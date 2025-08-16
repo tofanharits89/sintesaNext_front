@@ -1,0 +1,116 @@
+"use client";
+
+import React from "react";
+import { Check, CheckCheck } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+export interface MessageStatusProps {
+  isDelivered?: boolean;
+  isOpened?: boolean;
+  isRead?: boolean;
+  deliveredAt?: string | null;
+  openedAt?: string | null;
+  readAt?: string | null;
+  showTimestamp?: boolean;
+  className?: string;
+}
+
+/**
+ * WhatsApp-style message status indicator
+ * - Single checkmark (gray) = Delivered
+ * - Double checkmark (gray) = Opened/Viewed
+ * - Double checkmark (blue) = Read
+ */
+export const MessageStatus: React.FC<MessageStatusProps> = ({
+  isDelivered = false,
+  isOpened = false,
+  isRead = false,
+  deliveredAt,
+  openedAt,
+  readAt,
+  showTimestamp = false,
+  className,
+}) => {
+  // Determine the status and icon to show
+  const getStatusInfo = () => {
+    if (isRead) {
+      return {
+        icon: <CheckCheck className="h-3 w-3" />,
+        color: "text-blue-500",
+        status: "Read",
+        timestamp: readAt,
+      };
+    } else if (isOpened) {
+      return {
+        icon: <CheckCheck className="h-3 w-3" />,
+        color: "text-gray-400",
+        status: "Opened",
+        timestamp: openedAt,
+      };
+    } else if (isDelivered) {
+      return {
+        icon: <Check className="h-3 w-3" />,
+        color: "text-gray-400",
+        status: "Delivered",
+        timestamp: deliveredAt,
+      };
+    } else {
+      return {
+        icon: <Check className="h-3 w-3" />,
+        color: "text-gray-300",
+        status: "Sent",
+        timestamp: null,
+      };
+    }
+  };
+
+  const statusInfo = getStatusInfo();
+
+  const formatTimestamp = (timestamp: string | null) => {
+    if (!timestamp) return "";
+    
+    try {
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+      
+      if (diffInHours < 24) {
+        // Show time for today
+        return date.toLocaleTimeString([], { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+      } else {
+        // Show date for older messages
+        return date.toLocaleDateString([], { 
+          month: 'short', 
+          day: 'numeric',
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+      }
+    } catch (error) {
+      return "";
+    }
+  };
+
+  return (
+    <div className={cn("flex items-center gap-1 text-xs", className)}>
+      <span className={cn("flex-shrink-0", statusInfo.color)}>
+        {statusInfo.icon}
+      </span>
+      {showTimestamp && statusInfo.timestamp && (
+        <span className="text-gray-500 text-xs">
+          {formatTimestamp(statusInfo.timestamp)}
+        </span>
+      )}
+      {/* Tooltip for accessibility */}
+      <span className="sr-only">
+        {statusInfo.status}
+        {statusInfo.timestamp && ` at ${formatTimestamp(statusInfo.timestamp)}`}
+      </span>
+    </div>
+  );
+};
+
+export default MessageStatus;
