@@ -77,7 +77,7 @@ export function ModernUsersTable({
       columnHelper.display({
         id: "number",
         header: () => (
-          <div className="text-xs font-bold uppercase">NO</div>
+          <div className="text-[10px] font-semibold uppercase text-center">NO</div>
         ),
         cell: ({ row }) => (
           <div className="text-center font-medium text-muted-foreground text-xs">
@@ -93,21 +93,21 @@ export function ModernUsersTable({
             <Button
               variant="ghost"
               onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-              className="h-8 px-2 lg:px-3 hover:bg-slate-100 dark:hover:bg-slate-700"
+              className="h-8 px-2 lg:px-3 hover:bg-slate-100 dark:hover:bg-slate-700 w-full justify-center"
             >
-              <span className="text-xs font-bold uppercase">NAMA LENGKAP</span>
+              <span className="text-[10px] font-semibold uppercase">NAMA LENGKAP</span>
               {column.getIsSorted() === "asc" ? (
-                <ArrowUp className="ml-2 h-3 w-3" />
+                <ArrowUp className="ml-2 h-2.5 w-2.5" />
               ) : column.getIsSorted() === "desc" ? (
-                <ArrowDown className="ml-2 h-3 w-3" />
+                <ArrowDown className="ml-2 h-2.5 w-2.5" />
               ) : (
-                <ArrowUpDown className="ml-2 h-3 w-3" />
+                <ArrowUpDown className="ml-2 h-2.5 w-2.5" />
               )}
             </Button>
           );
         },
         cell: ({ getValue }) => (
-          <div className="font-medium text-slate-900 dark:text-slate-100">
+          <div className="font-medium text-slate-900 dark:text-slate-100 text-center">
             {getValue()}
           </div>
         ),
@@ -119,21 +119,21 @@ export function ModernUsersTable({
             <Button
               variant="ghost"
               onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-              className="h-8 px-2 lg:px-3 hover:bg-slate-100 dark:hover:bg-slate-700"
+              className="h-8 px-2 lg:px-3 hover:bg-slate-100 dark:hover:bg-slate-700 w-full justify-center"
             >
-              <span className="text-xs font-bold uppercase">USERNAME</span>
+              <span className="text-[10px] font-semibold uppercase">USERNAME</span>
               {column.getIsSorted() === "asc" ? (
-                <ArrowUp className="ml-2 h-3 w-3" />
+                <ArrowUp className="ml-2 h-2.5 w-2.5" />
               ) : column.getIsSorted() === "desc" ? (
-                <ArrowDown className="ml-2 h-3 w-3" />
+                <ArrowDown className="ml-2 h-2.5 w-2.5" />
               ) : (
-                <ArrowUpDown className="ml-2 h-3 w-3" />
+                <ArrowUpDown className="ml-2 h-2.5 w-2.5" />
               )}
             </Button>
           );
         },
         cell: ({ getValue }) => (
-          <div className="font-mono text-xs text-slate-700 dark:text-slate-300">
+          <div className="font-mono text-xs text-slate-700 dark:text-slate-300 text-center">
             {getValue()}
           </div>
         ),
@@ -145,63 +145,49 @@ export function ModernUsersTable({
             <Button
               variant="ghost"
               onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-              className="h-8 px-2 lg:px-3 hover:bg-slate-100 dark:hover:bg-slate-700"
+              className="h-8 px-2 lg:px-3 hover:bg-slate-100 dark:hover:bg-slate-700 w-full justify-center"
             >
-              <span className="text-xs font-bold uppercase">EMAIL</span>
+              <span className="text-[10px] font-semibold uppercase">EMAIL</span>
               {column.getIsSorted() === "asc" ? (
-                <ArrowUp className="ml-2 h-3 w-3" />
+                <ArrowUp className="ml-2 h-2.5 w-2.5" />
               ) : column.getIsSorted() === "desc" ? (
-                <ArrowDown className="ml-2 h-3 w-3" />
+                <ArrowDown className="ml-2 h-2.5 w-2.5" />
               ) : (
-                <ArrowUpDown className="ml-2 h-3 w-3" />
+                <ArrowUpDown className="ml-2 h-2.5 w-2.5" />
               )}
             </Button>
           );
         },
         cell: ({ getValue }) => (
-          <div className="text-xs text-slate-600 dark:text-slate-400">
+          <div className="text-xs text-slate-600 dark:text-slate-400 text-center">
             {getValue()}
           </div>
         ),
         size: 200,
       }),
       columnHelper.accessor("role", {
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-              className="h-8 px-2 lg:px-3 hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <span className="text-xs font-bold uppercase">ROLE</span>
-              {column.getIsSorted() === "asc" ? (
-                <ArrowUp className="ml-2 h-3 w-3" />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowDown className="ml-2 h-3 w-3" />
-              ) : (
-                <ArrowUpDown className="ml-2 h-3 w-3" />
-              )}
-            </Button>
-          );
-        },
+        header: () => (
+          <div className="text-[10px] font-semibold uppercase text-center">ROLE</div>
+        ),
         cell: ({ getValue }) => (
-          <div className="capitalize text-xs font-medium text-slate-700 dark:text-slate-300">
+          <div className="capitalize text-xs font-medium text-slate-700 dark:text-slate-300 text-center">
             {getValue().replaceAll("_", " ")}
           </div>
         ),
+        enableSorting: false,
         size: 150,
       }),
       columnHelper.display({
         id: "kanwil",
         header: () => (
-          <div className="text-xs font-bold uppercase">KANWIL</div>
+          <div className="text-[10px] font-semibold uppercase text-center">KANWIL</div>
         ),
         cell: ({ row }) => {
           const kanwil = row.original.kdkanwil
             ? kanwilData.find((k) => k.kdkanwil === row.original.kdkanwil)
             : null;
           return (
-            <div className="text-xs text-slate-600 dark:text-slate-400">
+            <div className="text-xs text-slate-600 dark:text-slate-400 text-center">
               {kanwil?.nmkanwil ?? "-"}
             </div>
           );
@@ -212,14 +198,14 @@ export function ModernUsersTable({
       columnHelper.display({
         id: "kppn",
         header: () => (
-          <div className="text-xs font-bold uppercase">KPPN</div>
+          <div className="text-[10px] font-semibold uppercase text-center">KPPN</div>
         ),
         cell: ({ row }) => {
           const kppn = row.original.kdkppn
             ? kppnData.find((k) => k.kdkppn === row.original.kdkppn)
             : null;
           return (
-            <div className="text-xs text-slate-600 dark:text-slate-400">
+            <div className="text-xs text-slate-600 dark:text-slate-400 text-center">
               {kppn?.nmkppn ?? "-"}
             </div>
           );
@@ -229,10 +215,10 @@ export function ModernUsersTable({
       }),
       columnHelper.accessor("limitKodeBA", {
         header: () => (
-          <div className="text-xs font-bold uppercase">LIMIT BA</div>
+          <div className="text-[10px] font-semibold uppercase text-center">LIMIT BA</div>
         ),
         cell: ({ getValue }) => (
-          <div className="text-xs font-mono text-slate-600 dark:text-slate-400">
+          <div className="text-xs font-mono text-slate-600 dark:text-slate-400 text-center">
             {getValue() ?? "-"}
           </div>
         ),
@@ -240,71 +226,34 @@ export function ModernUsersTable({
         size: 100,
       }),
       columnHelper.accessor("status", {
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-              className="h-8 px-2 lg:px-3 hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <span className="text-xs font-bold uppercase">STATUS</span>
-              {column.getIsSorted() === "asc" ? (
-                <ArrowUp className="ml-2 h-3 w-3" />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowDown className="ml-2 h-3 w-3" />
-              ) : (
-                <ArrowUpDown className="ml-2 h-3 w-3" />
-              )}
-            </Button>
-          );
-        },
-        cell: ({ getValue }) => (
-          <Badge
-            className={cn(
-              "font-medium",
-              getValue() === "active"
-                ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
-                : "bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800"
-            )}
-          >
-            {getValue() === "active" ? "Aktif" : "Nonaktif"}
-          </Badge>
+        header: () => (
+          <div className="text-[10px] font-semibold uppercase text-center">STATUS</div>
         ),
-        size: 100,
-      }),
-      columnHelper.accessor("createdAt", {
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-              className="h-8 px-2 lg:px-3 hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <span className="text-xs font-bold uppercase">DIBUAT</span>
-              {column.getIsSorted() === "asc" ? (
-                <ArrowUp className="ml-2 h-3 w-3" />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowDown className="ml-2 h-3 w-3" />
-              ) : (
-                <ArrowUpDown className="ml-2 h-3 w-3" />
-              )}
-            </Button>
-          );
-        },
         cell: ({ getValue }) => (
-          <div className="text-xs text-slate-600 dark:text-slate-400">
-            {new Date(getValue()).toLocaleString()}
+          <div className="flex justify-center">
+            <Badge
+              className={cn(
+                "font-medium",
+                getValue() === "active"
+                  ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
+                  : "bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800"
+              )}
+            >
+              {getValue() === "active" ? "Aktif" : "Nonaktif"}
+            </Badge>
           </div>
         ),
-        size: 150,
+        enableSorting: false,
+        size: 100,
       }),
+
       columnHelper.display({
         id: "actions",
         header: () => (
-          <div className="text-xs font-bold uppercase">AKSI</div>
+          <div className="text-[10px] font-semibold uppercase text-center">AKSI</div>
         ),
         cell: ({ row }) => (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 justify-center">
             <Button
               variant="ghost"
               size="icon"
@@ -359,7 +308,7 @@ export function ModernUsersTable({
                   <th
                     key={header.id}
                     className={cn(
-                      "px-4 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider",
+                      "px-4 py-3 text-center text-[10px] font-medium text-slate-700 dark:text-slate-300 uppercase tracking-wider",
                       header.column.getCanSort() && "cursor-pointer select-none"
                     )}
                     style={{ width: header.getSize() }}
@@ -367,9 +316,9 @@ export function ModernUsersTable({
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                   </th>
                 ))}
               </tr>

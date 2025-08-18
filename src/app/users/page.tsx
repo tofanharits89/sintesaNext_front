@@ -304,14 +304,14 @@ export default function UsersPage() {
 
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <Input
-          className="h-11 max-w-xl bg-white dark:bg-neutral-900"
+          className="h-9 max-w-xl bg-white dark:bg-neutral-900 flex items-center"
           placeholder="Cari nama, email, atau peran"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
         <div className="flex gap-2">
           <Select value={role} onValueChange={(v) => setRole(v)}>
-            <SelectTrigger className="h-11 min-w-40 bg-white dark:bg-neutral-900">
+            <SelectTrigger className="h-11 min-w-40 bg-white dark:bg-neutral-900 flex items-center px-3">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -325,7 +325,7 @@ export default function UsersPage() {
             </SelectContent>
           </Select>
           <Select value={status} onValueChange={(v) => setStatus(v)}>
-            <SelectTrigger className="h-11 min-w-40 bg-white dark:bg-neutral-900">
+            <SelectTrigger className="h-11 min-w-40 bg-white dark:bg-neutral-900 flex items-center px-3">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
