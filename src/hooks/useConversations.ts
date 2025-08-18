@@ -104,7 +104,7 @@ export function useConversations() {
   const { currentUser } = useCurrentUser();
   useEffect(() => {
     const updateOnNewMessage = (m: SocketMessageData) => {
-      mutate((prev) => {
+      mutate((prev: any) => {
         const list: Conversation[] = prev?.data?.conversations || [];
         const idx = list.findIndex((c) => c.id === m.conversationId);
         if (idx === -1) return prev; // Unknown conversation; skip
@@ -139,7 +139,7 @@ export function useConversations() {
       conversationId: string;
       messageIds: string[];
     }) => {
-      mutate((prev) => {
+      mutate((prev: any) => {
         const list: Conversation[] = prev?.data?.conversations || [];
         const idx = list.findIndex((c) => c.id === payload.conversationId);
         if (idx === -1) return prev;

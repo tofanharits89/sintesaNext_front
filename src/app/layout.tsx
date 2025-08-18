@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import AppShell from "@/components/layout/app-shell";
 import { ConnectionStatus } from "@/components/connection-status";
+import CheckBackend from "@/components/check-backend";
 import { withBasePath } from "@/lib/base-path";
 
 const geistSans = Geist({
@@ -41,9 +42,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <CheckBackend />
           <AppShell>{children}</AppShell>
           <ConnectionStatus />
           <Toaster richColors position="bottom-left" />
+          {/* Optionally show a top-of-page banner when server down via client routes */}
+          {/* <ServerDownBanner /> */}
         </ThemeProvider>
       </body>
     </html>

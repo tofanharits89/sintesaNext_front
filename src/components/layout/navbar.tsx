@@ -29,7 +29,6 @@ import {
 import {
   getNotificationsForUser,
   getUnreadNotificationCount,
-  type Notification,
 } from "@/lib/notifications-store";
 import { useMessaging } from "@/hooks/useMessaging";
 import { socketClient } from "@/lib/SocketClient";
@@ -92,7 +91,12 @@ export function Navbar() {
   const [totalUnreadMessagesCount, setTotalUnreadMessagesCount] = useState(0);
   // Listen for live notifications to update badge and list
   useEffect(() => {
-    const handleNew = (payload: any) => {
+    const handleNew = (payload: {
+      id: string;
+      title: string;
+      type: string;
+      priority: string;
+    }) => {
       setTotalUnreadNotificationsCount((c) => c + 1);
       setRecentNotifications((prev) =>
         [
@@ -108,16 +112,16 @@ export function Navbar() {
         ].slice(0, 5)
       );
     };
-    const handleNewV2 = (resp: any) => {
+    const handleNewV2 = (resp: { success?: boolean; data?: { id: string; title: string; type: string; priority: string; } }) => {
       if (!resp?.success || !resp?.data) return;
       handleNew(resp.data);
     };
-    if (socketClient.socket) {
-      socketClient.socket.on("notification:new", handleNew);
-      socketClient.socket.on("notification:new:v2", handleNewV2);
+    if (socketClient.getSocket()) {
+      socketClient.getSocket()?.on("notification:new", handleNew);
+      socketClient.getSocket()?.on("notification:new:v2", handleNewV2);
       return () => {
-        socketClient.socket?.off("notification:new", handleNew);
-        socketClient.socket?.off("notification:new:v2", handleNewV2);
+        socketClient.getSocket()?.off("notification:new", handleNew);
+        socketClient.getSocket()?.off("notification:new:v2", handleNewV2);
       };
     }
   }, []);
@@ -176,8 +180,8 @@ export function Navbar() {
 
       const sortedConversations = recentConversations
         .sort((a, b) => {
-          const aDate = new Date(a.lastMessage?.createdAt || a.updatedAt);
-          const bDate = new Date(b.lastMessage?.createdAt || b.updatedAt);
+          const aDate = new Date(a.lastMessage?.created_at || a.updated_at);
+          const bDate = new Date(b.lastMessage?.created_at || b.updated_at);
           const aTime = isNaN(aDate.getTime()) ? 0 : aDate.getTime();
           const bTime = isNaN(bDate.getTime()) ? 0 : bDate.getTime();
           return bTime - aTime;
@@ -193,7 +197,7 @@ export function Navbar() {
           }
 
           const convDate = new Date(
-            conv.lastMessage?.createdAt || conv.updatedAt
+conv.lastMessage?.created_at || conv.updated_at
           );
           const timeDiff = isNaN(convDate.getTime())
             ? 0
@@ -233,7 +237,29 @@ export function Navbar() {
         })
         .filter((message) => message !== null); // Remove null entries
 
-      setRecentMessages(sortedConversations);
+      setRecentMessages(
+        sortedConversations.filter((msg): msg is NonNullable<typeof msg> => {
+          if (!msg) return false;
+          
+          // Type guard to ensure all required properties exist and are of correct type
+          const hasValidProperties = 
+            typeof msg.id === 'string' &&
+            typeof msg.conversationId === 'string' &&
+            typeof msg.from === 'string' &&
+            typeof msg.subject === 'string' &&
+            typeof msg.time === 'string' &&
+            typeof msg.unread === 'boolean';
+
+          // Type guard for otherParticipant object
+          const hasValidParticipant = msg.otherParticipant && 
+            typeof msg.otherParticipant === 'object' &&
+            typeof msg.otherParticipant.id === 'string' &&
+            typeof msg.otherParticipant.name === 'string' &&
+            typeof msg.otherParticipant.username === 'string';
+
+          return hasValidProperties && hasValidParticipant;
+        }) as RecentMessage[]
+      );
 
       // Calculate total unread messages count
       const totalUnread = getUnreadCount();
@@ -258,29 +284,42 @@ export function Navbar() {
       <div className="container mx-auto flex h-14 items-center gap-3 px-4">
         {/* left: logo */}
         <div className="flex items-center gap-2">
-          {/* Brand logo – picks variant based on theme */}
+          {/* Brand logo – CSS toggles by theme to avoid SSR mismatch and persist on refresh */}
+          {/* Dark variant shown on light theme (default), hidden on dark */}
           <Image
-            src={
-              theme === "dark"
-                ? withBasePath("/snext_logoonly_light.svg")
-                : withBasePath("/snext_logoonly_dark.svg")
-            }
+            src={withBasePath("/snext_logoonly_dark.svg")}
             alt="sintesaNEXT"
             width={28}
             height={28}
-            className="rounded"
-            priority
+            className="rounded dark:hidden"
+            style={{ height: "auto" }}
           />
+          {/* Light variant shown on dark theme */}
           <Image
-            src={
-              theme === "dark"
-                ? withBasePath("/snext_typeonly_light.svg")
-                : withBasePath("/snext_typeonly_dark.svg")
-            }
+            src={withBasePath("/snext_logoonly_light.svg")}
+            alt="sintesaNEXT"
+            width={28}
+            height={28}
+            className="rounded hidden dark:inline"
+            style={{ height: "auto" }}
+          />
+          {/* Wordmark – dark version on light theme */}
+          <Image
+            src={withBasePath("/snext_typeonly_dark.svg")}
             alt="sintesaNEXT"
             width={110}
             height={20}
-            priority
+            className="dark:hidden"
+            style={{ height: "auto" }}
+          />
+          {/* Wordmark – light version on dark theme */}
+          <Image
+            src={withBasePath("/snext_typeonly_light.svg")}
+            alt="sintesaNEXT"
+            width={110}
+            height={20}
+            className="hidden dark:inline"
+            style={{ height: "auto" }}
           />
         </div>
 
@@ -490,7 +529,7 @@ export function Navbar() {
             </PopoverContent>
           </Popover>
 
-          {/* global darkmode switch */}
+          {/* Theme toggle switch */}
           <Button
             variant="ghost"
             size="icon"

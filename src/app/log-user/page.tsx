@@ -34,6 +34,15 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useMenuUsageTop } from "@/hooks/use-menu-usage";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 import { getRoleDisplayName } from "@/lib/rbac";
 
 // Simple tabs using local state
@@ -222,17 +231,14 @@ export default function LogUserPage() {
   const statusInfo = getConnectionStatusInfo();
   const StatusIcon = statusInfo.icon;
 
-  // Mock menu access frequency
-  const menuStats = useMemo(
-    () => [
-      { menu: "Dashboard Utama", count: 120 },
-      { menu: "Akun Manajemen", count: 85 },
-      { menu: "Profil", count: 64 },
-      { menu: "Laporan Bulanan", count: 52 },
-      { menu: "Inquiry Data - Permintaan", count: 47 },
-    ],
-    []
-  );
+  // Real menu usage aggregation
+  const {
+    data: menuAgg,
+    month: menuMonth,
+    setMonth: setMenuMonth,
+    isLoading: isLoadingMenu,
+    fetchTop: refreshMenu,
+  } = useMenuUsageTop();
 
   if (!allowed) {
     return (
@@ -474,6 +480,12 @@ export default function LogUserPage() {
                               <p className="text-xs text-muted-foreground">
                                 {entry.userRole}
                               </p>
+                              <p className="text-xs text-muted-foreground">
+                                Lokasi: {entry.location || "Tidak diketahui"}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground font-mono">
+                                IP: {entry.ipAddress || "-"}
+                              </p>
                             </div>
                           </div>
                           <div className="text-right">
@@ -646,12 +658,27 @@ export default function LogUserPage() {
                     <Table>
                       <TableHeader className="bg-slate-50 dark:bg-slate-800">
                         <TableRow>
-                          <TableHead>Nama Lengkap</TableHead>
-                          <TableHead>Username</TableHead>
-                          <TableHead>Role</TableHead>
-                          <TableHead>Waktu Login</TableHead>
-                          <TableHead>Durasi Login</TableHead>
-                          <TableHead className="text-right">Status</TableHead>
+                          <TableHead className="text-center font-bold">
+                            Nama Lengkap
+                          </TableHead>
+                          <TableHead className="text-center font-bold">
+                            Username
+                          </TableHead>
+                          <TableHead className="text-center font-bold">
+                            Role
+                          </TableHead>
+                          <TableHead className="text-center font-bold">
+                            Lokasi
+                          </TableHead>
+                          <TableHead className="text-center font-bold">
+                            Waktu Login
+                          </TableHead>
+                          <TableHead className="text-center font-bold">
+                            Durasi Login
+                          </TableHead>
+                          <TableHead className="text-center font-bold">
+                            Status
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -660,28 +687,31 @@ export default function LogUserPage() {
                             key={userInfo.socketId}
                             className="hover:bg-slate-50 dark:hover:bg-slate-800/50"
                           >
-                            <TableCell className="font-medium">
+                            <TableCell className="font-medium text-center">
                               {userInfo.user.name}
                             </TableCell>
-                            <TableCell className="font-mono text-sm">
+                            <TableCell className="font-mono text-sm text-center">
                               {userInfo.user.username}
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="text-center">
                               <Badge variant="outline" className="text-xs">
                                 {getRoleDisplayName(userInfo.user.role as any)}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
+                            <TableCell className="text-sm text-muted-foreground text-center">
+                              {userInfo.location || "Tidak diketahui"}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground text-center">
                               {userInfo.loginAt
                                 ? formatLoginDateTime(userInfo.loginAt)
                                 : "Tidak diketahui"}
                             </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
+                            <TableCell className="text-sm text-muted-foreground text-center">
                               {userInfo.loginAt
                                 ? calculateLoginDuration(userInfo.loginAt)
                                 : "Tidak diketahui"}
                             </TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className="text-center">
                               <Badge
                                 variant="default"
                                 className="bg-green-500 hover:bg-green-600 text-xs"
@@ -719,6 +749,10 @@ export default function LogUserPage() {
                               </Badge>
                             </div>
                             <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground">
+                                <span className="font-medium">Lokasi:</span>{" "}
+                                {userInfo.location || "Tidak diketahui"}
+                              </p>
                               <p className="text-xs text-muted-foreground">
                                 <span className="font-medium">Login:</span>{" "}
                                 {userInfo.loginAt
@@ -759,6 +793,45 @@ export default function LogUserPage() {
       {active === "menu" && (
         <Card>
           <CardHeader>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="text-sm text-muted-foreground">Bulan:</div>
+                <Select
+                  value={menuMonth}
+                  onValueChange={(val) => {
+                    setMenuMonth(val);
+                    // Refresh after changing month
+                    refreshMenu(val);
+                  }}
+                >
+                  <SelectTrigger size="sm">
+                    <SelectValue placeholder="Pilih bulan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 12 }).map((_, idx) => {
+                      const d = new Date();
+                      d.setMonth(d.getMonth() - idx);
+                      const val = `${d.getFullYear()}-${String(
+                        d.getMonth() + 1
+                      ).padStart(2, "0")}`;
+                      const label = d.toLocaleString("id-ID", {
+                        month: "long",
+                        year: "numeric",
+                      });
+                      return (
+                        <SelectItem key={val} value={val}>
+                          {label}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => refreshMenu()}>
+                <RefreshCw className="h-4 w-4 mr-1" /> Refresh
+              </Button>
+            </div>
+
             <CardTitle>Menu Paling Sering Diakses</CardTitle>
           </CardHeader>
           <CardContent>
@@ -771,12 +844,46 @@ export default function LogUserPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {menuStats.map((m) => (
-                    <TableRow key={m.menu}>
-                      <TableCell>{m.menu}</TableCell>
-                      <TableCell className="text-right">{m.count}</TableCell>
+                  {isLoadingMenu ? (
+                    <TableRow>
+                      <TableCell colSpan={2}>
+                        <div className="py-6 text-center text-sm text-muted-foreground">
+                          Memuat data menu...
+                        </div>
+                      </TableCell>
                     </TableRow>
-                  ))}
+                  ) : menuAgg.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={2}>
+                        <div className="py-6 text-center text-sm text-muted-foreground">
+                          Tidak ada data untuk bulan {menuMonth}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    menuAgg.map((parent) => (
+                      <>
+                        <TableRow key={parent.menu} className="bg-muted/40">
+                          <TableCell className="font-medium">
+                            {parent.menu}
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {parent.total}
+                          </TableCell>
+                        </TableRow>
+                        {parent.items.map((it) => (
+                          <TableRow key={`${parent.menu}__${it.submenu}`}>
+                            <TableCell className="pl-8 text-sm text-muted-foreground">
+                              {it.submenu}
+                            </TableCell>
+                            <TableCell className="text-right text-sm text-muted-foreground">
+                              {it.count}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>

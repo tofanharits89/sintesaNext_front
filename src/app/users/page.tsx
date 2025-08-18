@@ -37,7 +37,9 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Pencil, Trash2, AlertTriangle } from "lucide-react";
-import locationData from "@/data/indonesia-locations.json";
+import { ModernUsersTable } from "@/components/ui/modern-users-table";
+import kdkanwilData from "@/data/kdkanwil.json";
+import kdkppnData from "@/data/kdkppn.json";
 
 const fetcher = (url: string) =>
   fetch(url, { credentials: "include" }).then((r) => r.json());
@@ -123,7 +125,7 @@ export default function UsersPage() {
   // Filter KPPN berdasarkan Kanwil yang dipilih
   const filteredKppn = useMemo(() => {
     if (!form.kdkanwil) return [];
-    return locationData.kppn.filter((kppn) => kppn.kanwilId === form.kdkanwil);
+    return kdkppnData.filter((kppn) => kppn.kdkanwil === form.kdkanwil);
   }, [form.kdkanwil]);
 
   function openCreate() {
@@ -335,97 +337,16 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-md border bg-white dark:bg-neutral-900">
-        <Table className="[&_th]:text-center [&_td]:text-center [&_th]:px-3 [&_td]:px-3 md:[&_th]:px-4 md:[&_td]:px-4">
-          <TableHeader className="bg-slate-600 dark:bg-slate-800 [&_th]:text-white [&_th]:h-12">
-            <TableRow>
-              <TableHead className="w-10">
-                <Checkbox
-                  onCheckedChange={() => toggleSelectAll()}
-                  checked={
-                    paged.length > 0 && paged.every((u) => selected.has(u.id))
-                  }
-                />
-              </TableHead>
-              <TableHead className="w-12">No</TableHead>
-              <TableHead>Nama Lengkap</TableHead>
-              <TableHead>Username</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Kanwil</TableHead>
-              <TableHead>KPPN</TableHead>
-              <TableHead>Limit BA</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Dibuat</TableHead>
-              <TableHead>Aksi</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody className="[&_tr:nth-child(even)]:bg-slate-50 dark:[&_tr:nth-child(even)]:bg-neutral-800/50">
-            {paged.map((u, idx) => {
-              // Get kanwil and kppn names for display
-              const kanwil = u.kdkanwil
-                ? locationData.kanwilDJPb.find((k) => k.id === u.kdkanwil)
-                : null;
-              const kppn = u.kdkppn
-                ? locationData.kppn.find((k) => k.id === u.kdkppn)
-                : null;
-
-              return (
-                <TableRow key={u.id}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selected.has(u.id)}
-                      onCheckedChange={() => toggleSelect(u.id)}
-                    />
-                  </TableCell>
-                  <TableCell>{(page - 1) * pageSize + idx + 1}</TableCell>
-                  <TableCell>{u.name}</TableCell>
-                  <TableCell>{u.username}</TableCell>
-                  <TableCell>{u.email}</TableCell>
-                  <TableCell className="capitalize">
-                    {u.role.replaceAll("_", " ")}
-                  </TableCell>
-                  <TableCell>{kanwil?.name ?? "-"}</TableCell>
-                  <TableCell>{kppn?.name ?? "-"}</TableCell>
-                  <TableCell>{u.limitKodeBA ?? "-"}</TableCell>
-                  <TableCell>
-                    <Badge
-                      className={
-                        u.status === "active"
-                          ? "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200"
-                          : "bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900 dark:text-red-200"
-                      }
-                    >
-                      {u.status === "active" ? "Aktif" : "Nonaktif"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(u.createdAt).toLocaleString()}
-                  </TableCell>
-                  <TableCell className="space-x-1.5">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => openEdit(u)}
-                      aria-label="Edit pengguna"
-                    >
-                      <Pencil className="size-4" />
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => handleDeleteClick(u.id, u.name)}
-                      aria-label="Hapus pengguna"
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+      <ModernUsersTable
+        users={paged}
+        selected={selected}
+        onToggleSelect={toggleSelect}
+        onToggleSelectAll={toggleSelectAll}
+        onEdit={openEdit}
+        onDelete={handleDeleteClick}
+        currentPage={page}
+        pageSize={pageSize}
+      />
 
       <div className="mt-4 flex items-center justify-between">
         <div className="text-xs text-muted-foreground">
@@ -546,13 +467,13 @@ export default function UsersPage() {
                 <Select
                   value={form.kdkanwil}
                   onValueChange={(v) => {
-                    const selectedKanwil = locationData.kanwilDJPb.find(
-                      (k) => k.id === v
+                    const selectedKanwil = kdkanwilData.find(
+                      (k) => k.kdkanwil === v
                     );
                     setForm((f) => ({
                       ...f,
                       kdkanwil: v,
-                      nmkanwil: selectedKanwil?.name || "",
+                      nmkanwil: selectedKanwil?.nmkanwil || "",
                     }));
                   }}
                 >
@@ -560,9 +481,9 @@ export default function UsersPage() {
                     <SelectValue placeholder="Pilih Provinsi" />
                   </SelectTrigger>
                   <SelectContent>
-                    {locationData.kanwilDJPb.map((kanwil) => (
-                      <SelectItem key={kanwil.id} value={kanwil.id}>
-                        {kanwil.name}
+                    {kdkanwilData.map((kanwil) => (
+                      <SelectItem key={kanwil.kdkanwil} value={kanwil.kdkanwil}>
+                        {kanwil.nmkanwil}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -578,13 +499,13 @@ export default function UsersPage() {
                   <Select
                     value={form.kdkanwil}
                     onValueChange={(v) => {
-                      const selectedKanwil = locationData.kanwilDJPb.find(
-                        (k) => k.id === v
+                      const selectedKanwil = kdkanwilData.find(
+                        (k) => k.kdkanwil === v
                       );
                       setForm((f) => ({
                         ...f,
                         kdkanwil: v,
-                        nmkanwil: selectedKanwil?.name || "",
+                        nmkanwil: selectedKanwil?.nmkanwil || "",
                         kdkppn: "",
                         nmkppn: "",
                       }));
@@ -594,9 +515,9 @@ export default function UsersPage() {
                       <SelectValue placeholder="Pilih Kanwil" />
                     </SelectTrigger>
                     <SelectContent>
-                      {locationData.kanwilDJPb.map((kanwil) => (
-                        <SelectItem key={kanwil.id} value={kanwil.id}>
-                          {kanwil.name}
+                      {kdkanwilData.map((kanwil) => (
+                        <SelectItem key={kanwil.kdkanwil} value={kanwil.kdkanwil}>
+                          {kanwil.nmkanwil}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -610,12 +531,12 @@ export default function UsersPage() {
                       value={form.kdkppn}
                       onValueChange={(v) => {
                         const selectedKppn = filteredKppn.find(
-                          (k) => k.id === v
+                          (k) => k.kdkppn === v
                         );
                         setForm((f) => ({
                           ...f,
                           kdkppn: v,
-                          nmkppn: selectedKppn?.name || "",
+                          nmkppn: selectedKppn?.nmkppn || "",
                         }));
                       }}
                     >
@@ -624,8 +545,8 @@ export default function UsersPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {filteredKppn.map((kppn) => (
-                          <SelectItem key={kppn.id} value={kppn.id}>
-                            {kppn.name}
+                          <SelectItem key={kppn.kdkppn} value={kppn.kdkppn}>
+                            {kppn.nmkppn}
                           </SelectItem>
                         ))}
                       </SelectContent>

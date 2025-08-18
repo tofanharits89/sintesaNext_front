@@ -8,6 +8,7 @@ import { useLoginNotifications } from "@/hooks/use-login-notifications";
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAuthPage = pathname?.startsWith("/login");
+  const isError500 = pathname?.startsWith("/500");
 
   // Initialize login notifications for admin users
   useLoginNotifications();
@@ -15,7 +16,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   // Socket connection is now handled by useSocket hook in individual components
   // This prevents conflicts and ensures proper connection management
 
-  if (isAuthPage) {
+  if (isAuthPage || isError500) {
     return <>{children}</>;
   }
 
@@ -29,4 +30,3 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-

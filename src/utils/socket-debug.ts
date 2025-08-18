@@ -6,6 +6,7 @@
  */
 
 import { io, Socket } from 'socket.io-client';
+import { parse } from 'cookie';
 
 // Configuration
 const CONFIG = {

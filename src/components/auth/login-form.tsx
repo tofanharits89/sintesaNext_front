@@ -19,8 +19,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { apiPath } from "@/lib/base-path";
+import { apiPath, withBasePath } from "@/lib/base-path";
 import { dispatchAuthEvent } from "@/utils/auth-utils";
+import Image from "next/image";
 
 const schema = z.object({
   username: z.string().min(1, "Wajib diisi"),
@@ -78,6 +79,17 @@ export default function LoginForm() {
     setIsClient(true);
     setSeed(Math.random().toString(36).slice(2));
   }, []);
+
+  // Auto-regenerate captcha every 30 seconds
+  useEffect(() => {
+    if (!isClient) return;
+    
+    const interval = setInterval(() => {
+      setSeed(Math.random().toString(36).slice(2));
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [isClient]);
 
   const expectedCaptcha = useMemo(() => {
     if (!seed) return "0000"; // Default value during SSR
@@ -140,12 +152,47 @@ export default function LoginForm() {
         <Card>
           <CardHeader className="space-y-1">
             <div className="flex items-center gap-2 mb-2">
-              <div className="h-8 w-8 rounded bg-primary" />
-              <span className="font-semibold text-lg">Sintesa Finance</span>
+              {/* Brand logo – CSS toggles by theme to avoid SSR mismatch and persist on refresh */}
+              {/* Dark variant shown on light theme (default), hidden on dark */}
+              <Image
+                src={withBasePath("/snext_logoonly_dark.svg")}
+                alt="sintesaNEXT"
+                width={32}
+                height={32}
+                className="rounded dark:hidden"
+                style={{ height: "auto" }}
+              />
+              {/* Light variant shown on dark theme */}
+              <Image
+                src={withBasePath("/snext_logoonly_light.svg")}
+                alt="sintesaNEXT"
+                width={32}
+                height={32}
+                className="rounded hidden dark:inline"
+                style={{ height: "auto" }}
+              />
+              {/* Wordmark – dark version on light theme */}
+              <Image
+                src={withBasePath("/snext_typeonly_dark.svg")}
+                alt="sintesaNEXT"
+                width={120}
+                height={24}
+                className="dark:hidden"
+                style={{ height: "auto" }}
+              />
+              {/* Wordmark – light version on dark theme */}
+              <Image
+                src={withBasePath("/snext_typeonly_light.svg")}
+                alt="sintesaNEXT"
+                width={120}
+                height={24}
+                className="hidden dark:inline"
+                style={{ height: "auto" }}
+              />
             </div>
-            <CardTitle className="text-2xl">Masuk ke Dashboard</CardTitle>
+
             <CardDescription>
-              Dashboard Keuangan Indonesia - Sistem RBAC
+              Sistem Informasi Terpadu Pelaksanaan Anggaran
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -193,13 +240,6 @@ export default function LoginForm() {
                   >
                     {isClient ? expectedCaptcha : "0000"}
                   </div>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => setSeed(Math.random().toString(36).slice(2))}
-                  >
-                    Ubah
-                  </Button>
                 </div>
                 {form.formState.errors.captcha && (
                   <p className="text-xs text-destructive">

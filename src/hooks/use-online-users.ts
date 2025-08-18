@@ -13,6 +13,7 @@ export interface OnlineUser {
   };
   connectedAt?: string;
   loginAt?: string;
+  location?: string;
 }
 
 export interface UseOnlineUsersReturn {

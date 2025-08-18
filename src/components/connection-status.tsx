@@ -111,7 +111,10 @@ export function ConnectionStatus() {
 
   return (
     <div className="fixed bottom-4 right-4 z-40 max-w-sm">
-      <Alert variant={getAlertVariant() as any} className="shadow-lg border-2">
+      <Alert
+        variant={getAlertVariant() as "default" | "destructive"}
+        className="shadow-lg border-2"
+      >
         {getStatusIcon()}
         <AlertDescription className="flex items-center justify-between">
           <span className="text-sm">{getStatusMessage()}</span>

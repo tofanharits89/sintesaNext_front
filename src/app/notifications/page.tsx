@@ -90,6 +90,9 @@ export default function NotificationsPage() {
   // Delete confirmation dialog state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Notification | null>(null);
+  
+  // Multiple delete confirmation dialog state
+  const [showMultipleDeleteConfirm, setShowMultipleDeleteConfirm] = useState(false);
 
   // Load stats when admin opens the stats view for a notification
   useEffect(() => {
@@ -352,9 +355,7 @@ export default function NotificationsPage() {
 
     // Refresh notifications
     if (viewMode === "admin") {
-      getAllNotifications()
-        .then(setItems)
-        .catch(() => {});
+      mutateAdmin();
     }
   }
 
@@ -454,7 +455,7 @@ export default function NotificationsPage() {
           </Select>
           {/* User manual mark/unmark removed for simpler UX */}
           {viewMode === "admin" && isAdmin && (someSelected || allSelected) ? (
-            <Button variant="destructive" onClick={deleteSelected}>
+            <Button variant="destructive" onClick={() => setShowMultipleDeleteConfirm(true)}>
               <Trash2 className="h-4 w-4 mr-1" />
               Hapus ({Object.keys(selected).filter((k) => selected[k]).length})
             </Button>
@@ -907,7 +908,7 @@ export default function NotificationsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog (global) */}
+      {/* Delete Confirmation Dialog (single) */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -965,6 +966,46 @@ export default function NotificationsPage() {
               }}
             >
               Hapus
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Multiple Delete Confirmation Dialog */}
+      <Dialog open={showMultipleDeleteConfirm} onOpenChange={setShowMultipleDeleteConfirm}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Konfirmasi Hapus Multiple
+            </DialogTitle>
+            <DialogDescription>
+              Apakah Anda yakin ingin menghapus {Object.keys(selected).filter((k) => selected[k]).length} notifikasi yang dipilih?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Tindakan ini tidak dapat dibatalkan.
+            </p>
+            <p className="text-sm font-medium text-red-600">
+              {Object.keys(selected).filter((k) => selected[k]).length} notifikasi akan dihapus secara permanen.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowMultipleDeleteConfirm(false)}
+            >
+              Batal
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={async () => {
+                await deleteSelected();
+                setShowMultipleDeleteConfirm(false);
+              }}
+            >
+              Hapus Semua
             </Button>
           </DialogFooter>
         </DialogContent>

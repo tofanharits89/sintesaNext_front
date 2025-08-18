@@ -421,7 +421,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
             </h3>
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="text-xs">
-                {otherParticipant?.role === "admin" ? (
+                {(otherParticipant?.role === "super_admin" || otherParticipant?.role === "co_admin") ? (
                   <>
                     <Crown className="h-3 w-3 mr-1" />
                     Administrator

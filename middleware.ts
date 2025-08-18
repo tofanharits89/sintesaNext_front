@@ -19,6 +19,24 @@ async function verifyTokenViaBackend(token?: string) {
   }
 }
 
+async function isBackendHealthy() {
+  try {
+    const ac = new AbortController();
+    const timeout = setTimeout(() => ac.abort(), 1500);
+    const resp = await fetch(backendPath("/auth/health"), {
+      method: "GET",
+      cache: "no-store",
+      signal: ac.signal,
+    });
+    clearTimeout(timeout);
+    if (!resp.ok) return false;
+    const data = await resp.json().catch(() => ({}));
+    return Boolean(data?.success || data?.status === "healthy");
+  } catch {
+    return false;
+  }
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -26,6 +44,33 @@ export async function middleware(request: NextRequest) {
   const relPath = pathname.startsWith(BASE_PATH)
     ? pathname.slice(BASE_PATH.length) || "/"
     : pathname;
+
+  // Determine public routes (still show 500 when backend is down)
+  const isPublicPath =
+    relPath === "/login" ||
+    relPath.startsWith("/login") ||
+    relPath.startsWith("/api/auth");
+
+  // Early: Skip health check for static assets and the 500 page itself
+  const isStatic =
+    relPath.startsWith("/_next") ||
+    relPath.startsWith("/favicon.ico") ||
+    relPath.startsWith("/api/public") ||
+    relPath.startsWith("/images") ||
+    relPath.startsWith("/icons") ||
+    relPath.startsWith("/500");
+
+  // Early: If backend is unhealthy, redirect to 500 page
+  if (!isStatic) {
+    const healthyEarly = await isBackendHealthy();
+    if (!healthyEarly) {
+      const url = request.nextUrl.clone();
+      // Set path relative to current base path. Do NOT prepend BASE_PATH here,
+      // because Next middleware will apply basePath automatically.
+      url.pathname = `/500`;
+      return NextResponse.redirect(url);
+    }
+  }
 
   // Check multiple cookie names - this might be the issue!
   const tokenCookie = request.cookies.get("token")?.value;
@@ -49,12 +94,6 @@ export async function middleware(request: NextRequest) {
   });
 
   const isAuth = await verifyTokenViaBackend(token);
-
-  // Mark login and auth API as public (these don't require authentication)
-  const isPublicPath =
-    relPath === "/login" ||
-    relPath.startsWith("/login") ||
-    relPath.startsWith("/api/auth");
 
   // Debug logging (remove in production)
   console.log(

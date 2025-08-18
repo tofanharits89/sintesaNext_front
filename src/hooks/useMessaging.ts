@@ -9,6 +9,7 @@ import {
   TypingUserPayload,
   MessagesReadPayload,
   formatRelativeTime,
+  FrontendMessage,
 } from "@/shared/socket-events";
 import { backendPath } from "@/lib/backend";
 import { toast } from "sonner";

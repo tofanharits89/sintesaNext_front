@@ -170,7 +170,7 @@ export async function retryOperation<T>(
       console.log(
         `[retryOperation] Attempt ${attempt + 1}/${maxRetries + 1} failed:`,
         {
-          error: error?.message,
+          error: (error as Error)?.message || String(error),
           retryable: retryCondition(error),
           isLastAttempt: attempt === maxRetries,
         }

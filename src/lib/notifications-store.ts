@@ -78,7 +78,7 @@ function mapFromBackendItem(
   if (Array.isArray(item.reads)) {
     const usernames = item.reads
       .map(
-        (r: { user?: { username?: string }; username?: string }) =>
+        (r: { user?: { username?: string } | null; username?: string | null }) =>
           r?.user?.username || r?.username || null
       )
       .filter((u): u is string => typeof u === "string" && u.length > 0);

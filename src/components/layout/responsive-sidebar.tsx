@@ -2,9 +2,42 @@
 
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { ChevronDown, Menu, ChevronLeft, ChevronRight, LayoutDashboard, Utensils, Building2, ClipboardList, Receipt, Banknote, Inbox, FileText, Info, LineChart, TrendingUp, Users, Briefcase, CheckCircle, Layers, Star, Coins, Wallet, PiggyBank, Send, History, Calendar, CalendarDays, CalendarClock, User, Phone } from "lucide-react";
+import {
+  ChevronDown,
+  Menu,
+  ChevronLeft,
+  ChevronRight,
+  LayoutDashboard,
+  Utensils,
+  Building2,
+  ClipboardList,
+  Receipt,
+  Banknote,
+  Inbox,
+  FileText,
+  Info,
+  LineChart,
+  TrendingUp,
+  Users,
+  Briefcase,
+  CheckCircle,
+  Layers,
+  Star,
+  Coins,
+  Wallet,
+  PiggyBank,
+  Send,
+  History,
+  Calendar,
+  CalendarDays,
+  CalendarClock,
+  User,
+  Phone,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { trackMenuUsage } from "@/hooks/use-menu-usage";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,18 +52,50 @@ export type MenuItem = {
 };
 
 const defaultMenu: MenuItem[] = [
-  { label: "Dashboard", children: [{ label: "Dashboard Utama" }, { label: "Tren" }] },
-  { label: "Makan Bergizi", children: [{ label: "Program" }, { label: "Outcome" }] },
-  { label: "Profil K/L", children: [{ label: "Kementerian" }, { label: "Lembaga" }] },
+  {
+    label: "Dashboard",
+    children: [{ label: "Dashboard Utama" }, { label: "Tren" }],
+  },
+  {
+    label: "Makan Bergizi",
+    children: [{ label: "Program" }, { label: "Outcome" }],
+  },
+  {
+    label: "Profil K/L",
+    children: [{ label: "Kementerian" }, { label: "Lembaga" }],
+  },
   { label: "EPA", children: [{ label: "Proyek" }, { label: "Evaluasi" }] },
-  { label: "Spending Review", children: [{ label: "Sektor" }, { label: "Rekomendasi" }] },
-  { label: "Transfer Daerah", children: [{ label: "DAU" }, { label: "DAK" }, { label: "DBH" }] },
-  { label: "Inquiry Data", children: [{ label: "Permintaan" }, { label: "Riwayat" }] },
-  { label: "Laporan", children: [{ label: "Bulanan" }, { label: "Triwulanan" }, { label: "Tahunan" }] },
-  { label: "Tentang Kita", children: [{ label: "Profil" }, { label: "Kontak" }] },
+  {
+    label: "Spending Review",
+    children: [{ label: "Sektor" }, { label: "Rekomendasi" }],
+  },
+  {
+    label: "Transfer Daerah",
+    children: [{ label: "DAU" }, { label: "DAK" }, { label: "DBH" }],
+  },
+  {
+    label: "Inquiry Data",
+    children: [{ label: "Permintaan" }, { label: "Riwayat" }],
+  },
+  {
+    label: "Laporan",
+    children: [
+      { label: "Bulanan" },
+      { label: "Triwulanan" },
+      { label: "Tahunan" },
+    ],
+  },
+  {
+    label: "Tentang Kita",
+    children: [{ label: "Profil" }, { label: "Kontak" }],
+  },
 ];
 
-export function ResponsiveSidebar({ menu = defaultMenu }: { menu?: MenuItem[] }) {
+export function ResponsiveSidebar({
+  menu = defaultMenu,
+}: {
+  menu?: MenuItem[];
+}) {
   const [open, setOpen] = useState(false);
 
   // icon resolver for menu labels
@@ -38,23 +103,49 @@ export function ResponsiveSidebar({ menu = defaultMenu }: { menu?: MenuItem[] })
     const cls = "h-4 w-4 mr-1.5";
     switch (label) {
       case "Dashboard":
-        return <LayoutDashboard className={`${cls} text-sky-600 dark:text-sky-400`} />;
+        return (
+          <LayoutDashboard
+            className={`${cls} text-sky-600 dark:text-sky-400`}
+          />
+        );
       case "Makan Bergizi":
-        return <Utensils className={`${cls} text-emerald-600 dark:text-emerald-400`} />;
+        return (
+          <Utensils
+            className={`${cls} text-emerald-600 dark:text-emerald-400`}
+          />
+        );
       case "Profil K/L":
-        return <Building2 className={`${cls} text-indigo-600 dark:text-indigo-400`} />;
+        return (
+          <Building2
+            className={`${cls} text-indigo-600 dark:text-indigo-400`}
+          />
+        );
       case "EPA":
-        return <ClipboardList className={`${cls} text-amber-600 dark:text-amber-400`} />;
+        return (
+          <ClipboardList
+            className={`${cls} text-amber-600 dark:text-amber-400`}
+          />
+        );
       case "Spending Review":
-        return <Receipt className={`${cls} text-rose-600 dark:text-rose-400`} />;
+        return (
+          <Receipt className={`${cls} text-rose-600 dark:text-rose-400`} />
+        );
       case "Transfer Daerah":
-        return <Banknote className={`${cls} text-lime-600 dark:text-lime-400`} />;
+        return (
+          <Banknote className={`${cls} text-lime-600 dark:text-lime-400`} />
+        );
       case "Inquiry Data":
-        return <Inbox className={`${cls} text-fuchsia-600 dark:text-fuchsia-400`} />;
+        return (
+          <Inbox className={`${cls} text-fuchsia-600 dark:text-fuchsia-400`} />
+        );
       case "Laporan":
-        return <FileText className={`${cls} text-cyan-600 dark:text-cyan-400`} />;
+        return (
+          <FileText className={`${cls} text-cyan-600 dark:text-cyan-400`} />
+        );
       case "Tentang Kita":
-        return <Info className={`${cls} text-neutral-600 dark:text-neutral-300`} />;
+        return (
+          <Info className={`${cls} text-neutral-600 dark:text-neutral-300`} />
+        );
       default:
         return null;
     }
@@ -118,16 +209,16 @@ export function ResponsiveSidebar({ menu = defaultMenu }: { menu?: MenuItem[] })
   const calculateItemsPerPage = () => {
     const container = containerRef.current;
     if (!container) return 4;
-    
+
     const containerWidth = container.clientWidth;
     const itemWidth = 192; // w-48 = 192px
     const gap = 8; // gap-2 = 8px
     const padding = 32; // px-4 on each side = 16px, plus some buffer
     const buttonSpace = 80; // Space for navigation buttons when visible
-    
+
     const availableWidth = containerWidth - padding - buttonSpace;
     const itemsWithGaps = Math.floor(availableWidth / (itemWidth + gap));
-    
+
     return Math.max(3, itemsWithGaps); // Minimum 3 items per page
   };
 
@@ -141,12 +232,12 @@ export function ResponsiveSidebar({ menu = defaultMenu }: { menu?: MenuItem[] })
       if (currentPage >= maxPages) {
         setCurrentPage(0);
       }
-    }; 
-    
+    };
+
     updateItemsPerPage();
     const onResize = () => updateItemsPerPage();
     window.addEventListener("resize", onResize);
-    
+
     return () => {
       window.removeEventListener("resize", onResize);
     };
@@ -157,7 +248,7 @@ export function ResponsiveSidebar({ menu = defaultMenu }: { menu?: MenuItem[] })
   const startIndex = currentPage * itemsPerPage;
   const endIndex = Math.min(startIndex + itemsPerPage, menu.length);
   const currentPageItems = menu.slice(startIndex, endIndex);
-  
+
   const canGoLeft = currentPage > 0;
   const canGoRight = currentPage < totalPages - 1;
 
@@ -191,10 +282,13 @@ export function ResponsiveSidebar({ menu = defaultMenu }: { menu?: MenuItem[] })
           {/* Menu items container */}
           <div className="flex justify-center">
             <div className="flex items-center gap-2 h-12 py-0">
-{currentPageItems.map((m) => (
+              {currentPageItems.map((m) => (
                 <DropdownMenu key={m.label}>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="gap-1 w-48 justify-center">
+                    <Button
+                      variant="ghost"
+                      className="gap-1 w-48 justify-center"
+                    >
                       <span className="inline-flex items-center">
                         {iconFor(m.label)}
                         <span>{m.label}</span>
@@ -204,28 +298,53 @@ export function ResponsiveSidebar({ menu = defaultMenu }: { menu?: MenuItem[] })
                   </DropdownMenuTrigger>
                   {m.children?.length ? (
                     <DropdownMenuContent className="w-64">
-                      {m.children.map((c) => (
-                        c.label === "Dashboard Utama" && m.label === "Dashboard" ? (
+                      {m.children.map((c) =>
+                        c.label === "Dashboard Utama" &&
+                        m.label === "Dashboard" ? (
                           <DropdownMenuItem key={c.label} asChild>
-                            <Link href="/dashboard/utama" className="flex items-center w-full">
+                            <Link
+                              href="/dashboard/utama"
+                              className="flex items-center w-full"
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/dashboard/utama",
+                                })
+                              }
+                            >
                               {subIconFor(m.label, c.label)}
                               <span>{c.label}</span>
                             </Link>
                           </DropdownMenuItem>
-                        ) : c.label === "Profil" && m.label === "Tentang Kita" ? (
+                        ) : c.label === "Profil" &&
+                          m.label === "Tentang Kita" ? (
                           <DropdownMenuItem key={c.label} asChild>
-                            <Link href="/tentang-kita/profil" className="flex items-center w-full">
+                            <Link
+                              href="/tentang-kita/profil"
+                              className="flex items-center w-full"
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/tentang-kita/profil",
+                                })
+                              }
+                            >
                               {subIconFor(m.label, c.label)}
                               <span>{c.label}</span>
                             </Link>
                           </DropdownMenuItem>
                         ) : (
-                          <DropdownMenuItem key={c.label} className="flex items-center">
+                          <DropdownMenuItem
+                            key={c.label}
+                            className="flex items-center"
+                          >
                             {subIconFor(m.label, c.label)}
                             <span>{c.label}</span>
                           </DropdownMenuItem>
                         )
-                      ))}
+                      )}
                     </DropdownMenuContent>
                   ) : null}
                 </DropdownMenu>
@@ -246,7 +365,6 @@ export function ResponsiveSidebar({ menu = defaultMenu }: { menu?: MenuItem[] })
               <ChevronRight className="h-5 w-5" />
             </Button>
           )}
-
         </div>
       </nav>
 
@@ -264,20 +382,27 @@ export function ResponsiveSidebar({ menu = defaultMenu }: { menu?: MenuItem[] })
             </div>
           </div>
           <SheetContent side="left" className="p-0">
-            <div className="p-2">
+            <div className="p-2 overflow-y-auto max-h-screen">
               {menu.map((m) => (
-<div key={m.label} className="border-b">
+                <div key={m.label} className="border-b">
                   <div className="px-3 py-2 font-medium inline-flex items-center">
                     {iconFor(m.label)}
                     <span>{m.label}</span>
                   </div>
-                  {m.children?.map((c) => (
+                  {m.children?.map((c) =>
                     c.label === "Dashboard Utama" && m.label === "Dashboard" ? (
                       <Link
                         key={c.label}
                         href="/dashboard/utama"
                         className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
-                        onClick={() => setOpen(false)}
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/dashboard/utama",
+                          });
+                          setOpen(false);
+                        }}
                       >
                         <span className="inline-flex items-center">
                           {subIconFor(m.label, c.label)}
@@ -289,7 +414,14 @@ export function ResponsiveSidebar({ menu = defaultMenu }: { menu?: MenuItem[] })
                         key={c.label}
                         href="/tentang-kita/profil"
                         className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
-                        onClick={() => setOpen(false)}
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/tentang-kita/profil",
+                          });
+                          setOpen(false);
+                        }}
                       >
                         <span className="inline-flex items-center">
                           {subIconFor(m.label, c.label)}
@@ -308,7 +440,7 @@ export function ResponsiveSidebar({ menu = defaultMenu }: { menu?: MenuItem[] })
                         </span>
                       </button>
                     )
-                  ))}
+                  )}
                 </div>
               ))}
             </div>
