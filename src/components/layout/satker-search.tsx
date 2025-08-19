@@ -5,10 +5,14 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import carisatkerData from "@/data/carisatker.json";
+import { useCurrentUser } from "@/lib/use-current-user";
+import { filterSatkerByUserAccess } from "@/utils/satker-rbac";
 
 interface SatkerItem {
     kdsatker: string;
     nmsatker: string;
+    kdkppn: string;
+    kdkanwil: string;
 }
 
 export function SatkerSearch() {
@@ -19,8 +23,9 @@ export function SatkerSearch() {
     const router = useRouter();
     const inputRef = useRef<HTMLInputElement>(null);
     const resultsRef = useRef<HTMLDivElement>(null);
+    const { currentUser } = useCurrentUser();
 
-    // Filter results based on search input
+    // Filter results based on search input and user access
     useEffect(() => {
         if (searchValue.length < 2) {
             setFilteredResults([]);
@@ -28,7 +33,11 @@ export function SatkerSearch() {
             return;
         }
 
-        const filtered = carisatkerData.filter((item) => {
+        // First filter by user's access level (role-based access control)
+        const accessibleSatkers = filterSatkerByUserAccess(carisatkerData, currentUser);
+
+        // Then filter by search term
+        const filtered = accessibleSatkers.filter((item) => {
             const searchLower = searchValue.toLowerCase();
             return (
                 item.kdsatker.toLowerCase().includes(searchLower) ||
@@ -39,7 +48,7 @@ export function SatkerSearch() {
         setFilteredResults(filtered);
         setShowResults(filtered.length > 0);
         setSelectedIndex(-1);
-    }, [searchValue]);
+    }, [searchValue, currentUser]);
 
     const handleSelect = (satker: SatkerItem) => {
         setShowResults(false);
@@ -126,7 +135,7 @@ export function SatkerSearch() {
                                 <div className="flex flex-col">
                                     <span className="font-medium text-sm">{satker.nmsatker}</span>
                                     <span className="text-xs text-muted-foreground">
-                                        Kode: {satker.kdsatker}
+                                        Kode: {satker.kdsatker} | Kanwil: {satker.kdkanwil}
                                     </span>
                                 </div>
                             </div>

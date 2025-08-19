@@ -1,26 +1,34 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Building2, FileText, Calendar, User, MapPin, CreditCard } from "lucide-react";
+import { Building2, FileText, Calendar, User, MapPin, CreditCard, Shield, AlertTriangle } from "lucide-react";
 import carisatkerData from "@/data/carisatker.json";
 import { SatkerProfileTab } from "@/components/satker/satker-profile-tab";
 import { DipaDownloadTab } from "@/components/satker/dipa-download-tab";
+import { useCurrentUser } from "@/lib/use-current-user";
+import { hasAccessToSatker } from "@/utils/satker-rbac";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 interface SatkerData {
   kdsatker: string;
   nmsatker: string;
+  kdkppn: string;
+  kdkanwil: string;
 }
 
 export default function SatkerDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const kdsatker = params.kdsatker as string;
   const [satkerData, setSatkerData] = useState<SatkerData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { currentUser, isLoading: userLoading } = useCurrentUser();
 
   useEffect(() => {
     // Find satker data from JSON
@@ -29,7 +37,10 @@ export default function SatkerDetailPage() {
     setLoading(false);
   }, [kdsatker]);
 
-  if (loading) {
+  // Check if user has access to this satker
+  const hasAccess = satkerData ? hasAccessToSatker(satkerData, currentUser) : false;
+
+  if (loading || userLoading) {
     return (
       <div className="container mx-auto p-6">
         <div className="animate-pulse">
@@ -54,6 +65,57 @@ export default function SatkerDetailPage() {
             <p className="text-muted-foreground text-center">
               Satuan kerja dengan kode {kdsatker} tidak ditemukan dalam database.
             </p>
+            <Button 
+              onClick={() => router.push('/satker')} 
+              className="mt-4"
+              variant="outline"
+            >
+              Kembali ke Pencarian
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Check access control
+  if (!hasAccess) {
+    return (
+      <div className="container mx-auto p-6 space-y-6">
+        <Alert className="border-red-200 bg-red-50">
+          <AlertTriangle className="h-4 w-4 text-red-600" />
+          <AlertDescription className="text-red-800">
+            <strong>Akses Ditolak:</strong> Anda tidak memiliki akses untuk melihat detail satker ini. 
+            {currentUser?.role === "kanwil_djpb" 
+              ? ` Satker ini berada di luar area Kanwil ${currentUser.kdkanwil} Anda.`
+              : currentUser?.role === "kppn"
+              ? ` Satker ini berada di luar area KPPN ${currentUser.kdkppn} Anda.`
+              : " Silakan hubungi administrator untuk mendapatkan akses."
+            }
+          </AlertDescription>
+        </Alert>
+        
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Shield className="h-12 w-12 text-muted-foreground mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Akses Terbatas</h2>
+            <p className="text-muted-foreground text-center mb-4">
+              Anda tidak memiliki izin untuk mengakses informasi satker dengan kode {kdsatker}.
+            </p>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => router.push('/satker')} 
+                variant="outline"
+              >
+                Kembali ke Pencarian
+              </Button>
+              <Button 
+                onClick={() => router.push('/')} 
+                variant="default"
+              >
+                Ke Beranda
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -73,6 +135,9 @@ export default function SatkerDetailPage() {
             {satkerData.kdsatker}
           </Badge>
           <span>Kode Satker</span>
+          <Badge variant="secondary" className="font-mono">
+            Kanwil: {satkerData.kdkanwil}
+          </Badge>
         </div>
       </div>
 
@@ -96,7 +161,7 @@ export default function SatkerDetailPage() {
         </TabsList>
 
         <TabsContent value="profile">
-          <SatkerProfileTab satkerData={satkerData} />
+          <SatkerProfileTab kdsatker={kdsatker} />
         </TabsContent>
 
         <TabsContent value="dipa-download">

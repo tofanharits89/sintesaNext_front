@@ -1,4 +1,5 @@
 import { BarChartComponent } from "@/components/ui/bar-chart";
+import { LineChartComponent } from "@/components/ui/line-chart";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -34,6 +35,38 @@ const fungsiData = [
   { name: "Pertahanan", value: 180 },
   { name: "Sosial", value: 160 },
   { name: "Ekonomi", value: 140 },
+];
+
+// Data for Tren Penerimaan vs Belanja line chart
+const trenPenerimaanBelanja = [
+  { name: "Jan", penerimaan: 95, belanja: 110 },
+  { name: "Feb", penerimaan: 105, belanja: 125 },
+  { name: "Mar", penerimaan: 120, belanja: 140 },
+  { name: "Apr", penerimaan: 135, belanja: 155 },
+  { name: "Mei", penerimaan: 150, belanja: 170 },
+  { name: "Jun", penerimaan: 165, belanja: 185 },
+  { name: "Jul", penerimaan: 180, belanja: 200 },
+  { name: "Agu", penerimaan: 195, belanja: 210 },
+  { name: "Sep", penerimaan: 210, belanja: 225 },
+  { name: "Okt", penerimaan: 225, belanja: 240 },
+  { name: "Nov", penerimaan: 240, belanja: 250 },
+  { name: "Des", penerimaan: 255, belanja: 260 },
+];
+
+// Data for Proyeksi Deficit line chart
+const proyeksiDeficit = [
+  { name: "Jan", aktual: -15, proyeksi: -12 },
+  { name: "Feb", aktual: -20, proyeksi: -18 },
+  { name: "Mar", aktual: -20, proyeksi: -22 },
+  { name: "Apr", aktual: -20, proyeksi: -25 },
+  { name: "Mei", aktual: -20, proyeksi: -28 },
+  { name: "Jun", aktual: -20, proyeksi: -30 },
+  { name: "Jul", aktual: null, proyeksi: -32 },
+  { name: "Agu", aktual: null, proyeksi: -15 },
+  { name: "Sep", aktual: null, proyeksi: -10 },
+  { name: "Okt", aktual: null, proyeksi: -8 },
+  { name: "Nov", aktual: null, proyeksi: -5 },
+  { name: "Des", aktual: null, proyeksi: -2 },
 ];
 
 export default function DashboardUtamaPage() {
@@ -133,48 +166,28 @@ export default function DashboardUtamaPage() {
         />
       </div>
 
-      {/* Third Row: 2 Cards with Line Chart Placeholders */}
+      {/* Third Row: 2 Cards with Line Charts */}
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-lg p-4 bg-white dark:bg-neutral-900 shadow">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-sm font-medium">Tren Penerimaan vs Belanja</h3>
-              <p className="text-xs text-muted-foreground">Perbandingan bulanan 2025</p>
-            </div>
-            <span className="text-xs text-muted-foreground">2025</span>
-          </div>
-          <div className="h-64 rounded bg-muted flex items-center justify-center">
-            <div className="text-center text-muted-foreground">
-              <div className="w-16 h-16 mx-auto mb-2 rounded-full bg-muted-foreground/10 flex items-center justify-center">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <p className="text-sm">Line Chart Placeholder</p>
-              <p className="text-xs">Tren Penerimaan vs Belanja</p>
-            </div>
-          </div>
-        </div>
-        <div className="rounded-lg p-4 bg-white dark:bg-neutral-900 shadow">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-sm font-medium">Proyeksi Defisit/Surplus</h3>
-              <p className="text-xs text-muted-foreground">Estimasi hingga akhir tahun</p>
-            </div>
-            <span className="text-xs text-muted-foreground">2025</span>
-          </div>
-          <div className="h-64 rounded bg-muted flex items-center justify-center">
-            <div className="text-center text-muted-foreground">
-              <div className="w-16 h-16 mx-auto mb-2 rounded-full bg-muted-foreground/10 flex items-center justify-center">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-              </div>
-              <p className="text-sm">Line Chart Placeholder</p>
-              <p className="text-xs">Proyeksi Defisit/Surplus</p>
-            </div>
-          </div>
-        </div>
+        <LineChartComponent
+          data={trenPenerimaanBelanja}
+          title="Tren Penerimaan vs Belanja"
+          description="Perbandingan bulanan 2025 (Triliun Rp)"
+          lines={[
+            { dataKey: "penerimaan", stroke: "#10b981", name: "Penerimaan" },
+            { dataKey: "belanja", stroke: "#ef4444", name: "Belanja" }
+          ]}
+          height={280}
+        />
+        <LineChartComponent
+          data={proyeksiDeficit}
+          title="Proyeksi Defisit/Surplus"
+          description="Estimasi hingga akhir tahun (Triliun Rp)"
+          lines={[
+            { dataKey: "aktual", stroke: "#3b82f6", name: "Aktual" },
+            { dataKey: "proyeksi", stroke: "#f59e0b", name: "Proyeksi" }
+          ]}
+          height={280}
+        />
       </div>
     </div>
   );

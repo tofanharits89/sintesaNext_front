@@ -1,8 +1,6 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { 
   Building2, 
   Mail, 
@@ -17,34 +15,66 @@ import {
   CheckCircle,
   XCircle
 } from "lucide-react";
-
-interface SatkerData {
-  kdsatker: string;
-  nmsatker: string;
-}
+import { CarisatkerData, SatkerProfileData } from "@/types/satker";
+import { useSatkerData } from "@/hooks/use-satker-data";
 
 interface SatkerProfileTabProps {
-  satkerData: SatkerData;
+  kdsatker: string;
 }
 
-export function SatkerProfileTab({ satkerData }: SatkerProfileTabProps) {
-  // Mock data for demonstration - in real app, this would come from API
-  const profileData = {
-    namaSatker: satkerData.nmsatker,
-    emailSatker: `${satkerData.kdsatker}@kemenkeu.go.id`,
-    kementerian: "Kementerian Keuangan",
-    unitEselonI: "Direktorat Jenderal Perbendaharaan",
-    kewenangan: "Dekonsentrasi",
-    kanwilDJPb: "Kanwil DJPb Provinsi DKI Jakarta",
-    kppn: "KPPN Jakarta I",
-    tahunAnggaran: "2025",
-    kuasaPenggunaAnggaran: "Dr. John Doe, S.E., M.M.",
-    bendahara: "Jane Smith, S.Ak.",
-    ppspm: "Robert Johnson, S.E.",
-    npwp: "00.000.000.0-000.000",
-    statusBLU: false,
-    jenisDokumen: "DIPA"
+export function SatkerProfileTab({ kdsatker }: SatkerProfileTabProps) {
+  const { data: satkerData, loading, error } = useSatkerData(kdsatker);
+
+  // Transform carisatker data to profile data format
+  const getProfileData = (data: CarisatkerData | null): SatkerProfileData | null => {
+    if (!data) return null;
+
+    return {
+      namaSatker: data.nmsatker,
+      emailSatker: data.email || `${data.kdsatker}@kemenkeu.go.id`,
+      kementerian: data.nmdept || `${data.kddept || ''} - Kementerian Keuangan`,
+      unitEselonI: data.nmunit || `${data.kdunit || ''} - Unit Eselon I`,
+      kewenangan: data.nmdekon || `${data.kddekon || ''} - Kewenangan`,
+      kanwilDJPb: data.nmkanwil || `${data.kdkanwil} - Kanwil DJPb`,
+      kppn: data.nmkppn || `${data.kdkppn} - KPPN`,
+      tahunAnggaran: data.thang || "2025",
+      kuasaPenggunaAnggaran: data.kpa || "-",
+      bendahara: data.bendahara || "-",
+      ppspm: data.ppspm || "-",
+      npwp: data.npwp || "-",
+      statusBLU: typeof data.statusblu === 'boolean' ? data.statusblu : data.statusblu === '1' || data.statusblu === 'true',
+      jenisDokumen: data.kdjendok || "DIPA"
+    };
   };
+
+  const profileData = getProfileData(satkerData);
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-32 bg-gray-200 rounded mb-4"></div>
+          <div className="h-32 bg-gray-200 rounded mb-4"></div>
+          <div className="h-32 bg-gray-200 rounded mb-4"></div>
+          <div className="h-32 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !profileData) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-12">
+          <XCircle className="h-12 w-12 text-red-500 mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Gagal Memuat Data</h3>
+          <p className="text-muted-foreground text-center">
+            {error || "Tidak dapat memuat data profil satker."}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const InfoItem = ({ 
     icon: Icon, 
