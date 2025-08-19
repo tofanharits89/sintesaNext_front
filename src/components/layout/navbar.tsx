@@ -50,6 +50,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { withBasePath } from "@/lib/base-path";
+import { SatkerSearch } from "./satker-search";
 
 export function Navbar() {
   const { theme, setTheme } = useTheme();
@@ -324,12 +325,7 @@ conv.lastMessage?.created_at || conv.updated_at
         </div>
 
         {/* middle: search - hidden on xs */}
-        <div className="flex-1 max-w-xl mx-auto hidden sm:flex">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input className="pl-9" placeholder="Cari..." />
-          </div>
-        </div>
+        <SatkerSearch />
 
         {/* right: icons */}
         <div className="ml-auto flex items-center gap-2">
