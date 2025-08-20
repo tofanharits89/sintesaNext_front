@@ -1,19 +1,19 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Building2, 
-  Mail, 
-  MapPin, 
-  Users, 
-  Shield, 
-  Landmark, 
+import {
+  Building2,
+  Mail,
+  MapPin,
+  Users,
+  Shield,
+  Landmark,
   CreditCard,
   Calendar,
   User,
   FileText,
   CheckCircle,
-  XCircle
+  XCircle,
 } from "lucide-react";
 import { CarisatkerData, SatkerProfileData } from "@/types/satker";
 import { useSatkerData } from "@/hooks/use-satker-data";
@@ -26,15 +26,17 @@ export function SatkerProfileTab({ kdsatker }: SatkerProfileTabProps) {
   const { data: satkerData, loading, error } = useSatkerData(kdsatker);
 
   // Transform carisatker data to profile data format
-  const getProfileData = (data: CarisatkerData | null): SatkerProfileData | null => {
+  const getProfileData = (
+    data: CarisatkerData | null
+  ): SatkerProfileData | null => {
     if (!data) return null;
 
     return {
       namaSatker: data.nmsatker,
       emailSatker: data.email || `${data.kdsatker}@kemenkeu.go.id`,
-      kementerian: data.nmdept || `${data.kddept || ''} - Kementerian Keuangan`,
-      unitEselonI: data.nmunit || `${data.kdunit || ''} - Unit Eselon I`,
-      kewenangan: data.nmdekon || `${data.kddekon || ''} - Kewenangan`,
+      kementerian: data.nmdept || `${data.kddept || ""} - Kementerian Keuangan`,
+      unitEselonI: data.nmunit || `${data.kdunit || ""} - Unit Eselon I`,
+      kewenangan: data.nmdekon || `${data.kddekon || ""} - Kewenangan`,
       kanwilDJPb: data.nmkanwil || `${data.kdkanwil} - Kanwil DJPb`,
       kppn: data.nmkppn || `${data.kdkppn} - KPPN`,
       tahunAnggaran: data.thang || "2025",
@@ -42,8 +44,11 @@ export function SatkerProfileTab({ kdsatker }: SatkerProfileTabProps) {
       bendahara: data.bendahara || "-",
       ppspm: data.ppspm || "-",
       npwp: data.npwp || "-",
-      statusBLU: typeof data.statusblu === 'boolean' ? data.statusblu : data.statusblu === '1' || data.statusblu === 'true',
-      jenisDokumen: data.kdjendok || "DIPA"
+      statusBLU:
+        typeof data.statusblu === "boolean"
+          ? data.statusblu
+          : data.statusblu === "1" || data.statusblu === "true",
+      jenisDokumen: data.kdjendok || "DIPA",
     };
   };
 
@@ -76,28 +81,34 @@ export function SatkerProfileTab({ kdsatker }: SatkerProfileTabProps) {
     );
   }
 
-  const InfoItem = ({ 
-    icon: Icon, 
-    label, 
-    value, 
-    type = "text" 
-  }: { 
-    icon: any; 
-    label: string; 
-    value: string | boolean; 
+  const InfoItem = ({
+    icon: Icon,
+    label,
+    value,
+    type = "text",
+  }: {
+    icon: any;
+    label: string;
+    value?: string | boolean;
     type?: "text" | "email" | "boolean";
   }) => (
     <div className="flex items-start gap-3 p-4 rounded-lg border bg-card">
       <Icon className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-muted-foreground mb-1">{label}</p>
+        <p className="text-sm font-medium text-muted-foreground mb-1">
+          {label}
+        </p>
         {type === "email" ? (
-          <a 
-            href={`mailto:${value}`} 
-            className="text-sm font-medium text-blue-600 hover:text-blue-800 break-all"
-          >
-            {value as string}
-          </a>
+          typeof value === "string" && value.length > 0 ? (
+            <a
+              href={`mailto:${value}`}
+              className="text-sm font-medium text-blue-600 hover:text-blue-800 break-all"
+            >
+              {value}
+            </a>
+          ) : (
+            <p className="text-sm font-medium text-muted-foreground">-</p>
+          )
         ) : type === "boolean" ? (
           <div className="flex items-center gap-2">
             {value ? (
@@ -113,7 +124,9 @@ export function SatkerProfileTab({ kdsatker }: SatkerProfileTabProps) {
             )}
           </div>
         ) : (
-          <p className="text-sm font-medium break-words">{value as string}</p>
+          <p className="text-sm font-medium break-words">
+            {typeof value === "string" && value.length > 0 ? value : "-"}
+          </p>
         )}
       </div>
     </div>
@@ -173,11 +186,7 @@ export function SatkerProfileTab({ kdsatker }: SatkerProfileTabProps) {
             label="Kanwil DJPb"
             value={profileData.kanwilDJPb}
           />
-          <InfoItem
-            icon={Landmark}
-            label="KPPN"
-            value={profileData.kppn}
-          />
+          <InfoItem icon={Landmark} label="KPPN" value={profileData.kppn} />
           <InfoItem
             icon={Calendar}
             label="Tahun Anggaran"
@@ -205,16 +214,8 @@ export function SatkerProfileTab({ kdsatker }: SatkerProfileTabProps) {
             label="Bendahara"
             value={profileData.bendahara}
           />
-          <InfoItem
-            icon={User}
-            label="PPSPM"
-            value={profileData.ppspm}
-          />
-          <InfoItem
-            icon={CreditCard}
-            label="NPWP"
-            value={profileData.npwp}
-          />
+          <InfoItem icon={User} label="PPSPM" value={profileData.ppspm} />
+          <InfoItem icon={CreditCard} label="NPWP" value={profileData.npwp} />
         </CardContent>
       </Card>
 

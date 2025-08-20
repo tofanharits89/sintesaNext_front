@@ -1,0 +1,22 @@
+[
+  { "id": "1101", "provinceId": "ID-AC", "name": "Kab. Simeulue", "centroid": { "lat": 2.6167, "lng": 96.0833 } },
+  { "id": "1102", "provinceId": "ID-AC", "name": "Kab. Aceh Singkil", "centroid": { "lat": 2.4167, "lng": 97.8667 } },
+  { "id": "3171", "provinceId": "ID-JK", "name": "Kota Jakarta Selatan", "centroid": { "lat": -6.2615, "lng": 106.8106 } },
+  { "id": "3172", "provinceId": "ID-JK", "name": "Kota Jakarta Timur", "centroid": { "lat": -6.2250, "lng": 106.9000 } },
+  { "id": "3173", "provinceId": "ID-JK", "name": "Kota Jakarta Pusat", "centroid": { "lat": -6.1865, "lng": 106.8340 } },
+  { "id": "3174", "provinceId": "ID-JK", "name": "Kota Jakarta Barat", "centroid": { "lat": -6.1683, "lng": 106.7580 } },
+  { "id": "3175", "provinceId": "ID-JK", "name": "Kota Jakarta Utara", "centroid": { "lat": -6.1380, "lng": 106.8410 } },
+  { "id": "3201", "provinceId": "ID-JB", "name": "Kab. Bogor", "centroid": { "lat": -6.5950, "lng": 106.8166 } },
+  { "id": "3202", "provinceId": "ID-JB", "name": "Kab. Sukabumi", "centroid": { "lat": -6.9241, "lng": 106.9290 } },
+  { "id": "3374", "provinceId": "ID-JT", "name": "Kota Semarang", "centroid": { "lat": -6.9667, "lng": 110.4167 } },
+  { "id": "3371", "provinceId": "ID-JT", "name": "Kota Magelang", "centroid": { "lat": -7.4706, "lng": 110.2177 } },
+  { "id": "3578", "provinceId": "ID-JI", "name": "Kota Surabaya", "centroid": { "lat": -7.2575, "lng": 112.7521 } },
+  { "id": "3573", "provinceId": "ID-JI", "name": "Kota Malang", "centroid": { "lat": -7.9666, "lng": 112.6326 } },
+  { "id": "1207", "provinceId": "ID-SU", "name": "Kab. Deli Serdang", "centroid": { "lat": 3.4203, "lng": 98.7041 } },
+  { "id": "1171", "provinceId": "ID-SU", "name": "Kota Medan", "centroid": { "lat": 3.5952, "lng": 98.6722 } },
+  { "id": "1401", "provinceId": "ID-RI", "name": "Kab. Kampar", "centroid": { "lat": 0.4407, "lng": 101.1193 } },
+  { "id": "1471", "provinceId": "ID-RI", "name": "Kota Pekanbaru", "centroid": { "lat": 0.5071, "lng": 101.4478 } },
+  { "id": "3603", "provinceId": "ID-BT", "name": "Kab. Tangerang", "centroid": { "lat": -6.1783, "lng": 106.6319 } },
+  { "id": "3671", "provinceId": "ID-BT", "name": "Kota Tangerang", "centroid": { "lat": -6.1783, "lng": 106.6319 } }
+]
+

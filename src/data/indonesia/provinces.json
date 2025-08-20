@@ -1,0 +1,43 @@
+[
+  {
+    "id": "ID-AC",
+    "name": "Aceh",
+    "centroid": { "lat": 4.695135, "lng": 96.749397 }
+  },
+  {
+    "id": "ID-JK",
+    "name": "DKI Jakarta",
+    "centroid": { "lat": -6.200000, "lng": 106.816666 }
+  },
+  {
+    "id": "ID-JB",
+    "name": "Jawa Barat",
+    "centroid": { "lat": -6.889836, "lng": 107.640471 }
+  },
+  {
+    "id": "ID-JT",
+    "name": "Jawa Tengah",
+    "centroid": { "lat": -7.150975, "lng": 110.140259 }
+  },
+  {
+    "id": "ID-JI",
+    "name": "Jawa Timur",
+    "centroid": { "lat": -7.536063, "lng": 112.238402 }
+  },
+  {
+    "id": "ID-SU",
+    "name": "Sumatera Utara",
+    "centroid": { "lat": 2.115355, "lng": 99.545097 }
+  },
+  {
+    "id": "ID-RI",
+    "name": "Riau",
+    "centroid": { "lat": 0.293346, "lng": 101.706825 }
+  },
+  {
+    "id": "ID-BT",
+    "name": "Banten",
+    "centroid": { "lat": -6.405817, "lng": 106.064018 }
+  }
+]
+

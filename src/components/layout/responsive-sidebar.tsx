@@ -58,7 +58,11 @@ const defaultMenu: MenuItem[] = [
   },
   {
     label: "Makan Bergizi",
-    children: [{ label: "Program" }, { label: "Outcome" }],
+    children: [
+      { label: "Dashboard MBG" },
+      { label: "Program" },
+      { label: "Outcome" },
+    ],
   },
   {
     label: "Profil K/L",
@@ -159,6 +163,8 @@ export function ResponsiveSidebar({
         return <LineChart className={cls} />;
       case "Dashboard__Tren":
         return <TrendingUp className={cls} />;
+      case "Makan Bergizi__Dashboard MBG":
+        return <LineChart className={cls} />;
       case "Makan Bergizi__Program":
         return <ClipboardList className={cls} />;
       case "Makan Bergizi__Outcome":
@@ -317,6 +323,24 @@ export function ResponsiveSidebar({
                               <span>{c.label}</span>
                             </Link>
                           </DropdownMenuItem>
+                        ) : c.label === "Dashboard MBG" &&
+                          m.label === "Makan Bergizi" ? (
+                          <DropdownMenuItem key={c.label} asChild>
+                            <Link
+                              href="/makan-bergizi/dashboard"
+                              className="flex items-center w-full"
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/makan-bergizi/dashboard",
+                                })
+                              }
+                            >
+                              {subIconFor(m.label, c.label)}
+                              <span>{c.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
                         ) : c.label === "Profil" &&
                           m.label === "Tentang Kita" ? (
                           <DropdownMenuItem key={c.label} asChild>
@@ -400,6 +424,26 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/dashboard/utama",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Dashboard MBG" &&
+                      m.label === "Makan Bergizi" ? (
+                      <Link
+                        key={c.label}
+                        href="/makan-bergizi/dashboard"
+                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/makan-bergizi/dashboard",
                           });
                           setOpen(false);
                         }}
