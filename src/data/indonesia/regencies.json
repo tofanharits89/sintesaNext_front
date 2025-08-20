@@ -1,22 +1,4628 @@
 [
-  { "id": "1101", "provinceId": "ID-AC", "name": "Kab. Simeulue", "centroid": { "lat": 2.6167, "lng": 96.0833 } },
-  { "id": "1102", "provinceId": "ID-AC", "name": "Kab. Aceh Singkil", "centroid": { "lat": 2.4167, "lng": 97.8667 } },
-  { "id": "3171", "provinceId": "ID-JK", "name": "Kota Jakarta Selatan", "centroid": { "lat": -6.2615, "lng": 106.8106 } },
-  { "id": "3172", "provinceId": "ID-JK", "name": "Kota Jakarta Timur", "centroid": { "lat": -6.2250, "lng": 106.9000 } },
-  { "id": "3173", "provinceId": "ID-JK", "name": "Kota Jakarta Pusat", "centroid": { "lat": -6.1865, "lng": 106.8340 } },
-  { "id": "3174", "provinceId": "ID-JK", "name": "Kota Jakarta Barat", "centroid": { "lat": -6.1683, "lng": 106.7580 } },
-  { "id": "3175", "provinceId": "ID-JK", "name": "Kota Jakarta Utara", "centroid": { "lat": -6.1380, "lng": 106.8410 } },
-  { "id": "3201", "provinceId": "ID-JB", "name": "Kab. Bogor", "centroid": { "lat": -6.5950, "lng": 106.8166 } },
-  { "id": "3202", "provinceId": "ID-JB", "name": "Kab. Sukabumi", "centroid": { "lat": -6.9241, "lng": 106.9290 } },
-  { "id": "3374", "provinceId": "ID-JT", "name": "Kota Semarang", "centroid": { "lat": -6.9667, "lng": 110.4167 } },
-  { "id": "3371", "provinceId": "ID-JT", "name": "Kota Magelang", "centroid": { "lat": -7.4706, "lng": 110.2177 } },
-  { "id": "3578", "provinceId": "ID-JI", "name": "Kota Surabaya", "centroid": { "lat": -7.2575, "lng": 112.7521 } },
-  { "id": "3573", "provinceId": "ID-JI", "name": "Kota Malang", "centroid": { "lat": -7.9666, "lng": 112.6326 } },
-  { "id": "1207", "provinceId": "ID-SU", "name": "Kab. Deli Serdang", "centroid": { "lat": 3.4203, "lng": 98.7041 } },
-  { "id": "1171", "provinceId": "ID-SU", "name": "Kota Medan", "centroid": { "lat": 3.5952, "lng": 98.6722 } },
-  { "id": "1401", "provinceId": "ID-RI", "name": "Kab. Kampar", "centroid": { "lat": 0.4407, "lng": 101.1193 } },
-  { "id": "1471", "provinceId": "ID-RI", "name": "Kota Pekanbaru", "centroid": { "lat": 0.5071, "lng": 101.4478 } },
-  { "id": "3603", "provinceId": "ID-BT", "name": "Kab. Tangerang", "centroid": { "lat": -6.1783, "lng": 106.6319 } },
-  { "id": "3671", "provinceId": "ID-BT", "name": "Kota Tangerang", "centroid": { "lat": -6.1783, "lng": 106.6319 } }
+  {
+    "id": "11.01",
+    "provinceId": "11",
+    "name": "Kabupaten Aceh Selatan",
+    "centroid": {
+      "lat": 3.2548016392931354,
+      "lng": 97.17411233973566
+    }
+  },
+  {
+    "id": "11.02",
+    "provinceId": "11",
+    "name": "Kabupaten Aceh Tenggara",
+    "centroid": {
+      "lat": 3.473359853097982,
+      "lng": 97.81924348302599
+    }
+  },
+  {
+    "id": "11.03",
+    "provinceId": "11",
+    "name": "Kabupaten Aceh Timur",
+    "centroid": {
+      "lat": 4.932736888548549,
+      "lng": 97.7838443591112
+    }
+  },
+  {
+    "id": "11.04",
+    "provinceId": "11",
+    "name": "Kabupaten Aceh Tengah",
+    "centroid": {
+      "lat": 4.622057187598997,
+      "lng": 96.84566791108571
+    }
+  },
+  {
+    "id": "11.05",
+    "provinceId": "11",
+    "name": "Kabupaten Aceh Barat",
+    "centroid": {
+      "lat": 4.15301021563362,
+      "lng": 96.1314406676852
+    }
+  },
+  {
+    "id": "11.06",
+    "provinceId": "11",
+    "name": "Kabupaten Aceh Besar",
+    "centroid": {
+      "lat": 5.2973395526628515,
+      "lng": 95.61087103885502
+    }
+  },
+  {
+    "id": "11.07",
+    "provinceId": "11",
+    "name": "Kabupaten Pidie",
+    "centroid": {
+      "lat": 5.367600459124008,
+      "lng": 95.95788011001953
+    }
+  },
+  {
+    "id": "11.08",
+    "provinceId": "11",
+    "name": "Kabupaten Aceh Utara",
+    "centroid": {
+      "lat": 5.07571569194339,
+      "lng": 97.30262386768965
+    }
+  },
+  {
+    "id": "11.09",
+    "provinceId": "11",
+    "name": "Kabupaten Simeulue",
+    "centroid": {
+      "lat": 2.4614125527223116,
+      "lng": 96.38037739836625
+    }
+  },
+  {
+    "id": "11.10",
+    "provinceId": "11",
+    "name": "Kabupaten Aceh Singkil",
+    "centroid": {
+      "lat": 2.2710939677616295,
+      "lng": 97.81532536767888
+    }
+  },
+  {
+    "id": "11.11",
+    "provinceId": "11",
+    "name": "Kabupaten Bireuen",
+    "centroid": {
+      "lat": 5.207564894628741,
+      "lng": 96.72640339652622
+    }
+  },
+  {
+    "id": "11.12",
+    "provinceId": "11",
+    "name": "Kabupaten Aceh Barat Daya",
+    "centroid": {
+      "lat": 3.7391033250335153,
+      "lng": 96.85150507428492
+    }
+  },
+  {
+    "id": "11.13",
+    "provinceId": "11",
+    "name": "Kabupaten Gayo Lues",
+    "centroid": {
+      "lat": 3.993465184564387,
+      "lng": 97.32450169161383
+    }
+  },
+  {
+    "id": "11.14",
+    "provinceId": "11",
+    "name": "Kabupaten Aceh Jaya",
+    "centroid": {
+      "lat": 4.624131830287506,
+      "lng": 95.61681174202448
+    }
+  },
+  {
+    "id": "11.15",
+    "provinceId": "11",
+    "name": "Kabupaten Nagan Raya",
+    "centroid": {
+      "lat": 4.169426810266828,
+      "lng": 96.32437393884945
+    }
+  },
+  {
+    "id": "11.16",
+    "provinceId": "11",
+    "name": "Kabupaten Aceh Tamiang",
+    "centroid": {
+      "lat": 4.301275755472272,
+      "lng": 98.04571548117825
+    }
+  },
+  {
+    "id": "11.17",
+    "provinceId": "11",
+    "name": "Kabupaten Bener Meriah",
+    "centroid": {
+      "lat": 4.702762114549044,
+      "lng": 96.86195266768776
+    }
+  },
+  {
+    "id": "11.18",
+    "provinceId": "11",
+    "name": "Kabupaten Pidie Jaya",
+    "centroid": {
+      "lat": 5.2288994377471605,
+      "lng": 96.24475688303401
+    }
+  },
+  {
+    "id": "11.71",
+    "provinceId": "11",
+    "name": "Kota Banda Aceh",
+    "centroid": {
+      "lat": 5.550049859538454,
+      "lng": 95.31782669652819
+    }
+  },
+  {
+    "id": "11.72",
+    "provinceId": "11",
+    "name": "Kota Sabang",
+    "centroid": {
+      "lat": 5.892656382959924,
+      "lng": 95.32111719653021
+    }
+  },
+  {
+    "id": "11.73",
+    "provinceId": "11",
+    "name": "Kota Lhokseumawe",
+    "centroid": {
+      "lat": 5.179363622042538,
+      "lng": 97.14894011186956
+    }
+  },
+  {
+    "id": "11.74",
+    "provinceId": "11",
+    "name": "Kota Langsa",
+    "centroid": {
+      "lat": 4.46948210581997,
+      "lng": 97.96644605234316
+    }
+  },
+  {
+    "id": "11.75",
+    "provinceId": "11",
+    "name": "Kota Subulussalam",
+    "centroid": {
+      "lat": 2.6707917619957486,
+      "lng": 97.99301166767994
+    }
+  },
+  {
+    "id": "12.01",
+    "provinceId": "12",
+    "name": "Kabupaten Tapanuli Tengah",
+    "centroid": {
+      "lat": 1.684690341229827,
+      "lng": 98.82771720471466
+    }
+  },
+  {
+    "id": "12.02",
+    "provinceId": "12",
+    "name": "Kabupaten Tapanuli Utara",
+    "centroid": {
+      "lat": 2.0218496600101576,
+      "lng": 98.96179136764661
+    }
+  },
+  {
+    "id": "12.03",
+    "provinceId": "12",
+    "name": "Kabupaten Tapanuli Selatan",
+    "centroid": {
+      "lat": 1.519661925116435,
+      "lng": 99.30284312257872
+    }
+  },
+  {
+    "id": "12.04",
+    "provinceId": "12",
+    "name": "Kabupaten Nias",
+    "centroid": {
+      "lat": 1.2417545046363359,
+      "lng": 97.64991802740695
+    }
+  },
+  {
+    "id": "12.05",
+    "provinceId": "12",
+    "name": "Kabupaten Langkat",
+    "centroid": {
+      "lat": 3.7426864805785707,
+      "lng": 98.44753521807361
+    }
+  },
+  {
+    "id": "12.06",
+    "provinceId": "12",
+    "name": "Kabupaten Karo",
+    "centroid": {
+      "lat": 3.110679693532461,
+      "lng": 98.5013348785831
+    }
+  },
+  {
+    "id": "12.07",
+    "provinceId": "12",
+    "name": "Kabupaten Deli Serdang",
+    "centroid": {
+      "lat": 3.550718941711028,
+      "lng": 98.86644224023665
+    }
+  },
+  {
+    "id": "12.08",
+    "provinceId": "12",
+    "name": "Kabupaten Simalungun",
+    "centroid": {
+      "lat": 2.9653486091382972,
+      "lng": 98.86209969919715
+    }
+  },
+  {
+    "id": "12.09",
+    "provinceId": "12",
+    "name": "Kabupaten Asahan",
+    "centroid": {
+      "lat": 2.9881057835467244,
+      "lng": 99.61283578690154
+    }
+  },
+  {
+    "id": "12.10",
+    "provinceId": "12",
+    "name": "Kabupaten Labuhanbatu",
+    "centroid": {
+      "lat": 2.070089999362207,
+      "lng": 99.85708629199812
+    }
+  },
+  {
+    "id": "12.11",
+    "provinceId": "12",
+    "name": "Kabupaten Dairi",
+    "centroid": {
+      "lat": 2.7479672571598934,
+      "lng": 98.31396934594967
+    }
+  },
+  {
+    "id": "12.12",
+    "provinceId": "12",
+    "name": "Kabupaten Toba",
+    "centroid": {
+      "lat": 2.3318009358602985,
+      "lng": 99.05102147349844
+    }
+  },
+  {
+    "id": "12.13",
+    "provinceId": "12",
+    "name": "Kabupaten Mandailing Natal",
+    "centroid": {
+      "lat": 0.7967262645602773,
+      "lng": 99.57880901075687
+    }
+  },
+  {
+    "id": "12.14",
+    "provinceId": "12",
+    "name": "Kabupaten Nias Selatan",
+    "centroid": {
+      "lat": 0.5833773193046318,
+      "lng": 97.7778846860258
+    }
+  },
+  {
+    "id": "12.15",
+    "provinceId": "12",
+    "name": "Kabupaten Pakpak Bharat",
+    "centroid": {
+      "lat": 2.541054180498141,
+      "lng": 98.32258850116699
+    }
+  },
+  {
+    "id": "12.16",
+    "provinceId": "12",
+    "name": "Kabupaten Humbang Hasundutan",
+    "centroid": {
+      "lat": 2.250279290484845,
+      "lng": 98.79045401025103
+    }
+  },
+  {
+    "id": "12.17",
+    "provinceId": "12",
+    "name": "Kabupaten Samosir",
+    "centroid": {
+      "lat": 2.5598708852610876,
+      "lng": 98.7223886458626
+    }
+  },
+  {
+    "id": "12.18",
+    "provinceId": "12",
+    "name": "Kabupaten Serdang Bedagai",
+    "centroid": {
+      "lat": 3.4912650864166386,
+      "lng": 99.12592027625313
+    }
+  },
+  {
+    "id": "12.19",
+    "provinceId": "12",
+    "name": "Kabupaten Batu Bara",
+    "centroid": {
+      "lat": 3.1717751880433394,
+      "lng": 99.4209807063729
+    }
+  },
+  {
+    "id": "12.20",
+    "provinceId": "12",
+    "name": "Kabupaten Padang Lawas Utara",
+    "centroid": {
+      "lat": 1.4945493942995707,
+      "lng": 99.61970881122626
+    }
+  },
+  {
+    "id": "12.21",
+    "provinceId": "12",
+    "name": "Kabupaten Padang Lawas",
+    "centroid": {
+      "lat": 1.0555897761779505,
+      "lng": 99.77552008687299
+    }
+  },
+  {
+    "id": "12.22",
+    "provinceId": "12",
+    "name": "Kabupaten Labuhanbatu Selatan",
+    "centroid": {
+      "lat": 1.8682211662701844,
+      "lng": 100.04114555938138
+    }
+  },
+  {
+    "id": "12.23",
+    "provinceId": "12",
+    "name": "Kabupaten Labuhanbatu Utara",
+    "centroid": {
+      "lat": 2.5628487863896083,
+      "lng": 99.65806864456648
+    }
+  },
+  {
+    "id": "12.24",
+    "provinceId": "12",
+    "name": "Kabupaten Nias Utara",
+    "centroid": {
+      "lat": 1.389322425641782,
+      "lng": 97.38136186409508
+    }
+  },
+  {
+    "id": "12.25",
+    "provinceId": "12",
+    "name": "Kabupaten Nias Barat",
+    "centroid": {
+      "lat": 0.9989625537417939,
+      "lng": 97.49525171290033
+    }
+  },
+  {
+    "id": "12.71",
+    "provinceId": "12",
+    "name": "Kota Medan",
+    "centroid": {
+      "lat": 3.5902455275064686,
+      "lng": 98.67497243281954
+    }
+  },
+  {
+    "id": "12.72",
+    "provinceId": "12",
+    "name": "Kota Pematangsiantar",
+    "centroid": {
+      "lat": 2.956496281855757,
+      "lng": 99.06182098647018
+    }
+  },
+  {
+    "id": "12.73",
+    "provinceId": "12",
+    "name": "Kota Sibolga",
+    "centroid": {
+      "lat": 1.7460206351072023,
+      "lng": 98.77558765380772
+    }
+  },
+  {
+    "id": "12.74",
+    "provinceId": "12",
+    "name": "Kota Tanjungbalai",
+    "centroid": {
+      "lat": 2.9477544593720797,
+      "lng": 99.76671856261935
+    }
+  },
+  {
+    "id": "12.75",
+    "provinceId": "12",
+    "name": "Kota Binjai",
+    "centroid": {
+      "lat": 3.6029774611853127,
+      "lng": 98.48318146773616
+    }
+  },
+  {
+    "id": "12.76",
+    "provinceId": "12",
+    "name": "Kota Tebing Tinggi",
+    "centroid": {
+      "lat": 3.3275651079027178,
+      "lng": 99.16631751787298
+    }
+  },
+  {
+    "id": "12.77",
+    "provinceId": "12",
+    "name": "Kota Padangsidimpuan",
+    "centroid": {
+      "lat": 1.3776451726865724,
+      "lng": 99.27144601728223
+    }
+  },
+  {
+    "id": "12.78",
+    "provinceId": "12",
+    "name": "Kota Gunungsitoli",
+    "centroid": {
+      "lat": 1.2826405556021396,
+      "lng": 97.61346302920929
+    }
+  },
+  {
+    "id": "13.01",
+    "provinceId": "13",
+    "name": "Kabupaten Pesisir Selatan",
+    "centroid": {
+      "lat": -1.3480157543827396,
+      "lng": 100.57771703088352
+    }
+  },
+  {
+    "id": "13.02",
+    "provinceId": "13",
+    "name": "Kabupaten Solok",
+    "centroid": {
+      "lat": -0.9515709623485049,
+      "lng": 100.621363864246
+    }
+  },
+  {
+    "id": "13.03",
+    "provinceId": "13",
+    "name": "Kabupaten Sijunjung",
+    "centroid": {
+      "lat": -0.6657814625085021,
+      "lng": 100.94461003602282
+    }
+  },
+  {
+    "id": "13.04",
+    "provinceId": "13",
+    "name": "Kabupaten Tanah Datar",
+    "centroid": {
+      "lat": -0.47436500293745626,
+      "lng": 100.62341833230498
+    }
+  },
+  {
+    "id": "13.05",
+    "provinceId": "13",
+    "name": "Kabupaten Padang Pariaman",
+    "centroid": {
+      "lat": -0.6209981455774217,
+      "lng": 100.30654186745963
+    }
+  },
+  {
+    "id": "13.06",
+    "provinceId": "13",
+    "name": "Kabupaten Agam",
+    "centroid": {
+      "lat": -0.3151932364711986,
+      "lng": 100.02965550313753
+    }
+  },
+  {
+    "id": "13.07",
+    "provinceId": "13",
+    "name": "Kabupaten Lima Puluh Kota",
+    "centroid": {
+      "lat": -0.1523939738781051,
+      "lng": 100.66073826825613
+    }
+  },
+  {
+    "id": "13.08",
+    "provinceId": "13",
+    "name": "Kabupaten Pasaman",
+    "centroid": {
+      "lat": 0.14039088869184965,
+      "lng": 100.16698745256477
+    }
+  },
+  {
+    "id": "13.09",
+    "provinceId": "13",
+    "name": "Kabupaten Kepulauan Mentawai",
+    "centroid": {
+      "lat": -2.054155901765037,
+      "lng": 99.58047028483205
+    }
+  },
+  {
+    "id": "13.10",
+    "provinceId": "13",
+    "name": "Kabupaten Dharmasraya",
+    "centroid": {
+      "lat": -0.9529856017421708,
+      "lng": 101.4941127505854
+    }
+  },
+  {
+    "id": "13.11",
+    "provinceId": "13",
+    "name": "Kabupaten Solok Selatan",
+    "centroid": {
+      "lat": -1.55622109073616,
+      "lng": 101.23950314232809
+    }
+  },
+  {
+    "id": "13.12",
+    "provinceId": "13",
+    "name": "Kabupaten Pasaman Barat",
+    "centroid": {
+      "lat": 0.11037800042690936,
+      "lng": 99.82778738745613
+    }
+  },
+  {
+    "id": "13.71",
+    "provinceId": "13",
+    "name": "Kota Padang",
+    "centroid": {
+      "lat": -0.8758770365307109,
+      "lng": 100.38728839371491
+    }
+  },
+  {
+    "id": "13.72",
+    "provinceId": "13",
+    "name": "Kota Solok",
+    "centroid": {
+      "lat": -0.7994814749336137,
+      "lng": 100.65278211152693
+    }
+  },
+  {
+    "id": "13.73",
+    "provinceId": "13",
+    "name": "Kota Sawahlunto",
+    "centroid": {
+      "lat": -0.6750372451200484,
+      "lng": 100.76750125689844
+    }
+  },
+  {
+    "id": "13.74",
+    "provinceId": "13",
+    "name": "Kota Padang Panjang",
+    "centroid": {
+      "lat": -0.4621189750496027,
+      "lng": 100.39039860910817
+    }
+  },
+  {
+    "id": "13.75",
+    "provinceId": "13",
+    "name": "Kota Bukittinggi",
+    "centroid": {
+      "lat": -0.2854652709845979,
+      "lng": 100.36780701021121
+    }
+  },
+  {
+    "id": "13.76",
+    "provinceId": "13",
+    "name": "Kota Payakumbuh",
+    "centroid": {
+      "lat": -0.22251750962688782,
+      "lng": 100.63197810693005
+    }
+  },
+  {
+    "id": "13.77",
+    "provinceId": "13",
+    "name": "Kota Pariaman",
+    "centroid": {
+      "lat": -0.6289899582270029,
+      "lng": 100.1377134437062
+    }
+  },
+  {
+    "id": "14.01",
+    "provinceId": "14",
+    "name": "Kabupaten Kampar",
+    "centroid": {
+      "lat": 0.3138917999795952,
+      "lng": 101.01798894984739
+    }
+  },
+  {
+    "id": "14.02",
+    "provinceId": "14",
+    "name": "Kabupaten Indragiri Hulu",
+    "centroid": {
+      "lat": -0.39300278228698865,
+      "lng": 102.43757196516648
+    }
+  },
+  {
+    "id": "14.03",
+    "provinceId": "14",
+    "name": "Kabupaten Bengkalis",
+    "centroid": {
+      "lat": 1.4731922402874156,
+      "lng": 102.11333539019962
+    }
+  },
+  {
+    "id": "14.04",
+    "provinceId": "14",
+    "name": "Kabupaten Indragiri Hilir",
+    "centroid": {
+      "lat": -0.3151906894045306,
+      "lng": 103.15785004555477
+    }
+  },
+  {
+    "id": "14.05",
+    "provinceId": "14",
+    "name": "Kabupaten Pelalawan",
+    "centroid": {
+      "lat": 0.38378706324101214,
+      "lng": 101.8419575583448
+    }
+  },
+  {
+    "id": "14.06",
+    "provinceId": "14",
+    "name": "Kabupaten Rokan Hulu",
+    "centroid": {
+      "lat": 0.8997093117054642,
+      "lng": 100.30741018024709
+    }
+  },
+  {
+    "id": "14.07",
+    "provinceId": "14",
+    "name": "Kabupaten Rokan Hilir",
+    "centroid": {
+      "lat": 2.0994939613474934,
+      "lng": 100.81765082131788
+    }
+  },
+  {
+    "id": "14.08",
+    "provinceId": "14",
+    "name": "Kabupaten Siak",
+    "centroid": {
+      "lat": 0.8045392202011306,
+      "lng": 102.02031850446771
+    }
+  },
+  {
+    "id": "14.09",
+    "provinceId": "14",
+    "name": "Kabupaten Kuantan Singingi",
+    "centroid": {
+      "lat": -0.5053008502336358,
+      "lng": 101.53807726174774
+    }
+  },
+  {
+    "id": "14.10",
+    "provinceId": "14",
+    "name": "Kabupaten Kepulauan Meranti",
+    "centroid": {
+      "lat": 1.0007034465615983,
+      "lng": 102.72568179719613
+    }
+  },
+  {
+    "id": "14.71",
+    "provinceId": "14",
+    "name": "Kota Pekanbaru",
+    "centroid": {
+      "lat": 0.5134188210148788,
+      "lng": 101.44702176089957
+    }
+  },
+  {
+    "id": "14.72",
+    "provinceId": "14",
+    "name": "Kota Dumai",
+    "centroid": {
+      "lat": 1.605410676514873,
+      "lng": 101.39165976395793
+    }
+  },
+  {
+    "id": "15.01",
+    "provinceId": "15",
+    "name": "Kabupaten Kerinci",
+    "centroid": {
+      "lat": -2.057362540443507,
+      "lng": 101.3884655651427
+    }
+  },
+  {
+    "id": "15.02",
+    "provinceId": "15",
+    "name": "Kabupaten  Merangin",
+    "centroid": {
+      "lat": -2.060060712192705,
+      "lng": 102.27432945279186
+    }
+  },
+  {
+    "id": "15.03",
+    "provinceId": "15",
+    "name": "Kabupaten Sarolangun",
+    "centroid": {
+      "lat": -2.3132156092521274,
+      "lng": 102.75041232450403
+    }
+  },
+  {
+    "id": "15.04",
+    "provinceId": "15",
+    "name": "Kabupaten Batanghari",
+    "centroid": {
+      "lat": -1.6936093136328045,
+      "lng": 103.27299563039578
+    }
+  },
+  {
+    "id": "15.05",
+    "provinceId": "15",
+    "name": "Kabupaten  Muaro Jambi",
+    "centroid": {
+      "lat": -1.4482512111723946,
+      "lng": 103.51549566092164
+    }
+  },
+  {
+    "id": "15.06",
+    "provinceId": "15",
+    "name": "Kabupaten Tanjung Jabung Barat",
+    "centroid": {
+      "lat": -0.8267010584857123,
+      "lng": 103.46121376201233
+    }
+  },
+  {
+    "id": "15.07",
+    "provinceId": "15",
+    "name": "Kabupaten Tanjung Jabung Timur",
+    "centroid": {
+      "lat": -1.2062288175283662,
+      "lng": 103.79042841792285
+    }
+  },
+  {
+    "id": "15.08",
+    "provinceId": "15",
+    "name": "Kabupaten Bungo",
+    "centroid": {
+      "lat": -1.5163157015353335,
+      "lng": 102.11868862402379
+    }
+  },
+  {
+    "id": "15.09",
+    "provinceId": "15",
+    "name": "Kabupaten Tebo",
+    "centroid": {
+      "lat": -1.4662159218571826,
+      "lng": 102.35827578475197
+    }
+  },
+  {
+    "id": "15.71",
+    "provinceId": "15",
+    "name": "Kota Jambi",
+    "centroid": {
+      "lat": -1.6305013396917745,
+      "lng": 103.60727024612254
+    }
+  },
+  {
+    "id": "15.72",
+    "provinceId": "15",
+    "name": "Kota Sungai Penuh",
+    "centroid": {
+      "lat": -2.070909819809651,
+      "lng": 101.39607811491697
+    }
+  },
+  {
+    "id": "16.01",
+    "provinceId": "16",
+    "name": "Kabupaten Ogan Komering Ulu",
+    "centroid": {
+      "lat": -4.165710009351137,
+      "lng": 104.19777124067642
+    }
+  },
+  {
+    "id": "16.02",
+    "provinceId": "16",
+    "name": "Kabupaten Ogan Komering",
+    "centroid": {
+      "lat": -3.4116461216612666,
+      "lng": 104.82302047600152
+    }
+  },
+  {
+    "id": "16.03",
+    "provinceId": "16",
+    "name": "Kabupaten Muara Enim",
+    "centroid": {
+      "lat": -3.6556303086592794,
+      "lng": 103.77700425898033
+    }
+  },
+  {
+    "id": "16.04",
+    "provinceId": "16",
+    "name": "Kabupaten Lahat",
+    "centroid": {
+      "lat": -3.7781858650486404,
+      "lng": 103.55048129479607
+    }
+  },
+  {
+    "id": "16.05",
+    "provinceId": "16",
+    "name": "Kabupaten Musi Rawas",
+    "centroid": {
+      "lat": -3.243507659535636,
+      "lng": 103.01158628091243
+    }
+  },
+  {
+    "id": "16.06",
+    "provinceId": "16",
+    "name": "Kabupaten Musi Banyuasin",
+    "centroid": {
+      "lat": -2.8888428202148733,
+      "lng": 103.84022898155693
+    }
+  },
+  {
+    "id": "16.07",
+    "provinceId": "16",
+    "name": "Kabupaten Banyuasin",
+    "centroid": {
+      "lat": -2.91681146820806,
+      "lng": 104.40664162434949
+    }
+  },
+  {
+    "id": "16.08",
+    "provinceId": "16",
+    "name": "Kabupaten Ogan Komering Ulu Timur",
+    "centroid": {
+      "lat": -4.368780840384969,
+      "lng": 104.35844673228776
+    }
+  },
+  {
+    "id": "16.09",
+    "provinceId": "16",
+    "name": "Kabupaten Ogan Komering Ulu Selatan",
+    "centroid": {
+      "lat": -4.532324222637718,
+      "lng": 104.09536192072122
+    }
+  },
+  {
+    "id": "16.10",
+    "provinceId": "16",
+    "name": "Kabupaten Ogan Ilir",
+    "centroid": {
+      "lat": -3.2605839796212193,
+      "lng": 104.65253470549459
+    }
+  },
+  {
+    "id": "16.11",
+    "provinceId": "16",
+    "name": "Kabupaten Empat Lawang",
+    "centroid": {
+      "lat": -3.609843671060275,
+      "lng": 103.10276373795163
+    }
+  },
+  {
+    "id": "16.12",
+    "provinceId": "16",
+    "name": "Kabupaten Penukal Abab Lematang Ilir",
+    "centroid": {
+      "lat": -3.3098740053582287,
+      "lng": 103.88405107482733
+    }
+  },
+  {
+    "id": "16.13",
+    "provinceId": "16",
+    "name": "Kabupaten Musi Rawas Utara",
+    "centroid": {
+      "lat": -2.734689531152489,
+      "lng": 102.90112671236449
+    }
+  },
+  {
+    "id": "16.71",
+    "provinceId": "16",
+    "name": "Kota Palembang",
+    "centroid": {
+      "lat": -2.991046172915815,
+      "lng": 104.75675098698375
+    }
+  },
+  {
+    "id": "16.72",
+    "provinceId": "16",
+    "name": "Kota Pagar Alam",
+    "centroid": {
+      "lat": -4.039321642834122,
+      "lng": 103.19702046655082
+    }
+  },
+  {
+    "id": "16.73",
+    "provinceId": "16",
+    "name": "Kota Lubuk Linggau",
+    "centroid": {
+      "lat": -3.3258415506679007,
+      "lng": 102.82538716626468
+    }
+  },
+  {
+    "id": "16.74",
+    "provinceId": "16",
+    "name": "Kota Prabumulih",
+    "centroid": {
+      "lat": -3.3689384034331873,
+      "lng": 104.30842635256347
+    }
+  },
+  {
+    "id": "17.01",
+    "provinceId": "17",
+    "name": "Kabupaten Bengkulu Selatan",
+    "centroid": {
+      "lat": -4.439935303062977,
+      "lng": 102.89520237885483
+    }
+  },
+  {
+    "id": "17.02",
+    "provinceId": "17",
+    "name": "Kabupaten Rejang Lebong",
+    "centroid": {
+      "lat": -3.4779639096664248,
+      "lng": 102.53188572612797
+    }
+  },
+  {
+    "id": "17.03",
+    "provinceId": "17",
+    "name": "Kabupaten Bengkulu Utara",
+    "centroid": {
+      "lat": -3.436858034706668,
+      "lng": 102.2017863093631
+    }
+  },
+  {
+    "id": "17.04",
+    "provinceId": "17",
+    "name": "Kabupaten Kaur",
+    "centroid": {
+      "lat": -4.7591102206280205,
+      "lng": 103.34909985473034
+    }
+  },
+  {
+    "id": "17.05",
+    "provinceId": "17",
+    "name": "Kabupaten Seluma",
+    "centroid": {
+      "lat": -4.077629925945562,
+      "lng": 102.55625381723668
+    }
+  },
+  {
+    "id": "17.06",
+    "provinceId": "17",
+    "name": "Kabupaten Mukomuko",
+    "centroid": {
+      "lat": -2.5527631166770415,
+      "lng": 101.10421399515411
+    }
+  },
+  {
+    "id": "17.07",
+    "provinceId": "17",
+    "name": "Kabupaten Lebong",
+    "centroid": {
+      "lat": -3.1574485628093467,
+      "lng": 102.18284672681582
+    }
+  },
+  {
+    "id": "17.08",
+    "provinceId": "17",
+    "name": "Kabupaten Kepahiang",
+    "centroid": {
+      "lat": -3.6251092126391558,
+      "lng": 102.55634520967017
+    }
+  },
+  {
+    "id": "17.09",
+    "provinceId": "17",
+    "name": "Kabupaten Bengkulu Tengah",
+    "centroid": {
+      "lat": -3.7728554135369468,
+      "lng": 102.3899904291284
+    }
+  },
+  {
+    "id": "17.71",
+    "provinceId": "17",
+    "name": "Kota Bengkulu",
+    "centroid": {
+      "lat": -3.792845099999999,
+      "lng": 102.26076409999996
+    }
+  },
+  {
+    "id": "18.01",
+    "provinceId": "18",
+    "name": "Kabupaten Lampung Selatan",
+    "centroid": {
+      "lat": -5.717676069034854,
+      "lng": 105.58534802478252
+    }
+  },
+  {
+    "id": "18.02",
+    "provinceId": "18",
+    "name": "Kabupaten Lampung Tengah",
+    "centroid": {
+      "lat": -4.977246742581951,
+      "lng": 105.21014035161986
+    }
+  },
+  {
+    "id": "18.03",
+    "provinceId": "18",
+    "name": "Kabupaten Lampung Utara",
+    "centroid": {
+      "lat": -4.8291901217543,
+      "lng": 104.88744459932492
+    }
+  },
+  {
+    "id": "18.04",
+    "provinceId": "18",
+    "name": "Kabupaten Lampung Barat",
+    "centroid": {
+      "lat": -5.018974596354066,
+      "lng": 104.06076281355635
+    }
+  },
+  {
+    "id": "18.05",
+    "provinceId": "18",
+    "name": "Kabupaten Tulang Bawang",
+    "centroid": {
+      "lat": -4.494996749237475,
+      "lng": 105.22021203836975
+    }
+  },
+  {
+    "id": "18.06",
+    "provinceId": "18",
+    "name": "Kabupaten Tanggamus",
+    "centroid": {
+      "lat": -5.480674664821914,
+      "lng": 104.68229977472107
+    }
+  },
+  {
+    "id": "18.07",
+    "provinceId": "18",
+    "name": "Kabupaten Lampung Timur",
+    "centroid": {
+      "lat": -5.048183264548101,
+      "lng": 105.52825470212977
+    }
+  },
+  {
+    "id": "18.08",
+    "provinceId": "18",
+    "name": "Kabupaten Way Kanan",
+    "centroid": {
+      "lat": -4.506182074363012,
+      "lng": 104.51131397505866
+    }
+  },
+  {
+    "id": "18.09",
+    "provinceId": "18",
+    "name": "Kabupaten Pesawaran",
+    "centroid": {
+      "lat": -5.397533024693423,
+      "lng": 105.07010811310506
+    }
+  },
+  {
+    "id": "18.10",
+    "provinceId": "18",
+    "name": "Kabupaten Pringsewu",
+    "centroid": {
+      "lat": -5.344241935909573,
+      "lng": 105.00640245995234
+    }
+  },
+  {
+    "id": "18.11",
+    "provinceId": "18",
+    "name": "Kabupaten Mesuji",
+    "centroid": {
+      "lat": -3.873162785665348,
+      "lng": 105.42787851469521
+    }
+  },
+  {
+    "id": "18.12",
+    "provinceId": "18",
+    "name": "Kabupaten Tulang Bawang Barat",
+    "centroid": {
+      "lat": -4.499407459058168,
+      "lng": 105.11989991165247
+    }
+  },
+  {
+    "id": "18.13",
+    "provinceId": "18",
+    "name": "Kabupaten Pesisir Barat",
+    "centroid": {
+      "lat": -5.188425335364648,
+      "lng": 103.93458368482928
+    }
+  },
+  {
+    "id": "18.71",
+    "provinceId": "18",
+    "name": "Kota Bandar Lampung",
+    "centroid": {
+      "lat": -5.429579213794452,
+      "lng": 105.26256765111627
+    }
+  },
+  {
+    "id": "18.72",
+    "provinceId": "18",
+    "name": "Kota Metro",
+    "centroid": {
+      "lat": -5.113688728188825,
+      "lng": 105.30690431111174
+    }
+  },
+  {
+    "id": "19.01",
+    "provinceId": "19",
+    "name": "Kabupaten Bangka",
+    "centroid": {
+      "lat": -1.8873108002346788,
+      "lng": 106.10482719651391
+    }
+  },
+  {
+    "id": "19.02",
+    "provinceId": "19",
+    "name": "Kabupaten Belitung",
+    "centroid": {
+      "lat": -2.742308350486171,
+      "lng": 107.65431549651602
+    }
+  },
+  {
+    "id": "19.03",
+    "provinceId": "19",
+    "name": "Kabupaten Bangka Selatan",
+    "centroid": {
+      "lat": -3.019747321507955,
+      "lng": 106.5117467118603
+    }
+  },
+  {
+    "id": "19.04",
+    "provinceId": "19",
+    "name": "Kabupaten Bangka Tengah",
+    "centroid": {
+      "lat": -2.515349261743928,
+      "lng": 106.41589404069474
+    }
+  },
+  {
+    "id": "19.05",
+    "provinceId": "19",
+    "name": "Kabupaten Bangka Barat",
+    "centroid": {
+      "lat": -2.0586102945536235,
+      "lng": 105.20138132535004
+    }
+  },
+  {
+    "id": "19.06",
+    "provinceId": "19",
+    "name": "Kabupaten Belitung Timur",
+    "centroid": {
+      "lat": -2.883346486095607,
+      "lng": 108.23930392535223
+    }
+  },
+  {
+    "id": "19.71",
+    "provinceId": "19",
+    "name": "Kota Pangkal Pinang",
+    "centroid": {
+      "lat": -2.1409794439689436,
+      "lng": 106.11591390259511
+    }
+  },
+  {
+    "id": "21.01",
+    "provinceId": "21",
+    "name": "Kabupaten Bintan",
+    "centroid": {
+      "lat": 1.0867044293599752,
+      "lng": 104.50214506989914
+    }
+  },
+  {
+    "id": "21.02",
+    "provinceId": "21",
+    "name": "Kabupaten Karimun",
+    "centroid": {
+      "lat": 1.032978125457723,
+      "lng": 103.37578135747897
+    }
+  },
+  {
+    "id": "21.03",
+    "provinceId": "21",
+    "name": "Kabupaten Natuna",
+    "centroid": {
+      "lat": 3.923444039666034,
+      "lng": 108.3369318453504
+    }
+  },
+  {
+    "id": "21.04",
+    "provinceId": "21",
+    "name": "Kabupaten Lingga",
+    "centroid": {
+      "lat": -0.2099928734471007,
+      "lng": 104.60465899766058
+    }
+  },
+  {
+    "id": "21.05",
+    "provinceId": "21",
+    "name": "Kabupaten Kepulauan Anambas",
+    "centroid": {
+      "lat": 3.2145458693401,
+      "lng": 106.24870240264536
+    }
+  },
+  {
+    "id": "21.71",
+    "provinceId": "21",
+    "name": "Kota Batam",
+    "centroid": {
+      "lat": 1.1287452751793037,
+      "lng": 104.05533324230443
+    }
+  },
+  {
+    "id": "21.72",
+    "provinceId": "21",
+    "name": "Kota Tanjung Pinang",
+    "centroid": {
+      "lat": 0.9653429680491279,
+      "lng": 104.44098650588683
+    }
+  },
+  {
+    "id": "31.01",
+    "provinceId": "31",
+    "name": "Kabupaten Administrasi Kepulauan Seribu",
+    "centroid": {
+      "lat": -5.746480997815013,
+      "lng": 106.61316002536523
+    }
+  },
+  {
+    "id": "31.71",
+    "provinceId": "31",
+    "name": "Kota Administrasi Jakarta Pusat",
+    "centroid": {
+      "lat": -6.172913263118424,
+      "lng": 106.81869625420377
+    }
+  },
+  {
+    "id": "31.72",
+    "provinceId": "31",
+    "name": "Kota Administrasi Jakarta Utara ",
+    "centroid": {
+      "lat": -6.1200283357159915,
+      "lng": 106.89249513885989
+    }
+  },
+  {
+    "id": "31.73",
+    "provinceId": "31",
+    "name": "Kota Administrasi Jakarta Barat",
+    "centroid": {
+      "lat": -6.184334501192923,
+      "lng": 106.73662053886034
+    }
+  },
+  {
+    "id": "31.74",
+    "provinceId": "31",
+    "name": "Kota Administrasi Jakarta Selatan",
+    "centroid": {
+      "lat": -6.247775007302514,
+      "lng": 106.80763679653259
+    }
+  },
+  {
+    "id": "31.75",
+    "provinceId": "31",
+    "name": "Kota Administrasi Jakarta Timur",
+    "centroid": {
+      "lat": -6.2136855478344994,
+      "lng": 106.9440075965323
+    }
+  },
+  {
+    "id": "32.01",
+    "provinceId": "32",
+    "name": "Kabupaten Bogor",
+    "centroid": {
+      "lat": -6.479478948089524,
+      "lng": 106.82471731002641
+    }
+  },
+  {
+    "id": "32.02",
+    "provinceId": "32",
+    "name": "Kabupaten Sukabumi",
+    "centroid": {
+      "lat": -6.989164614549726,
+      "lng": 106.55022261003006
+    }
+  },
+  {
+    "id": "32.03",
+    "provinceId": "32",
+    "name": "Kabupaten Cianjur",
+    "centroid": {
+      "lat": -6.822746173673224,
+      "lng": 107.1394835830441
+    }
+  },
+  {
+    "id": "32.04",
+    "provinceId": "32",
+    "name": "Kabupaten Bandung",
+    "centroid": {
+      "lat": -7.021854779311784,
+      "lng": 107.52755122537383
+    }
+  },
+  {
+    "id": "32.05",
+    "provinceId": "32",
+    "name": "Kabupaten Garut",
+    "centroid": {
+      "lat": -7.202671667220667,
+      "lng": 107.88606805421097
+    }
+  },
+  {
+    "id": "32.06",
+    "provinceId": "32",
+    "name": "Kabupaten Tasikmalaya",
+    "centroid": {
+      "lat": -7.361038703594784,
+      "lng": 108.11307619839148
+    }
+  },
+  {
+    "id": "32.07",
+    "provinceId": "32",
+    "name": "Kabupaten Ciamis",
+    "centroid": {
+      "lat": -7.325899103457777,
+      "lng": 108.3514012468077
+    }
+  },
+  {
+    "id": "32.08",
+    "provinceId": "32",
+    "name": "Kabupaten Kuningan",
+    "centroid": {
+      "lat": -6.975864860855258,
+      "lng": 108.48310462537334
+    }
+  },
+  {
+    "id": "32.09",
+    "provinceId": "32",
+    "name": "Kabupaten Cirebon",
+    "centroid": {
+      "lat": -6.764528033189753,
+      "lng": 108.47861955420773
+    }
+  },
+  {
+    "id": "32.10",
+    "provinceId": "32",
+    "name": "Kabupaten Majalengka",
+    "centroid": {
+      "lat": -6.836270833744539,
+      "lng": 108.22755549468556
+    }
+  },
+  {
+    "id": "32.11",
+    "provinceId": "32",
+    "name": "Kabupaten Sumedang",
+    "centroid": {
+      "lat": -6.86120394309925,
+      "lng": 107.92061689653679
+    }
+  },
+  {
+    "id": "32.12",
+    "provinceId": "32",
+    "name": "Kabupaten Indramayu",
+    "centroid": {
+      "lat": -6.327080208332331,
+      "lng": 108.32320909838413
+    }
+  },
+  {
+    "id": "32.13",
+    "provinceId": "32",
+    "name": "Kabupaten Subang",
+    "centroid": {
+      "lat": -6.571294853262137,
+      "lng": 107.76235318119123
+    }
+  },
+  {
+    "id": "32.14",
+    "provinceId": "32",
+    "name": "Kabupaten Purwakarta",
+    "centroid": {
+      "lat": -6.556211845847212,
+      "lng": 107.44125672537048
+    }
+  },
+  {
+    "id": "32.15",
+    "provinceId": "32",
+    "name": "Kabupaten Karawang",
+    "centroid": {
+      "lat": -6.301616343281738,
+      "lng": 107.30488191002529
+    }
+  },
+  {
+    "id": "32.16",
+    "provinceId": "32",
+    "name": "Kabupaten Bekasi",
+    "centroid": {
+      "lat": -6.247446600000001,
+      "lng": 107.14845209999999
+    }
+  },
+  {
+    "id": "32.17",
+    "provinceId": "32",
+    "name": "Kabupaten Bandung Barat",
+    "centroid": {
+      "lat": -6.865221399999999,
+      "lng": 107.49197670000001
+    }
+  },
+  {
+    "id": "32.18",
+    "provinceId": "32",
+    "name": "Kabupaten Pangandaran",
+    "centroid": {
+      "lat": -7.615061099999999,
+      "lng": 108.49882690000004
+    }
+  },
+  {
+    "id": "32.71",
+    "provinceId": "32",
+    "name": "Kota Bogor",
+    "centroid": {
+      "lat": -6.595057464978462,
+      "lng": 106.79411231002724
+    }
+  },
+  {
+    "id": "32.72",
+    "provinceId": "32",
+    "name": "Kota Sukabumi",
+    "centroid": {
+      "lat": -6.917619028189996,
+      "lng": 106.93185683886544
+    }
+  },
+  {
+    "id": "32.73",
+    "provinceId": "32",
+    "name": "Kota Bandung",
+    "centroid": {
+      "lat": -6.910655826355507,
+      "lng": 107.60986952537303
+    }
+  },
+  {
+    "id": "32.74",
+    "provinceId": "32",
+    "name": "Kota Cirebon",
+    "centroid": {
+      "lat": -6.706735309782623,
+      "lng": 108.55824665420744
+    }
+  },
+  {
+    "id": "32.75",
+    "provinceId": "32",
+    "name": "Kota Bekasi",
+    "centroid": {
+      "lat": -6.2360139577925855,
+      "lng": 106.9942480407117
+    }
+  },
+  {
+    "id": "32.76",
+    "provinceId": "32",
+    "name": "Kota Depok",
+    "centroid": {
+      "lat": -6.394166132635422,
+      "lng": 106.8226891965335
+    }
+  },
+  {
+    "id": "32.77",
+    "provinceId": "32",
+    "name": "Kota Cimahi",
+    "centroid": {
+      "lat": -6.870807159364418,
+      "lng": 107.55515922352156
+    }
+  },
+  {
+    "id": "32.78",
+    "provinceId": "32",
+    "name": "Kota Tasikmalaya",
+    "centroid": {
+      "lat": -7.316053133091321,
+      "lng": 108.19701389654014
+    }
+  },
+  {
+    "id": "32.79",
+    "provinceId": "32",
+    "name": "Kota Banjar",
+    "centroid": {
+      "lat": -7.362161223560727,
+      "lng": 108.55958988304805
+    }
+  },
+  {
+    "id": "33.01",
+    "provinceId": "33",
+    "name": "Kabupaten Cilacap",
+    "centroid": {
+      "lat": -7.725598913851234,
+      "lng": 109.00953989681535
+    }
+  },
+  {
+    "id": "33.02",
+    "provinceId": "33",
+    "name": "Kabupaten Banyumas",
+    "centroid": {
+      "lat": -7.4227990604767795,
+      "lng": 109.23008333914095
+    }
+  },
+  {
+    "id": "33.03",
+    "provinceId": "33",
+    "name": "Kabupaten Purbalingga",
+    "centroid": {
+      "lat": -7.388814420295788,
+      "lng": 109.3640761679762
+    }
+  },
+  {
+    "id": "33.04",
+    "provinceId": "33",
+    "name": "Kabupaten Banjarnegara",
+    "centroid": {
+      "lat": -7.395695390770286,
+      "lng": 109.69606973623053
+    }
+  },
+  {
+    "id": "33.05",
+    "provinceId": "33",
+    "name": "Kabupaten Kebumen",
+    "centroid": {
+      "lat": -7.668443736529897,
+      "lng": 109.65371583117799
+    }
+  },
+  {
+    "id": "33.06",
+    "provinceId": "33",
+    "name": "Kabupaten Purworejo",
+    "centroid": {
+      "lat": -7.713974600894097,
+      "lng": 110.00829855421505
+    }
+  },
+  {
+    "id": "33.07",
+    "provinceId": "33",
+    "name": "Kabupaten Wonosobo",
+    "centroid": {
+      "lat": -7.358331142315653,
+      "lng": 109.90516253886881
+    }
+  },
+  {
+    "id": "33.08",
+    "provinceId": "33",
+    "name": "Kabupaten Magelang",
+    "centroid": {
+      "lat": -7.596984026372694,
+      "lng": 110.22353113036982
+    }
+  },
+  {
+    "id": "33.09",
+    "provinceId": "33",
+    "name": "Kabupaten Boyolali",
+    "centroid": {
+      "lat": -7.545656104163497,
+      "lng": 110.61059579654192
+    }
+  },
+  {
+    "id": "33.10",
+    "provinceId": "33",
+    "name": "Kabupaten Klaten",
+    "centroid": {
+      "lat": -7.712385036340197,
+      "lng": 110.59213566770745
+    }
+  },
+  {
+    "id": "33.11",
+    "provinceId": "33",
+    "name": "Kabupaten Sukoharjo",
+    "centroid": {
+      "lat": -7.664598872152095,
+      "lng": 110.83586765421464
+    }
+  },
+  {
+    "id": "33.12",
+    "provinceId": "33",
+    "name": "Kabupaten Wonogiri",
+    "centroid": {
+      "lat": -7.815058364755334,
+      "lng": 110.9256844677081
+    }
+  },
+  {
+    "id": "33.13",
+    "provinceId": "33",
+    "name": "Kabupaten Karanganyar",
+    "centroid": {
+      "lat": -7.595516965884652,
+      "lng": 110.93964029654224
+    }
+  },
+  {
+    "id": "33.14",
+    "provinceId": "33",
+    "name": "Kabupaten Sragen",
+    "centroid": {
+      "lat": -7.426354762546872,
+      "lng": 111.02317943886926
+    }
+  },
+  {
+    "id": "33.15",
+    "provinceId": "33",
+    "name": "Kabupaten Grobogan",
+    "centroid": {
+      "lat": -7.082058555310319,
+      "lng": 110.91737159653837
+    }
+  },
+  {
+    "id": "33.16",
+    "provinceId": "33",
+    "name": "Kabupaten Blora",
+    "centroid": {
+      "lat": -6.969718505731454,
+      "lng": 111.41492279653751
+    }
+  },
+  {
+    "id": "33.17",
+    "provinceId": "33",
+    "name": "Kabupaten Rembang",
+    "centroid": {
+      "lat": -6.703466029933058,
+      "lng": 111.34262144071498
+    }
+  },
+  {
+    "id": "33.18",
+    "provinceId": "33",
+    "name": "Kabupaten Pati",
+    "centroid": {
+      "lat": -6.75222674353357,
+      "lng": 111.03994759653601
+    }
+  },
+  {
+    "id": "33.19",
+    "provinceId": "33",
+    "name": "Kabupaten Kudus",
+    "centroid": {
+      "lat": -6.805651710957646,
+      "lng": 110.84219531187978
+    }
+  },
+  {
+    "id": "33.20",
+    "provinceId": "33",
+    "name": "Kabupaten Jepara",
+    "centroid": {
+      "lat": -6.59009446252794,
+      "lng": 110.66812971187831
+    }
+  },
+  {
+    "id": "33.21",
+    "provinceId": "33",
+    "name": "Kabupaten Demak",
+    "centroid": {
+      "lat": -6.891354614610146,
+      "lng": 110.63838933886524
+    }
+  },
+  {
+    "id": "33.22",
+    "provinceId": "33",
+    "name": "Kabupaten Semarang",
+    "centroid": {
+      "lat": -7.128957393445669,
+      "lng": 110.40409099653884
+    }
+  },
+  {
+    "id": "33.23",
+    "provinceId": "33",
+    "name": "Kabupaten Temanggung",
+    "centroid": {
+      "lat": -7.315316457103409,
+      "lng": 110.18189242537592
+    }
+  },
+  {
+    "id": "33.24",
+    "provinceId": "33",
+    "name": "Kabupaten Kendal",
+    "centroid": {
+      "lat": -6.922836880283628,
+      "lng": 110.20356709653716
+    }
+  },
+  {
+    "id": "33.25",
+    "provinceId": "33",
+    "name": "Kabupaten Batang",
+    "centroid": {
+      "lat": -6.910710871962525,
+      "lng": 109.72968238304469
+    }
+  },
+  {
+    "id": "33.26",
+    "provinceId": "33",
+    "name": "Kabupaten Pekalongan",
+    "centroid": {
+      "lat": -7.0250357325518875,
+      "lng": 109.59114532537376
+    }
+  },
+  {
+    "id": "33.27",
+    "provinceId": "33",
+    "name": "Kabupaten Pemalang",
+    "centroid": {
+      "lat": -6.893151410423199,
+      "lng": 109.38071935420861
+    }
+  },
+  {
+    "id": "33.28",
+    "provinceId": "33",
+    "name": "Kabupaten Tegal",
+    "centroid": {
+      "lat": -6.995407828046843,
+      "lng": 109.12789492537367
+    }
+  },
+  {
+    "id": "33.29",
+    "provinceId": "33",
+    "name": "Kabupaten Brebes",
+    "centroid": {
+      "lat": -6.870110551867783,
+      "lng": 109.03921083886512
+    }
+  },
+  {
+    "id": "33.71",
+    "provinceId": "33",
+    "name": "Kota Magelang",
+    "centroid": {
+      "lat": -7.50371096633142,
+      "lng": 110.22147082537745
+    }
+  },
+  {
+    "id": "33.72",
+    "provinceId": "33",
+    "name": "Kota Surakarta",
+    "centroid": {
+      "lat": -7.569260552279098,
+      "lng": 110.82945951003452
+    }
+  },
+  {
+    "id": "33.73",
+    "provinceId": "33",
+    "name": "Kota Salatiga",
+    "centroid": {
+      "lat": -7.33043714839692,
+      "lng": 110.5008298965402
+    }
+  },
+  {
+    "id": "33.74",
+    "provinceId": "33",
+    "name": "Kota Semarang",
+    "centroid": {
+      "lat": -6.98167961659711,
+      "lng": 110.4122341695528
+    }
+  },
+  {
+    "id": "33.75",
+    "provinceId": "33",
+    "name": "Kota Pekalongan",
+    "centroid": {
+      "lat": -6.896949717498735,
+      "lng": 109.66208089653703
+    }
+  },
+  {
+    "id": "33.76",
+    "provinceId": "33",
+    "name": "Kota Tegal",
+    "centroid": {
+      "lat": -6.8704087484501155,
+      "lng": 109.13741611002918
+    }
+  },
+  {
+    "id": "34.01",
+    "provinceId": "34",
+    "name": "Kabupaten Kulon Progo",
+    "centroid": {
+      "lat": -7.857808676282555,
+      "lng": 110.15916128305197
+    }
+  },
+  {
+    "id": "34.02",
+    "provinceId": "34",
+    "name": "Kabupaten Bantul",
+    "centroid": {
+      "lat": -7.886189837551494,
+      "lng": 110.3278379965447
+    }
+  },
+  {
+    "id": "34.03",
+    "provinceId": "34",
+    "name": "Kabupaten Gunungkidul",
+    "centroid": {
+      "lat": -7.964079635059824,
+      "lng": 110.6015380965454
+    }
+  },
+  {
+    "id": "34.04",
+    "provinceId": "34",
+    "name": "Kabupaten Sleman",
+    "centroid": {
+      "lat": -7.71654673418279,
+      "lng": 110.35577266770737
+    }
+  },
+  {
+    "id": "34.71",
+    "provinceId": "34",
+    "name": "Kota Yogyakarta",
+    "centroid": {
+      "lat": -7.799905025562796,
+      "lng": 110.39137075421564
+    }
+  },
+  {
+    "id": "35.01",
+    "provinceId": "35",
+    "name": "Kabupaten Pacitan",
+    "centroid": {
+      "lat": -8.194484702033753,
+      "lng": 111.10316522606453
+    }
+  },
+  {
+    "id": "35.02",
+    "provinceId": "35",
+    "name": "Kabupaten Ponorogo",
+    "centroid": {
+      "lat": -7.870873802089809,
+      "lng": 111.46254871373611
+    }
+  },
+  {
+    "id": "35.03",
+    "provinceId": "35",
+    "name": "Kabupaten Trenggalek",
+    "centroid": {
+      "lat": -8.047910064122286,
+      "lng": 111.70915082348205
+    }
+  },
+  {
+    "id": "35.04",
+    "provinceId": "35",
+    "name": "Kabupaten Tulungagung",
+    "centroid": {
+      "lat": -8.064364715839401,
+      "lng": 111.90068000547873
+    }
+  },
+  {
+    "id": "35.05",
+    "provinceId": "35",
+    "name": "Kabupaten Blitar",
+    "centroid": {
+      "lat": -8.12393088642822,
+      "lng": 112.21307421019162
+    }
+  },
+  {
+    "id": "35.06",
+    "provinceId": "35",
+    "name": "Kabupaten Kediri",
+    "centroid": {
+      "lat": -7.80216489245253,
+      "lng": 112.04111356733358
+    }
+  },
+  {
+    "id": "35.07",
+    "provinceId": "35",
+    "name": "Kabupaten Malang",
+    "centroid": {
+      "lat": -8.105459029077382,
+      "lng": 112.57329134091296
+    }
+  },
+  {
+    "id": "35.08",
+    "provinceId": "35",
+    "name": "Kabupaten Lumajang",
+    "centroid": {
+      "lat": -8.135206153280906,
+      "lng": 113.2243946381578
+    }
+  },
+  {
+    "id": "35.09",
+    "provinceId": "35",
+    "name": "Kabupaten Jember",
+    "centroid": {
+      "lat": -8.169670975121788,
+      "lng": 113.70215105421875
+    }
+  },
+  {
+    "id": "35.10",
+    "provinceId": "35",
+    "name": "Kabupaten Banyuwangi",
+    "centroid": {
+      "lat": -8.223037204830721,
+      "lng": 114.36643523941463
+    }
+  },
+  {
+    "id": "35.11",
+    "provinceId": "35",
+    "name": "Kabupaten Bondowoso",
+    "centroid": {
+      "lat": -7.914444581620128,
+      "lng": 113.82185071188832
+    }
+  },
+  {
+    "id": "35.12",
+    "provinceId": "35",
+    "name": "Kabupaten Situbondo",
+    "centroid": {
+      "lat": -7.707340624354634,
+      "lng": 114.00177518305065
+    }
+  },
+  {
+    "id": "35.13",
+    "provinceId": "35",
+    "name": "Kabupaten Probolinggo",
+    "centroid": {
+      "lat": -7.761818744749144,
+      "lng": 113.41597252537957
+    }
+  },
+  {
+    "id": "35.14",
+    "provinceId": "35",
+    "name": "Kabupaten Pasuruan",
+    "centroid": {
+      "lat": -7.64901246028997,
+      "lng": 112.90515909654273
+    }
+  },
+  {
+    "id": "35.15",
+    "provinceId": "35",
+    "name": "Kabupaten Sidoarjo",
+    "centroid": {
+      "lat": -7.447173306341014,
+      "lng": 112.71807833886932
+    }
+  },
+  {
+    "id": "35.16",
+    "provinceId": "35",
+    "name": "Kabupaten Mojokerto",
+    "centroid": {
+      "lat": -7.462844394027845,
+      "lng": 112.43341998304892
+    }
+  },
+  {
+    "id": "35.17",
+    "provinceId": "35",
+    "name": "Kabupaten Jombang",
+    "centroid": {
+      "lat": -7.556402096019785,
+      "lng": 112.23460958304962
+    }
+  },
+  {
+    "id": "35.18",
+    "provinceId": "35",
+    "name": "Kabupaten Nganjuk",
+    "centroid": {
+      "lat": -7.601982862041979,
+      "lng": 111.90189545421411
+    }
+  },
+  {
+    "id": "35.19",
+    "provinceId": "35",
+    "name": "Kabupaten Madiun",
+    "centroid": {
+      "lat": -7.538540959979179,
+      "lng": 111.6534826499319
+    }
+  },
+  {
+    "id": "35.20",
+    "provinceId": "35",
+    "name": "Kabupaten Magetan",
+    "centroid": {
+      "lat": -7.656157297486492,
+      "lng": 111.32926865421445
+    }
+  },
+  {
+    "id": "35.21",
+    "provinceId": "35",
+    "name": "Kabupaten Ngawi",
+    "centroid": {
+      "lat": -7.401286050830588,
+      "lng": 111.44544266770494
+    }
+  },
+  {
+    "id": "35.22",
+    "provinceId": "35",
+    "name": "Kabupaten Bojonegoro",
+    "centroid": {
+      "lat": -7.149935359747551,
+      "lng": 111.88154262537478
+    }
+  },
+  {
+    "id": "35.23",
+    "provinceId": "35",
+    "name": "Kabupaten Tuban",
+    "centroid": {
+      "lat": -6.8961044097904685,
+      "lng": 112.06506272537278
+    }
+  },
+  {
+    "id": "35.24",
+    "provinceId": "35",
+    "name": "Kabupaten Lamongan",
+    "centroid": {
+      "lat": -7.1210348508171615,
+      "lng": 112.41543434071801
+    }
+  },
+  {
+    "id": "35.25",
+    "provinceId": "35",
+    "name": "Kabupaten Gresik",
+    "centroid": {
+      "lat": -7.170587571783878,
+      "lng": 112.59967629653906
+    }
+  },
+  {
+    "id": "35.26",
+    "provinceId": "35",
+    "name": "Kabupaten Bangkalan",
+    "centroid": {
+      "lat": -7.046392499923124,
+      "lng": 112.73706719653809
+    }
+  },
+  {
+    "id": "35.27",
+    "provinceId": "35",
+    "name": "Kabupaten Sampang",
+    "centroid": {
+      "lat": -7.1875353391978205,
+      "lng": 113.23734031169953
+    }
+  },
+  {
+    "id": "35.28",
+    "provinceId": "35",
+    "name": "Kabupaten Pamekasan",
+    "centroid": {
+      "lat": -7.156884154270928,
+      "lng": 113.47188259653895
+    }
+  },
+  {
+    "id": "35.29",
+    "provinceId": "35",
+    "name": "Kabupaten Sumenep",
+    "centroid": {
+      "lat": -7.014033429943415,
+      "lng": 113.86352599653785
+    }
+  },
+  {
+    "id": "35.71",
+    "provinceId": "35",
+    "name": "Kota Kediri",
+    "centroid": {
+      "lat": -7.8121941506978585,
+      "lng": 112.0142841830517
+    }
+  },
+  {
+    "id": "35.72",
+    "provinceId": "35",
+    "name": "Kota Blitar",
+    "centroid": {
+      "lat": -8.099174292311863,
+      "lng": 112.1645539118899
+    }
+  },
+  {
+    "id": "35.73",
+    "provinceId": "35",
+    "name": "Kota Malang",
+    "centroid": {
+      "lat": -7.977788119311085,
+      "lng": 112.6338358100378
+    }
+  },
+  {
+    "id": "35.74",
+    "provinceId": "35",
+    "name": "Kota Probolinggo",
+    "centroid": {
+      "lat": -7.75367770292879,
+      "lng": 113.21423953887185
+    }
+  },
+  {
+    "id": "35.75",
+    "provinceId": "35",
+    "name": "Kota Pasuruan",
+    "centroid": {
+      "lat": -7.647370692892007,
+      "lng": 112.90855041188624
+    }
+  },
+  {
+    "id": "35.76",
+    "provinceId": "35",
+    "name": "Kota Mojokerto",
+    "centroid": {
+      "lat": -7.4628151554153925,
+      "lng": 112.43344588575034
+    }
+  },
+  {
+    "id": "35.77",
+    "provinceId": "35",
+    "name": "Kota Madiun",
+    "centroid": {
+      "lat": -7.624396873185385,
+      "lng": 111.52064916955761
+    }
+  },
+  {
+    "id": "35.78",
+    "provinceId": "35",
+    "name": "Kota Surabaya",
+    "centroid": {
+      "lat": -7.258891323638141,
+      "lng": 112.74703888119626
+    }
+  },
+  {
+    "id": "35.79",
+    "provinceId": "35",
+    "name": "Kota Batu",
+    "centroid": {
+      "lat": -7.862516051170755,
+      "lng": 112.5133531677289
+    }
+  },
+  {
+    "id": "36.01",
+    "provinceId": "36",
+    "name": "Kabupaten Pandeglang",
+    "centroid": {
+      "lat": -6.316855430513631,
+      "lng": 106.11479446982028
+    }
+  },
+  {
+    "id": "36.02",
+    "provinceId": "36",
+    "name": "Kabupaten Lebak",
+    "centroid": {
+      "lat": -6.3607670885178305,
+      "lng": 106.24618699653327
+    }
+  },
+  {
+    "id": "36.03",
+    "provinceId": "36",
+    "name": "Kabupaten Tangerang",
+    "centroid": {
+      "lat": -6.269630455565761,
+      "lng": 106.48440474071201
+    }
+  },
+  {
+    "id": "36.04",
+    "provinceId": "36",
+    "name": "Kabupaten Serang",
+    "centroid": {
+      "lat": -6.115302501045602,
+      "lng": 106.15201508303925
+    }
+  },
+  {
+    "id": "36.71",
+    "provinceId": "36",
+    "name": "Kota Tangerang",
+    "centroid": {
+      "lat": -6.164361554952064,
+      "lng": 106.64107113819723
+    }
+  },
+  {
+    "id": "36.72",
+    "provinceId": "36",
+    "name": "Kota Cilegon",
+    "centroid": {
+      "lat": -6.00980901882699,
+      "lng": 106.04212868303857
+    }
+  },
+  {
+    "id": "36.73",
+    "provinceId": "36",
+    "name": "Kota Serang",
+    "centroid": {
+      "lat": -6.1196975739996,
+      "lng": 106.17346069838267
+    }
+  },
+  {
+    "id": "36.74",
+    "provinceId": "36",
+    "name": "Kota Tangerang Selatan",
+    "centroid": {
+      "lat": -6.321567965040671,
+      "lng": 106.70774205743535
+    }
+  },
+  {
+    "id": "51.01",
+    "provinceId": "51",
+    "name": "Kabupaten Jembrana",
+    "centroid": {
+      "lat": -8.357300895935373,
+      "lng": 114.6369005100411
+    }
+  },
+  {
+    "id": "51.02",
+    "provinceId": "51",
+    "name": "Kabupaten Tabanan",
+    "centroid": {
+      "lat": -8.539497666397425,
+      "lng": 115.13103226771442
+    }
+  },
+  {
+    "id": "51.03",
+    "provinceId": "51",
+    "name": "Kabupaten Badung",
+    "centroid": {
+      "lat": -8.601920881989042,
+      "lng": 115.17914542538679
+    }
+  },
+  {
+    "id": "51.04",
+    "provinceId": "51",
+    "name": "Kabupaten Gianyar",
+    "centroid": {
+      "lat": -8.540851437717537,
+      "lng": 115.32410958305795
+    }
+  },
+  {
+    "id": "51.05",
+    "provinceId": "51",
+    "name": "Kabupaten Klungkung",
+    "centroid": {
+      "lat": -8.534402013006794,
+      "lng": 115.40297954072949
+    }
+  },
+  {
+    "id": "51.06",
+    "provinceId": "51",
+    "name": "Kabupaten Bangli",
+    "centroid": {
+      "lat": -8.461762702253463,
+      "lng": 115.35247721644086
+    }
+  },
+  {
+    "id": "51.07",
+    "provinceId": "51",
+    "name": "Kabupaten Karangasem",
+    "centroid": {
+      "lat": -8.438846951802109,
+      "lng": 115.61223348305695
+    }
+  },
+  {
+    "id": "51.08",
+    "provinceId": "51",
+    "name": "Kabupaten Buleleng",
+    "centroid": {
+      "lat": -8.12516022356895,
+      "lng": 115.09284902538256
+    }
+  },
+  {
+    "id": "51.71",
+    "provinceId": "51",
+    "name": "Kota Denpasar",
+    "centroid": {
+      "lat": -8.654458853264748,
+      "lng": 115.21653329890924
+    }
+  },
+  {
+    "id": "52.01",
+    "provinceId": "52",
+    "name": "Kabupaten Lombok Barat",
+    "centroid": {
+      "lat": -8.681396051887829,
+      "lng": 116.13670528305914
+    }
+  },
+  {
+    "id": "52.02",
+    "provinceId": "52",
+    "name": "Kabupaten Lombok Tengah",
+    "centroid": {
+      "lat": -8.706131863466181,
+      "lng": 116.27003418305937
+    }
+  },
+  {
+    "id": "52.03",
+    "provinceId": "52",
+    "name": "Kabupaten Lombok Timur",
+    "centroid": {
+      "lat": -8.650938604217814,
+      "lng": 116.52965363887955
+    }
+  },
+  {
+    "id": "52.04",
+    "provinceId": "52",
+    "name": "Kabupaten Sumbawa",
+    "centroid": {
+      "lat": -8.489511525311054,
+      "lng": 117.4196890006745
+    }
+  },
+  {
+    "id": "52.05",
+    "provinceId": "52",
+    "name": "Kabupaten Dompu",
+    "centroid": {
+      "lat": -8.534112083030623,
+      "lng": 118.46474902538593
+    }
+  },
+  {
+    "id": "52.06",
+    "provinceId": "52",
+    "name": "Kabupaten Bima",
+    "centroid": {
+      "lat": -8.556532639441706,
+      "lng": 118.67015779690297
+    }
+  },
+  {
+    "id": "52.07",
+    "provinceId": "52",
+    "name": "Kabupaten Sumbawa Barat",
+    "centroid": {
+      "lat": -8.753910149465758,
+      "lng": 116.85426539840077
+    }
+  },
+  {
+    "id": "52.08",
+    "provinceId": "52",
+    "name": "Kabupaten Lombok Utara",
+    "centroid": {
+      "lat": -8.35633546555901,
+      "lng": 116.15926985422034
+    }
+  },
+  {
+    "id": "52.71",
+    "provinceId": "52",
+    "name": "Kota Mataram",
+    "centroid": {
+      "lat": -8.582728859362096,
+      "lng": 116.10813842538651
+    }
+  },
+  {
+    "id": "52.72",
+    "provinceId": "52",
+    "name": "Kota Bima",
+    "centroid": {
+      "lat": -8.461655165060522,
+      "lng": 118.74871988305718
+    }
+  },
+  {
+    "id": "53.01",
+    "provinceId": "53",
+    "name": "Kabupaten Kupang",
+    "centroid": {
+      "lat": -10.072767460089674,
+      "lng": 123.86446322540102
+    }
+  },
+  {
+    "id": "53.02",
+    "provinceId": "53",
+    "name": "Kab Timor Tengah Selatan",
+    "centroid": {
+      "lat": -9.851780619986599,
+      "lng": 124.26648135633013
+    }
+  },
+  {
+    "id": "53.03",
+    "provinceId": "53",
+    "name": "Kabupaten Timor Tengah Utara",
+    "centroid": {
+      "lat": -9.456934944114428,
+      "lng": 124.47508769420945
+    }
+  },
+  {
+    "id": "53.04",
+    "provinceId": "53",
+    "name": "Kabupaten Belu",
+    "centroid": {
+      "lat": -9.105891366920305,
+      "lng": 124.87357678138326
+    }
+  },
+  {
+    "id": "53.05",
+    "provinceId": "53",
+    "name": "Kabupaten Alor",
+    "centroid": {
+      "lat": -8.209309443192296,
+      "lng": 124.5734638597916
+    }
+  },
+  {
+    "id": "53.06",
+    "provinceId": "53",
+    "name": "Kabupaten Flores Timur",
+    "centroid": {
+      "lat": -8.326454792692857,
+      "lng": 123.00311081827232
+    }
+  },
+  {
+    "id": "53.07",
+    "provinceId": "53",
+    "name": "Kabupaten Sikka",
+    "centroid": {
+      "lat": -8.616591300597133,
+      "lng": 122.2080821234478
+    }
+  },
+  {
+    "id": "53.08",
+    "provinceId": "53",
+    "name": "Kabupaten Ende",
+    "centroid": {
+      "lat": -8.84344514400059,
+      "lng": 121.66223033425577
+    }
+  },
+  {
+    "id": "53.09",
+    "provinceId": "53",
+    "name": "Kabupaten Ngada",
+    "centroid": {
+      "lat": -8.785172765189195,
+      "lng": 120.97473007615979
+    }
+  },
+  {
+    "id": "53.10",
+    "provinceId": "53",
+    "name": "Kabupaten Manggarai",
+    "centroid": {
+      "lat": -8.611446513623472,
+      "lng": 120.4642990196421
+    }
+  },
+  {
+    "id": "53.11",
+    "provinceId": "53",
+    "name": "Kabupaten Sumba Timur",
+    "centroid": {
+      "lat": -9.660787895234368,
+      "lng": 120.26131862254613
+    }
+  },
+  {
+    "id": "53.12",
+    "provinceId": "53",
+    "name": "Kabupaten Sumba Barat",
+    "centroid": {
+      "lat": -9.647321540554708,
+      "lng": 119.39400717233693
+    }
+  },
+  {
+    "id": "53.13",
+    "provinceId": "53",
+    "name": "Kabupaten Lembata",
+    "centroid": {
+      "lat": -8.359888246008067,
+      "lng": 123.45924285276752
+    }
+  },
+  {
+    "id": "53.14",
+    "provinceId": "53",
+    "name": "Kabupaten Rote Ndao",
+    "centroid": {
+      "lat": -10.75780320710065,
+      "lng": 123.06259078628618
+    }
+  },
+  {
+    "id": "53.15",
+    "provinceId": "53",
+    "name": "Kabupaten Manggarai Barat",
+    "centroid": {
+      "lat": -8.495964947540392,
+      "lng": 119.89429877413119
+    }
+  },
+  {
+    "id": "53.16",
+    "provinceId": "53",
+    "name": "Kabupaten Nagekeo",
+    "centroid": {
+      "lat": -8.575463250173927,
+      "lng": 121.28112874980738
+    }
+  },
+  {
+    "id": "53.17",
+    "provinceId": "53",
+    "name": "Kabupaten Sumba Tengah",
+    "centroid": {
+      "lat": -9.62267937221953,
+      "lng": 119.60043476625835
+    }
+  },
+  {
+    "id": "53.18",
+    "provinceId": "53",
+    "name": "Kabupaten Sumba Barat Daya",
+    "centroid": {
+      "lat": -9.391735416331608,
+      "lng": 119.18099193903856
+    }
+  },
+  {
+    "id": "53.19",
+    "provinceId": "53",
+    "name": "Kabupaten Manggarai Timur",
+    "centroid": {
+      "lat": -8.749471050872256,
+      "lng": 120.60861905890188
+    }
+  },
+  {
+    "id": "53.20",
+    "provinceId": "53",
+    "name": "Kabupaten Sabu Raijua",
+    "centroid": {
+      "lat": -10.452783457995888,
+      "lng": 121.87803338600901
+    }
+  },
+  {
+    "id": "53.21",
+    "provinceId": "53",
+    "name": "Kabupaten Malaka",
+    "centroid": {
+      "lat": -9.444597244521727,
+      "lng": 124.91757971876395
+    }
+  },
+  {
+    "id": "53.71",
+    "provinceId": "53",
+    "name": "Kota Kupang",
+    "centroid": {
+      "lat": -10.15389633793275,
+      "lng": 123.61939014385608
+    }
+  },
+  {
+    "id": "61.01",
+    "provinceId": "61",
+    "name": "Kabupaten Sambas",
+    "centroid": {
+      "lat": 1.3610923732904279,
+      "lng": 109.3285001118564
+    }
+  },
+  {
+    "id": "61.02",
+    "provinceId": "61",
+    "name": "Kabupaten Mempawah",
+    "centroid": {
+      "lat": 0.3507375156189089,
+      "lng": 108.96247645418383
+    }
+  },
+  {
+    "id": "61.03",
+    "provinceId": "61",
+    "name": "Kabupaten Sanggau",
+    "centroid": {
+      "lat": 0.12348442018479931,
+      "lng": 110.59604636952717
+    }
+  },
+  {
+    "id": "61.04",
+    "provinceId": "61",
+    "name": "Kabupaten Ketapang",
+    "centroid": {
+      "lat": -1.8442282167132769,
+      "lng": 109.97893875233444
+    }
+  },
+  {
+    "id": "61.05",
+    "provinceId": "61",
+    "name": "Kabupaten Sintang",
+    "centroid": {
+      "lat": 0.0786531223680243,
+      "lng": 111.49548392534787
+    }
+  },
+  {
+    "id": "61.06",
+    "provinceId": "61",
+    "name": "Kabupaten Kapuas Hulu",
+    "centroid": {
+      "lat": 0.8792574508162577,
+      "lng": 112.92539148302002
+    }
+  },
+  {
+    "id": "61.07",
+    "provinceId": "61",
+    "name": "Kabupaten Bengkayang",
+    "centroid": {
+      "lat": 0.8691040170174341,
+      "lng": 109.49749129836343
+    }
+  },
+  {
+    "id": "61.08",
+    "provinceId": "61",
+    "name": "Kabupaten Landak",
+    "centroid": {
+      "lat": 0.37478897210209017,
+      "lng": 109.9382701253479
+    }
+  },
+  {
+    "id": "61.09",
+    "provinceId": "61",
+    "name": "Kabupaten Sekadau",
+    "centroid": {
+      "lat": 0.007190078560764424,
+      "lng": 110.95471874069129
+    }
+  },
+  {
+    "id": "61.10",
+    "provinceId": "61",
+    "name": "Kabupaten Melawi",
+    "centroid": {
+      "lat": -0.3769284988267002,
+      "lng": 111.7643663695273
+    }
+  },
+  {
+    "id": "61.11",
+    "provinceId": "61",
+    "name": "Kabupaten Kayong Utara",
+    "centroid": {
+      "lat": -1.253324768640413,
+      "lng": 109.95437986952808
+    }
+  },
+  {
+    "id": "61.12",
+    "provinceId": "61",
+    "name": "Kabupaten Kubu Raya",
+    "centroid": {
+      "lat": -0.12685886609816646,
+      "lng": 109.40395645418373
+    }
+  },
+  {
+    "id": "61.71",
+    "provinceId": "61",
+    "name": "Kota Pontianak",
+    "centroid": {
+      "lat": -0.022086396871511572,
+      "lng": 109.3381039118554
+    }
+  },
+  {
+    "id": "61.72",
+    "provinceId": "61",
+    "name": "Kota Singkawang",
+    "centroid": {
+      "lat": 0.904786196799786,
+      "lng": 108.97740501185594
+    }
+  },
+  {
+    "id": "62.01",
+    "provinceId": "62",
+    "name": "Kabupaten Kotawaringin Barat",
+    "centroid": {
+      "lat": -2.6922174879548355,
+      "lng": 111.63434121272037
+    }
+  },
+  {
+    "id": "62.02",
+    "provinceId": "62",
+    "name": "Kabupaten Kotawaringin Timur",
+    "centroid": {
+      "lat": -2.537536373508974,
+      "lng": 112.94101118060833
+    }
+  },
+  {
+    "id": "62.03",
+    "provinceId": "62",
+    "name": "Kabupaten Kapuas",
+    "centroid": {
+      "lat": -2.9644660187868714,
+      "lng": 114.4161336148058
+    }
+  },
+  {
+    "id": "62.04",
+    "provinceId": "62",
+    "name": "Kabupaten Barito Selatan",
+    "centroid": {
+      "lat": -1.718998796838818,
+      "lng": 114.84513147281662
+    }
+  },
+  {
+    "id": "62.05",
+    "provinceId": "62",
+    "name": "Kabupaten Barito Utara",
+    "centroid": {
+      "lat": -0.9520746870429637,
+      "lng": 114.89845405524693
+    }
+  },
+  {
+    "id": "62.06",
+    "provinceId": "62",
+    "name": "Kabupaten Katingan",
+    "centroid": {
+      "lat": -1.8807186625388674,
+      "lng": 113.39917637503677
+    }
+  },
+  {
+    "id": "62.07",
+    "provinceId": "62",
+    "name": "Kabupaten Seruyan",
+    "centroid": {
+      "lat": -3.4138432398482084,
+      "lng": 112.54170361471685
+    }
+  },
+  {
+    "id": "62.08",
+    "provinceId": "62",
+    "name": "Kabupaten Sukamara",
+    "centroid": {
+      "lat": -2.7605344039108397,
+      "lng": 111.17662961478362
+    }
+  },
+  {
+    "id": "62.09",
+    "provinceId": "62",
+    "name": "Kabupaten Lamandau",
+    "centroid": {
+      "lat": -2.1848222337113796,
+      "lng": 111.42761967058787
+    }
+  },
+  {
+    "id": "62.10",
+    "provinceId": "62",
+    "name": "Kabupaten Gunung Mas",
+    "centroid": {
+      "lat": -1.1272585021152817,
+      "lng": 113.8438717306911
+    }
+  },
+  {
+    "id": "62.11",
+    "provinceId": "62",
+    "name": "Kabupaten Pulang Pisau",
+    "centroid": {
+      "lat": -2.7164345343156215,
+      "lng": 114.30473004401904
+    }
+  },
+  {
+    "id": "62.12",
+    "provinceId": "62",
+    "name": "Kabupaten Murung Raya",
+    "centroid": {
+      "lat": -0.6402071749256474,
+      "lng": 114.56874629288852
+    }
+  },
+  {
+    "id": "62.13",
+    "provinceId": "62",
+    "name": "Kabupaten Barito Timur",
+    "centroid": {
+      "lat": -2.115344993770098,
+      "lng": 115.16920098606302
+    }
+  },
+  {
+    "id": "62.71",
+    "provinceId": "62",
+    "name": "Kota Palangkaraya",
+    "centroid": {
+      "lat": -2.173996226380074,
+      "lng": 113.8802702994111
+    }
+  },
+  {
+    "id": "63.01",
+    "provinceId": "63",
+    "name": "Kabupaten Tanah Laut",
+    "centroid": {
+      "lat": -3.799466847049419,
+      "lng": 114.78255114131447
+    }
+  },
+  {
+    "id": "63.02",
+    "provinceId": "63",
+    "name": "Kabupaten Kotabaru",
+    "centroid": {
+      "lat": -3.2362388666435793,
+      "lng": 116.22797534143119
+    }
+  },
+  {
+    "id": "63.03",
+    "provinceId": "63",
+    "name": "Kabupaten Banjar",
+    "centroid": {
+      "lat": -3.408734828681626,
+      "lng": 114.84815554140891
+    }
+  },
+  {
+    "id": "63.04",
+    "provinceId": "63",
+    "name": "Kabupaten Barito Kuala",
+    "centroid": {
+      "lat": -2.9783388223443703,
+      "lng": 114.76579532814996
+    }
+  },
+  {
+    "id": "63.05",
+    "provinceId": "63",
+    "name": "Kabupaten Tapin",
+    "centroid": {
+      "lat": -2.932105977155375,
+      "lng": 115.16329842419783
+    }
+  },
+  {
+    "id": "63.06",
+    "provinceId": "63",
+    "name": "Kabupaten Hulu Sungai Selatan",
+    "centroid": {
+      "lat": -2.786510324118423,
+      "lng": 115.26594525712335
+    }
+  },
+  {
+    "id": "63.07",
+    "provinceId": "63",
+    "name": "Kabupaten Hulu Sungai Tengah",
+    "centroid": {
+      "lat": -2.584768110610726,
+      "lng": 115.38453172508864
+    }
+  },
+  {
+    "id": "63.08",
+    "provinceId": "63",
+    "name": "Kabupaten Hulu Sungai Utara",
+    "centroid": {
+      "lat": -2.4188734176622435,
+      "lng": 115.254335243741
+    }
+  },
+  {
+    "id": "63.09",
+    "provinceId": "63",
+    "name": "Kabupaten Tabalong",
+    "centroid": {
+      "lat": -2.1643540668202728,
+      "lng": 115.38235677273519
+    }
+  },
+  {
+    "id": "63.10",
+    "provinceId": "63",
+    "name": "Kabupaten Tanah Bumbu",
+    "centroid": {
+      "lat": -3.4832399331677077,
+      "lng": 115.94681434136322
+    }
+  },
+  {
+    "id": "63.11",
+    "provinceId": "63",
+    "name": "Kabupaten Balangan",
+    "centroid": {
+      "lat": -2.36356752319171,
+      "lng": 115.47108222829301
+    }
+  },
+  {
+    "id": "63.71",
+    "provinceId": "63",
+    "name": "Kota Banjarmasin",
+    "centroid": {
+      "lat": -3.327490958483104,
+      "lng": 114.58899911265445
+    }
+  },
+  {
+    "id": "63.72",
+    "provinceId": "63",
+    "name": "Kota Banjarbaru",
+    "centroid": {
+      "lat": -3.438617247106197,
+      "lng": 114.83106062806887
+    }
+  },
+  {
+    "id": "64.01",
+    "provinceId": "64",
+    "name": "Kabupaten Paser",
+    "centroid": {
+      "lat": -1.9104348021556423,
+      "lng": 116.19132949946525
+    }
+  },
+  {
+    "id": "64.02",
+    "provinceId": "64",
+    "name": "Kabupaten Kutai Kartanegara",
+    "centroid": {
+      "lat": -0.4427799289927499,
+      "lng": 116.99867075751636
+    }
+  },
+  {
+    "id": "64.03",
+    "provinceId": "64",
+    "name": "Kabupaten Berau",
+    "centroid": {
+      "lat": 2.1500322293440193,
+      "lng": 117.50760061575453
+    }
+  },
+  {
+    "id": "64.07",
+    "provinceId": "64",
+    "name": "Kabupaten Kutai Barat",
+    "centroid": {
+      "lat": -0.2365477692797606,
+      "lng": 115.69643256908253
+    }
+  },
+  {
+    "id": "64.08",
+    "provinceId": "64",
+    "name": "Kabupaten Kutai Timur",
+    "centroid": {
+      "lat": 0.5256821109783744,
+      "lng": 117.60821781465334
+    }
+  },
+  {
+    "id": "64.09",
+    "provinceId": "64",
+    "name": "Kabupaten Penajam Paser Utara",
+    "centroid": {
+      "lat": -1.308203498951236,
+      "lng": 116.72690384014312
+    }
+  },
+  {
+    "id": "64.11",
+    "provinceId": "64",
+    "name": "Kabupaten Mahakam Ulu",
+    "centroid": {
+      "lat": 0.5056814783065791,
+      "lng": 115.27080682675607
+    }
+  },
+  {
+    "id": "64.71",
+    "provinceId": "64",
+    "name": "Kota Balikpapan",
+    "centroid": {
+      "lat": -1.276337448127985,
+      "lng": 116.82776028626806
+    }
+  },
+  {
+    "id": "64.72",
+    "provinceId": "64",
+    "name": "Kota Samarinda",
+    "centroid": {
+      "lat": -0.491364825551253,
+      "lng": 117.14598009498553
+    }
+  },
+  {
+    "id": "64.74",
+    "provinceId": "64",
+    "name": "Kota Bontang",
+    "centroid": {
+      "lat": 0.06954899217650308,
+      "lng": 117.44419874425222
+    }
+  },
+  {
+    "id": "65.01",
+    "provinceId": "65",
+    "name": "Kabupaten Bulungan",
+    "centroid": {
+      "lat": 2.840859024940894,
+      "lng": 117.3980777424597
+    }
+  },
+  {
+    "id": "65.02",
+    "provinceId": "65",
+    "name": "Kabupaten Malinau",
+    "centroid": {
+      "lat": 3.5519331947811477,
+      "lng": 116.62208456556772
+    }
+  },
+  {
+    "id": "65.03",
+    "provinceId": "65",
+    "name": "Kabupaten Nunukan",
+    "centroid": {
+      "lat": 4.077076241826642,
+      "lng": 117.71891117176128
+    }
+  },
+  {
+    "id": "65.04",
+    "provinceId": "65",
+    "name": "Kabupaten Tana Tidung",
+    "centroid": {
+      "lat": 3.6022672070166344,
+      "lng": 116.90275124391299
+    }
+  },
+  {
+    "id": "65.71",
+    "provinceId": "65",
+    "name": "Kota Tarakan",
+    "centroid": {
+      "lat": 3.313742611777654,
+      "lng": 117.60485527164477
+    }
+  },
+  {
+    "id": "71.01",
+    "provinceId": "71",
+    "name": "Kabupaten Bolaang Mongondow",
+    "centroid": {
+      "lat": 0.8706059890875782,
+      "lng": 124.02440439997804
+    }
+  },
+  {
+    "id": "71.02",
+    "provinceId": "71",
+    "name": "Kabupaten Minahasa",
+    "centroid": {
+      "lat": 1.3007636720213933,
+      "lng": 124.91086981555465
+    }
+  },
+  {
+    "id": "71.03",
+    "provinceId": "71",
+    "name": "Kabupaten Kepulauan Sangihe",
+    "centroid": {
+      "lat": 3.6124519530653463,
+      "lng": 125.49964284257182
+    }
+  },
+  {
+    "id": "71.04",
+    "provinceId": "71",
+    "name": "Kabupaten Kepulauan Talaud",
+    "centroid": {
+      "lat": 4.005791698949146,
+      "lng": 126.68188419135473
+    }
+  },
+  {
+    "id": "71.05",
+    "provinceId": "71",
+    "name": "Kabupaten Minahasa Selatan",
+    "centroid": {
+      "lat": 1.213251206534312,
+      "lng": 124.59716997112689
+    }
+  },
+  {
+    "id": "71.06",
+    "provinceId": "71",
+    "name": "Kabupaten Minahasa Utara",
+    "centroid": {
+      "lat": 1.4590614069048187,
+      "lng": 124.97472972676134
+    }
+  },
+  {
+    "id": "71.07",
+    "provinceId": "71",
+    "name": "Kabupaten Minahasa Tenggara",
+    "centroid": {
+      "lat": 1.0418132213011337,
+      "lng": 124.79762142886007
+    }
+  },
+  {
+    "id": "71.08",
+    "provinceId": "71",
+    "name": "Kabupaten Bolaang Mongondow Utara",
+    "centroid": {
+      "lat": 0.9064567526907839,
+      "lng": 123.25905058744213
+    }
+  },
+  {
+    "id": "71.09",
+    "provinceId": "71",
+    "name": "Kabupaten Kep. Siau Tagulandang Biaro",
+    "centroid": {
+      "lat": 2.744597043553609,
+      "lng": 125.36228788467754
+    }
+  },
+  {
+    "id": "71.10",
+    "provinceId": "71",
+    "name": "Kabupaten Bolaang Mongondow Timur",
+    "centroid": {
+      "lat": 0.7685233845178085,
+      "lng": 124.61317307103388
+    }
+  },
+  {
+    "id": "71.11",
+    "provinceId": "71",
+    "name": "Kabupaten Bolaang Mongondow Selatan",
+    "centroid": {
+      "lat": 0.38353955588220484,
+      "lng": 124.04788389200526
+    }
+  },
+  {
+    "id": "71.71",
+    "provinceId": "71",
+    "name": "Kota Manado",
+    "centroid": {
+      "lat": 1.484553653349368,
+      "lng": 124.84912511558082
+    }
+  },
+  {
+    "id": "71.72",
+    "provinceId": "71",
+    "name": "Kota Bitung",
+    "centroid": {
+      "lat": 1.4453964356838027,
+      "lng": 125.1819828268371
+    }
+  },
+  {
+    "id": "71.73",
+    "provinceId": "71",
+    "name": "Kota Tomohon",
+    "centroid": {
+      "lat": 1.3145248488354484,
+      "lng": 124.82744674228223
+    }
+  },
+  {
+    "id": "71.74",
+    "provinceId": "71",
+    "name": "Kota Kotamobagu",
+    "centroid": {
+      "lat": 0.743496821258547,
+      "lng": 124.31266847335326
+    }
+  },
+  {
+    "id": "72.01",
+    "provinceId": "72",
+    "name": "Kabupaten Banggai",
+    "centroid": {
+      "lat": -0.9943229896836165,
+      "lng": 122.78853827900993
+    }
+  },
+  {
+    "id": "72.02",
+    "provinceId": "72",
+    "name": "Kabupaten Poso",
+    "centroid": {
+      "lat": -1.3952022331805114,
+      "lng": 120.75482448623922
+    }
+  },
+  {
+    "id": "72.03",
+    "provinceId": "72",
+    "name": "Kabupaten Donggala",
+    "centroid": {
+      "lat": -0.6784643651141344,
+      "lng": 119.75257412858682
+    }
+  },
+  {
+    "id": "72.04",
+    "provinceId": "72",
+    "name": "Kabupaten Toli-Toli",
+    "centroid": {
+      "lat": 1.0184933341744755,
+      "lng": 120.79802306837281
+    }
+  },
+  {
+    "id": "72.05",
+    "provinceId": "72",
+    "name": "Kabupaten Buol",
+    "centroid": {
+      "lat": 1.169077637159471,
+      "lng": 121.40975635779172
+    }
+  },
+  {
+    "id": "72.06",
+    "provinceId": "72",
+    "name": "Kabupaten Morowali",
+    "centroid": {
+      "lat": -2.480863226531761,
+      "lng": 121.93428529937842
+    }
+  },
+  {
+    "id": "72.07",
+    "provinceId": "72",
+    "name": "Kabupaten Banggai Kepulauan",
+    "centroid": {
+      "lat": -1.3119041730240604,
+      "lng": 123.29844358843701
+    }
+  },
+  {
+    "id": "72.08",
+    "provinceId": "72",
+    "name": "Kabupaten Parigi Moutong",
+    "centroid": {
+      "lat": -0.8054270040019127,
+      "lng": 120.16032341521101
+    }
+  },
+  {
+    "id": "72.09",
+    "provinceId": "72",
+    "name": "Kabupaten Tojo Una Una",
+    "centroid": {
+      "lat": -0.9146507390533831,
+      "lng": 121.588520770778
+    }
+  },
+  {
+    "id": "72.10",
+    "provinceId": "72",
+    "name": "Kabupaten Sigi",
+    "centroid": {
+      "lat": -1.0473982691058936,
+      "lng": 119.95034087728645
+    }
+  },
+  {
+    "id": "72.11",
+    "provinceId": "72",
+    "name": "Kabupaten Banggai Laut",
+    "centroid": {
+      "lat": -1.6062920063926547,
+      "lng": 123.4963867573023
+    }
+  },
+  {
+    "id": "72.12",
+    "provinceId": "72",
+    "name": "Kabupaten Morowali Utara",
+    "centroid": {
+      "lat": -1.9772829228540625,
+      "lng": 121.33550832771283
+    }
+  },
+  {
+    "id": "72.71",
+    "provinceId": "72",
+    "name": "Kota Palu",
+    "centroid": {
+      "lat": -0.8999595654952609,
+      "lng": 119.89102154408883
+    }
+  },
+  {
+    "id": "73.01",
+    "provinceId": "73",
+    "name": "Kabupaten Kepulauan Selayar",
+    "centroid": {
+      "lat": -6.120175497106447,
+      "lng": 120.46634581441285
+    }
+  },
+  {
+    "id": "73.02",
+    "provinceId": "73",
+    "name": "Kabupaten Bulukumba",
+    "centroid": {
+      "lat": -5.558243996799272,
+      "lng": 120.19308054104557
+    }
+  },
+  {
+    "id": "73.03",
+    "provinceId": "73",
+    "name": "Kabupaten Bantaeng",
+    "centroid": {
+      "lat": -5.5531536726224795,
+      "lng": 119.96718599882868
+    }
+  },
+  {
+    "id": "73.04",
+    "provinceId": "73",
+    "name": "Kabupaten Jeneponto",
+    "centroid": {
+      "lat": -5.67694518150875,
+      "lng": 119.74938992549147
+    }
+  },
+  {
+    "id": "73.05",
+    "provinceId": "73",
+    "name": "Kabupaten Takalar",
+    "centroid": {
+      "lat": -5.4254592918321345,
+      "lng": 119.44063086993823
+    }
+  },
+  {
+    "id": "73.06",
+    "provinceId": "73",
+    "name": "Kabupaten Gowa",
+    "centroid": {
+      "lat": -5.199807421044581,
+      "lng": 119.45319036991962
+    }
+  },
+  {
+    "id": "73.07",
+    "provinceId": "73",
+    "name": "Kabupaten Sinjai",
+    "centroid": {
+      "lat": -5.119898627419877,
+      "lng": 120.2354438144652
+    }
+  },
+  {
+    "id": "73.08",
+    "provinceId": "73",
+    "name": "Kabupaten Bone",
+    "centroid": {
+      "lat": -4.539251732825663,
+      "lng": 120.30925454114436
+    }
+  },
+  {
+    "id": "73.09",
+    "provinceId": "73",
+    "name": "Kabupaten Maros",
+    "centroid": {
+      "lat": -5.01614872131246,
+      "lng": 119.57445936973654
+    }
+  },
+  {
+    "id": "73.10",
+    "provinceId": "73",
+    "name": "Kabupaten Pangkajene dan Kepulauan",
+    "centroid": {
+      "lat": -4.845732154757298,
+      "lng": 119.5598290821929
+    }
+  },
+  {
+    "id": "73.11",
+    "provinceId": "73",
+    "name": "Kabupaten Barru",
+    "centroid": {
+      "lat": -4.4140407769508325,
+      "lng": 119.61729394119529
+    }
+  },
+  {
+    "id": "73.12",
+    "provinceId": "73",
+    "name": "Kabupaten Soppeng",
+    "centroid": {
+      "lat": -4.3644497502828505,
+      "lng": 119.89777167015757
+    }
+  },
+  {
+    "id": "73.13",
+    "provinceId": "73",
+    "name": "Kabupaten Wajo",
+    "centroid": {
+      "lat": -4.1120716633903855,
+      "lng": 120.02715621245426
+    }
+  },
+  {
+    "id": "73.14",
+    "provinceId": "73",
+    "name": "Kabupaten Sidenreng Rappang",
+    "centroid": {
+      "lat": -3.933052597666273,
+      "lng": 119.76930544132097
+    }
+  },
+  {
+    "id": "73.15",
+    "provinceId": "73",
+    "name": "Kabupaten Pinrang",
+    "centroid": {
+      "lat": -3.809259094007871,
+      "lng": 119.65000307873112
+    }
+  },
+  {
+    "id": "73.16",
+    "provinceId": "73",
+    "name": "Kabupaten Enrekang",
+    "centroid": {
+      "lat": -3.588329898134274,
+      "lng": 119.77030102200364
+    }
+  },
+  {
+    "id": "73.17",
+    "provinceId": "73",
+    "name": "Kabupaten Luwu",
+    "centroid": {
+      "lat": -3.394691969745157,
+      "lng": 120.36551044795807
+    }
+  },
+  {
+    "id": "73.18",
+    "provinceId": "73",
+    "name": "Kabupaten Tana Toraja",
+    "centroid": {
+      "lat": -3.0865430500830704,
+      "lng": 119.85708269925097
+    }
+  },
+  {
+    "id": "73.22",
+    "provinceId": "73",
+    "name": "Kabupaten Luwu Utara",
+    "centroid": {
+      "lat": -2.5498538223374445,
+      "lng": 120.34615805711422
+    }
+  },
+  {
+    "id": "73.24",
+    "provinceId": "73",
+    "name": "Kabupaten Luwu Timur",
+    "centroid": {
+      "lat": -2.6162481191655704,
+      "lng": 121.12410632820034
+    }
+  },
+  {
+    "id": "73.26",
+    "provinceId": "73",
+    "name": "Kabupaten Toraja Utara",
+    "centroid": {
+      "lat": -2.9736212067823917,
+      "lng": 119.89482069925177
+    }
+  },
+  {
+    "id": "73.71",
+    "provinceId": "73",
+    "name": "Kota Makassar",
+    "centroid": {
+      "lat": -5.133215561201631,
+      "lng": 119.40783685662606
+    }
+  },
+  {
+    "id": "73.72",
+    "provinceId": "73",
+    "name": "Kota Parepare",
+    "centroid": {
+      "lat": -4.027782140067662,
+      "lng": 119.63332752802752
+    }
+  },
+  {
+    "id": "73.73",
+    "provinceId": "73",
+    "name": "Kota Palopo",
+    "centroid": {
+      "lat": -3.008386458063242,
+      "lng": 120.20156382818331
+    }
+  },
+  {
+    "id": "74.01",
+    "provinceId": "74",
+    "name": "Kabupaten Kolaka",
+    "centroid": {
+      "lat": -4.060808748107698,
+      "lng": 121.61611935687937
+    }
+  },
+  {
+    "id": "74.02",
+    "provinceId": "74",
+    "name": "Kabupaten Konawe",
+    "centroid": {
+      "lat": -3.854233561558946,
+      "lng": 122.04272734128605
+    }
+  },
+  {
+    "id": "74.03",
+    "provinceId": "74",
+    "name": "Kabupaten Muna",
+    "centroid": {
+      "lat": -4.797870620269443,
+      "lng": 122.71895870272489
+    }
+  },
+  {
+    "id": "74.04",
+    "provinceId": "74",
+    "name": "Kabupaten Buton",
+    "centroid": {
+      "lat": -5.495773575456685,
+      "lng": 122.84013943527818
+    }
+  },
+  {
+    "id": "74.05",
+    "provinceId": "74",
+    "name": "Kabupaten Konawe Selatan",
+    "centroid": {
+      "lat": -4.332035736807719,
+      "lng": 122.28131524347981
+    }
+  },
+  {
+    "id": "74.06",
+    "provinceId": "74",
+    "name": "Kabupaten Bombana",
+    "centroid": {
+      "lat": -4.747234642989351,
+      "lng": 122.0110926542551
+    }
+  },
+  {
+    "id": "74.07",
+    "provinceId": "74",
+    "name": "Kabupaten Wakatobi",
+    "centroid": {
+      "lat": -5.328300233247569,
+      "lng": 23.5389007621827
+    }
+  },
+  {
+    "id": "74.08",
+    "provinceId": "74",
+    "name": "Kabupaten Kolaka Utara",
+    "centroid": {
+      "lat": -3.4901354632505868,
+      "lng": 120.88752770777094
+    }
+  },
+  {
+    "id": "74.09",
+    "provinceId": "74",
+    "name": "Kabupaten Konawe Utara",
+    "centroid": {
+      "lat": -3.51235292694681,
+      "lng": 122.11073191638067
+    }
+  },
+  {
+    "id": "74.10",
+    "provinceId": "74",
+    "name": "Kabupaten Buton Utara",
+    "centroid": {
+      "lat": -4.8010073959736,
+      "lng": 122.98309527349197
+    }
+  },
+  {
+    "id": "74.11",
+    "provinceId": "74",
+    "name": "Kabupaten Kolaka Timur",
+    "centroid": {
+      "lat": -4.000510057990807,
+      "lng": 121.8619498140791
+    }
+  },
+  {
+    "id": "74.12",
+    "provinceId": "74",
+    "name": "Kabupaten Konawe Kepulauan",
+    "centroid": {
+      "lat": -4.052608169270012,
+      "lng": 122.9885847942083
+    }
+  },
+  {
+    "id": "74.13",
+    "provinceId": "74",
+    "name": "Kabupaten Muna Barat",
+    "centroid": {
+      "lat": -4.7917142624455,
+      "lng": 122.49418357893698
+    }
+  },
+  {
+    "id": "74.14",
+    "provinceId": "74",
+    "name": "Kabupaten Buton Tengah",
+    "centroid": {
+      "lat": -5.316413937156861,
+      "lng": 122.53197889106548
+    }
+  },
+  {
+    "id": "74.15",
+    "provinceId": "74",
+    "name": "Kabupaten Buton Selatan",
+    "centroid": {
+      "lat": -5.608164675860151,
+      "lng": 122.6006216432974
+    }
+  },
+  {
+    "id": "74.71",
+    "provinceId": "74",
+    "name": "Kota Kendari",
+    "centroid": {
+      "lat": -3.9729017385837686,
+      "lng": 122.51174077056197
+    }
+  },
+  {
+    "id": "74.72",
+    "provinceId": "74",
+    "name": "Kota Bau Bau",
+    "centroid": {
+      "lat": -5.485071885684611,
+      "lng": 122.58479937279147
+    }
+  },
+  {
+    "id": "75.01",
+    "provinceId": "75",
+    "name": "Kabupaten Gorontalo",
+    "centroid": {
+      "lat": 0.6290030224702096,
+      "lng": 122.98093758487616
+    }
+  },
+  {
+    "id": "75.02",
+    "provinceId": "75",
+    "name": "Kabupaten Boalemo",
+    "centroid": {
+      "lat": 0.5292719285160986,
+      "lng": 122.34754187571235
+    }
+  },
+  {
+    "id": "75.03",
+    "provinceId": "75",
+    "name": "Kabupaten Bone Bolango",
+    "centroid": {
+      "lat": 0.5574113394247833,
+      "lng": 123.14391729846989
+    }
+  },
+  {
+    "id": "75.04",
+    "provinceId": "75",
+    "name": "Kabupaten Pohuwato",
+    "centroid": {
+      "lat": 0.7055277999999999,
+      "lng": 121.71954589999996
+    }
+  },
+  {
+    "id": "75.05",
+    "provinceId": "75",
+    "name": "Kabupaten Gorontalo Utara",
+    "centroid": {
+      "lat": 0.7909498464253044,
+      "lng": 122.86871529758803
+    }
+  },
+  {
+    "id": "75.71",
+    "provinceId": "75",
+    "name": "Kota Gorontalo",
+    "centroid": {
+      "lat": 0.5319060577592112,
+      "lng": 123.0595026528477
+    }
+  },
+  {
+    "id": "76.01",
+    "provinceId": "76",
+    "name": "Kabupaten Pasangkayu",
+    "centroid": {
+      "lat": -1.1737447997757244,
+      "lng": 119.37723724714068
+    }
+  },
+  {
+    "id": "76.02",
+    "provinceId": "76",
+    "name": "Kabupaten Mamuju",
+    "centroid": {
+      "lat": -2.6897491591296983,
+      "lng": 118.88453367460207
+    }
+  },
+  {
+    "id": "76.03",
+    "provinceId": "76",
+    "name": "Kabupaten Mamasa",
+    "centroid": {
+      "lat": -2.9556254753926536,
+      "lng": 119.36286435705937
+    }
+  },
+  {
+    "id": "76.04",
+    "provinceId": "76",
+    "name": "Kabupaten Polewali Mandar",
+    "centroid": {
+      "lat": -3.4077171800221633,
+      "lng": 119.31115423620673
+    }
+  },
+  {
+    "id": "76.05",
+    "provinceId": "76",
+    "name": "Kabupaten Majene",
+    "centroid": {
+      "lat": -3.548096071882418,
+      "lng": 118.95929449246914
+    }
+  },
+  {
+    "id": "76.06",
+    "provinceId": "76",
+    "name": "Kabupaten Mamuju Tengah",
+    "centroid": {
+      "lat": -2.08191948325633,
+      "lng": 119.30101480907719
+    }
+  },
+  {
+    "id": "81.01",
+    "provinceId": "81",
+    "name": "Kabupaten Maluku Tengah",
+    "centroid": {
+      "lat": -3.3042648189510224,
+      "lng": 128.95408633796967
+    }
+  },
+  {
+    "id": "81.02",
+    "provinceId": "81",
+    "name": "Kabupaten Maluku Tenggara",
+    "centroid": {
+      "lat": -5.682916545472394,
+      "lng": 132.71727708818904
+    }
+  },
+  {
+    "id": "81.03",
+    "provinceId": "81",
+    "name": "Kabupaten Kepulauan Tanimbar",
+    "centroid": {
+      "lat": -7.970115508208761,
+      "lng": 131.3122650572608
+    }
+  },
+  {
+    "id": "81.04",
+    "provinceId": "81",
+    "name": "Kabupaten Buru",
+    "centroid": {
+      "lat": -3.2591745680268827,
+      "lng": 127.10278183791851
+    }
+  },
+  {
+    "id": "81.05",
+    "provinceId": "81",
+    "name": "Kabupaten Seram Bagian Timur",
+    "centroid": {
+      "lat": -3.10374969502556,
+      "lng": 130.4886076064629
+    }
+  },
+  {
+    "id": "81.06",
+    "provinceId": "81",
+    "name": "Kabupaten Seram Bagian Barat",
+    "centroid": {
+      "lat": -3.066663330229327,
+      "lng": 128.23003905355495
+    }
+  },
+  {
+    "id": "81.07",
+    "provinceId": "81",
+    "name": "Kabupaten Kepulauan Aru",
+    "centroid": {
+      "lat": -5.775177775557766,
+      "lng": 134.21458787827214
+    }
+  },
+  {
+    "id": "81.08",
+    "provinceId": "81",
+    "name": "Kabupaten Maluku Barat Daya",
+    "centroid": {
+      "lat": -8.148038324123522,
+      "lng": 127.8015502463786
+    }
+  },
+  {
+    "id": "81.09",
+    "provinceId": "81",
+    "name": "Kabupaten Buru Selatan",
+    "centroid": {
+      "lat": -3.8377899371827398,
+      "lng": 126.73425882890845
+    }
+  },
+  {
+    "id": "81.71",
+    "provinceId": "81",
+    "name": "Kota Ambon",
+    "centroid": {
+      "lat": -3.6943237268737126,
+      "lng": 128.1813033560866
+    }
+  },
+  {
+    "id": "81.72",
+    "provinceId": "81",
+    "name": "Kota Tual",
+    "centroid": {
+      "lat": -5.6346805376740114,
+      "lng": 132.75172074301332
+    }
+  },
+  {
+    "id": "82.01",
+    "provinceId": "82",
+    "name": "Kabupaten Halmahera Barat",
+    "centroid": {
+      "lat": 1.0804684023803615,
+      "lng": 127.48015504022084
+    }
+  },
+  {
+    "id": "82.02",
+    "provinceId": "82",
+    "name": "Kabupaten Halmahera Tengah",
+    "centroid": {
+      "lat": 0.3304236239764005,
+      "lng": 127.87025115227507
+    }
+  },
+  {
+    "id": "82.03",
+    "provinceId": "82",
+    "name": "Kabupaten Halmahera Utara",
+    "centroid": {
+      "lat": 1.728187436226181,
+      "lng": 127.99219712155028
+    }
+  },
+  {
+    "id": "82.04",
+    "provinceId": "82",
+    "name": "Kabupaten Halmahera Selatan",
+    "centroid": {
+      "lat": -0.6454745703649585,
+      "lng": 127.50498392309089
+    }
+  },
+  {
+    "id": "82.05",
+    "provinceId": "82",
+    "name": "Kabupaten Kepulauan Sula",
+    "centroid": {
+      "lat": -2.0069779241586523,
+      "lng": 125.96414541579409
+    }
+  },
+  {
+    "id": "82.06",
+    "provinceId": "82",
+    "name": "Kabupaten Halmahera Timur",
+    "centroid": {
+      "lat": 0.6774434668568071,
+      "lng": 128.2840838248518
+    }
+  },
+  {
+    "id": "82.07",
+    "provinceId": "82",
+    "name": "Kabupaten Pulau Morotai",
+    "centroid": {
+      "lat": 2.0132967093802083,
+      "lng": 128.2837176160731
+    }
+  },
+  {
+    "id": "82.08",
+    "provinceId": "82",
+    "name": "Kabupaten Pulau Taliabu",
+    "centroid": {
+      "lat": -1.9474435273583983,
+      "lng": 124.3872161387243
+    }
+  },
+  {
+    "id": "82.71",
+    "provinceId": "82",
+    "name": "Kota Ternate",
+    "centroid": {
+      "lat": 0.7857513986405484,
+      "lng": 127.38784601086685
+    }
+  },
+  {
+    "id": "82.72",
+    "provinceId": "82",
+    "name": "Kota Tidore Kepulauan",
+    "centroid": {
+      "lat": 0.671565379994557,
+      "lng": 127.44672305015295
+    }
+  },
+  {
+    "id": "91.03",
+    "provinceId": "91",
+    "name": "Kabupaten Jayapura",
+    "centroid": {
+      "lat": -2.5498717752817006,
+      "lng": 140.47710271224273
+    }
+  },
+  {
+    "id": "91.05",
+    "provinceId": "91",
+    "name": "Kabupaten Kepulauan Yapen",
+    "centroid": {
+      "lat": -1.874066803353508,
+      "lng": 136.23707760338652
+    }
+  },
+  {
+    "id": "91.06",
+    "provinceId": "91",
+    "name": "Kabupaten Biak Numfor",
+    "centroid": {
+      "lat": -1.170708606082667,
+      "lng": 136.0901928711222
+    }
+  },
+  {
+    "id": "91.10",
+    "provinceId": "91",
+    "name": "Kabupaten Sarmi",
+    "centroid": {
+      "lat": -1.8685726776038396,
+      "lng": 138.74422616800342
+    }
+  },
+  {
+    "id": "91.11",
+    "provinceId": "91",
+    "name": "Kabupaten Keerom",
+    "centroid": {
+      "lat": -2.9087252628071565,
+      "lng": 140.77334129532647
+    }
+  },
+  {
+    "id": "91.15",
+    "provinceId": "91",
+    "name": "Kabupaten Waropen",
+    "centroid": {
+      "lat": -2.2408409305863604,
+      "lng": 136.3794501810602
+    }
+  },
+  {
+    "id": "91.19",
+    "provinceId": "91",
+    "name": "Kabupaten Supiori",
+    "centroid": {
+      "lat": -0.730681951344063,
+      "lng": 135.7326415849256
+    }
+  },
+  {
+    "id": "91.20",
+    "provinceId": "91",
+    "name": "Kabupaten Mamberamo Raya",
+    "centroid": {
+      "lat": -2.3708064074858095,
+      "lng": 138.04986837362105
+    }
+  },
+  {
+    "id": "91.71",
+    "provinceId": "91",
+    "name": "Kota Jayapura",
+    "centroid": {
+      "lat": -2.5626261642155557,
+      "lng": 140.69263309579875
+    }
+  },
+  {
+    "id": "92.02",
+    "provinceId": "92",
+    "name": "Kabupaten Manokwari",
+    "centroid": {
+      "lat": -0.8908143771517435,
+      "lng": 134.04012022193126
+    }
+  },
+  {
+    "id": "92.03",
+    "provinceId": "92",
+    "name": "Kabupaten Fak Fak",
+    "centroid": {
+      "lat": -2.928858303144004,
+      "lng": 132.29363471143284
+    }
+  },
+  {
+    "id": "92.06",
+    "provinceId": "92",
+    "name": "Kabupaten Teluk Bintuni",
+    "centroid": {
+      "lat": -2.0349716122196853,
+      "lng": 133.73180639786548
+    }
+  },
+  {
+    "id": "92.07",
+    "provinceId": "92",
+    "name": "Kabupaten Teluk Wondama",
+    "centroid": {
+      "lat": -2.8276928485593285,
+      "lng": 134.53572347142966
+    }
+  },
+  {
+    "id": "92.08",
+    "provinceId": "92",
+    "name": "Kabupaten Kaimana",
+    "centroid": {
+      "lat": -3.6396913935577087,
+      "lng": 133.74006737885003
+    }
+  },
+  {
+    "id": "92.11",
+    "provinceId": "92",
+    "name": "Kabupaten Manokwari Selatan",
+    "centroid": {
+      "lat": -1.5063952702108039,
+      "lng": 134.16864333913085
+    }
+  },
+  {
+    "id": "92.12",
+    "provinceId": "92",
+    "name": "Kabupaten Pegunungan Arfak",
+    "centroid": {
+      "lat": -1.3250472221470158,
+      "lng": 133.9165696939254
+    }
+  },
+  {
+    "id": "93.01",
+    "provinceId": "93",
+    "name": "Kabupaten Merauke",
+    "centroid": {
+      "lat": -8.508696154665504,
+      "lng": 140.40967635178788
+    }
+  },
+  {
+    "id": "93.02",
+    "provinceId": "93",
+    "name": "Kabupaten Boven Digoel",
+    "centroid": {
+      "lat": -6.100403916696958,
+      "lng": 140.32061122283034
+    }
+  },
+  {
+    "id": "93.03",
+    "provinceId": "93",
+    "name": "Kabupaten Mappi",
+    "centroid": {
+      "lat": -6.5281463061129115,
+      "lng": 139.3192523694171
+    }
+  },
+  {
+    "id": "93.04",
+    "provinceId": "93",
+    "name": "Kabupaten Asmat",
+    "centroid": {
+      "lat": -5.5409474839359305,
+      "lng": 138.13682960832256
+    }
+  },
+  {
+    "id": "94.01",
+    "provinceId": "94",
+    "name": "Kabupaten Nabire",
+    "centroid": {
+      "lat": -3.363365864105701,
+      "lng": 135.50389107766932
+    }
+  },
+  {
+    "id": "94.02",
+    "provinceId": "94",
+    "name": "Kabupaten Puncak Jaya",
+    "centroid": {
+      "lat": -3.716207542016092,
+      "lng": 137.98781735692376
+    }
+  },
+  {
+    "id": "94.03",
+    "provinceId": "94",
+    "name": "Kabupaten Paniai",
+    "centroid": {
+      "lat": -3.941435318407964,
+      "lng": 136.4216307854296
+    }
+  },
+  {
+    "id": "94.04",
+    "provinceId": "94",
+    "name": "Kabupaten Mimika",
+    "centroid": {
+      "lat": -4.4558567246897995,
+      "lng": 136.85372895723708
+    }
+  },
+  {
+    "id": "94.05",
+    "provinceId": "94",
+    "name": "Kabupaten Puncak",
+    "centroid": {
+      "lat": -3.971608513617806,
+      "lng": 137.64179825141554
+    }
+  },
+  {
+    "id": "94.06",
+    "provinceId": "94",
+    "name": "Kabupaten Dogiyai",
+    "centroid": {
+      "lat": -4.004608084689695,
+      "lng": 136.0377620012195
+    }
+  },
+  {
+    "id": "94.07",
+    "provinceId": "94",
+    "name": "Kabupaten Intan Jaya",
+    "centroid": {
+      "lat": -3.7405289181387547,
+      "lng": 137.04395179418287
+    }
+  },
+  {
+    "id": "94.08",
+    "provinceId": "94",
+    "name": "Kabupaten Deiyai",
+    "centroid": {
+      "lat": -4.032249309755539,
+      "lng": 136.29899153745475
+    }
+  },
+  {
+    "id": "95.01",
+    "provinceId": "95",
+    "name": "Kabupaten Jayawijaya",
+    "centroid": {
+      "lat": -4.099306801793126,
+      "lng": 138.94314903715775
+    }
+  },
+  {
+    "id": "95.02",
+    "provinceId": "95",
+    "name": "Kab Pegunungan Bintang",
+    "centroid": {
+      "lat": -4.890902753435135,
+      "lng": 140.6399248830013
+    }
+  },
+  {
+    "id": "95.03",
+    "provinceId": "95",
+    "name": "Kabupaten Yahukimo",
+    "centroid": {
+      "lat": -4.886949804165835,
+      "lng": 139.52051776219918
+    }
+  },
+  {
+    "id": "95.04",
+    "provinceId": "95",
+    "name": "Kabupaten Tolikara",
+    "centroid": {
+      "lat": -3.682250900207365,
+      "lng": 138.4734846330228
+    }
+  },
+  {
+    "id": "95.05",
+    "provinceId": "95",
+    "name": "Kabupaten Mamberamo Tengah",
+    "centroid": {
+      "lat": -3.671617193020148,
+      "lng": 139.06076334013963
+    }
+  },
+  {
+    "id": "95.06",
+    "provinceId": "95",
+    "name": "Kabupaten Yalimo",
+    "centroid": {
+      "lat": -3.7788529007356377,
+      "lng": 139.38315671497205
+    }
+  },
+  {
+    "id": "95.07",
+    "provinceId": "95",
+    "name": "Kabupaten Lanny Jaya",
+    "centroid": {
+      "lat": -3.923598745963506,
+      "lng": 138.4495844424401
+    }
+  },
+  {
+    "id": "95.08",
+    "provinceId": "95",
+    "name": "Kabupaten Nduga",
+    "centroid": {
+      "lat": -4.406940530605307,
+      "lng": 138.23935476923037
+    }
+  },
+  {
+    "id": "96.01",
+    "provinceId": "96",
+    "name": "Kabupaten Sorong",
+    "centroid": {
+      "lat": -0.9884965001187047,
+      "lng": 131.36625323576942
+    }
+  },
+  {
+    "id": "96.02",
+    "provinceId": "96",
+    "name": "Kabupaten Sorong Selatan",
+    "centroid": {
+      "lat": -1.4752482751322984,
+      "lng": 132.08562214178235
+    }
+  },
+  {
+    "id": "96.03",
+    "provinceId": "96",
+    "name": "Kabupaten Raja Ampat",
+    "centroid": {
+      "lat": -0.41850625897138194,
+      "lng": 130.82879113180778
+    }
+  },
+  {
+    "id": "96.04",
+    "provinceId": "96",
+    "name": "Kabupaten Tambrauw",
+    "centroid": {
+      "lat": -0.4973012250548381,
+      "lng": 132.08809753102656
+    }
+  },
+  {
+    "id": "96.05",
+    "provinceId": "96",
+    "name": "Kabupaten Maybrat",
+    "centroid": {
+      "lat": -1.257254042993835,
+      "lng": 132.49862338124385
+    }
+  },
+  {
+    "id": "96.71",
+    "provinceId": "96",
+    "name": "Kota Sorong",
+    "centroid": {
+      "lat": -0.881124482673792,
+      "lng": 131.28763959924163
+    }
+  }
 ]
-

@@ -103,10 +103,12 @@ export function RegencySelect({
     [provinceId]
   );
 
+  // Map external empty string to internal "all" to avoid Radix empty value error
+  const internalValue = !value ? "all" : value;
   return (
     <Select
-      value={value}
-      onValueChange={(val) => onChange(val)}
+      value={internalValue}
+      onValueChange={(val) => onChange(val === "all" ? "" : val)}
       disabled={!provinceId}
     >
       <SelectTrigger className="w-full">
@@ -117,6 +119,7 @@ export function RegencySelect({
         />
       </SelectTrigger>
       <SelectContent>
+        <SelectItem value="all">Semua Kabupaten/Kota</SelectItem>
         {items.map((r) => (
           <SelectItem key={r.id} value={r.id}>
             {r.name}
