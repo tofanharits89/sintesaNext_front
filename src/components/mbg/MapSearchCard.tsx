@@ -3,7 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ProvinceSelect, RegencySelect, useProvinceRegency } from "./ProvinceRegencySelectors";
+import {
+  ProvinceSelect,
+  RegencySelect,
+  useProvinceRegency,
+} from "./ProvinceRegencySelectors";
+import { MapStatsOverlay, OverlayStats } from "./MapStatsOverlay";
+import { X } from "lucide-react";
 import { toast } from "sonner";
 
 // Lightweight Google Maps loader
@@ -26,7 +32,9 @@ function useGoogleMaps(apiKey?: string) {
     const existing = document.getElementById("gmaps-script");
     if (existing) {
       existing.addEventListener("load", () => setLoaded(true));
-      existing.addEventListener("error", () => setError("Gagal memuat Google Maps"));
+      existing.addEventListener("error", () =>
+        setError("Gagal memuat Google Maps")
+      );
       return;
     }
 
@@ -51,7 +59,25 @@ export function MapSearchCard() {
   const markerRef = useRef<google.maps.Marker | null>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
-  const { provinceId, setProvinceId, regencyId, setRegencyId, selectedProvince, selectedRegency } = useProvinceRegency();
+  const {
+    provinceId,
+    setProvinceId,
+    regencyId,
+    setRegencyId,
+    selectedProvince,
+    selectedRegency,
+  } = useProvinceRegency();
+  const [searchText, setSearchText] = useState("");
+
+  const [overlayScope, setOverlayScope] = useState<
+    "national" | "province" | "regency"
+  >("national");
+  const [overlayName, setOverlayName] = useState<string | undefined>(undefined);
+  const [overlayStats, setOverlayStats] = useState<OverlayStats | undefined>(
+    undefined
+  );
+  const [overlayLoading, setOverlayLoading] = useState<boolean>(false);
+  const [overlayError, setOverlayError] = useState<string | null>(null);
 
   // Initialize map once
   useEffect(() => {
@@ -70,13 +96,15 @@ export function MapSearchCard() {
   // Setup Places autocomplete restricted to Indonesia; prefer regions/cities
   useEffect(() => {
     if (!loaded || !mapInstanceRef.current) return;
-    const input = document.getElementById("mbg-map-search") as HTMLInputElement | null;
+    const input = document.getElementById(
+      "mbg-map-search"
+    ) as HTMLInputElement | null;
     if (!input) return;
 
     const ac = new google.maps.places.Autocomplete(input, {
-      fields: ["geometry", "name", "types"],
+      fields: ["geometry", "name", "types", "address_components"],
       componentRestrictions: { country: "id" },
-      types: ["(regions)"]
+      types: ["(regions)"],
     });
     autocompleteRef.current = ac;
 
@@ -91,9 +119,29 @@ export function MapSearchCard() {
       mapInstanceRef.current!.setZoom(8);
 
       if (!markerRef.current) {
-        markerRef.current = new google.maps.Marker({ map: mapInstanceRef.current! });
+        markerRef.current = new google.maps.Marker({
+          map: mapInstanceRef.current!,
+        });
       }
       markerRef.current.setPosition(loc);
+
+      // Sync state: clear dropdowns, set overlay scope by place granularity
+      setProvinceId("");
+      setRegencyId("");
+      setOverlayError(null);
+      setOverlayLoading(true);
+      setOverlayScope("province");
+      setOverlayName(place.name);
+      // TODO: replace with real fetch for province-level stats
+      setTimeout(() => {
+        setOverlayStats({
+          totalAllocation: 1250000000000,
+          totalRealization: 980000000000,
+          beneficiaries: 2450120,
+          coveragePct: 78.4,
+        });
+        setOverlayLoading(false);
+      }, 400);
     });
 
     return () => {
@@ -106,6 +154,9 @@ export function MapSearchCard() {
     const map = mapInstanceRef.current;
     if (!map) return;
 
+    // If a dropdown selection happens, clear search input
+    if (provinceId || regencyId) setSearchText("");
+
     if (selectedRegency?.centroid) {
       map.panTo(selectedRegency.centroid);
       map.setZoom(10);
@@ -113,19 +164,71 @@ export function MapSearchCard() {
         markerRef.current = new google.maps.Marker({ map });
       }
       markerRef.current.setPosition(selectedRegency.centroid);
+      // Overlay: regency
+      setOverlayScope("regency");
+      setOverlayName(selectedRegency.name);
+      setOverlayLoading(true);
+      setOverlayError(null);
+      setTimeout(() => {
+        setOverlayStats({
+          totalAllocation: 25000000000,
+          totalRealization: 18000000000,
+          beneficiaries: 12045,
+          coveragePct: 74.2,
+        });
+        setOverlayLoading(false);
+      }, 300);
       return;
     }
 
-    if (selectedProvince?.centroid) {
-      map.panTo(selectedProvince.centroid);
-      map.setZoom(7);
-      if (!markerRef.current) {
-        markerRef.current = new google.maps.Marker({ map });
+    if (selectedProvince?.centroid || provinceId === "") {
+      const center = selectedProvince?.centroid ?? { lat: -2.5, lng: 118.0 };
+      const zoom = selectedProvince ? 7 : 5;
+      map.panTo(center);
+      map.setZoom(zoom);
+
+      if (markerRef.current && !selectedProvince) {
+        markerRef.current.setMap(null);
+        markerRef.current = null;
+      } else if (selectedProvince) {
+        if (!markerRef.current)
+          markerRef.current = new google.maps.Marker({ map });
+        markerRef.current.setPosition(selectedProvince.centroid!);
       }
-      markerRef.current.setPosition(selectedProvince.centroid);
+
+      // Overlay: province or national
+      if (selectedProvince) {
+        setOverlayScope("province");
+        setOverlayName(selectedProvince.name);
+        setOverlayLoading(true);
+        setOverlayError(null);
+        setTimeout(() => {
+          setOverlayStats({
+            totalAllocation: 120000000000,
+            totalRealization: 98000000000,
+            beneficiaries: 245012,
+            coveragePct: 78.4,
+          });
+          setOverlayLoading(false);
+        }, 300);
+      } else {
+        setOverlayScope("national");
+        setOverlayName(undefined);
+        setOverlayLoading(true);
+        setOverlayError(null);
+        setTimeout(() => {
+          setOverlayStats({
+            totalAllocation: 3000000000000,
+            totalRealization: 2100000000000,
+            beneficiaries: 12500120,
+            coveragePct: 75.1,
+          });
+          setOverlayLoading(false);
+        }, 300);
+      }
       return;
     }
-  }, [selectedProvince, selectedRegency]);
+  }, [provinceId, regencyId, selectedProvince, selectedRegency]);
 
   useEffect(() => {
     if (error) toast.error(error);
@@ -138,18 +241,75 @@ export function MapSearchCard() {
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-          <Input id="mbg-map-search" placeholder="Cari provinsi/kabupaten/kota (Indonesia)" />
-          <ProvinceSelect value={provinceId} onChange={(v) => { setProvinceId(v); setRegencyId(""); }} />
-          <RegencySelect value={regencyId} onChange={setRegencyId} provinceId={provinceId} />
+          <div className="relative">
+            <Input
+              id="mbg-map-search"
+              placeholder="Cari provinsi/kabupaten/kota (Indonesia)"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+            {searchText && (
+              <button
+                type="button"
+                aria-label="Bersihkan pencarian"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  setSearchText("");
+                  if (autocompleteRef.current) {
+                    (
+                      document.getElementById(
+                        "mbg-map-search"
+                      ) as HTMLInputElement
+                    ).value = "";
+                  }
+                  // Reset map to national view and clear markers
+                  if (mapInstanceRef.current) {
+                    mapInstanceRef.current.panTo({ lat: -2.5, lng: 118.0 });
+                    mapInstanceRef.current.setZoom(5);
+                  }
+                  if (markerRef.current) {
+                    markerRef.current.setMap(null);
+                    markerRef.current = null;
+                  }
+                  // Also reset dropdowns
+                  setProvinceId("");
+                  setRegencyId("");
+                  setOverlayScope("national");
+                }}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          <ProvinceSelect
+            value={provinceId}
+            onChange={(v) => {
+              setProvinceId(v);
+              setRegencyId("");
+            }}
+          />
+          <RegencySelect
+            value={regencyId}
+            onChange={setRegencyId}
+            provinceId={provinceId}
+          />
         </div>
-        <div className="h-[420px] w-full rounded-md overflow-hidden border">
+        <div className="h-[420px] w-full rounded-md overflow-hidden border relative">
           <div ref={mapRef} className="h-full w-full" />
           {!loaded && (
-            <div className="h-full w-full grid place-items-center text-muted-foreground text-sm">Memuat peta…</div>
+            <div className="absolute inset-0 grid place-items-center text-muted-foreground text-sm bg-background/50">
+              Memuat peta…
+            </div>
           )}
+          <MapStatsOverlay
+            scope={overlayScope}
+            scopeName={overlayName}
+            stats={overlayStats}
+            isLoading={overlayLoading}
+            error={overlayError}
+          />
         </div>
       </CardContent>
     </Card>
   );
 }
-

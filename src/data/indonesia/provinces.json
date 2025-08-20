@@ -2,42 +2,305 @@
   {
     "id": "ID-AC",
     "name": "Aceh",
-    "centroid": { "lat": 4.695135, "lng": 96.749397 }
-  },
-  {
-    "id": "ID-JK",
-    "name": "DKI Jakarta",
-    "centroid": { "lat": -6.200000, "lng": 106.816666 }
-  },
-  {
-    "id": "ID-JB",
-    "name": "Jawa Barat",
-    "centroid": { "lat": -6.889836, "lng": 107.640471 }
-  },
-  {
-    "id": "ID-JT",
-    "name": "Jawa Tengah",
-    "centroid": { "lat": -7.150975, "lng": 110.140259 }
-  },
-  {
-    "id": "ID-JI",
-    "name": "Jawa Timur",
-    "centroid": { "lat": -7.536063, "lng": 112.238402 }
+    "centroid": {
+      "lat": 4.695135,
+      "lng": 96.7493993
+    }
   },
   {
     "id": "ID-SU",
     "name": "Sumatera Utara",
-    "centroid": { "lat": 2.115355, "lng": 99.545097 }
+    "centroid": {
+      "lat": 2.1153547,
+      "lng": 99.54509739999999
+    }
+  },
+  {
+    "id": "ID-SB",
+    "name": "Sumatera Barat",
+    "centroid": {
+      "lat": -0.7399397,
+      "lng": 100.8000051
+    }
   },
   {
     "id": "ID-RI",
     "name": "Riau",
-    "centroid": { "lat": 0.293346, "lng": 101.706825 }
+    "centroid": {
+      "lat": 0.2933469,
+      "lng": 101.7068294
+    }
+  },
+  {
+    "id": "ID-JA",
+    "name": "Jambi",
+    "centroid": {
+      "lat": -1.4851831,
+      "lng": 102.4380581
+    }
+  },
+  {
+    "id": "ID-SS",
+    "name": "Sumatera Selatan",
+    "centroid": {
+      "lat": -3.3194374,
+      "lng": 103.914399
+    }
+  },
+  {
+    "id": "ID-BE",
+    "name": "Bengkulu",
+    "centroid": {
+      "lat": -3.792845099999999,
+      "lng": 102.2607641
+    }
+  },
+  {
+    "id": "ID-LA",
+    "name": "Lampung",
+    "centroid": {
+      "lat": -4.5585849,
+      "lng": 105.4068079
+    }
+  },
+  {
+    "id": "ID-BB",
+    "name": "Kepulauan Bangka Belitung",
+    "centroid": {
+      "lat": -2.7410513,
+      "lng": 106.4405872
+    }
+  },
+  {
+    "id": "ID-KR",
+    "name": "Kepulauan Riau",
+    "centroid": {
+      "lat": 3.9456514,
+      "lng": 108.1428669
+    }
+  },
+  {
+    "id": "ID-JK",
+    "name": "DKI Jakarta",
+    "centroid": {
+      "lat": -6.1944491,
+      "lng": 106.8229198
+    }
+  },
+  {
+    "id": "ID-JB",
+    "name": "Jawa Barat",
+    "centroid": {
+      "lat": -7.090910999999999,
+      "lng": 107.668887
+    }
+  },
+  {
+    "id": "ID-JT",
+    "name": "Jawa Tengah",
+    "centroid": {
+      "lat": -7.150975,
+      "lng": 110.1402594
+    }
+  },
+  {
+    "id": "ID-YO",
+    "name": "DI Yogyakarta",
+    "centroid": {
+      "lat": -7.875384899999999,
+      "lng": 110.4262088
+    }
+  },
+  {
+    "id": "ID-JI",
+    "name": "Jawa Timur",
+    "centroid": {
+      "lat": -7.5360639,
+      "lng": 112.2384017
+    }
   },
   {
     "id": "ID-BT",
     "name": "Banten",
-    "centroid": { "lat": -6.405817, "lng": 106.064018 }
+    "centroid": {
+      "lat": -6.4058172,
+      "lng": 106.0640179
+    }
+  },
+  {
+    "id": "ID-BA",
+    "name": "Bali",
+    "centroid": {
+      "lat": -8.4095178,
+      "lng": 115.188916
+    }
+  },
+  {
+    "id": "ID-NB",
+    "name": "Nusa Tenggara Barat",
+    "centroid": {
+      "lat": -8.6529334,
+      "lng": 117.3616476
+    }
+  },
+  {
+    "id": "ID-NT",
+    "name": "Nusa Tenggara Timur",
+    "centroid": {
+      "lat": -8.657381899999999,
+      "lng": 121.0793705
+    }
+  },
+  {
+    "id": "ID-KB",
+    "name": "Kalimantan Barat",
+    "centroid": {
+      "lat": -0.2787808,
+      "lng": 111.4752851
+    }
+  },
+  {
+    "id": "ID-KT",
+    "name": "Kalimantan Tengah",
+    "centroid": {
+      "lat": -1.6814878,
+      "lng": 113.3823545
+    }
+  },
+  {
+    "id": "ID-KS",
+    "name": "Kalimantan Selatan",
+    "centroid": {
+      "lat": -3.0926415,
+      "lng": 115.2837585
+    }
+  },
+  {
+    "id": "ID-KI",
+    "name": "Kalimantan Timur",
+    "centroid": {
+      "lat": 0.5386586,
+      "lng": 116.419389
+    }
+  },
+  {
+    "id": "ID-KU",
+    "name": "Kalimantan Utara",
+    "centroid": {
+      "lat": 3.0730929,
+      "lng": 116.0413889
+    }
+  },
+  {
+    "id": "ID-SA",
+    "name": "Sulawesi Utara",
+    "centroid": {
+      "lat": 0.6246932,
+      "lng": 123.9750018
+    }
+  },
+  {
+    "id": "ID-ST",
+    "name": "Sulawesi Tengah",
+    "centroid": {
+      "lat": -1.4300254,
+      "lng": 121.4456179
+    }
+  },
+  {
+    "id": "ID-SN",
+    "name": "Sulawesi Selatan",
+    "centroid": {
+      "lat": -3.6687994,
+      "lng": 119.9740534
+    }
+  },
+  {
+    "id": "ID-SG",
+    "name": "Sulawesi Tenggara",
+    "centroid": {
+      "lat": -4.144909999999999,
+      "lng": 122.174605
+    }
+  },
+  {
+    "id": "ID-GO",
+    "name": "Gorontalo",
+    "centroid": {
+      "lat": 0.5326875999999999,
+      "lng": 123.0598942
+    }
+  },
+  {
+    "id": "ID-SR",
+    "name": "Sulawesi Barat",
+    "centroid": {
+      "lat": -2.8441371,
+      "lng": 119.2320784
+    }
+  },
+  {
+    "id": "ID-MA",
+    "name": "Maluku",
+    "centroid": {
+      "lat": -3.2384616,
+      "lng": 130.1452734
+    }
+  },
+  {
+    "id": "ID-MU",
+    "name": "Maluku Utara",
+    "centroid": {
+      "lat": 1.5709993,
+      "lng": 127.8087693
+    }
+  },
+  {
+    "id": "ID-PA",
+    "name": "Papua",
+    "centroid": {
+      "lat": -4.269928,
+      "lng": 138.0803529
+    }
+  },
+  {
+    "id": "ID-PB",
+    "name": "Papua Barat",
+    "centroid": {
+      "lat": -1.3361154,
+      "lng": 133.1747162
+    }
+  },
+  {
+    "id": "ID-PS",
+    "name": "Papua Selatan",
+    "centroid": {
+      "lat": -6.7606468,
+      "lng": 139.6911374
+    }
+  },
+  {
+    "id": "ID-PT",
+    "name": "Papua Tengah",
+    "centroid": {
+      "lat": -3.8649098,
+      "lng": 137.6061625
+    }
+  },
+  {
+    "id": "ID-PP",
+    "name": "Papua Pegunungan",
+    "centroid": {
+      "lat": -4.269928,
+      "lng": 138.0803529
+    }
+  },
+  {
+    "id": "ID-PD",
+    "name": "Papua Barat Daya",
+    "centroid": {
+      "lat": -1.3361154,
+      "lng": 133.1747162
+    }
   }
 ]
-
