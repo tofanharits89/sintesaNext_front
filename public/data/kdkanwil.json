@@ -1,0 +1,206 @@
+[
+  {
+    "kdlokasi": "06",
+    "nmlokasi": "ACEH",
+    "kdkanwil": "01",
+    "nmkanwil": "BANDA ACEH"
+  },
+  {
+    "kdlokasi": "07",
+    "nmlokasi": "SUMATERA UTARA",
+    "kdkanwil": "02",
+    "nmkanwil": "MEDAN"
+  },
+  {
+    "kdlokasi": "09",
+    "nmlokasi": "RIAU",
+    "kdkanwil": "04",
+    "nmkanwil": "PEKANBARU"
+  },
+  {
+    "kdlokasi": "32",
+    "nmlokasi": "KEPULAUAN RIAU",
+    "kdkanwil": "31",
+    "nmkanwil": "KEPULAUAN RIAU"
+  },
+  {
+    "kdlokasi": "08",
+    "nmlokasi": "SUMATERA BARAT",
+    "kdkanwil": "03",
+    "nmkanwil": "PADANG"
+  },
+  {
+    "kdlokasi": "10",
+    "nmlokasi": "JAMBI",
+    "kdkanwil": "05",
+    "nmkanwil": "JAMBI"
+  },
+  {
+    "kdlokasi": "11",
+    "nmlokasi": "SUMATERA SELATAN",
+    "kdkanwil": "06",
+    "nmkanwil": "PALEMBANG"
+  },
+  {
+    "kdlokasi": "30",
+    "nmlokasi": "KEPULAUAN BANGKA BELITUNG",
+    "kdkanwil": "09",
+    "nmkanwil": "PANGKAL PINANG"
+  },
+  {
+    "kdlokasi": "26",
+    "nmlokasi": "BENGKULU",
+    "kdkanwil": "08",
+    "nmkanwil": "BENGKULU"
+  },
+  {
+    "kdlokasi": "12",
+    "nmlokasi": "LAMPUNG",
+    "kdkanwil": "07",
+    "nmkanwil": "BANDAR LAMPUNG"
+  },
+  {
+    "kdlokasi": "01",
+    "nmlokasi": "DKI JAKARTA",
+    "kdkanwil": "11",
+    "nmkanwil": "JAKARTA"
+  },
+  {
+    "kdlokasi": "29",
+    "nmlokasi": "BANTEN",
+    "kdkanwil": "10",
+    "nmkanwil": "SERANG"
+  },
+  {
+    "kdlokasi": "02",
+    "nmlokasi": "JAWA BARAT",
+    "kdkanwil": "12",
+    "nmkanwil": "BANDUNG"
+  },
+  {
+    "kdlokasi": "03",
+    "nmlokasi": "JAWA TENGAH",
+    "kdkanwil": "13",
+    "nmkanwil": "SEMARANG"
+  },
+  {
+    "kdlokasi": "04",
+    "nmlokasi": "DI YOGYAKARTA",
+    "kdkanwil": "14",
+    "nmkanwil": "YOGYAKARTA"
+  },
+  {
+    "kdlokasi": "05",
+    "nmlokasi": "JAWA TIMUR",
+    "kdkanwil": "15",
+    "nmkanwil": "SURABAYA"
+  },
+  {
+    "kdlokasi": "22",
+    "nmlokasi": "BALI",
+    "kdkanwil": "20",
+    "nmkanwil": "DENPASAR"
+  },
+  {
+    "kdlokasi": "23",
+    "nmlokasi": "NUSA TENGGARA BARAT",
+    "kdkanwil": "21",
+    "nmkanwil": "MATARAM"
+  },
+  {
+    "kdlokasi": "24",
+    "nmlokasi": "NUSA TENGGARA TIMUR",
+    "kdkanwil": "22",
+    "nmkanwil": "KUPANG"
+  },
+  {
+    "kdlokasi": "13",
+    "nmlokasi": "KALIMANTAN BARAT",
+    "kdkanwil": "16",
+    "nmkanwil": "PONTIANAK"
+  },
+  {
+    "kdlokasi": "14",
+    "nmlokasi": "KALIMANTAN TENGAH",
+    "kdkanwil": "17",
+    "nmkanwil": "PALANGKARAYA"
+  },
+  {
+    "kdlokasi": "15",
+    "nmlokasi": "KALIMANTAN SELATAN",
+    "kdkanwil": "18",
+    "nmkanwil": "BANJARMASIN"
+  },
+  {
+    "kdlokasi": "16",
+    "nmlokasi": "KALIMANTAN TIMUR",
+    "kdkanwil": "19",
+    "nmkanwil": "SAMARINDA"
+  },
+  {
+    "kdlokasi": "35",
+    "nmlokasi": "KALIMANTAN UTARA",
+    "kdkanwil": "34",
+    "nmkanwil": "KALIMANTAN UTARA"
+  },
+  {
+    "kdlokasi": "17",
+    "nmlokasi": "SULAWESI UTARA",
+    "kdkanwil": "27",
+    "nmkanwil": "MANADO"
+  },
+  {
+    "kdlokasi": "31",
+    "nmlokasi": "GORONTALO",
+    "kdkanwil": "26",
+    "nmkanwil": "GORONTALO"
+  },
+  {
+    "kdlokasi": "18",
+    "nmlokasi": "SULAWESI TENGAH",
+    "kdkanwil": "24",
+    "nmkanwil": "PALU"
+  },
+  {
+    "kdlokasi": "19",
+    "nmlokasi": "SULAWESI SELATAN",
+    "kdkanwil": "23",
+    "nmkanwil": "MAKASSAR"
+  },
+  {
+    "kdlokasi": "34",
+    "nmlokasi": "SULAWESI BARAT",
+    "kdkanwil": "32",
+    "nmkanwil": "SULAWESI BARAT"
+  },
+  {
+    "kdlokasi": "20",
+    "nmlokasi": "SULAWESI TENGGARA",
+    "kdkanwil": "25",
+    "nmkanwil": "KENDARI"
+  },
+  {
+    "kdlokasi": "21",
+    "nmlokasi": "MALUKU",
+    "kdkanwil": "29",
+    "nmkanwil": "AMBON"
+  },
+  {
+    "kdlokasi": "28",
+    "nmlokasi": "MALUKU UTARA",
+    "kdkanwil": "28",
+    "nmkanwil": "TERNATE"
+  },
+  {
+    "kdlokasi": "25",
+    "nmlokasi": "PAPUA",
+    "kdkanwil": "30",
+    "nmkanwil": "JAYAPURA"
+  },
+  {
+    "kdlokasi": "33",
+    "nmlokasi": "PAPUA BARAT",
+    "kdkanwil": "33",
+    "nmkanwil": "PAPUA BARAT"
+  }
+]

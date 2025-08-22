@@ -68,7 +68,14 @@ const defaultMenu: MenuItem[] = [
     label: "Profil K/L",
     children: [{ label: "Kementerian" }, { label: "Lembaga" }],
   },
-  { label: "EPA", children: [{ label: "Proyek" }, { label: "Evaluasi" }] },
+  {
+    label: "EPA",
+    children: [
+      { label: "Summary" },
+      { label: "Proyek" },
+      { label: "Evaluasi" },
+    ],
+  },
   {
     label: "Spending Review",
     children: [{ label: "Sektor" }, { label: "Rekomendasi" }],
@@ -173,6 +180,8 @@ export function ResponsiveSidebar({
         return <Users className={cls} />;
       case "Profil K/L__Lembaga":
         return <Building2 className={cls} />;
+      case "EPA__Summary":
+        return <LineChart className={cls} />;
       case "EPA__Proyek":
         return <Briefcase className={cls} />;
       case "EPA__Evaluasi":
@@ -359,6 +368,23 @@ export function ResponsiveSidebar({
                               <span>{c.label}</span>
                             </Link>
                           </DropdownMenuItem>
+                        ) : c.label === "Summary" && m.label === "EPA" ? (
+                          <DropdownMenuItem key={c.label} asChild>
+                            <Link
+                              href="/epa/summary"
+                              className="flex items-center w-full"
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/epa/summary",
+                                })
+                              }
+                            >
+                              {subIconFor(m.label, c.label)}
+                              <span>{c.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem
                             key={c.label}
@@ -463,6 +489,25 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/tentang-kita/profil",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Summary" && m.label === "EPA" ? (
+                      <Link
+                        key={c.label}
+                        href="/epa/summary"
+                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/epa/summary",
                           });
                           setOpen(false);
                         }}

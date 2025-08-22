@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -40,7 +40,7 @@ function useGoogleMaps(apiKey?: string) {
 
     const script = document.createElement("script");
     script.id = "gmaps-script";
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&language=id&region=ID`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,marker&language=id&region=ID`;
     script.async = true;
     script.defer = true;
     script.onload = () => setLoaded(true);
@@ -56,7 +56,9 @@ export function MapSearchCard() {
   const { loaded, error } = useGoogleMaps(apiKey);
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
-  const markerRef = useRef<google.maps.Marker | null>(null);
+  const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(
+    null
+  );
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
   const {
@@ -89,6 +91,7 @@ export function MapSearchCard() {
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: false,
+      mapId: "mbg-map", // Required for AdvancedMarkerElement
     });
     mapInstanceRef.current = map;
   }, [loaded]);
@@ -119,11 +122,13 @@ export function MapSearchCard() {
       mapInstanceRef.current!.setZoom(8);
 
       if (!markerRef.current) {
-        markerRef.current = new google.maps.Marker({
+        markerRef.current = new google.maps.marker.AdvancedMarkerElement({
           map: mapInstanceRef.current!,
+          position: loc,
         });
+      } else {
+        markerRef.current.position = loc;
       }
-      markerRef.current.setPosition(loc);
 
       // Sync state: clear dropdowns, set overlay scope by place granularity
       setProvinceId("");
@@ -161,9 +166,13 @@ export function MapSearchCard() {
       map.panTo(selectedRegency.centroid);
       map.setZoom(10);
       if (!markerRef.current) {
-        markerRef.current = new google.maps.Marker({ map });
+        markerRef.current = new google.maps.marker.AdvancedMarkerElement({
+          map,
+          position: selectedRegency.centroid,
+        });
+      } else {
+        markerRef.current.position = selectedRegency.centroid;
       }
-      markerRef.current.setPosition(selectedRegency.centroid);
       // Overlay: regency
       setOverlayScope("regency");
       setOverlayName(selectedRegency.name);
@@ -188,12 +197,17 @@ export function MapSearchCard() {
       map.setZoom(zoom);
 
       if (markerRef.current && !selectedProvince) {
-        markerRef.current.setMap(null);
+        markerRef.current.map = null;
         markerRef.current = null;
       } else if (selectedProvince) {
-        if (!markerRef.current)
-          markerRef.current = new google.maps.Marker({ map });
-        markerRef.current.setPosition(selectedProvince.centroid!);
+        if (!markerRef.current) {
+          markerRef.current = new google.maps.marker.AdvancedMarkerElement({
+            map,
+            position: selectedProvince.centroid!,
+          });
+        } else {
+          markerRef.current.position = selectedProvince.centroid!;
+        }
       }
 
       // Overlay: province or national
@@ -268,7 +282,7 @@ export function MapSearchCard() {
                     mapInstanceRef.current.setZoom(5);
                   }
                   if (markerRef.current) {
-                    markerRef.current.setMap(null);
+                    markerRef.current.map = null;
                     markerRef.current = null;
                   }
                   // Also reset dropdowns
