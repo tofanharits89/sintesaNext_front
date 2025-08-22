@@ -33,6 +33,7 @@ import {
   CalendarClock,
   User,
   Phone,
+  Upload,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -82,7 +83,12 @@ const defaultMenu: MenuItem[] = [
   },
   {
     label: "Transfer Daerah",
-    children: [{ label: "DAU" }, { label: "DAK" }, { label: "DBH" }],
+    children: [
+      { label: "Upload Laporan" },
+      { label: "DAU" },
+      { label: "DAK" },
+      { label: "DBH" },
+    ],
   },
   {
     label: "Inquiry Data",
@@ -190,6 +196,8 @@ export function ResponsiveSidebar({
         return <Layers className={cls} />;
       case "Spending Review__Rekomendasi":
         return <Star className={cls} />;
+      case "Transfer Daerah__Upload Laporan":
+        return <Upload className={cls} />;
       case "Transfer Daerah__DAU":
         return <Coins className={cls} />;
       case "Transfer Daerah__DAK":
@@ -385,6 +393,42 @@ export function ResponsiveSidebar({
                               <span>{c.label}</span>
                             </Link>
                           </DropdownMenuItem>
+                        ) : c.label === "Upload Laporan" &&
+                          m.label === "Transfer Daerah" ? (
+                          <DropdownMenuItem key={c.label} asChild>
+                            <Link
+                              href="/transfer-daerah/upload-laporan"
+                              className="flex items-center w-full"
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/transfer-daerah/upload-laporan",
+                                })
+                              }
+                            >
+                              {subIconFor(m.label, c.label)}
+                              <span>{c.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        ) : c.label === "DAU" &&
+                          m.label === "Transfer Daerah" ? (
+                          <DropdownMenuItem key={c.label} asChild>
+                            <Link
+                              href="/transfer-daerah/dau"
+                              className="flex items-center w-full"
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/transfer-daerah/dau",
+                                })
+                              }
+                            >
+                              {subIconFor(m.label, c.label)}
+                              <span>{c.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem
                             key={c.label}
@@ -508,6 +552,45 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/epa/summary",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Upload Laporan" &&
+                      m.label === "Transfer Daerah" ? (
+                      <Link
+                        key={c.label}
+                        href="/transfer-daerah/upload-laporan"
+                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/transfer-daerah/upload-laporan",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "DAU" && m.label === "Transfer Daerah" ? (
+                      <Link
+                        key={c.label}
+                        href="/transfer-daerah/dau"
+                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/transfer-daerah/dau",
                           });
                           setOpen(false);
                         }}

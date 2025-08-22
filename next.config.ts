@@ -14,6 +14,11 @@ const nextConfig: NextConfig = {
     };
     return config;
   },
+  turbopack: {
+    resolveAlias: {
+      "@shared": "./src/shared",
+    },
+  },
   async redirects() {
     return [
       {
