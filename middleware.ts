@@ -51,23 +51,23 @@ export async function middleware(request: NextRequest) {
     relPath.startsWith("/login") ||
     relPath.startsWith("/api/auth");
 
-  // Early: Skip health check for static assets and the 500 page itself
+  // Early: Skip health check for static assets and the server-error page itself
   const isStatic =
     relPath.startsWith("/_next") ||
     relPath.startsWith("/favicon.ico") ||
     relPath.startsWith("/api/public") ||
     relPath.startsWith("/images") ||
     relPath.startsWith("/icons") ||
-    relPath.startsWith("/500");
+    relPath.startsWith("/server-error");
 
-  // Early: If backend is unhealthy, redirect to 500 page
+  // Early: If backend is unhealthy, redirect to server-error page
   if (!isStatic) {
     const healthyEarly = await isBackendHealthy();
     if (!healthyEarly) {
       const url = request.nextUrl.clone();
       // Set path relative to current base path. Do NOT prepend BASE_PATH here,
       // because Next middleware will apply basePath automatically.
-      url.pathname = `/500`;
+      url.pathname = `/server-error`;
       return NextResponse.redirect(url);
     }
   }

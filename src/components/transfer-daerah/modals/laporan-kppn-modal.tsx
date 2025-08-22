@@ -398,7 +398,7 @@ export function LaporanKppnModal({
           <Button
             type="submit"
             form="laporan-kppn-form"
-            className="bg-blue-500 hover:bg-blue-600 text-white"
+            className="bg-slate-800 hover:bg-slate-900 text-white"
           >
             Save
           </Button>

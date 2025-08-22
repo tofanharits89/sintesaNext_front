@@ -284,44 +284,47 @@ export function DataKmkTab({}: DataKmkTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* Simple Filter Card */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Tahun</label>
-              <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger className="w-full">
-                  <SelectValue className="truncate" />
-                </SelectTrigger>
-                <SelectContent>
-                  {years.map((year) => (
-                    <SelectItem key={year} value={year}>
-                      {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Data Table Card */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Data KMK</CardTitle>
-            <div className="flex items-center gap-2">
-              <Button onClick={() => setIsDataKmkModalOpen(true)}>
-                Data KMK
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setIsPencabutanModalOpen(true)}
-              >
-                Pencabutan
-              </Button>
+          <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+            <CardTitle className="text-lg font-semibold">Data KMK</CardTitle>
+
+            <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:gap-4">
+              {/* Year Filter */}
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium whitespace-nowrap">
+                  Tahun:
+                </label>
+                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                  <SelectTrigger className="w-full sm:w-[120px]">
+                    <SelectValue className="truncate" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {years.map((year) => (
+                      <SelectItem key={year} value={year}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => setIsDataKmkModalOpen(true)}
+                  className="bg-slate-800 hover:bg-slate-900 text-white min-w-[100px] h-10 flex-1 sm:flex-initial"
+                >
+                  Data KMK
+                </Button>
+                <Button
+                  onClick={() => setIsPencabutanModalOpen(true)}
+                  className="bg-slate-800 hover:bg-slate-900 text-white min-w-[100px] h-10 flex-1 sm:flex-initial"
+                >
+                  Pencabutan
+                </Button>
+              </div>
             </div>
           </div>
         </CardHeader>

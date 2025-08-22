@@ -61,6 +61,20 @@ export function DataKmkModal({ open, onOpenChange }: DataKmkModalProps) {
     });
   };
 
+  const handleClose = () => {
+    onOpenChange(false);
+    // Reset form when closing
+    setFormData({
+      tahun: "",
+      tanggalKmk: undefined,
+      nomorKmk: "",
+      uraian: "",
+      jenis: "",
+      kriteria: "",
+      file: null,
+    });
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData({ ...formData, file });
@@ -73,12 +87,14 @@ export function DataKmkModal({ open, onOpenChange }: DataKmkModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="max-w-4xl sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>Tambah Data KMK</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-6 py-4">
+          {/* Form Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Tahun */}
             <div className="space-y-2">
               <Label htmlFor="tahun">Tahun</Label>
               <Select
@@ -87,8 +103,8 @@ export function DataKmkModal({ open, onOpenChange }: DataKmkModalProps) {
                   setFormData({ ...formData, tahun: value })
                 }
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih tahun" />
+                <SelectTrigger className="w-full">
+                  <SelectValue className="truncate" placeholder="Pilih tahun" />
                 </SelectTrigger>
                 <SelectContent>
                   {years.map((year) => (
@@ -100,6 +116,7 @@ export function DataKmkModal({ open, onOpenChange }: DataKmkModalProps) {
               </Select>
             </div>
 
+            {/* Tanggal KMK */}
             <div className="space-y-2">
               <Label>Tanggal KMK</Label>
               <Popover>
@@ -114,7 +131,7 @@ export function DataKmkModal({ open, onOpenChange }: DataKmkModalProps) {
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {formData.tanggalKmk
                       ? format(formData.tanggalKmk, "dd/MM/yyyy")
-                      : "Pilih tanggal"}
+                      : "Pilih tanggal KMK"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -129,34 +146,25 @@ export function DataKmkModal({ open, onOpenChange }: DataKmkModalProps) {
                 </PopoverContent>
               </Popover>
             </div>
+
+            {/* Nomor KMK */}
+            <div className="space-y-2">
+              <Label htmlFor="nomorKmk">Nomor KMK</Label>
+              <Input
+                id="nomorKmk"
+                value={formData.nomorKmk}
+                onChange={(e) =>
+                  setFormData({ ...formData, nomorKmk: e.target.value })
+                }
+                placeholder="Masukkan nomor KMK"
+                className="w-full"
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="nomorKmk">Nomor KMK</Label>
-            <Input
-              id="nomorKmk"
-              value={formData.nomorKmk}
-              onChange={(e) =>
-                setFormData({ ...formData, nomorKmk: e.target.value })
-              }
-              placeholder="Masukkan nomor KMK"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="uraian">Uraian</Label>
-            <Textarea
-              id="uraian"
-              value={formData.uraian}
-              onChange={(e) =>
-                setFormData({ ...formData, uraian: e.target.value })
-              }
-              placeholder="Masukkan uraian"
-              rows={3}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+          {/* Second row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Jenis KMK */}
             <div className="space-y-2">
               <Label htmlFor="jenis">Jenis KMK</Label>
               <Select
@@ -166,7 +174,10 @@ export function DataKmkModal({ open, onOpenChange }: DataKmkModalProps) {
                 }
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih jenis KMK" />
+                  <SelectValue
+                    className="truncate"
+                    placeholder="Pilih jenis KMK"
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="1" title="Kode 1 - Potongan SPM">
@@ -185,6 +196,7 @@ export function DataKmkModal({ open, onOpenChange }: DataKmkModalProps) {
               </Select>
             </div>
 
+            {/* Kriteria KMK */}
             <div className="space-y-2">
               <Label htmlFor="kriteria">Kriteria KMK</Label>
               <Select
@@ -194,7 +206,10 @@ export function DataKmkModal({ open, onOpenChange }: DataKmkModalProps) {
                 }
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih kriteria KMK" />
+                  <SelectValue
+                    className="truncate"
+                    placeholder="Pilih kriteria KMK"
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Tunggakan PHLN" title="Tunggakan PHLN">
@@ -226,27 +241,56 @@ export function DataKmkModal({ open, onOpenChange }: DataKmkModalProps) {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="file">File KMK</Label>
-            <Input
-              id="file"
-              type="file"
-              accept=".pdf,.doc,.docx"
-              onChange={handleFileChange}
-              className="cursor-pointer"
-            />
-            {formData.file && (
-              <p className="text-sm text-muted-foreground">
-                File terpilih: {formData.file.name}
-              </p>
-            )}
+          {/* Full width fields */}
+          <div className="mt-6">
+            <div className="space-y-4">
+              {/* Uraian */}
+              <div className="space-y-2">
+                <Label htmlFor="uraian">Uraian</Label>
+                <Textarea
+                  id="uraian"
+                  value={formData.uraian}
+                  onChange={(e) =>
+                    setFormData({ ...formData, uraian: e.target.value })
+                  }
+                  placeholder="Masukkan uraian"
+                  rows={4}
+                  className="w-full"
+                />
+              </div>
+
+              {/* File KMK */}
+              <div className="space-y-2">
+                <Label htmlFor="file">File KMK</Label>
+                <Input
+                  id="file"
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={handleFileChange}
+                  className="cursor-pointer w-full"
+                />
+                {formData.file && (
+                  <p className="text-sm text-muted-foreground">
+                    File terpilih: {formData.file.name}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Batal
-          </Button>
-          <Button onClick={handleSubmit}>Simpan</Button>
+
+        <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-3">
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleClose}>
+              Close
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              className="bg-slate-800 hover:bg-slate-900"
+            >
+              Save
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -12,11 +12,11 @@ import { RetryActions } from "@/components/retry-actions";
 import AutoRetry from "@/components/auto-retry";
 
 export const metadata: Metadata = {
-  title: "Server Error (500)",
+  title: "Server Connection Error",
   description: "We can't reach the server right now.",
 };
 
-export default function Error500Page() {
+export default function ServerErrorPage() {
   return (
     <div className="min-h-[100svh] w-full flex items-center justify-center bg-gradient-to-b from-background to-muted/40 p-6">
       <div className="max-w-xl w-full">

@@ -24,8 +24,6 @@ import {
   Layers,
   Star,
   Coins,
-  Wallet,
-  PiggyBank,
   Send,
   History,
   Calendar,
@@ -84,10 +82,9 @@ const defaultMenu: MenuItem[] = [
   {
     label: "Transfer Daerah",
     children: [
+      { label: "Proyeksi TKD" },
       { label: "Upload Laporan" },
       { label: "DAU" },
-      { label: "DAK" },
-      { label: "DBH" },
     ],
   },
   {
@@ -196,14 +193,13 @@ export function ResponsiveSidebar({
         return <Layers className={cls} />;
       case "Spending Review__Rekomendasi":
         return <Star className={cls} />;
+      case "Transfer Daerah__Proyeksi TKD":
+        return <TrendingUp className={cls} />;
       case "Transfer Daerah__Upload Laporan":
         return <Upload className={cls} />;
       case "Transfer Daerah__DAU":
         return <Coins className={cls} />;
-      case "Transfer Daerah__DAK":
-        return <Wallet className={cls} />;
-      case "Transfer Daerah__DBH":
-        return <PiggyBank className={cls} />;
+
       case "Inquiry Data__Permintaan":
         return <Send className={cls} />;
       case "Inquiry Data__Riwayat":
@@ -393,6 +389,24 @@ export function ResponsiveSidebar({
                               <span>{c.label}</span>
                             </Link>
                           </DropdownMenuItem>
+                        ) : c.label === "Proyeksi TKD" &&
+                          m.label === "Transfer Daerah" ? (
+                          <DropdownMenuItem key={c.label} asChild>
+                            <Link
+                              href="/transfer-daerah/proyeksi-tkd"
+                              className="flex items-center w-full"
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/transfer-daerah/proyeksi-tkd",
+                                })
+                              }
+                            >
+                              {subIconFor(m.label, c.label)}
+                              <span>{c.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
                         ) : c.label === "Upload Laporan" &&
                           m.label === "Transfer Daerah" ? (
                           <DropdownMenuItem key={c.label} asChild>
@@ -552,6 +566,26 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/epa/summary",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Proyeksi TKD" &&
+                      m.label === "Transfer Daerah" ? (
+                      <Link
+                        key={c.label}
+                        href="/transfer-daerah/proyeksi-tkd"
+                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/transfer-daerah/proyeksi-tkd",
                           });
                           setOpen(false);
                         }}

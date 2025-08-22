@@ -22,15 +22,15 @@ import { Download, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { DeleteLaporanModal } from "@/components/transfer-daerah/modals/delete-laporan-modal";
 
-// Mock data for demonstration
+// Mock data for demonstration - Only quarterly reports for Laporan Monev KPPN
 const mockData = [
   {
     id: 1,
     tahun: "2024",
     kppn: "KPPN Jakarta I",
     jenis: "Laporan Monev",
-    periode: "Bulanan - Maret",
-    uraian: "Laporan monitoring dan evaluasi periode Maret 2024",
+    periode: "Triwulan I",
+    uraian: "Laporan monitoring dan evaluasi triwulan I 2024",
     tanggalUpload: "2024-04-10 11:20:00",
   },
   {
@@ -38,8 +38,8 @@ const mockData = [
     tahun: "2024",
     kppn: "KPPN Jakarta II",
     jenis: "Laporan Monev",
-    periode: "Semesteran - Semester I",
-    uraian: "Laporan monitoring dan evaluasi semester I 2024",
+    periode: "Triwulan II",
+    uraian: "Laporan monitoring dan evaluasi triwulan II 2024",
     tanggalUpload: "2024-07-15 14:45:00",
   },
   {
@@ -47,8 +47,8 @@ const mockData = [
     tahun: "2024",
     kppn: "KPPN Bandung",
     jenis: "Laporan Monev",
-    periode: "Triwulan - Triwulan II",
-    uraian: "Laporan monitoring dan evaluasi triwulan II 2024",
+    periode: "Triwulan III",
+    uraian: "Laporan monitoring dan evaluasi triwulan III 2024",
     tanggalUpload: "2024-08-05 09:30:00",
   },
   {
@@ -56,8 +56,8 @@ const mockData = [
     tahun: "2023",
     kppn: "KPPN Medan",
     jenis: "Laporan Monev",
-    periode: "Tahunan",
-    uraian: "Laporan monitoring dan evaluasi tahunan 2023",
+    periode: "Triwulan IV",
+    uraian: "Laporan monitoring dan evaluasi triwulan IV 2023",
     tanggalUpload: "2024-02-28 16:15:00",
   },
 ];
@@ -114,18 +114,18 @@ export function LaporanMonevKppnTab() {
           {/* Periode Filter */}
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">
-              Filter Periode:
+              Filter Triwulan:
             </span>
             <Select value={selectedPeriode} onValueChange={handlePeriodeFilter}>
               <SelectTrigger className="w-40">
-                <SelectValue placeholder="Semua Periode" />
+                <SelectValue placeholder="Semua Triwulan" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua Periode</SelectItem>
-                <SelectItem value="bulanan">Bulanan</SelectItem>
-                <SelectItem value="semesteran">Semesteran</SelectItem>
-                <SelectItem value="tahunan">Tahunan</SelectItem>
-                <SelectItem value="triwulan">Triwulan</SelectItem>
+                <SelectItem value="all">Semua Triwulan</SelectItem>
+                <SelectItem value="triwulan i">Triwulan I</SelectItem>
+                <SelectItem value="triwulan ii">Triwulan II</SelectItem>
+                <SelectItem value="triwulan iii">Triwulan III</SelectItem>
+                <SelectItem value="triwulan iv">Triwulan IV</SelectItem>
               </SelectContent>
             </Select>
           </div>

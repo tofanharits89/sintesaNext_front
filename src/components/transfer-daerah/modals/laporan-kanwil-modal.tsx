@@ -289,7 +289,7 @@ export function LaporanKanwilModal({
           <Button
             type="submit"
             form="laporan-kanwil-form"
-            className="bg-green-500 hover:bg-green-600 text-white"
+            className="bg-slate-800 hover:bg-slate-900 text-white"
           >
             Save
           </Button>

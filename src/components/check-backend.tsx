@@ -11,8 +11,8 @@ export default function CheckBackend() {
 
   useEffect(() => {
     if (!pathname) return;
-    // Avoid loop on 500 page
-    if (pathname.includes("/500")) return;
+    // Avoid loop on server-error page
+    if (pathname.includes("/server-error")) return;
 
     const ac = new AbortController();
     const timeout = setTimeout(() => ac.abort(), 1500);
@@ -23,8 +23,8 @@ export default function CheckBackend() {
         if (!res.ok) throw new Error("unhealthy");
       })
       .catch(() => {
-        // If backend is down, navigate to the 500 page (basePath-aware)
-        router.replace("/500");
+        // If backend is down, navigate to the server-error page (basePath-aware)
+        router.replace("/server-error");
       });
 
     return () => {

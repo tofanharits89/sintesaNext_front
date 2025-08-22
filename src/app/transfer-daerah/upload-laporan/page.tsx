@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileText, Building2 } from "lucide-react";
 import { LaporanKppnModal } from "@/components/transfer-daerah/modals/laporan-kppn-modal";
 import { LaporanKanwilModal } from "@/components/transfer-daerah/modals/laporan-kanwil-modal";
 import { LaporanKeuanganKppnTab } from "@/components/transfer-daerah/laporan-keuangan-kppn-tab";
@@ -30,14 +31,16 @@ export default function UploadLaporanPage() {
         <div className="flex items-center gap-2">
           <Button
             onClick={() => setIsKppnModalOpen(true)}
-            className="bg-blue-500 hover:bg-blue-600 text-white"
+            className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 text-white min-w-[130px] h-10"
           >
+            <FileText className="h-4 w-4 mr-2" />
             Laporan KPPN
           </Button>
           <Button
             onClick={() => setIsKanwilModalOpen(true)}
-            className="bg-green-500 hover:bg-green-600 text-white"
+            className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 text-white min-w-[130px] h-10"
           >
+            <Building2 className="h-4 w-4 mr-2" />
             Laporan Kanwil
           </Button>
         </div>
