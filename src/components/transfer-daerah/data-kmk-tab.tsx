@@ -3,6 +3,13 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Download, Eye, Trash2 } from "lucide-react";
@@ -12,7 +19,7 @@ import { DataPotonganModal } from "./modals/data-potongan-modal";
 import { DeleteConfirmModal } from "./modals/delete-confirm-modal";
 
 interface DataKmkTabProps {
-  selectedYear: string;
+  // Remove the selectedYear prop as this tab will manage its own year state
 }
 
 // Mock data for KMK table
@@ -64,12 +71,19 @@ const mockKmkData = [
   // Add more mock data as needed
 ];
 
-export function DataKmkTab({ selectedYear }: DataKmkTabProps) {
+export function DataKmkTab({}: DataKmkTabProps) {
+  const [selectedYear, setSelectedYear] = useState("2024");
   const [isDataKmkModalOpen, setIsDataKmkModalOpen] = useState(false);
   const [isPencabutanModalOpen, setIsPencabutanModalOpen] = useState(false);
   const [isDataPotonganModalOpen, setIsDataPotonganModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+
+  // Generate years from current year back to 2020
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - 2019 }, (_, i) =>
+    (currentYear - i).toString()
+  );
 
   const handleDataPotongan = (item: any) => {
     setSelectedItem(item);
@@ -269,29 +283,55 @@ export function DataKmkTab({ selectedYear }: DataKmkTabProps) {
   ];
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Data KMK</CardTitle>
-          <div className="flex items-center gap-2">
-            <Button onClick={() => setIsDataKmkModalOpen(true)}>
-              Data KMK
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setIsPencabutanModalOpen(true)}
-            >
-              Pencabutan
-            </Button>
+    <div className="space-y-6">
+      {/* Simple Filter Card */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Tahun</label>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger className="w-full">
+                  <SelectValue className="truncate" />
+                </SelectTrigger>
+                <SelectContent>
+                  {years.map((year) => (
+                    <SelectItem key={year} value={year}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <DataTable
-          columns={columns}
-          data={mockKmkData.filter((item) => item.tahun === selectedYear)}
-        />
-      </CardContent>
+        </CardContent>
+      </Card>
+
+      {/* Data Table Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Data KMK</CardTitle>
+            <div className="flex items-center gap-2">
+              <Button onClick={() => setIsDataKmkModalOpen(true)}>
+                Data KMK
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsPencabutanModalOpen(true)}
+              >
+                Pencabutan
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <DataTable
+            columns={columns}
+            data={mockKmkData.filter((item) => item.tahun === selectedYear)}
+          />
+        </CardContent>
+      </Card>
 
       {/* Modals */}
       <DataKmkModal
@@ -317,6 +357,6 @@ export function DataKmkTab({ selectedYear }: DataKmkTabProps) {
           setIsDeleteModalOpen(false);
         }}
       />
-    </Card>
+    </div>
   );
 }

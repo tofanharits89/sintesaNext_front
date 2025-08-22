@@ -3,26 +3,11 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { DataKmkTab } from "@/components/transfer-daerah/data-kmk-tab";
 import { DataTransaksiTab } from "@/components/transfer-daerah/data-transaksi-tab";
 import { RekonsiliasiDataTab } from "@/components/transfer-daerah/rekonsilisasi-data-tab";
 
 export default function DAUPage() {
-  const [selectedYear, setSelectedYear] = useState("2024");
-
-  // Generate years from current year back to 2020
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: currentYear - 2019 }, (_, i) =>
-    (currentYear - i).toString()
-  );
-
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -34,23 +19,6 @@ export default function DAUPage() {
           <p className="text-sm text-muted-foreground">
             Kelola data DAU, transaksi, dan rekonsilisasi
           </p>
-        </div>
-
-        {/* Year Selector */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">Tahun:</span>
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {years.map((year) => (
-                <SelectItem key={year} value={year}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
@@ -81,21 +49,21 @@ export default function DAUPage() {
           value="data-kmk"
           className="animate-in fade-in-50 duration-200"
         >
-          <DataKmkTab selectedYear={selectedYear} />
+          <DataKmkTab />
         </TabsContent>
 
         <TabsContent
           value="data-transaksi"
           className="animate-in fade-in-50 duration-200"
         >
-          <DataTransaksiTab selectedYear={selectedYear} />
+          <DataTransaksiTab />
         </TabsContent>
 
         <TabsContent
           value="rekonsilisasi-data"
           className="animate-in fade-in-50 duration-200"
         >
-          <RekonsiliasiDataTab selectedYear={selectedYear} />
+          <RekonsiliasiDataTab />
         </TabsContent>
       </Tabs>
     </div>

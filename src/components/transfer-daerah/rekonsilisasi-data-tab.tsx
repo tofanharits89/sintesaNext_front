@@ -16,7 +16,7 @@ import kppnData from "@/data/kdkppn.json";
 import kabkotaData from "@/data/kdlokasi.json";
 
 interface RekonsiliasiDataTabProps {
-  selectedYear: string;
+  // Remove selectedYear prop as this tab will manage its own year state
 }
 
 // Mock data for reconciliation table
@@ -51,13 +51,18 @@ const mockRekonsiliasiData = [
   // Add more mock data as needed
 ];
 
-export function RekonsiliasiDataTab({
-  selectedYear,
-}: RekonsiliasiDataTabProps) {
+export function RekonsiliasiDataTab({}: RekonsiliasiDataTabProps) {
+  const [selectedYear, setSelectedYear] = useState("2024");
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedKppn, setSelectedKppn] = useState("");
   const [selectedKabKota, setSelectedKabKota] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
+
+  // Generate years from current year back to 2020
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - 2019 }, (_, i) =>
+    (currentYear - i).toString()
+  );
 
   const months = [
     "Januari",
@@ -77,6 +82,7 @@ export function RekonsiliasiDataTab({
   const statusOptions = ["Selesai", "Pending", "Dalam Proses", "Ditolak"];
 
   const handleReset = () => {
+    setSelectedYear("2024");
     setSelectedMonth("");
     setSelectedKppn("");
     setSelectedKabKota("");
@@ -195,10 +201,17 @@ export function RekonsiliasiDataTab({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Tahun</label>
-              <Select value={selectedYear} disabled>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue className="truncate" />
                 </SelectTrigger>
+                <SelectContent>
+                  {years.map((year) => (
+                    <SelectItem key={year} value={year}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
 

@@ -18,7 +18,7 @@ import kppnData from "@/data/kdkppn.json";
 import kabkotaData from "@/data/kdlokasi.json";
 
 interface DataTransaksiTabProps {
-  selectedYear: string;
+  // Remove selectedYear prop as this tab will manage its own year state
 }
 
 // Mock data for transaction table
@@ -46,13 +46,20 @@ const mockTransaksiData = [
   // Add more mock data as needed
 ];
 
-export function DataTransaksiTab({ selectedYear }: DataTransaksiTabProps) {
+export function DataTransaksiTab({}: DataTransaksiTabProps) {
+  const [selectedYear, setSelectedYear] = useState("2024");
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedKppn, setSelectedKppn] = useState("");
   const [selectedKabKota, setSelectedKabKota] = useState("");
   const [isRekamDataModalOpen, setIsRekamDataModalOpen] = useState(false);
   const [isKertasKerjaModalOpen, setIsKertasKerjaModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+
+  // Generate years from current year back to 2020
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - 2019 }, (_, i) =>
+    (currentYear - i).toString()
+  );
 
   const months = [
     "Januari",
@@ -70,6 +77,7 @@ export function DataTransaksiTab({ selectedYear }: DataTransaksiTabProps) {
   ];
 
   const handleReset = () => {
+    setSelectedYear("2024");
     setSelectedMonth("");
     setSelectedKppn("");
     setSelectedKabKota("");
@@ -221,10 +229,17 @@ export function DataTransaksiTab({ selectedYear }: DataTransaksiTabProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Tahun</label>
-              <Select value={selectedYear} disabled>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue className="truncate" />
                 </SelectTrigger>
+                <SelectContent>
+                  {years.map((year) => (
+                    <SelectItem key={year} value={year}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
 
