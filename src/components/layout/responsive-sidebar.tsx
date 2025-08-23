@@ -32,6 +32,7 @@ import {
   User,
   Phone,
   Upload,
+  Search,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -89,7 +90,11 @@ const defaultMenu: MenuItem[] = [
   },
   {
     label: "Inquiry Data",
-    children: [{ label: "Permintaan" }, { label: "Riwayat" }],
+    children: [
+      { label: "Permintaan" },
+      { label: "Riwayat" },
+      { label: "Belanja" },
+    ],
   },
   {
     label: "Laporan",
@@ -204,6 +209,8 @@ export function ResponsiveSidebar({
         return <Send className={cls} />;
       case "Inquiry Data__Riwayat":
         return <History className={cls} />;
+      case "Inquiry Data__Belanja":
+        return <Search className={cls} />;
       case "Laporan__Bulanan":
         return <Calendar className={cls} />;
       case "Laporan__Triwulanan":
@@ -461,6 +468,24 @@ export function ResponsiveSidebar({
                               <span>{c.label}</span>
                             </Link>
                           </DropdownMenuItem>
+                        ) : c.label === "Belanja" &&
+                          m.label === "Inquiry Data" ? (
+                          <DropdownMenuItem key={c.label} asChild>
+                            <Link
+                              href="/inquiry-data/belanja"
+                              className="flex items-center w-full"
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/inquiry-data/belanja",
+                                })
+                              }
+                            >
+                              {subIconFor(m.label, c.label)}
+                              <span>{c.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem
                             key={c.label}
@@ -663,6 +688,25 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/transfer-daerah/dau",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Belanja" && m.label === "Inquiry Data" ? (
+                      <Link
+                        key={c.label}
+                        href="/inquiry-data/belanja"
+                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/inquiry-data/belanja",
                           });
                           setOpen(false);
                         }}

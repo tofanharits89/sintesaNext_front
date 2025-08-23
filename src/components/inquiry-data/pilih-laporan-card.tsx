@@ -1,0 +1,140 @@
+"use client";
+
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface PilihLaporanCardProps {
+  reportParams: {
+    tahun: string;
+    tipeLaporan: string;
+    pembulatan: string;
+  };
+  setReportParams: React.Dispatch<
+    React.SetStateAction<{
+      tahun: string;
+      tipeLaporan: string;
+      pembulatan: string;
+    }>
+  >;
+}
+
+export function PilihLaporanCard({
+  reportParams,
+  setReportParams,
+}: PilihLaporanCardProps) {
+  // Generate years from current year back to 10 years
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 11 }, (_, i) => currentYear - i);
+
+  const tipeLaporanOptions = [
+    { value: "pagu_apbn", label: "1. Pagu APBN" },
+    { value: "pagu_realisasi", label: "2. Pagu Realisasi" },
+    { value: "pagu_realisasi_bulanan", label: "3. Pagu Realisasi Bulanan" },
+    { value: "pergerakan_pagu_bulanan", label: "4. Pergerakan Pagu Bulanan" },
+    {
+      value: "pergerakan_blokir_bulanan",
+      label: "5. Pergerakan Blokir Bulanan",
+    },
+    {
+      value: "pergerakan_blokir_bulanan_per_jenis",
+      label: "6. Pergerakan Blokir Bulanan Per Jenis",
+    },
+    {
+      value: "volume_output_kegiatan",
+      label: "7. Volume Output Kegiatan (Data Caput)",
+    },
+  ];
+
+  const pembulatanOptions = [
+    { value: "satuan", label: "Satuan" },
+    { value: "ribuan", label: "Ribuan" },
+    { value: "jutaan", label: "Jutaan" },
+    { value: "miliaran", label: "Miliaran" },
+    { value: "triliunan", label: "Triliunan" },
+  ];
+
+  const handleChange = (field: string, value: string) => {
+    setReportParams((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  return (
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="text-lg">Pilih Laporan</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Tahun Selection */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Tahun</label>
+            <Select
+              value={reportParams.tahun}
+              onValueChange={(value) => handleChange("tahun", value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Pilih tahun" />
+              </SelectTrigger>
+              <SelectContent>
+                {years.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Tipe Laporan Selection */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Tipe Laporan</label>
+            <Select
+              value={reportParams.tipeLaporan}
+              onValueChange={(value) => handleChange("tipeLaporan", value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Pilih tipe laporan" />
+              </SelectTrigger>
+              <SelectContent>
+                {tipeLaporanOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Pembulatan Selection */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Pembulatan</label>
+            <Select
+              value={reportParams.pembulatan}
+              onValueChange={(value) => handleChange("pembulatan", value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Pilih pembulatan" />
+              </SelectTrigger>
+              <SelectContent>
+                {pembulatanOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
