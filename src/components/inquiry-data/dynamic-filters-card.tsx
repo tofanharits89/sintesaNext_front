@@ -3,11 +3,12 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FilterCard } from "./filter-card";
+import { EnhancedFilterCard } from "./enhanced-filter-card";
 import { TayangModal } from "./modals/tayang-modal";
 import { WhatsappModal } from "./modals/whatsapp-modal";
 import { SimpanModal } from "./modals/simpan-modal";
 import { LihatSqlModal } from "./modals/lihat-sql-modal";
+
 import {
   Eye,
   Download,
@@ -18,6 +19,7 @@ import {
   FileText,
 } from "lucide-react";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { useInquiryDataApi } from "@/hooks/use-inquiry-data-api";
 
 interface DynamicFiltersCardProps {
   activeFilters: string[];
@@ -28,10 +30,12 @@ interface DynamicFiltersCardProps {
   };
   onRemoveFilter: (filterKey: string) => void;
   onClearAllFilters: () => void;
+  filterValues: Record<string, any>;
+  onFilterChange: (filterKey: string, field: string, value: string) => void;
 }
 
 const filterLabels: Record<string, string> = {
-  cutOff: "Cut Off",
+  cutOff: "Cut Off (Wajib)",
   kementerian: "Kementerian",
   eselonI: "Eselon I",
   kewenangan: "Kewenangan",
@@ -78,6 +82,8 @@ export function DynamicFiltersCard({
   reportParams,
   onRemoveFilter,
   onClearAllFilters,
+  filterValues,
+  onFilterChange,
 }: DynamicFiltersCardProps) {
   const [modals, setModals] = useState({
     tayang: false,
@@ -86,13 +92,13 @@ export function DynamicFiltersCard({
     lihatSql: false,
   });
 
-  // State to track filter values for hierarchical filtering
-  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
-
   // Get current user to check if admin for SQL view
   const { currentUser } = useCurrentUser();
   const isAdmin =
     currentUser?.role === "super_admin" || currentUser?.role === "co_admin";
+
+  // API hook for query execution (used for downloads)
+  const { downloadCSV, downloadExcel, isLoading } = useInquiryDataApi();
 
   // Sort active filters based on predefined order
   const sortedActiveFilters = activeFilters
@@ -113,35 +119,29 @@ export function DynamicFiltersCard({
 
   const handleRemoveFilter = (filterKey: string) => {
     onRemoveFilter(filterKey);
-    // Clear the filter value when removing the filter
-    setFilterValues((prev) => {
-      const newValues = { ...prev };
-      delete newValues[filterKey];
-      return newValues;
-    });
   };
 
-  const handleFilterChange = (
-    filterKey: string,
-    field: string,
-    value: string
-  ) => {
-    if (field === "selection") {
-      setFilterValues((prev) => ({
-        ...prev,
-        [filterKey]: value,
-      }));
+  // Open tayang modal (query execution will happen inside the modal)
+  const handleTayang = () => {
+    openModal("tayang");
+  };
+
+  const handleDownloadExcel = async () => {
+    try {
+      await downloadExcel(activeFilters, filterValues, reportParams);
+    } catch (error) {
+      console.error("Excel download error:", error);
+      // You could show a toast notification here
     }
   };
 
-  const handleDownloadExcel = () => {
-    // Implement Excel download logic
-    console.log("Downloading Excel file...");
-  };
-
-  const handleDownloadCSV = () => {
-    // Implement CSV download logic
-    console.log("Downloading CSV file...");
+  const handleDownloadCSV = async () => {
+    try {
+      await downloadCSV(activeFilters, filterValues, reportParams);
+    } catch (error) {
+      console.error("CSV download error:", error);
+      // You could show a toast notification here
+    }
   };
 
   return (
@@ -161,10 +161,7 @@ export function DynamicFiltersCard({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    onClearAllFilters();
-                    setFilterValues({}); // Clear all filter values
-                  }}
+                  onClick={onClearAllFilters}
                   className="text-red-600 hover:text-red-700 hover:bg-red-50"
                 >
                   Hapus Semua
@@ -173,13 +170,13 @@ export function DynamicFiltersCard({
             </div>
             <div className="space-y-4">
               {sortedActiveFilters.map((filterKey) => (
-                <FilterCard
+                <EnhancedFilterCard
                   key={filterKey}
                   filterKey={filterKey}
                   filterLabel={filterLabels[filterKey] || filterKey}
                   onRemove={() => handleRemoveFilter(filterKey)}
                   activeFilterValues={filterValues}
-                  onFilterChange={handleFilterChange}
+                  onFilterChange={onFilterChange}
                 />
               ))}
             </div>
@@ -201,19 +198,19 @@ export function DynamicFiltersCard({
           <div className="flex flex-wrap justify-center gap-3">
             {/* Tayang Button */}
             <Button
-              onClick={() => openModal("tayang")}
+              onClick={handleTayang}
               className="bg-blue-600 hover:bg-blue-700 text-white min-w-[150px] h-10"
-              disabled={activeFilters.length === 0}
+              disabled={activeFilters.length === 0 || isLoading}
             >
               <Eye className="w-4 h-4 mr-2" />
-              Tayang
+              {isLoading ? "Loading..." : "Tayang"}
             </Button>
 
             {/* Download Excel Button */}
             <Button
               onClick={handleDownloadExcel}
               className="bg-green-100 hover:bg-green-200 text-green-800 border-green-200 min-w-[150px] h-10"
-              disabled={activeFilters.length === 0}
+              disabled={activeFilters.length === 0 || isLoading}
             >
               <FileSpreadsheet className="w-4 h-4 mr-2" />
               Download Excel
@@ -223,7 +220,7 @@ export function DynamicFiltersCard({
             <Button
               onClick={handleDownloadCSV}
               className="bg-green-100 hover:bg-green-200 text-green-800 border-green-200 min-w-[150px] h-10"
-              disabled={activeFilters.length === 0}
+              disabled={activeFilters.length === 0 || isLoading}
             >
               <FileText className="w-4 h-4 mr-2" />
               Download CSV
@@ -270,6 +267,7 @@ export function DynamicFiltersCard({
         onOpenChange={(open: boolean) => closeModal("tayang")}
         activeFilters={activeFilters}
         reportParams={reportParams}
+        filterValues={filterValues}
       />
 
       <WhatsappModal
@@ -292,8 +290,11 @@ export function DynamicFiltersCard({
           onOpenChange={(open: boolean) => closeModal("lihatSql")}
           activeFilters={activeFilters}
           reportParams={reportParams}
+          filterValues={filterValues}
         />
       )}
+
+
     </Card>
   );
 }

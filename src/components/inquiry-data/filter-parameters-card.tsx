@@ -15,27 +15,33 @@ export function FilterParametersCard({
   setActiveFilters,
 }: FilterParametersCardProps) {
   const filterOptions = [
-    { key: "cutOff", label: "Cut Off" },
-    { key: "kementerian", label: "Kementerian" },
-    { key: "eselonI", label: "Eselon I" },
-    { key: "kewenangan", label: "Kewenangan" },
-    { key: "provinsi", label: "Provinsi" },
-    { key: "kabkota", label: "Kabkota" },
-    { key: "kanwil", label: "Kanwil" },
-    { key: "kppn", label: "KPPN" },
-    { key: "satker", label: "Satker" },
-    { key: "fungsi", label: "Fungsi" },
-    { key: "subFungsi", label: "Sub-Fungsi" },
-    { key: "program", label: "Program" },
-    { key: "kegiatan", label: "Kegiatan" },
-    { key: "outputKro", label: "Output/KRO" },
-    { key: "subOutputRo", label: "Sub-Output/RO" },
-    { key: "akun", label: "Akun" },
-    { key: "sumberDana", label: "Sumber Dana" },
-    { key: "register", label: "Register" },
+    { key: "cutOff", label: "Cut Off (Wajib)", mandatory: true },
+    { key: "kementerian", label: "Kementerian", mandatory: false },
+    { key: "eselonI", label: "Eselon I", mandatory: false },
+    { key: "kewenangan", label: "Kewenangan", mandatory: false },
+    { key: "provinsi", label: "Provinsi", mandatory: false },
+    { key: "kabkota", label: "Kabkota", mandatory: false },
+    { key: "kanwil", label: "Kanwil", mandatory: false },
+    { key: "kppn", label: "KPPN", mandatory: false },
+    { key: "satker", label: "Satker", mandatory: false },
+    { key: "fungsi", label: "Fungsi", mandatory: false },
+    { key: "subFungsi", label: "Sub-Fungsi", mandatory: false },
+    { key: "program", label: "Program", mandatory: false },
+    { key: "kegiatan", label: "Kegiatan", mandatory: false },
+    { key: "outputKro", label: "Output/KRO", mandatory: false },
+    { key: "subOutputRo", label: "Sub-Output/RO", mandatory: false },
+    { key: "akun", label: "Akun", mandatory: false },
+    { key: "sumberDana", label: "Sumber Dana", mandatory: false },
+    { key: "register", label: "Register", mandatory: false },
   ];
 
   const handleToggle = (filterKey: string) => {
+    // Find the filter option to check if it's mandatory
+    const filterOption = filterOptions.find(opt => opt.key === filterKey);
+    if (filterOption?.mandatory) {
+      return; // Prevent toggling mandatory filters
+    }
+    
     setActiveFilters((prev) => {
       if (prev.includes(filterKey)) {
         return prev.filter((key) => key !== filterKey);
@@ -56,7 +62,8 @@ export function FilterParametersCard({
             <div key={option.key} className="flex items-center space-x-2">
               <Switch
                 id={option.key}
-                checked={activeFilters.includes(option.key)}
+                checked={option.mandatory ? true : activeFilters.includes(option.key)}
+                disabled={option.mandatory}
                 onCheckedChange={() => handleToggle(option.key)}
               />
               <Label

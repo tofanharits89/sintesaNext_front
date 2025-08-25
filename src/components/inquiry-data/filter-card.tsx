@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -685,13 +686,76 @@ export function FilterCard({
   ];
 
   const handleInputChange = (field: string, value: string) => {
-    setFilterData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFilterData((prev) => {
+      const newData = {
+        ...prev,
+        [field]: value,
+      };
 
-    // Notify parent component about value changes for hierarchical filtering
-    if (onFilterChange && field === "selection") {
+      // Mutual exclusion logic: clear other filter fields when one is used
+      if (field === "selection" && value !== "all") {
+        // Clear other filters when main selection is made
+        newData.kondisiCode = "";
+        newData.mengandungKata = "";
+        
+        // Notify parent about cleared fields
+        if (onFilterChange) {
+          setTimeout(() => {
+            onFilterChange(filterKey, "kondisiCode", "");
+            onFilterChange(filterKey, "mengandungKata", "");
+          }, 0);
+        }
+      } else if (field === "kondisiCode" && value.trim()) {
+        // Clear other filters when kondisi is used
+        newData.selection = "all";
+        newData.mengandungKata = "";
+        
+        // Notify parent about cleared fields
+        if (onFilterChange) {
+          setTimeout(() => {
+            onFilterChange(filterKey, "selection", "all");
+            onFilterChange(filterKey, "mengandungKata", "");
+          }, 0);
+        }
+      } else if (field === "mengandungKata" && value.trim()) {
+        // Clear other filters when mengandung kata is used
+        newData.selection = "all";
+        newData.kondisiCode = "";
+        
+        // Notify parent about cleared fields
+        if (onFilterChange) {
+          setTimeout(() => {
+            onFilterChange(filterKey, "selection", "all");
+            onFilterChange(filterKey, "kondisiCode", "");
+          }, 0);
+        }
+      }
+
+      // Auto-change jenisTampilan to "kode_uraian" when mengandungKata is entered
+      // This makes sense because mengandungKata searches in description, so user should see both code and description
+      if (field === "mengandungKata" && value.trim() && prev.jenisTampilan !== "kode_uraian") {
+        newData.jenisTampilan = "kode_uraian";
+        
+        // Notify parent about the auto-change
+        if (onFilterChange) {
+          setTimeout(() => {
+            onFilterChange(filterKey, "jenisTampilan", "kode_uraian");
+          }, 0);
+        }
+      }
+
+      // Reset jenisTampilan back to "kode" if mengandungKata is cleared and it was auto-changed
+      if (field === "mengandungKata" && !value.trim() && prev.jenisTampilan === "kode_uraian") {
+        // Only reset if user hasn't manually selected kode_uraian for other reasons
+        // We can't easily track this, so we'll leave it as is for now
+        // User can manually change it back if needed
+      }
+
+      return newData;
+    });
+
+    // Notify parent component about value changes
+    if (onFilterChange) {
       onFilterChange(filterKey, field, value);
     }
   };
@@ -700,15 +764,18 @@ export function FilterCard({
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-base font-medium">{filterLabel}</CardTitle>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onRemove}
-          className="h-8 w-8 p-0"
-          title={`Hapus filter ${filterLabel}`}
-        >
-          <X className="h-4 w-4" />
-        </Button>
+        {/* Hide remove button for mandatory cutOff filter */}
+        {filterKey !== "cutOff" && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onRemove}
+            className="h-8 w-8 p-0"
+            title={`Hapus filter ${filterLabel}`}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Special layout for Cut Off filter */}
@@ -833,20 +900,55 @@ export function FilterCard({
                 value={filterData.selection}
                 onValueChange={(value) => handleInputChange("selection", value)}
                 placeholder={`Pilih ${filterLabel.toLowerCase()}`}
-                className="w-full"
+                className={cn(
+                  "w-full",
+                  ((filterData.kondisiCode && filterData.kondisiCode.trim()) ||
+                   (filterData.mengandungKata && filterData.mengandungKata.trim())) && 
+                  "opacity-50 cursor-not-allowed"
+                )}
+                disabled={
+                  (filterData.kondisiCode && filterData.kondisiCode.trim()) ||
+                  (filterData.mengandungKata && filterData.mengandungKata.trim())
+                }
               />
+              {((filterData.kondisiCode && filterData.kondisiCode.trim()) ||
+                (filterData.mengandungKata && filterData.mengandungKata.trim())) && (
+                <p className="text-xs text-amber-600">
+                  ⚠️ Dinonaktifkan karena filter lain sedang digunakan
+                </p>
+              )}
             </div>
 
             {/* Kondisi Input */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Kondisi</Label>
               <Input
-                placeholder="Kode kondisi"
+                placeholder="Kode kondisi (pisahkan dengan koma)"
                 value={filterData.kondisiCode}
                 onChange={(e) =>
                   handleInputChange("kondisiCode", e.target.value)
                 }
+                disabled={
+                  (filterData.selection && filterData.selection !== "all") ||
+                  (filterData.mengandungKata && filterData.mengandungKata.trim())
+                }
+                className={cn(
+                  ((filterData.selection && filterData.selection !== "all") ||
+                   (filterData.mengandungKata && filterData.mengandungKata.trim())) && 
+                  "opacity-50 cursor-not-allowed"
+                )}
               />
+              {filterData.kondisiCode && filterData.kondisiCode.trim() && (
+                <p className="text-xs text-muted-foreground">
+                  💡 Contoh: 001,002,003 untuk multiple kode
+                </p>
+              )}
+              {((filterData.selection && filterData.selection !== "all") ||
+                (filterData.mengandungKata && filterData.mengandungKata.trim())) && (
+                <p className="text-xs text-amber-600">
+                  ⚠️ Dinonaktifkan karena filter lain sedang digunakan
+                </p>
+              )}
             </div>
 
             {/* Mengandung Kata Input */}
@@ -858,7 +960,27 @@ export function FilterCard({
                 onChange={(e) =>
                   handleInputChange("mengandungKata", e.target.value)
                 }
+                disabled={
+                  (filterData.selection && filterData.selection !== "all") ||
+                  (filterData.kondisiCode && filterData.kondisiCode.trim())
+                }
+                className={cn(
+                  ((filterData.selection && filterData.selection !== "all") ||
+                   (filterData.kondisiCode && filterData.kondisiCode.trim())) && 
+                  "opacity-50 cursor-not-allowed"
+                )}
               />
+              {filterData.mengandungKata && filterData.mengandungKata.trim() && (
+                <p className="text-xs text-muted-foreground">
+                  💡 Pencarian dilakukan pada kolom deskripsi
+                </p>
+              )}
+              {((filterData.selection && filterData.selection !== "all") ||
+                (filterData.kondisiCode && filterData.kondisiCode.trim())) && (
+                <p className="text-xs text-amber-600">
+                  ⚠️ Dinonaktifkan karena filter lain sedang digunakan
+                </p>
+              )}
             </div>
 
             {/* Jenis Tampilan Dropdown */}
@@ -881,6 +1003,11 @@ export function FilterCard({
                   ))}
                 </SelectContent>
               </Select>
+              {filterData.mengandungKata && filterData.mengandungKata.trim() && filterData.jenisTampilan === "kode_uraian" && (
+                <p className="text-xs text-blue-600">
+                  ℹ️ Otomatis diubah ke "Kode Uraian" untuk pencarian teks
+                </p>
+              )}
             </div>
           </div>
         )}

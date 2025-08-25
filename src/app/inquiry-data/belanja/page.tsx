@@ -7,8 +7,23 @@ import { FilterParametersCard } from "@/components/inquiry-data/filter-parameter
 import { DynamicFiltersCard } from "@/components/inquiry-data/dynamic-filters-card";
 
 export default function BelanjaPage() {
-  // State for managing which filters are active
-  const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  // State for managing which filters are active (cutOff is always active)
+  const [activeFilters, setActiveFilters] = useState<string[]>(["cutOff"]);
+
+  // State for filter values (initialize cutOff with current month)
+  const getCurrentMonth = () => {
+    const now = new Date();
+    return String(now.getMonth() + 1).padStart(2, '0');
+  };
+  
+  const [filterValues, setFilterValues] = useState<Record<string, any>>({
+    cutOff: {
+      selection: getCurrentMonth(),
+      kondisiCode: "",
+      mengandungKata: "",
+      jenisTampilan: "kode",
+    },
+  });
 
   // State for report selection with defaults
   const currentYear = new Date().getFullYear();
@@ -21,12 +36,43 @@ export default function BelanjaPage() {
 
   // Function to remove a specific filter
   const removeFilter = (filterKey: string) => {
+    // Prevent removing cutOff as it's mandatory
+    if (filterKey === "cutOff") {
+      return;
+    }
+    
     setActiveFilters((prev) => prev.filter((key) => key !== filterKey));
+    // Clear the filter value when removing the filter
+    setFilterValues((prev) => {
+      const newValues = { ...prev };
+      delete newValues[filterKey];
+      return newValues;
+    });
   };
 
-  // Function to clear all filters
+  // Function to clear all filters (except mandatory cutOff)
   const clearAllFilters = () => {
-    setActiveFilters([]);
+    setActiveFilters(["cutOff"]);
+    // Keep cutOff filter value, clear others
+    setFilterValues((prev) => {
+      const cutOffValue = prev.cutOff;
+      return cutOffValue ? { cutOff: cutOffValue } : {};
+    });
+  };
+
+  // Function to handle filter value changes
+  const handleFilterChange = (
+    filterKey: string,
+    field: string,
+    value: string
+  ) => {
+    setFilterValues((prev) => ({
+      ...prev,
+      [filterKey]: {
+        ...prev[filterKey],
+        [field]: value,
+      },
+    }));
   };
 
   return (
@@ -64,6 +110,8 @@ export default function BelanjaPage() {
           reportParams={reportParams}
           onRemoveFilter={removeFilter}
           onClearAllFilters={clearAllFilters}
+          filterValues={filterValues}
+          onFilterChange={handleFilterChange}
         />
       </div>
     </div>
