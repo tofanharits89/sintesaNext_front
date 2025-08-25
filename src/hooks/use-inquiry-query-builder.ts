@@ -190,6 +190,12 @@ export function useInquiryQueryBuilder() {
       }
 
       const thang = reportParams.tahun;
+
+      // Special case for pergerakan_blokir_bulanan_per_jenis table name format
+      if (reportParams.tipeLaporan === "pergerakan_blokir_bulanan_per_jenis") {
+        return `monev${thang}.pa_pagu_blokir_akun_${thang}_bulanan`;
+      }
+
       return `monev${thang}.${baseTable}_${thang}`;
     },
     []
@@ -307,7 +313,8 @@ export function useInquiryQueryBuilder() {
         );
       } else if (
         reportParams.tipeLaporan !== "pergerakan_pagu_bulanan" &&
-        reportParams.tipeLaporan !== "pergerakan_blokir_bulanan"
+        reportParams.tipeLaporan !== "pergerakan_blokir_bulanan" &&
+        reportParams.tipeLaporan !== "pergerakan_blokir_bulanan_per_jenis"
       ) {
         // For other report types (except pergerakan_pagu_bulanan and pergerakan_blokir_bulanan), keep the original PAGU_DIPA column
         // pergerakan_pagu_bulanan doesn't need PAGU_DIPA since pagu is broken down by monthly columns
@@ -414,6 +421,38 @@ export function useInquiryQueryBuilder() {
           );
         }
         // No REALISASI column for pergerakan_blokir_bulanan as it only fetches blokir data
+      } else if (
+        reportParams.tipeLaporan === "pergerakan_blokir_bulanan_per_jenis"
+      ) {
+        // For tipe laporan 6 (Pergerakan Blokir Bulanan Per Jenis), add mandatory kdblokir and nmblokir columns
+        // Add mandatory kdblokir and nmblokir columns first
+        selectColumns.push(`main.kdblokir AS kdblokir_kode`);
+        selectColumns.push(`main.nmblokir AS nmblokir_uraian`);
+
+        // Month names mapping
+        const monthNames = [
+          "JAN",
+          "FEB",
+          "MAR",
+          "APR",
+          "MEI",
+          "JUN",
+          "JUL",
+          "AGS",
+          "SEP",
+          "OKT",
+          "NOV",
+          "DES",
+        ];
+
+        // Generate monthly blokir columns up to cutOff month
+        for (let month = 1; month <= cutOffNum; month++) {
+          const monthName = monthNames[month - 1];
+          selectColumns.push(
+            `ROUND(SUM(blokir${month}) / ${divisor}, 0) AS ${monthName}`
+          );
+        }
+        // No REALISASI column for pergerakan_blokir_bulanan_per_jenis as it only fetches blokir data
       } else {
         // For other report types, add single REALISASI column based on cut-off and pembulatan
         selectColumns.push(
@@ -490,8 +529,18 @@ export function useInquiryQueryBuilder() {
 
   // Build GROUP BY clause
   const buildGroupByClause = useCallback(
-    (activeFilters: string[], filterValues: Record<string, FilterValue>) => {
+    (
+      activeFilters: string[],
+      filterValues: Record<string, FilterValue>,
+      reportParams: { tipeLaporan: string }
+    ) => {
       const groupByColumns: string[] = [];
+
+      // For tipe laporan 6, add mandatory GROUP BY kdblokir and nmblokir
+      if (reportParams.tipeLaporan === "pergerakan_blokir_bulanan_per_jenis") {
+        groupByColumns.push("main.kdblokir");
+        groupByColumns.push("main.nmblokir");
+      }
 
       activeFilters.forEach((filterKey) => {
         // Skip cutOff - it's not a SELECT column, so not in GROUP BY
@@ -548,7 +597,11 @@ export function useInquiryQueryBuilder() {
           filterValues,
           reportParams
         );
-        const groupByColumns = buildGroupByClause(activeFilters, filterValues);
+        const groupByColumns = buildGroupByClause(
+          activeFilters,
+          filterValues,
+          reportParams
+        );
 
         // Build the complete query
         let query = `SELECT\n  ${selectColumns.join(

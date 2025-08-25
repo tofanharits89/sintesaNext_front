@@ -84,13 +84,25 @@ const mockUseInquiryQueryBuilder = () => {
     }
   ) => {
     // Build table name based on report type
-    let baseTable = "pagu_real_detail_harian";
-    if (reportParams.tipeLaporan === "pergerakan_pagu_bulanan" || reportParams.tipeLaporan === "pergerakan_blokir_bulanan") {
-      baseTable = "pagu_real_detail_bulan";
+    let tableName;
+    if (reportParams.tipeLaporan === "pergerakan_blokir_bulanan_per_jenis") {
+      // Special case for pergerakan_blokir_bulanan_per_jenis table name format
+      tableName = `monev${reportParams.tahun}.pa_pagu_blokir_akun_${reportParams.tahun}_bulanan`;
+    } else {
+      let baseTable = "pagu_real_detail_harian";
+      if (reportParams.tipeLaporan === "pergerakan_pagu_bulanan" || reportParams.tipeLaporan === "pergerakan_blokir_bulanan") {
+        baseTable = "pagu_real_detail_bulan";
+      }
+      tableName = `monev${reportParams.tahun}.${baseTable}_${reportParams.tahun}`;
     }
-    const tableName = `monev${reportParams.tahun}.${baseTable}_${reportParams.tahun}`;
     const selectColumns: string[] = [];
     
+    // For tipe laporan 6, add mandatory kdblokir and nmblokir columns first
+    if (reportParams.tipeLaporan === "pergerakan_blokir_bulanan_per_jenis") {
+      selectColumns.push(`main.kdblokir AS kdblokir_kode`);
+      selectColumns.push(`main.nmblokir AS nmblokir_uraian`);
+    }
+
     // Add regular filter columns (excluding cutOff)
     activeFilters.forEach(filter => {
       if (filter !== 'cutOff') {
@@ -115,10 +127,11 @@ const mockUseInquiryQueryBuilder = () => {
       // For Pagu APBN report (tipe laporan 1), add PAGU_APBN before PAGU_DIPA
       selectColumns.push(`ROUND(SUM(CONVERT(main.pagu_apbn, SIGNED)) / ${divisor}, 0) AS PAGU_APBN`);
       selectColumns.push(`ROUND(SUM(main.pagu_dipa) / ${divisor}, 0) AS PAGU_DIPA`);
-    } else if (reportParams.tipeLaporan !== "pergerakan_pagu_bulanan" && reportParams.tipeLaporan !== "pergerakan_blokir_bulanan") {
-      // For other report types (except pergerakan_pagu_bulanan and pergerakan_blokir_bulanan), keep the original PAGU_DIPA column
+    } else if (reportParams.tipeLaporan !== "pergerakan_pagu_bulanan" && reportParams.tipeLaporan !== "pergerakan_blokir_bulanan" && reportParams.tipeLaporan !== "pergerakan_blokir_bulanan_per_jenis") {
+      // For other report types (except pergerakan_pagu_bulanan, pergerakan_blokir_bulanan, and pergerakan_blokir_bulanan_per_jenis), keep the original PAGU_DIPA column
       // pergerakan_pagu_bulanan doesn't need PAGU_DIPA since pagu is broken down by monthly columns
       // pergerakan_blokir_bulanan doesn't need PAGU_DIPA since blokir is broken down by monthly columns
+      // pergerakan_blokir_bulanan_per_jenis doesn't need PAGU_DIPA since blokir is broken down by monthly columns
       selectColumns.push(`ROUND(SUM(main.pagu) / ${divisor}, 0) AS PAGU_DIPA`);
     }
 
@@ -172,6 +185,17 @@ const mockUseInquiryQueryBuilder = () => {
         selectColumns.push(`ROUND(SUM(blokir${month}) / ${divisor}, 0) AS ${monthName}`);
       }
       // No REALISASI column for pergerakan_blokir_bulanan as it only fetches blokir data
+    } else if (reportParams.tipeLaporan === "pergerakan_blokir_bulanan_per_jenis") {
+      // For tipe laporan 6 (Pergerakan Blokir Bulanan Per Jenis), show monthly blokir columns up to cutOff
+      // Month names mapping
+      const monthNames = ["JAN", "FEB", "MAR", "APR", "MEI", "JUN", "JUL", "AGS", "SEP", "OKT", "NOV", "DES"];
+      
+      // Generate monthly blokir columns up to cutOff month
+      for (let month = 1; month <= cutOffNum; month++) {
+        const monthName = monthNames[month - 1];
+        selectColumns.push(`ROUND(SUM(blokir${month}) / ${divisor}, 0) AS ${monthName}`);
+      }
+      // No REALISASI column for pergerakan_blokir_bulanan_per_jenis as it only fetches blokir data
     } else {
       // For other report types, add single REALISASI column based on cut-off and pembulatan
       selectColumns.push(`ROUND(SUM(${realizationSum}) / ${divisor}, 0) AS REALISASI`);
@@ -202,7 +226,19 @@ const mockUseInquiryQueryBuilder = () => {
     }
     
     // Add GROUP BY if there are filter columns
-    const groupByColumns = activeFilters.filter(f => f !== 'cutOff').map(f => `main.${f}`);
+    const groupByColumns = [];
+    
+    // For tipe laporan 6, add mandatory GROUP BY kdblokir and nmblokir
+    if (reportParams.tipeLaporan === "pergerakan_blokir_bulanan_per_jenis") {
+      groupByColumns.push("main.kdblokir");
+      groupByColumns.push("main.nmblokir");
+    }
+    
+    // Add filter columns to GROUP BY
+    activeFilters.filter(f => f !== 'cutOff').forEach(f => {
+      groupByColumns.push(`main.${f}`);
+    });
+    
     if (groupByColumns.length > 0) {
       query += `\nGROUP BY\n  ${groupByColumns.join(",\n  ")}`;
     }
@@ -812,7 +848,18 @@ export const testQueryBuilder = () => {
   );
   console.log('Pergerakan Blokir Bulanan Query (Tipe Laporan 5):', pergerakanBlokirQuery);
   
-  // Test 7: Encryption
+  // Test 7: Pergerakan Blokir Bulanan Per Jenis report (tipe laporan 6)
+  const pergerakanBlokirPerJenisQuery = queryBuilder.buildQuery(
+    ['cutOff', 'kementerian'],
+    {
+      cutOff: { selection: '6' }, // June cutOff
+      kementerian: { selection: '001', jenisTampilan: 'kode' }
+    },
+    { tahun: '2024', tipeLaporan: 'pergerakan_blokir_bulanan_per_jenis', pembulatan: 'jutaan' }
+  );
+  console.log('Pergerakan Blokir Bulanan Per Jenis Query (Tipe Laporan 6):', pergerakanBlokirPerJenisQuery);
+  
+  // Test 8: Encryption
   const encrypted = queryBuilder.encryptQuery(filteredQuery);
   const decrypted = queryBuilder.decryptQuery(encrypted);
   console.log('Encryption works:', decrypted === filteredQuery);
@@ -824,6 +871,7 @@ export const testQueryBuilder = () => {
     paguApbnQuery,
     pergerakanPaguQuery,
     pergerakanBlokirQuery,
+    pergerakanBlokirPerJenisQuery,
     encrypted,
     decrypted
   };
@@ -1155,5 +1203,318 @@ export const testPaguRealisasiBulanan = () => {
     nonAkumulatifQuery,
     akumulatifQuery,
     juneCutOffQuery
+  };
+};
+
+// Test cases for Tipe Laporan 6 (Pergerakan Blokir Bulanan Per Jenis)
+describe('Pergerakan Blokir Bulanan Per Jenis (Tipe Laporan 6)', () => {
+  const queryBuilder = mockUseInquiryQueryBuilder();
+
+  it('should build query for pergerakan_blokir_bulanan_per_jenis with mandatory kdblokir and nmblokir columns', () => {
+    const query = queryBuilder.buildQuery(
+      ['cutOff'],
+      {
+        cutOff: { selection: '12' }
+      },
+      {
+        tahun: '2024',
+        tipeLaporan: 'pergerakan_blokir_bulanan_per_jenis',
+        pembulatan: 'satuan'
+      }
+    );
+
+    // Should have mandatory kdblokir and nmblokir columns first
+    expect(query).toContain('main.kdblokir AS kdblokir_kode');
+    expect(query).toContain('main.nmblokir AS nmblokir_uraian');
+    
+    // Should not have PAGU_DIPA since blokir is broken down by monthly columns
+    expect(query).not.toContain('PAGU_DIPA');
+    
+    // Should have monthly blokir columns
+    expect(query).toContain('ROUND(SUM(blokir1) / 1, 0) AS JAN');
+    expect(query).toContain('ROUND(SUM(blokir2) / 1, 0) AS FEB');
+    expect(query).toContain('ROUND(SUM(blokir3) / 1, 0) AS MAR');
+    expect(query).toContain('ROUND(SUM(blokir4) / 1, 0) AS APR');
+    expect(query).toContain('ROUND(SUM(blokir5) / 1, 0) AS MEI');
+    expect(query).toContain('ROUND(SUM(blokir6) / 1, 0) AS JUN');
+    expect(query).toContain('ROUND(SUM(blokir7) / 1, 0) AS JUL');
+    expect(query).toContain('ROUND(SUM(blokir8) / 1, 0) AS AGS');
+    expect(query).toContain('ROUND(SUM(blokir9) / 1, 0) AS SEP');
+    expect(query).toContain('ROUND(SUM(blokir10) / 1, 0) AS OKT');
+    expect(query).toContain('ROUND(SUM(blokir11) / 1, 0) AS NOV');
+    expect(query).toContain('ROUND(SUM(blokir12) / 1, 0) AS DES');
+    
+    // Should not have REALISASI column
+    expect(query).not.toContain('REALISASI');
+    
+    // Should not have single BLOKIR column
+    expect(query).not.toContain('AS BLOKIR');
+    
+    // Should have mandatory GROUP BY kdblokir and nmblokir
+    expect(query).toContain('GROUP BY');
+    expect(query).toContain('main.kdblokir');
+    expect(query).toContain('main.nmblokir');
+  });
+
+  it('should build query for pergerakan_blokir_bulanan_per_jenis with cutOff filter (June)', () => {
+    const query = queryBuilder.buildQuery(
+      ['cutOff'],
+      {
+        cutOff: { selection: '6' } // June cutOff
+      },
+      {
+        tahun: '2024',
+        tipeLaporan: 'pergerakan_blokir_bulanan_per_jenis',
+        pembulatan: 'jutaan'
+      }
+    );
+
+    // Should have mandatory columns
+    expect(query).toContain('main.kdblokir AS kdblokir_kode');
+    expect(query).toContain('main.nmblokir AS nmblokir_uraian');
+
+    // Should contain months up to June
+    expect(query).toContain('ROUND(SUM(blokir1) / 1000000, 0) AS JAN');
+    expect(query).toContain('ROUND(SUM(blokir2) / 1000000, 0) AS FEB');
+    expect(query).toContain('ROUND(SUM(blokir3) / 1000000, 0) AS MAR');
+    expect(query).toContain('ROUND(SUM(blokir4) / 1000000, 0) AS APR');
+    expect(query).toContain('ROUND(SUM(blokir5) / 1000000, 0) AS MEI');
+    expect(query).toContain('ROUND(SUM(blokir6) / 1000000, 0) AS JUN');
+    
+    // Should NOT contain months after June
+    expect(query).not.toContain('AS JUL');
+    expect(query).not.toContain('AS AGS');
+    expect(query).not.toContain('AS SEP');
+    expect(query).not.toContain('AS OKT');
+    expect(query).not.toContain('AS NOV');
+    expect(query).not.toContain('AS DES');
+    
+    // Should not have REALISASI column
+    expect(query).not.toContain('REALISASI');
+    
+    // Should have mandatory GROUP BY
+    expect(query).toContain('GROUP BY');
+    expect(query).toContain('main.kdblokir');
+    expect(query).toContain('main.nmblokir');
+  });
+
+  it('should build query for pergerakan_blokir_bulanan_per_jenis with filters and pembulatan', () => {
+    const query = queryBuilder.buildQuery(
+      ['cutOff', 'kementerian', 'satker'],
+      {
+        cutOff: { selection: '9' }, // September cutOff
+        kementerian: { selection: '001', jenisTampilan: 'kode' },
+        satker: { selection: 'all', jenisTampilan: 'kode' }
+      },
+      {
+        tahun: '2024',
+        tipeLaporan: 'pergerakan_blokir_bulanan_per_jenis',
+        pembulatan: 'miliaran'
+      }
+    );
+
+    // Should have mandatory columns first
+    expect(query).toContain('main.kdblokir AS kdblokir_kode');
+    expect(query).toContain('main.nmblokir AS nmblokir_uraian');
+    
+    // Should have filter columns
+    expect(query).toContain('main.kementerian AS kementerian_kode');
+    expect(query).toContain('main.satker AS satker_kode');
+    
+    // Should not have PAGU_DIPA since blokir is broken down by monthly columns
+    expect(query).not.toContain('PAGU_DIPA');
+    
+    // Should contain months up to September with miliaran divisor
+    expect(query).toContain('ROUND(SUM(blokir1) / 1000000000, 0) AS JAN');
+    expect(query).toContain('ROUND(SUM(blokir9) / 1000000000, 0) AS SEP');
+    
+    // Should NOT contain months after September
+    expect(query).not.toContain('AS OKT');
+    expect(query).not.toContain('AS NOV');
+    expect(query).not.toContain('AS DES');
+    
+    // Should have WHERE conditions
+    expect(query).toContain("main.kementerian = '001'");
+    expect(query).not.toContain("main.satker = 'all'"); // 'all' should not create WHERE condition
+    
+    // Should not have REALISASI column
+    expect(query).not.toContain('REALISASI');
+    
+    // Should have mandatory GROUP BY kdblokir and nmblokir first, then filter columns
+    expect(query).toContain('GROUP BY');
+    expect(query).toContain('main.kdblokir');
+    expect(query).toContain('main.nmblokir');
+    expect(query).toContain('main.kementerian');
+    expect(query).toContain('main.satker');
+  });
+
+  it('should use correct table for pergerakan_blokir_bulanan_per_jenis', () => {
+    const query = queryBuilder.buildQuery(
+      ['cutOff'],
+      {
+        cutOff: { selection: '12' }
+      },
+      {
+        tahun: '2024',
+        tipeLaporan: 'pergerakan_blokir_bulanan_per_jenis',
+        pembulatan: 'satuan'
+      }
+    );
+
+    // Should use the correct table name for pergerakan_blokir_bulanan_per_jenis
+    expect(query).toContain('FROM monev2024.pa_pagu_blokir_akun_2024_bulanan');
+  });
+
+  it('should ensure kdblokir and nmblokir columns appear first in SELECT', () => {
+    const query = queryBuilder.buildQuery(
+      ['cutOff', 'kementerian', 'satker'],
+      {
+        cutOff: { selection: '6' },
+        kementerian: { selection: '001', jenisTampilan: 'kode' },
+        satker: { selection: '123456', jenisTampilan: 'kode' }
+      },
+      {
+        tahun: '2024',
+        tipeLaporan: 'pergerakan_blokir_bulanan_per_jenis',
+        pembulatan: 'satuan'
+      }
+    );
+
+    // Find positions of columns in the query
+    const kdBlokirIndex = query.indexOf('main.kdblokir AS kdblokir_kode');
+    const nmBlokirIndex = query.indexOf('main.nmblokir AS nmblokir_uraian');
+    const kementerianIndex = query.indexOf('main.kementerian AS kementerian_kode');
+    const satkerIndex = query.indexOf('main.satker AS satker_kode');
+    const janIndex = query.indexOf('AS JAN');
+
+    // kdblokir and nmblokir should come first
+    expect(kdBlokirIndex).toBeLessThan(kementerianIndex);
+    expect(nmBlokirIndex).toBeLessThan(kementerianIndex);
+    expect(kdBlokirIndex).toBeLessThan(satkerIndex);
+    expect(nmBlokirIndex).toBeLessThan(satkerIndex);
+    expect(kdBlokirIndex).toBeLessThan(janIndex);
+    expect(nmBlokirIndex).toBeLessThan(janIndex);
+  });
+
+  it('should ensure kdblokir and nmblokir appear first in GROUP BY', () => {
+    const query = queryBuilder.buildQuery(
+      ['cutOff', 'kementerian'],
+      {
+        cutOff: { selection: '12' },
+        kementerian: { selection: '001', jenisTampilan: 'kode' }
+      },
+      {
+        tahun: '2024',
+        tipeLaporan: 'pergerakan_blokir_bulanan_per_jenis',
+        pembulatan: 'satuan'
+      }
+    );
+
+    // Extract GROUP BY clause
+    const groupByMatch = query.match(/GROUP BY\s+([\s\S]+?)$/);
+    expect(groupByMatch).not.toBe(null);
+    
+    if (groupByMatch) {
+      const groupByClause = groupByMatch[1];
+      const kdBlokirIndex = groupByClause.indexOf('main.kdblokir');
+      const nmBlokirIndex = groupByClause.indexOf('main.nmblokir');
+      const kementerianIndex = groupByClause.indexOf('main.kementerian');
+
+      // kdblokir and nmblokir should come first in GROUP BY
+      expect(kdBlokirIndex).toBeLessThan(kementerianIndex);
+      expect(nmBlokirIndex).toBeLessThan(kementerianIndex);
+    }
+  });
+
+  it('should work with minimal configuration (cutOff only)', () => {
+    const query = queryBuilder.buildQuery(
+      ['cutOff'],
+      {
+        cutOff: { selection: '3' } // March cutOff
+      },
+      {
+        tahun: '2024',
+        tipeLaporan: 'pergerakan_blokir_bulanan_per_jenis',
+        pembulatan: 'triliunan'
+      }
+    );
+
+    // Should have mandatory columns
+    expect(query).toContain('main.kdblokir AS kdblokir_kode');
+    expect(query).toContain('main.nmblokir AS nmblokir_uraian');
+    
+    // Should only have months up to March
+    expect(query).toContain('ROUND(SUM(blokir1) / 1000000000000, 0) AS JAN');
+    expect(query).toContain('ROUND(SUM(blokir2) / 1000000000000, 0) AS FEB');
+    expect(query).toContain('ROUND(SUM(blokir3) / 1000000000000, 0) AS MAR');
+    
+    // Should NOT contain months after March
+    expect(query).not.toContain('AS APR');
+    expect(query).not.toContain('AS MEI');
+    expect(query).not.toContain('AS DES');
+    
+    // Should have mandatory GROUP BY
+    expect(query).toContain('GROUP BY');
+    expect(query).toContain('main.kdblokir');
+    expect(query).toContain('main.nmblokir');
+    
+    // Should not have WHERE clause since no filters with conditions
+    expect(query).not.toContain('WHERE');
+  });
+});
+
+// Manual testing function for Tipe Laporan 6
+export const testPergerakanBlokirBulananPerJenis = () => {
+  const queryBuilder = mockUseInquiryQueryBuilder();
+  
+  console.log('Testing Pergerakan Blokir Bulanan Per Jenis (Tipe Laporan 6)...');
+  
+  // Test 1: Basic query with full year cutOff
+  const basicQuery = queryBuilder.buildQuery(
+    ['cutOff'],
+    {
+      cutOff: { selection: '12' }
+    },
+    { tahun: '2024', tipeLaporan: 'pergerakan_blokir_bulanan_per_jenis', pembulatan: 'satuan' }
+  );
+  console.log('Basic Pergerakan Blokir Per Jenis Query (Full Year):', basicQuery);
+  
+  // Test 2: Query with cutOff filter (June)
+  const cutOffQuery = queryBuilder.buildQuery(
+    ['cutOff'],
+    {
+      cutOff: { selection: '6' } // June cutOff
+    },
+    { tahun: '2024', tipeLaporan: 'pergerakan_blokir_bulanan_per_jenis', pembulatan: 'jutaan' }
+  );
+  console.log('Pergerakan Blokir Per Jenis Query (June CutOff):', cutOffQuery);
+  
+  // Test 3: Query with filters and pembulatan
+  const filteredQuery = queryBuilder.buildQuery(
+    ['cutOff', 'kementerian', 'satker'],
+    {
+      cutOff: { selection: '9' }, // September cutOff
+      kementerian: { selection: '001', jenisTampilan: 'kode' },
+      satker: { selection: 'all', jenisTampilan: 'kode' }
+    },
+    { tahun: '2024', tipeLaporan: 'pergerakan_blokir_bulanan_per_jenis', pembulatan: 'miliaran' }
+  );
+  console.log('Pergerakan Blokir Per Jenis Query (With Filters):', filteredQuery);
+  
+  // Test 4: Minimal configuration (March cutOff)
+  const minimalQuery = queryBuilder.buildQuery(
+    ['cutOff'],
+    {
+      cutOff: { selection: '3' } // March cutOff
+    },
+    { tahun: '2024', tipeLaporan: 'pergerakan_blokir_bulanan_per_jenis', pembulatan: 'triliunan' }
+  );
+  console.log('Pergerakan Blokir Per Jenis Query (Minimal - March):', minimalQuery);
+  
+  return {
+    basicQuery,
+    cutOffQuery,
+    filteredQuery,
+    minimalQuery
   };
 };
