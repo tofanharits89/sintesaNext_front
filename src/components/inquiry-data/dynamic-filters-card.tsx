@@ -293,8 +293,6 @@ export function DynamicFiltersCard({
           filterValues={filterValues}
         />
       )}
-
-
     </Card>
   );
 }

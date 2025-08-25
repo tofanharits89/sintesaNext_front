@@ -18,15 +18,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  Loader2, 
-  RefreshCw, 
-  Search, 
-  Download, 
-  FileSpreadsheet, 
+import {
+  Loader2,
+  RefreshCw,
+  Search,
+  Download,
+  FileSpreadsheet,
   FileText,
   Clock,
-  BarChart3
+  BarChart3,
 } from "lucide-react";
 import { useInquiryDataApi } from "@/hooks/use-inquiry-data-api";
 
@@ -56,11 +56,15 @@ export function TayangModal({
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   // Use the query builder API
-  const { executeQuery, downloadCSV, downloadExcel, isLoading, lastResult } = useInquiryDataApi();
+  const { executeQuery, downloadCSV, downloadExcel, isLoading, lastResult } =
+    useInquiryDataApi();
 
   const fetchData = async () => {
     try {
-      await executeQuery(activeFilters, filterValues, reportParams);
+      await executeQuery(activeFilters, filterValues, reportParams, {
+        page: currentPage,
+        pageSize,
+      });
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -70,7 +74,8 @@ export function TayangModal({
     if (open && activeFilters.length > 0) {
       fetchData();
     }
-  }, [open, activeFilters, filterValues, reportParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, activeFilters, filterValues, reportParams, currentPage, pageSize]);
 
   // Process data for search, sort, and pagination
   const processedData = useMemo(() => {
@@ -92,19 +97,19 @@ export function TayangModal({
       filtered = [...filtered].sort((a, b) => {
         const aVal = a[sortColumn];
         const bVal = b[sortColumn];
-        
+
         // Handle null/undefined values
         if (aVal == null && bVal == null) return 0;
         if (aVal == null) return sortDirection === "asc" ? -1 : 1;
         if (bVal == null) return sortDirection === "asc" ? 1 : -1;
-        
+
         // Handle numeric values
         const aNum = Number(aVal);
         const bNum = Number(bVal);
         if (!isNaN(aNum) && !isNaN(bNum)) {
           return sortDirection === "asc" ? aNum - bNum : bNum - aNum;
         }
-        
+
         // Handle string values
         const aStr = String(aVal).toLowerCase();
         const bStr = String(bVal).toLowerCase();
@@ -117,11 +122,21 @@ export function TayangModal({
     return filtered;
   }, [lastResult?.data, searchTerm, sortColumn, sortDirection]);
 
-  // Pagination
-  const totalPages = Math.ceil(processedData.length / pageSize);
+  // Pagination (server-aware)
+  const isServerPaginated = typeof lastResult?.totalCount === "number";
+  const totalAvailable = isServerPaginated
+    ? lastResult?.totalCount || 0
+    : processedData.length;
+  const totalPages = Math.max(1, Math.ceil(totalAvailable / pageSize));
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
-  const paginatedData = processedData.slice(startIndex, endIndex);
+  const paginatedData = isServerPaginated
+    ? processedData
+    : processedData.slice(startIndex, endIndex);
+  const displayStart = totalAvailable === 0 ? 0 : startIndex + 1;
+  const displayEnd = isServerPaginated
+    ? startIndex + processedData.length
+    : Math.min(endIndex, processedData.length);
 
   // Handle column header click for sorting
   const handleColumnClick = (column: string) => {
@@ -136,7 +151,7 @@ export function TayangModal({
   // Format cell value for display
   const formatCellValue = (value: any, column: string): string => {
     if (value == null) return "-";
-    
+
     // Format numeric values
     if (typeof value === "number") {
       // Check if it's a percentage
@@ -144,14 +159,16 @@ export function TayangModal({
         return `${value.toFixed(2)}%`;
       }
       // Check if it's a monetary value
-      if (column.toLowerCase().includes("pagu") || 
-          column.toLowerCase().includes("realisasi") || 
-          column.toLowerCase().includes("anggaran")) {
+      if (
+        column.toLowerCase().includes("pagu") ||
+        column.toLowerCase().includes("realisasi") ||
+        column.toLowerCase().includes("anggaran")
+      ) {
         return new Intl.NumberFormat("id-ID").format(value);
       }
       return value.toLocaleString("id-ID");
     }
-    
+
     return String(value);
   };
 
@@ -185,7 +202,8 @@ export function TayangModal({
       pagu_realisasi_bulanan: "Pagu Realisasi Bulanan",
       pergerakan_pagu_bulanan: "Pergerakan Pagu Bulanan",
       pergerakan_blokir_bulanan: "Pergerakan Blokir Bulanan",
-      pergerakan_blokir_bulanan_per_jenis: "Pergerakan Blokir Bulanan Per Jenis",
+      pergerakan_blokir_bulanan_per_jenis:
+        "Pergerakan Blokir Bulanan Per Jenis",
       volume_output_kegiatan: "Volume Output Kegiatan (Data Caput)",
     };
     return labels[tipeLaporan] || tipeLaporan;
@@ -196,7 +214,9 @@ export function TayangModal({
       <DialogContent className="max-w-7xl max-h-[80vh] sm:max-w-7xl">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            <span>Hasil Query - {getReportTypeLabel(reportParams.tipeLaporan)}</span>
+            <span>
+              Hasil Query - {getReportTypeLabel(reportParams.tipeLaporan)}
+            </span>
             <Button
               variant="outline"
               size="sm"
@@ -214,9 +234,7 @@ export function TayangModal({
         {/* Query Summary */}
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2 items-center">
-            <Badge variant="secondary">
-              Tahun: {reportParams.tahun}
-            </Badge>
+            <Badge variant="secondary">Tahun: {reportParams.tahun}</Badge>
             <Badge variant="secondary">
               Pembulatan: {reportParams.pembulatan}
             </Badge>
@@ -304,13 +322,17 @@ export function TayangModal({
             <div className="flex items-center justify-center h-40">
               <div className="text-center">
                 <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Mengeksekusi query...</p>
+                <p className="text-sm text-muted-foreground">
+                  Mengeksekusi query...
+                </p>
               </div>
             </div>
           ) : lastResult && !lastResult.success ? (
             <div className="flex items-center justify-center h-40">
               <div className="text-center">
-                <p className="text-sm text-red-600 mb-2">Error: {lastResult.error}</p>
+                <p className="text-sm text-red-600 mb-2">
+                  Error: {lastResult.error}
+                </p>
                 <Button variant="outline" size="sm" onClick={handleRefresh}>
                   Coba Lagi
                 </Button>
@@ -344,7 +366,9 @@ export function TayangModal({
                   {paginatedData.length > 0 ? (
                     paginatedData.map((row, index) => (
                       <tr key={index} className="border-t hover:bg-muted/50">
-                        <td className="p-3 text-sm">{startIndex + index + 1}</td>
+                        <td className="p-3 text-sm">
+                          {startIndex + index + 1}
+                        </td>
                         {lastResult.columns?.map((column) => (
                           <td key={column} className="p-3 text-sm font-mono">
                             {formatCellValue(row[column], column)}
@@ -358,7 +382,9 @@ export function TayangModal({
                         colSpan={(lastResult.columns?.length || 0) + 1}
                         className="text-center py-8 text-muted-foreground"
                       >
-                        {searchTerm ? "Tidak ada data yang sesuai dengan pencarian" : "Tidak ada data"}
+                        {searchTerm
+                          ? "Tidak ada data yang sesuai dengan pencarian"
+                          : "Tidak ada data"}
                       </td>
                     </tr>
                   )}
@@ -384,8 +410,8 @@ export function TayangModal({
         {lastResult && lastResult.success && totalPages > 1 && (
           <div className="flex items-center justify-between py-2">
             <p className="text-sm text-muted-foreground">
-              Menampilkan {startIndex + 1}-{Math.min(endIndex, processedData.length)} dari {processedData.length} baris
-              {searchTerm && ` (difilter dari ${lastResult.rowCount} total)`}
+              Menampilkan {displayStart}-{displayEnd} dari {totalAvailable}{" "}
+              baris
             </p>
             <div className="flex items-center gap-2">
               <Button
@@ -402,7 +428,9 @@ export function TayangModal({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                onClick={() =>
+                  setCurrentPage(Math.min(totalPages, currentPage + 1))
+                }
                 disabled={currentPage === totalPages}
               >
                 Selanjutnya
@@ -414,7 +442,9 @@ export function TayangModal({
         {/* Footer */}
         <div className="flex justify-between items-center pt-4 border-t">
           <p className="text-sm text-muted-foreground">
-            {lastResult && lastResult.success ? `Total: ${lastResult.rowCount} baris data` : "Siap untuk menampilkan data"}
+            {lastResult && lastResult.success
+              ? `Total: ${lastResult.rowCount} baris data`
+              : "Siap untuk menampilkan data"}
           </p>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Tutup

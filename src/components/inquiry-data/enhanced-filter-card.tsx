@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { FilterCard } from "./filter-card";
 
 interface EnhancedFilterCardProps {
@@ -21,7 +21,7 @@ export function EnhancedFilterCard({
   // Get current month for cutOff filter default
   const getCurrentMonth = () => {
     const now = new Date();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, "0");
     return month;
   };
 
@@ -42,13 +42,13 @@ export function EnhancedFilterCard({
     if (!initialNotificationSent.current) {
       const initialValue = filterKey === "cutOff" ? getCurrentMonth() : "all";
       onFilterChange(filterKey, "selection", initialValue);
-      
+
       // Set initial complete filter data
       const initialData = getInitialFilterData();
       Object.entries(initialData).forEach(([field, value]) => {
         onFilterChange(filterKey, field, String(value));
       });
-      
+
       initialNotificationSent.current = true;
     }
   }, [filterKey, onFilterChange]);
@@ -65,18 +65,36 @@ export function EnhancedFilterCard({
   };
 
   // Create a modified onFilterChange that uses our local handler
-  const modifiedOnFilterChange = (key: string, field: string, value: string) => {
+  const modifiedOnFilterChange = (
+    key: string,
+    field: string,
+    value: string
+  ) => {
     if (key === filterKey) {
       handleInputChange(field, value);
     }
   };
+
+  // Normalize active filter values passed down so dependencies read the selected value string
+  const normalizedActiveValues = useMemo(() => {
+    const src = activeFilterValues || {};
+    const out: Record<string, string> = {};
+    Object.entries(src).forEach(([k, v]: [string, any]) => {
+      if (v && typeof v === "object" && "selection" in v) {
+        out[k] = String((v as any).selection ?? "");
+      } else if (v != null) {
+        out[k] = String(v as any);
+      }
+    });
+    return out;
+  }, [activeFilterValues]);
 
   return (
     <FilterCard
       filterKey={filterKey}
       filterLabel={filterLabel}
       onRemove={onRemove}
-      activeFilterValues={activeFilterValues}
+      activeFilterValues={normalizedActiveValues}
       onFilterChange={modifiedOnFilterChange}
     />
   );
