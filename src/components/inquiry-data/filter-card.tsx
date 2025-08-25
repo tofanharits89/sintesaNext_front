@@ -50,8 +50,15 @@ export function FilterCard({
   activeFilterValues = {},
   onFilterChange,
 }: FilterCardProps) {
+  // Get current month for cutOff filter default
+  const getCurrentMonth = () => {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    return month;
+  };
+
   const [filterData, setFilterData] = useState({
-    selection: "all", // Default to "Semua"
+    selection: filterKey === "cutOff" ? getCurrentMonth() : "all", // Default to current month for cutOff, "Semua" for others
     kondisiCode: "",
     mengandungKata: "",
     jenisTampilan: "kode", // Default to "Kode"
@@ -253,7 +260,8 @@ export function FilterCard({
   // Notify parent about initial default values (only once on mount)
   useEffect(() => {
     if (onFilterChange && !initialNotificationSent.current) {
-      onFilterChange(filterKey, "selection", "all");
+      const initialValue = filterKey === "cutOff" ? getCurrentMonth() : "all";
+      onFilterChange(filterKey, "selection", initialValue);
       initialNotificationSent.current = true;
     }
   }, [filterKey, onFilterChange]);
@@ -641,6 +649,25 @@ export function FilterCard({
           }));
           return [...commonOptions, ...sumberDanaOptions];
 
+        case "cutOff":
+          // Generate month options (without year since year is selected in Pilih Laporan card)
+          const months = [
+            "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+            "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+          ];
+          
+          const monthOptions = [];
+          
+          // Add months 1-12
+          for (let month = 1; month <= 12; month++) {
+            const monthStr = String(month).padStart(2, '0');
+            const value = monthStr;
+            const label = months[month - 1];
+            monthOptions.push({ value, label });
+          }
+          
+          return monthOptions;
+
         default:
           return commonOptions;
       }
@@ -684,8 +711,23 @@ export function FilterCard({
         </Button>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Special layout for Akun filter */}
-        {filterKey === "akun" ? (
+        {/* Special layout for Cut Off filter */}
+        {filterKey === "cutOff" ? (
+          <div className="space-y-4">
+            {/* Month Selection Only */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Pilih Bulan</Label>
+              <VirtualizedSelect
+                options={getFilterOptions(filterKey)}
+                value={filterData.selection}
+                onValueChange={(value) => handleInputChange("selection", value)}
+                placeholder="Pilih bulan"
+                className="w-full"
+              />
+            </div>
+          </div>
+        ) : /* Special layout for Akun filter */
+        filterKey === "akun" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {/* Account Type and Selection - Stacked in same column */}
             <div className="space-y-4">

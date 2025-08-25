@@ -16,6 +16,7 @@ export default function BelanjaPage() {
     tahun: currentYear.toString(), // Default to current year
     tipeLaporan: "pagu_realisasi", // Default to Pagu Realisasi
     pembulatan: "satuan", // Default to Satuan
+    jenisAkumulasi: "non_akumulatif", // Default to Non-Akumulatif
   });
 
   // Function to remove a specific filter

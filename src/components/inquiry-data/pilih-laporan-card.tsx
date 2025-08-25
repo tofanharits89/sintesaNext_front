@@ -15,12 +15,14 @@ interface PilihLaporanCardProps {
     tahun: string;
     tipeLaporan: string;
     pembulatan: string;
+    jenisAkumulasi: string;
   };
   setReportParams: React.Dispatch<
     React.SetStateAction<{
       tahun: string;
       tipeLaporan: string;
       pembulatan: string;
+      jenisAkumulasi: string;
     }>
   >;
 }
@@ -60,6 +62,11 @@ export function PilihLaporanCard({
     { value: "triliunan", label: "Triliunan" },
   ];
 
+  const jenisAkumulasiOptions = [
+    { value: "non_akumulatif", label: "Non-Akumulatif" },
+    { value: "akumulatif", label: "Akumulatif" },
+  ];
+
   const handleChange = (field: string, value: string) => {
     setReportParams((prev) => ({
       ...prev,
@@ -94,24 +101,51 @@ export function PilihLaporanCard({
             </Select>
           </div>
 
-          {/* Tipe Laporan Selection */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Tipe Laporan</label>
-            <Select
-              value={reportParams.tipeLaporan}
-              onValueChange={(value) => handleChange("tipeLaporan", value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Pilih tipe laporan" />
-              </SelectTrigger>
-              <SelectContent>
-                {tipeLaporanOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Tipe Laporan and Jenis Akumulasi Column */}
+          <div className="space-y-4">
+            {/* Tipe Laporan Selection */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Tipe Laporan</label>
+              <Select
+                value={reportParams.tipeLaporan}
+                onValueChange={(value) => handleChange("tipeLaporan", value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Pilih tipe laporan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tipeLaporanOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Jenis Akumulasi Selection - Only show when Pagu Realisasi Bulanan is selected */}
+            {reportParams.tipeLaporan === "pagu_realisasi_bulanan" && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Jenis Akumulasi</label>
+                <Select
+                  value={reportParams.jenisAkumulasi}
+                  onValueChange={(value) =>
+                    handleChange("jenisAkumulasi", value)
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Pilih jenis akumulasi" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {jenisAkumulasiOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           {/* Pembulatan Selection */}
