@@ -102,7 +102,7 @@ export function VirtualizedSelect({
         )}
         onClick={() => handleOptionSelect(option.value)}
       >
-        <span className="truncate">{option.label}</span>
+        <span className="truncate" title={option.label}>{option.label}</span>
         {isSelected && <Check className="w-4 h-4 flex-shrink-0 ml-2" />}
       </div>
     );
@@ -152,7 +152,7 @@ export function VirtualizedSelect({
 
           {/* Options List */}
           {filteredOptions.length > 0 ? (
-            <div className="max-h-[200px] overflow-hidden">
+            <div className="max-h-[200px] overflow-y-auto">
               {filteredOptions.length > 10 ? (
                 // Use virtualization for large lists
                 <List
@@ -177,7 +177,7 @@ export function VirtualizedSelect({
                       onClick={() => handleOptionSelect(option.value)}
                       style={{ height: itemHeight }}
                     >
-                      <span className="truncate">{option.label}</span>
+                      <span className="truncate" title={option.label}>{option.label}</span>
                       {option.value === value && (
                         <Check className="w-4 h-4 flex-shrink-0 ml-2" />
                       )}

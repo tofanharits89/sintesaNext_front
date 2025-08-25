@@ -1,0 +1,4706 @@
+[
+  {
+    "kddept": "001",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "001",
+    "kdunit": "02",
+    "kdprogram": "CF",
+    "nmprogram": "Program Penyelenggaraan Lembaga Legislatif dan Alat Kelengkapan"
+  },
+  {
+    "kddept": "002",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "002",
+    "kdunit": "02",
+    "kdprogram": "CF",
+    "nmprogram": "Program Penyelenggaraan Lembaga Legislatif dan Alat Kelengkapan"
+  },
+  {
+    "kddept": "002",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "004",
+    "kdunit": "01",
+    "kdprogram": "CI",
+    "nmprogram": "Program Pemeriksaan Keuangan Negara"
+  },
+  {
+    "kddept": "004",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "005",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "005",
+    "kdunit": "02",
+    "kdprogram": "BF",
+    "nmprogram": "Program Penegakan dan Pelayanan Hukum"
+  },
+  {
+    "kddept": "005",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "005",
+    "kdunit": "03",
+    "kdprogram": "BF",
+    "nmprogram": "Program Penegakan dan Pelayanan Hukum"
+  },
+  {
+    "kddept": "005",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "005",
+    "kdunit": "04",
+    "kdprogram": "BF",
+    "nmprogram": "Program Penegakan dan Pelayanan Hukum"
+  },
+  {
+    "kddept": "005",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "005",
+    "kdunit": "05",
+    "kdprogram": "BF",
+    "nmprogram": "Program Penegakan dan Pelayanan Hukum"
+  },
+  {
+    "kddept": "005",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "005",
+    "kdunit": "06",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "005",
+    "kdunit": "07",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "006",
+    "kdunit": "01",
+    "kdprogram": "BF",
+    "nmprogram": "Program Penegakan dan Pelayanan Hukum"
+  },
+  {
+    "kddept": "006",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "007",
+    "kdunit": "01",
+    "kdprogram": "CA",
+    "nmprogram": "Program Penyelenggaraan Layanan kepada Presiden dan Wakil Presiden"
+  },
+  {
+    "kddept": "007",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "007",
+    "kdunit": "06",
+    "kdprogram": "CA",
+    "nmprogram": "Program Penyelenggaraan Layanan kepada Presiden dan Wakil Presiden"
+  },
+  {
+    "kddept": "007",
+    "kdunit": "06",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "007",
+    "kdunit": "07",
+    "kdprogram": "CA",
+    "nmprogram": "Program Penyelenggaraan Layanan kepada Presiden dan Wakil Presiden"
+  },
+  {
+    "kddept": "007",
+    "kdunit": "07",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "007",
+    "kdunit": "10",
+    "kdprogram": "CA",
+    "nmprogram": "Program Penyelenggaraan Layanan kepada Presiden dan Wakil Presiden"
+  },
+  {
+    "kddept": "007",
+    "kdunit": "10",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "010",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "010",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "010",
+    "kdunit": "03",
+    "kdprogram": "CR",
+    "nmprogram": "Program Pembinaan Politik dan Pemerintahan Umum"
+  },
+  {
+    "kddept": "010",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "010",
+    "kdunit": "04",
+    "kdprogram": "CM",
+    "nmprogram": "Program Pembinaan Kapasitas Pemerintahan Daerah dan Desa"
+  },
+  {
+    "kddept": "010",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "010",
+    "kdunit": "05",
+    "kdprogram": "CM",
+    "nmprogram": "Program Pembinaan Kapasitas Pemerintahan Daerah dan Desa"
+  },
+  {
+    "kddept": "010",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "010",
+    "kdunit": "06",
+    "kdprogram": "CM",
+    "nmprogram": "Program Pembinaan Kapasitas Pemerintahan Daerah dan Desa"
+  },
+  {
+    "kddept": "010",
+    "kdunit": "06",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "010",
+    "kdunit": "07",
+    "kdprogram": "CM",
+    "nmprogram": "Program Pembinaan Kapasitas Pemerintahan Daerah dan Desa"
+  },
+  {
+    "kddept": "010",
+    "kdunit": "07",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "010",
+    "kdunit": "08",
+    "kdprogram": "CP",
+    "nmprogram": "Program Tata Kelola Kependudukan"
+  },
+  {
+    "kddept": "010",
+    "kdunit": "08",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "010",
+    "kdunit": "09",
+    "kdprogram": "CM",
+    "nmprogram": "Program Pembinaan Kapasitas Pemerintahan Daerah dan Desa"
+  },
+  {
+    "kddept": "010",
+    "kdunit": "09",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "010",
+    "kdunit": "11",
+    "kdprogram": "CM",
+    "nmprogram": "Program Pembinaan Kapasitas Pemerintahan Daerah dan Desa"
+  },
+  {
+    "kddept": "010",
+    "kdunit": "11",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "010",
+    "kdunit": "12",
+    "kdprogram": "CM",
+    "nmprogram": "Program Pembinaan Kapasitas Pemerintahan Daerah dan Desa"
+  },
+  {
+    "kddept": "010",
+    "kdunit": "12",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "011",
+    "kdunit": "01",
+    "kdprogram": "AA",
+    "nmprogram": "Program Diplomasi dan Kerja sama Internasional"
+  },
+  {
+    "kddept": "011",
+    "kdunit": "01",
+    "kdprogram": "AL",
+    "nmprogram": "Program Pelindungan WNI di Luar Negeri serta Pelayanan Publik"
+  },
+  {
+    "kddept": "011",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "011",
+    "kdunit": "02",
+    "kdprogram": "AA",
+    "nmprogram": "Program Diplomasi dan Kerja sama Internasional"
+  },
+  {
+    "kddept": "011",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "011",
+    "kdunit": "03",
+    "kdprogram": "AA",
+    "nmprogram": "Program Diplomasi dan Kerja sama Internasional"
+  },
+  {
+    "kddept": "011",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "011",
+    "kdunit": "04",
+    "kdprogram": "AK",
+    "nmprogram": "Program Peran dan Kepemimpinan Indonesia di bidang Kerja sama Mulltilateral"
+  },
+  {
+    "kddept": "011",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "011",
+    "kdunit": "05",
+    "kdprogram": "AK",
+    "nmprogram": "Program Peran dan Kepemimpinan Indonesia di bidang Kerja sama Mulltilateral"
+  },
+  {
+    "kddept": "011",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "011",
+    "kdunit": "06",
+    "kdprogram": "AA",
+    "nmprogram": "Program Diplomasi dan Kerja sama Internasional"
+  },
+  {
+    "kddept": "011",
+    "kdunit": "06",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "011",
+    "kdunit": "07",
+    "kdprogram": "AM",
+    "nmprogram": "Program Penegakan Kedaulatan serta Hukum dan Perjanjian Internasional"
+  },
+  {
+    "kddept": "011",
+    "kdunit": "07",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "011",
+    "kdunit": "08",
+    "kdprogram": "AL",
+    "nmprogram": "Program Pelindungan WNI di Luar Negeri serta Pelayanan Publik"
+  },
+  {
+    "kddept": "011",
+    "kdunit": "08",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "011",
+    "kdunit": "09",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "011",
+    "kdunit": "11",
+    "kdprogram": "AA",
+    "nmprogram": "Program Diplomasi dan Kerja sama Internasional"
+  },
+  {
+    "kddept": "011",
+    "kdunit": "11",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "01",
+    "kdprogram": "AD",
+    "nmprogram": "Program Kebijakan dan Regulasi Pertahanan"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "01",
+    "kdprogram": "AF",
+    "nmprogram": "Program Modernisasi Alutsista, Non Alutsista, dan Sarpras Pertahanan"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "01",
+    "kdprogram": "AJ",
+    "nmprogram": "Program Pembinaan Sumber Daya Pertahanan"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "01",
+    "kdprogram": "KA",
+    "nmprogram": "Program Riset, Industri, dan Pendidikan Tinggi Pertahanan"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "21",
+    "kdprogram": "AB",
+    "nmprogram": "Program Pelaksanaan Tugas TNI"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "21",
+    "kdprogram": "AC",
+    "nmprogram": "Program Profesionalisme dan Kesejahteraan Prajurit"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "21",
+    "kdprogram": "AF",
+    "nmprogram": "Program Modernisasi Alutsista, Non Alutsista, dan Sarpras Pertahanan"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "21",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "22",
+    "kdprogram": "AB",
+    "nmprogram": "Program Pelaksanaan Tugas TNI"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "22",
+    "kdprogram": "AC",
+    "nmprogram": "Program Profesionalisme dan Kesejahteraan Prajurit"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "22",
+    "kdprogram": "AF",
+    "nmprogram": "Program Modernisasi Alutsista, Non Alutsista, dan Sarpras Pertahanan"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "22",
+    "kdprogram": "AJ",
+    "nmprogram": "Program Pembinaan Sumber Daya Pertahanan"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "22",
+    "kdprogram": "KA",
+    "nmprogram": "Program Riset, Industri, dan Pendidikan Tinggi Pertahanan"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "22",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "23",
+    "kdprogram": "AB",
+    "nmprogram": "Program Pelaksanaan Tugas TNI"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "23",
+    "kdprogram": "AC",
+    "nmprogram": "Program Profesionalisme dan Kesejahteraan Prajurit"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "23",
+    "kdprogram": "AF",
+    "nmprogram": "Program Modernisasi Alutsista, Non Alutsista, dan Sarpras Pertahanan"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "23",
+    "kdprogram": "AJ",
+    "nmprogram": "Program Pembinaan Sumber Daya Pertahanan"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "23",
+    "kdprogram": "KA",
+    "nmprogram": "Program Riset, Industri, dan Pendidikan Tinggi Pertahanan"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "23",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "24",
+    "kdprogram": "AB",
+    "nmprogram": "Program Pelaksanaan Tugas TNI"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "24",
+    "kdprogram": "AC",
+    "nmprogram": "Program Profesionalisme dan Kesejahteraan Prajurit"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "24",
+    "kdprogram": "AF",
+    "nmprogram": "Program Modernisasi Alutsista, Non Alutsista, dan Sarpras Pertahanan"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "24",
+    "kdprogram": "AJ",
+    "nmprogram": "Program Pembinaan Sumber Daya Pertahanan"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "24",
+    "kdprogram": "KA",
+    "nmprogram": "Program Riset, Industri, dan Pendidikan Tinggi Pertahanan"
+  },
+  {
+    "kddept": "012",
+    "kdunit": "24",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "013",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "013",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "013",
+    "kdunit": "03",
+    "kdprogram": "BF",
+    "nmprogram": "Program Penegakan dan Pelayanan Hukum"
+  },
+  {
+    "kddept": "013",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "013",
+    "kdunit": "05",
+    "kdprogram": "BF",
+    "nmprogram": "Program Penegakan dan Pelayanan Hukum"
+  },
+  {
+    "kddept": "013",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "013",
+    "kdunit": "06",
+    "kdprogram": "BF",
+    "nmprogram": "Program Penegakan dan Pelayanan Hukum"
+  },
+  {
+    "kddept": "013",
+    "kdunit": "06",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "013",
+    "kdunit": "07",
+    "kdprogram": "BF",
+    "nmprogram": "Program Penegakan dan Pelayanan Hukum"
+  },
+  {
+    "kddept": "013",
+    "kdunit": "07",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "013",
+    "kdunit": "08",
+    "kdprogram": "BB",
+    "nmprogram": "Program Pembentukan Regulasi"
+  },
+  {
+    "kddept": "013",
+    "kdunit": "08",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "013",
+    "kdunit": "09",
+    "kdprogram": "BG",
+    "nmprogram": "Program Pemajuan dan Penegakan HAM"
+  },
+  {
+    "kddept": "013",
+    "kdunit": "09",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "013",
+    "kdunit": "10",
+    "kdprogram": "BB",
+    "nmprogram": "Program Pembentukan Regulasi"
+  },
+  {
+    "kddept": "013",
+    "kdunit": "10",
+    "kdprogram": "BF",
+    "nmprogram": "Program Penegakan dan Pelayanan Hukum"
+  },
+  {
+    "kddept": "013",
+    "kdunit": "10",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "013",
+    "kdunit": "11",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "013",
+    "kdunit": "12",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "02",
+    "kdprogram": "CD",
+    "nmprogram": "Program Pengelolaan Perbendaharaan, Kekayaan Negara dan Risiko"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "03",
+    "kdprogram": "CB",
+    "nmprogram": "Program Pengelolaan Belanja Negara"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "03",
+    "kdprogram": "CC",
+    "nmprogram": "Program Pengelolaan Penerimaan Negara"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "03",
+    "kdprogram": "CE",
+    "nmprogram": "Program Kebijakan Fiskal"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "04",
+    "kdprogram": "CC",
+    "nmprogram": "Program Pengelolaan Penerimaan Negara"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "04",
+    "kdprogram": "CE",
+    "nmprogram": "Program Kebijakan Fiskal"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "05",
+    "kdprogram": "CC",
+    "nmprogram": "Program Pengelolaan Penerimaan Negara"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "05",
+    "kdprogram": "CE",
+    "nmprogram": "Program Kebijakan Fiskal"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "06",
+    "kdprogram": "CB",
+    "nmprogram": "Program Pengelolaan Belanja Negara"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "06",
+    "kdprogram": "CE",
+    "nmprogram": "Program Kebijakan Fiskal"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "06",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "07",
+    "kdprogram": "CD",
+    "nmprogram": "Program Pengelolaan Perbendaharaan, Kekayaan Negara dan Risiko"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "07",
+    "kdprogram": "CE",
+    "nmprogram": "Program Kebijakan Fiskal"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "07",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "08",
+    "kdprogram": "CD",
+    "nmprogram": "Program Pengelolaan Perbendaharaan, Kekayaan Negara dan Risiko"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "08",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "09",
+    "kdprogram": "CD",
+    "nmprogram": "Program Pengelolaan Perbendaharaan, Kekayaan Negara dan Risiko"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "09",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "11",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "12",
+    "kdprogram": "CE",
+    "nmprogram": "Program Kebijakan Fiskal"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "12",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "13",
+    "kdprogram": "CC",
+    "nmprogram": "Program Pengelolaan Penerimaan Negara"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "13",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "03",
+    "kdprogram": "EC",
+    "nmprogram": "Program Nilai Tambah dan Daya Saing Industri"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "03",
+    "kdprogram": "HA",
+    "nmprogram": "Program Ketersediaan, Akses dan Konsumsi Pangan Berkualitas"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "04",
+    "kdprogram": "EC",
+    "nmprogram": "Program Nilai Tambah dan Daya Saing Industri"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "04",
+    "kdprogram": "HA",
+    "nmprogram": "Program Ketersediaan, Akses dan Konsumsi Pangan Berkualitas"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "05",
+    "kdprogram": "EC",
+    "nmprogram": "Program Nilai Tambah dan Daya Saing Industri"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "05",
+    "kdprogram": "HA",
+    "nmprogram": "Program Ketersediaan, Akses dan Konsumsi Pangan Berkualitas"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "06",
+    "kdprogram": "EC",
+    "nmprogram": "Program Nilai Tambah dan Daya Saing Industri"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "06",
+    "kdprogram": "HA",
+    "nmprogram": "Program Ketersediaan, Akses dan Konsumsi Pangan Berkualitas"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "06",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "08",
+    "kdprogram": "HA",
+    "nmprogram": "Program Ketersediaan, Akses dan Konsumsi Pangan Berkualitas"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "08",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "09",
+    "kdprogram": "EC",
+    "nmprogram": "Program Nilai Tambah dan Daya Saing Industri"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "09",
+    "kdprogram": "HA",
+    "nmprogram": "Program Ketersediaan, Akses dan Konsumsi Pangan Berkualitas"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "09",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "10",
+    "kdprogram": "DL",
+    "nmprogram": "Program Pendidikan dan Pelatihan Vokasi"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "10",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "11",
+    "kdprogram": "HA",
+    "nmprogram": "Program Ketersediaan, Akses dan Konsumsi Pangan Berkualitas"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "11",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "12",
+    "kdprogram": "HA",
+    "nmprogram": "Program Ketersediaan, Akses dan Konsumsi Pangan Berkualitas"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "12",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "13",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "019",
+    "kdunit": "01",
+    "kdprogram": "EC",
+    "nmprogram": "Program Nilai Tambah dan Daya Saing Industri"
+  },
+  {
+    "kddept": "019",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "019",
+    "kdunit": "02",
+    "kdprogram": "EC",
+    "nmprogram": "Program Nilai Tambah dan Daya Saing Industri"
+  },
+  {
+    "kddept": "019",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "019",
+    "kdunit": "03",
+    "kdprogram": "EC",
+    "nmprogram": "Program Nilai Tambah dan Daya Saing Industri"
+  },
+  {
+    "kddept": "019",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "019",
+    "kdunit": "04",
+    "kdprogram": "EC",
+    "nmprogram": "Program Nilai Tambah dan Daya Saing Industri"
+  },
+  {
+    "kddept": "019",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "019",
+    "kdunit": "05",
+    "kdprogram": "EC",
+    "nmprogram": "Program Nilai Tambah dan Daya Saing Industri"
+  },
+  {
+    "kddept": "019",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "019",
+    "kdunit": "06",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "019",
+    "kdunit": "07",
+    "kdprogram": "EC",
+    "nmprogram": "Program Nilai Tambah dan Daya Saing Industri"
+  },
+  {
+    "kddept": "019",
+    "kdunit": "07",
+    "kdprogram": "KB",
+    "nmprogram": "Program Riset dan Inovasi Ilmu Pengetahuan dan Teknologi"
+  },
+  {
+    "kddept": "019",
+    "kdunit": "07",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "019",
+    "kdunit": "09",
+    "kdprogram": "EC",
+    "nmprogram": "Program Nilai Tambah dan Daya Saing Industri"
+  },
+  {
+    "kddept": "019",
+    "kdunit": "09",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "019",
+    "kdunit": "10",
+    "kdprogram": "DL",
+    "nmprogram": "Program Pendidikan dan Pelatihan Vokasi"
+  },
+  {
+    "kddept": "019",
+    "kdunit": "10",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "04",
+    "kdprogram": "JA",
+    "nmprogram": "Program Energi dan Ketenagalistrikan"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "05",
+    "kdprogram": "JA",
+    "nmprogram": "Program Energi dan Ketenagalistrikan"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "06",
+    "kdprogram": "JB",
+    "nmprogram": "Program Pertambangan Mineral dan Batubara"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "06",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "07",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "11",
+    "kdprogram": "FE",
+    "nmprogram": "Program Mitigasi dan Pelayanan Geologi"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "11",
+    "kdprogram": "JA",
+    "nmprogram": "Program Energi dan Ketenagalistrikan"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "11",
+    "kdprogram": "JB",
+    "nmprogram": "Program Pertambangan Mineral dan Batubara"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "11",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "12",
+    "kdprogram": "DL",
+    "nmprogram": "Program Pendidikan dan Pelatihan Vokasi"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "12",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "13",
+    "kdprogram": "FE",
+    "nmprogram": "Program Mitigasi dan Pelayanan Geologi"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "13",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "14",
+    "kdprogram": "JA",
+    "nmprogram": "Program Energi dan Ketenagalistrikan"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "14",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "15",
+    "kdprogram": "JA",
+    "nmprogram": "Program Energi dan Ketenagalistrikan"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "15",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "16",
+    "kdprogram": "JA",
+    "nmprogram": "Program Energi dan Ketenagalistrikan"
+  },
+  {
+    "kddept": "020",
+    "kdunit": "16",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "022",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "022",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "022",
+    "kdunit": "03",
+    "kdprogram": "GA",
+    "nmprogram": "Program Infrastruktur Konektivitas"
+  },
+  {
+    "kddept": "022",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "022",
+    "kdunit": "04",
+    "kdprogram": "GA",
+    "nmprogram": "Program Infrastruktur Konektivitas"
+  },
+  {
+    "kddept": "022",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "022",
+    "kdunit": "05",
+    "kdprogram": "GA",
+    "nmprogram": "Program Infrastruktur Konektivitas"
+  },
+  {
+    "kddept": "022",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "022",
+    "kdunit": "08",
+    "kdprogram": "GA",
+    "nmprogram": "Program Infrastruktur Konektivitas"
+  },
+  {
+    "kddept": "022",
+    "kdunit": "08",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "022",
+    "kdunit": "11",
+    "kdprogram": "GA",
+    "nmprogram": "Program Infrastruktur Konektivitas"
+  },
+  {
+    "kddept": "022",
+    "kdunit": "11",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "022",
+    "kdunit": "12",
+    "kdprogram": "DL",
+    "nmprogram": "Program Pendidikan dan Pelatihan Vokasi"
+  },
+  {
+    "kddept": "022",
+    "kdunit": "12",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "022",
+    "kdunit": "13",
+    "kdprogram": "GA",
+    "nmprogram": "Program Infrastruktur Konektivitas"
+  },
+  {
+    "kddept": "022",
+    "kdunit": "13",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "023",
+    "kdunit": "01",
+    "kdprogram": "DF",
+    "nmprogram": "Program PAUD dan Wajib Belajar 12 Tahun"
+  },
+  {
+    "kddept": "023",
+    "kdunit": "01",
+    "kdprogram": "DI",
+    "nmprogram": "Program Kualitas Pengajaran dan Pembelajaran"
+  },
+  {
+    "kddept": "023",
+    "kdunit": "01",
+    "kdprogram": "DK",
+    "nmprogram": "Program Pendidikan Tinggi"
+  },
+  {
+    "kddept": "023",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "023",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "023",
+    "kdunit": "03",
+    "kdprogram": "DF",
+    "nmprogram": "Program PAUD dan Wajib Belajar 12 Tahun"
+  },
+  {
+    "kddept": "023",
+    "kdunit": "03",
+    "kdprogram": "DI",
+    "nmprogram": "Program Kualitas Pengajaran dan Pembelajaran"
+  },
+  {
+    "kddept": "023",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "023",
+    "kdunit": "11",
+    "kdprogram": "DI",
+    "nmprogram": "Program Kualitas Pengajaran dan Pembelajaran"
+  },
+  {
+    "kddept": "023",
+    "kdunit": "11",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "023",
+    "kdunit": "13",
+    "kdprogram": "DH",
+    "nmprogram": "Program Pemajuan dan Pelestarian Bahasa dan Kebudayaan"
+  },
+  {
+    "kddept": "023",
+    "kdunit": "13",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "023",
+    "kdunit": "15",
+    "kdprogram": "DH",
+    "nmprogram": "Program Pemajuan dan Pelestarian Bahasa dan Kebudayaan"
+  },
+  {
+    "kddept": "023",
+    "kdunit": "15",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "023",
+    "kdunit": "16",
+    "kdprogram": "DI",
+    "nmprogram": "Program Kualitas Pengajaran dan Pembelajaran"
+  },
+  {
+    "kddept": "023",
+    "kdunit": "16",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "023",
+    "kdunit": "17",
+    "kdprogram": "DK",
+    "nmprogram": "Program Pendidikan Tinggi"
+  },
+  {
+    "kddept": "023",
+    "kdunit": "17",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "023",
+    "kdunit": "18",
+    "kdprogram": "DL",
+    "nmprogram": "Program Pendidikan dan Pelatihan Vokasi"
+  },
+  {
+    "kddept": "023",
+    "kdunit": "18",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "01",
+    "kdprogram": "DD",
+    "nmprogram": "Program Kesehatan Masyarakat"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "01",
+    "kdprogram": "DG",
+    "nmprogram": "Program Pelayanan Kesehatan dan JKN"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "01",
+    "kdprogram": "DL",
+    "nmprogram": "Program Pendidikan dan Pelatihan Vokasi"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "01",
+    "kdprogram": "DO",
+    "nmprogram": "Program Pencegahan dan Pengendalian Penyakit"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "03",
+    "kdprogram": "DD",
+    "nmprogram": "Program Kesehatan Masyarakat"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "03",
+    "kdprogram": "DG",
+    "nmprogram": "Program Pelayanan Kesehatan dan JKN"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "03",
+    "kdprogram": "DO",
+    "nmprogram": "Program Pencegahan dan Pengendalian Penyakit"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "04",
+    "kdprogram": "DG",
+    "nmprogram": "Program Pelayanan Kesehatan dan JKN"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "05",
+    "kdprogram": "DD",
+    "nmprogram": "Program Kesehatan Masyarakat"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "05",
+    "kdprogram": "DO",
+    "nmprogram": "Program Pencegahan dan Pengendalian Penyakit"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "07",
+    "kdprogram": "DG",
+    "nmprogram": "Program Pelayanan Kesehatan dan JKN"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "07",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "11",
+    "kdprogram": "DG",
+    "nmprogram": "Program Pelayanan Kesehatan dan JKN"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "11",
+    "kdprogram": "DS",
+    "nmprogram": "Program Kebijakan Pembangunan Kesehatan"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "11",
+    "kdprogram": "KB",
+    "nmprogram": "Program Riset dan Inovasi Ilmu Pengetahuan dan Teknologi"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "11",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "12",
+    "kdprogram": "DG",
+    "nmprogram": "Program Pelayanan Kesehatan dan JKN"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "12",
+    "kdprogram": "DL",
+    "nmprogram": "Program Pendidikan dan Pelatihan Vokasi"
+  },
+  {
+    "kddept": "024",
+    "kdunit": "12",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "01",
+    "kdprogram": "DC",
+    "nmprogram": "Program Kerukunan Umat dan Layanan Kehidupan Beragama"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "01",
+    "kdprogram": "DI",
+    "nmprogram": "Program Kualitas Pengajaran dan Pembelajaran"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "03",
+    "kdprogram": "DC",
+    "nmprogram": "Program Kerukunan Umat dan Layanan Kehidupan Beragama"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "04",
+    "kdprogram": "DF",
+    "nmprogram": "Program PAUD dan Wajib Belajar 12 Tahun"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "04",
+    "kdprogram": "DI",
+    "nmprogram": "Program Kualitas Pengajaran dan Pembelajaran"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "04",
+    "kdprogram": "DK",
+    "nmprogram": "Program Pendidikan Tinggi"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "05",
+    "kdprogram": "DC",
+    "nmprogram": "Program Kerukunan Umat dan Layanan Kehidupan Beragama"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "05",
+    "kdprogram": "DF",
+    "nmprogram": "Program PAUD dan Wajib Belajar 12 Tahun"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "05",
+    "kdprogram": "DI",
+    "nmprogram": "Program Kualitas Pengajaran dan Pembelajaran"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "05",
+    "kdprogram": "DK",
+    "nmprogram": "Program Pendidikan Tinggi"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "06",
+    "kdprogram": "DC",
+    "nmprogram": "Program Kerukunan Umat dan Layanan Kehidupan Beragama"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "06",
+    "kdprogram": "DF",
+    "nmprogram": "Program PAUD dan Wajib Belajar 12 Tahun"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "06",
+    "kdprogram": "DI",
+    "nmprogram": "Program Kualitas Pengajaran dan Pembelajaran"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "06",
+    "kdprogram": "DK",
+    "nmprogram": "Program Pendidikan Tinggi"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "06",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "07",
+    "kdprogram": "DC",
+    "nmprogram": "Program Kerukunan Umat dan Layanan Kehidupan Beragama"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "07",
+    "kdprogram": "DF",
+    "nmprogram": "Program PAUD dan Wajib Belajar 12 Tahun"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "07",
+    "kdprogram": "DI",
+    "nmprogram": "Program Kualitas Pengajaran dan Pembelajaran"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "07",
+    "kdprogram": "DK",
+    "nmprogram": "Program Pendidikan Tinggi"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "07",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "08",
+    "kdprogram": "DC",
+    "nmprogram": "Program Kerukunan Umat dan Layanan Kehidupan Beragama"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "08",
+    "kdprogram": "DF",
+    "nmprogram": "Program PAUD dan Wajib Belajar 12 Tahun"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "08",
+    "kdprogram": "DI",
+    "nmprogram": "Program Kualitas Pengajaran dan Pembelajaran"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "08",
+    "kdprogram": "DK",
+    "nmprogram": "Program Pendidikan Tinggi"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "08",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "09",
+    "kdprogram": "DC",
+    "nmprogram": "Program Kerukunan Umat dan Layanan Kehidupan Beragama"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "09",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "11",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "12",
+    "kdprogram": "DC",
+    "nmprogram": "Program Kerukunan Umat dan Layanan Kehidupan Beragama"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "12",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "026",
+    "kdunit": "01",
+    "kdprogram": "DL",
+    "nmprogram": "Program Pendidikan dan Pelatihan Vokasi"
+  },
+  {
+    "kddept": "026",
+    "kdunit": "01",
+    "kdprogram": "DN",
+    "nmprogram": "Program Pembinaan Ketenagakerjaan"
+  },
+  {
+    "kddept": "026",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "026",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "026",
+    "kdunit": "04",
+    "kdprogram": "DN",
+    "nmprogram": "Program Pembinaan Ketenagakerjaan"
+  },
+  {
+    "kddept": "026",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "026",
+    "kdunit": "05",
+    "kdprogram": "DN",
+    "nmprogram": "Program Pembinaan Ketenagakerjaan"
+  },
+  {
+    "kddept": "026",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "026",
+    "kdunit": "08",
+    "kdprogram": "DN",
+    "nmprogram": "Program Pembinaan Ketenagakerjaan"
+  },
+  {
+    "kddept": "026",
+    "kdunit": "08",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "026",
+    "kdunit": "11",
+    "kdprogram": "DN",
+    "nmprogram": "Program Pembinaan Ketenagakerjaan"
+  },
+  {
+    "kddept": "026",
+    "kdunit": "11",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "026",
+    "kdunit": "13",
+    "kdprogram": "DL",
+    "nmprogram": "Program Pendidikan dan Pelatihan Vokasi"
+  },
+  {
+    "kddept": "026",
+    "kdunit": "13",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "027",
+    "kdunit": "01",
+    "kdprogram": "DQ",
+    "nmprogram": "Program Perlindungan Sosial"
+  },
+  {
+    "kddept": "027",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "027",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "027",
+    "kdunit": "03",
+    "kdprogram": "DQ",
+    "nmprogram": "Program Perlindungan Sosial"
+  },
+  {
+    "kddept": "027",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "027",
+    "kdunit": "04",
+    "kdprogram": "DQ",
+    "nmprogram": "Program Perlindungan Sosial"
+  },
+  {
+    "kddept": "027",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "027",
+    "kdunit": "05",
+    "kdprogram": "DQ",
+    "nmprogram": "Program Perlindungan Sosial"
+  },
+  {
+    "kddept": "027",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "027",
+    "kdunit": "06",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "027",
+    "kdunit": "11",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "03",
+    "kdprogram": "FF",
+    "nmprogram": "Program Pengelolaan Hutan Berkelanjutan"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "04",
+    "kdprogram": "FD",
+    "nmprogram": "Program Kualitas Lingkungan Hidup"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "04",
+    "kdprogram": "FF",
+    "nmprogram": "Program Pengelolaan Hutan Berkelanjutan"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "05",
+    "kdprogram": "FD",
+    "nmprogram": "Program Kualitas Lingkungan Hidup"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "05",
+    "kdprogram": "FF",
+    "nmprogram": "Program Pengelolaan Hutan Berkelanjutan"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "06",
+    "kdprogram": "FD",
+    "nmprogram": "Program Kualitas Lingkungan Hidup"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "06",
+    "kdprogram": "FF",
+    "nmprogram": "Program Pengelolaan Hutan Berkelanjutan"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "06",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "07",
+    "kdprogram": "FB",
+    "nmprogram": "Program Ketahanan Bencana dan Perubahan Iklim"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "07",
+    "kdprogram": "FD",
+    "nmprogram": "Program Kualitas Lingkungan Hidup"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "07",
+    "kdprogram": "FF",
+    "nmprogram": "Program Pengelolaan Hutan Berkelanjutan"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "07",
+    "kdprogram": "KB",
+    "nmprogram": "Program Riset dan Inovasi Ilmu Pengetahuan dan Teknologi"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "07",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "08",
+    "kdprogram": "DL",
+    "nmprogram": "Program Pendidikan dan Pelatihan Vokasi"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "08",
+    "kdprogram": "FF",
+    "nmprogram": "Program Pengelolaan Hutan Berkelanjutan"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "08",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "09",
+    "kdprogram": "FF",
+    "nmprogram": "Program Pengelolaan Hutan Berkelanjutan"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "09",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "10",
+    "kdprogram": "FD",
+    "nmprogram": "Program Kualitas Lingkungan Hidup"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "10",
+    "kdprogram": "FF",
+    "nmprogram": "Program Pengelolaan Hutan Berkelanjutan"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "10",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "11",
+    "kdprogram": "FB",
+    "nmprogram": "Program Ketahanan Bencana dan Perubahan Iklim"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "11",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "12",
+    "kdprogram": "FD",
+    "nmprogram": "Program Kualitas Lingkungan Hidup"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "12",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "13",
+    "kdprogram": "FD",
+    "nmprogram": "Program Kualitas Lingkungan Hidup"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "13",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "14",
+    "kdprogram": "FB",
+    "nmprogram": "Program Ketahanan Bencana dan Perubahan Iklim"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "14",
+    "kdprogram": "FD",
+    "nmprogram": "Program Kualitas Lingkungan Hidup"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "14",
+    "kdprogram": "FF",
+    "nmprogram": "Program Pengelolaan Hutan Berkelanjutan"
+  },
+  {
+    "kddept": "029",
+    "kdunit": "14",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "032",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "032",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "032",
+    "kdunit": "03",
+    "kdprogram": "HB",
+    "nmprogram": "Program Pengelolaan Perikanan dan Kelautan"
+  },
+  {
+    "kddept": "032",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "032",
+    "kdunit": "04",
+    "kdprogram": "HB",
+    "nmprogram": "Program Pengelolaan Perikanan dan Kelautan"
+  },
+  {
+    "kddept": "032",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "032",
+    "kdunit": "05",
+    "kdprogram": "HB",
+    "nmprogram": "Program Pengelolaan Perikanan dan Kelautan"
+  },
+  {
+    "kddept": "032",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "032",
+    "kdunit": "06",
+    "kdprogram": "EC",
+    "nmprogram": "Program Nilai Tambah dan Daya Saing Industri"
+  },
+  {
+    "kddept": "032",
+    "kdunit": "06",
+    "kdprogram": "HB",
+    "nmprogram": "Program Pengelolaan Perikanan dan Kelautan"
+  },
+  {
+    "kddept": "032",
+    "kdunit": "06",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "032",
+    "kdunit": "07",
+    "kdprogram": "FD",
+    "nmprogram": "Program Kualitas Lingkungan Hidup"
+  },
+  {
+    "kddept": "032",
+    "kdunit": "07",
+    "kdprogram": "HB",
+    "nmprogram": "Program Pengelolaan Perikanan dan Kelautan"
+  },
+  {
+    "kddept": "032",
+    "kdunit": "07",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "032",
+    "kdunit": "12",
+    "kdprogram": "DL",
+    "nmprogram": "Program Pendidikan dan Pelatihan Vokasi"
+  },
+  {
+    "kddept": "032",
+    "kdunit": "12",
+    "kdprogram": "HB",
+    "nmprogram": "Program Pengelolaan Perikanan dan Kelautan"
+  },
+  {
+    "kddept": "032",
+    "kdunit": "12",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "032",
+    "kdunit": "13",
+    "kdprogram": "EC",
+    "nmprogram": "Program Nilai Tambah dan Daya Saing Industri"
+  },
+  {
+    "kddept": "032",
+    "kdunit": "13",
+    "kdprogram": "HB",
+    "nmprogram": "Program Pengelolaan Perikanan dan Kelautan"
+  },
+  {
+    "kddept": "032",
+    "kdunit": "13",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "033",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "033",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "033",
+    "kdunit": "04",
+    "kdprogram": "GA",
+    "nmprogram": "Program Infrastruktur Konektivitas"
+  },
+  {
+    "kddept": "033",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "033",
+    "kdunit": "05",
+    "kdprogram": "IA",
+    "nmprogram": "Program Perumahan dan Kawasan Permukiman"
+  },
+  {
+    "kddept": "033",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "033",
+    "kdunit": "06",
+    "kdprogram": "FC",
+    "nmprogram": "Program Ketahanan Sumber Daya Air"
+  },
+  {
+    "kddept": "033",
+    "kdunit": "06",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "033",
+    "kdunit": "07",
+    "kdprogram": "IA",
+    "nmprogram": "Program Perumahan dan Kawasan Permukiman"
+  },
+  {
+    "kddept": "033",
+    "kdunit": "07",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "033",
+    "kdunit": "13",
+    "kdprogram": "DL",
+    "nmprogram": "Program Pendidikan dan Pelatihan Vokasi"
+  },
+  {
+    "kddept": "033",
+    "kdunit": "13",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "033",
+    "kdunit": "14",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "033",
+    "kdunit": "15",
+    "kdprogram": "DL",
+    "nmprogram": "Program Pendidikan dan Pelatihan Vokasi"
+  },
+  {
+    "kddept": "033",
+    "kdunit": "15",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "033",
+    "kdunit": "16",
+    "kdprogram": "IA",
+    "nmprogram": "Program Perumahan dan Kawasan Permukiman"
+  },
+  {
+    "kddept": "033",
+    "kdunit": "16",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "034",
+    "kdunit": "01",
+    "kdprogram": "CL",
+    "nmprogram": "Program Koordinasi Pelaksanaan Kebijakan"
+  },
+  {
+    "kddept": "034",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "035",
+    "kdunit": "01",
+    "kdprogram": "CL",
+    "nmprogram": "Program Koordinasi Pelaksanaan Kebijakan"
+  },
+  {
+    "kddept": "035",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "036",
+    "kdunit": "01",
+    "kdprogram": "CL",
+    "nmprogram": "Program Koordinasi Pelaksanaan Kebijakan"
+  },
+  {
+    "kddept": "036",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "040",
+    "kdunit": "01",
+    "kdprogram": "DL",
+    "nmprogram": "Program Pendidikan dan Pelatihan Vokasi"
+  },
+  {
+    "kddept": "040",
+    "kdunit": "01",
+    "kdprogram": "EA",
+    "nmprogram": "Program Kepariwisataan dan Ekonomi Kreatif"
+  },
+  {
+    "kddept": "040",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "041",
+    "kdunit": "01",
+    "kdprogram": "EI",
+    "nmprogram": "Program Pengembangan dan Pengawasan BUMN"
+  },
+  {
+    "kddept": "041",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "044",
+    "kdunit": "01",
+    "kdprogram": "EB",
+    "nmprogram": "Program Kewirausahaan, Usaha Mikro, Kecil Menengah, dan Koperasi"
+  },
+  {
+    "kddept": "044",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "047",
+    "kdunit": "01",
+    "kdprogram": "DE",
+    "nmprogram": "Program Kesetaraan Gender, Perlindungan Perempuan dan Anak"
+  },
+  {
+    "kddept": "047",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "048",
+    "kdunit": "01",
+    "kdprogram": "CO",
+    "nmprogram": "Program Kebijakan, Pembinaan Profesi, dan Tata Kelola ASN"
+  },
+  {
+    "kddept": "048",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "050",
+    "kdunit": "01",
+    "kdprogram": "BK",
+    "nmprogram": "Program Penyelidikan, Pengamanan, dan Penggalangan Keamanan Negara"
+  },
+  {
+    "kddept": "050",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "051",
+    "kdunit": "01",
+    "kdprogram": "BO",
+    "nmprogram": "Program Keamanan dan Ketahanan Siber dan Sandi Negara"
+  },
+  {
+    "kddept": "051",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "052",
+    "kdunit": "01",
+    "kdprogram": "AE",
+    "nmprogram": "Program Kebijakan dan Strategi Ketahanan Nasional"
+  },
+  {
+    "kddept": "052",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "054",
+    "kdunit": "01",
+    "kdprogram": "GG",
+    "nmprogram": "Program Penyediaan dan Pelayanan Informasi Statistik"
+  },
+  {
+    "kddept": "054",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "055",
+    "kdunit": "01",
+    "kdprogram": "CK",
+    "nmprogram": "Program Perencanaan Pembangunan Nasional"
+  },
+  {
+    "kddept": "055",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "056",
+    "kdunit": "01",
+    "kdprogram": "CS",
+    "nmprogram": "Program Pengelolaan dan Pelayanan Pertanahan"
+  },
+  {
+    "kddept": "056",
+    "kdunit": "01",
+    "kdprogram": "IC",
+    "nmprogram": "Program Penyelenggaraan Penataan Ruang"
+  },
+  {
+    "kddept": "056",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "056",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "056",
+    "kdunit": "03",
+    "kdprogram": "IC",
+    "nmprogram": "Program Penyelenggaraan Penataan Ruang"
+  },
+  {
+    "kddept": "056",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "056",
+    "kdunit": "04",
+    "kdprogram": "CS",
+    "nmprogram": "Program Pengelolaan dan Pelayanan Pertanahan"
+  },
+  {
+    "kddept": "056",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "056",
+    "kdunit": "05",
+    "kdprogram": "CS",
+    "nmprogram": "Program Pengelolaan dan Pelayanan Pertanahan"
+  },
+  {
+    "kddept": "056",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "056",
+    "kdunit": "06",
+    "kdprogram": "CS",
+    "nmprogram": "Program Pengelolaan dan Pelayanan Pertanahan"
+  },
+  {
+    "kddept": "056",
+    "kdunit": "06",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "056",
+    "kdunit": "07",
+    "kdprogram": "CS",
+    "nmprogram": "Program Pengelolaan dan Pelayanan Pertanahan"
+  },
+  {
+    "kddept": "056",
+    "kdunit": "07",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "056",
+    "kdunit": "08",
+    "kdprogram": "CS",
+    "nmprogram": "Program Pengelolaan dan Pelayanan Pertanahan"
+  },
+  {
+    "kddept": "056",
+    "kdunit": "08",
+    "kdprogram": "IC",
+    "nmprogram": "Program Penyelenggaraan Penataan Ruang"
+  },
+  {
+    "kddept": "056",
+    "kdunit": "08",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "056",
+    "kdunit": "09",
+    "kdprogram": "CS",
+    "nmprogram": "Program Pengelolaan dan Pelayanan Pertanahan"
+  },
+  {
+    "kddept": "056",
+    "kdunit": "09",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "057",
+    "kdunit": "01",
+    "kdprogram": "DM",
+    "nmprogram": "Program Perpustakaan dan Literasi"
+  },
+  {
+    "kddept": "057",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "01",
+    "kdprogram": "GH",
+    "nmprogram": "Program Komunikasi Publik"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "03",
+    "kdprogram": "GE",
+    "nmprogram": "Program Pengelolaan Spektrum Frekuensi, Standar Perangkat dan Layanan Publik"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "04",
+    "kdprogram": "GB",
+    "nmprogram": "Program Pemanfaatan Teknologi Informasi dan Komunikasi (TIK)"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "04",
+    "kdprogram": "GE",
+    "nmprogram": "Program Pengelolaan Spektrum Frekuensi, Standar Perangkat dan Layanan Publik"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "05",
+    "kdprogram": "GB",
+    "nmprogram": "Program Pemanfaatan Teknologi Informasi dan Komunikasi (TIK)"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "05",
+    "kdprogram": "GE",
+    "nmprogram": "Program Pengelolaan Spektrum Frekuensi, Standar Perangkat dan Layanan Publik"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "05",
+    "kdprogram": "GF",
+    "nmprogram": "Program Penyediaan Infrastruktur Teknologi Informasi dan Komunikasi (TIK)"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "06",
+    "kdprogram": "GB",
+    "nmprogram": "Program Pemanfaatan Teknologi Informasi dan Komunikasi (TIK)"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "06",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "07",
+    "kdprogram": "GB",
+    "nmprogram": "Program Pemanfaatan Teknologi Informasi dan Komunikasi (TIK)"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "07",
+    "kdprogram": "GH",
+    "nmprogram": "Program Komunikasi Publik"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "07",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "08",
+    "kdprogram": "GF",
+    "nmprogram": "Program Penyediaan Infrastruktur Teknologi Informasi dan Komunikasi (TIK)"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "08",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "060",
+    "kdunit": "01",
+    "kdprogram": "BD",
+    "nmprogram": "Program Profesionalisme SDM Polri"
+  },
+  {
+    "kddept": "060",
+    "kdunit": "01",
+    "kdprogram": "BI",
+    "nmprogram": "Program Penyelidikan dan Penyidikan Tindak Pidana"
+  },
+  {
+    "kddept": "060",
+    "kdunit": "01",
+    "kdprogram": "BP",
+    "nmprogram": "Program Modernisasi Almatsus dan Sarana Prasarana Polri"
+  },
+  {
+    "kddept": "060",
+    "kdunit": "01",
+    "kdprogram": "BQ",
+    "nmprogram": "Program Pemeliharaan Keamanan dan Ketertiban Masyarakat"
+  },
+  {
+    "kddept": "060",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "063",
+    "kdunit": "01",
+    "kdprogram": "DR",
+    "nmprogram": "Program Pengawasan Obat dan Makanan"
+  },
+  {
+    "kddept": "063",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "064",
+    "kdunit": "01",
+    "kdprogram": "AI",
+    "nmprogram": "Program Pembinaan Ketahanan Nasional"
+  },
+  {
+    "kddept": "064",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "065",
+    "kdunit": "01",
+    "kdprogram": "ED",
+    "nmprogram": "Program Penanaman Modal dan Hilirisasi"
+  },
+  {
+    "kddept": "065",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "066",
+    "kdunit": "01",
+    "kdprogram": "BL",
+    "nmprogram": "Program Pencegahan dan Pemberantasan Penyalahgunaan dan Peredaran Gelap Narkoba (P4GN)"
+  },
+  {
+    "kddept": "066",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "067",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "067",
+    "kdunit": "03",
+    "kdprogram": "CT",
+    "nmprogram": "Program Daerah Tertinggal, Kawasan Perbatasan, Perdesaan, dan Transmigrasi"
+  },
+  {
+    "kddept": "067",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "067",
+    "kdunit": "04",
+    "kdprogram": "CT",
+    "nmprogram": "Program Daerah Tertinggal, Kawasan Perbatasan, Perdesaan, dan Transmigrasi"
+  },
+  {
+    "kddept": "067",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "067",
+    "kdunit": "06",
+    "kdprogram": "CT",
+    "nmprogram": "Program Daerah Tertinggal, Kawasan Perbatasan, Perdesaan, dan Transmigrasi"
+  },
+  {
+    "kddept": "067",
+    "kdunit": "06",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "067",
+    "kdunit": "07",
+    "kdprogram": "CT",
+    "nmprogram": "Program Daerah Tertinggal, Kawasan Perbatasan, Perdesaan, dan Transmigrasi"
+  },
+  {
+    "kddept": "067",
+    "kdunit": "07",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "067",
+    "kdunit": "09",
+    "kdprogram": "CT",
+    "nmprogram": "Program Daerah Tertinggal, Kawasan Perbatasan, Perdesaan, dan Transmigrasi"
+  },
+  {
+    "kddept": "067",
+    "kdunit": "09",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "067",
+    "kdunit": "10",
+    "kdprogram": "CT",
+    "nmprogram": "Program Daerah Tertinggal, Kawasan Perbatasan, Perdesaan, dan Transmigrasi"
+  },
+  {
+    "kddept": "067",
+    "kdunit": "10",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "067",
+    "kdunit": "11",
+    "kdprogram": "CT",
+    "nmprogram": "Program Daerah Tertinggal, Kawasan Perbatasan, Perdesaan, dan Transmigrasi"
+  },
+  {
+    "kddept": "067",
+    "kdunit": "11",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "068",
+    "kdunit": "01",
+    "kdprogram": "DJ",
+    "nmprogram": "Program Pembangunan Keluarga, Kependudukan dan Keluarga Berencana"
+  },
+  {
+    "kddept": "068",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "074",
+    "kdunit": "01",
+    "kdprogram": "BG",
+    "nmprogram": "Program Pemajuan dan Penegakan HAM"
+  },
+  {
+    "kddept": "074",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "075",
+    "kdunit": "01",
+    "kdprogram": "GJ",
+    "nmprogram": "Program Meteorologi, Klimatologi, dan Geofisika"
+  },
+  {
+    "kddept": "075",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "076",
+    "kdunit": "01",
+    "kdprogram": "CQ",
+    "nmprogram": "Penyelenggaraan Pemilu dalam Proses Konsolidasi Demokrasi"
+  },
+  {
+    "kddept": "076",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "077",
+    "kdunit": "01",
+    "kdprogram": "BJ",
+    "nmprogram": "Program Penanganan Perkara Konstitusi"
+  },
+  {
+    "kddept": "077",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "078",
+    "kdunit": "01",
+    "kdprogram": "BE",
+    "nmprogram": "Program Pencegahan dan Pemberantasan Tindak Pidana Pencucian Uang (TPPU) dan Pendanaan Terorisme"
+  },
+  {
+    "kddept": "078",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "083",
+    "kdunit": "01",
+    "kdprogram": "GI",
+    "nmprogram": "Program Penyelenggaraan Informasi Geospasial"
+  },
+  {
+    "kddept": "083",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "084",
+    "kdunit": "01",
+    "kdprogram": "EJ",
+    "nmprogram": "Program Standardisasi Nasional"
+  },
+  {
+    "kddept": "084",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "085",
+    "kdunit": "01",
+    "kdprogram": "KB",
+    "nmprogram": "Program Riset dan Inovasi Ilmu Pengetahuan dan Teknologi"
+  },
+  {
+    "kddept": "085",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "086",
+    "kdunit": "01",
+    "kdprogram": "CO",
+    "nmprogram": "Program Kebijakan, Pembinaan Profesi, dan Tata Kelola ASN"
+  },
+  {
+    "kddept": "086",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "087",
+    "kdunit": "01",
+    "kdprogram": "CN",
+    "nmprogram": "Program Penyelenggaraan Kearsipan Nasional"
+  },
+  {
+    "kddept": "087",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "088",
+    "kdunit": "01",
+    "kdprogram": "CO",
+    "nmprogram": "Program Kebijakan, Pembinaan Profesi, dan Tata Kelola ASN"
+  },
+  {
+    "kddept": "088",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "089",
+    "kdunit": "01",
+    "kdprogram": "CH",
+    "nmprogram": "Program Pengawasan Pembangunan"
+  },
+  {
+    "kddept": "089",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "090",
+    "kdunit": "01",
+    "kdprogram": "EE",
+    "nmprogram": "Program Perdagangan Luar Negeri"
+  },
+  {
+    "kddept": "090",
+    "kdunit": "01",
+    "kdprogram": "EF",
+    "nmprogram": "Program Perdagangan Dalam Negeri"
+  },
+  {
+    "kddept": "090",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "090",
+    "kdunit": "02",
+    "kdprogram": "EF",
+    "nmprogram": "Program Perdagangan Dalam Negeri"
+  },
+  {
+    "kddept": "090",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "090",
+    "kdunit": "03",
+    "kdprogram": "EE",
+    "nmprogram": "Program Perdagangan Luar Negeri"
+  },
+  {
+    "kddept": "090",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "090",
+    "kdunit": "04",
+    "kdprogram": "EE",
+    "nmprogram": "Program Perdagangan Luar Negeri"
+  },
+  {
+    "kddept": "090",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "090",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "090",
+    "kdunit": "06",
+    "kdprogram": "EE",
+    "nmprogram": "Program Perdagangan Luar Negeri"
+  },
+  {
+    "kddept": "090",
+    "kdunit": "06",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "090",
+    "kdunit": "07",
+    "kdprogram": "EF",
+    "nmprogram": "Program Perdagangan Dalam Negeri"
+  },
+  {
+    "kddept": "090",
+    "kdunit": "07",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "090",
+    "kdunit": "08",
+    "kdprogram": "KB",
+    "nmprogram": "Program Riset dan Inovasi Ilmu Pengetahuan dan Teknologi"
+  },
+  {
+    "kddept": "090",
+    "kdunit": "08",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "090",
+    "kdunit": "09",
+    "kdprogram": "EF",
+    "nmprogram": "Program Perdagangan Dalam Negeri"
+  },
+  {
+    "kddept": "090",
+    "kdunit": "09",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "092",
+    "kdunit": "01",
+    "kdprogram": "DA",
+    "nmprogram": "Program Keolahragaan"
+  },
+  {
+    "kddept": "092",
+    "kdunit": "01",
+    "kdprogram": "DB",
+    "nmprogram": "Program Kepemudaan"
+  },
+  {
+    "kddept": "092",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "093",
+    "kdunit": "01",
+    "kdprogram": "BC",
+    "nmprogram": "Program Pencegahan dan Penindakan Perkara Korupsi"
+  },
+  {
+    "kddept": "093",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "095",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "095",
+    "kdunit": "02",
+    "kdprogram": "CF",
+    "nmprogram": "Program Penyelenggaraan Lembaga Legislatif dan Alat Kelengkapan"
+  },
+  {
+    "kddept": "095",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "100",
+    "kdunit": "01",
+    "kdprogram": "BH",
+    "nmprogram": "Program Penegakan Integritas Hakim"
+  },
+  {
+    "kddept": "100",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "103",
+    "kdunit": "01",
+    "kdprogram": "FA",
+    "nmprogram": "Program Ketahanan Bencana"
+  },
+  {
+    "kddept": "103",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "104",
+    "kdunit": "01",
+    "kdprogram": "DP",
+    "nmprogram": "Program Penempatan dan Pelindungan PMI"
+  },
+  {
+    "kddept": "104",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "106",
+    "kdunit": "01",
+    "kdprogram": "CJ",
+    "nmprogram": "Program Pengadaan Barang/Jasa Nasional"
+  },
+  {
+    "kddept": "106",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "107",
+    "kdunit": "01",
+    "kdprogram": "BM",
+    "nmprogram": "Program Pencarian dan Pertolongan pada Kecelakaan dan Bencana"
+  },
+  {
+    "kddept": "107",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "108",
+    "kdunit": "01",
+    "kdprogram": "EG",
+    "nmprogram": "Program Pengawasan Persaingan Usaha"
+  },
+  {
+    "kddept": "108",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "110",
+    "kdunit": "01",
+    "kdprogram": "CG",
+    "nmprogram": "Program Pengawasan Penyelenggaraan Pelayanan Publik"
+  },
+  {
+    "kddept": "110",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "111",
+    "kdunit": "01",
+    "kdprogram": "AG",
+    "nmprogram": "Program Pengelolaan Batas Wilayah Negara dan Kawasan Perbatasan"
+  },
+  {
+    "kddept": "111",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "112",
+    "kdunit": "01",
+    "kdprogram": "EH",
+    "nmprogram": "Program Pengembangan Kawasan Strategis"
+  },
+  {
+    "kddept": "112",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "113",
+    "kdunit": "01",
+    "kdprogram": "BA",
+    "nmprogram": "Program Penanggulangan Terorisme"
+  },
+  {
+    "kddept": "113",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "114",
+    "kdunit": "01",
+    "kdprogram": "CA",
+    "nmprogram": "Penyelenggaraan Layanan kepada Presiden dan Wakil Presiden"
+  },
+  {
+    "kddept": "114",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "115",
+    "kdunit": "01",
+    "kdprogram": "CQ",
+    "nmprogram": "Program Penyelenggaraan Pemilu dalam Proses Konsolidasi Demokrasi"
+  },
+  {
+    "kddept": "115",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "116",
+    "kdunit": "01",
+    "kdprogram": "GC",
+    "nmprogram": "Program Penyiaran Publik"
+  },
+  {
+    "kddept": "116",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "117",
+    "kdunit": "01",
+    "kdprogram": "GC",
+    "nmprogram": "Program Penyiaran Publik"
+  },
+  {
+    "kddept": "117",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "118",
+    "kdunit": "01",
+    "kdprogram": "EH",
+    "nmprogram": "Program Pengembangan Kawasan Strategis"
+  },
+  {
+    "kddept": "118",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "119",
+    "kdunit": "01",
+    "kdprogram": "BN",
+    "nmprogram": "Program Keamanan dan Keselamatan di Wilayah Perairan Indonesia dan Wilayah Yurisdiksi Indonesia"
+  },
+  {
+    "kddept": "119",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "120",
+    "kdunit": "01",
+    "kdprogram": "CL",
+    "nmprogram": "Program Koordinasi Pelaksanaan Kebijakan"
+  },
+  {
+    "kddept": "120",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "122",
+    "kdunit": "01",
+    "kdprogram": "AH",
+    "nmprogram": "Program Pembinaan Ideologi Pancasila"
+  },
+  {
+    "kddept": "122",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "123",
+    "kdunit": "01",
+    "kdprogram": "BF",
+    "nmprogram": "Program Penegakan dan Pelayanan Hukum"
+  },
+  {
+    "kddept": "123",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "124",
+    "kdunit": "01",
+    "kdprogram": "KB",
+    "nmprogram": "Program Riset dan Inovasi Ilmu Pengetahuan dan Teknologi"
+  },
+  {
+    "kddept": "124",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "125",
+    "kdunit": "01",
+    "kdprogram": "HA",
+    "nmprogram": "Program Ketersediaan, Akses dan Konsumsi Pangan Berkualitas"
+  },
+  {
+    "kddept": "125",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "126",
+    "kdunit": "01",
+    "kdprogram": "EH",
+    "nmprogram": "Program Pengembangan Kawasan Strategis"
+  },
+  {
+    "kddept": "126",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "999",
+    "kdunit": "01",
+    "kdprogram": "06",
+    "nmprogram": "Program Pengelolaan Utang Negara"
+  },
+  {
+    "kddept": "999",
+    "kdunit": "02",
+    "kdprogram": "07",
+    "nmprogram": "Program Pengelolaan Hibah Negara"
+  },
+  {
+    "kddept": "999",
+    "kdunit": "03",
+    "kdprogram": "08",
+    "nmprogram": "Program Investasi Pemerintah"
+  },
+  {
+    "kddept": "999",
+    "kdunit": "04",
+    "kdprogram": "09",
+    "nmprogram": "Program Pemberian Pinjaman"
+  },
+  {
+    "kddept": "999",
+    "kdunit": "05",
+    "kdprogram": "10",
+    "nmprogram": "Program Pengelolaan Anggaran Transfer ke Daerah"
+  },
+  {
+    "kddept": "999",
+    "kdunit": "07",
+    "kdprogram": "11",
+    "nmprogram": "Program Pengelolaan Subsidi"
+  },
+  {
+    "kddept": "999",
+    "kdunit": "08",
+    "kdprogram": "12",
+    "nmprogram": "Program Pengelolaan Belanja Lainnya"
+  },
+  {
+    "kddept": "999",
+    "kdunit": "99",
+    "kdprogram": "13",
+    "nmprogram": "Program Pengelolaan Transaksi Khusus"
+  },
+  {
+    "kddept": "127",
+    "kdunit": "01",
+    "kdprogram": "HA",
+    "nmprogram": "Program Ketersediaan, Akses dan Konsumsi Pangan Berkualitas"
+  },
+  {
+    "kddept": "127",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "065",
+    "kdunit": "06",
+    "kdprogram": "ED",
+    "nmprogram": "Program Penanaman Modal dan Hilirisasi"
+  },
+  {
+    "kddept": "065",
+    "kdunit": "07",
+    "kdprogram": "ED",
+    "nmprogram": "Program Penanaman Modal dan Hilirisasi"
+  },
+  {
+    "kddept": "128",
+    "kdunit": "01",
+    "kdprogram": "DT",
+    "nmprogram": "Program Pemenuhan Gizi Nasional"
+  },
+  {
+    "kddept": "128",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "135",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "135",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "135",
+    "kdunit": "03",
+    "kdprogram": "BB",
+    "nmprogram": "Program Pembentukan Regulasi"
+  },
+  {
+    "kddept": "135",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "135",
+    "kdunit": "04",
+    "kdprogram": "BF",
+    "nmprogram": "Program Penegakan dan Pelayanan Hukum"
+  },
+  {
+    "kddept": "135",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "135",
+    "kdunit": "05",
+    "kdprogram": "BF",
+    "nmprogram": "Program Penegakan dan Pelayanan Hukum"
+  },
+  {
+    "kddept": "135",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "135",
+    "kdunit": "11",
+    "kdprogram": "BB",
+    "nmprogram": "Program Pembentukan Regulasi"
+  },
+  {
+    "kddept": "135",
+    "kdunit": "11",
+    "kdprogram": "BF",
+    "nmprogram": "Program Penegakan dan Pelayanan Hukum"
+  },
+  {
+    "kddept": "135",
+    "kdunit": "11",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "135",
+    "kdunit": "12",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "135",
+    "kdunit": "13",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "136",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "136",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "136",
+    "kdunit": "03",
+    "kdprogram": "BG",
+    "nmprogram": "Program Pemajuan dan Penegakan HAM"
+  },
+  {
+    "kddept": "136",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "136",
+    "kdunit": "04",
+    "kdprogram": "BG",
+    "nmprogram": "Program Pemajuan dan Penegakan HAM"
+  },
+  {
+    "kddept": "136",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "137",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "137",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "137",
+    "kdunit": "03",
+    "kdprogram": "BF",
+    "nmprogram": "Program Penegakan dan Pelayanan Hukum"
+  },
+  {
+    "kddept": "137",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "137",
+    "kdunit": "04",
+    "kdprogram": "BF",
+    "nmprogram": "Program Penegakan dan Pelayanan Hukum"
+  },
+  {
+    "kddept": "137",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "137",
+    "kdunit": "11",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "141",
+    "kdunit": "01",
+    "kdprogram": "DC",
+    "nmprogram": "Program Kerukunan Umat dan Layanan Kehidupan Beragama"
+  },
+  {
+    "kddept": "141",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "142",
+    "kdunit": "01",
+    "kdprogram": "DC",
+    "nmprogram": "Program Kerukunan Umat dan Layanan Kehidupan Beragama"
+  },
+  {
+    "kddept": "142",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "130",
+    "kdunit": "01",
+    "kdprogram": "CL",
+    "nmprogram": "Program Koordinasi Pelaksanaan Kebijakan"
+  },
+  {
+    "kddept": "130",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "007",
+    "kdunit": "11",
+    "kdprogram": "CA",
+    "nmprogram": "Program Penyelenggaraan Layanan kepada Presiden dan Wakil Presiden"
+  },
+  {
+    "kddept": "007",
+    "kdunit": "11",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "007",
+    "kdunit": "12",
+    "kdprogram": "CA",
+    "nmprogram": "Program Penyelenggaraan Layanan kepada Presiden dan Wakil Presiden"
+  },
+  {
+    "kddept": "007",
+    "kdunit": "12",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "007",
+    "kdunit": "13",
+    "kdprogram": "CA",
+    "nmprogram": "Program Penyelenggaraan Layanan kepada Presiden dan Wakil Presiden"
+  },
+  {
+    "kddept": "007",
+    "kdunit": "13",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "09",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "10",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "11",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "12",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "131",
+    "kdunit": "01",
+    "kdprogram": "CL",
+    "nmprogram": "Program Koordinasi Pelaksanaan Kebijakan"
+  },
+  {
+    "kddept": "131",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "132",
+    "kdunit": "01",
+    "kdprogram": "CL",
+    "nmprogram": "Program Koordinasi Pelaksanaan Kebijakan"
+  },
+  {
+    "kddept": "132",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "147",
+    "kdunit": "01",
+    "kdprogram": "DL",
+    "nmprogram": "Program Pendidikan dan Pelatihan Vokasi"
+  },
+  {
+    "kddept": "129",
+    "kdunit": "01",
+    "kdprogram": "CL",
+    "nmprogram": "Program Koordinasi Pelaksanaan Kebijakan"
+  },
+  {
+    "kddept": "129",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "140",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "140",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "140",
+    "kdunit": "03",
+    "kdprogram": "DV",
+    "nmprogram": "Pemajuan dan Pelestarian Kebudayaan"
+  },
+  {
+    "kddept": "140",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "140",
+    "kdunit": "04",
+    "kdprogram": "DV",
+    "nmprogram": "Pemajuan dan Pelestarian Kebudayaan"
+  },
+  {
+    "kddept": "140",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "140",
+    "kdunit": "05",
+    "kdprogram": "DV",
+    "nmprogram": "Pemajuan dan Pelestarian Kebudayaan"
+  },
+  {
+    "kddept": "140",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "148",
+    "kdunit": "01",
+    "kdprogram": "EL",
+    "nmprogram": "Program Ekonomi Kreatif"
+  },
+  {
+    "kddept": "148",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "138",
+    "kdunit": "01",
+    "kdprogram": "DF",
+    "nmprogram": "Program Wajib Belajar 13 Tahun"
+  },
+  {
+    "kddept": "138",
+    "kdunit": "01",
+    "kdprogram": "DI",
+    "nmprogram": "Program Kualitas Pengajaran dan Pembelajaran"
+  },
+  {
+    "kddept": "138",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "138",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "138",
+    "kdunit": "03",
+    "kdprogram": "DI",
+    "nmprogram": "Program Kualitas Pengajaran dan Pembelajaran"
+  },
+  {
+    "kddept": "138",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "138",
+    "kdunit": "04",
+    "kdprogram": "DF",
+    "nmprogram": "Program Wajib Belajar 13 Tahun"
+  },
+  {
+    "kddept": "138",
+    "kdunit": "04",
+    "kdprogram": "DI",
+    "nmprogram": "Program Kualitas Pengajaran dan Pembelajaran"
+  },
+  {
+    "kddept": "138",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "138",
+    "kdunit": "05",
+    "kdprogram": "DI",
+    "nmprogram": "Program Kualitas Pengajaran dan Pembelajaran"
+  },
+  {
+    "kddept": "138",
+    "kdunit": "05",
+    "kdprogram": "DL",
+    "nmprogram": "Program Pendidikan dan Pelatihan Vokasi"
+  },
+  {
+    "kddept": "138",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "138",
+    "kdunit": "11",
+    "kdprogram": "DI",
+    "nmprogram": "Program Kualitas Pengajaran dan Pembelajaran"
+  },
+  {
+    "kddept": "138",
+    "kdunit": "11",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "138",
+    "kdunit": "12",
+    "kdprogram": "DI",
+    "nmprogram": "Program Kualitas Pengajaran dan Pembelajaran"
+  },
+  {
+    "kddept": "138",
+    "kdunit": "12",
+    "kdprogram": "DU",
+    "nmprogram": "Program Pembangunan Kebahasaan dan Kesastraan"
+  },
+  {
+    "kddept": "138",
+    "kdunit": "12",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "151",
+    "kdunit": "01",
+    "kdprogram": "CT",
+    "nmprogram": "Program Desa dan Pembangunan Daerah Tertinggal"
+  },
+  {
+    "kddept": "151",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "151",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "151",
+    "kdunit": "03",
+    "kdprogram": "CT",
+    "nmprogram": "Program Desa dan Pembangunan Daerah Tertinggal"
+  },
+  {
+    "kddept": "151",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "151",
+    "kdunit": "04",
+    "kdprogram": "CT",
+    "nmprogram": "Program Desa dan Pembangunan Daerah Tertinggal"
+  },
+  {
+    "kddept": "151",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "151",
+    "kdunit": "05",
+    "kdprogram": "CT",
+    "nmprogram": "Program Desa dan Pembangunan Daerah Tertinggal"
+  },
+  {
+    "kddept": "151",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "151",
+    "kdunit": "11",
+    "kdprogram": "CT",
+    "nmprogram": "Program Desa dan Pembangunan Daerah Tertinggal"
+  },
+  {
+    "kddept": "151",
+    "kdunit": "11",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "151",
+    "kdunit": "12",
+    "kdprogram": "CT",
+    "nmprogram": "Program Desa dan Pembangunan Daerah Tertinggal"
+  },
+  {
+    "kddept": "151",
+    "kdunit": "12",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "134",
+    "kdunit": "01",
+    "kdprogram": "CL",
+    "nmprogram": "Program Koordinasi Pelaksanaan Kebijakan"
+  },
+  {
+    "kddept": "134",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "143",
+    "kdunit": "01",
+    "kdprogram": "FF",
+    "nmprogram": "Program Pengelolaan Hutan Berkelanjutan"
+  },
+  {
+    "kddept": "143",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "143",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "143",
+    "kdunit": "03",
+    "kdprogram": "FF",
+    "nmprogram": "Program Pengelolaan Hutan Berkelanjutan"
+  },
+  {
+    "kddept": "143",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "143",
+    "kdunit": "04",
+    "kdprogram": "FF",
+    "nmprogram": "Program Pengelolaan Hutan Berkelanjutan"
+  },
+  {
+    "kddept": "143",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "143",
+    "kdunit": "05",
+    "kdprogram": "FF",
+    "nmprogram": "Program Pengelolaan Hutan Berkelanjutan"
+  },
+  {
+    "kddept": "143",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "143",
+    "kdunit": "06",
+    "kdprogram": "FF",
+    "nmprogram": "Program Pengelolaan Hutan Berkelanjutan"
+  },
+  {
+    "kddept": "143",
+    "kdunit": "06",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "143",
+    "kdunit": "07",
+    "kdprogram": "FF",
+    "nmprogram": "Program Pengelolaan Hutan Berkelanjutan"
+  },
+  {
+    "kddept": "143",
+    "kdunit": "07",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "143",
+    "kdunit": "08",
+    "kdprogram": "FF",
+    "nmprogram": "Program Pengelolaan Hutan Berkelanjutan"
+  },
+  {
+    "kddept": "143",
+    "kdunit": "08",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "143",
+    "kdunit": "11",
+    "kdprogram": "DL",
+    "nmprogram": "Program Pendidikan dan Pelatihan Vokasi"
+  },
+  {
+    "kddept": "143",
+    "kdunit": "11",
+    "kdprogram": "FF",
+    "nmprogram": "Program Pengelolaan Hutan Berkelanjutan"
+  },
+  {
+    "kddept": "143",
+    "kdunit": "11",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "149",
+    "kdunit": "01",
+    "kdprogram": "EM",
+    "nmprogram": "Program Perkoperasian"
+  },
+  {
+    "kddept": "149",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "150",
+    "kdunit": "01",
+    "kdprogram": "EN",
+    "nmprogram": "Program Usaha Mikro, Kecil, Menengah, dan Kewirausahaan"
+  },
+  {
+    "kddept": "150",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "144",
+    "kdunit": "01",
+    "kdprogram": "FB",
+    "nmprogram": "Program Ketahanan Bencana dan Perubahan Iklim"
+  },
+  {
+    "kddept": "144",
+    "kdunit": "01",
+    "kdprogram": "FD",
+    "nmprogram": "Program Kualitas Lingkungan Hidup"
+  },
+  {
+    "kddept": "144",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "146",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "146",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "146",
+    "kdunit": "03",
+    "kdprogram": "IA",
+    "nmprogram": "Program Perumahan dan Kawasan Permukiman"
+  },
+  {
+    "kddept": "146",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "146",
+    "kdunit": "04",
+    "kdprogram": "IA",
+    "nmprogram": "Program Perumahan dan Kawasan Permukiman"
+  },
+  {
+    "kddept": "146",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "146",
+    "kdunit": "05",
+    "kdprogram": "IA",
+    "nmprogram": "Program Perumahan dan Kawasan Permukiman"
+  },
+  {
+    "kddept": "146",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "146",
+    "kdunit": "06",
+    "kdprogram": "IA",
+    "nmprogram": "Program Perumahan dan Kawasan Permukiman"
+  },
+  {
+    "kddept": "146",
+    "kdunit": "06",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "147",
+    "kdunit": "01",
+    "kdprogram": "EK",
+    "nmprogram": "Program Pariwisata"
+  },
+  {
+    "kddept": "147",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "145",
+    "kdunit": "03",
+    "kdprogram": "FC",
+    "nmprogram": "Program Ketahanan Sumber Daya Air"
+  },
+  {
+    "kddept": "145",
+    "kdunit": "04",
+    "kdprogram": "GA",
+    "nmprogram": "Program Infrastruktur Konektivitas"
+  },
+  {
+    "kddept": "139",
+    "kdunit": "01",
+    "kdprogram": "DK",
+    "nmprogram": "Program Pendidikan Tinggi"
+  },
+  {
+    "kddept": "139",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "139",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "139",
+    "kdunit": "03",
+    "kdprogram": "DK",
+    "nmprogram": "Program Pendidikan Tinggi"
+  },
+  {
+    "kddept": "139",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "139",
+    "kdunit": "04",
+    "kdprogram": "DK",
+    "nmprogram": "Program Pendidikan Tinggi"
+  },
+  {
+    "kddept": "139",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "139",
+    "kdunit": "05",
+    "kdprogram": "KB",
+    "nmprogram": "Program Riset dan Inovasi Ilmu Pengetahuan dan Teknologi"
+  },
+  {
+    "kddept": "139",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "145",
+    "kdunit": "07",
+    "kdprogram": "DL",
+    "nmprogram": "Program Pendidikan dan Pelatihan Vokasi"
+  },
+  {
+    "kddept": "145",
+    "kdunit": "12",
+    "kdprogram": "DL",
+    "nmprogram": "Program Pendidikan dan Pelatihan Vokasi"
+  },
+  {
+    "kddept": "145",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "145",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "145",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "145",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "145",
+    "kdunit": "05",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "145",
+    "kdunit": "07",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "145",
+    "kdunit": "08",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "145",
+    "kdunit": "11",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "145",
+    "kdunit": "12",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "145",
+    "kdunit": "05",
+    "kdprogram": "IA",
+    "nmprogram": "Program Perumahan dan Kawasan Permukiman"
+  },
+  {
+    "kddept": "145",
+    "kdunit": "06",
+    "kdprogram": "GM",
+    "nmprogram": "Program Prasarana Strategis"
+  },
+  {
+    "kddept": "152",
+    "kdunit": "01",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "152",
+    "kdunit": "02",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "152",
+    "kdunit": "03",
+    "kdprogram": "DW",
+    "nmprogram": "Program Transmigrasi"
+  },
+  {
+    "kddept": "152",
+    "kdunit": "03",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "152",
+    "kdunit": "04",
+    "kdprogram": "DW",
+    "nmprogram": "Program Transmigrasi"
+  },
+  {
+    "kddept": "152",
+    "kdunit": "04",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "16",
+    "kdprogram": "CE",
+    "nmprogram": "Program Kebijakan Fiskal"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "16",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "17",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "14",
+    "kdprogram": "CE",
+    "nmprogram": "Program Kebijakan Fiskal"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "14",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "015",
+    "kdunit": "15",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "09",
+    "kdprogram": "GL",
+    "nmprogram": "Program Pengembangan dan Penguatan Infrastruktur Digital"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "10",
+    "kdprogram": "GK",
+    "nmprogram": "Program Pengembangan dan Penguatan Ekosistem dan Ruang Digital"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "11",
+    "kdprogram": "GK",
+    "nmprogram": "Program Pengembangan dan Penguatan Ekosistem dan Ruang Digital"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "12",
+    "kdprogram": "GK",
+    "nmprogram": "Program Pengembangan dan Penguatan Ekosistem dan Ruang Digital"
+  },
+  {
+    "kddept": "140",
+    "kdunit": "01",
+    "kdprogram": "DV",
+    "nmprogram": "Program Pemajuan dan Pelestarian Kebudayaan"
+  },
+  {
+    "kddept": "145",
+    "kdunit": "06",
+    "kdprogram": "WA",
+    "nmprogram": "Program Dukungan Manajemen"
+  },
+  {
+    "kddept": "138",
+    "kdunit": "05",
+    "kdprogram": "DF",
+    "nmprogram": "Program Wajib Belajar 13 Tahun"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "01",
+    "kdprogram": "DK",
+    "nmprogram": "Program Pendidikan Tinggi"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "11",
+    "kdprogram": "DC",
+    "nmprogram": "Program Kerukunan Umat dan Layanan Kehidupan Beragama"
+  },
+  {
+    "kddept": "025",
+    "kdunit": "11",
+    "kdprogram": "DI",
+    "nmprogram": "Program Kualitas Pengajaran dan Pembelajaran"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "08",
+    "kdprogram": "GL",
+    "nmprogram": "Program Pengembangan dan Penguatan Infrastruktur Digital"
+  },
+  {
+    "kddept": "059",
+    "kdunit": "06",
+    "kdprogram": "GK",
+    "nmprogram": "Program Pengembangan dan Penguatan Ekosistem dan Ruang Digital"
+  },
+  {
+    "kddept": "018",
+    "kdunit": "13",
+    "kdprogram": "HA",
+    "nmprogram": "Program Ketersediaan, Akses dan Konsumsi Pangan Berkualitas"
+  }
+]

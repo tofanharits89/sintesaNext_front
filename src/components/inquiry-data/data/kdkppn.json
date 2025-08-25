@@ -1332,14 +1332,6 @@
     "nmlokasi": "DKI JAKARTA",
     "kdkanwil": "11",
     "nmkanwil": "JAKARTA",
-    "kdkppn": "999",
-    "nmkppn": "DIREKTORAT PENGELOLAAN KAS NEGARA"
-  },
-  {
-    "kdlokasi": "01",
-    "nmlokasi": "DKI JAKARTA",
-    "kdkanwil": "11",
-    "nmkanwil": "JAKARTA",
     "kdkppn": "175",
     "nmkppn": "JAKARTA VI"
   },
@@ -1436,22 +1428,6 @@
     "nmlokasi": "DKI JAKARTA",
     "kdkanwil": "11",
     "nmkanwil": "JAKARTA",
-    "kdkppn": "901",
-    "nmkppn": "PENERIMAAN NEGARA (Dit. PKN)"
-  },
-  {
-    "kdlokasi": "01",
-    "nmlokasi": "DKI JAKARTA",
-    "kdkanwil": "11",
-    "nmkanwil": "JAKARTA",
-    "kdkppn": "666",
-    "nmkppn": "TRIAL REVISI"
-  },
-  {
-    "kdlokasi": "01",
-    "nmlokasi": "DKI JAKARTA",
-    "kdkanwil": "11",
-    "nmkanwil": "JAKARTA",
     "kdkppn": "182",
     "nmkppn": "JAKARTA VII"
   },
@@ -1480,3 +1456,28 @@
     "nmkppn": "TANJUNG SELOR"
   }
 ]
+
+// {
+//   "kdlokasi": "01",
+//   "nmlokasi": "DKI JAKARTA",
+//   "kdkanwil": "11",
+//   "nmkanwil": "JAKARTA",
+//   "kdkppn": "666",
+//   "nmkppn": "TRIAL REVISI"
+// },
+// {
+//   "kdlokasi": "01",
+//   "nmlokasi": "DKI JAKARTA",
+//   "kdkanwil": "11",
+//   "nmkanwil": "JAKARTA",
+//   "kdkppn": "901",
+//   "nmkppn": "PENERIMAAN NEGARA (Dit. PKN)"
+// },
+// {
+//   "kdlokasi": "01",
+//   "nmlokasi": "DKI JAKARTA",
+//   "kdkanwil": "11",
+//   "nmkanwil": "JAKARTA",
+//   "kdkppn": "999",
+//   "nmkppn": "DIREKTORAT PENGELOLAAN KAS NEGARA"
+// },
