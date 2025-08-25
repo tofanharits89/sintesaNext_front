@@ -23,6 +23,7 @@ export interface FilterValue {
   kondisiCode: string;
   mengandungKata: string;
   jenisTampilan: "kode" | "kode_uraian" | "uraian" | "jangan_tampilkan";
+  akunType?: "akun" | "kodeBkpk" | "jenisBelanja"; // For akun filter type switching
 }
 
 // Table mapping based on report type
@@ -162,6 +163,22 @@ const FILTER_CONFIG: Record<string, FilterConfig> = {
     joinKey: "kdakun",
     nameColumn: "nmakun",
   },
+  kodeBkpk: {
+    key: "kodeBkpk",
+    columnName: "kdakun",
+    referenceTable: "t_bkpk",
+    referenceDatabase: "dbref",
+    joinKey: "kdbkpk",
+    nameColumn: "nmbkpk",
+  },
+  jenisBelanja: {
+    key: "jenisBelanja",
+    columnName: "kdakun",
+    referenceTable: "t_gbkpk",
+    referenceDatabase: "dbref",
+    joinKey: "kdgbkpk",
+    nameColumn: "nmgbkpk",
+  },
   sumberDana: {
     key: "sumberDana",
     columnName: "kdsdana",
@@ -170,7 +187,14 @@ const FILTER_CONFIG: Record<string, FilterConfig> = {
     joinKey: "kdsdana",
     nameColumn: "nmsdana",
   },
-  register: { key: "register", columnName: "register" },
+  register: {
+    key: "register",
+    columnName: "register",
+    referenceTable: "t_register",
+    referenceDatabase: "dbref",
+    joinKey: "register",
+    nameColumn: "register", // Using register as name column since it's the main identifier
+  },
 };
 
 export function useInquiryQueryBuilder() {
@@ -245,11 +269,44 @@ export function useInquiryQueryBuilder() {
           (needsJoinForSelect || needsJoinForWhere) &&
           !joinedTables.has(alias)
         ) {
-          const joinTable = `${config.referenceDatabase}.${
-            config.referenceTable
-          }_${reportParams.tahun || new Date().getFullYear()}`;
+          // Determine the correct reference table and join condition based on filter type
+          let referenceTable = config.referenceTable;
+          let joinKey = config.joinKey;
+          let joinCondition = `main.${config.columnName} = ${alias}.${joinKey}`;
+
+          // Special handling for akun filter with different types
+          if (filterKey === "akun" && filterValue?.akunType) {
+            if (filterValue.akunType === "kodeBkpk") {
+              referenceTable = "t_bkpk";
+              joinKey = "kdbkpk";
+              joinCondition = `LEFT(main.${config.columnName}, 4) = ${alias}.${joinKey}`;
+            } else if (filterValue.akunType === "jenisBelanja") {
+              referenceTable = "t_gbkpk";
+              joinKey = "kdgbkpk";
+              joinCondition = `LEFT(main.${config.columnName}, 2) = ${alias}.${joinKey}`;
+            }
+          }
+          // Special handling for dedicated kodeBkpk and jenisBelanja filters
+          else if (filterKey === "kodeBkpk") {
+            joinCondition = `LEFT(main.${config.columnName}, 4) = ${alias}.${config.joinKey}`;
+          } else if (filterKey === "jenisBelanja") {
+            joinCondition = `LEFT(main.${config.columnName}, 2) = ${alias}.${config.joinKey}`;
+          }
+
+          // Special handling for register reference table name format
+          let joinTable;
+          if (filterKey === "register") {
+            joinTable = `${config.referenceDatabase}.${referenceTable}_${
+              reportParams.tahun || new Date().getFullYear()
+            }`;
+          } else {
+            joinTable = `${config.referenceDatabase}.${referenceTable}_${
+              reportParams.tahun || new Date().getFullYear()
+            }`;
+          }
+
           joinTables.push(
-            `LEFT JOIN ${joinTable} AS ${alias} ON main.${config.columnName} = ${alias}.${config.joinKey}`
+            `LEFT JOIN ${joinTable} AS ${alias} ON ${joinCondition}`
           );
           joinedTables.add(alias);
         }
@@ -257,28 +314,115 @@ export function useInquiryQueryBuilder() {
         // Add SELECT columns based on jenisTampilan (skip if jangan_tampilkan)
         if (jenisTampilan !== "jangan_tampilkan") {
           if (config.referenceTable && config.referenceDatabase) {
-            switch (jenisTampilan) {
-              case "kode":
-                // Only use main table column, no JOIN needed for SELECT
-                selectColumns.push(
-                  `main.${config.columnName} AS ${filterKey}_kode`
-                );
-                break;
-              case "uraian":
-                // Use description from joined table
-                selectColumns.push(
-                  `${alias}.${config.nameColumn} AS ${filterKey}_uraian`
-                );
-                break;
-              case "kode_uraian":
-                // Use both code and description
-                selectColumns.push(
-                  `main.${config.columnName} AS ${filterKey}_kode`
-                );
-                selectColumns.push(
-                  `${alias}.${config.nameColumn} AS ${filterKey}_uraian`
-                );
-                break;
+            // Debug logging
+            if (filterKey === "akun") {
+              console.log("DEBUG akun filter:", {
+                filterKey,
+                akunType: filterValue?.akunType,
+                filterValue,
+              });
+            }
+
+            // Determine the correct name column based on filter type
+            let nameColumn = config.nameColumn;
+            if (filterKey === "akun" && filterValue?.akunType) {
+              if (filterValue.akunType === "kodeBkpk") {
+                nameColumn = "nmbkpk";
+              } else if (filterValue.akunType === "jenisBelanja") {
+                nameColumn = "nmgbkpk";
+              }
+            }
+
+            // Special handling for register filter - add additional columns when reference table is used
+            if (
+              filterKey === "register" &&
+              (needsJoinForSelect || needsJoinForWhere)
+            ) {
+              // Add the additional columns from register reference table
+              selectColumns.push(`${alias}.register AS register_kode`);
+              selectColumns.push(`${alias}.nonpln AS nonpln`);
+              selectColumns.push(`${alias}.kdvalas AS kdvalas`);
+              selectColumns.push(`${alias}.tglnpln AS tglnpln`);
+              selectColumns.push(`${alias}.kddonor AS kddonor`);
+              selectColumns.push(`${alias}.kdkreditor AS kdkreditor`);
+              selectColumns.push(`${alias}.nmdonor AS nmdonor`);
+              selectColumns.push(`${alias}.jmlpnrk AS jmlpnrk`);
+              selectColumns.push(`${alias}.closingdate AS closingdate`);
+            } else {
+              switch (jenisTampilan) {
+                case "kode":
+                  // Special handling for akun filter with different types
+                  if (
+                    filterKey === "akun" &&
+                    filterValue?.akunType === "kodeBkpk"
+                  ) {
+                    selectColumns.push(
+                      `LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`
+                    );
+                  } else if (
+                    filterKey === "akun" &&
+                    filterValue?.akunType === "jenisBelanja"
+                  ) {
+                    selectColumns.push(
+                      `LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`
+                    );
+                  }
+                  // Special handling for dedicated kodeBkpk and jenisBelanja filters
+                  else if (filterKey === "kodeBkpk") {
+                    selectColumns.push(
+                      `LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`
+                    );
+                  } else if (filterKey === "jenisBelanja") {
+                    selectColumns.push(
+                      `LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`
+                    );
+                  } else {
+                    // Only use main table column, no JOIN needed for SELECT
+                    selectColumns.push(
+                      `main.${config.columnName} AS ${filterKey}_kode`
+                    );
+                  }
+                  break;
+                case "uraian":
+                  // Use description from joined table
+                  selectColumns.push(
+                    `${alias}.${nameColumn} AS ${filterKey}_uraian`
+                  );
+                  break;
+                case "kode_uraian":
+                  // Use both code and description
+                  if (
+                    filterKey === "akun" &&
+                    filterValue?.akunType === "kodeBkpk"
+                  ) {
+                    selectColumns.push(
+                      `LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`
+                    );
+                  } else if (
+                    filterKey === "akun" &&
+                    filterValue?.akunType === "jenisBelanja"
+                  ) {
+                    selectColumns.push(
+                      `LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`
+                    );
+                  } else if (filterKey === "kodeBkpk") {
+                    selectColumns.push(
+                      `LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`
+                    );
+                  } else if (filterKey === "jenisBelanja") {
+                    selectColumns.push(
+                      `LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`
+                    );
+                  } else {
+                    selectColumns.push(
+                      `main.${config.columnName} AS ${filterKey}_kode`
+                    );
+                  }
+                  selectColumns.push(
+                    `${alias}.${nameColumn} AS ${filterKey}_uraian`
+                  );
+                  break;
+              }
             }
           } else {
             // No reference table, just use main column
@@ -496,7 +640,31 @@ export function useInquiryQueryBuilder() {
 
         // Handle main selection
         if (selection && selection !== "all") {
-          whereConditions.push(`main.${config.columnName} = '${selection}'`);
+          // Special handling for akun filter with different types
+          if (filterKey === "akun" && filterValue?.akunType === "kodeBkpk") {
+            whereConditions.push(
+              `LEFT(main.${config.columnName}, 4) = '${selection}'`
+            );
+          } else if (
+            filterKey === "akun" &&
+            filterValue?.akunType === "jenisBelanja"
+          ) {
+            whereConditions.push(
+              `LEFT(main.${config.columnName}, 2) = '${selection}'`
+            );
+          }
+          // Special handling for dedicated kodeBkpk and jenisBelanja filters
+          else if (filterKey === "kodeBkpk") {
+            whereConditions.push(
+              `LEFT(main.${config.columnName}, 4) = '${selection}'`
+            );
+          } else if (filterKey === "jenisBelanja") {
+            whereConditions.push(
+              `LEFT(main.${config.columnName}, 2) = '${selection}'`
+            );
+          } else {
+            whereConditions.push(`main.${config.columnName} = '${selection}'`);
+          }
         }
 
         // Handle kondisi (multiple values)
@@ -507,18 +675,50 @@ export function useInquiryQueryBuilder() {
             .filter((v) => v);
           if (values.length > 0) {
             const valuesList = values.map((v) => `'${v}'`).join(", ");
-            whereConditions.push(
-              `main.${config.columnName} IN (${valuesList})`
-            );
+            // Special handling for akun filter with different types
+            if (filterKey === "akun" && filterValue?.akunType === "kodeBkpk") {
+              whereConditions.push(
+                `LEFT(main.${config.columnName}, 4) IN (${valuesList})`
+              );
+            } else if (
+              filterKey === "akun" &&
+              filterValue?.akunType === "jenisBelanja"
+            ) {
+              whereConditions.push(
+                `LEFT(main.${config.columnName}, 2) IN (${valuesList})`
+              );
+            }
+            // Special handling for dedicated kodeBkpk and jenisBelanja filters
+            else if (filterKey === "kodeBkpk") {
+              whereConditions.push(
+                `LEFT(main.${config.columnName}, 4) IN (${valuesList})`
+              );
+            } else if (filterKey === "jenisBelanja") {
+              whereConditions.push(
+                `LEFT(main.${config.columnName}, 2) IN (${valuesList})`
+              );
+            } else {
+              whereConditions.push(
+                `main.${config.columnName} IN (${valuesList})`
+              );
+            }
           }
         }
 
         // Handle mengandung kata (LIKE search)
         if (mengandungKata && mengandungKata.trim() && config.referenceTable) {
           const alias = `${filterKey}_ref`;
-          whereConditions.push(
-            `${alias}.${config.nameColumn} LIKE '%${mengandungKata.trim()}%'`
-          );
+
+          // Special handling for register filter - search in register column
+          if (filterKey === "register") {
+            whereConditions.push(
+              `${alias}.register LIKE '%${mengandungKata.trim()}%'`
+            );
+          } else {
+            whereConditions.push(
+              `${alias}.${config.nameColumn} LIKE '%${mengandungKata.trim()}%'`
+            );
+          }
         }
       });
 
@@ -556,15 +756,62 @@ export function useInquiryQueryBuilder() {
         if (jenisTampilan === "jangan_tampilkan") return;
 
         // Add main column to GROUP BY
-        groupByColumns.push(`main.${config.columnName}`);
+        // Special handling for akun filter with different types
+        if (filterKey === "akun" && filterValue?.akunType === "kodeBkpk") {
+          groupByColumns.push(`LEFT(main.${config.columnName}, 4)`);
+        } else if (
+          filterKey === "akun" &&
+          filterValue?.akunType === "jenisBelanja"
+        ) {
+          groupByColumns.push(`LEFT(main.${config.columnName}, 2)`);
+        }
+        // Special handling for dedicated kodeBkpk and jenisBelanja filters
+        else if (filterKey === "kodeBkpk") {
+          groupByColumns.push(`LEFT(main.${config.columnName}, 4)`);
+        } else if (filterKey === "jenisBelanja") {
+          groupByColumns.push(`LEFT(main.${config.columnName}, 2)`);
+        } else {
+          groupByColumns.push(`main.${config.columnName}`);
+        }
 
         // Add reference columns if needed
-        if (
-          config.referenceTable &&
-          (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian")
-        ) {
+        if (config.referenceTable) {
           const alias = `${filterKey}_ref`;
-          groupByColumns.push(`${alias}.${config.nameColumn}`);
+
+          // Special handling for register filter - add all additional columns to GROUP BY
+          if (filterKey === "register") {
+            // Check if we need to join (either for SELECT or WHERE with mengandung kata)
+            const mengandungKata = filterValue?.mengandungKata;
+            const needsJoinForWhere = mengandungKata && mengandungKata.trim();
+            const needsJoinForSelect =
+              jenisTampilan === "uraian" || jenisTampilan === "kode_uraian";
+
+            if (needsJoinForSelect || needsJoinForWhere) {
+              groupByColumns.push(`${alias}.register`);
+              groupByColumns.push(`${alias}.nonpln`);
+              groupByColumns.push(`${alias}.kdvalas`);
+              groupByColumns.push(`${alias}.tglnpln`);
+              groupByColumns.push(`${alias}.kddonor`);
+              groupByColumns.push(`${alias}.kdkreditor`);
+              groupByColumns.push(`${alias}.nmdonor`);
+              groupByColumns.push(`${alias}.jmlpnrk`);
+              groupByColumns.push(`${alias}.closingdate`);
+            }
+          } else if (
+            jenisTampilan === "uraian" ||
+            jenisTampilan === "kode_uraian"
+          ) {
+            // Determine the correct name column based on filter type
+            let nameColumn = config.nameColumn;
+            if (filterKey === "akun" && filterValue?.akunType) {
+              if (filterValue.akunType === "kodeBkpk") {
+                nameColumn = "nmbkpk";
+              } else if (filterValue.akunType === "jenisBelanja") {
+                nameColumn = "nmgbkpk";
+              }
+            }
+            groupByColumns.push(`${alias}.${nameColumn}`);
+          }
         }
       });
 
