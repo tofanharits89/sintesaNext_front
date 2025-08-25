@@ -82,6 +82,10 @@ export function FilterCard({
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" })); // Reset to default
+          // Notify parent about the reset
+          if (onFilterChange) {
+            onFilterChange(filterKey, "selection", "all");
+          }
         }
       }
     }
@@ -97,6 +101,10 @@ export function FilterCard({
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" })); // Reset to default
+          // Notify parent about the reset
+          if (onFilterChange) {
+            onFilterChange(filterKey, "selection", "all");
+          }
         }
       }
     }
@@ -112,6 +120,10 @@ export function FilterCard({
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" })); // Reset to default
+          // Notify parent about the reset
+          if (onFilterChange) {
+            onFilterChange(filterKey, "selection", "all");
+          }
         }
       }
     }
@@ -127,6 +139,10 @@ export function FilterCard({
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" })); // Reset to default
+          // Notify parent about the reset
+          if (onFilterChange) {
+            onFilterChange(filterKey, "selection", "all");
+          }
         }
       }
     }
@@ -148,6 +164,10 @@ export function FilterCard({
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" })); // Reset to default
+          // Notify parent about the reset
+          if (onFilterChange) {
+            onFilterChange(filterKey, "selection", "all");
+          }
         }
       }
     }
@@ -163,6 +183,10 @@ export function FilterCard({
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" })); // Reset to default
+          // Notify parent about the reset
+          if (onFilterChange) {
+            onFilterChange(filterKey, "selection", "all");
+          }
         }
       }
     }
@@ -180,6 +204,10 @@ export function FilterCard({
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" })); // Reset to default
+          // Notify parent about the reset
+          if (onFilterChange) {
+            onFilterChange(filterKey, "selection", "all");
+          }
         }
       }
     }
@@ -201,6 +229,10 @@ export function FilterCard({
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" })); // Reset to default
+          // Notify parent about the reset
+          if (onFilterChange) {
+            onFilterChange(filterKey, "selection", "all");
+          }
         }
       }
     }
@@ -226,6 +258,10 @@ export function FilterCard({
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" })); // Reset to default
+          // Notify parent about the reset
+          if (onFilterChange) {
+            onFilterChange(filterKey, "selection", "all");
+          }
         }
       }
     }
@@ -253,6 +289,10 @@ export function FilterCard({
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" })); // Reset to default
+          // Notify parent about the reset
+          if (onFilterChange) {
+            onFilterChange(filterKey, "selection", "all");
+          }
         }
       }
     }

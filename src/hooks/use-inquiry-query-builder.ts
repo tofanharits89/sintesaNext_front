@@ -314,15 +314,6 @@ export function useInquiryQueryBuilder() {
         // Add SELECT columns based on jenisTampilan (skip if jangan_tampilkan)
         if (jenisTampilan !== "jangan_tampilkan") {
           if (config.referenceTable && config.referenceDatabase) {
-            // Debug logging
-            if (filterKey === "akun") {
-              console.log("DEBUG akun filter:", {
-                filterKey,
-                akunType: filterValue?.akunType,
-                filterValue,
-              });
-            }
-
             // Determine the correct name column based on filter type
             let nameColumn = config.nameColumn;
             if (filterKey === "akun" && filterValue?.akunType) {
@@ -603,8 +594,11 @@ export function useInquiryQueryBuilder() {
           `ROUND(SUM(${realizationSum}) / ${divisor}, 0) AS REALISASI`
         );
 
-        // Add BLOKIR column after REALISASI for Pagu APBN report
-        if (reportParams.tipeLaporan === "pagu_apbn") {
+        // Add BLOKIR column after REALISASI for Pagu APBN and Pagu Realisasi reports
+        if (
+          reportParams.tipeLaporan === "pagu_apbn" ||
+          reportParams.tipeLaporan === "pagu_realisasi"
+        ) {
           selectColumns.push(
             `ROUND(SUM(main.blokir) / ${divisor}, 0) AS BLOKIR`
           );
@@ -797,21 +791,10 @@ export function useInquiryQueryBuilder() {
               groupByColumns.push(`${alias}.jmlpnrk`);
               groupByColumns.push(`${alias}.closingdate`);
             }
-          } else if (
-            jenisTampilan === "uraian" ||
-            jenisTampilan === "kode_uraian"
-          ) {
-            // Determine the correct name column based on filter type
-            let nameColumn = config.nameColumn;
-            if (filterKey === "akun" && filterValue?.akunType) {
-              if (filterValue.akunType === "kodeBkpk") {
-                nameColumn = "nmbkpk";
-              } else if (filterValue.akunType === "jenisBelanja") {
-                nameColumn = "nmgbkpk";
-              }
-            }
-            groupByColumns.push(`${alias}.${nameColumn}`);
           }
+          // Note: We don't add uraian columns to GROUP BY to avoid duplicate rows
+          // when multiple uraian values exist for the same kode (e.g., unit eselon 1)
+          // The LEFT JOIN will still provide the uraian values in SELECT, but we only group by kode
         }
       });
 
