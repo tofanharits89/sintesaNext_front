@@ -305,9 +305,13 @@ export function useInquiryQueryBuilder() {
         selectColumns.push(
           `ROUND(SUM(main.pagu_dipa) / ${divisor}, 0) AS PAGU_DIPA`
         );
-      } else if (reportParams.tipeLaporan !== "pergerakan_pagu_bulanan") {
-        // For other report types (except pergerakan_pagu_bulanan), keep the original PAGU_DIPA column
+      } else if (
+        reportParams.tipeLaporan !== "pergerakan_pagu_bulanan" &&
+        reportParams.tipeLaporan !== "pergerakan_blokir_bulanan"
+      ) {
+        // For other report types (except pergerakan_pagu_bulanan and pergerakan_blokir_bulanan), keep the original PAGU_DIPA column
         // pergerakan_pagu_bulanan doesn't need PAGU_DIPA since pagu is broken down by monthly columns
+        // pergerakan_blokir_bulanan doesn't need PAGU_DIPA since blokir is broken down by monthly columns
         selectColumns.push(
           `ROUND(SUM(main.pagu) / ${divisor}, 0) AS PAGU_DIPA`
         );
@@ -384,6 +388,32 @@ export function useInquiryQueryBuilder() {
           );
         }
         // No REALISASI column for pergerakan_pagu_bulanan as it only fetches pagu data
+      } else if (reportParams.tipeLaporan === "pergerakan_blokir_bulanan") {
+        // For tipe laporan 5 (Pergerakan Blokir Bulanan), show monthly blokir columns up to cutOff
+        // Month names mapping
+        const monthNames = [
+          "JAN",
+          "FEB",
+          "MAR",
+          "APR",
+          "MEI",
+          "JUN",
+          "JUL",
+          "AGS",
+          "SEP",
+          "OKT",
+          "NOV",
+          "DES",
+        ];
+
+        // Generate monthly blokir columns up to cutOff month
+        for (let month = 1; month <= cutOffNum; month++) {
+          const monthName = monthNames[month - 1];
+          selectColumns.push(
+            `ROUND(SUM(blokir${month}) / ${divisor}, 0) AS ${monthName}`
+          );
+        }
+        // No REALISASI column for pergerakan_blokir_bulanan as it only fetches blokir data
       } else {
         // For other report types, add single REALISASI column based on cut-off and pembulatan
         selectColumns.push(
