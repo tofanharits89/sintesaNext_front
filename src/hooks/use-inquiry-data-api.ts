@@ -184,7 +184,80 @@ export function useInquiryDataApi() {
 
         const XLSX = await import("xlsx");
         const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.json_to_sheet(result.data);
+
+        // Determine columns order
+        const monthlyCols = [
+          "JAN",
+          "FEB",
+          "MAR",
+          "APR",
+          "MEI",
+          "JUN",
+          "JUL",
+          "AGS",
+          "SEP",
+          "OKT",
+          "NOV",
+          "DES",
+        ];
+        const isMonetary = (col: string) => {
+          const c = col.toLowerCase();
+          return (
+            c.includes("pagu") ||
+            c.includes("realisasi") ||
+            c.includes("blokir") ||
+            c.includes("anggaran") ||
+            monthlyCols.includes(col.toUpperCase())
+          );
+        };
+
+        const columns =
+          result.columns && result.columns.length > 0
+            ? result.columns
+            : result.data?.length
+            ? Object.keys(result.data[0])
+            : [];
+
+        // Build AOA with header first, then rows; coerce monetary cells to numbers
+        const aoa: any[][] = [];
+        aoa.push(columns);
+        for (const row of result.data || []) {
+          const arr: any[] = [];
+          for (const col of columns) {
+            const v = (row as any)[col];
+            if (v === null || v === undefined || v === "") {
+              arr.push(null);
+              continue;
+            }
+            if (isMonetary(col)) {
+              const num = Number(v);
+              arr.push(!Number.isNaN(num) ? num : v);
+            } else {
+              arr.push(v);
+            }
+          }
+          aoa.push(arr);
+        }
+
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+        // Apply number format to monetary columns (thousands separator)
+        const range = XLSX.utils.decode_range(
+          ws["!ref"] ||
+            `A1:${XLSX.utils.encode_col(columns.length - 1)}${aoa.length}`
+        );
+        columns.forEach((col, cIdx) => {
+          if (!isMonetary(col)) return;
+          for (let r = range.s.r + 1; r <= range.e.r; r++) {
+            // skip header row
+            const cellAddr = XLSX.utils.encode_cell({ r, c: cIdx });
+            const cell = (ws as any)[cellAddr];
+            if (cell && typeof cell.v === "number") {
+              cell.z = "#,##0"; // basic number format
+            }
+          }
+        });
+
         XLSX.utils.book_append_sheet(wb, ws, "Inquiry Data");
         const filename = `inquiry_data_${reportParams.tipeLaporan}_${
           reportParams.tahun
