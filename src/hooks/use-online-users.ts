@@ -52,7 +52,15 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
 
   // Handler for users:online event
   const handleUsersOnline = useCallback(
-    (response: { success: boolean; data: OnlineUser[] | { users: OnlineUser[] }; error?: any } | OnlineUser[]) => {
+    (
+      response:
+        | {
+            success: boolean;
+            data: OnlineUser[] | { users: OnlineUser[] };
+            error?: any;
+          }
+        | OnlineUser[]
+    ) => {
       try {
         // Handle legacy format (direct array)
         if (Array.isArray(response)) {
@@ -84,7 +92,11 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
 
         // Handle new format: { success, data: { users } }
         let users: OnlineUser[] = [];
-        if (response.data && typeof response.data === 'object' && 'users' in response.data) {
+        if (
+          response.data &&
+          typeof response.data === "object" &&
+          "users" in response.data
+        ) {
           users = Array.isArray(response.data.users) ? response.data.users : [];
         } else if (Array.isArray(response.data)) {
           // Handle old format: { success, data: OnlineUser[] }
@@ -101,18 +113,35 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
         setOnlineUsers([]);
       }
     },
-      []
-    );
+    []
+  );
 
   // Subscribe to users:online and request initial list when connected
   useEffect(() => {
-    // Register listener
+    // Register listeners (support both legacy and v2 events)
     on("users:online", handleUsersOnline);
+    on("users:online:v2", handleUsersOnline);
 
     // If connected, request initial users
     if (isConnected) {
       try {
         emit("users:get-online");
+        // Also refresh list when we hear any user presence signals
+        const refreshOnPresenceEvent = () => {
+          try {
+            emit("users:get-online");
+          } catch (err) {
+            console.warn(
+              "[useOnlineUsers] Failed to refresh on presence event:",
+              err
+            );
+          }
+        };
+        on("user:login", refreshOnPresenceEvent);
+        on("user:offline", refreshOnPresenceEvent);
+        on("user:logout", refreshOnPresenceEvent);
+        // Some parts of the stack may emit a consolidated update event
+        on("users:updated", handleUsersOnline);
       } catch (err) {
         // emit may throw if socket not available; ignore and rely on reconnect to trigger request
         console.warn(
@@ -124,6 +153,11 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
 
     return () => {
       off("users:online", handleUsersOnline);
+      off("users:online:v2", handleUsersOnline);
+      off("user:login");
+      off("user:offline");
+      off("user:logout");
+      off("users:updated", handleUsersOnline);
     };
   }, [isConnected, on, off, emit, handleUsersOnline]);
 

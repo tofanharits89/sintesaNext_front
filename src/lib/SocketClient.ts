@@ -35,6 +35,9 @@ export class SocketClient {
   private eventListenersAttached = false;
   private readonly debugMode: boolean;
 
+  private listenerRegistry: Map<string, Set<(...args: any[]) => void>> =
+    new Map();
+
   constructor(config: SocketClientConfig = {}) {
     this.config = {
       url:
@@ -137,8 +140,26 @@ export class SocketClient {
     this.socket.on("connect_error", this.handleConnectError);
     this.socket.on("error", this.handleError);
 
+    // Re-attach any previously registered custom listeners after (re)connect
+    this.rebindRegisteredListeners();
+
     this.eventListenersAttached = true;
     this.log("Event listeners attached");
+  }
+
+  /**
+   * Rebind all previously registered custom listeners to the current socket
+   */
+  private rebindRegisteredListeners(): void {
+    if (!this.socket) return;
+    for (const [event, listeners] of this.listenerRegistry.entries()) {
+      for (const listener of listeners) {
+        this.socket.on(event, listener);
+      }
+    }
+    this.log("Rebound registered custom listeners", {
+      eventCount: this.listenerRegistry.size,
+    });
   }
 
   /**
@@ -391,7 +412,15 @@ export class SocketClient {
   /**
    * Listen for an event from the server
    */
-  public on(event: string, listener: (...args: any[]) => void): void {
+  public on(event: string, listener: (...args: unknown[]) => void): void {
+    // Store in registry for rebind on reconnect
+    let set = this.listenerRegistry.get(event);
+    if (!set) {
+      set = new Set();
+      this.listenerRegistry.set(event, set);
+    }
+    set.add(listener);
+
     if (!this.socket) {
       this.logError("Cannot add listener: socket not available");
       return;
@@ -404,7 +433,20 @@ export class SocketClient {
   /**
    * Remove event listener
    */
-  public off(event: string, listener?: (...args: any[]) => void): void {
+  public off(event: string, listener?: (...args: unknown[]) => void): void {
+    // Update registry
+    const set = this.listenerRegistry.get(event);
+    if (set) {
+      if (listener) {
+        set.delete(listener);
+      } else {
+        set.clear();
+      }
+      if (set.size === 0) {
+        this.listenerRegistry.delete(event);
+      }
+    }
+
     if (!this.socket) {
       this.logError("Cannot remove listener: socket not available");
       return;

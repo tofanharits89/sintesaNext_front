@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/popover";
 import { withBasePath } from "@/lib/base-path";
 import { SatkerSearch } from "./satker-search";
+import { dispatchAuthEvent } from "@/utils/auth-utils";
 
 export function Navbar() {
   const { theme, setTheme } = useTheme();
@@ -113,7 +114,10 @@ export function Navbar() {
         ].slice(0, 5)
       );
     };
-    const handleNewV2 = (resp: { success?: boolean; data?: { id: string; title: string; type: string; priority: string; } }) => {
+    const handleNewV2 = (resp: {
+      success?: boolean;
+      data?: { id: string; title: string; type: string; priority: string };
+    }) => {
       if (!resp?.success || !resp?.data) return;
       handleNew(resp.data);
     };
@@ -198,7 +202,7 @@ export function Navbar() {
           }
 
           const convDate = new Date(
-conv.lastMessage?.created_at || conv.updated_at
+            conv.lastMessage?.created_at || conv.updated_at
           );
           const timeDiff = isNaN(convDate.getTime())
             ? 0
@@ -241,22 +245,23 @@ conv.lastMessage?.created_at || conv.updated_at
       setRecentMessages(
         sortedConversations.filter((msg): msg is NonNullable<typeof msg> => {
           if (!msg) return false;
-          
+
           // Type guard to ensure all required properties exist and are of correct type
-          const hasValidProperties = 
-            typeof msg.id === 'string' &&
-            typeof msg.conversationId === 'string' &&
-            typeof msg.from === 'string' &&
-            typeof msg.subject === 'string' &&
-            typeof msg.time === 'string' &&
-            typeof msg.unread === 'boolean';
+          const hasValidProperties =
+            typeof msg.id === "string" &&
+            typeof msg.conversationId === "string" &&
+            typeof msg.from === "string" &&
+            typeof msg.subject === "string" &&
+            typeof msg.time === "string" &&
+            typeof msg.unread === "boolean";
 
           // Type guard for otherParticipant object
-          const hasValidParticipant = msg.otherParticipant && 
-            typeof msg.otherParticipant === 'object' &&
-            typeof msg.otherParticipant.id === 'string' &&
-            typeof msg.otherParticipant.name === 'string' &&
-            typeof msg.otherParticipant.username === 'string';
+          const hasValidParticipant =
+            msg.otherParticipant &&
+            typeof msg.otherParticipant === "object" &&
+            typeof msg.otherParticipant.id === "string" &&
+            typeof msg.otherParticipant.name === "string" &&
+            typeof msg.otherParticipant.username === "string";
 
           return hasValidProperties && hasValidParticipant;
         }) as RecentMessage[]
@@ -614,10 +619,16 @@ conv.lastMessage?.created_at || conv.updated_at
                 className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950"
                 onClick={async () => {
                   const { apiPath } = await import("@/lib/base-path");
+                  // Proactively disconnect socket so backend presence updates immediately
+                  try {
+                    socketClient.disconnect();
+                  } catch {}
                   await fetch(apiPath("/auth/logout"), {
                     method: "POST",
                     credentials: "include",
                   });
+                  // Dispatch a logout event so other listeners react
+                  dispatchAuthEvent("logout", { reason: "user_action" });
                   router.push("/login");
                 }}
               >
