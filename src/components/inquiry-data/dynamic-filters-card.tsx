@@ -8,7 +8,7 @@ import { TayangModal } from "./modals/tayang-modal";
 import { WhatsappModal } from "./modals/whatsapp-modal";
 import { SimpanModal } from "./modals/simpan-modal";
 import { LihatSqlModal } from "./modals/lihat-sql-modal";
-import { INQUIRY_FILTER_ORDER } from "./filterOrder";
+import { getFilterLabel, normalizeActiveFilters } from "./filterRegistry";
 
 import {
   Eye,
@@ -35,28 +35,7 @@ interface DynamicFiltersCardProps {
   onFilterChange: (filterKey: string, field: string, value: string) => void;
 }
 
-const filterLabels: Record<string, string> = {
-  cutOff: "Cut Off (Wajib)",
-  kementerian: "Kementerian",
-  eselonI: "Eselon I",
-  kewenangan: "Kewenangan",
-  provinsi: "Provinsi",
-  kabkota: "Kabkota",
-  kanwil: "Kanwil",
-  kppn: "KPPN",
-  satker: "Satker",
-  fungsi: "Fungsi",
-  subFungsi: "Sub-Fungsi",
-  program: "Program",
-  kegiatan: "Kegiatan",
-  outputKro: "Output/KRO",
-  subOutputRo: "Sub-Output/RO",
-  akun: "Akun",
-  sumberDana: "Sumber Dana",
-  register: "Register",
-};
-
-// Use centralized default filter order
+// Labels will come from the registry via getFilterLabel
 
 export function DynamicFiltersCard({
   activeFilters,
@@ -82,13 +61,7 @@ export function DynamicFiltersCard({
   const { downloadCSV, downloadExcel, isLoading } = useInquiryDataApi();
 
   // Sort active filters based on predefined order
-  const sortedActiveFilters = activeFilters
-    .slice() // Create a copy to avoid mutating the original array
-    .sort((a, b) => {
-      const indexA = INQUIRY_FILTER_ORDER.indexOf(a);
-      const indexB = INQUIRY_FILTER_ORDER.indexOf(b);
-      return indexA - indexB;
-    });
+  const sortedActiveFilters = normalizeActiveFilters(activeFilters);
 
   const openModal = (modal: keyof typeof modals) => {
     setModals((prev) => ({ ...prev, [modal]: true }));
@@ -110,16 +83,7 @@ export function DynamicFiltersCard({
   const handleDownloadExcel = async () => {
     try {
       // Normalize active filters to default order for consistent column ordering in exports
-      const orderMap = new Map(INQUIRY_FILTER_ORDER.map((k, i) => [k, i]));
-      const normalized = activeFilters.slice().sort((a, b) => {
-        const ia = orderMap.has(a)
-          ? (orderMap.get(a) as number)
-          : Number.MAX_SAFE_INTEGER;
-        const ib = orderMap.has(b)
-          ? (orderMap.get(b) as number)
-          : Number.MAX_SAFE_INTEGER;
-        return ia - ib;
-      });
+      const normalized = normalizeActiveFilters(activeFilters);
       await downloadExcel(normalized, filterValues, reportParams);
     } catch (error) {
       console.error("Excel download error:", error);
@@ -130,16 +94,7 @@ export function DynamicFiltersCard({
   const handleDownloadCSV = async () => {
     try {
       // Normalize active filters to default order for consistent column ordering in exports
-      const orderMap = new Map(INQUIRY_FILTER_ORDER.map((k, i) => [k, i]));
-      const normalized = activeFilters.slice().sort((a, b) => {
-        const ia = orderMap.has(a)
-          ? (orderMap.get(a) as number)
-          : Number.MAX_SAFE_INTEGER;
-        const ib = orderMap.has(b)
-          ? (orderMap.get(b) as number)
-          : Number.MAX_SAFE_INTEGER;
-        return ia - ib;
-      });
+      const normalized = normalizeActiveFilters(activeFilters);
       await downloadCSV(normalized, filterValues, reportParams);
     } catch (error) {
       console.error("CSV download error:", error);
@@ -176,7 +131,7 @@ export function DynamicFiltersCard({
                 <EnhancedFilterCard
                   key={filterKey}
                   filterKey={filterKey}
-                  filterLabel={filterLabels[filterKey] || filterKey}
+                  filterLabel={getFilterLabel(filterKey)}
                   onRemove={() => handleRemoveFilter(filterKey)}
                   activeFilterValues={filterValues}
                   onFilterChange={onFilterChange}

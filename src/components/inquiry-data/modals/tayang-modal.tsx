@@ -29,7 +29,7 @@ import {
   Minimize2,
 } from "lucide-react";
 import { useInquiryDataApi, FilterValue } from "@/hooks/use-inquiry-data-api";
-import { INQUIRY_FILTER_ORDER } from "../filterOrder";
+import { normalizeActiveFilters } from "../filterRegistry";
 
 interface TayangModalProps {
   open: boolean;
@@ -61,18 +61,10 @@ export function TayangModal({
   const { executeQuery, isLoading, lastResult } = useInquiryDataApi();
 
   // Normalize active filters to the default order so SELECT and thus table columns are stable
-  const normalizedActiveFilters = useMemo(() => {
-    const orderMap = new Map(INQUIRY_FILTER_ORDER.map((k, i) => [k, i]));
-    return activeFilters.slice().sort((a, b) => {
-      const ia = orderMap.has(a)
-        ? (orderMap.get(a) as number)
-        : Number.MAX_SAFE_INTEGER;
-      const ib = orderMap.has(b)
-        ? (orderMap.get(b) as number)
-        : Number.MAX_SAFE_INTEGER;
-      return ia - ib;
-    });
-  }, [activeFilters]);
+  const normalizedActiveFilters = useMemo(
+    () => normalizeActiveFilters(activeFilters),
+    [activeFilters]
+  );
 
   const fetchData = async () => {
     try {

@@ -37,165 +37,15 @@ const TABLE_MAPPING = {
   volume_output_kegiatan: "pagu_output_new",
 };
 
-// Filter configuration mapping
-const FILTER_CONFIG: Record<string, FilterConfig> = {
-  // Note: cutOff is handled specially in the query builder
-  // - It's not included in FILTER_CONFIG as it's not a regular filter
-  // - It only affects which real{month} columns are summed in REALISASI
-  // - It doesn't appear in SELECT, WHERE, or GROUP BY clauses
-  kementerian: {
-    key: "kementerian",
-    columnName: "kddept",
-    referenceTable: "t_dept",
-    referenceDatabase: "dbref",
-    joinKey: "kddept",
-    nameColumn: "nmdept",
-  },
-  eselonI: {
-    key: "eselonI",
-    columnName: "kdunit",
-    referenceTable: "t_unit",
-    referenceDatabase: "dbref",
-    joinKey: "kdunit",
-    nameColumn: "nmunit",
-  },
-  kewenangan: {
-    key: "kewenangan",
-    columnName: "kddekon",
-    referenceTable: "t_dekon",
-    referenceDatabase: "dbref",
-    joinKey: "kddekon",
-    nameColumn: "nmdekon",
-  },
-  provinsi: {
-    key: "provinsi",
-    columnName: "kdlokasi",
-    referenceTable: "t_lokasi",
-    referenceDatabase: "dbref",
-    joinKey: "kdlokasi",
-    nameColumn: "nmlokasi",
-  },
-  kabkota: {
-    key: "kabkota",
-    columnName: "kdkabkota",
-    referenceTable: "t_kabkota",
-    referenceDatabase: "dbref",
-    joinKey: "kdkabkota",
-    nameColumn: "nmkabkota",
-  },
-  kanwil: {
-    key: "kanwil",
-    columnName: "kdkanwil",
-    referenceTable: "t_kanwil",
-    referenceDatabase: "dbref",
-    joinKey: "kdkanwil",
-    nameColumn: "nmkanwil",
-  },
-  kppn: {
-    key: "kppn",
-    columnName: "kdkppn",
-    referenceTable: "t_kppn",
-    referenceDatabase: "dbref",
-    joinKey: "kdkppn",
-    nameColumn: "nmkppn",
-  },
-  satker: {
-    key: "satker",
-    columnName: "kdsatker",
-    referenceTable: "t_satker",
-    referenceDatabase: "dbref",
-    joinKey: "kdsatker",
-    nameColumn: "nmsatker",
-  },
-  fungsi: {
-    key: "fungsi",
-    columnName: "kdfungsi",
-    referenceTable: "t_fungsi",
-    referenceDatabase: "dbref",
-    joinKey: "kdfungsi",
-    nameColumn: "nmfungsi",
-  },
-  subFungsi: {
-    key: "subFungsi",
-    columnName: "kdsfung",
-    referenceTable: "t_sfung",
-    referenceDatabase: "dbref",
-    joinKey: "kdsfung",
-    nameColumn: "nmsfung",
-  },
-  program: {
-    key: "program",
-    columnName: "kdprogram",
-    referenceTable: "t_program",
-    referenceDatabase: "dbref",
-    joinKey: "kdprogram",
-    nameColumn: "nmprogram",
-  },
-  kegiatan: {
-    key: "kegiatan",
-    columnName: "kdgiat",
-    referenceTable: "t_giat",
-    referenceDatabase: "dbref",
-    joinKey: "kdgiat",
-    nameColumn: "nmgiat",
-  },
-  outputKro: {
-    key: "outputKro",
-    columnName: "kdoutput",
-    referenceTable: "t_output",
-    referenceDatabase: "dbref",
-    joinKey: "kdoutput",
-    nameColumn: "nmoutput",
-  },
-  subOutputRo: {
-    key: "subOutputRo",
-    columnName: "kdsoutput",
-    referenceTable: "t_soutput",
-    referenceDatabase: "dbref",
-    joinKey: "kdsoutput",
-    nameColumn: "nmsoutput",
-  },
-  akun: {
-    key: "akun",
-    columnName: "kdakun",
-    referenceTable: "t_akun",
-    referenceDatabase: "dbref",
-    joinKey: "kdakun",
-    nameColumn: "nmakun",
-  },
-  kodeBkpk: {
-    key: "kodeBkpk",
-    columnName: "kdakun",
-    referenceTable: "t_bkpk",
-    referenceDatabase: "dbref",
-    joinKey: "kdbkpk",
-    nameColumn: "nmbkpk",
-  },
-  jenisBelanja: {
-    key: "jenisBelanja",
-    columnName: "kdakun",
-    referenceTable: "t_gbkpk",
-    referenceDatabase: "dbref",
-    joinKey: "kdgbkpk",
-    nameColumn: "nmgbkpk",
-  },
-  sumberDana: {
-    key: "sumberDana",
-    columnName: "kdsdana",
-    referenceTable: "t_sdana",
-    referenceDatabase: "dbref",
-    joinKey: "kdsdana",
-    nameColumn: "nmsdana",
-  },
-  register: {
-    key: "register",
-    columnName: "register",
-    referenceTable: "t_register",
-    referenceDatabase: "dbref",
-    joinKey: "register",
-    nameColumn: "register", // Using register as name column since it's the main identifier
-  },
-};
+import { getFilterConfigMap } from "@/components/inquiry-data/filterRegistry";
+
+// Filter configuration mapping (derived from central registry)
+const FILTER_CONFIG: Record<string, FilterConfig> =
+  getFilterConfigMap() as Record<string, FilterConfig>;
+// Note: cutOff is handled specially in the query builder
+// - It's not included in FILTER_CONFIG as it's not a regular filter
+// - It only affects which real{month} columns are summed in REALISASI
+// - It doesn't appear in SELECT, WHERE, or GROUP BY clauses
 
 export function useInquiryQueryBuilder() {
   const [queryState, setQueryState] = useState<QueryBuilderState>({
@@ -612,11 +462,7 @@ export function useInquiryQueryBuilder() {
 
   // Build WHERE clause
   const buildWhereClause = useCallback(
-    (
-      activeFilters: string[],
-      filterValues: Record<string, FilterValue>,
-      reportParams: { tahun: string }
-    ) => {
+    (activeFilters: string[], filterValues: Record<string, FilterValue>) => {
       const whereConditions: string[] = [];
 
       // Year is only used for table name, not in WHERE clause
@@ -822,11 +668,7 @@ export function useInquiryQueryBuilder() {
           filterValues,
           reportParams
         );
-        const whereConditions = buildWhereClause(
-          activeFilters,
-          filterValues,
-          reportParams
-        );
+        const whereConditions = buildWhereClause(activeFilters, filterValues);
         const groupByColumns = buildGroupByClause(
           activeFilters,
           filterValues,
@@ -890,7 +732,7 @@ export function useInquiryQueryBuilder() {
   const decryptQuery = useCallback((encryptedQuery: string): string => {
     try {
       return decodeURIComponent(atob(encryptedQuery));
-    } catch (error) {
+    } catch {
       return "-- Error decrypting query";
     }
   }, []);

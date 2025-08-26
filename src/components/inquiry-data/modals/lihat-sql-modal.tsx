@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Code, Copy, Download, Loader2, CheckCircle } from "lucide-react";
 import { useInquiryQueryBuilder } from "@/hooks/use-inquiry-query-builder";
-import { INQUIRY_FILTER_ORDER } from "../filterOrder";
+import { normalizeActiveFilters } from "../filterRegistry";
 
 interface LihatSqlModalProps {
   open: boolean;
@@ -45,16 +45,7 @@ export function LihatSqlModal({
 
     try {
       // Use the query builder to generate the actual SQL; normalize filter order for stability
-      const orderMap = new Map(INQUIRY_FILTER_ORDER.map((k, i) => [k, i]));
-      const normalized = activeFilters.slice().sort((a, b) => {
-        const ia = orderMap.has(a)
-          ? (orderMap.get(a) as number)
-          : Number.MAX_SAFE_INTEGER;
-        const ib = orderMap.has(b)
-          ? (orderMap.get(b) as number)
-          : Number.MAX_SAFE_INTEGER;
-        return ia - ib;
-      });
+      const normalized = normalizeActiveFilters(activeFilters);
       const generatedSQL = buildQuery(normalized, filterValues, reportParams);
       setSqlQuery(generatedSQL);
     } catch (error) {
