@@ -45,6 +45,12 @@ export async function middleware(request: NextRequest) {
     ? pathname.slice(BASE_PATH.length) || "/"
     : pathname;
 
+  // Treat all API routes as pass-through (auth handled inside API handlers)
+  const isApiRoute = relPath.startsWith("/api/");
+  if (isApiRoute) {
+    return NextResponse.next();
+  }
+
   // Determine public routes (still show 500 when backend is down)
   const isPublicPath =
     relPath === "/login" ||

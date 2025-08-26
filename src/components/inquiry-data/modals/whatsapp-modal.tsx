@@ -13,6 +13,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { MessageCircle, Send, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  useInquiryQueryBuilder,
+  type FilterValue,
+} from "@/hooks/use-inquiry-query-builder";
+import { apiPath } from "@/lib/base-path";
+import { WhatsappQrModal } from "./whatsapp-qr-modal";
 
 interface WhatsappModalProps {
   open: boolean;
@@ -23,6 +30,8 @@ interface WhatsappModalProps {
     tipeLaporan: string;
     pembulatan: string;
   };
+  // pass values so we can build the same query server-side
+  filterValues?: Record<string, FilterValue>;
 }
 
 export function WhatsappModal({
@@ -30,9 +39,13 @@ export function WhatsappModal({
   onOpenChange,
   activeFilters,
   reportParams,
+  filterValues,
 }: WhatsappModalProps) {
   const [selectedFileType, setSelectedFileType] = useState<string>("");
+  const [phone, setPhone] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showQr, setShowQr] = useState(false);
+  const { buildQuery, encryptQuery } = useInquiryQueryBuilder();
 
   const fileTypeOptions = [
     {
@@ -45,42 +58,123 @@ export function WhatsappModal({
       label: "CSV (.csv)",
       description: "File teks terpisah koma",
     },
-    {
-      value: "pdf",
-      label: "PDF (.pdf)",
-      description: "Laporan dalam format PDF",
-    },
   ];
 
+  // On open, verify WhatsApp auth; if missing, show QR modal
+  React.useEffect(() => {
+    if (!open) return;
+    (async () => {
+      try {
+        const resp = await fetch(apiPath("/whatsapp/status"), {
+          cache: "no-store",
+        });
+        const data = await resp.json();
+        setShowQr(!(data?.success && data?.data?.authenticated));
+      } catch {
+        setShowQr(true);
+      }
+    })();
+  }, [open]);
+
   const handleSendToWhatsApp = async () => {
-    if (!selectedFileType) return;
+    if (!selectedFileType || !phone) return;
+    // If not authenticated, open QR modal instead of sending
+    try {
+      const respStatus = await fetch(apiPath("/whatsapp/status"), {
+        cache: "no-store",
+      });
+      const statusData = await respStatus.json();
+      const isAuthenticated = Boolean(
+        statusData?.success && statusData?.data?.authenticated
+      );
+      const isReady = Boolean(statusData?.success && statusData?.data?.ready);
+      if (!isAuthenticated) {
+        setShowQr(true);
+        return;
+      }
+      if (!isReady) {
+        const { toast } = await import("sonner");
+        toast.info(
+          "Sesi WhatsApp sedang menyiapkan… akan mencoba lagi sebentar."
+        );
+        // Poll for ready state up to ~10s total
+        const maxAttempts = 5;
+        const delayMs = 2000;
+        let becameReady = false;
+        for (let i = 0; i < maxAttempts; i++) {
+          await new Promise((r) => setTimeout(r, delayMs));
+          const resp = await fetch(apiPath("/whatsapp/status"), {
+            cache: "no-store",
+          });
+          const d = await resp.json();
+          const readyNow = Boolean(d?.success && d?.data?.ready);
+          const authNow = Boolean(d?.success && d?.data?.authenticated);
+          if (!authNow) {
+            setShowQr(true);
+            return;
+          }
+          if (readyNow) {
+            becameReady = true;
+            break;
+          }
+        }
+        if (!becameReady) {
+          toast.warning(
+            "Sesi WhatsApp masih menyiapkan. Coba lagi beberapa detik atau cek backend."
+          );
+          return;
+        }
+      }
+    } catch {
+      setShowQr(true);
+      return;
+    }
 
     setIsLoading(true);
 
     try {
-      // Simulate processing time
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // In real implementation, this would:
-      // 1. Generate the file based on query and filters
-      // 2. Upload file to server or cloud storage
-      // 3. Create WhatsApp message with file link
-      // 4. Open WhatsApp Web/App with pre-filled message
-
-      const message = encodeURIComponent(
-        `Inquiry Data Belanja\n\nTahun: ${reportParams.tahun}\nTipe Laporan: ${reportParams.tipeLaporan}\nPembulatan: ${reportParams.pembulatan}\nFilter Aktif: ${activeFilters.length}\n\nFile telah digenerate dan siap diunduh.`
+      // Build the SQL and encrypt it (same as downloads)
+      const normalized = activeFilters; // keep order as-is; backend uses server cap
+      const sqlQuery = buildQuery(
+        normalized,
+        (filterValues as any) || {},
+        reportParams
       );
+      const encryptedQuery = encryptQuery(sqlQuery);
 
-      // Open WhatsApp Web
-      window.open(`https://wa.me/?text=${message}`, "_blank");
+      const resp = await fetch(apiPath("/whatsapp/send"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          encryptedQuery,
+          fileType: selectedFileType === "excel" ? "excel" : "csv",
+          phone,
+          reportParams,
+          caption: `Inquiry Data Belanja (Tahun: ${reportParams.tahun}, Tipe: ${reportParams.tipeLaporan})`,
+        }),
+      });
 
-      // Close modal
+      const data = await resp.json();
+      if (!resp.ok || !data.success) {
+        throw new Error(data.error || "Gagal mengirim WhatsApp");
+      }
+
+      // Confirm to user
+      const label = selectedFileType === "excel" ? "Excel" : "CSV";
+      // Lazy load sonner to avoid heavier bundle
+      const { toast } = await import("sonner");
+      toast.success(`Berhasil mengirim file ${label} ke WhatsApp`, {
+        description: `Nomor: ${phone}`,
+      });
+
+      // Close modal and reset
       onOpenChange(false);
-
-      // Reset selection
       setSelectedFileType("");
+      setPhone("");
     } catch (error) {
       console.error("Error sending to WhatsApp:", error);
+      const { toast } = await import("sonner");
+      toast.error((error as any)?.message || "Gagal mengirim WhatsApp");
     } finally {
       setIsLoading(false);
     }
@@ -102,6 +196,17 @@ export function WhatsappModal({
             WhatsApp Messenger
           </DialogTitle>
         </DialogHeader>
+        {/* Overlay (placed after header so DialogContent can still center correctly) */}
+        {showQr && (
+          <div className="absolute inset-0 z-10 bg-white/80 dark:bg-black/60 flex items-center justify-center pointer-events-none">
+            <div className="flex items-center gap-3 px-4 py-2 rounded-md">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              <span className="text-sm font-medium text-muted-foreground">
+                Silakan hubungkan WhatsApp Anda
+              </span>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-4">
           {/* Query Summary */}
@@ -148,11 +253,22 @@ export function WhatsappModal({
             </RadioGroup>
           </div>
 
+          {/* Phone number */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium">Nomor WhatsApp</h4>
+            <Input
+              placeholder="Contoh: 6281234567890 atau 0812xxxxxx"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+          </div>
+
           {/* Instructions */}
           <div className="bg-muted/50 p-3 rounded-lg">
             <p className="text-xs text-muted-foreground">
-              File akan digenerate berdasarkan query dan filter yang aktif,
-              kemudian WhatsApp Web akan terbuka dengan pesan siap kirim.
+              Sistem akan mengirim file langsung ke nomor WhatsApp yang Anda
+              masukkan menggunakan sesi WhatsApp server. Pertama kali, Anda
+              perlu memindai QR di backend agar sesi aktif.
             </p>
           </div>
         </div>
@@ -175,6 +291,8 @@ export function WhatsappModal({
           </Button>
         </DialogFooter>
       </DialogContent>
+      {/* QR modal is controlled by the auth check above and re-check before send */}
+      <WhatsappQrModal open={showQr} onOpenChange={setShowQr} />
     </Dialog>
   );
 }

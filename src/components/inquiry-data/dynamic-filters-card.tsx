@@ -232,7 +232,10 @@ export function DynamicFiltersCard({
         onOpenChange={() => closeModal("whatsapp")}
         activeFilters={activeFilters}
         reportParams={reportParams}
+        filterValues={filterValues}
       />
+      {/* Optional: WhatsApp QR modal entry point can be added anywhere, e.g., settings */}
+      {/* <WhatsappQrModal open={qrOpen} onOpenChange={setQrOpen} /> */}
 
       <SimpanModal
         open={modals.simpan}
