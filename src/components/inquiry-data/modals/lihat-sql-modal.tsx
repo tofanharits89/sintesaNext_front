@@ -25,7 +25,10 @@ interface LihatSqlModalProps {
     pembulatan: string;
     jenisAkumulasi?: string;
   };
-  filterValues?: Record<string, any>;
+  filterValues?: Record<
+    string,
+    import("@/hooks/use-inquiry-data-api").FilterValue
+  >;
 }
 
 export function LihatSqlModal({
@@ -40,7 +43,7 @@ export function LihatSqlModal({
   const [copied, setCopied] = useState(false);
   const { buildQuery } = useInquiryQueryBuilder();
 
-  const fetchSQL = async () => {
+  const fetchSQL = React.useCallback(async () => {
     setIsLoading(true);
 
     try {
@@ -54,13 +57,13 @@ export function LihatSqlModal({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [activeFilters, filterValues, reportParams, buildQuery]);
 
   useEffect(() => {
     if (open) {
       fetchSQL();
     }
-  }, [open, activeFilters, reportParams, filterValues]);
+  }, [open, fetchSQL]);
 
   const handleCopySQL = async () => {
     try {

@@ -12,7 +12,6 @@ import { getFilterLabel, normalizeActiveFilters } from "./filterRegistry";
 
 import {
   Eye,
-  Download,
   MessageCircle,
   Save,
   Code,
@@ -20,7 +19,7 @@ import {
   FileText,
 } from "lucide-react";
 import { useCurrentUser } from "@/lib/use-current-user";
-import { useInquiryDataApi } from "@/hooks/use-inquiry-data-api";
+import { useInquiryDataApi, FilterValue } from "@/hooks/use-inquiry-data-api";
 
 interface DynamicFiltersCardProps {
   activeFilters: string[];
@@ -31,7 +30,7 @@ interface DynamicFiltersCardProps {
   };
   onRemoveFilter: (filterKey: string) => void;
   onClearAllFilters: () => void;
-  filterValues: Record<string, any>;
+  filterValues: Record<string, FilterValue>;
   onFilterChange: (filterKey: string, field: string, value: string) => void;
 }
 
@@ -143,7 +142,7 @@ export function DynamicFiltersCard({
           <div className="text-center py-8 text-muted-foreground">
             <p>Tidak ada filter yang aktif.</p>
             <p className="text-sm">
-              Aktifkan filter pada kartu "Filter Parameters" di atas.
+              Aktifkan filter pada kartu &quot;Filter Parameters&quot; di atas.
             </p>
           </div>
         )}
@@ -222,7 +221,7 @@ export function DynamicFiltersCard({
       {/* Modals */}
       <TayangModal
         open={modals.tayang}
-        onOpenChange={(open: boolean) => closeModal("tayang")}
+        onOpenChange={() => closeModal("tayang")}
         activeFilters={activeFilters}
         reportParams={reportParams}
         filterValues={filterValues}
@@ -230,14 +229,14 @@ export function DynamicFiltersCard({
 
       <WhatsappModal
         open={modals.whatsapp}
-        onOpenChange={(open: boolean) => closeModal("whatsapp")}
+        onOpenChange={() => closeModal("whatsapp")}
         activeFilters={activeFilters}
         reportParams={reportParams}
       />
 
       <SimpanModal
         open={modals.simpan}
-        onOpenChange={(open: boolean) => closeModal("simpan")}
+        onOpenChange={() => closeModal("simpan")}
         activeFilters={activeFilters}
         reportParams={reportParams}
       />
@@ -245,7 +244,7 @@ export function DynamicFiltersCard({
       {isAdmin && (
         <LihatSqlModal
           open={modals.lihatSql}
-          onOpenChange={(open: boolean) => closeModal("lihatSql")}
+          onOpenChange={() => closeModal("lihatSql")}
           activeFilters={activeFilters}
           reportParams={reportParams}
           filterValues={filterValues}

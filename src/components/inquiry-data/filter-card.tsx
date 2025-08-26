@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { VirtualizedSelect } from "@/components/ui/virtualized-select";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,24 @@ import kdbkpkData from "./data/kdbkpk.json";
 import kdgbkpkData from "./data/kdgbkpk.json";
 import kdsdanaData from "./data/kdsdana.json";
 
+type Option = { value: string; label: string };
+
+type Kddept = { kddept: string; nmdept: string };
+type Kdunit = { kdunit: string; nmunit: string; kddept: string };
+type Kdkanwil = { kdkanwil: string; nmkanwil: string; kdlokasi: string };
+type Kdkppn = { kdkppn: string; nmkppn: string; kdkanwil: string };
+type Kdlokasi = { kdlokasi: string; nmlokasi: string };
+type Kddekon = { kddekon: string; nmdekon: string };
+type Kdkabkota = { kdkabkota: string; nmkabkota: string; kdlokasi: string };
+
+const KDDEPT: Kddept[] = kddeptData as Kddept[];
+const KDUNIT: Kdunit[] = kdunitData as Kdunit[];
+const KDKANWIL: Kdkanwil[] = kdkanwilData as Kdkanwil[];
+const KDKPPN: Kdkppn[] = kdkppnData as Kdkppn[];
+const KDLOKASI: Kdlokasi[] = kdlokasiData as Kdlokasi[];
+const KDDEKON: Kddekon[] = kddekonData as Kddekon[];
+const KDKABKOTA: Kdkabkota[] = kdkabkotaData as Kdkabkota[];
+
 interface FilterCardProps {
   filterKey: string;
   filterLabel: string;
@@ -54,7 +72,7 @@ export function FilterCard({
   // Get current month for cutOff filter default
   const getCurrentMonth = () => {
     const now = new Date();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, "0");
     return month;
   };
 
@@ -296,7 +314,8 @@ export function FilterCard({
         }
       }
     }
-  }, [activeFilterValues, filterKey, filterData.selection]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFilterValues, filterKey, filterData.selection, onFilterChange]);
 
   // Notify parent about initial default values (only once on mount)
   useEffect(() => {
@@ -308,415 +327,469 @@ export function FilterCard({
   }, [filterKey, onFilterChange]);
 
   // Get filter options based on filter type - using real JSON data
-  const getFilterOptions = (key: string) => {
-    const commonOptions = [{ value: "all", label: "Semua" }];
+  const getFilterOptions = useCallback(
+    (key: string): Option[] => {
+      const commonOptions: Option[] = [{ value: "all", label: "Semua" }];
 
-    try {
-      switch (key) {
-        case "kementerian":
-          // Use kddept.json data
-          const kementarianOptions = (kddeptData as any[]).map((item: any) => ({
-            value: item.kddept,
-            label: `${item.kddept} - ${item.nmdept}`,
-          }));
-          return [...commonOptions, ...kementarianOptions];
-
-        case "eselonI":
-          // Use kdunit.json data for Unit Eselon I - filter by selected Kementerian
-          let eselonIData = kdunitData as any[];
-
-          // Filter by parent Kementerian if selected
-          const selectedKementerian = activeFilterValues?.kementerian;
-          if (selectedKementerian && selectedKementerian !== "all") {
-            eselonIData = eselonIData.filter(
-              (item: any) => item.kddept === selectedKementerian
-            );
+      try {
+        switch (key) {
+          case "kementerian": {
+            const kementarianOptions = KDDEPT.map((item) => ({
+              value: item.kddept,
+              label: `${item.kddept} - ${item.nmdept}`,
+            }));
+            return [...commonOptions, ...kementarianOptions];
           }
 
-          const eselonIOptions = eselonIData.map((item: any) => ({
-            value: item.kdunit,
-            label: `${item.kdunit} - ${item.nmunit}`,
-          }));
-          return [...commonOptions, ...eselonIOptions];
-
-        case "kanwil":
-          // Use kdkanwil.json data - filter by selected Provinsi
-          let kanwilData = kdkanwilData as any[];
-
-          // Filter by parent Provinsi if selected
-          const selectedProvinsiForKanwil = activeFilterValues?.provinsi;
-          if (
-            selectedProvinsiForKanwil &&
-            selectedProvinsiForKanwil !== "all"
-          ) {
-            kanwilData = kanwilData.filter(
-              (item: any) => item.kdlokasi === selectedProvinsiForKanwil
-            );
-          }
-
-          const kanwilOptions = kanwilData.map((item: any) => ({
-            value: item.kdkanwil,
-            label: `${item.kdkanwil} - ${item.nmkanwil}`,
-          }));
-          return [...commonOptions, ...kanwilOptions];
-
-        case "kppn":
-          // Use kdkppn.json data - filter by selected Kanwil
-          let kppnData = kdkppnData as any[];
-
-          // Filter by parent Kanwil if selected
-          const selectedKanwil = activeFilterValues?.kanwil;
-          if (selectedKanwil && selectedKanwil !== "all") {
-            kppnData = kppnData.filter(
-              (item: any) => item.kdkanwil === selectedKanwil
-            );
-          }
-
-          const kppnOptions = kppnData.map((item: any) => ({
-            value: item.kdkppn,
-            label: `${item.kdkppn} - ${item.nmkppn}`,
-          }));
-          return [...commonOptions, ...kppnOptions];
-
-        case "kewenangan":
-          // Use kddekon.json data - get unique kewenangan options
-          const uniqueKewenangan = new Map();
-          (kddekonData as any[]).forEach((item: any) => {
-            if (!uniqueKewenangan.has(item.kddekon)) {
-              uniqueKewenangan.set(item.kddekon, {
-                value: item.kddekon,
-                label: `${item.kddekon} - ${item.nmdekon}`,
-              });
+          case "eselonI": {
+            let eselonIData = KDUNIT;
+            const selectedKementerian = activeFilterValues?.kementerian;
+            if (selectedKementerian && selectedKementerian !== "all") {
+              eselonIData = eselonIData.filter(
+                (item) => item.kddept === selectedKementerian
+              );
             }
-          });
-          const kewenanganOptions = Array.from(uniqueKewenangan.values());
-          return [...commonOptions, ...kewenanganOptions];
-
-        case "provinsi":
-          // Use kdlokasi.json data
-          const provinsiOptions = (kdlokasiData as any[]).map((item: any) => ({
-            value: item.kdlokasi,
-            label: `${item.kdlokasi} - ${item.nmlokasi}`,
-          }));
-          return [...commonOptions, ...provinsiOptions];
-
-        case "kabkota":
-          // Use kdkabkota.json data - filter by selected Provinsi
-          let kabkotaData = kdkabkotaData as any[];
-
-          // Filter by parent Provinsi if selected
-          const selectedProvinsi = activeFilterValues?.provinsi;
-          if (selectedProvinsi && selectedProvinsi !== "all") {
-            kabkotaData = kabkotaData.filter(
-              (item: any) => item.kdlokasi === selectedProvinsi
-            );
+            const eselonIOptions = eselonIData.map((item) => ({
+              value: item.kdunit,
+              label: `${item.kdunit} - ${item.nmunit}`,
+            }));
+            return [...commonOptions, ...eselonIOptions];
           }
 
-          const kabkotaOptions = kabkotaData.map((item: any) => ({
-            value: item.kdkabkota,
-            label: `${item.kdkabkota} - ${item.nmkabkota}`,
-          }));
-          return [...commonOptions, ...kabkotaOptions];
-
-        case "satker":
-          // Use kdsatker.json data - filter by selected Kementerian, Kanwil, and KPPN
-          let satkerData = kdsatkerData as any[];
-
-          // Filter by parent Kementerian if selected
-          const selectedKementarianForSatker = activeFilterValues?.kementerian;
-          if (
-            selectedKementarianForSatker &&
-            selectedKementarianForSatker !== "all"
-          ) {
-            satkerData = satkerData.filter(
-              (item: any) => item.kddept === selectedKementarianForSatker
-            );
+          case "kanwil": {
+            let kanwilData = KDKANWIL;
+            const selectedProvinsiForKanwil = activeFilterValues?.provinsi;
+            if (
+              selectedProvinsiForKanwil &&
+              selectedProvinsiForKanwil !== "all"
+            ) {
+              kanwilData = kanwilData.filter(
+                (item) => item.kdlokasi === selectedProvinsiForKanwil
+              );
+            }
+            const kanwilOptions = kanwilData.map((item) => ({
+              value: item.kdkanwil,
+              label: `${item.kdkanwil} - ${item.nmkanwil}`,
+            }));
+            return [...commonOptions, ...kanwilOptions];
           }
 
-          // Filter by parent Kanwil if selected
-          const selectedKanwilForSatker = activeFilterValues?.kanwil;
-          if (selectedKanwilForSatker && selectedKanwilForSatker !== "all") {
-            satkerData = satkerData.filter(
-              (item: any) => item.kdkanwil === selectedKanwilForSatker
-            );
+          case "kppn": {
+            let kppnData = KDKPPN;
+            const selectedKanwil = activeFilterValues?.kanwil;
+            if (selectedKanwil && selectedKanwil !== "all") {
+              kppnData = kppnData.filter(
+                (item) => item.kdkanwil === selectedKanwil
+              );
+            }
+            const kppnOptions = kppnData.map((item) => ({
+              value: item.kdkppn,
+              label: `${item.kdkppn} - ${item.nmkppn}`,
+            }));
+            return [...commonOptions, ...kppnOptions];
           }
 
-          // Filter by parent KPPN if selected
-          const selectedKppnForSatker = activeFilterValues?.kppn;
-          if (selectedKppnForSatker && selectedKppnForSatker !== "all") {
-            satkerData = satkerData.filter(
-              (item: any) => item.kdkppn === selectedKppnForSatker
-            );
+          case "kewenangan": {
+            const uniqueKewenangan = new Map<string, Option>();
+            KDDEKON.forEach((item) => {
+              if (!uniqueKewenangan.has(item.kddekon)) {
+                uniqueKewenangan.set(item.kddekon, {
+                  value: item.kddekon,
+                  label: `${item.kddekon} - ${item.nmdekon}`,
+                });
+              }
+            });
+            const kewenanganOptions = Array.from(uniqueKewenangan.values());
+            return [...commonOptions, ...kewenanganOptions];
           }
 
-          const satkerOptions = satkerData.map((item: any) => ({
-            value: item.kdsatker,
-            label: `${item.kdsatker} - ${item.nmsatker}`,
-          }));
-          return [...commonOptions, ...satkerOptions];
-
-        // For other filter types, return mock data
-        case "fungsi":
-          // Use kdfungsi.json data
-          const fungsiOptions = (kdfungsiData as any[]).map((item: any) => ({
-            value: item.kdfungsi,
-            label: `${item.kdfungsi} - ${item.nmfungsi}`,
-          }));
-          return [...commonOptions, ...fungsiOptions];
-        case "subFungsi":
-          // Use kdsfung.json data - filter by selected Fungsi
-          let subFungsiData = kdsfungData as any[];
-
-          // Filter by parent Fungsi if selected
-          const selectedFungsi = activeFilterValues?.fungsi;
-          if (selectedFungsi && selectedFungsi !== "all") {
-            subFungsiData = subFungsiData.filter(
-              (item: any) => item.kdfungsi === selectedFungsi
-            );
+          case "provinsi": {
+            const provinsiOptions = KDLOKASI.map((item) => ({
+              value: item.kdlokasi,
+              label: `${item.kdlokasi} - ${item.nmlokasi}`,
+            }));
+            return [...commonOptions, ...provinsiOptions];
           }
 
-          const subFungsiOptions = subFungsiData.map((item: any) => ({
-            value: item.kdsfung,
-            label: `${item.kdfungsi}.${item.kdsfung} - ${item.nmsfung}`,
-          }));
-          return [...commonOptions, ...subFungsiOptions];
-        case "program":
-          // Use kdprogram.json data - filter by selected Kementerian and Unit Eselon 1
-          let programData = kdprogramData as any[];
-
-          // Filter by parent Kementerian if selected
-          const selectedKementarianForProgram = activeFilterValues?.kementerian;
-          if (
-            selectedKementarianForProgram &&
-            selectedKementarianForProgram !== "all"
-          ) {
-            programData = programData.filter(
-              (item: any) => item.kddept === selectedKementarianForProgram
-            );
+          case "kabkota": {
+            let kabkotaData = KDKABKOTA;
+            const selectedProvinsi = activeFilterValues?.provinsi;
+            if (selectedProvinsi && selectedProvinsi !== "all") {
+              kabkotaData = kabkotaData.filter(
+                (item) => item.kdlokasi === selectedProvinsi
+              );
+            }
+            const kabkotaOptions = kabkotaData.map((item) => ({
+              value: item.kdkabkota,
+              label: `${item.kdkabkota} - ${item.nmkabkota}`,
+            }));
+            return [...commonOptions, ...kabkotaOptions];
           }
 
-          // Filter by parent Unit Eselon 1 if selected
-          const selectedEselonI = activeFilterValues?.eselonI;
-          if (selectedEselonI && selectedEselonI !== "all") {
-            programData = programData.filter(
-              (item: any) => item.kdunit === selectedEselonI
-            );
-          }
+          case "satker":
+            // Use kdsatker.json data - filter by selected Kementerian, Kanwil, and KPPN
+            let satkerData = kdsatkerData as Array<{
+              kdsatker: string;
+              nmsatker: string;
+              kddept: string;
+              kdkanwil: string;
+              kdkppn: string;
+            }>;
 
-          const programOptions = programData.map((item: any) => ({
-            value: item.kdprogram,
-            label: `${item.kdprogram} - ${item.nmprogram}`,
-          }));
-          return [...commonOptions, ...programOptions];
-        case "kegiatan":
-          // Use kdgiat.json data - filter by selected Kementerian, Unit, and Program
-          let kegiatanData = kdgiatData as any[];
+            // Filter by parent Kementerian if selected
+            const selectedKementarianForSatker =
+              activeFilterValues?.kementerian;
+            if (
+              selectedKementarianForSatker &&
+              selectedKementarianForSatker !== "all"
+            ) {
+              satkerData = satkerData.filter(
+                (item) => item.kddept === selectedKementarianForSatker
+              );
+            }
 
-          // Filter by parent Kementerian if selected
-          const selectedKementarianForKegiatan =
-            activeFilterValues?.kementerian;
-          if (
-            selectedKementarianForKegiatan &&
-            selectedKementarianForKegiatan !== "all"
-          ) {
-            kegiatanData = kegiatanData.filter(
-              (item: any) => item.kddept === selectedKementarianForKegiatan
-            );
-          }
+            // Filter by parent Kanwil if selected
+            const selectedKanwilForSatker = activeFilterValues?.kanwil;
+            if (selectedKanwilForSatker && selectedKanwilForSatker !== "all") {
+              satkerData = satkerData.filter(
+                (item) => item.kdkanwil === selectedKanwilForSatker
+              );
+            }
 
-          // Filter by parent Unit if selected
-          const selectedUnitForKegiatan = activeFilterValues?.eselonI;
-          if (selectedUnitForKegiatan && selectedUnitForKegiatan !== "all") {
-            kegiatanData = kegiatanData.filter(
-              (item: any) => item.kdunit === selectedUnitForKegiatan
-            );
-          }
+            // Filter by parent KPPN if selected
+            const selectedKppnForSatker = activeFilterValues?.kppn;
+            if (selectedKppnForSatker && selectedKppnForSatker !== "all") {
+              satkerData = satkerData.filter(
+                (item) => item.kdkppn === selectedKppnForSatker
+              );
+            }
 
-          // Filter by parent Program if selected
-          const selectedProgram = activeFilterValues?.program;
-          if (selectedProgram && selectedProgram !== "all") {
-            kegiatanData = kegiatanData.filter(
-              (item: any) => item.kdprogram === selectedProgram
-            );
-          }
+            const satkerOptions = satkerData.map((item) => ({
+              value: item.kdsatker,
+              label: `${item.kdsatker} - ${item.nmsatker}`,
+            }));
+            return [...commonOptions, ...satkerOptions];
 
-          const kegiatanOptions = kegiatanData.map((item: any) => ({
-            value: item.kdgiat,
-            label: `${item.kdgiat} - ${item.nmgiat}`,
-          }));
-          return [...commonOptions, ...kegiatanOptions];
+          // For other filter types, return mock data
+          case "fungsi":
+            // Use kdfungsi.json data
+            const fungsiOptions = (
+              kdfungsiData as Array<{ kdfungsi: string; nmfungsi: string }>
+            ).map((item) => ({
+              value: item.kdfungsi,
+              label: `${item.kdfungsi} - ${item.nmfungsi}`,
+            }));
+            return [...commonOptions, ...fungsiOptions];
+          case "subFungsi":
+            // Use kdsfung.json data - filter by selected Fungsi
+            let subFungsiData = kdsfungData as Array<{
+              kdfungsi: string;
+              kdsfung: string;
+              nmsfung: string;
+            }>;
 
-        case "outputKro":
-          // Use kdoutput.json data - filter by selected Kementerian, Unit, Program, and Kegiatan
-          let outputData = kdoutputData as any[];
+            // Filter by parent Fungsi if selected
+            const selectedFungsi = activeFilterValues?.fungsi;
+            if (selectedFungsi && selectedFungsi !== "all") {
+              subFungsiData = subFungsiData.filter(
+                (item) => item.kdfungsi === selectedFungsi
+              );
+            }
 
-          // Filter by parent Kementerian if selected
-          const selectedKementarianForOutput = activeFilterValues?.kementerian;
-          if (
-            selectedKementarianForOutput &&
-            selectedKementarianForOutput !== "all"
-          ) {
-            outputData = outputData.filter(
-              (item: any) => item.kddept === selectedKementarianForOutput
-            );
-          }
+            const subFungsiOptions = subFungsiData.map((item) => ({
+              value: item.kdsfung,
+              label: `${item.kdfungsi}.${item.kdsfung} - ${item.nmsfung}`,
+            }));
+            return [...commonOptions, ...subFungsiOptions];
+          case "program":
+            // Use kdprogram.json data - filter by selected Kementerian and Unit Eselon 1
+            let programData = kdprogramData as Array<{
+              kdprogram: string;
+              nmprogram: string;
+              kddept: string;
+              kdunit: string;
+            }>;
 
-          // Filter by parent Unit if selected
-          const selectedUnitForOutput = activeFilterValues?.eselonI;
-          if (selectedUnitForOutput && selectedUnitForOutput !== "all") {
-            outputData = outputData.filter(
-              (item: any) => item.kdunit === selectedUnitForOutput
-            );
-          }
+            // Filter by parent Kementerian if selected
+            const selectedKementarianForProgram =
+              activeFilterValues?.kementerian;
+            if (
+              selectedKementarianForProgram &&
+              selectedKementarianForProgram !== "all"
+            ) {
+              programData = programData.filter(
+                (item) => item.kddept === selectedKementarianForProgram
+              );
+            }
 
-          // Filter by parent Program if selected
-          const selectedProgramForOutput = activeFilterValues?.program;
-          if (selectedProgramForOutput && selectedProgramForOutput !== "all") {
-            outputData = outputData.filter(
-              (item: any) => item.kdprogram === selectedProgramForOutput
-            );
-          }
+            // Filter by parent Unit Eselon 1 if selected
+            const selectedEselonI = activeFilterValues?.eselonI;
+            if (selectedEselonI && selectedEselonI !== "all") {
+              programData = programData.filter(
+                (item) => item.kdunit === selectedEselonI
+              );
+            }
 
-          // Filter by parent Kegiatan if selected
-          const selectedKegiatan = activeFilterValues?.kegiatan;
-          if (selectedKegiatan && selectedKegiatan !== "all") {
-            outputData = outputData.filter(
-              (item: any) => item.kdgiat === selectedKegiatan
-            );
-          }
+            const programOptions = programData.map((item) => ({
+              value: item.kdprogram,
+              label: `${item.kdprogram} - ${item.nmprogram}`,
+            }));
+            return [...commonOptions, ...programOptions];
+          case "kegiatan":
+            // Use kdgiat.json data - filter by selected Kementerian, Unit, and Program
+            let kegiatanData = kdgiatData as Array<{
+              kdgiat: string;
+              nmgiat: string;
+              kddept: string;
+              kdunit: string;
+              kdprogram: string;
+            }>;
 
-          const outputOptions = outputData.map((item: any) => ({
-            value: item.kdoutput,
-            label: `${item.kdoutput} - ${item.nmoutput}`,
-          }));
-          return [...commonOptions, ...outputOptions];
+            // Filter by parent Kementerian if selected
+            const selectedKementarianForKegiatan =
+              activeFilterValues?.kementerian;
+            if (
+              selectedKementarianForKegiatan &&
+              selectedKementarianForKegiatan !== "all"
+            ) {
+              kegiatanData = kegiatanData.filter(
+                (item) => item.kddept === selectedKementarianForKegiatan
+              );
+            }
 
-        case "subOutputRo":
-          // Use kdsoutput.json data - filter by selected Kementerian, Unit, Program, Kegiatan, and Output
-          let subOutputData = kdsoutputData as any[];
+            // Filter by parent Unit if selected
+            const selectedUnitForKegiatan = activeFilterValues?.eselonI;
+            if (selectedUnitForKegiatan && selectedUnitForKegiatan !== "all") {
+              kegiatanData = kegiatanData.filter(
+                (item) => item.kdunit === selectedUnitForKegiatan
+              );
+            }
 
-          // Filter by parent Kementerian if selected
-          const selectedKementarianForSubOutput =
-            activeFilterValues?.kementerian;
-          if (
-            selectedKementarianForSubOutput &&
-            selectedKementarianForSubOutput !== "all"
-          ) {
-            subOutputData = subOutputData.filter(
-              (item: any) => item.kddept === selectedKementarianForSubOutput
-            );
-          }
+            // Filter by parent Program if selected
+            const selectedProgram = activeFilterValues?.program;
+            if (selectedProgram && selectedProgram !== "all") {
+              kegiatanData = kegiatanData.filter(
+                (item) => item.kdprogram === selectedProgram
+              );
+            }
 
-          // Filter by parent Unit if selected
-          const selectedUnitForSubOutput = activeFilterValues?.eselonI;
-          if (selectedUnitForSubOutput && selectedUnitForSubOutput !== "all") {
-            subOutputData = subOutputData.filter(
-              (item: any) => item.kdunit === selectedUnitForSubOutput
-            );
-          }
+            const kegiatanOptions = kegiatanData.map((item) => ({
+              value: item.kdgiat,
+              label: `${item.kdgiat} - ${item.nmgiat}`,
+            }));
+            return [...commonOptions, ...kegiatanOptions];
 
-          // Filter by parent Program if selected
-          const selectedProgramForSubOutput = activeFilterValues?.program;
-          if (
-            selectedProgramForSubOutput &&
-            selectedProgramForSubOutput !== "all"
-          ) {
-            subOutputData = subOutputData.filter(
-              (item: any) => item.kdprogram === selectedProgramForSubOutput
-            );
-          }
+          case "outputKro":
+            // Use kdoutput.json data - filter by selected Kementerian, Unit, Program, and Kegiatan
+            let outputData = kdoutputData as Array<{
+              kdoutput: string;
+              nmoutput: string;
+              kddept: string;
+              kdunit: string;
+              kdprogram: string;
+              kdgiat: string;
+            }>;
 
-          // Filter by parent Kegiatan if selected
-          const selectedKegiatanForSubOutput = activeFilterValues?.kegiatan;
-          if (
-            selectedKegiatanForSubOutput &&
-            selectedKegiatanForSubOutput !== "all"
-          ) {
-            subOutputData = subOutputData.filter(
-              (item: any) => item.kdgiat === selectedKegiatanForSubOutput
-            );
-          }
+            // Filter by parent Kementerian if selected
+            const selectedKementarianForOutput =
+              activeFilterValues?.kementerian;
+            if (
+              selectedKementarianForOutput &&
+              selectedKementarianForOutput !== "all"
+            ) {
+              outputData = outputData.filter(
+                (item) => item.kddept === selectedKementarianForOutput
+              );
+            }
 
-          // Filter by parent Output if selected
-          const selectedOutput = activeFilterValues?.outputKro;
-          if (selectedOutput && selectedOutput !== "all") {
-            subOutputData = subOutputData.filter(
-              (item: any) => item.kdoutput === selectedOutput
-            );
-          }
+            // Filter by parent Unit if selected
+            const selectedUnitForOutput = activeFilterValues?.eselonI;
+            if (selectedUnitForOutput && selectedUnitForOutput !== "all") {
+              outputData = outputData.filter(
+                (item) => item.kdunit === selectedUnitForOutput
+              );
+            }
 
-          const subOutputOptions = subOutputData.map((item: any) => ({
-            value: item.kdsoutput,
-            label: `${item.kdsoutput} - ${item.nmsoutput}`,
-          }));
-          return [...commonOptions, ...subOutputOptions];
+            // Filter by parent Program if selected
+            const selectedProgramForOutput = activeFilterValues?.program;
+            if (
+              selectedProgramForOutput &&
+              selectedProgramForOutput !== "all"
+            ) {
+              outputData = outputData.filter(
+                (item) => item.kdprogram === selectedProgramForOutput
+              );
+            }
 
-        case "akun":
-          // Use different JSON data based on account type selection
-          const akunType = filterData.akunType || "jenisBelanja";
+            // Filter by parent Kegiatan if selected
+            const selectedKegiatan = activeFilterValues?.kegiatan;
+            if (selectedKegiatan && selectedKegiatan !== "all") {
+              outputData = outputData.filter(
+                (item) => item.kdgiat === selectedKegiatan
+              );
+            }
 
-          if (akunType === "jenisBelanja") {
-            // Use kdgbkpk.json data for Jenis Belanja (2 Digit)
-            const jenisBelanjaOptions = (kdgbkpkData as any[]).map(
-              (item: any) => ({
+            const outputOptions = outputData.map((item) => ({
+              value: item.kdoutput,
+              label: `${item.kdoutput} - ${item.nmoutput}`,
+            }));
+            return [...commonOptions, ...outputOptions];
+
+          case "subOutputRo":
+            // Use kdsoutput.json data - filter by selected Kementerian, Unit, Program, Kegiatan, and Output
+            let subOutputData = kdsoutputData as Array<{
+              kdsoutput: string;
+              nmsoutput: string;
+              kddept: string;
+              kdunit: string;
+              kdprogram: string;
+              kdgiat: string;
+              kdoutput: string;
+            }>;
+
+            // Filter by parent Kementerian if selected
+            const selectedKementarianForSubOutput =
+              activeFilterValues?.kementerian;
+            if (
+              selectedKementarianForSubOutput &&
+              selectedKementarianForSubOutput !== "all"
+            ) {
+              subOutputData = subOutputData.filter(
+                (item) => item.kddept === selectedKementarianForSubOutput
+              );
+            }
+
+            // Filter by parent Unit if selected
+            const selectedUnitForSubOutput = activeFilterValues?.eselonI;
+            if (
+              selectedUnitForSubOutput &&
+              selectedUnitForSubOutput !== "all"
+            ) {
+              subOutputData = subOutputData.filter(
+                (item) => item.kdunit === selectedUnitForSubOutput
+              );
+            }
+
+            // Filter by parent Program if selected
+            const selectedProgramForSubOutput = activeFilterValues?.program;
+            if (
+              selectedProgramForSubOutput &&
+              selectedProgramForSubOutput !== "all"
+            ) {
+              subOutputData = subOutputData.filter(
+                (item) => item.kdprogram === selectedProgramForSubOutput
+              );
+            }
+
+            // Filter by parent Kegiatan if selected
+            const selectedKegiatanForSubOutput = activeFilterValues?.kegiatan;
+            if (
+              selectedKegiatanForSubOutput &&
+              selectedKegiatanForSubOutput !== "all"
+            ) {
+              subOutputData = subOutputData.filter(
+                (item) => item.kdgiat === selectedKegiatanForSubOutput
+              );
+            }
+
+            // Filter by parent Output if selected
+            const selectedOutput = activeFilterValues?.outputKro;
+            if (selectedOutput && selectedOutput !== "all") {
+              subOutputData = subOutputData.filter(
+                (item) => item.kdoutput === selectedOutput
+              );
+            }
+
+            const subOutputOptions = subOutputData.map((item) => ({
+              value: item.kdsoutput,
+              label: `${item.kdsoutput} - ${item.nmsoutput}`,
+            }));
+            return [...commonOptions, ...subOutputOptions];
+
+          case "akun":
+            // Use different JSON data based on account type selection
+            const akunType = filterData.akunType || "jenisBelanja";
+
+            if (akunType === "jenisBelanja") {
+              // Use kdgbkpk.json data for Jenis Belanja (2 Digit)
+              const jenisBelanjaOptions = (
+                kdgbkpkData as Array<{ kdgbkpk: string; nmgbkpk: string }>
+              ).map((item) => ({
                 value: item.kdgbkpk,
                 label: `${item.kdgbkpk} - ${item.nmgbkpk}`,
-              })
-            );
-            return [...commonOptions, ...jenisBelanjaOptions];
-          } else if (akunType === "kodeBkpk") {
-            // Use kdbkpk.json data for Kode BKPK (4 Digit)
-            const kodeBkpkOptions = (kdbkpkData as any[]).map((item: any) => ({
-              value: item.kdbkpk,
-              label: `${item.kdbkpk} - ${item.nmbkpk}`,
+              }));
+              return [...commonOptions, ...jenisBelanjaOptions];
+            } else if (akunType === "kodeBkpk") {
+              // Use kdbkpk.json data for Kode BKPK (4 Digit)
+              const kodeBkpkOptions = (
+                kdbkpkData as Array<{ kdbkpk: string; nmbkpk: string }>
+              ).map((item) => ({
+                value: item.kdbkpk,
+                label: `${item.kdbkpk} - ${item.nmbkpk}`,
+              }));
+              return [...commonOptions, ...kodeBkpkOptions];
+            } else if (akunType === "kodeAkun") {
+              // Use kdakun.json data for Kode Akun (6 Digit)
+              const kodeAkunOptions = (
+                kdakunData as Array<{ kdakun: string; nmakun: string }>
+              ).map((item) => ({
+                value: item.kdakun,
+                label: `${item.kdakun} - ${item.nmakun}`,
+              }));
+              return [...commonOptions, ...kodeAkunOptions];
+            }
+
+            return commonOptions;
+
+          case "sumberDana":
+            // Use kdsdana.json data for Sumber Dana
+            const sumberDanaOptions = (
+              kdsdanaData as Array<{ kdsdana: string; nmsdana: string }>
+            ).map((item) => ({
+              value: item.kdsdana,
+              label: `${item.kdsdana} - ${item.nmsdana}`,
             }));
-            return [...commonOptions, ...kodeBkpkOptions];
-          } else if (akunType === "kodeAkun") {
-            // Use kdakun.json data for Kode Akun (6 Digit)
-            const kodeAkunOptions = (kdakunData as any[]).map((item: any) => ({
-              value: item.kdakun,
-              label: `${item.kdakun} - ${item.nmakun}`,
-            }));
-            return [...commonOptions, ...kodeAkunOptions];
-          }
+            return [...commonOptions, ...sumberDanaOptions];
 
-          return commonOptions;
+          case "cutOff":
+            // Generate month options (without year since year is selected in Pilih Laporan card)
+            const months = [
+              "Januari",
+              "Februari",
+              "Maret",
+              "April",
+              "Mei",
+              "Juni",
+              "Juli",
+              "Agustus",
+              "September",
+              "Oktober",
+              "November",
+              "Desember",
+            ];
 
-        case "sumberDana":
-          // Use kdsdana.json data for Sumber Dana
-          const sumberDanaOptions = (kdsdanaData as any[]).map((item: any) => ({
-            value: item.kdsdana,
-            label: `${item.kdsdana} - ${item.nmsdana}`,
-          }));
-          return [...commonOptions, ...sumberDanaOptions];
+            const monthOptions = [];
 
-        case "cutOff":
-          // Generate month options (without year since year is selected in Pilih Laporan card)
-          const months = [
-            "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-            "Juli", "Agustus", "September", "Oktober", "November", "Desember"
-          ];
-          
-          const monthOptions = [];
-          
-          // Add months 1-12
-          for (let month = 1; month <= 12; month++) {
-            const monthStr = String(month).padStart(2, '0');
-            const value = monthStr;
-            const label = months[month - 1];
-            monthOptions.push({ value, label });
-          }
-          
-          return monthOptions;
+            // Add months 1-12
+            for (let month = 1; month <= 12; month++) {
+              const monthStr = String(month).padStart(2, "0");
+              const value = monthStr;
+              const label = months[month - 1];
+              monthOptions.push({ value, label });
+            }
 
-        default:
-          return commonOptions;
+            return monthOptions;
+
+          default:
+            return commonOptions;
+        }
+      } catch (error) {
+        console.error(`Error loading data for filter ${key}:`, error);
+        return commonOptions;
       }
-    } catch (error) {
-      console.error(`Error loading data for filter ${key}:`, error);
-      return commonOptions;
-    }
-  };
+    },
+    [activeFilterValues, filterData]
+  );
 
   const jenisTampilanOptions = [
     { value: "kode", label: "Kode" },
@@ -737,7 +810,7 @@ export function FilterCard({
         // Clear other filters when main selection is made
         newData.kondisiCode = "";
         newData.mengandungKata = "";
-        
+
         // Notify parent about cleared fields
         if (onFilterChange) {
           setTimeout(() => {
@@ -749,7 +822,7 @@ export function FilterCard({
         // Clear other filters when kondisi is used
         newData.selection = "all";
         newData.mengandungKata = "";
-        
+
         // Notify parent about cleared fields
         if (onFilterChange) {
           setTimeout(() => {
@@ -761,7 +834,7 @@ export function FilterCard({
         // Clear other filters when mengandung kata is used
         newData.selection = "all";
         newData.kondisiCode = "";
-        
+
         // Notify parent about cleared fields
         if (onFilterChange) {
           setTimeout(() => {
@@ -773,9 +846,13 @@ export function FilterCard({
 
       // Auto-change jenisTampilan to "kode_uraian" when mengandungKata is entered
       // This makes sense because mengandungKata searches in description, so user should see both code and description
-      if (field === "mengandungKata" && value.trim() && prev.jenisTampilan !== "kode_uraian") {
+      if (
+        field === "mengandungKata" &&
+        value.trim() &&
+        prev.jenisTampilan !== "kode_uraian"
+      ) {
         newData.jenisTampilan = "kode_uraian";
-        
+
         // Notify parent about the auto-change
         if (onFilterChange) {
           setTimeout(() => {
@@ -785,7 +862,11 @@ export function FilterCard({
       }
 
       // Reset jenisTampilan back to "kode" if mengandungKata is cleared and it was auto-changed
-      if (field === "mengandungKata" && !value.trim() && prev.jenisTampilan === "kode_uraian") {
+      if (
+        field === "mengandungKata" &&
+        !value.trim() &&
+        prev.jenisTampilan === "kode_uraian"
+      ) {
         // Only reset if user hasn't manually selected kode_uraian for other reasons
         // We can't easily track this, so we'll leave it as is for now
         // User can manually change it back if needed
@@ -943,16 +1024,22 @@ export function FilterCard({
                 className={cn(
                   "w-full",
                   ((filterData.kondisiCode && filterData.kondisiCode.trim()) ||
-                   (filterData.mengandungKata && filterData.mengandungKata.trim())) && 
-                  "opacity-50 cursor-not-allowed"
+                    (filterData.mengandungKata &&
+                      filterData.mengandungKata.trim())) &&
+                    "opacity-50 cursor-not-allowed"
                 )}
                 disabled={
-                  (filterData.kondisiCode && filterData.kondisiCode.trim()) ||
-                  (filterData.mengandungKata && filterData.mengandungKata.trim())
+                  !!(
+                    (filterData.kondisiCode &&
+                      filterData.kondisiCode.trim() !== "") ||
+                    (filterData.mengandungKata &&
+                      filterData.mengandungKata.trim() !== "")
+                  )
                 }
               />
               {((filterData.kondisiCode && filterData.kondisiCode.trim()) ||
-                (filterData.mengandungKata && filterData.mengandungKata.trim())) && (
+                (filterData.mengandungKata &&
+                  filterData.mengandungKata.trim())) && (
                 <p className="text-xs text-amber-600">
                   ⚠️ Dinonaktifkan karena filter lain sedang digunakan
                 </p>
@@ -969,13 +1056,17 @@ export function FilterCard({
                   handleInputChange("kondisiCode", e.target.value)
                 }
                 disabled={
-                  (filterData.selection && filterData.selection !== "all") ||
-                  (filterData.mengandungKata && filterData.mengandungKata.trim())
+                  !!(
+                    (filterData.selection && filterData.selection !== "all") ||
+                    (filterData.mengandungKata &&
+                      filterData.mengandungKata.trim() !== "")
+                  )
                 }
                 className={cn(
                   ((filterData.selection && filterData.selection !== "all") ||
-                   (filterData.mengandungKata && filterData.mengandungKata.trim())) && 
-                  "opacity-50 cursor-not-allowed"
+                    (filterData.mengandungKata &&
+                      filterData.mengandungKata.trim())) &&
+                    "opacity-50 cursor-not-allowed"
                 )}
               />
               {filterData.kondisiCode && filterData.kondisiCode.trim() && (
@@ -984,7 +1075,8 @@ export function FilterCard({
                 </p>
               )}
               {((filterData.selection && filterData.selection !== "all") ||
-                (filterData.mengandungKata && filterData.mengandungKata.trim())) && (
+                (filterData.mengandungKata &&
+                  filterData.mengandungKata.trim())) && (
                 <p className="text-xs text-amber-600">
                   ⚠️ Dinonaktifkan karena filter lain sedang digunakan
                 </p>
@@ -1001,20 +1093,25 @@ export function FilterCard({
                   handleInputChange("mengandungKata", e.target.value)
                 }
                 disabled={
-                  (filterData.selection && filterData.selection !== "all") ||
-                  (filterData.kondisiCode && filterData.kondisiCode.trim())
+                  !!(
+                    (filterData.selection && filterData.selection !== "all") ||
+                    (filterData.kondisiCode &&
+                      filterData.kondisiCode.trim() !== "")
+                  )
                 }
                 className={cn(
                   ((filterData.selection && filterData.selection !== "all") ||
-                   (filterData.kondisiCode && filterData.kondisiCode.trim())) && 
-                  "opacity-50 cursor-not-allowed"
+                    (filterData.kondisiCode &&
+                      filterData.kondisiCode.trim())) &&
+                    "opacity-50 cursor-not-allowed"
                 )}
               />
-              {filterData.mengandungKata && filterData.mengandungKata.trim() && (
-                <p className="text-xs text-muted-foreground">
-                  💡 Pencarian dilakukan pada kolom deskripsi
-                </p>
-              )}
+              {filterData.mengandungKata &&
+                filterData.mengandungKata.trim() && (
+                  <p className="text-xs text-muted-foreground">
+                    💡 Pencarian dilakukan pada kolom deskripsi
+                  </p>
+                )}
               {((filterData.selection && filterData.selection !== "all") ||
                 (filterData.kondisiCode && filterData.kondisiCode.trim())) && (
                 <p className="text-xs text-amber-600">
@@ -1043,11 +1140,14 @@ export function FilterCard({
                   ))}
                 </SelectContent>
               </Select>
-              {filterData.mengandungKata && filterData.mengandungKata.trim() && filterData.jenisTampilan === "kode_uraian" && (
-                <p className="text-xs text-blue-600">
-                  ℹ️ Otomatis diubah ke "Kode Uraian" untuk pencarian teks
-                </p>
-              )}
+              {filterData.mengandungKata &&
+                filterData.mengandungKata.trim() &&
+                filterData.jenisTampilan === "kode_uraian" && (
+                  <p className="text-xs text-blue-600">
+                    ℹ️ Otomatis diubah ke &quot;Kode Uraian&quot; untuk
+                    pencarian teks
+                  </p>
+                )}
             </div>
           </div>
         )}

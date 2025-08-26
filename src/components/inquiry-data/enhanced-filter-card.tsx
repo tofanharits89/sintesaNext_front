@@ -1,13 +1,21 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
 import { FilterCard } from "./filter-card";
+
+import type { FilterValue } from "@/hooks/use-inquiry-data-api";
 
 interface EnhancedFilterCardProps {
   filterKey: string;
   filterLabel: string;
   onRemove: () => void;
-  activeFilterValues: Record<string, any>;
+  activeFilterValues: Record<string, FilterValue>;
   onFilterChange: (filterKey: string, field: string, value: string) => void;
 }
 
@@ -26,15 +34,18 @@ export function EnhancedFilterCard({
   };
 
   // Initialize filter data with defaults
-  const getInitialFilterData = () => ({
-    selection: filterKey === "cutOff" ? getCurrentMonth() : "all",
-    kondisiCode: "",
-    mengandungKata: "",
-    jenisTampilan: "kode" as const,
-    akunType: "kodeAkun" as const,
-  });
+  const getInitialFilterData = useCallback(
+    () => ({
+      selection: filterKey === "cutOff" ? getCurrentMonth() : "all",
+      kondisiCode: "",
+      mengandungKata: "",
+      jenisTampilan: "kode" as const,
+      akunType: "kodeAkun" as const,
+    }),
+    [filterKey]
+  );
 
-  const [filterData, setFilterData] = useState(getInitialFilterData());
+  const [, setFilterData] = useState(getInitialFilterData());
   const initialNotificationSent = useRef(false);
 
   // Notify parent about initial default values (only once on mount)
@@ -51,7 +62,7 @@ export function EnhancedFilterCard({
 
       initialNotificationSent.current = true;
     }
-  }, [filterKey, onFilterChange]);
+  }, [filterKey, onFilterChange, getInitialFilterData]);
 
   // Handle input changes
   const handleInputChange = (field: string, value: string) => {
@@ -79,11 +90,12 @@ export function EnhancedFilterCard({
   const normalizedActiveValues = useMemo(() => {
     const src = activeFilterValues || {};
     const out: Record<string, string> = {};
-    Object.entries(src).forEach(([k, v]: [string, any]) => {
-      if (v && typeof v === "object" && "selection" in v) {
-        out[k] = String((v as any).selection ?? "");
-      } else if (v != null) {
-        out[k] = String(v as any);
+    Object.entries(src).forEach(([k, v]) => {
+      const val = v as Partial<FilterValue> | string | undefined;
+      if (val && typeof val === "object" && "selection" in val) {
+        out[k] = String(val.selection ?? "");
+      } else if (val != null) {
+        out[k] = String(val as string);
       }
     });
     return out;
