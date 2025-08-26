@@ -11,6 +11,7 @@ export interface QueryExecutionResult {
   rowCount?: number;
   totalCount?: number;
   executionTime?: number;
+  grandTotals?: Record<string, number>;
   error?: string;
   query?: string;
 }

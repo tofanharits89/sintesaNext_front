@@ -23,12 +23,13 @@ import {
   Loader2,
   RefreshCw,
   Search,
-  FileSpreadsheet,
-  FileText,
   Clock,
   BarChart3,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
-import { useInquiryDataApi } from "@/hooks/use-inquiry-data-api";
+import { useInquiryDataApi, FilterValue } from "@/hooks/use-inquiry-data-api";
+import { INQUIRY_FILTER_ORDER } from "../filterOrder";
 
 interface TayangModalProps {
   open: boolean;
@@ -39,7 +40,7 @@ interface TayangModalProps {
     tipeLaporan: string;
     pembulatan: string;
   };
-  filterValues?: Record<string, any>;
+  filterValues?: Record<string, FilterValue>;
 }
 
 export function TayangModal({
@@ -54,14 +55,28 @@ export function TayangModal({
   const [currentPage, setCurrentPage] = useState(1);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Use the query builder API
-  const { executeQuery, downloadCSV, downloadExcel, isLoading, lastResult } =
-    useInquiryDataApi();
+  const { executeQuery, isLoading, lastResult } = useInquiryDataApi();
+
+  // Normalize active filters to the default order so SELECT and thus table columns are stable
+  const normalizedActiveFilters = useMemo(() => {
+    const orderMap = new Map(INQUIRY_FILTER_ORDER.map((k, i) => [k, i]));
+    return activeFilters.slice().sort((a, b) => {
+      const ia = orderMap.has(a)
+        ? (orderMap.get(a) as number)
+        : Number.MAX_SAFE_INTEGER;
+      const ib = orderMap.has(b)
+        ? (orderMap.get(b) as number)
+        : Number.MAX_SAFE_INTEGER;
+      return ia - ib;
+    });
+  }, [activeFilters]);
 
   const fetchData = async () => {
     try {
-      await executeQuery(activeFilters, filterValues, reportParams, {
+      await executeQuery(normalizedActiveFilters, filterValues, reportParams, {
         page: currentPage,
         pageSize,
       });
@@ -70,14 +85,16 @@ export function TayangModal({
     }
   };
 
+  // Reset page to 1 when modal opens or filters/report params change
   useEffect(() => {
     if (open && activeFilters.length > 0) {
-      // Reset to page 1 when opening modal with new filters
-      if (currentPage !== 1) {
-        setCurrentPage(1);
-        return; // useEffect will run again with currentPage = 1
-      }
+      setCurrentPage(1);
+    }
+  }, [open, activeFilters, filterValues, reportParams]);
 
+  // Fetch data whenever page/pageSize changes or when inputs change
+  useEffect(() => {
+    if (open && activeFilters.length > 0) {
       fetchData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -151,32 +168,25 @@ export function TayangModal({
     return summableColumns.includes(column.toUpperCase());
   };
 
-  // Calculate grand totals for all original data (before search/filter)
-  // Only include summable columns (pagu, realisasi, blokir, monthly columns)
+  // Grand totals across all data (prefer server-provided totals; fallback to client sum)
   const grandTotals = useMemo(() => {
+    if (lastResult?.grandTotals) return lastResult.grandTotals;
     if (!lastResult?.data?.length || !lastResult?.columns) return {};
 
     const totals: Record<string, number> = {};
 
     lastResult.columns.forEach((column) => {
-      // Only calculate totals for summable columns
       if (!isSummableColumn(column)) return;
-
-      const numericValues = (lastResult.data || [])
-        .map((row) => {
-          const value = row[column];
-          const numValue = Number(value);
-          return !isNaN(numValue) && value != null ? numValue : 0;
-        })
-        .filter((value) => value !== 0);
-
-      if (numericValues.length > 0) {
-        totals[column] = numericValues.reduce((sum, value) => sum + value, 0);
-      }
+      const sum = (lastResult.data || []).reduce((acc, row) => {
+        const val = row[column];
+        const num = Number(val);
+        return acc + (!isNaN(num) && val != null ? num : 0);
+      }, 0);
+      if (sum !== 0) totals[column] = sum;
     });
 
     return totals;
-  }, [lastResult?.data, lastResult?.columns]);
+  }, [lastResult?.grandTotals, lastResult?.data, lastResult?.columns]);
 
   // Pagination (server-aware)
   const isServerPaginated = typeof lastResult?.totalCount === "number";
@@ -230,7 +240,7 @@ export function TayangModal({
   };
 
   // Format cell value for display
-  const formatCellValue = (value: any, column: string): string => {
+  const formatCellValue = (value: unknown, column: string): string => {
     if (value == null) return "-";
 
     // Convert to number if it's a numeric string
@@ -272,22 +282,6 @@ export function TayangModal({
     setSearchTerm("");
   };
 
-  const handleDownloadCSV = async () => {
-    try {
-      await downloadCSV(activeFilters, filterValues, reportParams);
-    } catch (error) {
-      console.error("CSV download error:", error);
-    }
-  };
-
-  const handleDownloadExcel = async () => {
-    try {
-      await downloadExcel(activeFilters, filterValues, reportParams);
-    } catch (error) {
-      console.error("Excel download error:", error);
-    }
-  };
-
   // Get report type label
   const getReportTypeLabel = (tipeLaporan: string): string => {
     const labels: Record<string, string> = {
@@ -303,25 +297,87 @@ export function TayangModal({
     return labels[tipeLaporan] || tipeLaporan;
   };
 
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
+  const handleCloseModal = () => {
+    setIsFullscreen(false);
+    onOpenChange(false);
+  };
+
+  // Add effect to handle fullscreen body overflow
+  useEffect(() => {
+    if (isFullscreen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+
+    // Cleanup on unmount or when fullscreen changes
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isFullscreen]);
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl h-[90vh] sm:max-w-7xl flex flex-col overflow-hidden">
+    <Dialog open={open} onOpenChange={handleCloseModal}>
+      <DialogContent
+        className={`${
+          isFullscreen
+            ? "!fixed !inset-0 !w-screen !h-screen !max-w-none !max-h-none !m-0 !rounded-none !border-0 !translate-x-0 !translate-y-0 !top-0 !left-0 !transform-none"
+            : "max-w-7xl h-[90vh] sm:max-w-7xl"
+        } flex flex-col overflow-hidden`}
+        showCloseButton={false}
+        style={
+          isFullscreen
+            ? {
+                position: "fixed",
+                inset: "0",
+                width: "100vw",
+                height: "100vh",
+                maxWidth: "none",
+                maxHeight: "none",
+                margin: "0",
+                borderRadius: "0",
+                border: "none",
+                transform: "none",
+                top: "0",
+                left: "0",
+              }
+            : {}
+        }
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>
               Hasil Query - {getReportTypeLabel(reportParams.tipeLaporan)}
             </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isLoading}
-            >
-              <RefreshCw
-                className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
-              />
-              Refresh
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isLoading}
+              >
+                <RefreshCw
+                  className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+                />
+                Refresh
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleFullscreen}
+                title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+              >
+                {isFullscreen ? (
+                  <Minimize2 className="w-4 h-4" />
+                ) : (
+                  <Maximize2 className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
           </DialogTitle>
           <DialogDescription>
             {lastResult && lastResult.success && totalAvailable > 0
@@ -336,32 +392,32 @@ export function TayangModal({
 
         {/* Query Summary */}
         <div className="space-y-4">
-          <div className="flex flex-wrap gap-2 items-center">
-            <Badge variant="secondary">Tahun: {reportParams.tahun}</Badge>
-            <Badge variant="secondary">
-              Pembulatan: {reportParams.pembulatan}
-            </Badge>
-            <Badge variant="outline">
-              Filter Aktif: {activeFilters.length}
-            </Badge>
-            {lastResult && (
-              <>
-                <Badge variant="outline" className="flex items-center gap-1">
-                  <BarChart3 className="w-3 h-3" />
-                  {lastResult.rowCount} baris
-                </Badge>
-                <Badge variant="outline" className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {lastResult.executionTime}ms
-                </Badge>
-              </>
-            )}
-          </div>
+          <div className="flex flex-wrap gap-2 items-center justify-between">
+            <div className="flex flex-wrap gap-2 items-center">
+              <Badge variant="secondary">Tahun: {reportParams.tahun}</Badge>
+              <Badge variant="secondary">
+                Pembulatan: {reportParams.pembulatan}
+              </Badge>
+              <Badge variant="outline">
+                Filter Aktif: {activeFilters.length}
+              </Badge>
+              {lastResult && (
+                <>
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <BarChart3 className="w-3 h-3" />
+                    {lastResult.rowCount} baris
+                  </Badge>
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {lastResult.executionTime}ms
+                  </Badge>
+                </>
+              )}
+            </div>
 
-          {/* Controls */}
-          {lastResult && lastResult.success && lastResult.data && (
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+            {/* Search and Pagination Controls */}
+            {lastResult && lastResult.success && lastResult.data && (
+              <div className="flex gap-2 items-center">
                 <div className="relative">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -377,7 +433,9 @@ export function TayangModal({
                 <Select
                   value={pageSize.toString()}
                   onValueChange={(value) => {
-                    setPageSize(parseInt(value));
+                    const requested = parseInt(value);
+                    const capped = Math.min(requested, 100); // backend cap
+                    setPageSize(capped);
                     setCurrentPage(1);
                   }}
                 >
@@ -388,50 +446,24 @@ export function TayangModal({
                     <SelectItem value="25">25 baris</SelectItem>
                     <SelectItem value="50">50 baris</SelectItem>
                     <SelectItem value="100">100 baris</SelectItem>
-                    <SelectItem value="200">200 baris</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleDownloadCSV}
-                  className="flex items-center gap-1"
-                  disabled={isLoading}
-                >
-                  <FileText className="w-4 h-4" />
-                  CSV
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleDownloadExcel}
-                  className="flex items-center gap-1"
-                  disabled={isLoading}
-                >
-                  <FileSpreadsheet className="w-4 h-4" />
-                  Excel
-                </Button>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Dialog Body - Content Area */}
         <div className="flex-1 overflow-hidden">
           {isLoading ? (
-            <div className="flex items-center justify-center h-40">
+            <div className="flex items-center justify-center h-80">
               <div className="text-center">
-                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  Mengeksekusi query...
-                </p>
+                <Loader2 className="w-12 h-12 animate-spin mx-auto mb-2" />
+                <p className="text-md text-muted-foreground">Loading data..</p>
               </div>
             </div>
           ) : lastResult && !lastResult.success ? (
-            <div className="flex items-center justify-center h-40">
+            <div className="flex items-center justify-center h-80">
               <div className="text-center">
                 <p className="text-sm text-red-600 mb-2">
                   Error: {lastResult.error}
@@ -566,7 +598,7 @@ export function TayangModal({
           ) : (
             <div className="flex items-center justify-center h-40">
               <div className="text-center text-muted-foreground">
-                <p>Klik "Tayang" untuk menampilkan data</p>
+                <p>Klik &quot;Tayang&quot; untuk menampilkan data</p>
               </div>
             </div>
           )}
@@ -603,9 +635,9 @@ export function TayangModal({
             )}
           </div>
           <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            className="bg-red-200 hover:bg-red-300 text-red-800 hover:text-red-800 border-red-200 w-24"
+            variant="destructive"
+            onClick={handleCloseModal}
+            className="w-24"
           >
             Tutup
           </Button>

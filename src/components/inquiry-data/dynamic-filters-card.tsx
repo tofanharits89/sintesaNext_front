@@ -8,6 +8,7 @@ import { TayangModal } from "./modals/tayang-modal";
 import { WhatsappModal } from "./modals/whatsapp-modal";
 import { SimpanModal } from "./modals/simpan-modal";
 import { LihatSqlModal } from "./modals/lihat-sql-modal";
+import { INQUIRY_FILTER_ORDER } from "./filterOrder";
 
 import {
   Eye,
@@ -55,27 +56,7 @@ const filterLabels: Record<string, string> = {
   register: "Register",
 };
 
-// Define the order of filters to maintain consistent sorting
-const filterOrder = [
-  "cutOff",
-  "kementerian",
-  "eselonI",
-  "kewenangan",
-  "provinsi",
-  "kabkota",
-  "kanwil",
-  "kppn",
-  "satker",
-  "fungsi",
-  "subFungsi",
-  "program",
-  "kegiatan",
-  "outputKro",
-  "subOutputRo",
-  "akun",
-  "sumberDana",
-  "register",
-];
+// Use centralized default filter order
 
 export function DynamicFiltersCard({
   activeFilters,
@@ -104,8 +85,8 @@ export function DynamicFiltersCard({
   const sortedActiveFilters = activeFilters
     .slice() // Create a copy to avoid mutating the original array
     .sort((a, b) => {
-      const indexA = filterOrder.indexOf(a);
-      const indexB = filterOrder.indexOf(b);
+      const indexA = INQUIRY_FILTER_ORDER.indexOf(a);
+      const indexB = INQUIRY_FILTER_ORDER.indexOf(b);
       return indexA - indexB;
     });
 
@@ -128,7 +109,18 @@ export function DynamicFiltersCard({
 
   const handleDownloadExcel = async () => {
     try {
-      await downloadExcel(activeFilters, filterValues, reportParams);
+      // Normalize active filters to default order for consistent column ordering in exports
+      const orderMap = new Map(INQUIRY_FILTER_ORDER.map((k, i) => [k, i]));
+      const normalized = activeFilters.slice().sort((a, b) => {
+        const ia = orderMap.has(a)
+          ? (orderMap.get(a) as number)
+          : Number.MAX_SAFE_INTEGER;
+        const ib = orderMap.has(b)
+          ? (orderMap.get(b) as number)
+          : Number.MAX_SAFE_INTEGER;
+        return ia - ib;
+      });
+      await downloadExcel(normalized, filterValues, reportParams);
     } catch (error) {
       console.error("Excel download error:", error);
       // You could show a toast notification here
@@ -137,7 +129,18 @@ export function DynamicFiltersCard({
 
   const handleDownloadCSV = async () => {
     try {
-      await downloadCSV(activeFilters, filterValues, reportParams);
+      // Normalize active filters to default order for consistent column ordering in exports
+      const orderMap = new Map(INQUIRY_FILTER_ORDER.map((k, i) => [k, i]));
+      const normalized = activeFilters.slice().sort((a, b) => {
+        const ia = orderMap.has(a)
+          ? (orderMap.get(a) as number)
+          : Number.MAX_SAFE_INTEGER;
+        const ib = orderMap.has(b)
+          ? (orderMap.get(b) as number)
+          : Number.MAX_SAFE_INTEGER;
+        return ia - ib;
+      });
+      await downloadCSV(normalized, filterValues, reportParams);
     } catch (error) {
       console.error("CSV download error:", error);
       // You could show a toast notification here

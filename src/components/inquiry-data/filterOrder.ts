@@ -1,0 +1,21 @@
+export const INQUIRY_FILTER_ORDER: string[] = [
+  "cutOff",
+  "kementerian",
+  "eselonI",
+  "kewenangan",
+  "provinsi",
+  "kabkota",
+  "kanwil",
+  "kppn",
+  "satker",
+  "fungsi",
+  "subFungsi",
+  "program",
+  "kegiatan",
+  "outputKro",
+  "subOutputRo",
+  "akun",
+  "sumberDana",
+  "register",
+];
+
