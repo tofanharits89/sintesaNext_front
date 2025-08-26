@@ -27,6 +27,62 @@ const ERROR_CONFIGS: Record<string, ErrorConfig> = {
     maxRetries: 3,
     retryDelay: 2000,
   },
+  
+  // Saved queries specific errors
+  QUERY_SAVE_FAILED: {
+    message: "Failed to save query",
+    suggestion: "Please check your input and try again",
+    recoverable: true,
+    retryable: true,
+    autoRetry: false,
+    maxRetries: 2,
+    retryDelay: 1000,
+  },
+  QUERY_LOAD_FAILED: {
+    message: "Failed to load query",
+    suggestion: "The query may have been deleted or corrupted",
+    recoverable: true,
+    retryable: true,
+    autoRetry: false,
+    maxRetries: 1,
+    retryDelay: 1000,
+  },
+  QUERY_UPDATE_FAILED: {
+    message: "Failed to update query",
+    suggestion: "Please try again or refresh the page",
+    recoverable: true,
+    retryable: true,
+    autoRetry: false,
+    maxRetries: 2,
+    retryDelay: 1000,
+  },
+  QUERY_DELETE_FAILED: {
+    message: "Failed to delete query",
+    suggestion: "Please try again or refresh the page",
+    recoverable: true,
+    retryable: true,
+    autoRetry: false,
+    maxRetries: 2,
+    retryDelay: 1000,
+  },
+  QUERY_DUPLICATE_NAME: {
+    message: "Query name already exists",
+    suggestion: "Please choose a different name for your query",
+    recoverable: true,
+    retryable: false,
+  },
+  QUERY_NOT_FOUND: {
+    message: "Query not found",
+    suggestion: "The query may have been deleted",
+    recoverable: false,
+    retryable: false,
+  },
+  QUERY_INVALID_DATA: {
+    message: "Invalid query data",
+    suggestion: "The query contains invalid or corrupted data",
+    recoverable: true,
+    retryable: false,
+  },
   CONNECTION_TIMEOUT: {
     message: "Request timed out",
     suggestion: "The server is taking too long to respond. Trying again...",
@@ -414,3 +470,170 @@ export function createAutoRetrySocketOperation<T>(
 }
 
 export { ERROR_CONFIGS };
+
+// Saved queries specific error handling functions
+export function handleSavedQueryError(error: any, operation: string = "operation") {
+  const config = getErrorConfig(error);
+  
+  console.error(`[SavedQueries] ${operation} failed:`, error);
+  
+  // Determine if this is a specific saved query error
+  const errorMessage = error?.message || error?.toString() || "";
+  
+  if (/duplicate.*name|already.*exists/i.test(errorMessage)) {
+    return showUserFriendlyError(error, "QUERY_DUPLICATE_NAME");
+  }
+  
+  if (/not.*found|404/i.test(errorMessage)) {
+    return showUserFriendlyError(error, "QUERY_NOT_FOUND");
+  }
+  
+  if (/invalid.*data|validation/i.test(errorMessage)) {
+    return showUserFriendlyError(error, "QUERY_INVALID_DATA");
+  }
+  
+  // Operation-specific errors
+  switch (operation.toLowerCase()) {
+    case "save":
+    case "create":
+      return showUserFriendlyError(error, "QUERY_SAVE_FAILED");
+    case "load":
+    case "fetch":
+      return showUserFriendlyError(error, "QUERY_LOAD_FAILED");
+    case "update":
+    case "edit":
+      return showUserFriendlyError(error, "QUERY_UPDATE_FAILED");
+    case "delete":
+    case "remove":
+      return showUserFriendlyError(error, "QUERY_DELETE_FAILED");
+    default:
+      return showUserFriendlyError(error, operation);
+  }
+}
+
+// Enhanced retry wrapper specifically for saved queries operations
+export async function retrySavedQueryOperation<T>(
+  operation: () => Promise<T>,
+  operationType: string = "operation",
+  options: {
+    showToast?: boolean;
+    onRetry?: (attempt: number, error: any) => void;
+    onSuccess?: (result: T) => void;
+    onFinalError?: (error: any) => void;
+  } = {}
+): Promise<T | null> {
+  const { showToast = true, onRetry, onSuccess, onFinalError } = options;
+  
+  try {
+    const result = await retryOperation(operation, {
+      maxRetries: 2,
+      baseDelay: 1000,
+      retryCondition: (error) => {
+        // Don't retry validation errors or not found errors
+        const errorMessage = error?.message || error?.toString() || "";
+        if (/validation|invalid|not.*found|404|duplicate/i.test(errorMessage)) {
+          return false;
+        }
+        return isRetryableError(error);
+      },
+      onRetry: (attempt, error) => {
+        if (showToast && attempt === 1) {
+          toast.info(`Mencoba lagi... (Percobaan ${attempt})`);
+        }
+        if (onRetry) {
+          onRetry(attempt, error);
+        }
+      },
+    });
+
+    if (onSuccess) {
+      onSuccess(result);
+    }
+
+    return result;
+  } catch (error) {
+    if (onFinalError) {
+      onFinalError(error);
+    } else if (showToast) {
+      handleSavedQueryError(error, operationType);
+    }
+    
+    return null;
+  }
+}
+
+// Network status monitoring for saved queries
+export function createNetworkAwareOperation<T>(
+  operation: () => Promise<T>,
+  fallbackMessage: string = "Operation will be retried when connection is restored"
+) {
+  return async (): Promise<T> => {
+    // Check if we're online
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      throw new Error(`No internet connection. ${fallbackMessage}`);
+    }
+    
+    try {
+      return await operation();
+    } catch (error) {
+      // If it's a network error and we're offline, provide better messaging
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        throw new Error(`Connection lost. ${fallbackMessage}`);
+      }
+      throw error;
+    }
+  };
+}
+
+// Bulk operation error handling
+export async function handleBulkOperation<T>(
+  items: T[],
+  operation: (item: T) => Promise<void>,
+  options: {
+    onProgress?: (completed: number, total: number, failures: number) => void;
+    onItemError?: (item: T, error: any) => void;
+    continueOnError?: boolean;
+    showToast?: boolean;
+  } = {}
+): Promise<{ successful: T[]; failed: Array<{ item: T; error: any }> }> {
+  const { onProgress, onItemError, continueOnError = true, showToast = true } = options;
+  
+  const successful: T[] = [];
+  const failed: Array<{ item: T; error: any }> = [];
+  
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    
+    try {
+      await operation(item);
+      successful.push(item);
+    } catch (error) {
+      failed.push({ item, error });
+      
+      if (onItemError) {
+        onItemError(item, error);
+      }
+      
+      if (!continueOnError) {
+        break;
+      }
+    }
+    
+    if (onProgress) {
+      onProgress(successful.length, items.length, failed.length);
+    }
+  }
+  
+  // Show summary toast
+  if (showToast) {
+    if (failed.length === 0) {
+      toast.success(`Semua ${items.length} operasi berhasil`);
+    } else if (successful.length === 0) {
+      toast.error(`Semua ${items.length} operasi gagal`);
+    } else {
+      toast.warning(`${successful.length} berhasil, ${failed.length} gagal dari ${items.length} operasi`);
+    }
+  }
+  
+  return { successful, failed };
+}

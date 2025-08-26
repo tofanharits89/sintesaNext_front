@@ -8,6 +8,7 @@ import { TayangModal } from "./modals/tayang-modal";
 import { WhatsappModal } from "./modals/whatsapp-modal";
 import { SimpanModal } from "./modals/simpan-modal";
 import { LihatSqlModal } from "./modals/lihat-sql-modal";
+import { QueryLoaderButton } from "./query-loader-button";
 import { getFilterLabel, normalizeActiveFilters } from "./filterRegistry";
 
 import {
@@ -32,6 +33,11 @@ interface DynamicFiltersCardProps {
   onClearAllFilters: () => void;
   filterValues: Record<string, FilterValue>;
   onFilterChange: (filterKey: string, field: string, value: string) => void;
+  queryLoader?: {
+    hasUnsavedChanges: boolean;
+    loadQuery: (query: any) => Promise<void>;
+    validateQueryCompatibility: (query: any) => { isValid: boolean; errors: string[] };
+  };
 }
 
 // Labels will come from the registry via getFilterLabel
@@ -43,6 +49,7 @@ export function DynamicFiltersCard({
   onClearAllFilters,
   filterValues,
   onFilterChange,
+  queryLoader,
 }: DynamicFiltersCardProps) {
   const [modals, setModals] = useState({
     tayang: false,
@@ -152,6 +159,18 @@ export function DynamicFiltersCard({
           <h3 className="text-sm font-medium text-muted-foreground mb-4 text-center">
             Aksi Query
           </h3>
+          
+          {/* Query Loader Button */}
+          {queryLoader && (
+            <div className="flex justify-center mb-4">
+              <QueryLoaderButton
+                onLoadQuery={queryLoader.loadQuery}
+                hasUnsavedChanges={queryLoader.hasUnsavedChanges}
+                className="min-w-[200px]"
+              />
+            </div>
+          )}
+          
           <div className="flex flex-wrap justify-center gap-3">
             {/* Tayang Button */}
             <Button
@@ -242,6 +261,7 @@ export function DynamicFiltersCard({
         onOpenChange={() => closeModal("simpan")}
         activeFilters={activeFilters}
         reportParams={reportParams}
+        filterValues={filterValues}
       />
 
       {isAdmin && (

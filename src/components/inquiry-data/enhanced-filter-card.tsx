@@ -37,7 +37,7 @@ export function EnhancedFilterCard({
   const getInitialFilterData = useCallback(
     () => ({
       selection: filterKey === "cutOff" ? getCurrentMonth() : "all",
-      kondisiCode: "",
+      kondisiCode: filterKey === "cutOff" ? "equals" : "",
       mengandungKata: "",
       jenisTampilan: "kode" as const,
       akunType: "kodeAkun" as const,
@@ -54,7 +54,7 @@ export function EnhancedFilterCard({
       const initialValue = filterKey === "cutOff" ? getCurrentMonth() : "all";
       onFilterChange(filterKey, "selection", initialValue);
 
-      // Set initial complete filter data
+      // Set initial complete filter data including jenisTampilan
       const initialData = getInitialFilterData();
       Object.entries(initialData).forEach(([field, value]) => {
         onFilterChange(filterKey, field, String(value));

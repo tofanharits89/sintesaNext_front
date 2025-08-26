@@ -1,0 +1,376 @@
+"use client";
+
+import { useCallback, useState } from "react";
+import type {
+  SavedQuery,
+  FilterValue,
+  ReportParams,
+} from "@/types/saved-queries";
+
+export interface QueryLoaderState {
+  hasUnsavedChanges: boolean;
+  originalState: QueryBuilderState | null;
+  currentState: QueryBuilderState | null;
+}
+
+export interface QueryBuilderState {
+  activeFilters: string[];
+  filterValues: Record<string, FilterValue>;
+  reportParams: ReportParams;
+}
+
+export interface UseQueryLoaderProps {
+  onStateChange: (state: QueryBuilderState) => void;
+  getCurrentState: () => QueryBuilderState;
+}
+
+/**
+ * Custom hook for managing query loading functionality
+ * Handles state restoration, change detection, and validation
+ */
+export function useQueryLoader({
+  onStateChange,
+  getCurrentState,
+}: UseQueryLoaderProps) {
+  const [loaderState, setLoaderState] = useState<QueryLoaderState>({
+    hasUnsavedChanges: false,
+    originalState: null,
+    currentState: null,
+  });
+
+  /**
+   * Validates if a saved query is compatible with the current query builder
+   */
+  const validateQueryCompatibility = useCallback(
+    (query: SavedQuery): { isValid: boolean; errors: string[] } => {
+      const errors: string[] = [];
+
+      // Validate report parameters
+      if (!query.reportParams) {
+        errors.push("Query tidak memiliki parameter laporan yang valid");
+      } else {
+        if (!query.reportParams.tahun) {
+          errors.push("Parameter tahun tidak ditemukan");
+        }
+        if (!query.reportParams.tipeLaporan) {
+          errors.push("Parameter tipe laporan tidak ditemukan");
+        }
+        if (!query.reportParams.pembulatan) {
+          errors.push("Parameter pembulatan tidak ditemukan");
+        }
+      }
+
+      // Validate active filters
+      if (!Array.isArray(query.activeFilters)) {
+        errors.push("Daftar filter aktif tidak valid");
+      } else if (query.activeFilters.length === 0) {
+        errors.push("Query tidak memiliki filter aktif");
+      }
+
+      // Validate filter values
+      if (!query.filterValues || typeof query.filterValues !== "object") {
+        errors.push("Nilai filter tidak valid");
+      } else {
+        // Helper function to check if a filter is configured
+        const isFilterConfigured = (
+          filterKey: string,
+          filterValue: FilterValue
+        ): boolean => {
+          if (filterKey === "cutOff") {
+            // cutOff filter is configured if it has a kondisiCode
+            return !!(
+              filterValue.kondisiCode &&
+              typeof filterValue.kondisiCode === "string" &&
+              filterValue.kondisiCode.trim() !== ""
+            );
+          }
+
+          // Other filters are configured if they have:
+          // 1. A selection that's not "all", OR
+          // 2. A non-empty kondisiCode, OR
+          // 3. A non-empty mengandungKata
+          const hasValidSelection = Boolean(
+            filterValue.selection &&
+              typeof filterValue.selection === "string" &&
+              filterValue.selection !== "all"
+          );
+          const hasValidKondisiCode = Boolean(
+            filterValue.kondisiCode &&
+              typeof filterValue.kondisiCode === "string" &&
+              filterValue.kondisiCode.trim() !== ""
+          );
+          const hasValidMengandungKata = Boolean(
+            filterValue.mengandungKata &&
+              typeof filterValue.mengandungKata === "string" &&
+              filterValue.mengandungKata.trim() !== ""
+          );
+
+          return (
+            hasValidSelection || hasValidKondisiCode || hasValidMengandungKata
+          );
+        };
+
+        // Get only configured filters for validation
+        const configuredFilters = Object.entries(query.filterValues).filter(
+          ([filterKey, filterValue]) =>
+            filterValue && isFilterConfigured(filterKey, filterValue)
+        );
+
+        // Ensure we have at least one configured filter
+        if (configuredFilters.length === 0) {
+          errors.push("Query tidak memiliki filter yang dikonfigurasi");
+        }
+
+        // Validate each configured filter
+        for (const [filterKey, filterValue] of configuredFilters) {
+          if (typeof filterValue !== "object") {
+            errors.push(`Nilai filter "${filterKey}" tidak valid`);
+            continue;
+          }
+
+          // For cutOff filter, kondisiCode is required (already checked in isFilterConfigured)
+          if (filterKey === "cutOff" && !filterValue.kondisiCode) {
+            errors.push(
+              `Filter "${filterKey}" tidak memiliki kondisi yang valid`
+            );
+          }
+
+          // Validate jenisTampilan is present
+          if (!filterValue.jenisTampilan) {
+            errors.push(
+              `Filter "${filterKey}" tidak memiliki jenis tampilan yang valid`
+            );
+          }
+
+          // For conditions that require values, ensure they have selection or mengandungKata
+          if (
+            filterValue.kondisiCode &&
+            filterValue.kondisiCode !== "is_null" &&
+            filterValue.kondisiCode !== "is_not_null"
+          ) {
+            if (!filterValue.selection && !filterValue.mengandungKata) {
+              errors.push(
+                `Filter "${filterKey}" memerlukan nilai atau kata kunci`
+              );
+            }
+          }
+        }
+      }
+
+      return {
+        isValid: errors.length === 0,
+        errors,
+      };
+    },
+    []
+  );
+
+  /**
+   * Detects if the current state has unsaved changes compared to the original state
+   */
+  const detectUnsavedChanges = useCallback(
+    (
+      currentState: QueryBuilderState,
+      originalState: QueryBuilderState | null
+    ): boolean => {
+      if (!originalState) return false;
+
+      // Compare report parameters
+      const reportParamsChanged =
+        JSON.stringify(currentState.reportParams) !==
+        JSON.stringify(originalState.reportParams);
+
+      // Compare active filters
+      const activeFiltersChanged =
+        JSON.stringify(currentState.activeFilters.sort()) !==
+        JSON.stringify(originalState.activeFilters.sort());
+
+      // Compare filter values
+      const filterValuesChanged =
+        JSON.stringify(currentState.filterValues) !==
+        JSON.stringify(originalState.filterValues);
+
+      return reportParamsChanged || activeFiltersChanged || filterValuesChanged;
+    },
+    []
+  );
+
+  /**
+   * Updates the change detection state
+   */
+  const updateChangeDetection = useCallback(() => {
+    const currentState = getCurrentState();
+    const hasChanges = detectUnsavedChanges(
+      currentState,
+      loaderState.originalState
+    );
+
+    setLoaderState((prev) => ({
+      ...prev,
+      currentState,
+      hasUnsavedChanges: hasChanges,
+    }));
+  }, [getCurrentState, detectUnsavedChanges, loaderState.originalState]);
+
+  /**
+   * Sets the original state for change detection
+   */
+  const setOriginalState = useCallback((state: QueryBuilderState) => {
+    setLoaderState((prev) => ({
+      ...prev,
+      originalState: state,
+      currentState: state,
+      hasUnsavedChanges: false,
+    }));
+  }, []);
+
+  /**
+   * Restores report parameters from a saved query
+   */
+  const restoreReportParameters = useCallback(
+    (query: SavedQuery): ReportParams => {
+      return {
+        tahun: query.reportParams.tahun,
+        tipeLaporan: query.reportParams.tipeLaporan,
+        pembulatan: query.reportParams.pembulatan,
+        jenisAkumulasi: query.reportParams.jenisAkumulasi || "non_akumulatif",
+      };
+    },
+    []
+  );
+
+  /**
+   * Restores active filters and their values from a saved query
+   */
+  const restoreFiltersAndValues = useCallback(
+    (
+      query: SavedQuery
+    ): {
+      activeFilters: string[];
+      filterValues: Record<string, FilterValue>;
+    } => {
+      // Ensure cutOff is always included for belanja queries
+      const activeFilters = [...query.activeFilters];
+      if (!activeFilters.includes("cutOff")) {
+        activeFilters.unshift("cutOff");
+      }
+
+      // Restore filter values, ensuring cutOff has a default if missing
+      const filterValues = { ...query.filterValues };
+      if (!filterValues.cutOff) {
+        const getCurrentMonth = () => {
+          const now = new Date();
+          return String(now.getMonth() + 1).padStart(2, "0");
+        };
+
+        filterValues.cutOff = {
+          selection: getCurrentMonth(),
+          kondisiCode: "equals",
+          mengandungKata: "",
+          jenisTampilan: "kode" as const,
+        };
+      }
+
+      return { activeFilters, filterValues };
+    },
+    []
+  );
+
+  /**
+   * Loads a saved query into the query builder
+   */
+  const loadQuery = useCallback(
+    async (
+      query: SavedQuery
+    ): Promise<{ success: boolean; errors?: string[] }> => {
+      try {
+        // Validate query compatibility
+        const validation = validateQueryCompatibility(query);
+        if (!validation.isValid) {
+          return { success: false, errors: validation.errors };
+        }
+
+        // Restore report parameters
+        const reportParams = restoreReportParameters(query);
+
+        // Restore filters and values
+        const { activeFilters, filterValues } = restoreFiltersAndValues(query);
+
+        // Create new state
+        const newState: QueryBuilderState = {
+          reportParams,
+          activeFilters,
+          filterValues,
+        };
+
+        // Apply the new state
+        onStateChange(newState);
+
+        // Set as original state for change detection
+        setOriginalState(newState);
+
+        return { success: true };
+      } catch (error) {
+        console.error("Error loading query:", error);
+        return {
+          success: false,
+          errors: ["Terjadi kesalahan saat memuat query. Silakan coba lagi."],
+        };
+      }
+    },
+    [
+      validateQueryCompatibility,
+      restoreReportParameters,
+      restoreFiltersAndValues,
+      onStateChange,
+      setOriginalState,
+    ]
+  );
+
+  /**
+   * Resets the change detection state
+   */
+  const resetChangeDetection = useCallback(() => {
+    setLoaderState({
+      hasUnsavedChanges: false,
+      originalState: null,
+      currentState: null,
+    });
+  }, []);
+
+  /**
+   * Gets the current unsaved changes status
+   */
+  const getUnsavedChangesStatus = useCallback(() => {
+    const currentState = getCurrentState();
+    const hasChanges = detectUnsavedChanges(
+      currentState,
+      loaderState.originalState
+    );
+    return {
+      hasUnsavedChanges: hasChanges,
+      originalState: loaderState.originalState,
+      currentState,
+    };
+  }, [getCurrentState, detectUnsavedChanges, loaderState.originalState]);
+
+  return {
+    // State
+    hasUnsavedChanges: loaderState.hasUnsavedChanges,
+    originalState: loaderState.originalState,
+    currentState: loaderState.currentState,
+
+    // Actions
+    loadQuery,
+    validateQueryCompatibility,
+    updateChangeDetection,
+    setOriginalState,
+    resetChangeDetection,
+    getUnsavedChangesStatus,
+
+    // Utility functions
+    restoreReportParameters,
+    restoreFiltersAndValues,
+    detectUnsavedChanges,
+  } as const;
+}

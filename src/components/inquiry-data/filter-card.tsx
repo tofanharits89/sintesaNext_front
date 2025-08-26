@@ -78,7 +78,7 @@ export function FilterCard({
 
   const [filterData, setFilterData] = useState({
     selection: filterKey === "cutOff" ? getCurrentMonth() : "all", // Default to current month for cutOff, "Semua" for others
-    kondisiCode: "",
+    kondisiCode: filterKey === "cutOff" ? "equals" : "",
     mengandungKata: "",
     jenisTampilan: "kode", // Default to "Kode"
     akunType: "kodeAkun", // Default to "Kode Akun (6 Digit)" for Akun filter
@@ -315,7 +315,7 @@ export function FilterCard({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeFilterValues, filterKey, filterData.selection, onFilterChange]);
+  }, [activeFilterValues, filterKey, onFilterChange]);
 
   // Notify parent about initial default values (only once on mount)
   useEffect(() => {
@@ -808,13 +808,18 @@ export function FilterCard({
       // Mutual exclusion logic: clear other filter fields when one is used
       if (field === "selection" && value !== "all") {
         // Clear other filters when main selection is made
-        newData.kondisiCode = "";
+        // Exception: cutOff filter always needs kondisiCode = "equals"
+        if (filterKey === "cutOff") {
+          newData.kondisiCode = "equals";
+        } else {
+          newData.kondisiCode = "";
+        }
         newData.mengandungKata = "";
 
         // Notify parent about cleared fields
         if (onFilterChange) {
           setTimeout(() => {
-            onFilterChange(filterKey, "kondisiCode", "");
+            onFilterChange(filterKey, "kondisiCode", filterKey === "cutOff" ? "equals" : "");
             onFilterChange(filterKey, "mengandungKata", "");
           }, 0);
         }
@@ -833,13 +838,18 @@ export function FilterCard({
       } else if (field === "mengandungKata" && value.trim()) {
         // Clear other filters when mengandung kata is used
         newData.selection = "all";
-        newData.kondisiCode = "";
+        // Exception: cutOff filter always needs kondisiCode = "equals"
+        if (filterKey === "cutOff") {
+          newData.kondisiCode = "equals";
+        } else {
+          newData.kondisiCode = "";
+        }
 
         // Notify parent about cleared fields
         if (onFilterChange) {
           setTimeout(() => {
             onFilterChange(filterKey, "selection", "all");
-            onFilterChange(filterKey, "kondisiCode", "");
+            onFilterChange(filterKey, "kondisiCode", filterKey === "cutOff" ? "equals" : "");
           }, 0);
         }
       }

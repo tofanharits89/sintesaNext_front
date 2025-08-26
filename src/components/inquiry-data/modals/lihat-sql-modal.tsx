@@ -151,7 +151,7 @@ export function LihatSqlModal({
             </div>
 
             <ScrollArea className="h-[40vh] w-full">
-              <div className="bg-slate-950 text-slate-50 p-4 rounded-lg font-mono text-sm">
+              <div className="bg-slate-800 dark:bg-slate-900 text-slate-50 p-4 rounded-lg font-mono text-sm">
                 {isLoading ? (
                   <div className="flex items-center justify-center h-32">
                     <div className="text-center">
@@ -179,11 +179,12 @@ export function LihatSqlModal({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
+          <Button variant="destructive" onClick={() => onOpenChange(false)}>
+            Tutup
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
