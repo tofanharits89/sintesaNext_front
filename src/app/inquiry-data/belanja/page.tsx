@@ -1,16 +1,24 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  useMemo,
+} from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { PilihLaporanCard } from "@/components/inquiry-data/pilih-laporan-card";
 import { FilterParametersCard } from "@/components/inquiry-data/filter-parameters-card";
 import { DynamicFiltersCard } from "@/components/inquiry-data/dynamic-filters-card";
+import { QueryLoaderButton } from "@/components/inquiry-data/query-loader-button";
 import { UnsavedChangesModal } from "@/components/inquiry-data/modals/unsaved-changes-modal";
 import { QueryManagement } from "@/components/inquiry-data/query-management";
 import {
@@ -61,9 +69,18 @@ export default function BelanjaPage() {
   // Query loader hook for managing query loading functionality
   const queryLoader = useQueryLoader({
     onStateChange: useCallback((newState: QueryBuilderState) => {
+      console.log("[BelanjaPage] onStateChange called with:", {
+        activeFilters: newState.activeFilters,
+        filterValues: Object.entries(newState.filterValues).map(
+          ([key, value]) => ({
+            [key]: { selection: value.selection },
+          })
+        ),
+      });
+
+      // Update states simultaneously - React will batch these updates
       setActiveFilters(newState.activeFilters);
       setFilterValues(newState.filterValues);
-      // Ensure jenisAkumulasi is always defined
       setReportParams({
         tahun: newState.reportParams.tahun,
         tipeLaporan: newState.reportParams.tipeLaporan,
@@ -342,6 +359,13 @@ export default function BelanjaPage() {
 
         {/* Query Management Access */}
         <div className="flex items-center gap-2">
+          {/* Muat Query dropdown placed before Kelola Query */}
+          <QueryLoaderButton
+            onLoadQuery={handleLoadQuery}
+            onOpenQueryManagement={() => setIsQueryManagementOpen(true)}
+            hasUnsavedChanges={queryLoader.hasUnsavedChanges}
+          />
+
           <Button
             variant="outline"
             onClick={() => setIsQueryManagementOpen(true)}
@@ -399,7 +423,10 @@ export default function BelanjaPage() {
         open={isQueryManagementOpen}
         onOpenChange={setIsQueryManagementOpen}
       >
-        <DialogContent className="max-w-7xl w-full max-h-[90vh] overflow-hidden sm:max-w-7xl">
+        <DialogContent
+          className="max-w-7xl w-full max-h-[90vh] overflow-hidden sm:max-w-7xl"
+          showCloseButton={false}
+        >
           <DialogHeader>
             <DialogTitle>Kelola Query Tersimpan</DialogTitle>
           </DialogHeader>
@@ -414,6 +441,14 @@ export default function BelanjaPage() {
               />
             </QueryErrorBoundary>
           </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsQueryManagementOpen(false)}
+            >
+              Tutup
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

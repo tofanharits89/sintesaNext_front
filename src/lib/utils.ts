@@ -95,3 +95,56 @@ export function safeFormatDateTime(
     return fallback;
   }
 }
+
+// Fixed calendar-like formatter: dd MMM yyyy, HH.mm (id-ID)
+// Robust parsing for Date | epoch seconds/ms | SQL timestamps | ISO
+export function formatCalendarDate(input: any): string {
+  try {
+    if (input == null) return "—";
+
+    let d: Date | null = null;
+    if (input instanceof Date) {
+      d = input;
+    } else if (typeof input === "number") {
+      const ms = input < 1e12 ? input * 1000 : input;
+      d = new Date(ms);
+    } else if (typeof input === "string") {
+      const raw = input.trim();
+      if (!raw) return "—";
+      if (/^\d+$/.test(raw)) {
+        const num = Number(raw);
+        const ms = raw.length <= 10 ? num * 1000 : num;
+        d = new Date(ms);
+      } else {
+        let normalized = raw.includes("T") ? raw : raw.replace(" ", "T");
+        normalized = normalized.replace(/\.(\d{3})\d+/, ".$1");
+        if (
+          normalized.includes("T") &&
+          !/[Zz]|[+-]\d{2}:?\d{2}$/.test(normalized)
+        ) {
+          normalized += "Z";
+        }
+        const parsed = new Date(normalized);
+        if (!isNaN(parsed.getTime())) d = parsed;
+      }
+    }
+
+    if (!d || isNaN(d.getTime())) return "—";
+
+    let text = new Intl.DateTimeFormat("id-ID", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(d);
+
+    // Normalize "pukul" to comma and 14:05 -> 14.05
+    text = text.replace(" pukul ", ", ");
+    text = text.replace(/(\d{2}):(\d{2})/, (_m, h, m) => `${h}.${m}`);
+    return text;
+  } catch {
+    return "—";
+  }
+}

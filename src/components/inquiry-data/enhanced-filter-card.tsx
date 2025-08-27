@@ -49,20 +49,37 @@ export function EnhancedFilterCard({
   const initialNotificationSent = useRef(false);
 
   // Notify parent about initial default values (only once on mount)
+  // Guard: if this filter already has values (e.g., after loading a saved query), do NOT overwrite with defaults
   useEffect(() => {
-    if (!initialNotificationSent.current) {
-      const initialValue = filterKey === "cutOff" ? getCurrentMonth() : "all";
-      onFilterChange(filterKey, "selection", initialValue);
+    if (initialNotificationSent.current) return;
 
-      // Set initial complete filter data including jenisTampilan
-      const initialData = getInitialFilterData();
-      Object.entries(initialData).forEach(([field, value]) => {
-        onFilterChange(filterKey, field, String(value));
-      });
+    const existing: any = activeFilterValues?.[filterKey];
+    const hasExisting =
+      !!existing &&
+      ((typeof existing.selection === "string" &&
+        existing.selection.trim() !== "") ||
+        (typeof existing.kondisiCode === "string" &&
+          existing.kondisiCode.trim() !== "") ||
+        (typeof existing.mengandungKata === "string" &&
+          existing.mengandungKata.trim() !== "") ||
+        (typeof (existing as any).jenisTampilan === "string" &&
+          (existing as any).jenisTampilan.trim() !== "") ||
+        (typeof (existing as any).akunType === "string" &&
+          (existing as any).akunType.trim() !== ""));
 
+    if (hasExisting) {
       initialNotificationSent.current = true;
+      return;
     }
-  }, [filterKey, onFilterChange, getInitialFilterData]);
+
+    // Seed defaults for a brand new filter
+    const initialData = getInitialFilterData();
+    Object.entries(initialData).forEach(([field, value]) => {
+      onFilterChange(filterKey, field, String(value));
+    });
+
+    initialNotificationSent.current = true;
+  }, [filterKey, onFilterChange, getInitialFilterData, activeFilterValues]);
 
   // Handle input changes
   const handleInputChange = (field: string, value: string) => {
@@ -101,12 +118,24 @@ export function EnhancedFilterCard({
     return out;
   }, [activeFilterValues]);
 
+  // Extract current filter's values for this specific filter
+  const currentFilterValue = activeFilterValues[filterKey];
+
+  console.log(`[EnhancedFilterCard-${filterKey}] Rendering with:`, {
+    activeFilterValues: Object.keys(activeFilterValues),
+    currentFilterValue,
+    currentSelection: currentFilterValue?.selection,
+    hasCurrentFilterValue: !!currentFilterValue,
+    filterValueKeys: currentFilterValue ? Object.keys(currentFilterValue) : [],
+  });
+
   return (
     <FilterCard
       filterKey={filterKey}
       filterLabel={filterLabel}
       onRemove={onRemove}
       activeFilterValues={normalizedActiveValues}
+      currentFilterValue={currentFilterValue}
       onFilterChange={modifiedOnFilterChange}
     />
   );

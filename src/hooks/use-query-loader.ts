@@ -86,13 +86,13 @@ export function useQueryLoader({
           }
 
           // Other filters are configured if they have:
-          // 1. A selection that's not "all", OR
+          // 1. A valid selection (including "all" for "Semua"), OR
           // 2. A non-empty kondisiCode, OR
           // 3. A non-empty mengandungKata
           const hasValidSelection = Boolean(
             filterValue.selection &&
               typeof filterValue.selection === "string" &&
-              filterValue.selection !== "all"
+              filterValue.selection.trim() !== ""
           );
           const hasValidKondisiCode = Boolean(
             filterValue.kondisiCode &&

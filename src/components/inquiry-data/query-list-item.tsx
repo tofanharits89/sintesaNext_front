@@ -5,17 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Edit2, 
-  Trash2, 
-  Play, 
-  Save, 
-  X, 
+import {
+  Edit2,
+  Trash2,
+  Play,
+  Save,
+  X,
   Calendar,
   Filter,
   Settings,
   Loader2,
-  AlertTriangle
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -30,15 +30,19 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { ButtonSpinner, LoadingOverlay } from "@/components/ui/loading-states";
-import { 
-  savedQueryNotifications, 
-  savedQueryConfirmations 
+import {
+  savedQueryNotifications,
+  savedQueryConfirmations,
 } from "@/utils/notifications";
 import type { SavedQuery } from "@/types/saved-queries";
+import { formatCalendarDate } from "@/lib/utils"; // now exported here
 
 interface QueryListItemProps {
   query: SavedQuery;
-  onEdit: (id: string, updates: { name?: string; description?: string }) => Promise<void>;
+  onEdit: (
+    id: string,
+    updates: { name?: string; description?: string }
+  ) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onLoad: (query: SavedQuery) => void;
   isUpdating?: boolean;
@@ -54,14 +58,14 @@ interface EditState {
   originalDescription: string;
 }
 
-export function QueryListItem({ 
-  query, 
-  onEdit, 
-  onDelete, 
+export function QueryListItem({
+  query,
+  onEdit,
+  onDelete,
   onLoad,
   isUpdating = false,
   isDeleting = false,
-  showBulkActions = true
+  showBulkActions = true,
 }: QueryListItemProps) {
   const [editState, setEditState] = useState<EditState>({
     isEditing: false,
@@ -73,34 +77,18 @@ export function QueryListItem({
   const [isLocalUpdating, setIsLocalUpdating] = useState(false);
   const [isLocalDeleting, setIsLocalDeleting] = useState(false);
 
-  // Format date for display
-  const formatDate = useCallback((dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-
-    if (diffInHours < 1) {
-      const diffInMinutes = Math.floor(diffInHours * 60);
-      return `${diffInMinutes} menit yang lalu`;
-    } else if (diffInHours < 24) {
-      return `${Math.floor(diffInHours)} jam yang lalu`;
-    } else if (diffInHours < 24 * 7) {
-      const diffInDays = Math.floor(diffInHours / 24);
-      return `${diffInDays} hari yang lalu`;
-    } else {
-      return date.toLocaleDateString('id-ID', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
+  // Use shared fixed calendar-like date formatting
+  const formatDate = useCallback((input: any) => {
+    try {
+      return formatCalendarDate(input);
+    } catch {
+      return "—";
     }
   }, []);
 
   // Start editing mode
   const handleStartEdit = useCallback(() => {
-    setEditState(prev => ({
+    setEditState((prev) => ({
       ...prev,
       isEditing: true,
       name: query.name,
@@ -112,7 +100,7 @@ export function QueryListItem({
 
   // Cancel editing
   const handleCancelEdit = useCallback(() => {
-    setEditState(prev => ({
+    setEditState((prev) => ({
       ...prev,
       isEditing: false,
       name: prev.originalName,
@@ -133,10 +121,11 @@ export function QueryListItem({
 
     // Check if anything changed
     const nameChanged = trimmedName !== editState.originalName;
-    const descriptionChanged = trimmedDescription !== editState.originalDescription;
+    const descriptionChanged =
+      trimmedDescription !== editState.originalDescription;
 
     if (!nameChanged && !descriptionChanged) {
-      setEditState(prev => ({ ...prev, isEditing: false }));
+      setEditState((prev) => ({ ...prev, isEditing: false }));
       return;
     }
 
@@ -144,11 +133,11 @@ export function QueryListItem({
 
     try {
       const updates: { name?: string; description?: string } = {};
-      
+
       if (nameChanged) {
         updates.name = trimmedName;
       }
-      
+
       if (descriptionChanged) {
         updates.description = trimmedDescription;
       }
@@ -156,7 +145,7 @@ export function QueryListItem({
       await onEdit(query.id, updates);
 
       // Update local state
-      setEditState(prev => ({
+      setEditState((prev) => ({
         ...prev,
         isEditing: false,
         originalName: trimmedName,
@@ -168,9 +157,9 @@ export function QueryListItem({
     } catch (error) {
       console.error("Failed to update query:", error);
       toast.error("Gagal memperbarui query");
-      
+
       // Reset to original values on error
-      setEditState(prev => ({
+      setEditState((prev) => ({
         ...prev,
         name: prev.originalName,
         description: prev.originalDescription,
@@ -186,7 +175,7 @@ export function QueryListItem({
 
     try {
       await onDelete(query.id);
-      
+
       // Show enhanced success notification with potential undo
       savedQueryNotifications.queryDeleted(query.name, {
         label: "Batalkan",
@@ -222,16 +211,29 @@ export function QueryListItem({
   }, [onLoad, query]);
 
   // Check if operations are in progress
-  const isOperationInProgress = isUpdating || isDeleting || isLocalUpdating || isLocalDeleting;
+  const isOperationInProgress =
+    isUpdating || isDeleting || isLocalUpdating || isLocalDeleting;
 
   return (
-    <div className={`relative p-6 hover:bg-muted/30 transition-colors ${isOperationInProgress ? 'opacity-60' : ''}`}>
-      <LoadingOverlay 
-        isVisible={isOperationInProgress && (isLocalUpdating || isLocalDeleting)}
-        text={isLocalUpdating ? "Memperbarui..." : isLocalDeleting ? "Menghapus..." : "Memproses..."}
+    <div
+      className={`relative p-6 hover:bg-muted/30 transition-colors ${
+        isOperationInProgress ? "opacity-60" : ""
+      }`}
+    >
+      <LoadingOverlay
+        isVisible={
+          isOperationInProgress && (isLocalUpdating || isLocalDeleting)
+        }
+        text={
+          isLocalUpdating
+            ? "Memperbarui..."
+            : isLocalDeleting
+            ? "Menghapus..."
+            : "Memproses..."
+        }
         className="rounded-md"
       />
-      
+
       <div className="space-y-4">
         {/* Header with name and actions */}
         <div className="flex items-start justify-between gap-4">
@@ -241,7 +243,12 @@ export function QueryListItem({
                 <div>
                   <Input
                     value={editState.name}
-                    onChange={(e) => setEditState(prev => ({ ...prev, name: e.target.value }))}
+                    onChange={(e) =>
+                      setEditState((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
                     placeholder="Nama query"
                     className="font-medium"
                     disabled={isLocalUpdating}
@@ -250,7 +257,12 @@ export function QueryListItem({
                 <div>
                   <Textarea
                     value={editState.description}
-                    onChange={(e) => setEditState(prev => ({ ...prev, description: e.target.value }))}
+                    onChange={(e) =>
+                      setEditState((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
                     placeholder="Deskripsi query (opsional)"
                     rows={2}
                     disabled={isLocalUpdating}
@@ -335,10 +347,12 @@ export function QueryListItem({
                         Hapus Query
                       </AlertDialogTitle>
                       <AlertDialogDescription>
-                        Apakah Anda yakin ingin menghapus query <strong>"{query.name}"</strong>?
+                        Apakah Anda yakin ingin menghapus query{" "}
+                        <strong>"{query.name}"</strong>?
                         <br />
                         <br />
-                        Tindakan ini tidak dapat dibatalkan dan query akan dihapus secara permanen.
+                        Tindakan ini tidak dapat dibatalkan dan query akan
+                        dihapus secara permanen.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -397,16 +411,24 @@ export function QueryListItem({
             {/* Active filters preview */}
             {query.activeFilters.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground font-medium">Filter Aktif:</p>
+                <p className="text-xs text-muted-foreground font-medium">
+                  Filter Aktif:
+                </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {query.activeFilters.slice(0, 6).map((filter, index) => {
                     const filterValue = query.filterValues[filter];
                     return (
-                      <div key={index} className="text-xs bg-muted/50 rounded px-2 py-1">
+                      <div
+                        key={index}
+                        className="text-xs bg-muted/50 rounded px-2 py-1"
+                      >
                         <div className="font-medium truncate">{filter}</div>
                         {filterValue && (
                           <div className="text-muted-foreground truncate">
-                            {filterValue.kondisiCode}: {filterValue.selection || filterValue.mengandungKata || "N/A"}
+                            {filterValue.kondisiCode}:{" "}
+                            {filterValue.selection ||
+                              filterValue.mengandungKata ||
+                              "N/A"}
                           </div>
                         )}
                       </div>
@@ -423,10 +445,35 @@ export function QueryListItem({
 
             {/* Timestamps */}
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <span>Dibuat: {formatDate(query.createdAt)}</span>
-              {query.updatedAt !== query.createdAt && (
-                <span>Diperbarui: {formatDate(query.updatedAt)}</span>
-              )}
+              {(() => {
+                // Helper to pick the first non-empty value
+                const pick = (...vals: any[]) =>
+                  vals.find((v) => {
+                    if (v == null) return false;
+                    if (typeof v === "string") return v.trim() !== "";
+                    return true;
+                  });
+
+                const createdRaw = pick(
+                  (query as any).createdAt,
+                  (query as any).created_at,
+                  (query as any).updatedAt,
+                  (query as any).updated_at
+                );
+                const updatedRaw = pick(
+                  (query as any).updatedAt,
+                  (query as any).updated_at
+                );
+
+                return (
+                  <>
+                    <span>Dibuat: {formatDate(createdRaw)}</span>
+                    {updatedRaw && updatedRaw !== createdRaw && (
+                      <span>Diperbarui: {formatDate(updatedRaw)}</span>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
         )}

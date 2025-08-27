@@ -25,6 +25,8 @@ import {
 import { useSavedQueries } from "@/hooks/use-saved-queries";
 import { ButtonSpinner, InlineSpinner } from "@/components/ui/loading-states";
 import type { SavedQuery } from "@/types/saved-queries";
+import { formatCalendarDate } from "@/lib/utils";
+
 // Using built-in date formatting instead of date-fns
 
 interface QueryLoaderButtonProps {
@@ -143,28 +145,11 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
     }
   }, [onOpenQueryManagement]);
 
-  const formatQueryDate = useCallback((dateString: string) => {
+  const formatQueryDate = useCallback((input: any) => {
     try {
-      const date = new Date(dateString);
-      const now = new Date();
-      const diffInMs = now.getTime() - date.getTime();
-      const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-      const diffInHours = Math.floor(diffInMinutes / 60);
-      const diffInDays = Math.floor(diffInHours / 24);
-
-      if (diffInMinutes < 1) return "Baru saja";
-      if (diffInMinutes < 60) return `${diffInMinutes} menit lalu`;
-      if (diffInHours < 24) return `${diffInHours} jam lalu`;
-      if (diffInDays < 7) return `${diffInDays} hari lalu`;
-
-      // For older dates, show the actual date
-      return date.toLocaleDateString("id-ID", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      });
+      return formatCalendarDate(input);
     } catch {
-      return "Tanggal tidak valid";
+      return "—";
     }
   }, []);
 
@@ -314,26 +299,17 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
                       {getQuerySummary(query)}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {formatQueryDate(query.updatedAt)}
+                      {formatQueryDate(
+                        (query as any).updatedAt ??
+                          (query as any).updated_at ??
+                          (query as any).createdAt ??
+                          (query as any).created_at
+                      )}
                     </span>
                   </div>
                 </DropdownMenuItem>
               ))}
             </ScrollArea>
-          </>
-        )}
-
-        {/* Query Management Link */}
-        {onOpenQueryManagement && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={handleOpenQueryManagement}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <Settings className="w-4 h-4" />
-              <span>Kelola Query</span>
-            </DropdownMenuItem>
           </>
         )}
 

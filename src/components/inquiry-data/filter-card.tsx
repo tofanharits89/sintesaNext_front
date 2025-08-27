@@ -59,6 +59,13 @@ interface FilterCardProps {
   filterLabel: string;
   onRemove: () => void;
   activeFilterValues?: Record<string, string>; // Values from other active filters
+  currentFilterValue?: {
+    selection?: string;
+    kondisiCode?: string;
+    mengandungKata?: string;
+    jenisTampilan?: string;
+    akunType?: string;
+  }; // Current filter's values from parent (for loading saved queries)
   onFilterChange?: (filterKey: string, field: string, value: string) => void; // Callback for value changes
 }
 
@@ -67,6 +74,7 @@ export function FilterCard({
   filterLabel,
   onRemove,
   activeFilterValues = {},
+  currentFilterValue,
   onFilterChange,
 }: FilterCardProps) {
   // Get current month for cutOff filter default
@@ -86,6 +94,47 @@ export function FilterCard({
 
   // Track if initial notification has been sent to prevent infinite loops
   const initialNotificationSent = useRef(false);
+
+  // Sync internal state with external currentFilterValue (for loading saved queries)
+  useEffect(() => {
+    console.log(`[FilterCard-${filterKey}] useEffect triggered:`, {
+      currentFilterValue,
+      hasCurrentFilterValue: !!currentFilterValue,
+      currentSelection: currentFilterValue?.selection,
+      currentFilterValueType: typeof currentFilterValue,
+      currentFilterValueKeys: currentFilterValue
+        ? Object.keys(currentFilterValue)
+        : [],
+      filterDataSelection: filterData.selection,
+    });
+
+    if (currentFilterValue) {
+      console.log(
+        `[FilterCard-${filterKey}] Updating internal state from:`,
+        filterData.selection,
+        "to:",
+        currentFilterValue.selection
+      );
+      console.log(
+        `[FilterCard-${filterKey}] Full currentFilterValue:`,
+        currentFilterValue
+      );
+
+      setFilterData((prev) => {
+        const newState = {
+          ...prev,
+          selection: currentFilterValue.selection ?? prev.selection,
+          kondisiCode: currentFilterValue.kondisiCode ?? prev.kondisiCode,
+          mengandungKata:
+            currentFilterValue.mengandungKata ?? prev.mengandungKata,
+          jenisTampilan: currentFilterValue.jenisTampilan ?? prev.jenisTampilan,
+          akunType: currentFilterValue.akunType ?? prev.akunType,
+        };
+        console.log(`[FilterCard-${filterKey}] New internal state:`, newState);
+        return newState;
+      });
+    }
+  }, [currentFilterValue, filterKey]);
 
   // Handle hierarchical dependencies - clear child selections when parent changes
   useEffect(() => {
@@ -317,14 +366,21 @@ export function FilterCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeFilterValues, filterKey, onFilterChange]);
 
-  // Notify parent about initial default values (only once on mount)
+  // Notify parent about initial default values (only once on mount),
+  // but do NOT overwrite when a saved value exists
   useEffect(() => {
-    if (onFilterChange && !initialNotificationSent.current) {
-      const initialValue = filterKey === "cutOff" ? getCurrentMonth() : "all";
-      onFilterChange(filterKey, "selection", initialValue);
+    if (!onFilterChange || initialNotificationSent.current) return;
+
+    if (currentFilterValue) {
+      // Saved query provided values; skip default propagation
       initialNotificationSent.current = true;
+      return;
     }
-  }, [filterKey, onFilterChange]);
+
+    const initialValue = filterKey === "cutOff" ? getCurrentMonth() : "all";
+    onFilterChange(filterKey, "selection", initialValue);
+    initialNotificationSent.current = true;
+  }, [filterKey, onFilterChange, currentFilterValue]);
 
   // Get filter options based on filter type - using real JSON data
   const getFilterOptions = useCallback(
@@ -819,7 +875,11 @@ export function FilterCard({
         // Notify parent about cleared fields
         if (onFilterChange) {
           setTimeout(() => {
-            onFilterChange(filterKey, "kondisiCode", filterKey === "cutOff" ? "equals" : "");
+            onFilterChange(
+              filterKey,
+              "kondisiCode",
+              filterKey === "cutOff" ? "equals" : ""
+            );
             onFilterChange(filterKey, "mengandungKata", "");
           }, 0);
         }
@@ -849,7 +909,11 @@ export function FilterCard({
         if (onFilterChange) {
           setTimeout(() => {
             onFilterChange(filterKey, "selection", "all");
-            onFilterChange(filterKey, "kondisiCode", filterKey === "cutOff" ? "equals" : "");
+            onFilterChange(
+              filterKey,
+              "kondisiCode",
+              filterKey === "cutOff" ? "equals" : ""
+            );
           }, 0);
         }
       }
@@ -916,6 +980,9 @@ export function FilterCard({
             <div className="space-y-2">
               <Label className="text-sm font-medium">Pilih Bulan</Label>
               <VirtualizedSelect
+                key={`${filterKey}-${
+                  currentFilterValue?.selection || "default"
+                }`}
                 options={getFilterOptions(filterKey)}
                 value={filterData.selection}
                 onValueChange={(value) => handleInputChange("selection", value)}
@@ -961,6 +1028,9 @@ export function FilterCard({
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Pilihan Akun</Label>
                 <VirtualizedSelect
+                  key={`${filterKey}-${
+                    currentFilterValue?.selection || "default"
+                  }`}
                   options={getFilterOptions(filterKey)}
                   value={filterData.selection}
                   onValueChange={(value) =>
@@ -988,6 +1058,9 @@ export function FilterCard({
             <div className="space-y-2">
               <Label className="text-sm font-medium">Mengandung Kata</Label>
               <Input
+                key={`${filterKey}-mengandung-${
+                  currentFilterValue?.mengandungKata || "default"
+                }`}
                 placeholder="Kata kunci"
                 value={filterData.mengandungKata}
                 onChange={(e) =>
@@ -1027,6 +1100,9 @@ export function FilterCard({
                 Pilihan {filterLabel}
               </Label>
               <VirtualizedSelect
+                key={`${filterKey}-${
+                  currentFilterValue?.selection || "default"
+                }`}
                 options={getFilterOptions(filterKey)}
                 value={filterData.selection}
                 onValueChange={(value) => handleInputChange("selection", value)}

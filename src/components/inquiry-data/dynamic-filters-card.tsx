@@ -36,7 +36,10 @@ interface DynamicFiltersCardProps {
   queryLoader?: {
     hasUnsavedChanges: boolean;
     loadQuery: (query: any) => Promise<void>;
-    validateQueryCompatibility: (query: any) => { isValid: boolean; errors: string[] };
+    validateQueryCompatibility: (query: any) => {
+      isValid: boolean;
+      errors: string[];
+    };
   };
 }
 
@@ -159,18 +162,8 @@ export function DynamicFiltersCard({
           <h3 className="text-sm font-medium text-muted-foreground mb-4 text-center">
             Aksi Query
           </h3>
-          
-          {/* Query Loader Button */}
-          {queryLoader && (
-            <div className="flex justify-center mb-4">
-              <QueryLoaderButton
-                onLoadQuery={queryLoader.loadQuery}
-                hasUnsavedChanges={queryLoader.hasUnsavedChanges}
-                className="min-w-[200px]"
-              />
-            </div>
-          )}
-          
+
+          {/* Query Loader Button removed (redundant) */}
           <div className="flex flex-wrap justify-center gap-3">
             {/* Tayang Button */}
             <Button
