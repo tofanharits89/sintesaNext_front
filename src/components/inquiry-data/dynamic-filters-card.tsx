@@ -159,9 +159,6 @@ export function DynamicFiltersCard({
 
         {/* Action Buttons */}
         <div className="border-t pt-6">
-          <h3 className="text-sm font-medium text-muted-foreground mb-4 text-center">
-            Aksi Query
-          </h3>
 
           {/* Query Loader Button removed (redundant) */}
           <div className="flex flex-wrap justify-center gap-3">

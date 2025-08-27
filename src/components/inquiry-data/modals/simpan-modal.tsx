@@ -107,7 +107,8 @@ export function SimpanModal({
     const hasValidKondisiCode =
       filterValue.kondisiCode && filterValue.kondisiCode.trim() !== "";
     const hasValidMengandungKata =
-      filterValue.mengandungKata && filterValue.mengandungKata.trim() !== "";
+      typeof filterValue.mengandungKata === "string" && 
+      filterValue.mengandungKata.trim() !== "";
 
     return hasValidSelection || hasValidKondisiCode || hasValidMengandungKata;
   };
@@ -325,7 +326,7 @@ export function SimpanModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg sm:max-w-2xl" showCloseButton={false}>
         <LoadingOverlay
           isVisible={isOperationInProgress}
           text={isRetrying ? "Mencoba lagi..." : "Menyimpan query..."}
@@ -468,11 +469,12 @@ export function SimpanModal({
 
         <DialogFooter className="gap-2">
           <Button
-            variant="outline"
+            variant="destructive"
+            className="w-24"
             onClick={handleClose}
             disabled={isOperationInProgress}
           >
-            Batal
+            Tutup
           </Button>
           <Button
             onClick={() => handleSaveQuery()}

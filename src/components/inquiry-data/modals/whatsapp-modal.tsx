@@ -189,7 +189,7 @@ export function WhatsappModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg sm:max-w-2xl" showCloseButton={false}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MessageCircle className="w-5 h-5 text-green-600" />
@@ -257,7 +257,7 @@ export function WhatsappModal({
           <div className="space-y-2">
             <h4 className="text-sm font-medium">Nomor WhatsApp</h4>
             <Input
-              placeholder="Contoh: 6281234567890 atau 0812xxxxxx"
+              placeholder="Contoh: 085112345678"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
@@ -267,15 +267,14 @@ export function WhatsappModal({
           <div className="bg-muted/50 p-3 rounded-lg">
             <p className="text-xs text-muted-foreground">
               Sistem akan mengirim file langsung ke nomor WhatsApp yang Anda
-              masukkan menggunakan sesi WhatsApp server. Pertama kali, Anda
-              perlu memindai QR di backend agar sesi aktif.
+              masukkan menggunakan sesi WhatsApp server. Pindai QR terlebih dahulu agar sesi aktif.
             </p>
           </div>
         </div>
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={handleClose} disabled={isLoading}>
-            Batal
+          <Button variant="destructive" className="w-24" onClick={handleClose} disabled={isLoading}>
+            Tutup
           </Button>
           <Button
             onClick={handleSendToWhatsApp}

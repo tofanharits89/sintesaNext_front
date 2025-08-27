@@ -50,6 +50,7 @@ import { QueryListItem } from "./query-list-item";
 interface QueryManagementProps {
   onLoadQuery: (query: SavedQuery) => void;
   currentUserId: string;
+  onRefreshReady?: (refreshFn: () => void) => void;
 }
 
 interface FilterState {
@@ -60,7 +61,7 @@ interface FilterState {
 
 const ITEMS_PER_PAGE = 10;
 
-export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery, currentUserId }: QueryManagementProps) {
+export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery, currentUserId, onRefreshReady }: QueryManagementProps) {
   // Track renders for debugging - only in development
   if (process.env.NODE_ENV === 'development') {
     useRenderTracker('QueryManagement', { currentUserId }, { 
@@ -291,141 +292,129 @@ export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery
     filteredAndSortedQueries.every(q => selectedQueries.has(q.id));
   const someSelected = selectedCount > 0 && !allSelected;
 
+  // Provide refresh function to parent component
+  React.useEffect(() => {
+    if (onRefreshReady) {
+      onRefreshReady(handleRefresh);
+    }
+  }, [onRefreshReady, handleRefresh]);
+
   // Show loading skeleton on initial load
   if (isLoading && queries.length === 0) {
     return <QueryManagementSkeleton />;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col h-full">
       {/* Network Status Warning */}
       <NetworkStatus isOnline={isOnline} />
       
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Database className="w-6 h-6 text-amber-600" />
-          <div>
-            <h1 className="text-2xl font-semibold">Kelola Query Tersimpan</h1>
-            <p className="text-sm text-muted-foreground">
-              Kelola dan gunakan kembali query yang telah Anda simpan
-            </p>
-          </div>
-        </div>
-        <Button
-          onClick={handleRefresh}
-          variant="outline"
-          size="sm"
-          disabled={isLoading}
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
+      {/* Sticky Search and Filter Controls */}
+      <div className="sticky top-0 z-10 bg-background border-b mb-6">
+        <Card className="border-0 border-b rounded-none">
+          <CardContent className="p-4">
+            <div className="space-y-4">
+              {/* Search Bar */}
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Cari query berdasarkan nama..."
+                    value={filters.search}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={showFilters ? "bg-muted" : ""}
+                >
+                  <Filter className="w-4 h-4 mr-2" />
+                  Filter
+                </Button>
+              </div>
+
+              {/* Advanced Filters */}
+              {showFilters && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
+                  {/* Date Range Filter */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Tanggal Dibuat</label>
+                    <select
+                      value={filters.dateRange}
+                      onChange={(e) => handleFilterChange("dateRange", e.target.value)}
+                      className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
+                    >
+                      <option value="all">Semua Waktu</option>
+                      <option value="today">Hari Ini</option>
+                      <option value="week">7 Hari Terakhir</option>
+                      <option value="month">30 Hari Terakhir</option>
+                    </select>
+                  </div>
+
+                  {/* Sort By */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Urutkan</label>
+                    <select
+                      value={filters.sortBy}
+                      onChange={(e) => handleFilterChange("sortBy", e.target.value)}
+                      className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
+                    >
+                      <option value="newest">Terbaru</option>
+                      <option value="oldest">Terlama</option>
+                      <option value="name">Nama A-Z</option>
+                    </select>
+                  </div>
+
+                  {/* Clear Filters */}
+                  <div className="flex items-end">
+                    <Button
+                      variant="outline"
+                      onClick={handleClearFilters}
+                      className="w-full"
+                    >
+                      Bersihkan Filter
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Active Filters Display */}
+              {(filters.search || filters.dateRange !== "all" || filters.sortBy !== "newest") && (
+                <div className="flex flex-wrap gap-2 pt-2 border-t">
+                  <span className="text-sm text-muted-foreground">Filter aktif:</span>
+                  {filters.search && (
+                    <Badge variant="secondary">
+                      Pencarian: "{filters.search}"
+                    </Badge>
+                  )}
+                  {filters.dateRange !== "all" && (
+                    <Badge variant="secondary">
+                      Tanggal: {
+                        filters.dateRange === "today" ? "Hari Ini" :
+                        filters.dateRange === "week" ? "7 Hari" :
+                        "30 Hari"
+                      }
+                    </Badge>
+                  )}
+                  {filters.sortBy !== "newest" && (
+                    <Badge variant="secondary">
+                      Urutan: {
+                        filters.sortBy === "oldest" ? "Terlama" : "Nama A-Z"
+                      }
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Search and Filter Controls */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="space-y-4">
-            {/* Search Bar */}
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Cari query berdasarkan nama..."
-                  value={filters.search}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => setShowFilters(!showFilters)}
-                className={showFilters ? "bg-muted" : ""}
-              >
-                <Filter className="w-4 h-4 mr-2" />
-                Filter
-              </Button>
-            </div>
-
-            {/* Advanced Filters */}
-            {showFilters && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
-                {/* Date Range Filter */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Tanggal Dibuat</label>
-                  <select
-                    value={filters.dateRange}
-                    onChange={(e) => handleFilterChange("dateRange", e.target.value)}
-                    className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
-                  >
-                    <option value="all">Semua Waktu</option>
-                    <option value="today">Hari Ini</option>
-                    <option value="week">7 Hari Terakhir</option>
-                    <option value="month">30 Hari Terakhir</option>
-                  </select>
-                </div>
-
-                {/* Sort By */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Urutkan</label>
-                  <select
-                    value={filters.sortBy}
-                    onChange={(e) => handleFilterChange("sortBy", e.target.value)}
-                    className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
-                  >
-                    <option value="newest">Terbaru</option>
-                    <option value="oldest">Terlama</option>
-                    <option value="name">Nama A-Z</option>
-                  </select>
-                </div>
-
-                {/* Clear Filters */}
-                <div className="flex items-end">
-                  <Button
-                    variant="outline"
-                    onClick={handleClearFilters}
-                    className="w-full"
-                  >
-                    Bersihkan Filter
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Active Filters Display */}
-            {(filters.search || filters.dateRange !== "all" || filters.sortBy !== "newest") && (
-              <div className="flex flex-wrap gap-2 pt-2 border-t">
-                <span className="text-sm text-muted-foreground">Filter aktif:</span>
-                {filters.search && (
-                  <Badge variant="secondary">
-                    Pencarian: "{filters.search}"
-                  </Badge>
-                )}
-                {filters.dateRange !== "all" && (
-                  <Badge variant="secondary">
-                    Tanggal: {
-                      filters.dateRange === "today" ? "Hari Ini" :
-                      filters.dateRange === "week" ? "7 Hari" :
-                      "30 Hari"
-                    }
-                  </Badge>
-                )}
-                {filters.sortBy !== "newest" && (
-                  <Badge variant="secondary">
-                    Urutan: {
-                      filters.sortBy === "oldest" ? "Terlama" : "Nama A-Z"
-                    }
-                  </Badge>
-                )}
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Query List */}
-      <Card>
+      {/* Scrollable Query List Container */}
+      <div className="flex-1 overflow-hidden">
+        <Card className="h-full flex flex-col">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -523,166 +512,167 @@ export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery
             </div>
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
-          {/* Loading State */}
-          {isLoading && queries.length > 0 && (
-            <div className="p-6">
-              <div className="flex items-center justify-center">
-                <Loader2 className="w-6 h-6 animate-spin text-amber-600 mr-2" />
-                <span className="text-sm text-muted-foreground">Memuat query...</span>
-              </div>
-            </div>
-          )}
-
-          {/* Error State */}
-          {error && !isLoading && (
-            <div className="p-6">
-              <ErrorFallback
-                error={error}
-                onRetry={handleRefresh}
-                title="Gagal Memuat Query"
-                description="Terjadi kesalahan saat memuat daftar query tersimpan."
-                variant={
-                  error.message?.includes("network") || error.message?.includes("connection") 
-                    ? "network" 
-                    : error.message?.includes("server") || error.message?.includes("5")
-                    ? "server"
-                    : "generic"
-                }
-              />
-            </div>
-          )}
-
-          {/* Bulk Operation Progress */}
-          {bulkProgress && (
-            <div className="p-6 border-b">
-              <BulkOperationProgress
-                completed={bulkProgress.completed}
-                total={bulkProgress.total}
-                failed={bulkProgress.failed}
-                operation="Menghapus query"
-              />
-            </div>
-          )}
-
-          {/* Empty State */}
-          {!isLoading && !error && filteredAndSortedQueries.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-12 px-6">
-              <Database className="w-12 h-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">
-                {filters.search || filters.dateRange !== "all" ? 
-                  "Tidak Ada Query yang Cocok" : 
-                  "Belum Ada Query Tersimpan"
-                }
-              </h3>
-              <p className="text-sm text-muted-foreground text-center mb-4">
-                {filters.search || filters.dateRange !== "all" ? 
-                  "Coba ubah kriteria pencarian atau filter Anda." :
-                  "Mulai simpan query dari Query Builder untuk melihatnya di sini."
-                }
-              </p>
-              {(filters.search || filters.dateRange !== "all") && (
-                <Button onClick={handleClearFilters} variant="outline">
-                  Bersihkan Filter
-                </Button>
-              )}
-            </div>
-          )}
-
-          {/* Query List Items */}
-          {!isLoading && !error && filteredAndSortedQueries.length > 0 && (
-            <div className="divide-y">
-              {filteredAndSortedQueries.map((query) => (
-                <div key={query.id} className="flex items-start gap-3">
-                  {/* Bulk selection checkbox */}
-                  <div className="pt-6 pl-4">
-                    <Checkbox
-                      checked={selectedQueries.has(query.id)}
-                      onCheckedChange={(checked) => 
-                        handleSelectQuery(query.id, Boolean(checked))
-                      }
-                      disabled={isBulkDeleting}
-                    />
-                  </div>
-                  
-                  {/* Query item */}
-                  <div className="flex-1">
-                    <QueryListItem
-                      query={query}
-                      onEdit={handleEditQuery}
-                      onDelete={handleDeleteQuery}
-                      onLoad={handleLoadQuery}
-                      isUpdating={isUpdating}
-                      isDeleting={isDeleting}
-                      showBulkActions={false}
-                    />
-                  </div>
+          <CardContent className="flex-1 overflow-y-auto p-0">
+            {/* Loading State */}
+            {isLoading && queries.length > 0 && (
+              <div className="p-6">
+                <div className="flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-amber-600 mr-2" />
+                  <span className="text-sm text-muted-foreground">Memuat query...</span>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              </div>
+            )}
 
-      {/* Pagination */}
-      {!isLoading && !error && totalPages > 1 && (
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
-                Halaman {currentPage} dari {totalPages} 
-                {pagination && (
-                  <span className="ml-2">
-                    ({pagination.total} total query)
-                  </span>
+            {/* Error State */}
+            {error && !isLoading && (
+              <div className="p-6">
+                <ErrorFallback
+                  error={error}
+                  onRetry={handleRefresh}
+                  title="Gagal Memuat Query"
+                  description="Terjadi kesalahan saat memuat daftar query tersimpan."
+                  variant={
+                    error.message?.includes("network") || error.message?.includes("connection") 
+                      ? "network" 
+                      : error.message?.includes("server") || error.message?.includes("5")
+                      ? "server"
+                      : "generic"
+                  }
+                />
+              </div>
+            )}
+
+            {/* Bulk Operation Progress */}
+            {bulkProgress && (
+              <div className="p-6 border-b">
+                <BulkOperationProgress
+                  completed={bulkProgress.completed}
+                  total={bulkProgress.total}
+                  failed={bulkProgress.failed}
+                  operation="Menghapus query"
+                />
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!isLoading && !error && filteredAndSortedQueries.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-12 px-6">
+                <Database className="w-12 h-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">
+                  {filters.search || filters.dateRange !== "all" ? 
+                    "Tidak Ada Query yang Cocok" : 
+                    "Belum Ada Query Tersimpan"
+                  }
+                </h3>
+                <p className="text-sm text-muted-foreground text-center mb-4">
+                  {filters.search || filters.dateRange !== "all" ? 
+                    "Coba ubah kriteria pencarian atau filter Anda." :
+                    "Mulai simpan query dari Query Builder untuk melihatnya di sini."
+                  }
+                </p>
+                {(filters.search || filters.dateRange !== "all") && (
+                  <Button onClick={handleClearFilters} variant="outline">
+                    Bersihkan Filter
+                  </Button>
                 )}
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={!hasPrevPage || isLoading}
-                >
-                  <ChevronLeft className="w-4 h-4 mr-1" />
-                  Sebelumnya
-                </Button>
-                
-                {/* Page Numbers */}
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
-                    if (pageNum > totalPages) return null;
-                    
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={pageNum === currentPage ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handlePageChange(pageNum)}
-                        disabled={isLoading}
-                        className="w-8 h-8 p-0"
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
-                </div>
+            )}
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={!hasNextPage || isLoading}
-                >
-                  Selanjutnya
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
+            {/* Query List Items */}
+            {!isLoading && !error && filteredAndSortedQueries.length > 0 && (
+              <div className="divide-y">
+                {filteredAndSortedQueries.map((query) => (
+                  <div key={query.id} className="flex items-start gap-3">
+                    {/* Bulk selection checkbox */}
+                    <div className="pt-6 pl-4">
+                      <Checkbox
+                        checked={selectedQueries.has(query.id)}
+                        onCheckedChange={(checked) => 
+                          handleSelectQuery(query.id, Boolean(checked))
+                        }
+                        disabled={isBulkDeleting}
+                      />
+                    </div>
+                    
+                    {/* Query item */}
+                    <div className="flex-1">
+                      <QueryListItem
+                        query={query}
+                        onEdit={handleEditQuery}
+                        onDelete={handleDeleteQuery}
+                        onLoad={handleLoadQuery}
+                        isUpdating={isUpdating}
+                        isDeleting={isDeleting}
+                        showBulkActions={false}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
-      )}
+
+        {/* Pagination - Outside scrollable area */}
+        {!isLoading && !error && totalPages > 1 && (
+          <Card className="mt-4">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  Halaman {currentPage} dari {totalPages} 
+                  {pagination && (
+                    <span className="ml-2">
+                      ({pagination.total} total query)
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={!hasPrevPage || isLoading}
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    Sebelumnya
+                  </Button>
+                  
+                  {/* Page Numbers */}
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                      if (pageNum > totalPages) return null;
+                      
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={pageNum === currentPage ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handlePageChange(pageNum)}
+                          disabled={isLoading}
+                          className="w-8 h-8 p-0"
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={!hasNextPage || isLoading}
+                  >
+                    Selanjutnya
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 });

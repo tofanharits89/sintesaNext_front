@@ -89,18 +89,18 @@ export function LihatSqlModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl max-h-[80vh] sm:max-w-7xl">
+      <DialogContent className="max-w-7xl max-h-[80vh] sm:max-w-7xl" showCloseButton={false}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Code className="w-5 h-5 text-blue-600" />
-            Generated SQL Query
+            Tinjauan SQL Query
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Query Summary */}
           <div className="space-y-2">
-            <h4 className="text-sm font-medium">Query Configuration</h4>
+            <h4 className="text-sm font-medium">Konfigurasi Query</h4>
             <div className="flex flex-wrap gap-2">
               <Badge variant="secondary">
                 Tahun: {reportParams.tahun || "All"}
@@ -171,15 +171,16 @@ export function LihatSqlModal({
           {/* Warning */}
           <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-3 rounded-lg">
             <p className="text-xs text-amber-800 dark:text-amber-200">
-              <strong>Admin Notice:</strong> This SQL query is generated for
-              review purposes. Actual query execution may include additional
-              security layers and optimizations.
+              <strong>Catatan Admin:</strong> SQL Query ini ditampilkan untuk tujuan meninjau. Eksekusi Query yang sesungguhnya bisa terdapat fungsi tambahan untuk tujuan keamanan dan optimisasi.
             </p>
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="destructive" onClick={() => onOpenChange(false)}>
+          <Button
+          variant="destructive"
+          className="w-24"
+          onClick={() => onOpenChange(false)}>
             Tutup
           </Button>
         </DialogFooter>

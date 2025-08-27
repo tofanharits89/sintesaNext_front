@@ -29,7 +29,7 @@ import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
 import { useSavedQueries } from "@/hooks/use-saved-queries";
 import { useCurrentUser } from "@/lib/use-current-user";
 import type { FilterValue, SavedQuery } from "@/types/saved-queries";
-import { Settings, Keyboard } from "lucide-react";
+import { Settings, Keyboard, RefreshCw, Database } from "lucide-react";
 import { QueryErrorBoundary } from "@/components/ui/query-error-boundary";
 
 export default function BelanjaPage() {
@@ -41,6 +41,9 @@ export default function BelanjaPage() {
 
   // State for query management modal
   const [isQueryManagementOpen, setIsQueryManagementOpen] = useState(false);
+
+  // Ref for query management refresh function
+  const queryManagementRefreshRef = useRef<(() => void) | null>(null);
 
   // State for managing which filters are active (cutOff is always active)
   const [activeFilters, setActiveFilters] = useState<string[]>(["cutOff"]);
@@ -343,6 +346,25 @@ export default function BelanjaPage() {
     }));
   };
 
+  // Convert filterValues to the stricter type expected by DynamicFiltersCard
+  const normalizedFilterValues = useMemo(() => {
+    const normalized: Record<
+      string,
+      import("@/hooks/use-inquiry-data-api").FilterValue
+    > = {};
+
+    Object.entries(filterValues).forEach(([key, value]) => {
+      normalized[key] = {
+        selection: value.selection || "",
+        kondisiCode: value.kondisiCode || "",
+        mengandungKata: value.mengandungKata || "",
+        jenisTampilan: value.jenisTampilan || "kode",
+      };
+    });
+
+    return normalized;
+  }, [filterValues]);
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -403,7 +425,7 @@ export default function BelanjaPage() {
           reportParams={reportParams}
           onRemoveFilter={removeFilter}
           onClearAllFilters={clearAllFilters}
-          filterValues={filterValues}
+          filterValues={normalizedFilterValues}
           onFilterChange={handleFilterChange}
           queryLoader={stableQueryLoader}
         />
@@ -428,9 +450,31 @@ export default function BelanjaPage() {
           showCloseButton={false}
         >
           <DialogHeader>
-            <DialogTitle>Kelola Query Tersimpan</DialogTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Database className="w-6 h-6 text-amber-600" />
+                <div>
+                  <DialogTitle>Kelola Query Tersimpan</DialogTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Kelola dan gunakan kembali query yang telah Anda simpan
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={() => {
+                  if (queryManagementRefreshRef.current) {
+                    queryManagementRefreshRef.current();
+                  }
+                }}
+                variant="outline"
+                size="sm"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </Button>
+            </div>
           </DialogHeader>
-          <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
+          <div className="overflow-y-auto max-h-[calc(90vh-160px)]">
             <QueryErrorBoundary>
               <QueryManagement
                 onLoadQuery={(query) => {
@@ -438,12 +482,16 @@ export default function BelanjaPage() {
                   setIsQueryManagementOpen(false); // Close modal after loading
                 }}
                 currentUserId={currentUser?.id || ""}
+                onRefreshReady={(refreshFn) => {
+                  queryManagementRefreshRef.current = refreshFn;
+                }}
               />
             </QueryErrorBoundary>
           </div>
           <DialogFooter>
             <Button
-              variant="outline"
+              variant="destructive"
+              className="w-24"
               onClick={() => setIsQueryManagementOpen(false)}
             >
               Tutup
