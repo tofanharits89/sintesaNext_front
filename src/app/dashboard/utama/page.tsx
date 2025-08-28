@@ -26,8 +26,10 @@ import { useRealisasiKLPaguTerbesar } from "@/hooks/useRealisasiKLPaguTerbesar";
 import { useRealisasiKLPaguProgramTerbesar } from "@/hooks/useRealisasiKLPaguProgramTerbesar";
 import { useTrenRealisasiBulananPerJenisBelanja } from "@/hooks/useTrenRealisasiBulananPerJenisBelanja";
 import { useQuickStats } from "@/hooks/useQuickStats";
-import { backendPath } from "@/lib/backend";
+import { usePersentaseRealisasiKL } from "@/hooks/usePersentaseRealisasiKL";
 
+import { StatCard } from "@/components/dashboard/StatCard";
+import { AuthRequiredCard } from "@/components/dashboard/AuthRequiredCard";
 // Sample data for the bar charts
 const realisasiApbnData = [
   { name: "Jan", target: 120, realisasi: 110 },
@@ -129,6 +131,15 @@ export default function DashboardUtamaPage() {
     kanwil: selectedKanwil !== "semua" ? selectedKanwil : undefined,
   });
 
+  // Fetch Persentase Realisasi K/L data
+  const {
+    data: persentaseKLData,
+    isLoading: isLoadingPersentaseKL,
+    error: persentaseKLError,
+  } = usePersentaseRealisasiKL({
+    kanwil: selectedKanwil !== "semua" ? selectedKanwil : undefined,
+  });
+
   // Check if realisasi error is authentication related
   const isRealisasiAuthError =
     realisasiError?.message?.includes("authentication") ||
@@ -142,6 +153,13 @@ export default function DashboardUtamaPage() {
     klPaguError?.message?.includes("401");
 
   // Check if quick stats error is authentication related
+
+  // Check if persentase K/L error is authentication related
+  const isPersentaseAuthError =
+    persentaseKLError?.message?.includes("authentication") ||
+    persentaseKLError?.message?.includes("log in") ||
+    persentaseKLError?.message?.includes("401");
+
   const isQuickStatsAuthError =
     quickStatsError?.message?.includes("authentication") ||
     quickStatsError?.message?.includes("log in") ||
@@ -175,10 +193,10 @@ export default function DashboardUtamaPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Dashboard Utama
+            Dashboard Utama K/L
           </h1>
           <p className="text-sm text-muted-foreground">
-            Ringkasan cepat realisasi APBN dan indikator makro.
+            Ringkasan cepat realisasi APBN untuk Kementerian/Lembaga.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -228,94 +246,51 @@ export default function DashboardUtamaPage() {
           </div>
         )}
 
-        <div className="rounded-lg p-3 bg-white dark:bg-neutral-900 shadow relative">
-          <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-blue-500" />
-            <p className="text-xs text-muted-foreground">Jumlah DIPA</p>
-          </div>
-          <p className="mt-1 text-lg font-semibold">
-            {isLoadingQuickStats
-              ? "..."
-              : quickStats?.jumlahDipa?.toLocaleString("id-ID") || "0"}
-          </p>
-        </div>
-        <div className="rounded-lg p-3 bg-white dark:bg-neutral-900 shadow relative">
-          <div className="flex items-center gap-2">
-            <Banknote className="h-4 w-4 text-green-500" />
-            <p className="text-xs text-muted-foreground">Pagu APBN</p>
-          </div>
-          <p className="mt-1 text-lg font-semibold">
-            {isLoadingQuickStats
-              ? "..."
-              : formatCurrency(quickStats?.paguApbn || 0)}
-          </p>
-        </div>
-        <div className="rounded-lg p-3 bg-white dark:bg-neutral-900 shadow relative">
-          <div className="flex items-center gap-2">
-            <Wallet className="h-4 w-4 text-purple-500" />
-            <p className="text-xs text-muted-foreground">Pagu DIPA</p>
-          </div>
-          <p className="mt-1 text-lg font-semibold">
-            {isLoadingQuickStats
-              ? "..."
-              : formatCurrency(quickStats?.paguDipa || 0)}
-          </p>
-        </div>
-        <div className="rounded-lg p-3 bg-white dark:bg-neutral-900 shadow relative">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-orange-500" />
-            <p className="text-xs text-muted-foreground">Realisasi</p>
-          </div>
-          <p className="mt-1 text-lg font-semibold">
-            {isLoadingQuickStats
-              ? "..."
-              : formatCurrency(quickStats?.realisasi || 0)}
-          </p>
-        </div>
-        <div className="rounded-lg p-3 bg-white dark:bg-neutral-900 shadow relative">
-          <div className="flex items-center gap-2">
-            <Lock className="h-4 w-4 text-red-500" />
-            <p className="text-xs text-muted-foreground">Blokir</p>
-          </div>
-          <p className="mt-1 text-lg font-semibold">
-            {isLoadingQuickStats
-              ? "..."
-              : formatCurrency(quickStats?.blokir || 0)}
-          </p>
-        </div>
-        <div className="rounded-lg p-3 bg-white dark:bg-neutral-900 shadow relative">
-          <div className="flex items-center gap-2">
-            <Calculator className="h-4 w-4 text-teal-500" />
-            <p className="text-xs text-muted-foreground">Sisa Pagu DIPA</p>
-          </div>
-          <p className="mt-1 text-lg font-semibold">
-            {isLoadingQuickStats
-              ? "..."
-              : formatCurrency(quickStats?.sisaPaguDipa || 0)}
-          </p>
-        </div>
+        <StatCard
+          label="Jumlah DIPA"
+          icon={<FileText className="h-4 w-4 text-blue-500" />}
+          loading={isLoadingQuickStats}
+          value={quickStats?.jumlahDipa?.toLocaleString("id-ID") || "0"}
+        />
+        <StatCard
+          label="Pagu APBN"
+          icon={<Banknote className="h-4 w-4 text-green-500" />}
+          loading={isLoadingQuickStats}
+          value={formatCurrency(quickStats?.paguApbn || 0)}
+        />
+        <StatCard
+          label="Pagu DIPA"
+          icon={<Wallet className="h-4 w-4 text-purple-500" />}
+          loading={isLoadingQuickStats}
+          value={formatCurrency(quickStats?.paguDipa || 0)}
+        />
+        <StatCard
+          label="Realisasi"
+          icon={<TrendingUp className="h-4 w-4 text-orange-500" />}
+          loading={isLoadingQuickStats}
+          value={formatCurrency(quickStats?.realisasi || 0)}
+        />
+        <StatCard
+          label="Blokir"
+          icon={<Lock className="h-4 w-4 text-red-500" />}
+          loading={isLoadingQuickStats}
+          value={formatCurrency(quickStats?.blokir || 0)}
+        />
+        <StatCard
+          label="Sisa Pagu DIPA"
+          icon={<Calculator className="h-4 w-4 text-teal-500" />}
+          loading={isLoadingQuickStats}
+          value={formatCurrency(quickStats?.sisaPaguDipa || 0)}
+        />
       </div>
 
       {/* Second Row: 3 Cards with Bar Charts */}
       <div className="grid gap-4 md:grid-cols-3">
         {isRealisasiAuthError ? (
-          <div className="rounded-lg p-6 bg-white dark:bg-neutral-900 shadow border-2 border-dashed border-yellow-300">
-            <div className="text-center">
-              <Lock className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                Realisasi per Jenis Belanja
-              </h3>
-              <p className="text-sm text-yellow-600 mb-3">
-                Login required to view this data
-              </p>
-              <button
-                onClick={() => (window.location.href = "/login")}
-                className="px-4 py-2 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700 transition-colors"
-              >
-                Login to View Data
-              </button>
-            </div>
-          </div>
+          <AuthRequiredCard
+            title="Realisasi per Jenis Belanja"
+            description="Login required to view this data"
+          />
         ) : (
           <MultipleBarChartComponent
             data={
@@ -360,23 +335,10 @@ export default function DashboardUtamaPage() {
           />
         )}
         {isKLPaguAuthError ? (
-          <div className="rounded-lg p-6 bg-white dark:bg-neutral-900 shadow border-2 border-dashed border-yellow-300">
-            <div className="text-center">
-              <Lock className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                Realisasi K/L dengan Pagu DIPA Terbesar
-              </h3>
-              <p className="text-sm text-yellow-600 mb-3">
-                Login required to view this data
-              </p>
-              <button
-                onClick={() => (window.location.href = "/login")}
-                className="px-4 py-2 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700 transition-colors"
-              >
-                Login to View Data
-              </button>
-            </div>
-          </div>
+          <AuthRequiredCard
+            title="Realisasi K/L dengan Pagu DIPA Terbesar"
+            description="Login required to view this data"
+          />
         ) : (
           <MultipleBarChartComponent
             data={
@@ -419,23 +381,10 @@ export default function DashboardUtamaPage() {
         ) ||
         errorRealisasiKLPaguProgramTerbesar?.message?.includes("log in") ||
         errorRealisasiKLPaguProgramTerbesar?.message?.includes("401") ? (
-          <div className="rounded-lg p-6 bg-white dark:bg-neutral-900 shadow border-2 border-dashed border-yellow-300">
-            <div className="text-center">
-              <Lock className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                Realisasi K/L dengan Pagu Program Terbesar
-              </h3>
-              <p className="text-sm text-yellow-600 mb-3">
-                Login required to view this data
-              </p>
-              <button
-                onClick={() => (window.location.href = "/login")}
-                className="px-4 py-2 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700 transition-colors"
-              >
-                Login to View Data
-              </button>
-            </div>
-          </div>
+          <AuthRequiredCard
+            title="Realisasi K/L dengan Pagu Program Terbesar"
+            description="Login required to view this data"
+          />
         ) : (
           <MultipleBarChartComponent
             data={
@@ -481,23 +430,10 @@ export default function DashboardUtamaPage() {
       {/* Third Row: 2 Cards with Line Charts */}
       <div className="grid gap-4 md:grid-cols-2">
         {isTrenRealisasiAuthError ? (
-          <div className="rounded-lg p-6 bg-white dark:bg-neutral-900 shadow border-2 border-dashed border-yellow-300">
-            <div className="text-center">
-              <Lock className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                Tren Realisasi Bulanan Per Jenis Belanja
-              </h3>
-              <p className="text-sm text-yellow-600 mb-3">
-                Login required to view this data
-              </p>
-              <button
-                onClick={() => (window.location.href = "/login")}
-                className="px-4 py-2 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700 transition-colors"
-              >
-                Login to View Data
-              </button>
-            </div>
-          </div>
+          <AuthRequiredCard
+            title="Tren Realisasi Bulanan Per Jenis Belanja"
+            description="Login required to view this data"
+          />
         ) : (
           <LineChartComponent
             data={
@@ -560,6 +496,49 @@ export default function DashboardUtamaPage() {
           ]}
           height={280}
         />
+      </div>
+
+      {/* Fourth Row: Single Card - Persentase Realisasi K/L */}
+      <div className="grid gap-4">
+        {isPersentaseAuthError ? (
+          <AuthRequiredCard
+            title="Persentase Realisasi K/L"
+            description="Login required to view this data"
+          />
+        ) : (
+          <BarChartComponent
+            data={
+              persentaseKLData?.map((item) => ({
+                name: item.kode_ba, // use kode_ba for the X-axis label
+                value: item.persentase,
+                kode_ba: item.kode_ba,
+                nama_ba: item.nama_ba,
+              })) || []
+            }
+            title={`Persentase Realisasi K/L${
+              isLoadingPersentaseKL
+                ? " (Loading...)"
+                : persentaseKLError
+                ? " (Error - Using Fallback)"
+                : ""
+            }`}
+            description={
+              persentaseKLError && !isPersentaseAuthError
+                ? "Error loading data - showing fallback data"
+                : "Persentase realisasi terhadap Pagu DIPA per K/L (%)"
+            }
+            color="#0ea5e9"
+            height={360}
+            formatValue={(v) => `${Number(v).toFixed(2)}%`}
+            // Show kode_ba - nama_ba in tooltip label
+            formatTooltipLabel={(d) => `${d.kode_ba} - ${d.nama_ba}`}
+            // Rotate x-axis labels to vertical and shrink font
+            xTickAngle={-90}
+            xTickFontSize={10}
+            xAxisHeight={30}
+            showAllXTicks
+          />
+        )}
       </div>
     </div>
   );
