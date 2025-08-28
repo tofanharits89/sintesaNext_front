@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { BarChartComponent } from "@/components/ui/bar-chart";
 import { MultipleBarChartComponent } from "@/components/ui/multiple-bar-chart";
 import { LineChartComponent } from "@/components/ui/line-chart";
@@ -20,8 +20,10 @@ import {
   Calculator,
 } from "lucide-react";
 import kdkanwilData from "@/data/kdkanwil.json";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
+// getAuthTokenFromCookie is now used in the useQuickStats hook
 import { useRealisasiPerJenisBelanja } from "@/hooks/useRealisasiPerJenisBelanja";
+import { useRealisasiKLPaguTerbesar } from "@/hooks/useRealisasiKLPaguTerbesar";
+import { useQuickStats } from "@/hooks/useQuickStats";
 import { backendPath } from "@/lib/backend";
 
 // Sample data for the bar charts
@@ -34,13 +36,7 @@ const realisasiApbnData = [
   { name: "Jun", target: 220, realisasi: 210 },
 ];
 
-const klTopData = [
-  { name: "Kemendikbud", value: 85 },
-  { name: "Kemenkes", value: 78 },
-  { name: "Kemenhub", value: 72 },
-  { name: "Kemenag", value: 68 },
-  { name: "Kemendagri", value: 65 },
-];
+// Static data removed - now using dynamic data from API
 
 const fungsiData = [
   { name: "Pendidikan", value: 320 },
@@ -83,24 +79,7 @@ const proyeksiDeficit = [
   { name: "Des", aktual: null, proyeksi: -2 },
 ];
 
-// Types for the API response
-interface QuickStatsData {
-  jumlahDipa: number;
-  paguApbn: number;
-  paguDipa: number;
-  realisasi: number;
-  blokir: number;
-  sisaPaguDipa: number;
-}
-
-interface QuickStatsResponse {
-  success: boolean;
-  data: QuickStatsData;
-  filters: {
-    kanwil: string;
-  };
-  timestamp: string;
-}
+// QuickStatsData interface is now imported from the hook
 
 // Helper function to format currency
 const formatCurrency = (value: number): string => {
@@ -117,9 +96,15 @@ const formatCurrency = (value: number): string => {
 
 export default function DashboardUtamaPage() {
   const [selectedKanwil, setSelectedKanwil] = useState<string>("semua");
-  const [quickStats, setQuickStats] = useState<QuickStatsData | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+
+  // Fetch Quick Stats data using React Query
+  const {
+    data: quickStats,
+    isLoading: isLoadingQuickStats,
+    error: quickStatsError,
+  } = useQuickStats({
+    kanwil: selectedKanwil !== "semua" ? selectedKanwil : undefined,
+  });
 
   // Fetch Realisasi per Jenis Belanja data
   const {
@@ -130,76 +115,49 @@ export default function DashboardUtamaPage() {
     kanwil: selectedKanwil !== "semua" ? selectedKanwil : undefined,
   });
 
+  // Fetch K/L dengan Pagu DIPA Terbesar data
+  const {
+    data: klPaguTerbesarData,
+    isLoading: isLoadingKLPagu,
+    error: klPaguError,
+  } = useRealisasiKLPaguTerbesar({
+    kanwil: selectedKanwil !== "semua" ? selectedKanwil : undefined,
+  });
+
   // Check if realisasi error is authentication related
   const isRealisasiAuthError =
     realisasiError?.message?.includes("authentication") ||
     realisasiError?.message?.includes("log in") ||
     realisasiError?.message?.includes("401");
 
-  // Fetch quick stats from API
-  const fetchQuickStats = async (kanwil: string = "semua") => {
-    try {
-      setLoading(true);
-      setError(null);
+  // Check if K/L pagu error is authentication related
+  const isKLPaguAuthError =
+    klPaguError?.message?.includes("authentication") ||
+    klPaguError?.message?.includes("log in") ||
+    klPaguError?.message?.includes("401");
 
-      const token = getAuthTokenFromCookie();
-      if (!token) {
-        throw new Error("No authentication token found");
-      }
+  // Check if quick stats error is authentication related
+  const isQuickStatsAuthError =
+    quickStatsError?.message?.includes("authentication") ||
+    quickStatsError?.message?.includes("log in") ||
+    quickStatsError?.message?.includes("401");
 
-      const params = new URLSearchParams();
-      if (kanwil !== "semua") {
-        params.append("kanwil", kanwil);
-      }
-
-      const response = await fetch(
-        backendPath(`/dashboard/quick-stats?${params}`),
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result: QuickStatsResponse = await response.json();
-
-      if (result.success) {
-        setQuickStats(result.data);
-      } else {
-        throw new Error("Failed to fetch quick stats");
-      }
-    } catch (err) {
-      console.error("Error fetching quick stats:", err);
-      setError(err instanceof Error ? err.message : "An error occurred");
-      // Fallback to mock data on error
-      setQuickStats({
-        jumlahDipa: 1245,
-        paguApbn: 1250000000000000,
-        paguDipa: 1100000000000000,
-        realisasi: 850000000000000,
-        blokir: 45000000000000,
-        sisaPaguDipa: 205000000000000,
-      });
-    } finally {
-      setLoading(false);
+  // Helper function to format currency for chart display
+  const formatChartCurrency = (value: number): string => {
+    if (value >= 1000000000000) {
+      return `${(value / 1000000000000).toFixed(1)}T`;
     }
+    if (value >= 1000000000) {
+      return `${(value / 1000000000).toFixed(1)}M`;
+    }
+    return value.toLocaleString("id-ID");
   };
 
   // Handle kanwil selection change
   const handleKanwilChange = (value: string) => {
     setSelectedKanwil(value);
-    fetchQuickStats(value);
+    // React Query will automatically refetch when selectedKanwil changes
   };
-
-  // Fetch initial data
-  useEffect(() => {
-    fetchQuickStats(selectedKanwil);
-  }, []);
 
   return (
     <div className="space-y-6">
@@ -227,7 +185,7 @@ export default function DashboardUtamaPage() {
               ))}
             </SelectContent>
           </Select>
-          {loading && (
+          {isLoadingQuickStats && (
             <span className="text-xs text-muted-foreground">Loading...</span>
           )}
         </div>
@@ -235,10 +193,21 @@ export default function DashboardUtamaPage() {
 
       {/* First Row: 6 Compact Quick Stats Cards */}
       <div className="grid gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
-        {error && (
+        {quickStatsError && !isQuickStatsAuthError && (
           <div className="col-span-full bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-sm text-red-600">Error loading data: {error}</p>
-            <p className="text-xs text-red-500 mt-1">Showing fallback data</p>
+            <p className="text-sm text-red-600">Error loading data: {quickStatsError.message}</p>
+            <p className="text-xs text-red-500 mt-1">Please try refreshing the page</p>
+          </div>
+        )}
+        {isQuickStatsAuthError && (
+          <div className="col-span-full bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p className="text-sm text-yellow-600">Authentication required to view quick stats</p>
+            <button
+              onClick={() => (window.location.href = "/login")}
+              className="mt-2 px-3 py-1 bg-yellow-600 text-white text-xs rounded hover:bg-yellow-700 transition-colors"
+            >
+              Login to View Data
+            </button>
           </div>
         )}
 
@@ -248,7 +217,7 @@ export default function DashboardUtamaPage() {
             <p className="text-xs text-muted-foreground">Jumlah DIPA</p>
           </div>
           <p className="mt-1 text-lg font-semibold">
-            {loading
+            {isLoadingQuickStats
               ? "..."
               : quickStats?.jumlahDipa?.toLocaleString("id-ID") || "0"}
           </p>
@@ -259,7 +228,7 @@ export default function DashboardUtamaPage() {
             <p className="text-xs text-muted-foreground">Pagu APBN</p>
           </div>
           <p className="mt-1 text-lg font-semibold">
-            {loading ? "..." : formatCurrency(quickStats?.paguApbn || 0)}
+            {isLoadingQuickStats ? "..." : formatCurrency(quickStats?.paguApbn || 0)}
           </p>
         </div>
         <div className="rounded-lg p-3 bg-white dark:bg-neutral-900 shadow relative">
@@ -268,7 +237,7 @@ export default function DashboardUtamaPage() {
             <p className="text-xs text-muted-foreground">Pagu DIPA</p>
           </div>
           <p className="mt-1 text-lg font-semibold">
-            {loading ? "..." : formatCurrency(quickStats?.paguDipa || 0)}
+            {isLoadingQuickStats ? "..." : formatCurrency(quickStats?.paguDipa || 0)}
           </p>
         </div>
         <div className="rounded-lg p-3 bg-white dark:bg-neutral-900 shadow relative">
@@ -277,7 +246,7 @@ export default function DashboardUtamaPage() {
             <p className="text-xs text-muted-foreground">Realisasi</p>
           </div>
           <p className="mt-1 text-lg font-semibold">
-            {loading ? "..." : formatCurrency(quickStats?.realisasi || 0)}
+            {isLoadingQuickStats ? "..." : formatCurrency(quickStats?.realisasi || 0)}
           </p>
         </div>
         <div className="rounded-lg p-3 bg-white dark:bg-neutral-900 shadow relative">
@@ -286,7 +255,7 @@ export default function DashboardUtamaPage() {
             <p className="text-xs text-muted-foreground">Blokir</p>
           </div>
           <p className="mt-1 text-lg font-semibold">
-            {loading ? "..." : formatCurrency(quickStats?.blokir || 0)}
+            {isLoadingQuickStats ? "..." : formatCurrency(quickStats?.blokir || 0)}
           </p>
         </div>
         <div className="rounded-lg p-3 bg-white dark:bg-neutral-900 shadow relative">
@@ -295,7 +264,7 @@ export default function DashboardUtamaPage() {
             <p className="text-xs text-muted-foreground">Sisa Pagu DIPA</p>
           </div>
           <p className="mt-1 text-lg font-semibold">
-            {loading ? "..." : formatCurrency(quickStats?.sisaPaguDipa || 0)}
+            {isLoadingQuickStats ? "..." : formatCurrency(quickStats?.sisaPaguDipa || 0)}
           </p>
         </div>
       </div>
@@ -363,13 +332,61 @@ export default function DashboardUtamaPage() {
             }}
           />
         )}
-        <BarChartComponent
-          data={klTopData}
-          title="Top 5 K/L"
-          description="Realisasi tertinggi (%)"
-          color="#10b981"
-          height={250}
-        />
+        {isKLPaguAuthError ? (
+          <div className="rounded-lg p-6 bg-white dark:bg-neutral-900 shadow border-2 border-dashed border-yellow-300">
+            <div className="text-center">
+              <Lock className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                Realisasi K/L dengan Pagu DIPA Terbesar
+              </h3>
+              <p className="text-sm text-yellow-600 mb-3">
+                Login required to view this data
+              </p>
+              <button
+                onClick={() => (window.location.href = "/login")}
+                className="px-4 py-2 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700 transition-colors"
+              >
+                Login to View Data
+              </button>
+            </div>
+          </div>
+        ) : (
+          <MultipleBarChartComponent
+            data={
+              klPaguTerbesarData?.map((item) => ({
+                name: item.nama_kementerian,
+                "Pagu DIPA": item.pagu_dipa,
+                Realisasi: item.realisasi,
+              })) || []
+            }
+            title={`Realisasi K/L dengan Pagu DIPA Terbesar${
+              isLoadingKLPagu
+                ? " (Loading...)"
+                : klPaguError
+                ? " (Error - Using Fallback)"
+                : ""
+            }`}
+            description={
+              klPaguError && !isKLPaguAuthError
+                ? "Error loading data - showing fallback data"
+                : "Perbandingan Pagu DIPA vs Realisasi (Triliun Rp)"
+            }
+            series={[
+              { dataKey: "Pagu DIPA", name: "Pagu DIPA", color: "#3b82f6" },
+              { dataKey: "Realisasi", name: "Realisasi", color: "#10b981" },
+            ]}
+            height={250}
+            formatValue={(value) => {
+              if (value >= 1000000000000) {
+                return `${(value / 1000000000000).toFixed(1)}T`;
+              }
+              if (value >= 1000000000) {
+                return `${(value / 1000000000).toFixed(1)}M`;
+              }
+              return value.toLocaleString("id-ID");
+            }}
+          />
+        )}
         <BarChartComponent
           data={fungsiData}
           title="Realisasi per Fungsi"
