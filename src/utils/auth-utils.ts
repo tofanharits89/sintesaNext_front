@@ -4,7 +4,7 @@ import { parse } from "cookie";
 
 /**
  * Get authentication token from cookies
- * Utility function for token extraction and validation
+ * Optimized for simplified cookie structure (accessToken only)
  */
 export function getAuthTokenFromCookie(): string | null {
   if (typeof document === "undefined") {
@@ -26,98 +26,74 @@ export function getAuthTokenFromCookie(): string | null {
   const cookies = parse(cookieString);
   console.log("[Auth Debug] Available cookies:", Object.keys(cookies));
 
-  // First check for the authState cookie (non-httpOnly, readable by JavaScript)
-  // This is the primary cookie set by the backend for frontend authentication
-  if (
-    cookies.authState &&
-    typeof cookies.authState === "string" &&
-    cookies.authState.trim()
-  ) {
-    console.log("[Auth Debug] Found authState cookie");
-    const parts = cookies.authState.split(".");
-    if (parts.length === 3) {
-      try {
-        // Decode payload to check expiry
-        const payload = JSON.parse(atob(parts[1]));
-        const currentTime = Date.now();
-        const expTime = payload.exp * 1000;
-
-        console.log("[Auth Debug] Token payload:", {
-          userId: payload.userId,
-          exp: payload.exp,
-          currentTime: currentTime,
-          expTime: expTime,
-          isExpired: expTime <= currentTime,
-        });
-
-        // Check if token is expired
-        if (payload.exp && payload.exp * 1000 > Date.now()) {
-          console.log("[Auth Debug] Using valid authState token");
-          return cookies.authState;
-        } else {
-          console.log("[Auth Debug] authState token is expired");
-        }
-      } catch (decodeError) {
-        console.log(
-          "[Auth Debug] Failed to decode authState token:",
-          decodeError instanceof Error ? decodeError.message : "decode error"
-        );
-        // Continue to fallback options if authState is invalid
-      }
-    } else {
-      console.log(
-        "[Auth Debug] authState token invalid format, parts:",
-        parts.length
-      );
-    }
-  } else {
-    console.log("[Auth Debug] No authState cookie found");
-  }
-
-  // Fallback: Try other possible cookie names (though these are likely httpOnly)
-  const possibleTokenNames = [
-    "socket_token", // Add the actual cookie name that exists
-    "auth_user", // Add the other actual cookie name that exists
-    "accessToken",
+  // Prefer new cookie names, but fall back to legacy ones for compatibility
+  const candidateCookieNames = [
+    "accessToken", // new primary (backend, httpOnly)
+    "authState", // frontend-readable mirror set by Next login route
+    "token", // server-side guard cookie
+    "socket_token",
     "access_token",
     "authToken",
     "auth_token",
-    "token",
-    "jwt",
-    "authorization",
   ];
 
-  for (const tokenName of possibleTokenNames) {
-    const token = cookies[tokenName];
-
+  for (const name of candidateCookieNames) {
+    const token = (cookies as any)[name];
     if (token && typeof token === "string" && token.trim()) {
-      // Basic JWT format validation
       const parts = token.split(".");
       if (parts.length === 3) {
         try {
           // Decode payload to check expiry
           const payload = JSON.parse(atob(parts[1]));
+          const now = Date.now();
+          const expMs = (payload.exp ?? 0) * 1000;
 
-          // Check if token is expired
-          if (payload.exp && payload.exp * 1000 < Date.now()) {
-            continue;
+          console.log("[Auth Debug] Token candidate payload:", {
+            sourceCookie: name,
+            userId: payload.userId,
+            exp: payload.exp,
+            isExpired: expMs <= now,
+          });
+
+          if (payload.exp && expMs > now) {
+            console.log(`[Auth Debug] Using valid token from cookie: ${name}`);
+            return token;
           }
-
-          return token;
         } catch (decodeError) {
           console.log(
-            "[Auth Debug] Failed to decode token from",
-            tokenName,
-            ":",
+            `[Auth Debug] Failed to decode JWT from ${name}:`,
             decodeError instanceof Error ? decodeError.message : "decode error"
           );
-          continue;
         }
+      } else {
+        console.log(
+          `[Auth Debug] ${name} invalid JWT format, parts:`,
+          parts.length
+        );
       }
     }
   }
 
+  console.log("[Auth Debug] No valid auth token cookie found");
   return null;
+}
+
+/**
+ * Get refresh token from cookies
+ * Used for token refresh operations
+ */
+export function getRefreshTokenFromCookie(): string | null {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const cookieString = document.cookie || "";
+  if (!cookieString.trim()) {
+    return null;
+  }
+
+  const cookies = parse(cookieString);
+  return cookies.refreshToken || null;
 }
 
 /**
@@ -174,15 +150,17 @@ export function isAuthenticated(): boolean {
 
 /**
  * Clear authentication tokens from cookies
- * Utility function for token cleanup
+ * Optimized for simplified cookie structure
  */
 export function clearAuthToken(): void {
   try {
     const cookieNames = [
-      "authState", // Primary non-httpOnly cookie
-      "socket_token", // Add the actual cookie names that exist
-      "auth_user",
       "accessToken",
+      "refreshToken",
+      // Legacy cookie names for backward compatibility
+      "authState",
+      "socket_token",
+      "auth_user",
       "access_token",
       "authToken",
       "auth_token",
@@ -202,9 +180,55 @@ export function clearAuthToken(): void {
       }
     });
 
+    console.log("[Auth Utils] Cleared all authentication cookies");
+
     // Dispatch logout event
     dispatchAuthEvent("logout");
   } catch (error) {
     console.error("[Auth Utils Error] Failed to clear auth tokens:", error);
+  }
+}
+
+/**
+ * Refresh access token using refresh token
+ * Makes API call to refresh endpoint
+ */
+export async function refreshAccessToken(): Promise<{
+  success: boolean;
+  accessToken?: string;
+  error?: string;
+}> {
+  try {
+    const refreshToken = getRefreshTokenFromCookie();
+    if (!refreshToken) {
+      return { success: false, error: "No refresh token available" };
+    }
+
+    const response = await fetch("/api/v1/auth/refresh", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include", // Include cookies
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Refresh failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data.success) {
+      console.log("[Auth Utils] Token refreshed successfully");
+      return { success: true, accessToken: data.data.accessToken };
+    } else {
+      return { success: false, error: data.message || "Refresh failed" };
+    }
+  } catch (error) {
+    console.error("[Auth Utils] Token refresh error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 }

@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import AppShell from "@/components/layout/app-shell";
 import { ConnectionStatus } from "@/components/connection-status";
 import CheckBackend from "@/components/check-backend";
+import { QueryProvider } from "@/components/providers/query-provider";
 import { withBasePath } from "@/lib/base-path";
 
 const geistSans = Geist({
@@ -41,14 +42,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <CheckBackend />
-          <AppShell>{children}</AppShell>
-          <ConnectionStatus />
-          <Toaster richColors position="bottom-left" />
-          {/* Optionally show a top-of-page banner when server down via client routes */}
-          {/* <ServerDownBanner /> */}
-        </ThemeProvider>
+        <QueryProvider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <CheckBackend />
+            <AppShell>{children}</AppShell>
+            <ConnectionStatus />
+            <Toaster richColors position="bottom-left" />
+            {/* Optionally show a top-of-page banner when server down via client routes */}
+            {/* <ServerDownBanner /> */}
+          </ThemeProvider>
+        </QueryProvider>
       </body>
     </html>
   );

@@ -1,24 +1,27 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { jwtVerify } from "jose";
-
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "dev-secret-change-me"
-);
+import { backendPath } from "@/lib/backend";
 
 export default async function EPALayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Server-side guard: verify JWT to access any /epa/* page
+  // Server-side guard: verify via backend to align with new auth/session
   const c = await cookies();
   const token = c.get("token")?.value;
   if (!token) {
     redirect("/login");
   }
   try {
-    await jwtVerify(token, JWT_SECRET);
+    const resp = await fetch(backendPath("/auth/verify"), {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (!resp.ok) throw new Error("verify failed");
+    const data = await resp.json().catch(() => ({}));
+    if (!data?.success) throw new Error("invalid");
   } catch {
     redirect("/login");
   }

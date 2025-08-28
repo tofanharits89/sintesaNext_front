@@ -422,7 +422,8 @@ export class SocketClient {
     set.add(listener);
 
     if (!this.socket) {
-      this.logError("Cannot add listener: socket not available");
+      // Socket not ready yet; listener stored in registry and will be bound on connect
+      this.log("Deferring listener binding until socket is available");
       return;
     }
 
@@ -448,7 +449,10 @@ export class SocketClient {
     }
 
     if (!this.socket) {
-      this.logError("Cannot remove listener: socket not available");
+      // Socket not available; listener already removed from registry above
+      this.log(
+        `Listener removed from registry; socket not available for event: ${event}`
+      );
       return;
     }
 

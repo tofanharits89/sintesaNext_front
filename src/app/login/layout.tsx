@@ -1,24 +1,34 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { jwtVerify } from "jose";
+import { backendPath } from "@/lib/backend";
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "dev-secret-change-me");
-
-export default async function LoginLayout({ children }: { children: React.ReactNode }) {
+export default async function LoginLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   // If user is already authenticated, redirect to dashboard
   const c = await cookies();
   const token = c.get("token")?.value;
-  
+
   if (token) {
     try {
-      await jwtVerify(token, JWT_SECRET);
-      // Valid token exists, redirect to dashboard
-      redirect("/dashboard");
+      const resp = await fetch(backendPath("/auth/verify"), {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+      if (resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        if (data?.success) {
+          redirect("/dashboard");
+        }
+      }
     } catch {
-      // Invalid token, let them access login page
+      // Invalid or not verified, let them access login page
     }
   }
-  
+
   // No token or invalid token, show login page
   return <>{children}</>;
 }

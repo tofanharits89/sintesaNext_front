@@ -1,18 +1,27 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { jwtVerify } from "jose";
+import { backendPath } from "@/lib/backend";
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "dev-secret-change-me");
-
-export default async function ProfileLayout({ children }: { children: React.ReactNode }) {
-  // Server-side guard: verify JWT to access /profile
+export default async function ProfileLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  // Server-side guard: verify via backend to align with new auth/session
   const c = await cookies();
   const token = c.get("token")?.value;
   if (!token) {
     redirect("/login");
   }
   try {
-    await jwtVerify(token, JWT_SECRET);
+    const resp = await fetch(backendPath("/auth/verify"), {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (!resp.ok) throw new Error("verify failed");
+    const data = await resp.json().catch(() => ({}));
+    if (!data?.success) throw new Error("invalid");
   } catch {
     redirect("/login");
   }

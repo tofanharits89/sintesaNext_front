@@ -4,7 +4,8 @@ import { backendPath } from "@/lib/backend";
 
 export async function GET(request: NextRequest) {
   const token = request.cookies.get("token")?.value;
-  if (!token) return NextResponse.json({ ok: false, username: null }, { status: 200 });
+  if (!token)
+    return NextResponse.json({ ok: false, username: null }, { status: 200 });
 
   // Verify token on backend (optional) and fetch user profile
   const resp = await fetch(backendPath("/auth/me"), {
@@ -14,9 +15,10 @@ export async function GET(request: NextRequest) {
   const data = await resp.json().catch(() => ({}));
 
   if (!resp.ok || !data?.success) {
-    return NextResponse.json({ ok: false, username: null }, { status: 200 });
+    return NextResponse.json({ success: false, data: null }, { status: 200 });
   }
 
-  const username = data.data?.username || data.data?.user?.username || data.data?.name || null;
-  return NextResponse.json({ ok: true, username });
+  // Return full user object to clients for consistent profile display
+  const user = data.data?.user || data.data;
+  return NextResponse.json({ success: true, data: user }, { status: 200 });
 }

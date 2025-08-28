@@ -12,13 +12,14 @@ function getAuthTokenFromCookies(request: NextRequest): string | null {
       try {
         // Decode payload to check expiry
         const payload = JSON.parse(atob(parts[1]));
-        
+
         // Check if token is expired
         if (payload.exp && payload.exp * 1000 > Date.now()) {
           return authState;
         }
-      } catch (decodeError) {
-        // Continue to fallback options if authState is invalid
+      } catch {
+        // If decoding fails (e.g., atob not available in Node), accept the token
+        return authState;
       }
     }
   }
@@ -30,6 +31,7 @@ function getAuthTokenFromCookies(request: NextRequest): string | null {
     "authToken",
     "auth_token",
     "token",
+    "socket_token",
     "jwt",
     "authorization",
   ];
@@ -51,8 +53,9 @@ function getAuthTokenFromCookies(request: NextRequest): string | null {
           }
 
           return token;
-        } catch (decodeError) {
-          continue;
+        } catch {
+          // If decoding fails (e.g., atob not available in Node), accept the token
+          return token;
         }
       }
     }
@@ -63,47 +66,53 @@ function getAuthTokenFromCookies(request: NextRequest): string | null {
 
 export async function GET(request: NextRequest) {
   const token = getAuthTokenFromCookies(request);
-  
+
   if (!token) {
-    return NextResponse.json({ success: false, message: "No token found" }, { status: 401 });
+    return NextResponse.json(
+      { success: false, message: "No token found" },
+      { status: 401 }
+    );
   }
-  
+
   // Call backend /users/profile/me endpoint
   const resp = await fetch(backendPath("/users/profile/me"), {
     method: "GET",
     headers: { Authorization: `Bearer ${token}` },
   });
-  
+
   if (!resp.ok) {
     return NextResponse.json(
-      { success: false, message: "Failed to fetch profile" }, 
+      { success: false, message: "Failed to fetch profile" },
       { status: resp.status }
     );
   }
-  
+
   const data = await resp.json().catch(() => ({}));
   return NextResponse.json(data, { status: 200 });
 }
 
 export async function PUT(request: NextRequest) {
   const token = getAuthTokenFromCookies(request);
-  
+
   if (!token) {
-    return NextResponse.json({ success: false, message: "No token found" }, { status: 401 });
+    return NextResponse.json(
+      { success: false, message: "No token found" },
+      { status: 401 }
+    );
   }
-  
+
   const body = await request.json();
-  
+
   // Call backend /users/profile/me endpoint
   const resp = await fetch(backendPath("/users/profile/me"), {
     method: "PUT",
-    headers: { 
+    headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}` 
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(body),
   });
-  
+
   const data = await resp.json().catch(() => ({}));
   return NextResponse.json(data, { status: resp.ok ? 200 : resp.status });
 }

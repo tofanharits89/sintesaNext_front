@@ -1,6 +1,9 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { BarChartComponent } from "@/components/ui/bar-chart";
+import { MultipleBarChartComponent } from "@/components/ui/multiple-bar-chart";
 import { LineChartComponent } from "@/components/ui/line-chart";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -8,7 +11,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  FileText,
+  Banknote,
+  Wallet,
+  TrendingUp,
+  Lock,
+  Calculator,
+} from "lucide-react";
 import kdkanwilData from "@/data/kdkanwil.json";
+import { getAuthTokenFromCookie } from "@/utils/auth-utils";
+import { useRealisasiPerJenisBelanja } from "@/hooks/useRealisasiPerJenisBelanja";
+import { backendPath } from "@/lib/backend";
 
 // Sample data for the bar charts
 const realisasiApbnData = [
@@ -69,17 +83,138 @@ const proyeksiDeficit = [
   { name: "Des", aktual: null, proyeksi: -2 },
 ];
 
+// Types for the API response
+interface QuickStatsData {
+  jumlahDipa: number;
+  paguApbn: number;
+  paguDipa: number;
+  realisasi: number;
+  blokir: number;
+  sisaPaguDipa: number;
+}
+
+interface QuickStatsResponse {
+  success: boolean;
+  data: QuickStatsData;
+  filters: {
+    kanwil: string;
+  };
+  timestamp: string;
+}
+
+// Helper function to format currency
+const formatCurrency = (value: number): string => {
+  if (value >= 1000000000000) {
+    const trillionValue = (value / 1000000000000).toFixed(1);
+    return `Rp ${parseFloat(trillionValue).toLocaleString("id-ID")} T`;
+  }
+  if (value >= 1000000000) {
+    const millionValue = (value / 1000000000).toFixed(1);
+    return `Rp ${parseFloat(millionValue).toLocaleString("id-ID")} M`;
+  }
+  return `Rp ${value.toLocaleString("id-ID")}`;
+};
+
 export default function DashboardUtamaPage() {
+  const [selectedKanwil, setSelectedKanwil] = useState<string>("semua");
+  const [quickStats, setQuickStats] = useState<QuickStatsData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch Realisasi per Jenis Belanja data
+  const {
+    data: realisasiJenisBelanjaData,
+    isLoading: isLoadingRealisasi,
+    error: realisasiError,
+  } = useRealisasiPerJenisBelanja({
+    kanwil: selectedKanwil !== "semua" ? selectedKanwil : undefined,
+  });
+
+  // Check if realisasi error is authentication related
+  const isRealisasiAuthError =
+    realisasiError?.message?.includes("authentication") ||
+    realisasiError?.message?.includes("log in") ||
+    realisasiError?.message?.includes("401");
+
+  // Fetch quick stats from API
+  const fetchQuickStats = async (kanwil: string = "semua") => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const token = getAuthTokenFromCookie();
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const params = new URLSearchParams();
+      if (kanwil !== "semua") {
+        params.append("kanwil", kanwil);
+      }
+
+      const response = await fetch(
+        backendPath(`/dashboard/quick-stats?${params}`),
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result: QuickStatsResponse = await response.json();
+
+      if (result.success) {
+        setQuickStats(result.data);
+      } else {
+        throw new Error("Failed to fetch quick stats");
+      }
+    } catch (err) {
+      console.error("Error fetching quick stats:", err);
+      setError(err instanceof Error ? err.message : "An error occurred");
+      // Fallback to mock data on error
+      setQuickStats({
+        jumlahDipa: 1245,
+        paguApbn: 1250000000000000,
+        paguDipa: 1100000000000000,
+        realisasi: 850000000000000,
+        blokir: 45000000000000,
+        sisaPaguDipa: 205000000000000,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle kanwil selection change
+  const handleKanwilChange = (value: string) => {
+    setSelectedKanwil(value);
+    fetchQuickStats(value);
+  };
+
+  // Fetch initial data
+  useEffect(() => {
+    fetchQuickStats(selectedKanwil);
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard Utama</h1>
-          <p className="text-sm text-muted-foreground">Ringkasan cepat realisasi APBN dan indikator makro.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Dashboard Utama
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Ringkasan cepat realisasi APBN dan indikator makro.
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Filter Kanwil:</span>
-          <Select defaultValue="semua">
+          <Select value={selectedKanwil} onValueChange={handleKanwilChange}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Pilih Kanwil" />
             </SelectTrigger>
@@ -92,64 +227,142 @@ export default function DashboardUtamaPage() {
               ))}
             </SelectContent>
           </Select>
+          {loading && (
+            <span className="text-xs text-muted-foreground">Loading...</span>
+          )}
         </div>
       </div>
 
       {/* First Row: 6 Compact Quick Stats Cards */}
       <div className="grid gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+        {error && (
+          <div className="col-span-full bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-sm text-red-600">Error loading data: {error}</p>
+            <p className="text-xs text-red-500 mt-1">Showing fallback data</p>
+          </div>
+        )}
+
         <div className="rounded-lg p-3 bg-white dark:bg-neutral-900 shadow relative">
-          <Badge variant="secondary" className="absolute top-2 right-2 text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
-            +5.2%
-          </Badge>
-          <p className="text-xs text-muted-foreground">Penerimaan Negara</p>
-          <p className="mt-1 text-lg font-semibold">Rp 1.250 T</p>
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-blue-500" />
+            <p className="text-xs text-muted-foreground">Jumlah DIPA</p>
+          </div>
+          <p className="mt-1 text-lg font-semibold">
+            {loading
+              ? "..."
+              : quickStats?.jumlahDipa?.toLocaleString("id-ID") || "0"}
+          </p>
         </div>
         <div className="rounded-lg p-3 bg-white dark:bg-neutral-900 shadow relative">
-          <Badge variant="secondary" className="absolute top-2 right-2 text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-            +3.8%
-          </Badge>
-          <p className="text-xs text-muted-foreground">Belanja Negara</p>
-          <p className="mt-1 text-lg font-semibold">Rp 1.100 T</p>
+          <div className="flex items-center gap-2">
+            <Banknote className="h-4 w-4 text-green-500" />
+            <p className="text-xs text-muted-foreground">Pagu APBN</p>
+          </div>
+          <p className="mt-1 text-lg font-semibold">
+            {loading ? "..." : formatCurrency(quickStats?.paguApbn || 0)}
+          </p>
         </div>
         <div className="rounded-lg p-3 bg-white dark:bg-neutral-900 shadow relative">
-          <Badge variant="secondary" className="absolute top-2 right-2 text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
-            +12.5%
-          </Badge>
-          <p className="text-xs text-muted-foreground">Saldo Anggaran</p>
-          <p className="mt-1 text-lg font-semibold">Rp 150 T</p>
+          <div className="flex items-center gap-2">
+            <Wallet className="h-4 w-4 text-purple-500" />
+            <p className="text-xs text-muted-foreground">Pagu DIPA</p>
+          </div>
+          <p className="mt-1 text-lg font-semibold">
+            {loading ? "..." : formatCurrency(quickStats?.paguDipa || 0)}
+          </p>
         </div>
         <div className="rounded-lg p-3 bg-white dark:bg-neutral-900 shadow relative">
-          <Badge variant="secondary" className="absolute top-2 right-2 text-xs bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">
-            +0.3%
-          </Badge>
-          <p className="text-xs text-muted-foreground">Inflasi (YoY)</p>
-          <p className="mt-1 text-lg font-semibold">2.8%</p>
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-orange-500" />
+            <p className="text-xs text-muted-foreground">Realisasi</p>
+          </div>
+          <p className="mt-1 text-lg font-semibold">
+            {loading ? "..." : formatCurrency(quickStats?.realisasi || 0)}
+          </p>
         </div>
         <div className="rounded-lg p-3 bg-white dark:bg-neutral-900 shadow relative">
-          <Badge variant="secondary" className="absolute top-2 right-2 text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
-            +0.2%
-          </Badge>
-          <p className="text-xs text-muted-foreground">Pertumbuhan PDB</p>
-          <p className="mt-1 text-lg font-semibold">5.1%</p>
+          <div className="flex items-center gap-2">
+            <Lock className="h-4 w-4 text-red-500" />
+            <p className="text-xs text-muted-foreground">Blokir</p>
+          </div>
+          <p className="mt-1 text-lg font-semibold">
+            {loading ? "..." : formatCurrency(quickStats?.blokir || 0)}
+          </p>
         </div>
         <div className="rounded-lg p-3 bg-white dark:bg-neutral-900 shadow relative">
-          <Badge variant="secondary" className="absolute top-2 right-2 text-xs bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">
-            -0.5%
-          </Badge>
-          <p className="text-xs text-muted-foreground">Nilai Tukar</p>
-          <p className="mt-1 text-lg font-semibold">Rp 15.850</p>
+          <div className="flex items-center gap-2">
+            <Calculator className="h-4 w-4 text-teal-500" />
+            <p className="text-xs text-muted-foreground">Sisa Pagu DIPA</p>
+          </div>
+          <p className="mt-1 text-lg font-semibold">
+            {loading ? "..." : formatCurrency(quickStats?.sisaPaguDipa || 0)}
+          </p>
         </div>
       </div>
 
       {/* Second Row: 3 Cards with Bar Charts */}
       <div className="grid gap-4 md:grid-cols-3">
-        <BarChartComponent
-          data={realisasiApbnData.map(item => ({ name: item.name, value: item.realisasi }))}
-          title="Realisasi APBN"
-          description="Realisasi bulanan 2025 (Triliun Rp)"
-          color="#3b82f6"
-          height={250}
-        />
+        {isRealisasiAuthError ? (
+          <div className="rounded-lg p-6 bg-white dark:bg-neutral-900 shadow border-2 border-dashed border-yellow-300">
+            <div className="text-center">
+              <Lock className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                Realisasi per Jenis Belanja
+              </h3>
+              <p className="text-sm text-yellow-600 mb-3">
+                Login required to view this data
+              </p>
+              <button
+                onClick={() => (window.location.href = "/login")}
+                className="px-4 py-2 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700 transition-colors"
+              >
+                Login to View Data
+              </button>
+            </div>
+          </div>
+        ) : (
+          <MultipleBarChartComponent
+            data={
+              realisasiJenisBelanjaData?.categories?.map((category, index) => ({
+                name: category,
+                "Pagu DIPA":
+                  realisasiJenisBelanjaData.series.find(
+                    (s) => s.name === "Pagu DIPA"
+                  )?.data[index] || 0,
+                Realisasi:
+                  realisasiJenisBelanjaData.series.find(
+                    (s) => s.name === "Realisasi"
+                  )?.data[index] || 0,
+              })) || []
+            }
+            title={`Realisasi per Jenis Belanja${
+              isLoadingRealisasi
+                ? " (Loading...)"
+                : realisasiError
+                ? " (Error - Using Fallback)"
+                : ""
+            }`}
+            description={
+              realisasiError && !isRealisasiAuthError
+                ? "Error loading data - showing fallback data"
+                : "Perbandingan Pagu DIPA vs Realisasi (Triliun Rp)"
+            }
+            series={[
+              { dataKey: "Pagu DIPA", name: "Pagu DIPA", color: "#3b82f6" },
+              { dataKey: "Realisasi", name: "Realisasi", color: "#10b981" },
+            ]}
+            height={250}
+            formatValue={(value) => {
+              if (value >= 1000000000000) {
+                return `${(value / 1000000000000).toFixed(1)}T`;
+              }
+              if (value >= 1000000000) {
+                return `${(value / 1000000000).toFixed(1)}M`;
+              }
+              return value.toLocaleString("id-ID");
+            }}
+          />
+        )}
         <BarChartComponent
           data={klTopData}
           title="Top 5 K/L"
@@ -174,7 +387,7 @@ export default function DashboardUtamaPage() {
           description="Perbandingan bulanan 2025 (Triliun Rp)"
           lines={[
             { dataKey: "penerimaan", stroke: "#10b981", name: "Penerimaan" },
-            { dataKey: "belanja", stroke: "#ef4444", name: "Belanja" }
+            { dataKey: "belanja", stroke: "#ef4444", name: "Belanja" },
           ]}
           height={280}
         />
@@ -184,7 +397,7 @@ export default function DashboardUtamaPage() {
           description="Estimasi hingga akhir tahun (Triliun Rp)"
           lines={[
             { dataKey: "aktual", stroke: "#3b82f6", name: "Aktual" },
-            { dataKey: "proyeksi", stroke: "#f59e0b", name: "Proyeksi" }
+            { dataKey: "proyeksi", stroke: "#f59e0b", name: "Proyeksi" },
           ]}
           height={280}
         />
@@ -192,4 +405,3 @@ export default function DashboardUtamaPage() {
     </div>
   );
 }
-
