@@ -27,6 +27,7 @@ import { useRealisasiKLPaguProgramTerbesar } from "@/hooks/useRealisasiKLPaguPro
 import { useTrenRealisasiBulananPerJenisBelanja } from "@/hooks/useTrenRealisasiBulananPerJenisBelanja";
 import { useQuickStats } from "@/hooks/useQuickStats";
 import { usePersentaseRealisasiKL } from "@/hooks/usePersentaseRealisasiKL";
+import { useRealisasiKLPerFungsi } from "@/hooks/useRealisasiKLPerFungsi";
 
 import { StatCard } from "@/components/dashboard/StatCard";
 import { AuthRequiredCard } from "@/components/dashboard/AuthRequiredCard";
@@ -54,20 +55,20 @@ const fungsiData = [
 // Static data for Tren Penerimaan vs Belanja has been replaced with dynamic API data
 
 // Data for Proyeksi Deficit line chart
-const proyeksiDeficit = [
-  { name: "Jan", aktual: -15, proyeksi: -12 },
-  { name: "Feb", aktual: -20, proyeksi: -18 },
-  { name: "Mar", aktual: -20, proyeksi: -22 },
-  { name: "Apr", aktual: -20, proyeksi: -25 },
-  { name: "Mei", aktual: -20, proyeksi: -28 },
-  { name: "Jun", aktual: -20, proyeksi: -30 },
-  { name: "Jul", aktual: null, proyeksi: -32 },
-  { name: "Agu", aktual: null, proyeksi: -15 },
-  { name: "Sep", aktual: null, proyeksi: -10 },
-  { name: "Okt", aktual: null, proyeksi: -8 },
-  { name: "Nov", aktual: null, proyeksi: -5 },
-  { name: "Des", aktual: null, proyeksi: -2 },
-];
+// const proyeksiDeficit = [
+//   { name: "Jan", aktual: -15, proyeksi: -12 },
+//   { name: "Feb", aktual: -20, proyeksi: -18 },
+//   { name: "Mar", aktual: -20, proyeksi: -22 },
+//   { name: "Apr", aktual: -20, proyeksi: -25 },
+//   { name: "Mei", aktual: -20, proyeksi: -28 },
+//   { name: "Jun", aktual: -20, proyeksi: -30 },
+//   { name: "Jul", aktual: null, proyeksi: -32 },
+//   { name: "Agu", aktual: null, proyeksi: -15 },
+//   { name: "Sep", aktual: null, proyeksi: -10 },
+//   { name: "Okt", aktual: null, proyeksi: -8 },
+//   { name: "Nov", aktual: null, proyeksi: -5 },
+//   { name: "Des", aktual: null, proyeksi: -2 },
+// ];
 
 // QuickStatsData interface is now imported from the hook
 
@@ -140,6 +141,14 @@ export default function DashboardUtamaPage() {
     kanwil: selectedKanwil !== "semua" ? selectedKanwil : undefined,
   });
 
+  const {
+    data: realisasiKLPerFungsi,
+    isLoading: isLoadingRealisasiKLPerFungsi,
+    error: realisasiKLPerFungsiError,
+  } = useRealisasiKLPerFungsi({
+    kanwil: selectedKanwil !== "semua" ? selectedKanwil : undefined,
+  });
+
   // Check if realisasi error is authentication related
   const isRealisasiAuthError =
     realisasiError?.message?.includes("authentication") ||
@@ -170,6 +179,12 @@ export default function DashboardUtamaPage() {
     trenRealisasiError?.message?.includes("authentication") ||
     trenRealisasiError?.message?.includes("log in") ||
     trenRealisasiError?.message?.includes("401");
+
+  // Check if realisasi K/L per fungsi error is authentication related
+  const isRealisasiKLPerFungsiAuthError =
+    realisasiKLPerFungsiError?.message?.includes("authentication") ||
+    realisasiKLPerFungsiError?.message?.includes("log in") ||
+    realisasiKLPerFungsiError?.message?.includes("401");
 
   // Helper function to format currency for chart display
   const formatChartCurrency = (value: number): string => {
@@ -486,60 +501,96 @@ export default function DashboardUtamaPage() {
             xAxisPadding={{ left: 24, right: 16 }}
           />
         )}
-        <LineChartComponent
-          data={proyeksiDeficit}
-          title="Proyeksi Defisit/Surplus"
-          description="Estimasi hingga akhir tahun (Triliun Rp)"
-          lines={[
-            { dataKey: "aktual", stroke: "#3b82f6", name: "Aktual" },
-            { dataKey: "proyeksi", stroke: "#f59e0b", name: "Proyeksi" },
-          ]}
-          height={280}
-        />
-      </div>
-
-      {/* Fourth Row: Single Card - Persentase Realisasi K/L */}
-      <div className="grid gap-4">
-        {isPersentaseAuthError ? (
+        {isRealisasiKLPerFungsiAuthError ? (
           <AuthRequiredCard
-            title="Persentase Realisasi K/L"
+            title="Realisasi K/L per Fungsi"
             description="Login required to view this data"
           />
         ) : (
-          <BarChartComponent
+          <MultipleBarChartComponent
             data={
-              persentaseKLData?.map((item) => ({
-                name: item.kode_ba, // use kode_ba for the X-axis label
-                value: item.persentase,
-                kode_ba: item.kode_ba,
-                nama_ba: item.nama_ba,
-              })) || []
+              realisasiKLPerFungsi?.categories?.map((category, index) => {
+                const paguSeries = realisasiKLPerFungsi.series.find(
+                  (s) => s.name === "Pagu DIPA"
+                );
+                const realisasiSeries = realisasiKLPerFungsi.series.find(
+                  (s) => s.name === "Realisasi"
+                );
+                return {
+                  name: category,
+                  "Pagu DIPA": paguSeries?.data[index] || 0,
+                  Realisasi: realisasiSeries?.data[index] || 0,
+                };
+              }) || []
             }
-            title={`Persentase Realisasi K/L${
-              isLoadingPersentaseKL
+            title={`Realisasi K/L per Fungsi${
+              isLoadingRealisasiKLPerFungsi
                 ? " (Loading...)"
-                : persentaseKLError
+                : realisasiKLPerFungsiError
                 ? " (Error - Using Fallback)"
                 : ""
             }`}
             description={
-              persentaseKLError && !isPersentaseAuthError
+              realisasiKLPerFungsiError && !isRealisasiKLPerFungsiAuthError
                 ? "Error loading data - showing fallback data"
-                : "Persentase realisasi terhadap Pagu DIPA per K/L (%)"
+                : "Perbandingan Pagu DIPA vs Realisasi (Triliun Rp)"
             }
-            color="#0ea5e9"
-            height={360}
-            formatValue={(v) => `${Number(v).toFixed(2)}%`}
-            // Show kode_ba - nama_ba in tooltip label
-            formatTooltipLabel={(d) => `${d.kode_ba} - ${d.nama_ba}`}
-            // Rotate x-axis labels to vertical and shrink font
-            xTickAngle={-90}
-            xTickFontSize={10}
-            xAxisHeight={30}
-            showAllXTicks
+            series={[
+              { dataKey: "Pagu DIPA", name: "Pagu DIPA", color: "#3b82f6" },
+              { dataKey: "Realisasi", name: "Realisasi", color: "#10b981" },
+            ]}
+            height={280}
+            formatValue={(value) => {
+              if (value >= 1000000000000) {
+                return `${(value / 1000000000000).toFixed(1)}T`;
+              }
+              if (value >= 1000000000) {
+                return `${(value / 1000000000).toFixed(1)}M`;
+              }
+              return value.toLocaleString("id-ID");
+            }}
           />
         )}
       </div>
+      {isPersentaseAuthError ? (
+        <AuthRequiredCard
+          title="Persentase Realisasi K/L"
+          description="Login required to view this data"
+        />
+      ) : (
+        <BarChartComponent
+          data={
+            persentaseKLData?.map((item) => ({
+              name: item.kode_ba, // use kode_ba for the X-axis label
+              value: item.persentase,
+              kode_ba: item.kode_ba,
+              nama_ba: item.nama_ba,
+            })) || []
+          }
+          title={`Persentase Realisasi K/L${
+            isLoadingPersentaseKL
+              ? " (Loading...)"
+              : persentaseKLError
+              ? " (Error - Using Fallback)"
+              : ""
+          }`}
+          description={
+            persentaseKLError && !isPersentaseAuthError
+              ? "Error loading data - showing fallback data"
+              : "Persentase realisasi terhadap Pagu DIPA per K/L (%)"
+          }
+          color="#0ea5e9"
+          height={360}
+          formatValue={(v) => `${Number(v).toFixed(2)}%`}
+          // Show kode_ba - nama_ba in tooltip label
+          formatTooltipLabel={(d) => `${d.kode_ba} - ${d.nama_ba}`}
+          // Rotate x-axis labels to vertical and shrink font
+          xTickAngle={-90}
+          xTickFontSize={10}
+          xAxisHeight={30}
+          showAllXTicks
+        />
+      )}
     </div>
   );
 }
