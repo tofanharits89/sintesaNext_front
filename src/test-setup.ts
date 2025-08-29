@@ -164,3 +164,24 @@ declare global {
 }
 
 (global as any).testUtils = testUtils;
+
+// Jest compatibility shim for Vitest
+// Map common Jest APIs to Vitest equivalents so legacy tests work without refactor
+// This provides runtime compatibility (types may still come from Vitest when imported explicitly)
+const jestLike = {
+  fn: vi.fn,
+  mock: vi.mock,
+  spyOn: vi.spyOn,
+  clearAllMocks: vi.clearAllMocks,
+  resetAllMocks: vi.resetAllMocks,
+  restoreAllMocks: vi.restoreAllMocks,
+  useFakeTimers: vi.useFakeTimers,
+  useRealTimers: vi.useRealTimers,
+  advanceTimersByTime: vi.advanceTimersByTime,
+  setSystemTime: vi.setSystemTime,
+} as const;
+
+// Attach to globalThis as `jest` if not already defined
+if (!(globalThis as any).jest) {
+  (globalThis as any).jest = jestLike;
+}

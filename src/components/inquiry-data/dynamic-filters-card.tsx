@@ -74,6 +74,10 @@ export function DynamicFiltersCard({
 
   // Sort active filters based on predefined order
   const sortedActiveFilters = normalizeActiveFilters(activeFilters);
+  const visibleActiveFilters = React.useMemo(
+    () => sortedActiveFilters.filter((k) => !hiddenFilterKeys.includes(k)),
+    [sortedActiveFilters, hiddenFilterKeys]
+  );
 
   const openModal = (modal: keyof typeof modals) => {
     setModals((prev) => ({ ...prev, [modal]: true }));
@@ -121,13 +125,13 @@ export function DynamicFiltersCard({
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Active Filter Cards */}
-        {activeFilters.length > 0 ? (
+        {visibleActiveFilters.length > 0 ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-medium text-muted-foreground">
-                Filter yang Aktif ({activeFilters.length})
+                Filter yang Aktif ({visibleActiveFilters.length})
               </h3>
-              {activeFilters.length > 0 && (
+              {visibleActiveFilters.length > 0 && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -139,18 +143,16 @@ export function DynamicFiltersCard({
               )}
             </div>
             <div className="space-y-4">
-              {sortedActiveFilters
-                .filter((k) => !hiddenFilterKeys.includes(k))
-                .map((filterKey) => (
-                  <EnhancedFilterCard
-                    key={filterKey}
-                    filterKey={filterKey}
-                    filterLabel={getFilterLabel(filterKey)}
-                    onRemove={() => handleRemoveFilter(filterKey)}
-                    activeFilterValues={filterValues}
-                    onFilterChange={onFilterChange}
-                  />
-                ))}
+              {visibleActiveFilters.map((filterKey) => (
+                <EnhancedFilterCard
+                  key={filterKey}
+                  filterKey={filterKey}
+                  filterLabel={getFilterLabel(filterKey)}
+                  onRemove={() => handleRemoveFilter(filterKey)}
+                  activeFilterValues={filterValues}
+                  onFilterChange={onFilterChange}
+                />
+              ))}
             </div>
           </div>
         ) : (

@@ -38,6 +38,114 @@ const TABLE_MAPPING = {
 };
 
 import { getFilterConfigMap } from "@/components/inquiry-data/filterRegistry";
+import {
+  getTematikCategory,
+  getCategoryQueryConfig,
+  getCategoryMandatoryColumns,
+} from "@/components/inquiry-data/categoryRegistry";
+
+// Report type behavior configuration for modularity & scalability
+const REPORTS_EXCLUDE_PAGU_DIPA = new Set([
+  "pergerakan_pagu_bulanan",
+  "pergerakan_blokir_bulanan",
+  "pergerakan_blokir_bulanan_per_jenis",
+]);
+
+const REPORTS_ADD_BLOKIR_AFTER_REAL = new Set(["pagu_apbn", "pagu_realisasi"]);
+
+const REPORTS_MANDATORY_GROUPBY_BLOKIR_JENIS = new Set([
+  "pergerakan_blokir_bulanan_per_jenis",
+]);
+
+const REPORTS_VOLUME_OUTPUT = new Set(["volume_output_kegiatan"]);
+
+const MONTH_NAMES = [
+  "JAN",
+  "FEB",
+  "MAR",
+  "APR",
+  "MEI",
+  "JUN",
+  "JUL",
+  "AGS",
+  "SEP",
+  "OKT",
+  "NOV",
+  "DES",
+] as const;
+
+const SPECIAL_TABLE_NAME_BUILDERS: Record<
+  string,
+  (thang: string, baseTable: string) => string
+> = {
+  pergerakan_blokir_bulanan_per_jenis: (thang) =>
+    `monev${thang}.pa_pagu_blokir_akun_${thang}_bulanan`,
+  volume_output_kegiatan: (thang, baseTable) =>
+    `monev${thang}.${baseTable}_${thang}_new`,
+};
+
+// Central registry for report-type behavior (Phase 2)
+// This registry can be extended to describe each tipeLaporan’s behavior declaratively.
+// The defaults still come from the Sets above to preserve behavior even if a type is missing here.
+interface ReportTypeConfig {
+  includePaguDipa?: boolean; // defaults: !REPORTS_EXCLUDE_PAGU_DIPA
+  addBlokirAfterReal?: boolean; // defaults: REPORTS_ADD_BLOKIR_AFTER_REAL
+  requiresGroupByBlokirJenis?: boolean; // defaults: REPORTS_MANDATORY_GROUPBY_BLOKIR_JENIS
+  isVolumeOutput?: boolean; // defaults: REPORTS_VOLUME_OUTPUT
+  tableNameBuilder?: (thang: string, baseTable: string) => string; // defaults: SPECIAL_TABLE_NAME_BUILDERS
+}
+
+const REPORT_TYPE_REGISTRY: Record<string, ReportTypeConfig> = {
+  pagu_apbn: {
+    includePaguDipa: true,
+    addBlokirAfterReal: true,
+  },
+  pagu_realisasi: {
+    includePaguDipa: true,
+    addBlokirAfterReal: true,
+  },
+  pagu_realisasi_bulanan: {
+    includePaguDipa: true,
+  },
+  pergerakan_pagu_bulanan: {
+    includePaguDipa: false,
+  },
+  pergerakan_blokir_bulanan: {
+    includePaguDipa: false,
+  },
+  pergerakan_blokir_bulanan_per_jenis: {
+    includePaguDipa: false,
+    requiresGroupByBlokirJenis: true,
+    tableNameBuilder: (thang) =>
+      `monev${thang}.pa_pagu_blokir_akun_${thang}_bulanan`,
+  },
+  volume_output_kegiatan: {
+    includePaguDipa: true,
+    isVolumeOutput: true,
+    tableNameBuilder: (thang, baseTable) =>
+      `monev${thang}.${baseTable}_${thang}_new`,
+  },
+};
+
+function getReportTypeConfig(tipeLaporan: string): Required<ReportTypeConfig> {
+  const base: Required<ReportTypeConfig> = {
+    includePaguDipa: !REPORTS_EXCLUDE_PAGU_DIPA.has(tipeLaporan),
+    addBlokirAfterReal: REPORTS_ADD_BLOKIR_AFTER_REAL.has(tipeLaporan),
+    requiresGroupByBlokirJenis:
+      REPORTS_MANDATORY_GROUPBY_BLOKIR_JENIS.has(tipeLaporan),
+    isVolumeOutput: REPORTS_VOLUME_OUTPUT.has(tipeLaporan),
+    tableNameBuilder:
+      SPECIAL_TABLE_NAME_BUILDERS[tipeLaporan] ||
+      ((thang: string, baseTable: string) =>
+        `monev${thang}.${baseTable}_${thang}`),
+  };
+  const override = REPORT_TYPE_REGISTRY[tipeLaporan] || {};
+  return {
+    ...base,
+    ...override,
+    tableNameBuilder: override.tableNameBuilder || base.tableNameBuilder,
+  } as Required<ReportTypeConfig>;
+}
 
 // Filter configuration mapping (derived from central registry)
 const FILTER_CONFIG: Record<string, FilterConfig> =
@@ -56,14 +164,23 @@ export function useInquiryQueryBuilder() {
 
   // Build the main table name based on report parameters
   const buildTableName = useCallback(
-    (reportParams: { tahun: string; tipeLaporan: string }) => {
+    (reportParams: {
+      tahun: string;
+      tipeLaporan: string;
+      tematikKategori?: string;
+    }) => {
       const thang = reportParams.tahun;
 
       // Tematik-specific table mapping based on selected category
-      const tematikKategori = (reportParams as any).tematikKategori as
-        | string
-        | undefined;
+      const tematikKategori = reportParams.tematikKategori;
       if (tematikKategori) {
+        const categoryConfig = getCategoryQueryConfig(tematikKategori);
+        if (categoryConfig) {
+          const suffix = categoryConfig.baseTableSuffix || "";
+          return `monev${thang}.${categoryConfig.tableName}_${thang}${suffix}`;
+        }
+
+        // Fallback to legacy logic if category not found in registry
         if (tematikKategori === "bantuan_pemerintah") {
           return `monev${thang}.pagu_real_detail_harian_${thang}`;
         }
@@ -80,16 +197,8 @@ export function useInquiryQueryBuilder() {
         throw new Error(`Unknown report type: ${reportParams.tipeLaporan}`);
       }
 
-      // Special case for pergerakan_blokir_bulanan_per_jenis table name format
-      if (reportParams.tipeLaporan === "pergerakan_blokir_bulanan_per_jenis") {
-        return `monev${thang}.pa_pagu_blokir_akun_${thang}_bulanan`;
-      }
-
-      // Special table name for volume_output_kegiatan: pagu_output_{tahun}_new -> pagu_output_{tahun}_new (prefix after base)
-      if (reportParams.tipeLaporan === "volume_output_kegiatan") {
-        return `monev${thang}.${baseTable}_${thang}_new`;
-      }
-      return `monev${thang}.${baseTable}_${thang}`;
+      const cfg = getReportTypeConfig(reportParams.tipeLaporan);
+      return cfg.tableNameBuilder(thang, baseTable);
     },
     []
   );
@@ -109,6 +218,7 @@ export function useInquiryQueryBuilder() {
       const selectColumns: string[] = [];
       const joinTables: string[] = [];
       const joinedTables = new Set<string>(); // Track which tables we've already joined
+      const cfg = getReportTypeConfig(reportParams.tipeLaporan);
 
       // Process regular filters (excluding cutOff which is handled specially)
       activeFilters.forEach((filterKey) => {
@@ -299,6 +409,26 @@ export function useInquiryQueryBuilder() {
       const pembulatan = reportParams.pembulatan || "satuan";
       const divisor = getPembulatanDivisor(pembulatan);
 
+      // Add category-specific mandatory columns for tematik queries
+      const tematikKategori = (reportParams as { tematikKategori?: string })
+        .tematikKategori;
+      if (tematikKategori) {
+        const mandatoryColumns = getCategoryMandatoryColumns(tematikKategori);
+        const categoryMandatoryColumns = mandatoryColumns
+          .sort((a, b) => a.order - b.order)
+          .map((col) => {
+            // Replace {divisor} placeholder in SQL expressions
+            const sqlExpression = col.sqlExpression.replace(
+              /\{divisor\}/g,
+              divisor.toString()
+            );
+            return `${sqlExpression} AS ${col.key}`;
+          });
+
+        // Insert mandatory columns after filter columns but before standard monetary columns
+        selectColumns.push(...categoryMandatoryColumns);
+      }
+
       // Get cut-off month from filterValues (default to 12 if not specified)
       const cutOffMonth = filterValues.cutOff?.selection || "12";
       const cutOffNum = parseInt(cutOffMonth);
@@ -319,17 +449,10 @@ export function useInquiryQueryBuilder() {
         selectColumns.push(
           `ROUND(SUM(main.pagu_dipa) / ${divisor}, 0) AS PAGU_DIPA`
         );
-      } else if (
-        reportParams.tipeLaporan !== "pergerakan_pagu_bulanan" &&
-        reportParams.tipeLaporan !== "pergerakan_blokir_bulanan" &&
-        reportParams.tipeLaporan !== "pergerakan_blokir_bulanan_per_jenis"
-      ) {
-        // For other report types (except pergerakan_pagu_bulanan and pergerakan_blokir_bulanan), keep the original PAGU_DIPA column
-        // pergerakan_pagu_bulanan doesn't need PAGU_DIPA since pagu is broken down by monthly columns
-        // pergerakan_blokir_bulanan doesn't need PAGU_DIPA since blokir is broken down by monthly columns
-
+      } else if (!REPORTS_EXCLUDE_PAGU_DIPA.has(reportParams.tipeLaporan)) {
+        // For other report types (except excluded), keep the original PAGU_DIPA column
         // Special handling for volume_output_kegiatan columns
-        if (reportParams.tipeLaporan === "volume_output_kegiatan") {
+        if (REPORTS_VOLUME_OUTPUT.has(reportParams.tipeLaporan)) {
           // sat and SUM(vol) before PAGU
           // Insert before PAGU_DIPA so they appear right before it in the output
           selectColumns.push(`main.sat AS sat`);
@@ -346,25 +469,9 @@ export function useInquiryQueryBuilder() {
         // For Tematik and tipe laporan 3 (Pagu Realisasi Bulanan): always include PAGU and monthly REALISASI columns
         const jenisAkumulasi = reportParams.jenisAkumulasi || "non_akumulatif";
 
-        // Month names mapping
-        const monthNames = [
-          "JAN",
-          "FEB",
-          "MAR",
-          "APR",
-          "MEI",
-          "JUN",
-          "JUL",
-          "AGS",
-          "SEP",
-          "OKT",
-          "NOV",
-          "DES",
-        ];
-
         // Generate monthly columns up to cutOff month
         for (let month = 1; month <= cutOffNum; month++) {
-          const monthName = monthNames[month - 1];
+          const monthName = MONTH_NAMES[month - 1];
 
           if (jenisAkumulasi === "akumulatif") {
             // Akumulatif: each month sums from January until that month
@@ -388,25 +495,8 @@ export function useInquiryQueryBuilder() {
         selectColumns.push(`ROUND(SUM(main.blokir) / ${divisor}, 0) AS BLOKIR`);
       } else if (reportParams.tipeLaporan === "pergerakan_pagu_bulanan") {
         // For tipe laporan 4 (Pergerakan Pagu Bulanan), show monthly pagu columns up to cutOff
-        // Month names mapping
-        const monthNames = [
-          "JAN",
-          "FEB",
-          "MAR",
-          "APR",
-          "MEI",
-          "JUN",
-          "JUL",
-          "AGS",
-          "SEP",
-          "OKT",
-          "NOV",
-          "DES",
-        ];
-
-        // Generate monthly pagu columns up to cutOff month
         for (let month = 1; month <= cutOffNum; month++) {
-          const monthName = monthNames[month - 1];
+          const monthName = MONTH_NAMES[month - 1];
           selectColumns.push(
             `ROUND(SUM(pagu${month}) / ${divisor}, 0) AS ${monthName}`
           );
@@ -414,25 +504,8 @@ export function useInquiryQueryBuilder() {
         // No REALISASI column for pergerakan_pagu_bulanan as it only fetches pagu data
       } else if (reportParams.tipeLaporan === "pergerakan_blokir_bulanan") {
         // For tipe laporan 5 (Pergerakan Blokir Bulanan), show monthly blokir columns up to cutOff
-        // Month names mapping
-        const monthNames = [
-          "JAN",
-          "FEB",
-          "MAR",
-          "APR",
-          "MEI",
-          "JUN",
-          "JUL",
-          "AGS",
-          "SEP",
-          "OKT",
-          "NOV",
-          "DES",
-        ];
-
-        // Generate monthly blokir columns up to cutOff month
         for (let month = 1; month <= cutOffNum; month++) {
-          const monthName = monthNames[month - 1];
+          const monthName = MONTH_NAMES[month - 1];
           selectColumns.push(
             `ROUND(SUM(blokir${month}) / ${divisor}, 0) AS ${monthName}`
           );
@@ -446,26 +519,9 @@ export function useInquiryQueryBuilder() {
         selectColumns.push(`main.kdblokir AS kdblokir_kode`);
         selectColumns.push(`main.nmblokir AS nmblokir_uraian`);
 
-        // Month names mapping
-        const monthNames = [
-          "JAN",
-          "FEB",
-          "MAR",
-          "APR",
-          "MEI",
-          "JUN",
-          "JUL",
-          "AGS",
-          "SEP",
-          "OKT",
-
-          "NOV",
-          "DES",
-        ];
-
         // Generate monthly blokir columns up to cutOff month
         for (let month = 1; month <= cutOffNum; month++) {
-          const monthName = monthNames[month - 1];
+          const monthName = MONTH_NAMES[month - 1];
           selectColumns.push(
             `ROUND(SUM(blokir${month}) / ${divisor}, 0) AS ${monthName}`
           );
@@ -474,7 +530,7 @@ export function useInquiryQueryBuilder() {
       } else {
         // For other report types
         // For volume_output_kegiatan, append monthly columns and OS/KET
-        if (reportParams.tipeLaporan === "volume_output_kegiatan") {
+        if (REPORTS_VOLUME_OUTPUT.has(reportParams.tipeLaporan)) {
           const monthly: Array<[string, string]> = [];
           for (let m = 1; m <= cutOffNum; m++) {
             const mnames = [
@@ -514,16 +570,11 @@ export function useInquiryQueryBuilder() {
           selectColumns.push(`main.os AS os`);
           selectColumns.push(`main.ket AS ket`);
         } else {
-          // Default: single REALISASI column based on cut-off and pembulatan
+          // Default: single REALISASI + optional BLOKIR after REALISASI
           selectColumns.push(
             `ROUND(SUM(${realizationSum}) / ${divisor}, 0) AS REALISASI`
           );
-
-          // Add BLOKIR column after REALISASI for Pagu APBN and Pagu Realisasi reports
-          if (
-            reportParams.tipeLaporan === "pagu_apbn" ||
-            reportParams.tipeLaporan === "pagu_realisasi"
-          ) {
+          if (cfg.addBlokirAfterReal) {
             selectColumns.push(
               `ROUND(SUM(main.blokir) / ${divisor}, 0) AS BLOKIR`
             );
@@ -538,12 +589,29 @@ export function useInquiryQueryBuilder() {
 
   // Build WHERE clause
   const buildWhereClause = useCallback(
-    (activeFilters: string[], filterValues: Record<string, FilterValue>) => {
+    (
+      activeFilters: string[],
+      filterValues: Record<string, FilterValue>,
+      reportParams?: {
+        tahun?: string;
+        tipeLaporan?: string;
+        tematikKategori?: string;
+        pembulatan?: string;
+        jenisAkumulasi?: string;
+      }
+    ) => {
       const whereConditions: string[] = [];
 
-      // Year is only used for table name, not in WHERE clause
+      // Add category-specific WHERE conditions for tematik queries
+      const tematikKategori = reportParams?.tematikKategori;
+      if (tematikKategori) {
+        const categoryConfig = getCategoryQueryConfig(tematikKategori);
+        if (categoryConfig?.whereConditions) {
+          whereConditions.push(...categoryConfig.whereConditions);
+        }
+      }
 
-      // Mandatory: Exclude kdpn '00' for Prioritas Nasional
+      // Legacy: Mandatory: Exclude kdpn '00' for Prioritas Nasional
       // We infer PN context if the dedicated PN filter is present
       if (activeFilters.includes("jenisPn")) {
         whereConditions.push("main.kdpn <> '00'");
@@ -757,7 +825,11 @@ export function useInquiryQueryBuilder() {
           filterValues,
           reportParams
         );
-        const whereConditions = buildWhereClause(activeFilters, filterValues);
+        const whereConditions = buildWhereClause(
+          activeFilters,
+          filterValues,
+          reportParams
+        );
         const groupByColumns = buildGroupByClause(
           activeFilters,
           filterValues,

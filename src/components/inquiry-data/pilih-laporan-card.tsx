@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getTematikCategoryOptions } from "./categoryRegistry";
 
 interface PilihLaporanCardProps {
   reportParams: {
@@ -56,8 +57,11 @@ export function PilihLaporanCard({
     },
   ];
 
+  // Use centralized category registry for tematik mode
   const tipeLaporanOptions =
-    customTipeLaporanOptions || defaultTipeLaporanOptions;
+    mode === "tematik"
+      ? customTipeLaporanOptions || getTematikCategoryOptions()
+      : customTipeLaporanOptions || defaultTipeLaporanOptions;
 
   const pembulatanOptions = [
     { value: "satuan", label: "Satuan" },
@@ -73,7 +77,7 @@ export function PilihLaporanCard({
   ];
 
   const handleChange = (field: string, value: string) => {
-    setReportParams((prev) => ({
+    setReportParams((prev: any) => ({
       ...prev,
       [field]: value,
     }));

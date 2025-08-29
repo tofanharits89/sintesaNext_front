@@ -150,46 +150,45 @@
   {
     "kdlokasi": "39",
     "nmlokasi": "PAPUA BARAT DAYA"
+  },
+  {
+    "kdlokasi": "50",
+    "nmlokasi": "PERWAKILAN RI DI LUAR NEGERI"
+  },
+  {
+    "kdlokasi": "51",
+    "nmlokasi": "AMERIKA UTARA"
+  },
+  {
+    "kdlokasi": "52",
+    "nmlokasi": "AMERIKA SELATAN"
+  },
+  {
+    "kdlokasi": "53",
+    "nmlokasi": "EROPA TIMUR DAN UTARA"
+  },
+  {
+    "kdlokasi": "54",
+    "nmlokasi": "EROPA BARAT"
+  },
+  {
+    "kdlokasi": "55",
+    "nmlokasi": "AFRIKA"
+  },
+  {
+    "kdlokasi": "56",
+    "nmlokasi": "ASIA TENGAH DAN TIMUR"
+  },
+  {
+    "kdlokasi": "57",
+    "nmlokasi": "ASIA PASIFIK"
+  },
+  {
+    "kdlokasi": "58",
+    "nmlokasi": "ASIA TENGGARA"
+  },
+  {
+    "kdlokasi": "59",
+    "nmlokasi": "TIMUR TENGAH"
   }
 ]
-
-// {
-//     "kdlokasi": "50",
-//     "nmlokasi": "PERWAKILAN RI DI LUAR NEGERI"
-//   },
-//   {
-//     "kdlokasi": "51",
-//     "nmlokasi": "AMERIKA UTARA"
-//   },
-//   {
-//     "kdlokasi": "52",
-//     "nmlokasi": "AMERIKA SELATAN"
-//   },
-//   {
-//     "kdlokasi": "53",
-//     "nmlokasi": "EROPA TIMUR DAN UTARA"
-//   },
-//   {
-//     "kdlokasi": "54",
-//     "nmlokasi": "EROPA BARAT"
-//   },
-//   {
-//     "kdlokasi": "55",
-//     "nmlokasi": "AFRIKA"
-//   },
-//   {
-//     "kdlokasi": "56",
-//     "nmlokasi": "ASIA TENGAH DAN TIMUR"
-//   },
-//   {
-//     "kdlokasi": "57",
-//     "nmlokasi": "ASIA PASIFIK"
-//   },
-//   {
-//     "kdlokasi": "58",
-//     "nmlokasi": "ASIA TENGGARA"
-//   },
-//   {
-//     "kdlokasi": "59",
-//     "nmlokasi": "TIMUR TENGAH"
-//   }

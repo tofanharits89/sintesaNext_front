@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { useInquiryDataApi, FilterValue } from "@/hooks/use-inquiry-data-api";
 import { normalizeActiveFilters } from "../filterRegistry";
+import { getCategoryLabel } from "../categoryRegistry";
 
 interface TayangModalProps {
   open: boolean;
@@ -425,15 +426,8 @@ export function TayangModal({
   };
 
   const getTematikKategoriLabel = (kategori?: string): string => {
-    const map: Record<string, string> = {
-      prioritas_nasional: "Prioritas Nasional",
-      // add other tematik categories here when available
-    };
-    return (
-      (kategori && map[kategori]) ||
-      kategori ||
-      getReportTypeLabel(reportParams.tipeLaporan)
-    );
+    if (!kategori) return "";
+    return getCategoryLabel(kategori);
   };
 
   const toggleFullscreen = () => {

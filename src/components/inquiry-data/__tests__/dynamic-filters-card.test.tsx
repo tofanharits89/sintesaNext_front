@@ -6,22 +6,46 @@ import { useInquiryDataApi } from "@/hooks/use-inquiry-data-api";
 import type { FilterValue } from "@/hooks/use-inquiry-data-api";
 
 // Mock dependencies
-jest.mock("@/lib/use-current-user", () => ({
-  useCurrentUser: jest.fn(),
+import { vi } from "vitest";
+
+vi.mock("@/lib/use-current-user", () => ({
+  useCurrentUser: vi.fn(),
 }));
 
-jest.mock("@/hooks/use-inquiry-data-api", () => ({
-  useInquiryDataApi: jest.fn(),
+vi.mock("@/hooks/use-inquiry-data-api", () => ({
+  useInquiryDataApi: vi.fn(),
 }));
 
-jest.mock("../modals/simpan-modal", () => ({
-  SimpanModal: ({ open, activeFilters, reportParams, filterValues, onOpenChange }: any) => (
+vi.mock("../modals/simpan-modal", () => ({
+  SimpanModal: ({
+    open,
+    activeFilters,
+    reportParams,
+    filterValues,
+    onOpenChange,
+  }: {
+    open: boolean;
+    activeFilters: string[];
+    reportParams: {
+      tahun: string;
+      tipeLaporan: string;
+      pembulatan: string;
+    };
+    filterValues: Record<string, FilterValue>;
+    onOpenChange: (open: boolean) => void;
+  }) => (
     <div data-testid="simpan-modal">
       {open && (
         <div>
-          <div data-testid="modal-active-filters">{JSON.stringify(activeFilters)}</div>
-          <div data-testid="modal-report-params">{JSON.stringify(reportParams)}</div>
-          <div data-testid="modal-filter-values">{JSON.stringify(filterValues)}</div>
+          <div data-testid="modal-active-filters">
+            {JSON.stringify(activeFilters)}
+          </div>
+          <div data-testid="modal-report-params">
+            {JSON.stringify(reportParams)}
+          </div>
+          <div data-testid="modal-filter-values">
+            {JSON.stringify(filterValues)}
+          </div>
           <button onClick={() => onOpenChange(false)}>Close Modal</button>
         </div>
       )}
@@ -29,24 +53,27 @@ jest.mock("../modals/simpan-modal", () => ({
   ),
 }));
 
-jest.mock("../modals/tayang-modal", () => ({
+vi.mock("../modals/tayang-modal", () => ({
   TayangModal: () => <div data-testid="tayang-modal" />,
 }));
 
-jest.mock("../modals/whatsapp-modal", () => ({
+vi.mock("../modals/whatsapp-modal", () => ({
   WhatsappModal: () => <div data-testid="whatsapp-modal" />,
 }));
 
-jest.mock("../modals/lihat-sql-modal", () => ({
+vi.mock("../modals/lihat-sql-modal", () => ({
   LihatSqlModal: () => <div data-testid="lihat-sql-modal" />,
 }));
 
-jest.mock("../query-loader-button", () => ({
-  QueryLoaderButton: () => <div data-testid="query-loader-button" />,
-}));
 
-jest.mock("../enhanced-filter-card", () => ({
-  EnhancedFilterCard: ({ filterKey, onRemove }: any) => (
+vi.mock("../enhanced-filter-card", () => ({
+  EnhancedFilterCard: ({
+    filterKey,
+    onRemove,
+  }: {
+    filterKey: string;
+    onRemove: () => void;
+  }) => (
     <div data-testid={`filter-card-${filterKey}`}>
       <span>{filterKey}</span>
       <button onClick={onRemove} data-testid={`remove-${filterKey}`}>
@@ -56,13 +83,13 @@ jest.mock("../enhanced-filter-card", () => ({
   ),
 }));
 
-jest.mock("../filterRegistry", () => ({
+vi.mock("../filterRegistry", () => ({
   getFilterLabel: (key: string) => `Label for ${key}`,
   normalizeActiveFilters: (filters: string[]) => filters,
 }));
 
-const mockUseCurrentUser = useCurrentUser as jest.MockedFunction<typeof useCurrentUser>;
-const mockUseInquiryDataApi = useInquiryDataApi as jest.MockedFunction<typeof useInquiryDataApi>;
+const mockUseCurrentUser = vi.mocked(useCurrentUser);
+const mockUseInquiryDataApi = vi.mocked(useInquiryDataApi);
 
 describe("DynamicFiltersCard", () => {
   const mockProps = {
@@ -72,8 +99,8 @@ describe("DynamicFiltersCard", () => {
       tipeLaporan: "bulanan",
       pembulatan: "ribuan",
     },
-    onRemoveFilter: jest.fn(),
-    onClearAllFilters: jest.fn(),
+    onRemoveFilter: vi.fn(),
+    onClearAllFilters: vi.fn(),
     filterValues: {
       filter1: {
         selection: "value1",
@@ -88,22 +115,24 @@ describe("DynamicFiltersCard", () => {
         jenisTampilan: "uraian" as const,
       },
     } as Record<string, FilterValue>,
-    onFilterChange: jest.fn(),
+    onFilterChange: vi.fn(),
     queryLoader: {
       hasUnsavedChanges: false,
-      loadQuery: jest.fn(),
-      validateQueryCompatibility: jest.fn().mockReturnValue({ isValid: true, errors: [] }),
+      loadQuery: vi.fn(),
+      validateQueryCompatibility: vi
+        .fn()
+        .mockReturnValue({ isValid: true, errors: [] }),
     },
   };
 
   const mockApiHook = {
-    downloadCSV: jest.fn(),
-    downloadExcel: jest.fn(),
+    downloadCSV: vi.fn(),
+    downloadExcel: vi.fn(),
     isLoading: false,
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockUseCurrentUser.mockReturnValue({
       currentUser: {
         id: "user-id",
@@ -112,17 +141,19 @@ describe("DynamicFiltersCard", () => {
         email: "test@example.com",
       },
     });
-    mockUseInquiryDataApi.mockReturnValue(mockApiHook as any);
+    mockUseInquiryDataApi.mockReturnValue(
+      mockApiHook as ReturnType<typeof useInquiryDataApi>
+    );
   });
 
   it("renders active filters and action buttons", () => {
     render(<DynamicFiltersCard {...mockProps} />);
 
-    expect(screen.getByText("Filter Aktif dan Aksi")).toBeInTheDocument();
+    void expect(screen.getByText("Filter Aktif dan Aksi")).toBeInTheDocument();
     expect(screen.getByText("Filter yang Aktif (2)")).toBeInTheDocument();
     expect(screen.getByTestId("filter-card-filter1")).toBeInTheDocument();
     expect(screen.getByTestId("filter-card-filter2")).toBeInTheDocument();
-    
+
     // Action buttons
     expect(screen.getByText("Tayang")).toBeInTheDocument();
     expect(screen.getByText("Download Excel")).toBeInTheDocument();
@@ -187,7 +218,9 @@ describe("DynamicFiltersCard", () => {
 
     // Verify that complex filter values are passed correctly
     const modalFilterValues = screen.getByTestId("modal-filter-values");
-    expect(modalFilterValues).toHaveTextContent(JSON.stringify(complexFilterValues));
+    expect(modalFilterValues).toHaveTextContent(
+      JSON.stringify(complexFilterValues)
+    );
   });
 
   it("maintains backward compatibility when filterValues is empty", async () => {
@@ -243,22 +276,6 @@ describe("DynamicFiltersCard", () => {
     expect(screen.queryByText("Lihat SQL")).not.toBeInTheDocument();
   });
 
-  it("renders query loader button when queryLoader prop is provided", () => {
-    render(<DynamicFiltersCard {...mockProps} />);
-
-    expect(screen.getByTestId("query-loader-button")).toBeInTheDocument();
-  });
-
-  it("does not render query loader button when queryLoader prop is not provided", () => {
-    const propsWithoutQueryLoader = {
-      ...mockProps,
-      queryLoader: undefined,
-    };
-
-    render(<DynamicFiltersCard {...propsWithoutQueryLoader} />);
-
-    expect(screen.queryByTestId("query-loader-button")).not.toBeInTheDocument();
-  });
 
   it("calls onRemoveFilter when filter remove button is clicked", () => {
     render(<DynamicFiltersCard {...mockProps} />);
@@ -287,8 +304,14 @@ describe("DynamicFiltersCard", () => {
 
     render(<DynamicFiltersCard {...propsWithNoFilters} />);
 
-    expect(screen.getByText("Tidak ada filter yang aktif.")).toBeInTheDocument();
-    expect(screen.getByText('Aktifkan filter pada kartu "Filter Parameters" di atas.')).toBeInTheDocument();
+    expect(
+      screen.getByText("Tidak ada filter yang aktif.")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Aktifkan filter pada kartu "Filter Parameters" di atas.'
+      )
+    ).toBeInTheDocument();
   });
 
   it("handles download operations correctly", async () => {
@@ -326,5 +349,66 @@ describe("DynamicFiltersCard", () => {
     expect(screen.getByText("Loading...")).toBeInTheDocument();
     expect(screen.getByText("Download Excel")).toBeDisabled();
     expect(screen.getByText("Download CSV")).toBeDisabled();
+  });
+
+  // NEW TESTS: hiddenFilterKeys behavior
+  it("renders only visible filters and correct count when some active filters are hidden", () => {
+    const propsWithHidden = {
+      ...mockProps,
+      activeFilters: ["filter1", "filter2", "hiddenA"],
+      filterValues: {
+        ...mockProps.filterValues,
+        hiddenA: {
+          selection: "valueHidden",
+          kondisiCode: "eq",
+          mengandungKata: "",
+          jenisTampilan: "kode" as const,
+        },
+      },
+      hiddenFilterKeys: ["hiddenA"],
+    } as any;
+
+    render(<DynamicFiltersCard {...propsWithHidden} />);
+
+    // Count should reflect only visible filters
+    expect(screen.getByText("Filter yang Aktif (2)")).toBeInTheDocument();
+
+    // Visible filters are rendered
+    expect(screen.getByTestId("filter-card-filter1")).toBeInTheDocument();
+    expect(screen.getByTestId("filter-card-filter2")).toBeInTheDocument();
+
+    // Hidden filter should not be rendered
+    expect(screen.queryByTestId("filter-card-hiddenA")).not.toBeInTheDocument();
+  });
+
+  it("shows empty state and hides 'Hapus Semua' when all active filters are hidden", () => {
+    const propsAllHidden = {
+      ...mockProps,
+      activeFilters: ["hiddenA"],
+      filterValues: {
+        hiddenA: {
+          selection: "valueHidden",
+          kondisiCode: "eq",
+          mengandungKata: "",
+          jenisTampilan: "kode" as const,
+        },
+      },
+      hiddenFilterKeys: ["hiddenA"],
+    } as any;
+
+    render(<DynamicFiltersCard {...propsAllHidden} />);
+
+    // Empty state appears
+    expect(
+      screen.getByText("Tidak ada filter yang aktif.")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Aktifkan filter pada kartu "Filter Parameters" di atas.'
+      )
+    ).toBeInTheDocument();
+
+    // "Hapus Semua" button should not be present
+    expect(screen.queryByText("Hapus Semua")).not.toBeInTheDocument();
   });
 });

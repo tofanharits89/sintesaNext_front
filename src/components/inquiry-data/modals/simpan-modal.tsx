@@ -24,6 +24,11 @@ import {
   savedQueryNotifications,
   savedQueryWarnings,
 } from "@/utils/notifications";
+import { normalizeActiveFilters } from "../filterRegistry";
+import {
+  getCategoryLabel,
+  getCategoryMandatoryFilters,
+} from "../categoryRegistry";
 import type { FilterValue, SavedQuery } from "@/types/saved-queries";
 
 interface SimpanModalProps {
@@ -117,9 +122,8 @@ export function SimpanModal({
   };
 
   const validateFilterData = (): string | null => {
-    const isPNTematik =
-      scope === "tematik" &&
-      reportParams.tematikKategori === "prioritas_nasional";
+    const isTematik = scope === "tematik";
+    const currentCategory = reportParams.tematikKategori;
 
     // Filter out unconfigured filters (those with selection="all" and no other values)
     const configuredFilters = activeFilters.filter((filterName) => {
@@ -127,8 +131,8 @@ export function SimpanModal({
       return isFilterConfigured(filterName, filterValue);
     });
 
-    // Check if we have any configured filters. For PN tematik, mandatory cards are allowed even if user didn't touch them.
-    if (configuredFilters.length === 0 && !isPNTematik) {
+    // Check if we have any configured filters. For tematik with mandatory filters, allow even if user didn't configure them.
+    if (configuredFilters.length === 0 && (!isTematik || !currentCategory)) {
       return "Setidaknya satu filter harus dikonfigurasi untuk menyimpan query.";
     }
 
@@ -161,25 +165,24 @@ export function SimpanModal({
       }
     });
 
-    // If Tematik with Prioritas Nasional, ensure PN mandatory filters are included
-    const isPNTematik =
-      scope === "tematik" &&
-      reportParams.tematikKategori === "prioritas_nasional";
-    if (isPNTematik) {
-      const pnKeys = [
-        "jenisPn",
-        "programPrioritas",
-        "kegiatanPrioritas",
-        "proyekPrioritas",
-      ];
-      // Merge PN keys into active filters (dedupe)
+    // If Tematik with any category, ensure mandatory filters are included
+    const isTematik = scope === "tematik";
+    const currentCategory = reportParams.tematikKategori;
+
+    if (isTematik && currentCategory) {
+      const mandatoryFilters = getCategoryMandatoryFilters(currentCategory);
+      const mandatoryKeys = mandatoryFilters.map((f) => f.key);
+
+      // Merge mandatory keys into active filters (dedupe)
       configuredActiveFilters = Array.from(
-        new Set(["cutOff", ...configuredActiveFilters, ...pnKeys])
+        new Set(["cutOff", ...configuredActiveFilters, ...mandatoryKeys])
       );
+
       // Ensure filter values exist (seed defaults if missing)
-      pnKeys.forEach((k) => {
+      mandatoryKeys.forEach((k) => {
         if (!configuredFilterValues[k]) {
-          configuredFilterValues[k] = {
+          const mandatoryFilter = mandatoryFilters.find((f) => f.key === k);
+          configuredFilterValues[k] = mandatoryFilter?.defaultValue || {
             selection: "all",
             kondisiCode: "",
             mengandungKata: "",

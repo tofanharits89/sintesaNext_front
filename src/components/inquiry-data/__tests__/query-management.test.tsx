@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { jest } from '@jest/globals';
+// removed import { jest } from '@jest/globals';
 import { QueryManagement } from '../query-management';
 import { useSavedQueries } from '@/hooks/use-saved-queries';
 import type { SavedQuery } from '@/types/saved-queries';

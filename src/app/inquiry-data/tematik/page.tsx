@@ -19,6 +19,7 @@ import { PilihLaporanCard } from "@/components/inquiry-data/pilih-laporan-card";
 import { FilterParametersCard } from "@/components/inquiry-data/filter-parameters-card";
 import { DynamicFiltersCard } from "@/components/inquiry-data/dynamic-filters-card";
 import { EnhancedFilterCard } from "@/components/inquiry-data/enhanced-filter-card";
+import { CategoryMandatoryFilters } from "@/components/inquiry-data/category-mandatory-filters";
 import { QueryLoaderButton } from "@/components/inquiry-data/query-loader-button";
 import { UnsavedChangesModal } from "@/components/inquiry-data/modals/unsaved-changes-modal";
 import { QueryManagement } from "@/components/inquiry-data/query-management";
@@ -29,9 +30,11 @@ import {
 import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
 import { useSavedQueries } from "@/hooks/use-saved-queries";
 import { useCurrentUser } from "@/lib/use-current-user";
+import { useTematikConfig } from "@/hooks/use-tematik-config";
 import type { FilterValue, SavedQuery } from "@/types/saved-queries";
 import { Settings, Keyboard, RefreshCw, Database } from "lucide-react";
 import { QueryErrorBoundary } from "@/components/ui/query-error-boundary";
+import { getCategoryMandatoryFilters } from "@/components/inquiry-data/categoryRegistry";
 
 export default function TematikPage() {
   // Helper function to get current month
@@ -84,6 +87,9 @@ export default function TematikPage() {
     tematikKategori: "prioritas_nasional", // Default tematik category
   });
 
+  // Use tematik configuration hook
+  const tematikConfig = useTematikConfig(reportParams.tematikKategori);
+
   // Query loader hook for managing query loading functionality
   const queryLoader = useQueryLoader({
     onStateChange: useCallback((newState: QueryBuilderState) => {
@@ -123,23 +129,76 @@ export default function TematikPage() {
     scope: "tematik", // Set scope for tematik page
   });
 
-  // Ensure PN mandatory filters are active when Prioritas Nasional is selected
+  // Track previous category to detect changes
+  const [previousCategory, setPreviousCategory] = useState<string | undefined>(
+    reportParams.tematikKategori
+  );
+
+  // Initialize mandatory filters when category changes
   useEffect(() => {
-    const pnKeys = [
-      "jenisPn",
-      "programPrioritas",
-      "kegiatanPrioritas",
-      "proyekPrioritas",
-    ];
+    // Only run when category actually changes
+    if (previousCategory === reportParams.tematikKategori) {
+      return;
+    }
+
+    // Update previous category
+    setPreviousCategory(reportParams.tematikKategori);
+
+    if (!reportParams.tematikKategori) {
+      return;
+    }
+
+    // Only run if we have a valid category
+    const category = tematikConfig.category;
+    if (!category) {
+      return;
+    }
+
+    const newMandatoryFilterKeys = tematikConfig.getMandatoryFilterKeys();
+    const defaultValues = tematikConfig.getDefaultFilterValues();
+
+    // Determine previous category mandatory filters to remove
+    const prevMandatoryFilterKeys = previousCategory
+      ? getCategoryMandatoryFilters(previousCategory).map((f) => f.key)
+      : [];
+
+    // Remove obsolete mandatory filters from activeFilters, add new mandatory filters, always keep cutOff
     setActiveFilters((prev) => {
-      if (reportParams.tematikKategori === "prioritas_nasional") {
-        const merged = Array.from(new Set(["cutOff", ...prev, ...pnKeys]));
-        return merged;
-      }
-      // If not PN, remove PN-only keys but keep cutOff
-      return prev.filter((k) => !pnKeys.includes(k));
+      const withoutObsoleteMandatory = prev.filter(
+        (key) => !prevMandatoryFilterKeys.includes(key) || newMandatoryFilterKeys.includes(key)
+      );
+      const merged = Array.from(
+        new Set(["cutOff", ...withoutObsoleteMandatory, ...newMandatoryFilterKeys])
+      );
+      return merged.filter((filter) => filter !== "register"); // Always exclude register
     });
-  }, [reportParams.tematikKategori]);
+
+    // Update filterValues: drop obsolete mandatory filters, apply defaults for new mandatory filters
+    setFilterValues((prev) => {
+      const updated = { ...prev, ...defaultValues } as Record<string, FilterValue>;
+      const removedKeys = prevMandatoryFilterKeys.filter(
+        (k) => !newMandatoryFilterKeys.includes(k)
+      );
+      removedKeys.forEach((k) => {
+        if (k in updated) {
+          delete (updated as any)[k];
+        }
+      });
+      return updated;
+    });
+
+    // Apply report type restriction if specified
+    const restrictedReportType = tematikConfig.getReportTypeRestriction();
+    if (
+      restrictedReportType &&
+      reportParams.tipeLaporan !== restrictedReportType
+    ) {
+      setReportParams((prev) => ({
+        ...prev,
+        tipeLaporan: restrictedReportType,
+      }));
+    }
+  }, [reportParams.tematikKategori, previousCategory]);
 
   // Create stable references for queryLoader functions to prevent unnecessary re-renders
   const stableLoadQuery = useCallback(
@@ -149,13 +208,14 @@ export default function TematikPage() {
     [queryLoader.loadQuery]
   );
 
-  // Update change detection when state changes
-  const updateChangeDetectionRef = useRef(queryLoader.updateChangeDetection);
-  updateChangeDetectionRef.current = queryLoader.updateChangeDetection;
+  // Update change detection when state changes - stabilized to prevent infinite loops
+  const updateChangeDetection = useCallback(() => {
+    queryLoader.updateChangeDetection();
+  }, [queryLoader.updateChangeDetection]);
 
   useEffect(() => {
-    updateChangeDetectionRef.current();
-  }, [activeFilters, filterValues, reportParams]);
+    updateChangeDetection();
+  }, [activeFilters, filterValues, reportParams, updateChangeDetection]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -455,101 +515,37 @@ export default function TematikPage() {
           reportParams={reportParams}
           setReportParams={setReportParams}
           mode="tematik"
-          hideJenisAkumulasi
-          customTipeLaporanOptions={[
-            { value: "prioritas_nasional", label: "Prioritas Nasional" },
-            { value: "major_project", label: "Major Project" },
-            { value: "tematik_anggaran", label: "Tematik Anggaran" },
-            { value: "inflasi", label: "Inflasi" },
-            { value: "penanganan_stunting", label: "Penanganan Stunting" },
-            { value: "kemiskinan_ekstrim", label: "Kemiskinan Ekstrim" },
-            { value: "belanja_pemilu", label: "Belanja Pemilu" },
-            { value: "ibu_kota_nusantara", label: "Ibu Kota Nusantara" },
-            { value: "ketahanan_pangan", label: "Ketahanan Pangan" },
-            { value: "bantuan_pemerintah", label: "Bantuan Pemerintah" },
-            { value: "makan_bergizi_gratis", label: "Makan Bergizi Gratis" },
-            { value: "swasembada_pangan", label: "Swasembada Pangan" },
-            { value: "program_strategis", label: "Program Strategis" },
-          ]}
+          hideJenisAkumulasi={!tematikConfig.isJenisAkumulasiAllowed()}
+          // Use centralized category options from registry
         />
 
-        {/* 2. Mandatory PN filters shown when Prioritas Nasional selected */}
-        {reportParams.tematikKategori === "prioritas_nasional" && (
-          <div className="space-y-4">
-            <EnhancedFilterCard
-              filterKey="jenisPn"
-              filterLabel="Jenis PN"
-              onRemove={() => {}}
-              activeFilterValues={normalizedFilterValues}
+        {/* 2. Category Mandatory Filters - Dynamic based on selected category */}
+        {reportParams.tematikKategori &&
+          tematikConfig.category &&
+          tematikConfig.mandatoryFilters.length > 0 && (
+            <CategoryMandatoryFilters
+              categoryKey={reportParams.tematikKategori}
+              filterValues={filterValues}
               onFilterChange={handleFilterChange}
-              removable={false}
+              onClearAllFilters={() => {
+                const defaultValues = tematikConfig.getDefaultFilterValues();
+                setFilterValues((prev) => ({
+                  ...prev,
+                  ...defaultValues,
+                }));
+              }}
             />
-            <EnhancedFilterCard
-              filterKey="programPrioritas"
-              filterLabel="Program Prioritas"
-              onRemove={() => {}}
-              activeFilterValues={normalizedFilterValues}
-              onFilterChange={handleFilterChange}
-              removable={false}
-            />
-            <EnhancedFilterCard
-              filterKey="kegiatanPrioritas"
-              filterLabel="Kegiatan Prioritas"
-              onRemove={() => {}}
-              activeFilterValues={normalizedFilterValues}
-              onFilterChange={handleFilterChange}
-              removable={false}
-            />
-            <EnhancedFilterCard
-              filterKey="proyekPrioritas"
-              filterLabel="Proyek Prioritas"
-              onRemove={() => {}}
-              activeFilterValues={normalizedFilterValues}
-              onFilterChange={handleFilterChange}
-              removable={false}
-            />
-          </div>
-        )}
-        <div className="flex justify-end">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              const pnKeys = [
-                "jenisPn",
-                "programPrioritas",
-                "kegiatanPrioritas",
-                "proyekPrioritas",
-              ];
-              setFilterValues((prev) => {
-                const next = { ...prev } as any;
-                pnKeys.forEach((k) => {
-                  next[k] = {
-                    selection: "all",
-                    kondisiCode: "",
-                    mengandungKata: "",
-                    jenisTampilan: "kode",
-                  };
-                });
-                return next;
-              });
-            }}
-          >
-            Clear PN Selections
-          </Button>
-        </div>
+          )}
 
         {/* 3. Filter Parameters Card */}
         <FilterParametersCard
           activeFilters={activeFilters}
           setActiveFilters={setActiveFiltersWrapper}
           excludeFilters={[
-            "register",
-            "cutOff", // exclude from switches; it appears in DynamicFiltersCard
-            "jenisPn",
-            "programPrioritas",
-            "kegiatanPrioritas",
-            "proyekPrioritas",
+            "register", // Always exclude register for tematik
+            "cutOff", // Exclude from switches; it appears in DynamicFiltersCard
+            ...tematikConfig.getMandatoryFilterKeys(), // Exclude mandatory filters (shown above)
+            ...tematikConfig.excludedStandardFilters, // Exclude category-specific filters
           ]}
         />
 
@@ -562,16 +558,7 @@ export default function TematikPage() {
           filterValues={normalizedFilterValues}
           onFilterChange={handleFilterChange}
           scope="tematik" // Pass scope for query differentiation
-          hiddenFilterKeys={
-            reportParams.tematikKategori === "prioritas_nasional"
-              ? [
-                  "jenisPn",
-                  "programPrioritas",
-                  "kegiatanPrioritas",
-                  "proyekPrioritas",
-                ]
-              : []
-          }
+          hiddenFilterKeys={tematikConfig.getMandatoryFilterKeys()} // Hide mandatory filters from this card
         />
       </div>
 
