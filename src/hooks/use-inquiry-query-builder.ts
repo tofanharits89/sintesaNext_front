@@ -611,11 +611,8 @@ export function useInquiryQueryBuilder() {
         }
       }
 
-      // Legacy: Mandatory: Exclude kdpn '00' for Prioritas Nasional
-      // We infer PN context if the dedicated PN filter is present
-      if (activeFilters.includes("jenisPn")) {
-        whereConditions.push("main.kdpn <> '00'");
-      }
+      // Note: Category-specific WHERE conditions (like kdpn <> '00' for prioritas_nasional) 
+      // are now handled above via categoryConfig.whereConditions to avoid duplication
 
       activeFilters.forEach((filterKey) => {
         // Skip cutOff - it doesn't create WHERE conditions, only affects SELECT

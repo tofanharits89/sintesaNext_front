@@ -98,8 +98,10 @@ export function DynamicFiltersCard({
 
   const handleDownloadExcel = async () => {
     try {
+      // Include hidden filters for query building
+      const allFilters = [...activeFilters, ...(hiddenFilterKeys || [])];
       // Normalize active filters to default order for consistent column ordering in exports
-      const normalized = normalizeActiveFilters(activeFilters);
+      const normalized = normalizeActiveFilters(allFilters);
       await downloadExcel(normalized, filterValues, reportParams);
     } catch (error) {
       console.error("Excel download error:", error);
@@ -109,8 +111,10 @@ export function DynamicFiltersCard({
 
   const handleDownloadCSV = async () => {
     try {
+      // Include hidden filters for query building
+      const allFilters = [...activeFilters, ...(hiddenFilterKeys || [])];
       // Normalize active filters to default order for consistent column ordering in exports
-      const normalized = normalizeActiveFilters(activeFilters);
+      const normalized = normalizeActiveFilters(allFilters);
       await downloadCSV(normalized, filterValues, reportParams);
     } catch (error) {
       console.error("CSV download error:", error);
@@ -172,7 +176,7 @@ export function DynamicFiltersCard({
             <Button
               onClick={handleTayang}
               className="bg-blue-600 hover:bg-blue-700 text-white min-w-[150px] h-10"
-              disabled={activeFilters.length === 0 || isLoading}
+              disabled={(activeFilters.length + (hiddenFilterKeys?.length || 0)) === 0 || isLoading}
             >
               <Eye className="w-4 h-4 mr-2" />
               {isLoading ? "Loading..." : "Tayang"}
@@ -182,7 +186,7 @@ export function DynamicFiltersCard({
             <Button
               onClick={handleDownloadExcel}
               className="bg-green-100 hover:bg-green-200 text-green-800 border-green-200 min-w-[150px] h-10"
-              disabled={activeFilters.length === 0 || isLoading}
+              disabled={(activeFilters.length + (hiddenFilterKeys?.length || 0)) === 0 || isLoading}
             >
               <FileSpreadsheet className="w-4 h-4 mr-2" />
               Download Excel
@@ -192,7 +196,7 @@ export function DynamicFiltersCard({
             <Button
               onClick={handleDownloadCSV}
               className="bg-green-100 hover:bg-green-200 text-green-800 border-green-200 min-w-[150px] h-10"
-              disabled={activeFilters.length === 0 || isLoading}
+              disabled={(activeFilters.length + (hiddenFilterKeys?.length || 0)) === 0 || isLoading}
             >
               <FileText className="w-4 h-4 mr-2" />
               Download CSV
@@ -202,7 +206,7 @@ export function DynamicFiltersCard({
             <Button
               onClick={() => openModal("whatsapp")}
               className="bg-green-600 hover:bg-green-700 text-white min-w-[150px] h-10"
-              disabled={activeFilters.length === 0}
+              disabled={(activeFilters.length + (hiddenFilterKeys?.length || 0)) === 0}
             >
               <MessageCircle className="w-4 h-4 mr-2" />
               WhatsApp
@@ -212,7 +216,7 @@ export function DynamicFiltersCard({
             <Button
               onClick={() => openModal("simpan")}
               className="bg-amber-600 hover:bg-amber-700 text-white min-w-[150px] h-10"
-              disabled={activeFilters.length === 0}
+              disabled={(activeFilters.length + (hiddenFilterKeys?.length || 0)) === 0}
             >
               <Save className="w-4 h-4 mr-2" />
               Simpan
@@ -223,7 +227,7 @@ export function DynamicFiltersCard({
               <Button
                 onClick={() => openModal("lihatSql")}
                 className="bg-gray-100 hover:bg-gray-200 text-gray-800 border-gray-200 min-w-[150px] h-10"
-                disabled={activeFilters.length === 0}
+                disabled={(activeFilters.length + (hiddenFilterKeys?.length || 0)) === 0}
               >
                 <Code className="w-4 h-4 mr-2" />
                 Lihat SQL
@@ -237,7 +241,7 @@ export function DynamicFiltersCard({
       <TayangModal
         open={modals.tayang}
         onOpenChange={() => closeModal("tayang")}
-        activeFilters={activeFilters}
+        activeFilters={[...activeFilters, ...(hiddenFilterKeys || [])]} // Include hidden filters for query building
         reportParams={reportParams}
         filterValues={filterValues}
         scope={scope}
@@ -246,7 +250,7 @@ export function DynamicFiltersCard({
       <WhatsappModal
         open={modals.whatsapp}
         onOpenChange={() => closeModal("whatsapp")}
-        activeFilters={activeFilters}
+        activeFilters={[...activeFilters, ...(hiddenFilterKeys || [])]} // Include hidden filters for query building
         reportParams={{ ...reportParams, scope }}
         filterValues={filterValues}
       />
@@ -256,7 +260,7 @@ export function DynamicFiltersCard({
       <SimpanModal
         open={modals.simpan}
         onOpenChange={() => closeModal("simpan")}
-        activeFilters={activeFilters}
+        activeFilters={[...activeFilters, ...(hiddenFilterKeys || [])]} // Include hidden filters for query building
         reportParams={reportParams}
         filterValues={filterValues}
         scope={scope} // Pass scope to SimpanModal
@@ -266,7 +270,7 @@ export function DynamicFiltersCard({
         <LihatSqlModal
           open={modals.lihatSql}
           onOpenChange={() => closeModal("lihatSql")}
-          activeFilters={activeFilters}
+          activeFilters={[...activeFilters, ...(hiddenFilterKeys || [])]} // Include hidden filters for query building
           reportParams={{ ...reportParams, scope }}
           filterValues={filterValues}
         />

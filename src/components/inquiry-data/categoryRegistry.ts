@@ -58,7 +58,7 @@ export const TEMATIK_CATEGORIES: CategoryDefinition[] = [
           selection: "all",
           kondisiCode: "",
           mengandungKata: "",
-          jenisTampilan: "kode",
+          jenisTampilan: "kode", // Default to show both code and description
         },
       },
       {
@@ -70,7 +70,7 @@ export const TEMATIK_CATEGORIES: CategoryDefinition[] = [
           selection: "all",
           kondisiCode: "",
           mengandungKata: "",
-          jenisTampilan: "kode",
+          jenisTampilan: "kode", // Default to show both code and description
         },
       },
       {
@@ -82,7 +82,7 @@ export const TEMATIK_CATEGORIES: CategoryDefinition[] = [
           selection: "all",
           kondisiCode: "",
           mengandungKata: "",
-          jenisTampilan: "kode",
+          jenisTampilan: "kode", // Default to show both code and description
         },
       },
       {
@@ -94,39 +94,13 @@ export const TEMATIK_CATEGORIES: CategoryDefinition[] = [
           selection: "all",
           kondisiCode: "",
           mengandungKata: "",
-          jenisTampilan: "kode",
+          jenisTampilan: "kode", // Default to show both code and description
         },
       },
     ],
     mandatoryColumns: [
-      {
-        key: "kdpn",
-        label: "Kode PN",
-        sqlExpression: "main.kdpn",
-        order: 1,
-        dataType: "text",
-      },
-      {
-        key: "kdpp",
-        label: "Kode Program Prioritas",
-        sqlExpression: "main.kdpp",
-        order: 2,
-        dataType: "text",
-      },
-      {
-        key: "kdkp",
-        label: "Kode Kegiatan Prioritas",
-        sqlExpression: "main.kdkp",
-        order: 3,
-        dataType: "text",
-      },
-      {
-        key: "kdproy",
-        label: "Kode Proyek",
-        sqlExpression: "main.kdproy",
-        order: 4,
-        dataType: "text",
-      },
+      // No mandatory columns needed - the mandatory filters already handle the PN hierarchy columns
+      // through the filter registry with proper JOINs and jenis tampilan logic
     ],
     queryConfig: {
       tableName: "a_pagu_real_bkpk_dja",
