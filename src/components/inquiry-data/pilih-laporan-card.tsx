@@ -16,26 +16,28 @@ interface PilihLaporanCardProps {
     tipeLaporan: string;
     pembulatan: string;
     jenisAkumulasi: string;
+    // Optional field for tematik category selection on tematik page
+    tematikKategori?: string;
   };
-  setReportParams: React.Dispatch<
-    React.SetStateAction<{
-      tahun: string;
-      tipeLaporan: string;
-      pembulatan: string;
-      jenisAkumulasi: string;
-    }>
-  >;
+  setReportParams: React.Dispatch<React.SetStateAction<any>>;
+  // Optional overrides for tematik context
+  mode?: "general" | "tematik";
+  customTipeLaporanOptions?: { value: string; label: string }[];
+  hideJenisAkumulasi?: boolean;
 }
 
 export function PilihLaporanCard({
   reportParams,
   setReportParams,
+  mode = "general",
+  customTipeLaporanOptions,
+  hideJenisAkumulasi = false,
 }: PilihLaporanCardProps) {
   // Generate years from current year back to 10 years
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 11 }, (_, i) => currentYear - i);
 
-  const tipeLaporanOptions = [
+  const defaultTipeLaporanOptions = [
     { value: "pagu_apbn", label: "1. Pagu APBN" },
     { value: "pagu_realisasi", label: "2. Pagu Realisasi" },
     { value: "pagu_realisasi_bulanan", label: "3. Pagu Realisasi Bulanan" },
@@ -53,6 +55,9 @@ export function PilihLaporanCard({
       label: "7. Volume Output Kegiatan (Data Caput)",
     },
   ];
+
+  const tipeLaporanOptions =
+    customTipeLaporanOptions || defaultTipeLaporanOptions;
 
   const pembulatanOptions = [
     { value: "satuan", label: "Satuan" },
@@ -105,13 +110,30 @@ export function PilihLaporanCard({
           <div className="space-y-4">
             {/* Tipe Laporan Selection */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tipe Laporan</label>
+              <label className="text-sm font-medium">
+                {mode === "tematik" ? "Kategori Tematik" : "Tipe Laporan"}
+              </label>
               <Select
-                value={reportParams.tipeLaporan}
-                onValueChange={(value) => handleChange("tipeLaporan", value)}
+                value={
+                  mode === "tematik"
+                    ? reportParams.tematikKategori || undefined
+                    : reportParams.tipeLaporan
+                }
+                onValueChange={(value) =>
+                  handleChange(
+                    mode === "tematik" ? "tematikKategori" : "tipeLaporan",
+                    value
+                  )
+                }
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih tipe laporan" />
+                  <SelectValue
+                    placeholder={
+                      mode === "tematik"
+                        ? "Pilih kategori tematik"
+                        : "Pilih tipe laporan"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {tipeLaporanOptions.map((option) => (
@@ -123,29 +145,30 @@ export function PilihLaporanCard({
               </Select>
             </div>
 
-            {/* Jenis Akumulasi Selection - Only show when Pagu Realisasi Bulanan is selected */}
-            {reportParams.tipeLaporan === "pagu_realisasi_bulanan" && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Jenis Akumulasi</label>
-                <Select
-                  value={reportParams.jenisAkumulasi}
-                  onValueChange={(value) =>
-                    handleChange("jenisAkumulasi", value)
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Pilih jenis akumulasi" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {jenisAkumulasiOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            {/* Jenis Akumulasi Selection - Only show when allowed and Pagu Realisasi Bulanan is selected */}
+            {!hideJenisAkumulasi &&
+              reportParams.tipeLaporan === "pagu_realisasi_bulanan" && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Jenis Akumulasi</label>
+                  <Select
+                    value={reportParams.jenisAkumulasi}
+                    onValueChange={(value) =>
+                      handleChange("jenisAkumulasi", value)
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Pilih jenis akumulasi" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {jenisAkumulasiOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
           </div>
 
           {/* Pembulatan Selection */}

@@ -91,6 +91,10 @@ export function Navbar() {
   const [totalUnreadNotificationsCount, setTotalUnreadNotificationsCount] =
     useState(0);
   const [totalUnreadMessagesCount, setTotalUnreadMessagesCount] = useState(0);
+
+  // State for controlling popovers
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [messagesOpen, setMessagesOpen] = useState(false);
   // Listen for live notifications to update badge and list
   useEffect(() => {
     const handleNew = (payload: {
@@ -335,7 +339,7 @@ export function Navbar() {
         {/* right: icons */}
         <div className="ml-auto flex items-center gap-2">
           {/* Notifications popover */}
-          <Popover>
+          <Popover open={notificationsOpen} onOpenChange={setNotificationsOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="ghost"
@@ -371,6 +375,7 @@ export function Navbar() {
                         className={`block px-3 py-2.5 hover:bg-muted/50 transition-colors ${
                           n.unread ? "bg-orange-50 dark:bg-orange-950/20" : ""
                         }`}
+                        onClick={() => setNotificationsOpen(false)}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
@@ -419,7 +424,11 @@ export function Navbar() {
                   variant="ghost"
                   className="w-full h-auto py-2 px-3 justify-between hover:bg-background"
                 >
-                  <Link href="/notifications" className="flex items-center">
+                  <Link
+                    href="/notifications"
+                    className="flex items-center"
+                    onClick={() => setNotificationsOpen(false)}
+                  >
                     <span className="text-sm font-medium">
                       Lihat semua notifikasi
                     </span>
@@ -431,7 +440,7 @@ export function Navbar() {
           </Popover>
 
           {/* Messages popover */}
-          <Popover>
+          <Popover open={messagesOpen} onOpenChange={setMessagesOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="ghost"
@@ -467,6 +476,7 @@ export function Navbar() {
                         className={`block px-3 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer ${
                           m.unread ? "bg-blue-50 dark:bg-blue-950/20" : ""
                         }`}
+                        onClick={() => setMessagesOpen(false)}
                       >
                         <div className="flex items-start gap-2.5">
                           <Avatar className="h-7 w-7 mt-0.5 flex-shrink-0">
@@ -519,7 +529,11 @@ export function Navbar() {
                   variant="ghost"
                   className="w-full h-auto py-2 px-3 justify-between hover:bg-background"
                 >
-                  <Link href="/messages" className="flex items-center">
+                  <Link
+                    href="/messages"
+                    className="flex items-center"
+                    onClick={() => setMessagesOpen(false)}
+                  >
                     <span className="text-sm font-medium">
                       Lihat semua pesan
                     </span>

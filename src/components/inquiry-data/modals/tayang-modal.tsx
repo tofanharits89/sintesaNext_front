@@ -40,8 +40,10 @@ interface TayangModalProps {
     tahun: string;
     tipeLaporan: string;
     pembulatan: string;
+    tematikKategori?: string;
   };
   filterValues?: Record<string, FilterValue>;
+  scope?: "belanja" | "tematik" | "general";
 }
 
 export function TayangModal({
@@ -50,6 +52,7 @@ export function TayangModal({
   activeFilters,
   reportParams,
   filterValues = {},
+  scope = "general",
 }: TayangModalProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [pageSize, setPageSize] = useState(50);
@@ -209,28 +212,88 @@ export function TayangModal({
 
   // Helper function to check if column should be treated as monetary
   const isMonetaryColumn = (column: string): boolean => {
-    const monthlyColumns = [
-      "JAN",
-      "FEB",
-      "MAR",
-      "APR",
-      "MEI",
-      "JUN",
-      "JUL",
-      "AGS",
-      "SEP",
-      "OKT",
-      "NOV",
-      "DES",
+    // Treat r- monthly alias (rjan..rdes), base monthly (jan..des), and monetary aggregates as currency
+    const rMonthly = [
+      "rjan",
+      "rfeb",
+      "rmar",
+      "rapr",
+      "rmei",
+      "rjun",
+      "rjul",
+      "rags",
+      "rsep",
+      "rokt",
+      "rnov",
+      "rdes",
     ];
+    const baseMonthly = [
+      "jan",
+      "feb",
+      "mar",
+      "apr",
+      "mei",
+      "jun",
+      "jul",
+      "ags",
+      "sep",
+      "okt",
+      "nov",
+      "des",
+    ];
+    const lower = column.toLowerCase();
     return (
-      column.toLowerCase().includes("pagu") ||
-      column.toLowerCase().includes("realisasi") ||
-      column.toLowerCase().includes("blokir") ||
-      column.toLowerCase().includes("anggaran") ||
-      monthlyColumns.includes(column.toUpperCase())
+      lower.includes("pagu") ||
+      lower.includes("realisasi") ||
+      lower.includes("blokir") ||
+      lower.includes("anggaran") ||
+      rMonthly.includes(lower) ||
+      baseMonthly.includes(lower)
     );
   };
+  // Monthly alias lists for rendering and alignment
+  const rMonthly = [
+    "rjan",
+    "rfeb",
+    "rmar",
+    "rapr",
+    "rmei",
+    "rjun",
+    "rjul",
+    "rags",
+    "rsep",
+    "rokt",
+    "rnov",
+    "rdes",
+  ];
+  const pMonthly = [
+    "pjan",
+    "pfeb",
+    "pmar",
+    "papr",
+    "pmei",
+    "pjun",
+    "pjul",
+    "pags",
+    "psep",
+    "pokt",
+    "pnov",
+    "pdes",
+  ];
+  const rpMonthly = [
+    "rpjan",
+    "rpfeb",
+    "rpmar",
+    "rpapr",
+    "rpmei",
+    "rpjun",
+    "rpjul",
+    "rpags",
+    "rpsep",
+    "rpokt",
+    "rpnov",
+    "rpdes",
+  ];
 
   // Format cell value for display
   const formatCellValue = (value: unknown, column: string): string => {
@@ -242,15 +305,67 @@ export function TayangModal({
 
     // Format numeric values (both numbers and numeric strings)
     if (isNumeric) {
-      // Check if it's a percentage
-      if (column.toLowerCase().includes("persentase")) {
+      const lower = column.toLowerCase();
+
+      const pMonthly = [
+        "pjan",
+        "pfeb",
+        "pmar",
+        "papr",
+        "pmei",
+        "pjun",
+        "pjul",
+        "pags",
+        "psep",
+        "pokt",
+        "pnov",
+        "pdes",
+      ];
+      const rpMonthly = [
+        "rpjan",
+        "rpfeb",
+        "rpmar",
+        "rpapr",
+        "rpmei",
+        "rpjun",
+        "rpjul",
+        "rpags",
+        "rpsep",
+        "rpokt",
+        "rpnov",
+        "rpdes",
+      ];
+
+      // sum_vol: no decimals, thousand separator, right aligned (handled in class)
+      if (lower === "sum_vol") {
+        return new Intl.NumberFormat("id-ID", {
+          maximumFractionDigits: 0,
+        }).format(Math.round(numValue));
+      }
+
+      // r* monthly: currency with pembulatan already in SQL; just format with grouping
+      if (rMonthly.includes(lower)) {
+        return new Intl.NumberFormat("id-ID").format(numValue);
+      }
+
+      // rp* monthly: thousand separator, no decimals
+      if (lower.startsWith("rp")) {
+        return new Intl.NumberFormat("id-ID", {
+          maximumFractionDigits: 0,
+        }).format(Math.round(numValue));
+      }
+
+      // p* monthly: percentage, 2 decimals with % suffix
+      if (pMonthly.includes(lower)) {
         return `${numValue.toFixed(2)}%`;
       }
-      // Check if it's a monetary value (including blokir and monthly columns)
+
+      // Monetary aggregates (e.g., PAGU_*, REALISASI, BLOKIR)
       if (isMonetaryColumn(column)) {
         return new Intl.NumberFormat("id-ID").format(numValue);
       }
-      // For non-monetary numeric columns, preserve original string format to keep leading zeros
+
+      // Non-monetary numeric columns: keep raw string to preserve leading zeros
       return String(value);
     }
 
@@ -264,20 +379,32 @@ export function TayangModal({
       if (column === "kdblokir_kode") return "text-center";
       if (column === "nmblokir_uraian") return "text-left";
     }
-    // Right-align monetary and monthly columns
-    if (isMonetaryColumn(column)) {
+    const lower = column.toLowerCase();
+    // Right-align monetary, r* monthly, rp* metrics, p* percentages, and sum_vol
+    if (
+      lower === "sum_vol" ||
+      lower.startsWith("rp") ||
+      pMonthly.includes(lower) ||
+      rMonthly.includes(lower) ||
+      isMonetaryColumn(column)
+    ) {
       return "text-right";
     }
     // Left-align descriptive columns like 'uraian'
-    if (column.toLowerCase().includes("uraian")) {
+    if (lower.includes("uraian")) {
       return "text-left";
     }
     // Default alignment
     return "text-center";
   };
+  // Page name for tematik vs belanja
+  const pageName = scope === "tematik" ? "Tematik" : "Belanja";
 
   const handleRefresh = () => {
     fetchData();
+    // Resolve page name for header/description
+    const getPageName = () => (scope === "tematik" ? "Tematik" : "Belanja");
+
     setCurrentPage(1);
     setSearchTerm("");
   };
@@ -295,6 +422,18 @@ export function TayangModal({
       volume_output_kegiatan: "Volume Output Kegiatan (Data Caput)",
     };
     return labels[tipeLaporan] || tipeLaporan;
+  };
+
+  const getTematikKategoriLabel = (kategori?: string): string => {
+    const map: Record<string, string> = {
+      prioritas_nasional: "Prioritas Nasional",
+      // add other tematik categories here when available
+    };
+    return (
+      (kategori && map[kategori]) ||
+      kategori ||
+      getReportTypeLabel(reportParams.tipeLaporan)
+    );
   };
 
   const toggleFullscreen = () => {
@@ -353,7 +492,8 @@ export function TayangModal({
             <span className="flex items-center gap-2">
               <Table className="w-5 h-5 text-blue-600" />
               <span>
-                Hasil Query - {getReportTypeLabel(reportParams.tipeLaporan)}
+                Hasil Query {pageName} -{" "}
+                {getTematikKategoriLabel(reportParams.tematikKategori)}
               </span>
             </span>
             <div className="flex gap-2">
@@ -385,8 +525,8 @@ export function TayangModal({
           <DialogDescription>
             {lastResult && lastResult.success && totalAvailable > 0
               ? `Menampilkan ${displayStart}-${displayEnd} dari ${totalAvailable} baris`
-              : `Laporan ${getReportTypeLabel(
-                  reportParams.tipeLaporan
+              : `${pageName} - ${getTematikKategoriLabel(
+                  reportParams.tematikKategori
                 )} tahun ${reportParams.tahun} dengan ${
                   activeFilters.length
                 } filter aktif`}

@@ -6,6 +6,10 @@ import type {
   FilterValue,
   ReportParams,
 } from "@/types/saved-queries";
+import {
+  validateFiltersForScope,
+  getFilterLabel,
+} from "@/components/inquiry-data/filterRegistry";
 
 export interface QueryLoaderState {
   hasUnsavedChanges: boolean;
@@ -22,6 +26,7 @@ export interface QueryBuilderState {
 export interface UseQueryLoaderProps {
   onStateChange: (state: QueryBuilderState) => void;
   getCurrentState: () => QueryBuilderState;
+  scope?: "belanja" | "tematik" | "general"; // Add scope for compatibility validation
 }
 
 /**
@@ -31,6 +36,7 @@ export interface UseQueryLoaderProps {
 export function useQueryLoader({
   onStateChange,
   getCurrentState,
+  scope = "general", // Default to general scope
 }: UseQueryLoaderProps) {
   const [loaderState, setLoaderState] = useState<QueryLoaderState>({
     hasUnsavedChanges: false,
@@ -65,6 +71,30 @@ export function useQueryLoader({
         errors.push("Daftar filter aktif tidak valid");
       } else if (query.activeFilters.length === 0) {
         errors.push("Query tidak memiliki filter aktif");
+      }
+
+      // Validate scope compatibility
+      if (scope !== "general") {
+        const scopeValidation = validateFiltersForScope(
+          query.activeFilters || [],
+          scope
+        );
+        if (!scopeValidation.isValid) {
+          const incompatibleFilterLabels = scopeValidation.incompatibleFilters
+            .map((filter) => getFilterLabel(filter))
+            .join(", ");
+
+          if (query.scope && query.scope !== scope) {
+            errors.push(
+              `Query ini dibuat untuk halaman ${query.scope} dan tidak kompatibel dengan halaman ${scope}. ` +
+                `Filter yang tidak didukung: ${incompatibleFilterLabels}`
+            );
+          } else {
+            errors.push(
+              `Query menggunakan filter yang tidak tersedia di halaman ${scope}: ${incompatibleFilterLabels}`
+            );
+          }
+        }
       }
 
       // Validate filter values
@@ -162,7 +192,7 @@ export function useQueryLoader({
         errors,
       };
     },
-    []
+    [scope]
   );
 
   /**
@@ -234,6 +264,8 @@ export function useQueryLoader({
         tipeLaporan: query.reportParams.tipeLaporan,
         pembulatan: query.reportParams.pembulatan,
         jenisAkumulasi: query.reportParams.jenisAkumulasi || "non_akumulatif",
+        // Preserve tematik category when present
+        tematikKategori: (query.reportParams as any).tematikKategori,
       };
     },
     []

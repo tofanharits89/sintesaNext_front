@@ -35,6 +35,7 @@ interface QueryLoaderButtonProps {
   hasUnsavedChanges?: boolean;
   disabled?: boolean;
   className?: string;
+  scope?: "belanja" | "tematik" | "general";
 }
 
 const QueryLoaderButtonComponent = function QueryLoaderButton({
@@ -43,6 +44,7 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
   hasUnsavedChanges = false,
   disabled = false,
   className = "",
+  scope = "general",
 }: QueryLoaderButtonProps) {
   // Track renders for debugging - only in development
   if (process.env.NODE_ENV === "development") {
@@ -72,8 +74,9 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
     return {
       search: searchQuery.trim() || undefined,
       limit: 10, // Limit for dropdown
-    };
-  }, [isOpen, searchQuery]);
+      scope,
+    } as const;
+  }, [isOpen, searchQuery, scope]);
 
   // Fetch saved queries with search - only when needed
   const {

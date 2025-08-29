@@ -144,7 +144,11 @@ const fetcher = async (url: string) => {
  * Custom hook for saved queries management with SWR integration
  * Provides caching, background refetching, and optimistic updates
  */
-export function useSavedQueries(params: GetSavedQueriesParams = {}) {
+export function useSavedQueries(
+  params: GetSavedQueriesParams & {
+    scope?: "belanja" | "tematik" | "general";
+  } = {}
+) {
   // Stabilize params to prevent infinite loops
   const stableParams = useMemo(
     () =>
@@ -152,8 +156,9 @@ export function useSavedQueries(params: GetSavedQueriesParams = {}) {
         page: params.page,
         limit: params.limit,
         search: params.search?.trim() || undefined,
+        scope: params.scope, // Include scope in stable params
       }),
-    [params.page, params.limit, params.search]
+    [params.page, params.limit, params.search, params.scope]
   );
 
   // Build SWR key with query parameters - memoized to prevent infinite loops
@@ -164,10 +169,16 @@ export function useSavedQueries(params: GetSavedQueriesParams = {}) {
     if (stableParams.limit)
       searchParams.set("limit", stableParams.limit.toString());
     if (stableParams.search) searchParams.set("search", stableParams.search);
+    if (stableParams.scope) searchParams.set("scope", stableParams.scope); // Include scope in API request
 
     const queryString = searchParams.toString();
     return backendPath(`/saved-queries${queryString ? `?${queryString}` : ""}`);
-  }, [stableParams.page, stableParams.limit, stableParams.search]);
+  }, [
+    stableParams.page,
+    stableParams.limit,
+    stableParams.search,
+    stableParams.scope,
+  ]);
 
   // Main SWR hook for fetching saved queries with enhanced error handling
   const { data, error, isLoading, mutate } = useSWR<SavedQueriesResponse>(
@@ -223,6 +234,21 @@ export function useSavedQueries(params: GetSavedQueriesParams = {}) {
 
   const queries = data?.queries ?? [];
   const pagination = data?.pagination;
+
+  // Apply client-side scope filtering as fallback
+  const filteredQueries = useMemo(() => {
+    if (!stableParams.scope || stableParams.scope === "general") {
+      return queries; // No filtering needed for general scope
+    }
+
+    // Filter queries by scope
+    return queries.filter((query) => {
+      // If query has no scope, assume it's general and show in all pages
+      if (!query.scope) return true;
+      // Only show queries that match the current scope
+      return query.scope === stableParams.scope;
+    });
+  }, [queries, stableParams.scope]);
 
   // Create saved query mutation with enhanced error handling
   const createQueryMutation = useSWRMutation(
@@ -576,17 +602,17 @@ export function useSavedQueries(params: GetSavedQueriesParams = {}) {
     mutate();
   }, [mutate]);
 
-  // Get single query by ID (uses the cached data)
+  // Get single query by ID (uses the filtered cached data)
   const getQueryById = useCallback(
     (id: string): SavedQuery | undefined => {
-      return queries.find((q) => q.id === id);
+      return filteredQueries.find((q) => q.id === id);
     },
-    [queries]
+    [filteredQueries]
   );
 
   return {
     // Data
-    queries,
+    queries: filteredQueries, // Use filtered queries instead of raw queries
     pagination,
 
     // Loading states

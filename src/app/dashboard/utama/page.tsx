@@ -31,6 +31,13 @@ import { useRealisasiKLPerFungsi } from "@/hooks/useRealisasiKLPerFungsi";
 
 import { StatCard } from "@/components/dashboard/StatCard";
 import { AuthRequiredCard } from "@/components/dashboard/AuthRequiredCard";
+import {
+  StatCardSkeleton,
+  MultipleBarChartSkeleton,
+  LineChartSkeleton,
+  BarChartSkeleton,
+  DashboardHeaderSkeleton,
+} from "@/components/ui/dashboard-skeletons";
 // Sample data for the bar charts
 const realisasiApbnData = [
   { name: "Jan", target: 120, realisasi: 110 },
@@ -205,6 +212,7 @@ export default function DashboardUtamaPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header - always show the actual header, no skeleton */}
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -261,42 +269,52 @@ export default function DashboardUtamaPage() {
           </div>
         )}
 
-        <StatCard
-          label="Jumlah DIPA"
-          icon={<FileText className="h-4 w-4 text-blue-500" />}
-          loading={isLoadingQuickStats}
-          value={quickStats?.jumlahDipa?.toLocaleString("id-ID") || "0"}
-        />
-        <StatCard
-          label="Pagu APBN"
-          icon={<Banknote className="h-4 w-4 text-green-500" />}
-          loading={isLoadingQuickStats}
-          value={formatCurrency(quickStats?.paguApbn || 0)}
-        />
-        <StatCard
-          label="Pagu DIPA"
-          icon={<Wallet className="h-4 w-4 text-purple-500" />}
-          loading={isLoadingQuickStats}
-          value={formatCurrency(quickStats?.paguDipa || 0)}
-        />
-        <StatCard
-          label="Realisasi"
-          icon={<TrendingUp className="h-4 w-4 text-orange-500" />}
-          loading={isLoadingQuickStats}
-          value={formatCurrency(quickStats?.realisasi || 0)}
-        />
-        <StatCard
-          label="Blokir"
-          icon={<Lock className="h-4 w-4 text-red-500" />}
-          loading={isLoadingQuickStats}
-          value={formatCurrency(quickStats?.blokir || 0)}
-        />
-        <StatCard
-          label="Sisa Pagu DIPA"
-          icon={<Calculator className="h-4 w-4 text-teal-500" />}
-          loading={isLoadingQuickStats}
-          value={formatCurrency(quickStats?.sisaPaguDipa || 0)}
-        />
+        {isLoadingQuickStats ? (
+          // Show skeleton cards while loading
+          Array.from({ length: 6 }).map((_, i) => (
+            <StatCardSkeleton key={`skeleton-${i}`} />
+          ))
+        ) : (
+          // Show actual stat cards when loaded
+          <>
+            <StatCard
+              label="Jumlah DIPA"
+              icon={<FileText className="h-4 w-4 text-blue-500" />}
+              loading={isLoadingQuickStats}
+              value={quickStats?.jumlahDipa?.toLocaleString("id-ID") || "0"}
+            />
+            <StatCard
+              label="Pagu APBN"
+              icon={<Banknote className="h-4 w-4 text-green-500" />}
+              loading={isLoadingQuickStats}
+              value={formatCurrency(quickStats?.paguApbn || 0)}
+            />
+            <StatCard
+              label="Pagu DIPA"
+              icon={<Wallet className="h-4 w-4 text-purple-500" />}
+              loading={isLoadingQuickStats}
+              value={formatCurrency(quickStats?.paguDipa || 0)}
+            />
+            <StatCard
+              label="Realisasi"
+              icon={<TrendingUp className="h-4 w-4 text-orange-500" />}
+              loading={isLoadingQuickStats}
+              value={formatCurrency(quickStats?.realisasi || 0)}
+            />
+            <StatCard
+              label="Blokir"
+              icon={<Lock className="h-4 w-4 text-red-500" />}
+              loading={isLoadingQuickStats}
+              value={formatCurrency(quickStats?.blokir || 0)}
+            />
+            <StatCard
+              label="Sisa Pagu DIPA"
+              icon={<Calculator className="h-4 w-4 text-teal-500" />}
+              loading={isLoadingQuickStats}
+              value={formatCurrency(quickStats?.sisaPaguDipa || 0)}
+            />
+          </>
+        )}
       </div>
 
       {/* Second Row: 3 Cards with Bar Charts */}
@@ -306,6 +324,8 @@ export default function DashboardUtamaPage() {
             title="Realisasi per Jenis Belanja"
             description="Login required to view this data"
           />
+        ) : isLoadingRealisasi ? (
+          <MultipleBarChartSkeleton height={250} />
         ) : (
           <MultipleBarChartComponent
             data={
@@ -349,11 +369,14 @@ export default function DashboardUtamaPage() {
             }}
           />
         )}
+
         {isKLPaguAuthError ? (
           <AuthRequiredCard
             title="Realisasi K/L dengan Pagu DIPA Terbesar"
             description="Login required to view this data"
           />
+        ) : isLoadingKLPagu ? (
+          <MultipleBarChartSkeleton height={250} />
         ) : (
           <MultipleBarChartComponent
             data={
@@ -391,6 +414,7 @@ export default function DashboardUtamaPage() {
             }}
           />
         )}
+
         {errorRealisasiKLPaguProgramTerbesar?.message?.includes(
           "authentication"
         ) ||
@@ -400,6 +424,8 @@ export default function DashboardUtamaPage() {
             title="Realisasi K/L dengan Pagu Program Terbesar"
             description="Login required to view this data"
           />
+        ) : isLoadingRealisasiKLPaguProgramTerbesar ? (
+          <MultipleBarChartSkeleton height={250} />
         ) : (
           <MultipleBarChartComponent
             data={
@@ -449,6 +475,8 @@ export default function DashboardUtamaPage() {
             title="Tren Realisasi Bulanan Per Jenis Belanja"
             description="Login required to view this data"
           />
+        ) : isLoadingTrenRealisasi ? (
+          <LineChartSkeleton height={280} />
         ) : (
           <LineChartComponent
             data={
@@ -501,11 +529,14 @@ export default function DashboardUtamaPage() {
             xAxisPadding={{ left: 24, right: 16 }}
           />
         )}
+
         {isRealisasiKLPerFungsiAuthError ? (
           <AuthRequiredCard
             title="Realisasi K/L per Fungsi"
             description="Login required to view this data"
           />
+        ) : isLoadingRealisasiKLPerFungsi ? (
+          <MultipleBarChartSkeleton height={280} />
         ) : (
           <MultipleBarChartComponent
             data={
@@ -552,11 +583,14 @@ export default function DashboardUtamaPage() {
           />
         )}
       </div>
+      {/* Fourth Row: Large Bar Chart */}
       {isPersentaseAuthError ? (
         <AuthRequiredCard
           title="Persentase Realisasi K/L"
           description="Login required to view this data"
         />
+      ) : isLoadingPersentaseKL ? (
+        <BarChartSkeleton height={360} />
       ) : (
         <BarChartComponent
           data={

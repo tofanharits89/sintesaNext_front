@@ -8,18 +8,18 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  Search, 
-  Filter, 
-  RefreshCw, 
-  ChevronLeft, 
+import {
+  Search,
+  Filter,
+  RefreshCw,
+  ChevronLeft,
   ChevronRight,
   Database,
   AlertCircle,
   Loader2,
   Trash2,
   CheckSquare,
-  Square
+  Square,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -37,12 +37,15 @@ import { useSavedQueries } from "@/hooks/use-saved-queries";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useNetworkStatus } from "@/hooks/use-network-status";
 import { ErrorFallback, NetworkStatus } from "@/components/ui/error-fallback";
-import { QueryManagementSkeleton, BulkOperationProgress } from "@/components/ui/loading-states";
+import {
+  QueryManagementSkeleton,
+  BulkOperationProgress,
+} from "@/components/ui/loading-states";
 import { handleBulkOperation } from "@/utils/errorHandling";
-import { 
-  savedQueryNotifications, 
+import {
+  savedQueryNotifications,
   savedQueryConfirmations,
-  notificationUtils 
+  notificationUtils,
 } from "@/utils/notifications";
 import type { SavedQuery } from "@/types/saved-queries";
 import { QueryListItem } from "./query-list-item";
@@ -50,6 +53,7 @@ import { QueryListItem } from "./query-list-item";
 interface QueryManagementProps {
   onLoadQuery: (query: SavedQuery) => void;
   currentUserId: string;
+  scope?: "belanja" | "tematik" | "general"; // Add scope for filtering queries
   onRefreshReady?: (refreshFn: () => void) => void;
 }
 
@@ -61,13 +65,22 @@ interface FilterState {
 
 const ITEMS_PER_PAGE = 10;
 
-export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery, currentUserId, onRefreshReady }: QueryManagementProps) {
+export const QueryManagement = React.memo(function QueryManagement({
+  onLoadQuery,
+  currentUserId,
+  scope = "general", // Default to general scope
+  onRefreshReady,
+}: QueryManagementProps) {
   // Track renders for debugging - only in development
-  if (process.env.NODE_ENV === 'development') {
-    useRenderTracker('QueryManagement', { currentUserId }, { 
-      maxRenders: 15, // Lower threshold for earlier detection
-      timeWindow: 2000 // 2 second window
-    });
+  if (process.env.NODE_ENV === "development") {
+    useRenderTracker(
+      "QueryManagement",
+      { currentUserId },
+      {
+        maxRenders: 15, // Lower threshold for earlier detection
+        timeWindow: 2000, // 2 second window
+      }
+    );
   }
 
   // State management
@@ -78,16 +91,18 @@ export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery
     sortBy: "newest",
   });
   const [showFilters, setShowFilters] = useState(false);
-  
+
   // Bulk operations state
-  const [selectedQueries, setSelectedQueries] = useState<Set<string>>(new Set());
+  const [selectedQueries, setSelectedQueries] = useState<Set<string>>(
+    new Set()
+  );
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{
     completed: number;
     total: number;
     failed: number;
   } | null>(null);
-  
+
   // Network status
   const { isOnline } = useNetworkStatus();
 
@@ -95,11 +110,15 @@ export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery
   const debouncedSearch = useDebounce(filters.search, 300);
 
   // Memoize query parameters to prevent infinite loops
-  const queryParams = useMemo(() => ({
-    page: currentPage,
-    limit: ITEMS_PER_PAGE,
-    search: debouncedSearch,
-  }), [currentPage, debouncedSearch]);
+  const queryParams = useMemo(
+    () => ({
+      page: currentPage,
+      limit: ITEMS_PER_PAGE,
+      search: debouncedSearch,
+      scope, // Include scope for filtering
+    }),
+    [currentPage, debouncedSearch, scope]
+  );
 
   // Fetch saved queries with pagination and search
   const {
@@ -135,8 +154,8 @@ export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery
           break;
       }
 
-      filtered = filtered.filter(query => 
-        new Date(query.createdAt) >= cutoffDate
+      filtered = filtered.filter(
+        (query) => new Date(query.createdAt) >= cutoffDate
       );
     }
 
@@ -144,9 +163,13 @@ export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery
     filtered.sort((a, b) => {
       switch (filters.sortBy) {
         case "newest":
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
         case "oldest":
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          return (
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
         case "name":
           return a.name.localeCompare(b.name);
         default:
@@ -159,14 +182,17 @@ export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery
 
   // Event handlers
   const handleSearchChange = useCallback((value: string) => {
-    setFilters(prev => ({ ...prev, search: value }));
+    setFilters((prev) => ({ ...prev, search: value }));
     setCurrentPage(1); // Reset to first page when searching
   }, []);
 
-  const handleFilterChange = useCallback((key: keyof FilterState, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-    setCurrentPage(1); // Reset to first page when filtering
-  }, []);
+  const handleFilterChange = useCallback(
+    (key: keyof FilterState, value: string) => {
+      setFilters((prev) => ({ ...prev, [key]: value }));
+      setCurrentPage(1); // Reset to first page when filtering
+    },
+    []
+  );
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
@@ -185,50 +211,62 @@ export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery
     setCurrentPage(1);
   }, []);
 
-  const handleEditQuery = useCallback(async (id: string, updates: { name?: string; description?: string }) => {
-    try {
-      await updateQuery(id, updates);
-    } catch (error) {
-      console.error("Failed to update query:", error);
-    }
-  }, [updateQuery]);
+  const handleEditQuery = useCallback(
+    async (id: string, updates: { name?: string; description?: string }) => {
+      try {
+        await updateQuery(id, updates);
+      } catch (error) {
+        console.error("Failed to update query:", error);
+      }
+    },
+    [updateQuery]
+  );
 
-  const handleDeleteQuery = useCallback(async (id: string) => {
-    try {
-      await deleteQuery(id);
-    } catch (error) {
-      console.error("Failed to delete query:", error);
-    }
-  }, [deleteQuery]);
+  const handleDeleteQuery = useCallback(
+    async (id: string) => {
+      try {
+        await deleteQuery(id);
+      } catch (error) {
+        console.error("Failed to delete query:", error);
+      }
+    },
+    [deleteQuery]
+  );
 
-  const handleLoadQuery = useCallback((query: SavedQuery) => {
-    try {
-      onLoadQuery(query);
-      // Show success notification
-      savedQueryNotifications.queryLoaded(query.name);
-    } catch (error) {
-      console.error("Failed to load query:", error);
-      toast.error("Gagal memuat query", {
-        description: `Query "${query.name}" tidak dapat dimuat`,
-      });
-    }
-  }, [onLoadQuery]);
+  const handleLoadQuery = useCallback(
+    (query: SavedQuery) => {
+      try {
+        onLoadQuery(query);
+        // Show success notification
+        savedQueryNotifications.queryLoaded(query.name);
+      } catch (error) {
+        console.error("Failed to load query:", error);
+        toast.error("Gagal memuat query", {
+          description: `Query "${query.name}" tidak dapat dimuat`,
+        });
+      }
+    },
+    [onLoadQuery]
+  );
 
   // Bulk operations handlers
-  const handleSelectQuery = useCallback((queryId: string, selected: boolean) => {
-    setSelectedQueries(prev => {
-      const newSet = new Set(prev);
-      if (selected) {
-        newSet.add(queryId);
-      } else {
-        newSet.delete(queryId);
-      }
-      return newSet;
-    });
-  }, []);
+  const handleSelectQuery = useCallback(
+    (queryId: string, selected: boolean) => {
+      setSelectedQueries((prev) => {
+        const newSet = new Set(prev);
+        if (selected) {
+          newSet.add(queryId);
+        } else {
+          newSet.delete(queryId);
+        }
+        return newSet;
+      });
+    },
+    []
+  );
 
   const handleSelectAll = useCallback(() => {
-    const allQueryIds = new Set(filteredAndSortedQueries.map(q => q.id));
+    const allQueryIds = new Set(filteredAndSortedQueries.map((q) => q.id));
     setSelectedQueries(allQueryIds);
   }, [filteredAndSortedQueries]);
 
@@ -244,7 +282,10 @@ export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery
 
     try {
       const queryIds = Array.from(selectedQueries);
-      const queryObjects = queryIds.map(id => ({ id, name: queries.find(q => q.id === id)?.name || id }));
+      const queryObjects = queryIds.map((id) => ({
+        id,
+        name: queries.find((q) => q.id === id)?.name || id,
+      }));
 
       const result = await handleBulkOperation(
         queryObjects,
@@ -285,11 +326,12 @@ export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery
   const totalPages = pagination?.totalPages || 1;
   const hasNextPage = currentPage < totalPages;
   const hasPrevPage = currentPage > 1;
-  
+
   // Bulk operations info
   const selectedCount = selectedQueries.size;
-  const allSelected = filteredAndSortedQueries.length > 0 && 
-    filteredAndSortedQueries.every(q => selectedQueries.has(q.id));
+  const allSelected =
+    filteredAndSortedQueries.length > 0 &&
+    filteredAndSortedQueries.every((q) => selectedQueries.has(q.id));
   const someSelected = selectedCount > 0 && !allSelected;
 
   // Provide refresh function to parent component
@@ -308,7 +350,7 @@ export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery
     <div className="flex flex-col h-full">
       {/* Network Status Warning */}
       <NetworkStatus isOnline={isOnline} />
-      
+
       {/* Sticky Search and Filter Controls */}
       <div className="sticky top-0 z-10 bg-background border-b mb-6">
         <Card className="border-0 border-b rounded-none">
@@ -340,10 +382,14 @@ export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
                   {/* Date Range Filter */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Tanggal Dibuat</label>
+                    <label className="text-sm font-medium">
+                      Tanggal Dibuat
+                    </label>
                     <select
                       value={filters.dateRange}
-                      onChange={(e) => handleFilterChange("dateRange", e.target.value)}
+                      onChange={(e) =>
+                        handleFilterChange("dateRange", e.target.value)
+                      }
                       className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
                     >
                       <option value="all">Semua Waktu</option>
@@ -358,7 +404,9 @@ export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery
                     <label className="text-sm font-medium">Urutkan</label>
                     <select
                       value={filters.sortBy}
-                      onChange={(e) => handleFilterChange("sortBy", e.target.value)}
+                      onChange={(e) =>
+                        handleFilterChange("sortBy", e.target.value)
+                      }
                       className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
                     >
                       <option value="newest">Terbaru</option>
@@ -381,9 +429,13 @@ export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery
               )}
 
               {/* Active Filters Display */}
-              {(filters.search || filters.dateRange !== "all" || filters.sortBy !== "newest") && (
+              {(filters.search ||
+                filters.dateRange !== "all" ||
+                filters.sortBy !== "newest") && (
                 <div className="flex flex-wrap gap-2 pt-2 border-t">
-                  <span className="text-sm text-muted-foreground">Filter aktif:</span>
+                  <span className="text-sm text-muted-foreground">
+                    Filter aktif:
+                  </span>
                   {filters.search && (
                     <Badge variant="secondary">
                       Pencarian: "{filters.search}"
@@ -391,18 +443,18 @@ export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery
                   )}
                   {filters.dateRange !== "all" && (
                     <Badge variant="secondary">
-                      Tanggal: {
-                        filters.dateRange === "today" ? "Hari Ini" :
-                        filters.dateRange === "week" ? "7 Hari" :
-                        "30 Hari"
-                      }
+                      Tanggal:{" "}
+                      {filters.dateRange === "today"
+                        ? "Hari Ini"
+                        : filters.dateRange === "week"
+                        ? "7 Hari"
+                        : "30 Hari"}
                     </Badge>
                   )}
                   {filters.sortBy !== "newest" && (
                     <Badge variant="secondary">
-                      Urutan: {
-                        filters.sortBy === "oldest" ? "Terlama" : "Nama A-Z"
-                      }
+                      Urutan:{" "}
+                      {filters.sortBy === "oldest" ? "Terlama" : "Nama A-Z"}
                     </Badge>
                   )}
                 </div>
@@ -415,110 +467,118 @@ export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery
       {/* Scrollable Query List Container */}
       <div className="flex-1 overflow-hidden">
         <Card className="h-full flex flex-col">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <span>Daftar Query ({pagination?.total || 0})</span>
-              {selectedCount > 0 && (
-                <Badge variant="secondary" className="bg-amber-100 text-amber-800">
-                  {selectedCount} dipilih
-                </Badge>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              {(isUpdating || isDeleting || isBulkDeleting) && (
-                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-              )}
-              
-              {/* Bulk operations */}
-              {filteredAndSortedQueries.length > 0 && (
-                <div className="flex items-center gap-2">
-                  {selectedCount > 0 && (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={isBulkDeleting}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          {isBulkDeleting ? (
-                            <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                          ) : (
-                            <Trash2 className="w-4 h-4 mr-1" />
-                          )}
-                          Hapus ({selectedCount})
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle className="flex items-center gap-2">
-                            <Trash2 className="w-5 h-5 text-red-600" />
-                            Hapus Query Terpilih
-                          </AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Apakah Anda yakin ingin menghapus <strong>{selectedCount} query</strong> yang dipilih?
-                            <br />
-                            <br />
-                            Tindakan ini tidak dapat dibatalkan dan semua query akan dihapus secara permanen.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel disabled={isBulkDeleting}>
-                            Batal
-                          </AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={handleBulkDelete}
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <span>Daftar Query ({pagination?.total || 0})</span>
+                {selectedCount > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-amber-100 text-amber-800"
+                  >
+                    {selectedCount} dipilih
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {(isUpdating || isDeleting || isBulkDeleting) && (
+                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                )}
+
+                {/* Bulk operations */}
+                {filteredAndSortedQueries.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    {selectedCount > 0 && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="outline"
                             disabled={isBulkDeleting}
-                            className="bg-red-600 hover:bg-red-700 text-white"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
                             {isBulkDeleting ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Menghapus...
-                              </>
+                              <Loader2 className="w-4 h-4 mr-1 animate-spin" />
                             ) : (
-                              <>
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Hapus {selectedCount} Query
-                              </>
+                              <Trash2 className="w-4 h-4 mr-1" />
                             )}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
-                  
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={allSelected ? handleSelectNone : handleSelectAll}
-                    disabled={isBulkDeleting}
-                  >
-                    {allSelected ? (
-                      <>
-                        <Square className="w-4 h-4 mr-1" />
-                        Batal Pilih
-                      </>
-                    ) : (
-                      <>
-                        <CheckSquare className="w-4 h-4 mr-1" />
-                        Pilih Semua
-                      </>
+                            Hapus ({selectedCount})
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="flex items-center gap-2">
+                              <Trash2 className="w-5 h-5 text-red-600" />
+                              Hapus Query Terpilih
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Apakah Anda yakin ingin menghapus{" "}
+                              <strong>{selectedCount} query</strong> yang
+                              dipilih?
+                              <br />
+                              <br />
+                              Tindakan ini tidak dapat dibatalkan dan semua
+                              query akan dihapus secara permanen.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel disabled={isBulkDeleting}>
+                              Batal
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={handleBulkDelete}
+                              disabled={isBulkDeleting}
+                              className="bg-red-600 hover:bg-red-700 text-white"
+                            >
+                              {isBulkDeleting ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Menghapus...
+                                </>
+                              ) : (
+                                <>
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Hapus {selectedCount} Query
+                                </>
+                              )}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     )}
-                  </Button>
-                </div>
-              )}
-            </div>
-          </CardTitle>
-        </CardHeader>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={allSelected ? handleSelectNone : handleSelectAll}
+                      disabled={isBulkDeleting}
+                    >
+                      {allSelected ? (
+                        <>
+                          <Square className="w-4 h-4 mr-1" />
+                          Batal Pilih
+                        </>
+                      ) : (
+                        <>
+                          <CheckSquare className="w-4 h-4 mr-1" />
+                          Pilih Semua
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardTitle>
+          </CardHeader>
           <CardContent className="flex-1 overflow-y-auto p-0">
             {/* Loading State */}
             {isLoading && queries.length > 0 && (
               <div className="p-6">
                 <div className="flex items-center justify-center">
                   <Loader2 className="w-6 h-6 animate-spin text-amber-600 mr-2" />
-                  <span className="text-sm text-muted-foreground">Memuat query...</span>
+                  <span className="text-sm text-muted-foreground">
+                    Memuat query...
+                  </span>
                 </div>
               </div>
             )}
@@ -532,9 +592,11 @@ export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery
                   title="Gagal Memuat Query"
                   description="Terjadi kesalahan saat memuat daftar query tersimpan."
                   variant={
-                    error.message?.includes("network") || error.message?.includes("connection") 
-                      ? "network" 
-                      : error.message?.includes("server") || error.message?.includes("5")
+                    error.message?.includes("network") ||
+                    error.message?.includes("connection")
+                      ? "network"
+                      : error.message?.includes("server") ||
+                        error.message?.includes("5")
                       ? "server"
                       : "generic"
                   }
@@ -559,16 +621,14 @@ export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery
               <div className="flex flex-col items-center justify-center py-12 px-6">
                 <Database className="w-12 h-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium mb-2">
-                  {filters.search || filters.dateRange !== "all" ? 
-                    "Tidak Ada Query yang Cocok" : 
-                    "Belum Ada Query Tersimpan"
-                  }
+                  {filters.search || filters.dateRange !== "all"
+                    ? "Tidak Ada Query yang Cocok"
+                    : "Belum Ada Query Tersimpan"}
                 </h3>
                 <p className="text-sm text-muted-foreground text-center mb-4">
-                  {filters.search || filters.dateRange !== "all" ? 
-                    "Coba ubah kriteria pencarian atau filter Anda." :
-                    "Mulai simpan query dari Query Builder untuk melihatnya di sini."
-                  }
+                  {filters.search || filters.dateRange !== "all"
+                    ? "Coba ubah kriteria pencarian atau filter Anda."
+                    : "Mulai simpan query dari Query Builder untuk melihatnya di sini."}
                 </p>
                 {(filters.search || filters.dateRange !== "all") && (
                   <Button onClick={handleClearFilters} variant="outline">
@@ -587,13 +647,13 @@ export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery
                     <div className="pt-6 pl-4">
                       <Checkbox
                         checked={selectedQueries.has(query.id)}
-                        onCheckedChange={(checked) => 
+                        onCheckedChange={(checked) =>
                           handleSelectQuery(query.id, Boolean(checked))
                         }
                         disabled={isBulkDeleting}
                       />
                     </div>
-                    
+
                     {/* Query item */}
                     <div className="flex-1">
                       <QueryListItem
@@ -619,7 +679,7 @@ export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-muted-foreground">
-                  Halaman {currentPage} dari {totalPages} 
+                  Halaman {currentPage} dari {totalPages}
                   {pagination && (
                     <span className="ml-2">
                       ({pagination.total} total query)
@@ -636,17 +696,21 @@ export const QueryManagement = React.memo(function QueryManagement({ onLoadQuery
                     <ChevronLeft className="w-4 h-4 mr-1" />
                     Sebelumnya
                   </Button>
-                  
+
                   {/* Page Numbers */}
                   <div className="flex items-center gap-1">
                     {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                      const pageNum =
+                        Math.max(1, Math.min(totalPages - 4, currentPage - 2)) +
+                        i;
                       if (pageNum > totalPages) return null;
-                      
+
                       return (
                         <Button
                           key={pageNum}
-                          variant={pageNum === currentPage ? "default" : "outline"}
+                          variant={
+                            pageNum === currentPage ? "default" : "outline"
+                          }
                           size="sm"
                           onClick={() => handlePageChange(pageNum)}
                           disabled={isLoading}

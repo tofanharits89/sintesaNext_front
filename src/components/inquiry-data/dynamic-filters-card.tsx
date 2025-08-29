@@ -8,7 +8,6 @@ import { TayangModal } from "./modals/tayang-modal";
 import { WhatsappModal } from "./modals/whatsapp-modal";
 import { SimpanModal } from "./modals/simpan-modal";
 import { LihatSqlModal } from "./modals/lihat-sql-modal";
-import { QueryLoaderButton } from "./query-loader-button";
 import { getFilterLabel, normalizeActiveFilters } from "./filterRegistry";
 
 import {
@@ -28,11 +27,13 @@ interface DynamicFiltersCardProps {
     tahun: string;
     tipeLaporan: string;
     pembulatan: string;
+    tematikKategori?: string;
   };
   onRemoveFilter: (filterKey: string) => void;
   onClearAllFilters: () => void;
   filterValues: Record<string, FilterValue>;
   onFilterChange: (filterKey: string, field: string, value: string) => void;
+  scope?: "belanja" | "tematik" | "general"; // Add scope for query differentiation
   queryLoader?: {
     hasUnsavedChanges: boolean;
     loadQuery: (query: any) => Promise<void>;
@@ -41,6 +42,7 @@ interface DynamicFiltersCardProps {
       errors: string[];
     };
   };
+  hiddenFilterKeys?: string[]; // Optional: hide rendering of specific filters but keep them active
 }
 
 // Labels will come from the registry via getFilterLabel
@@ -52,7 +54,8 @@ export function DynamicFiltersCard({
   onClearAllFilters,
   filterValues,
   onFilterChange,
-  queryLoader,
+  scope = "general", // Default to general scope
+  hiddenFilterKeys = [],
 }: DynamicFiltersCardProps) {
   const [modals, setModals] = useState({
     tayang: false,
@@ -136,16 +139,18 @@ export function DynamicFiltersCard({
               )}
             </div>
             <div className="space-y-4">
-              {sortedActiveFilters.map((filterKey) => (
-                <EnhancedFilterCard
-                  key={filterKey}
-                  filterKey={filterKey}
-                  filterLabel={getFilterLabel(filterKey)}
-                  onRemove={() => handleRemoveFilter(filterKey)}
-                  activeFilterValues={filterValues}
-                  onFilterChange={onFilterChange}
-                />
-              ))}
+              {sortedActiveFilters
+                .filter((k) => !hiddenFilterKeys.includes(k))
+                .map((filterKey) => (
+                  <EnhancedFilterCard
+                    key={filterKey}
+                    filterKey={filterKey}
+                    filterLabel={getFilterLabel(filterKey)}
+                    onRemove={() => handleRemoveFilter(filterKey)}
+                    activeFilterValues={filterValues}
+                    onFilterChange={onFilterChange}
+                  />
+                ))}
             </div>
           </div>
         ) : (
@@ -159,7 +164,6 @@ export function DynamicFiltersCard({
 
         {/* Action Buttons */}
         <div className="border-t pt-6">
-
           {/* Query Loader Button removed (redundant) */}
           <div className="flex flex-wrap justify-center gap-3">
             {/* Tayang Button */}
@@ -234,13 +238,14 @@ export function DynamicFiltersCard({
         activeFilters={activeFilters}
         reportParams={reportParams}
         filterValues={filterValues}
+        scope={scope}
       />
 
       <WhatsappModal
         open={modals.whatsapp}
         onOpenChange={() => closeModal("whatsapp")}
         activeFilters={activeFilters}
-        reportParams={reportParams}
+        reportParams={{ ...reportParams, scope }}
         filterValues={filterValues}
       />
       {/* Optional: WhatsApp QR modal entry point can be added anywhere, e.g., settings */}
@@ -252,6 +257,7 @@ export function DynamicFiltersCard({
         activeFilters={activeFilters}
         reportParams={reportParams}
         filterValues={filterValues}
+        scope={scope} // Pass scope to SimpanModal
       />
 
       {isAdmin && (
@@ -259,7 +265,7 @@ export function DynamicFiltersCard({
           open={modals.lihatSql}
           onOpenChange={() => closeModal("lihatSql")}
           activeFilters={activeFilters}
-          reportParams={reportParams}
+          reportParams={{ ...reportParams, scope }}
           filterValues={filterValues}
         />
       )}

@@ -29,6 +29,8 @@ interface WhatsappModalProps {
     tahun: string;
     tipeLaporan: string;
     pembulatan: string;
+    tematikKategori?: string;
+    scope?: "belanja" | "tematik" | "general";
   };
   // pass values so we can build the same query server-side
   filterValues?: Record<string, FilterValue>;
@@ -150,7 +152,15 @@ export function WhatsappModal({
           fileType: selectedFileType === "excel" ? "excel" : "csv",
           phone,
           reportParams,
-          caption: `Inquiry Data Belanja (Tahun: ${reportParams.tahun}, Tipe: ${reportParams.tipeLaporan})`,
+          caption: `Inquiry Data ${
+            reportParams.scope === "tematik" ? "Tematik" : "Belanja"
+          } (Tahun: ${reportParams.tahun}, ${
+            reportParams.scope === "tematik" ? "Kategori" : "Tipe"
+          }: ${
+            reportParams.scope === "tematik"
+              ? reportParams.tematikKategori || "-"
+              : reportParams.tipeLaporan
+          })`,
         }),
       });
 
@@ -217,7 +227,10 @@ export function WhatsappModal({
                 Tahun: {reportParams.tahun || "Belum dipilih"}
               </Badge>
               <Badge variant="secondary">
-                Tipe: {reportParams.tipeLaporan || "Belum dipilih"}
+                {reportParams.scope === "tematik" ? "Kategori" : "Tipe"}:{" "}
+                {reportParams.scope === "tematik"
+                  ? reportParams.tematikKategori || "Belum dipilih"
+                  : reportParams.tipeLaporan || "Belum dipilih"}
               </Badge>
               <Badge variant="outline">Filter: {activeFilters.length}</Badge>
             </div>
@@ -267,13 +280,19 @@ export function WhatsappModal({
           <div className="bg-muted/50 p-3 rounded-lg">
             <p className="text-xs text-muted-foreground">
               Sistem akan mengirim file langsung ke nomor WhatsApp yang Anda
-              masukkan menggunakan sesi WhatsApp server. Pindai QR terlebih dahulu agar sesi aktif.
+              masukkan menggunakan sesi WhatsApp server. Pindai QR terlebih
+              dahulu agar sesi aktif.
             </p>
           </div>
         </div>
 
         <DialogFooter className="gap-2">
-          <Button variant="destructive" className="w-24" onClick={handleClose} disabled={isLoading}>
+          <Button
+            variant="destructive"
+            className="w-24"
+            onClick={handleClose}
+            disabled={isLoading}
+          >
             Tutup
           </Button>
           <Button

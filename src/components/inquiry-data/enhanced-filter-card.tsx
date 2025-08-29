@@ -17,6 +17,7 @@ interface EnhancedFilterCardProps {
   onRemove: () => void;
   activeFilterValues: Record<string, FilterValue>;
   onFilterChange: (filterKey: string, field: string, value: string) => void;
+  removable?: boolean;
 }
 
 export function EnhancedFilterCard({
@@ -25,6 +26,7 @@ export function EnhancedFilterCard({
   onRemove,
   activeFilterValues,
   onFilterChange,
+  removable = true,
 }: EnhancedFilterCardProps) {
   // Get current month for cutOff filter default
   const getCurrentMonth = () => {
@@ -137,6 +139,7 @@ export function EnhancedFilterCard({
       activeFilterValues={normalizedActiveValues}
       currentFilterValue={currentFilterValue}
       onFilterChange={modifiedOnFilterChange}
+      removable={removable}
     />
   );
 }

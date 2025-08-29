@@ -1,0 +1,8226 @@
+[
+  {
+    "kdpn": "01",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Percepatan Pembangunan Pembangkit Energi Terbarukan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Akselerasi Pengembangan BBN",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Perluasan Penerapan Efisiensi Energi",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Pemenuhan Energi yang Kompetitif bagi Industri",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Industri EBT",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Inventarisasi Jasa Lingkungan Tinggi",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Perlindungan dan Pengamanan Kawasan Lindung Nasional secara Partisipatif",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Optimalisasi Hasil Hutan dan Jasa Lingkungan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Penguatan Kesatuan Pengelolaan Hutan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Pembangunan dan Rehabilitasi Jaringan Irigasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Pembangunan Sistem Penyediaan Air untuk Komoditas Pertanian Bernilai Ekonomi Tinggi",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Penyediaan dan Pengamanan Air Baku dan Air Tanah",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Rehabilitasi Hutan dan Lahan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "02",
+    "deskripsi": "Revitalisasi/ Penyelamatan Danau Prioritas Nasional",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "02",
+    "kdkp": "06",
+    "kdproy": "01",
+    "deskripsi": "Pembangunan dan Rehabilitasi Bendungan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "02",
+    "kdkp": "06",
+    "kdproy": "02",
+    "deskripsi": "Optimalisasi dan Pemanfaatan Tampungan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan Diversifikasi Konsumsi Pangan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Keamanan Pangan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Pengembangan Fortifikasi dan Biofortifikasi Pangan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "04",
+    "deskripsi": "Pengembangan Pangan Organik",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan Produksi Padi",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Produksi Jagung",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Peningkatan Produksi Kedelai",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "04",
+    "deskripsi": "Peningkatan Produksi Daging",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "05",
+    "deskripsi": "Peningkatan Produksi Hortikultura",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "06",
+    "deskripsi": "Peningkatan Produksi Umbi-Umbian",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Asuransi Pertanian",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Pendidikan Pertanian",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Penyuluhan dan Pendampingan Sekolah Lapang",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "03",
+    "kdproy": "04",
+    "deskripsi": "Korporasi Petani",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Pengelolaan Sumber Daya  Air Pertanian",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Pengelolaan Sumber Daya Lahan Pertanian",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "03",
+    "deskripsi": "Peningkatan varietas unggul tanaman dan hewan untuk pangan yang dilepas",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "04",
+    "deskripsi": "Peningkatan sumber daya genetika tanaman dan hewan sumber pangan yang terlindungi/tersedia",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Stabilisasi Harga Pangan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "02",
+    "deskripsi": "Penanganan Rawan Pangan ",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "03",
+    "deskripsi": "Penguatan Cadangan Pangan Nasional",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "04",
+    "deskripsi": "Desain Ulang Kelembagaan Pangan Nasional",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "04",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Pengelolaan Wilayah Pengelolaan Perikanan (WPP)",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "04",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Penataan Ruang Laut dan Rencana Zonasi Pesisir",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "04",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Pengendalian Pemanfaatan Ruang Laut",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Wisata Bahari dan Jasa Maritim",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Marine Bioproduct dan Bioteknologi",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "04",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan Produksi Perikanan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "04",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Produksi Rumput Laut",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "04",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Peningkatan Produksi Garam",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "04",
+    "kdkp": "03",
+    "kdproy": "04",
+    "deskripsi": "Karantina Ikan dan Jaminan Mutu",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan Perlindungan Nelayan dan Pembudidaya Ikan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Akses Pembiayaan Usaha Perikanan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "03",
+    "deskripsi": "Penataan Perizinan Kelautan dan Perikanan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan SDM Kelautan dan Perikanan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "02",
+    "deskripsi": "Penguatan Inovasi Teknologi dan Riset Kelautan dan Perikanan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "05",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Kapasitas Usaha dan Kualitas Produk",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "05",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Perluasan Kemitraan Usaha",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "05",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Penguatan Kapasitas Kelembagaan untuk Bermitra",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Dukungan Pemberian Modal Awal Usaha",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Pendampingan UMKM untuk Mengakses Kredit",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Pengembangan Skema Pembiayaan bagi Wirausaha dan UMKM",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "05",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan Kapasitas Pengurus dan Manajer Koperasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "05",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Pendampingan Kelompok untuk Membentuk Koperasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "05",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Pengembangan Jangkauan dan Cakupan Usaha",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "05",
+    "kdkp": "03",
+    "kdproy": "04",
+    "deskripsi": "Pengembangan Inovasi Koperasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Pelatihan Kewirausahaan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Inkubasi Usaha",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "03",
+    "deskripsi": "Penguatan Kapasitas Layanan Usaha",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "04",
+    "deskripsi": "Pengembangan Sentra Industri Kecil dan Menengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Pembinaan Wirausaha Sosial",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Industri Berbasis Perkebunan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Industri Berbasis Pertanian Pangan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Pengembangan Industri Berbasis Kehutanan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "01",
+    "kdproy": "04",
+    "deskripsi": "Pengembangan Industri Kemaritiman",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "01",
+    "kdproy": "05",
+    "deskripsi": "Pengembangan Industri Kimia, Farmasi dan Logam",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Kawasan Industri dan Smelter secara Terintegrasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Pemanfaatan Mineral dan Batubara untuk Peningkatan Nilai Tambah",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan 25 Kawasan Hutan untuk Mendukung Destinasi Pariwisata Prioritas",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Aksesibilitas, Amenitas, dan Atraksi, serta Daya Dukung Destinasi Pariwisata",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Penguatan Rantai Pasok Industri dan Kapasitas Masyarakat, termasuk Melalui Desa Wisata",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "03",
+    "kdproy": "04",
+    "deskripsi": "Pengelolaan dan Standar Layanan Destinasi Pariwisata",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "03",
+    "kdproy": "05",
+    "deskripsi": "Pengembangan 16 Destinasi Pariwisata Geopark",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Penyediaan Insentif Inovasi dan Pengembangan Brand",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Penyediaan Insentif Penerapan dan Komersialisasi HKI",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "03",
+    "deskripsi": "Fasilitasi Rantai Pasok dan Scale-up Karya dan Platform Kreatif Unggulan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "04",
+    "deskripsi": "Peningkatan Kerja Sama Pengembangan Kota Kreatif",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "05",
+    "deskripsi": "Pengembangan ’Start-Up Parks’ dan Center of Excellence",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "06",
+    "deskripsi": "Pengembangan Pendampingan dan Inkubasi di Ruang Kreatif",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "07",
+    "deskripsi": "Pengembangan Kawasan Be Creative District (BCD)",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Kepastian Hukum Berusaha dan Investasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "05",
+    "kdproy": "02",
+    "deskripsi": "Fasilitasi Kemudahan Usaha dan Investasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "05",
+    "kdproy": "03",
+    "deskripsi": "Peningkatan Iklim Ketenagakerjaan dan Hubungan Industrial",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "06",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Infrastruktur Industri Halal",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "07",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan Diversifikasi Produk Ekspor dan Jasa",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "07",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Nilai Tambah Produk Ekspor dan Jasa",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "07",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan Pangsa Pasar Produk Indonesia",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "07",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Fasilitasi Ekspor",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "07",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Peningkatan Daya Saing Industri Guna Mendorong Peningkatan Ekspor",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "07",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Penguatan Kebijakan Perlindungan Akses Pasar Dalam Negeri",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Sistem Katalog",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "07",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan Investasi (Inbound & Outbound) Industri GPN Berbasis Hilirisasi SDA, Teknologi Tinggi",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "07",
+    "kdkp": "06",
+    "kdproy": "01",
+    "deskripsi": "Branding Wonderful Indonesia",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "07",
+    "kdkp": "06",
+    "kdproy": "02",
+    "deskripsi": "Pendalaman Pasar Tradisional dan Diversifikasi Pemasaran ke Pasar Baru",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "07",
+    "kdkp": "06",
+    "kdproy": "03",
+    "deskripsi": "Perluasan Pemasaran Produk Kreatif, termasuk Melalui e-Commerce",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "07",
+    "kdkp": "06",
+    "kdproy": "04",
+    "deskripsi": "Perluasan Diklat Manajemen Usaha dan Pemasaran",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "07",
+    "kdkp": "07",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan Kapasitas dan Kualitas Sumber Daya Manusia (Negosiator) dan Kelembagaan Perwakilan RI di Luar Negeri termasuk FTA Center",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "07",
+    "kdkp": "07",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Jumlah Kesepakatan dan Penyelesaian Proses Ratifikasi Kerjasama Ekonomi Internasional",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "07",
+    "kdkp": "07",
+    "kdproy": "03",
+    "deskripsi": "Promosi Terintegrasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "08",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan Inklusi Keuangan, Inovasi Sektor Keuangan, dengan Menjaga Stabilitas dan Integritas Sistem Keuangan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "08",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Pengembangan dan Pendalaman Pasar Keuangan Pemerintah",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "08",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Penguatan Industri Fintech, e-Commerce, On-Demand Service, dan Internet Of Things",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "08",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Modernisasi Industri Hingga 4.0 Sesuai Karakteristik Industri",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "08",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Pembangunan Sarana dan Prasarana Pendukung Efisiensi Sistem Logistik",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "08",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Pengendalian Inflasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "08",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Penerapan Standar Pariwisata Berkelanjutan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "08",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Penerapan Industri Hijau",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "08",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Pembaruan Sistem Informasi Administrasi Perpajakan yang Andal dan Terintegrasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "08",
+    "kdkp": "05",
+    "kdproy": "03",
+    "deskripsi": "Perumusan Kebijakan Terkait Pembiayaan",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "08",
+    "kdkp": "05",
+    "kdproy": "04",
+    "deskripsi": "Pengembangan Sistem Pembayaran",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "08",
+    "kdkp": "05",
+    "kdproy": "05",
+    "deskripsi": "Pembangunan dan Pengembangan Data Analytic",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "08",
+    "kdkp": "06",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Statistik Pariwisata dan Ekonomi Kreatif",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "08",
+    "kdkp": "06",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Statistik e-Commerce",
+    "status": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "08",
+    "kdkp": "06",
+    "kdproy": "03",
+    "deskripsi": "Pelaksanaan Sensus Pertanian 2023 dan Perbaikan Statistik Pangan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Percepatan Peningkatan Investasi KEK Arun Lhokseumawe",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Fasilitasi Realisasi Investasi dan Pembangunan KI/KEK Sei Mangkei",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Perbaikan Aksesibilitas, Atraksi dan Amenitas Destinasi Pariwisata Prioritas Danau Toba dan sekitarnya",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "04",
+    "deskripsi": "Pembangunan Destinasi Pariwisata Pengembangan Padang-Bukittinggi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "05",
+    "deskripsi": "Perbaikan Aksesibilitas, Atraksi dan Amenitas Destinasi Pariwisata Prioritas Bangka Belitung/KEK Tanjung Kelayang",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "06",
+    "deskripsi": "Percepatan Peningkatan Investasi KPBPB Batam, Bintan, dan Karimun",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "07",
+    "deskripsi": "Fasilitasi Realisasi Investasi dan Pembangunan KI/KEK Galang Batang",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "08",
+    "deskripsi": "Pembangunan Destinasi Pariwisata Pengembangan Batam Bintan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kopi di Provinsi Aceh",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kakao di Provinsi Aceh",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Pengembangan Komoditas Unggulan Karet di Provinsi Aceh",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "04",
+    "deskripsi": "Pengembangan Komoditas Unggulan Lada, Pala, Cengkeh di Provinsi Aceh",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "05",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa Sawit di Provinsi Aceh",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "06",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap di Provinsi Aceh",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "07",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya di Provinsi Aceh",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "08",
+    "deskripsi": "Pengembangan Komoditas Unggulan Garam di Provinsi Aceh",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "10",
+    "deskripsi": "Pengembangan Komoditas Unggulan Karet di Provinsi Sumatera Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "11",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kopi di Provinsi Sumatera Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "12",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa Sawit di Provinsi Sumatera Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "13",
+    "deskripsi": "Pengembangan Komoditas Unggulan Tebu di Provinsi Sumatera Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "14",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap di Provinsi Sumatera Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "15",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya di Provinsi Sumatera Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "16",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kakao di Provinsi Sumatera Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "17",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kopi di Provinsi Sumatera Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "18",
+    "deskripsi": "Pengembangan Komoditas Unggulan Karet di Provinsi Sumatera Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "19",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa Sawit di Provinsi Sumatera Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "20",
+    "deskripsi": "Pengembangan Komoditas Unggulan Pala di Provinsi Sumatera Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "21",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap di Provinsi Sumatera Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "22",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya di Provinsi Sumatera Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "23",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa Sawit di Provinsi Riau",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "24",
+    "deskripsi": "Pengembangan Komoditas Unggulan Karet di Provinsi Riau",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "25",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa di Provinsi Riau",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "26",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kopi di Provinsi Riau",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "27",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya di Provinsi Riau",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "28",
+    "deskripsi": "Optimalisasi Komoditas Unggulan Emas di Provinsi Riau",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "29",
+    "deskripsi": "Optimalisasi Komoditas Unggulan Pertambangan di Provinsi Riau",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "30",
+    "deskripsi": "Pengembangan Komoditas Unggulan Tebu di Provinsi Jambi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "31",
+    "deskripsi": "Pengembangan Komoditas Unggulan Karet di Provinsi Jambi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "32",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa Sawit di Provinsi Jambi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "33",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kopi di Provinsi Jambi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "34",
+    "deskripsi": "Optimalisasi Komoditas Unggulan Pertambangan di Provinsi Jambi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "35",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya di Provinsi Jambi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "36",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kopi di Provinsi Sumatera Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "37",
+    "deskripsi": "Pengembangan Komoditas Unggulan Karet di Provinsi Sumatera Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "38",
+    "deskripsi": "Pengembangan Komoditas Unggulan Tebu di Provinsi Sumatera Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "39",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa Sawit di Provinsi Sumatera Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "40",
+    "deskripsi": "Pengembangan Komoditas Unggulan Lada, Pala, Cengkeh di Provinsi Sumatera Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "41",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap di Provinsi Sumatera Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "42",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya di Provinsi Sumatera Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "43",
+    "deskripsi": "Optimalisasi Komoditas Unggulan Pertambangan di Provinsi Sumatera Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "44",
+    "deskripsi": " Pengembangan Komoditas Unggulan Kopi di Provinsi Bengkulu",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "45",
+    "deskripsi": "Pengembangan Komoditas Unggulan Karet di Provinsi Bengkulu",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "46",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap di Provinsi Bengkulu",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "47",
+    "deskripsi": "Optimalisasi Komoditas Unggulan Emas di Provinsi Bengkulu",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "48",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa Sawit di Provinsi Bengkulu",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "49",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kopi di Provinsi Lampung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "50",
+    "deskripsi": "Pengembangan Komoditas Unggulan Karet di Provinsi Lampung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "51",
+    "deskripsi": "Pengembangan Komoditas Unggulan Lada di Provinsi Lampung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "52",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa Sawit di Provinsi Lampung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "53",
+    "deskripsi": "Pengembangan Komoditas Unggulan Tebu di Provinsi Lampung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "54",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap di Provinsi Lampung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "55",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya di Provinsi Lampung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "56",
+    "deskripsi": "Pengembangan Komoditas Unggulan Lada, Pala, Cengkeh di Provinsi Kepulauan Bangka Belitung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "57",
+    "deskripsi": "Pengembangan Komoditas Unggulan Karet di Provinsi Kepulauan Bangka Belitung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "58",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kopi di Provinsi Kepulauan Bangka Belitung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "59",
+    "deskripsi": "Optimalisasi Komoditas Unggulan Timah di Provinsi Kepulauan Bangka Belitung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "60",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap di Provinsi Kepulauan Bangka Belitung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "61",
+    "deskripsi": "Pengembangan Komoditas Unggulan Pala di Provinsi Kepulauan Riau",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "62",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap di Provinsi Kepulauan Riau",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Aceh",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Bengkulu",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Jambi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "04",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Kepulauan Bangka Belitung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "05",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Kepulauan Riau",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "06",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Lampung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "07",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Riau",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "08",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Sumatera Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "09",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Sumatera Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "10",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Sumatera Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "11",
+    "deskripsi": "Pengembangan Wilayah Metropolitan di Provinsi Sumatera Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "12",
+    "deskripsi": "Pengembangan Wilayah Metropolitan di Provinsi Sumatera Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Percepatan Pembangunan Daerah Tertinggal",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Pembangunan Desa Terpadu",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "03",
+    "deskripsi": "Peningkatan Kesejahteraan dan Tata Kelola di Kecamatan Lokasi Prioritas",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "04",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN)",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "05",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "06",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "07",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Aceh",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "08",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Aceh Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "09",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi Ketapang Nusantara, Samar Kilang, dan Selaut",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "10",
+    "deskripsi": "Peningkatan Kesejahteraan dan Tata Kelola di Kecamatan Lokasi Prioritas di Provinsi Aceh",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "11",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN) Sabang",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "12",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Sumatera Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "13",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Toba Samosir dan Samosir",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "14",
+    "deskripsi": "Peningkatan Kesejahteraan dan Tata Kelola di Kecamatan Lokasi Prioritas di Provinsi Sumatera Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "15",
+    "deskripsi": "Percepatan Pembangunan Daerah Tertinggal di Provinsi Sumatera Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "16",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Sumatera Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "17",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Agam",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "18",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi Lunang Silaut",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "19",
+    "deskripsi": "Percepatan Pembangunan Daerah Tertinggal di Provinsi Sumatera Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "20",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Riau",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "21",
+    "deskripsi": "Peningkatan Kesejahteraan dan Tata Kelola di Kecamatan Lokasi Prioritas di Provinsi Riau",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "22",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN) Bengkalis",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "23",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Jambi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "24",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Muaro Jambi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "25",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi Bathin III Ulu",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "26",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Sumatera Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "27",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Banyuasin",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "28",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi Parit Rambutan, Telang, dan Kikim",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "29",
+    "deskripsi": "Percepatan Pembangunan Daerah Tertinggal di Provinsi Sumatera Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "30",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Bengkulu",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "31",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Bengkulu Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "32",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi Lagita",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "33",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Lampung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "34",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Mesuji dan Tulang Bawang",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "35",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi Rawa Pitu dan Mesuji",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "36",
+    "deskripsi": "Percepatan Pembangunan Daerah Tertinggal di Provinsi Lampung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "37",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Kepulauan Bangka Belitung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "38",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Belitung, Belitung Timur, dan Bangka Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "39",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi Batu Betumpang",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "40",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Kepulauan Riau",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "41",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Bintan dan Karimun",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "42",
+    "deskripsi": "Peningkatan Kesejahteraan dan Tata Kelola di Kecamatan Lokasi Prioritas di Provinsi Kepulauan Riau",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "43",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN) Ranai",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan kapasitas pemerintahan daerah dan hubungan pusat-daerah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "02",
+    "deskripsi": "Pengelolaan dan pelayanan pertanahan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "03",
+    "deskripsi": "Penyelenggaraan Penataan Ruang",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "04",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Aceh",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "05",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Aceh",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "06",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Aceh",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "07",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Sumatera Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "08",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Sumatera Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "09",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Sumatera Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "10",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Sumatera Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "11",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Sumatera Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "12",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Sumatera Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "13",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Riau",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "14",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Riau",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "15",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Riau",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "16",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Kepulauan Riau",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "17",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Kepulauan Riau",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "18",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Kepulauan Riau",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "19",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Jambi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "20",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Jambi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "21",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Jambi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "22",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Sumatera Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "23",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Sumatera Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "24",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Sumatera Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "25",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Lampung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "26",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Lampung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "27",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Lampung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "28",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Bengkulu",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "29",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Bengkulu",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "30",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Bengkulu",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "31",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Kepulauan Bangka Belitung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "32",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Kepulauan Bangka Belitung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "33",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Kepulauan Bangka Belitung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "34",
+    "deskripsi": "Penyelenggaraan Informasi Geospasial di Provinsi Sumatera Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "35",
+    "deskripsi": "Penyelenggaraan Informasi Geospasial di Provinsi Sumatera Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "36",
+    "deskripsi": "Penyelenggaraan Informasi Geospasial di Provinsi Sumatera Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "37",
+    "deskripsi": "Penyelenggaraan Informasi Geospasial di Provinsi Lampung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Pembangunan Destinasi Pariwisata Pengembangan Ujung Kulon-Halimun-Bandung-Pangandaran di Provinsi Jawa Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Percepatan Peningkatan Investasi KEK Kendal",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Perbaikan Aksesibilitas, Atraksi dan Amenitas Destinasi Pariwisata Prioritas Borobudur dan Sekitarnya di Provinsi Jawa Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "04",
+    "deskripsi": "Terlaksananya Perbaikan Aksesibilitas, Atraksi dan Amenitas Destinasi Pariwisata Prioritas Borobudur dan Sekitarnya di Provinsi DI Yogyakarta",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "05",
+    "deskripsi": "Perbaikan Aksesibilitas, Atraksi dan Amenitas Destinasi Pariwisata Prioritas Bromo-Tengger-Semeru",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "06",
+    "deskripsi": " Pembangunan Destinasi Pariwisata Pengembangan Banyuwangi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "07",
+    "deskripsi": "Percepatan Peningkatan Investasi KEK Tanjung Lesung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "08",
+    "deskripsi": "Peningkatan keberlanjutan DPP Revitalisasi Bali",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "09",
+    "deskripsi": "Pembangunan Destinasi Pariwisata Pengembangan Ujung Kulon-Halimun-Bandung-Pangandaran di Provinsi Banten",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Komoditas Unggulan Lada, Pala, dan Cengkeh di Provinsi Jawa Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kopi di Provinsi Jawa Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa di Provinsi Jawa Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "04",
+    "deskripsi": "Pengembangan Komoditas Unggulan Tebu di Provinsi Jawa Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "05",
+    "deskripsi": "Optimalisasi Komoditas Unggulan Emas di Provinsi Jawa Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "06",
+    "deskripsi": "Pengembangan Komoditas Unggulan Garam di Provinsi Jawa Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "07",
+    "deskripsi": "Peningkatan Komoditas Unggulan Tebu di Provinsi Jawa Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "08",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kopi di Provinsi Jawa Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "09",
+    "deskripsi": "Pengembangan Komoditas Unggulan Garam di Provinsi Jawa Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "10",
+    "deskripsi": "Pengembangan Komoditas Unggulan Tebu di Provinsi DI Yogyakarta",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "11",
+    "deskripsi": "Peningkatan Komoditas Unggulan Tebu di Provinsi Jawa Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "12",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kopi di Provinsi Jawa Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "13",
+    "deskripsi": "Pengembangan Komoditas Unggulan Lada, Pala, dan Cengkeh di Provinsi Jawa Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "14",
+    "deskripsi": "Pengembangan Komoditas Unggulan Garam di Provinsi Jawa Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "15",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kopi di Provinsi Banten",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "16",
+    "deskripsi": "Pengembangan Komoditas Unggulan Lada, Pala, dan Cengkeh di Provinsi Banten",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "17",
+    "deskripsi": "Pengembangan komoditas unggulan kopi di Provinsi Bali",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "18",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa di Provinsi Bali",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "19",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kakao di Provinsi Bali",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "20",
+    "deskripsi": "Pengembangan Komoditas Unggulan Lada, Pala, dan Cengkeh di Provinsi Bali",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "21",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap Provinsi di DKI Jakarta",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "22",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap Provinsi Jawa Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "23",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya di Provinsi Jawa Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "24",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap di Provinsi Jawa Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "25",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya di Provinsi Jawa Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "26",
+    "deskripsi": "Pengembangan komoditas Unggulan Perikanan Budidaya Provinsi di DI Yogyakarta",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "27",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap di Provinsi Jawa Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "28",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya di Provinsi Jawa Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "29",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya di Provinsi Banten",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "30",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap Provinsi Bali",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "05",
+    "deskripsi": "Peningkatan Kualitas Wilayah Metropolitan Jakarta di Provinsi DKI Jakarta",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "06",
+    "deskripsi": "Peningkatan Kualitas Wilayah Metropolitan Jakarta di Provinsi Jawa Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "07",
+    "deskripsi": "Peningkatan Kualitas Wilayah Metropolitan di Provinsi Jawa Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "08",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Jawa Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "09",
+    "deskripsi": "Peningkatan Kualitas Wilayah Metropolitan di Provinsi Jawa Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "10",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Jawa Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "11",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi DI Yogyakarta",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "12",
+    "deskripsi": "Peningkatan Kualitas Wilayah Metropolitan di Provinsi Jawa Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "13",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Jawa Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "15",
+    "deskripsi": "Pembangunan Kota Baru di Provinsi Banten",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "16",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Banten",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "17",
+    "deskripsi": "Peningkatan Kualitas Wilayah Metropolitan Jakarta di Provinsi Banten",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "18",
+    "deskripsi": "Pengembangan Wilayah Metropolitan di Provinsi Bali",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Pembangunan Desa Terpadu",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "03",
+    "deskripsi": "Pemulihan Pascabencana Daerah Terdampak",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "04",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Jawa Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "05",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Jawa Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "06",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi DI Yogyakarta",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "07",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Jawa Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "08",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Banten",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "09",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Bali",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "10",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Sukabumi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "11",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Magelang dan Kendal",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "12",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Pamekasan dan Banyuwangi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "13",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Pandeglang",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "14",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Buleleng dan Klungkung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "15",
+    "deskripsi": "Pemulihan Pasca Bencana Daerah Terdampak di Kawasan Pesisir Selat Sunda",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan kapasitas pemerintahan daerah dan hubungan pusat-daerah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "02",
+    "deskripsi": "Pengelolaan dan pelayanan pertanahan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "03",
+    "deskripsi": "Penyelenggaraan Penataan Ruang",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "04",
+    "deskripsi": "Penyelenggaraan Informasi Geospasial",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "05",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi DKI Jakarta",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "06",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi DKI Jakarta",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "07",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Jawa Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "08",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Jawa Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "09",
+    "deskripsi": "Penyelengaraan Penataan Ruang di Provinsi Jawa Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "10",
+    "deskripsi": "Penyelenggaraan Informasi Geospasial di Provinsi Jawa Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "11",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Jawa Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "12",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Jawa Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "13",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Jawa Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "14",
+    "deskripsi": "Penyelenggaraan Informasi Geospasial di Provinsi Jawa Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "15",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi D.I. Yogyakarta",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "16",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi D.I. Yogyakarta",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "17",
+    "deskripsi": "Penyelengaraan Penataan Ruang di Provinsi D.I. Yogyakarta",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "18",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Jawa Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "19",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Jawa Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "20",
+    "deskripsi": "Penyelengaraan Penataan Ruang di Provinsi Jawa Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "21",
+    "deskripsi": "Penyelenggaraan Informasi Geospasial di Provinsi Jawa Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "22",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Banten",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "23",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Banten",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "24",
+    "deskripsi": "Penyelengaraan Penataan Ruang di Provinsi Banten",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "25",
+    "deskripsi": "Penyelenggaraan Informasi Geospasial di Provinsi Banten",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "26",
+    "deskripsi": "Peningkatan kapasitas pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Bali",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "27",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Bali",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "28",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Bali",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Perbaikan Aksesibilitas, Atraksi dan Amenitas Destinasi Pariwisata Prioritas Lombok-Mandalika/KEK Mandalika",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Perbaikan Aksesibilitas, Atraksi dan Amenitas Destinasi Pariwisata Prioritas Labuan Bajo",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa di Provinsi Nusa Tenggara Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kopi di Provinsi Nusa Tenggara Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Pengembangan Komoditas Unggulan Tebu di Provinsi Nusa Tenggara Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "04",
+    "deskripsi": "Optimalisasi Komoditas Unggulan Tembaga di Provinsi Nusa Tenggara Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "05",
+    "deskripsi": "Optimalisasi Komoditas Unggulan Emas di Provinsi Nusa Tenggara Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "08",
+    "deskripsi": "Pengembangan Komoditas Unggulan Garam di Provinsi Nusa Tenggara Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "09",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kopi di Provinsi Nusa Tenggara Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "10",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa di Provinsi Nusa Tenggara Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "11",
+    "deskripsi": "Pengembangan Komoditas Unggulan Lada, Pala, dan Cengkeh di Provinsi Nusa Tenggara Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "12",
+    "deskripsi": "Pengembangan Komoditas Unggulan Tebu di Provinsi Nusa Tenggara Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "13",
+    "deskripsi": "Pengembangan Komoditas Unggulan Garam di Provinsi Nusa Tenggara Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "14",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya di Provinsi Nusa Tenggara Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "15",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap di Provinsi Nusa Tenggara Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "16",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya di Provinsi Nusa Tenggara Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Nusa Tenggara Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Nusa Tenggara Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Percepatan Pembangunan Daerah Tertinggal",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Kesejahteraan dan Tata Kelola di Kecamatan Lokasi Prioritas di Provinsi Nusa Tenggara Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "03",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN)",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "04",
+    "deskripsi": "Pembangunan Desa Terpadu",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "05",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "06",
+    "deskripsi": "Pemulihan Pascabencana Daerah Terdampak",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "11",
+    "deskripsi": "Percepatan Pembangunan Daerah Tertinggal di Provinsi Nusa Tenggara Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "12",
+    "deskripsi": "Percepatan Pembangunan Daerah Tertinggal di Provinsi Nusa Tenggara Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "14",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN) Atambua",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "15",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN) Kefamenanu",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "16",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Nusa Tenggara Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "17",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Nusa Tenggara Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "18",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Sumbawa, Lombok Timur, Lombok Tengah, dan Dompu",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "19",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Manggarai Barat, Ngada, dan Sumba Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "20",
+    "deskripsi": "Pemulihan Pasca Bencana Daerah Terdampak di Pulau Lombok dan Sekitarnya",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "21",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi Tambora dan Labangka",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "22",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi Kobalima Timur, Ponu, dan Melolo",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan kapasitas pemerintahan daerah dan hubungan pusat-daerah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "02",
+    "deskripsi": "Pengelolaan dan pelayanan pertanahan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "03",
+    "deskripsi": "Penyelenggaraan Penataan Ruang",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "11",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Nusa Tenggara Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "12",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Nusa Tenggara Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "13",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Nusa Tenggara Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "14",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Nusa Tenggara Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "15",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Nusa Tenggara Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "16",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Nusa Tenggara Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "17",
+    "deskripsi": "Penyelenggaraan Informasi Geospasial di Provinsi Nusa Tenggara Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Fasilitasi Realisasi Investasi dan Pembangunan KI Ketapang",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Pembangunan Destinasi Pariwisata Pengembangan Sambas-Singkawang",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Fasilitasi Realisasi Investasi dan Pembangunan KI Surya Borneo",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "01",
+    "kdproy": "04",
+    "deskripsi": "Pembangunan Destinasi Pariwisata Pengembangan Derawan-Berau",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Komoditas Unggulan Karet di Provinsi Kalimantan Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Komoditas Unggulan Lada, Pala, dan Cengkeh di Provinsi Kalimantan Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa Sawit di Provinsi Kalimantan Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "04",
+    "deskripsi": "Optimalisasi Komoditas Unggulan Bauksit di Provinsi Kalimantan Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "05",
+    "deskripsi": "Optimalisasi Komoditas Unggulan Emas di Provinsi Kalimantan Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "06",
+    "deskripsi": "Optimalisasi Komoditas Unggulan Pertambangan di Provinsi Kalimantan Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "07",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa Sawit di Provinsi Kalimantan Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "08",
+    "deskripsi": "Pengembangan Komoditas Unggulan Karet di Provinsi Kalimantan Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "09",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kakao di Provinsi Kalimantan Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "10",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kopi di Provinsi Kalimantan Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "11",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa di Provinsi Kalimantan Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "12",
+    "deskripsi": "Optimalisasi Komoditas Unggulan Emas di Provinsi Kalimantan Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "13",
+    "deskripsi": "Optimalisasi Komoditas Unggulan Pertambangan di Provinsi Kalimantan Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "14",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa Sawit di Provinsi Kalimantan Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "15",
+    "deskripsi": "Pengembangan Komoditas Unggulan Karet di Provinsi Kalimantan Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "16",
+    "deskripsi": "Optimalisasi Komoditas Unggulan Pertambangan di Provinsi Kalimantan Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "17",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa Sawit di Provinsi Kalimantan Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "18",
+    "deskripsi": "Pengembangan Komoditas Unggulan Karet di Provinsi Kalimantan Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "19",
+    "deskripsi": "Pengembangan Komoditas Unggulan Lada, Pala, dan Cengkeh di Provinsi Kalimantan Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "20",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa di Provinsi Kalimantan Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "21",
+    "deskripsi": "Optimalisasi Komoditas Unggulan Pertambangan di Provinsi Kalimantan Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "22",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa Sawit di Provinsi Kalimantan Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "23",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kopi di Provinsi Kalimantan Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "24",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kakao di Provinsi Kalimantan Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "25",
+    "deskripsi": "Pengembangan Komoditas Unggulan Lada, Pala, dan Cengkeh di Provinsi Kalimantan Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "26",
+    "deskripsi": "Pengembangan komoditas Unggulan Perikanan Tangkap di Provinsi Kalimantan Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "27",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap Provinsi Kalimantan Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "28",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya di Provinsi Kalimantan Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "29",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap di Provinsi Kalimantan Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "30",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya Provinsi Kalimantan Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "31",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap Provinsi Kalimantan Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "32",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya Provinsi Kalimantan Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "33",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap Provinsi Kalimantan Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "34",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya Provinsi Kalimantan Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Pembangunan Kota Baru di Provinsi Kalimantan Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Pengembangan Wilayah Metropolitan di Provinsi Kalimantan Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "03",
+    "kdproy": "04",
+    "deskripsi": "Pembangunan Ibu Kota Negara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "03",
+    "kdproy": "05",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Kalimantan Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "03",
+    "kdproy": "06",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Kalimantan Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "03",
+    "kdproy": "07",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Kalimantan Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "03",
+    "kdproy": "08",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Kalimantan Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan Kesejahteraan dan Tata Kelola di Kecamatan Lokasi Prioritas",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN)",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "03",
+    "deskripsi": "Pembangunan Desa Terpadu",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "04",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "05",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "06",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Kalimantan Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "07",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Kubu Raya, Mempawah, Bengkayang, dan Sambas",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "08",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi Rasau Jaya, Gerbang Mas Perkasa, dan Subah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "09",
+    "deskripsi": "Peningkatan Kesejahteraan dan Tata Kelola di Kecamatan Lokasi Prioritas di Provinsi Kalimantan Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "10",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN) Paloh Aruk",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "11",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN) Jagoi Babang",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "12",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Kalimantan Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "13",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Kotawaringin Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "14",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi Belantikan Raya, serta Kawasan Transmigrasi Lamunti-Dadahup dan Pulang Pisau yang Mendukung Pengembangan Food Estate sesuai Direktif Presiden dalam Rangka Penguatan Ketahanan Pangan Nasional",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "15",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Kalimantan Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "16",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Barito Kuala dan Banjar",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "17",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi Cahaya Baru",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "18",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Kalimantan Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "19",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Berau dan Kutai Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "20",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi Kerang dan Maloy Kaliorang",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "21",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Kalimantan Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "22",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Bulungan dan Nunukan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "23",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi Salim Batu dan Seimenggaris",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "24",
+    "deskripsi": "Peningkatan Kesejahteraan dan Tata Kelola di Kecamatan Lokasi Prioritas di Provinsi Kalimantan Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "25",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN) Nunukan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "26",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN) Long Midang",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "27",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN) Tou Lumbis",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "28",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN) Long Nawang",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "02",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "03",
+    "deskripsi": "Penyelenggaraan Penataan Ruang",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "04",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Kalimantan Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "05",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Kalimantan Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "06",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Kalimantan Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "07",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Kalimantan Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "08",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Kalimantan Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "09",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Kalimantan Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "10",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Kalimantan Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "11",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Kalimantan Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "12",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Kalimantan Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "13",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Kalimantan Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "14",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Kalimantan Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "15",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Kalimantan Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "16",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Kalimantan Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "17",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Kalimantan Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "18",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Kalimantan Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "19",
+    "deskripsi": "Penyelenggaraan Informasi Geospasial di Provinsi Kalimantan Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "20",
+    "deskripsi": "Penyelenggaraan Informasi Geospasial di Provinsi Kalimantan Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "21",
+    "deskripsi": "Penyelenggaraan Informasi Geospasial di Provinsi Kalimantan Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "22",
+    "deskripsi": "Penyelenggaraan Informasi Geospasial di Provinsi Kalimantan Timur",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "23",
+    "deskripsi": "Penyelenggaraan Informasi Geospasial di Provinsi Kalimantan Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Percepatan Peningkatan Investasi KEK Bitung",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Percepatan Operasionalisasi KEK Likupang/Destinasi Pariwisata Prioritas Manado-Likupang",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Fasilitasi Realisasi Investasi dan Pembangunan KI/KEK Palu",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "01",
+    "kdproy": "04",
+    "deskripsi": "Pembangunan Destinasi Pariwisata Pengembangan Toraja-Makassar-Selayar",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "01",
+    "kdproy": "05",
+    "deskripsi": "Perbaikan Aksesibilitas, Atraksi, dan Amenitas Destinasi Pariwisata Prioritas Wakatobi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa di Provinsi Sulawesi Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Komoditas Unggulan Lada, Pala, dan Cengkeh di Provinsi Sulawesi Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kopi di Provinsi Sulawesi Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "04",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kakao di Provinsi Sulawesi Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "05",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kakao di Provinsi Sulawesi Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "06",
+    "deskripsi": "Pengembangan Komoditas Unggulan Lada, Pala, dan Cengkeh di Provinsi Sulawesi Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "07",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kopi di Provinsi Sulawesi Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "08",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa di Provinsi Sulawesi Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "09",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kakao di Provinsi Sulawesi Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "10",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kopi di Provinsi Sulawesi Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "11",
+    "deskripsi": "Pengembangan Komoditas Unggulan Lada, Pala, dan Cengkeh di Provinsi Sulawesi Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "12",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa di Provinsi Sulawesi Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "13",
+    "deskripsi": "Pengembangan Komoditas Unggulan Tebu di Provinsi Sulawesi Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "14",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kakao di Provinsi Sulawesi Tenggara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "15",
+    "deskripsi": "Pengembangan Komoditas Unggulan Lada, Pala, dan Cengkeh di Provinsi Sulawesi Tenggara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "16",
+    "deskripsi": "Pengembangan Komoditas Kopi di Provinsi Sulawesi Tenggara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "17",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa di Provinsi Sulawesi Tenggara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "18",
+    "deskripsi": "Pengembangan Komoditas Unggulan Tebu di Provinsi Sulawesi Tenggara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "19",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa di Provinsi Gorontalo",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "20",
+    "deskripsi": "Pengembangan Komoditas Unggulan Tebu di Provinsi Gorontalo",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "21",
+    "deskripsi": "Pengembangan Komoditas Unggulan Pala di Provinsi Gorontalo",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "22",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kopi di Provinsi Sulawesi Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "23",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kakao di Provinsi Sulawesi Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "24",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa di Provinsi Sulawesi Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "25",
+    "deskripsi": "Pengembangan komoditas Unggulan Kelapa Sawit di Provinsi Sulawesi Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "26",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap di Provinsi Sulawesi Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "27",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya di Provinsi Sulawesi Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "28",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap di Provinsi Sulawesi Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "29",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya di Provinsi Sulawesi Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "30",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap di Provinsi Sulawesi Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "31",
+    "deskripsi": "Pengembangan Komoditas Unggulan Garam di Provinsi Sulawesi Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "32",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya di Provinsi Sulawesi Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "33",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap di Provinsi Sulawesi Tenggara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "34",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya di Provinsi Sulawesi Tenggara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "35",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap di Provinsi Gorontalo",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "36",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya di Provinsi Gorontalo",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "37",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap di Provinsi Sulawesi Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "38",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya di Provinsi Sulawesi Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Pengembangan Wilayah Metropolitan di Provinsi Sulawesi Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "03",
+    "kdproy": "04",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Sulawesi Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "03",
+    "kdproy": "05",
+    "deskripsi": "Pengembangan Wilayah Metropolitan di Provinsi Sulawesi Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "03",
+    "kdproy": "06",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Sulawesi Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "03",
+    "kdproy": "07",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Sulawesi Tenggara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "03",
+    "kdproy": "08",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Gorontalo",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "03",
+    "kdproy": "09",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Sulawesi Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Percepatan Pembangunan Daerah Tertinggal",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Kesejahteraan dan Tata Kelola di Kecamatan Lokasi Prioritas di Provinsi Sulawesi Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "03",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN)",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "04",
+    "deskripsi": "Pembangunan Desa Terpadu",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "05",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "06",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "07",
+    "deskripsi": "Pemulihan Pascabencana Daerah Terdampak",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "08",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Sulawesi Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "09",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Minahasa Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "10",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN) Tahuna",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "11",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN) Melonguane",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "12",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Sulawesi Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "13",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Morowali, Buol, dan Poso",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "14",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi Palolo, Bungku, Air Terang, Tampolore, Padauloyo, dan Bahari Tomini Raya",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "15",
+    "deskripsi": "Percepatan Pembangunan Daerah Tertinggal di Provinsi Sulawesi Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "16",
+    "deskripsi": "Pemulihan Pasca Bencana Daerah Terdampak di Kota Palu dan Sekitarnya",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "17",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Sulawesi Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "18",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Barru, Pinrang, Luwu Timur, dan Bone",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "19",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi Gilireng, Masamba, dan Mahalona",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "20",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Sulawesi Tenggara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "21",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Konawe Selatan, Wakatobi, dan Muna",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "22",
+    "deskripsi": " Revitalisasi Kawasan Transmigrasi Tinanggea, Mutiara, dan Asinua/Routa",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "23",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Gorontalo",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "24",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Gorontalo, Boalemo, dan Gorontalo Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "25",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi Sumalata, Paguyaman Pantai, Pawonsari, dan Pulubala",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "26",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Sulawesi Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "27",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Mamuju dan Mamuju Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "28",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi Tobadak dan Sarudu Baras",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan kapasitas pemerintahan daerah dan hubungan pusat-daerah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "02",
+    "deskripsi": "Pengelolaan dan pelayanan pertanahan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "03",
+    "deskripsi": "Penyelenggaraan Penataan Ruang",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "04",
+    "deskripsi": "Penyeleggaraan Informasi Geospasial",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "05",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Sulawesi Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "06",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Sulawesi Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "07",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Sulawesi Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "08",
+    "deskripsi": "Penyelenggaraan Informasi Geospasial di Provinsi Sulawesi Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "09",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Sulawesi Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "10",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Sulawesi Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "11",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Sulawesi Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "12",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Sulawesi Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "13",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Sulawesi Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "14",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Sulawesi Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "15",
+    "deskripsi": "Penyelenggaraan Informasi Geospasial di Provinsi Sulawesi Selatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "16",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Sulawesi Tenggara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "17",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Sulawesi Tenggara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "18",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Sulawesi Tenggara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "19",
+    "deskripsi": "Penyelenggaraan Informasi Geospasial di Provinsi Sulawesi Tenggara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "20",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Gorontalo",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "21",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Gorontalo",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "22",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Gorontalo",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "23",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Sulawesi Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "24",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Sulawesi Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "25",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Sulawesi Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "26",
+    "deskripsi": "Penyelenggaraan Informasi Geospasial di Provinsi Sulawesi Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Perbaikan Aksesibilitas, Atraksi dan Amenitas Destinasi Pariwisata Prioritas Morotai",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Fasilitasi realisasi investasi dan pembangunan KI  Teluk Weda",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Komoditas Unggulan Lada, Pala, dan Cengkeh di Provinsi Maluku",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa di Provinsi Maluku",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kelapa di Provinsi Maluku Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "02",
+    "kdproy": "04",
+    "deskripsi": "Pengembangan Komoditas Unggulan Lada, Pala, dan Cengkeh di Provinsi Maluku Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "02",
+    "kdproy": "05",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap di Provinsi Maluku",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "02",
+    "kdproy": "06",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya di Provinsi Maluku",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "02",
+    "kdproy": "07",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap di Provinsi Maluku Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "02",
+    "kdproy": "08",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Budidaya di Provinsi Maluku Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Maluku",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Maluku Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Pembangunan Kota Baru di Provinsi Maluku Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Percepatan Pembangunan Daerah Tertinggal",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Kesejahteraan dan Tata Kelola di Kecamatan Lokasi Prioritas di Provinsi Maluku",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "03",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN)",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "04",
+    "deskripsi": "Pembangunan Desa Terpadu",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "05",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "06",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "11",
+    "deskripsi": "Percepatan Pembangunan Daerah Tertinggal di Provinsi Maluku",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "12",
+    "deskripsi": "Percepatan Pembangunan Daerah Tertinggal di Provinsi Maluku Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "14",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN) Saumlaki",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "15",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN) Daruba",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "16",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Maluku",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "17",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Maluku Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "18",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Maluku Tengah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "19",
+    "deskripsi": " Pembangunan Kawasan Perdesaan Prioritas Nasional Morotai",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "20",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi Kobisonta",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "21",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi Pulau Mangoli dan Pulau Morotai",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan kapasitas pemerintahan daerah dan hubungan pusat-daerah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "05",
+    "kdproy": "02",
+    "deskripsi": " Pengelolaan dan pelayanan pertanahan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "05",
+    "kdproy": "03",
+    "deskripsi": "Penyelenggaraan Penataan Ruang",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "05",
+    "kdproy": "11",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Maluku",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "05",
+    "kdproy": "12",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Maluku Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "05",
+    "kdproy": "13",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Maluku",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "05",
+    "kdproy": "14",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Maluku Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "05",
+    "kdproy": "15",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Maluku",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "05",
+    "kdproy": "16",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Maluku Utara",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Pembangunan Destinasi Pariwisata Pengembangan Biak-Teluk Cenderawasih",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Perbaikan Aksesibilitas, Atraksi dan Amenitas Destinasi Pariwisata Prioritas Raja Ampat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kakao di Provinsi Papua",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kopi di Provinsi Papua",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Optimalisasi Komoditas Unggulan Pertambangan di Provinsi Papua",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "02",
+    "kdproy": "04",
+    "deskripsi": "Optimalisasi Komoditas Unggulan Emas di Provinsi Papua",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "02",
+    "kdproy": "05",
+    "deskripsi": "Optimalisasi Komoditas Unggulan Tembaga di Provinsi Papua",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "02",
+    "kdproy": "06",
+    "deskripsi": "Pengembangan Komoditas Unggulan Lada, Pala, dan Cengkeh di Provinsi Papua Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "02",
+    "kdproy": "07",
+    "deskripsi": "Pengembangan Komoditas Unggulan Kakao di Provinsi Papua Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "02",
+    "kdproy": "08",
+    "deskripsi": "Optimalisasi Komoditas Unggulan Pertambangan di Provinsi Papua Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "02",
+    "kdproy": "10",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap di Provinsi Papua Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "02",
+    "kdproy": "11",
+    "deskripsi": "Pengembangan Komoditas Unggulan Perikanan Tangkap di Provinsi Papua",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Kota Besar, Kota Sedang, Kota Kecil di Provinsi Papua",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Pembangunan kota baru di Provinsi Papua Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Wilayah Adat Papua",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Kesejahteraan dan Tata Kelola di Kecamatan Lokasi Prioritas di Provinsi Papua",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "03",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN)",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "04",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Papua",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "05",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "06",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "21",
+    "deskripsi": "Wilayah Adat Papua : Laa Pago",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "22",
+    "deskripsi": "Wilayah Adat Papua : Mee Pago",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "23",
+    "deskripsi": "Wilayah Adat Papua : Saireri",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "24",
+    "deskripsi": "Wilayah Adat Papua : Tabi",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "25",
+    "deskripsi": "Wilayah Adat Papua : Anim Ha",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "26",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Jayapura dan Merauke",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "27",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi Senggi, Salor, dan Muting",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "29",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN) Jayapura",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "30",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN) Merauke",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "31",
+    "deskripsi": "Pusat Kegiatan Strategis Nasional (PKSN) Tanah Merah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "32",
+    "deskripsi": "Wilayah Adat Papua : Domberay",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "33",
+    "deskripsi": "Pembangunan Kawasan Perdesaan Prioritas Nasional Raja Ampat dan Manokwari",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "34",
+    "deskripsi": "Revitalisasi Kawasan Transmigrasi Werianggi Werabur dan Bomberay - Tomage",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "35",
+    "deskripsi": "Wilayah Adat Papua : Bomberay",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "36",
+    "deskripsi": "Pembangunan Desa Terpadu di Provinsi Papua Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan kapasitas pemerintahan daerah dan hubungan pusat-daerah",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "05",
+    "kdproy": "02",
+    "deskripsi": "Pengelolaan dan pelayanan pertanahan",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "05",
+    "kdproy": "03",
+    "deskripsi": "Penyelenggaraan Penataan Ruang",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "05",
+    "kdproy": "04",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Papua Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "05",
+    "kdproy": "05",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Papua Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "05",
+    "kdproy": "06",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Papua Barat",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "05",
+    "kdproy": "07",
+    "deskripsi": "Peningkatan Kapasitas Pemerintahan Daerah dan Hubungan Pusat-Daerah di Provinsi Papua",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "05",
+    "kdproy": "08",
+    "deskripsi": "Pengelolaan dan Pelayanan Pertanahan di Provinsi Papua",
+    "status": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "05",
+    "kdproy": "09",
+    "deskripsi": "Penyelenggaraan Penataan Ruang di Provinsi Papua",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Perluasan Jangkauan Layanan Administrasi Kependudukan",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Percepatan Kepemilikan Dokumen Pendataran Penduduk dan Pencatatan Sipil bagi Kelompok Khusus",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Penguatan Integrasi Data Administrasi Kependudukan",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Data dan Informasi Kependudukan (Statistik Hayati) yang Akurat, Lengkap dan Tepat Waktu",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Penyelenggaraan Sistem Layanan dan Rujukan Terpadu",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Penguatan Pendampingan Masyarakat",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Sinergitas Kebijakan Pengendalian Penduduk dalam Mewujudkan Penduduk Tumbuh Seimbang",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Penguatan Kapasitas dan Kapabilitas Kelembagaan Kependudukan",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "03",
+    "deskripsi": "Pemanfaatan Data dan Informasi Kependudukan",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Program Jaminan Sosial",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Penguatan Kelembagaan Penyelenggara Sistem Jaminan Sosial Nasional",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Penyelenggaraan Bantuan dan Subsidi Tepat Sasaran",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Pelaksanaan Perlindungan Sosial yang Adaptif",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Penyelenggaraan Kesejahteraan Sosial yang Inklusif",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Penguatan Kelembagaan dan Pemberdayaan Kelanjutusiaan (Lansia Aktif dan Produktif)",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "03",
+    "deskripsi": "Pelaksanaan Perawatan Jangka Panjang Berbasis Komunitas yang Terintegrasi (Long-Term Care)",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "04",
+    "deskripsi": "Penguatan Pelayanan Sosial Kelompok Rentan Lainnya",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Penurunan Kematian Ibu dan Bayi",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan KB dan Kesehatan Reproduksi",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Penurunan Stunting",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "03",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Pengendalian Penyakit Menular",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "03",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Pengendalian Penyakit Tidak Menular",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Lingkungan Sehat",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Penguatan Promosi Germas",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Penguatan Pelayanan Kesehatan Dasar dan Rujukan",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "02",
+    "deskripsi": "Pemenuhan dan Peningkatan Kompetensi Tenaga Kesehatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "03",
+    "deskripsi": "Pemenuhan dan Peningkatan Daya Saing Sediaan Farmasi dan Alat Kesehatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "04",
+    "deskripsi": "Penguatan Tata Kelola, Pembiayaan, Penelitian dan Pengembangan Kesehatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "05",
+    "deskripsi": "Peningkatan Efektivitas Pengawasan Obat dan Makanan",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Penerapan Kurikulum dan Pola Pembelajaran Inovatif",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Kompetensi Pendidik",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Penguatan Kualitas Penilaian Pendidikan",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "01",
+    "kdproy": "04",
+    "deskripsi": "Pemanfaatan Teknologi Informasi dan Komunikasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "01",
+    "kdproy": "05",
+    "deskripsi": "Integrasi Softskill dalam Pembelajaran",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Sarana dan Prasarana Pendidikan",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Bantuan Pendidikan bagi Anak Kurang Mampu, Daerah Afirmasi, dan Berbakat",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Penanganan Anak Tidak Sekolah",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "04",
+    "deskripsi": "Penguatan Pelayanan 1 Tahun Prasekolah",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Revitalisasi LPTK",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Pendidikan Profesi Guru dan Peningkatan Kualifikasi Pendidik",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Pemenuhan dan Distribusi Tenaga Pendidik Berbasis Kebutuhan",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "03",
+    "kdproy": "04",
+    "deskripsi": "Peningkatan Kesejahteraan Pendidik Berbasis Kinerja",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Penguatan Kapasitas dan Akselerasi Akreditasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Perluasan Budaya Mutu Pendidikan",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Penguatan Tata Kelola Pemenuhan SPM Pendidikan",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "02",
+    "deskripsi": "Penguatan Strategi Pembiayaan dan Efektivitas Pemanfaatan Anggaran Pendidikan",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "03",
+    "deskripsi": "Peningkatan Sinkronisasi Data Pokok Pendidikan",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "05",
+    "kdproy": "04",
+    "deskripsi": "Sinkronisasi Pelaksanaan PAUD-HI",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "05",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Penjaminan Pemenuhan Hak Anak secara Universal",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "05",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Perlindungan Anak dari Tindak Kekerasan, Eksploitasi, Penelantaran, dan Perlakuan Salah Lainnya",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Penguatan Kapasitas Kelembagaan PUG",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Perlindungan Perempuan, termasuk Pekerja Migran dari Kekerasan dan Tindak Pidana Perdagangan orang",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "05",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Penguatan Kapasitas Kelembagaan dan Koordinasi Lintas Sektor Layanan Kepemudaan",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "05",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Pencegahan Perilaku Beresiko",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "05",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Partisipasi Aktif Sosial dan Politik Pemuda",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "06",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Fasilitasi Modal Usaha",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "06",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Fasilitasi Keperantaraan Usaha Produktif",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "06",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Penguatan Pemberdayaan Berdampak Sosial",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "06",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Penyuluhan dan/atau Pendampingan bagi Kelompok Masyarakat Lingkungan Hidup dan Kehutanan",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "06",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Penataan Penguasaan dan Pemilikan TORA (termasuk Pelepasan Kawasan Hutan)",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "06",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Kualitas Data Pertanahan dan Legalisasi atas Tora",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "06",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Pemberdayaan Masyarakat dalam Penggunaan, Pemanfaatan, dan Produksi atas TORA",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "06",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Pengelolaan Kawasan Hutan oleh Masyarakat",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan Peran dan Kerjasama Industri dalam Pendidikan dan Pelatihan Vokasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Reformasi Penyelenggaraan Pendidikan dan Pelatihan Vokasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Peningkatan Kualitas Pendidik Vokasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "01",
+    "kdproy": "04",
+    "deskripsi": "Penguatan Tata Kelola Pendidikan dan Pelatihan Vokasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "01",
+    "kdproy": "05",
+    "deskripsi": "Penguatan Sistem Sertifikasi Kompetensi",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Perguruan Tinggi sebagai Produsen Iptek Inovasi dan Pusat Keunggulan",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Kualitas dan Pemanfaatan Penelitian",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Peningkatan Kualitas Lulusan PT",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Pemanfaatan Iptek dan Penciptaan Inovasi di Bidang-bidang Fokus Rencana Induk Riset Nasional 2017-2045 untuk Pembangunan yang Berkelanjutan",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Research Power-House",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Penciptaan Ekosistem Inovasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "03",
+    "kdproy": "04",
+    "deskripsi": "Peningkatan Jumlah dan Kualitas Belanja Litbang",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Penguatan dan Penataan Regulasi Keolahragaan",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Budaya Olahraga",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "03",
+    "deskripsi": "Penataan Sistem Pembinaan Olahraga Berbasis Cabang Olahraga Olimpiade/Paralimpiade dan Potensi Daerah",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "04",
+    "deskripsi": "Penataan Kelembagaan Olahraga",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "05",
+    "deskripsi": "Peningkatan Ketersediaan Tenaga Keolahragaan Berstandar Internasional",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "06",
+    "deskripsi": "Peningkatan Sarana dan Prasarana Olahraga Berstandar Internasional",
+    "status": "1"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "04",
+    "kdproy": "07",
+    "deskripsi": "Pengembangan Peran Dunia Usaha dalam Pendampingan dan Pembiayaan Keolahragaan",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Budaya Belajar dan Lingkungan Sekolah yang Menyenangkan dan Bebas dari Kekerasan (Bullying Free School Environment)",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Penguatan Pendidikan Agama, Nilai Toleransi Beragama, dan Budi Pekerti dalam Sistem Pendidikan",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Peningkatan Kepeloporan dan Kesukarelawanan Pemuda, serta Pengembangan Pendidikan Kepramukaan",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan Budaya Kerja Pelayanan Publik yang Ramah, Cepat, Efektif, Efisien, dan Terpercaya",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Penerapan Disiplin, Reward dan Punishment dalam Birokrasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Penyiapan Kehidupan Berkeluarga dan Kecakapan Hidup",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Ketahanan Keluarga Berdasarkan Siklus Hidup dengan Memperhatikan Kesinambungan Antargenerasi, Sebagai Upaya Penguatan Fungsi dan Nilai Keluarga",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Pewujudan Lingkungan yang Kondusif melalui Penguatan Masyarakat, Kelembagaan, Regulasi, Penyediaan Sarana dan Prasarana, serta Partisipasi Dunia Usaha",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Pemantapan Pelaksanaan Lima Program Gerakan Nasional Revolusi Mental untuk Mewujudkan Indonesia Melayani, Indonesia Bersih, Indonesia Tertib, Indonesia Mandiri, dan Indonesia Bersatu",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Penguatan Pusat-Pusat Perubahan Gerakan Revolusi Mental di Daerah",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Membangun Budaya Ekonomi Nasional dengan Platform Koperasi dalam Kegiatan Usaha Produktif",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Etos Kerja dan Kewirausahaan Berlandaskan Semangat Gotong Royong",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "03",
+    "deskripsi": "Penumbuhan Budaya Konsumen Cerdas dan Cinta Produk Dalam Negeri",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "06",
+    "kdproy": "01",
+    "deskripsi": "Pembinaan Ideologi Pancasila, Penguatan Pendidikan Kewargaan, Nilai-Nilai Kebangsaan dan Bela Negara",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "06",
+    "kdproy": "02",
+    "deskripsi": "Peningkatkan Peran dan Fungsi Badan Pembinaan Ideologi Pancasila (BPIP)",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "06",
+    "kdproy": "03",
+    "deskripsi": "Harmonisasi dan Evaluasi Peraturan Perundang-Undangan yang Bertentangan dengan Ideologi Pancasila.",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "06",
+    "kdproy": "04",
+    "deskripsi": "Membersihkan Unsur-Unsur yang Mengancam Ideologi Negara",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Pelindungan, Pengembangan, dan Pemanfaatan Nilai Budaya, Tradisi, Sejarah dan Kearifan Lokal",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Akses dan Kualitas Pelayanan Museum dan Arsip",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Pelestarian, Pengembangan dan Pemanfaatan Manuskrip dan Arsip Sebagai Sumber Nilai Budaya, Sejarah, dan Memori Kolektif Bangsa",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Produk Seni, Budaya, dan Film",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Penyelenggaraan Festival Budaya dan Membangun Opera Berkelas Internasional",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Pengelolaan Cagar Budaya untuk Meningkatkan Kesejahteraan Rakyat",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "04",
+    "deskripsi": "Pengembangan Budaya Bahari dan Sumber Daya Maritim",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Wilayah Adat sebagai Pusat Pelestarian Budaya dan Lingkungan Hidup",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Pemberdayaan Masyarakat Adat dan Komunitas Budaya",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Pelindungan Kekayaan Budaya Komunal dan Hak Cipta",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Diplomasi Budaya melalui Pengembangan Bahasa Indonesia sebagai Bahasa Internasional, Muhibah Seni Budaya, dan Kuliner Nusantara",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Penguatan Pusat Studi dan Rumah Budaya Indonesia di Luar Negeri",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Pengelolaan Dana Perwalian Kebudayaan",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Kualitas Sumber Daya Manusia Kebudayaan",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "03",
+    "deskripsi": "Peningkatan Sarana dan Prasarana Kebudayaan",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "04",
+    "deskripsi": "Pengembangan Sistem Pendataan Kebudayaan Terpadu",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "05",
+    "deskripsi": "Pengembangan Kerja Sama dan Kemitraan dalam Pemajuan Kebudayaan",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Penyiaran Agama untuk Perdamaian dan Kemaslahatan Umat",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Penguatan Sistem Pendidikan yang Berperspektif Moderat Mencakup Pengembangan Kurikulum, Materi dan Proses Pengajaran, Pendidikan Guru dan Tenaga Kependidikan, dan Rekrutmen Guru",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Penguatan Peran Pesantren dalam Mengembangkan Moderasi Beragama melalui Peningkatan Pemahaman dan Pengamalan Ajaran Agama untuk Kemaslahatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "04",
+    "deskripsi": "Pengelolaan Rumah Ibadah sebagai Pusat Syiar Agama yang Toleran",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "05",
+    "deskripsi": "Pemanfaatan Ruang Publik untuk Pertukaran Ide dan Gagasan di Kalangan Pelajar, Mahasiswa, dan Pemuda Lintas Budaya, Lintas Agama, dan Lintas Suku Bangsa",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Pelindungan Umat Beragama untuk Menjamin Hak-Hak Sipil dan Beragama",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Penguatan Peran Lembaga Agama, Organisasi Sosial Keagamaan, Tokoh Agama, Tokoh Masyarakat, ASN, TNI, dan Polri sebagai Perekat Persatuan dan Kesatuan Bangsa",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Penguatan Forum Kerukunan Umat Beragama (FKUB) untuk Membangun Solidaritas Sosial, Toleransi, dan Gotong Royong",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Penghargaan atas Ekspresi Budaya Berbasis Nilai-Nilai Agama",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Literasi Khazanah Budaya Bernafas Agama",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Pelestarian Situs Keagamaan dan Pemanfaatan Perayaan Keagamaan dan Budaya untuk Memperkuat Toleransi",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan Fasilitasi Pelayanan Keagamaan",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Pelayanan Bimbingan Perkawinan dan Keluarga",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "03",
+    "deskripsi": "Penguatan Penyelenggaraan Jaminan Produk Halal",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "04",
+    "deskripsi": "Peningkatan Kualitas Penyelenggaran Haji dan Umrah",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Pemberdayaan Dana Sosial Keagamaan",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Kelembagaan Ekonomi Umat",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "03",
+    "deskripsi": "Pengelolaan Dana Haji secara Profesional, Transparan, dan Akuntabel",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "04",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Budaya Kegemaran Membaca",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "04",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Sistem Perbukuan dan Penguatan Konten Literasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "04",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Peningkatan Akses dan Kualitas Perpustakaan Berbasis Inklusi Sosial",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan Fungsi Bahasa Indonesia menjadi Bahasa Internasional",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Pendidikan Sastra di Satuan Pendidikan dan Komunitas",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Revitalisasi Bahasa dan Aksara Daerah sebagai Khazanah Budaya Bangsa",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "04",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan Budaya Riset dan Ekperimentasi Ilmiah Sejak Usia Dini",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "04",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Budaya Produksi dan Kreativitas Berbasis Inovasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Mitra Perpustakaan (Library Supporter)",
+    "status": "1"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Inovasi Sosial yang Didukung dari Pendanaan Filantropi",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan Fasilitasi Penyediaan Hunian Baru",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Fasilitasi Pembiayaan Perumahan",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Pengembangan Fasilitasi Peningkatan Kualitas Rumah",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "04",
+    "deskripsi": "Penyediaan Prasarana, Sarana dan Utilitas Perumahan dan Permukiman",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "05",
+    "deskripsi": "Fasilitasi Peningkatan Standar Keandalan Bangunan dan Keamanan Bermukim (IMB dan SLF)",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "06",
+    "deskripsi": "Fasilitasi Penanganan Permukiman Kumuh",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Sistem Penyelenggaraan Air Minum dan Sanitasi Layak dan Aman",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Pembinaan Penyelenggaraan Air Minum dan Sanitasi Layak dan Aman",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Pengaturan Penyelenggaraan Air Minum dan Sanitasi Layak dan Aman",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "04",
+    "deskripsi": "Pengawasan Kualitas Air Minum dan Sanitasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Penyediaan dan Pengamanan Air Baku dan Air Tanah",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Penataan Regulasi serta Perkuatan Kelembagaan SDA",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Pengembangan SISDA Terpadu Berbasis Teknologi Cerdas (Smart Water Management)",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Pemenuhan Fasilitas Keselamatan dan Keamanan Transportasi dan SAR",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Pembinaan dan Pendidikan SDM Keselamatan dan Keamanan Transportasi, Pencarian dan Pertolongan",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Kebijakan Wilayah untuk Ketahanan Bencana dan Penguatan Infrastruktur Vital Tahan Bencana",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "02",
+    "deskripsi": "Pembangunan dan Rehabilitasi Infrastruktur Ketahanan Bencana",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "03",
+    "deskripsi": "Penyediaan Sistem Terpadu Peringatan Dini dan Tanggap Darurat Bencana",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "05",
+    "kdproy": "04",
+    "deskripsi": "Restorasi dan Konservasi Infrastruktur Alami",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "06",
+    "kdproy": "01",
+    "deskripsi": "Perencanaan Pengembangan Bendungan Multiguna dan Pemanfaatan Tampungan Alami",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "06",
+    "kdproy": "02",
+    "deskripsi": "Pembangunan dan Rehabilitasi Bendungan",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "06",
+    "kdproy": "03",
+    "deskripsi": "Optimalisasi dan Pemanfaatan Tampungan",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "06",
+    "kdproy": "04",
+    "deskripsi": "Peningkatan OP dan Keamanan Bendungan",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "06",
+    "kdproy": "05",
+    "deskripsi": "Pembangunan dan Rehabilitasi Jaringan Irigasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "06",
+    "kdproy": "06",
+    "deskripsi": "Peningkatan Pengelolaan Alokasi Air dan Kapasitas Kelembagaan Irigasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "06",
+    "kdproy": "07",
+    "deskripsi": "Pembangunan Sistem Penyediaan Air untuk Komoditas Pertanian Bernilai Ekonomi Tinggi",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Pembangunan Jalan Strategis",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Pembangunan Jalan Tol",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Pembangunan Jalan Mendukung Kawasan Prioritas (KI, KEK, dan KSPN)",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "04",
+    "deskripsi": "Pembangunan Jalan Akses Simpul Transportasi (Pelabuhan, Bandara, Terminal)",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "05",
+    "deskripsi": "Preservasi Jalan Nasional (termasuk Peningkatan/Pelebaran)",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "06",
+    "deskripsi": "Pembangunan dan Pemeliharaan Jalan Daerah",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Pembangunan Jalur Kereta Api Antarkota",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan, Pemeliharaan, Perawatan dan Pengoperasian Jaringan Prasarana Kereta Api",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Pembangunan KA Akses Pelabuhan dan Bandara",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "04",
+    "deskripsi": "Penyediaan PSO dan Subsidi",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Pelabuhan Utama (Hub)",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Pembangunan dan Pengembangan Pelabuhan Laut",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Pelabuhan Mendukung Kawasan Strategis Prioritas Nasional",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "04",
+    "deskripsi": "Penyelenggaraan Layanan Subsidi Tol Laut dan Perintis Angkutan Laut",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "05",
+    "deskripsi": "Pengembangan Teknologi Informasi Pelayaran",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Jembatan Udara",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Pembangunan Bandara Baru",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "03",
+    "deskripsi": "Pengembangan Bandara Hub Primer",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "04",
+    "deskripsi": "Pembangunan Bandara Perairan (Waterbased Airport) untuk Mendukung Destinasi Pariwisata",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "05",
+    "deskripsi": "Layanan Subsidi angkutan udara",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Pembangunan Pelabuhan Penyeberangan Baru",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "02",
+    "deskripsi": "Pembangunan/Pengembangan Pelabuhan Angkutan Sungai Danau",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "03",
+    "deskripsi": "Pembangunan Terminal Penumpang dan Barang Antarnegara",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "04",
+    "deskripsi": "Pembangunan Kapal Penyeberangan Perintis Baru",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "05",
+    "deskripsi": "Penyediaan Layanan Perintis Angkutan Darat untuk Penumpang dan Barang",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "05",
+    "kdproy": "06",
+    "deskripsi": "Peningkatan/Revitalisasi Terminal Penumpang Tipe A",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Sistem Angkutan Umum Massal Perkotaan di 6 Wilayah Metropolitan (Jakarta, Surabaya, Medan, Bandung, Makassar, Semarang)",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Pembangunan Fasilitas Alih Moda yang Terintegrasi dengan Pusat Kegiatan Perekonomian, Permukiman dan Fasilitas Umum pada Simpul-simpul Transportasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Pengembangan Sistem Angkutan Umum Massal di Perkotaan Besar Lainnya",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "04",
+    "deskripsi": "Pembangunan Perlintasan Tidak Sebidang antara Jalan dan KA di Perkotaan",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "05",
+    "deskripsi": "Pembangunan Jalan Perkotaan",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "06",
+    "deskripsi": "Penyediaan Subsidi Angkutan Umum Massal Perkotaan",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan TIK Perkotaan",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "03",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Penyediaan dan Penyelenggaraan Air Minum dan Sanitasi yang Handal dan Terintegrasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Fasilitasi Penanganan Permukiman Kumuh Perkotaan",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "04",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Perbaikan Efisiensi dan Emisi Energi dan Ketenagalistrikan",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Perluasan Jaringan Gas Kota",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Perluasan Akses dan Keterjangkauan Energi dan Ketenagalistrikan",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "04",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan Kehandalan Infrastruktur Energi dan Ketenagalistrikan",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "04",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Pembangunan Kilang Minyak Bumi",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "04",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Pembangunan Pipa Gas Bumi Trans Kalimantan",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "05",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Pengembangan Infrastruktur Pitalebar",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "05",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Infrastruktur Penyiaran",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "05",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Pengembangan Infrastruktur TIK Pemerintahan",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Pemanfaatan TIK  Layanan Pemerintah",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Pemanfaatan TIK  Layanan Masyarakat dan Dunia Usaha",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "05",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Pengelolaan Informasi secara Aman dan Terintegrasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "05",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Pengembangan Literasi dan Keahlian TIK",
+    "status": "1"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "05",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Pengembangan dan Fasilitasi Industri TIK",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Pemantauan Kualitas Udara, Air, dan Air Laut",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Pemantauan Kinerja Pengelolaan Lingkungan pada Usaha dan/atau Kegiatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Penyediaan Informasi Cuaca dan Iklim",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "04",
+    "deskripsi": "Pencegahan Kebakaran Lahan dan Hutan",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "05",
+    "deskripsi": "Peningkatan Kesadaran dan Kapasitas Pemerintah, Swasta dan Masyarakat terhadap Lingkungan Hidup",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "06",
+    "deskripsi": "Pencegahan Kehilangan Keanekaragaman Hayati dan Kerusakan Ekosistem",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "07",
+    "deskripsi": "Penyediaan Data dan Informasi Keanekaragaman Hayati dan Ekosistem",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Penanganan Pencemaran dan Kerusakan Lingkungan",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Pengelolaan Sampah Rumah Tangga dan Sampah Plastik",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Pengurangan dan Penghapusan Merkuri",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "04",
+    "deskripsi": "Pembangunan Fasilitas Pengolahan Limbah B3 Medis dan Limbah B3 Terpadu",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Restorasi dan Pemulihan Lahan Gambut",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Pemulihan Lahan Bekas Tambang dan Lahan Terkontaminasi Limbah B3",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Pemulihan Kerusakan Lingkungan Pesisir dan Laut",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "04",
+    "deskripsi": "Pemulihan Habitat Spesies Terancam Punah",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "05",
+    "deskripsi": "Peningkatan Populasi Spesies Tumbuhan dan Satwa Liar Terancam Punah",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Penguatan Regulasi dan Kelembagaan Bidang Sumber Daya Alam dan Lingkungan Hidup di Pusat dan Daerah",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Penguatan Sistem Perizinan, Pengawasan, dan Pengamanan Pengelolaan Sumber Daya Alam dan Lingkungan Hidup",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "04",
+    "kdproy": "03",
+    "deskripsi": "Penguatan Mekanisme Pidana, Perdata, dan Mediasi dalam Proses Penegakan Hukum Bidang Sumber Daya Alam dan Lingkungan Hidup",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Penguatan Data, Informasi, dan Literasi Bencana",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Penguatan Sistem, Regulasi dan Tata Kelola Bencana",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Peningkatan Sarana Prasarana Kebencanaan",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "04",
+    "deskripsi": "Integrasi Kerjasama Kebijakan dan Penataan Ruang Berbasis Risiko Bencana",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "05",
+    "deskripsi": "Penguatan Penanganan Darurat Bencana",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "06",
+    "deskripsi": "Pelaksanaan Rehabilitasi dan Rekonstruksi di Daerah Terdampak Bencana",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "07",
+    "deskripsi": "Penguatan Sistem Mitigasi Multi Ancaman Bencana Terpadu",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Perlindungan Kerentanan Pesisir dan Sektor Kelautan",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Perlindungan Ketahanan Air pada Wilayah Berisiko Iklim",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Perlindungan Ketahanan Pangan terhadap Perubahan Iklim",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "04",
+    "deskripsi": "Perlindungan Kesehatan Masyarakat dan Lingkungan dari Dampak Perubahan Iklim",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Pengelolaan Energi Baru Terbarukan",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Efisiensi dan Konservasi Energi",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Restorasi dan Pengelolaan Lahan Gambut",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Rehabilitasi Hutan Lahan dan Reforestasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Pengurangan Laju Deforestasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "04",
+    "deskripsi": "Peningkatan Produktivitas dan E?siensi Pertanian",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "03",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Pengelolaan Sampah Rumah Tangga",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Penerapan Modi?kasi Proses dan Teknologi",
+    "status": "1"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "03",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Inventarisasi dan Rehabilitasi Ekosistem Pesisir dan Kelautan",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Penguatan Penyelenggara Pemilu",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Penguatan Peraturan Perundangan Bidang Politik",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Peningkatan Bantuan Keuangan Partai Politik",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "04",
+    "deskripsi": "Penguatan Demokrasi Internal, Transparansi, dan Akuntabilitas  Partai Politik",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "01",
+    "kdkp": "01",
+    "kdproy": "05",
+    "deskripsi": "Penguatan Demokrasi di Daerah",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Pendidikan Politik dan Pendidikan Pemilih",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Kualitas Penyelenggaraan Kepemiluan",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "01",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Peningkatan Kapasitas Organisasi Kemasyarakatan",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Penguatan Tata Kelola Informasi dan Komunikasi Publik di Pusat dan Daerah",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Penyediaan Konten dan Akses Informasi Publik secara Merata dan Berkeadilan terutama di Wilayah 3T",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Peningkatan Kualitas SDM Bidang Komunikasi dan Informatika",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "04",
+    "deskripsi": "Peningkatan Literasi TIK Masyarakat",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "05",
+    "deskripsi": "Penelitian Strategis Bidang Komunikasi dan Informatika",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "06",
+    "deskripsi": "Penguatan Peran Lembaga Pers dan Jurnalis",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "01",
+    "kdkp": "03",
+    "kdproy": "07",
+    "deskripsi": "Peningkatan Kualitas Lembaga Penyiaran",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan dan Intensifikasi Efektivitas Penyelesaian Perbatasan dan Percepatan Pemetaan Batas Negara",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "02",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Penguatan Perlindungan WNI dan BHI di Tingkat Bilateral, Regional, Multilateral",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan Penggunaan Sumber-Sumber dan Mekanisme Pendanaan Baru Kerjasama Pembangunan Internasional",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "02",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Penciptaan Lingkungan yang Mendukung (Enabling Environment) Peningkatan Keterlibatan Swasta dalam Kerjasama Pembangunan Internasional",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "02",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Penyusunan Kebijakan Diplomasi Publik dan Turunannya",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan Inisiatif/Posisi Indonesia yang Diterima",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "02",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Optimalisasi Kontribusi Indonesia dalam Jajaran 10 Besar Negara Kontributor MPP PBB",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Pembentukan Lembaga Pengelola Regulasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "03",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Pembaruan Substansi Hukum",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Penyempurnaan Hukum Ekonomi untuk Mendukung Kemudahan Berusaha",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Penerapan Pendekatan Keadilan Restoratif",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Dukungan TI di Bidang Hukum dan Peradilan",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "03",
+    "kdkp": "02",
+    "kdproy": "04",
+    "deskripsi": "Peningkatan Integritas dan Pengawasan Hakim",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "03",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Penguatan Implementasi Strategi Nasional Pencegahan Korupsi",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "03",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Optimalisasi Mekanisme Pemulihan dan Pengelolaan Aset",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Penguatan Layanan Keadilan",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "03",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Pemberdayaan Hukum bagi Masyarakat",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "04",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Manajemen Talenta Nasional ASN",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "04",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Penerapan Sistem Merit ASN",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "04",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Perluasan Implementasi Sistem Integritas",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Pelayanan Publik Berbasis Elektronik (E-Services) yang Terintegrasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Penguatan Pengawasan Masyarakat atas Kinerja Pelayanan Publik",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Penguatan Ekosistem Inovasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "04",
+    "kdkp": "02",
+    "kdproy": "04",
+    "deskripsi": "Penguatan Pelayanan Terpadu",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "04",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Penataan Kelembagaan",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "04",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Penerapan SPBE Terintegrasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Penguatan Pengelolaan Reformasi Birokrasi",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "04",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Penguatan Sistem Akuntabilitas Kinerja Pembangunan",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "01",
+    "kdproy": "01",
+    "deskripsi": "Peningkatan Deradikalisasi dan Penanganan Terorisme",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "01",
+    "kdproy": "02",
+    "deskripsi": "Pengamanan Obyek Vital dan Target Rentan",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "01",
+    "kdproy": "03",
+    "deskripsi": "Penguatan Pertahanan dan Keamanan di Perbatasan dan Pulau Terluar",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "01",
+    "kdproy": "04",
+    "deskripsi": "Penanganan Konflik secara Humanis",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "01",
+    "kdproy": "05",
+    "deskripsi": "Keselamatan dan Reintegrasi di Wilayah Rawan dan Bencana",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "01",
+    "deskripsi": "Pengadaan Alutsista",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "02",
+    "deskripsi": "Pemeliharaan dan Perawatan Alutsista",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "03",
+    "deskripsi": "Pembangunan Sarana-Prasarana Pertahanan",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "04",
+    "deskripsi": "Peningkatan Profesionalisme dan Kesejahteraan Prajurit",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "05",
+    "deskripsi": "Pembangunan Pertahanan Siber",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "02",
+    "kdproy": "06",
+    "deskripsi": "Pembangunan dan Pengembangan Industri Pertahanan",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "03",
+    "kdproy": "01",
+    "deskripsi": "Penguatan Kapasitas Sistem Peringatan Dini Terpadu",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "03",
+    "kdproy": "02",
+    "deskripsi": "Penguatan Kapasitas Operasi Keamanan Laut",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "03",
+    "kdproy": "03",
+    "deskripsi": "Peningkatan Penyelesaian Kasus Keamanan Laut",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "01",
+    "deskripsi": "Pencegahan dan Pemberantasan Peredaran Gelap Narkotika dan Prekursor Narkotika",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "02",
+    "deskripsi": "Peningkatan Pencegahan Penyalahgunaan dan Rehabilitasi Penyalahguna Narkotika",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "03",
+    "deskripsi": "Penanganan Kasus TPPO, serta Kejahatan terhadap Perempuan, Anak, dan Kelompok Rentan Lainnya",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "04",
+    "deskripsi": "Peningkatan Layanan Kepolisian yang Profesional, Modern, dan Terpercaya",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "05",
+    "deskripsi": "Pengadaan Almatsus dan Alpalkam Dukungan Layanan Kepolisian",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "04",
+    "kdproy": "06",
+    "deskripsi": "Peningkatan Profesionalisme, dan Kesejahteraan Anggota POLRI",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "01",
+    "deskripsi": "Pembangunan dan Penguatan Tim Cepat Tanggap Keamanan Siber",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "02",
+    "deskripsi": "Penguatan Infrastruktur, SDM, dan Regulasi Keamanan Siber",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "03",
+    "deskripsi": "Penyelesaian Kejahatan Siber",
+    "status": "1"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "05",
+    "kdproy": "04",
+    "deskripsi": "Pencegahan Kejahatan Siber dan Peningkatan Kerjasama Internasional Bidang Siber",
+    "status": "1"
+  }
+]

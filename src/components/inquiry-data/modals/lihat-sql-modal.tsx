@@ -24,6 +24,7 @@ interface LihatSqlModalProps {
     tipeLaporan: string;
     pembulatan: string;
     jenisAkumulasi?: string;
+    scope?: "belanja" | "tematik" | "general";
   };
   filterValues?: Record<
     string,
@@ -80,7 +81,9 @@ export function LihatSqlModal({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `query_belanja_${new Date().toISOString().split("T")[0]}.sql`;
+    a.download = `query_${
+      (reportParams as any)?.scope === "tematik" ? "tematik" : "belanja"
+    }_${new Date().toISOString().split("T")[0]}.sql`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -89,7 +92,10 @@ export function LihatSqlModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl max-h-[80vh] sm:max-w-7xl" showCloseButton={false}>
+      <DialogContent
+        className="max-w-7xl max-h-[80vh] sm:max-w-7xl"
+        showCloseButton={false}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Code className="w-5 h-5 text-blue-600" />
@@ -106,7 +112,13 @@ export function LihatSqlModal({
                 Tahun: {reportParams.tahun || "All"}
               </Badge>
               <Badge variant="secondary">
-                Tipe: {reportParams.tipeLaporan || "All"}
+                {(reportParams as any)?.scope === "tematik"
+                  ? "Kategori"
+                  : "Tipe"}
+                :{" "}
+                {(reportParams as any)?.scope === "tematik"
+                  ? (reportParams as any)?.tematikKategori || "All"
+                  : reportParams.tipeLaporan || "All"}
               </Badge>
               <Badge variant="secondary">
                 Pembulatan: {reportParams.pembulatan || "Default"}
@@ -171,16 +183,19 @@ export function LihatSqlModal({
           {/* Warning */}
           <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-3 rounded-lg">
             <p className="text-xs text-amber-800 dark:text-amber-200">
-              <strong>Catatan Admin:</strong> SQL Query ini ditampilkan untuk tujuan meninjau. Eksekusi Query yang sesungguhnya bisa terdapat fungsi tambahan untuk tujuan keamanan dan optimisasi.
+              <strong>Catatan Admin:</strong> SQL Query ini ditampilkan untuk
+              tujuan meninjau. Eksekusi Query yang sesungguhnya bisa terdapat
+              fungsi tambahan untuk tujuan keamanan dan optimisasi.
             </p>
           </div>
         </div>
 
         <DialogFooter>
           <Button
-          variant="destructive"
-          className="w-24"
-          onClick={() => onOpenChange(false)}>
+            variant="destructive"
+            className="w-24"
+            onClick={() => onOpenChange(false)}
+          >
             Tutup
           </Button>
         </DialogFooter>
@@ -188,4 +203,3 @@ export function LihatSqlModal({
     </Dialog>
   );
 }
-

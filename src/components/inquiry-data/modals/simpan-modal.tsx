@@ -34,8 +34,10 @@ interface SimpanModalProps {
     tahun: string;
     tipeLaporan: string;
     pembulatan: string;
+    tematikKategori?: string;
   };
   filterValues: Record<string, FilterValue>;
+  scope?: "belanja" | "tematik" | "general"; // Add scope for query differentiation
   onSaveSuccess?: (savedQuery: SavedQuery) => void;
 }
 
@@ -45,6 +47,7 @@ export function SimpanModal({
   activeFilters,
   reportParams,
   filterValues,
+  scope = "general", // Default to general scope
   onSaveSuccess,
 }: SimpanModalProps) {
   const [formData, setFormData] = useState({
@@ -107,21 +110,25 @@ export function SimpanModal({
     const hasValidKondisiCode =
       filterValue.kondisiCode && filterValue.kondisiCode.trim() !== "";
     const hasValidMengandungKata =
-      typeof filterValue.mengandungKata === "string" && 
+      typeof filterValue.mengandungKata === "string" &&
       filterValue.mengandungKata.trim() !== "";
 
     return hasValidSelection || hasValidKondisiCode || hasValidMengandungKata;
   };
 
   const validateFilterData = (): string | null => {
+    const isPNTematik =
+      scope === "tematik" &&
+      reportParams.tematikKategori === "prioritas_nasional";
+
     // Filter out unconfigured filters (those with selection="all" and no other values)
     const configuredFilters = activeFilters.filter((filterName) => {
       const filterValue = filterValues[filterName];
       return isFilterConfigured(filterName, filterValue);
     });
 
-    // Check if we have any configured filters
-    if (configuredFilters.length === 0) {
+    // Check if we have any configured filters. For PN tematik, mandatory cards are allowed even if user didn't touch them.
+    if (configuredFilters.length === 0 && !isPNTematik) {
       return "Setidaknya satu filter harus dikonfigurasi untuk menyimpan query.";
     }
 
@@ -142,7 +149,7 @@ export function SimpanModal({
 
   // Helper function to get only configured filters for saving
   const getConfiguredFiltersForSaving = () => {
-    const configuredActiveFilters = activeFilters.filter((filterName) => {
+    let configuredActiveFilters = activeFilters.filter((filterName) => {
       const filterValue = filterValues[filterName];
       return isFilterConfigured(filterName, filterValue);
     });
@@ -153,6 +160,34 @@ export function SimpanModal({
         configuredFilterValues[filterName] = filterValues[filterName];
       }
     });
+
+    // If Tematik with Prioritas Nasional, ensure PN mandatory filters are included
+    const isPNTematik =
+      scope === "tematik" &&
+      reportParams.tematikKategori === "prioritas_nasional";
+    if (isPNTematik) {
+      const pnKeys = [
+        "jenisPn",
+        "programPrioritas",
+        "kegiatanPrioritas",
+        "proyekPrioritas",
+      ];
+      // Merge PN keys into active filters (dedupe)
+      configuredActiveFilters = Array.from(
+        new Set(["cutOff", ...configuredActiveFilters, ...pnKeys])
+      );
+      // Ensure filter values exist (seed defaults if missing)
+      pnKeys.forEach((k) => {
+        if (!configuredFilterValues[k]) {
+          configuredFilterValues[k] = {
+            selection: "all",
+            kondisiCode: "",
+            mengandungKata: "",
+            jenisTampilan: "kode",
+          };
+        }
+      });
+    }
 
     return {
       activeFilters: configuredActiveFilters,
@@ -218,6 +253,7 @@ export function SimpanModal({
         reportParams,
         activeFilters: configuredActiveFilters,
         filterValues: configuredFilterValues,
+        scope, // Include scope in the saved query
       };
 
       const savedQuery = await createQuery(queryData);
@@ -351,7 +387,10 @@ export function SimpanModal({
                 Tahun: {reportParams.tahun || "Belum dipilih"}
               </Badge>
               <Badge variant="secondary">
-                Tipe: {reportParams.tipeLaporan || "Belum dipilih"}
+                {scope === "tematik" ? "Kategori" : "Tipe"}:{" "}
+                {scope === "tematik"
+                  ? reportParams.tematikKategori || "Belum dipilih"
+                  : reportParams.tipeLaporan || "Belum dipilih"}
               </Badge>
               <Badge variant="secondary">
                 Pembulatan: {reportParams.pembulatan || "Belum dipilih"}

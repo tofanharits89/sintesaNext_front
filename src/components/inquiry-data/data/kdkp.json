@@ -1,0 +1,1248 @@
+[
+  {
+    "kdpn": "01",
+    "kdpp": "01",
+    "kdkp": "01",
+    "deskripsi": "Penguatan Kapasitas Lembaga Demokrasi",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "01",
+    "kdkp": "02",
+    "deskripsi": "Penguatan Kesetaraan dan Kebebasan",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "01",
+    "kdkp": "03",
+    "deskripsi": "Peningkatan Kualitas Komunikasi Publik",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "01",
+    "kdkp": "04",
+    "deskripsi": "Penguatan Kelembagaan dan Penegakan Hukum di Bidang Sumber Daya Alam dan Lingkungan Hidup",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "01",
+    "kdkp": "05",
+    "deskripsi": "Ketahanan Kebencanaan Infrastruktur",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "02",
+    "kdkp": "01",
+    "deskripsi": "Penguatan Integritas NKRI dan Perlindungan WNI di Luar Negeri",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "02",
+    "kdkp": "02",
+    "deskripsi": "Penguatan Kerjasama Pembangunan Internasional",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "02",
+    "kdkp": "03",
+    "deskripsi": "Peningkatan Citra Positif di Dunia Internasional",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "02",
+    "kdkp": "04",
+    "deskripsi": "Peningkatan Peran Indonesia di Tingkat Regional dan Global",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "02",
+    "kdkp": "05",
+    "deskripsi": "Konektivitas Darat",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "02",
+    "kdkp": "06",
+    "deskripsi": "Pengembangan Waduk Multiguna",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "01",
+    "deskripsi": "Penataan Regulasi",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "02",
+    "deskripsi": "Perbaikan Sistem Hukum Pidana dan Perdata",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "04",
+    "deskripsi": "Peningkatan Akses terhadap Keadilan",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "03",
+    "kdkp": "05",
+    "deskripsi": "Rendah Karbon Pesisir dan Laut",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "04",
+    "kdkp": "01",
+    "deskripsi": "Penguatan Implementasi Manajemen ASN",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "04",
+    "kdkp": "02",
+    "deskripsi": "Transformasi Pelayanan Publik",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "04",
+    "kdkp": "03",
+    "deskripsi": "Penataan Kelembagaan dan Proses Bisnis",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "04",
+    "kdkp": "04",
+    "deskripsi": "Reformasi Sistem Akuntabilitas Kinerja Pembangunan",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "04",
+    "kdkp": "05",
+    "deskripsi": "Peningkatan Tata Kelola Pendidikan",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "05",
+    "kdkp": "01",
+    "deskripsi": "Penguatan Keamanan Dalam Negeri",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "05",
+    "kdkp": "02",
+    "deskripsi": "Penguatan Kemampuan Pertahanan Dibarengi Confidence Building Measures (CBM)",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "05",
+    "kdkp": "03",
+    "deskripsi": "Penguatan Keamanan Laut",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "05",
+    "kdkp": "04",
+    "deskripsi": "Penguatan Keamanan dan Ketertiban Masyarakat",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "05",
+    "kdkp": "05",
+    "deskripsi": "Penguatan Ketahanan dan Keamanan Siber",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "01",
+    "deskripsi": "Akselerasi Penguatan Ekonomi Keluarga",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "02",
+    "deskripsi": "Keperantaraan Usaha dan Dampak Sosial",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "03",
+    "deskripsi": "Reforma Agraria",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "04",
+    "deskripsi": "Perhutanan Sosial",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "05",
+    "deskripsi": "Kelembagaan dan Keuangan Daerah",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "06",
+    "kdkp": "06",
+    "deskripsi": "Pengembangan Industri Halal",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "07",
+    "kdkp": "01",
+    "deskripsi": "Pendidikan dan Pelatihan Vokasi Berbasis Kerjasama Industri",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "07",
+    "kdkp": "02",
+    "deskripsi": "Penguatan Pendidikan Tinggi Berkualitas",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "07",
+    "kdkp": "03",
+    "deskripsi": "Peningkatan Kapabilitas Iptek dan Penciptaan Inovasi",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "07",
+    "kdkp": "04",
+    "deskripsi": "Prestasi Olahraga",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "07",
+    "kdkp": "05",
+    "deskripsi": "Kelembagaan dan Keuangan Daerah",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "07",
+    "kdkp": "06",
+    "deskripsi": "Peningkatan Citra dan Diversifikasi Pemasaran Destinasi Pariwisata Prioritas dan Destinasi Branding, dan Produk Kreatif",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "07",
+    "kdkp": "07",
+    "deskripsi": "Peningkatan Efektivitas Prefrential Trade Agreement (PTA)/Free Trade Agreement (FTA)/Comprehensive Economic Partnership Agreement (CEPA) dan Diplomasi Ekonomi",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "08",
+    "kdkp": "01",
+    "deskripsi": "Peningkatan Pendalaman Sektor Keuangan",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "08",
+    "kdkp": "02",
+    "deskripsi": "Optimalisasi Pemanfaatan Teknologi Digital dan Industry 4.0",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "08",
+    "kdkp": "03",
+    "deskripsi": "Peningkatan Sistem Logistik dan Stabilitas Harga",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "08",
+    "kdkp": "04",
+    "deskripsi": "Peningkatan Penerapan Praktik Berkelanjutan di Industri Pengolahan dan Pariwisata",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "08",
+    "kdkp": "05",
+    "deskripsi": "Reformasi Fiskal",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "01",
+    "kdpp": "08",
+    "kdkp": "06",
+    "deskripsi": "Peningkatan Ketersediaan dan Kualitas Data dan Informasi Perkembangan Ekonomi, Terutama Pangan, Kemaritiman, Pariwisata, Ekonomi Kreatif, dan Ekonomi Digital",
+    "aktif": "1"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "01",
+    "deskripsi": "Pengembangan Kawasan Strategis",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "02",
+    "deskripsi": "Pengembangan Sektor Unggulan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "03",
+    "deskripsi": "Pengembangan Kawasan Perkotaan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "04",
+    "deskripsi": "Pengembangan Daerah Tertinggal, Kawasan Perbatasan, Perdesaan, dan Transmigrasi",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "01",
+    "kdkp": "05",
+    "deskripsi": "Kelembagaan dan Keuangan Daerah",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "01",
+    "deskripsi": "Pengembangan Kawasan Strategis",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "02",
+    "deskripsi": "Pengembangan Sektor Unggulan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "03",
+    "deskripsi": "Pengembangan Kawasan Perkotaan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "04",
+    "deskripsi": "Pengembangan Daerah Tertinggal, Kawasan Perbatasan, Perdesaan, dan Transmigrasi",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "02",
+    "kdkp": "05",
+    "deskripsi": "Kelembagaan dan Keuangan Daerah",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "01",
+    "deskripsi": "Pengembangan Kawasan Strategis",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "02",
+    "deskripsi": "Pengembangan Sektor Unggulan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "03",
+    "deskripsi": "Pengembangan Kawasan Perkotaan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "04",
+    "deskripsi": "Pengembangan Daerah Tertinggal, Kawasan Perbatasan, Perdesaan, dan Transmigrasi",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "03",
+    "kdkp": "05",
+    "deskripsi": "Kelembagaan dan Keuangan Daerah",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "01",
+    "deskripsi": "Pengembangan Kawasan Strategis",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "02",
+    "deskripsi": "Pengembangan Sektor Unggulan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "03",
+    "deskripsi": "Pengembangan Kawasan Perkotaan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "04",
+    "deskripsi": "Pengembangan Daerah Tertinggal, Kawasan Perbatasan, Perdesaan, dan Transmigrasi",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "04",
+    "kdkp": "05",
+    "deskripsi": "Kelembagaan dan Keuangan Daerah",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "01",
+    "deskripsi": "Pengembangan Kawasan Strategis",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "02",
+    "deskripsi": "Pengembangan Sektor Unggulan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "03",
+    "deskripsi": "Pengembangan Kawasan Perkotaan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "04",
+    "deskripsi": "Pengembangan Daerah Tertinggal, Kawasan Perbatasan, Perdesaan, dan Transmigrasi",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "05",
+    "kdkp": "05",
+    "deskripsi": "Kelembagaan dan Keuangan Daerah",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "01",
+    "deskripsi": "Pengembangan Kawasan Strategis",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "02",
+    "deskripsi": "Pengembangan Sektor Unggulan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "03",
+    "deskripsi": "Pengembangan Kawasan Perkotaan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "04",
+    "deskripsi": "Pengembangan Daerah Tertinggal, Kawasan Perbatasan, Perdesaan, dan Transmigrasi",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "06",
+    "kdkp": "05",
+    "deskripsi": "Kelembagaan dan Keuangan Daerah",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "01",
+    "deskripsi": "Pengembangan Kawasan Strategis",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "02",
+    "deskripsi": "Pengembangan Sektor Unggulan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "03",
+    "deskripsi": "Pengembangan Kawasan Perkotaan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "04",
+    "deskripsi": "Pengembangan Daerah Tertinggal, Kawasan Perbatasan, Perdesaan, dan Transmigrasi",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "02",
+    "kdpp": "07",
+    "kdkp": "05",
+    "deskripsi": "Kelembagaan dan Keuangan Daerah",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "01",
+    "kdkp": "01",
+    "deskripsi": "Percepatan Cakupan Administrasi Kependudukan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "01",
+    "kdkp": "02",
+    "deskripsi": "Integrasi Sistem Administrasi Kependudukan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "01",
+    "kdkp": "03",
+    "deskripsi": "Pendampingan dan Layanan Terpadu",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "01",
+    "kdkp": "04",
+    "deskripsi": "Pemaduan dan Sinkronisasi Kebijakan Pengendalian Penduduk",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "02",
+    "kdkp": "01",
+    "deskripsi": "Sistem Jaminan Sosial Nasional",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "02",
+    "kdkp": "02",
+    "deskripsi": "Bantuan Sosial dan Subsidi Tepat Sasaran",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "02",
+    "kdkp": "03",
+    "deskripsi": "Perlindungan Sosial Adaptif",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "02",
+    "kdkp": "04",
+    "deskripsi": "Kesejahteraan Sosial",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "03",
+    "kdkp": "01",
+    "deskripsi": "Peningkatan Kesehatan Ibu, Anak, Keluarga Berencana (KB), dan Kesehatan Reproduksi",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "03",
+    "kdkp": "02",
+    "deskripsi": "Percepatan Perbaikan Gizi Masyarakat",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "03",
+    "kdkp": "03",
+    "deskripsi": "Peningkatan Pengendalian Penyakit",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "03",
+    "kdkp": "04",
+    "deskripsi": "Penguatan Gerakan Masyarakat Hidup Sehat (Germas)",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "03",
+    "kdkp": "05",
+    "deskripsi": "Penguatan Sistem Kesehatan dan Pengawasan Obat dan Makanan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "01",
+    "deskripsi": "Peningkatan Kualitas Pengajaran dan Pembelajaran",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "02",
+    "deskripsi": "Pemerataan Akses dan Wajib Belajar 12 Tahun",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "03",
+    "deskripsi": "Peningkatan Pengelolaan dan Penempatan Pendidik dan Tenaga Kependidikan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "04",
+    "deskripsi": "Penjaminan Mutu Pendidikan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "04",
+    "kdkp": "05",
+    "deskripsi": "Peningkatan Tata Kelola Pendidikan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "05",
+    "kdkp": "01",
+    "deskripsi": "Pemenuhan Hak dan Perlindungan Anak",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "05",
+    "kdkp": "02",
+    "deskripsi": "Peningkatan Kesetaraan Gender, Pemberdayaan dan Perlindungan Perempuan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "05",
+    "kdkp": "03",
+    "deskripsi": "Kualitas Pemuda",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "06",
+    "kdkp": "01",
+    "deskripsi": "Akselerasi Penguatan Ekonomi Keluarga",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "06",
+    "kdkp": "02",
+    "deskripsi": "Keperantaraan Usaha dan Dampak Sosial",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "06",
+    "kdkp": "03",
+    "deskripsi": "Reforma Agraria",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "06",
+    "kdkp": "04",
+    "deskripsi": "Perhutanan Sosial",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "01",
+    "deskripsi": "Pendidikan dan Pelatihan Vokasi Berbasis Kerjasama Industri",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "02",
+    "deskripsi": "Penguatan Pendidikan Tinggi Berkualitas",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "03",
+    "deskripsi": "Peningkatan Kapabilitas Iptek dan Penciptaan Inovasi",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "03",
+    "kdpp": "07",
+    "kdkp": "04",
+    "deskripsi": "Prestasi Olahraga",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "01",
+    "deskripsi": "Revolusi Mental dalam Sistem Pendidikan untuk Memperkuat Nilai Integritas, Etos Kerja, Gotong Royong, dan Budi Pekerti",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "02",
+    "deskripsi": "Revolusi Mental dalam Tata Kelola Pemerintahan untuk Penguatan Budaya Birokrasi yang Bersih, Melayani, dan Responsif",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "03",
+    "deskripsi": "Revolusi Mental dalam Sistem Sosial untuk Memperkuat Ketahanan, Kualitas dan Peran Keluarga dan Masyarakat dalam Pembentukan Karakter",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "04",
+    "deskripsi": "Penguatan Pusat-Pusat Perubahan Gerakan Revolusi Mental",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "05",
+    "deskripsi": "Pembangunan dan Pembudayaan Sistem Ekonomi Kerakyatan Berlandaskan Pancasila",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "01",
+    "kdkp": "06",
+    "deskripsi": "Pembinaan Ideologi Pancasila, Pendidikan Kewarganegaraan, Wawasan Kebangsaan dan Bela Negara untuk Menumbuhkan Jiwa Nasionalisme dan Patriotisme",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "02",
+    "kdkp": "01",
+    "deskripsi": "Revitalisasi dan Aktualisasi Nilai Budaya dan Kearifan Lokal",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "02",
+    "kdkp": "02",
+    "deskripsi": "Pengembangan dan Pemanfaatan Kekayaan Budaya untuk Memperkuat Karakter Bangsa dan Kesejahteraan Rakyat",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "02",
+    "kdkp": "03",
+    "deskripsi": "Pelindungan Hak Kebudayaan dan Ekspresi Budaya untuk Memperkuat Kebudayaan yang Inklusif",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "02",
+    "kdkp": "04",
+    "deskripsi": "Pengembangan Diplomasi Budaya untuk Memperkuat Pengaruh Indonesia dalam Perkembangan Peradaban Dunia",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "02",
+    "kdkp": "05",
+    "deskripsi": "Pengembangan Tata Kelola Pembangunan Kebudayaan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "01",
+    "deskripsi": "Penguatan Cara Pandang, Sikap, dan Praktik Beragama dalam Perspektif Jalan Tengah untuk Memantapkan Persaudaraan dan Kebersamaan di Kalangan Umat Beragama",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "02",
+    "deskripsi": "Penguatan Harmoni dan Kerukunan Umat Beragama",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "03",
+    "deskripsi": "Penyelarasan Relasi Agama dan Budaya",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "04",
+    "deskripsi": "Peningkatan Kualitas Pelayanan Kehidupan Beragama",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "03",
+    "kdkp": "05",
+    "deskripsi": "Pengembangan Ekonomi dan Sumber Daya Keagamaan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "04",
+    "kdkp": "01",
+    "deskripsi": "Peningkatan Budaya Literasi",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "04",
+    "kdkp": "02",
+    "deskripsi": "Pengembangan, Pembinaan, dan Pelindungan Bahasa Indonesia, Bahasa dan Aksara Daerah, serta Sastra",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "04",
+    "kdkp": "03",
+    "deskripsi": "Pengembangan Budaya Iptek, Inovasi, Kreativitas, dan Daya Cipta",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "04",
+    "kdpp": "04",
+    "kdkp": "04",
+    "deskripsi": "Penguatan Institusi Sosial Penggerak Literasi dan Inovasi",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "01",
+    "deskripsi": "Penyediaan Akses Perumahan dan Permukiman Layak, Aman dan Terjangkau",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "02",
+    "deskripsi": "Penyediaan Akses Air Minum dan Sanitasi Layak dan Aman",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "03",
+    "deskripsi": "Pengelolaan Air Tanah dan Air Baku Berkelanjutan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "04",
+    "deskripsi": "Keselamatan dan Keamanan Transportasi",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "05",
+    "deskripsi": "Ketahanan Kebencanaan Infrastruktur",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "01",
+    "kdkp": "06",
+    "deskripsi": "Waduk Multipurpose dan Modernisasi Irigasi",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "01",
+    "deskripsi": "Konektivitas Jalan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "02",
+    "deskripsi": "Konektivitas Kereta Api",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "03",
+    "deskripsi": "Konektivitas Laut",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "04",
+    "deskripsi": "Konektivitas Udara",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "02",
+    "kdkp": "05",
+    "deskripsi": "Konektivitas Darat",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "03",
+    "kdkp": "01",
+    "deskripsi": "Transportasi Perkotaan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "03",
+    "kdkp": "02",
+    "deskripsi": "Infrastruktur dan Ekosistem TIK Perkotaan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "03",
+    "kdkp": "03",
+    "deskripsi": "Penyediaan Akses Air Minum dan Sanitasi Layak dan Aman di Perkotaan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "03",
+    "kdkp": "04",
+    "deskripsi": "Penyediaan Akses Perumahan dan Permukiman Layak, Aman dan Terjangkau di Perkotaan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "04",
+    "kdkp": "01",
+    "deskripsi": "Keberlanjutan Penyediaan Energi dan Ketenagalistrikan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "04",
+    "kdkp": "02",
+    "deskripsi": "Akses dan Keterjangkauan Energi dan Ketenagalistrikan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "04",
+    "kdkp": "03",
+    "deskripsi": "Kecukupan Penyediaan Energi dan Tenaga Listrik",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "05",
+    "kdkp": "01",
+    "deskripsi": "Penuntasan Infrastruktur TIK",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "05",
+    "kdkp": "02",
+    "deskripsi": "Pemanfaatan Infrastruktur TIK",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "05",
+    "kdpp": "05",
+    "kdkp": "03",
+    "deskripsi": "Fasilitas Pendukung Transformasi Digital",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "01",
+    "deskripsi": "Pencegahan Pencemaran dan Kerusakan Sumber Daya Alam dan Lingkungan Hidup",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "02",
+    "deskripsi": "Penanggulangan Pencemaran dan Kerusakan Sumber Daya Alam dan Lingkungan Hidup",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "03",
+    "deskripsi": "Pemulihan Pencemaran dan Kerusakan Sumber Daya Alam dan Lingkungan Hidup",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "01",
+    "kdkp": "04",
+    "deskripsi": "Penguatan Kelembagaan dan Penegakan Hukum di Bidang Sumber Daya Alam dan Lingkungan Hidup",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "02",
+    "kdkp": "01",
+    "deskripsi": "Penanggulangan Bencana",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "02",
+    "kdkp": "02",
+    "deskripsi": "Peningkatan Ketahanan Iklim",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "03",
+    "kdkp": "01",
+    "deskripsi": "Pembangunan Energi Berkelanjutan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "03",
+    "kdkp": "02",
+    "deskripsi": "Pemulihan Lahan Berkelanjutan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "03",
+    "kdkp": "03",
+    "deskripsi": "Pengelolaan Limbah",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "03",
+    "kdkp": "04",
+    "deskripsi": "Pengembangan Industri Hijau",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "06",
+    "kdpp": "03",
+    "kdkp": "05",
+    "deskripsi": "Rendah Karbon Pesisir dan Laut",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "01",
+    "kdkp": "01",
+    "deskripsi": "Penguatan Kapasitas Lembaga Demokrasi",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "01",
+    "kdkp": "02",
+    "deskripsi": "Penguatan Kesetaraan dan Kebebasan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "01",
+    "kdkp": "03",
+    "deskripsi": "Peningkatan Kualitas Komunikasi Publik",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "02",
+    "kdkp": "01",
+    "deskripsi": "Penguatan Integritas NKRI dan Perlindungan WNI di Luar Negeri",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "02",
+    "kdkp": "02",
+    "deskripsi": "Penguatan Kerjasama Pembangunan Internasional",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "02",
+    "kdkp": "03",
+    "deskripsi": "Peningkatan Citra Positif di Dunia Internasional",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "02",
+    "kdkp": "04",
+    "deskripsi": "Peningkatan Peran Indonesia di Tingkat Regional dan Global",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "03",
+    "kdkp": "01",
+    "deskripsi": "Penataan Regulasi",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "03",
+    "kdkp": "02",
+    "deskripsi": "Perbaikan Sistem Hukum Pidana dan Perdata",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "03",
+    "kdkp": "04",
+    "deskripsi": "Peningkatan Akses terhadap Keadilan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "04",
+    "kdkp": "01",
+    "deskripsi": "Penguatan Implementasi Manajemen ASN",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "04",
+    "kdkp": "02",
+    "deskripsi": "Transformasi Pelayanan Publik",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "04",
+    "kdkp": "03",
+    "deskripsi": "Penataan Kelembagaan dan Proses Bisnis",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "04",
+    "kdkp": "04",
+    "deskripsi": "Reformasi Sistem Akuntabilitas Kinerja Pembangunan",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "01",
+    "deskripsi": "Penguatan Keamanan Dalam Negeri",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "02",
+    "deskripsi": "Penguatan Kemampuan Pertahanan Dibarengi Confidence Building Measures (CBM)",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "03",
+    "deskripsi": "Penguatan Keamanan Laut",
+    "aktif": "0"
+  },
+  {
+    "kdpn": "07",
+    "kdpp": "05",
+    "kdkp": "04",
+    "deskripsi": "Penguatan Keamanan dan Ketertiban Masyarakat",
+    "aktif": "0"
+  }
+]

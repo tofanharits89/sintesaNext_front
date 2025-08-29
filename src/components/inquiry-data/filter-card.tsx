@@ -35,6 +35,11 @@ import kdakunData from "./data/kdakun.json";
 import kdbkpkData from "./data/kdbkpk.json";
 import kdgbkpkData from "./data/kdgbkpk.json";
 import kdsdanaData from "./data/kdsdana.json";
+// PN hierarchy JSONs
+import kdpnData from "./data/kdpn.json";
+import kdppData from "./data/kdpp.json";
+import kdkpData from "./data/kdkp.json";
+import kdproyData from "./data/kdproy.json";
 
 type Option = { value: string; label: string };
 
@@ -67,6 +72,7 @@ interface FilterCardProps {
     akunType?: string;
   }; // Current filter's values from parent (for loading saved queries)
   onFilterChange?: (filterKey: string, field: string, value: string) => void; // Callback for value changes
+  removable?: boolean; // Optional: hide remove button for mandatory cards
 }
 
 export function FilterCard({
@@ -94,6 +100,8 @@ export function FilterCard({
 
   // Track if initial notification has been sent to prevent infinite loops
   const initialNotificationSent = useRef(false);
+  // Track if current component just loaded values from a saved query
+  const loadedFromSavedRef = useRef(false);
 
   // Sync internal state with external currentFilterValue (for loading saved queries)
   useEffect(() => {
@@ -133,11 +141,18 @@ export function FilterCard({
         console.log(`[FilterCard-${filterKey}] New internal state:`, newState);
         return newState;
       });
+      // Mark that we initialized from a saved query so dependency clearing can skip once
+      loadedFromSavedRef.current = true;
     }
   }, [currentFilterValue, filterKey]);
 
   // Handle hierarchical dependencies - clear child selections when parent changes
   useEffect(() => {
+    // Skip clearing on the very first run after hydrating from saved values
+    if (loadedFromSavedRef.current) {
+      loadedFromSavedRef.current = false;
+      return;
+    }
     // Clear eselonI selection when kementerian changes
     if (filterKey === "eselonI") {
       const currentKementerian = activeFilterValues?.kementerian;
@@ -329,6 +344,54 @@ export function FilterCard({
           if (onFilterChange) {
             onFilterChange(filterKey, "selection", "all");
           }
+        }
+      }
+    }
+
+    // Clear Program Prioritas when Jenis PN changes
+    if (filterKey === "programPrioritas") {
+      const currentPn = activeFilterValues?.jenisPn;
+      if (currentPn && filterData.selection) {
+        const validOptions = getFilterOptions("programPrioritas");
+        const isValid = validOptions.some(
+          (o) => o.value === filterData.selection
+        );
+        if (!isValid) {
+          setFilterData((prev) => ({ ...prev, selection: "all" }));
+          if (onFilterChange) onFilterChange(filterKey, "selection", "all");
+        }
+      }
+    }
+
+    // Clear Kegiatan Prioritas when Jenis PN or Program Prioritas changes
+    if (filterKey === "kegiatanPrioritas") {
+      const currentPn = activeFilterValues?.jenisPn;
+      const currentPp = activeFilterValues?.programPrioritas;
+      if ((currentPn || currentPp) && filterData.selection) {
+        const validOptions = getFilterOptions("kegiatanPrioritas");
+        const isValid = validOptions.some(
+          (o) => o.value === filterData.selection
+        );
+        if (!isValid) {
+          setFilterData((prev) => ({ ...prev, selection: "all" }));
+          if (onFilterChange) onFilterChange(filterKey, "selection", "all");
+        }
+      }
+    }
+
+    // Clear Proyek Prioritas when Jenis PN, Program Prioritas, or Kegiatan Prioritas changes
+    if (filterKey === "proyekPrioritas") {
+      const currentPn = activeFilterValues?.jenisPn;
+      const currentPp = activeFilterValues?.programPrioritas;
+      const currentKp = activeFilterValues?.kegiatanPrioritas;
+      if ((currentPn || currentPp || currentKp) && filterData.selection) {
+        const validOptions = getFilterOptions("proyekPrioritas");
+        const isValid = validOptions.some(
+          (o) => o.value === filterData.selection
+        );
+        if (!isValid) {
+          setFilterData((prev) => ({ ...prev, selection: "all" }));
+          if (onFilterChange) onFilterChange(filterKey, "selection", "all");
         }
       }
     }
@@ -762,6 +825,83 @@ export function FilterCard({
             }));
             return [...commonOptions, ...subOutputOptions];
 
+          // Prioritas Nasional hierarchy filters
+          case "jenisPn": {
+            const pnOptions = (
+              kdpnData as Array<{ kdpn: string; nmpn: string }>
+            ).map((item) => ({
+              value: item.kdpn,
+              label: `${item.kdpn} - ${item.nmpn}`,
+            }));
+            return [...commonOptions, ...pnOptions];
+          }
+
+          case "programPrioritas": {
+            let data = kdppData as Array<{
+              kdpn: string;
+              kdpp: string;
+              nmpp: string;
+            }>;
+            const selectedPn = activeFilterValues?.jenisPn;
+            if (selectedPn && selectedPn !== "all") {
+              data = data.filter((item) => item.kdpn === selectedPn);
+            }
+            const options = data.map((item) => ({
+              value: item.kdpp,
+              label: `${item.kdpp} - ${item.nmpp}`,
+            }));
+            return [...commonOptions, ...options];
+          }
+
+          case "kegiatanPrioritas": {
+            let data = kdkpData as Array<{
+              kdpn: string;
+              kdpp: string;
+              kdkp: string;
+              deskripsi: string;
+            }>;
+            const selectedPn = activeFilterValues?.jenisPn;
+            const selectedPp = activeFilterValues?.programPrioritas;
+            if (selectedPn && selectedPn !== "all") {
+              data = data.filter((item) => item.kdpn === selectedPn);
+            }
+            if (selectedPp && selectedPp !== "all") {
+              data = data.filter((item) => item.kdpp === selectedPp);
+            }
+            const options = data.map((item) => ({
+              value: item.kdkp,
+              label: `${item.kdkp} - ${item.deskripsi}`,
+            }));
+            return [...commonOptions, ...options];
+          }
+
+          case "proyekPrioritas": {
+            let data = kdproyData as Array<{
+              kdpn: string;
+              kdpp: string;
+              kdkp: string;
+              kdproy: string;
+              deskripsi: string;
+            }>;
+            const selectedPn = activeFilterValues?.jenisPn;
+            const selectedPp = activeFilterValues?.programPrioritas;
+            const selectedKp = activeFilterValues?.kegiatanPrioritas;
+            if (selectedPn && selectedPn !== "all") {
+              data = data.filter((item) => item.kdpn === selectedPn);
+            }
+            if (selectedPp && selectedPp !== "all") {
+              data = data.filter((item) => item.kdpp === selectedPp);
+            }
+            if (selectedKp && selectedKp !== "all") {
+              data = data.filter((item) => item.kdkp === selectedKp);
+            }
+            const options = data.map((item) => ({
+              value: item.kdproy,
+              label: `${item.kdproy} - ${item.deskripsi}`,
+            }));
+            return [...commonOptions, ...options];
+          }
+
           case "akun":
             // Use different JSON data based on account type selection
             const akunType = filterData.akunType || "jenisBelanja";
@@ -959,18 +1099,19 @@ export function FilterCard({
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-base font-medium">{filterLabel}</CardTitle>
-        {/* Hide remove button for mandatory cutOff filter */}
-        {filterKey !== "cutOff" && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onRemove}
-            className="h-8 w-8 p-0"
-            title={`Hapus filter ${filterLabel}`}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        )}
+        {/* Hide remove button for mandatory filters when removable is false */}
+        {filterKey !== "cutOff" &&
+          (typeof removable === "undefined" || removable) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onRemove}
+              className="h-8 w-8 p-0"
+              title={`Hapus filter ${filterLabel}`}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Special layout for Cut Off filter */}

@@ -18,6 +18,7 @@ import {
 import { PilihLaporanCard } from "@/components/inquiry-data/pilih-laporan-card";
 import { FilterParametersCard } from "@/components/inquiry-data/filter-parameters-card";
 import { DynamicFiltersCard } from "@/components/inquiry-data/dynamic-filters-card";
+import { EnhancedFilterCard } from "@/components/inquiry-data/enhanced-filter-card";
 import { QueryLoaderButton } from "@/components/inquiry-data/query-loader-button";
 import { UnsavedChangesModal } from "@/components/inquiry-data/modals/unsaved-changes-modal";
 import { QueryManagement } from "@/components/inquiry-data/query-management";
@@ -32,7 +33,7 @@ import type { FilterValue, SavedQuery } from "@/types/saved-queries";
 import { Settings, Keyboard, RefreshCw, Database } from "lucide-react";
 import { QueryErrorBoundary } from "@/components/ui/query-error-boundary";
 
-export default function BelanjaPage() {
+export default function TematikPage() {
   // Helper function to get current month
   const getCurrentMonth = () => {
     const now = new Date();
@@ -46,7 +47,20 @@ export default function BelanjaPage() {
   const queryManagementRefreshRef = useRef<(() => void) | null>(null);
 
   // State for managing which filters are active (cutOff is always active)
+  // Note: "register" filter is excluded for tematik page
   const [activeFilters, setActiveFilters] = useState<string[]>(["cutOff"]);
+
+  // Wrapper function to ensure "register" filter is never added in tematik page
+  const setActiveFiltersWrapper = useCallback(
+    (value: React.SetStateAction<string[]>) => {
+      setActiveFilters((prev) => {
+        const newFilters = typeof value === "function" ? value(prev) : value;
+        // Always exclude "register" filter from tematik page
+        return newFilters.filter((filter) => filter !== "register");
+      });
+    },
+    []
+  );
 
   // State for filter values (initialize cutOff with current month)
   const [filterValues, setFilterValues] = useState<Record<string, FilterValue>>(
@@ -64,15 +78,16 @@ export default function BelanjaPage() {
   const currentYear = new Date().getFullYear();
   const [reportParams, setReportParams] = useState({
     tahun: currentYear.toString(), // Default to current year
-    tipeLaporan: "pagu_realisasi", // Default to Pagu Realisasi
+    tipeLaporan: "pagu_realisasi_bulanan", // For tematik: always use monthly realisasi
     pembulatan: "satuan", // Default to Satuan
-    jenisAkumulasi: "non_akumulatif", // Default to Non-Akumulatif
+    jenisAkumulasi: "non_akumulatif", // Tematik: no akumulatif selector; keep non-akumulatif
+    tematikKategori: "prioritas_nasional", // Default tematik category
   });
 
   // Query loader hook for managing query loading functionality
   const queryLoader = useQueryLoader({
     onStateChange: useCallback((newState: QueryBuilderState) => {
-      console.log("[BelanjaPage] onStateChange called with:", {
+      console.log("[TematikPage] onStateChange called with:", {
         activeFilters: newState.activeFilters,
         filterValues: Object.entries(newState.filterValues).map(
           ([key, value]) => ({
@@ -86,10 +101,15 @@ export default function BelanjaPage() {
       setFilterValues(newState.filterValues);
       setReportParams({
         tahun: newState.reportParams.tahun,
-        tipeLaporan: newState.reportParams.tipeLaporan,
+        // Force tematik to always use monthly realisasi tipe
+        tipeLaporan: "pagu_realisasi_bulanan",
         pembulatan: newState.reportParams.pembulatan,
-        jenisAkumulasi:
-          newState.reportParams.jenisAkumulasi || "non_akumulatif",
+        // Force non-akumulatif for tematik (no akumulatif toggle)
+        jenisAkumulasi: "non_akumulatif",
+        // Preserve tematik category if present; otherwise keep current selection
+        tematikKategori:
+          (newState.reportParams as any).tematikKategori ??
+          reportParams.tematikKategori,
       });
     }, []),
     getCurrentState: useCallback(
@@ -100,8 +120,26 @@ export default function BelanjaPage() {
       }),
       [activeFilters, filterValues, reportParams]
     ),
-    scope: "belanja", // Set scope for belanja page
+    scope: "tematik", // Set scope for tematik page
   });
+
+  // Ensure PN mandatory filters are active when Prioritas Nasional is selected
+  useEffect(() => {
+    const pnKeys = [
+      "jenisPn",
+      "programPrioritas",
+      "kegiatanPrioritas",
+      "proyekPrioritas",
+    ];
+    setActiveFilters((prev) => {
+      if (reportParams.tematikKategori === "prioritas_nasional") {
+        const merged = Array.from(new Set(["cutOff", ...prev, ...pnKeys]));
+        return merged;
+      }
+      // If not PN, remove PN-only keys but keep cutOff
+      return prev.filter((k) => !pnKeys.includes(k));
+    });
+  }, [reportParams.tematikKategori]);
 
   // Create stable references for queryLoader functions to prevent unnecessary re-renders
   const stableLoadQuery = useCallback(
@@ -159,15 +197,16 @@ export default function BelanjaPage() {
         hour: "2-digit",
         minute: "2-digit",
       });
-      const defaultName = `Query ${timestamp}`;
+      const defaultName = `Query Tematik ${timestamp}`;
 
       const queryData = {
         name: defaultName,
-        description: "Query disimpan otomatis sebelum memuat query lain",
+        description:
+          "Query tematik disimpan otomatis sebelum memuat query lain",
         reportParams,
         activeFilters,
         filterValues,
-        scope: "belanja" as const, // Mark this as a belanja query
+        scope: "tematik" as const, // Mark this as a tematik query
       };
 
       await createQuery(queryData);
@@ -185,19 +224,28 @@ export default function BelanjaPage() {
   const discardCurrentChanges = useCallback(() => {
     // Reset to original state if available
     if (queryLoader.originalState) {
-      setActiveFilters(queryLoader.originalState.activeFilters);
+      // Filter out "register" from original state for tematik page
+      const filteredActiveFilters =
+        queryLoader.originalState.activeFilters.filter(
+          (filter) => filter !== "register"
+        );
+      setActiveFilters(filteredActiveFilters);
       setFilterValues(queryLoader.originalState.filterValues);
       // Ensure jenisAkumulasi is always defined
       setReportParams({
         tahun: queryLoader.originalState.reportParams.tahun,
-        tipeLaporan: queryLoader.originalState.reportParams.tipeLaporan,
+        // Always enforce monthly type for tematik
+        tipeLaporan: "pagu_realisasi_bulanan",
         pembulatan: queryLoader.originalState.reportParams.pembulatan,
-        jenisAkumulasi:
-          queryLoader.originalState.reportParams.jenisAkumulasi ||
-          "non_akumulatif",
+        // Always non-akumulatif
+        jenisAkumulasi: "non_akumulatif",
+        // Default to prioritas_nasional if missing
+        tematikKategori:
+          (queryLoader.originalState.reportParams as any).tematikKategori ||
+          "prioritas_nasional",
       });
     } else {
-      // Reset to default state
+      // Reset to default state (register is excluded by design for tematik)
       const currentMonth = getCurrentMonth();
       setActiveFilters(["cutOff"]);
       setFilterValues({
@@ -210,9 +258,13 @@ export default function BelanjaPage() {
       });
       setReportParams({
         tahun: currentYear.toString(),
-        tipeLaporan: "pagu_realisasi",
+        // Always enforce monthly type for tematik
+        tipeLaporan: "pagu_realisasi_bulanan",
         pembulatan: "satuan",
+        // Always non-akumulatif
         jenisAkumulasi: "non_akumulatif",
+        // Default category
+        tematikKategori: "prioritas_nasional",
       });
     }
 
@@ -284,19 +336,7 @@ export default function BelanjaPage() {
     }
   }, [unsavedChangesWarning.isWarningOpen, unsavedChangesWarning.isProcessing]);
 
-  // Create stable queryLoader object for DynamicFiltersCard
-  const stableQueryLoader = useMemo(
-    () => ({
-      hasUnsavedChanges: queryLoader.hasUnsavedChanges,
-      loadQuery: handleLoadQuery,
-      validateQueryCompatibility: queryLoader.validateQueryCompatibility,
-    }),
-    [
-      queryLoader.hasUnsavedChanges,
-      handleLoadQuery,
-      queryLoader.validateQueryCompatibility,
-    ]
-  );
+  // Removed stableQueryLoader (no longer passed to DynamicFiltersCard)
 
   // Function to remove a specific filter
   const removeFilter = (filterKey: string) => {
@@ -314,9 +354,9 @@ export default function BelanjaPage() {
     });
   };
 
-  // Function to clear all filters (except mandatory cutOff)
+  // Function to clear all filters (except mandatory cutOff, and always exclude register for tematik)
   const clearAllFilters = () => {
-    setActiveFilters(["cutOff"]);
+    setActiveFilters(["cutOff"]); // Only keep cutOff, register is excluded by wrapper
     // Keep cutOff filter value, clear others
     setFilterValues((prev) => {
       const cutOffValue = prev.cutOff;
@@ -373,10 +413,10 @@ export default function BelanjaPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Inquiry Data Belanja
+            Inquiry Data Tematik
           </h1>
           <p className="text-sm text-muted-foreground">
-            Query builder untuk data belanja dengan filter parameter yang dapat
+            Query builder untuk data tematik dengan filter parameter yang dapat
             disesuaikan
           </p>
         </div>
@@ -388,7 +428,7 @@ export default function BelanjaPage() {
             onLoadQuery={handleLoadQuery}
             onOpenQueryManagement={() => setIsQueryManagementOpen(true)}
             hasUnsavedChanges={queryLoader.hasUnsavedChanges}
-            scope="belanja"
+            scope="tematik"
           />
 
           <Button
@@ -414,15 +454,106 @@ export default function BelanjaPage() {
         <PilihLaporanCard
           reportParams={reportParams}
           setReportParams={setReportParams}
+          mode="tematik"
+          hideJenisAkumulasi
+          customTipeLaporanOptions={[
+            { value: "prioritas_nasional", label: "Prioritas Nasional" },
+            { value: "major_project", label: "Major Project" },
+            { value: "tematik_anggaran", label: "Tematik Anggaran" },
+            { value: "inflasi", label: "Inflasi" },
+            { value: "penanganan_stunting", label: "Penanganan Stunting" },
+            { value: "kemiskinan_ekstrim", label: "Kemiskinan Ekstrim" },
+            { value: "belanja_pemilu", label: "Belanja Pemilu" },
+            { value: "ibu_kota_nusantara", label: "Ibu Kota Nusantara" },
+            { value: "ketahanan_pangan", label: "Ketahanan Pangan" },
+            { value: "bantuan_pemerintah", label: "Bantuan Pemerintah" },
+            { value: "makan_bergizi_gratis", label: "Makan Bergizi Gratis" },
+            { value: "swasembada_pangan", label: "Swasembada Pangan" },
+            { value: "program_strategis", label: "Program Strategis" },
+          ]}
         />
 
-        {/* 2. Filter Parameters Card */}
+        {/* 2. Mandatory PN filters shown when Prioritas Nasional selected */}
+        {reportParams.tematikKategori === "prioritas_nasional" && (
+          <div className="space-y-4">
+            <EnhancedFilterCard
+              filterKey="jenisPn"
+              filterLabel="Jenis PN"
+              onRemove={() => {}}
+              activeFilterValues={normalizedFilterValues}
+              onFilterChange={handleFilterChange}
+              removable={false}
+            />
+            <EnhancedFilterCard
+              filterKey="programPrioritas"
+              filterLabel="Program Prioritas"
+              onRemove={() => {}}
+              activeFilterValues={normalizedFilterValues}
+              onFilterChange={handleFilterChange}
+              removable={false}
+            />
+            <EnhancedFilterCard
+              filterKey="kegiatanPrioritas"
+              filterLabel="Kegiatan Prioritas"
+              onRemove={() => {}}
+              activeFilterValues={normalizedFilterValues}
+              onFilterChange={handleFilterChange}
+              removable={false}
+            />
+            <EnhancedFilterCard
+              filterKey="proyekPrioritas"
+              filterLabel="Proyek Prioritas"
+              onRemove={() => {}}
+              activeFilterValues={normalizedFilterValues}
+              onFilterChange={handleFilterChange}
+              removable={false}
+            />
+          </div>
+        )}
+        <div className="flex justify-end">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              const pnKeys = [
+                "jenisPn",
+                "programPrioritas",
+                "kegiatanPrioritas",
+                "proyekPrioritas",
+              ];
+              setFilterValues((prev) => {
+                const next = { ...prev } as any;
+                pnKeys.forEach((k) => {
+                  next[k] = {
+                    selection: "all",
+                    kondisiCode: "",
+                    mengandungKata: "",
+                    jenisTampilan: "kode",
+                  };
+                });
+                return next;
+              });
+            }}
+          >
+            Clear PN Selections
+          </Button>
+        </div>
+
+        {/* 3. Filter Parameters Card */}
         <FilterParametersCard
           activeFilters={activeFilters}
-          setActiveFilters={setActiveFilters}
+          setActiveFilters={setActiveFiltersWrapper}
+          excludeFilters={[
+            "register",
+            "cutOff", // exclude from switches; it appears in DynamicFiltersCard
+            "jenisPn",
+            "programPrioritas",
+            "kegiatanPrioritas",
+            "proyekPrioritas",
+          ]}
         />
 
-        {/* 3. Dynamic Filters and Actions Card */}
+        {/* 4. Dynamic Filters and Actions Card */}
         <DynamicFiltersCard
           activeFilters={activeFilters}
           reportParams={reportParams}
@@ -430,8 +561,17 @@ export default function BelanjaPage() {
           onClearAllFilters={clearAllFilters}
           filterValues={normalizedFilterValues}
           onFilterChange={handleFilterChange}
-          scope="belanja" // Pass scope for query differentiation
-          queryLoader={stableQueryLoader}
+          scope="tematik" // Pass scope for query differentiation
+          hiddenFilterKeys={
+            reportParams.tematikKategori === "prioritas_nasional"
+              ? [
+                  "jenisPn",
+                  "programPrioritas",
+                  "kegiatanPrioritas",
+                  "proyekPrioritas",
+                ]
+              : []
+          }
         />
       </div>
 
@@ -458,9 +598,10 @@ export default function BelanjaPage() {
               <div className="flex items-center gap-3">
                 <Database className="w-6 h-6 text-amber-600" />
                 <div>
-                  <DialogTitle>Kelola Query Tersimpan</DialogTitle>
+                  <DialogTitle>Kelola Query Tematik Tersimpan</DialogTitle>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Kelola dan gunakan kembali query yang telah Anda simpan
+                    Kelola dan gunakan kembali query tematik yang telah Anda
+                    simpan
                   </p>
                 </div>
               </div>
@@ -486,7 +627,7 @@ export default function BelanjaPage() {
                   setIsQueryManagementOpen(false); // Close modal after loading
                 }}
                 currentUserId={currentUser?.id || ""}
-                scope="belanja" // Pass scope to filter queries
+                scope="tematik" // Pass scope to filter queries
                 onRefreshReady={(refreshFn) => {
                   queryManagementRefreshRef.current = refreshFn;
                 }}

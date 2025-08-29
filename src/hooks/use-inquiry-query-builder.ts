@@ -34,7 +34,7 @@ const TABLE_MAPPING = {
   pergerakan_pagu_bulanan: "pagu_real_detail_bulan",
   pergerakan_blokir_bulanan: "pagu_real_detail_bulan",
   pergerakan_blokir_bulanan_per_jenis: "pa_pagu_blokir_akun_bulanan",
-  volume_output_kegiatan: "pagu_output_new",
+  volume_output_kegiatan: "pagu_output", // special-case suffix order handled in buildTableName
 };
 
 import { getFilterConfigMap } from "@/components/inquiry-data/filterRegistry";
@@ -57,19 +57,38 @@ export function useInquiryQueryBuilder() {
   // Build the main table name based on report parameters
   const buildTableName = useCallback(
     (reportParams: { tahun: string; tipeLaporan: string }) => {
+      const thang = reportParams.tahun;
+
+      // Tematik-specific table mapping based on selected category
+      const tematikKategori = (reportParams as any).tematikKategori as
+        | string
+        | undefined;
+      if (tematikKategori) {
+        if (tematikKategori === "bantuan_pemerintah") {
+          return `monev${thang}.pagu_real_detail_harian_${thang}`;
+        }
+        if (tematikKategori === "program_strategis") {
+          return `monev${thang}.smry_program_strategis_${thang}`;
+        }
+        // Default for all other tematik categories
+        return `monev${thang}.a_pagu_real_bkpk_dja_${thang}`;
+      }
+
       const baseTable =
         TABLE_MAPPING[reportParams.tipeLaporan as keyof typeof TABLE_MAPPING];
       if (!baseTable) {
         throw new Error(`Unknown report type: ${reportParams.tipeLaporan}`);
       }
 
-      const thang = reportParams.tahun;
-
       // Special case for pergerakan_blokir_bulanan_per_jenis table name format
       if (reportParams.tipeLaporan === "pergerakan_blokir_bulanan_per_jenis") {
         return `monev${thang}.pa_pagu_blokir_akun_${thang}_bulanan`;
       }
 
+      // Special table name for volume_output_kegiatan: pagu_output_{tahun}_new -> pagu_output_{tahun}_new (prefix after base)
+      if (reportParams.tipeLaporan === "volume_output_kegiatan") {
+        return `monev${thang}.${baseTable}_${thang}_new`;
+      }
       return `monev${thang}.${baseTable}_${thang}`;
     },
     []
@@ -124,6 +143,18 @@ export function useInquiryQueryBuilder() {
           let joinKey = config.joinKey;
           let joinCondition = `main.${config.columnName} = ${alias}.${joinKey}`;
 
+          // PN hierarchy: include parent keys in JOINs
+          if (filterKey === "programPrioritas") {
+            // A.KDPN=PP.KDPN AND A.KDPP=PP.KDPP
+            joinCondition = `main.kdpn = ${alias}.kdpn AND main.${config.columnName} = ${alias}.${joinKey}`;
+          } else if (filterKey === "kegiatanPrioritas") {
+            // A.KDPN=KP.KDPN AND A.KDPP=KP.KDPP AND A.KDKP=KP.KDKP
+            joinCondition = `main.kdpn = ${alias}.kdpn AND main.kdpp = ${alias}.kdpp AND main.${config.columnName} = ${alias}.${joinKey}`;
+          } else if (filterKey === "proyekPrioritas") {
+            // A.KDPN=PR.KDPN AND A.KDPP=PR.KDPP AND A.KDKP=PR.KDKP AND A.KDPROY=PR.KDPROY
+            joinCondition = `main.kdpn = ${alias}.kdpn AND main.kdpp = ${alias}.kdpp AND main.kdkp = ${alias}.kdkp AND main.${config.columnName} = ${alias}.${joinKey}`;
+          }
+
           // Special handling for akun filter with different types
           if (filterKey === "akun" && filterValue?.akunType) {
             if (filterValue.akunType === "kodeBkpk") {
@@ -143,17 +174,9 @@ export function useInquiryQueryBuilder() {
             joinCondition = `LEFT(main.${config.columnName}, 2) = ${alias}.${config.joinKey}`;
           }
 
-          // Special handling for register reference table name format
-          let joinTable;
-          if (filterKey === "register") {
-            joinTable = `${config.referenceDatabase}.${referenceTable}_${
-              reportParams.tahun || new Date().getFullYear()
-            }`;
-          } else {
-            joinTable = `${config.referenceDatabase}.${referenceTable}_${
-              reportParams.tahun || new Date().getFullYear()
-            }`;
-          }
+          // Build full join table name with year suffix
+          const year = reportParams.tahun || new Date().getFullYear();
+          const joinTable = `${config.referenceDatabase}.${referenceTable}_${year}`;
 
           joinTables.push(
             `LEFT JOIN ${joinTable} AS ${alias} ON ${joinCondition}`
@@ -304,6 +327,15 @@ export function useInquiryQueryBuilder() {
         // For other report types (except pergerakan_pagu_bulanan and pergerakan_blokir_bulanan), keep the original PAGU_DIPA column
         // pergerakan_pagu_bulanan doesn't need PAGU_DIPA since pagu is broken down by monthly columns
         // pergerakan_blokir_bulanan doesn't need PAGU_DIPA since blokir is broken down by monthly columns
+
+        // Special handling for volume_output_kegiatan columns
+        if (reportParams.tipeLaporan === "volume_output_kegiatan") {
+          // sat and SUM(vol) before PAGU
+          // Insert before PAGU_DIPA so they appear right before it in the output
+          selectColumns.push(`main.sat AS sat`);
+          selectColumns.push(`SUM(main.vol) AS sum_vol`);
+        }
+
         selectColumns.push(
           `ROUND(SUM(main.pagu) / ${divisor}, 0) AS PAGU_DIPA`
         );
@@ -311,7 +343,7 @@ export function useInquiryQueryBuilder() {
 
       // Handle realization columns based on report type
       if (reportParams.tipeLaporan === "pagu_realisasi_bulanan") {
-        // For tipe laporan 3 (Pagu Realisasi Bulanan), show monthly columns up to cutOff
+        // For Tematik and tipe laporan 3 (Pagu Realisasi Bulanan): always include PAGU and monthly REALISASI columns
         const jenisAkumulasi = reportParams.jenisAkumulasi || "non_akumulatif";
 
         // Month names mapping
@@ -353,7 +385,7 @@ export function useInquiryQueryBuilder() {
         }
 
         // Add mandatory BLOKIR column for tipe laporan 3
-        selectColumns.push(`ROUND(SUM(blokir) / ${divisor}, 0) AS BLOKIR`);
+        selectColumns.push(`ROUND(SUM(main.blokir) / ${divisor}, 0) AS BLOKIR`);
       } else if (reportParams.tipeLaporan === "pergerakan_pagu_bulanan") {
         // For tipe laporan 4 (Pergerakan Pagu Bulanan), show monthly pagu columns up to cutOff
         // Month names mapping
@@ -426,6 +458,7 @@ export function useInquiryQueryBuilder() {
           "AGS",
           "SEP",
           "OKT",
+
           "NOV",
           "DES",
         ];
@@ -439,19 +472,62 @@ export function useInquiryQueryBuilder() {
         }
         // No REALISASI column for pergerakan_blokir_bulanan_per_jenis as it only fetches blokir data
       } else {
-        // For other report types, add single REALISASI column based on cut-off and pembulatan
-        selectColumns.push(
-          `ROUND(SUM(${realizationSum}) / ${divisor}, 0) AS REALISASI`
-        );
-
-        // Add BLOKIR column after REALISASI for Pagu APBN and Pagu Realisasi reports
-        if (
-          reportParams.tipeLaporan === "pagu_apbn" ||
-          reportParams.tipeLaporan === "pagu_realisasi"
-        ) {
+        // For other report types
+        // For volume_output_kegiatan, append monthly columns and OS/KET
+        if (reportParams.tipeLaporan === "volume_output_kegiatan") {
+          const monthly: Array<[string, string]> = [];
+          for (let m = 1; m <= cutOffNum; m++) {
+            const mnames = [
+              "jan",
+              "feb",
+              "mar",
+              "apr",
+              "mei",
+              "jun",
+              "jul",
+              "ags",
+              "sep",
+              "okt",
+              "nov",
+              "des",
+            ];
+            const aliasR = `r${mnames[m - 1]}`;
+            const aliasP = `p${mnames[m - 1]}`;
+            const aliasRP = `rp${mnames[m - 1]}`;
+            monthly.push([`real${m}`, aliasR]);
+            monthly.push([`persen${m}`, aliasP]);
+            monthly.push([`realfisik${m}`, aliasRP]);
+          }
+          monthly.forEach(([col, alias]) => {
+            const isRMonthly =
+              /^r(jan|feb|mar|apr|mei|jun|jul|ags|sep|okt|nov|des)$/i.test(
+                alias
+              );
+            if (isRMonthly) {
+              selectColumns.push(
+                `ROUND(SUM(main.${col}) / ${divisor}, 0) AS ${alias}`
+              );
+            } else {
+              selectColumns.push(`SUM(main.${col}) AS ${alias}`);
+            }
+          });
+          selectColumns.push(`main.os AS os`);
+          selectColumns.push(`main.ket AS ket`);
+        } else {
+          // Default: single REALISASI column based on cut-off and pembulatan
           selectColumns.push(
-            `ROUND(SUM(main.blokir) / ${divisor}, 0) AS BLOKIR`
+            `ROUND(SUM(${realizationSum}) / ${divisor}, 0) AS REALISASI`
           );
+
+          // Add BLOKIR column after REALISASI for Pagu APBN and Pagu Realisasi reports
+          if (
+            reportParams.tipeLaporan === "pagu_apbn" ||
+            reportParams.tipeLaporan === "pagu_realisasi"
+          ) {
+            selectColumns.push(
+              `ROUND(SUM(main.blokir) / ${divisor}, 0) AS BLOKIR`
+            );
+          }
         }
       }
 
@@ -466,6 +542,12 @@ export function useInquiryQueryBuilder() {
       const whereConditions: string[] = [];
 
       // Year is only used for table name, not in WHERE clause
+
+      // Mandatory: Exclude kdpn '00' for Prioritas Nasional
+      // We infer PN context if the dedicated PN filter is present
+      if (activeFilters.includes("jenisPn")) {
+        whereConditions.push("main.kdpn <> '00'");
+      }
 
       activeFilters.forEach((filterKey) => {
         // Skip cutOff - it doesn't create WHERE conditions, only affects SELECT
@@ -612,6 +694,13 @@ export function useInquiryQueryBuilder() {
           groupByColumns.push(`LEFT(main.${config.columnName}, 2)`);
         } else {
           groupByColumns.push(`main.${config.columnName}`);
+        }
+
+        // Add mandatory GROUP BY for volume_output_kegiatan
+        if (reportParams.tipeLaporan === "volume_output_kegiatan") {
+          groupByColumns.push("main.sat");
+          groupByColumns.push("main.os");
+          groupByColumns.push("main.ket");
         }
 
         // Add reference columns if needed

@@ -9,13 +9,17 @@ import { getUIFilters } from "./filterRegistry";
 interface FilterParametersCardProps {
   activeFilters: string[];
   setActiveFilters: React.Dispatch<React.SetStateAction<string[]>>;
+  excludeFilters?: string[]; // Optional array of filter keys to exclude
 }
 
 export function FilterParametersCard({
   activeFilters,
   setActiveFilters,
+  excludeFilters = [], // Default to empty array if not provided
 }: FilterParametersCardProps) {
-  const uiFilters = getUIFilters();
+  const uiFilters = getUIFilters().filter(
+    (filter) => !excludeFilters.includes(filter.key)
+  );
 
   const handleToggle = (filterKey: string) => {
     const def = uiFilters.find((f) => f.key === filterKey);
