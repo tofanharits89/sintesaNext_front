@@ -5,7 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { VirtualizedSelect } from "@/components/ui/virtualized-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { X } from "lucide-react";
+import {
+  X,
+  Filter,
+  Building2,
+  MapPin,
+  Calendar,
+  CreditCard,
+  Users,
+  Target,
+  Briefcase,
+  Settings,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -74,6 +85,36 @@ interface FilterCardProps {
   onFilterChange?: (filterKey: string, field: string, value: string) => void; // Callback for value changes
   removable?: boolean; // Optional: hide remove button for mandatory cards
 }
+
+// Helper function to get appropriate icon for each filter type
+const getFilterIcon = (filterKey: string) => {
+  const iconMap: Record<string, React.ReactNode> = {
+    cutOff: <Calendar className="h-4 w-4" />,
+    kementerian: <Building2 className="h-4 w-4" />,
+    eselonI: <Users className="h-4 w-4" />,
+    kewenangan: <Settings className="h-4 w-4" />,
+    provinsi: <MapPin className="h-4 w-4" />,
+    kabkota: <MapPin className="h-4 w-4" />,
+    kanwil: <Building2 className="h-4 w-4" />,
+    kppn: <Building2 className="h-4 w-4" />,
+    satker: <Briefcase className="h-4 w-4" />,
+    fungsi: <Target className="h-4 w-4" />,
+    subFungsi: <Target className="h-4 w-4" />,
+    program: <Target className="h-4 w-4" />,
+    kegiatan: <Target className="h-4 w-4" />,
+    outputKro: <Target className="h-4 w-4" />,
+    subOutputRo: <Target className="h-4 w-4" />,
+    akun: <CreditCard className="h-4 w-4" />,
+    sumberDana: <CreditCard className="h-4 w-4" />,
+    register: <Settings className="h-4 w-4" />,
+    jenisPn: <Target className="h-4 w-4" />,
+    programPrioritas: <Target className="h-4 w-4" />,
+    kegiatanPrioritas: <Target className="h-4 w-4" />,
+    proyekPrioritas: <Target className="h-4 w-4" />,
+  };
+
+  return iconMap[filterKey] || <Filter className="h-4 w-4" />;
+};
 
 export function FilterCard({
   filterKey,
@@ -1097,59 +1138,31 @@ export function FilterCard({
 
   return (
     <Card className="w-full">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-base font-medium">{filterLabel}</CardTitle>
-        {/* Hide remove button for mandatory filters when removable is false */}
-        {filterKey !== "cutOff" &&
-          (typeof removable === "undefined" || removable) && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onRemove}
-              className="h-8 w-8 p-0"
-              title={`Hapus filter ${filterLabel}`}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Special layout for Cut Off filter */}
-        {filterKey === "cutOff" ? (
-          <div className="space-y-4">
-            {/* Month Selection Only */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Pilih Bulan</Label>
-              <VirtualizedSelect
-                key={`${filterKey}-${
-                  currentFilterValue?.selection || "default"
-                }`}
-                options={getFilterOptions(filterKey)}
-                value={filterData.selection}
-                onValueChange={(value) => handleInputChange("selection", value)}
-                placeholder="Pilih bulan"
-                className="w-full"
-              />
+      <CardContent className="p-4">
+        {/* Responsive layout: 1 col on mobile, 2 on tablet, 5 on desktop */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-start sm:items-center">
+          {/* Column 1: Filter Title with Icon */}
+          <div className="flex items-center space-x-2 min-w-0 sm:col-span-1 lg:col-span-1">
+            {getFilterIcon(filterKey)}
+            <div className="text-sm font-medium truncate" title={filterLabel}>
+              {filterLabel}
             </div>
           </div>
-        ) : /* Special layout for Akun filter */
-        filterKey === "akun" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {/* Account Type and Selection - Stacked in same column */}
-            <div className="space-y-4">
-              {/* Account Type Selector */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Tipe Akun</Label>
+
+          {/* Column 2: Selection/Account Type */}
+          <div className="space-y-2 sm:col-span-1 lg:col-span-1">
+            {filterKey === "akun" ? (
+              <>
+                <Label className="text-xs font-medium">Tipe Akun</Label>
                 <Select
                   value={filterData.akunType}
                   onValueChange={(value) => {
                     handleInputChange("akunType", value);
-                    // Reset selection when account type changes
                     handleInputChange("selection", "all");
                   }}
                 >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Pilih tipe akun" />
+                  <SelectTrigger className="w-full h-8 text-xs">
+                    <SelectValue placeholder="Pilih tipe" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="jenisBelanja">
@@ -1163,11 +1176,10 @@ export function FilterCard({
                     </SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-
-              {/* Selection Dropdown */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Pilihan Akun</Label>
+              </>
+            ) : filterKey === "cutOff" ? (
+              <>
+                <Label className="text-xs font-medium">Pilih Bulan</Label>
                 <VirtualizedSelect
                   key={`${filterKey}-${
                     currentFilterValue?.selection || "default"
@@ -1177,107 +1189,50 @@ export function FilterCard({
                   onValueChange={(value) =>
                     handleInputChange("selection", value)
                   }
-                  placeholder="Pilih akun"
-                  className="w-full"
+                  placeholder="Pilih bulan"
+                  className="w-full h-8 text-xs"
                 />
-              </div>
-            </div>
+              </>
+            ) : (
+              <>
+                <Label className="text-xs font-medium">Pilihan</Label>
+                <VirtualizedSelect
+                  key={`${filterKey}-${
+                    currentFilterValue?.selection || "default"
+                  }`}
+                  options={getFilterOptions(filterKey)}
+                  value={filterData.selection}
+                  onValueChange={(value) =>
+                    handleInputChange("selection", value)
+                  }
+                  placeholder={`Pilih ${filterLabel.toLowerCase()}`}
+                  className={cn(
+                    "w-full h-8 text-xs",
+                    ((filterData.kondisiCode &&
+                      filterData.kondisiCode.trim()) ||
+                      (filterData.mengandungKata &&
+                        filterData.mengandungKata.trim())) &&
+                      "opacity-50 cursor-not-allowed"
+                  )}
+                  disabled={
+                    !!(
+                      (filterData.kondisiCode &&
+                        filterData.kondisiCode.trim() !== "") ||
+                      (filterData.mengandungKata &&
+                        filterData.mengandungKata.trim() !== "")
+                    )
+                  }
+                />
+              </>
+            )}
+          </div>
 
-            {/* Kondisi Input */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Kondisi</Label>
+          {/* Column 3: Kondisi */}
+          {filterKey !== "cutOff" && (
+            <div className="space-y-2 sm:col-span-1 lg:col-span-1">
+              <Label className="text-xs font-medium">Kondisi</Label>
               <Input
                 placeholder="Kode kondisi"
-                value={filterData.kondisiCode}
-                onChange={(e) =>
-                  handleInputChange("kondisiCode", e.target.value)
-                }
-              />
-            </div>
-
-            {/* Mengandung Kata Input */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Mengandung Kata</Label>
-              <Input
-                key={`${filterKey}-mengandung-${
-                  currentFilterValue?.mengandungKata || "default"
-                }`}
-                placeholder="Kata kunci"
-                value={filterData.mengandungKata}
-                onChange={(e) =>
-                  handleInputChange("mengandungKata", e.target.value)
-                }
-              />
-            </div>
-
-            {/* Jenis Tampilan Dropdown */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Jenis Tampilan</Label>
-              <Select
-                value={filterData.jenisTampilan}
-                onValueChange={(value) =>
-                  handleInputChange("jenisTampilan", value)
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih tampilan" />
-                </SelectTrigger>
-                <SelectContent>
-                  {jenisTampilanOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        ) : (
-          /* Standard layout for all other filters */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {/* Selection Dropdown */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">
-                Pilihan {filterLabel}
-              </Label>
-              <VirtualizedSelect
-                key={`${filterKey}-${
-                  currentFilterValue?.selection || "default"
-                }`}
-                options={getFilterOptions(filterKey)}
-                value={filterData.selection}
-                onValueChange={(value) => handleInputChange("selection", value)}
-                placeholder={`Pilih ${filterLabel.toLowerCase()}`}
-                className={cn(
-                  "w-full",
-                  ((filterData.kondisiCode && filterData.kondisiCode.trim()) ||
-                    (filterData.mengandungKata &&
-                      filterData.mengandungKata.trim())) &&
-                    "opacity-50 cursor-not-allowed"
-                )}
-                disabled={
-                  !!(
-                    (filterData.kondisiCode &&
-                      filterData.kondisiCode.trim() !== "") ||
-                    (filterData.mengandungKata &&
-                      filterData.mengandungKata.trim() !== "")
-                  )
-                }
-              />
-              {((filterData.kondisiCode && filterData.kondisiCode.trim()) ||
-                (filterData.mengandungKata &&
-                  filterData.mengandungKata.trim())) && (
-                <p className="text-xs text-amber-600">
-                  ⚠️ Dinonaktifkan karena filter lain sedang digunakan
-                </p>
-              )}
-            </div>
-
-            {/* Kondisi Input */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Kondisi</Label>
-              <Input
-                placeholder="Kode kondisi (pisahkan dengan koma)"
                 value={filterData.kondisiCode}
                 onChange={(e) =>
                   handleInputChange("kondisiCode", e.target.value)
@@ -1290,29 +1245,20 @@ export function FilterCard({
                   )
                 }
                 className={cn(
+                  "w-full h-8 text-xs",
                   ((filterData.selection && filterData.selection !== "all") ||
                     (filterData.mengandungKata &&
                       filterData.mengandungKata.trim())) &&
                     "opacity-50 cursor-not-allowed"
                 )}
               />
-              {filterData.kondisiCode && filterData.kondisiCode.trim() && (
-                <p className="text-xs text-muted-foreground">
-                  💡 Contoh: 001,002,003 untuk multiple kode
-                </p>
-              )}
-              {((filterData.selection && filterData.selection !== "all") ||
-                (filterData.mengandungKata &&
-                  filterData.mengandungKata.trim())) && (
-                <p className="text-xs text-amber-600">
-                  ⚠️ Dinonaktifkan karena filter lain sedang digunakan
-                </p>
-              )}
             </div>
+          )}
 
-            {/* Mengandung Kata Input */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Mengandung Kata</Label>
+          {/* Column 4: Mengandung Kata */}
+          {filterKey !== "cutOff" && (
+            <div className="space-y-2 sm:col-span-1 lg:col-span-1">
+              <Label className="text-xs font-medium">Kata Kunci</Label>
               <Input
                 placeholder="Kata kunci"
                 value={filterData.mengandungKata}
@@ -1327,36 +1273,27 @@ export function FilterCard({
                   )
                 }
                 className={cn(
+                  "w-full h-8 text-xs",
                   ((filterData.selection && filterData.selection !== "all") ||
                     (filterData.kondisiCode &&
                       filterData.kondisiCode.trim())) &&
                     "opacity-50 cursor-not-allowed"
                 )}
               />
-              {filterData.mengandungKata &&
-                filterData.mengandungKata.trim() && (
-                  <p className="text-xs text-muted-foreground">
-                    💡 Pencarian dilakukan pada kolom deskripsi
-                  </p>
-                )}
-              {((filterData.selection && filterData.selection !== "all") ||
-                (filterData.kondisiCode && filterData.kondisiCode.trim())) && (
-                <p className="text-xs text-amber-600">
-                  ⚠️ Dinonaktifkan karena filter lain sedang digunakan
-                </p>
-              )}
             </div>
+          )}
 
-            {/* Jenis Tampilan Dropdown */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Jenis Tampilan</Label>
+          {/* Column 5: Jenis Tampilan */}
+          {filterKey !== "cutOff" && (
+            <div className="space-y-2 sm:col-span-1 lg:col-span-1">
+              <Label className="text-xs font-medium">Tampilan</Label>
               <Select
                 value={filterData.jenisTampilan}
                 onValueChange={(value) =>
                   handleInputChange("jenisTampilan", value)
                 }
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full h-8 text-xs">
                   <SelectValue placeholder="Pilih tampilan" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1367,15 +1304,37 @@ export function FilterCard({
                   ))}
                 </SelectContent>
               </Select>
-              {filterData.mengandungKata &&
-                filterData.mengandungKata.trim() &&
-                filterData.jenisTampilan === "kode_uraian" && (
-                  <p className="text-xs text-blue-600">
-                    ℹ️ Otomatis diubah ke &quot;Kode Uraian&quot; untuk
-                    pencarian teks
-                  </p>
-                )}
             </div>
+          )}
+        </div>
+
+        {/* Status Messages */}
+        {filterKey !== "cutOff" && (
+          <div className="mt-2 space-y-1">
+            {filterData.kondisiCode && filterData.kondisiCode.trim() && (
+              <p className="text-xs text-muted-foreground">
+                💡 Contoh: 001,002,003 untuk multiple kode
+              </p>
+            )}
+            {filterData.mengandungKata && filterData.mengandungKata.trim() && (
+              <p className="text-xs text-muted-foreground">
+                💡 Pencarian dilakukan pada kolom deskripsi
+              </p>
+            )}
+            {((filterData.kondisiCode && filterData.kondisiCode.trim()) ||
+              (filterData.mengandungKata &&
+                filterData.mengandungKata.trim())) && (
+              <p className="text-xs text-amber-600">
+                ⚠️ Dropdown dinonaktifkan karena filter lain sedang digunakan
+              </p>
+            )}
+            {filterData.mengandungKata &&
+              filterData.mengandungKata.trim() &&
+              filterData.jenisTampilan === "kode_uraian" && (
+                <p className="text-xs text-blue-600">
+                  ℹ️ Otomatis diubah ke "Kode Uraian" untuk pencarian teks
+                </p>
+              )}
           </div>
         )}
       </CardContent>

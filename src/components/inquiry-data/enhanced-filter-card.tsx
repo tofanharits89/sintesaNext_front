@@ -18,6 +18,7 @@ interface EnhancedFilterCardProps {
   activeFilterValues: Record<string, FilterValue>;
   onFilterChange: (filterKey: string, field: string, value: string) => void;
   removable?: boolean;
+  scope?: "belanja" | "tematik" | "general";
 }
 
 export function EnhancedFilterCard({
