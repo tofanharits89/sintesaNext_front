@@ -111,6 +111,73 @@ export const TEMATIK_CATEGORIES: CategoryDefinition[] = [
     jenisAkumulasiAllowed: false,
   },
   {
+    key: "major_project",
+    label: "Major Project",
+    description: "Data proyek-proyek besar nasional",
+    mandatoryFilters: [
+      {
+        key: "jenisMajorProject",
+        label: "Jenis Major Project",
+        mandatory: true,
+        removable: false,
+        defaultValue: {
+          selection: "all",
+          jenisTampilan: "kode",
+        },
+      },
+    ],
+    mandatoryColumns: [],
+    queryConfig: {
+      tableName: "a_pagu_real_bkpk_dja",
+      whereConditions: ["main.kdmp <> '00'"],
+    },
+    excludeStandardFilters: ["register"],
+    reportTypeRestriction: "pagu_realisasi_bulanan",
+    jenisAkumulasiAllowed: false,
+  },
+  {
+    key: "inflasi",
+    label: "Inflasi",
+    description: "Analisis data berdasarkan Inflasi Intervensi dan Pengeluaran",
+    mandatoryFilters: [
+      {
+        key: "jenisInflasiIntervensi",
+        label: "Jenis Inflasi Intervensi",
+        mandatory: true,
+        removable: false,
+        defaultValue: {
+          selection: "all",
+          jenisTampilan: "kode",
+        },
+      },
+      {
+        key: "jenisInflasiPengeluaran",
+        label: "Jenis Inflasi Pengeluaran",
+        mandatory: true,
+        removable: false,
+        defaultValue: {
+          selection: "all",
+          jenisTampilan: "kode",
+        },
+      },
+    ],
+    mandatoryColumns: [],
+    queryConfig: {
+      tableName: "a_pagu_real_bkpk_dja",
+      whereConditions: [
+        "main.inf_intervensi IS NOT NULL",
+        "main.inf_pengeluaran IS NOT NULL",
+      ],
+      customJoins: [
+        "LEFT JOIN ref_inf_intervensi intervensi ON main.inf_intervensi = intervensi.kode_intervensi",
+        "LEFT JOIN ref_inf_pengeluaran pengeluaran ON main.inf_pengeluaran = pengeluaran.kode_pengeluaran",
+      ],
+    },
+    excludeStandardFilters: ["register"],
+    reportTypeRestriction: "pagu_realisasi_bulanan",
+    jenisAkumulasiAllowed: false,
+  },
+  {
     key: "bantuan_pemerintah",
     label: "Bantuan Pemerintah",
     description: "Data bantuan pemerintah dengan filter khusus",
@@ -234,68 +301,7 @@ export const TEMATIK_CATEGORIES: CategoryDefinition[] = [
     reportTypeRestriction: "pagu_realisasi",
     jenisAkumulasiAllowed: false,
   },
-  {
-    key: "major_project",
-    label: "Major Project",
-    description: "Data proyek-proyek besar nasional",
-    mandatoryFilters: [
-      {
-        key: "statusProyek",
-        label: "Status Proyek",
-        mandatory: true,
-        removable: false,
-        defaultValue: {
-          selection: "all",
-          kondisiCode: "",
-          mengandungKata: "",
-          jenisTampilan: "uraian",
-        },
-      },
-      {
-        key: "tahapPelaksanaan",
-        label: "Tahap Pelaksanaan",
-        mandatory: true,
-        removable: false,
-        defaultValue: {
-          selection: "all",
-          kondisiCode: "",
-          mengandungKata: "",
-          jenisTampilan: "uraian",
-        },
-      },
-    ],
-    mandatoryColumns: [
-      {
-        key: "nama_proyek",
-        label: "Nama Proyek",
-        sqlExpression: "main.nama_proyek",
-        order: 1,
-        dataType: "text",
-      },
-      {
-        key: "status_proyek",
-        label: "Status Proyek",
-        sqlExpression: "main.status_proyek",
-        order: 2,
-        dataType: "text",
-      },
-      {
-        key: "progress_fisik",
-        label: "Progress Fisik (%)",
-        sqlExpression: "AVG(main.progress_fisik)",
-        order: 3,
-        dataType: "number",
-      },
-    ],
-    queryConfig: {
-      tableName: "a_pagu_real_bkpk_dja",
-      whereConditions: ["main.is_major_project = 1"],
-      groupByColumns: ["main.nama_proyek", "main.status_proyek"],
-    },
-    excludeStandardFilters: ["register"],
-    reportTypeRestriction: "pagu_realisasi_bulanan",
-    jenisAkumulasiAllowed: false,
-  },
+
   // Add more categories as needed...
 ];
 

@@ -1,0 +1,18 @@
+[
+  {
+    "inf_intervensi": "K1",
+    "ur_inf_intervensi": "Keterjangkauan Harga"
+  },
+  {
+    "inf_intervensi": "K2",
+    "ur_inf_intervensi": "Ketersediaan Pasokan"
+  },
+  {
+    "inf_intervensi": "K3",
+    "ur_inf_intervensi": "Kelancaran distribusi"
+  },
+  {
+    "inf_intervensi": "K4",
+    "ur_inf_intervensi": "Komunikasi Efektif"
+  }
+]

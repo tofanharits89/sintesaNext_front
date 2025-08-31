@@ -220,8 +220,11 @@ export function useInquiryQueryBuilder() {
       const joinedTables = new Set<string>(); // Track which tables we've already joined
       const cfg = getReportTypeConfig(reportParams.tipeLaporan);
 
+      // Deduplicate activeFilters to prevent duplicate SELECT columns
+      const uniqueActiveFilters = Array.from(new Set(activeFilters));
+
       // Process regular filters (excluding cutOff which is handled specially)
-      activeFilters.forEach((filterKey) => {
+      uniqueActiveFilters.forEach((filterKey) => {
         // Skip cutOff - it's not a SELECT column, only affects realization calculation
         if (filterKey === "cutOff") return;
 
@@ -614,7 +617,10 @@ export function useInquiryQueryBuilder() {
       // Note: Category-specific WHERE conditions (like kdpn <> '00' for prioritas_nasional)
       // are now handled above via categoryConfig.whereConditions to avoid duplication
 
-      activeFilters.forEach((filterKey) => {
+      // Use the same deduplicated filters for WHERE conditions
+      const uniqueActiveFilters = Array.from(new Set(activeFilters));
+      
+      uniqueActiveFilters.forEach((filterKey) => {
         // Skip cutOff - it doesn't create WHERE conditions, only affects SELECT
         if (filterKey === "cutOff") return;
 
@@ -738,7 +744,10 @@ export function useInquiryQueryBuilder() {
         groupByColumns.push("main.nmblokir");
       }
 
-      activeFilters.forEach((filterKey) => {
+      // Use deduplicated filters for GROUP BY consistency
+      const uniqueActiveFilters = Array.from(new Set(activeFilters));
+      
+      uniqueActiveFilters.forEach((filterKey) => {
         // Skip cutOff - it's not a SELECT column, so not in GROUP BY
         if (filterKey === "cutOff") return;
 

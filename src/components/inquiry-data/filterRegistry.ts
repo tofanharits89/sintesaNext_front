@@ -260,6 +260,51 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
     },
   },
   {
+    key: "jenisMajorProject",
+    label: "Jenis Major Project",
+    order: 204,
+    showInUI: true,
+    query: {
+      columnName: "kdmp",
+      reference: {
+        database: "dbref",
+        table: "t_mp",
+        joinKey: "kdmp",
+        nameColumn: "nmmp",
+      },
+    },
+  },
+  {
+    key: "jenisInflasiIntervensi",
+    label: "Jenis Inflasi Intervensi",
+    order: 205,
+    showInUI: true,
+    query: {
+      columnName: "inf_intervensi",
+      // Uses local JSON file: inf_intervensi.json
+      // Data handled in FilterCard component
+      dataSource: "local",
+      localFile: "inf_intervensi.json",
+      joinKey: "inf_intervensi",
+      nameColumn: "ur_inf_intervensi",
+    },
+  },
+  {
+    key: "jenisInflasiPengeluaran",
+    label: "Jenis Inflasi Pengeluaran",
+    order: 206,
+    showInUI: true,
+    query: {
+      columnName: "inf_pengeluaran",
+      // Uses local JSON file: inf_pengeluaran.json
+      // Data handled in FilterCard component
+      dataSource: "local",
+      localFile: "inf_pengeluaran.json",
+      joinKey: "inf_pengeluaran",
+      nameColumn: "ur_inf_pengeluaran",
+    },
+  },
+  {
     key: "kegiatan",
     label: "Kegiatan",
     order: 12,

@@ -1,0 +1,50 @@
+[
+  {
+    "inf_pengeluaran": "KP0",
+    "ur_inf_pengeluaran": "Pendukung Kelompok Pengeluaran"
+  },
+  {
+    "inf_pengeluaran": "KP1",
+    "ur_inf_pengeluaran": "Makanan, Minuman, dan Tembakau"
+  },
+  {
+    "inf_pengeluaran": "KP10",
+    "ur_inf_pengeluaran": "Penyediaan Makanan dan Minuman/Restoran"
+  },
+  {
+    "inf_pengeluaran": "KP11",
+    "ur_inf_pengeluaran": "Perawatan Pribadi dan Jasa Lainnya"
+  },
+  {
+    "inf_pengeluaran": "KP2",
+    "ur_inf_pengeluaran": "Pakaian dan Alas Kaki"
+  },
+  {
+    "inf_pengeluaran": "KP3",
+    "ur_inf_pengeluaran": "Perumahan, Air, Listrik, dan Bahan Bakar Rumah Tangga"
+  },
+  {
+    "inf_pengeluaran": "KP4",
+    "ur_inf_pengeluaran": "Perlengkapan, Peralatan, dan Pemeliharaan Rutin Rumah Tangga"
+  },
+  {
+    "inf_pengeluaran": "KP5",
+    "ur_inf_pengeluaran": "Kesehatan"
+  },
+  {
+    "inf_pengeluaran": "KP6",
+    "ur_inf_pengeluaran": "Transportasi"
+  },
+  {
+    "inf_pengeluaran": "KP7",
+    "ur_inf_pengeluaran": "Informasi, Komunikasi, dan Jasa Keuangan"
+  },
+  {
+    "inf_pengeluaran": "KP8",
+    "ur_inf_pengeluaran": "Rekreasi, Olahraga, dan Budaya"
+  },
+  {
+    "inf_pengeluaran": "KP9",
+    "ur_inf_pengeluaran": "Pendidikan"
+  }
+]

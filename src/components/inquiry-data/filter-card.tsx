@@ -51,6 +51,11 @@ import kdpnData from "./data/kdpn.json";
 import kdppData from "./data/kdpp.json";
 import kdkpData from "./data/kdkp.json";
 import kdproyData from "./data/kdproy.json";
+// Major Project JSON
+import kdmpData from "./data/kdmp.json";
+// Inflation JSON files
+import infIntervensiData from "./data/inf_intervensi.json";
+import infPengeluaranData from "./data/inf_pengeluaran.json";
 
 type Option = { value: string; label: string };
 
@@ -111,6 +116,7 @@ const getFilterIcon = (filterKey: string) => {
     programPrioritas: <Target className="h-4 w-4" />,
     kegiatanPrioritas: <Target className="h-4 w-4" />,
     proyekPrioritas: <Target className="h-4 w-4" />,
+    jenisMajorProject: <Target className="h-4 w-4" />,
   };
 
   return iconMap[filterKey] || <Filter className="h-4 w-4" />;
@@ -943,6 +949,16 @@ export function FilterCard({
             return [...commonOptions, ...options];
           }
 
+          case "jenisMajorProject": {
+            const majorProjectOptions = (
+              kdmpData as Array<{ kdmp: string; nmmp: string }>
+            ).map((item) => ({
+              value: item.kdmp,
+              label: `${item.kdmp} - ${item.nmmp}`,
+            }));
+            return [...commonOptions, ...majorProjectOptions];
+          }
+
           case "akun":
             // Use different JSON data based on account type selection
             const akunType = filterData.akunType || "jenisBelanja";
@@ -987,6 +1003,28 @@ export function FilterCard({
               label: `${item.kdsdana} - ${item.nmsdana}`,
             }));
             return [...commonOptions, ...sumberDanaOptions];
+
+          case "jenisInflasiIntervensi": {
+            // Use inf_intervensi.json data for Jenis Inflasi Intervensi
+            const inflationIntervensiOptions = (
+              infIntervensiData as Array<{ inf_intervensi: string; ur_inf_intervensi: string }>
+            ).map((item) => ({
+              value: item.inf_intervensi,
+              label: `${item.inf_intervensi} - ${item.ur_inf_intervensi}`,
+            }));
+            return [...commonOptions, ...inflationIntervensiOptions];
+          }
+
+          case "jenisInflasiPengeluaran": {
+            // Use inf_pengeluaran.json data for Jenis Inflasi Pengeluaran
+            const inflationPengeluaranOptions = (
+              infPengeluaranData as Array<{ inf_pengeluaran: string; ur_inf_pengeluaran: string }>
+            ).map((item) => ({
+              value: item.inf_pengeluaran,
+              label: `${item.inf_pengeluaran} - ${item.ur_inf_pengeluaran}`,
+            }));
+            return [...commonOptions, ...inflationPengeluaranOptions];
+          }
 
           case "cutOff":
             // Generate month options (without year since year is selected in Pilih Laporan card)
