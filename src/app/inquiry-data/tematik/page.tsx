@@ -165,17 +165,26 @@ export default function TematikPage() {
     // Remove obsolete mandatory filters from activeFilters, add new mandatory filters, always keep cutOff
     setActiveFilters((prev) => {
       const withoutObsoleteMandatory = prev.filter(
-        (key) => !prevMandatoryFilterKeys.includes(key) || newMandatoryFilterKeys.includes(key)
+        (key) =>
+          !prevMandatoryFilterKeys.includes(key) ||
+          newMandatoryFilterKeys.includes(key)
       );
       const merged = Array.from(
-        new Set(["cutOff", ...withoutObsoleteMandatory, ...newMandatoryFilterKeys])
+        new Set([
+          "cutOff",
+          ...withoutObsoleteMandatory,
+          ...newMandatoryFilterKeys,
+        ])
       );
       return merged.filter((filter) => filter !== "register"); // Always exclude register
     });
 
     // Update filterValues: drop obsolete mandatory filters, apply defaults for new mandatory filters
     setFilterValues((prev) => {
-      const updated = { ...prev, ...defaultValues } as Record<string, FilterValue>;
+      const updated = { ...prev, ...defaultValues } as Record<
+        string,
+        FilterValue
+      >;
       const removedKeys = prevMandatoryFilterKeys.filter(
         (k) => !newMandatoryFilterKeys.includes(k)
       );
@@ -461,7 +470,8 @@ export default function TematikPage() {
         kondisiCode: value.kondisiCode || "",
         mengandungKata: value.mengandungKata || "",
         jenisTampilan: value.jenisTampilan || "kode",
-      };
+        akunType: (value as any).akunType,
+      } as any;
     });
 
     return normalized;

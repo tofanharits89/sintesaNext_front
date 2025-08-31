@@ -361,7 +361,8 @@ export default function BelanjaPage() {
         kondisiCode: value.kondisiCode || "",
         mengandungKata: value.mengandungKata || "",
         jenisTampilan: value.jenisTampilan || "kode",
-      };
+        akunType: (value as any).akunType,
+      } as any;
     });
 
     return normalized;

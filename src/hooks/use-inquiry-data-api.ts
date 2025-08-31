@@ -21,6 +21,7 @@ export interface FilterValue {
   kondisiCode: string;
   mengandungKata: string;
   jenisTampilan: "kode" | "kode_uraian" | "uraian" | "jangan_tampilkan";
+  akunType?: "kodeAkun" | "kodeBkpk" | "jenisBelanja";
 }
 
 export function useInquiryDataApi() {

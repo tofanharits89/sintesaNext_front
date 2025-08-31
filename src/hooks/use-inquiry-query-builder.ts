@@ -23,7 +23,7 @@ export interface FilterValue {
   kondisiCode: string;
   mengandungKata: string;
   jenisTampilan: "kode" | "kode_uraian" | "uraian" | "jangan_tampilkan";
-  akunType?: "akun" | "kodeBkpk" | "jenisBelanja"; // For akun filter type switching
+  akunType?: "kodeAkun" | "kodeBkpk" | "jenisBelanja"; // For akun filter type switching
 }
 
 // Table mapping based on report type
@@ -611,7 +611,7 @@ export function useInquiryQueryBuilder() {
         }
       }
 
-      // Note: Category-specific WHERE conditions (like kdpn <> '00' for prioritas_nasional) 
+      // Note: Category-specific WHERE conditions (like kdpn <> '00' for prioritas_nasional)
       // are now handled above via categoryConfig.whereConditions to avoid duplication
 
       activeFilters.forEach((filterKey) => {
@@ -702,8 +702,17 @@ export function useInquiryQueryBuilder() {
               `${alias}.register LIKE '%${mengandungKata.trim()}%'`
             );
           } else {
+            // Determine proper name column for keyword search
+            let nameCol = config.nameColumn;
+            if (filterKey === "akun" && filterValue?.akunType) {
+              if (filterValue.akunType === "kodeBkpk") {
+                nameCol = "nmbkpk"; // 4-digit BKPK
+              } else if (filterValue.akunType === "jenisBelanja") {
+                nameCol = "nmgbkpk"; // 2-digit GBKPK
+              }
+            }
             whereConditions.push(
-              `${alias}.${config.nameColumn} LIKE '%${mengandungKata.trim()}%'`
+              `${alias}.${nameCol} LIKE '%${mengandungKata.trim()}%'`
             );
           }
         }

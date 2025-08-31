@@ -1245,7 +1245,7 @@ export function FilterCard({
                   )
                 }
                 className={cn(
-                  "w-full h-8 text-xs",
+                  "w-full h-8 text-xs placeholder:text-xs",
                   ((filterData.selection && filterData.selection !== "all") ||
                     (filterData.mengandungKata &&
                       filterData.mengandungKata.trim())) &&
@@ -1273,7 +1273,7 @@ export function FilterCard({
                   )
                 }
                 className={cn(
-                  "w-full h-8 text-xs",
+                  "w-full h-8 text-xs placeholder:text-xs",
                   ((filterData.selection && filterData.selection !== "all") ||
                     (filterData.kondisiCode &&
                       filterData.kondisiCode.trim())) &&
