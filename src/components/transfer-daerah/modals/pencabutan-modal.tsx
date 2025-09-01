@@ -29,7 +29,7 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { KmkPenundaanListModal } from "./kmk-penundaan-list-modal";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
@@ -39,6 +39,7 @@ interface PencabutanModalProps {
 }
 
 export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     dasarPenundaan: "",
     tahun: "",
@@ -78,18 +79,57 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
       staleTime: 5 * 60 * 1000,
     });
 
-  const handleSubmit = () => {
-    // Handle form submission
-    console.log("Submitting Pencabutan KMK:", formData);
-    onOpenChange(false);
-    // Reset form
-    setFormData({
-      dasarPenundaan: "",
-      tahun: "",
-      nomor: "",
-      tanggalKmk: undefined,
-      uraianKmk: "",
-    });
+  const handleSubmit = async () => {
+    try {
+      const token = getAuthTokenFromCookie();
+      const headers: HeadersInit = { "Content-Type": "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      // Map fields to backend payload
+      const payload = {
+        kmktunda: formData.dasarPenundaan?.trim(),
+        thangcabut: Number(formData.tahun),
+        no_kmkcabut: formData.nomor?.trim(),
+        tglcabut: formData.tanggalKmk
+          ? `${formData.tanggalKmk.getFullYear()}-${String(
+              formData.tanggalKmk.getMonth() + 1
+            ).padStart(2, "0")}-${String(formData.tanggalKmk.getDate()).padStart(2, "0")}`
+          : "",
+        uraiancabut: formData.uraianKmk?.trim() || null,
+      };
+
+      const res = await fetch(
+        backendPath("/transfer-daerah/dau/kmk/penundaan"),
+        {
+          method: "POST",
+          credentials: "include",
+          headers,
+          body: JSON.stringify(payload),
+          signal: AbortSignal.timeout(20000),
+        }
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.message || "Gagal menyimpan data pencabutan");
+      }
+
+      // Invalidate list to refresh
+      await queryClient.invalidateQueries({ queryKey: ["kmk-penundaan-list"] });
+
+      onOpenChange(false);
+      // Reset form
+      setFormData({
+        dasarPenundaan: "",
+        tahun: "",
+        nomor: "",
+        tanggalKmk: undefined,
+        uraianKmk: "",
+      });
+    } catch (e: any) {
+      // Minimal UX feedback; replace with toast if available in project
+      console.error(e);
+      alert(e?.message || "Terjadi kesalahan saat menyimpan");
+    }
   };
 
   const handleClose = () => {
@@ -112,8 +152,33 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
             <DialogTitle>Pencabutan KMK</DialogTitle>
           </DialogHeader>
           <div className="grid gap-6 py-4">
-            {/* Form Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Row 1: Tahun & Dasar Penundaan */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Tahun */}
+              <div className="space-y-2">
+                <Label htmlFor="tahun">Tahun</Label>
+                <Select
+                  value={formData.tahun}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, tahun: value })
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      className="truncate"
+                      placeholder="Pilih tahun"
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {years.map((year) => (
+                      <SelectItem key={year} value={year}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Dasar Penundaan */}
               <div className="space-y-2">
                 <Label htmlFor="dasarPenundaan">Dasar Penundaan</Label>
@@ -144,32 +209,10 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
 
-              {/* Tahun */}
-              <div className="space-y-2">
-                <Label htmlFor="tahun">Tahun</Label>
-                <Select
-                  value={formData.tahun}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, tahun: value })
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue
-                      className="truncate"
-                      placeholder="Pilih tahun"
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {years.map((year) => (
-                      <SelectItem key={year} value={year}>
-                        {year}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
+            {/* Row 2: Nomor & Tanggal KMK */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Nomor */}
               <div className="space-y-2">
                 <Label htmlFor="nomor">Nomor</Label>
@@ -183,10 +226,7 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
                   className="w-full"
                 />
               </div>
-            </div>
 
-            {/* Second row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Tanggal KMK */}
               <div className="space-y-2">
                 <Label>Tanggal KMK</Label>

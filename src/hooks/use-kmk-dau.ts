@@ -31,6 +31,7 @@ export interface KmkRow {
   jenis: string; // code as string (e.g., "1", "2")
   kriteria: string; // human readable
   fileUrl: string;
+  fileName: string;
 }
 
 const fetcher = async (url: string) => {
@@ -70,7 +71,49 @@ export function useKmkDau(year?: string | number) {
     uraian: r.uraian ?? "",
     jenis: String(r.jenis ?? ""),
     kriteria: (r.nm_kriteria ?? r.kriteria ?? "").toString(),
-    fileUrl: r.filekmk ?? "",
+    fileUrl: (() => {
+      const f = (r.filekmk ?? "").toString();
+      if (!f) return "";
+      // Absolute URL -> if it's not our backend, route through proxy to avoid CORS
+      if (/^https?:\/\//i.test(f)) {
+        // Heuristic: treat any non-localhost:88 (default backend) as external
+        if (!/^https?:\/\/localhost:88\b/i.test(f)) {
+          const needsInsecure = /sintesa\.kemenkeu\.go\.id:7000/i.test(f) ? "&insecure=1" : "";
+          // derive a readable filename for the proxy path segment
+          let derivedName = "file.pdf";
+          try {
+            const u = new URL(f);
+            derivedName = (u.pathname.split("/").filter(Boolean).pop() || "file.pdf").replace(/[^a-zA-Z0-9_.-]/g, "_");
+          } catch {}
+          return backendPath(`/transfer-daerah/dau/kmk/file/proxy/${encodeURIComponent(derivedName)}?url=${encodeURIComponent(f)}${needsInsecure}`);
+        }
+        return f;
+      }
+      // If the path already contains our file-serving route, just prefix with backend
+      if (/\/transfer-daerah\/dau\/kmk\/file\//.test(f)) {
+        return backendPath(f.startsWith("/") ? f : `/${f}`);
+      }
+      // If it's just a bare filename, point to the stream route (no .pdf in URL)
+      if (!f.includes("/")) {
+        const base = f.replace(/\.pdf$/i, "");
+        return backendPath(`/transfer-daerah/dau/kmk/file/stream/${encodeURIComponent(base)}`);
+      }
+      // Otherwise, treat as relative path
+      return backendPath(f.startsWith("/") ? f : `/${f}`);
+    })(),
+    fileName: (() => {
+      const f = (r.filekmk ?? "").toString();
+      if (!f) return "";
+      try {
+        if (/^https?:\/\//i.test(f)) {
+          const u = new URL(f);
+          const last = u.pathname.split("/").filter(Boolean).pop() || "file.pdf";
+          return last;
+        }
+      } catch {}
+      const just = f.split("/").pop() || f;
+      return just;
+    })(),
   }));
 
   return { rows, isLoading, error, mutate } as const;

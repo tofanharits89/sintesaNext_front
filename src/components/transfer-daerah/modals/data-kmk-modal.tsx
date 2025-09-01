@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -34,13 +34,17 @@ import { VirtualizedSelect } from "@/components/ui/virtualized-select";
 import jenisKMK from "@/data/jeniskmk_tkd.json";
 import kriteriaKMK from "@/data/jeniskriteria_tkd.json";
 import kppnList from "@/data/kdkppn_tkd.json";
+import { backendPath } from "@/lib/backend";
+import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
 interface DataKmkModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialYear?: string | number;
+  onCreated?: () => void;
 }
 
-export function DataKmkModal({ open, onOpenChange }: DataKmkModalProps) {
+export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: DataKmkModalProps) {
   const [formData, setFormData] = useState({
     tahun: "",
     tanggalKmk: undefined as Date | undefined,
@@ -55,12 +59,9 @@ export function DataKmkModal({ open, onOpenChange }: DataKmkModalProps) {
     kabkota: "",
   });
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = () => {
-    // Handle form submission
-    console.log("Submitting Data KMK:", formData);
-    onOpenChange(false);
-    // Reset form
+  const resetForm = () => {
     setFormData({
       tahun: "",
       tanggalKmk: undefined,
@@ -76,22 +77,62 @@ export function DataKmkModal({ open, onOpenChange }: DataKmkModalProps) {
     });
   };
 
+  const handleSubmit = async () => {
+    try {
+      setSubmitting(true);
+      // Build multipart form data for upload
+      const fd = new FormData();
+      fd.append("jenis", formData.jenis);
+      fd.append("kriteria", formData.kriteria);
+      fd.append("thang", formData.tahun);
+      fd.append(
+        "tgl_kmk",
+        formData.tanggalKmk
+          ? `${formData.tanggalKmk.getFullYear()}-${String(formData.tanggalKmk.getMonth() + 1).padStart(2, "0")}-${String(formData.tanggalKmk.getDate()).padStart(2, "0")}`
+          : ""
+      );
+      fd.append("no_kmk", formData.nomorKmk);
+      fd.append("uraian", formData.uraian);
+      if (formData.file) {
+        fd.append("file", formData.file);
+      }
+
+      const token = getAuthTokenFromCookie();
+      const headers: HeadersInit = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      const resp = await fetch(backendPath("/transfer-daerah/dau/kmk"), {
+        method: "POST",
+        headers,
+        credentials: "include",
+        body: fd,
+      });
+      const text = await resp.text();
+      if (!resp.ok) {
+        let msg = `HTTP ${resp.status}`;
+        try {
+          const j = JSON.parse(text);
+          msg = j?.message || j?.error || msg;
+        } catch {}
+        throw new Error(msg);
+      }
+
+      // Success
+      onOpenChange(false);
+      resetForm();
+      onCreated?.();
+    } catch (e) {
+      console.error("Failed to create KMK DAU:", e);
+      alert(`Gagal menyimpan data KMK: ${String((e as any)?.message || e)}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleClose = () => {
     onOpenChange(false);
     // Reset form when closing
-    setFormData({
-      tahun: "",
-      tanggalKmk: undefined,
-      nomorKmk: "",
-      uraian: "",
-      jenis: "",
-      kriteria: "",
-      file: null,
-      dasarPenundaan: "",
-      dasarPencabutan: "",
-      kppn: "",
-      kabkota: "",
-    });
+    resetForm();
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,6 +144,16 @@ export function DataKmkModal({ open, onOpenChange }: DataKmkModalProps) {
   const years = Array.from({ length: 10 }, (_, i) =>
     (currentYear - i).toString()
   );
+
+  // Apply initial year when modal opens
+  useEffect(() => {
+    if (open) {
+      setFormData((prev) => ({
+        ...prev,
+        tahun: prev.tahun || (initialYear ? String(initialYear) : ""),
+      }));
+    }
+  }, [open, initialYear]);
 
   const jenisOptions = (jenisKMK as { jenis: string; nmjenis: string }[]);
   const kriteriaOptions = (kriteriaKMK as {
@@ -439,21 +490,19 @@ export function DataKmkModal({ open, onOpenChange }: DataKmkModalProps) {
                 </div>
               )}
 
-              {/* File KMK - hide when jenis=3 as per new spec */}
+              {/* File KMK Upload (PDF). Hidden when jenis=3 */}
               {formData.jenis === "3" ? null : (
                 <div className="space-y-2">
-                  <Label htmlFor="file">File KMK</Label>
+                  <Label htmlFor="file">File KMK (PDF)</Label>
                   <Input
                     id="file"
                     type="file"
-                    accept=".pdf,.doc,.docx"
+                    accept="application/pdf,.pdf"
                     onChange={handleFileChange}
                     className="cursor-pointer w-full"
                   />
                   {formData.file && (
-                    <p className="text-sm text-muted-foreground">
-                      File terpilih: {formData.file.name}
-                    </p>
+                    <p className="text-sm text-muted-foreground">File terpilih: {formData.file.name}</p>
                   )}
                 </div>
               )}
@@ -468,9 +517,10 @@ export function DataKmkModal({ open, onOpenChange }: DataKmkModalProps) {
             </Button>
             <Button
               onClick={handleSubmit}
+              disabled={submitting}
               className="bg-slate-800 hover:bg-slate-900"
             >
-              Save
+              {submitting ? "Saving..." : "Save"}
             </Button>
           </div>
         </DialogFooter>

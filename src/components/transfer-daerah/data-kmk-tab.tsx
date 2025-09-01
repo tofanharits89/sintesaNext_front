@@ -12,13 +12,16 @@ import {
 } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Download, Trash2, Scissors, PauseCircle } from "lucide-react";
+import { FileText, Trash2, Scissors, PauseCircle } from "lucide-react";
+import { PdfjsViewerIframeModal } from "./modals/pdfjs-viewer-iframe-modal";
 import { DataKmkModal } from "./modals/data-kmk-modal";
 import { PencabutanModal } from "./modals/pencabutan-modal";
 import { DataPenundaanModal } from "./modals/data-penundaan-modal";
 import { DataPemotonganModal } from "./modals/data-pemotongan-modal";
 import { DeleteConfirmModal } from "./modals/delete-confirm-modal";
 import { useKmkDau } from "@/hooks/use-kmk-dau";
+import { backendPath } from "@/lib/backend";
+import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
 interface DataKmkTabProps {
   // Remove the selectedYear prop as this tab will manage its own year state
@@ -37,7 +40,7 @@ export function DataKmkTab({}: DataKmkTabProps) {
     useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
-  const { rows, isLoading, error } = useKmkDau(selectedYear);
+  const { rows, isLoading, error, mutate } = useKmkDau(selectedYear);
 
   // Generate years from current year back to 2020
   const years = Array.from({ length: currentYear - 2019 }, (_, i) =>
@@ -62,9 +65,16 @@ export function DataKmkTab({}: DataKmkTabProps) {
     setIsDeleteModalOpen(true);
   };
 
-  const handleDownload = (fileUrl: string) => {
-    // Implementation for file download
-    console.log("Downloading file:", fileUrl);
+  // PDF Preview modal state
+  const [isPdfOpen, setIsPdfOpen] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | undefined>(undefined);
+  const [pdfTitle, setPdfTitle] = useState<string | undefined>(undefined);
+
+  const handleOpenPreview = (fileUrl: string, title?: string) => {
+    if (!fileUrl) return;
+    setPdfUrl(fileUrl);
+    setPdfTitle(title);
+    setIsPdfOpen(true);
   };
 
   const columns = [
@@ -196,10 +206,10 @@ export function DataKmkTab({}: DataKmkTabProps) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleDownload(row.getValue("fileUrl"))}
+            onClick={() => handleOpenPreview(row.getValue("fileUrl"), row.original?.fileName || undefined)}
             className="h-8 w-8 p-0"
           >
-            <Download className="h-4 w-4" />
+            <FileText className="h-4 w-4" />
           </Button>
         </div>
       ),
@@ -309,6 +319,11 @@ export function DataKmkTab({}: DataKmkTabProps) {
       <DataKmkModal
         open={isDataKmkModalOpen}
         onOpenChange={setIsDataKmkModalOpen}
+        initialYear={selectedYear}
+        onCreated={() => {
+          // refresh list after creating new KMK
+          mutate();
+        }}
       />
       <PencabutanModal
         open={isPencabutanModalOpen}
@@ -328,12 +343,38 @@ export function DataKmkTab({}: DataKmkTabProps) {
         open={isDeleteModalOpen}
         onOpenChange={setIsDeleteModalOpen}
         data={selectedItem}
-        onConfirm={() => {
-          // Implementation for delete
-          console.log("Deleting item:", selectedItem);
-          setIsDeleteModalOpen(false);
+        onConfirm={async () => {
+          try {
+            const id = selectedItem?.id;
+            if (!id) throw new Error("ID tidak ditemukan");
+            const token = getAuthTokenFromCookie();
+            const headers: HeadersInit = { "Content-Type": "application/json" };
+            if (token) headers["Authorization"] = `Bearer ${token}`;
+            const resp = await fetch(backendPath(`/transfer-daerah/dau/kmk/${encodeURIComponent(String(id))}`), {
+              method: "DELETE",
+              headers,
+              credentials: "include",
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            setIsDeleteModalOpen(false);
+            setSelectedItem(null);
+            mutate();
+          } catch (e) {
+            console.error("Delete failed", e);
+            alert(`Gagal menghapus data: ${String((e as any)?.message || e)}`);
+          }
         }}
+      />
+
+      {/* PDF.js Viewer (iframe) Modal */}
+      <PdfjsViewerIframeModal
+        open={isPdfOpen}
+        onOpenChange={setIsPdfOpen}
+        url={pdfUrl}
+        title={pdfTitle || "Pratinjau KMK"}
       />
     </div>
   );
 }
+
+export default DataKmkTab;
