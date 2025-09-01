@@ -12,10 +12,11 @@ import {
 } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Trash2, Scissors, PauseCircle } from "lucide-react";
+import { FileText, Trash2, Scissors, PauseCircle, Undo2 } from "lucide-react";
 import { PdfjsViewerIframeModal } from "./modals/pdfjs-viewer-iframe-modal";
 import { DataKmkModal } from "./modals/data-kmk-modal";
 import { PencabutanModal } from "./modals/pencabutan-modal";
+import { DataPencabutanModal } from "./modals/data-pencabutan-modal";
 import { DataPenundaanModal } from "./modals/data-penundaan-modal";
 import { DataPemotonganModal } from "./modals/data-pemotongan-modal";
 import { DeleteConfirmModal } from "./modals/delete-confirm-modal";
@@ -40,6 +41,8 @@ export function DataKmkTab({}: DataKmkTabProps) {
     useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [isDataPencabutanModalOpen, setIsDataPencabutanModalOpen] = useState(false);
+  const [selectedNoKmkForPencabutan, setSelectedNoKmkForPencabutan] = useState<string | undefined>(undefined);
   const { rows, isLoading, error, mutate } = useKmkDau(selectedYear);
 
   // Generate years from current year back to 2020
@@ -221,32 +224,81 @@ export function DataKmkTab({}: DataKmkTabProps) {
       ),
       cell: ({ row }: any) => (
         <div className="flex items-center justify-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200"
-            onClick={() => handleDataPotongan(row.original)}
-            title={(() => {
-              const jenis = String(row.original?.jenis ?? "");
-              return jenis === "1" || jenis === "4"
-                ? "Data Pemotongan"
-                : "Data Penundaan";
-            })()}
-          >
-            {(() => {
-              const jenis = String(row.original?.jenis ?? "");
-              return jenis === "1" || jenis === "4" ? (
-                <Scissors className="h-4 w-4" />
-              ) : (
-                <PauseCircle className="h-4 w-4" />
+          {/* 1) Data Pemotongan (only jenis = 1 or 4) */}
+          {(() => {
+            const jenis = String(row.original?.jenis ?? "");
+            if (jenis === "1" || jenis === "4") {
+              return (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 h-8 w-8 p-0"
+                  onClick={() => {
+                    setSelectedItem(row.original);
+                    setIsDataPemotonganModalOpen(true);
+                  }}
+                  title="Data Pemotongan"
+                >
+                  <Scissors className="h-4 w-4" />
+                </Button>
               );
-            })()}
-          </Button>
+            }
+            return null;
+          })()}
+
+          {/* 2) Data Penundaan (only jenis = 2 or 3) */}
+          {(() => {
+            const jenis = String(row.original?.jenis ?? "");
+            if (jenis === "2" || jenis === "3") {
+              return (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 h-8 w-8 p-0"
+                  onClick={() => {
+                    setSelectedItem(row.original);
+                    setIsDataPenundaanModalOpen(true);
+                  }}
+                  title="Data Penundaan"
+                >
+                  <PauseCircle className="h-4 w-4" />
+                </Button>
+              );
+            }
+            return null;
+          })()}
+
+          {/* 3) Data Pencabutan (only for jenis = 2) */}
+          {(() => {
+            const jenis = String(row.original?.jenis ?? "");
+            if (jenis === "2") {
+              return (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 h-8 w-8 p-0"
+                  onClick={() => {
+                    setSelectedNoKmkForPencabutan(
+                      row.original?.nomorKmk || row.original?.no_kmk || row.getValue?.("nomorKmk")
+                    );
+                    setIsDataPencabutanModalOpen(true);
+                  }}
+                  title="Data Pencabutan"
+                >
+                  <Undo2 className="h-4 w-4" />
+                </Button>
+              );
+            }
+            return null;
+          })()}
+
+          {/* 4) Delete */}
           <Button
             variant="outline"
             size="sm"
-            className="bg-red-100 text-red-700 border-red-200 hover:bg-red-200"
+            className="bg-red-100 text-red-700 border-red-200 hover:bg-red-200 h-8 w-8 p-0"
             onClick={() => handleDelete(row.original)}
+            title="Hapus"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -338,6 +390,11 @@ export function DataKmkTab({}: DataKmkTabProps) {
         open={isDataPemotonganModalOpen}
         onOpenChange={setIsDataPemotonganModalOpen}
         data={selectedItem}
+      />
+      <DataPencabutanModal
+        open={isDataPencabutanModalOpen}
+        onOpenChange={setIsDataPencabutanModalOpen}
+        noKmk={selectedNoKmkForPencabutan}
       />
       <DeleteConfirmModal
         open={isDeleteModalOpen}
