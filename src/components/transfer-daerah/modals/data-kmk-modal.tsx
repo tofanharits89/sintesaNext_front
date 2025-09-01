@@ -36,6 +36,10 @@ import kriteriaKMK from "@/data/jeniskriteria_tkd.json";
 import kppnList from "@/data/kdkppn_tkd.json";
 import { backendPath } from "@/lib/backend";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
+import { useDasarPenundaanOptions } from "@/hooks/use-dasar-penundaan";
+import { useDasarPencabutanOptions } from "@/hooks/use-dasar-pencabutan";
+import { useKppnByNoKmk } from "@/hooks/use-kppn-by-nokmk";
+import { useKabKotaByNoKmk } from "@/hooks/use-kabkota-by-nokmk";
 
 interface DataKmkModalProps {
   open: boolean;
@@ -80,33 +84,56 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
   const handleSubmit = async () => {
     try {
       setSubmitting(true);
-      // Build multipart form data for upload
-      const fd = new FormData();
-      fd.append("jenis", formData.jenis);
-      fd.append("kriteria", formData.kriteria);
-      fd.append("thang", formData.tahun);
-      fd.append(
-        "tgl_kmk",
-        formData.tanggalKmk
-          ? `${formData.tanggalKmk.getFullYear()}-${String(formData.tanggalKmk.getMonth() + 1).padStart(2, "0")}-${String(formData.tanggalKmk.getDate()).padStart(2, "0")}`
-          : ""
-      );
-      fd.append("no_kmk", formData.nomorKmk);
-      fd.append("uraian", formData.uraian);
-      if (formData.file) {
-        fd.append("file", formData.file);
-      }
-
       const token = getAuthTokenFromCookie();
-      const headers: HeadersInit = {};
-      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const authHeaders: HeadersInit = {};
+      if (token) authHeaders["Authorization"] = `Bearer ${token}`;
 
-      const resp = await fetch(backendPath("/transfer-daerah/dau/kmk"), {
-        method: "POST",
-        headers,
-        credentials: "include",
-        body: fd,
-      });
+      let resp: Response;
+      if (formData.jenis === "3") {
+        // Create KMK Pencabutan (Penundaan) row
+        const payload = {
+          no_kmk: formData.dasarPenundaan,
+          thangcabut: formData.tahun,
+          no_kmkcabut: formData.dasarPencabutan,
+          tglcabut: formData.tanggalKmk
+            ? `${formData.tanggalKmk.getFullYear()}-${String(formData.tanggalKmk.getMonth() + 1).padStart(2, "0")}-${String(formData.tanggalKmk.getDate()).padStart(2, "0")}`
+            : "",
+          uraiancabut: formData.uraian,
+          kriteria: formData.kriteria,
+          kdkppn: formData.kppn || undefined,
+          kdpemda: formData.kabkota || undefined,
+        };
+        resp = await fetch(backendPath("/transfer-daerah/dau/kmk/penundaan"), {
+          method: "POST",
+          headers: { ...authHeaders, "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        });
+      } else {
+        // Build multipart form data for upload (KMK DAU create)
+        const fd = new FormData();
+        fd.append("jenis", formData.jenis);
+        fd.append("kriteria", formData.kriteria);
+        fd.append("thang", formData.tahun);
+        fd.append(
+          "tgl_kmk",
+          formData.tanggalKmk
+            ? `${formData.tanggalKmk.getFullYear()}-${String(formData.tanggalKmk.getMonth() + 1).padStart(2, "0")}-${String(formData.tanggalKmk.getDate()).padStart(2, "0")}`
+            : ""
+        );
+        fd.append("no_kmk", formData.nomorKmk);
+        fd.append("uraian", formData.uraian);
+        if (formData.file) {
+          fd.append("file", formData.file);
+        }
+
+        resp = await fetch(backendPath("/transfer-daerah/dau/kmk"), {
+          method: "POST",
+          headers: authHeaders,
+          credentials: "include",
+          body: fd,
+        });
+      }
       const text = await resp.text();
       if (!resp.ok) {
         let msg = `HTTP ${resp.status}`;
@@ -167,55 +194,31 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
     ? kriteriaOptions.filter((k) => k.id === formData.jenis)
     : [];
 
-  // Mock dropdown sources (replace with real data fetching later)
-  const dasarPenundaanOptions: { value: string; label: string }[] = [
-    { value: "DP-001", label: "DP-001 - Penundaan karena kriteria A" },
-    { value: "DP-002", label: "DP-002 - Penundaan karena kriteria B" },
-    { value: "DP-003", label: "DP-003 - Penundaan karena kriteria C" },
-  ];
-  const dasarPencabutanOptions: { value: string; label: string }[] = [
-    { value: "DC-001", label: "DC-001 - Pencabutan memenuhi syarat X" },
-    { value: "DC-002", label: "DC-002 - Pencabutan memenuhi syarat Y" },
-    { value: "DC-003", label: "DC-003 - Pencabutan memenuhi syarat Z" },
-  ];
+  // Dasar Penundaan options from backend (tkd25.ref_kmk_dau where jenis='2')
+  const { options: dasarPenundaanOptions, isLoading: dasarPenundaanLoading, error: dasarPenundaanError } =
+    useDasarPenundaanOptions(formData.jenis === "3");
+  const {
+    items: dasarPencabutanItems,
+    options: dasarPencabutanOptions,
+    isLoading: dasarPencabutanLoading,
+    error: dasarPencabutanError,
+  } = useDasarPencabutanOptions(formData.jenis === "3");
 
-  // Build options from a single source of truth: kdkppn_tkd.json
-  type KppnRow = {
-    kdkabkota: string;
-    nmkabkota: string;
-    kdkppn: string;
-    nmkppn: string;
-    kdkanwil?: string;
-  };
-  const kppnRows = kppnList as KppnRow[];
+  // Dynamic KPPN & Kab/Kota options based on selected Dasar Penundaan (no_kmk)
+  const {
+    options: kppnOptions,
+    isLoading: kppnLoading,
+    error: kppnError,
+  } = useKppnByNoKmk(formData.jenis === "3" ? formData.dasarPenundaan : undefined);
 
-  // Deduplicate KPPN by kdkppn
-  const kppnOptions = Array.from(
-    new Map(
-      kppnRows.map((r) => [r.kdkppn, { value: r.kdkppn, label: `${r.kdkppn} - ${r.nmkppn}` }])
-    ).values()
-  ).sort((a, b) => a.value.localeCompare(b.value));
-
-  // Deduplicate Kab/Kota by kdkabkota
-  const kabKotaOptionsAll = Array.from(
-    new Map(
-      kppnRows.map((r) => [r.kdkabkota, { value: r.kdkabkota, label: `${r.kdkabkota} - ${r.nmkabkota}` }])
-    ).values()
-  ).sort((a, b) => a.value.localeCompare(b.value));
-
-  // Filter Kab/Kota by selected KPPN (hierarchical)
-  const kabKotaOptions = formData.kppn
-    ? Array.from(
-        new Map(
-          kppnRows
-            .filter((r) => r.kdkppn === formData.kppn)
-            .map((r) => [
-              r.kdkabkota,
-              { value: r.kdkabkota, label: `${r.kdkabkota} - ${r.nmkabkota}` },
-            ])
-        ).values()
-      ).sort((a, b) => a.value.localeCompare(b.value))
-    : [];
+  const {
+    options: kabKotaOptions,
+    isLoading: kabKotaLoading,
+    error: kabKotaError,
+  } = useKabKotaByNoKmk(
+    formData.jenis === "3" ? formData.dasarPenundaan : undefined,
+    formData.jenis === "3" ? formData.kppn : undefined
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -311,11 +314,17 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
               {/* Dasar Penundaan - full row */}
               <div className="space-y-2">
                 <Label htmlFor="dasarPenundaan">Dasar Penundaan</Label>
-                {dasarPenundaanOptions.length > 0 ? (
+                {dasarPenundaanLoading ? (
+                  <div className="text-sm text-muted-foreground">Memuat opsi dasar penundaan...</div>
+                ) : dasarPenundaanError ? (
+                  <div className="text-sm text-red-600">Gagal memuat opsi dasar penundaan</div>
+                ) : dasarPenundaanOptions.length > 0 ? (
                   <VirtualizedSelect
                     options={dasarPenundaanOptions}
                     value={formData.dasarPenundaan}
-                    onValueChange={(value) => setFormData({ ...formData, dasarPenundaan: value })}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, dasarPenundaan: value, kppn: "", kabkota: "" })
+                    }
                     placeholder="Pilih dasar penundaan"
                   />
                 ) : (
@@ -332,11 +341,26 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
               {/* Dasar Pencabutan - full row */}
               <div className="space-y-2">
                 <Label htmlFor="dasarPencabutan">Dasar Pencabutan</Label>
-                {dasarPencabutanOptions.length > 0 ? (
+                {dasarPencabutanLoading ? (
+                  <div className="text-sm text-muted-foreground">Memuat opsi dasar pencabutan...</div>
+                ) : dasarPencabutanError ? (
+                  <div className="text-sm text-red-600">Gagal memuat opsi dasar pencabutan</div>
+                ) : dasarPencabutanOptions.length > 0 ? (
                   <VirtualizedSelect
                     options={dasarPencabutanOptions}
                     value={formData.dasarPencabutan}
-                    onValueChange={(value) => setFormData({ ...formData, dasarPencabutan: value })}
+                    onValueChange={(value) => {
+                      const selected = (dasarPencabutanItems || []).find(
+                        (it: any) => String(it.no_kmkcabut) === String(value)
+                      );
+                      setFormData({
+                        ...formData,
+                        dasarPencabutan: value,
+                        tahun: selected?.thangcabut ? String(selected.thangcabut) : formData.tahun,
+                        tanggalKmk: selected?.tglcabut ? new Date(selected.tglcabut) : formData.tanggalKmk,
+                        uraian: selected?.uraiancabut ?? formData.uraian,
+                      });
+                    }}
                     placeholder="Pilih dasar pencabutan"
                   />
                 ) : (
@@ -376,24 +400,37 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="kppn">Pilih KPPN</Label>
-                  <VirtualizedSelect
-                    options={kppnOptions}
-                    value={formData.kppn}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, kppn: value, kabkota: "" })
-                    }
-                    placeholder="Pilih KPPN"
-                  />
+                  {kppnLoading ? (
+                    <div className="text-sm text-muted-foreground">Memuat KPPN...</div>
+                  ) : kppnError ? (
+                    <div className="text-sm text-red-600">Gagal memuat KPPN</div>
+                  ) : (
+                    <VirtualizedSelect
+                      options={kppnOptions}
+                      value={formData.kppn}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, kppn: value, kabkota: "" })
+                      }
+                      placeholder={formData.dasarPenundaan ? "Pilih KPPN" : "Pilih Dasar Penundaan terlebih dahulu"}
+                      disabled={!formData.dasarPenundaan}
+                    />
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="kabkota">Pilih Kab/Kota</Label>
-                  <VirtualizedSelect
-                    options={kabKotaOptions}
-                    value={formData.kabkota}
-                    onValueChange={(value) => setFormData({ ...formData, kabkota: value })}
-                    placeholder={formData.kppn ? "Pilih Kab/Kota" : "Pilih KPPN terlebih dahulu"}
-                    disabled={!formData.kppn}
-                  />
+                  {kabKotaLoading ? (
+                    <div className="text-sm text-muted-foreground">Memuat Kab/Kota...</div>
+                  ) : kabKotaError ? (
+                    <div className="text-sm text-red-600">Gagal memuat Kab/Kota</div>
+                  ) : (
+                    <VirtualizedSelect
+                      options={kabKotaOptions}
+                      value={formData.kabkota}
+                      onValueChange={(value) => setFormData({ ...formData, kabkota: value })}
+                      placeholder={formData.kppn ? "Pilih Kab/Kota" : "Pilih KPPN terlebih dahulu"}
+                      disabled={!formData.kppn}
+                    />
+                  )}
                 </div>
               </div>
             </div>
