@@ -7,74 +7,54 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { DataTable } from "@/components/ui/data-table";
+import { useQuery } from "@tanstack/react-query";
+import { backendPath } from "@/lib/backend";
+import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
 interface KmkPenundaanListModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-// Mock data for KMK Penundaan list
-const mockKmkPenundaanData = [
-  {
-    id: "1",
-    no: 1,
-    kmkPenundaan: "KMK-P001/2024",
-    tahun: "2024",
-    tanggal: "2024-01-15",
-    nomor: "001/PND/2024",
-    uraian: "Penundaan pencairan DAU Triwulan I karena verifikasi dokumen",
-  },
-  {
-    id: "2",
-    no: 2,
-    kmkPenundaan: "KMK-P002/2024",
-    tahun: "2024",
-    tanggal: "2024-02-20",
-    nomor: "002/PND/2024",
-    uraian: "Penundaan pencairan DAU akibat ketidaksesuaian laporan keuangan",
-  },
-  {
-    id: "3",
-    no: 3,
-    kmkPenundaan: "KMK-P003/2024",
-    tahun: "2024",
-    tanggal: "2024-03-10",
-    nomor: "003/PND/2024",
-    uraian: "Penundaan pencairan DAU menunggu hasil audit BPK",
-  },
-  {
-    id: "4",
-    no: 4,
-    kmkPenundaan: "KMK-P004/2024",
-    tahun: "2024",
-    tanggal: "2024-04-05",
-    nomor: "004/PND/2024",
-    uraian: "Penundaan pencairan DAU karena masalah administrasi daerah",
-  },
-  {
-    id: "5",
-    no: 5,
-    kmkPenundaan: "KMK-P005/2024",
-    tahun: "2024",
-    tanggal: "2024-05-15",
-    nomor: "005/PND/2024",
-    uraian: "Penundaan pencairan DAU akibat temuan penyimpangan anggaran",
-  },
-  {
-    id: "6",
-    no: 6,
-    kmkPenundaan: "KMK-P006/2024",
-    tahun: "2023",
-    tanggal: "2023-12-20",
-    nomor: "025/PND/2023",
-    uraian: "Penundaan pencairan DAU akhir tahun untuk evaluasi kinerja",
-  },
-];
+type ApiRow = {
+  kmktunda: string;
+  thangcabut: string | number;
+  no_kmkcabut: string;
+  tglcabut: string;
+  uraiancabut: string;
+};
 
 export function KmkPenundaanListModal({
   open,
   onOpenChange,
 }: KmkPenundaanListModalProps) {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["kmk-penundaan-list"],
+    queryFn: async () => {
+      const token = getAuthTokenFromCookie();
+      const headers: HeadersInit = { "Content-Type": "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch(backendPath("/transfer-daerah/dau/kmk/penundaan"), {
+        credentials: "include",
+        headers,
+        signal: AbortSignal.timeout(20000),
+      });
+      if (!res.ok) throw new Error("Failed to fetch KMK penundaan list");
+      const json = await res.json();
+      return (json?.data as ApiRow[]) ?? [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const rows = (data ?? []).map((d: ApiRow, idx: number) => ({
+    id: `${d.no_kmkcabut}-${idx}`,
+    no: idx + 1,
+    kmkPenundaan: d.kmktunda,
+    tahun: d.thangcabut,
+    tanggal: d.tglcabut,
+    nomor: d.no_kmkcabut,
+    uraian: d.uraiancabut,
+  }));
   const columns = [
     {
       accessorKey: "no",
@@ -148,7 +128,17 @@ export function KmkPenundaanListModal({
           <DialogTitle>List KMK Penundaan</DialogTitle>
         </DialogHeader>
         <div className="py-4">
-          <DataTable columns={columns} data={mockKmkPenundaanData} />
+          {isLoading ? (
+            <div className="text-center text-sm text-muted-foreground py-10">
+              Memuat data...
+            </div>
+          ) : isError ? (
+            <div className="text-center text-sm text-red-600 py-10">
+              Gagal memuat data KMK Penundaan.
+            </div>
+          ) : (
+            <DataTable columns={columns} data={rows} />
+          )}
         </div>
       </DialogContent>
     </Dialog>

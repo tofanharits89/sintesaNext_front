@@ -29,6 +29,9 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { KmkPenundaanListModal } from "./kmk-penundaan-list-modal";
+import { useQuery } from "@tanstack/react-query";
+import { backendPath } from "@/lib/backend";
+import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
 interface PencabutanModalProps {
   open: boolean;
@@ -52,14 +55,28 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
     (currentYear - i).toString()
   );
 
-  // Mock data for Dasar Penundaan options
-  const dasarPenundaanOptions = [
-    { value: "1", label: "PP No. 55 Tahun 2005" },
-    { value: "2", label: "PP No. 69 Tahun 2010" },
-    { value: "3", label: "Permendagri No. 37 Tahun 2007" },
-    { value: "4", label: "SE Mendagri No. 973.3/1659/SJ" },
-    { value: "5", label: "Lainnya" },
-  ];
+  // Fetch Dasar Penundaan options (no_kmk) from backend
+  const { data: dasarOptions, isLoading: dasarLoading, isError: dasarError } =
+    useQuery<{ no_kmk: string }[]>({
+      queryKey: ["dasar-penundaan-options"],
+      queryFn: async () => {
+        const token = getAuthTokenFromCookie();
+        const headers: HeadersInit = { "Content-Type": "application/json" };
+        if (token) headers.Authorization = `Bearer ${token}`;
+        const res = await fetch(
+          backendPath("/transfer-daerah/dau/kmk/penundaan/dasar"),
+          {
+            credentials: "include",
+            headers,
+            signal: AbortSignal.timeout(20000),
+          }
+        );
+        if (!res.ok) throw new Error("Failed to fetch Dasar Penundaan options");
+        const json = await res.json();
+        return (json?.data as { no_kmk: string }[]) ?? [];
+      },
+      staleTime: 5 * 60 * 1000,
+    });
 
   const handleSubmit = () => {
     // Handle form submission
@@ -109,13 +126,19 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
                   <SelectTrigger className="w-full">
                     <SelectValue
                       className="truncate"
-                      placeholder="Pilih dasar penundaan"
+                      placeholder={
+                        dasarLoading
+                          ? "Memuat..."
+                          : dasarError
+                          ? "Gagal memuat"
+                          : "Pilih dasar penundaan"
+                      }
                     />
                   </SelectTrigger>
                   <SelectContent>
-                    {dasarPenundaanOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
+                    {(dasarOptions ?? []).map((opt) => (
+                      <SelectItem key={opt.no_kmk} value={opt.no_kmk}>
+                        {opt.no_kmk}
                       </SelectItem>
                     ))}
                   </SelectContent>

@@ -27,19 +27,19 @@ export default function DAUPage() {
         <TabsList className="grid w-full grid-cols-3 bg-white dark:bg-slate-900 border shadow-sm p-2 h-15 gap-2 rounded-lg">
           <TabsTrigger
             value="data-kmk"
-            className="text-sm font-semibold data-[state=active]:bg-slate-500 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=inactive]:hover:bg-slate-100 data-[state=inactive]:hover:text-slate-600 transition-all duration-200 rounded-md py-3 px-4"
+            className="text-sm font-semibold data-[state=active]:bg-slate-800 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=inactive]:hover:bg-slate-100 data-[state=inactive]:hover:text-slate-600 transition-all duration-200 rounded-md py-3 px-4"
           >
             Data KMK
           </TabsTrigger>
           <TabsTrigger
             value="data-transaksi"
-            className="text-sm font-semibold data-[state=active]:bg-slate-500 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=inactive]:hover:bg-slate-100 data-[state=inactive]:hover:text-slate-600 transition-all duration-200 rounded-md py-3 px-4"
+            className="text-sm font-semibold data-[state=active]:bg-slate-800 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=inactive]:hover:bg-slate-100 data-[state=inactive]:hover:text-slate-600 transition-all duration-200 rounded-md py-3 px-4"
           >
             Data Transaksi
           </TabsTrigger>
           <TabsTrigger
             value="rekonsilisasi-data"
-            className="text-sm font-semibold data-[state=active]:bg-slate-500 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=inactive]:hover:bg-slate-100 data-[state=inactive]:hover:text-slate-600 transition-all duration-200 rounded-md py-3 px-4"
+            className="text-sm font-semibold data-[state=active]:bg-slate-800 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=inactive]:hover:bg-slate-100 data-[state=inactive]:hover:text-slate-600 transition-all duration-200 rounded-md py-3 px-4"
           >
             Rekonsilisasi Data
           </TabsTrigger>

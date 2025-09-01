@@ -146,9 +146,9 @@ export function DataKmkTab({}: DataKmkTabProps) {
         const getJenisBadgeClasses = (code: string) => {
           // Soft red for Potongan (1,4), soft blue for Penundaan/Cabut (2,3)
           if (code === "1" || code === "4") {
-            return "bg-red-100 text-red-700 border-red-200";
+            return "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800";
           }
-          return "bg-blue-100 text-blue-700 border-blue-200";
+          return "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800";
         };
         return (
           <div className="flex justify-center">
@@ -175,8 +175,8 @@ export function DataKmkTab({}: DataKmkTabProps) {
         const jenisCode = String(row.original?.jenis ?? "");
         const classes =
           jenisCode === "1" || jenisCode === "4"
-            ? "bg-red-100 text-red-700 border-red-200"
-            : "bg-blue-100 text-blue-700 border-blue-200";
+            ? "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800"
+            : "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800";
         return (
           <div className="flex justify-center">
             <Badge variant="outline" className={classes} title={kriteria}>
@@ -212,9 +212,9 @@ export function DataKmkTab({}: DataKmkTabProps) {
       cell: ({ row }: any) => (
         <div className="flex items-center justify-center gap-2">
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
-            className="h-8 w-8 p-0"
+            className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200"
             onClick={() => handleDataPotongan(row.original)}
             title={(() => {
               const jenis = String(row.original?.jenis ?? "");
@@ -233,8 +233,9 @@ export function DataKmkTab({}: DataKmkTabProps) {
             })()}
           </Button>
           <Button
-            variant="destructive"
+            variant="outline"
             size="sm"
+            className="bg-red-100 text-red-700 border-red-200 hover:bg-red-200"
             onClick={() => handleDelete(row.original)}
           >
             <Trash2 className="h-4 w-4" />
