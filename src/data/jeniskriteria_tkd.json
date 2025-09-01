@@ -1,0 +1,68 @@
+[
+  {
+    "id": "1",
+    "id_kriteria": "11",
+    "nm_kriteria": "Tunggakan PHLN",
+    "kunci": null
+  },
+  {
+    "id": "1",
+    "id_kriteria": "12",
+    "nm_kriteria": "Pinjaman PEN",
+    "kunci": null
+  },
+  {
+    "id": "1",
+    "id_kriteria": "13",
+    "nm_kriteria": "Intercept Earmarked",
+    "kunci": null
+  },
+  {
+    "id": "1",
+    "id_kriteria": "14",
+    "nm_kriteria": "Potongan Dana Transfer",
+    "kunci": null
+  },
+  {
+    "id": "1",
+    "id_kriteria": "15",
+    "nm_kriteria": "Sisa Hibah",
+    "kunci": null
+  },
+  {
+    "id": "2",
+    "id_kriteria": "21",
+    "nm_kriteria": "Penundaan Laporan",
+    "kunci": null
+  },
+  {
+    "id": "2",
+    "id_kriteria": "22",
+    "nm_kriteria": "Penundaan Belanja Wajib",
+    "kunci": null
+  },
+  {
+    "id": "4",
+    "id_kriteria": "41",
+    "nm_kriteria": "Potongan ADD 81",
+    "kunci": null
+  },
+  {
+    "id": "3",
+    "id_kriteria": "21",
+    "nm_kriteria": "Penundaan Laporan (Pencabutan)",
+    "kunci": "21"
+  },
+  {
+    "id": "3",
+    "id_kriteria": "22",
+    "nm_kriteria": "Penundaan Belanja Wajib (Pencabutan)",
+    "kunci": "22"
+  },
+  {
+    "id": "1",
+    "id_kriteria": "16",
+    "nm_kriteria": "Potongan JKN",
+    "kunci": null
+  }
+]

@@ -12,64 +12,18 @@ import {
 } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Download, Eye, Trash2 } from "lucide-react";
+import { Download, Trash2 } from "lucide-react";
 import { DataKmkModal } from "./modals/data-kmk-modal";
 import { PencabutanModal } from "./modals/pencabutan-modal";
 import { DataPotonganModal } from "./modals/data-potongan-modal";
 import { DeleteConfirmModal } from "./modals/delete-confirm-modal";
+import { useKmkDau } from "@/hooks/use-kmk-dau";
 
 interface DataKmkTabProps {
   // Remove the selectedYear prop as this tab will manage its own year state
 }
 
-// Mock data for KMK table
-const mockKmkData = [
-  {
-    id: "1",
-    no: 1,
-    tahun: "2024",
-    tanggalKmk: "2024-01-15",
-    nomorKmk: "KMK-001/2024",
-    uraian: "Alokasi DAU Triwulan I",
-    jenis: "1",
-    kriteria: "Tunggakan PHLN",
-    fileUrl: "/files/kmk-001-2024.pdf",
-  },
-  {
-    id: "2",
-    no: 2,
-    tahun: "2024",
-    tanggalKmk: "2024-04-15",
-    nomorKmk: "KMK-002/2024",
-    uraian: "Alokasi DAU Triwulan II",
-    jenis: "2",
-    kriteria: "Pinjaman PEN",
-    fileUrl: "/files/kmk-002-2024.pdf",
-  },
-  {
-    id: "3",
-    no: 3,
-    tahun: "2024",
-    tanggalKmk: "2024-07-10",
-    nomorKmk: "KMK-003/2024",
-    uraian: "Alokasi DAU Triwulan III",
-    jenis: "3",
-    kriteria: "Intercept Earmarked",
-    fileUrl: "/files/kmk-003-2024.pdf",
-  },
-  {
-    id: "4",
-    no: 4,
-    tahun: "2024",
-    tanggalKmk: "2024-10-05",
-    nomorKmk: "KMK-004/2024",
-    uraian: "Penyesuaian Alokasi DAU",
-    jenis: "4",
-    kriteria: "Potongan Dana Transfer",
-    fileUrl: "/files/kmk-004-2024.pdf",
-  },
-  // Add more mock data as needed
-];
+// Data is now fetched from backend via useKmkDau
 
 export function DataKmkTab({}: DataKmkTabProps) {
   const [selectedYear, setSelectedYear] = useState("2024");
@@ -78,6 +32,7 @@ export function DataKmkTab({}: DataKmkTabProps) {
   const [isDataPotonganModalOpen, setIsDataPotonganModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const { rows, isLoading, error } = useKmkDau(selectedYear);
 
   // Generate years from current year back to 2020
   const currentYear = new Date().getFullYear();
@@ -329,14 +284,16 @@ export function DataKmkTab({}: DataKmkTabProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <DataTable
-            columns={columns}
-            data={mockKmkData.filter((item) => item.tahun === selectedYear)}
-          />
+          {error ? (
+            <div className="text-sm text-red-600 mb-2">{String((error as any).message || error)}</div>
+          ) : null}
+          {isLoading ? (
+            <div className="text-sm text-muted-foreground">Memuat data KMK...</div>
+          ) : (
+            <DataTable columns={columns} data={rows} />
+          )}
         </CardContent>
       </Card>
-
-      {/* Modals */}
       <DataKmkModal
         open={isDataKmkModalOpen}
         onOpenChange={setIsDataKmkModalOpen}

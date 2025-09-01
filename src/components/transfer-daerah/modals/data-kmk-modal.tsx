@@ -29,6 +29,9 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
+import jenisKMK from "@/data/jeniskmk_tkd.json";
+import kriteriaKMK from "@/data/jeniskriteria_tkd.json";
+
 interface DataKmkModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -44,6 +47,7 @@ export function DataKmkModal({ open, onOpenChange }: DataKmkModalProps) {
     kriteria: "",
     file: null as File | null,
   });
+  const [datePopoverOpen, setDatePopoverOpen] = useState(false);
 
   const handleSubmit = () => {
     // Handle form submission
@@ -85,6 +89,18 @@ export function DataKmkModal({ open, onOpenChange }: DataKmkModalProps) {
     (currentYear - i).toString()
   );
 
+  const jenisOptions = (jenisKMK as { jenis: string; nmjenis: string }[]);
+  const kriteriaOptions = (kriteriaKMK as {
+    id: string; // jenis id
+    id_kriteria: string;
+    nm_kriteria: string;
+    kunci?: string | null;
+  }[]);
+
+  const filteredKriteriaOptions = formData.jenis
+    ? kriteriaOptions.filter((k) => k.id === formData.jenis)
+    : [];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl sm:max-w-4xl">
@@ -93,6 +109,82 @@ export function DataKmkModal({ open, onOpenChange }: DataKmkModalProps) {
         </DialogHeader>
         <div className="grid gap-6 py-4">
           {/* Form Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Jenis KMK */}
+            <div className="space-y-2">
+              <Label htmlFor="jenis">Jenis KMK</Label>
+              <Select
+                value={formData.jenis}
+                onValueChange={(value) => {
+                  const currentKriteria = kriteriaOptions.find(
+                    (k) => k.id_kriteria === formData.kriteria
+                  );
+                  const stillValid = currentKriteria?.id === value;
+                  setFormData({
+                    ...formData,
+                    jenis: value,
+                    kriteria: stillValid ? formData.kriteria : "",
+                  });
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue
+                    className="truncate"
+                    placeholder="Pilih jenis KMK"
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {jenisOptions.map((j) => {
+                    const label = `${j.jenis} - ${j.nmjenis}`;
+                    return (
+                      <SelectItem key={j.jenis} value={j.jenis} title={label}>
+                        <span className="truncate">{label}</span>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Kriteria KMK */}
+            <div className="space-y-2">
+              <Label htmlFor="kriteria">Kriteria KMK</Label>
+              <Select
+                value={formData.kriteria}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, kriteria: value })
+                }
+              >
+                <SelectTrigger className="w-full" disabled={!formData.jenis}>
+                  <SelectValue
+                    className="truncate"
+                    placeholder={
+                      formData.jenis
+                        ? "Pilih kriteria KMK"
+                        : "Pilih jenis KMK terlebih dahulu"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredKriteriaOptions.length === 0 ? (
+                    <SelectItem value="__none__" disabled title="Tidak ada kriteria">
+                      <span className="truncate">Tidak ada kriteria</span>
+                    </SelectItem>
+                  ) : null}
+                  {filteredKriteriaOptions.map((k) => {
+                    const label = `${k.id_kriteria} - ${k.nm_kriteria}`;
+                    return (
+                      <SelectItem key={`${k.id_kriteria}-${k.nm_kriteria}`} value={k.id_kriteria} title={label}>
+                        <span className="truncate">{label}</span>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Second row */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Tahun */}
             <div className="space-y-2">
@@ -119,7 +211,7 @@ export function DataKmkModal({ open, onOpenChange }: DataKmkModalProps) {
             {/* Tanggal KMK */}
             <div className="space-y-2">
               <Label>Tanggal KMK</Label>
-              <Popover>
+              <Popover modal={false} open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
@@ -134,13 +226,15 @@ export function DataKmkModal({ open, onOpenChange }: DataKmkModalProps) {
                       : "Pilih tanggal KMK"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent className="w-auto p-0" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
                   <Calendar
                     mode="single"
                     selected={formData.tanggalKmk}
-                    onSelect={(date) =>
-                      setFormData({ ...formData, tanggalKmk: date })
-                    }
+                    onSelect={(date) => {
+                      setFormData({ ...formData, tanggalKmk: date });
+                      // close popover after selecting a date
+                      setDatePopoverOpen(false);
+                    }}
                     initialFocus
                   />
                 </PopoverContent>
@@ -159,85 +253,6 @@ export function DataKmkModal({ open, onOpenChange }: DataKmkModalProps) {
                 placeholder="Masukkan nomor KMK"
                 className="w-full"
               />
-            </div>
-          </div>
-
-          {/* Second row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Jenis KMK */}
-            <div className="space-y-2">
-              <Label htmlFor="jenis">Jenis KMK</Label>
-              <Select
-                value={formData.jenis}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, jenis: value })
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue
-                    className="truncate"
-                    placeholder="Pilih jenis KMK"
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1" title="Kode 1 - Potongan SPM">
-                    <span className="truncate">Kode 1 - Potongan SPM</span>
-                  </SelectItem>
-                  <SelectItem value="2" title="Kode 2 - Penundaan">
-                    <span className="truncate">Kode 2 - Penundaan</span>
-                  </SelectItem>
-                  <SelectItem value="3" title="Kode 3 - Cabut Penundaan">
-                    <span className="truncate">Kode 3 - Cabut Penundaan</span>
-                  </SelectItem>
-                  <SelectItem value="4" title="Kode 4 - Potongan ADD">
-                    <span className="truncate">Kode 4 - Potongan ADD</span>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Kriteria KMK */}
-            <div className="space-y-2">
-              <Label htmlFor="kriteria">Kriteria KMK</Label>
-              <Select
-                value={formData.kriteria}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, kriteria: value })
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue
-                    className="truncate"
-                    placeholder="Pilih kriteria KMK"
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Tunggakan PHLN" title="Tunggakan PHLN">
-                    <span className="truncate">Tunggakan PHLN</span>
-                  </SelectItem>
-                  <SelectItem value="Pinjaman PEN" title="Pinjaman PEN">
-                    <span className="truncate">Pinjaman PEN</span>
-                  </SelectItem>
-                  <SelectItem
-                    value="Intercept Earmarked"
-                    title="Intercept Earmarked"
-                  >
-                    <span className="truncate">Intercept Earmarked</span>
-                  </SelectItem>
-                  <SelectItem
-                    value="Potongan Dana Transfer"
-                    title="Potongan Dana Transfer"
-                  >
-                    <span className="truncate">Potongan Dana Transfer</span>
-                  </SelectItem>
-                  <SelectItem value="Sisa Hibah" title="Sisa Hibah">
-                    <span className="truncate">Sisa Hibah</span>
-                  </SelectItem>
-                  <SelectItem value="Potongan JKN" title="Potongan JKN">
-                    <span className="truncate">Potongan JKN</span>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
 

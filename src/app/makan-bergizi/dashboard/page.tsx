@@ -1,78 +1,39 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
+import dynamic from "next/dynamic";
 import { QuickStatCard } from "@/components/mbg/QuickStatCard";
-import { MapSearchCard } from "@/components/mbg/MapSearchCard";
 import { StatsRankingCard } from "@/components/mbg/StatsRankingCard";
 import { PlaceholderChartCard } from "@/components/mbg/PlaceholderChartCard";
+import { QueryErrorBoundary } from "@/components/ui/query-error-boundary";
 import {
   QuickStatCardSkeleton,
   MapSearchCardSkeleton,
   StatsRankingCardSkeleton,
   ChartCardSkeleton,
 } from "@/components/ui/dashboard-skeletons";
+import { useQuickStats } from "@/features/mbg/hooks/useQuickStats";
+import { useRankings } from "@/features/mbg/hooks/useRankings";
+import { useChartsReady } from "@/features/mbg/hooks/useChartsReady";
+
+const MapSearch = dynamic(
+  () =>
+    import("@/features/mbg/components/MapSearch").then((m) => ({
+      default: m.MapSearch,
+    })),
+  {
+    ssr: false,
+    loading: () => <MapSearchCardSkeleton className="h-96" />,
+  }
+);
 
 export default function DashboardMBGPage() {
-  // Loading states for different sections
-  const [isQuickStatsLoading, setIsQuickStatsLoading] = useState(true);
-  const [isMapLoading, setIsMapLoading] = useState(true);
-  const [isRankingLoading, setIsRankingLoading] = useState(true);
-  const [isChartsLoading, setIsChartsLoading] = useState(true);
+  // Replace simulated timers with data hooks preserving the same UX timings
+  const { data: quickStatsData, isLoading: isQuickStatsLoading } = useQuickStats();
+  const { data: rankingsData, isLoading: isRankingLoading } = useRankings();
+  const { isLoading: isChartsLoading } = useChartsReady();
 
-  // Simulate data loading with different timing for each section
-  useEffect(() => {
-    // Quick stats load first (1.5s)
-    const quickStatsTimer = setTimeout(() => {
-      setIsQuickStatsLoading(false);
-    }, 1500);
-
-    // Map loads second (2s)
-    const mapTimer = setTimeout(() => {
-      setIsMapLoading(false);
-    }, 2000);
-
-    // Ranking loads third (2.5s)
-    const rankingTimer = setTimeout(() => {
-      setIsRankingLoading(false);
-    }, 2500);
-
-    // Charts load last (3s)
-    const chartsTimer = setTimeout(() => {
-      setIsChartsLoading(false);
-    }, 3000);
-
-    return () => {
-      clearTimeout(quickStatsTimer);
-      clearTimeout(mapTimer);
-      clearTimeout(rankingTimer);
-      clearTimeout(chartsTimer);
-    };
-  }, []);
-
-  // Sample quick stats. Replace with real data hooks later.
-  const quickStats = [
-    { label: "Total Alokasi", value: "Rp 1.250 M", trend: "+5.2%", variant: "up" as const },
-    { label: "Total Realisasi", value: "Rp 980 M", trend: "+3.1%", variant: "up" as const },
-    { label: "Serapan (%)", value: "78,4%", trend: "+1,0%", variant: "up" as const },
-    { label: "Penerima Manfaat", value: "2.450.120", trend: "-0,3%", variant: "down" as const },
-    { label: "Kab/Kota Aktif", value: "415", trend: "+2", variant: "neutral" as const },
-  ];
-
-  const top5 = [
-    { name: "DKI Jakarta", value: 125_000 },
-    { name: "Jawa Barat", value: 112_000 },
-    { name: "Jawa Timur", value: 97_500 },
-    { name: "Sumatera Utara", value: 84_200 },
-    { name: "Riau", value: 70_900 },
-  ];
-
-  const bottom5 = [
-    { name: "Maluku Utara", value: 12_300 },
-    { name: "Gorontalo", value: 13_100 },
-    { name: "Sulawesi Barat", value: 14_900 },
-    { name: "Papua Barat Daya", value: 15_200 },
-    { name: "Papua Pegunungan", value: 16_500 },
-  ];
+  const quickStats = useMemo(() => quickStatsData ?? [], [quickStatsData]);
 
   return (
     <div className="space-y-6">
@@ -88,8 +49,14 @@ export default function DashboardMBGPage() {
             <QuickStatCardSkeleton key={`skeleton-${i}`} />
           ))
         ) : (
-          quickStats.map((s, i) => (
-            <QuickStatCard key={i} label={s.label} value={s.value} trend={s.trend} trendVariant={s.variant} />
+          quickStats.map((s: any, i: number) => (
+            <QuickStatCard
+              key={i}
+              label={s.label}
+              value={String(s.value)}
+              trend={s.trend}
+              trendVariant={(s.variant as any) ?? "neutral"}
+            />
           ))
         )}
       </div>
@@ -97,17 +64,19 @@ export default function DashboardMBGPage() {
       {/* Row 2: Map (75%) + Stats (25%) */}
       <div className="grid gap-4 grid-cols-1 xl:grid-cols-4">
         <div className="xl:col-span-3">
-          {isMapLoading ? (
-            <MapSearchCardSkeleton className="h-96" />
-          ) : (
-            <MapSearchCard />
-          )}
+          <QueryErrorBoundary>
+            <MapSearch />
+          </QueryErrorBoundary>
         </div>
         <div className="xl:col-span-1">
           {isRankingLoading ? (
             <StatsRankingCardSkeleton />
           ) : (
-            <StatsRankingCard title="Statistik Wilayah" topItems={top5} bottomItems={bottom5} />
+            <StatsRankingCard
+              title="Statistik Wilayah"
+              topItems={rankingsData?.top5 ?? []}
+              bottomItems={rankingsData?.bottom5 ?? []}
+            />
           )}
         </div>
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,8 +14,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { ResetButton } from "@/components/ui/reset-button";
 import { RekamDataTransaksiModal } from "./modals/rekam-data-transaksi-modal";
 import { KertasKerjaModal } from "./modals/kertas-kerja-modal";
-import kppnData from "@/data/kdkppn.json";
-import kabkotaData from "@/data/kdlokasi.json";
+import tkdData from "@/data/kdkppn_tkd.json";
 
 interface DataTransaksiTabProps {
   // Remove selectedYear prop as this tab will manage its own year state
@@ -28,8 +27,8 @@ const mockTransaksiData = [
     no: 1,
     tahun: "2024",
     bulan: "Januari",
-    kppn: "KPPN Jakarta I",
-    kabkota: "Jakarta Pusat",
+    kppn: "001 - BANDA ACEH",
+    kabkota: "0601 - Kab. Aceh Besar",
     alokasi: 5000000000,
     nilaiPotongan: 250000000,
   },
@@ -38,12 +37,21 @@ const mockTransaksiData = [
     no: 2,
     tahun: "2024",
     bulan: "Februari",
-    kppn: "KPPN Jakarta II",
-    kabkota: "Jakarta Selatan",
+    kppn: "003 - MEULABOH",
+    kabkota: "0606 - Kab. Aceh Barat",
     alokasi: 4500000000,
     nilaiPotongan: 180000000,
   },
-  // Add more mock data as needed
+  {
+    id: "3",
+    no: 3,
+    tahun: "2024",
+    bulan: "Maret",
+    kppn: "002 - LANGSA",
+    kabkota: "0604 - Kab. Aceh Timur",
+    alokasi: 4200000000,
+    nilaiPotongan: 150000000,
+  },
 ];
 
 export function DataTransaksiTab({}: DataTransaksiTabProps) {
@@ -54,6 +62,31 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
   const [isRekamDataModalOpen, setIsRekamDataModalOpen] = useState(false);
   const [isKertasKerjaModalOpen, setIsKertasKerjaModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+
+  // Build unique KPPN list from TKD mapping
+  const uniqueKppn = Array.from(
+    new Map(
+      (tkdData as Array<any>).map((d) => [
+        d.kdkppn,
+        { kdkppn: d.kdkppn, nmkppn: d.nmkppn },
+      ])
+    ).values()
+  ).sort((a, b) => a.kdkppn.localeCompare(b.kdkppn));
+
+  // Hierarchical: Kab/Kota depends on selected KPPN from TKD mapping
+  const filteredKabKotaOptions = selectedKppn
+    ? (tkdData as Array<any>)
+        .filter(
+          (row) =>
+            row.kdkppn === selectedKppn && !String(row.kdkabkota).endsWith("00")
+        )
+        .sort((a, b) => String(a.kdkabkota).localeCompare(String(b.kdkabkota)))
+    : [];
+
+  // Clear Kab/Kota when KPPN changes
+  useEffect(() => {
+    setSelectedKabKota("");
+  }, [selectedKppn]);
 
   // Generate years from current year back to 2020
   const currentYear = new Date().getFullYear();
@@ -206,12 +239,37 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
   ];
 
   // Filter data based on selections
+  const normalizeKppn = (s: string) =>
+    (s || "")
+      .toLowerCase()
+      .replace(/^kppn\s+/, "")
+      .trim();
+  const normalizeKabKota = (s: string) =>
+    (s || "")
+      .toLowerCase()
+      .replace(/^kota\s+/, "")
+      .replace(/^kab\.\s+/, "")
+      .replace(/^provinsi\s+/, "")
+      .trim();
+
+  const selectedKppnName = selectedKppn
+    ? uniqueKppn.find((k) => k.kdkppn === selectedKppn)?.nmkppn || ""
+    : "";
+  const selectedKabKotaName = selectedKabKota
+    ? (tkdData as Array<any>).find((row) => row.kdkabkota === selectedKabKota)
+        ?.nmkabkota || ""
+    : "";
+
   const filteredData = mockTransaksiData.filter((item) => {
     return (
       item.tahun === selectedYear &&
       (selectedMonth === "" || item.bulan === selectedMonth) &&
-      (selectedKppn === "" || item.kppn.includes(selectedKppn)) &&
-      (selectedKabKota === "" || item.kabkota.includes(selectedKabKota))
+      (selectedKppn === "" ||
+        normalizeKppn(item.kppn).includes(normalizeKppn(selectedKppnName))) &&
+      (selectedKabKota === "" ||
+        normalizeKabKota(item.kabkota).includes(
+          normalizeKabKota(selectedKabKotaName)
+        ))
     );
   });
 
@@ -266,13 +324,15 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
                   <SelectValue placeholder="Pilih KPPN" />
                 </SelectTrigger>
                 <SelectContent>
-                  {kppnData.map((kppn) => (
+                  {uniqueKppn.map((kppn) => (
                     <SelectItem
                       key={kppn.kdkppn}
-                      value={kppn.nmkppn}
-                      title={kppn.nmkppn}
+                      value={kppn.kdkppn}
+                      title={`${kppn.kdkppn} - ${kppn.nmkppn}`}
                     >
-                      <span className="truncate">{kppn.nmkppn}</span>
+                      <span className="truncate">
+                        {kppn.kdkppn} - {kppn.nmkppn}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -285,17 +345,25 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
                 value={selectedKabKota}
                 onValueChange={setSelectedKabKota}
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih Kab/Kota" />
+                <SelectTrigger className="w-full" disabled={!selectedKppn}>
+                  <SelectValue
+                    placeholder={
+                      selectedKppn
+                        ? "Pilih Kab/Kota"
+                        : "Pilih KPPN terlebih dahulu"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  {kabkotaData.map((lokasi) => (
+                  {filteredKabKotaOptions.map((lokasi) => (
                     <SelectItem
-                      key={lokasi.kdlokasi}
-                      value={lokasi.nmlokasi}
-                      title={lokasi.nmlokasi}
+                      key={lokasi.kdkabkota}
+                      value={lokasi.kdkabkota}
+                      title={`${lokasi.kdkabkota} - ${lokasi.nmkabkota}`}
                     >
-                      <span className="truncate">{lokasi.nmlokasi}</span>
+                      <span className="truncate">
+                        {lokasi.kdkabkota} - {lokasi.nmkabkota}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -28,8 +28,7 @@ import {
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import kppnData from "@/data/kdkppn.json";
-import kabkotaData from "@/data/kdlokasi.json";
+import tkdData from "@/data/kdkppn_tkd.json";
 
 interface RekamDataTransaksiModalProps {
   open: boolean;
@@ -54,6 +53,8 @@ export function RekamDataTransaksiModal({
     keterangan: "",
     buktiTransaksi: null as File | null,
   });
+
+  const [datePopoverOpen, setDatePopoverOpen] = useState(false);
 
   const handleSubmit = () => {
     // Handle form submission
@@ -101,6 +102,32 @@ export function RekamDataTransaksiModal({
     "Pengembalian Dana",
     "Lain-lain",
   ];
+
+  // Build unique KPPN list from TKD mapping
+  const uniqueKppn = Array.from(
+    new Map(
+      (tkdData as Array<any>).map((d) => [
+        d.kdkppn,
+        { kdkppn: d.kdkppn, nmkppn: d.nmkppn },
+      ])
+    ).values()
+  ).sort((a, b) => a.kdkppn.localeCompare(b.kdkppn));
+
+  // Hierarchical: Kab/Kota depends on selected KPPN from TKD mapping
+  const filteredKabKotaOptions = formData.kppn
+    ? (tkdData as Array<any>)
+        .filter(
+          (row) =>
+            row.kdkppn === formData.kppn &&
+            !String(row.kdkabkota).endsWith("00")
+        )
+        .sort((a, b) => String(a.kdkabkota).localeCompare(String(b.kdkabkota)))
+    : [];
+
+  // Clear Kab/Kota when KPPN changes
+  useEffect(() => {
+    setFormData((prev) => ({ ...prev, kabkota: "" }));
+  }, [formData.kppn]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -159,13 +186,15 @@ export function RekamDataTransaksiModal({
                   <SelectValue placeholder="Pilih KPPN" />
                 </SelectTrigger>
                 <SelectContent>
-                  {kppnData.map((kppn) => (
+                  {uniqueKppn.map((kppn) => (
                     <SelectItem
                       key={kppn.kdkppn}
-                      value={kppn.nmkppn}
-                      title={kppn.nmkppn}
+                      value={kppn.kdkppn}
+                      title={`${kppn.kdkppn} - ${kppn.nmkppn}`}
                     >
-                      <span className="truncate">{kppn.nmkppn}</span>
+                      <span className="truncate">
+                        {kppn.kdkppn} - {kppn.nmkppn}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -180,17 +209,25 @@ export function RekamDataTransaksiModal({
                   setFormData({ ...formData, kabkota: value })
                 }
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih Kab/Kota" />
+                <SelectTrigger disabled={!formData.kppn}>
+                  <SelectValue
+                    placeholder={
+                      formData.kppn
+                        ? "Pilih Kab/Kota"
+                        : "Pilih KPPN terlebih dahulu"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  {kabkotaData.map((lokasi) => (
+                  {filteredKabKotaOptions.map((lokasi) => (
                     <SelectItem
-                      key={lokasi.kdlokasi}
-                      value={lokasi.nmlokasi}
-                      title={lokasi.nmlokasi}
+                      key={lokasi.kdkabkota}
+                      value={lokasi.kdkabkota}
+                      title={`${lokasi.kdkabkota} - ${lokasi.nmkabkota}`}
                     >
-                      <span className="truncate">{lokasi.nmlokasi}</span>
+                      <span className="truncate">
+                        {lokasi.kdkabkota} - {lokasi.nmkabkota}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -201,7 +238,11 @@ export function RekamDataTransaksiModal({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Tanggal Transaksi</Label>
-              <Popover>
+              <Popover
+                modal={false}
+                open={datePopoverOpen}
+                onOpenChange={setDatePopoverOpen}
+              >
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
@@ -216,13 +257,18 @@ export function RekamDataTransaksiModal({
                       : "Pilih tanggal"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent
+                  className="w-auto p-0"
+                  align="start"
+                  onOpenAutoFocus={(e) => e.preventDefault()}
+                >
                   <Calendar
                     mode="single"
                     selected={formData.tanggalTransaksi}
-                    onSelect={(date) =>
-                      setFormData({ ...formData, tanggalTransaksi: date })
-                    }
+                    onSelect={(date) => {
+                      setFormData({ ...formData, tanggalTransaksi: date });
+                      setDatePopoverOpen(false);
+                    }}
                     initialFocus
                   />
                 </PopoverContent>

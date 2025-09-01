@@ -44,6 +44,7 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
     uraianKmk: "",
   });
   const [isKmkPenundaanListOpen, setIsKmkPenundaanListOpen] = useState(false);
+  const [datePopoverOpen, setDatePopoverOpen] = useState(false);
 
   // Generate years from current year back to 2020
   const currentYear = new Date().getFullYear();
@@ -166,7 +167,11 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
               {/* Tanggal KMK */}
               <div className="space-y-2">
                 <Label>Tanggal KMK</Label>
-                <Popover>
+                <Popover
+                  modal={false}
+                  open={datePopoverOpen}
+                  onOpenChange={setDatePopoverOpen}
+                >
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -181,13 +186,19 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
                         : "Pilih tanggal KMK"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
+                  <PopoverContent
+                    className="w-auto p-0"
+                    align="start"
+                    onOpenAutoFocus={(e) => e.preventDefault()}
+                  >
                     <Calendar
                       mode="single"
                       selected={formData.tanggalKmk}
-                      onSelect={(date) =>
-                        setFormData({ ...formData, tanggalKmk: date })
-                      }
+                      onSelect={(date) => {
+                        setFormData({ ...formData, tanggalKmk: date });
+                        // close popover after selecting a date
+                        setDatePopoverOpen(false);
+                      }}
                       initialFocus
                     />
                   </PopoverContent>

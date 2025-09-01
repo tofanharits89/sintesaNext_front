@@ -1,0 +1,18 @@
+[
+  {
+    "jenis": "1",
+    "nmjenis": "Potongan SPM"
+  },
+  {
+    "jenis": "2",
+    "nmjenis": "Penundaan"
+  },
+  {
+    "jenis": "3",
+    "nmjenis": "Cabut Penundaan"
+  },
+  {
+    "jenis": "4",
+    "nmjenis": "Potongan ADD"
+  }
+]

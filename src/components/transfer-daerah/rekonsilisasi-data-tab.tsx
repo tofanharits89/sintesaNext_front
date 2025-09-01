@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -12,8 +12,7 @@ import {
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { ResetButton } from "@/components/ui/reset-button";
-import kppnData from "@/data/kdkppn.json";
-import kabkotaData from "@/data/kdlokasi.json";
+import tkdData from "@/data/kdkppn_tkd.json";
 
 interface RekonsiliasiDataTabProps {
   // Remove selectedYear prop as this tab will manage its own year state
@@ -26,8 +25,8 @@ const mockRekonsiliasiData = [
     no: 1,
     tahun: "2024",
     bulan: "Januari",
-    kppn: "KPPN Jakarta I",
-    kabkota: "Jakarta Pusat",
+    kppn: "001 - BANDA ACEH",
+    kabkota: "0601 - Kab. Aceh Besar",
     status: "Selesai",
   },
   {
@@ -35,8 +34,8 @@ const mockRekonsiliasiData = [
     no: 2,
     tahun: "2024",
     bulan: "Februari",
-    kppn: "KPPN Jakarta II",
-    kabkota: "Jakarta Selatan",
+    kppn: "003 - MEULABOH",
+    kabkota: "0606 - Kab. Aceh Barat",
     status: "Pending",
   },
   {
@@ -44,11 +43,10 @@ const mockRekonsiliasiData = [
     no: 3,
     tahun: "2024",
     bulan: "Maret",
-    kppn: "KPPN Bandung I",
-    kabkota: "Bandung",
+    kppn: "002 - LANGSA",
+    kabkota: "0604 - Kab. Aceh Timur",
     status: "Dalam Proses",
   },
-  // Add more mock data as needed
 ];
 
 export function RekonsiliasiDataTab({}: RekonsiliasiDataTabProps) {
@@ -57,6 +55,31 @@ export function RekonsiliasiDataTab({}: RekonsiliasiDataTabProps) {
   const [selectedKppn, setSelectedKppn] = useState("");
   const [selectedKabKota, setSelectedKabKota] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
+
+  // Build unique KPPN list from TKD mapping
+  const uniqueKppn = Array.from(
+    new Map(
+      (tkdData as Array<any>).map((d) => [
+        d.kdkppn,
+        { kdkppn: d.kdkppn, nmkppn: d.nmkppn },
+      ])
+    ).values()
+  ).sort((a, b) => a.kdkppn.localeCompare(b.kdkppn));
+
+  // Hierarchical: Kab/Kota depends on selected KPPN from TKD mapping
+  const filteredKabKotaOptions = selectedKppn
+    ? (tkdData as Array<any>)
+        .filter(
+          (row) =>
+            row.kdkppn === selectedKppn && !String(row.kdkabkota).endsWith("00")
+        )
+        .sort((a, b) => String(a.kdkabkota).localeCompare(String(b.kdkabkota)))
+    : [];
+
+  // Clear Kab/Kota when KPPN changes
+  useEffect(() => {
+    setSelectedKabKota("");
+  }, [selectedKppn]);
 
   // Generate years from current year back to 2020
   const currentYear = new Date().getFullYear();
@@ -177,12 +200,37 @@ export function RekonsiliasiDataTab({}: RekonsiliasiDataTabProps) {
   ];
 
   // Filter data based on selections
+  const normalizeKppn = (s: string) =>
+    (s || "")
+      .toLowerCase()
+      .replace(/^kppn\s+/, "")
+      .trim();
+  const normalizeKabKota = (s: string) =>
+    (s || "")
+      .toLowerCase()
+      .replace(/^kota\s+/, "")
+      .replace(/^kab\.?\s+/, "")
+      .replace(/^provinsi\s+/, "")
+      .trim();
+
+  const selectedKppnName = selectedKppn
+    ? uniqueKppn.find((k) => k.kdkppn === selectedKppn)?.nmkppn || ""
+    : "";
+  const selectedKabKotaName = selectedKabKota
+    ? (tkdData as Array<any>).find((row) => row.kdkabkota === selectedKabKota)
+        ?.nmkabkota || ""
+    : "";
+
   const filteredData = mockRekonsiliasiData.filter((item) => {
     return (
       item.tahun === selectedYear &&
       (selectedMonth === "" || item.bulan === selectedMonth) &&
-      (selectedKppn === "" || item.kppn.includes(selectedKppn)) &&
-      (selectedKabKota === "" || item.kabkota.includes(selectedKabKota)) &&
+      (selectedKppn === "" ||
+        normalizeKppn(item.kppn).includes(normalizeKppn(selectedKppnName))) &&
+      (selectedKabKota === "" ||
+        normalizeKabKota(item.kabkota).includes(
+          normalizeKabKota(selectedKabKotaName)
+        )) &&
       (selectedStatus === "" || item.status === selectedStatus)
     );
   });
@@ -238,13 +286,15 @@ export function RekonsiliasiDataTab({}: RekonsiliasiDataTabProps) {
                   <SelectValue placeholder="Pilih KPPN" />
                 </SelectTrigger>
                 <SelectContent>
-                  {kppnData.map((kppn) => (
+                  {uniqueKppn.map((kppn) => (
                     <SelectItem
                       key={kppn.kdkppn}
-                      value={kppn.nmkppn}
-                      title={kppn.nmkppn}
+                      value={kppn.kdkppn}
+                      title={`${kppn.kdkppn} - ${kppn.nmkppn}`}
                     >
-                      <span className="truncate">{kppn.nmkppn}</span>
+                      <span className="truncate">
+                        {kppn.kdkppn} - {kppn.nmkppn}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -257,17 +307,25 @@ export function RekonsiliasiDataTab({}: RekonsiliasiDataTabProps) {
                 value={selectedKabKota}
                 onValueChange={setSelectedKabKota}
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih Kab/Kota" />
+                <SelectTrigger className="w-full" disabled={!selectedKppn}>
+                  <SelectValue
+                    placeholder={
+                      selectedKppn
+                        ? "Pilih Kab/Kota"
+                        : "Pilih KPPN terlebih dahulu"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  {kabkotaData.map((lokasi) => (
+                  {filteredKabKotaOptions.map((lokasi) => (
                     <SelectItem
-                      key={lokasi.kdlokasi}
-                      value={lokasi.nmlokasi}
-                      title={lokasi.nmlokasi}
+                      key={lokasi.kdkabkota}
+                      value={lokasi.kdkabkota}
+                      title={`${lokasi.kdkabkota} - ${lokasi.nmkabkota}`}
                     >
-                      <span className="truncate">{lokasi.nmlokasi}</span>
+                      <span className="truncate">
+                        {lokasi.kdkabkota} - {lokasi.nmkabkota}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -50,6 +50,7 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  onInteractOutside,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
@@ -65,6 +66,21 @@ function DialogContent({
           className?.includes("flex") ? "" : "grid",
           className
         )}
+        onInteractOutside={(e) => {
+          try {
+            const target = (e.target ?? (e as any).originalEvent?.target) as Node | null
+            if (target) {
+              const popovers = document.querySelectorAll('[data-slot="popover-content"]')
+              for (const el of Array.from(popovers)) {
+                if (el.contains(target)) {
+                  e.preventDefault()
+                  return
+                }
+              }
+            }
+          } catch {}
+          onInteractOutside?.(e)
+        }}
         {...props}
       >
         {children}
