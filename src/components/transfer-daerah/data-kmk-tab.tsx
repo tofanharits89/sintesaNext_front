@@ -12,10 +12,11 @@ import {
 } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Download, Trash2 } from "lucide-react";
+import { Download, Trash2, Scissors, PauseCircle } from "lucide-react";
 import { DataKmkModal } from "./modals/data-kmk-modal";
 import { PencabutanModal } from "./modals/pencabutan-modal";
-import { DataPotonganModal } from "./modals/data-potongan-modal";
+import { DataPenundaanModal } from "./modals/data-penundaan-modal";
+import { DataPemotonganModal } from "./modals/data-pemotongan-modal";
 import { DeleteConfirmModal } from "./modals/delete-confirm-modal";
 import { useKmkDau } from "@/hooks/use-kmk-dau";
 
@@ -26,23 +27,34 @@ interface DataKmkTabProps {
 // Data is now fetched from backend via useKmkDau
 
 export function DataKmkTab({}: DataKmkTabProps) {
-  const [selectedYear, setSelectedYear] = useState("2024");
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState(currentYear.toString());
   const [isDataKmkModalOpen, setIsDataKmkModalOpen] = useState(false);
   const [isPencabutanModalOpen, setIsPencabutanModalOpen] = useState(false);
-  const [isDataPotonganModalOpen, setIsDataPotonganModalOpen] = useState(false);
+  const [isDataPenundaanModalOpen, setIsDataPenundaanModalOpen] =
+    useState(false);
+  const [isDataPemotonganModalOpen, setIsDataPemotonganModalOpen] =
+    useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const { rows, isLoading, error } = useKmkDau(selectedYear);
 
   // Generate years from current year back to 2020
-  const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear - 2019 }, (_, i) =>
     (currentYear - i).toString()
   );
 
   const handleDataPotongan = (item: any) => {
     setSelectedItem(item);
-    setIsDataPotonganModalOpen(true);
+    const jenis = String(item?.jenis ?? "");
+    if (jenis === "1" || jenis === "4") {
+      setIsDataPemotonganModalOpen(true);
+    } else if (jenis === "2" || jenis === "3") {
+      setIsDataPenundaanModalOpen(true);
+    } else {
+      // default to penundaan to be safe
+      setIsDataPenundaanModalOpen(true);
+    }
   };
 
   const handleDelete = (item: any) => {
@@ -103,7 +115,7 @@ export function DataKmkTab({}: DataKmkTabProps) {
       ),
       cell: ({ row }: any) => (
         <div
-          className="text-center max-w-[200px] truncate mx-auto"
+          className="text-center max-w-[320px] truncate mx-auto"
           title={row.getValue("uraian")}
         >
           {row.getValue("uraian")}
@@ -131,24 +143,18 @@ export function DataKmkTab({}: DataKmkTabProps) {
               return `Kode ${code}`;
           }
         };
-        const getJenisVariant = (code: string) => {
-          switch (code) {
-            case "1":
-              return "destructive"; // Red for Potongan SPM
-            case "2":
-              return "secondary"; // Gray for Penundaan
-            case "3":
-              return "default"; // Blue for Cabut Penundaan
-            case "4":
-              return "outline"; // Outline for Potongan ADD
-            default:
-              return "secondary";
+        const getJenisBadgeClasses = (code: string) => {
+          // Soft red for Potongan (1,4), soft blue for Penundaan/Cabut (2,3)
+          if (code === "1" || code === "4") {
+            return "bg-red-100 text-red-700 border-red-200";
           }
+          return "bg-blue-100 text-blue-700 border-blue-200";
         };
         return (
           <div className="flex justify-center">
             <Badge
-              variant={getJenisVariant(jenisCode)}
+              variant="outline"
+              className={getJenisBadgeClasses(jenisCode)}
               title={`Kode ${jenisCode} - ${getJenisDescription(jenisCode)}`}
             >
               <span className="truncate">
@@ -166,27 +172,14 @@ export function DataKmkTab({}: DataKmkTabProps) {
       ),
       cell: ({ row }: any) => {
         const kriteria = row.getValue("kriteria");
-        const getKriteriaVariant = (kriteria: string) => {
-          switch (kriteria) {
-            case "Tunggakan PHLN":
-              return "destructive";
-            case "Pinjaman PEN":
-              return "default";
-            case "Intercept Earmarked":
-              return "secondary";
-            case "Potongan Dana Transfer":
-              return "outline";
-            case "Sisa Hibah":
-              return "default";
-            case "Potongan JKN":
-              return "destructive";
-            default:
-              return "secondary";
-          }
-        };
+        const jenisCode = String(row.original?.jenis ?? "");
+        const classes =
+          jenisCode === "1" || jenisCode === "4"
+            ? "bg-red-100 text-red-700 border-red-200"
+            : "bg-blue-100 text-blue-700 border-blue-200";
         return (
           <div className="flex justify-center">
-            <Badge variant={getKriteriaVariant(kriteria)} title={kriteria}>
+            <Badge variant="outline" className={classes} title={kriteria}>
               <span className="truncate">{kriteria}</span>
             </Badge>
           </div>
@@ -219,11 +212,25 @@ export function DataKmkTab({}: DataKmkTabProps) {
       cell: ({ row }: any) => (
         <div className="flex items-center justify-center gap-2">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
+            className="h-8 w-8 p-0"
             onClick={() => handleDataPotongan(row.original)}
+            title={(() => {
+              const jenis = String(row.original?.jenis ?? "");
+              return jenis === "1" || jenis === "4"
+                ? "Data Pemotongan"
+                : "Data Penundaan";
+            })()}
           >
-            Data Potongan
+            {(() => {
+              const jenis = String(row.original?.jenis ?? "");
+              return jenis === "1" || jenis === "4" ? (
+                <Scissors className="h-4 w-4" />
+              ) : (
+                <PauseCircle className="h-4 w-4" />
+              );
+            })()}
           </Button>
           <Button
             variant="destructive"
@@ -285,10 +292,14 @@ export function DataKmkTab({}: DataKmkTabProps) {
         </CardHeader>
         <CardContent>
           {error ? (
-            <div className="text-sm text-red-600 mb-2">{String((error as any).message || error)}</div>
+            <div className="text-sm text-red-600 mb-2">
+              {String((error as any).message || error)}
+            </div>
           ) : null}
           {isLoading ? (
-            <div className="text-sm text-muted-foreground">Memuat data KMK...</div>
+            <div className="text-sm text-muted-foreground">
+              Memuat data KMK...
+            </div>
           ) : (
             <DataTable columns={columns} data={rows} />
           )}
@@ -302,9 +313,14 @@ export function DataKmkTab({}: DataKmkTabProps) {
         open={isPencabutanModalOpen}
         onOpenChange={setIsPencabutanModalOpen}
       />
-      <DataPotonganModal
-        open={isDataPotonganModalOpen}
-        onOpenChange={setIsDataPotonganModalOpen}
+      <DataPenundaanModal
+        open={isDataPenundaanModalOpen}
+        onOpenChange={setIsDataPenundaanModalOpen}
+        data={selectedItem}
+      />
+      <DataPemotonganModal
+        open={isDataPemotonganModalOpen}
+        onOpenChange={setIsDataPemotonganModalOpen}
         data={selectedItem}
       />
       <DeleteConfirmModal
