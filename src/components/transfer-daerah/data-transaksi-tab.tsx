@@ -65,7 +65,7 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
     ? (tkdData as Array<any>)
         .filter(
           (row) =>
-            row.kdkppn === selectedKppn && !String(row.kdkabkota).endsWith("00")
+            row.kdkppn === selectedKppn
         )
         .sort((a, b) => String(a.kdkabkota).localeCompare(String(b.kdkabkota)))
     : [];

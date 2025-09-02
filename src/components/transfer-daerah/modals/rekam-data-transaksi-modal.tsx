@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -18,68 +18,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
-import tkdData from "@/data/kdkppn_tkd.json";
+import { VirtualizedSelect } from "@/components/ui/virtualized-select";
+import { useKmkDau } from "@/hooks/use-kmk-dau";
+import { useDasarPenundaanOptions } from "@/hooks/use-dasar-penundaan";
+import { useKmkPemotongan } from "@/hooks/use-kmk-pemotongan";
+import { useJenisKmkOptions } from "@/hooks/use-jenis-kmk-options";
+import { useKriteriaOptions } from "@/hooks/use-kriteria-options";
+import { useDasarPemotonganOptions } from "@/hooks/use-dasar-pemotongan-options";
+import { useKodeAkunOptions } from "@/hooks/use-kode-akun-options";
+import { backendPath } from "@/lib/backend";
+import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
 interface RekamDataTransaksiModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  data: any;
+  data: any; // expects row from useDauTransaksi()
 }
 
-export function RekamDataTransaksiModal({
-  open,
-  onOpenChange,
-  data,
-}: RekamDataTransaksiModalProps) {
-  const [formData, setFormData] = useState({
-    tahun: data?.tahun || "",
-    bulan: data?.bulan || "",
-    kppn: data?.kppn || "",
-    kabkota: data?.kabkota || "",
-    tanggalTransaksi: undefined as Date | undefined,
-    nomorTransaksi: "",
-    nilaiTransaksi: "",
-    jenisTransaksi: "",
-    keterangan: "",
-    buktiTransaksi: null as File | null,
-  });
-
-  const [datePopoverOpen, setDatePopoverOpen] = useState(false);
-
-  const handleSubmit = () => {
-    // Handle form submission
-    console.log("Submitting Rekam Data Transaksi:", formData);
-    onOpenChange(false);
-    // Reset form
-    setFormData({
-      tahun: "",
-      bulan: "",
-      kppn: "",
-      kabkota: "",
-      tanggalTransaksi: undefined,
-      nomorTransaksi: "",
-      nilaiTransaksi: "",
-      jenisTransaksi: "",
-      keterangan: "",
-      buktiTransaksi: null,
-    });
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setFormData({ ...formData, buktiTransaksi: file });
-  };
-
+export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataTransaksiModalProps) {
   const months = [
     "Januari",
     "Februari",
@@ -95,77 +51,271 @@ export function RekamDataTransaksiModal({
     "Desember",
   ];
 
-  const jenisTransaksiOptions = [
-    "Transfer Dana",
-    "Pemotongan Pajak",
-    "Penyesuaian Alokasi",
-    "Pengembalian Dana",
-    "Lain-lain",
-  ];
+  const [formData, setFormData] = useState({
+    jenis: "",
+    kriteria: "",
+    dasarPemotongan: "", // no_kmk (jenis 1/4)
+    kdakun: "",
+    nilaiPotongan: "",
+    kdsatker: "",
+    kdlokasi: "",
+    dasarPenundaan: "", // no_kmk (jenis 2/3)
+  });
 
-  // Build unique KPPN list from TKD mapping
-  const uniqueKppn = Array.from(
-    new Map(
-      (tkdData as Array<any>).map((d) => [
-        d.kdkppn,
-        { kdkppn: d.kdkppn, nmkppn: d.nmkppn },
-      ])
-    ).values()
-  ).sort((a, b) => a.kdkppn.localeCompare(b.kdkppn));
+  const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Hierarchical: Kab/Kota depends on selected KPPN from TKD mapping
-  const filteredKabKotaOptions = formData.kppn
-    ? (tkdData as Array<any>)
-        .filter(
-          (row) =>
-            row.kdkppn === formData.kppn &&
-            !String(row.kdkabkota).endsWith("00")
-        )
-        .sort((a, b) => String(a.kdkabkota).localeCompare(String(b.kdkabkota)))
-    : [];
+  // Preload disabled header values
+  const tahun = data?.tahun ? String(data.tahun) : "";
+  const kppnText = data?.kppn ? String(data.kppn) : "";
+  const kabkotaText = data?.kabkota ? String(data.kabkota) : "";
+  const kdpemdaCode = data?.kdpemdaCode ? String(data.kdpemdaCode) : "";
+  const nmbulanText = data?.nmbulan ? String(data.nmbulan) : "";
+  // Derive numeric bulan from either numeric field or month name
+  const bulanNumber = useMemo(() => {
+    const raw = data?.bulan;
+    if (raw !== undefined && raw !== null) {
+      const n = Number(raw);
+      if (Number.isFinite(n) && n >= 1 && n <= 12) return n;
+      const name = String(raw).toLowerCase();
+      const idx = months.findIndex((m) => m.toLowerCase() === name);
+      if (idx >= 0) return idx + 1;
+    }
+    if (data?.nmbulan) {
+      const idx = months.findIndex((m) => m.toLowerCase() === String(data.nmbulan).toLowerCase());
+      if (idx >= 0) return idx + 1;
+    }
+    return NaN;
+  }, [data]);
+  const bulanDisplay = nmbulanText || (data?.bulan ? String(data.bulan) : "");
 
-  // Clear Kab/Kota when KPPN changes
+  // Dynamic options from backend
+  const { options: jenisOptions } = useJenisKmkOptions();
+  const { options: kriteriaOptions } = useKriteriaOptions(formData.jenis || undefined);
+  const { options: dasarPemotonganOptions } = useDasarPemotonganOptions(formData.kriteria || undefined);
+  const { options: kdakunOptions, akunMap } = useKodeAkunOptions(formData.kriteria || undefined);
+
+  // Keep KMK list available if needed elsewhere, but dasar pemotongan now comes from ref hook
+  const { rows: kmkRows } = useKmkDau(tahun);
+
+  // Dasar KMK Penundaan options from backend
+  const { options: dasarPenundaanOptions } = useDasarPenundaanOptions(true);
+
+  // When selecting dasar pemotongan, fetch pemotongan detail to derive kdsatker/kdlokasi for this Pemda
+  const { rows: pemotonganRows } = useKmkPemotongan(formData.dasarPemotongan || undefined, !!formData.dasarPemotongan);
   useEffect(() => {
-    setFormData((prev) => ({ ...prev, kabkota: "" }));
-  }, [formData.kppn]);
+    if (!formData.dasarPemotongan) {
+      // Avoid fighting with kdakun-based auto-fill. Only clear when kdakun is also empty
+      if (!formData.kdakun && (formData.kdsatker !== "" || formData.kdlokasi !== "")) {
+        setFormData((p) => ({ ...p, kdsatker: "", kdlokasi: "" }));
+      }
+      return;
+    }
+    // Only derive from pemotonganRows when kdakun has not been selected
+    if (!formData.kdakun) {
+      const match = (pemotonganRows || []).find((r: any) => String(r.kdkabkota || "") === kdpemdaCode);
+      const nextKdsatker = match ? String(match.kdsatker || "") : "";
+      const nextKdlokasi = match ? String(match.kdlokasi || "") : "";
+      if (formData.kdsatker !== nextKdsatker || formData.kdlokasi !== nextKdlokasi) {
+        setFormData((p) => ({ ...p, kdsatker: nextKdsatker, kdlokasi: nextKdlokasi }));
+      }
+    }
+  }, [formData.dasarPemotongan, formData.kdakun, pemotonganRows, kdpemdaCode, formData.kdsatker, formData.kdlokasi]);
+
+  // Auto-fill KDSatker & KdLokasi based on selected kdakun using fixed mapping rules
+  useEffect(() => {
+    const selectedAkun = formData.kdakun;
+    if (!selectedAkun) {
+      // When kdakun cleared, fallback to blank unless dasarPemotongan will set it
+      if (!formData.dasarPemotongan && (formData.kdsatker !== "" || formData.kdlokasi !== "")) {
+        setFormData((p) => ({ ...p, kdsatker: "", kdlokasi: "" }));
+      }
+      return;
+    }
+    const groupA = new Set(["715211", "425713", "425762", "425823"]);
+    const groupB = new Set(["717121", "425719"]);
+    let nextKdsatker = "000000";
+    let nextKdlokasi = "0000";
+    if (groupA.has(String(selectedAkun))) {
+      nextKdsatker = "977386";
+      nextKdlokasi = "0100";
+    } else if (groupB.has(String(selectedAkun))) {
+      nextKdsatker = "999302";
+      nextKdlokasi = "0100";
+    }
+    if (formData.kdsatker !== nextKdsatker || formData.kdlokasi !== nextKdlokasi) {
+      setFormData((p) => ({ ...p, kdsatker: nextKdsatker, kdlokasi: nextKdlokasi }));
+    }
+  }, [formData.kdakun, formData.kdsatker, formData.kdlokasi, formData.dasarPemotongan]);
+
+  const handleClose = () => {
+    onOpenChange(false);
+    setFormData({
+      jenis: "",
+      kriteria: "",
+      dasarPemotongan: "",
+      kdakun: "",
+      nilaiPotongan: "",
+      kdsatker: "",
+      kdlokasi: "",
+      dasarPenundaan: "",
+    });
+  };
+
+  const handleSubmit = async () => {
+    setErrorMsg(null);
+    setSaving(true);
+    try {
+      // Map modal state to backend payload
+      const kdkppnCodeOnly = (kppnText || "").split(" - ")[0].trim();
+      const bulanTwoDigit = Number.isFinite(bulanNumber) ? String(bulanNumber).padStart(2, "0") : "";
+      const payload = {
+        kdkppn: kdkppnCodeOnly,
+        bulan: bulanTwoDigit,
+        thang: Number(tahun || 0),
+        kdkabkota: String(kdpemdaCode || "").trim(),
+        jenis: String(formData.jenis || "").trim(),
+        kriteria: String(formData.kriteria || "").trim(),
+        no_kmk: String(formData.dasarPemotongan || "").trim(),
+        kdakun: String(formData.kdakun || "").trim(),
+        nilai: Number(formData.nilaiPotongan || 0),
+        kdsatker: String(formData.kdsatker || "").trim(),
+        kdlokasi: String(formData.kdlokasi || "").trim(),
+        nmbulan: (nmbulanText || (Number.isFinite(bulanNumber) && bulanNumber >= 1 && bulanNumber <= 12 ? months[bulanNumber - 1] : "")).toString(),
+      };
+
+      // Basic front-end validation
+      if (!Number.isFinite(bulanNumber) || bulanNumber < 1 || bulanNumber > 12) {
+        throw new Error("Data belum lengkap: bulan");
+      }
+      if (!Number.isFinite(payload.thang)) {
+        throw new Error("Data belum lengkap: thang");
+      }
+      if (!payload.nmbulan || payload.nmbulan.trim() === "") {
+        throw new Error("Data belum lengkap: nmbulan");
+      }
+      const requiredFields = [
+        { key: "kdkppn", val: payload.kdkppn },
+        { key: "kdkabkota", val: payload.kdkabkota },
+        { key: "jenis", val: payload.jenis },
+        { key: "kriteria", val: payload.kriteria },
+        { key: "no_kmk", val: payload.no_kmk },
+        { key: "kdakun", val: payload.kdakun },
+      ];
+      const missing = requiredFields
+        .filter((f) => typeof f.val === "string" ? f.val.trim() === "" : f.val === undefined || f.val === null)
+        .map((f) => f.key);
+      if (missing.length) {
+        throw new Error(`Data belum lengkap: ${missing.join(", ")}`);
+      }
+
+      const token = getAuthTokenFromCookie();
+      const headers: HeadersInit = { "Content-Type": "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const resp = await fetch(backendPath(`/transfer-daerah/dau/transaksi`), {
+        method: "POST",
+        headers,
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+      const text = await resp.text();
+      if (!resp.ok) {
+        let msg = `Gagal menyimpan (HTTP ${resp.status})`;
+        try {
+          const j = JSON.parse(text);
+          msg = j?.message || j?.error || msg;
+        } catch {}
+        throw new Error(msg);
+      }
+
+      onOpenChange(false);
+      handleClose();
+    } catch (e: any) {
+      setErrorMsg(e?.message || "Gagal menyimpan");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[720px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Rekam Data Transaksi</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="tahun">Tahun</Label>
-              <Input
-                id="tahun"
-                value={formData.tahun}
-                onChange={(e) =>
-                  setFormData({ ...formData, tahun: e.target.value })
-                }
-                placeholder="Tahun"
-                readOnly
-                className="bg-muted"
-              />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="bulan">Bulan</Label>
+        <div className="grid gap-5 py-2">
+          {/* Top disabled trio */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label>KPPN</Label>
+              <Input value={kppnText} disabled placeholder="KPPN" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Kab/Kota</Label>
+              <Input value={kabkotaText} disabled placeholder="Kab/Kota" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Bulan</Label>
+              <Input value={bulanDisplay} disabled placeholder="Bulan" />
+            </div>
+          </div>
+
+          {/* Jenis & Kriteria */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Jenis KMK</Label>
               <Select
-                value={formData.bulan}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, bulan: value })
-                }
+                value={formData.jenis}
+                onValueChange={(value) => {
+                  setFormData({
+                    jenis: value,
+                    kriteria: "",
+                    dasarPemotongan: "",
+                    kdakun: "",
+                    nilaiPotongan: "",
+                    kdsatker: "",
+                    kdlokasi: "",
+                    dasarPenundaan: "",
+                  });
+                }}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih bulan" />
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Pilih jenis KMK" />
                 </SelectTrigger>
                 <SelectContent>
-                  {months.map((month) => (
-                    <SelectItem key={month} value={month}>
-                      {month}
+                  {(jenisOptions || [])
+                    .filter((j) => j.value !== "2" && j.value !== "3")
+                    .map((j) => (
+                    <SelectItem key={j.value} value={j.value} title={j.label}>
+                      <span className="truncate">{j.label}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Kriteria</Label>
+              <Select
+                value={formData.kriteria}
+                onValueChange={(value) =>
+                  setFormData((p) => ({
+                    ...p,
+                    kriteria: value,
+                    dasarPemotongan: "",
+                    kdakun: "",
+                    kdsatker: "",
+                    kdlokasi: "",
+                  }))
+                }
+              >
+                <SelectTrigger className="w-full" disabled={!formData.jenis}>
+                  <SelectValue placeholder={formData.jenis ? "Pilih kriteria" : "Pilih jenis KMK terlebih dahulu"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {(kriteriaOptions || []).map((k) => (
+                    <SelectItem key={k.value} value={k.value} title={k.label}>
+                      <span className="truncate">{k.label}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -173,191 +323,88 @@ export function RekamDataTransaksiModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="kppn">KPPN</Label>
-              <Select
-                value={formData.kppn}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, kppn: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih KPPN" />
-                </SelectTrigger>
-                <SelectContent>
-                  {uniqueKppn.map((kppn) => (
-                    <SelectItem
-                      key={kppn.kdkppn}
-                      value={kppn.kdkppn}
-                      title={`${kppn.kdkppn} - ${kppn.nmkppn}`}
-                    >
-                      <span className="truncate">
-                        {kppn.kdkppn} - {kppn.nmkppn}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {/* Conditional sections */}
+          {formData.jenis === "1" || formData.jenis === "4" ? (
+            <div className="grid gap-4">
+              {/* Dasar KMK Pemotongan */}
+              <div className="space-y-1.5">
+                <Label>Dasar KMK Pemotongan</Label>
+                <VirtualizedSelect
+                  options={dasarPemotonganOptions}
+                  value={formData.dasarPemotongan}
+                  onValueChange={(value) =>
+                    setFormData((p) => ({
+                      ...p,
+                      dasarPemotongan: value,
+                      kdakun: "",
+                      kdsatker: "",
+                      kdlokasi: "",
+                    }))
+                  }
+                  placeholder="Pilih dasar KMK pemotongan"
+                  disabled={!formData.kriteria}
+                />
+              </div>
+
+              {/* Kode Akun */}
+              <div className="space-y-1.5">
+                <Label>Kode Akun</Label>
+                <VirtualizedSelect
+                  options={kdakunOptions}
+                  value={formData.kdakun}
+                  onValueChange={(value) => setFormData((p) => ({ ...p, kdakun: value }))}
+                  placeholder="Pilih kode akun"
+                  disabled={!formData.kriteria}
+                />
+              </div>
+
+              {/* Nilai Potongan */}
+              <div className="space-y-1.5">
+                <Label>Nilai Potongan</Label>
+                <Input
+                  type="number"
+                  value={formData.nilaiPotongan}
+                  onChange={(e) => setFormData((p) => ({ ...p, nilaiPotongan: e.target.value }))}
+                  placeholder="Masukkan nilai potongan"
+                />
+              </div>
+
+              {/* Disabled Kode Satker & Kode Lokasi */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Kode Satker</Label>
+                  <Input value={formData.kdsatker} disabled placeholder="Kode Satker" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Kode Lokasi</Label>
+                  <Input value={formData.kdlokasi} disabled placeholder="Kode Lokasi" />
+                </div>
+              </div>
             </div>
+          ) : null}
 
-            <div className="space-y-2">
-              <Label htmlFor="kabkota">Kab/Kota</Label>
-              <Select
-                value={formData.kabkota}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, kabkota: value })
-                }
-              >
-                <SelectTrigger disabled={!formData.kppn}>
-                  <SelectValue
-                    placeholder={
-                      formData.kppn
-                        ? "Pilih Kab/Kota"
-                        : "Pilih KPPN terlebih dahulu"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredKabKotaOptions.map((lokasi) => (
-                    <SelectItem
-                      key={lokasi.kdkabkota}
-                      value={lokasi.kdkabkota}
-                      title={`${lokasi.kdkabkota} - ${lokasi.nmkabkota}`}
-                    >
-                      <span className="truncate">
-                        {lokasi.kdkabkota} - {lokasi.nmkabkota}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {formData.jenis === "2" || formData.jenis === "3" ? (
+            <div className="grid gap-4">
+              {/* Dasar KMK Penundaan */}
+              <div className="space-y-1.5">
+                <Label>Dasar KMK Penundaan</Label>
+                <VirtualizedSelect
+                  options={dasarPenundaanOptions}
+                  value={formData.dasarPenundaan}
+                  onValueChange={(value) => setFormData((p) => ({ ...p, dasarPenundaan: value }))}
+                  placeholder="Pilih dasar KMK penundaan"
+                />
+              </div>
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Tanggal Transaksi</Label>
-              <Popover
-                modal={false}
-                open={datePopoverOpen}
-                onOpenChange={setDatePopoverOpen}
-              >
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !formData.tanggalTransaksi && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.tanggalTransaksi
-                      ? format(formData.tanggalTransaksi, "dd/MM/yyyy")
-                      : "Pilih tanggal"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-auto p-0"
-                  align="start"
-                  onOpenAutoFocus={(e) => e.preventDefault()}
-                >
-                  <Calendar
-                    mode="single"
-                    selected={formData.tanggalTransaksi}
-                    onSelect={(date) => {
-                      setFormData({ ...formData, tanggalTransaksi: date });
-                      setDatePopoverOpen(false);
-                    }}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="nomorTransaksi">Nomor Transaksi</Label>
-              <Input
-                id="nomorTransaksi"
-                value={formData.nomorTransaksi}
-                onChange={(e) =>
-                  setFormData({ ...formData, nomorTransaksi: e.target.value })
-                }
-                placeholder="Masukkan nomor transaksi"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="nilaiTransaksi">Nilai Transaksi</Label>
-              <Input
-                id="nilaiTransaksi"
-                type="number"
-                value={formData.nilaiTransaksi}
-                onChange={(e) =>
-                  setFormData({ ...formData, nilaiTransaksi: e.target.value })
-                }
-                placeholder="Masukkan nilai transaksi"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="jenisTransaksi">Jenis Transaksi</Label>
-              <Select
-                value={formData.jenisTransaksi}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, jenisTransaksi: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih jenis transaksi" />
-                </SelectTrigger>
-                <SelectContent>
-                  {jenisTransaksiOptions.map((jenis) => (
-                    <SelectItem key={jenis} value={jenis}>
-                      {jenis}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="keterangan">Keterangan</Label>
-            <Textarea
-              id="keterangan"
-              value={formData.keterangan}
-              onChange={(e) =>
-                setFormData({ ...formData, keterangan: e.target.value })
-              }
-              placeholder="Masukkan keterangan transaksi"
-              rows={3}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="buktiTransaksi">Bukti Transaksi</Label>
-            <Input
-              id="buktiTransaksi"
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png"
-              onChange={handleFileChange}
-              className="cursor-pointer"
-            />
-            {formData.buktiTransaksi && (
-              <p className="text-sm text-muted-foreground">
-                File terpilih: {formData.buktiTransaksi.name}
-              </p>
-            )}
-          </div>
+          ) : null}
         </div>
+
+        {errorMsg ? (
+          <div className="text-sm text-red-600">{errorMsg}</div>
+        ) : null}
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Batal
-          </Button>
-          <Button onClick={handleSubmit}>Simpan Transaksi</Button>
+          <Button variant="outline" onClick={handleClose} disabled={saving}>Tutup</Button>
+          <Button onClick={handleSubmit} disabled={saving}>{saving ? "Menyimpan..." : "Simpan"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
