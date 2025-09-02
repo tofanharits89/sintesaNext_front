@@ -1,7 +1,7 @@
 "use client";
 
 import useSWRInfinite from "swr/infinite";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { backendPath } from "@/lib/backend";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 import { useSocket } from "./useSocket";
@@ -33,8 +33,29 @@ const fetcher = async (url: string) => {
 };
 
 export function useMessages(conversationId?: string) {
+  const isFetchable = (() => {
+    if (!conversationId) return false;
+    const isTemp = conversationId.startsWith("temp-") || conversationId.startsWith("temp_conv-") || conversationId.startsWith("temp-conv-");
+    const looksLikeUuid = /^[0-9a-fA-F-]{16,}$/.test(conversationId);
+    return !isTemp && looksLikeUuid;
+  })();
+
+  // Local store for temp/invalid conversations (no fetch). Ensures optimistic + socket messages appear.
+  const localStoreRef = useRef<FrontendMessage[]>([]);
+  const [localTick, setLocalTick] = useState(0);
+  const bump = () => setLocalTick((x) => x + 1);
+
+  // Debug: log initialization
+  useEffect(() => {
+    console.log("[useMessages:init]", {
+      conversationId,
+      isFetchable,
+      localStoreSize: localStoreRef.current.length,
+    });
+  }, [conversationId, isFetchable]);
+
   const getKey = (pageIndex: number, previousPageData: any) => {
-    if (!conversationId) return null;
+    if (!isFetchable) return null;
     // Stop if the previous page had fewer than PAGE_SIZE items (no more pages)
     if (
       previousPageData &&
@@ -60,6 +81,10 @@ export function useMessages(conversationId?: string) {
 
   // Map API pages to FrontendMessage[]
   const messages: FrontendMessage[] = useMemo(() => {
+    if (!isFetchable) {
+      // Return a copy to avoid external mutation; already in chronological order by insertion
+      return [...localStoreRef.current];
+    }
     if (!data) return [];
     const pages = data as Array<any>;
 
@@ -109,21 +134,95 @@ export function useMessages(conversationId?: string) {
     const sorted = mappedWithSort.sort((a, b) => a._sortTs - b._sortTs);
     // Drop helper field
     return sorted.map(({ _sortTs, ...rest }) => rest as FrontendMessage);
-  }, [data, conversationId]);
+  }, [data, conversationId, isFetchable, localTick]);
 
-  const isLoading = !data && !error;
+  // If not fetchable (temp/invalid id), do not show loading spinner
+  const isLoading = isFetchable ? (!data && !error) : false;
 
   // Socket -> cache updates
   const { on, off } = useSocket();
   useEffect(() => {
     if (!conversationId) return;
 
+    // Simple de-dupe for rapid duplicate socket events (e.g., NEW + RECEIVED)
+    const recentIds = new Set<string>();
+    let recentTimer: any = null;
+
+    const remember = (id?: string | null) => {
+      if (!id) return;
+      recentIds.add(id);
+      // Clear after short window
+      if (recentTimer) clearTimeout(recentTimer);
+      recentTimer = setTimeout(() => recentIds.clear(), 5000);
+    };
+
     const appendNewMessage = (m: SocketMessageData) => {
       if (m.conversationId !== conversationId) return;
+      if (recentIds.has(m.id)) return; // drop duplicate
+
+      // If not fetchable, append into local store and re-render
+      if (!isFetchable) {
+        console.log("[useMessages:socket->local]", {
+          conversationId,
+          echoConvId: m.conversationId,
+          tempId: (m as any).tempId || (m as any).temp_id,
+          id: m.id,
+        });
+        // Reconcile any temp by tempId
+        const tempId = (m as any).tempId || (m as any).temp_id || null;
+        if (tempId) {
+          localStoreRef.current = localStoreRef.current.filter((msg) => msg.id !== tempId);
+        }
+        const createdAt = m.timestamp || new Date().toISOString();
+        localStoreRef.current.push({
+          id: m.id,
+          conversationId: m.conversationId,
+          content: m.content,
+          timestamp: createdAt,
+          sender: m.sender,
+          senderType: m.senderType,
+          isRead: false,
+          isDelivered: false,
+          isOpened: false,
+        } as FrontendMessage);
+
+        // If we got a real conversationId alongside a tempId for this temp chat, notify reconcilers
+        if (tempId && m.conversationId && m.conversationId !== conversationId) {
+          try {
+            console.log("[useMessages:reconcile:dispatch]", {
+              tempId: conversationId,
+              realId: m.conversationId,
+            });
+            window.dispatchEvent(
+              new CustomEvent("conversation:created", {
+                detail: { tempId: conversationId, conversationId: m.conversationId },
+              })
+            );
+          } catch {}
+        }
+        remember(m.id);
+        bump();
+        return;
+      }
+
       mutate((prev) => {
-        if (!prev || !Array.isArray(prev)) return prev;
+        console.log("[useMessages:socket->swr]", {
+          conversationId,
+          id: m.id,
+          echoConvId: m.conversationId,
+        });
+        // Initialize cache if empty so first realtime message appears
+        if (!prev || !Array.isArray(prev) || prev.length === 0) {
+          const newPage = {
+            data: {
+              messages: [] as any[],
+              pagination: { page: 1, limit: PAGE_SIZE, total: 1, hasMore: false },
+            },
+          } as any;
+          prev = [newPage];
+        }
+
         const copy = prev.map((p: any) => ({ ...p }));
-        if (copy.length === 0) return prev;
         const lastIdx = copy.length - 1;
         const last = { ...copy[lastIdx] };
         const list = Array.isArray(last?.data?.messages)
@@ -181,6 +280,7 @@ export function useMessages(conversationId?: string) {
         if (filtered.some((x: any) => x.id === m.id)) {
           last.data = { ...(last.data || {}), messages: filtered };
           copy[lastIdx] = last;
+          remember(m.id);
           return copy;
         }
 
@@ -201,6 +301,7 @@ export function useMessages(conversationId?: string) {
         });
         last.data = { ...(last.data || {}), messages: filtered };
         copy[lastIdx] = last;
+        remember(m.id);
         return copy;
       }, false);
 
@@ -301,9 +402,66 @@ export function useMessages(conversationId?: string) {
     };
   }, [conversationId, on, off, mutate]);
 
+  // Global optimistic insert bridge (e.g., from NewMessageDialog)
+  useEffect(() => {
+    if (!conversationId) return;
+    const handler = (e: Event) => {
+      const { conversationId: cid, message } = (e as CustomEvent).detail || {};
+      if (!cid || cid !== conversationId || !message) return;
+      console.log("[useMessages:optimisticInsert:event]", { conversationId: cid, id: (message as any)?.id, isFetchable });
+      const temp: FrontendMessage = message as FrontendMessage;
+      if (!isFetchable) {
+        localStoreRef.current.push({ ...temp });
+        bump();
+      } else {
+        // Insert into SWR cache
+        mutate((prev) => {
+          const newMsg = {
+            id: temp.id,
+            conversation_id: temp.conversationId,
+            content: temp.content,
+            timestamp: temp.timestamp,
+            created_at: temp.timestamp,
+            sender: temp.sender,
+            senderType: temp.senderType,
+            is_read: false,
+          };
+          if (!prev || !Array.isArray(prev) || prev.length === 0) {
+            return [
+              {
+                data: {
+                  messages: [newMsg],
+                  pagination: { page: 1, limit: PAGE_SIZE, total: 1, hasMore: false },
+                },
+              },
+            ];
+          }
+          const copy = prev.map((p: any) => ({ ...p }));
+          const lastIdx = copy.length - 1;
+          const last = { ...copy[lastIdx] };
+          const list = Array.isArray(last?.data?.messages) ? [...last.data.messages] : [];
+          list.push(newMsg);
+          last.data = { ...(last.data || {}), messages: list };
+          copy[lastIdx] = last;
+          return copy;
+        }, false);
+      }
+    };
+    window.addEventListener("messages:optimistic-insert", handler as EventListener);
+    return () => window.removeEventListener("messages:optimistic-insert", handler as EventListener);
+  }, [conversationId, isFetchable, mutate]);
+
   // Optimistic insert helper for sending
-  const optimisticInsert = (temp: FrontendMessage) =>
-    mutate((prev) => {
+  const optimisticInsert = (temp: FrontendMessage) => {
+    if (!isFetchable) {
+      // Insert into local store and trigger re-render
+      console.log("[useMessages:optimisticInsert:local]", { conversationId: temp.conversationId, id: temp.id });
+      localStoreRef.current.push({ ...temp });
+      bump();
+      return Promise.resolve();
+    }
+    console.log("[useMessages:optimisticInsert:swr]", { conversationId: temp.conversationId, id: temp.id });
+    return mutate((prev) => {
       // If no cache yet, create the first page with this optimistic message
       const newMsg = {
         id: temp.id,
@@ -338,10 +496,11 @@ export function useMessages(conversationId?: string) {
       copy[lastIdx] = last;
       return copy;
     }, false);
+  };
 
   return {
     messages,
-    isLoading,
+    isLoading: conversationId ? isLoading : false,
     isValidating,
     size,
     setSize,

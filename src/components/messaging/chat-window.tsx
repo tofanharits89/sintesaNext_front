@@ -34,11 +34,13 @@ import { useCurrentUser } from "@/lib/use-current-user";
 import { MessageStatus } from "./MessageStatus";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useMessages as useMessagesData } from "@/hooks/useMessages";
+import { useConversations } from "@/hooks/useConversations";
 import dynamic from "next/dynamic";
 import {
   useMarkAsReadMutation,
   useMarkAsOpenedMutation,
 } from "@/hooks/useMessageMutations";
+import { getHint } from "@/features/messaging/temp-conversation-hints";
 
 // Dynamically import EmojiPicker to avoid SSR issues
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), {
@@ -60,13 +62,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { currentUser } = useCurrentUser();
-  // SWR Infinite messages for this conversation
-  const {
-    messages,
-    isLoading: isMessagesLoading,
-    optimisticInsert,
-  } = useMessagesData(conversation?.id);
-
+  // Pull messaging state early so currentConversation is available
   const {
     isLoading,
     isConnected,
@@ -76,17 +72,71 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
     stopTyping,
     formatMessageTime,
     selectConversation,
+    currentConversation,
   } = useMessaging();
+
+  // Locally adopted real conversation id once reconciliation occurs
+  const [adoptedRealId, setAdoptedRealId] = useState<string | undefined>(
+    undefined
+  );
+
+  // Reset adoptedRealId on prop conversation changes to avoid leaking across sessions
+  useEffect(() => {
+    const propId = conversation?.id;
+    if (!propId) {
+      setAdoptedRealId(undefined);
+      return;
+    }
+    // If prop id is already real, no need to keep any adopted id
+    if (!isTempId(propId)) {
+      if (adoptedRealId) setAdoptedRealId(undefined);
+      return;
+    }
+    // If we opened a different temp conversation than before, clear any previous adopted id
+    // This ensures a fresh reconciliation for the new temp conversation
+    if (adoptedRealId && adoptedRealId !== propId) {
+      setAdoptedRealId(undefined);
+    }
+  }, [conversation?.id]);
+
+  // Helper to determine temp ids
+  const isTempId = (id?: string) =>
+    !!id &&
+    (id.startsWith("temp-") ||
+      id.startsWith("temp_conv-") ||
+      id.startsWith("temp-conv-"));
+
+  // Prefer reconciled real conversation over temp prop when available
+  const effectiveConversationId = useMemo(() => {
+    const propId = conversation?.id;
+    const curId = currentConversation?.id;
+    // Prefer locally adopted real id first
+    if (adoptedRealId && !isTempId(adoptedRealId)) return adoptedRealId;
+    // Then prefer reconciled currentConversation over temp prop
+    if (isTempId(propId) && curId && !isTempId(curId)) return curId;
+    return propId;
+  }, [conversation?.id, currentConversation?.id, adoptedRealId]);
+
+  // Use messages for the effective conversation id (handles temp->real seamlessly)
+  const {
+    messages,
+    isLoading: isMessagesLoading,
+    optimisticInsert,
+  } = useMessagesData(effectiveConversationId);
 
   // After sending, keep the viewport pinned to bottom for a short period
   const pinUntilRef = useRef<number>(0);
 
   // SWR Mutations for read/opened with optimistic updates
-  const { trigger: markRead } = useMarkAsReadMutation(conversation?.id);
-  const { trigger: markOpened } = useMarkAsOpenedMutation(conversation?.id);
+  const { trigger: markRead } = useMarkAsReadMutation(effectiveConversationId);
+  const { trigger: markOpened } = useMarkAsOpenedMutation(
+    effectiveConversationId
+  );
 
   // Get online users to check if other participant is online
   const { onlineUsers } = useOnlineUsers();
+  // Pull SWR conversations to hydrate missing fields on stub conversations
+  const { conversations: swrConversations } = useConversations();
 
   // Custom message visibility handler
   const handleMessageVisible = (messageId: string) => {
@@ -97,7 +147,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
   const { observeMessage, clearMarkedMessages } = useAutoMarkAsRead({
     messages,
     currentUserId: currentUser?.id,
-    conversationId: conversation?.id,
+    conversationId: effectiveConversationId,
     markAsRead: (ids) => markRead({ messageIds: ids }),
     markAsOpened: (ids) => markOpened({ messageIds: ids }),
     enabled: true,
@@ -105,22 +155,84 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
     onMessageVisible: handleMessageVisible, // Pass the visibility handler
   });
 
-  // Load conversation when component mounts or conversation changes
+  // Load/select conversation, but avoid re-selecting a temp id once a real id is active
   useEffect(() => {
-    if (conversation) {
-      selectConversation(conversation.id);
+    if (!conversation?.id) return;
+    const convId = conversation.id as string;
+    const curId = currentConversation?.id as string | undefined;
+    const looksTemp =
+      !!convId &&
+      (convId.startsWith("temp-") ||
+        convId.startsWith("temp_conv-") ||
+        convId.startsWith("temp-conv-"));
+    const curLooksReal =
+      !!curId &&
+      !(
+        curId.startsWith("temp-") ||
+        curId.startsWith("temp_conv-") ||
+        curId.startsWith("temp-conv-")
+      );
+
+    // If we have adopted a real id, prefer selecting it and do not reselect temp
+    if (adoptedRealId && !isTempId(adoptedRealId)) {
+      if (curId !== adoptedRealId) {
+        console.log("[ChatWindow] selectConversation(adoptedRealId)", {
+          id: adoptedRealId,
+        });
+        selectConversation(adoptedRealId);
+      }
+      return;
     }
-  }, [conversation?.id, selectConversation]);
+
+    // If current is already a real conversation and the prop is still temp, do not revert
+    if (looksTemp && curLooksReal && curId !== convId) {
+      console.log(
+        "[ChatWindow] skip reselecting temp after real reconciliation",
+        { tempId: convId, currentRealId: curId }
+      );
+      return;
+    }
+    // No-op if already selected
+    if (curId === convId) return;
+
+    console.log("[ChatWindow] selectConversation", { id: convId });
+    selectConversation(convId);
+  }, [
+    conversation?.id,
+    currentConversation?.id,
+    selectConversation,
+    adoptedRealId,
+  ]);
+
+  // Bridge: adopt reconciled id only on 'conversation:created' to avoid recursion
+  useEffect(() => {
+    const onCreated = (e: Event) => {
+      const { tempId, conversationId: realId } =
+        (e as CustomEvent).detail || {};
+      if (!tempId || !realId) return;
+      const propId = conversation?.id as string | undefined;
+      if (propId && propId === tempId && !isTempId(realId)) {
+        if (currentConversation?.id === realId) return;
+        // Remember the adopted real id locally so our derived state stops using the temp id
+        setAdoptedRealId(realId);
+        console.log("[ChatWindow] adopt created->real", { tempId, realId });
+        selectConversation(realId);
+      }
+    };
+    window.addEventListener("conversation:created", onCreated as EventListener);
+    return () => {
+      window.removeEventListener(
+        "conversation:created",
+        onCreated as EventListener
+      );
+    };
+  }, [conversation?.id, currentConversation?.id, selectConversation]);
 
   // Mark already-read messages as opened when messages load
   useEffect(() => {
     if (messages.length > 0 && currentUser?.id) {
       const alreadyReadMessages = messages
-        .filter(
-          (msg) =>
-            msg.sender.id !== currentUser.id &&
-            msg.isRead
-        )
+        .filter((msg) => msg.sender.id !== currentUser.id && msg.isRead)
         .map((msg) => msg.id);
 
       if (alreadyReadMessages.length > 0) {
@@ -139,7 +251,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
       const { messageIds, conversationId: eventConversationId } = event.detail;
 
       // Only update if it's for the current conversation
-      if (eventConversationId === conversation?.id) {
+      if (eventConversationId === effectiveConversationId) {
         setOpenedMessages((prev) => {
           const newSet = new Set(prev);
           messageIds.forEach((id: string) => newSet.add(id));
@@ -151,7 +263,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
     // Listen for messages marked as opened events
     const handleMessagesMarkedAsOpened = (event: CustomEvent) => {
       const { messageIds, conversationId: eventConversationId } = event.detail;
-      if (eventConversationId === conversation?.id) {
+      if (eventConversationId === effectiveConversationId) {
         setOpenedMessages((prev) => {
           const newSet = new Set(prev);
           messageIds.forEach((id: string) => newSet.add(id));
@@ -179,7 +291,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
         handleMessagesMarkedAsOpened as EventListener
       );
     };
-  }, [conversation?.id]);
+  }, [effectiveConversationId]);
 
   // Scroll to bottom function with smooth behavior
   const scrollToBottom = (smooth = false) => {
@@ -279,18 +391,19 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
     }
     // Scroll to bottom when switching conversations
     setTimeout(() => scrollToBottom(false), 100);
-  }, [conversation.id]);
+  }, [effectiveConversationId]);
 
   // Keep view pinned when a reconciled message arrives without changing list length
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as { conversationId?: string };
-      if (!detail || detail.conversationId !== conversation.id) return;
+      if (!detail || detail.conversationId !== effectiveConversationId) return;
       scrollToBottom(false);
     };
     window.addEventListener("messages:appended", handler as EventListener);
-    return () => window.removeEventListener("messages:appended", handler as EventListener);
-  }, [conversation.id]);
+    return () =>
+      window.removeEventListener("messages:appended", handler as EventListener);
+  }, [effectiveConversationId]);
 
   const handleSendMessage = async () => {
     if (!messageInput.trim() && attachedFiles.length === 0) return;
@@ -316,9 +429,14 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
       // Optimistic insert pending message
       const tempId = `temp-${Math.random().toString(36).slice(2)}`;
       // optimistic insert
+      console.log("[ChatWindow:send] optimisticInsert", {
+        convId: effectiveConversationId || conversation.id,
+        tempId,
+        content,
+      });
       optimisticInsert({
         id: tempId,
-        conversationId: conversation.id,
+        conversationId: effectiveConversationId || conversation.id,
         content,
         timestamp: new Date().toISOString(),
         sender: currentUser as any,
@@ -335,7 +453,15 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
       // send invoke
       // Enable a short grace period to keep the view pinned during reconciliation
       pinUntilRef.current = Date.now() + 2000;
-      await sendMessage(content, undefined, tempId);
+      const recipientFromConversation =
+        (otherParticipant as any)?.id ||
+        (conversation as any)?.otherParticipant?.id;
+      console.log("[ChatWindow:send] calling sendMessage", {
+        convId: conversation.id,
+        recipientFromConversation,
+        tempId,
+      });
+      await sendMessage(content, recipientFromConversation, tempId);
       // send done
     }
 
@@ -404,7 +530,112 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
     }
   };
 
-  const otherParticipant = conversation.otherParticipant;
+  // Prefer provided otherParticipant; fallback to SWR list match; else derive from participants/lastMessage
+  const otherParticipant = useMemo(() => {
+    if (conversation?.otherParticipant) return conversation.otherParticipant;
+
+    // If we're on a temp conversation, consult hint store to resolve immediately
+    const cid = (effectiveConversationId || conversation?.id) as
+      | string
+      | undefined;
+    if (
+      cid &&
+      (cid.startsWith("temp-") ||
+        cid.startsWith("temp_conv-") ||
+        cid.startsWith("temp-conv-"))
+    ) {
+      const hint = getHint(cid);
+      if (hint?.otherParticipant) return hint.otherParticipant as any;
+    }
+
+    const fromList = swrConversations.find(
+      (c) => c.id === (effectiveConversationId || conversation?.id)
+    );
+    if (fromList?.otherParticipant) return fromList.otherParticipant;
+
+    // 3) Derive from participants (if available)
+    const p1 = (fromList || conversation)?.participant1 as any;
+    const p2 = (fromList || conversation)?.participant2 as any;
+    const currentId = currentUser?.id;
+    if (p1 && p2) {
+      if (currentId) {
+        if (p1.id !== currentId) return p1;
+        if (p2.id !== currentId) return p2;
+      } else {
+        // No currentUser yet; pick the first available participant
+        return p2 || p1;
+      }
+    } else if (p1 || p2) {
+      return p1 || p2;
+    }
+
+    // 3b) Derive from participant ids when participant objects are missing
+    const p1Id = (fromList || (conversation as any))?.participant1_id as
+      | string
+      | undefined;
+    const p2Id = (fromList || (conversation as any))?.participant2_id as
+      | string
+      | undefined;
+    if (p1Id || p2Id) {
+      // If we know current user id, pick the non-self id; otherwise pick any available id
+      let candidateId: string | undefined = undefined;
+      if (currentId) {
+        candidateId =
+          p1Id && p1Id !== currentId
+            ? p1Id
+            : p2Id && p2Id !== currentId
+            ? p2Id
+            : undefined;
+      } else {
+        candidateId = p2Id || p1Id;
+      }
+      if (candidateId) {
+        return { id: candidateId, username: candidateId } as any;
+      }
+    }
+
+    // 4) Derive from lastMessage sender/recipient
+    const lm = (fromList || conversation)?.lastMessage as any;
+    if (lm) {
+      if (lm.sender && lm.sender.id && lm.sender.id !== currentId)
+        return lm.sender;
+      if (lm.recipient && lm.recipient.id && lm.recipient.id !== currentId)
+        return lm.recipient;
+    }
+
+    return undefined;
+  }, [
+    effectiveConversationId,
+    conversation?.id,
+    (conversation as any)?.otherParticipant,
+    swrConversations,
+    currentUser?.id,
+  ]);
+
+  // Debug: log how otherParticipant is resolved
+  useEffect(() => {
+    const fromList = (swrConversations as any[])?.find(
+      (c) => c.id === (effectiveConversationId || conversation.id)
+    );
+    console.log("[ChatWindow:otherParticipant]", {
+      convId: effectiveConversationId || conversation?.id,
+      currentUserId: currentUser?.id,
+      fromProp: (conversation as any)?.otherParticipant,
+      fromList: fromList?.otherParticipant,
+      p1: (fromList || (conversation as any))?.participant1,
+      p2: (fromList || (conversation as any))?.participant2,
+      p1_id: (fromList || (conversation as any))?.participant1_id,
+      p2_id: (fromList || (conversation as any))?.participant2_id,
+      lastMessage: (fromList || (conversation as any))?.lastMessage,
+      resolved: otherParticipant,
+    });
+  }, [
+    effectiveConversationId,
+    conversation?.id,
+    swrConversations,
+    currentUser?.id,
+    otherParticipant,
+  ]);
 
   // Check if other participant is online
   const isOtherParticipantOnline = useMemo(() => {
@@ -435,7 +666,8 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
             </h3>
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="text-xs">
-                {(otherParticipant?.role === "super_admin" || otherParticipant?.role === "co_admin") ? (
+                {otherParticipant?.role === "super_admin" ||
+                otherParticipant?.role === "co_admin" ? (
                   <>
                     <Crown className="h-3 w-3 mr-1" />
                     Administrator
@@ -734,7 +966,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
               ref={inputRef}
               value={messageInput}
               onChange={(e) => handleInputChange(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyPress}
               placeholder="Type a message..."
               className="flex-1"
             />
@@ -742,11 +974,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
             {/* Emoji picker */}
             <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
               <PopoverTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="flex-shrink-0"
-                >
+                <Button variant="ghost" size="icon" className="flex-shrink-0">
                   <Smile className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
@@ -761,9 +989,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
 
             <Button
               onClick={handleSendMessage}
-              disabled={
-                !messageInput.trim() && attachedFiles.length === 0
-              }
+              disabled={!messageInput.trim() && attachedFiles.length === 0}
               size="icon"
               className="flex-shrink-0"
             >

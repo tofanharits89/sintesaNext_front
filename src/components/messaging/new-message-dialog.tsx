@@ -62,7 +62,7 @@ export function NewMessageDialog({
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
-  const { sendMessage } = useMessaging();
+  const { sendMessage, selectConversation } = useMessaging();
   const { optimisticAddConversation, reconcileConversationId } =
     useConversations();
   const { currentUser } = useCurrentUser();
@@ -158,16 +158,79 @@ export function NewMessageDialog({
         timestamp: new Date().toISOString(),
       });
 
+      // Provide an immediate hint for the temp conversation so UI can resolve otherParticipant
+      try {
+        const { setHint } = await import(
+          "@/features/messaging/temp-conversation-hints"
+        );
+        setHint(tempId, {
+          otherParticipant: selectedUser,
+          participant1_id: currentUser?.id,
+          participant2_id: selectedUser.id,
+          participant1: currentUser as any,
+          participant2: selectedUser as any,
+          updated_at: new Date().toISOString(),
+        });
+      } catch {}
+
+      // Give SWR a tick to publish the optimistic conversation before selecting it
+      await new Promise((r) => setTimeout(r, 80));
+
+      // Select the temp conversation so the chat window binds to it immediately
+      try {
+        await selectConversation(tempId);
+      } catch {}
+
+      // Also emit a global selection event so any listeners can switch views
+      try {
+        window.dispatchEvent(
+          new CustomEvent("conversation:selected", {
+            detail: { conversationId: tempId },
+          })
+        );
+      } catch {}
+
+      // Let parent navigate to the temp conversation before actually sending
+      if (onConversationCreated) {
+        try {
+          onConversationCreated(tempId);
+        } catch {}
+      }
+      // Close dialog to reveal chat window
+      onOpenChange(false);
+
+      // After the chat window mounts, emit an optimistic message insert so it appears immediately
+      setTimeout(() => {
+        try {
+          const tempMsg = {
+            id: tempId, // temp message id can be same as conv temp for simplicity
+            conversationId: tempId,
+            content: message.trim(),
+            timestamp: new Date().toISOString(),
+            sender: currentUser,
+            senderType:
+              currentUser?.role &&
+              ["super_admin", "co_admin"].includes(currentUser.role)
+                ? "admin"
+                : "user",
+            isRead: false,
+            isDelivered: false,
+            isOpened: false,
+          } as any;
+          window.dispatchEvent(
+            new CustomEvent("messages:optimistic-insert", {
+              detail: { conversationId: tempId, message: tempMsg },
+            })
+          );
+        } catch {}
+      }, 100);
+
+      // Send the message now (recipientId prioritized in sendMessage)
       await sendMessage(message.trim(), selectedUser.id, tempId);
 
       toast.success("Message sent successfully");
-      onOpenChange(false);
 
-      if (onConversationCreated) {
-        // We don't have the real id here; the room echo will update the existing list.
-        // Optionally, if you capture the server ACK with conversationId, call reconcileConversationId(tempId, conversationId)
-        onConversationCreated(tempId);
-      }
+      // Note: real id reconciliation is handled on socket ACK and in useConversations listener
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error("Failed to send message");

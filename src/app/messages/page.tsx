@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMessaging } from "@/hooks/useMessaging";
 import { useConversations } from "@/hooks/useConversations";
 import { ChatWindow } from "@/components/messaging/chat-window";
@@ -29,6 +29,18 @@ export default function MessagesPage() {
   const handleNewMessage = () => {
     setShowNewMessageDialog(true);
   };
+
+  // Sync selection when hooks select programmatically (e.g., after REST success)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ce = e as CustomEvent<{ conversationId: string }>;
+      if (ce?.detail?.conversationId) {
+        setSelectedConversationId(ce.detail.conversationId);
+      }
+    };
+    window.addEventListener("conversation:selected", handler as EventListener);
+    return () => window.removeEventListener("conversation:selected", handler as EventListener);
+  }, []);
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">

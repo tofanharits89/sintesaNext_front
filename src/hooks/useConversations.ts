@@ -53,12 +53,17 @@ export function useConversations() {
     senderType: "user" | "admin";
     timestamp: string;
   }) => {
+    console.debug("[useConversations][optimisticAddConversation]", params);
     mutate((prev: any) => {
       const list: Conversation[] = prev?.data?.conversations || [];
       if (list.some((c) => c.id === params.tempId)) return prev;
       const conv: any = {
         id: params.tempId,
         otherParticipant: params.otherParticipant,
+        participant1_id: params.sender?.id,
+        participant2_id: params.otherParticipant?.id,
+        participant1: params.sender,
+        participant2: params.otherParticipant,
         updated_at: params.timestamp,
         unread_count: 0,
         lastMessage: {
@@ -80,6 +85,7 @@ export function useConversations() {
   };
 
   const reconcileConversationId = (tempId: string, realId: string) => {
+    console.debug("[useConversations][reconcileConversationId]", { tempId, realId });
     mutate((prev: any) => {
       const list: Conversation[] = prev?.data?.conversations || [];
       const idx = list.findIndex((c) => c.id === tempId);
@@ -104,6 +110,7 @@ export function useConversations() {
   const { currentUser } = useCurrentUser();
   useEffect(() => {
     const updateOnNewMessage = (m: SocketMessageData) => {
+      console.debug("[useConversations][socket] MESSAGE_NEW/RECEIVED", m);
       mutate((prev: any) => {
         const list: Conversation[] = prev?.data?.conversations || [];
         const idx = list.findIndex((c) => c.id === m.conversationId);
@@ -139,6 +146,7 @@ export function useConversations() {
       conversationId: string;
       messageIds: string[];
     }) => {
+      console.debug("[useConversations][socket] READ/OPENED", payload);
       mutate((prev: any) => {
         const list: Conversation[] = prev?.data?.conversations || [];
         const idx = list.findIndex((c) => c.id === payload.conversationId);
@@ -185,6 +193,7 @@ export function useConversations() {
   // Reconcile temp conversation ids when server confirms real id
   useEffect(() => {
     const handler = (payload: { tempId: string; conversationId: string }) => {
+      console.debug("[useConversations][event] conversation:created", payload);
       reconcileConversationId(payload.tempId, payload.conversationId);
     };
     on("conversation:created", handler as any);
