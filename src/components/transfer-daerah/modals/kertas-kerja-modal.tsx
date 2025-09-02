@@ -9,9 +9,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { FileText, Download, Eye } from "lucide-react";
+import { FileText } from "lucide-react";
+import { useMemo } from "react";
+import { useDauRekapBulanan } from "@/hooks/use-dau-rekap-bulanan";
+import { useDauPenundaanCabutByPemda } from "@/hooks/use-dau-penundaan-cabut-by-pemda";
+import { useDauRekapByPemda } from "@/hooks/use-dau-rekap-by-pemda";
 
 interface KertasKerjaModalProps {
   open: boolean;
@@ -19,270 +21,235 @@ interface KertasKerjaModalProps {
   data: any;
 }
 
-// Mock data for kertas kerja
-const mockKertasKerjaData = {
-  nomorDokumen: "KK-DAU-001/2024",
-  tanggalPembuatan: "2024-01-15",
-  status: "Final",
-  ringkasan: {
-    totalAlokasi: 5000000000,
-    totalPotongan: 250000000,
-    sisaDana: 4750000000,
-    jumlahTransaksi: 12,
-  },
-  rincianTransaksi: [
-    {
-      tanggal: "2024-01-10",
-      nomor: "TRX-001",
-      jenis: "Transfer Dana",
-      nilai: 1000000000,
-      status: "Berhasil",
-    },
-    {
-      tanggal: "2024-01-15",
-      nomor: "TRX-002",
-      jenis: "Pemotongan Pajak",
-      nilai: -50000000,
-      status: "Berhasil",
-    },
-    {
-      tanggal: "2024-01-20",
-      nomor: "TRX-003",
-      jenis: "Transfer Dana",
-      nilai: 1500000000,
-      status: "Berhasil",
-    },
-  ],
-  berkas: [
-    {
-      nama: "Kertas_Kerja_DAU_Jan_2024.pdf",
-      ukuran: "2.5 MB",
-      tanggal: "2024-01-15",
-      tipe: "PDF",
-    },
-    {
-      nama: "Rincian_Transaksi_Jan_2024.xlsx",
-      ukuran: "1.2 MB",
-      tanggal: "2024-01-15",
-      tipe: "Excel",
-    },
-  ],
+// Thousand-separator without currency prefix
+const fmt = (v: any) => {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return v ?? "";
+  return n.toLocaleString("id-ID");
 };
 
-export function KertasKerjaModal({
-  open,
-  onOpenChange,
-  data,
-}: KertasKerjaModalProps) {
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(value);
-  };
+function SimpleTable({ rows }: { rows: any[] }) {
+  const columns = useMemo(() => {
+    if (!rows?.length) return [] as string[];
+    const keys = Object.keys(rows[0] || {});
+    return keys.slice(0, 8); // cap columns to avoid overflow
+  }, [rows]);
 
-  const handleDownload = (fileName: string) => {
-    console.log("Downloading file:", fileName);
-    // Implementation for file download
-  };
+  if (!rows?.length) return <div className="text-sm text-muted-foreground">Tidak ada data.</div>;
 
-  const handlePreview = (fileName: string) => {
-    console.log("Previewing file:", fileName);
-    // Implementation for file preview
-  };
+  return (
+    <div className="w-full overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b">
+            {columns.map((c) => (
+              <th key={c} className="text-left py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">
+                {c}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i} className="border-b last:border-0">
+              {columns.map((c) => (
+                <td key={c} className="py-2 pr-4 align-top">
+                  {String(r?.[c] ?? "")}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function RekapBulananTable({ rows }: { rows: any[] }) {
+  if (!rows?.length) return <div className="text-sm text-muted-foreground">Tidak ada data.</div>;
+
+  const safe = (v: any) => (v === null || v === undefined ? "" : v);
+
+  return (
+    <div className="w-full overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b">
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">THANG</th>
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">KDPEMDA - NMPEMDA</th>
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">PAGU</th>
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">ALOKASI BULAN</th>
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">TUNDA</th>
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">CABUT</th>
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">POTONGAN</th>
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">SALUR</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i} className="border-b last:border-0">
+              <td className="py-2 pr-4 align-top">{safe(r?.thang)}</td>
+              <td className="py-2 pr-4 align-top">{`${safe(r?.kdpemda)} - ${safe(r?.nmpemda)}`}</td>
+              <td className="py-2 pr-4 align-top text-right">{fmt(r?.pagu)}</td>
+              <td className="py-2 pr-4 align-top text-right">{fmt(r?.alokasi_bulan)}</td>
+              <td className="py-2 pr-4 align-top text-right">{fmt(r?.tunda)}</td>
+              <td className="py-2 pr-4 align-top text-right">{fmt(r?.cabut)}</td>
+              <td className="py-2 pr-4 align-top text-right">{fmt(r?.potongan)}</td>
+              <td className="py-2 pr-4 align-top text-right">{fmt(r?.salur)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function PenundaanCabutTable({ rows }: { rows: any[] }) {
+  if (!rows?.length) return <div className="text-sm text-muted-foreground">Tidak ada data.</div>;
+
+  const safe = (v: any) => (v === null || v === undefined ? "" : v);
+
+  const months = ["jan", "peb", "mar", "apr", "mei", "jun", "jul", "ags", "sep", "okt", "nov", "des"] as const;
+
+  return (
+    <div className="w-full overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b">
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">No</th>
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">no_kmk</th>
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">kmk_cabut</th>
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">nm_kriteria</th>
+            {months.map((m) => (
+              <th key={m} className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">{m}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i} className="border-b last:border-0">
+              <td className="py-2 pr-4 align-top">{i + 1}</td>
+              <td className="py-2 pr-4 align-top">{safe(r?.no_kmk)}</td>
+              <td className="py-2 pr-4 align-top">{safe(r?.kmk_cabut)}</td>
+              <td className="py-2 pr-4 align-top">{safe(r?.nm_kriteria)}</td>
+              {months.map((m) => (
+                <td key={m} className="py-2 pr-4 align-top text-right">{fmt(r?.[m])}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function RekapByPemdaTable({ rows }: { rows: any[] }) {
+  if (!rows?.length) return <div className="text-sm text-muted-foreground">Tidak ada data.</div>;
+
+  const safe = (v: any) => (v === null || v === undefined ? "" : v);
+
+  return (
+    <div className="w-full overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b">
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">No</th>
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">thang</th>
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">nmbulan</th>
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">nmkppn</th>
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">nmpemda</th>
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">pagu</th>
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">alokasi_bulan</th>
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">tunda</th>
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">cabut</th>
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">potongan</th>
+            <th className="text-center py-2 pr-4 font-medium uppercase text-xs text-muted-foreground">salur</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i} className="border-b last:border-0">
+              <td className="py-2 pr-4 align-top">{i + 1}</td>
+              <td className="py-2 pr-4 align-top">{safe(r?.thang)}</td>
+              <td className="py-2 pr-4 align-top">{safe(r?.nmbulan)}</td>
+              <td className="py-2 pr-4 align-top">{safe(r?.nmkppn)}</td>
+              <td className="py-2 pr-4 align-top">{safe(r?.nmpemda)}</td>
+              <td className="py-2 pr-4 align-top text-right">{fmt(r?.pagu)}</td>
+              <td className="py-2 pr-4 align-top text-right">{fmt(r?.alokasi_bulan)}</td>
+              <td className="py-2 pr-4 align-top text-right">{fmt(r?.tunda)}</td>
+              <td className="py-2 pr-4 align-top text-right">{fmt(r?.cabut)}</td>
+              <td className="py-2 pr-4 align-top text-right">{fmt(r?.potongan)}</td>
+              <td className="py-2 pr-4 align-top text-right">{fmt(r?.salur)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export function KertasKerjaModal({ open, onOpenChange, data }: KertasKerjaModalProps) {
+  const kdpemda = data?.kdpemdaCode as string | undefined;
+  const bulan = data?.bulanNum as number | undefined;
+
+  // Queries
+  const rekapBulanan = useDauRekapBulanan({ kdpemda, bulan });
+  const penundaanCabut = useDauPenundaanCabutByPemda({ kdpemda });
+  const rekapByPemda = useDauRekapByPemda({ kdpemda });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-7xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Kertas Kerja - {data?.kppn}, {data?.bulan} {data?.tahun}
+            Kertas Kerja - {data?.kppn} • {data?.kabkota} • {data?.bulan} {data?.tahun}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Document Info */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Informasi Dokumen</CardTitle>
+              <CardTitle className="text-lg">Rekap Bulanan (Pemda & Bulan)</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Nomor Dokumen</p>
-                  <p className="font-medium">
-                    {mockKertasKerjaData.nomorDokumen}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    Tanggal Pembuatan
-                  </p>
-                  <p className="font-medium">
-                    {new Date(
-                      mockKertasKerjaData.tanggalPembuatan
-                    ).toLocaleDateString("id-ID")}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Status</p>
-                  <Badge variant="default">{mockKertasKerjaData.status}</Badge>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">KPPN</p>
-                  <p className="font-medium">{data?.kppn}</p>
-                </div>
-              </div>
+              {rekapBulanan.isLoading ? (
+                <div className="text-sm text-muted-foreground">Memuat data...</div>
+              ) : rekapBulanan.error ? (
+                <div className="text-sm text-red-600">{String(rekapBulanan.error.message || rekapBulanan.error)}</div>
+              ) : (
+                <RekapBulananTable rows={rekapBulanan.rows} />
+              )}
             </CardContent>
           </Card>
 
-          {/* Summary */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Ringkasan Keuangan</CardTitle>
+              <CardTitle className="text-lg">Penundaan & Pencabutan (Pemda)</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">Total Alokasi</p>
-                  <p className="text-lg font-bold text-blue-600">
-                    {formatCurrency(mockKertasKerjaData.ringkasan.totalAlokasi)}
-                  </p>
-                </div>
-                <div className="text-center p-3 bg-red-50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">
-                    Total Potongan
-                  </p>
-                  <p className="text-lg font-bold text-red-600">
-                    {formatCurrency(
-                      mockKertasKerjaData.ringkasan.totalPotongan
-                    )}
-                  </p>
-                </div>
-                <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">Sisa Dana</p>
-                  <p className="text-lg font-bold text-green-600">
-                    {formatCurrency(mockKertasKerjaData.ringkasan.sisaDana)}
-                  </p>
-                </div>
-                <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">
-                    Jumlah Transaksi
-                  </p>
-                  <p className="text-lg font-bold text-gray-600">
-                    {mockKertasKerjaData.ringkasan.jumlahTransaksi}
-                  </p>
-                </div>
-              </div>
+              {penundaanCabut.isLoading ? (
+                <div className="text-sm text-muted-foreground">Memuat data...</div>
+              ) : penundaanCabut.error ? (
+                <div className="text-sm text-red-600">{String(penundaanCabut.error.message || penundaanCabut.error)}</div>
+              ) : (
+                <PenundaanCabutTable rows={penundaanCabut.rows} />
+              )}
             </CardContent>
           </Card>
 
-          {/* Transaction Details */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">
-                Rincian Transaksi Terakhir
-              </CardTitle>
+              <CardTitle className="text-lg">Rekap Penyaluran (Semua Bulan Pemda)</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {mockKertasKerjaData.rincianTransaksi.map(
-                  (transaksi, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 border rounded-lg"
-                    >
-                      <div className="flex-1 grid grid-cols-4 gap-4">
-                        <div>
-                          <p className="text-sm text-muted-foreground">
-                            Tanggal
-                          </p>
-                          <p className="font-medium">
-                            {new Date(transaksi.tanggal).toLocaleDateString(
-                              "id-ID"
-                            )}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Nomor</p>
-                          <p className="font-medium">{transaksi.nomor}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Jenis</p>
-                          <p className="font-medium">{transaksi.jenis}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Nilai</p>
-                          <p
-                            className={`font-bold ${
-                              transaksi.nilai >= 0
-                                ? "text-green-600"
-                                : "text-red-600"
-                            }`}
-                          >
-                            {formatCurrency(Math.abs(transaksi.nilai))}
-                          </p>
-                        </div>
-                      </div>
-                      <Badge
-                        variant={
-                          transaksi.status === "Berhasil"
-                            ? "default"
-                            : "secondary"
-                        }
-                      >
-                        {transaksi.status}
-                      </Badge>
-                    </div>
-                  )
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Files */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Berkas Terkait</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {mockKertasKerjaData.berkas.map((berkas, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 border rounded-lg"
-                  >
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-8 w-8 text-blue-500" />
-                      <div>
-                        <p className="font-medium">{berkas.nama}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {berkas.tipe} • {berkas.ukuran} •{" "}
-                          {new Date(berkas.tanggal).toLocaleDateString("id-ID")}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePreview(berkas.nama)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownload(berkas.nama)}
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {rekapByPemda.isLoading ? (
+                <div className="text-sm text-muted-foreground">Memuat data...</div>
+              ) : rekapByPemda.error ? (
+                <div className="text-sm text-red-600">{String(rekapByPemda.error.message || rekapByPemda.error)}</div>
+              ) : (
+                <RekapByPemdaTable rows={rekapByPemda.rows} />
+              )}
             </CardContent>
           </Card>
         </div>
@@ -290,10 +257,6 @@ export function KertasKerjaModal({
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Tutup
-          </Button>
-          <Button onClick={() => handleDownload("Kertas_Kerja_Lengkap.pdf")}>
-            <Download className="h-4 w-4 mr-2" />
-            Download Lengkap
           </Button>
         </DialogFooter>
       </DialogContent>

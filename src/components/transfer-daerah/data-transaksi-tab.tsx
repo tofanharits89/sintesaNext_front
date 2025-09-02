@@ -15,48 +15,35 @@ import { ResetButton } from "@/components/ui/reset-button";
 import { RekamDataTransaksiModal } from "./modals/rekam-data-transaksi-modal";
 import { KertasKerjaModal } from "./modals/kertas-kerja-modal";
 import tkdData from "@/data/kdkppn_tkd.json";
+import { useDauTransaksi } from "@/hooks/use-dau-transaksi";
+import { FilePenLine, FileText } from "lucide-react";
 
 interface DataTransaksiTabProps {
   // Remove selectedYear prop as this tab will manage its own year state
 }
 
-// Mock data for transaction table
-const mockTransaksiData = [
-  {
-    id: "1",
-    no: 1,
-    tahun: "2024",
-    bulan: "Januari",
-    kppn: "001 - BANDA ACEH",
-    kabkota: "0601 - Kab. Aceh Besar",
-    alokasi: 5000000000,
-    nilaiPotongan: 250000000,
-  },
-  {
-    id: "2",
-    no: 2,
-    tahun: "2024",
-    bulan: "Februari",
-    kppn: "003 - MEULABOH",
-    kabkota: "0606 - Kab. Aceh Barat",
-    alokasi: 4500000000,
-    nilaiPotongan: 180000000,
-  },
-  {
-    id: "3",
-    no: 3,
-    tahun: "2024",
-    bulan: "Maret",
-    kppn: "002 - LANGSA",
-    kabkota: "0604 - Kab. Aceh Timur",
-    alokasi: 4200000000,
-    nilaiPotongan: 150000000,
-  },
-];
+// Live data now fetched via useDauTransaksi
 
 export function DataTransaksiTab({}: DataTransaksiTabProps) {
-  const [selectedYear, setSelectedYear] = useState("2024");
-  const [selectedMonth, setSelectedMonth] = useState("");
+  const now = new Date();
+  const defaultYear = String(now.getFullYear());
+  const defaultMonthName = [
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
+  ][now.getMonth()];
+
+  const [selectedYear, setSelectedYear] = useState(defaultYear);
+  const [selectedMonth, setSelectedMonth] = useState(defaultMonthName);
   const [selectedKppn, setSelectedKppn] = useState("");
   const [selectedKabKota, setSelectedKabKota] = useState("");
   const [isRekamDataModalOpen, setIsRekamDataModalOpen] = useState(false);
@@ -110,8 +97,8 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
   ];
 
   const handleReset = () => {
-    setSelectedYear("2024");
-    setSelectedMonth("");
+    setSelectedYear(defaultYear);
+    setSelectedMonth(defaultMonthName);
     setSelectedKppn("");
     setSelectedKabKota("");
   };
@@ -126,12 +113,11 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
     setIsKertasKerjaModalOpen(true);
   };
 
-  const formatCurrency = (value: number) => {
+  const formatNumberId = (value: number) => {
     return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
       minimumFractionDigits: 0,
-    }).format(value);
+      maximumFractionDigits: 0,
+    }).format(Number(value || 0));
   };
 
   const columns = [
@@ -179,11 +165,11 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
     {
       accessorKey: "kabkota",
       header: ({ column }: any) => (
-        <div className="text-center font-medium">Kab/Kota</div>
+        <div className="text-center font-medium w-56 mx-auto">Kab/Kota</div>
       ),
       cell: ({ row }: any) => (
         <div
-          className="text-center max-w-[150px] truncate mx-auto"
+          className="text-center w-56 truncate mx-auto"
           title={row.getValue("kabkota")}
         >
           {row.getValue("kabkota")}
@@ -196,8 +182,8 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
         <div className="text-center font-medium">Alokasi</div>
       ),
       cell: ({ row }: any) => (
-        <div className="text-center font-mono">
-          {formatCurrency(row.getValue("alokasi"))}
+        <div className="text-right font-mono tabular-nums pr-2">
+          {formatNumberId(row.getValue("alokasi"))}
         </div>
       ),
     },
@@ -207,8 +193,8 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
         <div className="text-center font-medium">Nilai Potongan</div>
       ),
       cell: ({ row }: any) => (
-        <div className="text-center font-mono">
-          {formatCurrency(row.getValue("nilaiPotongan"))}
+        <div className="text-right font-mono tabular-nums pr-2">
+          {formatNumberId(row.getValue("nilaiPotongan"))}
         </div>
       ),
     },
@@ -218,59 +204,39 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
         <div className="text-center font-medium">Aksi</div>
       ),
       cell: ({ row }: any) => (
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-1.5">
           <Button
-            variant="outline"
-            size="sm"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
+            title="Rekam Data Transaksi"
+            aria-label="Rekam Data Transaksi"
             onClick={() => handleRekamData(row.original)}
           >
-            Rekam Data Transaksi
+            <FilePenLine className="h-4 w-4" />
           </Button>
           <Button
-            variant="outline"
-            size="sm"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
+            title="Kertas Kerja"
+            aria-label="Kertas Kerja"
             onClick={() => handleKertasKerja(row.original)}
           >
-            Kertas Kerja
+            <FileText className="h-4 w-4" />
           </Button>
         </div>
       ),
     },
   ];
 
-  // Filter data based on selections
-  const normalizeKppn = (s: string) =>
-    (s || "")
-      .toLowerCase()
-      .replace(/^kppn\s+/, "")
-      .trim();
-  const normalizeKabKota = (s: string) =>
-    (s || "")
-      .toLowerCase()
-      .replace(/^kota\s+/, "")
-      .replace(/^kab\.\s+/, "")
-      .replace(/^provinsi\s+/, "")
-      .trim();
-
-  const selectedKppnName = selectedKppn
-    ? uniqueKppn.find((k) => k.kdkppn === selectedKppn)?.nmkppn || ""
-    : "";
-  const selectedKabKotaName = selectedKabKota
-    ? (tkdData as Array<any>).find((row) => row.kdkabkota === selectedKabKota)
-        ?.nmkabkota || ""
-    : "";
-
-  const filteredData = mockTransaksiData.filter((item) => {
-    return (
-      item.tahun === selectedYear &&
-      (selectedMonth === "" || item.bulan === selectedMonth) &&
-      (selectedKppn === "" ||
-        normalizeKppn(item.kppn).includes(normalizeKppn(selectedKppnName))) &&
-      (selectedKabKota === "" ||
-        normalizeKabKota(item.kabkota).includes(
-          normalizeKabKota(selectedKabKotaName)
-        ))
-    );
+  // Build query params and fetch live data
+  const bulanNum = selectedMonth ? months.indexOf(selectedMonth) + 1 : undefined;
+  const { rows, isLoading, error } = useDauTransaksi({
+    thang: selectedYear,
+    bulan: bulanNum,
+    kppn: selectedKppn || undefined,
+    kabkota: selectedKabKota || undefined,
   });
 
   return (
@@ -379,7 +345,14 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
           <CardTitle>Data Transaksi</CardTitle>
         </CardHeader>
         <CardContent>
-          <DataTable columns={columns} data={filteredData} />
+          {isLoading && (
+            <div className="text-sm text-muted-foreground mb-2">Memuat data...</div>
+          )}
+          {error ? (
+            <div className="text-sm text-red-600">{String(error.message || error)}</div>
+          ) : (
+            <DataTable columns={columns} data={rows} />
+          )}
         </CardContent>
       </Card>
 

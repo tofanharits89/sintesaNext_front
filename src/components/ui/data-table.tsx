@@ -12,7 +12,7 @@ import {
   VisibilityState,
   useReactTable,
 } from "@tanstack/react-table";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   Table,
@@ -31,6 +31,16 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   searchKey?: string;
   searchPlaceholder?: string;
+  // When true, hides the built-in pagination controls so that the parent can render them externally
+  hidePagination?: boolean;
+  // Callback to expose the internal table instance to the parent for external pagination control
+  onTableInstance?: (table: ReturnType<typeof useReactTable<TData>>) => void;
+  // Notify parent when pagination changes (pageIndex/pageSize)
+  onPaginationChange?: (pagination: { pageIndex: number; pageSize: number }) => void;
+  // If provided, use this as controlled pagination state
+  controlledPagination?: { pageIndex: number; pageSize: number };
+  // Control react-table's auto reset behavior for page index
+  autoResetPageIndex?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -38,10 +48,17 @@ export function DataTable<TData, TValue>({
   data,
   searchKey,
   searchPlaceholder = "Search...",
+  hidePagination = false,
+  onTableInstance,
+  onPaginationChange,
+  controlledPagination,
+  autoResetPageIndex = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [uncontrolledPagination, setUncontrolledPagination] = useState({ pageIndex: 0, pageSize: 10 });
+  const effectivePagination = controlledPagination ?? uncontrolledPagination;
 
   const table = useReactTable({
     data,
@@ -50,15 +67,39 @@ export function DataTable<TData, TValue>({
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    autoResetPageIndex,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
+    onPaginationChange: controlledPagination
+      ? undefined
+      : (updater) => {
+          // Uncontrolled: update internal state and notify parent
+          const next = typeof updater === "function" ? (updater as any)(uncontrolledPagination) : updater;
+          setUncontrolledPagination(next);
+          onPaginationChange?.(next);
+        },
     state: {
       sorting,
       columnFilters,
       columnVisibility,
+      pagination: effectivePagination,
     },
   });
+
+  // Expose table instance to parent for external pagination controls
+  useEffect(() => {
+    onTableInstance?.(table as any);
+    // We intentionally do not add onTableInstance to deps to avoid re-calling unnecessarily
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table, sorting, columnFilters, columnVisibility, data]);
+
+  // Notify parent when uncontrolled pagination changes so external UIs can re-render
+  useEffect(() => {
+    if (!controlledPagination) {
+      onPaginationChange?.(uncontrolledPagination);
+    }
+  }, [uncontrolledPagination, onPaginationChange, controlledPagination]);
 
   return (
     <div className="space-y-4">
@@ -126,32 +167,34 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          Showing {table.getFilteredRowModel().rows.length} of{" "}
-          {table.getCoreRowModel().rows.length} entries
+      {hidePagination ? null : (
+        <div className="flex items-center justify-between space-x-2 py-4">
+          <div className="flex-1 text-sm text-muted-foreground">
+            Showing {table.getFilteredRowModel().rows.length} of{" "}
+            {table.getCoreRowModel().rows.length} entries
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
