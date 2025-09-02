@@ -297,9 +297,7 @@ export class SocketClient {
    * Log debug messages
    */
   private log(message: string, ...args: unknown[]): void {
-    if (this.debugMode) {
-      console.log(`[SocketClient] ${message}`, ...args);
-    }
+    // Debug logs silenced
   }
 
   /**

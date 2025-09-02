@@ -92,8 +92,8 @@ export const useMessaging = (): UseMessagingReturn => {
       try {
         data = JSON.parse(text);
       } catch (parseError) {
-        console.error("JSON parse error:", parseError);
-        console.error("Response text:", text);
+        // Keep error concise
+        console.error("[Messaging] Failed to parse conversations response");
         throw new Error("Invalid JSON response from server");
       }
 
@@ -147,11 +147,52 @@ export const useMessaging = (): UseMessagingReturn => {
           tempId: tempId, // pass through explicit tempId for reconciliation
         };
 
+        // Optimistically update conversations list so recent chat shows immediately
+        if (currentConversation) {
+          const listKey = backendPath("/messaging/conversations");
+          const nowIso = new Date().toISOString();
+          swrMutate(
+            listKey,
+            (prev: any) => {
+              const list = Array.isArray(prev?.data?.conversations)
+                ? [...prev.data.conversations]
+                : [];
+              const idx = list.findIndex(
+                (c: any) => c?.id === currentConversation.id
+              );
+              if (idx === -1) return prev ?? { data: { conversations: [] } };
+
+              const conv = { ...(list[idx] || {}) };
+              // Set a minimal lastMessage optimistically
+              conv.lastMessage = {
+                ...(conv.lastMessage || {}),
+                id: tempId || `temp-${Math.random().toString(36).slice(2)}`,
+                content: payload.content,
+                is_read: true,
+                isRead: true,
+                timestamp: nowIso,
+                created_at: nowIso,
+              };
+              conv.updated_at = nowIso;
+
+              // Move conversation to top
+              list.splice(idx, 1);
+              list.unshift(conv);
+
+              return {
+                ...(prev || {}),
+                data: { ...(prev?.data || {}), conversations: list },
+              };
+            },
+            { revalidate: false }
+          );
+        }
+
         if (isConnected && socket) {
           // Send via socket for real-time delivery
           emit(SOCKET_EVENTS.MESSAGE_SEND, payload, (response: any) => {
             if (!response.success) {
-              console.error("Socket message send failed:", response.error);
+              console.error("[Messaging][send] socket failed", response.error);
               toast.error("Failed to send message");
             }
           });
@@ -181,7 +222,7 @@ export const useMessaging = (): UseMessagingReturn => {
           await loadConversations();
         }
       } catch (error) {
-        console.error("Error sending message:", error);
+        console.error("[Messaging][send] error", error);
         toast.error("Failed to send message");
       }
     },
@@ -226,9 +267,6 @@ export const useMessaging = (): UseMessagingReturn => {
 
         // Use the proper unread_count field from backend if available
         if (conversation.unread_count !== undefined) {
-          console.log(
-            `[getUnreadCount] 🔢 Conversation ${conversationId} (${conversation.otherParticipant?.name}) unread_count: ${conversation.unread_count}`
-          );
           return conversation.unread_count;
         }
 
@@ -307,8 +345,6 @@ export const useMessaging = (): UseMessagingReturn => {
 
     // Handle opened status updates
     const handleMessagesOpened = (data: any) => {
-      console.log(`[useMessaging] 📡 Received message:opened event:`, data);
-
       // Broadcast custom event for UI hooks
       window.dispatchEvent(
         new CustomEvent("messages:marked-as-opened", {
@@ -328,8 +364,6 @@ export const useMessaging = (): UseMessagingReturn => {
 
     // Handle read status updates
     const handleMessagesRead = (data: MessagesReadPayload) => {
-      console.log(`[useMessaging] 📡 Received message:read event:`, data);
-
       // Broadcast custom event for UI hooks
       window.dispatchEvent(
         new CustomEvent("messages:marked-as-read", {
@@ -348,8 +382,6 @@ export const useMessaging = (): UseMessagingReturn => {
 
     // Handle delivered status updates
     const handleMessagesDelivered = (data: any) => {
-      console.log(`[useMessaging] 📡 Received message:delivered event:`, data);
-
       // Messages are handled by SWR (useMessages); no local update here
     };
 

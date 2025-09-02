@@ -218,21 +218,21 @@ export function DataKmkTab({}: DataKmkTabProps) {
       ),
     },
     {
-      id: "actions",
+      id: "data-actions",
       header: ({ column }: any) => (
-        <div className="text-center font-medium">Aksi</div>
+        <div className="text-center font-medium">Data</div>
       ),
       cell: ({ row }: any) => (
         <div className="flex items-center justify-center gap-2">
-          {/* 1) Data Pemotongan (only jenis = 1 or 4) */}
+          {/* Data Pemotongan (jenis 1 atau 4) */}
           {(() => {
             const jenis = String(row.original?.jenis ?? "");
             if (jenis === "1" || jenis === "4") {
               return (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 h-8 w-8 p-0"
+                  className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
                   onClick={() => {
                     setSelectedItem(row.original);
                     setIsDataPemotonganModalOpen(true);
@@ -246,15 +246,15 @@ export function DataKmkTab({}: DataKmkTabProps) {
             return null;
           })()}
 
-          {/* 2) Data Penundaan (only jenis = 2 or 3) */}
+          {/* Data Penundaan (jenis 2 atau 3) */}
           {(() => {
             const jenis = String(row.original?.jenis ?? "");
             if (jenis === "2" || jenis === "3") {
               return (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 h-8 w-8 p-0"
+                  className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800"
                   onClick={() => {
                     setSelectedItem(row.original);
                     setIsDataPenundaanModalOpen(true);
@@ -268,15 +268,15 @@ export function DataKmkTab({}: DataKmkTabProps) {
             return null;
           })()}
 
-          {/* 3) Data Pencabutan (only for jenis = 2) */}
+          {/* Data Pencabutan (hanya untuk jenis = 2) */}
           {(() => {
             const jenis = String(row.original?.jenis ?? "");
             if (jenis === "2") {
               return (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 h-8 w-8 p-0"
+                  className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800"
                   onClick={() => {
                     setSelectedNoKmkForPencabutan(
                       row.original?.nomorKmk || row.original?.no_kmk || row.getValue?.("nomorKmk")
@@ -291,12 +291,21 @@ export function DataKmkTab({}: DataKmkTabProps) {
             }
             return null;
           })()}
-
-          {/* 4) Delete */}
+        </div>
+      ),
+    },
+    {
+      id: "actions",
+      header: ({ column }: any) => (
+        <div className="text-center font-medium">Aksi</div>
+      ),
+      cell: ({ row }: any) => (
+        <div className="flex items-center justify-center gap-2">
+          {/* Delete only */}
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="bg-red-100 text-red-700 border-red-200 hover:bg-red-200 h-8 w-8 p-0"
+            className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
             onClick={() => handleDelete(row.original)}
             title="Hapus"
           >

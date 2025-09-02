@@ -45,10 +45,6 @@ export function useAutoMarkAsRead({
         entries.forEach((entry) => {
           const messageId = entry.target.getAttribute("data-message-id");
           if (messageId) {
-            console.log(
-              `[useAutoMarkAsRead] Message ${messageId} visibility:`,
-              entry.isIntersecting
-            );
             if (entry.isIntersecting) {
               visibleMessagesRef.current.add(messageId);
               // Trigger the visibility callback for immediate UI update
@@ -60,11 +56,6 @@ export function useAutoMarkAsRead({
             }
           }
         });
-
-        console.log(
-          `[useAutoMarkAsRead] Visible messages:`,
-          Array.from(visibleMessagesRef.current)
-        );
       },
       {
         threshold: 0.3, // Message must be 30% visible (reduced threshold)
@@ -102,9 +93,6 @@ export function useAutoMarkAsRead({
       const trackers = conversationTrackerRef.current;
 
       if (!trackers.has(convId)) {
-        console.log(
-          `[useAutoMarkAsRead] 🚨 DEBUG: Creating new tracker for conversation ${convId}`
-        );
         trackers.set(convId, {
           conversationId: convId,
           lastMarkedAt: 0,
@@ -112,11 +100,7 @@ export function useAutoMarkAsRead({
           isMarking: false,
         });
       } else {
-        const tracker = trackers.get(convId)!;
-        console.log(
-          `[useAutoMarkAsRead] 🚨 DEBUG: Using existing tracker for conversation ${convId}, markedMessageIds:`,
-          Array.from(tracker.markedMessageIds)
-        );
+        // existing tracker present; nothing to log
       }
 
       return trackers.get(convId)!;
@@ -133,9 +117,7 @@ export function useAutoMarkAsRead({
       const tracker = getConversationTracker(targetConversationId);
       messageIds.forEach((id) => tracker.markedMessageIds.delete(id));
 
-      console.log(
-        `[useAutoMarkAsRead] Cleared tracking for ${messageIds.length} messages in conversation ${targetConversationId}`
-      );
+      // cleared tracking; no debug log
     },
     [conversationId, getConversationTracker]
   );
@@ -148,7 +130,6 @@ export function useAutoMarkAsRead({
       !currentUserId ||
       messages.length === 0
     ) {
-      console.log("[useAutoMarkAsRead] Skipping: disabled or missing data");
       return;
     }
 
@@ -156,7 +137,6 @@ export function useAutoMarkAsRead({
 
     // Prevent concurrent marking operations
     if (tracker.isMarking) {
-      console.log("[useAutoMarkAsRead] Skipping: marking already in progress");
       return;
     }
 
@@ -166,15 +146,6 @@ export function useAutoMarkAsRead({
       const isVisible = visibleMessagesRef.current.has(msg.id);
       const notAlreadyMarked = !tracker.markedMessageIds.has(msg.id);
       const isNotOpened = !msg.isOpened; // Check if message is not opened yet
-
-      console.log(`[useAutoMarkAsRead] Message ${msg.id}:`, {
-        isNotFromCurrentUser,
-        isVisible,
-        notAlreadyMarked,
-        isNotOpened,
-        senderId: msg.sender.id,
-        currentUserId,
-      });
 
       return (
         isNotFromCurrentUser && isVisible && notAlreadyMarked && isNotOpened
@@ -196,17 +167,12 @@ export function useAutoMarkAsRead({
       });
 
       if (fallbackUnopenedMessages.length > 0) {
-        console.log(
-          "[useAutoMarkAsRead] Using fallback: marking all unopened messages from others as opened"
-        );
         const messageIds = fallbackUnopenedMessages.map((msg) => msg.id);
         await markAsOpened(messageIds);
         messageIds.forEach((id) => tracker.markedMessageIds.add(id));
         tracker.lastMarkedAt = now;
         return;
       }
-
-      console.log("[useAutoMarkAsRead] No unopened visible messages to mark");
       return;
     }
 
@@ -218,15 +184,6 @@ export function useAutoMarkAsRead({
     //   return;
     // }
 
-    console.log(
-      `[useAutoMarkAsRead] Marking ${unopenedMessages.length} messages as opened:`,
-      unopenedMessages.map((m) => m.id)
-    );
-
-    console.log(
-      `[useAutoMarkAsRead] 🚨 DEBUG: markedMessageIds set:`,
-      Array.from(tracker.markedMessageIds)
-    );
 
     try {
       tracker.isMarking = true;
@@ -235,14 +192,8 @@ export function useAutoMarkAsRead({
       await markAsOpened(messageIds);
 
       // Track marked messages to prevent duplicate marking
-      console.log(
-        `[useAutoMarkAsRead] 🚨 DEBUG: Adding to markedMessageIds:`,
-        messageIds
-      );
       messageIds.forEach((id) => tracker.markedMessageIds.add(id));
       tracker.lastMarkedAt = now;
-
-      console.log("[useAutoMarkAsRead] Successfully marked messages as opened");
     } catch (error) {
       console.error(
         "[useAutoMarkAsRead] Failed to mark messages as opened:",
@@ -279,10 +230,6 @@ export function useAutoMarkAsRead({
   // Effect to trigger auto-mark when messages or conversation changes
   useEffect(() => {
     if (!enabled || !conversationId) return;
-
-    console.log(
-      "[useAutoMarkAsRead] Messages or conversation changed, scheduling auto-mark"
-    );
 
     // Add a small delay to ensure DOM is updated and intersection observer can work
     const timer = setTimeout(() => {

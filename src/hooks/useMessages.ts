@@ -62,24 +62,53 @@ export function useMessages(conversationId?: string) {
   const messages: FrontendMessage[] = useMemo(() => {
     if (!data) return [];
     const pages = data as Array<any>;
-    const mapped = pages.flatMap((p) =>
-      (p?.data?.messages ?? []).map((msg: any) => ({
-        id: msg.id,
-        conversationId: msg.conversation_id || conversationId!,
-        content: msg.content,
-        timestamp: msg.timestamp || msg.created_at,
-        sender: msg.sender,
-        senderType: msg.senderType || msg.sender_type,
-        isRead: msg.isRead ?? msg.is_read ?? false,
-        readAt: msg.readAt ?? null,
-        isOpened: msg.isOpened ?? false,
-        openedAt: msg.openedAt ?? null,
-        isDelivered: msg.isDelivered ?? false,
-        deliveredAt: msg.deliveredAt ?? null,
-      }))
+
+    // Normalize various timestamp formats to milliseconds since epoch
+    const toMs = (t: any): number => {
+      if (t == null) return 0;
+      if (typeof t === "number") {
+        // Heuristic: treat values < 1e12 as seconds
+        return t < 1_000_000_000_000 ? t * 1000 : t;
+      }
+      if (typeof t === "string") {
+        // Try ISO/RFC parsing first
+        const parsed = Date.parse(t);
+        if (Number.isFinite(parsed)) return parsed;
+        // Fallback: numeric string
+        const asNum = Number(t);
+        if (Number.isFinite(asNum)) {
+          return asNum < 1_000_000_000_000 ? asNum * 1000 : asNum;
+        }
+      }
+      return 0;
+    };
+
+    const mappedWithSort = pages.flatMap((p) =>
+      (p?.data?.messages ?? []).map((msg: any) => {
+        const rawTs = msg.timestamp ?? msg.created_at;
+        const ms = toMs(rawTs);
+        return {
+          id: msg.id,
+          conversationId: msg.conversation_id || conversationId!,
+          content: msg.content,
+          // Store ISO for display while sorting by ms
+          timestamp: ms ? new Date(ms).toISOString() : (rawTs || ""),
+          _sortTs: ms,
+          sender: msg.sender,
+          senderType: msg.senderType || msg.sender_type,
+          isRead: msg.isRead ?? msg.is_read ?? false,
+          readAt: msg.readAt ?? null,
+          isOpened: msg.isOpened ?? false,
+          openedAt: msg.openedAt ?? null,
+          isDelivered: msg.isDelivered ?? false,
+          deliveredAt: msg.deliveredAt ?? null,
+        } as FrontendMessage & { _sortTs: number };
+      })
     );
-    // Ensure ascending by timestamp if needed
-    return mapped.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+
+    const sorted = mappedWithSort.sort((a, b) => a._sortTs - b._sortTs);
+    // Drop helper field
+    return sorted.map(({ _sortTs, ...rest }) => rest as FrontendMessage);
   }, [data, conversationId]);
 
   const isLoading = !data && !error;
@@ -104,10 +133,32 @@ export function useMessages(conversationId?: string) {
         // Tiny helper: reconcile by tempId if backend echoes it; fallback to proximity
         const tempId = (m as any).tempId || (m as any).temp_id || null;
         let filtered = list;
+        let reconciledTimestampMs: number | null = null;
 
         if (tempId) {
           // Remove the optimistic placeholder with this tempId
+          // Capture the optimistic timestamp to preserve ordering if server ts is older
+          const tempMsg = filtered.find((msg: any) => msg.id === tempId);
+          if (tempMsg) {
+            const toMs = (t: any) => {
+              if (t == null) return 0;
+              if (typeof t === "number") return t < 1_000_000_000_000 ? t * 1000 : t;
+              const parsed = Date.parse(t);
+              if (Number.isFinite(parsed)) return parsed;
+              const asNum = Number(t);
+              return Number.isFinite(asNum)
+                ? asNum < 1_000_000_000_000
+                  ? asNum * 1000
+                  : asNum
+                : 0;
+            };
+            reconciledTimestampMs = Math.max(
+              toMs(tempMsg.timestamp || tempMsg.created_at),
+              toMs(m.timestamp)
+            );
+          }
           filtered = filtered.filter((msg: any) => msg.id !== tempId);
+          // reconciled by tempId
         } else {
           // Fallback: remove any temp placeholders that match content and are very recent
           const realTs = new Date(m.timestamp).getTime();
@@ -123,6 +174,7 @@ export function useMessages(conversationId?: string) {
             }
             return true;
           });
+          // reconciled by fallback
         }
 
         // Avoid duplicate by real id if already present
@@ -137,8 +189,12 @@ export function useMessages(conversationId?: string) {
           id: m.id,
           conversation_id: m.conversationId,
           content: m.content,
-          created_at: m.timestamp,
-          timestamp: m.timestamp,
+          created_at: reconciledTimestampMs
+            ? new Date(reconciledTimestampMs).toISOString()
+            : m.timestamp,
+          timestamp: reconciledTimestampMs
+            ? new Date(reconciledTimestampMs).toISOString()
+            : m.timestamp,
           sender: m.sender,
           senderType: m.senderType,
           is_read: false,
@@ -147,6 +203,15 @@ export function useMessages(conversationId?: string) {
         copy[lastIdx] = last;
         return copy;
       }, false);
+
+      // Notify UI to auto-scroll for visibility even if total count is unchanged
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("messages:appended", {
+            detail: { conversationId },
+          })
+        );
+      }
     };
 
     const markMessagesRead = (payload: {
@@ -239,15 +304,8 @@ export function useMessages(conversationId?: string) {
   // Optimistic insert helper for sending
   const optimisticInsert = (temp: FrontendMessage) =>
     mutate((prev) => {
-      if (!prev) return prev;
-      const copy = prev.map((p: any) => ({ ...p }));
-      if (copy.length === 0) return prev;
-      const lastIdx = copy.length - 1;
-      const last = { ...copy[lastIdx] };
-      const list = Array.isArray(last?.data?.messages)
-        ? [...last.data.messages]
-        : [];
-      list.push({
+      // If no cache yet, create the first page with this optimistic message
+      const newMsg = {
         id: temp.id,
         conversation_id: temp.conversationId,
         content: temp.content,
@@ -256,7 +314,26 @@ export function useMessages(conversationId?: string) {
         sender: temp.sender,
         senderType: temp.senderType,
         is_read: false,
-      });
+      };
+
+      if (!prev || !Array.isArray(prev) || prev.length === 0) {
+        return [
+          {
+            data: {
+              messages: [newMsg],
+              pagination: { page: 1, limit: PAGE_SIZE, total: 1, hasMore: false },
+            },
+          },
+        ];
+      }
+
+      const copy = prev.map((p: any) => ({ ...p }));
+      const lastIdx = copy.length - 1;
+      const last = { ...copy[lastIdx] };
+      const list = Array.isArray(last?.data?.messages)
+        ? [...last.data.messages]
+        : [];
+      list.push(newMsg);
       last.data = { ...(last.data || {}), messages: list };
       copy[lastIdx] = last;
       return copy;

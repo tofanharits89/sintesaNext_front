@@ -8,23 +8,16 @@ import { parse } from "cookie";
  */
 export function getAuthTokenFromCookie(): string | null {
   if (typeof document === "undefined") {
-    console.log("[Auth Debug] SSR environment, no document available");
     return null;
   }
 
   const cookieString = document.cookie || "";
-  console.log(
-    "[Auth Debug] Cookie string:",
-    cookieString ? "present" : "empty"
-  );
 
   if (!cookieString.trim()) {
-    console.log("[Auth Debug] No cookies found");
     return null;
   }
 
   const cookies = parse(cookieString);
-  console.log("[Auth Debug] Available cookies:", Object.keys(cookies));
 
   // Prefer new cookie names, but fall back to legacy ones for compatibility
   const candidateCookieNames = [
@@ -48,33 +41,18 @@ export function getAuthTokenFromCookie(): string | null {
           const now = Date.now();
           const expMs = (payload.exp ?? 0) * 1000;
 
-          console.log("[Auth Debug] Token candidate payload:", {
-            sourceCookie: name,
-            userId: payload.userId,
-            exp: payload.exp,
-            isExpired: expMs <= now,
-          });
-
           if (payload.exp && expMs > now) {
-            console.log(`[Auth Debug] Using valid token from cookie: ${name}`);
             return token;
           }
         } catch (decodeError) {
-          console.log(
-            `[Auth Debug] Failed to decode JWT from ${name}:`,
-            decodeError instanceof Error ? decodeError.message : "decode error"
-          );
+          // ignore decode errors silently
         }
       } else {
-        console.log(
-          `[Auth Debug] ${name} invalid JWT format, parts:`,
-          parts.length
-        );
+        // invalid jwt format; continue
       }
     }
   }
 
-  console.log("[Auth Debug] No valid auth token cookie found");
   return null;
 }
 
@@ -106,19 +84,13 @@ export async function waitForAuthToken(
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const token = getAuthTokenFromCookie();
     if (token) {
-      console.log(`[Auth Utils] Token found on attempt ${attempt}`);
       return token;
     }
 
     if (attempt < maxAttempts) {
-      console.log(
-        `[Auth Utils] Token not found, attempt ${attempt}/${maxAttempts}, retrying in ${delayMs}ms`
-      );
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
-
-  console.warn(`[Auth Utils] Token not found after ${maxAttempts} attempts`);
   return null;
 }
 
@@ -135,8 +107,6 @@ export function dispatchAuthEvent(
     detail: data,
     bubbles: true,
   });
-
-  console.log(`[Auth Utils] Dispatching auth:${eventType} event`, data);
   window.dispatchEvent(event);
 }
 
@@ -179,9 +149,6 @@ export function clearAuthToken(): void {
           .join(".")}`;
       }
     });
-
-    console.log("[Auth Utils] Cleared all authentication cookies");
-
     // Dispatch logout event
     dispatchAuthEvent("logout");
   } catch (error) {
@@ -219,7 +186,6 @@ export async function refreshAccessToken(): Promise<{
 
     const data = await response.json();
     if (data.success) {
-      console.log("[Auth Utils] Token refreshed successfully");
       return { success: true, accessToken: data.data.accessToken };
     } else {
       return { success: false, error: data.message || "Refresh failed" };

@@ -16,7 +16,9 @@ function mutateMessagesForConversation(
   swrMutate(
     (key) => typeof key === "string" && key.startsWith(base),
     (prev: any) => {
+      // useSWRInfinite stores pages as an array; guard against other shapes
       if (!prev) return prev;
+      if (!Array.isArray(prev)) return prev;
       return prev.map((page: any) => updater(page));
     },
     false
@@ -32,12 +34,17 @@ function mutateConversationsList(
   swrMutate(
     listKey,
     (prev: any) => {
-      const list = prev?.data?.conversations || [];
-      const idx = list.findIndex((c: any) => c.id === conversationId);
-      if (idx === -1) return prev;
+      const list = Array.isArray(prev?.data?.conversations)
+        ? prev.data.conversations
+        : [];
+      const idx = list.findIndex((c: any) => c?.id === conversationId);
+      if (idx === -1) return prev ?? { data: { conversations: [] } };
       const next = [...list];
-      next[idx] = update({ ...next[idx] });
-      return { ...(prev || {}), data: { ...(prev?.data || {}), conversations: next } };
+      next[idx] = update({ ...(next[idx] || {}) });
+      return {
+        ...(prev || {}),
+        data: { ...(prev?.data || {}), conversations: next },
+      };
     },
     false
   );

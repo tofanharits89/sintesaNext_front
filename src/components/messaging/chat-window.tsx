@@ -78,6 +78,9 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
     selectConversation,
   } = useMessaging();
 
+  // After sending, keep the viewport pinned to bottom for a short period
+  const pinUntilRef = useRef<number>(0);
+
   // SWR Mutations for read/opened with optimistic updates
   const { trigger: markRead } = useMarkAsReadMutation(conversation?.id);
   const { trigger: markOpened } = useMarkAsOpenedMutation(conversation?.id);
@@ -87,9 +90,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
 
   // Custom message visibility handler
   const handleMessageVisible = (messageId: string) => {
-    console.log(`[ChatWindow] Message ${messageId} became visible`);
-    // Don't add to openedMessages here - let useAutoMarkAsRead handle it
-    // The openedMessages state will be updated when the backend confirms the opened status
+    // Keep passive; useAutoMarkAsRead will handle status
   };
 
   // Controlled auto-mark-as-read functionality
@@ -117,15 +118,12 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
       const alreadyReadMessages = messages
         .filter(
           (msg) =>
-            msg.sender.id !== currentUser.id && // Not own messages
-            msg.isRead // Already marked as read
+            msg.sender.id !== currentUser.id &&
+            msg.isRead
         )
         .map((msg) => msg.id);
 
       if (alreadyReadMessages.length > 0) {
-        console.log(
-          `[ChatWindow] Marking ${alreadyReadMessages.length} already-read messages as opened`
-        );
         setOpenedMessages((prev) => {
           const newSet = new Set(prev);
           alreadyReadMessages.forEach((id) => newSet.add(id));
@@ -142,10 +140,6 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
 
       // Only update if it's for the current conversation
       if (eventConversationId === conversation?.id) {
-        console.log(
-          `[ChatWindow] Received messages marked as read event:`,
-          messageIds
-        );
         setOpenedMessages((prev) => {
           const newSet = new Set(prev);
           messageIds.forEach((id: string) => newSet.add(id));
@@ -158,10 +152,6 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
     const handleMessagesMarkedAsOpened = (event: CustomEvent) => {
       const { messageIds, conversationId: eventConversationId } = event.detail;
       if (eventConversationId === conversation?.id) {
-        console.log(
-          `[ChatWindow] Received messages marked as opened event:`,
-          messageIds
-        );
         setOpenedMessages((prev) => {
           const newSet = new Set(prev);
           messageIds.forEach((id: string) => newSet.add(id));
@@ -212,6 +202,12 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
+    // If we're within the grace period, force pin to bottom
+    if (Date.now() < pinUntilRef.current) {
+      console.log("[Messaging][UI] pinToBottom:grace");
+      scrollToBottom(false);
+      return;
+    }
     scrollToBottom(false);
   }, [messages.length]);
 
@@ -285,11 +281,24 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
     setTimeout(() => scrollToBottom(false), 100);
   }, [conversation.id]);
 
+  // Keep view pinned when a reconciled message arrives without changing list length
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { conversationId?: string };
+      if (!detail || detail.conversationId !== conversation.id) return;
+      scrollToBottom(false);
+    };
+    window.addEventListener("messages:appended", handler as EventListener);
+    return () => window.removeEventListener("messages:appended", handler as EventListener);
+  }, [conversation.id]);
+
   const handleSendMessage = async () => {
     if (!messageInput.trim() && attachedFiles.length === 0) return;
 
     const content = messageInput.trim();
     const files = [...attachedFiles];
+
+    // Start send flow
 
     // Clear input and attachments
     setMessageInput("");
@@ -306,6 +315,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
     if (content) {
       // Optimistic insert pending message
       const tempId = `temp-${Math.random().toString(36).slice(2)}`;
+      // optimistic insert
       optimisticInsert({
         id: tempId,
         conversationId: conversation.id,
@@ -322,7 +332,11 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
         isOpened: false,
       } as any);
       // Fire actual send (socket or REST), passing tempId for reconciliation
+      // send invoke
+      // Enable a short grace period to keep the view pinned during reconciliation
+      pinUntilRef.current = Date.now() + 2000;
       await sendMessage(content, undefined, tempId);
+      // send done
     }
 
     // If there are files, show a placeholder message for now
@@ -467,52 +481,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
       <CardContent className="flex-1 p-0 flex flex-col min-h-0 overflow-hidden">
         <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
           <div className="p-4">
-            {isMessagesLoading ? (
-              <div className="space-y-4">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={cn(
-                      "flex gap-3",
-                      i % 2 === 0 ? "justify-start" : "justify-end"
-                    )}
-                  >
-                    {i % 2 === 0 && (
-                      <Skeleton className="h-8 w-8 rounded-full" />
-                    )}
-                    <div
-                      className={cn(
-                        "space-y-1",
-                        i % 2 === 0 ? "items-start" : "items-end"
-                      )}
-                    >
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton
-                        className={cn(
-                          "h-10 rounded-lg",
-                          i % 2 === 0 ? "w-48" : "w-32"
-                        )}
-                      />
-                    </div>
-                    {i % 2 === 1 && (
-                      <Skeleton className="h-8 w-8 rounded-full" />
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <div className="text-muted-foreground">
-                  <h4 className="text-lg font-medium mb-2">
-                    Start the conversation
-                  </h4>
-                  <p className="text-sm">
-                    Send a message to begin chatting with{" "}
-                    {otherParticipant?.name || "this user"}
-                  </p>
-                </div>
-              </div>
-            ) : (
+            {messages.length > 0 ? (
               <div className="space-y-4">
                 {messages.map((message) => {
                   const isOwnMessage = message.sender.id === currentUser?.id;
@@ -662,6 +631,51 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
                   </div>
                 )}
               </div>
+            ) : isMessagesLoading ? (
+              <div className="space-y-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={cn(
+                      "flex gap-3",
+                      i % 2 === 0 ? "justify-start" : "justify-end"
+                    )}
+                  >
+                    {i % 2 === 0 && (
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                    )}
+                    <div
+                      className={cn(
+                        "space-y-1",
+                        i % 2 === 0 ? "items-start" : "items-end"
+                      )}
+                    >
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton
+                        className={cn(
+                          "h-10 rounded-lg",
+                          i % 2 === 0 ? "w-48" : "w-32"
+                        )}
+                      />
+                    </div>
+                    {i % 2 === 1 && (
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                <div className="text-muted-foreground">
+                  <h4 className="text-lg font-medium mb-2">
+                    Start the conversation
+                  </h4>
+                  <p className="text-sm">
+                    Send a message to begin chatting with{" "}
+                    {otherParticipant?.name || "this user"}
+                  </p>
+                </div>
+              </div>
             )}
           </div>
         </ScrollArea>
@@ -701,7 +715,6 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
               variant="ghost"
               size="icon"
               onClick={triggerFileInput}
-              disabled={!isConnected}
               className="flex-shrink-0"
             >
               <Paperclip className="h-4 w-4" />
@@ -724,7 +737,6 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
               onKeyPress={handleKeyPress}
               placeholder="Type a message..."
               className="flex-1"
-              disabled={!isConnected}
             />
 
             {/* Emoji picker */}
@@ -733,7 +745,6 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  disabled={!isConnected}
                   className="flex-shrink-0"
                 >
                   <Smile className="h-4 w-4" />
@@ -751,8 +762,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
             <Button
               onClick={handleSendMessage}
               disabled={
-                (!messageInput.trim() && attachedFiles.length === 0) ||
-                !isConnected
+                !messageInput.trim() && attachedFiles.length === 0
               }
               size="icon"
               className="flex-shrink-0"
