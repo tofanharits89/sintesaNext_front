@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquarePlus, Users, Wifi, WifiOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
 export default function MessagesPage() {
   const [selectedConversationId, setSelectedConversationId] = useState<
@@ -21,6 +22,9 @@ export default function MessagesPage() {
     useMessaging();
   const { conversations, isLoading } = useConversations();
 
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const handleConversationSelect = async (conversationId: string) => {
     setSelectedConversationId(conversationId);
     await selectConversation(conversationId);
@@ -39,8 +43,24 @@ export default function MessagesPage() {
       }
     };
     window.addEventListener("conversation:selected", handler as EventListener);
-    return () => window.removeEventListener("conversation:selected", handler as EventListener);
+    return () =>
+      window.removeEventListener(
+        "conversation:selected",
+        handler as EventListener
+      );
   }, []);
+
+  // If URL has ?conversation=..., auto-select that chat on load/navigation
+  useEffect(() => {
+    const convId = searchParams.get("conversation");
+    if (convId) {
+      handleConversationSelect(convId);
+      // Clean the URL so refresh doesn't re-open via query param
+      try {
+        router.replace(pathname);
+      } catch {}
+    }
+  }, [searchParams, router, pathname]);
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">

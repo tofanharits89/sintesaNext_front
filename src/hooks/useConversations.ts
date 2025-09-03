@@ -85,7 +85,10 @@ export function useConversations() {
   };
 
   const reconcileConversationId = (tempId: string, realId: string) => {
-    console.debug("[useConversations][reconcileConversationId]", { tempId, realId });
+    console.debug("[useConversations][reconcileConversationId]", {
+      tempId,
+      realId,
+    });
     mutate((prev: any) => {
       const list: Conversation[] = prev?.data?.conversations || [];
       const idx = list.findIndex((c) => c.id === tempId);
@@ -116,7 +119,10 @@ export function useConversations() {
         const idx = list.findIndex((c) => c.id === m.conversationId);
         if (idx === -1) return prev; // Unknown conversation; skip
         const next = [...list];
-        const conv = { ...next[idx] } as Conversation & { lastMessage?: any };
+        const [removed] = next.splice(idx, 1);
+        const conv = { ...(removed || {}) } as Conversation & {
+          lastMessage?: any;
+        };
         // Update lastMessage and updated_at
         conv.lastMessage = {
           ...(conv.lastMessage || {}),
@@ -134,7 +140,8 @@ export function useConversations() {
         const currentUnread =
           typeof conv.unread_count === "number" ? conv.unread_count : 0;
         conv.unread_count = fromSelf ? currentUnread : currentUnread + 1;
-        next[idx] = conv;
+        // Move to top (most recent first)
+        next.unshift(conv);
         return {
           ...(prev || {}),
           data: { ...(prev?.data || {}), conversations: next },
