@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { Conversation } from "@/shared/socket-events";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +30,9 @@ interface ConversationListProps {
   onConversationSelect: (conversationId: string) => void;
   isLoading: boolean;
   getUnreadCount: (conversationId: string) => number;
+  hasMore?: boolean;
+  onLoadMore?: () => void;
+  isLoadingMore?: boolean;
 }
 
 export function ConversationList({
@@ -37,7 +41,36 @@ export function ConversationList({
   onConversationSelect,
   isLoading,
   getUnreadCount,
+  hasMore = false,
+  onLoadMore,
+  isLoadingMore = false,
 }: ConversationListProps) {
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const lastLoadTriggerRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (!hasMore || !onLoadMore) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          // Avoid spamming load calls while a load is in-flight
+          if (isLoadingMore) continue;
+          // Throttle triggers slightly to prevent rapid back-to-back calls
+          const now = Date.now();
+          if (now - lastLoadTriggerRef.current < 800) continue;
+          lastLoadTriggerRef.current = now;
+          onLoadMore();
+        }
+      },
+      { root: el.parentElement, rootMargin: "200px", threshold: 0 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasMore, onLoadMore, conversations.length, isLoadingMore]);
+
   if (isLoading) {
     return (
       <div className="p-4 space-y-3">
@@ -190,6 +223,30 @@ export function ConversationList({
             </Button>
           );
         })}
+
+        {/* Inline loader under the list when paginating */}
+        {isLoadingMore && (
+          <div className="px-6 py-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin" />
+              <span>Loading more…</span>
+            </div>
+          </div>
+        )}
+
+        {/* Infinite scroll sentinel and fallback button */}
+        <div ref={sentinelRef} className="h-6" />
+        {hasMore && (
+          <div className="p-4 flex items-center justify-center">
+            <Button
+              variant="outline"
+              onClick={() => onLoadMore && onLoadMore()}
+              disabled={isLoadingMore}
+            >
+              {isLoadingMore ? "Memuat..." : "Muat lebih banyak"}
+            </Button>
+          </div>
+        )}
       </div>
     </ScrollArea>
   );

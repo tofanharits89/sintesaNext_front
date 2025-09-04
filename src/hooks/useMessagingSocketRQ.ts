@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSocket } from './useSocket';
 import { conversationKeys } from './useConversationsRQ';
@@ -30,8 +30,11 @@ import { useCurrentUser } from '@/lib/use-current-user';
  */
 export function useMessagingSocketRQ() {
   const queryClient = useQueryClient();
-  const { on, off, isConnected } = useSocket();
+  const { socket, on, off, isConnected, emit } = useSocket();
   const { currentUser } = useCurrentUser();
+  // In-memory dedupe for rapid duplicate socket events
+  const processedMessageIdsRef = useRef<Map<string, number>>(new Map());
+  const DEDUPE_TTL_MS = 15_000; // 15s window
   
   // Store actions
   const { ui } = useMessagingActions();
@@ -41,31 +44,117 @@ export function useMessagingSocketRQ() {
   // Current active conversation id
   const activeConversationId = useActiveConversationId();
 
+  // Track which rooms we've joined to avoid duplicate emits
+  const joinedRoomsRef = useRef<Set<string>>(new Set());
+
+  // Helper to join known conversation rooms from React Query cache
+  const joinKnownConversationRooms = useCallback(() => {
+    try {
+      const cached = queryClient.getQueryData<any>(conversationKeys.lists());
+      const pages = cached?.pages || [];
+      const ids: string[] = pages.flatMap((pg: any) =>
+        Array.isArray(pg?.conversations) ? pg.conversations.map((c: any) => c?.id).filter(Boolean) : []
+      );
+      ids.forEach((id) => {
+        if (!joinedRoomsRef.current.has(id)) {
+          try {
+            emit(SOCKET_EVENTS.CONVERSATION_JOIN, { conversationId: id });
+            joinedRoomsRef.current.add(id);
+            // console.debug("[MessagingSocketRQ] Joined conversation room", id);
+          } catch {}
+        }
+      });
+    } catch {}
+  }, [queryClient, emit]);
+
   // Handle new/received messages
-  const handleNewMessage = useCallback((messageData: SocketMessageData) => {
-    const conversationId = messageData.conversationId;
+  const handleNewMessage = useCallback((incoming: SocketMessageData | any) => {
+    try {
+      console.debug("[MessagingSocketRQ] handleNewMessage incoming", incoming);
+    } catch {}
+    // Normalize payload to a flat structure
+    const normalized = (() => {
+      if (incoming && typeof incoming === 'object' && incoming.message) {
+        const msg = incoming.message;
+        const ts = msg.timestamp || msg.created_at || new Date().toISOString();
+        return {
+          id: msg.id,
+          content: msg.content,
+          timestamp: ts,
+          sender: msg.sender || incoming.sender,
+          senderType: msg.senderType || msg.sender_type || incoming.senderType,
+          conversationId: incoming.conversationId || msg.conversation_id,
+          tempId: incoming.tempId || msg.tempId || msg.temp_id,
+        } as SocketMessageData & { tempId?: string };
+      }
+      const ts = incoming?.timestamp || incoming?.created_at || new Date().toISOString();
+      return {
+        id: incoming?.id,
+        content: incoming?.content,
+        timestamp: ts,
+        sender: incoming?.sender,
+        senderType: incoming?.senderType || incoming?.sender_type,
+        conversationId: incoming?.conversationId || incoming?.conversation_id,
+        tempId: incoming?.tempId || incoming?.temp_id,
+      } as SocketMessageData & { tempId?: string };
+    })();
+
+    const conversationId = normalized.conversationId;
     if (!conversationId) return;
+
+    // In-memory rapid dedupe (handles races where multiple events arrive before cache reflects updates)
+    try {
+      const now = Date.now();
+      // prune expired entries occasionally
+      if (processedMessageIdsRef.current.size > 500) {
+        for (const [mid, ts] of processedMessageIdsRef.current) {
+          if (now - ts > DEDUPE_TTL_MS) processedMessageIdsRef.current.delete(mid);
+        }
+      }
+      const lastTs = processedMessageIdsRef.current.get(normalized.id);
+      if (lastTs && now - lastTs < DEDUPE_TTL_MS) {
+        return; // already processed recently
+      }
+      processedMessageIdsRef.current.set(normalized.id, now);
+    } catch {}
+
+    // Deduplicate: if this message id already exists in cache, skip processing
+    try {
+      const existing = queryClient.getQueryData<any>(messageKeys.list(conversationId));
+      if (existing?.pages) {
+        const exists = existing.pages.some((p: any) =>
+          Array.isArray(p?.data?.messages) && p.data.messages.some((m: any) => m.id === normalized.id)
+        );
+        if (exists) {
+          return; // already processed this message, avoid duplicate append and unread increments
+        }
+      }
+    } catch {}
 
     // Update React Query cache for messages
     queryClient.setQueryData(messageKeys.list(conversationId), (prev: any) => {
       if (!prev?.pages) {
-        // Initialize cache if empty
+        // Initialize cache if empty so first realtime message appears immediately
         return {
-          pages: [{
-            data: {
-              messages: [{
-                id: messageData.id,
-                conversation_id: conversationId,
-                content: messageData.content,
-                timestamp: messageData.timestamp,
-                created_at: messageData.timestamp,
-                sender: messageData.sender,
-                senderType: messageData.senderType,
-                is_read: false,
-              }],
-              pagination: { page: 1, limit: 50, total: 1, hasMore: false },
+          pages: [
+            {
+              data: {
+                messages: [
+                  {
+                    id: normalized.id,
+                    conversation_id: conversationId,
+                    content: normalized.content,
+                    timestamp: normalized.timestamp,
+                    created_at: normalized.timestamp,
+                    sender: normalized.sender,
+                    senderType: normalized.senderType,
+                    is_read: false,
+                  },
+                ],
+                pagination: { page: 1, limit: 50, total: 1, hasMore: false },
+              },
             },
-          }],
+          ],
           pageParams: [1],
         };
       }
@@ -74,31 +163,37 @@ export function useMessagingSocketRQ() {
         ...prev,
         pages: prev.pages.map((p: any) => ({ ...p })),
       };
-      
       const lastIdx = copy.pages.length - 1;
       const last = { ...copy.pages[lastIdx] };
-      const messages = Array.isArray(last?.data?.messages) ? [...last.data.messages] : [];
-      
-      // Handle tempId reconciliation if present
-      const tempId = (messageData as any).tempId;
-      if (tempId) {
-        // Remove optimistic message with tempId
-        const filteredMessages = messages.filter((m: any) => m.id !== tempId);
-        messages.splice(0, messages.length, ...filteredMessages);
+      const messages = Array.isArray(last?.data?.messages)
+        ? [...last.data.messages]
+        : [];
+
+      // Safety: if by any chance it exists in last page, skip appending
+      if (messages.some((m: any) => m.id === normalized.id)) {
+        copy.pages[lastIdx] = { ...last, data: { ...(last.data || {}), messages } };
+        return copy;
       }
-      
+
+      // Handle tempId reconciliation if present
+      const tempId = (normalized as any).tempId;
+      if (tempId) {
+        const filtered = messages.filter((m: any) => m.id !== tempId);
+        messages.splice(0, messages.length, ...filtered);
+      }
+
       // Add new message
       messages.push({
-        id: messageData.id,
+        id: normalized.id,
         conversation_id: conversationId,
-        content: messageData.content,
-        timestamp: messageData.timestamp,
-        created_at: messageData.timestamp,
-        sender: messageData.sender,
-        senderType: messageData.senderType,
+        content: normalized.content,
+        timestamp: normalized.timestamp,
+        created_at: normalized.timestamp,
+        sender: normalized.sender,
+        senderType: normalized.senderType,
         is_read: false,
       });
-      
+
       last.data = { ...(last.data || {}), messages };
       copy.pages[lastIdx] = last;
       return copy;
@@ -114,18 +209,18 @@ export function useMessagingSocketRQ() {
       if (idx !== -1) {
         const conv = { ...conversations[idx] };
         conv.lastMessage = {
-          id: messageData.id,
-          content: messageData.content,
-          timestamp: messageData.timestamp,
-          sender: messageData.sender,
-          senderType: messageData.senderType,
+          id: normalized.id,
+          content: normalized.content,
+          timestamp: normalized.timestamp,
+          sender: normalized.sender,
+          senderType: normalized.senderType,
           isRead: false,
           is_read: false,
         };
-        conv.updated_at = messageData.timestamp;
+        conv.updated_at = normalized.timestamp;
         
         // Update unread count if message is not from current user
-        const fromSelf = currentUser?.id && messageData.sender?.id === currentUser.id;
+        const fromSelf = currentUser?.id && normalized.sender?.id === currentUser.id;
         if (!fromSelf) {
           conv.unread_count = (conv.unread_count || 0) + 1;
         }
@@ -142,28 +237,58 @@ export function useMessagingSocketRQ() {
     });
 
     // Update Zustand stores
-    const fromSelf = currentUser?.id && messageData.sender?.id === currentUser.id;
+    const fromSelf = currentUser?.id && normalized.sender?.id === currentUser.id;
     if (!fromSelf) {
       // Update unread count
-      unreadActions.incrementUnreadCount(
-        conversationId,
-        messageData.id,
-        messageData.timestamp
-      );
+      unreadActions.incrementUnreadCount(conversationId, normalized.id, normalized.timestamp);
       
       // Add notification
       notificationActions.addNotification({
         type: 'message',
         title: 'New Message',
-        message: `${messageData.sender?.name || 'Someone'}: ${messageData.content}`,
+        message: `${normalized.sender?.name || 'Someone'}: ${normalized.content}`,
         conversationId,
-        userId: messageData.sender?.id,
+        userId: normalized.sender?.id,
       });
     }
+
+    // Notify UI listeners (e.g., chat window) to adjust scroll when messages are appended
+    try {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('messages:appended', { detail: { conversationId } })
+        );
+      }
+    } catch {}
   }, [queryClient, currentUser, unreadActions, notificationActions]);
+
+  // Join/leave conversation rooms as active conversation changes to ensure we receive events
+  const prevConvRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isConnected) return;
+    const current = activeConversationId || null;
+    const prev = prevConvRef.current;
+
+    if (prev && prev !== current) {
+      try {
+        emit(SOCKET_EVENTS.CONVERSATION_LEAVE, { conversationId: prev });
+      } catch {}
+    }
+
+    if (current) {
+      try {
+        emit(SOCKET_EVENTS.CONVERSATION_JOIN, { conversationId: current });
+      } catch {}
+    }
+
+    prevConvRef.current = current;
+  }, [activeConversationId, isConnected, emit]);
 
   // Handle message read events
   const handleMessageRead = useCallback((data: { conversationId: string; messageIds: string[] }) => {
+    try {
+      console.debug("[MessagingSocketRQ] handleMessageRead/opened incoming", data);
+    } catch {}
     const { conversationId, messageIds } = data;
     
     // Update React Query cache for messages
@@ -301,6 +426,10 @@ export function useMessagingSocketRQ() {
   useEffect(() => {
     if (!isConnected) return;
 
+    // Attempt to join all known conversation rooms immediately and periodically
+    joinKnownConversationRooms();
+    const joinInterval = setInterval(() => joinKnownConversationRooms(), 10000);
+
     // Message events
     on(SOCKET_EVENTS.MESSAGE_NEW, handleNewMessage);
     on(SOCKET_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
@@ -334,6 +463,7 @@ export function useMessagingSocketRQ() {
 
     return () => {
       // Clean up listeners
+      clearInterval(joinInterval);
       off(SOCKET_EVENTS.MESSAGE_NEW, handleNewMessage);
       off(SOCKET_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
       off(SOCKET_EVENTS.MESSAGE_READ, handleMessageRead);
@@ -354,6 +484,7 @@ export function useMessagingSocketRQ() {
     handleTypingStart,
     handleTypingStop,
     handleConversationCreated,
+    joinKnownConversationRooms,
   ]);
 
   // Provide methods for manual cache invalidation

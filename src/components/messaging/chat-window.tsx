@@ -74,6 +74,7 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
     // Loading states
     isLoading,
     canLoadMore,
+    isLoadingMoreMessages,
 
     // Connection state
     isSocketConnected,
@@ -117,6 +118,43 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
   const handleMessageVisible = (messageId: string) => {
     // Keep passive; useAutoMarkAsRead will handle status
   };
+
+  // Load older messages preserving scroll offset
+  const loadOlderMessagesPreserveScroll = async () => {
+    const viewport = scrollAreaRef.current?.querySelector(
+      "[data-radix-scroll-area-viewport]"
+    ) as HTMLElement | null;
+    const prevHeight = viewport?.scrollHeight ?? 0;
+    await loadMoreMessages();
+    // After React Query adds older messages to the top, adjust scrollTop to preserve view
+    requestAnimationFrame(() => {
+      const newHeight = viewport?.scrollHeight ?? 0;
+      if (viewport) viewport.scrollTop = (newHeight - prevHeight) + (viewport.scrollTop || 0);
+    });
+  };
+
+  // Top sentinel to auto-load previous pages
+  const topSentinelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!canLoadMore) return;
+    const viewport = scrollAreaRef.current?.querySelector(
+      "[data-radix-scroll-area-viewport]"
+    ) as HTMLElement | null;
+    const target = topSentinelRef.current;
+    if (!viewport || !target) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            loadOlderMessagesPreserveScroll();
+          }
+        }
+      },
+      { root: viewport, rootMargin: "200px", threshold: 0 }
+    );
+    io.observe(target);
+    return () => io.disconnect();
+  }, [canLoadMore, messages.length]);
 
   // Controlled auto-mark-as-read/opened functionality
   const { observeMessage, clearMarkedMessages } = useAutoMarkAsRead({
@@ -545,6 +583,20 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
       <CardContent className="flex-1 p-0 flex flex-col min-h-0 overflow-hidden">
         <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
           <div className="p-4">
+            {/* Top loader: button + sentinel for older messages */}
+            {canLoadMore && (
+              <div className="mb-3 flex items-center justify-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={loadOlderMessagesPreserveScroll}
+                  disabled={isLoadingMoreMessages}
+                >
+                  {isLoadingMoreMessages ? "Loading…" : "Load previous messages"}
+                </Button>
+              </div>
+            )}
+            <div ref={topSentinelRef} className="h-1" />
             {messages.length > 0 ? (
               <div className="space-y-4">
                 {messages.map((message) => {

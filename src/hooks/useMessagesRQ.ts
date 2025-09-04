@@ -167,8 +167,19 @@ export function useMessages(conversationId?: string) {
     );
 
     const sorted = mappedWithSort.sort((a, b) => a._sortTs - b._sortTs);
+    // De-duplicate by id while preserving chronological order; keep the last occurrence
+    const seen = new Set<string>();
+    const dedupedReversed = [] as typeof sorted;
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      const item = sorted[i];
+      if (!item?.id) continue;
+      if (seen.has(item.id)) continue;
+      seen.add(item.id);
+      dedupedReversed.push(item);
+    }
+    const deduped = dedupedReversed.reverse();
     // Drop helper field
-    return sorted.map(({ _sortTs, ...rest }) => rest as FrontendMessage);
+    return deduped.map(({ _sortTs, ...rest }) => rest as FrontendMessage);
   }, [data, conversationId, isFetchable, localTick]);
 
   // Note: removed verbose messages-updated logging
@@ -351,7 +362,10 @@ export function useMessages(conversationId?: string) {
           is_read: false,
         };
 
-        filtered.push(newMsg);
+        // Skip if this exact message id already exists (guards against duplicate socket events)
+        if (!filtered.some((msg: any) => msg?.id === newMsg.id)) {
+          filtered.push(newMsg);
+        }
         last.data = { ...(last.data || {}), messages: filtered };
         copy.pages[lastIdx] = last;
         return copy;

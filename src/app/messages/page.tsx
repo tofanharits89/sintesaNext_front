@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquarePlus, Users, Wifi, WifiOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { socketClient } from "@/lib/SocketClient";
 
 export default function MessagesPage() {
   const [showNewMessageDialog, setShowNewMessageDialog] = useState(false);
@@ -32,7 +33,13 @@ export default function MessagesPage() {
 
     // UI state
     totalUnreadCount,
-  } = useMessagingRQ();
+    // Conversations pagination
+    conversationsHasNextPage,
+    fetchNextConversations,
+    isFetchingNextConversations,
+    // Utilities
+    refetchConversations,
+  } = useMessagingRQ({ enabled: true });
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -147,6 +154,70 @@ export default function MessagesPage() {
 
   // Note: We intentionally do not listen for 'conversation:created' here to avoid double-selection loops.
 
+  // Conditional refresh: only while on messages page
+  useEffect(() => {
+    if (!refetchConversations) return;
+    let interval: any;
+
+    // Refresh once when socket connects
+    if (isSocketConnected) {
+      refetchConversations();
+    } else {
+      // Poll lightly while disconnected
+      interval = setInterval(() => refetchConversations(), 90000);
+    }
+
+    // Refresh when tab becomes visible again
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        refetchConversations();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      if (interval) clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [isSocketConnected, refetchConversations]);
+
+  // Socket-driven refresh for conversations unread badges (only while on this page)
+  useEffect(() => {
+    const sock = socketClient.getSocket?.() || null;
+    if (!sock) return;
+
+    let debounceTimer: any = null;
+    const debouncedRefresh = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        refetchConversations?.();
+      }, 150);
+    };
+
+    const onConnect = () => debouncedRefresh();
+    const onNewMessage = () => debouncedRefresh();
+    const onReadOrOpened = () => debouncedRefresh();
+
+    sock.on?.("connect", onConnect);
+    sock.on?.("message:new", onNewMessage);
+    sock.on?.("messaging:new_message", onNewMessage);
+    sock.on?.("messages:read", onReadOrOpened);
+    sock.on?.("messaging:messages_read", onReadOrOpened);
+    sock.on?.("message:opened", onReadOrOpened);
+    sock.on?.("messaging:opened", onReadOrOpened);
+
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      sock.off?.("connect", onConnect);
+      sock.off?.("message:new", onNewMessage);
+      sock.off?.("messaging:new_message", onNewMessage);
+      sock.off?.("messages:read", onReadOrOpened);
+      sock.off?.("messaging:messages_read", onReadOrOpened);
+      sock.off?.("message:opened", onReadOrOpened);
+      sock.off?.("messaging:opened", onReadOrOpened);
+    };
+  }, [refetchConversations]);
+
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
       {/* Header */}
@@ -213,6 +284,9 @@ export default function MessagesPage() {
                   const isRead = lm?.isRead ?? lm?.is_read;
                   return isRead ? 0 : 1;
                 }}
+                hasMore={!!conversationsHasNextPage}
+                onLoadMore={() => fetchNextConversations && fetchNextConversations()}
+                isLoadingMore={!!isFetchingNextConversations}
               />
             </CardContent>
           </Card>

@@ -31,7 +31,9 @@ import {
   getUnreadNotificationCount,
 } from "@/lib/notifications-store";
 import { useMessagingRQ } from "@/hooks/useMessagingRQ";
+import { useMessagingSocketRQ } from "@/hooks/useMessagingSocketRQ";
 import { socketClient } from "@/lib/SocketClient";
+import { useUnreadActions } from "@/stores/unread-badges-store";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,6 +52,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { withBasePath } from "@/lib/base-path";
+import { apiPath } from "@/lib/base-path";
 import { SatkerSearch } from "./satker-search";
 import { dispatchAuthEvent } from "@/utils/auth-utils";
 
@@ -80,20 +83,89 @@ export function Navbar() {
     unread: boolean;
   }
 
-  const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([]);
+  // recentMessages will be derived below after conversations is declared
 
-  // Real-time messaging data via React Query + Zustand
-  const { conversations, isSocketConnected, totalUnreadCount } = useMessagingRQ();
+  // State for controlling popovers (declare before hooks that depend on it)
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [messagesOpen, setMessagesOpen] = useState(false);
+
+  // Real-time messaging data via React Query + Zustand (enable globally so badges update even when popover is closed)
+  const { conversations, isSocketConnected } = useMessagingRQ({ enabled: true });
+  // Mount socket listeners globally so unread badges update even when popover is closed
+  const { isConnected: _socketReady } = useMessagingSocketRQ();
+  // Derive recent messages directly from conversations so it updates on every socket/cache change
+  const recentMessages: RecentMessage[] = useMemo(() => {
+    if (!Array.isArray(conversations) || !currentUser?.id) return [];
+
+    const recentConversations = conversations.filter(
+      (conv) => (conv as any).lastMessage && (conv as any).otherParticipant
+    );
+
+    const sorted = recentConversations
+      .slice()
+      .sort((a: any, b: any) => {
+        const aDate = new Date(a.lastMessage?.created_at || a.updated_at);
+        const bDate = new Date(b.lastMessage?.created_at || b.updated_at);
+        const aTime = isNaN(aDate.getTime()) ? 0 : aDate.getTime();
+        const bTime = isNaN(bDate.getTime()) ? 0 : bDate.getTime();
+        return bTime - aTime;
+      })
+      .slice(0, 5)
+      .map((conv: any) => {
+        const otherParticipant = conv.otherParticipant;
+        if (!otherParticipant) return null;
+
+        const convDate = new Date(conv.lastMessage?.created_at || conv.updated_at);
+        const timeDiff = isNaN(convDate.getTime()) ? 0 : Date.now() - convDate.getTime();
+        const minutes = Math.floor(timeDiff / 60000);
+        const hours = Math.floor(timeDiff / 3600000);
+        const days = Math.floor(timeDiff / 86400000);
+
+        let timeStr: string;
+        if (days > 0) timeStr = `${days}h`;
+        else if (hours > 0) timeStr = `${hours}j`;
+        else timeStr = `${minutes}m`;
+
+        let isUnread = false;
+        if (typeof conv.unread_count === "number") {
+          isUnread = conv.unread_count > 0;
+        } else {
+          const lastMessage = conv.lastMessage;
+          isUnread = lastMessage
+            ? lastMessage.isRead !== undefined
+              ? !lastMessage.isRead
+              : !lastMessage.is_read
+            : false;
+        }
+
+        return {
+          id: conv.id,
+          conversationId: conv.id,
+          from: otherParticipant.name || "Unknown User",
+          subject: conv.lastMessage?.content || "No messages yet",
+          time: timeStr,
+          unread: isUnread,
+          otherParticipant,
+        } as RecentMessage;
+      })
+      .filter((m: any) => m !== null) as RecentMessage[];
+
+    return sorted;
+  }, [conversations, currentUser?.id]);
   const [recentNotifications, setRecentNotifications] = useState<
     RecentNotification[]
   >([]);
-  const [totalUnreadNotificationsCount, setTotalUnreadNotificationsCount] =
-    useState(0);
-  const [totalUnreadMessagesCount, setTotalUnreadMessagesCount] = useState(0);
+  const { bulkUpdateUnreadCounts } = useUnreadActions();
+  // Derive total unread directly from conversations so it updates on socket-driven cache changes
+  const totalUnreadMessagesCount = useMemo(
+    () =>
+      Array.isArray(conversations)
+        ? conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0)
+        : 0,
+    [conversations]
+  );
+  const [totalUnreadNotificationsCount, setTotalUnreadNotificationsCount] = useState(0);
 
-  // State for controlling popovers
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [messagesOpen, setMessagesOpen] = useState(false);
   // Listen for live notifications to update badge and list
   useEffect(() => {
     const handleNew = (payload: {
@@ -173,128 +245,7 @@ export function Navbar() {
     }
   }, [currentUser]);
 
-  // Update recent messages from conversations
-  useEffect(() => {
-    // Compute target unread count and update state only if it differs
-    const nextUnreadTotal = totalUnreadCount || 0;
-    setTotalUnreadMessagesCount((prev) =>
-      prev !== nextUnreadTotal ? nextUnreadTotal : prev
-    );
-
-    if (conversations.length > 0 && currentUser?.id) {
-      // Get up to 5 most recent conversations with messages
-      const recentConversations = conversations.filter(
-        (conv) => conv.lastMessage && conv.otherParticipant
-      ); // Only conversations with messages and valid other participant
-
-      const sortedConversations = recentConversations
-        .slice() // avoid mutating filtered array
-        .sort((a, b) => {
-          const aDate = new Date(a.lastMessage?.created_at || a.updated_at);
-          const bDate = new Date(b.lastMessage?.created_at || b.updated_at);
-          const aTime = isNaN(aDate.getTime()) ? 0 : aDate.getTime();
-          const bTime = isNaN(bDate.getTime()) ? 0 : bDate.getTime();
-          return bTime - aTime;
-        })
-        .slice(0, 5)
-        .map((conv) => {
-          // Use the otherParticipant field directly since it's already calculated
-          const otherParticipant = conv.otherParticipant;
-
-          // Skip conversations where otherParticipant is undefined
-          if (!otherParticipant) {
-            return null;
-          }
-
-          const convDate = new Date(
-            conv.lastMessage?.created_at || conv.updated_at
-          );
-          const timeDiff = isNaN(convDate.getTime())
-            ? 0
-            : Date.now() - convDate.getTime();
-          const minutes = Math.floor(timeDiff / 60000);
-          const hours = Math.floor(timeDiff / 3600000);
-          const days = Math.floor(timeDiff / 86400000);
-
-          let timeStr;
-          if (days > 0) timeStr = `${days}h`;
-          else if (hours > 0) timeStr = `${hours}j`;
-          else timeStr = `${minutes}m`;
-
-          // Check if last message is unread - use proper unread_count if available
-          let isUnread = false;
-          if (conv.unread_count !== undefined) {
-            isUnread = conv.unread_count > 0;
-          } else {
-            // Fallback to lastMessage.isRead logic
-            const lastMessage = conv.lastMessage;
-            isUnread = lastMessage
-              ? lastMessage.isRead !== undefined
-                ? !lastMessage.isRead
-                : !lastMessage.is_read
-              : false;
-          }
-
-          return {
-            id: conv.id,
-            conversationId: conv.id,
-            from: otherParticipant.name || "Unknown User",
-            subject: conv.lastMessage?.content || "No messages yet",
-            time: timeStr,
-            unread: isUnread,
-            otherParticipant,
-          };
-        })
-        .filter((message) => message !== null);
-
-      const nextRecent = (sortedConversations.filter(
-        (msg): msg is NonNullable<typeof msg> => {
-          if (!msg) return false;
-
-          // Type guard to ensure all required properties exist and are of correct type
-          const hasValidProperties =
-            typeof msg.id === "string" &&
-            typeof msg.conversationId === "string" &&
-            typeof msg.from === "string" &&
-            typeof msg.subject === "string" &&
-            typeof msg.time === "string" &&
-            typeof msg.unread === "boolean";
-
-          // Type guard for otherParticipant object
-          const hasValidParticipant =
-            msg.otherParticipant &&
-            typeof msg.otherParticipant === "object" &&
-            typeof msg.otherParticipant.id === "string" &&
-            typeof msg.otherParticipant.name === "string" &&
-            typeof msg.otherParticipant.username === "string";
-
-          return hasValidProperties && hasValidParticipant;
-        }) as RecentMessage[]);
-
-      // Only update if list actually changed (shallow compare by id + key fields)
-      setRecentMessages((prev) => {
-        if (prev.length === nextRecent.length) {
-          let same = true;
-          for (let i = 0; i < prev.length; i++) {
-            const a = prev[i];
-            const b = nextRecent[i];
-            if (
-              a.id !== b.id ||
-              a.conversationId !== b.conversationId ||
-              a.unread !== b.unread ||
-              a.subject !== b.subject ||
-              a.time !== b.time
-            ) {
-              same = false;
-              break;
-            }
-          }
-          if (same) return prev;
-        }
-        return nextRecent;
-      });
-    }
-  }, [conversations, currentUser?.id, totalUnreadCount]);
+  // The old state/effect approach is removed to ensure immediate updates without stale state
 
   // Generate initials for avatar fallback
   const initials = useMemo(() => {
@@ -467,7 +418,15 @@ export function Navbar() {
                 aria-label="Pesan"
                 className="relative"
               >
-                <Mail className="h-5 w-5" />
+                <span className="relative inline-block">
+                  <Mail className="h-5 w-5" />
+                  <span
+                    title={isSocketConnected ? "Socket connected" : "Socket disconnected"}
+                    className={`absolute -bottom-0.5 -left-0.5 h-2 w-2 rounded-full ring-2 ring-background ${
+                      isSocketConnected ? "bg-emerald-500" : "bg-red-500"
+                    }`}
+                  />
+                </span>
                 {totalUnreadMessagesCount > 0 && (
                   <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white">
                     {totalUnreadMessagesCount > 9

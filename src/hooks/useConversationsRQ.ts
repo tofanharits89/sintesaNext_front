@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useCallback } from "react";
 import { backendPath } from "@/lib/backend";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
@@ -21,15 +21,29 @@ export const conversationKeys = {
   detail: (id: string) => [...conversationKeys.details(), id] as const,
 };
 
-// Fetcher that attaches auth and parses JSON safely
-const fetchConversations = async (): Promise<{ data: { conversations: Conversation[] } }> => {
+// Fetcher that attaches auth and parses JSON safely (paginated by cursor)
+type ConversationsPage = {
+  conversations: Conversation[];
+  nextCursor?: string | null;
+};
+
+type FoundLoc = { pageIdx: number; idx: number };
+
+const fetchConversationsPage = async (
+  cursor?: string | null,
+  limit: number = 20
+): Promise<ConversationsPage> => {
   const token = getAuthTokenFromCookie();
   const headers: HeadersInit = { "Content-Type": "application/json" };
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const resp = await fetch(backendPath("/messaging/conversations"), { 
-    credentials: "include", 
-    headers 
+  const url = new URL(backendPath("/messaging/conversations"));
+  if (cursor) url.searchParams.set("cursor", String(cursor));
+  if (limit) url.searchParams.set("limit", String(limit));
+
+  const resp = await fetch(url.toString(), {
+    credentials: "include",
+    headers,
   });
   const text = await resp.text();
 
@@ -38,27 +52,48 @@ const fetchConversations = async (): Promise<{ data: { conversations: Conversati
   }
   if (!text.trim()) throw new Error("Empty response from server");
 
+  let json: any;
   try {
-    return JSON.parse(text);
+    json = JSON.parse(text);
   } catch (e) {
     throw new Error("Invalid JSON response from server");
   }
+
+  // Accept multiple shapes for backward compatibility
+  const conversations: Conversation[] =
+    json?.data?.conversations || json?.conversations || [];
+  const nextCursor: string | null =
+    json?.data?.nextCursor ?? json?.nextCursor ?? null;
+
+  return { conversations, nextCursor };
 };
 
-export function useConversations() {
+export function useConversations(options?: { enabled?: boolean }) {
   const queryClient = useQueryClient();
-  
-  const { data, error, isLoading, refetch } = useQuery({
+
+  const {
+    data,
+    error,
+    isLoading,
+    refetch,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: conversationKeys.lists(),
-    queryFn: fetchConversations,
-    staleTime: 30 * 1000, // 30 seconds
-    gcTime: 5 * 60 * 1000, // 5 minutes (formerly cacheTime)
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam }) => fetchConversationsPage(pageParam as string | null, 20),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
+    enabled: options?.enabled ?? true,
   });
 
-  // Ensure newest conversations appear first, even on initial fetch
-  const rawConversations: Conversation[] = data?.data?.conversations ?? [];
+  // Flatten pages and ensure newest conversations appear first
+  const rawConversations: Conversation[] = (data?.pages || [])
+    .flatMap((p) => p.conversations || []);
   
   // Normalize conversations to ensure lastMessage.timestamp exists and updated_at is sane
   const normalizeConversation = (c: Conversation): Conversation => {
@@ -106,11 +141,15 @@ export function useConversations() {
     (a, b) => getLastActivity(b) - getLastActivity(a)
   );
 
-  // Helper to update conversations cache
+  // Helper to update conversations cache for paginated data
   const updateConversationsCache = useCallback((
-    updater: (prev: { data: { conversations: Conversation[] } } | undefined) => { data: { conversations: Conversation[] } }
+    updater: (
+      prev:
+        | { pages: ConversationsPage[]; pageParams: (string | null)[] }
+        | undefined
+    ) => { pages: ConversationsPage[]; pageParams: (string | null)[] }
   ) => {
-    queryClient.setQueryData(conversationKeys.lists(), updater);
+    queryClient.setQueryData(conversationKeys.lists(), updater as any);
   }, [queryClient]);
 
   // Helpers: optimistic add and reconcile for new conversations
@@ -123,9 +162,13 @@ export function useConversations() {
     timestamp: string;
   }) => {
     updateConversationsCache((prev) => {
-      const list: Conversation[] = prev?.data?.conversations || [];
-      if (list.some((c) => c.id === params.tempId)) return prev || { data: { conversations: [] } };
-      
+      const empty: { pages: ConversationsPage[]; pageParams: (string | null)[] } =
+        { pages: [{ conversations: [], nextCursor: null }], pageParams: [null] };
+      const curr = prev || empty;
+      const firstPage = curr.pages[0] || { conversations: [], nextCursor: null };
+      const list: Conversation[] = firstPage.conversations || [];
+      if (list.some((c) => c.id === params.tempId)) return curr;
+
       const conv: any = {
         id: params.tempId,
         otherParticipant: params.otherParticipant,
@@ -145,45 +188,55 @@ export function useConversations() {
           is_read: true,
         },
       };
-      
-      const next = [conv, ...list];
-      return {
-        ...(prev || {}),
-        data: { ...(prev?.data || {}), conversations: next },
-      };
+
+      const nextFirst = [conv, ...list];
+      const nextPages = [{ ...firstPage, conversations: nextFirst }, ...curr.pages.slice(1)];
+      return { pages: nextPages, pageParams: curr.pageParams };
     });
   }, [updateConversationsCache]);
 
   const reconcileConversationId = useCallback((tempId: string, realId: string) => {
     updateConversationsCache((prev) => {
-      const list: Conversation[] = prev?.data?.conversations || [];
-      const idx = list.findIndex((c) => c.id === tempId);
-      if (idx === -1) return prev || { data: { conversations: [] } };
-      
-      // If a conversation with realId already exists, remove temp; else rename
-      const existingIdx = list.findIndex((c) => c.id === realId);
-      let next = [...list];
-      if (existingIdx !== -1) {
-        next = next.filter((c) => c.id !== tempId);
+      if (!prev) return { pages: [{ conversations: [], nextCursor: null }], pageParams: [null] };
+      const pages = prev.pages.map((pg) => ({ ...pg, conversations: [...pg.conversations] }));
+      let foundAt: FoundLoc | null = null;
+      pages.forEach((pg, pIdx) => {
+        const idx = pg.conversations.findIndex((c) => c.id === tempId);
+        if (idx !== -1) foundAt = { pageIdx: pIdx, idx };
+      });
+      if (!foundAt) return prev;
+      const { pageIdx, idx } = foundAt as FoundLoc;
+
+      // If a conversation with realId already exists anywhere, remove the temp; else rename
+      let realExists = false;
+      pages.forEach((pg) => {
+        if (pg.conversations.some((c) => c.id === realId)) realExists = true;
+      });
+
+      if (realExists) {
+        pages[pageIdx].conversations = pages[pageIdx].conversations.filter((c) => c.id !== tempId);
       } else {
-        next[idx] = { ...next[idx], id: realId } as any;
+        pages[pageIdx].conversations[idx] = {
+          ...pages[pageIdx].conversations[idx],
+          id: realId,
+        } as any;
       }
-      
-      return {
-        ...(prev || {}),
-        data: { ...(prev?.data || {}), conversations: next },
-      };
+
+      return { pages, pageParams: prev.pageParams };
     });
   }, [updateConversationsCache]);
 
   // Bridge socket events -> in-place cache updates for snappy UI
   const { on, off } = useSocket();
   const { currentUser } = useCurrentUser();
-  
+
   useEffect(() => {
     const updateOnNewMessage = (m: SocketMessageData) => {
+      try {
+        console.debug("[ConversationsRQ] MESSAGE_NEW/RECEIVED incoming payload", m);
+      } catch {}
       updateConversationsCache((prev) => {
-        const list: Conversation[] = prev?.data?.conversations || [];
+        if (!prev) return { pages: [{ conversations: [], nextCursor: null }], pageParams: [null] };
         // Normalize possibly nested payloads and timestamps
         const msgLike: any = (m as any)?.message ? (m as any).message : (m as any);
         const conversationId =
@@ -199,16 +252,65 @@ export function useConversations() {
           msgLike.message?.createdAt ||
           msgLike.message?.sent_at ||
           msgLike.message?.sentAt;
-        
-        const idx = list.findIndex((c) => c.id === conversationId);
-        if (idx === -1) return prev || { data: { conversations: [] } }; // Unknown conversation; skip
-        
-        const next = [...list];
-        const [removed] = next.splice(idx, 1);
+
+        // Locate conversation across pages
+        const pages = prev.pages.map((pg) => ({ ...pg, conversations: [...pg.conversations] }));
+        let found: FoundLoc | null = null;
+        pages.forEach((pg, pIdx) => {
+          const idx = pg.conversations.findIndex((c) => c.id === conversationId);
+          if (idx !== -1) found = { pageIdx: pIdx, idx };
+        });
+        if (!found) {
+          // Unknown conversation: create a minimal entry so UI updates immediately
+          const pages = prev.pages.map((pg) => ({ ...pg, conversations: [...pg.conversations] }));
+          const firstPage = pages[0] || { conversations: [], nextCursor: null };
+          const effectiveTs =
+            ts ||
+            msgLike.timestamp ||
+            msgLike.created_at ||
+            msgLike.createdAt ||
+            new Date().toISOString();
+
+          const minimalConv: any = {
+            id: conversationId,
+            updated_at: effectiveTs,
+            unread_count: 1,
+            // Best-effort mapping: otherParticipant is the sender for recipient's view
+            otherParticipant: msgLike.sender || msgLike.from || null,
+            lastMessage: {
+              id: msgLike.id,
+              content: msgLike.content || "",
+              timestamp: effectiveTs,
+              sender: msgLike.sender,
+              senderType: msgLike.senderType,
+              isRead: false,
+              is_read: false,
+            },
+          };
+
+          firstPage.conversations.unshift(minimalConv);
+          pages[0] = firstPage;
+
+          try {
+            console.debug(
+              "[ConversationsRQ] Inserted minimal conversation for unknown conversation on new message",
+              {
+                conversationId,
+                lastMessageId: msgLike.id,
+              }
+            );
+          } catch {}
+
+          return { pages, pageParams: prev.pageParams };
+        }
+
+        const { pageIdx, idx } = found as FoundLoc;
+        const fromPage = pages[pageIdx];
+        const [removed] = fromPage.conversations.splice(idx, 1);
         const conv = { ...(removed || {}) } as Conversation & {
           lastMessage?: any;
         };
-        
+
         // Effective timestamp fallback
         const effectiveTs =
           ts ||
@@ -217,7 +319,7 @@ export function useConversations() {
           (conv as any)?.updated_at ||
           (conv as any)?.created_at ||
           new Date().toISOString();
-        
+
         // Update lastMessage and updated_at
         conv.lastMessage = {
           ...(conv.lastMessage || {}),
@@ -230,110 +332,134 @@ export function useConversations() {
           is_read: false,
         };
         conv.updated_at = effectiveTs || conv.updated_at;
-        
+
         // Increase unread_count if the message is not from current user
         const fromSelf = currentUser?.id && msgLike?.sender?.id === currentUser.id;
         const currentUnread =
           typeof conv.unread_count === "number" ? conv.unread_count : 0;
         conv.unread_count = fromSelf ? currentUnread : currentUnread + 1;
-        
-        // Move to top (most recent first)
-        next.unshift(conv);
-        
-        return {
-          ...(prev || {}),
-          data: { ...(prev?.data || {}), conversations: next },
-        };
+
+        // Move to top of first page (most recent first)
+        const firstPage = pages[0] || { conversations: [], nextCursor: null };
+        firstPage.conversations.unshift(conv);
+        pages[0] = firstPage;
+
+        try {
+          console.debug("[ConversationsRQ] Updated conversation on new message", {
+            conversationId,
+            unread_count: conv.unread_count,
+            lastMessageId: (conv.lastMessage as any)?.id,
+            pagesCount: pages.length,
+          });
+        } catch {}
+
+        return { pages, pageParams: prev.pageParams };
       });
     };
 
     const updateOnReadOrOpened = (payload: {
       conversationId: string;
       messageIds: string[];
-    }) => {
+    }, eventType: 'read' | 'opened' = 'read') => {
+      try {
+        console.debug(
+          "[ConversationsRQ] MESSAGE_READ/OPENED incoming payload",
+          { eventType, payload }
+        );
+      } catch {}
+
+      // Only process read/opened events for the current user when userId is provided
+      const incomingUserId = (payload as any)?.userId;
+      const me = currentUser?.id;
+      if (incomingUserId && me && incomingUserId !== me) {
+        try {
+          console.debug(
+            "[ConversationsRQ] Skipping read/opened: event userId does not match current user",
+            { incomingUserId, me, conversationId: (payload as any)?.conversationId }
+          );
+        } catch {}
+        return; // Do not decrement our unread due to other user's read/opened
+      }
       updateConversationsCache((prev) => {
-        const list: Conversation[] = prev?.data?.conversations || [];
-        const idx = list.findIndex((c) => c.id === payload.conversationId);
-        if (idx === -1) return prev || { data: { conversations: [] } };
-        
-        const next = [...list];
-        const conv = { ...next[idx] } as Conversation & { lastMessage?: any };
-        
-        // Decrease unread_count (min 0)
-        const currentUnread =
-          typeof conv.unread_count === "number" ? conv.unread_count : 0;
-        const dec = Math.min(currentUnread, payload.messageIds.length);
-        conv.unread_count = Math.max(0, currentUnread - dec);
-        
-        // If lastMessage included, set read flags if it's among ids
+        if (!prev) return { pages: [{ conversations: [], nextCursor: null }], pageParams: [null] };
+        const pages = prev.pages.map((pg) => ({ ...pg, conversations: [...pg.conversations] }));
+        let found: FoundLoc | null = null;
+        pages.forEach((pg, pIdx) => {
+          const idx = pg.conversations.findIndex((c) => c.id === payload.conversationId);
+          if (idx !== -1) found = { pageIdx: pIdx, idx };
+        });
+        if (!found) {
+          try {
+            console.debug(
+              "[ConversationsRQ] Read/opened for unknown conversation, skipping",
+              payload
+            );
+          } catch {}
+          return prev;
+        }
+
+        const { pageIdx, idx } = found as FoundLoc;
+        const conv = { ...pages[pageIdx].conversations[idx] } as Conversation & { lastMessage?: any };
+
+        // Only decrement unread_count for READ events; OPENED should not affect unread badges
+        if (eventType === 'read') {
+          const currentUnread = typeof conv.unread_count === 'number' ? conv.unread_count : 0;
+          conv.unread_count = Math.max(0, currentUnread - (payload.messageIds?.length || 0));
+        }
+
+        // Update lastMessage flags if the last message is in the payload
         if (
           conv.lastMessage &&
-          payload.messageIds.includes(conv.lastMessage.id)
+          payload.messageIds?.includes((conv.lastMessage as any)?.id)
         ) {
           conv.lastMessage = {
             ...conv.lastMessage,
-            isRead: true,
-            is_read: true,
+            isRead: eventType === 'read' ? true : (conv.lastMessage as any)?.isRead,
+            is_read: eventType === 'read' ? true : (conv.lastMessage as any)?.is_read,
           };
         }
-        
-        next[idx] = conv;
-        
-        return {
-          ...(prev || {}),
-          data: { ...(prev?.data || {}), conversations: next },
-        };
+
+        pages[pageIdx].conversations[idx] = conv;
+        try {
+          console.debug("[ConversationsRQ] Updated conversation on read/opened", {
+            eventType,
+            conversationId: payload.conversationId,
+            decBy: payload.messageIds.length,
+            unread_count: conv.unread_count,
+          });
+        } catch {}
+        return { pages, pageParams: prev.pageParams };
       });
     };
 
+    // Register socket listeners with stable wrapper functions to allow proper cleanup
+    const onRead = (p: any) => updateOnReadOrOpened(p, 'read');
+    const onOpened = (p: any) => updateOnReadOrOpened(p, 'opened');
+
     on(SOCKET_EVENTS.MESSAGE_NEW, updateOnNewMessage);
     on(SOCKET_EVENTS.MESSAGE_RECEIVED, updateOnNewMessage);
-    on(SOCKET_EVENTS.MESSAGE_READ, updateOnReadOrOpened as any);
-    on(SOCKET_EVENTS.MESSAGE_OPENED, updateOnReadOrOpened as any);
+    on(SOCKET_EVENTS.MESSAGE_READ, onRead);
+    on(SOCKET_EVENTS.MESSAGE_OPENED, onOpened);
 
     return () => {
       off(SOCKET_EVENTS.MESSAGE_NEW, updateOnNewMessage);
       off(SOCKET_EVENTS.MESSAGE_RECEIVED, updateOnNewMessage);
-      off(SOCKET_EVENTS.MESSAGE_READ, updateOnReadOrOpened as any);
-      off(SOCKET_EVENTS.MESSAGE_OPENED, updateOnReadOrOpened as any);
+      off(SOCKET_EVENTS.MESSAGE_READ, onRead);
+      off(SOCKET_EVENTS.MESSAGE_OPENED, onOpened);
     };
-  }, [on, off, updateConversationsCache, currentUser?.id]);
-
-  // Reconcile temp conversation ids when server confirms real id
-  useEffect(() => {
-    const handler = (payload: { tempId: string; conversationId: string }) => {
-      reconcileConversationId(payload.tempId, payload.conversationId);
-    };
-
-    // Listen via socket (if backend emits it)
-    on("conversation:created", handler as any);
-
-    // Also listen to browser CustomEvent dispatched by temp-message flow
-    const windowListener = (e: Event) => {
-      try {
-        const detail = (e as CustomEvent).detail as { tempId: string; conversationId: string };
-        if (detail && detail.tempId && detail.conversationId) handler(detail);
-      } catch {}
-    };
-    if (typeof window !== "undefined") {
-      window.addEventListener("conversation:created", windowListener as EventListener);
-    }
-
-    return () => {
-      off("conversation:created", handler as any);
-      if (typeof window !== "undefined") {
-        window.removeEventListener("conversation:created", windowListener as EventListener);
-      }
-    };
-  }, [on, off, reconcileConversationId]);
+  }, [on, off, currentUser?.id, updateConversationsCache]);
 
   return {
     conversations,
     error,
     isLoading,
-    mutateConversations: refetch, // React Query equivalent of SWR's mutate
+    mutateConversations: refetch, // keep shape compatibility
     optimisticAddConversation,
     reconcileConversationId,
+    // Pagination controls (optional for callers)
+    hasNextPage: !!hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage: !!isFetchingNextPage,
     // Additional React Query specific methods
     invalidateConversations: () => queryClient.invalidateQueries({ queryKey: conversationKeys.all }),
     refetchConversations: refetch,

@@ -30,7 +30,7 @@ import { useCurrentUser } from "@/lib/use-current-user";
  * - Real-time updates (WebSocket)
  * - Optimistic updates and mutations
  */
-export function useMessagingRQ() {
+export function useMessagingRQ(options?: { enabled?: boolean }) {
   const { currentUser } = useCurrentUser();
 
   // Global messaging state from Zustand
@@ -72,9 +72,12 @@ export function useMessagingRQ() {
     conversations,
     isLoading: conversationsLoading,
     error: conversationsError,
+    hasNextPage: conversationsHasNextPage,
+    fetchNextPage: fetchNextConversations,
+    isFetchingNextPage: isFetchingNextConversations,
     invalidateConversations,
     refetchConversations,
-  } = useConversations();
+  } = useConversations({ enabled: options?.enabled });
 
   const {
     messages,
@@ -421,6 +424,9 @@ export function useMessagingRQ() {
     // Pagination
     hasNextPage,
     canLoadMore: hasNextPage && !isFetchingNextPage,
+    conversationsHasNextPage,
+    fetchNextConversations,
+    isFetchingNextConversations,
 
     // Actions
     selectConversation,
