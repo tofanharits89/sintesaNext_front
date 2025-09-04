@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
-import { useMessaging } from "@/hooks/useMessaging";
+import { useState, useRef, useEffect, useMemo, useLayoutEffect } from "react";
+// Import the new React Query + Zustand messaging system
+import { useConversationRQ } from "@/hooks/messaging-rq";
 import { useAutoMarkAsRead } from "@/hooks/useAutoMarkAsRead";
 import { Conversation } from "@/shared/socket-events";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -33,14 +34,10 @@ import { cn } from "@/lib/utils";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { MessageStatus } from "./MessageStatus";
 import { useOnlineUsers } from "@/hooks/use-online-users";
-import { useMessages as useMessagesData } from "@/hooks/useMessages";
-import { useConversations } from "@/hooks/useConversations";
+import { useMessagingRQ } from "@/hooks/messaging-rq";
 import dynamic from "next/dynamic";
-import {
-  useMarkAsReadMutation,
-  useMarkAsOpenedMutation,
-} from "@/hooks/useMessageMutations";
 import { getHint } from "@/features/messaging/temp-conversation-hints";
+import { pushTempMessage } from "@/features/messaging/temp-messages-store";
 
 // Dynamically import EmojiPicker to avoid SSR issues
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), {
@@ -48,13 +45,11 @@ const EmojiPicker = dynamic(() => import("emoji-picker-react"), {
 });
 
 interface ChatWindowProps {
-  conversation: Conversation;
+  conversationId: string;
+  conversation?: Conversation; // Optional for backward compatibility
 }
 
-export function ChatWindow({ conversation }: ChatWindowProps) {
-  const [messageInput, setMessageInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [openedMessages, setOpenedMessages] = useState<Set<string>>(new Set());
+export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -62,236 +57,99 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { currentUser } = useCurrentUser();
-  // Pull messaging state early so currentConversation is available
+
+  // Use the new React Query + Zustand messaging system
   const {
-    isLoading,
-    isConnected,
-    typingUsers,
-    sendMessage,
-    startTyping,
-    stopTyping,
-    formatMessageTime,
-    selectConversation,
-    currentConversation,
-  } = useMessaging();
-
-  // Locally adopted real conversation id once reconciliation occurs
-  const [adoptedRealId, setAdoptedRealId] = useState<string | undefined>(
-    undefined
-  );
-
-  // Reset adoptedRealId on prop conversation changes to avoid leaking across sessions
-  useEffect(() => {
-    const propId = conversation?.id;
-    if (!propId) {
-      setAdoptedRealId(undefined);
-      return;
-    }
-    // If prop id is already real, no need to keep any adopted id
-    if (!isTempId(propId)) {
-      if (adoptedRealId) setAdoptedRealId(undefined);
-      return;
-    }
-    // If we opened a different temp conversation than before, clear any previous adopted id
-    // This ensures a fresh reconciliation for the new temp conversation
-    if (adoptedRealId && adoptedRealId !== propId) {
-      setAdoptedRealId(undefined);
-    }
-  }, [conversation?.id]);
-
-  // Helper to determine temp ids
-  const isTempId = (id?: string) =>
-    !!id &&
-    (id.startsWith("temp-") ||
-      id.startsWith("temp_conv-") ||
-      id.startsWith("temp-conv-"));
-
-  // Prefer reconciled real conversation over temp prop when available
-  const effectiveConversationId = useMemo(() => {
-    const propId = conversation?.id;
-    const curId = currentConversation?.id;
-    // Prefer locally adopted real id first
-    if (adoptedRealId && !isTempId(adoptedRealId)) return adoptedRealId;
-    // Then prefer reconciled currentConversation over temp prop
-    if (isTempId(propId) && curId && !isTempId(curId)) return curId;
-    return propId;
-  }, [conversation?.id, currentConversation?.id, adoptedRealId]);
-
-  // Use messages for the effective conversation id (handles temp->real seamlessly)
-  const {
+    // Data
+    conversations,
     messages,
-    isLoading: isMessagesLoading,
-    optimisticInsert,
-  } = useMessagesData(effectiveConversationId);
+
+    // UI State
+    messageInput,
+
+    // Typing indicators
+    isAnyoneTyping,
+    typingText,
+
+    // Loading states
+    isLoading,
+    canLoadMore,
+
+    // Connection state
+    isSocketConnected,
+    isSendingMessage,
+
+    // Actions
+    sendMessage: sendMessageRQ,
+    selectConversation,
+    loadMoreMessages,
+    markMessagesAsRead,
+    markMessagesAsOpened,
+    setMessageContent,
+    startTyping: startTypingRQ,
+    stopTyping: stopTypingRQ,
+  } = useMessagingRQ();
+
+  // Get conversation data from the new system or fallback to prop
+  const conversationData =
+    conversations?.find((c) => c.id === conversationId) || conversation;
+
+  // The new React Query system handles conversation reconciliation automatically
+
+  // Use the conversationId prop directly since the new system handles reconciliation
+  const effectiveConversationId = conversationId;
+
+  // Messages are now handled by the useMessagingRQ hook above
+  // No need for separate useMessagesData hook
+  // Debug mount
+  useEffect(() => {
+    console.log("[ChatWindow] mount", {
+      conversationId: effectiveConversationId,
+      fromPropConversation: !!conversation,
+    });
+    return () => {
+      console.log("[ChatWindow] unmount", {
+        conversationId: effectiveConversationId,
+      });
+    };
+  }, [effectiveConversationId]);
 
   // After sending, keep the viewport pinned to bottom for a short period
   const pinUntilRef = useRef<number>(0);
 
-  // SWR Mutations for read/opened with optimistic updates
-  const { trigger: markRead } = useMarkAsReadMutation(effectiveConversationId);
-  const { trigger: markOpened } = useMarkAsOpenedMutation(
-    effectiveConversationId
-  );
-
   // Get online users to check if other participant is online
   const { onlineUsers } = useOnlineUsers();
-  // Pull SWR conversations to hydrate missing fields on stub conversations
-  const { conversations: swrConversations } = useConversations();
+  // The new system handles read/opened mutations automatically
 
   // Custom message visibility handler
   const handleMessageVisible = (messageId: string) => {
     // Keep passive; useAutoMarkAsRead will handle status
   };
 
-  // Controlled auto-mark-as-read functionality
+  // Controlled auto-mark-as-read/opened functionality
   const { observeMessage, clearMarkedMessages } = useAutoMarkAsRead({
     messages,
     currentUserId: currentUser?.id,
     conversationId: effectiveConversationId,
-    markAsRead: (ids) => markRead({ messageIds: ids }),
-    markAsOpened: (ids) => markOpened({ messageIds: ids }),
+    // Make read a no-op here to avoid duplicate mutations; opened will still fire
+    markAsRead: async (_ids) => {},
+    markAsOpened: async (ids) => {
+      // Use the dedicated opened-status mutation instead of reusing read
+      markMessagesAsOpened(ids);
+    }, // Use the same function for now
+    // Enable opened-only behavior
     enabled: true,
     debounceMs: 100, // Very fast for real-time feedback while chatting
     onMessageVisible: handleMessageVisible, // Pass the visibility handler
   });
 
-  // Load/select conversation, but avoid re-selecting a temp id once a real id is active
-  useEffect(() => {
-    if (!conversation?.id) return;
-    const convId = conversation.id as string;
-    const curId = currentConversation?.id as string | undefined;
-    const looksTemp =
-      !!convId &&
-      (convId.startsWith("temp-") ||
-        convId.startsWith("temp_conv-") ||
-        convId.startsWith("temp-conv-"));
-    const curLooksReal =
-      !!curId &&
-      !(
-        curId.startsWith("temp-") ||
-        curId.startsWith("temp_conv-") ||
-        curId.startsWith("temp-conv-")
-      );
+  // The new system handles conversation selection automatically
 
-    // If we have adopted a real id, prefer selecting it and do not reselect temp
-    if (adoptedRealId && !isTempId(adoptedRealId)) {
-      if (curId !== adoptedRealId) {
-        console.log("[ChatWindow] selectConversation(adoptedRealId)", {
-          id: adoptedRealId,
-        });
-        selectConversation(adoptedRealId);
-      }
-      return;
-    }
+  // The new system handles conversation creation and reconciliation automatically
 
-    // If current is already a real conversation and the prop is still temp, do not revert
-    if (looksTemp && curLooksReal && curId !== convId) {
-      console.log(
-        "[ChatWindow] skip reselecting temp after real reconciliation",
-        { tempId: convId, currentRealId: curId }
-      );
-      return;
-    }
-    // No-op if already selected
-    if (curId === convId) return;
+  // The new system handles message status automatically
 
-    console.log("[ChatWindow] selectConversation", { id: convId });
-    selectConversation(convId);
-  }, [
-    conversation?.id,
-    currentConversation?.id,
-    selectConversation,
-    adoptedRealId,
-  ]);
-
-  // Bridge: adopt reconciled id only on 'conversation:created' to avoid recursion
-  useEffect(() => {
-    const onCreated = (e: Event) => {
-      const { tempId, conversationId: realId } =
-        (e as CustomEvent).detail || {};
-      if (!tempId || !realId) return;
-      const propId = conversation?.id as string | undefined;
-      if (propId && propId === tempId && !isTempId(realId)) {
-        if (currentConversation?.id === realId) return;
-        // Remember the adopted real id locally so our derived state stops using the temp id
-        setAdoptedRealId(realId);
-        console.log("[ChatWindow] adopt created->real", { tempId, realId });
-        selectConversation(realId);
-      }
-    };
-    window.addEventListener("conversation:created", onCreated as EventListener);
-    return () => {
-      window.removeEventListener(
-        "conversation:created",
-        onCreated as EventListener
-      );
-    };
-  }, [conversation?.id, currentConversation?.id, selectConversation]);
-
-  // Mark already-read messages as opened when messages load
-  useEffect(() => {
-    if (messages.length > 0 && currentUser?.id) {
-      const alreadyReadMessages = messages
-        .filter((msg) => msg.sender.id !== currentUser.id && msg.isRead)
-        .map((msg) => msg.id);
-
-      if (alreadyReadMessages.length > 0) {
-        setOpenedMessages((prev) => {
-          const newSet = new Set(prev);
-          alreadyReadMessages.forEach((id) => newSet.add(id));
-          return newSet;
-        });
-      }
-    }
-  }, [messages, currentUser?.id]);
-
-  // Handle real-time message read status updates
-  useEffect(() => {
-    const handleMessagesMarkedAsRead = (event: CustomEvent) => {
-      const { messageIds, conversationId: eventConversationId } = event.detail;
-
-      // Only update if it's for the current conversation
-      if (eventConversationId === effectiveConversationId) {
-        setOpenedMessages((prev) => {
-          const newSet = new Set(prev);
-          messageIds.forEach((id: string) => newSet.add(id));
-          return newSet;
-        });
-      }
-    };
-
-    // Listen for messages marked as opened events
-    const handleMessagesMarkedAsOpened = (event: CustomEvent) => {
-      const { messageIds, conversationId: eventConversationId } = event.detail;
-      if (eventConversationId === effectiveConversationId) {
-        setOpenedMessages((prev) => {
-          const newSet = new Set(prev);
-          messageIds.forEach((id: string) => newSet.add(id));
-          return newSet;
-        });
-      }
-    };
-
-    window.addEventListener(
-      "messages:marked-as-read",
-      handleMessagesMarkedAsRead as EventListener
-    );
-    window.addEventListener(
-      "messages:marked-as-opened",
-      handleMessagesMarkedAsOpened as EventListener
-    );
-
-    return () => {
-      window.removeEventListener(
-        "messages:marked-as-read",
-        handleMessagesMarkedAsRead as EventListener
-      );
-      window.removeEventListener(
-        "messages:marked-as-opened",
-        handleMessagesMarkedAsOpened as EventListener
-      );
-    };
-  }, [effectiveConversationId]);
+  // The new system handles message read status updates automatically
 
   // Scroll to bottom function with smooth behavior
   const scrollToBottom = (smooth = false) => {
@@ -314,6 +172,11 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
+    console.log("[ChatWindow] messages changed", {
+      conversationId: effectiveConversationId,
+      length: messages.length,
+      last: messages[messages.length - 1],
+    });
     // If we're within the grace period, force pin to bottom
     if (Date.now() < pinUntilRef.current) {
       console.log("[Messaging][UI] pinToBottom:grace");
@@ -322,6 +185,38 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
     }
     scrollToBottom(false);
   }, [messages.length]);
+
+  // Seed an optimistic message from hint if this is a temp conversation with no messages yet
+  useEffect(() => {
+    const cid = effectiveConversationId;
+    if (!cid) return;
+    const isTemp =
+      cid.startsWith("temp-") || cid.startsWith("temp_conv-") || cid.startsWith("temp-conv-");
+    if (!isTemp) return;
+    if (messages && messages.length > 0) return;
+    const hint = getHint(cid);
+    const lm: any = hint?.lastMessage;
+    if (!lm?.content) return;
+    try {
+      const nowIso = lm.timestamp || new Date().toISOString();
+      const tempMsgId = `temp-msg-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      pushTempMessage(cid, {
+        id: tempMsgId,
+        conversationId: cid,
+        content: lm.content,
+        timestamp: nowIso,
+        sender:
+          lm.sender ||
+          (currentUser
+            ? { id: currentUser.id, username: currentUser.username || "you", name: currentUser.name || "You" }
+            : { id: "current-user", username: "you", name: "You" }),
+        senderType: lm.senderType || (currentUser?.role === "super_admin" || currentUser?.role === "co_admin" ? ("admin" as const) : ("user" as const)),
+        isRead: true,
+        isDelivered: false,
+        isOpened: false,
+      } as any);
+    } catch {}
+  }, [effectiveConversationId, messages?.length, currentUser?.id]);
 
   // Auto-mark-as-read is now handled by useAutoMarkAsRead hook with proper safeguards
 
@@ -384,8 +279,13 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
     });
   };
 
-  // Focus input and scroll to bottom when conversation changes
-  useEffect(() => {
+  // Ensure active conversation is set ASAP and then focus+scroll
+  useLayoutEffect(() => {
+    // Ensure the global active conversation is correctly set so mutations use it
+    if (effectiveConversationId) {
+      selectConversation(effectiveConversationId);
+    }
+
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -406,84 +306,62 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
   }, [effectiveConversationId]);
 
   const handleSendMessage = async () => {
-    if (!messageInput.trim() && attachedFiles.length === 0) return;
+    if (!messageInput.content.trim() && attachedFiles.length === 0) return;
 
-    const content = messageInput.trim();
+    const content = messageInput.content.trim();
     const files = [...attachedFiles];
 
-    // Start send flow
-
-    // Clear input and attachments
-    setMessageInput("");
+    // Clear attachments
     setAttachedFiles([]);
 
     // Stop typing indicator
-    if (isTyping) {
-      stopTyping();
-      setIsTyping(false);
-    }
+    stopTypingRQ();
 
     // For now, just send the text message
     // TODO: Implement file upload functionality in the backend
     if (content) {
-      // Optimistic insert pending message
-      const tempId = `temp-${Math.random().toString(36).slice(2)}`;
-      // optimistic insert
-      console.log("[ChatWindow:send] optimisticInsert", {
-        convId: effectiveConversationId || conversation.id,
-        tempId,
-        content,
-      });
-      optimisticInsert({
-        id: tempId,
-        conversationId: effectiveConversationId || conversation.id,
-        content,
-        timestamp: new Date().toISOString(),
-        sender: currentUser as any,
-        senderType:
-          currentUser?.role &&
-          ["super_admin", "co_admin"].includes(currentUser.role)
-            ? "admin"
-            : "user",
-        isRead: false,
-        isDelivered: false,
-        isOpened: false,
-      } as any);
-      // Fire actual send (socket or REST), passing tempId for reconciliation
-      // send invoke
-      // Enable a short grace period to keep the view pinned during reconciliation
-      pinUntilRef.current = Date.now() + 2000;
-      const recipientFromConversation =
-        (otherParticipant as any)?.id ||
-        (conversation as any)?.otherParticipant?.id;
-      console.log("[ChatWindow:send] calling sendMessage", {
-        convId: conversation.id,
-        recipientFromConversation,
-        tempId,
-      });
-      await sendMessage(content, recipientFromConversation, tempId);
-      // send done
+      try {
+        // Use the new React Query sendMessage which handles optimistic updates
+        // For temp conversations, pass recipientId so backend can create the real conversation
+        const isTempConv =
+          effectiveConversationId?.startsWith("temp-") ||
+          effectiveConversationId?.startsWith("temp_conv-") ||
+          effectiveConversationId?.startsWith("temp-conv-");
+        const recipientId = isTempConv ? otherParticipant?.id : undefined;
+        console.log("[ChatWindow:send]", {
+          conversationId: effectiveConversationId,
+          isTempConv,
+          recipientId,
+          content,
+        });
+        await sendMessageRQ(content, recipientId);
+      } catch (error) {
+        console.error("[ChatWindow:send] Error sending message:", error);
+        // The new system handles error rollback automatically
+      }
     }
 
     // If there are files, show a placeholder message for now
     if (files.length > 0) {
       const fileNames = files.map((f) => f.name).join(", ");
-      await sendMessage(
-        `📎 Attached files: ${fileNames} (File upload feature coming soon)`
-      );
+      try {
+        await sendMessageRQ(
+          `📎 Attached files: ${fileNames} (File upload feature coming soon)`
+        );
+      } catch (error) {
+        console.error("[ChatWindow:send] Error sending file message:", error);
+      }
     }
   };
 
   const handleInputChange = (value: string) => {
-    setMessageInput(value);
+    setMessageContent(value);
 
     // Handle typing indicators
-    if (value.trim() && !isTyping) {
-      startTyping();
-      setIsTyping(true);
-    } else if (!value.trim() && isTyping) {
-      stopTyping();
-      setIsTyping(false);
+    if (value.trim() && !messageInput.isTyping) {
+      startTypingRQ();
+    } else if (!value.trim() && messageInput.isTyping) {
+      stopTypingRQ();
     }
   };
 
@@ -497,7 +375,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
   // Handle emoji selection
   const handleEmojiClick = (emojiData: any) => {
     const emoji = emojiData.emoji;
-    setMessageInput((prev) => prev + emoji);
+    setMessageContent(messageInput.content + emoji);
     setShowEmojiPicker(false);
     // Focus back to input
     if (inputRef.current) {
@@ -530,7 +408,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
     }
   };
 
-  // Prefer provided otherParticipant; fallback to SWR list match; else derive from participants/lastMessage
+  // Prefer provided otherParticipant; fallback to React Query conversations list match; else derive from participants/lastMessage
   const otherParticipant = useMemo(() => {
     if (conversation?.otherParticipant) return conversation.otherParticipant;
 
@@ -548,7 +426,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
       if (hint?.otherParticipant) return hint.otherParticipant as any;
     }
 
-    const fromList = swrConversations.find(
+    const fromList = conversations?.find(
       (c) => c.id === (effectiveConversationId || conversation?.id)
     );
     if (fromList?.otherParticipant) return fromList.otherParticipant;
@@ -608,14 +486,14 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
     effectiveConversationId,
     conversation?.id,
     (conversation as any)?.otherParticipant,
-    swrConversations,
+    conversations,
     currentUser?.id,
   ]);
 
   // Debug: log how otherParticipant is resolved
   useEffect(() => {
-    const fromList = (swrConversations as any[])?.find(
-      (c) => c.id === (effectiveConversationId || conversation.id)
+    const fromList = (conversations as any[])?.find(
+      (c) => c.id === (effectiveConversationId || conversation?.id)
     );
     console.log("[ChatWindow:otherParticipant]", {
       convId: effectiveConversationId || conversation?.id,
@@ -632,7 +510,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
   }, [
     effectiveConversationId,
     conversation?.id,
-    swrConversations,
+    conversations,
     currentUser?.id,
     otherParticipant,
   ]);
@@ -798,7 +676,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
                             // For sent messages: show WhatsApp-style status indicators using real-time fields
                             <MessageStatus
                               isDelivered={message.isDelivered}
-                              // Sender side should reflect remote recipient's open state from socket/SWR only
+                              // Sender side should reflect remote recipient's open state from socket/React Query cache only
                               isOpened={message.isOpened}
                               isRead={message.isRead}
                               deliveredAt={message.deliveredAt}
@@ -812,16 +690,12 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
                             <span
                               className={cn(
                                 "text-xs transition-colors duration-200",
-                                openedMessages.has(message.id) ||
-                                  message.isOpened
+                                message.isOpened
                                   ? "text-green-600"
                                   : "text-orange-600"
                               )}
                             >
-                              {openedMessages.has(message.id) ||
-                              message.isOpened
-                                ? `Opened`
-                                : "Unopened"}
+                              {message.isOpened ? `Opened` : "Unopened"}
                             </span>
                           )}
                         </div>
@@ -831,31 +705,24 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
                 })}
 
                 {/* Typing indicator */}
-                {typingUsers.size > 0 && (
+                {isAnyoneTyping && (
                   <div className="flex gap-3 max-w-[80%]">
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="bg-muted text-sm">
-                        {otherParticipant?.name?.charAt(0)?.toUpperCase() ||
-                          "?"}
+                        {conversationData?.otherParticipant?.name
+                          ?.charAt(0)
+                          ?.toUpperCase() || "?"}
                       </AvatarFallback>
                     </Avatar>
                     <div className="bg-muted rounded-lg px-3 py-2">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
-                        <div
-                          className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
-                          style={{ animationDelay: "0.1s" }}
-                        />
-                        <div
-                          className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
-                          style={{ animationDelay: "0.2s" }}
-                        />
+                      <div className="text-sm text-muted-foreground">
+                        {typingText}
                       </div>
                     </div>
                   </div>
                 )}
               </div>
-            ) : isMessagesLoading ? (
+            ) : isLoading ? (
               <div className="space-y-4">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <div
@@ -956,7 +823,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
 
             <Input
               ref={inputRef}
-              value={messageInput}
+              value={messageInput.content}
               onChange={(e) => handleInputChange(e.target.value)}
               onKeyDown={handleKeyPress}
               placeholder="Type a message..."
@@ -981,7 +848,9 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
 
             <Button
               onClick={handleSendMessage}
-              disabled={!messageInput.trim() && attachedFiles.length === 0}
+              disabled={
+                !messageInput.content.trim() && attachedFiles.length === 0
+              }
               size="icon"
               className="flex-shrink-0"
             >
@@ -989,7 +858,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
             </Button>
           </div>
 
-          {!isConnected && (
+          {!isSocketConnected && (
             <p className="text-xs text-muted-foreground mt-2">
               You're offline. Messages will be sent when connection is restored.
             </p>

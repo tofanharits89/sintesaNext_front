@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useMessaging } from "@/hooks/useMessaging";
+import { useMessagingRQ } from "@/hooks/useMessagingRQ";
 import { useCurrentUser } from "@/lib/use-current-user";
 import {
   Dialog,
@@ -21,8 +21,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Send, Crown, User as UserIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiPath } from "@/lib/base-path";
-import { useConversations } from "@/hooks/useConversations";
+import { useConversations as useConversationsRQ } from "@/hooks/useConversationsRQ";
+import { setHint } from "@/features/messaging/temp-conversation-hints";
 import { toast } from "sonner";
+import { pushTempMessage } from "@/features/messaging/temp-messages-store";
+import type { FrontendMessage } from "@/shared/socket-events";
 
 // Helper function to get role display name
 const getRoleDisplayName = (role?: string): string => {
@@ -62,9 +65,8 @@ export function NewMessageDialog({
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
-  const { sendMessage, selectConversation } = useMessaging();
-  const { optimisticAddConversation, reconcileConversationId } =
-    useConversations();
+  const { sendMessage, selectConversation } = useMessagingRQ();
+  const { conversations, optimisticAddConversation } = useConversationsRQ();
   const { currentUser } = useCurrentUser();
 
   // Load users when dialog opens
@@ -142,7 +144,39 @@ export function NewMessageDialog({
     try {
       setIsSending(true);
 
-      // Generate a tempId, optimistically insert a conversation, then send
+      // 1) If a real conversation with this user already exists, open and use it
+      const existingConv = (conversations || []).find((c: any) => {
+        const otherId = (c.otherParticipant as any)?.id;
+        const p1 = (c as any).participant1_id;
+        const p2 = (c as any).participant2_id;
+        const currentId = currentUser?.id;
+        const targetId = selectedUser.id;
+        return (
+          (otherId && otherId === targetId) ||
+          ((p1 && p2 && currentId) &&
+            ((p1 === currentId && p2 === targetId) || (p2 === currentId && p1 === targetId)))
+        );
+      });
+
+      if (existingConv?.id) {
+        // Use existing conversation: select it, notify parent, close dialog, then send
+        try {
+          await selectConversation(existingConv.id);
+        } catch {}
+        // Wait briefly to ensure the global activeConversationId store updates
+        await new Promise((resolve) => setTimeout(resolve, 120));
+        if (onConversationCreated) {
+          try {
+            onConversationCreated(existingConv.id);
+          } catch {}
+        }
+        onOpenChange(false);
+        await sendMessage(message.trim());
+        toast.success("Message sent successfully");
+        return; // Done
+      }
+
+      // 2) Otherwise, create a temporary conversation and proceed as before
       const tempId = `temp-conv-${Math.random().toString(36).slice(2)}`;
 
       optimisticAddConversation({
@@ -151,44 +185,61 @@ export function NewMessageDialog({
         content: message.trim(),
         sender: currentUser,
         senderType:
-          currentUser?.role &&
-          ["super_admin", "co_admin"].includes(currentUser.role)
+          currentUser?.role && ["super_admin", "co_admin"].includes(currentUser.role)
             ? "admin"
             : "user",
         timestamp: new Date().toISOString(),
       });
 
-      // Provide an immediate hint for the temp conversation so UI can resolve otherParticipant
+      // Seed a hint so ChatWindow can resolve otherParticipant immediately for temp conversations
       try {
-        const { setHint } = await import(
-          "@/features/messaging/temp-conversation-hints"
-        );
         setHint(tempId, {
           otherParticipant: selectedUser,
           participant1_id: currentUser?.id,
           participant2_id: selectedUser.id,
-          participant1: currentUser as any,
-          participant2: selectedUser as any,
+          participant1: currentUser || undefined,
+          participant2: selectedUser,
+          lastMessage: {
+            content: message.trim(),
+            timestamp: new Date().toISOString(),
+            sender: currentUser || undefined,
+            recipient: selectedUser,
+          },
           updated_at: new Date().toISOString(),
         });
       } catch {}
 
-      // Give SWR a tick to publish the optimistic conversation before selecting it
-      await new Promise((r) => setTimeout(r, 80));
+      // Pre-seed an optimistic message directly into the temp store so it shows immediately
+      try {
+        const nowIso = new Date().toISOString();
+        const tempMsgId = `temp-msg-${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2, 9)}`;
+        const optimistic: FrontendMessage = {
+          id: tempMsgId,
+          conversationId: tempId,
+          content: message.trim(),
+          timestamp: nowIso,
+          sender: currentUser
+            ? { id: currentUser.id, username: currentUser.username || "you", name: currentUser.name || "You" }
+            : { id: "current-user", username: "you", name: "You" },
+          senderType:
+            currentUser?.role && ["super_admin", "co_admin"].includes(currentUser.role)
+              ? ("admin" as const)
+              : ("user" as const),
+          isRead: true,
+          isDelivered: false,
+          isOpened: false,
+        };
+        pushTempMessage(tempId, optimistic);
+      } catch {}
 
-      // Select the temp conversation so the chat window binds to it immediately
+      // Select the temp conversation so the chat binds immediately
       try {
         await selectConversation(tempId);
       } catch {}
-
-      // Also emit a global selection event so any listeners can switch views
-      try {
-        window.dispatchEvent(
-          new CustomEvent("conversation:selected", {
-            detail: { conversationId: tempId },
-          })
-        );
-      } catch {}
+      // Ensure the global activeConversationId updates before sending
+      await new Promise((resolve) => setTimeout(resolve, 120));
 
       // Let parent navigate to the temp conversation before actually sending
       if (onConversationCreated) {
@@ -196,36 +247,11 @@ export function NewMessageDialog({
           onConversationCreated(tempId);
         } catch {}
       }
+
       // Close dialog to reveal chat window
       onOpenChange(false);
 
-      // After the chat window mounts, emit an optimistic message insert so it appears immediately
-      setTimeout(() => {
-        try {
-          const tempMsg = {
-            id: tempId, // temp message id can be same as conv temp for simplicity
-            conversationId: tempId,
-            content: message.trim(),
-            timestamp: new Date().toISOString(),
-            sender: currentUser,
-            senderType:
-              currentUser?.role &&
-              ["super_admin", "co_admin"].includes(currentUser.role)
-                ? "admin"
-                : "user",
-            isRead: false,
-            isDelivered: false,
-            isOpened: false,
-          } as any;
-          window.dispatchEvent(
-            new CustomEvent("messages:optimistic-insert", {
-              detail: { conversationId: tempId, message: tempMsg },
-            })
-          );
-        } catch {}
-      }, 100);
-
-      // Send the message now (recipientId prioritized in sendMessage)
+      // Send the message now. Provide conversation override to avoid any timing issues
       await sendMessage(message.trim(), selectedUser.id, tempId);
 
       toast.success("Message sent successfully");

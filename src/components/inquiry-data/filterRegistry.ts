@@ -21,6 +21,11 @@ export interface FilterDef {
   query?: {
     columnName: string;
     reference?: RefDef;
+    // Additional properties for local data sources
+    dataSource?: "local" | "database";
+    localFile?: string;
+    joinKey?: string;
+    nameColumn?: string;
   };
 }
 

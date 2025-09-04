@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useMessaging } from "@/hooks/useMessaging";
-import { useConversations } from "@/hooks/useConversations";
+import { useEffect, useRef, useState } from "react";
+// Import the new React Query + Zustand messaging system
+import { useMessagingRQ } from "@/hooks/messaging-rq";
 import { ChatWindow } from "@/components/messaging/chat-window";
 import { ConversationList } from "@/components/messaging/conversation-list";
 import { NewMessageDialog } from "@/components/messaging/new-message-dialog";
@@ -13,54 +13,89 @@ import { Badge } from "@/components/ui/badge";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
 export default function MessagesPage() {
-  const [selectedConversationId, setSelectedConversationId] = useState<
-    string | null
-  >(null);
   const [showNewMessageDialog, setShowNewMessageDialog] = useState(false);
 
-  const { isConnected, selectConversation, currentConversation } =
-    useMessaging();
-  const { conversations, isLoading } = useConversations();
+  // Use the new comprehensive messaging hook
+  const {
+    // Data
+    conversations,
+    activeConversationId,
+
+    // Loading states
+    isLoading,
+
+    // Connection state
+    isSocketConnected,
+
+    // Actions
+    selectConversation,
+
+    // UI state
+    totalUnreadCount,
+  } = useMessagingRQ();
 
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+
   const handleConversationSelect = async (conversationId: string) => {
-    setSelectedConversationId(conversationId);
-    await selectConversation(conversationId);
+    selectConversation(conversationId);
+
+    // Update URL
+    const current = searchParams.get("conversation");
+    if (current !== conversationId) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("conversation", conversationId);
+      router.push(`${pathname}?${params.toString()}`);
+    }
   };
 
   const handleNewMessage = () => {
     setShowNewMessageDialog(true);
   };
 
-  // Sync selection when hooks select programmatically (e.g., after REST success)
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const ce = e as CustomEvent<{ conversationId: string }>;
-      if (ce?.detail?.conversationId) {
-        setSelectedConversationId(ce.detail.conversationId);
-      }
-    };
-    window.addEventListener("conversation:selected", handler as EventListener);
-    return () =>
-      window.removeEventListener(
-        "conversation:selected",
-        handler as EventListener
-      );
-  }, []);
+  // Handle URL-based conversation selection (avoid unstable searchParams object in deps)
+  const urlConversationId = searchParams.get("conversation");
 
-  // If URL has ?conversation=..., auto-select that chat on load/navigation
+  // Ref to mark when URL was last updated by state, so URL->state effect can skip one cycle
+  const lastUrlUpdateByStateRef = useRef<string | null>(null);
+
+  // URL -> state: select conversation from URL unless this URL was just set by our own state sync
   useEffect(() => {
-    const convId = searchParams.get("conversation");
-    if (convId) {
-      handleConversationSelect(convId);
-      // Clean the URL so refresh doesn't re-open via query param
-      try {
-        router.replace(pathname);
-      } catch {}
+    if (!urlConversationId) return;
+    if (lastUrlUpdateByStateRef.current === urlConversationId) {
+      // Skip once and clear the marker
+      lastUrlUpdateByStateRef.current = null;
+      return;
     }
-  }, [searchParams, router, pathname]);
+    // If URL points to a temp conversation but state already holds a real id, don't revert to temp
+    const isTemp =
+      urlConversationId.startsWith("temp-") ||
+      urlConversationId.startsWith("temp_conv-") ||
+      urlConversationId.startsWith("temp-conv-");
+    const stateIsReal = !!activeConversationId &&
+      !activeConversationId.startsWith("temp-") &&
+      !activeConversationId.startsWith("temp_conv-") &&
+      !activeConversationId.startsWith("temp-conv-");
+    if (isTemp && stateIsReal) return;
+    if (urlConversationId !== activeConversationId) {
+      selectConversation(urlConversationId);
+    }
+  }, [urlConversationId, activeConversationId, selectConversation]);
+
+  // Keep URL in sync when activeConversationId changes programmatically
+  useEffect(() => {
+    if (!activeConversationId) return;
+    if (urlConversationId !== activeConversationId) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("conversation", activeConversationId);
+      // Mark that this URL change is initiated by state
+      lastUrlUpdateByStateRef.current = activeConversationId;
+      router.replace(`${pathname}?${params.toString()}`);
+    }
+  }, [activeConversationId, urlConversationId, router, pathname]);
+
+  // Note: We intentionally do not listen for 'conversation:created' here to avoid double-selection loops.
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
@@ -74,7 +109,12 @@ export default function MessagesPage() {
 
           {/* Connection Status */}
           <div className="flex items-center gap-2">
-            {isConnected ? (
+            {totalUnreadCount > 0 && (
+              <Badge variant="destructive" className="mr-2">
+                {totalUnreadCount} unread
+              </Badge>
+            )}
+            {isSocketConnected ? (
               <Badge
                 variant="secondary"
                 className="text-green-600 bg-green-50 border-green-200"
@@ -109,12 +149,12 @@ export default function MessagesPage() {
             </CardHeader>
             <CardContent className="p-0 flex-1 overflow-hidden">
               <ConversationList
-                conversations={conversations}
-                selectedConversationId={selectedConversationId}
+                conversations={conversations || []}
+                selectedConversationId={activeConversationId}
                 onConversationSelect={handleConversationSelect}
                 isLoading={isLoading}
                 getUnreadCount={(id) => {
-                  const conv = conversations.find((c) => c.id === id);
+                  const conv = conversations?.find((c) => c.id === id);
                   if (!conv) return 0;
                   if (typeof conv.unread_count === "number")
                     return conv.unread_count;
@@ -130,8 +170,8 @@ export default function MessagesPage() {
 
         {/* Chat Window */}
         <div className="lg:col-span-2">
-          {currentConversation ? (
-            <ChatWindow conversation={currentConversation} />
+          {activeConversationId ? (
+            <ChatWindow conversationId={activeConversationId} />
           ) : (
             <Card className="h-[600px] max-h-[70vh] flex items-center justify-center">
               <CardContent className="text-center">
@@ -142,10 +182,10 @@ export default function MessagesPage() {
                       Tidak ada pesan terpilih
                     </h3>
                     <p className="text-sm">
-                      Silahkan pilih pesan dari daftar percakapan atau buat pesan baru.
+                      Silahkan pilih pesan dari daftar percakapan atau buat
+                      pesan baru.
                     </p>
                   </div>
-                 
                 </div>
               </CardContent>
             </Card>

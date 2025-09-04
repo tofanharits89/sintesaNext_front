@@ -30,7 +30,7 @@ import {
   getNotificationsForUser,
   getUnreadNotificationCount,
 } from "@/lib/notifications-store";
-import { useMessaging } from "@/hooks/useMessaging";
+import { useMessagingRQ } from "@/hooks/useMessagingRQ";
 import { socketClient } from "@/lib/SocketClient";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -82,9 +82,8 @@ export function Navbar() {
 
   const [recentMessages, setRecentMessages] = useState<RecentMessage[]>([]);
 
-  // Real-time messaging data
-  const { conversations, isConnected, loadConversations, getUnreadCount } =
-    useMessaging();
+  // Real-time messaging data via React Query + Zustand
+  const { conversations, isSocketConnected, totalUnreadCount } = useMessagingRQ();
   const [recentNotifications, setRecentNotifications] = useState<
     RecentNotification[]
   >([]);
@@ -138,11 +137,6 @@ export function Navbar() {
   // Load user's messages and notifications
   useEffect(() => {
     if (currentUser?.username) {
-      // Load real-time conversations
-      if (isConnected) {
-        loadConversations();
-      }
-
       // Load notifications from backend
       getNotificationsForUser(currentUser.username)
         .then((userNotifications) => {
@@ -177,10 +171,16 @@ export function Navbar() {
         .then((count) => setTotalUnreadNotificationsCount(count))
         .catch(() => setTotalUnreadNotificationsCount(0));
     }
-  }, [currentUser, isConnected, loadConversations]);
+  }, [currentUser]);
 
   // Update recent messages from conversations
   useEffect(() => {
+    // Compute target unread count and update state only if it differs
+    const nextUnreadTotal = totalUnreadCount || 0;
+    setTotalUnreadMessagesCount((prev) =>
+      prev !== nextUnreadTotal ? nextUnreadTotal : prev
+    );
+
     if (conversations.length > 0 && currentUser?.id) {
       // Get up to 5 most recent conversations with messages
       const recentConversations = conversations.filter(
@@ -188,6 +188,7 @@ export function Navbar() {
       ); // Only conversations with messages and valid other participant
 
       const sortedConversations = recentConversations
+        .slice() // avoid mutating filtered array
         .sort((a, b) => {
           const aDate = new Date(a.lastMessage?.created_at || a.updated_at);
           const bDate = new Date(b.lastMessage?.created_at || b.updated_at);
@@ -244,10 +245,10 @@ export function Navbar() {
             otherParticipant,
           };
         })
-        .filter((message) => message !== null); // Remove null entries
+        .filter((message) => message !== null);
 
-      setRecentMessages(
-        sortedConversations.filter((msg): msg is NonNullable<typeof msg> => {
+      const nextRecent = (sortedConversations.filter(
+        (msg): msg is NonNullable<typeof msg> => {
           if (!msg) return false;
 
           // Type guard to ensure all required properties exist and are of correct type
@@ -268,14 +269,32 @@ export function Navbar() {
             typeof msg.otherParticipant.username === "string";
 
           return hasValidProperties && hasValidParticipant;
-        }) as RecentMessage[]
-      );
+        }) as RecentMessage[]);
 
-      // Calculate total unread messages count
-      const totalUnread = getUnreadCount();
-      setTotalUnreadMessagesCount(totalUnread);
+      // Only update if list actually changed (shallow compare by id + key fields)
+      setRecentMessages((prev) => {
+        if (prev.length === nextRecent.length) {
+          let same = true;
+          for (let i = 0; i < prev.length; i++) {
+            const a = prev[i];
+            const b = nextRecent[i];
+            if (
+              a.id !== b.id ||
+              a.conversationId !== b.conversationId ||
+              a.unread !== b.unread ||
+              a.subject !== b.subject ||
+              a.time !== b.time
+            ) {
+              same = false;
+              break;
+            }
+          }
+          if (same) return prev;
+        }
+        return nextRecent;
+      });
     }
-  }, [conversations, currentUser, getUnreadCount]);
+  }, [conversations, currentUser?.id, totalUnreadCount]);
 
   // Generate initials for avatar fallback
   const initials = useMemo(() => {

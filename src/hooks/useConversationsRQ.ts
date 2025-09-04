@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useCallback } from "react";
 import { backendPath } from "@/lib/backend";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
@@ -12,13 +12,25 @@ import {
 } from "@/shared/socket-events";
 import { useCurrentUser } from "@/lib/use-current-user";
 
+// Query keys for React Query
+export const conversationKeys = {
+  all: ['conversations'] as const,
+  lists: () => [...conversationKeys.all, 'list'] as const,
+  list: (filters: Record<string, any>) => [...conversationKeys.lists(), { filters }] as const,
+  details: () => [...conversationKeys.all, 'detail'] as const,
+  detail: (id: string) => [...conversationKeys.details(), id] as const,
+};
+
 // Fetcher that attaches auth and parses JSON safely
-const fetcher = async (url: string) => {
+const fetchConversations = async (): Promise<{ data: { conversations: Conversation[] } }> => {
   const token = getAuthTokenFromCookie();
   const headers: HeadersInit = { "Content-Type": "application/json" };
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const resp = await fetch(url, { credentials: "include", headers });
+  const resp = await fetch(backendPath("/messaging/conversations"), { 
+    credentials: "include", 
+    headers 
+  });
   const text = await resp.text();
 
   if (!resp.ok) {
@@ -36,15 +48,20 @@ const fetcher = async (url: string) => {
 };
 
 export function useConversations() {
-  const key = backendPath("/messaging/conversations");
-  const { data, error, isLoading, mutate } = useSWR(key, fetcher, {
-    revalidateOnFocus: true,
-    revalidateOnReconnect: true,
-    dedupingInterval: 3000,
+  const queryClient = useQueryClient();
+  
+  const { data, error, isLoading, refetch } = useQuery({
+    queryKey: conversationKeys.lists(),
+    queryFn: fetchConversations,
+    staleTime: 30 * 1000, // 30 seconds
+    gcTime: 5 * 60 * 1000, // 5 minutes (formerly cacheTime)
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 
   // Ensure newest conversations appear first, even on initial fetch
   const rawConversations: Conversation[] = data?.data?.conversations ?? [];
+  
   // Normalize conversations to ensure lastMessage.timestamp exists and updated_at is sane
   const normalizeConversation = (c: Conversation): Conversation => {
     const conv: any = { ...(c as any) };
@@ -66,9 +83,11 @@ export function useConversations() {
     if (!conv.updated_at && convTs) conv.updated_at = convTs;
     return conv as Conversation;
   };
+  
   const normalizedConversations: Conversation[] = rawConversations.map(
     normalizeConversation
   );
+  
   const getLastActivity = (c: Conversation): number => {
     const ts =
       (c.lastMessage as any)?.timestamp ||
@@ -84,11 +103,20 @@ export function useConversations() {
     const t = ts ? new Date(ts).getTime() : 0;
     return isNaN(t) ? 0 : t;
   };
+  
   const conversations = [...normalizedConversations].sort(
     (a, b) => getLastActivity(b) - getLastActivity(a)
   );
+
+  // Helper to update conversations cache
+  const updateConversationsCache = useCallback((
+    updater: (prev: { data: { conversations: Conversation[] } } | undefined) => { data: { conversations: Conversation[] } }
+  ) => {
+    queryClient.setQueryData(conversationKeys.lists(), updater);
+  }, [queryClient]);
+
   // Helpers: optimistic add and reconcile for new conversations
-  const optimisticAddConversation = (params: {
+  const optimisticAddConversation = useCallback((params: {
     tempId: string;
     otherParticipant: any;
     content: string;
@@ -97,9 +125,10 @@ export function useConversations() {
     timestamp: string;
   }) => {
     console.debug("[useConversations][optimisticAddConversation]", params);
-    mutate((prev: any) => {
+    updateConversationsCache((prev) => {
       const list: Conversation[] = prev?.data?.conversations || [];
-      if (list.some((c) => c.id === params.tempId)) return prev;
+      if (list.some((c) => c.id === params.tempId)) return prev || { data: { conversations: [] } };
+      
       const conv: any = {
         id: params.tempId,
         otherParticipant: params.otherParticipant,
@@ -119,23 +148,25 @@ export function useConversations() {
           is_read: true,
         },
       };
+      
       const next = [conv, ...list];
       return {
         ...(prev || {}),
         data: { ...(prev?.data || {}), conversations: next },
       };
-    }, false);
-  };
+    });
+  }, [updateConversationsCache]);
 
   const reconcileConversationId = useCallback((tempId: string, realId: string) => {
     console.debug("[useConversations][reconcileConversationId]", {
       tempId,
       realId,
     });
-    mutate((prev: any) => {
+    updateConversationsCache((prev) => {
       const list: Conversation[] = prev?.data?.conversations || [];
       const idx = list.findIndex((c) => c.id === tempId);
-      if (idx === -1) return prev;
+      if (idx === -1) return prev || { data: { conversations: [] } };
+      
       // If a conversation with realId already exists, remove temp; else rename
       const existingIdx = list.findIndex((c) => c.id === realId);
       let next = [...list];
@@ -144,20 +175,22 @@ export function useConversations() {
       } else {
         next[idx] = { ...next[idx], id: realId } as any;
       }
+      
       return {
         ...(prev || {}),
         data: { ...(prev?.data || {}), conversations: next },
       };
-    }, false);
-  }, [mutate]);
+    });
+  }, [updateConversationsCache]);
 
   // Bridge socket events -> in-place cache updates for snappy UI
   const { on, off } = useSocket();
   const { currentUser } = useCurrentUser();
+  
   useEffect(() => {
     const updateOnNewMessage = (m: SocketMessageData) => {
       console.debug("[useConversations][socket] MESSAGE_NEW/RECEIVED", m);
-      mutate((prev: any) => {
+      updateConversationsCache((prev) => {
         const list: Conversation[] = prev?.data?.conversations || [];
         // Normalize possibly nested payloads and timestamps
         const msgLike: any = (m as any)?.message ? (m as any).message : (m as any);
@@ -174,13 +207,16 @@ export function useConversations() {
           msgLike.message?.createdAt ||
           msgLike.message?.sent_at ||
           msgLike.message?.sentAt;
+        
         const idx = list.findIndex((c) => c.id === conversationId);
-        if (idx === -1) return prev; // Unknown conversation; skip
+        if (idx === -1) return prev || { data: { conversations: [] } }; // Unknown conversation; skip
+        
         const next = [...list];
         const [removed] = next.splice(idx, 1);
         const conv = { ...(removed || {}) } as Conversation & {
           lastMessage?: any;
         };
+        
         // Effective timestamp fallback
         const effectiveTs =
           ts ||
@@ -189,6 +225,7 @@ export function useConversations() {
           (conv as any)?.updated_at ||
           (conv as any)?.created_at ||
           new Date().toISOString();
+        
         // Update lastMessage and updated_at
         conv.lastMessage = {
           ...(conv.lastMessage || {}),
@@ -201,18 +238,21 @@ export function useConversations() {
           is_read: false,
         };
         conv.updated_at = effectiveTs || conv.updated_at;
+        
         // Increase unread_count if the message is not from current user
         const fromSelf = currentUser?.id && msgLike?.sender?.id === currentUser.id;
         const currentUnread =
           typeof conv.unread_count === "number" ? conv.unread_count : 0;
         conv.unread_count = fromSelf ? currentUnread : currentUnread + 1;
+        
         // Move to top (most recent first)
         next.unshift(conv);
+        
         return {
           ...(prev || {}),
           data: { ...(prev?.data || {}), conversations: next },
         };
-      }, false);
+      });
     };
 
     const updateOnReadOrOpened = (payload: {
@@ -220,18 +260,21 @@ export function useConversations() {
       messageIds: string[];
     }) => {
       console.debug("[useConversations][socket] READ/OPENED", payload);
-      mutate((prev: any) => {
+      updateConversationsCache((prev) => {
         const list: Conversation[] = prev?.data?.conversations || [];
         const idx = list.findIndex((c) => c.id === payload.conversationId);
-        if (idx === -1) return prev;
+        if (idx === -1) return prev || { data: { conversations: [] } };
+        
         const next = [...list];
         const conv = { ...next[idx] } as Conversation & { lastMessage?: any };
+        
         // Decrease unread_count (min 0)
         const currentUnread =
           typeof conv.unread_count === "number" ? conv.unread_count : 0;
         const dec = Math.min(currentUnread, payload.messageIds.length);
         conv.unread_count = Math.max(0, currentUnread - dec);
-        // If lastMessage included, set read flags if it’s among ids
+        
+        // If lastMessage included, set read flags if it's among ids
         if (
           conv.lastMessage &&
           payload.messageIds.includes(conv.lastMessage.id)
@@ -242,12 +285,14 @@ export function useConversations() {
             is_read: true,
           };
         }
+        
         next[idx] = conv;
+        
         return {
           ...(prev || {}),
           data: { ...(prev?.data || {}), conversations: next },
         };
-      }, false);
+      });
     };
 
     on(SOCKET_EVENTS.MESSAGE_NEW, updateOnNewMessage);
@@ -261,7 +306,7 @@ export function useConversations() {
       off(SOCKET_EVENTS.MESSAGE_READ, updateOnReadOrOpened as any);
       off(SOCKET_EVENTS.MESSAGE_OPENED, updateOnReadOrOpened as any);
     };
-  }, [on, off, mutate, currentUser?.id]);
+  }, [on, off, updateConversationsCache, currentUser?.id]);
 
   // Reconcile temp conversation ids when server confirms real id
   useEffect(() => {
@@ -269,16 +314,38 @@ export function useConversations() {
       console.debug("[useConversations][event] conversation:created", payload);
       reconcileConversationId(payload.tempId, payload.conversationId);
     };
+
+    // Listen via socket (if backend emits it)
     on("conversation:created", handler as any);
-    return () => off("conversation:created", handler as any);
+
+    // Also listen to browser CustomEvent dispatched by temp-message flow
+    const windowListener = (e: Event) => {
+      try {
+        const detail = (e as CustomEvent).detail as { tempId: string; conversationId: string };
+        if (detail && detail.tempId && detail.conversationId) handler(detail);
+      } catch {}
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("conversation:created", windowListener as EventListener);
+    }
+
+    return () => {
+      off("conversation:created", handler as any);
+      if (typeof window !== "undefined") {
+        window.removeEventListener("conversation:created", windowListener as EventListener);
+      }
+    };
   }, [on, off, reconcileConversationId]);
 
   return {
     conversations,
     error,
     isLoading,
-    mutateConversations: mutate,
+    mutateConversations: refetch, // React Query equivalent of SWR's mutate
     optimisticAddConversation,
     reconcileConversationId,
+    // Additional React Query specific methods
+    invalidateConversations: () => queryClient.invalidateQueries({ queryKey: conversationKeys.all }),
+    refetchConversations: refetch,
   } as const;
 }
