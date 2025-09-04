@@ -1,14 +1,14 @@
 "use client";
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
-import { conversationKeys } from './useConversationsRQ';
-import { messageKeys } from './useMessagesRQ';
-import { useSocket } from './useSocket';
-import { FrontendMessage } from '@/shared/socket-events';
-import { useMessagingActions } from '@/stores';
-import { useCurrentUser } from '@/lib/use-current-user';
+import { conversationKeys } from "./useConversationsRQ";
+import { messageKeys } from "./useMessagesRQ";
+import { useSocket } from "./useSocket";
+import { FrontendMessage } from "@/shared/socket-events";
+import { useMessagingActions } from "@/stores";
+import { useCurrentUser } from "@/lib/use-current-user";
 
 // Types for mutation arguments
 interface SendMessageArgs {
@@ -49,7 +49,7 @@ export function useSendMessageMutation() {
           recipientId,
           conversationId,
           content: content.trim(),
-          type: 'text',
+          type: "text",
           tempId,
           senderId: currentUser?.id,
           participant1Id: conversationId ? undefined : currentUser?.id,
@@ -58,7 +58,7 @@ export function useSendMessageMutation() {
           recipient_id: recipientId,
           conversation_id: conversationId,
           message: content.trim(),
-          message_type: 'text',
+          message_type: "text",
           temp_id: tempId,
           sender_id: currentUser?.id,
           participant1_id: conversationId ? undefined : currentUser?.id,
@@ -69,7 +69,7 @@ export function useSendMessageMutation() {
 
         const socketResponse: any = await new Promise((resolve, reject) => {
           const timeout = setTimeout(() => {
-            reject(new Error('Socket timeout'));
+            reject(new Error("Socket timeout"));
           }, 5000);
 
           emit("message:send", socketPayload, (response: any) => {
@@ -82,11 +82,11 @@ export function useSendMessageMutation() {
           return socketResponse;
         }
 
-        const errMsg = socketResponse?.error || 'Socket send failed';
+        const errMsg = socketResponse?.error || "Socket send failed";
         throw new Error(errMsg);
       } catch (socketError) {
         // Socket failed, trying REST (silently fallback)
-        
+
         // Fallback to REST API
         const token = getAuthTokenFromCookie();
         const headers: HeadersInit = { "Content-Type": "application/json" };
@@ -101,7 +101,7 @@ export function useSendMessageMutation() {
             recipientId,
             conversationId,
             content: content.trim(),
-            type: 'text',
+            type: "text",
             tempId,
             senderId: currentUser?.id,
             participant1Id: conversationId ? undefined : currentUser?.id,
@@ -110,7 +110,7 @@ export function useSendMessageMutation() {
             recipient_id: recipientId,
             conversation_id: conversationId,
             message: content.trim(),
-            message_type: 'text',
+            message_type: "text",
             temp_id: tempId,
             sender_id: currentUser?.id,
             participant1_id: conversationId ? undefined : currentUser?.id,
@@ -124,7 +124,7 @@ export function useSendMessageMutation() {
 
         const result = await resp.json();
         if (!result.success) {
-          throw new Error(result.error || 'Send failed');
+          throw new Error(result.error || "Send failed");
         }
 
         return result;
@@ -132,8 +132,9 @@ export function useSendMessageMutation() {
     },
     onMutate: async (args) => {
       const { conversationId, content, tempId } = args;
-      const convKeyId = conversationId != null ? String(conversationId) : undefined;
-      
+      const convKeyId =
+        conversationId != null ? String(conversationId) : undefined;
+
       // Set sending state
       ui.setSendingMessage(true);
 
@@ -145,9 +146,13 @@ export function useSendMessageMutation() {
           content: content.trim(),
           timestamp: new Date().toISOString(),
           sender: currentUser
-            ? { id: currentUser.id, username: currentUser.username || 'you', name: currentUser.name || 'You' }
-            : { id: 'current-user', username: 'you', name: 'You' },
-          senderType: 'user',
+            ? {
+                id: currentUser.id,
+                username: currentUser.username || "you",
+                name: currentUser.name || "You",
+              }
+            : { id: "current-user", username: "you", name: "You" },
+          senderType: "user",
           isRead: true,
           isDelivered: false,
           isOpened: false,
@@ -158,21 +163,30 @@ export function useSendMessageMutation() {
           if (!prev || !prev.pages || prev.pages.length === 0) {
             // Initialize with first page containing the temp message
             return {
-              pages: [{
-                data: {
-                  messages: [{
-                    id: tempId,
-                    conversation_id: convKeyId,
-                    content: content.trim(),
-                    timestamp: optimisticMessage.timestamp,
-                    created_at: optimisticMessage.timestamp,
-                    sender: optimisticMessage.sender,
-                    senderType: optimisticMessage.senderType,
-                    is_read: true,
-                  }],
-                  pagination: { page: 1, limit: 50, total: 1, hasMore: false },
+              pages: [
+                {
+                  data: {
+                    messages: [
+                      {
+                        id: tempId,
+                        conversation_id: convKeyId,
+                        content: content.trim(),
+                        timestamp: optimisticMessage.timestamp,
+                        created_at: optimisticMessage.timestamp,
+                        sender: optimisticMessage.sender,
+                        senderType: optimisticMessage.senderType,
+                        is_read: true,
+                      },
+                    ],
+                    pagination: {
+                      page: 1,
+                      limit: 50,
+                      total: 1,
+                      hasMore: false,
+                    },
+                  },
                 },
-              }],
+              ],
               pageParams: [1],
             };
           }
@@ -183,12 +197,14 @@ export function useSendMessageMutation() {
           };
           const lastIdx = copy.pages.length - 1;
           const last = { ...copy.pages[lastIdx] };
-          const list = Array.isArray(last?.data?.messages) ? [...last.data.messages] : [];
+          const list = Array.isArray(last?.data?.messages)
+            ? [...last.data.messages]
+            : [];
           // Guard: avoid duplicating the same temp message
           if (list.some((m: any) => m.id === tempId)) {
             return prev;
           }
-          
+
           list.push({
             id: tempId,
             conversation_id: convKeyId,
@@ -199,7 +215,7 @@ export function useSendMessageMutation() {
             senderType: optimisticMessage.senderType,
             is_read: true,
           });
-          
+
           last.data = { ...(last.data || {}), messages: list };
           copy.pages[lastIdx] = last;
           return copy;
@@ -208,10 +224,12 @@ export function useSendMessageMutation() {
         // Update conversations list optimistically
         queryClient.setQueryData(conversationKeys.lists(), (prev: any) => {
           if (!prev?.data?.conversations) return prev;
-          
+
           const conversations = [...prev.data.conversations];
-          const idx = conversations.findIndex((c: any) => String(c.id) === convKeyId);
-          
+          const idx = conversations.findIndex(
+            (c: any) => String(c.id) === convKeyId
+          );
+
           if (idx !== -1) {
             const conv = { ...conversations[idx] };
             conv.lastMessage = {
@@ -224,12 +242,12 @@ export function useSendMessageMutation() {
               is_read: true,
             };
             conv.updated_at = optimisticMessage.timestamp;
-            
+
             // Move to top
             conversations.splice(idx, 1);
             conversations.unshift(conv);
           }
-          
+
           return {
             ...prev,
             data: { ...prev.data, conversations },
@@ -241,16 +259,20 @@ export function useSendMessageMutation() {
     },
     onSuccess: (data, args, context) => {
       const { conversationId, tempId, content } = args as any;
-      const convKeyId = conversationId != null ? String(conversationId) : undefined;
-      
+      const convKeyId =
+        conversationId != null ? String(conversationId) : undefined;
+
       // Clear sending state
       ui.setSendingMessage(false);
-      
+
       // Clear message input
       ui.clearMessageInput();
 
       // If we got a new conversation ID, update active conversation
-      if (data.data?.conversationId && data.data.conversationId !== conversationId) {
+      if (
+        data.data?.conversationId &&
+        data.data.conversationId !== conversationId
+      ) {
         ui.setActiveConversation(data.data.conversationId);
 
         // Seed the new conversation's message cache so the chat window shows the just-sent message immediately
@@ -258,8 +280,12 @@ export function useSendMessageMutation() {
         const nowIso = new Date().toISOString();
         queryClient.setQueryData(messageKeys.list(newConvId), (prev: any) => {
           const optimisticSender = currentUser
-            ? { id: currentUser.id, username: currentUser.username || 'you', name: currentUser.name || 'You' }
-            : { id: 'current-user', username: 'you', name: 'You' };
+            ? {
+                id: currentUser.id,
+                username: currentUser.username || "you",
+                name: currentUser.name || "You",
+              }
+            : { id: "current-user", username: "you", name: "You" };
 
           const newMsg = {
             id: tempId || `temp-msg-${Date.now()}`,
@@ -268,7 +294,7 @@ export function useSendMessageMutation() {
             timestamp: nowIso,
             created_at: nowIso,
             sender: optimisticSender,
-            senderType: 'user',
+            senderType: "user",
             is_read: true,
           };
 
@@ -278,7 +304,12 @@ export function useSendMessageMutation() {
                 {
                   data: {
                     messages: [newMsg],
-                    pagination: { page: 1, limit: 50, total: 1, hasMore: false },
+                    pagination: {
+                      page: 1,
+                      limit: 50,
+                      total: 1,
+                      hasMore: false,
+                    },
                   },
                 },
               ],
@@ -286,10 +317,15 @@ export function useSendMessageMutation() {
             };
           }
 
-          const copy = { ...prev, pages: prev.pages.map((p: any) => ({ ...p })) };
+          const copy = {
+            ...prev,
+            pages: prev.pages.map((p: any) => ({ ...p })),
+          };
           const lastIdx = copy.pages.length - 1;
           const last = { ...copy.pages[lastIdx] };
-          const list = Array.isArray(last?.data?.messages) ? [...last.data.messages] : [];
+          const list = Array.isArray(last?.data?.messages)
+            ? [...last.data.messages]
+            : [];
           if (!list.some((m: any) => m.id === newMsg.id)) {
             list.push(newMsg);
             last.data = { ...(last.data || {}), messages: list };
@@ -301,39 +337,45 @@ export function useSendMessageMutation() {
 
       // Invalidate and refetch to get the real message data
       if (convKeyId) {
-        queryClient.invalidateQueries({ queryKey: messageKeys.list(convKeyId) });
+        queryClient.invalidateQueries({
+          queryKey: messageKeys.list(convKeyId),
+        });
       }
       if (data.data?.conversationId) {
-        queryClient.invalidateQueries({ queryKey: messageKeys.list(String(data.data.conversationId)) });
+        queryClient.invalidateQueries({
+          queryKey: messageKeys.list(String(data.data.conversationId)),
+        });
       }
       queryClient.invalidateQueries({ queryKey: conversationKeys.all });
     },
     onError: (error, args, context) => {
-      
       // Clear sending state
       ui.setSendingMessage(false);
-      
+
       // Revert optimistic updates
       const { conversationId, tempId } = args;
-      const convKeyId = conversationId != null ? String(conversationId) : undefined;
+      const convKeyId =
+        conversationId != null ? String(conversationId) : undefined;
       if (convKeyId && tempId) {
         // Remove optimistic message
         queryClient.setQueryData(messageKeys.list(convKeyId), (prev: any) => {
           if (!prev?.pages) return prev;
-          
+
           const copy = {
             ...prev,
             pages: prev.pages.map((p: any) => ({
               ...p,
               data: {
                 ...p.data,
-                messages: (p.data?.messages || []).filter((m: any) => m.id !== tempId),
+                messages: (p.data?.messages || []).filter(
+                  (m: any) => m.id !== tempId
+                ),
               },
             })),
           };
           return copy;
         });
-        
+
         // Revert conversation list changes
         queryClient.invalidateQueries({ queryKey: conversationKeys.all });
       }
@@ -348,23 +390,26 @@ export function useMarkAsReadMutation(conversationId?: string) {
 
   return useMutation({
     mutationFn: async (args: ReadArgs) => {
-      if (!conversationId) throw new Error('Conversation ID required');
-      
+      if (!conversationId) throw new Error("Conversation ID required");
+
       const { messageIds } = args;
       if (!Array.isArray(messageIds) || messageIds.length === 0) {
-        throw new Error('Message IDs required');
+        throw new Error("Message IDs required");
       }
 
       const token = getAuthTokenFromCookie();
       const headers: HeadersInit = { "Content-Type": "application/json" };
       if (token) headers.Authorization = `Bearer ${token}`;
 
-      const resp = await fetch(backendPath(`/messaging/conversations/${conversationId}/read`), {
-        method: "PUT",
-        headers,
-        credentials: "include",
-        body: JSON.stringify({ messageIds }),
-      });
+      const resp = await fetch(
+        backendPath(`/messaging/conversations/${conversationId}/read`),
+        {
+          method: "PUT",
+          headers,
+          credentials: "include",
+          body: JSON.stringify({ messageIds }),
+        }
+      );
 
       const rawText = await resp.text();
       if (!resp.ok) {
@@ -379,46 +424,53 @@ export function useMarkAsReadMutation(conversationId?: string) {
     },
     onMutate: async (args) => {
       if (!conversationId) return;
-      
+
       const { messageIds } = args;
-      
+
       // Optimistically mark messages as read in cache
-      queryClient.setQueryData(messageKeys.list(conversationId), (prev: any) => {
-        if (!prev?.pages) return prev;
-        
-        const copy = {
-          ...prev,
-          pages: prev.pages.map((p: any) => ({
-            ...p,
-            data: {
-              ...p.data,
-              messages: (p.data?.messages || []).map((msg: any) =>
-                messageIds.includes(msg.id)
-                  ? { ...msg, is_read: true, isRead: true }
-                  : msg
-              ),
-            },
-          })),
-        };
-        return copy;
-      });
+      queryClient.setQueryData(
+        messageKeys.list(conversationId),
+        (prev: any) => {
+          if (!prev?.pages) return prev;
+
+          const copy = {
+            ...prev,
+            pages: prev.pages.map((p: any) => ({
+              ...p,
+              data: {
+                ...p.data,
+                messages: (p.data?.messages || []).map((msg: any) =>
+                  messageIds.includes(msg.id)
+                    ? { ...msg, is_read: true, isRead: true }
+                    : msg
+                ),
+              },
+            })),
+          };
+          return copy;
+        }
+      );
 
       // Update conversation unread count
       queryClient.setQueryData(conversationKeys.lists(), (prev: any) => {
         if (!prev?.data?.conversations) return prev;
-        
+
         const conversations = prev.data.conversations.map((c: any) =>
           c.id === conversationId
             ? {
                 ...c,
-                unread_count: Math.max(0, (c.unread_count || 0) - messageIds.length),
-                lastMessage: c.lastMessage && messageIds.includes(c.lastMessage.id)
-                  ? { ...c.lastMessage, isRead: true, is_read: true }
-                  : c.lastMessage,
+                unread_count: Math.max(
+                  0,
+                  (c.unread_count || 0) - messageIds.length
+                ),
+                lastMessage:
+                  c.lastMessage && messageIds.includes(c.lastMessage.id)
+                    ? { ...c.lastMessage, isRead: true, is_read: true }
+                    : c.lastMessage,
               }
             : c
         );
-        
+
         return {
           ...prev,
           data: { ...prev.data, conversations },
@@ -426,13 +478,17 @@ export function useMarkAsReadMutation(conversationId?: string) {
       });
 
       // Update Zustand unread store
-      unread.markConversationAsRead(conversationId, messageIds[messageIds.length - 1]);
+      unread.markConversationAsRead(
+        conversationId,
+        messageIds[messageIds.length - 1]
+      );
     },
     onError: (error, args) => {
-      
       // Invalidate to revert optimistic updates
       if (conversationId) {
-        queryClient.invalidateQueries({ queryKey: messageKeys.list(conversationId) });
+        queryClient.invalidateQueries({
+          queryKey: messageKeys.list(conversationId),
+        });
         queryClient.invalidateQueries({ queryKey: conversationKeys.all });
       }
     },
@@ -442,80 +498,98 @@ export function useMarkAsReadMutation(conversationId?: string) {
 // Mark messages as opened mutation
 export function useMarkAsOpenedMutation(conversationId?: string) {
   const queryClient = useQueryClient();
+  const { unread } = useMessagingActions();
 
   return useMutation({
     mutationFn: async (args: ReadArgs) => {
-      if (!conversationId) throw new Error('Conversation ID required');
-      
+      if (!conversationId) throw new Error("Conversation ID required");
+
       const { messageIds } = args;
       if (!Array.isArray(messageIds) || messageIds.length === 0) {
-        throw new Error('Message IDs required');
+        throw new Error("Message IDs required");
       }
 
       const token = getAuthTokenFromCookie();
       const headers: HeadersInit = { "Content-Type": "application/json" };
       if (token) headers.Authorization = `Bearer ${token}`;
 
-      const resp = await fetch(backendPath(`/messaging/conversations/${conversationId}/opened`), {
-        method: "PUT",
-        headers,
-        credentials: "include",
-        body: JSON.stringify({ messageIds }),
-      });
+      const resp = await fetch(
+        backendPath(`/messaging/conversations/${conversationId}/opened`),
+        {
+          method: "PUT",
+          headers,
+          credentials: "include",
+          body: JSON.stringify({ messageIds }),
+        }
+      );
 
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       return await resp.json().catch(() => ({}));
     },
     onMutate: async (args) => {
       if (!conversationId) return;
-      
-      const { messageIds } = args;
-      
-      // Optimistically mark messages as opened in cache
-      queryClient.setQueryData(messageKeys.list(conversationId), (prev: any) => {
-        if (!prev?.pages) return prev;
-        
-        const copy = {
-          ...prev,
-          pages: prev.pages.map((p: any) => ({
-            ...p,
-            data: {
-              ...p.data,
-              messages: (p.data?.messages || []).map((msg: any) =>
-                messageIds.includes(msg.id)
-                  ? { ...msg, isOpened: true }
-                  : msg
-              ),
-            },
-          })),
-        };
-        return copy;
-      });
 
-      // Update conversation last message if it's in the opened list
+      const { messageIds } = args;
+
+      // Optimistically mark messages as opened in cache
+      queryClient.setQueryData(
+        messageKeys.list(conversationId),
+        (prev: any) => {
+          if (!prev?.pages) return prev;
+
+          const copy = {
+            ...prev,
+            pages: prev.pages.map((p: any) => ({
+              ...p,
+              data: {
+                ...p.data,
+                messages: (p.data?.messages || []).map((msg: any) =>
+                  messageIds.includes(msg.id) ? { ...msg, isOpened: true } : msg
+                ),
+              },
+            })),
+          };
+          return copy;
+        }
+      );
+
+      // Update conversation unread count and last message flags
       queryClient.setQueryData(conversationKeys.lists(), (prev: any) => {
         if (!prev?.data?.conversations) return prev;
-        
-        const conversations = prev.data.conversations.map((c: any) =>
-          c.id === conversationId && c.lastMessage && messageIds.includes(c.lastMessage.id)
-            ? {
-                ...c,
-                lastMessage: { ...c.lastMessage, isOpened: true },
-              }
-            : c
-        );
-        
+
+        const conversations = prev.data.conversations.map((c: any) => {
+          if (c.id !== conversationId) return c;
+          const dec = messageIds.length || 0;
+          const nextUnread = Math.max(0, (c.unread_count || 0) - dec);
+          const updateLast =
+            c.lastMessage && messageIds.includes(c.lastMessage.id)
+              ? { lastMessage: { ...c.lastMessage, isOpened: true } }
+              : {};
+          return {
+            ...c,
+            unread_count: nextUnread,
+            ...updateLast,
+          };
+        });
+
         return {
           ...prev,
           data: { ...prev.data, conversations },
         };
       });
+
+      // Update Zustand unread store to keep totals in sync immediately
+      unread.markConversationAsRead(
+        conversationId,
+        messageIds[messageIds.length - 1]
+      );
     },
     onError: (error, args) => {
-      
       // Invalidate to revert optimistic updates
       if (conversationId) {
-        queryClient.invalidateQueries({ queryKey: messageKeys.list(conversationId) });
+        queryClient.invalidateQueries({
+          queryKey: messageKeys.list(conversationId),
+        });
         queryClient.invalidateQueries({ queryKey: conversationKeys.all });
       }
     },

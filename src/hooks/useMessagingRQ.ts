@@ -61,8 +61,8 @@ export function useMessagingRQ() {
     (s) => s.setCurrentUserTyping
   );
 
-  const bulkUpdateUnreadCounts = useUnreadBadgesStore(
-    (s) => s.bulkUpdateUnreadCounts
+  const replaceAllUnreadCounts = useUnreadBadgesStore(
+    (s) => s.replaceAllUnreadCounts
   );
 
   const addNotification = useNotificationStore((s) => s.addNotification);
@@ -122,9 +122,30 @@ export function useMessagingRQ() {
     }
 
     const updates: Record<string, any> = {};
+    const unreadState = useUnreadBadgesStore.getState();
+    const activeId = useMessagingUIStore.getState().activeConversationId || "";
     conversations.forEach((conv) => {
+      const serverCount = conv.unread_count || 0;
+      const storeInfo = unreadState.unreadCounts[conv.id];
+      const currentStoreCount = storeInfo?.count || 0;
+      const lastReadId = storeInfo?.lastReadMessageId || null;
+      const lastMsgId = conv.lastMessage?.id || null;
+
+      // If we've recorded that the last read message matches the conversation's last message,
+      // we can confidently say unread is 0 even if the server is stale.
+      const readCoversLastMessage =
+        lastReadId && lastMsgId && lastReadId === lastMsgId;
+
+      let effectiveCount = serverCount;
+      if (readCoversLastMessage) {
+        effectiveCount = 0;
+      } else if (conv.id === activeId) {
+        // Preserve locally-cleared unread for the active conversation to avoid badge bouncing
+        effectiveCount = Math.min(currentStoreCount, serverCount);
+      }
+
       updates[conv.id] = {
-        count: conv.unread_count || 0,
+        count: effectiveCount,
         lastMessageId: conv.lastMessage?.id,
         lastMessageTimestamp: conv.lastMessage?.timestamp,
       };
@@ -132,11 +153,14 @@ export function useMessagingRQ() {
 
     // Always sync (including zeros) when key changed so cleared counts propagate
     lastUnreadSyncKeyRef.current = key;
-    bulkUpdateUnreadCounts(updates);
-  }, [conversations, bulkUpdateUnreadCounts]);
+    replaceAllUnreadCounts(updates);
+  }, [conversations, replaceAllUnreadCounts]);
 
   // Remember last submitted message IDs for mark-as-read to avoid duplicate requests
-  const lastSubmittedReadRef = useRef<{ conversationId: string; idsKey: string } | null>(null);
+  const lastSubmittedReadRef = useRef<{
+    conversationId: string;
+    idsKey: string;
+  } | null>(null);
   const lastMarkAtRef = useRef<number>(0);
 
   // Compute unread IDs and a stable key to avoid effect churn on array identity changes
@@ -159,12 +183,12 @@ export function useMessagingRQ() {
     if (!activeConversationId || !idsKey || unreadIds.length === 0) return;
     if (markAsReadMutation.isPending) return;
 
-    // Only when tab visible and window focused
+    // Only when tab visible; require window focus only if the API exists
     if (typeof document !== "undefined") {
       if (document.visibilityState !== "visible") return;
-    }
-    if (typeof window !== "undefined") {
-      if (typeof document !== "undefined" && !document.hasFocus?.()) return;
+      if (typeof (document as any).hasFocus === "function") {
+        if (!(document as any).hasFocus()) return;
+      }
     }
 
     // Avoid re-submitting the same batch and add a short cooldown
@@ -183,7 +207,10 @@ export function useMessagingRQ() {
     }
 
     const timer = setTimeout(() => {
-      lastSubmittedReadRef.current = { conversationId: activeConversationId, idsKey };
+      lastSubmittedReadRef.current = {
+        conversationId: activeConversationId,
+        idsKey,
+      };
       lastMarkAtRef.current = Date.now();
       markAsReadMutation.mutate({ messageIds: unreadIds });
     }, 500);
@@ -220,7 +247,11 @@ export function useMessagingRQ() {
   );
 
   const sendMessage = useCallback(
-    async (content: string, recipientId?: string, conversationIdOverride?: string) => {
+    async (
+      content: string,
+      recipientId?: string,
+      conversationIdOverride?: string
+    ) => {
       if (!content.trim()) return;
 
       const tempId = `temp-msg-${Date.now()}-${Math.random()
@@ -230,7 +261,9 @@ export function useMessagingRQ() {
       // IMPORTANT: Read the latest activeConversationId at call time to avoid stale closures
       // Allow explicit override to avoid UI store timing races (e.g., just selected a temp conversation)
       const latestActiveId =
-        conversationIdOverride || useMessagingUIStore.getState().activeConversationId || "";
+        conversationIdOverride ||
+        useMessagingUIStore.getState().activeConversationId ||
+        "";
 
       // If we're in a temporary conversation (not fetchable), inject optimistic message into local store
       const convId = latestActiveId || "";
@@ -240,11 +273,12 @@ export function useMessagingRQ() {
         convId.startsWith("temp-conv-");
 
       if (isTempConv && !recipientId) {
-        const err = new Error('Recipient required to start a new conversation');
+        const err = new Error("Recipient required to start a new conversation");
         addNotification({
-          type: 'error',
-          title: 'Cannot send message',
-          message: 'Please select a recipient before sending the first message.',
+          type: "error",
+          title: "Cannot send message",
+          message:
+            "Please select a recipient before sending the first message.",
         });
         throw err;
       }
@@ -256,7 +290,13 @@ export function useMessagingRQ() {
           conversationId: convId,
           content: content.trim(),
           timestamp: nowIso,
-          sender: currentUser ? { id: currentUser.id, username: currentUser.username || "you", name: currentUser.name || "You" } : { id: "current-user", username: "you", name: "You" },
+          sender: currentUser
+            ? {
+                id: currentUser.id,
+                username: currentUser.username || "you",
+                name: currentUser.name || "You",
+              }
+            : { id: "current-user", username: "you", name: "You" },
           senderType: "user",
           isRead: true,
           isDelivered: false,
@@ -286,7 +326,12 @@ export function useMessagingRQ() {
         });
       }
     },
-    [activeConversationId, sendMessageMutation, addNotification, optimisticInsert]
+    [
+      activeConversationId,
+      sendMessageMutation,
+      addNotification,
+      optimisticInsert,
+    ]
   );
 
   const markMessagesAsRead = useCallback(

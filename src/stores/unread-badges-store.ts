@@ -60,8 +60,13 @@ export interface UnreadBadgesActions {
   // Clear mention flag for a conversation
   clearMentionFlag: (conversationId: string) => void;
 
-  // Bulk update unread counts (useful for initial load)
+  // Bulk update unread counts (merges into existing map)
   bulkUpdateUnreadCounts: (
+    updates: Record<string, Partial<UnreadInfo>>
+  ) => void;
+
+  // Replace all unread counts (source of truth from server)
+  replaceAllUnreadCounts: (
     updates: Record<string, Partial<UnreadInfo>>
   ) => void;
 
@@ -314,6 +319,32 @@ export const useUnreadBadgesStore = create<
           );
         },
 
+        replaceAllUnreadCounts: (updates) => {
+          set(
+            () => {
+              const nextUnreadCounts: Record<string, UnreadInfo> = {};
+              Object.entries(updates).forEach(
+                ([conversationId, updateInfo]) => {
+                  nextUnreadCounts[conversationId] = {
+                    ...defaultUnreadInfo,
+                    ...updateInfo,
+                    count: Math.max(0, Number(updateInfo.count) || 0),
+                  } as UnreadInfo;
+                }
+              );
+
+              return {
+                unreadCounts: nextUnreadCounts,
+                totalUnreadCount: calculateTotalUnread(nextUnreadCounts),
+                conversationsWithUnread:
+                  getConversationsWithUnread(nextUnreadCounts),
+              };
+            },
+            false,
+            "replaceAllUnreadCounts"
+          );
+        },
+
         removeConversation: (conversationId) => {
           set(
             (state) => {
@@ -421,15 +452,12 @@ export const useTotalUnreadCount = () =>
 export const useHasUnreadMessages = (conversationId: string) =>
   useUnreadBadgesStore((state) => state.hasUnreadMessages(conversationId));
 
-export const useConversationsWithUnread = () =>
-  {
-    const setRef = useUnreadBadgesStore(
-      (state) => state.conversationsWithUnread
-    );
-    // Memoize the derived array so getServerSnapshot returns a stable value
-    // across multiple reads within the same render.
-    return useMemo(() => Array.from(setRef), [setRef]);
-  };
+export const useConversationsWithUnread = () => {
+  const setRef = useUnreadBadgesStore((state) => state.conversationsWithUnread);
+  // Memoize the derived array so getServerSnapshot returns a stable value
+  // across multiple reads within the same render.
+  return useMemo(() => Array.from(setRef), [setRef]);
+};
 
 export const useUnreadActions = () => {
   const setUnreadCount = useUnreadBadgesStore((state) => state.setUnreadCount);
