@@ -92,7 +92,7 @@ export function NewMessageDialog({
         currentUser?.role === "super_admin" || currentUser?.role === "co_admin";
       const endpoint = isAdminUser ? "/users" : "/users/admins";
 
-      console.log("Loading users from endpoint:", endpoint);
+      // Debug logging removed
 
       const response = await fetch(apiPath(endpoint), {
         credentials: "include",
@@ -101,29 +101,25 @@ export function NewMessageDialog({
         },
       });
 
-      console.log("Response status:", response.status, response.statusText);
+      // Debug logging removed
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("Response error:", errorText);
         throw new Error(
           `Failed to load users: ${response.status} ${response.statusText}`
         );
       }
 
       const data = await response.json();
-      console.log("Response data:", data);
 
       if (data.success) {
         // Handle different response structures
         const usersList = data.data || [];
-        console.log("Users loaded:", usersList.length);
         setUsers(usersList);
       } else {
         throw new Error(data.message || data.error || "Failed to load users");
       }
     } catch (error) {
-      console.error("Error loading users:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Failed to load users";
       toast.error(errorMessage);
@@ -258,7 +254,6 @@ export function NewMessageDialog({
 
       // Note: real id reconciliation is handled on socket ACK and in useConversations listener
     } catch (error) {
-      console.error("Error sending message:", error);
       toast.error("Failed to send message");
     } finally {
       setIsSending(false);

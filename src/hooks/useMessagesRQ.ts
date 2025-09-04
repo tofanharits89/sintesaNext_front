@@ -49,8 +49,6 @@ const fetchMessages = async (context: {
   try {
     return JSON.parse(text);
   } catch (e) {
-    console.error("[useMessages] JSON parse error", e);
-    console.error("[useMessages] Response text", text);
     throw new Error("Invalid JSON");
   }
 };
@@ -374,27 +372,17 @@ export function useMessages(conversationId?: string) {
   const optimisticInsert = (temp: FrontendMessage) => {
     if (!isFetchable) {
       // Insert into shared store and trigger re-render
-      console.log("[useMessages:optimisticInsert:local]", {
-        tempConversationId: temp.conversationId,
-        hookConversationId: conversationId,
-        id: temp.id,
-      });
       const targetConvId = temp.conversationId || conversationId;
       if (targetConvId) {
         pushTempMessage(targetConvId, { ...temp });
       } else {
-        console.warn("[useMessages:optimisticInsert:local] missing conversationId", {
-          temp,
-        });
+        // Missing conversationId; skip insert
       }
       bump();
       return Promise.resolve();
     }
 
-    console.log("[useMessages:optimisticInsert:rq]", {
-      conversationId: temp.conversationId,
-      id: temp.id,
-    });
+    // Insert into React Query cache
     updateMessagesCache((prev: any) => {
       const newMsg = {
         id: temp.id,

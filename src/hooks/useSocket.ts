@@ -100,25 +100,16 @@ export const useSocket = (): UseSocketReturn => {
   // Handle authentication state changes
   useEffect(() => {
     const handleAuthLogin = () => {
-      console.log(
-        "[useSocket] Authentication login detected, reconnecting socket"
-      );
 
       // Check if user is actually authenticated before attempting connection
       if (!isAuthenticated()) {
-        console.log("[useSocket] User not authenticated, skipping connection");
         return;
       }
 
       // Increased delay to ensure cookies are properly set
       setTimeout(() => {
         if (mountedRef.current && isAuthenticated()) {
-          console.log("[useSocket] Attempting socket connection after login");
           socketClient.connect().catch((error) => {
-            console.error(
-              "[useSocket] Failed to reconnect after login:",
-              error
-            );
             if (mountedRef.current) {
               setError(
                 "Failed to reconnect after login. Please refresh the page."
@@ -130,9 +121,6 @@ export const useSocket = (): UseSocketReturn => {
     };
 
     const handleAuthLogout = () => {
-      console.log(
-        "[useSocket] Authentication logout detected, disconnecting socket"
-      );
       socketClient.disconnect();
       safeSetState(() => {
         setError("User logged out");
@@ -140,7 +128,6 @@ export const useSocket = (): UseSocketReturn => {
     };
 
     const handleSocketAuthRequired = () => {
-      console.log("[useSocket] Socket authentication required");
       safeSetState(() => {
         setError(
           "Authentication required. Please refresh the page and log in again."
@@ -206,14 +193,11 @@ export const useSocket = (): UseSocketReturn => {
   // Public API methods
   const reconnect = useCallback(() => {
     if (!mountedRef.current) return;
-
-    console.log("[useSocket] Manual reconnection requested");
     safeSetState(() => {
       setError(null);
     });
 
     socketClient.connect().catch((error) => {
-      console.error("[useSocket] Manual reconnection failed:", error);
       if (mountedRef.current) {
         setError("Reconnection failed");
       }

@@ -77,21 +77,12 @@ export const MessagingRQMigration = {
 export const MessagingRQDevTools = {
   // Clear all caches
   clearAllCaches: () => {
-    if (typeof window !== 'undefined') {
-      // This would need to be called from within a component with access to queryClient
-      console.warn('clearAllCaches should be called from within a component with queryClient access');
-    }
+    // No-op in production; call from a component with access to queryClient if needed
   },
   
   // Debug current state
   debugState: () => {
-    if (typeof window !== 'undefined') {
-      console.group('Messaging RQ Debug State');
-      console.log('React Query Cache:', 'Use React Query DevTools');
-      console.log('Zustand Stores:', 'Use Zustand DevTools');
-      console.log('WebSocket Status:', 'Check useSocket hook');
-      console.groupEnd();
-    }
+    // No-op to avoid console noise; use appropriate DevTools instead
   },
   
   // Performance tips

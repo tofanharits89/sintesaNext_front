@@ -46,6 +46,12 @@ export default function MessagesPage() {
     if (current !== conversationId) {
       const params = new URLSearchParams(searchParams.toString());
       params.set("conversation", conversationId);
+      // User explicitly selected a conversation; allow URL sync again
+      skipUrlSyncRef.current = false;
+      // Mark this as a user-initiated URL change to avoid state->URL reverting
+      lastUrlUpdateByStateRef.current = conversationId;
+      // Suppress state->URL effect until state catches up to selection
+      pendingSelectionRef.current = conversationId;
       router.push(`${pathname}?${params.toString()}`);
     }
   };
@@ -60,9 +66,36 @@ export default function MessagesPage() {
   // Ref to mark when URL was last updated by state, so URL->state effect can skip one cycle
   const lastUrlUpdateByStateRef = useRef<string | null>(null);
 
+  // Ref to temporarily skip syncing state -> URL after a reload-triggered redirect
+  // Initialize with reload+query to suppress first-render URL sync and chat window
+  const skipUrlSyncRef = useRef<boolean>(!!urlConversationId);
+
+  // Ref to suppress state->URL effect right after a user initiates a selection
+  // This prevents the race where activeConversationId (still old) forces the URL back
+  const pendingSelectionRef = useRef<string | null>(null);
+
+  // On initial mount: if a conversation query exists, strip it and land on main messages page
+  useEffect(() => {
+    if (urlConversationId) {
+      // Avoid re-adding the query param via the sync effect
+      skipUrlSyncRef.current = true;
+      router.replace(pathname);
+    }
+    // We intentionally run this only once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // URL -> state: select conversation from URL unless this URL was just set by our own state sync
   useEffect(() => {
     if (!urlConversationId) return;
+    // If a user just selected a conversation and we're waiting for the URL to update,
+    // do not let the old URL value revert the active state back to the previous conversation.
+    if (
+      pendingSelectionRef.current &&
+      urlConversationId !== pendingSelectionRef.current
+    ) {
+      return;
+    }
     if (lastUrlUpdateByStateRef.current === urlConversationId) {
       // Skip once and clear the marker
       lastUrlUpdateByStateRef.current = null;
@@ -86,12 +119,29 @@ export default function MessagesPage() {
   // Keep URL in sync when activeConversationId changes programmatically
   useEffect(() => {
     if (!activeConversationId) return;
+    if (skipUrlSyncRef.current) return; // skip immediately after reload redirect
+    // If user just pushed a URL for a new selection, wait until state catches up
+    if (
+      pendingSelectionRef.current &&
+      urlConversationId === pendingSelectionRef.current &&
+      activeConversationId !== pendingSelectionRef.current
+    ) {
+      return;
+    }
+
     if (urlConversationId !== activeConversationId) {
       const params = new URLSearchParams(searchParams.toString());
       params.set("conversation", activeConversationId);
       // Mark that this URL change is initiated by state
       lastUrlUpdateByStateRef.current = activeConversationId;
       router.replace(`${pathname}?${params.toString()}`);
+    }
+    // Clear pending selection once state matches it
+    if (
+      pendingSelectionRef.current &&
+      activeConversationId === pendingSelectionRef.current
+    ) {
+      pendingSelectionRef.current = null;
     }
   }, [activeConversationId, urlConversationId, router, pathname]);
 
@@ -170,7 +220,7 @@ export default function MessagesPage() {
 
         {/* Chat Window */}
         <div className="lg:col-span-2">
-          {activeConversationId ? (
+          {activeConversationId && !skipUrlSyncRef.current ? (
             <ChatWindow conversationId={activeConversationId} />
           ) : (
             <Card className="h-[600px] max-h-[70vh] flex items-center justify-center">

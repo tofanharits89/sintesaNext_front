@@ -43,8 +43,6 @@ export function useMessagingSocketRQ() {
 
   // Handle new/received messages
   const handleNewMessage = useCallback((messageData: SocketMessageData) => {
-    console.debug('[useMessagingSocketRQ] New message:', messageData);
-    
     const conversationId = messageData.conversationId;
     if (!conversationId) return;
 
@@ -166,8 +164,6 @@ export function useMessagingSocketRQ() {
 
   // Handle message read events
   const handleMessageRead = useCallback((data: { conversationId: string; messageIds: string[] }) => {
-    console.debug('[useMessagingSocketRQ] Messages read:', data);
-    
     const { conversationId, messageIds } = data;
     
     // Update React Query cache for messages
@@ -222,8 +218,6 @@ export function useMessagingSocketRQ() {
     conversationId: string; 
     user: { id: string; username: string; name: string } 
   }) => {
-    console.debug('[useMessagingSocketRQ] Typing start:', data);
-    
     typingActions.addTypingUser(data.conversationId, {
       userId: data.user.id,
       username: data.user.username,
@@ -236,8 +230,6 @@ export function useMessagingSocketRQ() {
     conversationId: string; 
     userId: string 
   }) => {
-    console.debug('[useMessagingSocketRQ] Typing stop:', data);
-    
     typingActions.removeTypingUser(data.conversationId, data.userId);
   }, [typingActions]);
 
@@ -248,8 +240,6 @@ export function useMessagingSocketRQ() {
     otherParticipant?: { id: string; username?: string; name?: string; role?: string };
     participants?: Array<{ id: string; username?: string; name?: string; role?: string }>;
   }) => {
-    console.debug('[useMessagingSocketRQ] Conversation created:', data);
-
     // If the currently active conversation is the temporary one, switch to the real ID
     if (activeConversationId && activeConversationId === data.tempId) {
       ui.setActiveConversation(data.conversationId);
@@ -309,7 +299,6 @@ export function useMessagingSocketRQ() {
 
   // Set up WebSocket event listeners
   useEffect(() => {
-    console.debug('[useMessagingSocketRQ] mount/useEffect', { isConnected });
     if (!isConnected) return;
 
     // Message events

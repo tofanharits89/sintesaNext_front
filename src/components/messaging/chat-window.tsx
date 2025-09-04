@@ -101,17 +101,9 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
 
   // Messages are now handled by the useMessagingRQ hook above
   // No need for separate useMessagesData hook
-  // Debug mount
+  // Mount/unmount side-effects removed (no-op)
   useEffect(() => {
-    console.log("[ChatWindow] mount", {
-      conversationId: effectiveConversationId,
-      fromPropConversation: !!conversation,
-    });
-    return () => {
-      console.log("[ChatWindow] unmount", {
-        conversationId: effectiveConversationId,
-      });
-    };
+    return () => {};
   }, [effectiveConversationId]);
 
   // After sending, keep the viewport pinned to bottom for a short period
@@ -172,14 +164,8 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    console.log("[ChatWindow] messages changed", {
-      conversationId: effectiveConversationId,
-      length: messages.length,
-      last: messages[messages.length - 1],
-    });
     // If we're within the grace period, force pin to bottom
     if (Date.now() < pinUntilRef.current) {
-      console.log("[Messaging][UI] pinToBottom:grace");
       scrollToBottom(false);
       return;
     }
@@ -328,15 +314,8 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
           effectiveConversationId?.startsWith("temp_conv-") ||
           effectiveConversationId?.startsWith("temp-conv-");
         const recipientId = isTempConv ? otherParticipant?.id : undefined;
-        console.log("[ChatWindow:send]", {
-          conversationId: effectiveConversationId,
-          isTempConv,
-          recipientId,
-          content,
-        });
         await sendMessageRQ(content, recipientId);
       } catch (error) {
-        console.error("[ChatWindow:send] Error sending message:", error);
         // The new system handles error rollback automatically
       }
     }
@@ -348,9 +327,7 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
         await sendMessageRQ(
           `📎 Attached files: ${fileNames} (File upload feature coming soon)`
         );
-      } catch (error) {
-        console.error("[ChatWindow:send] Error sending file message:", error);
-      }
+      } catch (error) {}
     }
   };
 
@@ -490,30 +467,7 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
     currentUser?.id,
   ]);
 
-  // Debug: log how otherParticipant is resolved
-  useEffect(() => {
-    const fromList = (conversations as any[])?.find(
-      (c) => c.id === (effectiveConversationId || conversation?.id)
-    );
-    console.log("[ChatWindow:otherParticipant]", {
-      convId: effectiveConversationId || conversation?.id,
-      currentUserId: currentUser?.id,
-      fromProp: (conversation as any)?.otherParticipant,
-      fromList: fromList?.otherParticipant,
-      p1: (fromList || (conversation as any))?.participant1,
-      p2: (fromList || (conversation as any))?.participant2,
-      p1_id: (fromList || (conversation as any))?.participant1_id,
-      p2_id: (fromList || (conversation as any))?.participant2_id,
-      lastMessage: (fromList || (conversation as any))?.lastMessage,
-      resolved: otherParticipant,
-    });
-  }, [
-    effectiveConversationId,
-    conversation?.id,
-    conversations,
-    currentUser?.id,
-    otherParticipant,
-  ]);
+  // Debug logs removed
 
   // Check if other participant is online
   const isOtherParticipantOnline = useMemo(() => {

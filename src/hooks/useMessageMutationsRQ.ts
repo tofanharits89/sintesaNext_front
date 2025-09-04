@@ -65,13 +65,7 @@ export function useSendMessageMutation() {
           participant2_id: conversationId ? undefined : recipientId,
         } as any;
 
-        console.debug('[useSendMessage] Emitting message:send', {
-          hasRecipient: !!recipientId,
-          hasConversationId: !!conversationId,
-          contentLen: content?.length ?? 0,
-          tempId,
-          hasSender: !!currentUser?.id,
-        });
+        // Emitting message:send (debug logging removed)
 
         const socketResponse: any = await new Promise((resolve, reject) => {
           const timeout = setTimeout(() => {
@@ -80,7 +74,6 @@ export function useSendMessageMutation() {
 
           emit("message:send", socketPayload, (response: any) => {
             clearTimeout(timeout);
-            console.debug('[useSendMessage] ACK for message:send', response);
             resolve(response);
           });
         });
@@ -90,10 +83,9 @@ export function useSendMessageMutation() {
         }
 
         const errMsg = socketResponse?.error || 'Socket send failed';
-        console.error('[useSendMessage] Socket rejected message:send', { errMsg, response: socketResponse });
         throw new Error(errMsg);
       } catch (socketError) {
-        console.warn('[useSendMessage] Socket failed, trying REST:', socketError);
+        // Socket failed, trying REST (silently fallback)
         
         // Fallback to REST API
         const token = getAuthTokenFromCookie();
@@ -317,7 +309,6 @@ export function useSendMessageMutation() {
       queryClient.invalidateQueries({ queryKey: conversationKeys.all });
     },
     onError: (error, args, context) => {
-      console.error('[useSendMessage] Error:', error);
       
       // Clear sending state
       ui.setSendingMessage(false);
@@ -438,7 +429,6 @@ export function useMarkAsReadMutation(conversationId?: string) {
       unread.markConversationAsRead(conversationId, messageIds[messageIds.length - 1]);
     },
     onError: (error, args) => {
-      console.error('[useMarkAsRead] Error:', error);
       
       // Invalidate to revert optimistic updates
       if (conversationId) {
@@ -522,7 +512,6 @@ export function useMarkAsOpenedMutation(conversationId?: string) {
       });
     },
     onError: (error, args) => {
-      console.error('[useMarkAsOpened] Error:', error);
       
       // Invalidate to revert optimistic updates
       if (conversationId) {

@@ -238,15 +238,9 @@ export function useMessagingRQ() {
         convId.startsWith("temp-") ||
         convId.startsWith("temp_conv-") ||
         convId.startsWith("temp-conv-");
-      console.debug('[useMessagingRQ] sendMessage context', {
-        latestActiveId,
-        isTempConv,
-        hasRecipient: !!recipientId,
-      });
 
       if (isTempConv && !recipientId) {
         const err = new Error('Recipient required to start a new conversation');
-        console.error('[useMessagingRQ] Missing recipientId for temp conversation');
         addNotification({
           type: 'error',
           title: 'Cannot send message',
@@ -283,8 +277,6 @@ export function useMessagingRQ() {
           tempId,
         });
       } catch (error) {
-        console.error("[useMessagingRQ] Send message error:", error);
-
         // Show error notification
         addNotification({
           type: "error",

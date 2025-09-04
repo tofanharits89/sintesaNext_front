@@ -41,8 +41,6 @@ const fetchConversations = async (): Promise<{ data: { conversations: Conversati
   try {
     return JSON.parse(text);
   } catch (e) {
-    console.error("[useConversations] JSON parse error:", e);
-    console.error("[useConversations] Response text:", text);
     throw new Error("Invalid JSON response from server");
   }
 };
@@ -124,7 +122,6 @@ export function useConversations() {
     senderType: "user" | "admin";
     timestamp: string;
   }) => {
-    console.debug("[useConversations][optimisticAddConversation]", params);
     updateConversationsCache((prev) => {
       const list: Conversation[] = prev?.data?.conversations || [];
       if (list.some((c) => c.id === params.tempId)) return prev || { data: { conversations: [] } };
@@ -158,10 +155,6 @@ export function useConversations() {
   }, [updateConversationsCache]);
 
   const reconcileConversationId = useCallback((tempId: string, realId: string) => {
-    console.debug("[useConversations][reconcileConversationId]", {
-      tempId,
-      realId,
-    });
     updateConversationsCache((prev) => {
       const list: Conversation[] = prev?.data?.conversations || [];
       const idx = list.findIndex((c) => c.id === tempId);
@@ -189,7 +182,6 @@ export function useConversations() {
   
   useEffect(() => {
     const updateOnNewMessage = (m: SocketMessageData) => {
-      console.debug("[useConversations][socket] MESSAGE_NEW/RECEIVED", m);
       updateConversationsCache((prev) => {
         const list: Conversation[] = prev?.data?.conversations || [];
         // Normalize possibly nested payloads and timestamps
@@ -259,7 +251,6 @@ export function useConversations() {
       conversationId: string;
       messageIds: string[];
     }) => {
-      console.debug("[useConversations][socket] READ/OPENED", payload);
       updateConversationsCache((prev) => {
         const list: Conversation[] = prev?.data?.conversations || [];
         const idx = list.findIndex((c) => c.id === payload.conversationId);
@@ -311,7 +302,6 @@ export function useConversations() {
   // Reconcile temp conversation ids when server confirms real id
   useEffect(() => {
     const handler = (payload: { tempId: string; conversationId: string }) => {
-      console.debug("[useConversations][event] conversation:created", payload);
       reconcileConversationId(payload.tempId, payload.conversationId);
     };
 
