@@ -35,9 +35,12 @@ const fetcher = async (url: string) => {
 export function useMessages(conversationId?: string) {
   const isFetchable = (() => {
     if (!conversationId) return false;
-    const isTemp = conversationId.startsWith("temp-") || conversationId.startsWith("temp_conv-") || conversationId.startsWith("temp-conv-");
-    const looksLikeUuid = /^[0-9a-fA-F-]{16,}$/.test(conversationId);
-    return !isTemp && looksLikeUuid;
+    const isTemp =
+      conversationId.startsWith("temp-") ||
+      conversationId.startsWith("temp_conv-") ||
+      conversationId.startsWith("temp-conv-");
+    // Previously we restricted to UUID-looking IDs; relax to any non-temp real ID
+    return !isTemp;
   })();
 
   // Local store for temp/invalid conversations (no fetch). Ensures optimistic + socket messages appear.
@@ -156,51 +159,81 @@ export function useMessages(conversationId?: string) {
       recentTimer = setTimeout(() => recentIds.clear(), 5000);
     };
 
-    const appendNewMessage = (m: SocketMessageData) => {
-      if (m.conversationId !== conversationId) return;
-      if (recentIds.has(m.id)) return; // drop duplicate
+    const isTempConvId = (id?: string) =>
+      !!id && (id.startsWith("temp-") || id.startsWith("temp_conv-") || id.startsWith("temp-conv-"));
+
+    // Only accept events for this conversation. For temp conversations, also match by tempId echoed from backend.
+    const convMatches = (incomingConvId?: string, incomingTempId?: string) => {
+      if (incomingConvId === conversationId) return true;
+      // When viewing a temp conversation (not fetchable yet), accept events only if the event carries our temp id
+      if (!isFetchable && isTempConvId(conversationId) && incomingTempId === conversationId) return true;
+      return false;
+    };
+
+    const appendNewMessage = (m: SocketMessageData | any) => {
+      // Normalize possible shapes: { id, content, ... } OR { message: {...}, conversationId }
+      const normalized = (() => {
+        if (m && typeof m === "object" && m.message) {
+          const msg = m.message;
+          const ts = msg.timestamp || msg.created_at || new Date().toISOString();
+          return {
+            id: msg.id,
+            content: msg.content,
+            timestamp: ts,
+            sender: msg.sender || m.sender,
+            senderType: msg.senderType || m.senderType,
+            conversationId: m.conversationId || msg.conversation_id,
+            tempId: m.tempId || msg.tempId || msg.temp_id,
+          } as SocketMessageData & { tempId?: string };
+        }
+        const ts = (m as any)?.timestamp || (m as any)?.created_at || new Date().toISOString();
+        return { ...(m as any), timestamp: ts } as SocketMessageData & { tempId?: string };
+      })();
+
+      if (!convMatches(normalized.conversationId, (normalized as any).tempId)) return;
+      if (recentIds.has(normalized.id)) return; // drop duplicate
 
       // If not fetchable, append into local store and re-render
       if (!isFetchable) {
         console.log("[useMessages:socket->local]", {
           conversationId,
-          echoConvId: m.conversationId,
-          tempId: (m as any).tempId || (m as any).temp_id,
-          id: m.id,
+          echoConvId: normalized.conversationId,
+          tempId: (normalized as any).tempId,
+          id: normalized.id,
         });
         // Reconcile any temp by tempId
-        const tempId = (m as any).tempId || (m as any).temp_id || null;
+        const tempId = (normalized as any).tempId || null;
         if (tempId) {
           localStoreRef.current = localStoreRef.current.filter((msg) => msg.id !== tempId);
         }
-        const createdAt = m.timestamp || new Date().toISOString();
+        const createdAt = normalized.timestamp || new Date().toISOString();
         localStoreRef.current.push({
-          id: m.id,
-          conversationId: m.conversationId,
-          content: m.content,
+          id: normalized.id,
+          conversationId: normalized.conversationId,
+          content: normalized.content,
           timestamp: createdAt,
-          sender: m.sender,
-          senderType: m.senderType,
+          sender: normalized.sender,
+          senderType: normalized.senderType,
           isRead: false,
           isDelivered: false,
           isOpened: false,
         } as FrontendMessage);
 
-        // If we got a real conversationId alongside a tempId for this temp chat, notify reconcilers
-        if (tempId && m.conversationId && m.conversationId !== conversationId) {
+        // If we got a real conversationId (with or without tempId) while viewing a temp chat, notify reconcilers
+        if (normalized.conversationId && normalized.conversationId !== conversationId) {
           try {
             console.log("[useMessages:reconcile:dispatch]", {
               tempId: conversationId,
-              realId: m.conversationId,
+              realId: normalized.conversationId,
             });
             window.dispatchEvent(
               new CustomEvent("conversation:created", {
-                detail: { tempId: conversationId, conversationId: m.conversationId },
+                detail: { tempId: conversationId, conversationId: normalized.conversationId },
               })
             );
           } catch {}
         }
-        remember(m.id);
+        remember(normalized.id);
         bump();
         return;
       }
@@ -208,8 +241,8 @@ export function useMessages(conversationId?: string) {
       mutate((prev) => {
         console.log("[useMessages:socket->swr]", {
           conversationId,
-          id: m.id,
-          echoConvId: m.conversationId,
+          id: normalized.id,
+          echoConvId: normalized.conversationId,
         });
         // Initialize cache if empty so first realtime message appears
         if (!prev || !Array.isArray(prev) || prev.length === 0) {
@@ -230,7 +263,7 @@ export function useMessages(conversationId?: string) {
           : [];
 
         // Tiny helper: reconcile by tempId if backend echoes it; fallback to proximity
-        const tempId = (m as any).tempId || (m as any).temp_id || null;
+        const tempId = (normalized as any).tempId || null;
         let filtered = list;
         let reconciledTimestampMs: number | null = null;
 
@@ -253,18 +286,18 @@ export function useMessages(conversationId?: string) {
             };
             reconciledTimestampMs = Math.max(
               toMs(tempMsg.timestamp || tempMsg.created_at),
-              toMs(m.timestamp)
+              toMs(normalized.timestamp)
             );
           }
           filtered = filtered.filter((msg: any) => msg.id !== tempId);
           // reconciled by tempId
         } else {
           // Fallback: remove any temp placeholders that match content and are very recent
-          const realTs = new Date(m.timestamp).getTime();
+          const realTs = new Date(normalized.timestamp as any).getTime();
           const THRESHOLD_MS = 5000;
           filtered = filtered.filter((msg: any) => {
             if (typeof msg?.id === "string" && msg.id.startsWith("temp-")) {
-              const sameContent = msg.content === m.content;
+              const sameContent = msg.content === normalized.content;
               const ts = new Date(
                 msg.timestamp || msg.created_at || 0
               ).getTime();
@@ -277,31 +310,31 @@ export function useMessages(conversationId?: string) {
         }
 
         // Avoid duplicate by real id if already present
-        if (filtered.some((x: any) => x.id === m.id)) {
+        if (filtered.some((x: any) => x.id === normalized.id)) {
           last.data = { ...(last.data || {}), messages: filtered };
           copy[lastIdx] = last;
-          remember(m.id);
+          remember(normalized.id);
           return copy;
         }
 
         // Push message in backend-ish shape; mapper will handle fields
         filtered.push({
-          id: m.id,
-          conversation_id: m.conversationId,
-          content: m.content,
+          id: normalized.id,
+          conversation_id: normalized.conversationId,
+          content: normalized.content,
           created_at: reconciledTimestampMs
             ? new Date(reconciledTimestampMs).toISOString()
-            : m.timestamp,
+            : normalized.timestamp,
           timestamp: reconciledTimestampMs
             ? new Date(reconciledTimestampMs).toISOString()
-            : m.timestamp,
-          sender: m.sender,
-          senderType: m.senderType,
+            : normalized.timestamp,
+          sender: normalized.sender,
+          senderType: normalized.senderType,
           is_read: false,
         });
         last.data = { ...(last.data || {}), messages: filtered };
         copy[lastIdx] = last;
-        remember(m.id);
+        remember(normalized.id);
         return copy;
       }, false);
 
@@ -319,55 +352,142 @@ export function useMessages(conversationId?: string) {
       conversationId: string;
       messageIds: string[];
       readAt?: string;
-    }) => {
-      if (payload.conversationId !== conversationId) return;
+    } | { conversationId: string; messageId: string; readAt?: string } | any) => {
+      // Normalize to { conversationId, messageIds[] }
+      const p = (() => {
+        if (payload?.messageId && !payload?.messageIds) {
+          return {
+            conversationId: payload.conversationId || payload?.data?.conversationId,
+            messageIds: [payload.messageId],
+            readAt: payload.readAt,
+          } as { conversationId: string; messageIds: string[]; readAt?: string };
+        }
+        if (payload?.data?.messageIds || payload?.data?.conversationId) {
+          return {
+            conversationId: payload.data.conversationId,
+            messageIds: payload.data.messageIds || [],
+            readAt: payload.data.readAt,
+          };
+        }
+        return payload as { conversationId: string; messageIds: string[]; readAt?: string };
+      })();
+      // Some backends may omit conversationId on MESSAGE_READ; update by IDs regardless
+      console.debug("[socket] MESSAGE_READ", {
+        cid: p.conversationId,
+        ids: p.messageIds,
+        at: p.readAt,
+      });
       mutate((prev) => {
         if (!prev) return prev;
+        const idSet = new Set(p.messageIds || []);
         return prev.map((page: any) => {
           const msgs = (page?.data?.messages || []).map((msg: any) =>
-            payload.messageIds.includes(msg.id)
+            idSet.has(msg.id)
               ? {
                   ...msg,
                   is_read: true,
                   isRead: true,
-                  readAt: payload.readAt || msg.readAt,
+                  readAt: p.readAt || msg.readAt,
                 }
               : msg
           );
           return { ...page, data: { ...(page.data || {}), messages: msgs } };
         });
       }, false);
+
+      // Notify UI listeners (e.g., ChatWindow) for instantaneous status updates
+      try {
+        window.dispatchEvent(
+          new CustomEvent("messages:marked-as-read", {
+            detail: { conversationId, messageIds: p.messageIds },
+          })
+        );
+      } catch {}
     };
 
     const markMessagesOpened = (payload: {
       conversationId: string;
       messageIds: string[];
       openedAt?: string;
-    }) => {
-      if (payload.conversationId !== conversationId) return;
+    } | { conversationId: string; messageId: string; openedAt?: string } | any) => {
+      const p = (() => {
+        if (payload?.messageId && !payload?.messageIds) {
+          return {
+            conversationId: payload.conversationId || payload?.data?.conversationId,
+            messageIds: [payload.messageId],
+            openedAt: payload.openedAt,
+          };
+        }
+        if (payload?.data?.messageIds || payload?.data?.conversationId) {
+          return {
+            conversationId: payload.data.conversationId,
+            messageIds: payload.data.messageIds || [],
+            openedAt: payload.data.openedAt,
+          };
+        }
+        return payload;
+      })();
+      // Some backends may omit conversationId on MESSAGE_OPENED; update by IDs regardless
+      console.debug("[socket] MESSAGE_OPENED", {
+        cid: p.conversationId,
+        ids: p.messageIds,
+        at: p.openedAt,
+      });
       mutate((prev) => {
         if (!prev) return prev;
+        const idSet = new Set(p.messageIds || []);
         return prev.map((page: any) => {
           const msgs = (page?.data?.messages || []).map((msg: any) =>
-            payload.messageIds.includes(msg.id)
+            idSet.has(msg.id)
               ? {
                   ...msg,
                   isOpened: true,
-                  openedAt: payload.openedAt || msg.openedAt,
+                  openedAt: p.openedAt || msg.openedAt,
                 }
               : msg
           );
           return { ...page, data: { ...(page.data || {}), messages: msgs } };
         });
       }, false);
+
+      // Notify UI listeners (e.g., ChatWindow) for instantaneous status updates
+      try {
+        window.dispatchEvent(
+          new CustomEvent("messages:marked-as-opened", {
+            detail: { conversationId, messageIds: p.messageIds },
+          })
+        );
+      } catch {}
     };
 
     const markMessagesDelivered = (payload: {
       conversationId: string;
       messages: Array<{ id: string; deliveredAt?: string }>;
-    }) => {
-      if (payload.conversationId !== conversationId) return;
-      const ids = new Set(payload.messages.map((m) => m.id));
+    } | { conversationId: string; messageId: string; deliveredAt?: string } | any) => {
+      const p = (() => {
+        if (payload?.messageId && !payload?.messages) {
+          return {
+            conversationId: payload.conversationId || payload?.data?.conversationId,
+            messages: [
+              { id: payload.messageId, deliveredAt: payload.deliveredAt },
+            ],
+          } as { conversationId: string; messages: Array<{ id: string; deliveredAt?: string }> };
+        }
+        if (payload?.data?.messages || payload?.data?.conversationId) {
+          return {
+            conversationId: payload.data.conversationId,
+            messages: (payload.data.messages || []).map((x: any) => ({
+              id: x.id || x.messageId,
+              deliveredAt: x.deliveredAt,
+            })),
+          };
+        }
+        return payload as { conversationId: string; messages: Array<{ id: string; deliveredAt?: string }> };
+      })();
+      if (!convMatches(p.conversationId, undefined)) return;
+      const ids = new Set(
+        p.messages.map((m: { id: string; deliveredAt?: string }) => m.id)
+      );
       mutate((prev) => {
         if (!prev) return prev;
         return prev.map((page: any) => {
@@ -377,7 +497,10 @@ export function useMessages(conversationId?: string) {
                   ...msg,
                   isDelivered: true,
                   deliveredAt:
-                    payload.messages.find((x) => x.id === msg.id)
+                    p.messages.find(
+                      (x: { id?: string; messageId?: string; deliveredAt?: string }) =>
+                        (x.id || x.messageId) === msg.id
+                    )
                       ?.deliveredAt || msg.deliveredAt,
                 }
               : msg
@@ -387,18 +510,56 @@ export function useMessages(conversationId?: string) {
       }, false);
     };
 
+    // Some backends send a generic ACK event with a type field
+    const handleMessageAck = (payload: any) => {
+      // Normalize forms like { messageId, type, ackAt } or { data: { ... } }
+      const p = (() => {
+        const src = payload?.data || payload || {};
+        return {
+          messageId: src.messageId || src.id,
+          type: src.type as string | undefined,
+          ackAt: src.ackAt || src.openedAt || src.readAt,
+          conversationId: src.conversationId,
+        } as { messageId?: string; type?: string; ackAt?: string; conversationId?: string };
+      })();
+      if (!p.messageId) return;
+      mutate((prev) => {
+        if (!prev) return prev;
+        return prev.map((page: any) => {
+          const msgs = (page?.data?.messages || []).map((msg: any) => {
+            if (msg.id !== p.messageId) return msg;
+            if (p.type === "read") {
+              return { ...msg, is_read: true, isRead: true, readAt: p.ackAt || msg.readAt };
+            }
+            if (p.type === "opened" || p.type === "viewed") {
+              return { ...msg, isOpened: true, openedAt: p.ackAt || msg.openedAt };
+            }
+            if (p.type === "delivered" || p.type === "received") {
+              return { ...msg, isDelivered: true, deliveredAt: p.ackAt || msg.deliveredAt };
+            }
+            return msg;
+          });
+          return { ...page, data: { ...(page.data || {}), messages: msgs } };
+        });
+      }, false);
+    };
+
     on(SOCKET_EVENTS.MESSAGE_NEW, appendNewMessage);
+    on(SOCKET_EVENTS.MESSAGE_SENT, appendNewMessage);
     on(SOCKET_EVENTS.MESSAGE_RECEIVED, appendNewMessage);
     on(SOCKET_EVENTS.MESSAGE_READ, markMessagesRead as any);
     on(SOCKET_EVENTS.MESSAGE_OPENED, markMessagesOpened as any);
     on(SOCKET_EVENTS.MESSAGE_DELIVERED, markMessagesDelivered as any);
+    on(SOCKET_EVENTS.MESSAGE_ACK, handleMessageAck as any);
 
     return () => {
       off(SOCKET_EVENTS.MESSAGE_NEW, appendNewMessage);
+      off(SOCKET_EVENTS.MESSAGE_SENT, appendNewMessage);
       off(SOCKET_EVENTS.MESSAGE_RECEIVED, appendNewMessage);
       off(SOCKET_EVENTS.MESSAGE_READ, markMessagesRead as any);
       off(SOCKET_EVENTS.MESSAGE_OPENED, markMessagesOpened as any);
       off(SOCKET_EVENTS.MESSAGE_DELIVERED, markMessagesDelivered as any);
+      off(SOCKET_EVENTS.MESSAGE_ACK, handleMessageAck as any);
     };
   }, [conversationId, on, off, mutate]);
 

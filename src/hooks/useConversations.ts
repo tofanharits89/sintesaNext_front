@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { backendPath } from "@/lib/backend";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 import { useSocket } from "./useSocket";
@@ -43,7 +43,50 @@ export function useConversations() {
     dedupingInterval: 3000,
   });
 
-  const conversations: Conversation[] = data?.data?.conversations ?? [];
+  // Ensure newest conversations appear first, even on initial fetch
+  const rawConversations: Conversation[] = data?.data?.conversations ?? [];
+  // Normalize conversations to ensure lastMessage.timestamp exists and updated_at is sane
+  const normalizeConversation = (c: Conversation): Conversation => {
+    const conv: any = { ...(c as any) };
+    const lm: any = conv.lastMessage || undefined;
+    if (lm) {
+      const lmTs =
+        lm.timestamp || lm.created_at || lm.createdAt || lm.sent_at || lm.sentAt;
+      if (!lm.timestamp && lmTs) conv.lastMessage = { ...lm, timestamp: lmTs };
+    }
+    const convTs =
+      (conv.lastMessage &&
+        ((conv.lastMessage as any).timestamp ||
+          (conv.lastMessage as any).created_at ||
+          (conv.lastMessage as any).createdAt)) ||
+      conv.updated_at ||
+      conv.updatedAt ||
+      conv.created_at ||
+      conv.createdAt;
+    if (!conv.updated_at && convTs) conv.updated_at = convTs;
+    return conv as Conversation;
+  };
+  const normalizedConversations: Conversation[] = rawConversations.map(
+    normalizeConversation
+  );
+  const getLastActivity = (c: Conversation): number => {
+    const ts =
+      (c.lastMessage as any)?.timestamp ||
+      (c.lastMessage as any)?.created_at ||
+      (c.lastMessage as any)?.createdAt ||
+      (c.lastMessage as any)?.message?.timestamp ||
+      (c.lastMessage as any)?.message?.created_at ||
+      (c.lastMessage as any)?.message?.createdAt ||
+      (c as any)?.updated_at ||
+      (c as any)?.updatedAt ||
+      (c as any)?.created_at ||
+      (c as any)?.createdAt;
+    const t = ts ? new Date(ts).getTime() : 0;
+    return isNaN(t) ? 0 : t;
+  };
+  const conversations = [...normalizedConversations].sort(
+    (a, b) => getLastActivity(b) - getLastActivity(a)
+  );
   // Helpers: optimistic add and reconcile for new conversations
   const optimisticAddConversation = (params: {
     tempId: string;
@@ -84,7 +127,7 @@ export function useConversations() {
     }, false);
   };
 
-  const reconcileConversationId = (tempId: string, realId: string) => {
+  const reconcileConversationId = useCallback((tempId: string, realId: string) => {
     console.debug("[useConversations][reconcileConversationId]", {
       tempId,
       realId,
@@ -106,7 +149,7 @@ export function useConversations() {
         data: { ...(prev?.data || {}), conversations: next },
       };
     }, false);
-  };
+  }, [mutate]);
 
   // Bridge socket events -> in-place cache updates for snappy UI
   const { on, off } = useSocket();
@@ -116,27 +159,50 @@ export function useConversations() {
       console.debug("[useConversations][socket] MESSAGE_NEW/RECEIVED", m);
       mutate((prev: any) => {
         const list: Conversation[] = prev?.data?.conversations || [];
-        const idx = list.findIndex((c) => c.id === m.conversationId);
+        // Normalize possibly nested payloads and timestamps
+        const msgLike: any = (m as any)?.message ? (m as any).message : (m as any);
+        const conversationId =
+          (m as any)?.conversationId || msgLike.conversation_id || msgLike.conversationId;
+        const ts =
+          msgLike.timestamp ||
+          msgLike.created_at ||
+          msgLike.createdAt ||
+          msgLike.sent_at ||
+          msgLike.sentAt ||
+          msgLike.message?.timestamp ||
+          msgLike.message?.created_at ||
+          msgLike.message?.createdAt ||
+          msgLike.message?.sent_at ||
+          msgLike.message?.sentAt;
+        const idx = list.findIndex((c) => c.id === conversationId);
         if (idx === -1) return prev; // Unknown conversation; skip
         const next = [...list];
         const [removed] = next.splice(idx, 1);
         const conv = { ...(removed || {}) } as Conversation & {
           lastMessage?: any;
         };
+        // Effective timestamp fallback
+        const effectiveTs =
+          ts ||
+          (conv.lastMessage as any)?.timestamp ||
+          (conv.lastMessage as any)?.created_at ||
+          (conv as any)?.updated_at ||
+          (conv as any)?.created_at ||
+          new Date().toISOString();
         // Update lastMessage and updated_at
         conv.lastMessage = {
           ...(conv.lastMessage || {}),
-          id: m.id,
-          content: m.content,
-          timestamp: m.timestamp,
-          sender: m.sender,
-          senderType: m.senderType,
+          id: msgLike.id ?? (conv.lastMessage as any)?.id,
+          content: msgLike.content ?? (conv.lastMessage as any)?.content ?? "",
+          timestamp: effectiveTs,
+          sender: msgLike.sender ?? (conv.lastMessage as any)?.sender,
+          senderType: msgLike.senderType ?? (conv.lastMessage as any)?.senderType,
           isRead: false,
           is_read: false,
         };
-        conv.updated_at = m.timestamp;
+        conv.updated_at = effectiveTs || conv.updated_at;
         // Increase unread_count if the message is not from current user
-        const fromSelf = currentUser?.id && m.sender?.id === currentUser.id;
+        const fromSelf = currentUser?.id && msgLike?.sender?.id === currentUser.id;
         const currentUnread =
           typeof conv.unread_count === "number" ? conv.unread_count : 0;
         conv.unread_count = fromSelf ? currentUnread : currentUnread + 1;

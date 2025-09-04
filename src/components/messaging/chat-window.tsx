@@ -151,7 +151,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
     markAsRead: (ids) => markRead({ messageIds: ids }),
     markAsOpened: (ids) => markOpened({ messageIds: ids }),
     enabled: true,
-    debounceMs: 2500, // 2.5 second delay
+    debounceMs: 100, // Very fast for real-time feedback while chatting
     onMessageVisible: handleMessageVisible, // Pass the visibility handler
   });
 
@@ -795,13 +795,11 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
                         {/* Message status indicators */}
                         <div className="mt-1">
                           {isOwnMessage ? (
-                            // For sent messages: show WhatsApp-style status indicators
+                            // For sent messages: show WhatsApp-style status indicators using real-time fields
                             <MessageStatus
                               isDelivered={message.isDelivered}
-                              isOpened={
-                                openedMessages.has(message.id) ||
-                                message.isOpened
-                              }
+                              // Sender side should reflect remote recipient's open state from socket/SWR only
+                              isOpened={message.isOpened}
                               isRead={message.isRead}
                               deliveredAt={message.deliveredAt}
                               openedAt={message.openedAt}
@@ -822,13 +820,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
                             >
                               {openedMessages.has(message.id) ||
                               message.isOpened
-                                ? `Opened${
-                                    message.openedAt
-                                      ? ` at ${formatOpenedTimestamp(
-                                          message.openedAt
-                                        )}`
-                                      : ""
-                                  }`
+                                ? `Opened`
                                 : "Unopened"}
                             </span>
                           )}

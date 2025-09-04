@@ -69,7 +69,7 @@ export default function MessagesPage() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <Users className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">Messages</h1>
+            <h1 className="text-2xl font-bold">Kelola Pesan</h1>
           </div>
 
           {/* Connection Status */}
@@ -80,7 +80,7 @@ export default function MessagesPage() {
                 className="text-green-600 bg-green-50 border-green-200"
               >
                 <Wifi className="h-3 w-3 mr-1" />
-                Connected
+                Tersambung
               </Badge>
             ) : (
               <Badge
@@ -96,7 +96,7 @@ export default function MessagesPage() {
 
         <Button onClick={handleNewMessage} className="flex items-center gap-2">
           <MessageSquarePlus className="h-4 w-4" />
-          New Message
+          Pesan Baru
         </Button>
       </div>
 
@@ -105,7 +105,7 @@ export default function MessagesPage() {
         <div className="lg:col-span-1">
           <Card className="h-[600px] max-h-[70vh] flex flex-col">
             <CardHeader className="pb-3 flex-shrink-0">
-              <CardTitle className="text-lg">Conversations</CardTitle>
+              <CardTitle className="text-lg">Percakapan</CardTitle>
             </CardHeader>
             <CardContent className="p-0 flex-1 overflow-hidden">
               <ConversationList
@@ -139,16 +139,13 @@ export default function MessagesPage() {
                   <Users className="h-12 w-12" />
                   <div>
                     <h3 className="text-lg font-medium mb-2">
-                      No conversation selected
+                      Tidak ada pesan terpilih
                     </h3>
                     <p className="text-sm">
-                      Choose a conversation from the list or start a new message
+                      Silahkan pilih pesan dari daftar percakapan atau buat pesan baru.
                     </p>
                   </div>
-                  <Button onClick={handleNewMessage} variant="outline">
-                    <MessageSquarePlus className="h-4 w-4 mr-2" />
-                    Start New Conversation
-                  </Button>
+                 
                 </div>
               </CardContent>
             </Card>

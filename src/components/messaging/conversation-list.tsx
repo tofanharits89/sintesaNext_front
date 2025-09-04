@@ -162,7 +162,10 @@ export function ConversationList({
                       )}
                       <span
                         className={cn(
-                          "text-sm text-muted-foreground truncate block flex-1 min-w-0",
+                          // Allow wrapping so preview doesn't cut off; keep layout stable
+                          "text-sm text-muted-foreground block flex-1 min-w-0 whitespace-normal break-words",
+                          // If line-clamp is available in Tailwind config, this limits to 2 lines while wrapping
+                          "line-clamp-2",
                           unreadCount > 0 && "text-foreground font-medium"
                         )}
                         title={conversation.lastMessage.content} // Show full text on hover

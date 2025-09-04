@@ -168,7 +168,11 @@ export function useAutoMarkAsRead({
 
       if (fallbackUnopenedMessages.length > 0) {
         const messageIds = fallbackUnopenedMessages.map((msg) => msg.id);
-        await markAsOpened(messageIds);
+        // Mark as read and opened together for real-time double-check & opened status
+        await Promise.allSettled([
+          markAsRead(messageIds),
+          markAsOpened(messageIds),
+        ]);
         messageIds.forEach((id) => tracker.markedMessageIds.add(id));
         tracker.lastMarkedAt = now;
         return;
@@ -189,7 +193,11 @@ export function useAutoMarkAsRead({
       tracker.isMarking = true;
 
       const messageIds = unopenedMessages.map((msg) => msg.id);
-      await markAsOpened(messageIds);
+      // Mark as read and opened together for real-time updates
+      await Promise.allSettled([
+        markAsRead(messageIds),
+        markAsOpened(messageIds),
+      ]);
 
       // Track marked messages to prevent duplicate marking
       messageIds.forEach((id) => tracker.markedMessageIds.add(id));

@@ -82,6 +82,15 @@ export function useMarkAsReadMutation(conversationId?: string) {
         return { ...conv, unread_count: Math.max(0, currentUnread - dec) };
       });
 
+      // Notify UI listeners immediately
+      try {
+        window.dispatchEvent(
+          new CustomEvent("messages:marked-as-read", {
+            detail: { conversationId, messageIds },
+          })
+        );
+      } catch {}
+
       // Send mutation via REST for retry semantics
       const token = getAuthTokenFromCookie();
       const headers: HeadersInit = { "Content-Type": "application/json" };
@@ -132,6 +141,15 @@ export function useMarkAsOpenedMutation(conversationId?: string) {
         }
         return { ...conv, unread_count: Math.max(0, currentUnread - dec) };
       });
+
+      // Notify UI listeners immediately
+      try {
+        window.dispatchEvent(
+          new CustomEvent("messages:marked-as-opened", {
+            detail: { conversationId, messageIds },
+          })
+        );
+      } catch {}
 
       // Send mutation via REST for retry semantics
       const token = getAuthTokenFromCookie();

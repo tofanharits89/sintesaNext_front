@@ -247,11 +247,11 @@ export function NewMessageDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>New Message</DialogTitle>
+          <DialogTitle>Pesan Baru</DialogTitle>
           <DialogDescription>
-            Select a recipient and compose your message.
+            Pilih penerima dan buat pesan.
           </DialogDescription>
         </DialogHeader>
 
@@ -259,7 +259,7 @@ export function NewMessageDialog({
           {/* User Selection */}
           {!selectedUser ? (
             <div className="space-y-3">
-              <Label>Select recipient</Label>
+              <Label>Pilih penerima</Label>
 
               {/* Search */}
               <div className="relative">
@@ -273,7 +273,7 @@ export function NewMessageDialog({
               </div>
 
               {/* User List */}
-              <ScrollArea className="h-48 border rounded-md">
+              <ScrollArea className="h-96 border rounded-md">
                 {isLoadingUsers ? (
                   <div className="p-3 space-y-3">
                     {Array.from({ length: 5 }).map((_, i) => (
@@ -371,9 +371,9 @@ export function NewMessageDialog({
 
               {/* Message Input */}
               <div className="space-y-2">
-                <Label>Message</Label>
+                <Label>Pesan</Label>
                 <Textarea
-                  placeholder="Type your message here..."
+                  placeholder="Tulis pesan di sini..."
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
@@ -381,14 +381,14 @@ export function NewMessageDialog({
                   className="resize-none"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Press Ctrl+Enter to send
+                  Tekan Ctrl+Enter untuk mengirim
                 </p>
               </div>
 
               {/* Send Button */}
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => onOpenChange(false)}>
-                  Cancel
+                  Batal
                 </Button>
                 <Button
                   onClick={handleSendMessage}
@@ -396,7 +396,7 @@ export function NewMessageDialog({
                   className="flex items-center gap-2"
                 >
                   <Send className="h-4 w-4" />
-                  {isSending ? "Sending..." : "Send Message"}
+                  {isSending ? "Sedang mengirim..." : "Kirim Pesan"}
                 </Button>
               </div>
             </div>
