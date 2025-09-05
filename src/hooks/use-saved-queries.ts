@@ -5,7 +5,7 @@ import useSWRMutation from "swr/mutation";
 import { mutate as swrMutate } from "swr";
 import { useCallback, useMemo } from "react";
 import { backendPath } from "@/lib/backend";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
+import { apiClient, http } from "@/lib/httpClient";
 import {
   retrySavedQueryOperation,
   createNetworkAwareOperation,
@@ -23,119 +23,92 @@ import type {
   GetSavedQueriesParams,
 } from "@/types/saved-queries";
 
-// Enhanced SWR fetcher with comprehensive error handling
+// Enhanced SWR fetcher with Axios + interceptors and comprehensive error handling
 const fetcher = async (url: string) => {
-  const token = getAuthTokenFromCookie();
-  const headers: HeadersInit = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
-
   try {
-    const resp = await fetch(url, {
-      credentials: "include",
-      headers,
-      // Add timeout to prevent hanging requests
-      signal: AbortSignal.timeout(30000), // 30 second timeout
+    // Using http directly allows passing an absolute URL as key
+    const resp = await http.get(url, {
+      withCredentials: true,
+      timeout: 30000,
     });
+    const result = resp.data;
+    if (result && result.success && result.data) {
+      return result.data;
+    }
+    return result;
+  } catch (err: any) {
+    const status = err?.response?.status as number | undefined;
+    const statusText = err?.response?.statusText;
+    const data = err?.response?.data;
 
-    const text = await resp.text();
-
-    if (!resp.ok) {
-      // Handle specific HTTP status codes
-      let errorMessage = `HTTP ${resp.status}`;
-
-      switch (resp.status) {
-        case 400:
-          errorMessage = "Invalid request data";
-          break;
-        case 401:
-          errorMessage = "Authentication required";
-          break;
-        case 403:
-          errorMessage = "Access denied";
-          break;
-        case 404:
-          // For saved queries, 404 might be expected (no queries found)
-          // Return empty result instead of throwing error
-          if (url.includes("/saved-queries")) {
-            return {
-              queries: [],
-              pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
-            };
-          }
-          errorMessage = "Resource not found";
-          break;
-        case 409:
-          errorMessage = "Conflict - resource already exists";
-          break;
-        case 429:
-          errorMessage = "Too many requests - please wait";
-          break;
-        case 500:
-          errorMessage = "Server error - please try again";
-          break;
-        case 502:
-        case 503:
-        case 504:
-          errorMessage = "Service temporarily unavailable";
-          break;
-        default:
-          errorMessage = `Server error: ${resp.status} ${resp.statusText}`;
-      }
-
-      // Try to parse error response for more details
-      try {
-        const errorData = JSON.parse(text);
-        if (errorData.error) {
-          errorMessage = errorData.error;
+    // Handle specific HTTP status codes
+    let errorMessage = `HTTP ${status ?? "Error"}`;
+    switch (status) {
+      case 400:
+        errorMessage = "Invalid request data";
+        break;
+      case 401:
+        errorMessage = "Authentication required";
+        break;
+      case 403:
+        errorMessage = "Access denied";
+        break;
+      case 404:
+        if (typeof url === "string" && url.includes("/saved-queries")) {
+          return {
+            queries: [],
+            pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+          };
         }
-      } catch {
-        // Use default error message if JSON parsing fails
+        errorMessage = "Resource not found";
+        break;
+      case 409:
+        errorMessage = "Conflict - resource already exists";
+        break;
+      case 429:
+        errorMessage = "Too many requests - please wait";
+        break;
+      case 500:
+        errorMessage = "Server error - please try again";
+        break;
+      case 502:
+      case 503:
+      case 504:
+        errorMessage = "Service temporarily unavailable";
+        break;
+      default:
+        if (status) errorMessage = `Server error: ${status} ${statusText ?? ""}`.trim();
+    }
+
+    // Parse backend error object if present
+    if (data && typeof data === "object") {
+      // Prefer explicit backend messages
+      if (typeof data.message === "string" && data.message.trim()) {
+        errorMessage = data.message;
+      } else if (typeof (data as any).error === "string" && (data as any).error.trim()) {
+        errorMessage = (data as any).error;
+      } else if (Array.isArray((data as any).errors) && (data as any).errors.length > 0) {
+        // If validation errors exist, summarize the first few
+        const firstMessages = (data as any).errors
+          .map((e: any) => e?.message)
+          .filter(Boolean)
+          .slice(0, 3)
+          .join(", ");
+        if (firstMessages) {
+          errorMessage = `Validation failed: ${firstMessages}`;
+        }
       }
-
-      const error = new Error(errorMessage);
-      (error as any).status = resp.status;
-      (error as any).statusText = resp.statusText;
-      throw error;
     }
 
-    if (!text.trim()) {
-      throw new Error("Empty response from server");
+    const error = new Error(errorMessage) as any;
+    error.status = status;
+    error.statusText = statusText;
+    // Attach useful debugging context
+    error.url = typeof url === "string" ? url : undefined;
+    if (data && typeof data === "object") {
+      error.details = (data as any).errors ?? undefined;
+      error.backend = data;
     }
-
-    try {
-      const result = JSON.parse(text);
-
-      // Backend returns wrapped response: { success: true, data: actualData }
-      if (result.success && result.data) {
-        return result.data;
-      }
-
-      // Fallback for unwrapped responses
-      return result;
-    } catch (e) {
-      console.error("[useSavedQueries] JSON parse error:", e);
-      console.error("[useSavedQueries] Response text:", text);
-      throw new Error("Invalid JSON response from server");
-    }
-  } catch (error) {
-    // Handle network errors
-    if (error instanceof TypeError && error.message.includes("fetch")) {
-      throw new Error(
-        "Network connection failed - please check your internet connection"
-      );
-    }
-
-    // Handle timeout errors
-    if (error instanceof DOMException && error.name === "TimeoutError") {
-      throw new Error("Request timed out - please try again");
-    }
-
-    // Handle abort errors
-    if (error instanceof DOMException && error.name === "AbortError") {
-      throw new Error("Request was cancelled");
-    }
-
-    // Re-throw other errors as-is
     throw error;
   }
 };
@@ -152,12 +125,30 @@ export function useSavedQueries(
   // Stabilize params to prevent infinite loops
   const stableParams = useMemo(
     () =>
-      createStableRef({
-        page: params.page,
-        limit: params.limit,
-        search: params.search?.trim() || undefined,
-        scope: params.scope, // Include scope in stable params
-      }),
+      {
+        // sanitize inputs before creating a stable ref
+        const allowedScopes = ["belanja", "tematik", "general"] as const;
+        const rawPage = typeof params.page === "number" ? params.page : undefined;
+        const rawLimit = typeof params.limit === "number" ? params.limit : undefined;
+        const safePage = rawPage && Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
+        const safeLimit = rawLimit && Number.isFinite(rawLimit)
+          ? Math.min(100, Math.max(1, rawLimit))
+          : 10;
+        const trimmedSearch = params.search?.trim();
+        const safeSearch = trimmedSearch
+          ? trimmedSearch.slice(0, 255)
+          : undefined;
+        const safeScope = params.scope && allowedScopes.includes(params.scope)
+          ? params.scope
+          : undefined; // omit invalid scopes; backend treats scope as optional
+
+        return createStableRef({
+          page: safePage,
+          limit: safeLimit,
+          search: safeSearch,
+          scope: safeScope, // Include scope in stable params only if valid
+        });
+      },
     [params.page, params.limit, params.search, params.scope]
   );
 
@@ -251,82 +242,28 @@ export function useSavedQueries(
   }, [queries, stableParams.scope]);
 
   // Create saved query mutation with enhanced error handling
-  const createQueryMutation = useSWRMutation(
+  const createQueryMutation = useSWRMutation<SavedQuery, any, string, CreateSavedQueryRequest>(
     backendPath("/saved-queries"),
-    async (url: string, { arg }: { arg: CreateSavedQueryRequest }) => {
-      return await retrySavedQueryOperation(
+    async (url: string, { arg }: { arg: CreateSavedQueryRequest }): Promise<SavedQuery> => {
+      const res = await retrySavedQueryOperation(
         createNetworkAwareOperation(async () => {
-          const token = getAuthTokenFromCookie();
-          const headers: HeadersInit = { "Content-Type": "application/json" };
-          if (token) headers.Authorization = `Bearer ${token}`;
-
           console.log("[useSavedQueries] Making request to:", url);
           console.log("[useSavedQueries] Request payload:", arg);
-          console.log("[useSavedQueries] Auth token present:", !!token);
 
-          const resp = await fetch(url, {
-            method: "POST",
-            headers,
-            credentials: "include",
-            body: JSON.stringify(arg),
-            signal: AbortSignal.timeout(15000), // 15 second timeout for create operations
+          const result = await apiClient.post<any>("/saved-queries", arg, {
+            timeout: 15000,
           });
 
-          console.log("[useSavedQueries] Response status:", resp.status);
-          console.log(
-            "[useSavedQueries] Response headers:",
-            Object.fromEntries(resp.headers.entries())
-          );
-
-          const responseText = await resp.text();
-          console.log("[useSavedQueries] Response text:", responseText);
-
-          if (!resp.ok) {
-            let errorMessage = `HTTP ${resp.status}`;
-            try {
-              const errorData = JSON.parse(responseText);
-              errorMessage =
-                errorData.message || errorData.error || errorMessage;
-            } catch {
-              // Use default error message if JSON parsing fails
-            }
-
-            // Add specific error context
-            if (
-              resp.status === 409 ||
-              errorMessage.toLowerCase().includes("duplicate")
-            ) {
-              throw new Error(
-                `Query name "${arg.name}" already exists. Please choose a different name.`
-              );
-            }
-
-            throw new Error(errorMessage);
+          // Backend returns wrapped response: { success: true, data }
+          if (result && result.success && result.data) {
+            return result.data as SavedQuery;
           }
-
-          if (!responseText.trim()) {
-            throw new Error("Empty response from server");
-          }
-
-          try {
-            const result = JSON.parse(responseText);
-            console.log("[useSavedQueries] Parsed response:", result);
-
-            // Backend returns wrapped response: { success: true, data: savedQuery }
-            if (result.success && result.data) {
-              return result.data;
-            }
-
-            // Fallback for unwrapped responses
-            return result;
-          } catch (e) {
-            console.error("[useSavedQueries] JSON parse error:", e);
-            throw new Error("Invalid JSON response from server");
-          }
+          return result as SavedQuery;
         }),
         "save",
-        { showToast: false } // Let the component handle success/error toasts
+        { showToast: false }
       );
+      return res as SavedQuery;
     },
     {
       onSuccess: (newQuery: SavedQuery) => {
@@ -374,61 +311,29 @@ export function useSavedQueries(
   );
 
   // Update saved query mutation with enhanced error handling
-  const updateQueryMutation = useSWRMutation(
+  const updateQueryMutation = useSWRMutation<SavedQuery, any, string, { id: string; updates: UpdateSavedQueryRequest }>(
     backendPath("/saved-queries/update"),
     async (
       _url: string,
       { arg }: { arg: { id: string; updates: UpdateSavedQueryRequest } }
-    ) => {
-      const url = backendPath(`/saved-queries/${arg.id}`);
-      return await retrySavedQueryOperation(
+    ): Promise<SavedQuery> => {
+      const res = await retrySavedQueryOperation(
         createNetworkAwareOperation(async () => {
-          const token = getAuthTokenFromCookie();
-          const headers: HeadersInit = { "Content-Type": "application/json" };
-          if (token) headers.Authorization = `Bearer ${token}`;
+          const result = await apiClient.put<any>(
+            `/saved-queries/${arg.id}`,
+            arg.updates,
+            { timeout: 10000 }
+          );
 
-          const resp = await fetch(url, {
-            method: "PUT",
-            headers,
-            credentials: "include",
-            body: JSON.stringify(arg.updates),
-            signal: AbortSignal.timeout(10000), // 10 second timeout for updates
-          });
-
-          if (!resp.ok) {
-            const errorData = await resp.json().catch(() => ({}));
-            const errorMessage = errorData.error || `HTTP ${resp.status}`;
-
-            // Add specific error context
-            if (resp.status === 404) {
-              throw new Error("Query not found - it may have been deleted");
-            }
-
-            if (
-              resp.status === 409 ||
-              errorMessage.toLowerCase().includes("duplicate")
-            ) {
-              throw new Error(
-                `Query name "${arg.updates.name}" already exists. Please choose a different name.`
-              );
-            }
-
-            throw new Error(errorMessage);
+          if (result && result.success && result.data) {
+            return result.data as SavedQuery;
           }
-
-          const result = await resp.json();
-
-          // Backend returns wrapped response: { success: true, data: updatedQuery }
-          if (result.success && result.data) {
-            return result.data;
-          }
-
-          // Fallback for unwrapped responses
-          return result;
+          return result as SavedQuery;
         }),
         "update",
         { showToast: false } // Let the component handle success/error toasts
       );
+      return res as SavedQuery;
     },
     {
       onSuccess: (updatedQuery: SavedQuery) => {
@@ -459,42 +364,30 @@ export function useSavedQueries(
   );
 
   // Delete saved query mutation with enhanced error handling
-  const deleteQueryMutation = useSWRMutation(
+  const deleteQueryMutation = useSWRMutation<{ id: string }, any, string, { id: string }>(
     backendPath("/saved-queries/delete"),
     async (
       _url: string,
       { arg }: { arg: { id: string } }
     ): Promise<{ id: string }> => {
-      const url = backendPath(`/saved-queries/${arg.id}`);
       const result = await retrySavedQueryOperation(
         createNetworkAwareOperation(async () => {
-          const token = getAuthTokenFromCookie();
-          const headers: HeadersInit = { "Content-Type": "application/json" };
-          if (token) headers.Authorization = `Bearer ${token}`;
-
-          const resp = await fetch(url, {
-            method: "DELETE",
-            headers,
-            credentials: "include",
-            signal: AbortSignal.timeout(10000), // 10 second timeout for deletes
-          });
-
-          if (!resp.ok) {
-            const errorData = await resp.json().catch(() => ({}));
-            const errorMessage = errorData.error || `HTTP ${resp.status}`;
-
-            // Add specific error context
-            if (resp.status === 404) {
-              // For delete operations, 404 might be acceptable (already deleted)
+          try {
+            await apiClient.delete(`/saved-queries/${arg.id}`, {
+              timeout: 10000,
+            });
+            return { id: arg.id };
+          } catch (e: any) {
+            const status = e?.response?.status;
+            const data = e?.response?.data;
+            const message =
+              (data && (data.error || data.message)) || `HTTP ${status}`;
+            if (status === 404) {
               console.warn("Query already deleted or not found");
               return { id: arg.id };
             }
-
-            throw new Error(errorMessage);
+            throw new Error(message);
           }
-
-          // Always return the ID for successful deletes
-          return { id: arg.id };
         }),
         "delete",
         { showToast: false } // Let the component handle success/error toasts

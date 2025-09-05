@@ -1,9 +1,16 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { FixedSizeList as List } from "react-window";
+import * as ReactWindow from "react-window";
 import { ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Resolve react-window List across different export shapes (ESM/CJS)
+// If not found, List will be undefined and we will fall back to non-virtualized rendering.
+const List: any =
+  (ReactWindow as any)?.FixedSizeList ||
+  (ReactWindow as any)?.default?.FixedSizeList ||
+  undefined;
 
 interface Option {
   value: string;
@@ -102,7 +109,9 @@ export function VirtualizedSelect({
         )}
         onClick={() => handleOptionSelect(option.value)}
       >
-        <span className="truncate" title={option.label}>{option.label}</span>
+        <span className="truncate" title={option.label}>
+          {option.label}
+        </span>
         {isSelected && <Check className="w-4 h-4 flex-shrink-0 ml-2" />}
       </div>
     );
@@ -119,7 +128,8 @@ export function VirtualizedSelect({
         disabled={disabled}
         className={cn(
           "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-full items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-xs whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 h-8",
-          isOpen && "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+          isOpen &&
+            "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
         )}
       >
         <span
@@ -153,7 +163,7 @@ export function VirtualizedSelect({
           {/* Options List */}
           {filteredOptions.length > 0 ? (
             <div className="max-h-[200px] overflow-y-auto">
-              {filteredOptions.length > 10 ? (
+              {filteredOptions.length > 10 && List ? (
                 // Use virtualization for large lists
                 <List
                   height={listHeight}
@@ -177,7 +187,9 @@ export function VirtualizedSelect({
                       onClick={() => handleOptionSelect(option.value)}
                       style={{ height: itemHeight }}
                     >
-                      <span className="truncate" title={option.label}>{option.label}</span>
+                      <span className="truncate" title={option.label}>
+                        {option.label}
+                      </span>
                       {option.value === value && (
                         <Check className="w-4 h-4 flex-shrink-0 ml-2" />
                       )}

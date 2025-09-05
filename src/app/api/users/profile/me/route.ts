@@ -2,65 +2,44 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { backendPath } from "@/lib/backend";
 
-// Helper function to extract auth token from cookies (same logic as auth-utils.ts)
+// Helper function to extract auth token from cookies with preference for backend-issued accessToken
 function getAuthTokenFromCookies(request: NextRequest): string | null {
-  // First check for the authState cookie (primary cookie set by backend)
-  const authState = request.cookies.get("authState")?.value;
-  if (authState && authState.trim()) {
-    const parts = authState.split(".");
-    if (parts.length === 3) {
-      try {
-        // Decode payload to check expiry
-        const payload = JSON.parse(atob(parts[1]));
-
-        // Check if token is expired
-        if (payload.exp && payload.exp * 1000 > Date.now()) {
-          return authState;
-        }
-      } catch {
-        // If decoding fails (e.g., atob not available in Node), accept the token
-        return authState;
-      }
+  // Helper: decode JWT payload safely in Node
+  const decodePayload = (token: string): any | null => {
+    try {
+      const parts = token.split(".");
+      if (parts.length !== 3) return null;
+      const json = Buffer.from(parts[1], "base64").toString("utf8");
+      return JSON.parse(json);
+    } catch {
+      return null;
     }
-  }
+  };
 
-  // Fallback: Try other possible cookie names
-  const possibleTokenNames = [
-    "accessToken",
+  // Prefer httpOnly backend cookie first (kept fresh on refresh), then fall back to legacy/client mirrors
+  const candidateNames = [
+    "accessToken", // backend httpOnly (preferred)
+    "token", // Next login httpOnly fallback
     "access_token",
     "authToken",
     "auth_token",
-    "token",
-    "socket_token",
     "jwt",
     "authorization",
+    "socket_token",
+    "authState", // last to avoid stale token overriding fresh accessToken
   ];
 
-  for (const tokenName of possibleTokenNames) {
-    const token = request.cookies.get(tokenName)?.value;
+  for (const name of candidateNames) {
+    const token = request.cookies.get(name)?.value;
+    if (!token || !token.trim()) continue;
 
-    if (token && token.trim()) {
-      // Basic JWT format validation
-      const parts = token.split(".");
-      if (parts.length === 3) {
-        try {
-          // Decode payload to check expiry
-          const payload = JSON.parse(atob(parts[1]));
-
-          // Check if token is expired
-          if (payload.exp && payload.exp * 1000 < Date.now()) {
-            continue;
-          }
-
-          return token;
-        } catch {
-          // If decoding fails (e.g., atob not available in Node), accept the token
-          return token;
-        }
-      }
+    const payload = decodePayload(token);
+    if (payload?.exp && payload.exp * 1000 < Date.now()) {
+      // expired
+      continue;
     }
+    return token;
   }
-
   return null;
 }
 

@@ -9,14 +9,25 @@ export default async function DashboardLayout({
 }) {
   // Server-side guard: verify via backend to align with new auth/session
   const c = await cookies();
-  const token = c.get("token")?.value;
+  const candidateNames = [
+    "accessToken",
+    "token",
+    "authState",
+    "access_token",
+    "authToken",
+    "auth_token",
+    "socket_token",
+  ];
+  const token = (candidateNames
+    .map((n) => c.get(n)?.value)
+    .find((v) => typeof v === "string" && v.trim()) || null) as string | null;
   if (!token) {
     redirect("/login");
   }
   try {
     const resp = await fetch(backendPath("/auth/verify"), {
       method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
       cache: "no-store",
     });
     if (!resp.ok) throw new Error("verify failed");

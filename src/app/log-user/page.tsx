@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, Fragment } from "react";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useLoginHistory } from "@/hooks/use-login-history";
@@ -862,7 +862,7 @@ export default function LogUserPage() {
                     </TableRow>
                   ) : (
                     menuAgg.map((parent) => (
-                      <>
+                      <Fragment key={parent.menu}>
                         <TableRow key={parent.menu} className="bg-muted/40">
                           <TableCell className="font-medium">
                             {parent.menu}
@@ -881,7 +881,7 @@ export default function LogUserPage() {
                             </TableCell>
                           </TableRow>
                         ))}
-                      </>
+                      </Fragment>
                     ))
                   )}
                 </TableBody>

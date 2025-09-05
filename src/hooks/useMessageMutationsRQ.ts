@@ -1,8 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { backendPath } from "@/lib/backend";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
+import { http } from "@/lib/httpClient";
 import { conversationKeys } from "./useConversationsRQ";
 import { messageKeys } from "./useMessagesRQ";
 import { useSocket } from "./useSocket";
@@ -87,42 +86,29 @@ export function useSendMessageMutation() {
       } catch (socketError) {
         // Socket failed, trying REST (silently fallback)
 
-        // Fallback to REST API
-        const token = getAuthTokenFromCookie();
-        const headers: HeadersInit = { "Content-Type": "application/json" };
-        if (token) headers.Authorization = `Bearer ${token}`;
-
-        const resp = await fetch(backendPath("/messaging/send"), {
-          method: "POST",
-          headers,
-          credentials: "include",
-          body: JSON.stringify({
-            // camelCase
-            recipientId,
-            conversationId,
-            content: content.trim(),
-            type: "text",
-            tempId,
-            senderId: currentUser?.id,
-            participant1Id: conversationId ? undefined : currentUser?.id,
-            participant2Id: conversationId ? undefined : recipientId,
-            // snake_case duplicates
-            recipient_id: recipientId,
-            conversation_id: conversationId,
-            message: content.trim(),
-            message_type: "text",
-            temp_id: tempId,
-            sender_id: currentUser?.id,
-            participant1_id: conversationId ? undefined : currentUser?.id,
-            participant2_id: conversationId ? undefined : recipientId,
-          }),
+        // Fallback to REST API via centralized Axios client
+        const resp = await http.post("/messaging/send", {
+          // camelCase
+          recipientId,
+          conversationId,
+          content: content.trim(),
+          type: "text",
+          tempId,
+          senderId: currentUser?.id,
+          participant1Id: conversationId ? undefined : currentUser?.id,
+          participant2Id: conversationId ? undefined : recipientId,
+          // snake_case duplicates
+          recipient_id: recipientId,
+          conversation_id: conversationId,
+          message: content.trim(),
+          message_type: "text",
+          temp_id: tempId,
+          sender_id: currentUser?.id,
+          participant1_id: conversationId ? undefined : currentUser?.id,
+          participant2_id: conversationId ? undefined : recipientId,
         });
 
-        if (!resp.ok) {
-          throw new Error(`HTTP ${resp.status}`);
-        }
-
-        const result = await resp.json();
+        const result = resp.data;
         if (!result.success) {
           throw new Error(result.error || "Send failed");
         }
@@ -397,30 +383,11 @@ export function useMarkAsReadMutation(conversationId?: string) {
         throw new Error("Message IDs required");
       }
 
-      const token = getAuthTokenFromCookie();
-      const headers: HeadersInit = { "Content-Type": "application/json" };
-      if (token) headers.Authorization = `Bearer ${token}`;
-
-      const resp = await fetch(
-        backendPath(`/messaging/conversations/${conversationId}/read`),
-        {
-          method: "PUT",
-          headers,
-          credentials: "include",
-          body: JSON.stringify({ messageIds }),
-        }
+      const resp = await http.put(
+        `/messaging/conversations/${conversationId}/read`,
+        { messageIds }
       );
-
-      const rawText = await resp.text();
-      if (!resp.ok) {
-        const snippet = rawText?.slice(0, 500) || "";
-        throw new Error(`HTTP ${resp.status}${snippet ? ": " + snippet : ""}`);
-      }
-      try {
-        return rawText ? JSON.parse(rawText) : {};
-      } catch {
-        return {} as any;
-      }
+      return resp.data ?? {};
     },
     onMutate: async (args) => {
       if (!conversationId) return;
@@ -509,22 +476,11 @@ export function useMarkAsOpenedMutation(conversationId?: string) {
         throw new Error("Message IDs required");
       }
 
-      const token = getAuthTokenFromCookie();
-      const headers: HeadersInit = { "Content-Type": "application/json" };
-      if (token) headers.Authorization = `Bearer ${token}`;
-
-      const resp = await fetch(
-        backendPath(`/messaging/conversations/${conversationId}/opened`),
-        {
-          method: "PUT",
-          headers,
-          credentials: "include",
-          body: JSON.stringify({ messageIds }),
-        }
+      const resp = await http.put(
+        `/messaging/conversations/${conversationId}/opened`,
+        { messageIds }
       );
-
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      return await resp.json().catch(() => ({}));
+      return resp.data ?? {};
     },
     onMutate: async (args) => {
       if (!conversationId) return;

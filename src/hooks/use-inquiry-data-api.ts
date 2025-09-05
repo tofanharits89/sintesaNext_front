@@ -2,7 +2,8 @@
 
 import { useState, useCallback } from "react";
 import { useInquiryQueryBuilder } from "./use-inquiry-query-builder";
-import { apiPath } from "@/lib/base-path";
+import { apiClient, http } from "@/lib/httpClient";
+import { backendPath } from "@/lib/backend";
 
 export interface QueryExecutionResult {
   success: boolean;
@@ -53,25 +54,16 @@ export function useInquiryDataApi() {
         // Encrypt the query
         const encryptedQuery = encryptQuery(sqlQuery);
 
-        // Send to API (respect basePath)
-        const response = await fetch(apiPath("/inquiry-data/query"), {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+        // Send to API via centralized client
+        const result = await apiClient.post<QueryExecutionResult>(
+          "/inquiry-data/query",
+          {
             encryptedQuery,
             format: "json",
             page: pagination?.page ?? 1,
             pageSize: pagination?.pageSize ?? 50,
-          }),
-        });
-
-        const result: QueryExecutionResult = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error || "Query execution failed");
-        }
+          }
+        );
 
         setLastResult(result);
         return result;
@@ -112,32 +104,21 @@ export function useInquiryDataApi() {
         // Encrypt the query
         const encryptedQuery = encryptQuery(sqlQuery);
 
-        // Send to API for CSV download (respect basePath)
-        const response = await fetch(apiPath("/inquiry-data/query"), {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+        // Send to API using axios with blob response
+        const { data: blob } = await http.post(
+          backendPath("/inquiry-data/query"),
+          {
             encryptedQuery,
             format: "csv",
             limit: 50000, // Higher limit for downloads
-          }),
-        });
+          },
+          { responseType: "blob" }
+        );
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "CSV download failed");
-        }
-
-        // Create download
-        const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `inquiry_data_${reportParams.tipeLaporan}_${
-          reportParams.tahun
-        }_${Date.now()}.csv`;
+        a.download = `inquiry_data_${reportParams.tipeLaporan}_${reportParams.tahun}_${Date.now()}.csv`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -171,16 +152,12 @@ export function useInquiryDataApi() {
         const sqlQuery = buildQuery(activeFilters, filterValues, reportParams);
         const encryptedQuery = encryptQuery(sqlQuery);
 
-        const response = await fetch(apiPath("/inquiry-data/query"), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ encryptedQuery, format: "excel" }),
-        });
-        const result: QueryExecutionResult = await response.json();
-        if (!response.ok || !result.success || !result.data) {
-          throw new Error(
-            result.error || "Failed to get data for Excel export"
-          );
+        const { data: result } = await http.post<QueryExecutionResult>(
+          backendPath("/inquiry-data/query"),
+          { encryptedQuery, format: "excel" }
+        );
+        if (!result.success || !result.data) {
+          throw new Error(result.error || "Failed to get data for Excel export");
         }
 
         const XLSX = await import("xlsx");
@@ -277,12 +254,10 @@ export function useInquiryDataApi() {
   // Test API connection
   const testConnection = useCallback(async (): Promise<boolean> => {
     try {
-      const response = await fetch("/api/inquiry-data/query", {
-        method: "GET",
-      });
-
-      const result = await response.json();
-      return result.success;
+      const result = await apiClient.get<{ success: boolean }>(
+        "/inquiry-data/query"
+      );
+      return !!result.success;
     } catch (error) {
       console.error("Connection test failed:", error);
       return false;

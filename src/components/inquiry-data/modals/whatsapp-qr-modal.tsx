@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Loader2, QrCode, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
-import { apiPath } from "@/lib/base-path";
+import { http } from "@/lib/httpClient";
 
 interface WhatsappQrModalProps {
   open: boolean;
@@ -35,13 +35,11 @@ export function WhatsappQrModal({ open, onOpenChange }: WhatsappQrModalProps) {
 
   async function fetchStatus() {
     try {
-      const resp = await fetch(apiPath("/whatsapp/status"), {
-        cache: "no-store",
-      });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data?.error || "Gagal memeriksa status");
-      setStatus(data.data || null);
-      return data.data as typeof status;
+      const resp = await http.get(`/whatsapp/status`);
+      const data = resp.data;
+      if (data?.success === false) throw new Error(data?.error || "Gagal memeriksa status");
+      setStatus(data?.data || null);
+      return data?.data as typeof status;
     } catch (e) {
       console.error("QR status error", e);
       return null;
@@ -51,11 +49,10 @@ export function WhatsappQrModal({ open, onOpenChange }: WhatsappQrModalProps) {
   async function fetchQr() {
     setLoading(true);
     try {
-      const resp = await fetch(apiPath("/whatsapp/qr"), { cache: "no-store" });
-      const data = await resp.json();
-      if (!resp.ok || !data.success)
-        throw new Error(data?.error || "QR tidak tersedia");
-      setQrText(data.data?.qr || null);
+      const resp = await http.get(`/whatsapp/qr`);
+      const data = resp.data;
+      if (!data?.success) throw new Error(data?.error || "QR tidak tersedia");
+      setQrText(data?.data?.qr || null);
     } catch (e) {
       console.error("QR fetch error", e);
       setQrText(null);

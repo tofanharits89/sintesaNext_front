@@ -1,52 +1,17 @@
 import { useMemo } from "react";
 import useSWR from "swr";
 import { User } from "./users-store";
-import { apiPath } from "./base-path";
-import { getAuthTokenFromCookie } from "../utils/auth-utils";
+import { apiClient } from "./httpClient";
 
-const fetcher = (url: string) => {
-  const token = getAuthTokenFromCookie();
-
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-  };
-
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  return fetch(url, {
-    credentials: "include",
-    headers,
-  })
-    .then(async (r) => {
-      // Check if response has content
-      const contentType = r.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        return { success: false, error: "Invalid response format" };
-      }
-
-      // Check if response body is empty
-      const text = await r.text();
-      if (!text.trim()) {
-        return { success: false, error: "Empty response" };
-      }
-
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        return { success: false, error: "Invalid JSON response" };
-      }
-    })
-    .catch((error) => {
-      throw error;
-    });
+// Fetcher hits backend directly so Axios interceptors handle CSRF and token refresh
+const fetcher = async () => {
+  return apiClient.get("/users/profile/me");
 };
 
 export function useCurrentUser() {
-  // Fetch current user's profile directly
+  // Fetch current user's profile directly from backend
   const { data: profileResp, mutate } = useSWR(
-    apiPath("/users/profile/me"),
+    "current-user-profile",
     fetcher
   );
 

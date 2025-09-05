@@ -18,7 +18,7 @@ import {
   useInquiryQueryBuilder,
   type FilterValue,
 } from "@/hooks/use-inquiry-query-builder";
-import { apiPath } from "@/lib/base-path";
+import { http } from "@/lib/httpClient";
 import { WhatsappQrModal } from "./whatsapp-qr-modal";
 
 interface WhatsappModalProps {
@@ -67,10 +67,8 @@ export function WhatsappModal({
     if (!open) return;
     (async () => {
       try {
-        const resp = await fetch(apiPath("/whatsapp/status"), {
-          cache: "no-store",
-        });
-        const data = await resp.json();
+        const resp = await http.get(`/whatsapp/status`);
+        const data = resp.data;
         setShowQr(!(data?.success && data?.data?.authenticated));
       } catch {
         setShowQr(true);
@@ -82,10 +80,8 @@ export function WhatsappModal({
     if (!selectedFileType || !phone) return;
     // If not authenticated, open QR modal instead of sending
     try {
-      const respStatus = await fetch(apiPath("/whatsapp/status"), {
-        cache: "no-store",
-      });
-      const statusData = await respStatus.json();
+      const respStatus = await http.get(`/whatsapp/status`);
+      const statusData = respStatus.data;
       const isAuthenticated = Boolean(
         statusData?.success && statusData?.data?.authenticated
       );
@@ -105,10 +101,8 @@ export function WhatsappModal({
         let becameReady = false;
         for (let i = 0; i < maxAttempts; i++) {
           await new Promise((r) => setTimeout(r, delayMs));
-          const resp = await fetch(apiPath("/whatsapp/status"), {
-            cache: "no-store",
-          });
-          const d = await resp.json();
+          const resp = await http.get(`/whatsapp/status`);
+          const d = resp.data;
           const readyNow = Boolean(d?.success && d?.data?.ready);
           const authNow = Boolean(d?.success && d?.data?.authenticated);
           if (!authNow) {
@@ -144,29 +138,25 @@ export function WhatsappModal({
       );
       const encryptedQuery = encryptQuery(sqlQuery);
 
-      const resp = await fetch(apiPath("/whatsapp/send"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          encryptedQuery,
-          fileType: selectedFileType === "excel" ? "excel" : "csv",
-          phone,
-          reportParams,
-          caption: `Inquiry Data ${
-            reportParams.scope === "tematik" ? "Tematik" : "Belanja"
-          } (Tahun: ${reportParams.tahun}, ${
-            reportParams.scope === "tematik" ? "Kategori" : "Tipe"
-          }: ${
-            reportParams.scope === "tematik"
-              ? reportParams.tematikKategori || "-"
-              : reportParams.tipeLaporan
-          })`,
-        }),
+      const resp = await http.post(`/whatsapp/send`, {
+        encryptedQuery,
+        fileType: selectedFileType === "excel" ? "excel" : "csv",
+        phone,
+        reportParams,
+        caption: `Inquiry Data ${
+          reportParams.scope === "tematik" ? "Tematik" : "Belanja"
+        } (Tahun: ${reportParams.tahun}, ${
+          reportParams.scope === "tematik" ? "Kategori" : "Tipe"
+        }: ${
+          reportParams.scope === "tematik"
+            ? reportParams.tematikKategori || "-"
+            : reportParams.tipeLaporan
+        })`,
       });
 
-      const data = await resp.json();
-      if (!resp.ok || !data.success) {
-        throw new Error(data.error || "Gagal mengirim WhatsApp");
+      const data = resp.data;
+      if (!data?.success) {
+        throw new Error(data?.error || data?.message || "Gagal mengirim WhatsApp");
       }
 
       // Confirm to user

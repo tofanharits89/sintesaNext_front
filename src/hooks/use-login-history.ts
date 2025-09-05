@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { apiPath } from "@/lib/base-path";
+import { http } from "@/lib/httpClient";
 
 interface LoginStats {
   date: string;
@@ -69,32 +69,22 @@ export const useLoginHistory = (): UseLoginHistoryReturn => {
     setError(null);
 
     try {
-      const response = await fetch(
-        apiPath(`/analytics/login-stats/weekly?days=${days}`),
-        {
-          method: "GET",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const resp = await http.get(`/analytics/login-stats/weekly`, { params: { days } });
+      const result = resp.data;
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      if (result.success) {
+      if (result?.success) {
         setWeeklyStats(result.data || []);
       } else {
-        throw new Error(result.message || "Failed to fetch weekly stats");
+        throw new Error(result?.message || "Failed to fetch weekly stats");
       }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to fetch weekly stats";
-      setError(errorMessage);
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const message =
+        err?.response?.data?.message || err?.message || "Failed to fetch weekly stats";
+      // Map some friendly messages
+      if (status === 401) setError("Sesi berakhir. Silakan login kembali.");
+      else if (status >= 500) setError("Server bermasalah. Coba lagi nanti.");
+      else setError(message);
       console.error("Error fetching weekly stats:", err);
     } finally {
       setIsLoading(false);
@@ -113,38 +103,22 @@ export const useLoginHistory = (): UseLoginHistoryReturn => {
       setError(null);
 
       try {
-        const params = new URLSearchParams({
-          limit: limit.toString(),
-          offset: offset.toString(),
-        });
+        const params: Record<string, string | number> = {
+          limit: limit,
+          offset: offset,
+        } as any;
+        if (startDate) (params as any).startDate = startDate;
+        if (endDate) (params as any).endDate = endDate;
+        if (userId) (params as any).userId = userId;
 
-        if (startDate) params.append("startDate", startDate);
-        if (endDate) params.append("endDate", endDate);
-        if (userId) params.append("userId", userId.toString());
+        const resp = await http.get(`/analytics/login-history`, { params });
+        const result: LoginHistoryResponse = resp.data;
 
-        const response = await fetch(
-          apiPath(`/analytics/login-history?${params}`),
-          {
-            method: "GET",
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result: LoginHistoryResponse = await response.json();
-
-        if (result.success) {
+        if (result?.success) {
           setLoginHistory(result.data || []);
           setPagination({
             currentPage:
-              Math.floor(result.pagination.offset / result.pagination.limit) +
-              1,
+              Math.floor(result.pagination.offset / result.pagination.limit) + 1,
             totalPages: Math.ceil(
               result.pagination.total / result.pagination.limit
             ),
@@ -154,10 +128,13 @@ export const useLoginHistory = (): UseLoginHistoryReturn => {
         } else {
           throw new Error("Failed to fetch login history");
         }
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Failed to fetch login history";
-        setError(errorMessage);
+      } catch (err: any) {
+        const status = err?.response?.status;
+        const message =
+          err?.response?.data?.message || err?.message || "Failed to fetch login history";
+        if (status === 401) setError("Sesi berakhir. Silakan login kembali.");
+        else if (status >= 500) setError("Server bermasalah. Coba lagi nanti.");
+        else setError(message);
         console.error("Error fetching login history:", err);
       } finally {
         setIsLoading(false);

@@ -1,7 +1,7 @@
-import { apiPath } from "./base-path";
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
 import { mutate as swrMutate } from "swr";
+import { http } from "@/lib/httpClient";
 
 export type NotificationType = "info" | "warning" | "success" | "error";
 export type NotificationPriority = "low" | "medium" | "high";
@@ -41,14 +41,34 @@ export type Notification = {
 };
 
 // Helpers
-async function fetchJSON(input: RequestInfo, init?: RequestInit) {
-  const resp = await fetch(input, init);
-  const data = await resp.json().catch(() => ({}));
-  if (!resp.ok || data?.success === false) {
-    const message = data?.message || "Request failed";
+async function fetchJSON(input: string, init?: RequestInit) {
+  // Map Fetch-like init to Axios request config
+  const method = (init?.method || "GET") as any;
+  const headers = init?.headers as any;
+  const data = init?.body ? tryParseJSON(init.body as any) : undefined;
+  try {
+    const resp = await http.request({ url: input, method, headers, data });
+    const payload = resp.data ?? {};
+    if (payload?.success === false) {
+      const message = payload?.message || "Request failed";
+      throw new Error(message);
+    }
+    return payload;
+  } catch (e: any) {
+    const message = e?.response?.data?.message || e?.message || "Request failed";
     throw new Error(message);
   }
-  return data;
+}
+
+function tryParseJSON(body: any) {
+  if (typeof body === "string") {
+    try {
+      return JSON.parse(body);
+    } catch {
+      return body;
+    }
+  }
+  return body;
 }
 
 function mapFromBackendItem(
@@ -105,9 +125,8 @@ function mapFromBackendItem(
 export async function getNotificationsForUser(
   username: string
 ): Promise<Notification[]> {
-  const data = await fetchJSON(apiPath("/notifications"), {
-    cache: "no-store",
-  });
+  const resp = await http.get(`/notifications`);
+  const data = resp.data;
   const items = data?.data?.notifications || [];
   return items.map((it: NotificationApiItem) =>
     mapFromBackendItem(it, username)
@@ -124,26 +143,22 @@ export async function getUnreadNotificationsForUser(
 export async function getUnreadNotificationCount(
   username: string
 ): Promise<number> {
-  const data = await fetchJSON(apiPath("/notifications/unread-count"), {
-    cache: "no-store",
-  });
-  return data?.data?.unread ?? 0;
+  const resp = await http.get(`/notifications/unread-count`);
+  return resp.data?.data?.unread ?? 0;
 }
 
 export async function markNotificationAsRead(
   notificationId: string,
   _username: string
 ): Promise<boolean> {
-  await fetchJSON(apiPath(`/notifications/${notificationId}/read`), {
-    method: "PUT",
-  });
+  await http.put(`/notifications/${notificationId}/read`, {});
   return true;
 }
 
 export async function markAllNotificationsAsRead(
   _username: string
 ): Promise<void> {
-  await fetchJSON(apiPath("/notifications/read/all"), { method: "PUT" });
+  await http.put(`/notifications/read/all`, {});
 }
 
 export async function createNotification(notification: {
@@ -163,11 +178,8 @@ export async function createNotification(notification: {
     recipients: notification.recipients,
     expiresAt: notification.expiresAt,
   };
-  const data = await fetchJSON(apiPath("/notifications"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  const resp = await http.post(`/notifications`, body);
+  const data = resp.data;
   const item = data?.data?.notification || data?.data || body;
   return mapFromBackendItem(item);
 }
@@ -175,16 +187,13 @@ export async function createNotification(notification: {
 export async function deleteNotification(
   notificationId: string
 ): Promise<boolean> {
-  await fetchJSON(apiPath(`/notifications/${notificationId}`), {
-    method: "DELETE",
-  });
+  await http.delete(`/notifications/${notificationId}`);
   return true;
 }
 
 export async function getAllNotifications(): Promise<Notification[]> {
-  const data = await fetchJSON(apiPath("/notifications/admin"), {
-    cache: "no-store",
-  });
+  const resp = await http.get(`/notifications/admin`);
+  const data = resp.data;
   const items = data?.data?.notifications || [];
   return items.map((it: NotificationApiItem) => mapFromBackendItem(it));
 }
@@ -195,9 +204,8 @@ export async function getNotificationStats(notificationId: string): Promise<{
   readPercentage: number;
 } | null> {
   // Fetch admin list and compute
-  const data = await fetchJSON(apiPath("/notifications/admin"), {
-    cache: "no-store",
-  });
+  const resp = await http.get(`/notifications/admin`);
+  const data = resp.data;
   const items = data?.data?.notifications || [];
   const item = items.find((x: any) => x.id === notificationId);
   if (!item) return null;
@@ -210,10 +218,11 @@ export async function getNotificationStats(notificationId: string): Promise<{
   let totalRecipients = 0;
   if (recipients === "all") {
     // Fetch users count
-    const usersResp = await fetchJSON(apiPath("/users"), { cache: "no-store" });
-    totalRecipients = Array.isArray(usersResp?.data)
-      ? usersResp.data.length
-      : usersResp?.data?.users?.length || 0;
+    const usersResp = await http.get(`/users`);
+    const uData = usersResp.data;
+    totalRecipients = Array.isArray(uData?.data)
+      ? uData.data.length
+      : uData?.data?.users?.length || 0;
   } else {
     totalRecipients = recipients.length;
   }
@@ -224,12 +233,14 @@ export async function getNotificationStats(notificationId: string): Promise<{
 }
 
 // SWR utilities
-const swrFetcher = (url: string) =>
-  fetch(url, { cache: "no-store" }).then((r) => r.json());
+const swrFetcher = async (url: string) => {
+  const resp = await http.get(url);
+  return resp.data;
+};
 
 // Admin notifications list hooks
 export function useAdminNotifications() {
-  const key = apiPath("/notifications/admin");
+  const key = `/notifications/admin`;
   const { data, error, isLoading, mutate } = useSWR(key, swrFetcher);
   const items = (data?.data?.notifications || []).map(
     (it: NotificationApiItem) => mapFromBackendItem(it)
@@ -239,17 +250,17 @@ export function useAdminNotifications() {
 
 export function useDeleteNotificationMutation() {
   // Key for invalidation should match the list key(s)
-  const listKey = apiPath("/notifications/admin");
+  const listKey = `/notifications/admin`;
   const { trigger, isMutating, error } = useSWRMutation(
-    (id: string) => apiPath(`/notifications/${id}`),
+    (id: string) => `/notifications/${id}`,
     async (
       key: (id: string) => string,
       { arg: _ }: Readonly<{ arg: never }>
     ) => {
       const url = key as unknown as string;
-      const resp = await fetch(url, { method: "DELETE" });
-      const data = await resp.json().catch(() => ({}));
-      if (!resp.ok || data?.success === false) {
+      const resp = await http.delete(url);
+      const data = resp.data ?? {};
+      if (data?.success === false) {
         throw new Error(data?.message || "Request failed");
       }
       await swrMutate(listKey);
@@ -261,7 +272,7 @@ export function useDeleteNotificationMutation() {
 
 // User notifications list hooks
 export function useUserNotifications(username?: string) {
-  const key = username ? apiPath("/notifications") : null;
+  const key = username ? `/notifications` : null;
   const { data, error, isLoading, mutate } = useSWR(key, swrFetcher);
   const items = (data?.data?.notifications || []).map(
     (it: NotificationApiItem) => mapFromBackendItem(it, username)

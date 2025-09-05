@@ -19,7 +19,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { apiPath, withBasePath } from "@/lib/base-path";
+import { withBasePath } from "@/lib/base-path";
+import { apiClient, prefetchCsrf } from "@/lib/httpClient";
 import { dispatchAuthEvent } from "@/utils/auth-utils";
 import Image from "next/image";
 
@@ -83,7 +84,7 @@ export default function LoginForm() {
   // Auto-regenerate captcha every 30 seconds
   useEffect(() => {
     if (!isClient) return;
-    
+
     const interval = setInterval(() => {
       setSeed(Math.random().toString(36).slice(2));
     }, 30000); // 30 seconds
@@ -106,16 +107,33 @@ export default function LoginForm() {
 
   async function onSubmit(values: z.infer<typeof schema>) {
     try {
-      const res = await fetch(apiPath("/auth/login"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ ...values, expectedCaptcha }),
-      });
-      const data = await res.json();
+      // Ensure CSRF token cookie is present before POST
+      await prefetchCsrf();
 
-      if (data.ok) {
+      // Post directly to backend so CSRF + cookies are handled by axios interceptors
+      const data = await apiClient.post("/auth/login", {
+        ...values,
+        expectedCaptcha,
+      });
+
+      if (data?.success) {
         toast.success("Berhasil masuk");
+
+        // Mirror tokens to frontend-visible cookies so Next middleware and client checks can see them
+        try {
+          const accessToken: string | undefined = data?.data?.accessToken;
+          const userName: string | undefined = data?.data?.user?.username;
+          if (accessToken) {
+            // Non-httpOnly mirrors (backend sets httpOnly cookies on its own origin)
+            document.cookie = `authState=${accessToken}; Path=/; SameSite=Lax`;
+            document.cookie = `socket_token=${accessToken}; Path=/; SameSite=Lax`;
+          }
+          if (userName) {
+            document.cookie = `auth_user=${encodeURIComponent(
+              userName
+            )}; Path=/; SameSite=Lax`;
+          }
+        } catch {}
 
         // Dispatch auth login event for socket system
         dispatchAuthEvent("login", {
@@ -123,7 +141,7 @@ export default function LoginForm() {
           timestamp: new Date().toISOString(),
         });
 
-        // Add a small delay to ensure cookies are set before redirect
+        // Small delay to ensure cookies are written before redirect
         await new Promise((resolve) => setTimeout(resolve, 250));
 
         router.push("/dashboard");

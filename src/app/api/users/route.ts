@@ -3,9 +3,20 @@ import type { NextRequest } from "next/server";
 import { backendPath } from "@/lib/backend";
 
 export async function GET(request: NextRequest) {
-  const token = request.cookies.get("token")?.value;
+  const cookieToken =
+    request.cookies.get("token")?.value ||
+    request.cookies.get("authState")?.value ||
+    request.cookies.get("accessToken")?.value ||
+    request.cookies.get("access_token")?.value ||
+    request.cookies.get("authToken")?.value ||
+    request.cookies.get("auth_token")?.value ||
+    request.cookies.get("socket_token")?.value ||
+    null;
 
-  if (!token) {
+  const fallbackAuth = request.headers.get("authorization");
+  const auth = fallbackAuth || (cookieToken ? `Bearer ${cookieToken}` : null);
+
+  if (!auth) {
     return NextResponse.json(
       { success: false, message: "No token found" },
       { status: 401 }
@@ -14,7 +25,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const resp = await fetch(backendPath("/users"), {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: auth },
     });
 
     const data = await resp.json().catch(() => ({}));
@@ -41,13 +52,32 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const token = request.cookies.get("token")?.value;
+  const cookieToken =
+    request.cookies.get("token")?.value ||
+    request.cookies.get("authState")?.value ||
+    request.cookies.get("accessToken")?.value ||
+    request.cookies.get("access_token")?.value ||
+    request.cookies.get("authToken")?.value ||
+    request.cookies.get("auth_token")?.value ||
+    request.cookies.get("socket_token")?.value ||
+    null;
+
+  const fallbackAuth = request.headers.get("authorization");
+  const auth = fallbackAuth || (cookieToken ? `Bearer ${cookieToken}` : null);
+
+  if (!auth) {
+    return NextResponse.json(
+      { success: false, message: "No token found" },
+      { status: 401 }
+    );
+  }
+
   const body = await request.json();
   const resp = await fetch(backendPath("/users"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: token ? `Bearer ${token}` : "",
+      Authorization: auth,
     },
     body: JSON.stringify(body),
   });
@@ -59,14 +89,33 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const token = request.cookies.get("token")?.value;
+  const cookieToken =
+    request.cookies.get("token")?.value ||
+    request.cookies.get("authState")?.value ||
+    request.cookies.get("accessToken")?.value ||
+    request.cookies.get("access_token")?.value ||
+    request.cookies.get("authToken")?.value ||
+    request.cookies.get("auth_token")?.value ||
+    request.cookies.get("socket_token")?.value ||
+    null;
+
+  const fallbackAuth = request.headers.get("authorization");
+  const auth = fallbackAuth || (cookieToken ? `Bearer ${cookieToken}` : null);
+
+  if (!auth) {
+    return NextResponse.json(
+      { success: false, message: "No token found" },
+      { status: 401 }
+    );
+  }
+
   const body = await request.json();
   const id = body?.id;
   const resp = await fetch(backendPath(`/users/${id}`), {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      Authorization: token ? `Bearer ${token}` : "",
+      Authorization: auth,
     },
     body: JSON.stringify(body),
   });
@@ -78,7 +127,26 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const token = request.cookies.get("token")?.value;
+  const cookieToken =
+    request.cookies.get("token")?.value ||
+    request.cookies.get("authState")?.value ||
+    request.cookies.get("accessToken")?.value ||
+    request.cookies.get("access_token")?.value ||
+    request.cookies.get("authToken")?.value ||
+    request.cookies.get("auth_token")?.value ||
+    request.cookies.get("socket_token")?.value ||
+    null;
+
+  const fallbackAuth = request.headers.get("authorization");
+  const auth = fallbackAuth || (cookieToken ? `Bearer ${cookieToken}` : null);
+
+  if (!auth) {
+    return NextResponse.json(
+      { success: false, message: "No token found" },
+      { status: 401 }
+    );
+  }
+
   const url = new URL(request.url);
   const id = url.searchParams.get("id");
   const ids = url.searchParams.getAll("ids");
@@ -87,7 +155,7 @@ export async function DELETE(request: NextRequest) {
   if (id) {
     const resp = await fetch(backendPath(`/users/${id}`), {
       method: "DELETE",
-      headers: { Authorization: token ? `Bearer ${token}` : "" },
+      headers: { Authorization: auth },
     });
     status = resp.ok ? 200 : 400;
     payload = { ok: resp.ok };
@@ -97,7 +165,7 @@ export async function DELETE(request: NextRequest) {
     for (const uid of ids) {
       const resp = await fetch(backendPath(`/users/${uid}`), {
         method: "DELETE",
-        headers: { Authorization: token ? `Bearer ${token}` : "" },
+        headers: { Authorization: auth },
       });
       if (resp.ok) deleted++;
     }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { CarisatkerData } from "@/types/satker";
 import { apiPath } from "@/lib/base-path";
+import { http } from "@/lib/httpClient";
 
 export function useSatkerData(kdsatker?: string) {
   const [data, setData] = useState<CarisatkerData | null>(null);
@@ -15,16 +16,15 @@ export function useSatkerData(kdsatker?: string) {
       setError(null);
 
       try {
-        const response = await fetch(apiPath(`/satker/${kdsatker}`));
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.message || "Failed to fetch satker data");
+        const resp = await http.get(apiPath(`/satker/${kdsatker}`));
+        const result = resp.data;
+        if (result?.success === false) {
+          throw new Error(result?.message || "Failed to fetch satker data");
         }
-
-        setData(result.data || result);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
+        setData(result.data || result || null);
+      } catch (err: any) {
+        const message = err?.response?.data?.message || err?.message || "An error occurred";
+        setError(message);
         setData(null);
       } finally {
         setLoading(false);
@@ -52,18 +52,15 @@ export function useSatkerSearch() {
     setError(null);
 
     try {
-      const response = await fetch(
-        apiPath(`/satker?search=${encodeURIComponent(searchTerm)}`)
-      );
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to search satker data");
+      const resp = await http.get(apiPath(`/satker`), { params: { search: searchTerm } });
+      const result = resp.data;
+      if (result?.success === false) {
+        throw new Error(result?.message || "Failed to search satker data");
       }
-
       setResults(result.data || result || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+    } catch (err: any) {
+      const message = err?.response?.data?.message || err?.message || "An error occurred";
+      setError(message);
       setResults([]);
     } finally {
       setLoading(false);

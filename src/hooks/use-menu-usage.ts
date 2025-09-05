@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { apiPath } from "@/lib/base-path";
+import { http } from "@/lib/httpClient";
 
 export type AggregatedMenuItem = {
   menu: string;
@@ -20,16 +20,16 @@ export function useMenuUsageTop(defaultMonth?: string, defaultLimit: number = 50
     setIsLoading(true);
     setError(null);
     try {
-      const url = new URL(apiPath("/analytics/menu-usage/top"), window.location.origin);
-      url.searchParams.set("month", m);
-      url.searchParams.set("limit", String(l));
-      const resp = await fetch(url.toString(), { credentials: "include" });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const json = await resp.json();
-      if (!json.success) throw new Error(json.message || "Failed to fetch top menu usage");
+      const resp = await http.get(`/analytics/menu-usage/top`, { params: { month: m, limit: l } });
+      const json = resp.data;
+      if (!json?.success) throw new Error(json?.message || "Failed to fetch top menu usage");
       setData(json.data || []);
     } catch (e: any) {
-      setError(e.message || "Failed to fetch menu usage");
+      const status = e?.response?.status;
+      const message = e?.response?.data?.message || e?.message || "Failed to fetch menu usage";
+      if (status === 401) setError("Sesi berakhir. Silakan login kembali.");
+      else if (status >= 500) setError("Server bermasalah. Coba lagi nanti.");
+      else setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -44,13 +44,8 @@ export function useMenuUsageTop(defaultMonth?: string, defaultLimit: number = 50
 
 export async function trackMenuUsage(params: { menu: string; submenu?: string; path?: string }) {
   try {
-    await fetch(apiPath("/analytics/menu-usage"), {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(params),
-      keepalive: true, // allow to send during navigation/unload
-    });
+    // Fire-and-forget tracking; Axios doesn't support keepalive. It's okay to swallow errors.
+    await http.post(`/analytics/menu-usage`, params);
   } catch {
     // swallow errors, tracking should never block UI
   }

@@ -30,8 +30,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { KmkPenundaanListModal } from "./kmk-penundaan-list-modal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { backendPath } from "@/lib/backend";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
+import { http } from "@/lib/httpClient";
 
 interface PencabutanModalProps {
   open: boolean;
@@ -61,19 +60,11 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
     useQuery<{ no_kmk: string }[]>({
       queryKey: ["dasar-penundaan-options"],
       queryFn: async () => {
-        const token = getAuthTokenFromCookie();
-        const headers: HeadersInit = { "Content-Type": "application/json" };
-        if (token) headers.Authorization = `Bearer ${token}`;
-        const res = await fetch(
-          backendPath("/transfer-daerah/dau/kmk/penundaan/dasar"),
-          {
-            credentials: "include",
-            headers,
-            signal: AbortSignal.timeout(20000),
-          }
-        );
-        if (!res.ok) throw new Error("Failed to fetch Dasar Penundaan options");
-        const json = await res.json();
+        const res = await http.get(`/transfer-daerah/dau/kmk/penundaan/dasar`, {
+          signal: AbortSignal.timeout(20000),
+        });
+        const json = res.data;
+        if (json?.success === false) throw new Error(json?.message || "Failed to fetch Dasar Penundaan options");
         return (json?.data as { no_kmk: string }[]) ?? [];
       },
       staleTime: 5 * 60 * 1000,
@@ -81,10 +72,6 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
 
   const handleSubmit = async () => {
     try {
-      const token = getAuthTokenFromCookie();
-      const headers: HeadersInit = { "Content-Type": "application/json" };
-      if (token) headers.Authorization = `Bearer ${token}`;
-
       // Map fields to backend payload
       const payload = {
         kmktunda: formData.dasarPenundaan?.trim(),
@@ -97,20 +84,12 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
           : "",
         uraiancabut: formData.uraianKmk?.trim() || null,
       };
-
-      const res = await fetch(
-        backendPath("/transfer-daerah/dau/kmk/penundaan"),
-        {
-          method: "POST",
-          credentials: "include",
-          headers,
-          body: JSON.stringify(payload),
-          signal: AbortSignal.timeout(20000),
-        }
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.message || "Gagal menyimpan data pencabutan");
+      const res = await http.post(`/transfer-daerah/dau/kmk/penundaan`, payload, {
+        signal: AbortSignal.timeout(20000),
+      });
+      const json = res.data;
+      if (json?.success === false) {
+        throw new Error(json?.message || "Gagal menyimpan data pencabutan");
       }
 
       // Invalidate list to refresh

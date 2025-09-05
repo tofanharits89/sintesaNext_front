@@ -34,8 +34,7 @@ import { VirtualizedSelect } from "@/components/ui/virtualized-select";
 import jenisKMK from "@/data/jeniskmk_tkd.json";
 import kriteriaKMK from "@/data/jeniskriteria_tkd.json";
 import kppnList from "@/data/kdkppn_tkd.json";
-import { backendPath } from "@/lib/backend";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
+import { http } from "@/lib/httpClient";
 import { useDasarPenundaanOptions } from "@/hooks/use-dasar-penundaan";
 import { useDasarPencabutanOptions } from "@/hooks/use-dasar-pencabutan";
 import { useKppnByNoKmk } from "@/hooks/use-kppn-by-nokmk";
@@ -84,11 +83,7 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
   const handleSubmit = async () => {
     try {
       setSubmitting(true);
-      const token = getAuthTokenFromCookie();
-      const authHeaders: HeadersInit = {};
-      if (token) authHeaders["Authorization"] = `Bearer ${token}`;
-
-      let resp: Response;
+      let data: any;
       if (formData.jenis === "3") {
         // Create KMK Pencabutan (Penundaan) row
         const payload = {
@@ -103,12 +98,8 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
           kdkppn: formData.kppn || undefined,
           kdpemda: formData.kabkota || undefined,
         };
-        resp = await fetch(backendPath("/transfer-daerah/dau/kmk/penundaan"), {
-          method: "POST",
-          headers: { ...authHeaders, "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(payload),
-        });
+        const resp = await http.post(`/transfer-daerah/dau/kmk/penundaan`, payload);
+        data = resp.data;
       } else {
         // Build multipart form data for upload (KMK DAU create)
         const fd = new FormData();
@@ -126,21 +117,11 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
         if (formData.file) {
           fd.append("file", formData.file);
         }
-
-        resp = await fetch(backendPath("/transfer-daerah/dau/kmk"), {
-          method: "POST",
-          headers: authHeaders,
-          credentials: "include",
-          body: fd,
-        });
+        const resp = await http.post(`/transfer-daerah/dau/kmk`, fd);
+        data = resp.data;
       }
-      const text = await resp.text();
-      if (!resp.ok) {
-        let msg = `HTTP ${resp.status}`;
-        try {
-          const j = JSON.parse(text);
-          msg = j?.message || j?.error || msg;
-        } catch {}
+      if (data?.success === false) {
+        const msg = data?.message || data?.error || "Gagal menyimpan data KMK";
         throw new Error(msg);
       }
 

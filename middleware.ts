@@ -78,19 +78,28 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Check multiple cookie names - this might be the issue!
-  const tokenCookie = request.cookies.get("token")?.value;
-  const authStateCookie = request.cookies.get("authState")?.value;
+  // Check multiple cookie names - prefer backend httpOnly accessToken first
+  const accessTokenCookie = request.cookies.get("accessToken")?.value;
+  const accessTokenAltCookie = request.cookies.get("access_token")?.value;
+  const tokenCookie = request.cookies.get("token")?.value; // legacy Next login cookie
+  const authStateCookie = request.cookies.get("authState")?.value; // client-readable mirror
   const socketTokenCookie = request.cookies.get("socket_token")?.value;
   const authUserCookie = request.cookies.get("auth_user")?.value;
 
-  // Try the primary token first, then fallbacks
+  // Try the primary token first (backend-issued), then fallbacks
   const token =
-    tokenCookie || authStateCookie || socketTokenCookie || authUserCookie;
+    accessTokenCookie ||
+    accessTokenAltCookie ||
+    tokenCookie ||
+    authStateCookie ||
+    socketTokenCookie ||
+    authUserCookie;
 
   console.log("[Middleware Debug] Cookie analysis:", {
     path: pathname,
     relPath,
+    accessTokenCookie: accessTokenCookie ? "present" : "missing",
+    accessTokenAltCookie: accessTokenAltCookie ? "present" : "missing",
     tokenCookie: tokenCookie ? "present" : "missing",
     authStateCookie: authStateCookie ? "present" : "missing",
     socketTokenCookie: socketTokenCookie ? "present" : "missing",
@@ -116,19 +125,19 @@ export async function middleware(request: NextRequest) {
   // Handle root path: redirect to appropriate base path
   if (relPath === "/") {
     const url = request.nextUrl.clone();
-    url.pathname = `${BASE_PATH}${isAuth ? "/dashboard" : "/login"}`;
+    url.pathname = isAuth ? "/dashboard" : "/login";
     return NextResponse.redirect(url);
   }
 
   if (!isAuth && !isPublicPath) {
     const url = request.nextUrl.clone();
-    url.pathname = `${BASE_PATH}/login`;
+    url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
   if (isAuth && relPath.startsWith("/login")) {
     const url = request.nextUrl.clone();
-    url.pathname = `${BASE_PATH}/dashboard`;
+    url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 
