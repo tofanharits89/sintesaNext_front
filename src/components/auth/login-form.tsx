@@ -20,7 +20,8 @@ import { Info } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { withBasePath } from "@/lib/base-path";
-import { apiClient, prefetchCsrf } from "@/lib/httpClient";
+import { prefetchCsrf } from "@/lib/httpClient";
+import { apiPath } from "@/lib/base-path";
 import { dispatchAuthEvent } from "@/utils/auth-utils";
 import Image from "next/image";
 
@@ -110,13 +111,18 @@ export default function LoginForm() {
       // Ensure CSRF token cookie is present before POST
       await prefetchCsrf();
 
-      // Post directly to backend so CSRF + cookies are handled by axios interceptors
-      const data = await apiClient.post("/auth/login", {
-        ...values,
-        expectedCaptcha,
+      // Post to Next API proxy so cookies/CSRF are handled and Set-Cookie is forwarded
+      const resp = await fetch(apiPath("/auth/login"), {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...values, expectedCaptcha }),
       });
+      const data = await resp.json().catch(() => ({}));
 
-      if (data?.success) {
+      const success =
+        data?.success ?? data?.ok ?? (resp.ok && resp.status === 200);
+      if (success) {
         toast.success("Berhasil masuk");
 
         // Mirror tokens to frontend-visible cookies so Next middleware and client checks can see them

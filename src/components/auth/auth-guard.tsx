@@ -3,29 +3,20 @@ import { redirect } from "next/navigation";
 import { backendPath } from "@/lib/backend";
 
 export async function AuthGuard({ children }: { children: React.ReactNode }) {
-  // Server-side guard: verify via backend
+  // Server-side guard: verify via backend by forwarding cookies (cookie-only auth)
   const c = await cookies();
-  const candidateNames = [
-    "accessToken",
-    "token",
-    "authState",
-    "access_token",
-    "authToken",
-    "auth_token",
-    "socket_token",
-  ];
-  const token = (candidateNames
-    .map((n) => c.get(n)?.value)
-    .find((v) => typeof v === "string" && v.trim()) || null) as string | null;
-
-  if (!token) {
+  const cookieHeader = c
+    .getAll()
+    .map(({ name, value }) => `${name}=${value}`)
+    .join("; ");
+  if (!cookieHeader) {
     redirect("/login");
   }
 
   try {
     const resp = await fetch(backendPath("/auth/verify"), {
       method: "GET",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: cookieHeader ? { cookie: cookieHeader } : {},
       // Avoid caching SSR verification
       cache: "no-store",
     });

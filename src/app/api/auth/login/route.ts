@@ -16,53 +16,86 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "Invalid captcha" });
   }
 
-  // Call backend login API
+  // Call backend login API and forward Set-Cookie headers
+  let cookie = request.headers.get("cookie") || "";
+  let xsrf =
+    request.cookies.get("XSRF-TOKEN")?.value ||
+    request.cookies.get("_csrf")?.value;
+
+  // If no XSRF token present, prime it by calling backend /csrf-token and reuse its cookies for login
+  let csrfSetCookies: string[] = [];
+  if (!xsrf) {
+    const csrfResp = await fetch(backendPath("/csrf-token"), {
+      method: "GET",
+      headers: { ...(cookie ? { cookie } : {}) },
+      credentials: "include",
+      cache: "no-store",
+    });
+    // Collect Set-Cookie values to forward to client later
+    for (const [k, v] of csrfResp.headers)
+      if (k.toLowerCase() === "set-cookie") csrfSetCookies.push(v);
+    // Try to extract XSRF-TOKEN value from Set-Cookie
+    const xsrfCookie = csrfSetCookies.find((c) => c.startsWith("XSRF-TOKEN="));
+    if (xsrfCookie) {
+      const nameValue = xsrfCookie.split(";")[0]; // XSRF-TOKEN=...
+      xsrf = nameValue.split("=")[1];
+      // Merge cookies for the subsequent login fetch
+      const newCookies = csrfSetCookies.map((c) => c.split(";")[0]).join("; ");
+      cookie = [cookie, newCookies].filter(Boolean).join("; ");
+    }
+  }
+
   const resp = await fetch(backendPath("/auth/login"), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(cookie ? { cookie } : {}),
+      ...(xsrf ? { "X-CSRF-Token": xsrf } : {}),
+    },
     body: JSON.stringify({ username, password }),
+    // Ensure cookies from backend are included so Next can forward them
+    credentials: "include",
   });
 
   const data = await resp.json().catch(() => ({}));
   if (!resp.ok || !data?.success) {
-    return NextResponse.json(
+    const errRes = NextResponse.json(
       { ok: false, error: data?.message || "Login failed" },
-      { status: 200 }
+      { status: resp.status || 401 }
     );
+    // Forward any Set-Cookie headers (e.g., partial cookies) from backend even on failure
+    for (const [key, value] of resp.headers) {
+      if (key.toLowerCase() === "set-cookie")
+        errRes.headers.append("set-cookie", value);
+    }
+    return errRes;
   }
 
-  const res = NextResponse.json({
+  // Collect Set-Cookie headers and extract accessToken value
+  const setCookieValues: string[] = [];
+  for (const [key, value] of resp.headers) {
+    if (key.toLowerCase() === "set-cookie") setCookieValues.push(value);
+  }
+
+  let accessTokenFromCookie: string | undefined = undefined;
+  const candidate = setCookieValues.find((v) => v.includes("accessToken="));
+  if (candidate) {
+    const firstPart = candidate.split(";")[0]; // accessToken=...
+    const eqIdx = firstPart.indexOf("=");
+    if (eqIdx > -1) accessTokenFromCookie = firstPart.slice(eqIdx + 1);
+  }
+
+  const user = data?.data?.user || null;
+  const responseBody = {
     ok: true,
-    username: data.data?.user?.username || username,
-  });
+    success: true,
+    username: user?.username || username,
+    data: { user, accessToken: accessTokenFromCookie },
+  };
 
-  // Set cookies for compatibility with existing middleware/auth-guard
-  if (data.data?.accessToken) {
-    // Main token for server-side authentication (httpOnly for security)
-    res.cookies.set("token", data.data.accessToken, {
-      httpOnly: true,
-      sameSite: "lax",
-      path: "/",
-    });
-    // Socket token for client-side socket authentication (non-httpOnly)
-    res.cookies.set("socket_token", data.data.accessToken, {
-      httpOnly: false,
-      sameSite: "lax",
-      path: "/",
-    });
-    // Auth state token for frontend authentication checking (non-httpOnly, matches backend)
-    res.cookies.set("authState", data.data.accessToken, {
-      httpOnly: false,
-      sameSite: "lax",
-      path: "/",
-    });
-  }
-  if (data.data?.user?.username) {
-    res.cookies.set("auth_user", data.data.user.username, {
-      httpOnly: false,
-      path: "/",
-    });
-  }
+  const res = NextResponse.json(responseBody, { status: 200 });
+  // Forward all Set-Cookie headers to client
+  for (const v of setCookieValues) res.headers.append("set-cookie", v);
 
   return res;
 }

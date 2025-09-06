@@ -1,6 +1,7 @@
 "use client";
 
 import { parse } from "cookie";
+import { apiPath } from "@/lib/base-path";
 
 /**
  * Get authentication token from cookies
@@ -171,7 +172,7 @@ export async function refreshAccessToken(): Promise<{
       return { success: false, error: "No refresh token available" };
     }
 
-    const response = await fetch("/api/v1/auth/refresh", {
+    const response = await fetch(apiPath("/auth/refresh"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

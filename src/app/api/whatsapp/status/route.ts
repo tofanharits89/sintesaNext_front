@@ -5,22 +5,18 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    // Accept token from cookie or Authorization header (fallback)
-    const cookieToken = request.cookies.get("token")?.value;
-    const fallbackAuth = request.headers.get("authorization");
-    const auth = fallbackAuth || (cookieToken ? `Bearer ${cookieToken}` : null);
-    if (!auth) {
+    // Forward Cookie header to backend; rely on httpOnly cookies
+    const cookie = request.headers.get("cookie") || "";
+    if (!cookie) {
       return NextResponse.json(
-        { success: false, message: "No token" },
+        { success: false, message: "No session" },
         { status: 401 }
       );
     }
 
     const resp = await fetch(backendPath("/whatsapp/status"), {
       method: "GET",
-      headers: {
-        Authorization: auth,
-      },
+      headers: cookie ? { cookie } : {},
       cache: "no-store",
     });
 

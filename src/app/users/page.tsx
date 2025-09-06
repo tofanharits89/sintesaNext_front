@@ -187,10 +187,46 @@ export default function UsersPage() {
       body: JSON.stringify(bodyPayload),
     });
     if (!res.ok) {
-      // Try to surface backend error for easier debugging
+      // Try to surface backend error for easier debugging and localize password policy errors
       try {
         const err = await res.json();
-        toast.error(err?.message || "Gagal menyimpan pengguna");
+        const enMsg = err?.message || "";
+        const errors: string[] = Array.isArray(err?.errors) ? err.errors : [];
+
+        const translateLine = (s: string) => {
+          const map: Record<string, string> = {
+            "Password must be at least 12 characters long":
+              "Password harus minimal 12 karakter",
+            "Password must contain at least one uppercase letter":
+              "Password harus mengandung setidaknya satu huruf besar",
+            "Password must contain at least one number":
+              "Password harus mengandung setidaknya satu angka",
+            "Password must contain at least one special character":
+              "Password harus mengandung setidaknya satu karakter khusus",
+          };
+          return map[s] || s;
+        };
+
+        if (
+          enMsg === "Password does not meet complexity requirements" ||
+          (errors.length > 0 && /Password/.test(enMsg))
+        ) {
+          const title = "Password tidak memenuhi persyaratan kompleksitas";
+          // Tampilkan poin tetap sesuai permintaan pengguna
+          toast.error(title, {
+            description: (
+              <ol className="list-decimal pl-5">
+                <li>Minimal 12 karakter.</li>
+                <li>Mengandung huruf besar.</li>
+                <li>Mengandung angka.</li>
+                <li>Mengandung karakter khusus.</li>
+              </ol>
+            ),
+            duration: 12000,
+          });
+        } else {
+          toast.error(enMsg || "Gagal menyimpan pengguna");
+        }
       } catch {
         toast.error("Gagal menyimpan pengguna");
       }

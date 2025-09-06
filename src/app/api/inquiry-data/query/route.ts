@@ -3,10 +3,10 @@ import { backendPath } from "@/lib/backend";
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.cookies.get("token")?.value;
-    if (!token) {
+    const cookie = request.headers.get("cookie") || "";
+    if (!cookie) {
       return NextResponse.json(
-        { success: false, message: "No token" },
+        { success: false, message: "No session" },
         { status: 401 }
       );
     }
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        ...(cookie ? { cookie } : {}),
       },
       body: JSON.stringify(body),
     });
@@ -42,10 +42,10 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get("token")?.value;
+    const cookie = request.headers.get("cookie") || "";
     const resp = await fetch(backendPath("/inquiry-data/query"), {
       method: "GET",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: cookie ? { cookie } : {},
       cache: "no-store",
     });
     const data = await resp.json().catch(() => ({}));

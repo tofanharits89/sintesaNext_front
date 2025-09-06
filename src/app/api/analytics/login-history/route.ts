@@ -1,23 +1,22 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { backendPath } from '@/lib/backend';
+import { NextRequest, NextResponse } from "next/server";
+import { backendPath } from "@/lib/backend";
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get('token')?.value;
-    
-    if (!token) {
+    const cookie = request.headers.get("cookie") || "";
+    if (!cookie) {
       return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
+        { success: false, message: "Unauthorized" },
         { status: 401 }
       );
     }
 
     const { searchParams } = new URL(request.url);
-    const limit = searchParams.get('limit') || '20';
-    const offset = searchParams.get('offset') || '0';
-    const startDate = searchParams.get('startDate');
-    const endDate = searchParams.get('endDate');
-    const userId = searchParams.get('userId');
+    const limit = searchParams.get("limit") || "20";
+    const offset = searchParams.get("offset") || "0";
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
+    const userId = searchParams.get("userId");
 
     // Build query parameters
     const queryParams = new URLSearchParams({
@@ -25,17 +24,17 @@ export async function GET(request: NextRequest) {
       offset,
     });
 
-    if (startDate) queryParams.append('startDate', startDate);
-    if (endDate) queryParams.append('endDate', endDate);
-    if (userId) queryParams.append('userId', userId);
+    if (startDate) queryParams.append("startDate", startDate);
+    if (endDate) queryParams.append("endDate", endDate);
+    if (userId) queryParams.append("userId", userId);
 
     const response = await fetch(
-      `${backendPath('/analytics/login-history')}?${queryParams.toString()}`,
+      `${backendPath("/analytics/login-history")}?${queryParams.toString()}`,
       {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          ...(cookie ? { cookie } : {}),
+          "Content-Type": "application/json",
         },
       }
     );
@@ -43,10 +42,10 @@ export async function GET(request: NextRequest) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { 
-          success: false, 
-          message: errorData.message || 'Failed to fetch login history',
-          error: errorData.error 
+        {
+          success: false,
+          message: errorData.message || "Failed to fetch login history",
+          error: errorData.error,
         },
         { status: response.status }
       );
@@ -55,12 +54,12 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Login history API error:', error);
+    console.error("Login history API error:", error);
     return NextResponse.json(
-      { 
-        success: false, 
-        message: 'Internal server error',
-        error: error instanceof Error ? error.message : 'Unknown error'
+      {
+        success: false,
+        message: "Internal server error",
+        error: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );

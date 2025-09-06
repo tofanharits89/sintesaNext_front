@@ -47,7 +47,7 @@ export default function RootLayout({
             <CheckBackend />
             <AppShell>{children}</AppShell>
             <ConnectionStatus />
-            <Toaster richColors position="bottom-left" />
+            <Toaster richColors position="bottom-left"/>
             {/* Optionally show a top-of-page banner when server down via client routes */}
             {/* <ServerDownBanner /> */}
           </ThemeProvider>

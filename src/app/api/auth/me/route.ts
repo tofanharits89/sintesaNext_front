@@ -3,14 +3,13 @@ import type { NextRequest } from "next/server";
 import { backendPath } from "@/lib/backend";
 
 export async function GET(request: NextRequest) {
-  const token = request.cookies.get("token")?.value;
-  if (!token)
-    return NextResponse.json({ ok: false, username: null }, { status: 200 });
+  // Forward client cookies to backend; rely on backend to read httpOnly cookies
+  const cookie = request.headers.get("cookie") || "";
 
-  // Verify token on backend (optional) and fetch user profile
   const resp = await fetch(backendPath("/auth/me"), {
     method: "GET",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: cookie ? { cookie } : {},
+    cache: "no-store",
   });
   const data = await resp.json().catch(() => ({}));
 
@@ -18,7 +17,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: false, data: null }, { status: 200 });
   }
 
-  // Return full user object to clients for consistent profile display
   const user = data.data?.user || data.data;
   return NextResponse.json({ success: true, data: user }, { status: 200 });
 }

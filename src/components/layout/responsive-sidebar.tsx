@@ -45,7 +45,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 
 export type MenuItem = {
   label: string;
@@ -84,16 +84,14 @@ const defaultMenu: MenuItem[] = [
   {
     label: "Transfer Daerah",
     children: [
-      { label: "Proyeksi TKD" },
-      { label: "Upload Laporan" },
       { label: "DAU" },
+      { label: "Upload Laporan" },
+      { label: "Proyeksi TKD" },
     ],
   },
   {
     label: "Inquiry Data",
     children: [
-      { label: "Permintaan" },
-      { label: "Riwayat" },
       { label: "Belanja" },
       { label: "Tematik" },
     ],
@@ -212,7 +210,7 @@ export function ResponsiveSidebar({
       case "Inquiry Data__Riwayat":
         return <History className={cls} />;
       case "Inquiry Data__Belanja":
-        return <Search className={cls} />;
+        return <Database className={cls} />;
       case "Inquiry Data__Tematik":
         return <Database className={cls} />;
       case "Laporan__Bulanan":
@@ -555,6 +553,7 @@ export function ResponsiveSidebar({
             </div>
           </div>
           <SheetContent side="left" className="p-0">
+            <SheetTitle className="sr-only">Menu</SheetTitle>
             <div className="p-2 overflow-y-auto max-h-screen">
               {menu.map((m) => (
                 <div key={m.label} className="border-b">

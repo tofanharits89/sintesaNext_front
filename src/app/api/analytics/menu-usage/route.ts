@@ -4,12 +4,12 @@ import { backendPath } from "@/lib/backend";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const token = req.cookies.get("token")?.value;
+    const cookie = req.headers.get("cookie") || "";
     const resp = await fetch(backendPath("/analytics/menu-usage"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(cookie ? { cookie } : {}),
       },
       body: JSON.stringify(body),
       cache: "no-store",

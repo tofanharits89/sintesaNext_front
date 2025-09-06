@@ -4,14 +4,14 @@ import { backendPath } from "@/lib/backend";
 import { getToken } from "./_shared";
 
 export async function GET(request: NextRequest) {
-  const token = getToken(request);
+  const cookie = request.headers.get("cookie") || "";
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search");
   const limit = searchParams.get("limit") || "20";
 
-  if (!token) {
+  if (!cookie) {
     return NextResponse.json(
-      { success: false, message: "No token found" },
+      { success: false, message: "No session" },
       { status: 401 }
     );
   }
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     }
 
     const resp = await fetch(backendPath(apiPath), {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { ...(cookie ? { cookie } : {}) },
     });
 
     const data = await resp.json().catch(() => ({}));

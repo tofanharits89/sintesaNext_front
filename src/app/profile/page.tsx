@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useCurrentUser } from "@/lib/use-current-user";
-import { apiPath } from "@/lib/base-path";
+import { apiClient, prefetchCsrf } from "@/lib/httpClient";
 import { User } from "@/lib/users-store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-// Removed unused Separator import
 import { toast } from "sonner";
 import kdkanwilData from "@/data/kdkanwil.json";
 import kdkppnData from "@/data/kdkppn.json";
@@ -36,6 +35,11 @@ export default function ProfilePage() {
   const [kdkppn, setKdkppn] = useState("");
   const [nmkanwil, setNmkanwil] = useState("");
   const [nmkppn, setNmkppn] = useState("");
+
+  // Password change state
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
 
   // Profile picture preview (local-only). In production, upload to storage and save URL.
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
@@ -113,17 +117,12 @@ export default function ProfilePage() {
     }
 
     try {
-      const res = await fetch(apiPath("/users/profile/me"), {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || data?.success === false) {
+      // Ensure CSRF token is present (interceptor also fetches if missing)
+      await prefetchCsrf();
+      const data = await apiClient.put<any>("/users/profile/me", payload);
+      if (!data || data?.success === false) {
         const message =
-          data?.message || data?.error || "Gagal menyimpan profil";
+          data?.message || (data as any)?.error || "Gagal menyimpan profil";
         toast.error(message);
         return;
       }
@@ -133,6 +132,98 @@ export default function ProfilePage() {
       toast.error(
         e instanceof Error ? e.message : "Terjadi kesalahan jaringan"
       );
+    }
+  }
+
+  async function onChangePassword() {
+    if (!current) {
+      toast.error("Profil tidak ditemukan");
+      return;
+    }
+    if (!newPassword || !confirmPassword) {
+      toast.error("Mohon isi password baru dan konfirmasi password");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Konfirmasi password tidak cocok");
+      return;
+    }
+    if (newPassword.length < 12) {
+      toast.error("Password minimal 12 karakter sesuai kebijakan keamanan");
+      return;
+    }
+
+    try {
+      setChangingPassword(true);
+      await prefetchCsrf();
+      const data = await apiClient.put<any>("/users/profile/me", {
+        password: newPassword,
+      });
+      if (!data || data?.success === false) {
+        const message =
+          data?.message || (data as any)?.error || "Gagal mengubah password";
+        const errors = Array.isArray((data as any)?.errors)
+          ? (data as any).errors
+          : [];
+
+        if (
+          message === "Password does not meet complexity requirements" ||
+          (errors.length > 0 && /Password/i.test(message || ""))
+        ) {
+          const title = "Password tidak memenuhi persyaratan kompleksitas";
+          toast.error(title, {
+            description: (
+              <ol className="list-decimal pl-5">
+                <li>Minimal 12 karakter.</li>
+                <li>Mengandung huruf besar.</li>
+                <li>Mengandung angka.</li>
+                <li>Mengandung karakter khusus.</li>
+              </ol>
+            ),
+            duration: 12000,
+          });
+        } else {
+          toast.error([message, ...errors].filter(Boolean).join("\n"));
+        }
+        return;
+      }
+
+      toast.success("Password berhasil diubah");
+      setNewPassword("");
+      setConfirmPassword("");
+      // Optionally refresh user data
+      mutate();
+    } catch (e: Error | unknown) {
+      const respData = (e as any)?.response?.data;
+      const enMsg: string | undefined = respData?.message;
+      const errors: string[] = Array.isArray(respData?.errors)
+        ? respData.errors
+        : [];
+
+      // Mirror the error style used in users create modal for password policy
+      if (
+        enMsg === "Password does not meet complexity requirements" ||
+        (errors.length > 0 && /Password/i.test(enMsg || ""))
+      ) {
+        const title = "Password tidak memenuhi persyaratan kompleksitas";
+        toast.error(title, {
+          description: (
+            <ol className="list-decimal pl-5">
+              <li>Minimal 12 karakter.</li>
+              <li>Mengandung huruf besar.</li>
+              <li>Mengandung angka.</li>
+              <li>Mengandung karakter khusus.</li>
+            </ol>
+          ),
+          duration: 12000,
+        });
+      } else {
+        toast.error(
+          e instanceof Error ? e.message : "Terjadi kesalahan jaringan"
+        );
+      }
+    } finally {
+      setChangingPassword(false);
     }
   }
 
@@ -260,26 +351,26 @@ export default function ProfilePage() {
                 <Label>Kanwil DJPb</Label>
                 {canEditRoleAndLocation ? (
                   <Select
-                  value={kdkanwil}
-                  onValueChange={(v) => {
-                    const selectedKanwil = kdkanwilData.find(
-                      (k) => k.kdkanwil === v
-                    );
-                    setKdkanwil(v);
-                    setNmkanwil(selectedKanwil?.nmkanwil || "");
-                  }}
-                >
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Pilih Kanwil DJPb" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {kdkanwilData.map((kanwil) => (
-                      <SelectItem key={kanwil.kdkanwil} value={kanwil.kdkanwil}>
-                        {kanwil.nmkanwil}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                    value={kdkanwil}
+                    onValueChange={(v) => {
+                      const selectedKanwil = kdkanwilData.find(
+                        (k) => k.kdkanwil === v
+                      );
+                      setKdkanwil(v);
+                      setNmkanwil(selectedKanwil?.nmkanwil || "");
+                    }}
+                  >
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="Pilih Kanwil DJPb" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {kdkanwilData.map((kanwil) => (
+                        <SelectItem key={kanwil.kdkanwil} value={kanwil.kdkanwil}>
+                          {kanwil.nmkanwil}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 ) : (
                   <Input
                     value={nmkanwil || "Tidak ada data"}
@@ -302,28 +393,28 @@ export default function ProfilePage() {
                   <Label>Kanwil</Label>
                   {canEditRoleAndLocation ? (
                     <Select
-                    value={kdkanwil}
-                    onValueChange={(v) => {
-                      const selectedKanwil = kdkanwilData.find(
-                        (k) => k.kdkanwil === v
-                      );
-                      setKdkanwil(v);
-                      setNmkanwil(selectedKanwil?.nmkanwil || "");
-                      setKdkppn("");
-                      setNmkppn("");
-                    }}
-                  >
-                    <SelectTrigger className="h-11">
-                      <SelectValue placeholder="Pilih Kanwil" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {kdkanwilData.map((kanwil) => (
-                        <SelectItem key={kanwil.kdkanwil} value={kanwil.kdkanwil}>
-                          {kanwil.nmkanwil}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                      value={kdkanwil}
+                      onValueChange={(v) => {
+                        const selectedKanwil = kdkanwilData.find(
+                          (k) => k.kdkanwil === v
+                        );
+                        setKdkanwil(v);
+                        setNmkanwil(selectedKanwil?.nmkanwil || "");
+                        setKdkppn("");
+                        setNmkppn("");
+                      }}
+                    >
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Pilih Kanwil" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {kdkanwilData.map((kanwil) => (
+                          <SelectItem key={kanwil.kdkanwil} value={kanwil.kdkanwil}>
+                            {kanwil.nmkanwil}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   ) : (
                     <Input
                       value={nmkanwil || "Tidak ada data"}
@@ -406,16 +497,26 @@ export default function ProfilePage() {
         <div className="grid gap-4 md:grid-cols-2">
           <div className="grid gap-2">
             <Label>Password Baru</Label>
-            <Input type="password" placeholder="••••••••" />
+            <Input
+              type="password"
+              placeholder="••••••••"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
           </div>
           <div className="grid gap-2">
             <Label>Konfirmasi Password Baru</Label>
-            <Input type="password" placeholder="••••••••" />
+            <Input
+              type="password"
+              placeholder="••••••••"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
           </div>
         </div>
         <div className="mt-4">
-          <Button variant="outline" disabled>
-            Ubah Password (coming soon)
+          <Button onClick={onChangePassword} disabled={changingPassword}>
+            {changingPassword ? "Menyimpan..." : "Ubah Password"}
           </Button>
         </div>
       </div>

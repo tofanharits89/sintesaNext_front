@@ -1,5 +1,11 @@
-import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
+import axios, {
+  AxiosError,
+  AxiosInstance,
+  AxiosRequestConfig,
+  InternalAxiosRequestConfig,
+} from "axios";
 import { BACKEND_BASE_URL, backendPath } from "./backend";
+import { apiPath } from "./base-path";
 
 // Utilities to read cookies in browser
 function getCookie(name: string): string | null {
@@ -22,9 +28,14 @@ let lastCsrfToken: string | null = null;
 // Force-fetch a fresh CSRF token (useful before critical POSTs like login/refresh)
 export async function refreshCsrf(): Promise<void> {
   try {
-    const resp = await http.get(backendPath("/csrf-token"), { withCredentials: true });
-    const token = (resp?.data as any)?.token;
-    if (token) lastCsrfToken = token;
+    // Use same-origin Next API to avoid third-party cookie issues
+    const resp = await fetch(apiPath("/csrf-token"), {
+      credentials: "include",
+      cache: "no-store",
+    });
+    const data = await resp.json().catch(() => ({}));
+    const token = (data as any)?.token;
+    if (token) lastCsrfToken = token as string;
   } catch (e) {
     // ignore
   }
@@ -35,9 +46,14 @@ async function ensureCsrfToken(instance: AxiosInstance) {
   const xsrfCookie = getCookie("XSRF-TOKEN");
   if (!xsrfCookie) {
     try {
-      const resp = await instance.get(backendPath("/csrf-token"), { withCredentials: true });
-      const token = (resp?.data as any)?.token;
-      if (token) lastCsrfToken = token;
+      // Call same-origin proxy which forwards cookies and Set-Cookie
+      const resp = await fetch(apiPath("/csrf-token"), {
+        credentials: "include",
+        cache: "no-store",
+      });
+      const data = await resp.json().catch(() => ({}));
+      const token = (data as any)?.token;
+      if (token) lastCsrfToken = token as string;
     } catch (e) {
       // ignore, backend will set token on next protected route
     }
@@ -96,18 +112,34 @@ async function refreshTokens(): Promise<void> {
   try {
     // Proactively ensure we have a CSRF token before hitting refresh endpoint
     await ensureCsrfToken(http);
-    // refresh endpoint uses cookies; no body required
-    try {
-      await http.post(backendPath("/auth/refresh-token"), {});
-    } catch (err: any) {
-      // If CSRF failed, fetch a fresh token and retry once
-      const status = err?.response?.status;
-      const code = (err?.response?.data as any)?.error?.code;
-      if (status === 403 && code === "EBADCSRFTOKEN") {
+    // Call same-origin Next API which proxies to backend and forwards cookies/CSRF
+    const csrf = getCookie("XSRF-TOKEN") || lastCsrfToken;
+    const resp = await fetch(apiPath("/auth/refresh"), {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(csrf ? { "X-CSRF-Token": String(csrf) } : {}),
+      },
+      body: JSON.stringify({}),
+    });
+    if (!resp.ok) {
+      // If CSRF failed, try once more after forcing token fetch
+      if (resp.status === 403) {
         await ensureCsrfToken(http);
-        await http.post(backendPath("/auth/refresh-token"), {});
+        const csrf2 = getCookie("XSRF-TOKEN") || lastCsrfToken;
+        const retry = await fetch(apiPath("/auth/refresh"), {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            ...(csrf2 ? { "X-CSRF-Token": String(csrf2) } : {}),
+          },
+          body: JSON.stringify({}),
+        });
+        if (!retry.ok) throw new Error(`Refresh failed: ${retry.status}`);
       } else {
-        throw err;
+        throw new Error(`Refresh failed: ${resp.status}`);
       }
     }
     processQueue(null);

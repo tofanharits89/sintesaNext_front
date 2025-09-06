@@ -11,12 +11,12 @@ export async function GET(req: NextRequest) {
     if (month) url.searchParams.set("month", month);
     url.searchParams.set("limit", limit);
 
-    const token = req.cookies.get("token")?.value;
+    const cookie = req.headers.get("cookie") || "";
 
     const resp = await fetch(url.toString(), {
       method: "GET",
       headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(cookie ? { cookie } : {}),
       },
       cache: "no-store",
     });

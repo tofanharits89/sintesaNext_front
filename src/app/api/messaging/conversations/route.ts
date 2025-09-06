@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendPath } from "@/lib/backend";
 
-export const dynamic = "force-dynamic";
-
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    // Forward Cookie header to backend; rely on httpOnly cookies
     const cookie = request.headers.get("cookie") || "";
     if (!cookie) {
       return NextResponse.json(
@@ -14,17 +11,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json().catch(() => ({}));
+    const { searchParams } = new URL(request.url);
+    const cursor = searchParams.get("cursor");
+    const limit = searchParams.get("limit");
 
-    const resp = await fetch(backendPath("/whatsapp/send"), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(cookie ? { cookie } : {}),
-      },
-      body: JSON.stringify(body),
+    const url = new URL(backendPath("/messaging/conversations"));
+    if (cursor) url.searchParams.set("cursor", cursor);
+    if (limit) url.searchParams.set("limit", limit);
+
+    const resp = await fetch(url.toString(), {
+      method: "GET",
+      headers: { ...(cookie ? { cookie } : {}) },
+      cache: "no-store",
     });
-
     const data = await resp.json().catch(() => ({}));
     return NextResponse.json(data, { status: resp.status });
   } catch (error) {
@@ -34,3 +33,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

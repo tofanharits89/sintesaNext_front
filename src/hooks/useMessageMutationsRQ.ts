@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { http } from "@/lib/httpClient";
+import { apiPath } from "@/lib/base-path";
 import { conversationKeys } from "./useConversationsRQ";
 import { messageKeys } from "./useMessagesRQ";
 import { useSocket } from "./useSocket";
@@ -87,28 +87,33 @@ export function useSendMessageMutation() {
         // Socket failed, trying REST (silently fallback)
 
         // Fallback to REST API via centralized Axios client
-        const resp = await http.post("/messaging/send", {
-          // camelCase
-          recipientId,
-          conversationId,
-          content: content.trim(),
-          type: "text",
-          tempId,
-          senderId: currentUser?.id,
-          participant1Id: conversationId ? undefined : currentUser?.id,
-          participant2Id: conversationId ? undefined : recipientId,
-          // snake_case duplicates
-          recipient_id: recipientId,
-          conversation_id: conversationId,
-          message: content.trim(),
-          message_type: "text",
-          temp_id: tempId,
-          sender_id: currentUser?.id,
-          participant1_id: conversationId ? undefined : currentUser?.id,
-          participant2_id: conversationId ? undefined : recipientId,
+        const respRaw = await fetch(apiPath("/messaging/send"), {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            // camelCase
+            recipientId,
+            conversationId,
+            content: content.trim(),
+            type: "text",
+            tempId,
+            senderId: currentUser?.id,
+            participant1Id: conversationId ? undefined : currentUser?.id,
+            participant2Id: conversationId ? undefined : recipientId,
+            // snake_case duplicates
+            recipient_id: recipientId,
+            conversation_id: conversationId,
+            message: content.trim(),
+            message_type: "text",
+            temp_id: tempId,
+            sender_id: currentUser?.id,
+            participant1_id: conversationId ? undefined : currentUser?.id,
+            participant2_id: conversationId ? undefined : recipientId,
+          }),
         });
 
-        const result = resp.data;
+        const result = await respRaw.json().catch(() => ({}));
         if (!result.success) {
           throw new Error(result.error || "Send failed");
         }
@@ -383,11 +388,16 @@ export function useMarkAsReadMutation(conversationId?: string) {
         throw new Error("Message IDs required");
       }
 
-      const resp = await http.put(
-        `/messaging/conversations/${conversationId}/read`,
-        { messageIds }
+      const readResp = await fetch(
+        apiPath(`/messaging/conversations/${conversationId}/read`),
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messageIds }),
+        }
       );
-      return resp.data ?? {};
+      return (await readResp.json().catch(() => ({}))) ?? {};
     },
     onMutate: async (args) => {
       if (!conversationId) return;
@@ -476,11 +486,16 @@ export function useMarkAsOpenedMutation(conversationId?: string) {
         throw new Error("Message IDs required");
       }
 
-      const resp = await http.put(
-        `/messaging/conversations/${conversationId}/opened`,
-        { messageIds }
+      const openedResp = await fetch(
+        apiPath(`/messaging/conversations/${conversationId}/opened`),
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messageIds }),
+        }
       );
-      return resp.data ?? {};
+      return (await openedResp.json().catch(() => ({}))) ?? {};
     },
     onMutate: async (args) => {
       if (!conversationId) return;

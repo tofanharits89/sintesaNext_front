@@ -8,18 +8,18 @@ export async function GET(
   context: { params: Promise<{ kdsatker: string }> }
 ) {
   const { kdsatker } = await context.params;
-  const token = getToken(request);
+  const cookie = request.headers.get("cookie") || "";
 
-  if (!token) {
+  if (!cookie) {
     return NextResponse.json(
-      { success: false, message: "No token found" },
+      { success: false, message: "No session" },
       { status: 401 }
     );
   }
 
   try {
     const resp = await fetch(backendPath(`/carisatker/${kdsatker}`), {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { ...(cookie ? { cookie } : {}) },
     });
 
     const data = await resp.json().catch(() => ({}));

@@ -2,8 +2,7 @@
 
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { backendPath } from "@/lib/backend";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
+import { apiPath } from "@/lib/base-path";
 import { useSocket } from "./useSocket";
 import {
   SOCKET_EVENTS,
@@ -33,24 +32,20 @@ const fetchMessages = async (context: {
 }) => {
   const { pageParam = 1, queryKey } = context;
   const [, , conversationId] = queryKey;
-  const token = getAuthTokenFromCookie();
-  const headers: HeadersInit = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
 
-  const url = backendPath(
-    `/messaging/conversations/${conversationId}/messages?page=${pageParam}&limit=${PAGE_SIZE}`
+  const url = new URL(
+    apiPath(`/messaging/conversations/${conversationId}/messages`),
+    window.location.origin
   );
+  url.searchParams.set("page", String(pageParam));
+  url.searchParams.set("limit", String(PAGE_SIZE));
 
-  const resp = await fetch(url, { credentials: "include", headers });
-  const text = await resp.text();
+  const resp = await fetch(url.toString(), {
+    credentials: "include",
+    cache: "no-store",
+  });
   if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-  if (!text.trim()) throw new Error("Empty response");
-
-  try {
-    return JSON.parse(text);
-  } catch (e) {
-    throw new Error("Invalid JSON");
-  }
+  return await resp.json().catch(() => ({}));
 };
 
 export function useMessages(conversationId?: string) {
@@ -80,8 +75,12 @@ export function useMessages(conversationId?: string) {
         setLocalTick((x) => x + 1);
       }
     };
-    window.addEventListener('tempMessages:updated', handler as EventListener);
-    return () => window.removeEventListener('tempMessages:updated', handler as EventListener);
+    window.addEventListener("tempMessages:updated", handler as EventListener);
+    return () =>
+      window.removeEventListener(
+        "tempMessages:updated",
+        handler as EventListener
+      );
   }, [conversationId, isFetchable]);
 
   const {
