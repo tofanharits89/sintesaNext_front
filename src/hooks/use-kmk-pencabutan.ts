@@ -2,7 +2,6 @@
 
 import useSWR from "swr";
 import { backendPath } from "@/lib/backend";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
 export interface KmkPencabutanRow {
   no_kmk: string;
@@ -18,11 +17,12 @@ export interface KmkPencabutanRow {
 }
 
 const fetcher = async (url: string) => {
-  const token = getAuthTokenFromCookie();
-  const headers: HeadersInit = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  const resp = await fetch(url, { credentials: "include", headers, signal: AbortSignal.timeout(20000) });
+  const resp = await fetch(url, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(20000),
+    cache: "no-store",
+  });
   const text = await resp.text();
 
   if (!resp.ok) {
@@ -39,7 +39,17 @@ const fetcher = async (url: string) => {
 };
 
 export function useKmkPencabutan(no_kmk?: string) {
-  const key = no_kmk ? backendPath(`/transfer-daerah/dau/kmk/pencabutan?no_kmk=${encodeURIComponent(no_kmk)}`) : null;
-  const { data, error, isLoading, mutate } = useSWR<KmkPencabutanRow[]>(key, fetcher, { revalidateOnFocus: false });
+  const key = no_kmk
+    ? `${
+        process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next"
+      }/api/transfer-daerah/dau/kmk/pencabutan?no_kmk=${encodeURIComponent(
+        no_kmk
+      )}`
+    : null;
+  const { data, error, isLoading, mutate } = useSWR<KmkPencabutanRow[]>(
+    key,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
   return { rows: data || [], isLoading, error, mutate } as const;
 }

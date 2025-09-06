@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 import { backendPath } from "@/lib/backend";
 
 interface PersentaseRealisasiKLItem {
@@ -27,23 +26,21 @@ export function usePersentaseRealisasiKL(
   return useQuery<PersentaseRealisasiKLItem[], Error>({
     queryKey: ["persentase-realisasi-kl", kanwil],
     queryFn: async () => {
-      const token = getAuthTokenFromCookie();
-      if (!token) {
-        throw new Error("No authentication token found. Please log in to continue.");
-      }
-
       const params = new URLSearchParams();
       if (kanwil) params.append("kanwil", kanwil);
 
-      const url = backendPath(
-        `/dashboard/persentase-realisasi-kl${params.toString() ? "?" + params.toString() : ""}`
+      const url = new URL(
+        (process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next") +
+          `/api/dashboard/persentase-realisasi-kl${
+            params.toString() ? "?" + params.toString() : ""
+          }`,
+        window.location.origin
       );
 
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+      const response = await fetch(url.toString(), {
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
       });
 
       if (!response.ok) {
@@ -60,11 +57,13 @@ export function usePersentaseRealisasiKL(
     enabled: isClient,
     staleTime: 5 * 60 * 1000,
     retry: (failureCount, error) => {
-      if (error.message?.includes("authentication") || error.message?.includes("401")) {
+      if (
+        error.message?.includes("authentication") ||
+        error.message?.includes("401")
+      ) {
         return false;
       }
       return failureCount < 3;
     },
   });
 }
-

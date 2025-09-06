@@ -323,20 +323,9 @@ export class SocketClient {
       return;
     }
 
-    // Check if we have a token, with retry logic for post-login scenarios
-    let token = this.getAuthToken();
-    if (!token) {
-      this.log("No authentication token available, attempting retry...");
-      token = await this.getAuthTokenWithRetry();
-
-      if (!token) {
-        this.log(
-          "No authentication token available after retry, skipping connection"
-        );
-        this.setState("auth_failed");
-        return;
-      }
-    }
+    // In cookie-only mode, proceed even when no JS-visible token exists.
+    // Token will be sent via cookies (withCredentials) and validated server-side.
+    const token = this.getAuthToken();
 
     this.setState("connecting");
 

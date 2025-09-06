@@ -125,21 +125,8 @@ export default function LoginForm() {
       if (success) {
         toast.success("Berhasil masuk");
 
-        // Mirror tokens to frontend-visible cookies so Next middleware and client checks can see them
-        try {
-          const accessToken: string | undefined = data?.data?.accessToken;
-          const userName: string | undefined = data?.data?.user?.username;
-          if (accessToken) {
-            // Non-httpOnly mirrors (backend sets httpOnly cookies on its own origin)
-            document.cookie = `authState=${accessToken}; Path=/; SameSite=Lax`;
-            document.cookie = `socket_token=${accessToken}; Path=/; SameSite=Lax`;
-          }
-          if (userName) {
-            document.cookie = `auth_user=${encodeURIComponent(
-              userName
-            )}; Path=/; SameSite=Lax`;
-          }
-        } catch {}
+        // No client-side token mirroring. Auth is carried by httpOnly cookies set by backend.
+        // Optionally, keep a lightweight, non-sensitive user mirror if needed (omitted here for security).
 
         // Dispatch auth login event for socket system
         dispatchAuthEvent("login", {

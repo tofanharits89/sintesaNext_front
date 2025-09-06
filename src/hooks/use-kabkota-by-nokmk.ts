@@ -2,7 +2,6 @@
 
 import useSWR from "swr";
 import { backendPath } from "@/lib/backend";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
 export interface KabKotaItem {
   kdkabkota: string; // kdpemda
@@ -10,11 +9,12 @@ export interface KabKotaItem {
 }
 
 const fetcher = async (url: string) => {
-  const token = getAuthTokenFromCookie();
-  const headers: HeadersInit = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  const resp = await fetch(url, { credentials: "include", headers, signal: AbortSignal.timeout(20000) });
+  const resp = await fetch(url, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(20000),
+    cache: "no-store",
+  });
   const text = await resp.text();
   if (!resp.ok) {
     let msg = `HTTP ${resp.status}`;
@@ -32,9 +32,20 @@ const fetcher = async (url: string) => {
 export function useKabKotaByNoKmk(_no_kmk?: string, kppn?: string) {
   const params = new URLSearchParams();
   if (kppn) params.set("kppn", kppn);
-  const key = kppn ? backendPath(`/transfer-daerah/dau/kmk/penundaan/kabkota?${params.toString()}`) : null;
-  const { data, error, isLoading, mutate } = useSWR<KabKotaItem[]>(key, fetcher, { revalidateOnFocus: false });
+  const key = kppn
+    ? `${
+        process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next"
+      }/api/transfer-daerah/dau/kmk/penundaan/kabkota?${params.toString()}`
+    : null;
+  const { data, error, isLoading, mutate } = useSWR<KabKotaItem[]>(
+    key,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
 
-  const options = (data || []).map((d) => ({ value: d.kdkabkota, label: `${d.kdkabkota} - ${d.nmkabkota}` }));
+  const options = (data || []).map((d) => ({
+    value: d.kdkabkota,
+    label: `${d.kdkabkota} - ${d.nmkabkota}`,
+  }));
   return { items: data || [], options, isLoading, error, mutate } as const;
 }

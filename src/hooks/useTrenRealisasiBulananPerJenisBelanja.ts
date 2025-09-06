@@ -31,14 +31,6 @@ export function useTrenRealisasiBulananPerJenisBelanja(
   return useQuery<ChartData, Error>({
     queryKey: ["tren-realisasi-bulanan-per-jenis-belanja", kanwil],
     queryFn: async () => {
-      // Check for authentication token
-      const token = getAuthTokenFromCookie();
-      if (!token) {
-        throw new Error(
-          "No authentication token found. Please log in to continue."
-        );
-      }
-
       try {
         // Build URL with kanwil parameter if provided
         const params = new URLSearchParams();
@@ -46,34 +38,41 @@ export function useTrenRealisasiBulananPerJenisBelanja(
           params.append("kanwil", kanwil);
         }
 
-        const url = backendPath(
-          `/dashboard/tren-realisasi-bulanan-per-jenis-belanja${
-            params.toString() ? "?" + params.toString() : ""
-          }`
+        const url = new URL(
+          (process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next") +
+            `/api/dashboard/tren-realisasi-bulanan-per-jenis-belanja${
+              params.toString() ? "?" + params.toString() : ""
+            }`,
+          window.location.origin
         );
 
-        // Fetch data from backend
-        const response = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+        // Use same-origin Next API to forward httpOnly cookies
+        const response = await fetch(url.toString(), {
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
         });
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const result: TrenRealisasiBulananPerJenisBelanjaResponse = await response.json();
+        const result: TrenRealisasiBulananPerJenisBelanjaResponse =
+          await response.json();
 
         if (!result.success) {
-          throw new Error("Failed to fetch tren realisasi bulanan per jenis belanja data");
+          throw new Error(
+            "Failed to fetch tren realisasi bulanan per jenis belanja data"
+          );
         }
 
         // Backend returns the correct chart format for line charts
         return result.data;
       } catch (error: any) {
-        console.error("Error fetching tren realisasi bulanan per jenis belanja:", error);
+        console.error(
+          "Error fetching tren realisasi bulanan per jenis belanja:",
+          error
+        );
         // Handle 401 errors specifically
         if (
           error.message?.includes("401") ||

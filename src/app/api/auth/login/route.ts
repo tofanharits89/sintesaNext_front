@@ -71,18 +71,10 @@ export async function POST(request: NextRequest) {
     return errRes;
   }
 
-  // Collect Set-Cookie headers and extract accessToken value
+  // Collect Set-Cookie headers to forward them to the browser (cookies carry auth)
   const setCookieValues: string[] = [];
   for (const [key, value] of resp.headers) {
     if (key.toLowerCase() === "set-cookie") setCookieValues.push(value);
-  }
-
-  let accessTokenFromCookie: string | undefined = undefined;
-  const candidate = setCookieValues.find((v) => v.includes("accessToken="));
-  if (candidate) {
-    const firstPart = candidate.split(";")[0]; // accessToken=...
-    const eqIdx = firstPart.indexOf("=");
-    if (eqIdx > -1) accessTokenFromCookie = firstPart.slice(eqIdx + 1);
   }
 
   const user = data?.data?.user || null;
@@ -90,7 +82,7 @@ export async function POST(request: NextRequest) {
     ok: true,
     success: true,
     username: user?.username || username,
-    data: { user, accessToken: accessTokenFromCookie },
+    data: { user },
   };
 
   const res = NextResponse.json(responseBody, { status: 200 });

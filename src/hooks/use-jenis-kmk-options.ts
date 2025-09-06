@@ -2,7 +2,6 @@
 
 import useSWR from "swr";
 import { backendPath } from "@/lib/backend";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
 export interface OptionItem {
   value: string;
@@ -10,11 +9,12 @@ export interface OptionItem {
 }
 
 const fetcher = async (url: string) => {
-  const token = getAuthTokenFromCookie();
-  const headers: HeadersInit = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  const resp = await fetch(url, { credentials: "include", headers, signal: AbortSignal.timeout(20000) });
+  const resp = await fetch(url, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(20000),
+    cache: "no-store",
+  });
   const text = await resp.text();
   if (!resp.ok) {
     let msg = `HTTP ${resp.status}`;
@@ -31,7 +31,9 @@ const fetcher = async (url: string) => {
 
 export function useJenisKmkOptions() {
   const key = backendPath("/transfer-daerah/dau/ref/jenis");
-  const { data, error, isLoading, mutate } = useSWR<any[]>(key, fetcher, { revalidateOnFocus: false });
+  const { data, error, isLoading, mutate } = useSWR<any[]>(key, fetcher, {
+    revalidateOnFocus: false,
+  });
 
   const options: OptionItem[] = (data || [])
     .map((r) => {

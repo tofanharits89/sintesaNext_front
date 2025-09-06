@@ -2,7 +2,6 @@
 
 import useSWR from "swr";
 import { backendPath } from "@/lib/backend";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
 export interface RawKmkDauItem {
   id: string | number;
@@ -35,11 +34,12 @@ export interface KmkRow {
 }
 
 const fetcher = async (url: string) => {
-  const token = getAuthTokenFromCookie();
-  const headers: HeadersInit = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  const resp = await fetch(url, { credentials: "include", headers, signal: AbortSignal.timeout(20000) });
+  const resp = await fetch(url, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(20000),
+    cache: "no-store",
+  });
   const text = await resp.text();
 
   if (!resp.ok) {
@@ -57,10 +57,18 @@ const fetcher = async (url: string) => {
 };
 
 export function useKmkDau(year?: string | number) {
-  const key = backendPath(`/transfer-daerah/dau/kmk${year ? `?year=${encodeURIComponent(String(year))}` : ""}`);
-  const { data, error, isLoading, mutate } = useSWR<RawKmkDauItem[]>(key, fetcher, {
-    revalidateOnFocus: false,
-  });
+  const key =
+    (process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next") +
+    `/api/transfer-daerah/dau/kmk${
+      year ? `?year=${encodeURIComponent(String(year))}` : ""
+    }`;
+  const { data, error, isLoading, mutate } = useSWR<RawKmkDauItem[]>(
+    key,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+    }
+  );
 
   const rows: KmkRow[] = (data || []).map((r, idx) => ({
     id: String(r.id),
@@ -74,19 +82,10 @@ export function useKmkDau(year?: string | number) {
     fileUrl: (() => {
       const f = (r.filekmk ?? "").toString();
       if (!f) return "";
-      // Absolute URL -> if it's not our backend, route through proxy to avoid CORS
+      // Absolute URL -> load directly in iframe to avoid backend proxy failures (502)
+      // Browsers can usually render cross-origin PDFs in an iframe; if a site blocks framing,
+      // the modal provides a "Buka di tab baru" link as a fallback.
       if (/^https?:\/\//i.test(f)) {
-        // Heuristic: treat any non-localhost:88 (default backend) as external
-        if (!/^https?:\/\/localhost:88\b/i.test(f)) {
-          const needsInsecure = /sintesa\.kemenkeu\.go\.id:7000/i.test(f) ? "&insecure=1" : "";
-          // derive a readable filename for the proxy path segment
-          let derivedName = "file.pdf";
-          try {
-            const u = new URL(f);
-            derivedName = (u.pathname.split("/").filter(Boolean).pop() || "file.pdf").replace(/[^a-zA-Z0-9_.-]/g, "_");
-          } catch {}
-          return backendPath(`/transfer-daerah/dau/kmk/file/proxy/${encodeURIComponent(derivedName)}?url=${encodeURIComponent(f)}${needsInsecure}`);
-        }
         return f;
       }
       // If the path already contains our file-serving route, just prefix with backend
@@ -96,7 +95,9 @@ export function useKmkDau(year?: string | number) {
       // If it's just a bare filename, point to the stream route (no .pdf in URL)
       if (!f.includes("/")) {
         const base = f.replace(/\.pdf$/i, "");
-        return backendPath(`/transfer-daerah/dau/kmk/file/stream/${encodeURIComponent(base)}`);
+        return backendPath(
+          `/transfer-daerah/dau/kmk/file/stream/${encodeURIComponent(base)}`
+        );
       }
       // Otherwise, treat as relative path
       return backendPath(f.startsWith("/") ? f : `/${f}`);
@@ -107,7 +108,8 @@ export function useKmkDau(year?: string | number) {
       try {
         if (/^https?:\/\//i.test(f)) {
           const u = new URL(f);
-          const last = u.pathname.split("/").filter(Boolean).pop() || "file.pdf";
+          const last =
+            u.pathname.split("/").filter(Boolean).pop() || "file.pdf";
           return last;
         }
       } catch {}

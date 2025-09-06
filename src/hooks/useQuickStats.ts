@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 import { backendPath } from "@/lib/backend";
 
 // Quick stats data format returned by the backend
@@ -22,23 +21,13 @@ interface UseQuickStatsOptions {
   kanwil?: string;
 }
 
-export function useQuickStats(
-  options: UseQuickStatsOptions = {}
-) {
+export function useQuickStats(options: UseQuickStatsOptions = {}) {
   const { kanwil } = options;
   const isClient = typeof window !== "undefined";
 
   return useQuery<QuickStatsData, Error>({
     queryKey: ["quick-stats", kanwil],
     queryFn: async () => {
-      // Check for authentication token using the same method as other hooks
-      const token = getAuthTokenFromCookie();
-      if (!token) {
-        throw new Error(
-          "No authentication token found. Please log in to continue."
-        );
-      }
-
       try {
         // Build URL with same pattern as other dashboard endpoints
         const params = new URLSearchParams();
@@ -46,18 +35,19 @@ export function useQuickStats(
           params.append("kanwil", kanwil);
         }
 
-        const url = backendPath(
-          `/dashboard/quick-stats${
-            params.toString() ? "?" + params.toString() : ""
-          }`
+        const url = new URL(
+          (process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next") +
+            `/api/dashboard/quick-stats${
+              params.toString() ? "?" + params.toString() : ""
+            }`,
+          window.location.origin
         );
 
-        // Use direct fetch with same headers as other hooks
-        const response = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+        // Use same-origin Next API to forward httpOnly cookies; no Authorization header needed
+        const response = await fetch(url.toString(), {
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
         });
 
         if (!response.ok) {

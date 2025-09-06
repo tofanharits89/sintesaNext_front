@@ -2,7 +2,6 @@
 
 import useSWR from "swr";
 import { backendPath } from "@/lib/backend";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
 export interface KppnItem {
   kdkppn: string;
@@ -11,11 +10,12 @@ export interface KppnItem {
 }
 
 const fetcher = async (url: string) => {
-  const token = getAuthTokenFromCookie();
-  const headers: HeadersInit = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  const resp = await fetch(url, { credentials: "include", headers, signal: AbortSignal.timeout(20000) });
+  const resp = await fetch(url, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(20000),
+    cache: "no-store",
+  });
   const text = await resp.text();
   if (!resp.ok) {
     let msg = `HTTP ${resp.status}`;
@@ -31,9 +31,20 @@ const fetcher = async (url: string) => {
 };
 
 export function useKppnByNoKmk(no_kmk?: string) {
-  const key = no_kmk ? backendPath(`/transfer-daerah/dau/kmk/penundaan/kppn?no_kmk=${encodeURIComponent(no_kmk)}`) : null;
-  const { data, error, isLoading, mutate } = useSWR<KppnItem[]>(key, fetcher, { revalidateOnFocus: false });
+  const key = no_kmk
+    ? `${
+        process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next"
+      }/api/transfer-daerah/dau/kmk/penundaan/kppn?no_kmk=${encodeURIComponent(
+        no_kmk
+      )}`
+    : null;
+  const { data, error, isLoading, mutate } = useSWR<KppnItem[]>(key, fetcher, {
+    revalidateOnFocus: false,
+  });
 
-  const options = (data || []).map((d) => ({ value: d.kdkppn, label: `${d.kdkppn} - ${d.nmkppn}` }));
+  const options = (data || []).map((d) => ({
+    value: d.kdkppn,
+    label: `${d.kdkppn} - ${d.nmkppn}`,
+  }));
   return { items: data || [], options, isLoading, error, mutate } as const;
 }

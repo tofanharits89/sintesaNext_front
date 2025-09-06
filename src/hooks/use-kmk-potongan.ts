@@ -2,7 +2,6 @@
 
 import useSWR from "swr";
 import { backendPath } from "@/lib/backend";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
 export interface RawPotonganItem {
   id: number | string;
@@ -34,11 +33,12 @@ export interface PotonganRow extends RawPotonganItem {
 }
 
 const fetcher = async (url: string) => {
-  const token = getAuthTokenFromCookie();
-  const headers: HeadersInit = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  const resp = await fetch(url, { credentials: "include", headers, signal: AbortSignal.timeout(20000) });
+  const resp = await fetch(url, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(20000),
+    cache: "no-store",
+  });
   const text = await resp.text();
 
   if (!resp.ok) {
@@ -55,14 +55,27 @@ const fetcher = async (url: string) => {
   return result?.data ?? result;
 };
 
-export function useKmkPotongan(no_kmk?: string, thang?: string | number, enabled: boolean = true) {
-  const key = no_kmk && thang && enabled
-    ? backendPath(`/transfer-daerah/dau/kmk/potongan?no_kmk=${encodeURIComponent(no_kmk)}&thang=${encodeURIComponent(String(thang))}`)
-    : null;
+export function useKmkPotongan(
+  no_kmk?: string,
+  thang?: string | number,
+  enabled: boolean = true
+) {
+  const key =
+    no_kmk && thang && enabled
+      ? backendPath(
+          `/transfer-daerah/dau/kmk/potongan?no_kmk=${encodeURIComponent(
+            no_kmk
+          )}&thang=${encodeURIComponent(String(thang))}`
+        )
+      : null;
 
-  const { data, error, isLoading, mutate } = useSWR<RawPotonganItem[]>(key, fetcher, {
-    revalidateOnFocus: false,
-  });
+  const { data, error, isLoading, mutate } = useSWR<RawPotonganItem[]>(
+    key,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+    }
+  );
 
   const rows: PotonganRow[] = (data || []).map((r, idx) => ({
     ...r,
@@ -70,10 +83,21 @@ export function useKmkPotongan(no_kmk?: string, thang?: string | number, enabled
   }));
 
   // total across all months per row
-  const totals = rows.map(r => (
-    (r.jan || 0) + (r.peb || 0) + (r.mar || 0) + (r.apr || 0) + (r.mei || 0) + (r.jun || 0) +
-    (r.jul || 0) + (r.ags || 0) + (r.sep || 0) + (r.okt || 0) + (r.nov || 0) + (r.des || 0)
-  ));
+  const totals = rows.map(
+    (r) =>
+      (r.jan || 0) +
+      (r.peb || 0) +
+      (r.mar || 0) +
+      (r.apr || 0) +
+      (r.mei || 0) +
+      (r.jun || 0) +
+      (r.jul || 0) +
+      (r.ags || 0) +
+      (r.sep || 0) +
+      (r.okt || 0) +
+      (r.nov || 0) +
+      (r.des || 0)
+  );
   const grandTotal = totals.reduce((a, b) => a + b, 0);
 
   return { rows, isLoading, error, mutate, grandTotal } as const;

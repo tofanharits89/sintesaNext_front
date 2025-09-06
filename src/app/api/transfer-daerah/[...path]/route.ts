@@ -3,7 +3,7 @@ import { backendPath } from "@/lib/backend";
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ conversationId: string }> }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
   try {
     const cookie = request.headers.get("cookie") || "";
@@ -13,21 +13,11 @@ export async function GET(
         { status: 401 }
       );
     }
-
-    const { conversationId } = await context.params;
+    const { path } = await params;
+    const segments = (path || []).join("/");
+    const url = new URL(backendPath(`/transfer-daerah/${segments}`));
     const { searchParams } = new URL(request.url);
-    const page = searchParams.get("page");
-    const limit = searchParams.get("limit");
-
-    const url = new URL(
-      backendPath(
-        `/messaging/conversations/${encodeURIComponent(
-          conversationId
-        )}/messages`
-      )
-    );
-    if (page) url.searchParams.set("page", page);
-    if (limit) url.searchParams.set("limit", limit);
+    for (const [k, v] of searchParams.entries()) url.searchParams.set(k, v);
 
     const resp = await fetch(url.toString(), {
       method: "GET",

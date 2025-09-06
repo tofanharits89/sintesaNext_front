@@ -31,14 +31,6 @@ export function useRealisasiPerJenisBelanja(
   return useQuery<ChartData, Error>({
     queryKey: ["realisasi-per-jenis-belanja", kanwil],
     queryFn: async () => {
-      // Check for authentication token using the same method as quick stats
-      const token = getAuthTokenFromCookie();
-      if (!token) {
-        throw new Error(
-          "No authentication token found. Please log in to continue."
-        );
-      }
-
       try {
         // Build URL with same pattern as quick stats
         const params = new URLSearchParams();
@@ -46,18 +38,19 @@ export function useRealisasiPerJenisBelanja(
           params.append("kanwil", kanwil);
         }
 
-        const url = backendPath(
-          `/dashboard/realisasi-per-jenis-belanja${
-            params.toString() ? "?" + params.toString() : ""
-          }`
+        const url = new URL(
+          (process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next") +
+            `/api/dashboard/realisasi-per-jenis-belanja${
+              params.toString() ? "?" + params.toString() : ""
+            }`,
+          window.location.origin
         );
 
-        // Use direct fetch with same headers as quick stats
-        const response = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+        // Use same-origin Next API to forward httpOnly cookies
+        const response = await fetch(url.toString(), {
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
         });
 
         if (!response.ok) {

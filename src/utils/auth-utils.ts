@@ -20,15 +20,10 @@ export function getAuthTokenFromCookie(): string | null {
 
   const cookies = parse(cookieString);
 
-  // Prefer new cookie names, but fall back to legacy ones for compatibility
+  // Prefer httpOnly backend cookie only; no JS-visible mirrors in cookie-only mode
   const candidateCookieNames = [
-    "accessToken", // new primary (backend, httpOnly)
-    "authState", // frontend-readable mirror set by Next login route
-    "token", // server-side guard cookie
-    "socket_token",
-    "access_token",
-    "authToken",
-    "auth_token",
+    // Note: httpOnly cookies are not accessible via document.cookie; this will typically return null
+    "accessToken",
   ];
 
   for (const name of candidateCookieNames) {
@@ -115,8 +110,12 @@ export function dispatchAuthEvent(
  * Check if user is authenticated by checking for valid token
  */
 export function isAuthenticated(): boolean {
-  const token = getAuthTokenFromCookie();
-  return !!token;
+  // In cookie-only mode, client-side cannot reliably read httpOnly cookies.
+  // Prefer SSR guards and middleware. This helper now always returns true if any cookies exist, false otherwise.
+  if (typeof document === "undefined") return false;
+  const cookieString = document.cookie || "";
+  // document.cookie will not include httpOnly cookies; this becomes a best-effort hint only.
+  return Boolean(cookieString && cookieString.trim().length > 0);
 }
 
 /**

@@ -2,7 +2,6 @@
 
 import useSWR from "swr";
 import { backendPath } from "@/lib/backend";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
 export interface RawPemotonganItem {
   id: number | string;
@@ -26,11 +25,12 @@ export interface PemotonganRow extends RawPemotonganItem {
 }
 
 const fetcher = async (url: string) => {
-  const token = getAuthTokenFromCookie();
-  const headers: HeadersInit = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  const resp = await fetch(url, { credentials: "include", headers, signal: AbortSignal.timeout(20000) });
+  const resp = await fetch(url, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(20000),
+    cache: "no-store",
+  });
   const text = await resp.text();
 
   if (!resp.ok) {
@@ -48,13 +48,22 @@ const fetcher = async (url: string) => {
 };
 
 export function useKmkPemotongan(no_kmk?: string, enabled: boolean = true) {
-  const key = no_kmk && enabled
-    ? backendPath(`/transfer-daerah/dau/kmk/pemotongan?no_kmk=${encodeURIComponent(no_kmk)}`)
-    : null;
+  const key =
+    no_kmk && enabled
+      ? `${
+          process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next"
+        }/api/transfer-daerah/dau/kmk/pemotongan?no_kmk=${encodeURIComponent(
+          no_kmk
+        )}`
+      : null;
 
-  const { data, error, isLoading, mutate } = useSWR<RawPemotonganItem[]>(key, fetcher, {
-    revalidateOnFocus: false,
-  });
+  const { data, error, isLoading, mutate } = useSWR<RawPemotonganItem[]>(
+    key,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+    }
+  );
 
   const rows: PemotonganRow[] = (data || []).map((r, idx) => ({
     ...r,
@@ -63,4 +72,3 @@ export function useKmkPemotongan(no_kmk?: string, enabled: boolean = true) {
 
   return { rows, isLoading, error, mutate } as const;
 }
-
