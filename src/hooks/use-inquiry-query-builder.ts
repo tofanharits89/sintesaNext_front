@@ -643,6 +643,12 @@ export function useInquiryQueryBuilder() {
       if (activeFilters.includes("ketahananPangan")) {
         whereConditions.push("main.pangan IS NOT NULL");
       }
+      // Belanja Pemerintah: WHERE-only filter on kdakun; no GROUP BY or SELECT column
+      if (activeFilters.includes("belanjaPemerintah")) {
+        whereConditions.push(
+          "main.kdakun IN ('511521','511522','511529','521231','521232','521233','521234','526111','526112','526113','526114','526115','526121','526122','526123','526124','526131','526132','526311','526312','526313','526321','526322','526323')"
+        );
+      }
 
       // Note: Category-specific WHERE conditions (like kdpn <> '00' for prioritas_nasional)
       // are now handled above via categoryConfig.whereConditions to avoid duplication

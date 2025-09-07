@@ -120,6 +120,7 @@ const getFilterIcon = (filterKey: string) => {
     belanjaPemilu: <Settings className="h-4 w-4" />,
     ibuKotaNusantara: <Settings className="h-4 w-4" />,
     ketahananPangan: <Settings className="h-4 w-4" />,
+    belanjaPemerintah: <Settings className="h-4 w-4" />,
   };
 
   return iconMap[filterKey] || <Filter className="h-4 w-4" />;
@@ -153,11 +154,13 @@ export function FilterCard({
   const isBelanjaPemilu = filterKey === "belanjaPemilu";
   const isIbuKotaNusantara = filterKey === "ibuKotaNusantara";
   const isKetahananPangan = filterKey === "ketahananPangan";
+  const isBelanjaPemerintah = filterKey === "belanjaPemerintah";
   const isBooleanSwitch =
     isKemiskinanEkstrim ||
     isBelanjaPemilu ||
     isIbuKotaNusantara ||
-    isKetahananPangan;
+    isKetahananPangan ||
+    isBelanjaPemerintah;
 
   // Track if initial notification has been sent to prevent infinite loops
   const initialNotificationSent = useRef(false);
@@ -1098,6 +1101,10 @@ export function FilterCard({
           }
           case "ketahananPangan": {
             // Boolean-only flag: no explicit option; keep default "Semua" only
+            return commonOptions;
+          }
+          case "belanjaPemerintah": {
+            // Boolean-only flag/switch: WHERE-only handling; options remain default
             return commonOptions;
           }
 

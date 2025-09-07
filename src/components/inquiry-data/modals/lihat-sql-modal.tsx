@@ -25,6 +25,7 @@ interface LihatSqlModalProps {
     pembulatan: string;
     jenisAkumulasi?: string;
     scope?: "belanja" | "tematik" | "general";
+    tematikKategori?: string;
   };
   filterValues?: Record<
     string,
@@ -82,7 +83,7 @@ export function LihatSqlModal({
     const a = document.createElement("a");
     a.href = url;
     a.download = `query_${
-      (reportParams as any)?.scope === "tematik" ? "tematik" : "belanja"
+      reportParams.scope === "tematik" ? "tematik" : "belanja"
     }_${new Date().toISOString().split("T")[0]}.sql`;
     document.body.appendChild(a);
     a.click();
@@ -112,12 +113,9 @@ export function LihatSqlModal({
                 Tahun: {reportParams.tahun || "All"}
               </Badge>
               <Badge variant="secondary">
-                {(reportParams as any)?.scope === "tematik"
-                  ? "Kategori"
-                  : "Tipe"}
-                :{" "}
-                {(reportParams as any)?.scope === "tematik"
-                  ? (reportParams as any)?.tematikKategori || "All"
+                {reportParams.scope === "tematik" ? "Kategori" : "Tipe"}:{" "}
+                {reportParams.scope === "tematik"
+                  ? reportParams.tematikKategori || "All"
                   : reportParams.tipeLaporan || "All"}
               </Badge>
               <Badge variant="secondary">
@@ -163,7 +161,7 @@ export function LihatSqlModal({
             </div>
 
             <ScrollArea className="h-[40vh] w-full">
-              <div className="bg-slate-800 dark:bg-slate-900 text-slate-50 p-4 rounded-lg font-mono text-sm">
+              <div className="bg-slate-800 dark:bg-slate-900 text-slate-50 p-4 rounded-lg font-mono text-sm w-full overflow-hidden">
                 {isLoading ? (
                   <div className="flex items-center justify-center h-32">
                     <div className="text-center">
@@ -172,7 +170,7 @@ export function LihatSqlModal({
                     </div>
                   </div>
                 ) : (
-                  <pre className="whitespace-pre-wrap break-words">
+                  <pre className="whitespace-pre-wrap break-all">
                     {sqlQuery || "-- No SQL query generated"}
                   </pre>
                 )}

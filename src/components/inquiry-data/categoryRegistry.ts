@@ -275,6 +275,24 @@ export const TEMATIK_CATEGORIES: CategoryDefinition[] = [
     jenisAkumulasiAllowed: false,
   },
   {
+    key: "belanja_pemerintah",
+    label: "Bantuan Pemerintah",
+    description:
+      "Analisis data berdasarkan filter kdakun untuk Belanja Pemerintah",
+    mandatoryFilters: [],
+    mandatoryColumns: [],
+    queryConfig: {
+      tableName: "a_pagu_real_bkpk_dja",
+      whereConditions: [
+        "main.kdakun IN ('511521','511522','511529','521231','521232','521233','521234','526111','526112','526113','526114','526115','526121','526122','526123','526124','526131','526132','526311','526312','526313','526321','526322','526323')",
+      ],
+      // Note: No groupByColumns for this category as requested
+    },
+    excludeStandardFilters: ["register"],
+    reportTypeRestriction: "pagu_realisasi_bulanan",
+    jenisAkumulasiAllowed: false,
+  },
+  {
     key: "ketahanan_pangan",
     label: "Ketahanan Pangan",
     description: "Analisis data berdasarkan status Ketahanan Pangan",
@@ -297,130 +315,6 @@ export const TEMATIK_CATEGORIES: CategoryDefinition[] = [
     reportTypeRestriction: "pagu_realisasi_bulanan",
     jenisAkumulasiAllowed: false,
   },
-  {
-    key: "bantuan_pemerintah",
-    label: "Bantuan Pemerintah",
-    description: "Data bantuan pemerintah dengan filter khusus",
-    mandatoryFilters: [
-      {
-        key: "jenisTransfer",
-        label: "Jenis Transfer",
-        mandatory: true,
-        removable: false,
-        defaultValue: {
-          selection: "all",
-          kondisiCode: "",
-          mengandungKata: "",
-          jenisTampilan: "kode",
-        },
-      },
-      {
-        key: "statusPenyaluran",
-        label: "Status Penyaluran",
-        mandatory: true,
-        removable: false,
-        defaultValue: {
-          selection: "all",
-          kondisiCode: "",
-          mengandungKata: "",
-          jenisTampilan: "uraian",
-        },
-      },
-    ],
-    mandatoryColumns: [
-      {
-        key: "jenis_transfer",
-        label: "Jenis Transfer",
-        sqlExpression: "main.jenis_transfer",
-        order: 1,
-        dataType: "text",
-      },
-      {
-        key: "status_penyaluran",
-        label: "Status Penyaluran",
-        sqlExpression: "main.status_penyaluran",
-        order: 2,
-        dataType: "text",
-      },
-      {
-        key: "pagu_transfer",
-        label: "Pagu Transfer",
-        sqlExpression: "ROUND(SUM(main.pagu_transfer) / {divisor}, 0)",
-        order: 3,
-        dataType: "number",
-        isMonetary: true,
-      },
-    ],
-    queryConfig: {
-      tableName: "pagu_real_detail_harian",
-      whereConditions: ["main.jenis_transfer IS NOT NULL"],
-    },
-    excludeStandardFilters: ["register", "akun"],
-    reportTypeRestriction: "pagu_realisasi",
-    jenisAkumulasiAllowed: false,
-  },
-  {
-    key: "program_strategis",
-    label: "Program Strategis",
-    description: "Data program strategis nasional",
-    mandatoryFilters: [
-      {
-        key: "kategoriProgram",
-        label: "Kategori Program",
-        mandatory: true,
-        removable: false,
-        defaultValue: {
-          selection: "all",
-          kondisiCode: "",
-          mengandungKata: "",
-          jenisTampilan: "kode_uraian",
-        },
-      },
-      {
-        key: "tingkatPrioritas",
-        label: "Tingkat Prioritas",
-        mandatory: true,
-        removable: false,
-        defaultValue: {
-          selection: "all",
-          kondisiCode: "",
-          mengandungKata: "",
-          jenisTampilan: "uraian",
-        },
-      },
-    ],
-    mandatoryColumns: [
-      {
-        key: "kategori_program",
-        label: "Kategori Program",
-        sqlExpression: "main.kategori_program",
-        order: 1,
-        dataType: "text",
-      },
-      {
-        key: "tingkat_prioritas",
-        label: "Tingkat Prioritas",
-        sqlExpression: "main.tingkat_prioritas",
-        order: 2,
-        dataType: "text",
-      },
-      {
-        key: "target_output",
-        label: "Target Output",
-        sqlExpression: "SUM(main.target_output)",
-        order: 3,
-        dataType: "number",
-      },
-    ],
-    queryConfig: {
-      tableName: "smry_program_strategis",
-      whereConditions: ["main.kategori_program IS NOT NULL"],
-      groupByColumns: ["main.kategori_program", "main.tingkat_prioritas"],
-    },
-    excludeStandardFilters: ["register", "akun", "fungsi"],
-    reportTypeRestriction: "pagu_realisasi",
-    jenisAkumulasiAllowed: false,
-  },
 
   // Add more categories as needed...
 ];
@@ -436,7 +330,40 @@ export function getTematikCategoryOptions(): {
   value: string;
   label: string;
 }[] {
-  return TEMATIK_CATEGORIES.map((cat) => ({
+  // Explicit ordering requested:
+  // 1. Prioritas Nasional
+  // 2. Major Project
+  // 3. Inflasi
+  // 4. Penanganan Stunting
+  // 5. Kemiskinan Ekstrim
+  // 6. Belanja Pemilu
+  // 7. Ibu Kota Nusantara
+  // 8. Ketahanan Pangan
+  // 9. Bantuan Pemerintah
+  const orderMap: Record<string, number> = {
+    prioritas_nasional: 1,
+    major_project: 2,
+    inflasi: 3,
+    penanganan_stunting: 4,
+    kemiskinan_ekstrim: 5,
+    belanja_pemilu: 6,
+    ibu_kota_nusantara: 7,
+    ketahanan_pangan: 8,
+    belanja_pemerintah: 9, // label: Bantuan Pemerintah
+  };
+
+  const keyed = TEMATIK_CATEGORIES.map((cat, idx) => ({
+    cat,
+    idx,
+    ord: orderMap[cat.key] ?? 1000 + idx, // unknowns go last in stable order
+  }));
+
+  const sorted = keyed
+    .slice()
+    .sort((a, b) => a.ord - b.ord)
+    .map((x) => x.cat);
+
+  return sorted.map((cat) => ({
     value: cat.key,
     label: cat.label,
   }));

@@ -383,6 +383,16 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
     },
   },
   {
+    key: "belanjaPemerintah",
+    label: "Bantuan Pemerintah",
+    order: 212,
+    showInUI: true,
+    query: {
+      columnName: "kdakun",
+      // Acts as a switch; handled in query builder WHERE only (no SELECT/GROUP BY)
+    },
+  },
+  {
     key: "kegiatan",
     label: "Kegiatan",
     order: 12,
@@ -586,6 +596,7 @@ export const getAvailableFiltersForScope = (
       "belanjaPemilu",
       "ibuKotaNusantara",
       "ketahananPangan",
+      "belanjaPemerintah",
     ], // Exclude switches from Tematik page
     general: [], // General scope has all filters
   };
