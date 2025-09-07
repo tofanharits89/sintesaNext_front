@@ -147,7 +147,7 @@ export const TEMATIK_CATEGORIES: CategoryDefinition[] = [
         removable: false,
         defaultValue: {
           selection: "all",
-          jenisTampilan: "kode",
+          jenisTampilan: "kode_uraian",
         },
       },
       {
@@ -157,7 +157,7 @@ export const TEMATIK_CATEGORIES: CategoryDefinition[] = [
         removable: false,
         defaultValue: {
           selection: "all",
-          jenisTampilan: "kode",
+          jenisTampilan: "kode_uraian",
         },
       },
     ],
@@ -330,6 +330,17 @@ export function getCategoryLabel(key: string): string {
 export function getCategoryMandatoryFilters(key: string): CategoryFilter[] {
   const category = getTematikCategory(key);
   return category?.mandatoryFilters || [];
+}
+
+/**
+ * Get a unique list of ALL mandatory filter keys across every tematik category.
+ * Useful for globally hiding category-specific mandatory switches from UI.
+ */
+export function getAllMandatoryFilterKeys(): string[] {
+  const all = TEMATIK_CATEGORIES.flatMap((cat) =>
+    (cat.mandatoryFilters || []).map((f) => f.key)
+  );
+  return Array.from(new Set(all));
 }
 
 export function getCategoryMandatoryColumns(key: string): CategoryColumn[] {

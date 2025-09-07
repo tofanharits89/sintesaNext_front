@@ -34,7 +34,10 @@ import { useTematikConfig } from "@/hooks/use-tematik-config";
 import type { FilterValue, SavedQuery } from "@/types/saved-queries";
 import { Settings, Keyboard, RefreshCw, Database } from "lucide-react";
 import { QueryErrorBoundary } from "@/components/ui/query-error-boundary";
-import { getCategoryMandatoryFilters } from "@/components/inquiry-data/categoryRegistry";
+import {
+  getCategoryMandatoryFilters,
+  getAllMandatoryFilterKeys,
+} from "@/components/inquiry-data/categoryRegistry";
 
 export default function TematikPage() {
   // Helper function to get current month
@@ -554,7 +557,7 @@ export default function TematikPage() {
           excludeFilters={[
             "register", // Always exclude register for tematik
             "cutOff", // Exclude from switches; it appears in DynamicFiltersCard
-            ...tematikConfig.getMandatoryFilterKeys(), // Exclude mandatory filters (shown above)
+            ...getAllMandatoryFilterKeys(), // Hide ALL kategori mandatory switches globally
             ...tematikConfig.excludedStandardFilters, // Exclude category-specific filters
           ]}
         />

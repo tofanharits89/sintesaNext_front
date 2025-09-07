@@ -286,8 +286,13 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
     showInUI: true,
     query: {
       columnName: "inf_intervensi",
-      // Uses local JSON file: inf_intervensi.json
-      // Data handled in FilterCard component
+      reference: {
+        database: "dbref",
+        table: "ref_inf_intervensi",
+        joinKey: "inf_intervensi",
+        nameColumn: "ur_inf_intervensi",
+      },
+      // Keep local JSON for UI options while SQL uses reference for LEFT JOIN
       dataSource: "local",
       localFile: "inf_intervensi.json",
       joinKey: "inf_intervensi",
@@ -301,8 +306,13 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
     showInUI: true,
     query: {
       columnName: "inf_pengeluaran",
-      // Uses local JSON file: inf_pengeluaran.json
-      // Data handled in FilterCard component
+      reference: {
+        database: "dbref",
+        table: "ref_inf_pengeluaran",
+        joinKey: "inf_pengeluaran",
+        nameColumn: "ur_inf_pengeluaran",
+      },
+      // Keep local JSON for UI options while SQL uses reference for LEFT JOIN
       dataSource: "local",
       localFile: "inf_pengeluaran.json",
       joinKey: "inf_pengeluaran",
@@ -471,7 +481,7 @@ export const getFilterConfigMap = () => {
       map[d.key] = {
         key: d.key,
         columnName: d.key,
-      } as any;
+      };
     }
   }
   return map;
