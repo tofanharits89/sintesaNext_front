@@ -3,23 +3,56 @@ import type { NextRequest } from "next/server";
 import { backendPath } from "@/lib/backend";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next";
+const DEBUG_AUTH = process.env.NEXT_PUBLIC_DEBUG_AUTH === "1";
 
-async function verifyTokenViaBackend(token?: string) {
-  if (!token) return false;
+// Simple in-memory cache for session verification to reduce backend load
+const SESSION_VERIFY_TTL_MS = 20_000; // 20 seconds
+const sessionVerifyCache = new Map<string, { ok: boolean; exp: number }>();
+
+/**
+ * Validate session with backend using cookies only (no token extraction).
+ * Caches results for a short TTL keyed by the incoming Cookie header.
+ */
+async function validateSessionViaBackend(
+  incomingCookie: string
+): Promise<boolean> {
+  const key = incomingCookie || "_no_cookie";
+  const now = Date.now();
+  const cached = sessionVerifyCache.get(key);
+  if (cached && cached.exp > now) {
+    if (DEBUG_AUTH) console.debug("[Auth] session verify cache hit");
+    return cached.ok;
+  }
+
   try {
-    const resp = await fetch(backendPath("/auth/verify"), {
+    const resp = await fetch(backendPath("/auth/session/validate"), {
       method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: incomingCookie ? { cookie: incomingCookie } : {},
+      cache: "no-store",
     });
-    if (!resp.ok) return false;
-    const data = await resp.json().catch(() => ({}));
-    return Boolean(data?.success);
+    const ok =
+      resp.ok && Boolean((await resp.json().catch(() => ({})))?.success);
+    sessionVerifyCache.set(key, { ok, exp: now + SESSION_VERIFY_TTL_MS });
+    return ok;
   } catch {
+    sessionVerifyCache.set(key, {
+      ok: false,
+      exp: now + SESSION_VERIFY_TTL_MS,
+    });
     return false;
   }
 }
 
+const HEALTH_TTL_MS = 15_000;
+let healthCache: { ok: boolean; exp: number } | null = null;
+
 async function isBackendHealthy() {
+  const now = Date.now();
+  if (healthCache && healthCache.exp > now) {
+    if (DEBUG_AUTH) console.debug("[Auth] health cache hit");
+    return healthCache.ok;
+  }
+
   try {
     const ac = new AbortController();
     const timeout = setTimeout(() => ac.abort(), 1500);
@@ -29,10 +62,21 @@ async function isBackendHealthy() {
       signal: ac.signal,
     });
     clearTimeout(timeout);
-    if (!resp.ok) return false;
-    const data = await resp.json().catch(() => ({}));
-    return Boolean(data?.success || data?.status === "healthy");
+    const ok =
+      resp.ok &&
+      Boolean(
+        (await resp.json().catch(() => ({})))?.success ||
+          (
+            await resp
+              .clone()
+              .json()
+              .catch(() => ({}))
+          )?.status === "healthy"
+      );
+    healthCache = { ok, exp: now + HEALTH_TTL_MS };
+    return ok;
   } catch {
+    healthCache = { ok: false, exp: now + HEALTH_TTL_MS };
     return false;
   }
 }
@@ -78,49 +122,9 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Check multiple cookie names - prefer backend httpOnly accessToken first
-  const accessTokenCookie = request.cookies.get("accessToken")?.value;
-  const accessTokenAltCookie = request.cookies.get("access_token")?.value;
-  const tokenCookie = request.cookies.get("token")?.value; // legacy Next login cookie
-  const authStateCookie = request.cookies.get("authState")?.value; // client-readable mirror
-  const socketTokenCookie = request.cookies.get("socket_token")?.value;
-  const authUserCookie = request.cookies.get("auth_user")?.value;
-
-  // Try the primary token first (backend-issued), then fallbacks
-  const token =
-    accessTokenCookie ||
-    accessTokenAltCookie ||
-    tokenCookie ||
-    authStateCookie ||
-    socketTokenCookie ||
-    authUserCookie;
-
-  console.log("[Middleware Debug] Cookie analysis:", {
-    path: pathname,
-    relPath,
-    accessTokenCookie: accessTokenCookie ? "present" : "missing",
-    accessTokenAltCookie: accessTokenAltCookie ? "present" : "missing",
-    tokenCookie: tokenCookie ? "present" : "missing",
-    authStateCookie: authStateCookie ? "present" : "missing",
-    socketTokenCookie: socketTokenCookie ? "present" : "missing",
-    authUserCookie: authUserCookie ? "present" : "missing",
-    finalToken: token ? "present" : "missing",
-    allCookies: request.cookies.getAll().map((c) => c.name),
-  });
-
-  const isAuth = await verifyTokenViaBackend(token);
-
-  // Debug logging (remove in production)
-  console.log(
-    "[Middleware] Path:",
-    pathname,
-    "RelPath:",
-    relPath,
-    "IsPublic:",
-    isPublicPath,
-    "IsAuth:",
-    isAuth
-  );
+  // Validate session via backend using cookies only (no token extraction)
+  const incomingCookie = request.headers.get("cookie") || "";
+  const isAuth = await validateSessionViaBackend(incomingCookie);
 
   // Handle root path: redirect to appropriate base path
   if (relPath === "/") {

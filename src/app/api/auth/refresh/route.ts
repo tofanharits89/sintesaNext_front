@@ -1,20 +1,22 @@
 import { NextResponse, NextRequest } from "next/server";
-import { cookies as nextCookies } from "next/headers";
 import { backendPath } from "@/lib/backend";
+import { forwardSetCookies } from "@/lib/cookie-helpers";
 
 export async function POST(request: NextRequest) {
   // Collect client cookies and forward to backend so it can read refreshToken
   const incomingCookie = request.headers.get("cookie") || "";
+
   // Forward CSRF headers if present
   const csrfHeaderCandidates = [
     "x-csrf-token",
     "X-CSRF-Token",
     "x-xsrf-token",
     "X-XSRF-TOKEN",
-  ];
+  ] as const;
+
   const forwardedCsrfHeaders: Record<string, string> = {};
   for (const name of csrfHeaderCandidates) {
-    const v = request.headers.get(name as any);
+    const v = request.headers.get(name);
     if (v) forwardedCsrfHeaders[name] = v;
   }
 
@@ -27,22 +29,14 @@ export async function POST(request: NextRequest) {
       // Forward CSRF headers (any that were provided)
       ...forwardedCsrfHeaders,
     },
+    cache: "no-store",
   });
 
   const resBody = await resp.json().catch(() => ({}));
 
   const res = NextResponse.json(resBody, { status: resp.status });
-
   // Forward Set-Cookie from backend so browser updates httpOnly cookies
-  // Forward one or multiple Set-Cookie headers
-  const getSetCookie = (resp.headers as any).getSetCookie?.bind(resp.headers);
-  const cookiesFromBackend: string[] = getSetCookie ? getSetCookie() : [];
-  if (cookiesFromBackend.length > 0) {
-    for (const c of cookiesFromBackend) res.headers.append("set-cookie", c);
-  } else {
-    const single = resp.headers.get("set-cookie");
-    if (single) res.headers.set("set-cookie", single);
-  }
+  forwardSetCookies(resp, res);
 
   return res;
 }

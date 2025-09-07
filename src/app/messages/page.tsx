@@ -73,20 +73,21 @@ export default function MessagesPage() {
   // Ref to mark when URL was last updated by state, so URL->state effect can skip one cycle
   const lastUrlUpdateByStateRef = useRef<string | null>(null);
 
-  // Ref to temporarily skip syncing state -> URL after a reload-triggered redirect
-  // Initialize with reload+query to suppress first-render URL sync and chat window
-  const skipUrlSyncRef = useRef<boolean>(!!urlConversationId);
+  // Ref to temporarily skip syncing state -> URL on first load to prevent auto-opening last chat
+  // Always start as true; will be set to false on explicit user selection
+  const skipUrlSyncRef = useRef<boolean>(true);
 
   // Ref to suppress state->URL effect right after a user initiates a selection
   // This prevents the race where activeConversationId (still old) forces the URL back
   const pendingSelectionRef = useRef<string | null>(null);
 
-  // On initial mount: if a conversation query exists, strip it and land on main messages page
+  // On initial mount:
+  // - If a conversation ID is present in the URL (e.g., from navbar popover), honor it and allow opening that chat
+  // - Otherwise, keep skipUrlSyncRef as true to show the default "no conversation selected" view
   useEffect(() => {
     if (urlConversationId) {
-      // Avoid re-adding the query param via the sync effect
-      skipUrlSyncRef.current = true;
-      router.replace(pathname);
+      // Allow immediate chat open from explicit navigation with query param
+      skipUrlSyncRef.current = false;
     }
     // We intentionally run this only once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -113,7 +114,8 @@ export default function MessagesPage() {
       urlConversationId.startsWith("temp-") ||
       urlConversationId.startsWith("temp_conv-") ||
       urlConversationId.startsWith("temp-conv-");
-    const stateIsReal = !!activeConversationId &&
+    const stateIsReal =
+      !!activeConversationId &&
       !activeConversationId.startsWith("temp-") &&
       !activeConversationId.startsWith("temp_conv-") &&
       !activeConversationId.startsWith("temp-conv-");
@@ -157,7 +159,7 @@ export default function MessagesPage() {
   // Conditional refresh: only while on messages page
   useEffect(() => {
     if (!refetchConversations) return;
-    let interval: any;
+    let interval: ReturnType<typeof setInterval> | undefined;
 
     // Refresh once when socket connects
     if (isSocketConnected) {
@@ -186,7 +188,7 @@ export default function MessagesPage() {
     const sock = socketClient.getSocket?.() || null;
     if (!sock) return;
 
-    let debounceTimer: any = null;
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     const debouncedRefresh = () => {
       if (debounceTimer) clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
@@ -279,13 +281,21 @@ export default function MessagesPage() {
                   if (!conv) return 0;
                   if (typeof conv.unread_count === "number")
                     return conv.unread_count;
-                  const lm = conv.lastMessage as any;
+                  const lm = (
+                    conv as unknown as {
+                      lastMessage?:
+                        | { isRead?: boolean; is_read?: boolean }
+                        | undefined;
+                    }
+                  ).lastMessage;
                   if (!lm) return 0;
                   const isRead = lm?.isRead ?? lm?.is_read;
                   return isRead ? 0 : 1;
                 }}
                 hasMore={!!conversationsHasNextPage}
-                onLoadMore={() => fetchNextConversations && fetchNextConversations()}
+                onLoadMore={() =>
+                  fetchNextConversations && fetchNextConversations()
+                }
                 isLoadingMore={!!isFetchingNextConversations}
               />
             </CardContent>
