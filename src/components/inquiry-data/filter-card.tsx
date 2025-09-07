@@ -117,6 +117,9 @@ const getFilterIcon = (filterKey: string) => {
     kegiatanPrioritas: <Target className="h-4 w-4" />,
     proyekPrioritas: <Target className="h-4 w-4" />,
     jenisMajorProject: <Target className="h-4 w-4" />,
+    belanjaPemilu: <Settings className="h-4 w-4" />,
+    ibuKotaNusantara: <Settings className="h-4 w-4" />,
+    ketahananPangan: <Settings className="h-4 w-4" />,
   };
 
   return iconMap[filterKey] || <Filter className="h-4 w-4" />;
@@ -145,8 +148,16 @@ export function FilterCard({
     akunType: "kodeAkun", // Default to "Kode Akun (6 Digit)" for Akun filter
   });
 
-  // Special handling flags
+  // Special handling flags for boolean switch filters (no options/tampilan/kondisi/kata)
   const isKemiskinanEkstrim = filterKey === "kemiskinanEkstrim";
+  const isBelanjaPemilu = filterKey === "belanjaPemilu";
+  const isIbuKotaNusantara = filterKey === "ibuKotaNusantara";
+  const isKetahananPangan = filterKey === "ketahananPangan";
+  const isBooleanSwitch =
+    isKemiskinanEkstrim ||
+    isBelanjaPemilu ||
+    isIbuKotaNusantara ||
+    isKetahananPangan;
 
   // Track if initial notification has been sent to prevent infinite loops
   const initialNotificationSent = useRef(false);
@@ -1077,6 +1088,18 @@ export function FilterCard({
             // Boolean-only flag: no explicit option; keep default "Semua" only
             return commonOptions;
           }
+          case "belanjaPemilu": {
+            // Boolean-only flag: no explicit option; keep default "Semua" only
+            return commonOptions;
+          }
+          case "ibuKotaNusantara": {
+            // Boolean-only flag: no explicit option; keep default "Semua" only
+            return commonOptions;
+          }
+          case "ketahananPangan": {
+            // Boolean-only flag: no explicit option; keep default "Semua" only
+            return commonOptions;
+          }
 
           default:
             return commonOptions;
@@ -1299,7 +1322,7 @@ export function FilterCard({
                   handleInputChange("kondisiCode", e.target.value)
                 }
                 disabled={
-                  isKemiskinanEkstrim ||
+                  isBooleanSwitch ||
                   !!(
                     (filterData.selection && filterData.selection !== "all") ||
                     (filterData.mengandungKata &&
@@ -1308,7 +1331,7 @@ export function FilterCard({
                 }
                 className={cn(
                   "w-full h-8 text-xs placeholder:text-xs",
-                  (isKemiskinanEkstrim ||
+                  (isBooleanSwitch ||
                     (filterData.selection && filterData.selection !== "all") ||
                     (filterData.mengandungKata &&
                       filterData.mengandungKata.trim())) &&
@@ -1329,7 +1352,7 @@ export function FilterCard({
                   handleInputChange("mengandungKata", e.target.value)
                 }
                 disabled={
-                  isKemiskinanEkstrim ||
+                  isBooleanSwitch ||
                   !!(
                     (filterData.selection && filterData.selection !== "all") ||
                     (filterData.kondisiCode &&
@@ -1338,7 +1361,7 @@ export function FilterCard({
                 }
                 className={cn(
                   "w-full h-8 text-xs placeholder:text-xs",
-                  (isKemiskinanEkstrim ||
+                  (isBooleanSwitch ||
                     (filterData.selection && filterData.selection !== "all") ||
                     (filterData.kondisiCode &&
                       filterData.kondisiCode.trim())) &&
@@ -1355,16 +1378,16 @@ export function FilterCard({
               <Select
                 value={filterData.jenisTampilan}
                 onValueChange={(value) => {
-                  if (isKemiskinanEkstrim) return; // disabled
+                  if (isBooleanSwitch) return; // disabled
                   handleInputChange("jenisTampilan", value);
                 }}
               >
                 <SelectTrigger
                   className={cn(
                     "w-full h-8 text-xs",
-                    isKemiskinanEkstrim && "opacity-50 cursor-not-allowed"
+                    isBooleanSwitch && "opacity-50 cursor-not-allowed"
                   )}
-                  disabled={isKemiskinanEkstrim}
+                  disabled={isBooleanSwitch}
                 >
                   <SelectValue placeholder="Pilih tampilan" />
                 </SelectTrigger>

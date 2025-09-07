@@ -231,9 +231,14 @@ export function useInquiryQueryBuilder() {
         const config = FILTER_CONFIG[filterKey];
         if (!config) return;
 
-        // Special-case: kemiskinanEkstrim is a boolean flag without uraian.
+        // Special-case: kemiskinanEkstrim and belanjaPemilu are boolean flags without uraian.
         // When active, always select the raw column even if no filter value object exists
-        if (filterKey === "kemiskinanEkstrim") {
+        if (
+          filterKey === "kemiskinanEkstrim" ||
+          filterKey === "belanjaPemilu" ||
+          filterKey === "ibuKotaNusantara" ||
+          filterKey === "ketahananPangan"
+        ) {
           // Push as a simple code column (no reference/join and no tampilan switching)
           // Keep alias stable to align with export/SQL preview expectations
           selectColumns.push(`main.${config.columnName} AS ${filterKey}`);
@@ -624,10 +629,19 @@ export function useInquiryQueryBuilder() {
         }
       }
 
-      // Global switch: if kemiskinanEkstrim filter is active, always enforce the IS NOT NULL condition
-      // Applies to all scopes (e.g., belanja and tematik) that use the shared filter switch
+      // Global switches: enforce IS NOT NULL conditions when switches are active
+      // Applies to all scopes (e.g., belanja and tematik) that use the shared filter switches
       if (activeFilters.includes("kemiskinanEkstrim")) {
         whereConditions.push("main.kemiskinan_ekstrim IS NOT NULL");
+      }
+      if (activeFilters.includes("belanjaPemilu")) {
+        whereConditions.push("main.pemilu IS NOT NULL");
+      }
+      if (activeFilters.includes("ibuKotaNusantara")) {
+        whereConditions.push("main.ikn IS NOT NULL");
+      }
+      if (activeFilters.includes("ketahananPangan")) {
+        whereConditions.push("main.pangan IS NOT NULL");
       }
 
       // Note: Category-specific WHERE conditions (like kdpn <> '00' for prioritas_nasional)
@@ -770,9 +784,18 @@ export function useInquiryQueryBuilder() {
       // Use deduplicated filters for GROUP BY consistency
       const uniqueActiveFilters = Array.from(new Set(activeFilters));
 
-      // Ensure GROUP BY for kemiskinanEkstrim switch regardless of tampilan/selection
+      // Ensure GROUP BY for switch filters regardless of tampilan/selection
       if (uniqueActiveFilters.includes("kemiskinanEkstrim")) {
         addGroupBy("main.kemiskinan_ekstrim");
+      }
+      if (uniqueActiveFilters.includes("belanjaPemilu")) {
+        addGroupBy("main.pemilu");
+      }
+      if (uniqueActiveFilters.includes("ibuKotaNusantara")) {
+        addGroupBy("main.ikn");
+      }
+      if (uniqueActiveFilters.includes("ketahananPangan")) {
+        addGroupBy("main.pangan");
       }
 
       uniqueActiveFilters.forEach((filterKey) => {

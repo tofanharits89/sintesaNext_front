@@ -347,6 +347,42 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
     },
   },
   {
+    key: "belanjaPemilu",
+    label: "Belanja Pemilu",
+    order: 209,
+    showInUI: true,
+    query: {
+      columnName: "pemilu",
+      // Acts as a switch; query builder enforces
+      // WHERE main.pemilu IS NOT NULL and GROUP BY main.pemilu
+      // when this filter is active
+    },
+  },
+  {
+    key: "ibuKotaNusantara",
+    label: "Ibu Kota Nusantara",
+    order: 210,
+    showInUI: true,
+    query: {
+      columnName: "ikn",
+      // Acts as a switch; query builder enforces
+      // WHERE main.ikn IS NOT NULL and GROUP BY main.ikn
+      // when this filter is active
+    },
+  },
+  {
+    key: "ketahananPangan",
+    label: "Ketahanan Pangan",
+    order: 211,
+    showInUI: true,
+    query: {
+      columnName: "pangan",
+      // Acts as a switch; query builder enforces
+      // WHERE main.pangan IS NOT NULL and GROUP BY main.pangan
+      // when this filter is active
+    },
+  },
+  {
     key: "kegiatan",
     label: "Kegiatan",
     order: 12,
@@ -544,7 +580,13 @@ export const getAvailableFiltersForScope = (
   // Define scope-specific exclusions
   const scopeExclusions: Record<string, string[]> = {
     belanja: [], // Belanja has all filters available
-    tematik: ["register", "kemiskinanEkstrim"], // Exclude kemiskinanEkstrim switch from Tematik page
+    tematik: [
+      "register",
+      "kemiskinanEkstrim",
+      "belanjaPemilu",
+      "ibuKotaNusantara",
+      "ketahananPangan",
+    ], // Exclude switches from Tematik page
     general: [], // General scope has all filters
   };
 
