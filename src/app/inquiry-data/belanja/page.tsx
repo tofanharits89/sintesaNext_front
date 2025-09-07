@@ -422,6 +422,7 @@ export default function BelanjaPage() {
           activeFilters={activeFilters}
           setActiveFilters={setActiveFilters}
           scope="belanja"
+          tipeLaporan={reportParams.tipeLaporan}
         />
 
         {/* 3. Dynamic Filters and Actions Card */}

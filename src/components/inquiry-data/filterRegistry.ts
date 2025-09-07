@@ -1,3 +1,5 @@
+import { getAllMandatoryFilterKeys } from "./categoryRegistry";
+
 export type JenisTampilan =
   | "kode"
   | "kode_uraian"
@@ -610,13 +612,19 @@ export const normalizeActiveFilters = (activeFilters: string[]): string[] => {
  */
 export const getAvailableFiltersForScope = (
   scope: "belanja" | "tematik" | "general" = "general",
-  excludeFilters: string[] = []
+  excludeFilters: string[] = [],
+  options?: { tipeLaporan?: string }
 ): string[] => {
   const allUIFilters = getUIFilters().map((f) => f.key);
 
   // Define scope-specific exclusions
   const scopeExclusions: Record<string, string[]> = {
-    belanja: [], // Belanja has all filters available
+    // Hide specific tematik filters from Belanja per request
+    belanja: [
+      "belanjaPemerintah", // Bantuan Pemerintah
+      "mbgIntervensi", // Makan Bergizi Gratis
+      "swasembadaPangan", // Swasembada Pangan
+    ],
     tematik: [
       "register",
       "kemiskinanEkstrim",
@@ -629,10 +637,49 @@ export const getAvailableFiltersForScope = (
     general: [], // General scope has all filters
   };
 
-  const filtersToExclude = [
+  // Base exclusions
+  const filtersToExclude: string[] = [
     ...(scopeExclusions[scope] || []),
     ...excludeFilters,
   ];
+
+  // Additional rule: On Belanja page, conditional visibility based on tipe laporan
+  if (scope === "belanja") {
+    const tipe = options?.tipeLaporan;
+
+    if (tipe === "volume_output_kegiatan") {
+      // For tipe 7, hide these filters: akun, sumberDana, register
+      const hideOnTipe7 = ["akun", "sumberDana", "register"];
+      hideOnTipe7.forEach((k) => {
+        if (!filtersToExclude.includes(k)) {
+          filtersToExclude.push(k);
+        }
+      });
+    } else {
+      // For non-tipe 7:
+      // 1) Hide all tematik mandatory filters (PN/MP/Inflasi/Stunting/MBG, etc.)
+      const tematikMandatoryKeys = getAllMandatoryFilterKeys();
+      for (const k of tematikMandatoryKeys) {
+        if (!filtersToExclude.includes(k)) {
+          filtersToExclude.push(k);
+        }
+      }
+
+      // 2) Also hide switch-type tematik filters from Belanja unless tipe 7:
+      //    kemiskinanEkstrim, belanjaPemilu, ibuKotaNusantara, ketahananPangan
+      const tematikSwitchesToHide = [
+        "kemiskinanEkstrim",
+        "belanjaPemilu",
+        "ibuKotaNusantara",
+        "ketahananPangan",
+      ];
+      tematikSwitchesToHide.forEach((k) => {
+        if (!filtersToExclude.includes(k)) {
+          filtersToExclude.push(k);
+        }
+      });
+    }
+  }
 
   return allUIFilters.filter(
     (filterKey) => !filtersToExclude.includes(filterKey)

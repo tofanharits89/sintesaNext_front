@@ -11,6 +11,7 @@ interface FilterParametersCardProps {
   setActiveFilters: React.Dispatch<React.SetStateAction<string[]>>;
   excludeFilters?: string[]; // Optional array of filter keys to exclude
   scope?: "belanja" | "tematik" | "general"; // Optional scope for context-aware visibility
+  tipeLaporan?: string; // Pass current report type to gate tematik mandatory filters on Belanja
 }
 
 export function FilterParametersCard({
@@ -18,9 +19,12 @@ export function FilterParametersCard({
   setActiveFilters,
   excludeFilters = [], // Default to empty array if not provided
   scope = "general",
+  tipeLaporan,
 }: FilterParametersCardProps) {
   // Determine allowed filters for the given scope then apply exclude list
-  const allowedKeys = getAvailableFiltersForScope(scope, excludeFilters);
+  const allowedKeys = getAvailableFiltersForScope(scope, excludeFilters, {
+    tipeLaporan,
+  });
   const uiFilters = getUIFilters().filter((filter) =>
     allowedKeys.includes(filter.key)
   );
