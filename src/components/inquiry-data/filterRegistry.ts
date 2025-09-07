@@ -335,6 +335,21 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
     },
   },
   {
+    key: "mbgIntervensi",
+    label: "Intervensi MBG",
+    order: 213,
+    showInUI: true,
+    query: {
+      columnName: "mbg",
+      reference: {
+        database: "dbref",
+        table: "ref_mbg_intervensi",
+        joinKey: "mbg",
+        nameColumn: "ur_mbg_intervensi",
+      },
+    },
+  },
+  {
     key: "kemiskinanEkstrim",
     label: "Kemiskinan Ekstrim",
     order: 208,
@@ -379,6 +394,18 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
       columnName: "pangan",
       // Acts as a switch; query builder enforces
       // WHERE main.pangan IS NOT NULL and GROUP BY main.pangan
+      // when this filter is active
+    },
+  },
+  {
+    key: "swasembadaPangan",
+    label: "Swasembada Pangan",
+    order: 214,
+    showInUI: true,
+    query: {
+      columnName: "swasembada",
+      // Acts as a switch; query builder enforces
+      // WHERE main.swasembada IS NOT NULL and GROUP BY main.swasembada
       // when this filter is active
     },
   },
@@ -596,6 +623,7 @@ export const getAvailableFiltersForScope = (
       "belanjaPemilu",
       "ibuKotaNusantara",
       "ketahananPangan",
+      "swasembadaPangan",
       "belanjaPemerintah",
     ], // Exclude switches from Tematik page
     general: [], // General scope has all filters

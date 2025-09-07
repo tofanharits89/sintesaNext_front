@@ -293,6 +293,34 @@ export const TEMATIK_CATEGORIES: CategoryDefinition[] = [
     jenisAkumulasiAllowed: false,
   },
   {
+    key: "makan_bergizi_gratis",
+    label: "Makan Bergizi Gratis",
+    description: "Analisis data berdasarkan Intervensi MBG",
+    mandatoryFilters: [
+      {
+        key: "mbgIntervensi",
+        label: "Intervensi MBG",
+        mandatory: true,
+        removable: false,
+        defaultValue: {
+          selection: "all",
+          jenisTampilan: "kode",
+        },
+      },
+    ],
+    mandatoryColumns: [],
+    queryConfig: {
+      tableName: "a_pagu_real_bkpk_dja",
+      whereConditions: ["main.mbg IS NOT NULL"],
+      customJoins: [
+        "LEFT JOIN ref_mbg_intervensi mbgref ON main.mbg = mbgref.mbg",
+      ],
+    },
+    excludeStandardFilters: ["register"],
+    reportTypeRestriction: "pagu_realisasi_bulanan",
+    jenisAkumulasiAllowed: false,
+  },
+  {
     key: "ketahanan_pangan",
     label: "Ketahanan Pangan",
     description: "Analisis data berdasarkan status Ketahanan Pangan",
@@ -310,6 +338,30 @@ export const TEMATIK_CATEGORIES: CategoryDefinition[] = [
       tableName: "a_pagu_real_bkpk_dja",
       whereConditions: ["main.pangan IS NOT NULL"],
       groupByColumns: ["main.pangan"],
+    },
+    excludeStandardFilters: ["register"],
+    reportTypeRestriction: "pagu_realisasi_bulanan",
+    jenisAkumulasiAllowed: false,
+  },
+
+  {
+    key: "swasembada_pangan",
+    label: "Swasembada Pangan",
+    description: "Analisis data berdasarkan status Swasembada Pangan",
+    mandatoryFilters: [],
+    mandatoryColumns: [
+      {
+        key: "swasembada",
+        label: "Swasembada Pangan",
+        sqlExpression: "main.swasembada",
+        order: 1,
+        dataType: "text",
+      },
+    ],
+    queryConfig: {
+      tableName: "a_pagu_real_bkpk_dja",
+      whereConditions: ["main.swasembada IS NOT NULL"],
+      groupByColumns: ["main.swasembada"],
     },
     excludeStandardFilters: ["register"],
     reportTypeRestriction: "pagu_realisasi_bulanan",
@@ -340,6 +392,7 @@ export function getTematikCategoryOptions(): {
   // 7. Ibu Kota Nusantara
   // 8. Ketahanan Pangan
   // 9. Bantuan Pemerintah
+  // 10. Makan Bergizi Gratis
   const orderMap: Record<string, number> = {
     prioritas_nasional: 1,
     major_project: 2,
@@ -350,6 +403,8 @@ export function getTematikCategoryOptions(): {
     ibu_kota_nusantara: 7,
     ketahanan_pangan: 8,
     belanja_pemerintah: 9, // label: Bantuan Pemerintah
+    makan_bergizi_gratis: 10,
+    swasembada_pangan: 11,
   };
 
   const keyed = TEMATIK_CATEGORIES.map((cat, idx) => ({

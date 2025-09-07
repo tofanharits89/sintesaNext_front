@@ -237,7 +237,8 @@ export function useInquiryQueryBuilder() {
           filterKey === "kemiskinanEkstrim" ||
           filterKey === "belanjaPemilu" ||
           filterKey === "ibuKotaNusantara" ||
-          filterKey === "ketahananPangan"
+          filterKey === "ketahananPangan" ||
+          filterKey === "swasembadaPangan"
         ) {
           // Push as a simple code column (no reference/join and no tampilan switching)
           // Keep alias stable to align with export/SQL preview expectations
@@ -643,6 +644,9 @@ export function useInquiryQueryBuilder() {
       if (activeFilters.includes("ketahananPangan")) {
         whereConditions.push("main.pangan IS NOT NULL");
       }
+      if (activeFilters.includes("swasembadaPangan")) {
+        whereConditions.push("main.swasembada IS NOT NULL");
+      }
       // Belanja Pemerintah: WHERE-only filter on kdakun; no GROUP BY or SELECT column
       if (activeFilters.includes("belanjaPemerintah")) {
         whereConditions.push(
@@ -802,6 +806,9 @@ export function useInquiryQueryBuilder() {
       }
       if (uniqueActiveFilters.includes("ketahananPangan")) {
         addGroupBy("main.pangan");
+      }
+      if (uniqueActiveFilters.includes("swasembadaPangan")) {
+        addGroupBy("main.swasembada");
       }
 
       uniqueActiveFilters.forEach((filterKey) => {

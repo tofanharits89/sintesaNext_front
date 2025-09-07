@@ -120,7 +120,9 @@ const getFilterIcon = (filterKey: string) => {
     belanjaPemilu: <Settings className="h-4 w-4" />,
     ibuKotaNusantara: <Settings className="h-4 w-4" />,
     ketahananPangan: <Settings className="h-4 w-4" />,
+    swasembadaPangan: <Settings className="h-4 w-4" />,
     belanjaPemerintah: <Settings className="h-4 w-4" />,
+    mbgIntervensi: <Target className="h-4 w-4" />,
   };
 
   return iconMap[filterKey] || <Filter className="h-4 w-4" />;
@@ -154,12 +156,14 @@ export function FilterCard({
   const isBelanjaPemilu = filterKey === "belanjaPemilu";
   const isIbuKotaNusantara = filterKey === "ibuKotaNusantara";
   const isKetahananPangan = filterKey === "ketahananPangan";
+  const isSwasembadaPangan = filterKey === "swasembadaPangan";
   const isBelanjaPemerintah = filterKey === "belanjaPemerintah";
   const isBooleanSwitch =
     isKemiskinanEkstrim ||
     isBelanjaPemilu ||
     isIbuKotaNusantara ||
     isKetahananPangan ||
+    isSwasembadaPangan ||
     isBelanjaPemerintah;
 
   // Track if initial notification has been sent to prevent infinite loops
@@ -1057,6 +1061,15 @@ export function FilterCard({
             ];
             return [...commonOptions, ...options];
           }
+          case "mbgIntervensi": {
+            // Static options for Makan Bergizi Gratis (MBG) Intervensi
+            const options: Option[] = [
+              { value: "utama", label: "Intervensi Utama" },
+              { value: "pendukung", label: "Intervensi Pendukung" },
+              { value: "dukman", label: "Intervensi Dukman" },
+            ];
+            return [...commonOptions, ...options];
+          }
 
           case "cutOff":
             // Generate month options (without year since year is selected in Pilih Laporan card)
@@ -1100,6 +1113,10 @@ export function FilterCard({
             return commonOptions;
           }
           case "ketahananPangan": {
+            // Boolean-only flag: no explicit option; keep default "Semua" only
+            return commonOptions;
+          }
+          case "swasembadaPangan": {
             // Boolean-only flag: no explicit option; keep default "Semua" only
             return commonOptions;
           }
