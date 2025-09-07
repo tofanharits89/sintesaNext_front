@@ -284,7 +284,7 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
   {
     key: "jenisInflasiIntervensi",
     label: "Jenis Inflasi Intervensi",
-    order: 205,
+    order: 206,
     showInUI: true,
     query: {
       columnName: "inf_intervensi",
@@ -304,7 +304,7 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
   {
     key: "jenisInflasiPengeluaran",
     label: "Jenis Inflasi Pengeluaran",
-    order: 206,
+    order: 207,
     showInUI: true,
     query: {
       columnName: "inf_pengeluaran",
@@ -323,8 +323,8 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
   },
   {
     key: "stuntingIntervensi",
-    label: "Intervensi",
-    order: 207,
+    label: "Intervensi Stunting",
+    order: 208,
     showInUI: true,
     query: {
       columnName: "stun_intervensi",
@@ -339,7 +339,7 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
   {
     key: "mbgIntervensi",
     label: "Intervensi MBG",
-    order: 213,
+    order: 214,
     showInUI: true,
     query: {
       columnName: "mbg",
@@ -352,9 +352,43 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
     },
   },
   {
+    key: "jenisProgramStrategis",
+    label: "Jenis Program Strategis",
+    order: 216,
+    showInUI: true,
+    query: {
+      columnName: "kdprogis",
+      // Use local JSON for dropdown options; no reference join required
+      dataSource: "local",
+      localFile: "kdprogis.json",
+      joinKey: "kdprogis",
+      nameColumn: "nmprogis",
+    },
+  },
+  {
+    key: "jenisTemaAnggaran",
+    label: "Jenis Tema Anggaran",
+    order: 205,
+    showInUI: true,
+    query: {
+      columnName: "kdtema",
+      reference: {
+        database: "dbref",
+        table: "t_tema",
+        joinKey: "kdtema",
+        nameColumn: "nmtema",
+      },
+      // Use local JSON for dropdown options (9 items)
+      dataSource: "local",
+      localFile: "kdtema.json",
+      joinKey: "kdtema",
+      nameColumn: "nmtema",
+    },
+  },
+  {
     key: "kemiskinanEkstrim",
     label: "Kemiskinan Ekstrim",
-    order: 208,
+    order: 209,
     showInUI: true,
     query: {
       columnName: "kemiskinan_ekstrim",
@@ -366,7 +400,7 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
   {
     key: "belanjaPemilu",
     label: "Belanja Pemilu",
-    order: 209,
+    order: 210,
     showInUI: true,
     query: {
       columnName: "pemilu",
@@ -378,7 +412,7 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
   {
     key: "ibuKotaNusantara",
     label: "Ibu Kota Nusantara",
-    order: 210,
+    order: 211,
     showInUI: true,
     query: {
       columnName: "ikn",
@@ -390,7 +424,7 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
   {
     key: "ketahananPangan",
     label: "Ketahanan Pangan",
-    order: 211,
+    order: 212,
     showInUI: true,
     query: {
       columnName: "pangan",
@@ -402,7 +436,7 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
   {
     key: "swasembadaPangan",
     label: "Swasembada Pangan",
-    order: 214,
+    order: 215,
     showInUI: true,
     query: {
       columnName: "swasembada",
@@ -414,7 +448,7 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
   {
     key: "belanjaPemerintah",
     label: "Bantuan Pemerintah",
-    order: 212,
+    order: 213,
     showInUI: true,
     query: {
       columnName: "kdakun",
@@ -624,6 +658,7 @@ export const getAvailableFiltersForScope = (
       "belanjaPemerintah", // Bantuan Pemerintah
       "mbgIntervensi", // Makan Bergizi Gratis
       "swasembadaPangan", // Swasembada Pangan
+      "jenisProgramStrategis", // Program Strategis (not used on Belanja page)
     ],
     tematik: [
       "register",

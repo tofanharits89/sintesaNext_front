@@ -136,6 +136,31 @@ export const TEMATIK_CATEGORIES: CategoryDefinition[] = [
     jenisAkumulasiAllowed: false,
   },
   {
+    key: "tematik_anggaran",
+    label: "Tematik Anggaran",
+    description: "Analisis data berdasarkan Tema Anggaran",
+    mandatoryFilters: [
+      {
+        key: "jenisTemaAnggaran",
+        label: "Jenis Tema Anggaran",
+        mandatory: true,
+        removable: false,
+        defaultValue: {
+          selection: "000",
+          jenisTampilan: "kode",
+        },
+      },
+    ],
+    mandatoryColumns: [],
+    queryConfig: {
+      tableName: "a_pagu_real_bkpk_dja",
+      whereConditions: ["main.kdtema IS NOT NULL"],
+    },
+    excludeStandardFilters: ["register"],
+    reportTypeRestriction: "pagu_realisasi_bulanan",
+    jenisAkumulasiAllowed: false,
+  },
+  {
     key: "inflasi",
     label: "Inflasi",
     description: "Analisis data berdasarkan Inflasi Intervensi dan Pengeluaran",
@@ -184,7 +209,7 @@ export const TEMATIK_CATEGORIES: CategoryDefinition[] = [
     mandatoryFilters: [
       {
         key: "stuntingIntervensi",
-        label: "Intervensi",
+        label: "Intervensi Stunting",
         mandatory: true,
         removable: false,
         defaultValue: {
@@ -368,6 +393,34 @@ export const TEMATIK_CATEGORIES: CategoryDefinition[] = [
     jenisAkumulasiAllowed: false,
   },
 
+  {
+    key: "program_strategis",
+    label: "Program Strategis",
+    description: "Analisis data berdasarkan Jenis Program Strategis",
+    mandatoryFilters: [
+      {
+        key: "jenisProgramStrategis",
+        label: "Jenis Program Strategis",
+        mandatory: true,
+        removable: false,
+        defaultValue: {
+          selection: "all",
+          jenisTampilan: "kode",
+        },
+      },
+    ],
+    mandatoryColumns: [],
+    queryConfig: {
+      // Use dedicated summary table; builder will append _{tahun} and monev{tahun}. schema
+      tableName: "smry_program_strategis",
+      whereConditions: ["main.kdprogis IS NOT NULL"],
+      groupByColumns: ["main.kdprogis"],
+    },
+    excludeStandardFilters: ["register"],
+    reportTypeRestriction: "pagu_realisasi_bulanan",
+    jenisAkumulasiAllowed: false,
+  },
+
   // Add more categories as needed...
 ];
 
@@ -396,15 +449,17 @@ export function getTematikCategoryOptions(): {
   const orderMap: Record<string, number> = {
     prioritas_nasional: 1,
     major_project: 2,
-    inflasi: 3,
-    penanganan_stunting: 4,
-    kemiskinan_ekstrim: 5,
-    belanja_pemilu: 6,
-    ibu_kota_nusantara: 7,
-    ketahanan_pangan: 8,
-    belanja_pemerintah: 9, // label: Bantuan Pemerintah
-    makan_bergizi_gratis: 10,
-    swasembada_pangan: 11,
+    tematik_anggaran: 3, // New category placed after Major Project
+    inflasi: 4,
+    penanganan_stunting: 5,
+    kemiskinan_ekstrim: 6,
+    belanja_pemilu: 7,
+    ibu_kota_nusantara: 8,
+    ketahanan_pangan: 9,
+    belanja_pemerintah: 10, // label: Bantuan Pemerintah
+    makan_bergizi_gratis: 11,
+    swasembada_pangan: 12,
+    program_strategis: 13,
   };
 
   const keyed = TEMATIK_CATEGORIES.map((cat, idx) => ({

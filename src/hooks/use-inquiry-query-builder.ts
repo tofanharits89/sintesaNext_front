@@ -251,6 +251,31 @@ export function useInquiryQueryBuilder() {
         const jenisTampilan = filterValue?.jenisTampilan || "kode";
         const mengandungKata = filterValue?.mengandungKata;
 
+        // Special-case handling for Program Strategis (no LEFT JOIN; uraian exists in main table)
+        if (filterKey === "jenisProgramStrategis") {
+          // Map tampilan to main.kdprogis (kode) and main.nmprogis (uraian)
+          if (jenisTampilan !== "jangan_tampilkan") {
+            switch (jenisTampilan) {
+              case "kode":
+                selectColumns.push(
+                  `main.${config.columnName} AS ${filterKey}_kode`
+                );
+                break;
+              case "uraian":
+                selectColumns.push(`main.nmprogis AS ${filterKey}_uraian`);
+                break;
+              case "kode_uraian":
+                selectColumns.push(
+                  `main.${config.columnName} AS ${filterKey}_kode`
+                );
+                selectColumns.push(`main.nmprogis AS ${filterKey}_uraian`);
+                break;
+            }
+          }
+          // Skip generic handling for this filter
+          return;
+        }
+
         const alias = `${filterKey}_ref`;
         const needsJoinForSelect =
           config.referenceTable &&
@@ -695,6 +720,12 @@ export function useInquiryQueryBuilder() {
             whereConditions.push(
               `LEFT(main.${config.columnName}, 2) = '${selection}'`
             );
+          }
+          // Tematik Anggaran: use LIKE for kdtema as requested
+          else if (filterKey === "jenisTemaAnggaran") {
+            whereConditions.push(
+              `main.${config.columnName} LIKE '%${selection}%'`
+            );
           } else {
             whereConditions.push(`main.${config.columnName} = '${selection}'`);
           }
@@ -730,6 +761,13 @@ export function useInquiryQueryBuilder() {
               whereConditions.push(
                 `LEFT(main.${config.columnName}, 2) IN (${valuesList})`
               );
+            }
+            // Tematik Anggaran: OR-ed LIKEs for multiple kdtema codes
+            else if (filterKey === "jenisTemaAnggaran") {
+              const likeConds = values
+                .map((v) => `main.${config.columnName} LIKE '%${v}%'`)
+                .join(" OR ");
+              whereConditions.push(`(${likeConds})`);
             } else {
               whereConditions.push(
                 `main.${config.columnName} IN (${valuesList})`
@@ -739,7 +777,20 @@ export function useInquiryQueryBuilder() {
         }
 
         // Handle mengandung kata (LIKE search)
-        if (mengandungKata && mengandungKata.trim() && config.referenceTable) {
+        // Special-case: Program Strategis searches on main.nmprogis (no reference table)
+        if (
+          filterKey === "jenisProgramStrategis" &&
+          mengandungKata &&
+          mengandungKata.trim()
+        ) {
+          whereConditions.push(
+            `main.nmprogis LIKE '%${mengandungKata.trim()}%'`
+          );
+        } else if (
+          mengandungKata &&
+          mengandungKata.trim() &&
+          config.referenceTable
+        ) {
           const alias = `${filterKey}_ref`;
 
           // Special handling for register filter - search in register column

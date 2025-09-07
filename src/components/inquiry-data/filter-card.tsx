@@ -56,6 +56,10 @@ import kdmpData from "./data/kdmp.json";
 // Inflation JSON files
 import infIntervensiData from "./data/inf_intervensi.json";
 import infPengeluaranData from "./data/inf_pengeluaran.json";
+// Program Strategis JSON
+import kdprogisData from "./data/kdprogis.json";
+// Tematik Anggaran JSON
+import kdtemaData from "./data/kdtema.json";
 
 type Option = { value: string; label: string };
 
@@ -123,6 +127,8 @@ const getFilterIcon = (filterKey: string) => {
     swasembadaPangan: <Settings className="h-4 w-4" />,
     belanjaPemerintah: <Settings className="h-4 w-4" />,
     mbgIntervensi: <Target className="h-4 w-4" />,
+    jenisProgramStrategis: <Target className="h-4 w-4" />,
+    jenisTemaAnggaran: <Target className="h-4 w-4" />,
   };
 
   return iconMap[filterKey] || <Filter className="h-4 w-4" />;
@@ -144,7 +150,12 @@ export function FilterCard({
   };
 
   const [filterData, setFilterData] = useState({
-    selection: filterKey === "cutOff" ? getCurrentMonth() : "all", // Default to current month for cutOff, "Semua" for others
+    selection:
+      filterKey === "cutOff"
+        ? getCurrentMonth()
+        : filterKey === "jenisTemaAnggaran"
+        ? "000"
+        : "all", // Default to "000" for Jenis Tema Anggaran, "Semua" for others
     kondisiCode: filterKey === "cutOff" ? "equals" : "",
     mengandungKata: "",
     jenisTampilan: "kode", // Default to "Kode"
@@ -508,7 +519,12 @@ export function FilterCard({
       return;
     }
 
-    const initialValue = filterKey === "cutOff" ? getCurrentMonth() : "all";
+    const initialValue =
+      filterKey === "cutOff"
+        ? getCurrentMonth()
+        : filterKey === "jenisTemaAnggaran"
+        ? "000"
+        : "all";
     onFilterChange(filterKey, "selection", initialValue);
     initialNotificationSent.current = true;
   }, [filterKey, onFilterChange, currentFilterValue]);
@@ -520,6 +536,19 @@ export function FilterCard({
 
       try {
         switch (key) {
+          case "jenisTemaAnggaran": {
+            // No "Semua" option for Jenis Tema Anggaran; default should be 000
+            const options = (
+              kdtemaData as Array<{
+                kdtema: string;
+                nmtema: string;
+              }>
+            ).map((item) => ({
+              value: item.kdtema,
+              label: `${item.kdtema} - ${item.nmtema}`,
+            }));
+            return options; // exclude commonOptions
+          }
           case "kementerian": {
             const kementarianOptions = KDDEPT.map((item) => ({
               value: item.kddept,
@@ -1068,6 +1097,19 @@ export function FilterCard({
               { value: "pendukung", label: "Intervensi Pendukung" },
               { value: "dukman", label: "Intervensi Dukman" },
             ];
+            return [...commonOptions, ...options];
+          }
+          case "jenisProgramStrategis": {
+            // Static options from kdprogis.json for Program Strategis
+            const options = (
+              kdprogisData as Array<{
+                kdprogis: string;
+                nmprogis: string;
+              }>
+            ).map((item) => ({
+              value: item.kdprogis,
+              label: `${item.kdprogis} - ${item.nmprogis}`,
+            }));
             return [...commonOptions, ...options];
           }
 
