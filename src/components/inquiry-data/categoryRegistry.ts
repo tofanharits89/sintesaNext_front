@@ -147,7 +147,7 @@ export const TEMATIK_CATEGORIES: CategoryDefinition[] = [
         removable: false,
         defaultValue: {
           selection: "all",
-          jenisTampilan: "kode_uraian",
+          jenisTampilan: "kode",
         },
       },
       {
@@ -157,7 +157,7 @@ export const TEMATIK_CATEGORIES: CategoryDefinition[] = [
         removable: false,
         defaultValue: {
           selection: "all",
-          jenisTampilan: "kode_uraian",
+          jenisTampilan: "kode",
         },
       },
     ],
@@ -178,6 +178,57 @@ export const TEMATIK_CATEGORIES: CategoryDefinition[] = [
     jenisAkumulasiAllowed: false,
   },
   {
+    key: "penanganan_stunting",
+    label: "Penanganan Stunting",
+    description: "Analisis data berdasarkan Intervensi Stunting",
+    mandatoryFilters: [
+      {
+        key: "stuntingIntervensi",
+        label: "Intervensi",
+        mandatory: true,
+        removable: false,
+        defaultValue: {
+          selection: "all",
+          jenisTampilan: "kode",
+        },
+      },
+    ],
+    mandatoryColumns: [],
+    queryConfig: {
+      tableName: "a_pagu_real_bkpk_dja",
+      whereConditions: ["main.stun_intervensi IS NOT NULL"],
+      customJoins: [
+        "LEFT JOIN ref_stunting_intervensi stunting ON main.stun_intervensi = stunting.stun_intervensi",
+      ],
+    },
+    excludeStandardFilters: ["register"],
+    reportTypeRestriction: "pagu_realisasi_bulanan",
+    jenisAkumulasiAllowed: false,
+  },
+  {
+    key: "kemiskinan_ekstrim",
+    label: "Kemiskinan Ekstrim",
+    description: "Analisis data berdasarkan status Kemiskinan Ekstrim",
+    mandatoryFilters: [],
+    mandatoryColumns: [
+      {
+        key: "kemiskinan_ekstrim",
+        label: "Kemiskinan Ekstrim",
+        sqlExpression: "main.kemiskinan_ekstrim",
+        order: 1,
+        dataType: "text",
+      },
+    ],
+    queryConfig: {
+      tableName: "a_pagu_real_bkpk_dja",
+      whereConditions: ["main.kemiskinan_ekstrim IS NOT NULL"],
+      groupByColumns: ["main.kemiskinan_ekstrim"],
+    },
+    excludeStandardFilters: ["register"],
+    reportTypeRestriction: "pagu_realisasi_bulanan",
+    jenisAkumulasiAllowed: false,
+  },
+  {
     key: "bantuan_pemerintah",
     label: "Bantuan Pemerintah",
     description: "Data bantuan pemerintah dengan filter khusus",
@@ -191,7 +242,7 @@ export const TEMATIK_CATEGORIES: CategoryDefinition[] = [
           selection: "all",
           kondisiCode: "",
           mengandungKata: "",
-          jenisTampilan: "kode_uraian",
+          jenisTampilan: "kode",
         },
       },
       {
@@ -380,10 +431,7 @@ export function validateCategoryConfiguration(key: string): string[] {
     return errors;
   }
 
-  // Validate mandatory filters
-  if (category.mandatoryFilters.length === 0) {
-    errors.push(`Category '${key}' has no mandatory filters defined`);
-  }
+  // Mandatory filters are optional per category design
 
   // Validate query configuration
   if (!category.queryConfig.tableName) {

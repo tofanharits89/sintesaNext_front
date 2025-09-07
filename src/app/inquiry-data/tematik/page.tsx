@@ -560,6 +560,7 @@ export default function TematikPage() {
             ...getAllMandatoryFilterKeys(), // Hide ALL kategori mandatory switches globally
             ...tematikConfig.excludedStandardFilters, // Exclude category-specific filters
           ]}
+          scope="tematik" // ensure kemiskinanEkstrim switch is hidden on tematik page
         />
 
         {/* 4. Dynamic Filters and Actions Card */}

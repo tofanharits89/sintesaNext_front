@@ -421,6 +421,7 @@ export default function BelanjaPage() {
         <FilterParametersCard
           activeFilters={activeFilters}
           setActiveFilters={setActiveFilters}
+          scope="belanja"
         />
 
         {/* 3. Dynamic Filters and Actions Card */}

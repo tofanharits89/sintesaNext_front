@@ -231,6 +231,16 @@ export function useInquiryQueryBuilder() {
         const config = FILTER_CONFIG[filterKey];
         if (!config) return;
 
+        // Special-case: kemiskinanEkstrim is a boolean flag without uraian.
+        // When active, always select the raw column even if no filter value object exists
+        if (filterKey === "kemiskinanEkstrim") {
+          // Push as a simple code column (no reference/join and no tampilan switching)
+          // Keep alias stable to align with export/SQL preview expectations
+          selectColumns.push(`main.${config.columnName} AS ${filterKey}`);
+          // Continue to next filter (skip the generic SELECT logic below)
+          return;
+        }
+
         const filterValue = filterValues[filterKey];
         const jenisTampilan = filterValue?.jenisTampilan || "kode";
         const mengandungKata = filterValue?.mengandungKata;
@@ -614,12 +624,18 @@ export function useInquiryQueryBuilder() {
         }
       }
 
+      // Global switch: if kemiskinanEkstrim filter is active, always enforce the IS NOT NULL condition
+      // Applies to all scopes (e.g., belanja and tematik) that use the shared filter switch
+      if (activeFilters.includes("kemiskinanEkstrim")) {
+        whereConditions.push("main.kemiskinan_ekstrim IS NOT NULL");
+      }
+
       // Note: Category-specific WHERE conditions (like kdpn <> '00' for prioritas_nasional)
       // are now handled above via categoryConfig.whereConditions to avoid duplication
 
       // Use the same deduplicated filters for WHERE conditions
       const uniqueActiveFilters = Array.from(new Set(activeFilters));
-      
+
       uniqueActiveFilters.forEach((filterKey) => {
         // Skip cutOff - it doesn't create WHERE conditions, only affects SELECT
         if (filterKey === "cutOff") return;
@@ -734,19 +750,31 @@ export function useInquiryQueryBuilder() {
     (
       activeFilters: string[],
       filterValues: Record<string, FilterValue>,
-      reportParams: { tipeLaporan: string }
+      reportParams: { tipeLaporan: string; tematikKategori?: string }
     ) => {
       const groupByColumns: string[] = [];
 
+      // Helper to avoid duplicate GROUP BY columns
+      const addGroupBy = (col: string) => {
+        if (!groupByColumns.includes(col)) {
+          groupByColumns.push(col);
+        }
+      };
+
       // For tipe laporan 6, add mandatory GROUP BY kdblokir and nmblokir
       if (reportParams.tipeLaporan === "pergerakan_blokir_bulanan_per_jenis") {
-        groupByColumns.push("main.kdblokir");
-        groupByColumns.push("main.nmblokir");
+        addGroupBy("main.kdblokir");
+        addGroupBy("main.nmblokir");
       }
 
       // Use deduplicated filters for GROUP BY consistency
       const uniqueActiveFilters = Array.from(new Set(activeFilters));
-      
+
+      // Ensure GROUP BY for kemiskinanEkstrim switch regardless of tampilan/selection
+      if (uniqueActiveFilters.includes("kemiskinanEkstrim")) {
+        addGroupBy("main.kemiskinan_ekstrim");
+      }
+
       uniqueActiveFilters.forEach((filterKey) => {
         // Skip cutOff - it's not a SELECT column, so not in GROUP BY
         if (filterKey === "cutOff") return;
@@ -760,30 +788,30 @@ export function useInquiryQueryBuilder() {
 
         if (jenisTampilan === "jangan_tampilkan") return;
 
-        // Add main column to GROUP BY
+        // Add main column to GROUP BY (uniquely)
         // Special handling for akun filter with different types
         if (filterKey === "akun" && filterValue?.akunType === "kodeBkpk") {
-          groupByColumns.push(`LEFT(main.${config.columnName}, 4)`);
+          addGroupBy(`LEFT(main.${config.columnName}, 4)`);
         } else if (
           filterKey === "akun" &&
           filterValue?.akunType === "jenisBelanja"
         ) {
-          groupByColumns.push(`LEFT(main.${config.columnName}, 2)`);
+          addGroupBy(`LEFT(main.${config.columnName}, 2)`);
         }
         // Special handling for dedicated kodeBkpk and jenisBelanja filters
         else if (filterKey === "kodeBkpk") {
-          groupByColumns.push(`LEFT(main.${config.columnName}, 4)`);
+          addGroupBy(`LEFT(main.${config.columnName}, 4)`);
         } else if (filterKey === "jenisBelanja") {
-          groupByColumns.push(`LEFT(main.${config.columnName}, 2)`);
+          addGroupBy(`LEFT(main.${config.columnName}, 2)`);
         } else {
-          groupByColumns.push(`main.${config.columnName}`);
+          addGroupBy(`main.${config.columnName}`);
         }
 
         // Add mandatory GROUP BY for volume_output_kegiatan
         if (reportParams.tipeLaporan === "volume_output_kegiatan") {
-          groupByColumns.push("main.sat");
-          groupByColumns.push("main.os");
-          groupByColumns.push("main.ket");
+          addGroupBy("main.sat");
+          addGroupBy("main.os");
+          addGroupBy("main.ket");
         }
 
         // Add reference columns if needed
@@ -799,15 +827,15 @@ export function useInquiryQueryBuilder() {
               jenisTampilan === "uraian" || jenisTampilan === "kode_uraian";
 
             if (needsJoinForSelect || needsJoinForWhere) {
-              groupByColumns.push(`${alias}.register`);
-              groupByColumns.push(`${alias}.nonpln`);
-              groupByColumns.push(`${alias}.kdvalas`);
-              groupByColumns.push(`${alias}.tglnpln`);
-              groupByColumns.push(`${alias}.kddonor`);
-              groupByColumns.push(`${alias}.kdkreditor`);
-              groupByColumns.push(`${alias}.nmdonor`);
-              groupByColumns.push(`${alias}.jmlpnrk`);
-              groupByColumns.push(`${alias}.closingdate`);
+              addGroupBy(`${alias}.register`);
+              addGroupBy(`${alias}.nonpln`);
+              addGroupBy(`${alias}.kdvalas`);
+              addGroupBy(`${alias}.tglnpln`);
+              addGroupBy(`${alias}.kddonor`);
+              addGroupBy(`${alias}.kdkreditor`);
+              addGroupBy(`${alias}.nmdonor`);
+              addGroupBy(`${alias}.jmlpnrk`);
+              addGroupBy(`${alias}.closingdate`);
             }
           }
           // Note: We don't add uraian columns to GROUP BY to avoid duplicate rows
@@ -815,6 +843,19 @@ export function useInquiryQueryBuilder() {
           // The LEFT JOIN will still provide the uraian values in SELECT, but we only group by kode
         }
       });
+
+      // Append category-specific GROUP BY columns (from tematik registry)
+      const tematikKategori = reportParams?.tematikKategori;
+      if (tematikKategori) {
+        const categoryConfig = getCategoryQueryConfig(tematikKategori);
+        if (categoryConfig?.groupByColumns?.length) {
+          for (const col of categoryConfig.groupByColumns) {
+            if (!groupByColumns.includes(col)) {
+              groupByColumns.push(col);
+            }
+          }
+        }
+      }
 
       return groupByColumns;
     },

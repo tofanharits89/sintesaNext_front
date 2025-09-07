@@ -4,21 +4,25 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { getUIFilters } from "./filterRegistry";
+import { getUIFilters, getAvailableFiltersForScope } from "./filterRegistry";
 
 interface FilterParametersCardProps {
   activeFilters: string[];
   setActiveFilters: React.Dispatch<React.SetStateAction<string[]>>;
   excludeFilters?: string[]; // Optional array of filter keys to exclude
+  scope?: "belanja" | "tematik" | "general"; // Optional scope for context-aware visibility
 }
 
 export function FilterParametersCard({
   activeFilters,
   setActiveFilters,
   excludeFilters = [], // Default to empty array if not provided
+  scope = "general",
 }: FilterParametersCardProps) {
-  const uiFilters = getUIFilters().filter(
-    (filter) => !excludeFilters.includes(filter.key)
+  // Determine allowed filters for the given scope then apply exclude list
+  const allowedKeys = getAvailableFiltersForScope(scope, excludeFilters);
+  const uiFilters = getUIFilters().filter((filter) =>
+    allowedKeys.includes(filter.key)
   );
 
   const handleToggle = (filterKey: string) => {

@@ -145,6 +145,9 @@ export function FilterCard({
     akunType: "kodeAkun", // Default to "Kode Akun (6 Digit)" for Akun filter
   });
 
+  // Special handling flags
+  const isKemiskinanEkstrim = filterKey === "kemiskinanEkstrim";
+
   // Track if initial notification has been sent to prevent infinite loops
   const initialNotificationSent = useRef(false);
   // Track if current component just loaded values from a saved query
@@ -1007,7 +1010,10 @@ export function FilterCard({
           case "jenisInflasiIntervensi": {
             // Use inf_intervensi.json data for Jenis Inflasi Intervensi
             const inflationIntervensiOptions = (
-              infIntervensiData as Array<{ inf_intervensi: string; ur_inf_intervensi: string }>
+              infIntervensiData as Array<{
+                inf_intervensi: string;
+                ur_inf_intervensi: string;
+              }>
             ).map((item) => ({
               value: item.inf_intervensi,
               label: `${item.inf_intervensi} - ${item.ur_inf_intervensi}`,
@@ -1018,12 +1024,24 @@ export function FilterCard({
           case "jenisInflasiPengeluaran": {
             // Use inf_pengeluaran.json data for Jenis Inflasi Pengeluaran
             const inflationPengeluaranOptions = (
-              infPengeluaranData as Array<{ inf_pengeluaran: string; ur_inf_pengeluaran: string }>
+              infPengeluaranData as Array<{
+                inf_pengeluaran: string;
+                ur_inf_pengeluaran: string;
+              }>
             ).map((item) => ({
               value: item.inf_pengeluaran,
               label: `${item.inf_pengeluaran} - ${item.ur_inf_pengeluaran}`,
             }));
             return [...commonOptions, ...inflationPengeluaranOptions];
+          }
+          case "stuntingIntervensi": {
+            // Static options for Penanganan Stunting Intervensi
+            const options: Option[] = [
+              { value: "I1", label: "I1 - Intervensi Dukungan" },
+              { value: "I2", label: "I2 - Intervensi Sensitif" },
+              { value: "I3", label: "I3 - Intervensi Spesifik" },
+            ];
+            return [...commonOptions, ...options];
           }
 
           case "cutOff":
@@ -1054,6 +1072,11 @@ export function FilterCard({
             }
 
             return monthOptions;
+
+          case "kemiskinanEkstrim": {
+            // Boolean-only flag: no explicit option; keep default "Semua" only
+            return commonOptions;
+          }
 
           default:
             return commonOptions;
@@ -1276,6 +1299,7 @@ export function FilterCard({
                   handleInputChange("kondisiCode", e.target.value)
                 }
                 disabled={
+                  isKemiskinanEkstrim ||
                   !!(
                     (filterData.selection && filterData.selection !== "all") ||
                     (filterData.mengandungKata &&
@@ -1284,7 +1308,8 @@ export function FilterCard({
                 }
                 className={cn(
                   "w-full h-8 text-xs placeholder:text-xs",
-                  ((filterData.selection && filterData.selection !== "all") ||
+                  (isKemiskinanEkstrim ||
+                    (filterData.selection && filterData.selection !== "all") ||
                     (filterData.mengandungKata &&
                       filterData.mengandungKata.trim())) &&
                     "opacity-50 cursor-not-allowed"
@@ -1304,6 +1329,7 @@ export function FilterCard({
                   handleInputChange("mengandungKata", e.target.value)
                 }
                 disabled={
+                  isKemiskinanEkstrim ||
                   !!(
                     (filterData.selection && filterData.selection !== "all") ||
                     (filterData.kondisiCode &&
@@ -1312,7 +1338,8 @@ export function FilterCard({
                 }
                 className={cn(
                   "w-full h-8 text-xs placeholder:text-xs",
-                  ((filterData.selection && filterData.selection !== "all") ||
+                  (isKemiskinanEkstrim ||
+                    (filterData.selection && filterData.selection !== "all") ||
                     (filterData.kondisiCode &&
                       filterData.kondisiCode.trim())) &&
                     "opacity-50 cursor-not-allowed"
@@ -1327,11 +1354,18 @@ export function FilterCard({
               <Label className="text-xs font-medium">Tampilan</Label>
               <Select
                 value={filterData.jenisTampilan}
-                onValueChange={(value) =>
-                  handleInputChange("jenisTampilan", value)
-                }
+                onValueChange={(value) => {
+                  if (isKemiskinanEkstrim) return; // disabled
+                  handleInputChange("jenisTampilan", value);
+                }}
               >
-                <SelectTrigger className="w-full h-8 text-xs">
+                <SelectTrigger
+                  className={cn(
+                    "w-full h-8 text-xs",
+                    isKemiskinanEkstrim && "opacity-50 cursor-not-allowed"
+                  )}
+                  disabled={isKemiskinanEkstrim}
+                >
                   <SelectValue placeholder="Pilih tampilan" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1370,7 +1404,8 @@ export function FilterCard({
               filterData.mengandungKata.trim() &&
               filterData.jenisTampilan === "kode_uraian" && (
                 <p className="text-xs text-blue-600">
-                  ℹ️ Otomatis diubah ke "Kode Uraian" untuk pencarian teks
+                  ℹ️ Otomatis diubah ke &quot;Kode Uraian&quot; untuk pencarian
+                  teks
                 </p>
               )}
           </div>

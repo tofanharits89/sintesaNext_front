@@ -320,6 +320,33 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
     },
   },
   {
+    key: "stuntingIntervensi",
+    label: "Intervensi",
+    order: 207,
+    showInUI: true,
+    query: {
+      columnName: "stun_intervensi",
+      reference: {
+        database: "dbref",
+        table: "ref_stunting_intervensi",
+        joinKey: "stun_intervensi",
+        nameColumn: "ur_stun_intervensi",
+      },
+    },
+  },
+  {
+    key: "kemiskinanEkstrim",
+    label: "Kemiskinan Ekstrim",
+    order: 208,
+    showInUI: true,
+    query: {
+      columnName: "kemiskinan_ekstrim",
+      // Acts as a switch; query builder enforces
+      // WHERE main.kemiskinan_ekstrim IS NOT NULL and GROUP BY main.kemiskinan_ekstrim
+      // when this filter is active
+    },
+  },
+  {
     key: "kegiatan",
     label: "Kegiatan",
     order: 12,
@@ -517,7 +544,7 @@ export const getAvailableFiltersForScope = (
   // Define scope-specific exclusions
   const scopeExclusions: Record<string, string[]> = {
     belanja: [], // Belanja has all filters available
-    tematik: ["register"], // Tematik excludes register filter
+    tematik: ["register", "kemiskinanEkstrim"], // Exclude kemiskinanEkstrim switch from Tematik page
     general: [], // General scope has all filters
   };
 
