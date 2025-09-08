@@ -11,10 +11,17 @@ interface QuickStatsData {
   sisaPaguDipa: number;
 }
 
+interface DashboardMeta {
+  asOfJakarta?: string | null;
+  cacheExpiresAtUtc?: string | null;
+  cacheMaxAgeSeconds?: number;
+}
+
 interface QuickStatsResponse {
   success: boolean;
   data: QuickStatsData;
   warning?: string;
+  _meta?: DashboardMeta;
 }
 
 interface UseQuickStatsOptions {
@@ -60,8 +67,12 @@ export function useQuickStats(options: UseQuickStatsOptions = {}) {
           throw new Error("Failed to fetch quick stats data");
         }
 
-        // Backend returns the correct format, no transformation needed
-        return result.data;
+        // Attach meta to the returned data for optional use in UI (last refresh time)
+        const dataWithMeta: QuickStatsData & { _meta?: DashboardMeta } = {
+          ...(result.data as QuickStatsData),
+          _meta: result._meta,
+        } as any;
+        return dataWithMeta as any;
       } catch (error: any) {
         console.error("Error fetching quick stats:", error);
         // Handle 401 errors specifically

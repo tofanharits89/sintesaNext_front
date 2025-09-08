@@ -5,7 +5,11 @@ import { backendPath } from "@/lib/backend";
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next";
 const DEBUG_AUTH = process.env.NEXT_PUBLIC_DEBUG_AUTH === "1";
 
-// Simple in-memory cache for session verification to reduce backend load
+// In-memory cache (per process) to reduce backend load in middleware.
+// Note: Next.js middleware runs per server process (not a shared global cache).
+// This cache does NOT persist across deployments/cold starts or across regions.
+// Keep TTLs short to tolerate scale-out and cold starts without causing long-lived
+// auth/health decisions.
 const SESSION_VERIFY_TTL_MS = 20_000; // 20 seconds
 const sessionVerifyCache = new Map<string, { ok: boolean; exp: number }>();
 
@@ -36,7 +40,8 @@ async function validateSessionViaBackend(
     });
     const ok =
       resp.ok && Boolean((await resp.json().catch(() => ({})))?.success);
-    if (!noCache) sessionVerifyCache.set(key, { ok, exp: now + SESSION_VERIFY_TTL_MS });
+    if (!noCache)
+      sessionVerifyCache.set(key, { ok, exp: now + SESSION_VERIFY_TTL_MS });
     return ok;
   } catch {
     if (!noCache) {
@@ -59,31 +64,49 @@ async function isBackendHealthy() {
     return healthCache.ok;
   }
 
+  const timeoutMs = 2500; // allow a bit more time than before
+
+  // Prefer a fast HEAD probe first
   try {
     const ac = new AbortController();
-    const timeout = setTimeout(() => ac.abort(), 1500);
-    const resp = await fetch(backendPath("/auth/health"), {
-      method: "GET",
+    const timeout = setTimeout(() => ac.abort(), timeoutMs);
+    const headResp = await fetch(backendPath("/auth/health"), {
+      method: "HEAD",
       cache: "no-store",
       signal: ac.signal,
     });
     clearTimeout(timeout);
-    const ok =
-      resp.ok &&
-      Boolean(
-        (await resp.json().catch(() => ({})))?.success ||
-          (
-            await resp
-              .clone()
-              .json()
-              .catch(() => ({}))
-          )?.status === "healthy"
-      );
+    const ok = headResp.ok;
     healthCache = { ok, exp: now + HEALTH_TTL_MS };
     return ok;
   } catch {
-    healthCache = { ok: false, exp: now + HEALTH_TTL_MS };
-    return false;
+    // Fallback to GET (some proxies/CDNs strip HEAD or mishandle it)
+    try {
+      const ac2 = new AbortController();
+      const timeout2 = setTimeout(() => ac2.abort(), timeoutMs);
+      const resp = await fetch(backendPath("/auth/health"), {
+        method: "GET",
+        cache: "no-store",
+        signal: ac2.signal,
+      });
+      clearTimeout(timeout2);
+      const ok =
+        resp.ok &&
+        Boolean(
+          (await resp.json().catch(() => ({})))?.success ||
+            (
+              await resp
+                .clone()
+                .json()
+                .catch(() => ({}))
+            )?.status === "healthy"
+        );
+      healthCache = { ok, exp: now + HEALTH_TTL_MS };
+      return ok;
+    } catch {
+      healthCache = { ok: false, exp: now + HEALTH_TTL_MS };
+      return false;
+    }
   }
 }
 
@@ -128,10 +151,11 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-// Validate session via backend using cookies only (no token extraction)
+  // Validate session via backend using cookies only (no token extraction)
   const incomingCookie = request.headers.get("cookie") || "";
   // Avoid cached auth decision on login/dashboard to prevent redirect loops
-  const noCache = relPath.startsWith("/login") || relPath.startsWith("/dashboard");
+  const noCache =
+    relPath.startsWith("/login") || relPath.startsWith("/dashboard");
   const isAuth = await validateSessionViaBackend(incomingCookie, noCache);
 
   // Handle root path: redirect to appropriate base path

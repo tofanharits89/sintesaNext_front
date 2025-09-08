@@ -30,7 +30,16 @@ export async function GET(
     });
 
     const data = await resp.json().catch(() => ({}));
-    return NextResponse.json(data, { status: resp.status });
+    const asOfJakarta = resp.headers.get("x-as-of-jakarta") || null;
+    const cacheExpiresAtUtc =
+      resp.headers.get("x-cache-expires-at-utc") || null;
+    const cacheMaxAge = resp.headers.get("x-cache-maxage");
+    const meta = {
+      asOfJakarta,
+      cacheExpiresAtUtc,
+      cacheMaxAgeSeconds: cacheMaxAge ? Number(cacheMaxAge) : undefined,
+    } as const;
+    return NextResponse.json({ ...data, _meta: meta }, { status: resp.status });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "Proxy error" },

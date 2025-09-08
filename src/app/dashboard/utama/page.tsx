@@ -204,6 +204,21 @@ export default function DashboardUtamaPage() {
     return value.toLocaleString("id-ID");
   };
 
+  // Last refresh info from backend meta header (forwarded by Next API)
+  const lastRefreshJakarta = (quickStats as any)?._meta?.asOfJakarta as
+    | string
+    | undefined;
+  const lastRefreshText = lastRefreshJakarta
+    ? `${new Date(lastRefreshJakarta).toLocaleString("id-ID", {
+        timeZone: "Asia/Jakarta",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })} WIB`
+    : "-";
+
   // Handle kanwil selection change
   const handleKanwilChange = (value: string) => {
     setSelectedKanwil(value);
@@ -220,6 +235,9 @@ export default function DashboardUtamaPage() {
           </h1>
           <p className="text-sm text-muted-foreground">
             Ringkasan cepat realisasi APBN untuk Kementerian/Lembaga.
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Terakhir diperbarui: {lastRefreshText}
           </p>
         </div>
         <div className="flex items-center gap-2">
