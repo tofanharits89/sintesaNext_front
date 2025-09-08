@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { CarisatkerData } from "@/types/satker";
-import { apiPath } from "@/lib/base-path";
 import { http } from "@/lib/httpClient";
 
 export function useSatkerData(kdsatker?: string) {
@@ -16,7 +15,9 @@ export function useSatkerData(kdsatker?: string) {
       setError(null);
 
       try {
-        const resp = await http.get(apiPath(`/satker/${kdsatker}`));
+        // Backend exposes /api/v1/carisatker/:kdsatker (and alias /api/satker without /v1)
+        // Our axios baseURL is http://localhost:88/api/v1, so use /carisatker here
+        const resp = await http.get(`/carisatker/${kdsatker}`);
         const result = resp.data;
         if (result?.success === false) {
           throw new Error(result?.message || "Failed to fetch satker data");
@@ -52,7 +53,8 @@ export function useSatkerSearch() {
     setError(null);
 
     try {
-      const resp = await http.get(apiPath(`/satker`), { params: { search: searchTerm } });
+      // Match backend collection route: /api/v1/carisatker?search=...
+      const resp = await http.get(`/carisatker`, { params: { search: searchTerm } });
       const result = resp.data;
       if (result?.success === false) {
         throw new Error(result?.message || "Failed to search satker data");

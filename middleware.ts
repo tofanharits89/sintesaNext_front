@@ -12,16 +12,20 @@ const sessionVerifyCache = new Map<string, { ok: boolean; exp: number }>();
 /**
  * Validate session with backend using cookies only (no token extraction).
  * Caches results for a short TTL keyed by the incoming Cookie header.
+ * Set noCache=true to bypass cache (useful for login/dashboard to avoid loops).
  */
 async function validateSessionViaBackend(
-  incomingCookie: string
+  incomingCookie: string,
+  noCache = false
 ): Promise<boolean> {
   const key = incomingCookie || "_no_cookie";
   const now = Date.now();
-  const cached = sessionVerifyCache.get(key);
-  if (cached && cached.exp > now) {
-    if (DEBUG_AUTH) console.debug("[Auth] session verify cache hit");
-    return cached.ok;
+  if (!noCache) {
+    const cached = sessionVerifyCache.get(key);
+    if (cached && cached.exp > now) {
+      if (DEBUG_AUTH) console.debug("[Auth] session verify cache hit");
+      return cached.ok;
+    }
   }
 
   try {
@@ -32,13 +36,15 @@ async function validateSessionViaBackend(
     });
     const ok =
       resp.ok && Boolean((await resp.json().catch(() => ({})))?.success);
-    sessionVerifyCache.set(key, { ok, exp: now + SESSION_VERIFY_TTL_MS });
+    if (!noCache) sessionVerifyCache.set(key, { ok, exp: now + SESSION_VERIFY_TTL_MS });
     return ok;
   } catch {
-    sessionVerifyCache.set(key, {
-      ok: false,
-      exp: now + SESSION_VERIFY_TTL_MS,
-    });
+    if (!noCache) {
+      sessionVerifyCache.set(key, {
+        ok: false,
+        exp: now + SESSION_VERIFY_TTL_MS,
+      });
+    }
     return false;
   }
 }
@@ -122,9 +128,11 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Validate session via backend using cookies only (no token extraction)
+// Validate session via backend using cookies only (no token extraction)
   const incomingCookie = request.headers.get("cookie") || "";
-  const isAuth = await validateSessionViaBackend(incomingCookie);
+  // Avoid cached auth decision on login/dashboard to prevent redirect loops
+  const noCache = relPath.startsWith("/login") || relPath.startsWith("/dashboard");
+  const isAuth = await validateSessionViaBackend(incomingCookie, noCache);
 
   // Handle root path: redirect to appropriate base path
   if (relPath === "/") {

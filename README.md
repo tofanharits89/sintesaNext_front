@@ -49,6 +49,8 @@ A modern Next.js frontend application for the Sintesa Finance Dashboard with rea
    ```env
    NEXT_PUBLIC_BACKEND_URL=http://localhost:88/api/v1
    NEXT_PUBLIC_SOCKET_URL=http://localhost:88
+   NEXT_PUBLIC_SOCKET_PATH=/socket.io
+   NEXT_PUBLIC_BASE_PATH=/v3/next
    JWT_SECRET=your-jwt-secret-matching-backend
    ```
 
@@ -126,6 +128,13 @@ src/
 - `npm run build` - Build for production
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
+
+### Testing
+
+- `npm test` - Run Vitest in watch mode
+- `npm run test:ui` - Run Vitest with UI
+- `npm run test:run` - Single test run (CI-friendly)
+- `npm run test:coverage` - Test run with coverage report
 
 ### Code Style
 

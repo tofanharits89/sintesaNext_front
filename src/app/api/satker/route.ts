@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { backendPath } from "@/lib/backend";
 import { getToken } from "./_shared";
+
+// Direct backend URL without using backendPath to avoid basePath issues
+const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:88/api/v1';
 
 export async function GET(request: NextRequest) {
   const cookie = request.headers.get("cookie") || "";
@@ -30,7 +32,7 @@ export async function GET(request: NextRequest) {
       apiPath += `?${queryParams.toString()}`;
     }
 
-    const resp = await fetch(backendPath(apiPath), {
+    const resp = await fetch(`${BACKEND_BASE_URL}${apiPath}`, {
       headers: { ...(cookie ? { cookie } : {}) },
     });
 
