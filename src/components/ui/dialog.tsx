@@ -55,6 +55,36 @@ function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
 }) {
+  // Detect if a DialogDescription is present in children to keep proper a11y.
+  function hasDialogDescription(node: React.ReactNode): boolean {
+    const arr = React.Children.toArray(node);
+    for (const child of arr) {
+      if (!React.isValidElement(child)) continue;
+      // Our DialogDescription sets data-slot="dialog-description"
+      // Recurse through nested children (e.g., inside DialogHeader)
+      // @ts-ignore - data-slot is not in React type defs
+      if (child.props?.["data-slot"] === "dialog-description") return true;
+      if (child.props?.children && hasDialogDescription(child.props.children))
+        return true;
+    }
+    return false;
+  }
+
+  // Preserve consumer overrides while silencing Radix warning when no description is used.
+  const hasDesc = hasDialogDescription(children);
+  // @ts-ignore - allow aria-describedby passthrough
+  const ariaFromUser = (props as any)["aria-describedby"];
+  const maybeAria: Record<string, any> =
+    ariaFromUser !== undefined
+      ? { "aria-describedby": ariaFromUser }
+      : !hasDesc
+      ? { "aria-describedby": undefined }
+      : {};
+
+  // Exclude aria-describedby from props to avoid duplication
+  // @ts-ignore - rest extraction for aria-describedby
+  const { ["aria-describedby"]: _omit, ...rest } = props as any;
+
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
@@ -68,20 +98,24 @@ function DialogContent({
         )}
         onInteractOutside={(e) => {
           try {
-            const target = (e.target ?? (e as any).originalEvent?.target) as Node | null
+            const target = (e.target ??
+              (e as any).originalEvent?.target) as Node | null;
             if (target) {
-              const popovers = document.querySelectorAll('[data-slot="popover-content"]')
+              const popovers = document.querySelectorAll(
+                '[data-slot="popover-content"]'
+              );
               for (const el of Array.from(popovers)) {
                 if (el.contains(target)) {
-                  e.preventDefault()
-                  return
+                  e.preventDefault();
+                  return;
                 }
               }
             }
           } catch {}
-          onInteractOutside?.(e)
+          onInteractOutside?.(e);
         }}
-        {...props}
+        {...maybeAria}
+        {...rest}
       >
         {children}
         {showCloseButton && (
