@@ -64,27 +64,31 @@ async function ensureCsrfToken(instance: AxiosInstance) {
 export const http: AxiosInstance = axios.create({
   baseURL: BACKEND_BASE_URL,
   withCredentials: true, // send cookies for auth and CSRF
-  headers: {
-    "Content-Type": "application/json",
-  },
   xsrfCookieName: "XSRF-TOKEN",
   xsrfHeaderName: "X-CSRF-Token",
 });
 
-// Request interceptor: attach CSRF header if available
+// Request interceptor: attach CSRF header if available and set Content-Type
 http.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
-  // Only attach CSRF for state-changing methods
   const method = (config.method || "get").toLowerCase();
+  
+  // Set Content-Type to application/json for non-FormData requests
   if (["post", "put", "patch", "delete"].includes(method)) {
+    const h = (config.headers ||= {} as any);
+    
+    // Only set Content-Type if it's not FormData (let browser set multipart/form-data)
+    if (!(config.data instanceof FormData) && !h["Content-Type"]) {
+      h["Content-Type"] = "application/json";
+    }
+    
+    // Attach CSRF token for state-changing methods
     let csrf = getCookie("XSRF-TOKEN") || lastCsrfToken;
     if (!csrf) {
       await ensureCsrfToken(http);
       csrf = getCookie("XSRF-TOKEN") || lastCsrfToken;
     }
     if (csrf) {
-      // Server accepts multiple header names; use a canonical one
-      const h = (config.headers ||= {} as any);
-      (h as any)["X-CSRF-Token"] = csrf;
+      h["X-CSRF-Token"] = csrf;
     }
   }
   return config;

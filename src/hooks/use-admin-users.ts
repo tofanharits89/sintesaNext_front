@@ -23,12 +23,7 @@ export function useAdminUsers() {
     try {
       // Get token from cookies for authentication
       const token = getAuthTokenFromCookie();
-      console.log("[useAdminUsers Debug] Fetching admin users:", {
-        hasToken: !!token,
-        tokenLength: token?.length,
-        tokenPrefix: token?.substring(0, 10) + "...",
-        url: backendPath("/users/admins"),
-      });
+      // Fetching admin users from API
 
       const response = await fetch(backendPath("/users/admins"), {
         headers: {
@@ -37,11 +32,7 @@ export function useAdminUsers() {
         },
       });
 
-      console.log("[useAdminUsers Debug] Response received:", {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok,
-      });
+      // Processing admin users response
 
       if (!response.ok) {
         console.error(

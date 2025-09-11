@@ -55,10 +55,7 @@ export default function MessagesPage() {
 
   const handleConversationSelect = async (conversationId: string) => {
     try {
-      console.log("[MessagingDebug] MessagesPage.handleConversationSelect", {
-        conversationId,
-        activeBefore: activeConversationId,
-      });
+      // Handling conversation selection
     } catch {}
 
     // Simple approach like navbar popover - just navigate with URL params
@@ -180,11 +177,7 @@ export default function MessagesPage() {
         const { conversationId } = (e as CustomEvent).detail || {};
         if (!conversationId) return;
         try {
-          console.log("[MessagingDebug] MessagesPage.windowEvent", {
-            type: (e as any)?.type,
-            conversationId,
-            activeBefore: activeConversationId,
-          });
+          // Handling window conversation event
         } catch {}
         // Delegate to the same selection handler so URL and state stay in sync
         handleConversationSelect(conversationId);

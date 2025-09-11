@@ -12,12 +12,10 @@ export function MessagingAuthListener() {
 
   useEffect(() => {
     const handleAuthLogout = async () => {
-      console.log("[MessagingAuthListener] Logout detected, cleaning up messaging state");
       await cleanupMessaging();
     };
 
     const handleAuthLogin = async () => {
-      console.log("[MessagingAuthListener] Login detected, messaging state will be fresh");
       // On login, we might want to clear any stale state as well
       // in case the user is switching accounts
       await cleanupMessaging();

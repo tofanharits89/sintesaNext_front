@@ -137,11 +137,7 @@ export const useMessagingUIStore = create<
           set(
             (state) => {
               try {
-                console.log("[MessagingDebug] setActiveConversation", {
-                  from: state.activeConversationId,
-                  to: conversationId,
-                  same: state.activeConversationId === conversationId,
-                });
+                // Setting active conversation
               } catch {}
               // No-op if selecting the same conversation; don't clear the input
               if (state.activeConversationId === conversationId)

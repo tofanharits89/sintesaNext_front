@@ -20,7 +20,7 @@ export default function LoginPage() {
           cache: "no-store",
         });
         const data = await resp.json().catch(() => ({}));
-        console.log("[Login Page Debug] Backend session validate:", data);
+        // Backend session validation response
         if (!cancelled && data?.success) {
           router.replace("/dashboard");
         }

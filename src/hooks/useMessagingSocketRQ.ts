@@ -485,21 +485,14 @@ export function useMessagingSocketRQ() {
       const tempId = String(data?.tempId || "");
       const realId = String(data?.conversationId || "");
       try {
-        console.log("[MessagingDebug] conversation:created", {
-          tempId,
-          conversationId: realId,
-          activeBefore: activeConversationId,
-        });
+        // Processing conversation:created event
       } catch {}
 
       // Deduplicate repeated events for the same mapping
       const prev = reconciledMapRef.current.get(tempId);
       if (prev === realId) {
         try {
-          console.log("[MessagingDebug] conversation:created deduped", {
-            tempId,
-            conversationId: realId,
-          });
+          // Deduplicating conversation:created event
         } catch {}
         return;
       }
@@ -508,10 +501,7 @@ export function useMessagingSocketRQ() {
       if (activeConversationId === realId) {
         reconciledMapRef.current.set(tempId, realId);
         try {
-          console.log("[MessagingDebug] already on real conversation; no-op", {
-            tempId,
-            conversationId: realId,
-          });
+          // Already on real conversation, no action needed
         } catch {}
         return;
       }
@@ -589,10 +579,7 @@ export function useMessagingSocketRQ() {
             return copy;
           });
           try {
-            console.log("[MessagingDebug] temp migration", {
-              tempId,
-              migratedCount: migrated.length,
-            });
+            // Temp messages migrated to real conversation
           } catch {}
         }
       } catch {}
@@ -693,9 +680,7 @@ export function useMessagingSocketRQ() {
           queryClient.refetchQueries({
             queryKey: messageKeys.messages(realId),
           });
-          console.log("[MessagingDebug] forced messages refresh", {
-            conversationId: realId,
-          });
+          // Forcing messages refresh for real conversation
         } catch {}
       }, 200);
 
@@ -733,7 +718,7 @@ export function useMessagingSocketRQ() {
     // Wrap socket event to log before handling
     const socketConvCreatedListener = (payload: any) => {
       try {
-        console.log("[MessagingDebug] socket conversation:created", payload);
+        // Socket conversation:created event received
       } catch {}
       try {
         handleConversationCreated(payload);
@@ -763,7 +748,7 @@ export function useMessagingSocketRQ() {
         };
         if (detail && detail.tempId && detail.conversationId) {
           try {
-            console.log("[MessagingDebug] window conversation:created", detail);
+            // Window conversation:created event received
           } catch {}
           handleConversationCreated(detail);
         }

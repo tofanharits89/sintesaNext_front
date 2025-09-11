@@ -42,7 +42,7 @@ const fetchConversationsPage = async (
   if (cursor) url.searchParams.set("cursor", String(cursor));
   if (limit) url.searchParams.set("limit", String(limit));
 
-  console.log('🔍 [DEBUG] Fetching conversations from:', url.toString());
+  // Fetching conversations from API
 
   const resp = await fetch(url.toString(), {
     credentials: "include",
@@ -54,26 +54,14 @@ const fetchConversationsPage = async (
   if (!resp.ok) throw new Error(`Failed to fetch: ${resp.status}`);
   const json: any = await resp.json().catch(() => ({}));
 
-  console.log('🔍 [DEBUG] Raw API Response:', JSON.stringify(json, null, 2));
-  console.log('🔍 [DEBUG] Conversations from API:', json?.data?.conversations || json?.conversations || []);
+  // Processing API response
 
   const conversations: Conversation[] =
     json?.data?.conversations || json?.conversations || [];
   const nextCursor: string | null =
     json?.data?.nextCursor ?? json?.nextCursor ?? null;
 
-  // Log each conversation's structure
-  conversations.forEach((conv, index) => {
-    console.log(`🔍 [DEBUG] Raw Conversation ${index}:`, {
-      id: conv.id,
-      lastMessage: conv.lastMessage,
-      lastMessage_timestamp: conv.lastMessage?.timestamp,
-      lastMessage_created_at: conv.lastMessage?.created_at,
-      lastMessage_sentAt: conv.lastMessage?.sentAt,
-      updated_at: (conv as any)?.updated_at,
-      created_at: (conv as any)?.created_at
-    });
-  });
+  // Process each conversation structure
 
   return { conversations, nextCursor };
 };
@@ -111,12 +99,7 @@ export function useConversations(options?: { enabled?: boolean }) {
   const normalizeConversation = (c: Conversation): Conversation => {
     const conv: any = { ...(c as any) };
     
-    console.log('🔍 [DEBUG] Raw conversation before normalization:', JSON.stringify({
-      id: conv.id,
-      lastMessage: conv.lastMessage,
-      updated_at: conv.updated_at,
-      created_at: conv.created_at
-    }, null, 2));
+    // Normalizing conversation data
     
     const lm: any = conv.lastMessage || undefined;
     if (lm) {
@@ -132,14 +115,7 @@ export function useConversations(options?: { enabled?: boolean }) {
         lm.sentAt;
       if (!lm.timestamp && lmTs) conv.lastMessage = { ...lm, timestamp: lmTs };
       
-      console.log('🔍 [DEBUG] Last message timestamp normalization:', {
-        original_timestamp: originalTimestamp,
-        original_created_at: originalCreatedAt,
-        original_sentAt: originalSentAt,
-        final_timestamp: conv.lastMessage.timestamp,
-        message_content: conv.lastMessage.content,
-        message_type: conv.lastMessage.type
-      });
+      // Last message timestamp normalized
     }
     const convTs =
       (conv.lastMessage &&
@@ -153,14 +129,7 @@ export function useConversations(options?: { enabled?: boolean }) {
       conv.createdAt;
     if (!conv.updated_at && convTs) conv.updated_at = convTs;
     
-    console.log('🔍 [DEBUG] Final normalized conversation:', {
-      id: conv.id,
-      lastMessage: conv.lastMessage,
-      lastMessage_timestamp: conv.lastMessage?.timestamp,
-      lastMessage_content: conv.lastMessage?.content,
-      updated_at: conv.updated_at,
-      created_at: conv.created_at
-    });
+    // Conversation normalization completed
     
     return conv as Conversation;
   };

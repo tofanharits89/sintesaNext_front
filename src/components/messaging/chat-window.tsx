@@ -144,15 +144,7 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
       !activeConversationId.startsWith("temp-conv-");
     return isTemp && activeIsReal ? activeConversationId : conversationId;
 
-    useEffect(() => {
-      try {
-        console.log("[MessagingDebug] ChatWindow", {
-          effectiveConversationId,
-          activeConversationId,
-          messagesLen: messages?.length || 0,
-        });
-      } catch {}
-    }, [effectiveConversationId, activeConversationId, messages?.length]);
+    // Debug effect removed - was logging conversation state changes
   }, [conversationId, activeConversationId]);
 
   // Get conversation data from the new system or fallback to prop

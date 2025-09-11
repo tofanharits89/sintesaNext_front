@@ -51,10 +51,7 @@ const fetchMessages = async (context: {
   }
 
   try {
-    console.log("[MessagingDebug] fetchMessages request", {
-      url: url.toString(),
-      pageParam,
-    });
+    // Fetching messages from API
   } catch {}
 
   const resp = await fetch(url.toString(), {
@@ -73,13 +70,7 @@ const fetchMessages = async (context: {
       json?.data?.result?.messages,
     ];
     const arr = cands.find((a: any) => Array.isArray(a)) as any[] | undefined;
-    console.log("[MessagingDebug] fetchMessages response", {
-      status: resp.status,
-      messagesLen: Array.isArray(arr) ? arr.length : undefined,
-      hasPagination: Boolean(
-        json?.data?.pagination || json?.pagination || json?.result?.pagination
-      ),
-    });
+    // Processing messages response
   } catch {}
   return json;
 };

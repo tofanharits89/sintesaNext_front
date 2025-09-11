@@ -28,6 +28,7 @@ import { useDasarPemotonganOptions } from "@/hooks/use-dasar-pemotongan-options"
 import { useKodeAkunOptions } from "@/hooks/use-kode-akun-options";
 import { backendPath } from "@/lib/backend";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
+import { addCsrfToHeaders } from "@/utils/csrf-utils";
 
 interface RekamDataTransaksiModalProps {
   open: boolean;
@@ -210,11 +211,16 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataT
       }
 
       const token = getAuthTokenFromCookie();
+      
       const headers: HeadersInit = { "Content-Type": "application/json" };
       if (token) headers.Authorization = `Bearer ${token}`;
+      
+      // Add CSRF token to headers
+      const headersWithCsrf = addCsrfToHeaders(headers);
+      
       const resp = await fetch(backendPath(`/transfer-daerah/dau/transaksi`), {
         method: "POST",
-        headers,
+        headers: headersWithCsrf,
         credentials: "include",
         body: JSON.stringify(payload),
       });

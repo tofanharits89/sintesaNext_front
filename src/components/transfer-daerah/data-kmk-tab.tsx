@@ -23,6 +23,7 @@ import { DeleteConfirmModal } from "./modals/delete-confirm-modal";
 import { useKmkDau } from "@/hooks/use-kmk-dau";
 import { backendPath } from "@/lib/backend";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
+import { addCsrfToHeaders } from "@/utils/csrf-utils";
 
 interface DataKmkTabProps {
   // Remove the selectedYear prop as this tab will manage its own year state
@@ -414,11 +415,16 @@ export function DataKmkTab({}: DataKmkTabProps) {
             const id = selectedItem?.id;
             if (!id) throw new Error("ID tidak ditemukan");
             const token = getAuthTokenFromCookie();
+            
             const headers: HeadersInit = { "Content-Type": "application/json" };
-            if (token) headers["Authorization"] = `Bearer ${token}`;
+             if (token) headers["Authorization"] = `Bearer ${token}`;
+             
+             // Add CSRF token to headers
+             const headersWithCsrf = addCsrfToHeaders(headers);
+            
             const resp = await fetch(backendPath(`/transfer-daerah/dau/kmk/${encodeURIComponent(String(id))}`), {
               method: "DELETE",
-              headers,
+              headers: headersWithCsrf,
               credentials: "include",
             });
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);

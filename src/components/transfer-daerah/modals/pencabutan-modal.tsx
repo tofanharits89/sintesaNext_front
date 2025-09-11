@@ -31,6 +31,8 @@ import { cn } from "@/lib/utils";
 import { KmkPenundaanListModal } from "./kmk-penundaan-list-modal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { http } from "@/lib/httpClient";
+import { useKppnByNoKmk } from "@/hooks/use-kppn-by-nokmk";
+import { useKabKotaByNoKmk } from "@/hooks/use-kabkota-by-nokmk";
 
 interface PencabutanModalProps {
   open: boolean;
@@ -45,6 +47,8 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
     nomor: "",
     tanggalKmk: undefined as Date | undefined,
     uraianKmk: "",
+    kdkppn: "",
+    kdpemda: "",
   });
   const [isKmkPenundaanListOpen, setIsKmkPenundaanListOpen] = useState(false);
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
@@ -70,11 +74,31 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
       staleTime: 5 * 60 * 1000,
     });
 
+  // Dependent options based on selected Dasar Penundaan (no_kmk)
+  const { options: kppnOptions, isLoading: kppnLoading } = useKppnByNoKmk(
+    formData.dasarPenundaan || undefined,
+  );
+  const { options: kabkotaOptions, isLoading: kabkotaLoading } = useKabKotaByNoKmk(
+    formData.dasarPenundaan || undefined,
+    formData.kdkppn || undefined,
+  );
+
   const handleSubmit = async () => {
     try {
+      // Basic validation before submit
+      const errors: string[] = [];
+      if (!formData.tahun) errors.push("Tahun wajib diisi");
+      if (!formData.dasarPenundaan) errors.push("Dasar Penundaan wajib dipilih");
+      if (!formData.nomor) errors.push("Nomor KMK Pencabutan wajib diisi");
+      if (!formData.tanggalKmk) errors.push("Tanggal KMK Pencabutan wajib dipilih");
+      if (errors.length) {
+        alert(errors.join("\n"));
+        return;
+      }
+
       // Map fields to backend payload
       const payload = {
-        kmktunda: formData.dasarPenundaan?.trim(),
+        no_kmk: formData.dasarPenundaan?.trim(),
         thangcabut: Number(formData.tahun),
         no_kmkcabut: formData.nomor?.trim(),
         tglcabut: formData.tanggalKmk
@@ -83,6 +107,7 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
             ).padStart(2, "0")}-${String(formData.tanggalKmk.getDate()).padStart(2, "0")}`
           : "",
         uraiancabut: formData.uraianKmk?.trim() || null,
+        // kdkppn and kdpemda are optional for pencabutan save
       };
       const res = await http.post(`/transfer-daerah/dau/kmk/penundaan`, payload, {
         signal: AbortSignal.timeout(20000),
@@ -103,6 +128,8 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
         nomor: "",
         tanggalKmk: undefined,
         uraianKmk: "",
+        kdkppn: "",
+        kdpemda: "",
       });
     } catch (e: any) {
       // Minimal UX feedback; replace with toast if available in project
@@ -120,6 +147,8 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
       nomor: "",
       tanggalKmk: undefined,
       uraianKmk: "",
+      kdkppn: "",
+      kdpemda: "",
     });
   };
 
@@ -164,7 +193,7 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
                 <Select
                   value={formData.dasarPenundaan}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, dasarPenundaan: value })
+                    setFormData({ ...formData, dasarPenundaan: value, kdkppn: "", kdpemda: "" })
                   }
                 >
                   <SelectTrigger className="w-full">
