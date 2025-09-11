@@ -1,46 +1,33 @@
-import { useQuery } from "@tanstack/react-query";
-import { backendPath } from "@/lib/backend";
+import { useQuery } from '@tanstack/react-query';
+import { backendPath } from '@/lib/backend';
 
-interface PersentaseRealisasiKLItem {
-  kode_ba: string;
-  nama_ba: string;
-  persentase: number; // 0..100
+// Check if we're running on the client side
+const isClient = typeof window !== 'undefined';
+
+interface PersentaseRealisasiKL {
+  kl_id: string;
+  kl_nama: string;
+  pagu: number;
+  realisasi: number;
+  persentase: number;
 }
 
 interface PersentaseRealisasiKLResponse {
   success: boolean;
-  data: PersentaseRealisasiKLItem[];
-  warning?: string;
+  data: PersentaseRealisasiKL[];
+  message?: string;
 }
 
-interface UsePersentaseRealisasiKLOptions {
-  kanwil?: string;
-}
-
-export function usePersentaseRealisasiKL(
-  options: UsePersentaseRealisasiKLOptions = {}
-) {
-  const { kanwil } = options;
-  const isClient = typeof window !== "undefined";
-
-  return useQuery<PersentaseRealisasiKLItem[], Error>({
-    queryKey: ["persentase-realisasi-kl", kanwil],
+export function usePersentaseRealisasiKL() {
+  return useQuery<PersentaseRealisasiKLResponse>({
+    queryKey: ['persentase-realisasi-kl'],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (kanwil) params.append("kanwil", kanwil);
-
-      const url = new URL(
-        (process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next") +
-          `/api/dashboard/persentase-realisasi-kl${
-            params.toString() ? "?" + params.toString() : ""
-          }`,
-        window.location.origin
-      );
-
-      const response = await fetch(url.toString(), {
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        cache: "no-store",
+      const response = await fetch(backendPath('/dashboard/persentase-realisasi-kl'), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
       });
 
       if (!response.ok) {

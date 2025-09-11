@@ -1,9 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { BarChartComponent } from "@/components/ui/bar-chart";
-import { MultipleBarChartComponent } from "@/components/ui/multiple-bar-chart";
-import { LineChartComponent } from "@/components/ui/line-chart";
+import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
+const MultipleBarChartComponent = dynamic(
+  () =>
+    import("@/components/ui/multiple-bar-chart").then(
+      (m) => m.MultipleBarChartComponent
+    ),
+  { ssr: false, loading: () => <MultipleBarChartSkeleton height={250} /> }
+);
+const BarChartComponent = dynamic(
+  () => import("@/components/ui/bar-chart").then((m) => m.BarChartComponent),
+  { ssr: false, loading: () => <BarChartSkeleton height={360} /> }
+);
+const LineChartComponent = dynamic(
+  () => import("@/components/ui/line-chart").then((m) => m.LineChartComponent),
+  { ssr: false, loading: () => <LineChartSkeleton height={280} /> }
+);
 import {
   Select,
   SelectContent,
@@ -31,6 +44,7 @@ import { useRealisasiKLPerFungsi } from "@/hooks/useRealisasiKLPerFungsi";
 
 import { StatCard } from "@/components/dashboard/StatCard";
 import { AuthRequiredCard } from "@/components/dashboard/AuthRequiredCard";
+
 import {
   StatCardSkeleton,
   MultipleBarChartSkeleton,
@@ -94,6 +108,7 @@ const formatCurrency = (value: number): string => {
 
 export default function DashboardUtamaPage() {
   const [selectedKanwil, setSelectedKanwil] = useState<string>("semua");
+  const [showLoadingIndicator, setShowLoadingIndicator] = useState(false);
 
   // Fetch Quick Stats data using React Query
   const {
@@ -193,6 +208,8 @@ export default function DashboardUtamaPage() {
     realisasiKLPerFungsiError?.message?.includes("log in") ||
     realisasiKLPerFungsiError?.message?.includes("401");
 
+
+
   // Helper function to format currency for chart display
   const formatChartCurrency = (value: number): string => {
     if (value >= 1000000000000) {
@@ -208,16 +225,30 @@ export default function DashboardUtamaPage() {
   const lastRefreshJakarta = (quickStats as any)?._meta?.asOfJakarta as
     | string
     | undefined;
-  const lastRefreshText = lastRefreshJakarta
-    ? `${new Date(lastRefreshJakarta).toLocaleString("id-ID", {
+  
+  // Client-side date formatting to prevent hydration mismatch
+  const [lastRefreshText, setLastRefreshText] = useState('Loading...')
+  
+  useEffect(() => {
+    if (lastRefreshJakarta) {
+      const formattedDate = new Date(lastRefreshJakarta).toLocaleString("id-ID", {
         timeZone: "Asia/Jakarta",
         year: "numeric",
         month: "long",
         day: "numeric",
         hour: "2-digit",
         minute: "2-digit",
-      })} WIB`
-    : "-";
+      })
+      setLastRefreshText(`${formattedDate} WIB`)
+    } else {
+      setLastRefreshText('-')
+    }
+  }, [lastRefreshJakarta])
+
+  // Client-side only loading indicator to prevent hydration mismatch
+  useEffect(() => {
+    setShowLoadingIndicator(isLoadingQuickStats);
+  }, [isLoadingQuickStats]);
 
   // Handle kanwil selection change
   const handleKanwilChange = (value: string) => {
@@ -255,7 +286,7 @@ export default function DashboardUtamaPage() {
               ))}
             </SelectContent>
           </Select>
-          {isLoadingQuickStats && (
+          {showLoadingIndicator && (
             <span className="text-xs text-muted-foreground">Loading...</span>
           )}
         </div>
@@ -334,6 +365,8 @@ export default function DashboardUtamaPage() {
           </>
         )}
       </div>
+
+
 
       {/* Second Row: 3 Cards with Bar Charts */}
       <div className="grid gap-4 md:grid-cols-3">
@@ -612,12 +645,12 @@ export default function DashboardUtamaPage() {
       ) : (
         <BarChartComponent
           data={
-            persentaseKLData?.map((item) => ({
+            Array.isArray(persentaseKLData) ? persentaseKLData.map((item) => ({
               name: item.kode_ba, // use kode_ba for the X-axis label
               value: item.persentase,
               kode_ba: item.kode_ba,
               nama_ba: item.nama_ba,
-            })) || []
+            })) : []
           }
           title={`Persentase Realisasi K/L${
             isLoadingPersentaseKL

@@ -2,8 +2,9 @@
 
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { apiPath } from "@/lib/base-path";
+import { backendPath } from "@/lib/backend";
 import { useSocket } from "./useSocket";
+import { conversationKeys } from "./useConversationsRQ";
 import {
   SOCKET_EVENTS,
   FrontendMessage,
@@ -14,38 +15,73 @@ import {
   pushTempMessage,
   removeTempMessageById,
 } from "@/features/messaging/temp-messages-store";
+import { createInfiniteQueryOptions, queryKeyFactories } from "@/lib/query-configs";
 
-const PAGE_SIZE = 50;
+// Persist last-known truthy status flags across refetches to prevent visual regressions
+const lastKnownFlags: Map<
+  string,
+  Partial<{ isDelivered: boolean; isRead: boolean }>
+> = new Map();
 
-// Query keys for React Query
-export const messageKeys = {
-  all: ["messages"] as const,
-  lists: () => [...messageKeys.all, "list"] as const,
-  list: (conversationId: string) =>
-    [...messageKeys.lists(), conversationId] as const,
-};
+const PAGE_SIZE = 25;
 
-// Fetcher with auth headers and safe JSON parsing
+// Use centralized query keys
+export const messageKeys = queryKeyFactories.messaging;
+
+// Fetcher with auth headers and safe JSON parsing (cursor-based)
 const fetchMessages = async (context: {
-  pageParam: number;
+  pageParam: string | undefined;
   queryKey: readonly string[];
 }) => {
-  const { pageParam = 1, queryKey } = context;
-  const [, , conversationId] = queryKey;
+  const { pageParam, queryKey } = context;
+  const [, , conversationId] = queryKey as [string, string, string];
 
   const url = new URL(
-    apiPath(`/messaging/conversations/${conversationId}/messages`),
+    backendPath(`/messaging/conversations/${conversationId}/messages`),
     window.location.origin
   );
-  url.searchParams.set("page", String(pageParam));
+  // Be liberal in what we send: support multiple backend param names after TS migration
   url.searchParams.set("limit", String(PAGE_SIZE));
+  url.searchParams.set("page_size", String(PAGE_SIZE));
+  url.searchParams.set("pageSize", String(PAGE_SIZE));
+  if (pageParam) {
+    url.searchParams.set("before", pageParam);
+    url.searchParams.set("cursor", pageParam);
+    url.searchParams.set("next_before", pageParam);
+  }
+
+  try {
+    console.log("[MessagingDebug] fetchMessages request", {
+      url: url.toString(),
+      pageParam,
+    });
+  } catch {}
 
   const resp = await fetch(url.toString(), {
     credentials: "include",
     cache: "no-store",
   });
   if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-  return await resp.json().catch(() => ({}));
+  const json = await resp.json().catch(() => ({}));
+  try {
+    // Best-effort length check using common shapes
+    const cands = [
+      json?.data?.messages,
+      json?.messages,
+      json?.data?.data?.messages,
+      json?.result?.messages,
+      json?.data?.result?.messages,
+    ];
+    const arr = cands.find((a: any) => Array.isArray(a)) as any[] | undefined;
+    console.log("[MessagingDebug] fetchMessages response", {
+      status: resp.status,
+      messagesLen: Array.isArray(arr) ? arr.length : undefined,
+      hasPagination: Boolean(
+        json?.data?.pagination || json?.pagination || json?.result?.pagination
+      ),
+    });
+  } catch {}
+  return json;
 };
 
 export function useMessages(conversationId?: string) {
@@ -53,10 +89,11 @@ export function useMessages(conversationId?: string) {
 
   const isFetchable = (() => {
     if (!conversationId) return false;
+    const safeConversationId = String(conversationId);
     const isTemp =
-      conversationId.startsWith("temp-") ||
-      conversationId.startsWith("temp_conv-") ||
-      conversationId.startsWith("temp-conv-");
+      safeConversationId.startsWith("temp-") ||
+      safeConversationId.startsWith("temp_conv-") ||
+      safeConversationId.startsWith("temp-conv-");
     return !isTemp;
   })();
 
@@ -92,24 +129,26 @@ export function useMessages(conversationId?: string) {
     isFetchingNextPage,
     isLoading,
   } = useInfiniteQuery({
-    queryKey: messageKeys.list(conversationId || ""),
+    queryKey: messageKeys.messages(conversationId || ""),
     queryFn: fetchMessages,
     enabled: isFetchable && !!conversationId,
-    initialPageParam: 1,
-    getNextPageParam: (lastPage, allPages) => {
-      // Stop if the last page had fewer than PAGE_SIZE items (no more pages)
-      if (
-        Array.isArray(lastPage?.data?.messages) &&
-        lastPage.data.messages.length < PAGE_SIZE
-      ) {
-        return undefined;
-      }
-      return allPages.length + 1;
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => {
+      // Support multiple possible locations for pagination cursor
+      const pg =
+        lastPage?.data?.pagination ||
+        lastPage?.pagination ||
+        lastPage?.data?.data?.pagination ||
+        lastPage?.result?.pagination ||
+        null;
+      const nextBefore =
+        pg?.nextBefore || pg?.next_before || pg?.next || undefined;
+      return nextBefore || undefined;
     },
-    staleTime: 30 * 1000, // 30 seconds
-    gcTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false, // rely on sockets for live updates
-    refetchOnReconnect: true,
+    ...createInfiniteQueryOptions('realtime', {
+      refetchOnWindowFocus: false, // rely on sockets for live updates
+      gcTime: 30 * 60 * 1000, // 30 minutes (avoid dropping cache during short idles)
+    }),
   });
 
   // Map API pages to FrontendMessage[]
@@ -121,6 +160,77 @@ export function useMessages(conversationId?: string) {
     }
     if (!data) return [];
     const pages = data.pages;
+
+    // Helper to find messages array in various shapes (tolerant to backend changes)
+    const extractMessages = (p: any): any[] => {
+      if (!p) return [];
+
+      // 1) Known candidates from legacy and migrated APIs
+      const cands = [
+        p?.data?.messages,
+        p?.messages,
+        p?.data?.data?.messages,
+        p?.result?.messages,
+        p?.data?.result?.messages,
+        // Common TS migration variants
+        p?.data?.items,
+        p?.items,
+        p?.result?.items,
+        p?.data?.result?.items,
+        p?.data?.records,
+        p?.records,
+        p?.rows,
+        p?.data?.rows,
+        p?.data?.data, // sometimes the array itself is here
+      ];
+      for (const arr of cands) {
+        if (Array.isArray(arr)) return arr;
+      }
+
+      // 2) Recursive fallback: search for the first array of objects that looks like messages
+      const looksLikeMessageArray = (arr: any[]): boolean => {
+        if (!Array.isArray(arr) || arr.length === 0) return false;
+        const first = arr[0];
+        if (typeof first !== "object") return false;
+        // Accept if has an id and one of typical fields
+        return (
+          ("id" in first || "messageId" in first) &&
+          ("content" in first ||
+            "text" in first ||
+            "message" in first ||
+            "created_at" in first ||
+            "timestamp" in first ||
+            "conversation_id" in first)
+        );
+      };
+
+      const visited = new Set<any>();
+      const dfs = (obj: any, depth: number): any[] => {
+        if (!obj || typeof obj !== "object" || visited.has(obj) || depth > 3)
+          return [];
+        visited.add(obj);
+        // If this object itself is an array, test it
+        if (Array.isArray(obj)) {
+          return looksLikeMessageArray(obj) ? obj : [];
+        }
+        // Otherwise, scan its values
+        for (const key of Object.keys(obj)) {
+          const val = (obj as any)[key];
+          if (Array.isArray(val) && looksLikeMessageArray(val)) return val;
+        }
+        // Recurse into nested objects (limited depth)
+        for (const key of Object.keys(obj)) {
+          const val = (obj as any)[key];
+          if (val && typeof val === "object") {
+            const found = dfs(val, depth + 1);
+            if (found.length) return found;
+          }
+        }
+        return [];
+      };
+
+      return dfs(p, 0);
+    };
 
     // Normalize various timestamp formats to milliseconds since epoch
     const toMs = (t: any): number => {
@@ -143,10 +253,11 @@ export function useMessages(conversationId?: string) {
     };
 
     const mappedWithSort = pages.flatMap((p) =>
-      (p?.data?.messages ?? []).map((msg: any) => {
+      extractMessages(p).map((msg: any) => {
         const rawTs = msg.timestamp ?? msg.created_at;
         const ms = toMs(rawTs);
-        return {
+        const id = msg.id as string;
+        const fromApi = {
           id: msg.id,
           conversationId: msg.conversation_id || conversationId!,
           content: msg.content,
@@ -156,12 +267,18 @@ export function useMessages(conversationId?: string) {
           sender: msg.sender,
           senderType: msg.senderType || msg.sender_type,
           isRead: msg.isRead ?? msg.is_read ?? false,
-          readAt: msg.readAt ?? null,
-          isOpened: msg.isOpened ?? false,
-          openedAt: msg.openedAt ?? null,
-          isDelivered: msg.isDelivered ?? false,
-          deliveredAt: msg.deliveredAt ?? null,
+          readAt: msg.readAt ?? msg.read_at ?? null,
+          isDelivered: msg.isDelivered ?? msg.is_delivered ?? false,
+          deliveredAt: msg.deliveredAt ?? msg.delivered_at ?? null,
         } as FrontendMessage & { _sortTs: number };
+
+        const known = lastKnownFlags.get(id);
+        if (known) {
+          // Once true, keep true (do not downgrade from true -> false on refetch)
+          fromApi.isDelivered = fromApi.isDelivered || !!known.isDelivered;
+          fromApi.isRead = fromApi.isRead || !!known.isRead;
+        }
+        return fromApi;
       })
     );
 
@@ -187,7 +304,7 @@ export function useMessages(conversationId?: string) {
   const updateMessagesCache = useCallback(
     (updater: (prev: any) => any) => {
       if (!conversationId) return;
-      queryClient.setQueryData(messageKeys.list(conversationId), updater);
+      queryClient.setQueryData(messageKeys.messages(conversationId), updater);
     },
     [conversationId, queryClient]
   );
@@ -275,7 +392,7 @@ export function useMessages(conversationId?: string) {
           senderType: normalized.senderType,
           isRead: false,
           isDelivered: false,
-          isOpened: false,
+          // isOpened removed - using 2-state system
         } as FrontendMessage);
 
         // If we got a real conversationId (with or without tempId) while viewing a temp chat, notify reconcilers
@@ -299,6 +416,15 @@ export function useMessages(conversationId?: string) {
         return;
       }
 
+      // If cache is empty before appending, schedule a backfill fetch after seeding
+      const prevCache = queryClient.getQueryData(
+        messageKeys.messages(conversationId)
+      );
+      const wasEmpty =
+        !prevCache ||
+        !(prevCache as any).pages ||
+        (prevCache as any).pages.length === 0;
+
       updateMessagesCache((prev: any) => {
         // Initialize cache if empty so first realtime message appears
         if (!prev || !prev.pages || prev.pages.length === 0) {
@@ -313,6 +439,8 @@ export function useMessages(conversationId?: string) {
             senderType: normalized.senderType,
             is_read: false,
           };
+          // Mark that we seeded so we can trigger a backfill fetch below (outside updater)
+          (window as any).__messagesSeeded__ = true;
           return {
             pages: [
               {
@@ -322,12 +450,12 @@ export function useMessages(conversationId?: string) {
                     page: 1,
                     limit: PAGE_SIZE,
                     total: 1,
-                    hasMore: false,
+                    hasMore: true, // unknown; allow backfill to load older
                   },
                 },
               },
             ],
-            pageParams: [1],
+            pageParams: [undefined],
           };
         }
 
@@ -369,17 +497,252 @@ export function useMessages(conversationId?: string) {
         copy.pages[lastIdx] = last;
         return copy;
       });
+      // If we had to seed because cache was empty, backfill immediately to fetch full history
+      if (wasEmpty) {
+        try {
+          setTimeout(() => {
+            try {
+              queryClient.refetchQueries({
+                queryKey: messageKeys.messages(conversationId),
+              });
+            } catch {}
+          }, 0);
+        } catch {}
+      }
     };
 
     on(SOCKET_EVENTS.MESSAGE_NEW, appendNewMessage);
     on(SOCKET_EVENTS.MESSAGE_RECEIVED, appendNewMessage);
 
+    // Normalize message IDs from various payload shapes (single, array, nested)
+    const getMsgIds = (p: any): string[] => {
+      if (!p) return [];
+      if (Array.isArray(p.messageIds)) return p.messageIds.filter(Boolean);
+      if (Array.isArray(p.messages))
+        return p.messages.map((m: any) => m?.id).filter(Boolean);
+      const single = p?.messageId || p?.id || p?.message?.id;
+      return single ? [single] : [];
+    };
+
+    // Update flags in messages cache and lastMessage in conversations list
+    const updateMessageFlags = (
+      messageId: string | undefined,
+      updates: Partial<{
+        isDelivered: boolean;
+        deliveredAt: string | null;
+        isRead: boolean;
+        readAt: string | null;
+      }>
+    ) => {
+      if (!messageId) return;
+
+      // Persist truthy flags to avoid downgrades on refetch
+      const prev = lastKnownFlags.get(messageId) || {};
+      lastKnownFlags.set(messageId, {
+        isDelivered: prev.isDelivered || !!updates.isDelivered,
+        isRead: prev.isRead || !!updates.isRead,
+      });
+
+      updateMessagesCache((prevCache: any) => {
+        if (!prevCache?.pages) return prevCache;
+        const copy = {
+          ...prevCache,
+          pages: prevCache.pages.map((p: any) => ({ ...p })),
+        };
+        copy.pages = copy.pages.map((pg: any) => {
+          const msgs = Array.isArray(pg?.data?.messages)
+            ? pg.data.messages.map((m: any) =>
+                m?.id === messageId
+                  ? {
+                      ...m,
+                      is_delivered:
+                        updates.isDelivered ?? m.is_delivered ?? m.isDelivered,
+                      isDelivered:
+                        updates.isDelivered ?? m.isDelivered ?? m.is_delivered,
+                      delivered_at:
+                        updates.deliveredAt ?? m.delivered_at ?? m.deliveredAt,
+                      deliveredAt:
+                        updates.deliveredAt ?? m.deliveredAt ?? m.delivered_at,
+                      // isOpened properties removed - using 2-state system
+                      is_read: updates.isRead ?? m.is_read ?? m.isRead,
+                      isRead: updates.isRead ?? m.isRead ?? m.is_read,
+                      read_at: updates.readAt ?? m.read_at ?? m.readAt,
+                      readAt: updates.readAt ?? m.readAt ?? m.read_at,
+                    }
+                  : m
+              )
+            : pg?.data?.messages;
+          return { ...pg, data: { ...(pg.data || {}), messages: msgs } };
+        });
+        return copy;
+      });
+
+      // Update lastMessage flags in conversations list cache
+      queryClient.setQueryData(conversationKeys.lists(), (prevList: any) => {
+        if (!prevList) return prevList;
+        const curr = prevList?.pages
+          ? prevList
+          : { pages: [prevList], pageParams: [null] };
+        const pages = curr.pages.map((pg: any) => ({
+          ...pg,
+          conversations: Array.isArray(pg?.conversations)
+            ? pg.conversations.map((c: any) =>
+                c?.lastMessage?.id === messageId
+                  ? {
+                      ...c,
+                      lastMessage: {
+                        ...c.lastMessage,
+                        isDelivered:
+                          updates.isDelivered ?? c.lastMessage.isDelivered,
+                        deliveredAt:
+                          updates.deliveredAt ?? c.lastMessage.deliveredAt,
+                        // isOpened properties removed - using 2-state system
+                        isRead: updates.isRead ?? c.lastMessage.isRead,
+                        is_read: updates.isRead ?? c.lastMessage.is_read,
+                        readAt: updates.readAt ?? c.lastMessage.readAt,
+                      },
+                    }
+                  : c
+              )
+            : pg?.conversations,
+        }));
+        return { ...curr, pages };
+      });
+    };
+
+    const onDelivered = (payload: any) => {
+      const convId = payload?.conversationId || payload?.conversation_id;
+      if (!convMatches(convId, (payload as any)?.tempId)) return;
+      const ids = getMsgIds(payload);
+      const atGlobal =
+        payload?.deliveredAt ||
+        payload?.delivered_at ||
+        payload?.timestamp ||
+        null;
+      if (ids.length === 0 && Array.isArray(payload?.messages)) {
+        for (const m of payload.messages) {
+          const id = m?.id;
+          const at =
+            m?.deliveredAt ||
+            m?.delivered_at ||
+            atGlobal ||
+            new Date().toISOString();
+          updateMessageFlags(id, { isDelivered: true, deliveredAt: at });
+        }
+        return;
+      }
+      for (const id of ids) {
+        const at = atGlobal || new Date().toISOString();
+        updateMessageFlags(id, { isDelivered: true, deliveredAt: at });
+      }
+    };
+
+    // onOpened removed - using 2-state system (delivered -> read)
+
+    const onRead = (payload: any) => {
+      const convId = payload?.conversationId || payload?.conversation_id;
+      if (!convMatches(convId, (payload as any)?.tempId)) return;
+      const ids = getMsgIds(payload);
+      const atGlobal =
+        payload?.readAt || payload?.read_at || payload?.timestamp || null;
+      for (const id of ids) {
+        const at = atGlobal || new Date().toISOString();
+        updateMessageFlags(id, { isRead: true, readAt: at });
+      }
+    };
+
+    on(SOCKET_EVENTS.MESSAGE_DELIVERED, onDelivered);
+    // MESSAGE_OPENED event removed - using 2-state system
+    on(SOCKET_EVENTS.MESSAGE_READ, onRead);
+
+    // Also listen for reconciliation events emitted by mutation/socket paths
+    const onConvCreated = (e: Event) => {
+      try {
+        const detail = (e as CustomEvent).detail as {
+          tempId: string;
+          conversationId: string;
+        };
+        if (!detail?.conversationId || !detail?.tempId) return;
+        // Only act if this hook instance is for the REAL conversation id
+        if (detail.conversationId !== conversationId) return;
+
+        // Seed the real conversation cache with any temp messages, if the cache is empty
+        const migrated = getTempMessages(String(detail.tempId));
+        if (!Array.isArray(migrated) || migrated.length === 0) return;
+
+        queryClient.setQueryData(
+          messageKeys.messages(conversationId),
+          (prev: any) => {
+            const nowIso = new Date().toISOString();
+            const toCache = migrated.map((m: any) => ({
+              id: m.id,
+              conversation_id: conversationId,
+              content: m.content,
+              timestamp: m.timestamp || nowIso,
+              created_at: m.timestamp || nowIso,
+              sender: m.sender,
+              senderType: m.senderType || "user",
+              is_read: true,
+            }));
+            if (!prev || !prev.pages || prev.pages.length === 0) {
+              return {
+                pages: [
+                  {
+                    data: {
+                      messages: toCache,
+                      pagination: {
+                        page: 1,
+                        limit: PAGE_SIZE,
+                        total: toCache.length,
+                        hasMore: true,
+                      },
+                    },
+                  },
+                ],
+                pageParams: [undefined],
+              };
+            }
+            const copy = {
+              ...prev,
+              pages: prev.pages.map((p: any) => ({ ...p })),
+            };
+            const lastIdx = copy.pages.length - 1;
+            const last = { ...copy.pages[lastIdx] };
+            const list = Array.isArray(last?.data?.messages)
+              ? [...last.data.messages]
+              : [];
+            for (const msg of toCache) {
+              if (!list.some((m: any) => m?.id === msg.id)) list.push(msg);
+            }
+            last.data = { ...(last.data || {}), messages: list };
+            copy.pages[lastIdx] = last;
+            return copy;
+          }
+        );
+      } catch {}
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener(
+        "conversation:created",
+        onConvCreated as EventListener
+      );
+    }
+
     return () => {
       off(SOCKET_EVENTS.MESSAGE_NEW, appendNewMessage);
       off(SOCKET_EVENTS.MESSAGE_RECEIVED, appendNewMessage);
+      off(SOCKET_EVENTS.MESSAGE_DELIVERED, onDelivered);
+      // MESSAGE_OPENED event removed - using 2-state system
+      off(SOCKET_EVENTS.MESSAGE_READ, onRead);
       if (recentTimer) clearTimeout(recentTimer);
+      if (typeof window !== "undefined") {
+        window.removeEventListener(
+          "conversation:created",
+          onConvCreated as EventListener
+        );
+      }
     };
-  }, [conversationId, isFetchable, on, off, updateMessagesCache]);
+  }, [conversationId, isFetchable, on, off, updateMessagesCache, queryClient]);
 
   // Optimistic insert helper for sending
   const optimisticInsert = (temp: FrontendMessage) => {
@@ -418,12 +781,12 @@ export function useMessages(conversationId?: string) {
                   page: 1,
                   limit: PAGE_SIZE,
                   total: 1,
-                  hasMore: false,
+                  hasMore: true,
                 },
               },
             },
           ],
-          pageParams: [1],
+          pageParams: [undefined],
         };
       }
 
@@ -456,11 +819,11 @@ export function useMessages(conversationId?: string) {
     // React Query specific methods
     invalidateMessages: () =>
       queryClient.invalidateQueries({
-        queryKey: messageKeys.list(conversationId || ""),
+        queryKey: messageKeys.messages(conversationId || ""),
       }),
     refetchMessages: () =>
       queryClient.refetchQueries({
-        queryKey: messageKeys.list(conversationId || ""),
+        queryKey: messageKeys.messages(conversationId || ""),
       }),
   } as const;
 }

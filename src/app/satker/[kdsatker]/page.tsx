@@ -25,7 +25,7 @@ interface SatkerData {
 export default function SatkerDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const kdsatker = params.kdsatker as string;
+  const kdsatker = params?.kdsatker as string;
   const [satkerData, setSatkerData] = useState<SatkerData | null>(null);
   const [loading, setLoading] = useState(true);
   const { currentUser, isLoading: userLoading } = useCurrentUser();

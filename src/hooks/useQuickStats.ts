@@ -54,7 +54,6 @@ export function useQuickStats(options: UseQuickStatsOptions = {}) {
         const response = await fetch(url.toString(), {
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          cache: "no-store",
         });
 
         if (!response.ok) {
@@ -86,7 +85,7 @@ export function useQuickStats(options: UseQuickStatsOptions = {}) {
       }
     },
     enabled: isClient,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 24 * 60 * 60 * 1000, // 24 hours to match HTTP cache
     retry: (failureCount, error) => {
       // Don't retry on authentication errors
       if (

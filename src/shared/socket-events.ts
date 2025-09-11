@@ -456,8 +456,6 @@ export interface FrontendMessage {
   senderType: "user" | "admin";
   isRead: boolean;
   readAt?: string | null;
-  isOpened?: boolean;
-  openedAt?: string | null;
   isDelivered?: boolean;
   deliveredAt?: string | null;
 }
@@ -528,7 +526,6 @@ export const SOCKET_EVENTS = {
   MESSAGE_NEW: "message:new",
   MESSAGE_RECEIVED: "message:received",
   MESSAGE_READ: "message:read",
-  MESSAGE_OPENED: "message:opened",
   MESSAGE_DELETE: "message:delete",
   MESSAGE_DELETED: "message:deleted",
   MESSAGE_DELIVERED: "message:delivered",

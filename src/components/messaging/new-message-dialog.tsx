@@ -22,6 +22,7 @@ import { Search, Send, Crown, User as UserIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiPath } from "@/lib/base-path";
 import { useConversations as useConversationsRQ } from "@/hooks/useConversationsRQ";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { setHint } from "@/features/messaging/temp-conversation-hints";
 import { toast } from "sonner";
 import { pushTempMessage } from "@/features/messaging/temp-messages-store";
@@ -68,6 +69,9 @@ export function NewMessageDialog({
   const { sendMessage, selectConversation } = useMessagingRQ();
   const { conversations, optimisticAddConversation } = useConversationsRQ();
   const { currentUser } = useCurrentUser();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   // Load users when dialog opens
   useEffect(() => {
@@ -160,7 +164,23 @@ export function NewMessageDialog({
           await selectConversation(existingConv.id);
         } catch {}
         // Wait briefly to ensure the global activeConversationId store updates
-        await new Promise((resolve) => setTimeout(resolve, 120));
+        await new Promise((resolve) => setTimeout(resolve, 60));
+        // Push URL param immediately to aid URL->state sync
+        try {
+          const params = new URLSearchParams(searchParams?.toString?.() || "");
+          params.set("conversation", existingConv.id);
+          router.push(`${pathname}?${params.toString()}`);
+        } catch {}
+        // Emit a synchronous selection event for any listeners (e.g., Messages page)
+        try {
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(
+              new CustomEvent("conversation:selected", {
+                detail: { conversationId: existingConv.id },
+              })
+            );
+          }
+        } catch {}
         if (onConversationCreated) {
           try {
             onConversationCreated(existingConv.id);
@@ -172,20 +192,8 @@ export function NewMessageDialog({
         return; // Done
       }
 
-      // 2) Otherwise, create a temporary conversation and proceed as before
+      // 2) Otherwise, create a temporary conversation id and proceed without adding it to the list
       const tempId = `temp-conv-${Math.random().toString(36).slice(2)}`;
-
-      optimisticAddConversation({
-        tempId,
-        otherParticipant: selectedUser,
-        content: message.trim(),
-        sender: currentUser,
-        senderType:
-          currentUser?.role && ["super_admin", "co_admin"].includes(currentUser.role)
-            ? "admin"
-            : "user",
-        timestamp: new Date().toISOString(),
-      });
 
       // Seed a hint so ChatWindow can resolve otherParticipant immediately for temp conversations
       try {
@@ -225,7 +233,6 @@ export function NewMessageDialog({
               : ("user" as const),
           isRead: true,
           isDelivered: false,
-          isOpened: false,
         };
         pushTempMessage(tempId, optimistic);
       } catch {}
@@ -235,7 +242,24 @@ export function NewMessageDialog({
         await selectConversation(tempId);
       } catch {}
       // Ensure the global activeConversationId updates before sending
-      await new Promise((resolve) => setTimeout(resolve, 120));
+      await new Promise((resolve) => setTimeout(resolve, 60));
+
+      // Push URL param immediately for the temp conversation
+      try {
+        const params = new URLSearchParams(searchParams?.toString?.() || "");
+        params.set("conversation", tempId);
+        router.push(`${pathname}?${params.toString()}`);
+      } catch {}
+      // Emit a synchronous selection event for any listeners (e.g., Messages page)
+      try {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("conversation:selected", {
+              detail: { conversationId: tempId },
+            })
+          );
+        }
+      } catch {}
 
       // Let parent navigate to the temp conversation before actually sending
       if (onConversationCreated) {
@@ -248,7 +272,7 @@ export function NewMessageDialog({
       onOpenChange(false);
 
       // Send the message now. Provide conversation override to avoid any timing issues
-      await sendMessage(message.trim(), selectedUser.id, tempId);
+      await sendMessage(message.trim(), selectedUser.id, tempId, true);
 
       toast.success("Message sent successfully");
 

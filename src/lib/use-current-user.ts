@@ -15,9 +15,13 @@ const fetcher = async () => {
   return resp.json();
 };
 
-export function useCurrentUser() {
-  // Fetch current user's profile directly from backend
-  const { data: profileResp, mutate } = useSWR("current-user-profile", fetcher);
+export function useCurrentUser(initial?: User) {
+  // Fetch current user's profile directly from backend; hydrate with server-provided initial user if available
+  const { data: profileResp, mutate } = useSWR(
+    "current-user-profile",
+    fetcher,
+    initial ? { fallbackData: { data: initial } as any } : undefined
+  );
 
   const currentUser = useMemo(() => {
     const u = profileResp?.data as User | undefined;

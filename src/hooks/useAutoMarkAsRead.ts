@@ -6,7 +6,6 @@ interface UseAutoMarkAsReadOptions {
   currentUserId?: string;
   conversationId?: string;
   markAsRead: (messageIds: string[]) => Promise<void>;
-  markAsOpened: (messageIds: string[]) => Promise<void>;
   enabled?: boolean;
   debounceMs?: number;
   onMessageVisible?: (messageId: string) => void;
@@ -24,7 +23,6 @@ export function useAutoMarkAsRead({
   currentUserId,
   conversationId,
   markAsRead,
-  markAsOpened,
   enabled = true,
   debounceMs = 2500, // 2.5 second delay
   onMessageVisible,
@@ -141,38 +139,34 @@ export function useAutoMarkAsRead({
     }
 
     // Find messages that are visible and not sent by current user (regardless of read status)
-    const unopenedMessages = messages.filter((msg) => {
+    const unreadMessages = messages.filter((msg) => {
       const isNotFromCurrentUser = msg.sender.id !== currentUserId;
       const isVisible = visibleMessagesRef.current.has(msg.id);
       const notAlreadyMarked = !tracker.markedMessageIds.has(msg.id);
-      const isNotOpened = !msg.isOpened; // Check if message is not opened yet
 
       return (
-        isNotFromCurrentUser && isVisible && notAlreadyMarked && isNotOpened
+        isNotFromCurrentUser && isVisible && notAlreadyMarked
       );
     });
 
     // Prevent marking too frequently (minimum 1 second between marks, only if no new messages)
     const now = Date.now();
 
-    // Fallback: If no messages are detected as visible but we have unopened messages from others,
-    // mark them as opened anyway (user opened the conversation)
-    if (unopenedMessages.length === 0) {
-      const fallbackUnopenedMessages = messages.filter((msg) => {
-        const isNotOpened = !msg.isOpened;
+    // Fallback: If no messages are detected as visible but we have unread messages from others,
+    // mark them as read anyway (user opened the conversation)
+    if (unreadMessages.length === 0) {
+      const fallbackUnreadMessages = messages.filter((msg) => {
+        const isNotRead = !msg.isRead;
         const isNotFromCurrentUser = msg.sender.id !== currentUserId;
         const notAlreadyMarked = !tracker.markedMessageIds.has(msg.id);
 
-        return isNotOpened && isNotFromCurrentUser && notAlreadyMarked;
+        return isNotRead && isNotFromCurrentUser && notAlreadyMarked;
       });
 
-      if (fallbackUnopenedMessages.length > 0) {
-        const messageIds = fallbackUnopenedMessages.map((msg) => msg.id);
-        // Mark as read and opened together for real-time double-check & opened status
-        await Promise.allSettled([
-          markAsRead(messageIds),
-          markAsOpened(messageIds),
-        ]);
+      if (fallbackUnreadMessages.length > 0) {
+        const messageIds = fallbackUnreadMessages.map((msg) => msg.id);
+        // Mark as read for real-time updates
+        await markAsRead(messageIds);
         messageIds.forEach((id) => tracker.markedMessageIds.add(id));
         tracker.lastMarkedAt = now;
         return;
@@ -192,19 +186,16 @@ export function useAutoMarkAsRead({
     try {
       tracker.isMarking = true;
 
-      const messageIds = unopenedMessages.map((msg) => msg.id);
-      // Mark as read and opened together for real-time updates
-      await Promise.allSettled([
-        markAsRead(messageIds),
-        markAsOpened(messageIds),
-      ]);
+      const messageIds = unreadMessages.map((msg) => msg.id);
+      // Mark as read for real-time updates
+      await markAsRead(messageIds);
 
       // Track marked messages to prevent duplicate marking
       messageIds.forEach((id) => tracker.markedMessageIds.add(id));
       tracker.lastMarkedAt = now;
     } catch (error) {
       console.error(
-        "[useAutoMarkAsRead] Failed to mark messages as opened:",
+        "[useAutoMarkAsRead] Failed to mark messages as read:",
         error
       );
     } finally {
@@ -216,7 +207,6 @@ export function useAutoMarkAsRead({
     currentUserId,
     messages,
     markAsRead,
-    markAsOpened,
     getConversationTracker,
   ]);
 

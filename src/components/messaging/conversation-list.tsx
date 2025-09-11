@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatRelativeTime } from "@/shared/socket-events";
 import { cn } from "@/lib/utils";
 import { MessageCircle, Crown, User } from "lucide-react";
+import { useOnlineUsers } from "@/hooks/use-online-users";
 
 // Helper function to get role display name
 const getRoleDisplayName = (role?: string): string => {
@@ -47,6 +48,7 @@ export function ConversationList({
 }: ConversationListProps) {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const lastLoadTriggerRef = useRef<number>(0);
+  const { onlineUsers } = useOnlineUsers();
 
   useEffect(() => {
     if (!hasMore || !onLoadMore) return;
@@ -108,6 +110,28 @@ export function ConversationList({
           const isSelected = conversation.id === selectedConversationId;
           const unreadCount = getUnreadCount(conversation.id);
           const otherParticipant = conversation.otherParticipant;
+          
+          // Extract online status check
+          const isOnline = !!(otherParticipant && onlineUsers?.some((u) =>
+            (otherParticipant as any)?.id && u.user.id === (otherParticipant as any).id
+              ? true
+              : (otherParticipant as any)?.username &&
+                u.user.username === (otherParticipant as any).username
+          ));
+          
+          // Extract timestamp calculation
+          const getTimestamp = () => {
+            return conversation.lastMessage?.timestamp ||
+              (conversation.lastMessage as any)?.created_at ||
+              (conversation.lastMessage as any)?.sentAt ||
+              (conversation as any)?.lastMessageAt ||
+              (conversation as any)?.updated_at ||
+              (conversation as any)?.updatedAt ||
+              null;
+          };
+          
+          const timestamp = getTimestamp();
+          const formattedTime = timestamp ? formatRelativeTime(timestamp) : null;
 
           return (
             <Button
@@ -119,10 +143,10 @@ export function ConversationList({
               )}
               onClick={() => onConversationSelect(conversation.id)}
             >
-              <div className="flex items-start space-x-4 w-full min-w-0 overflow-hidden">
+              <div className="flex items-center space-x-4 w-full min-w-0 overflow-hidden">
                 {/* Avatar */}
                 <div className="relative">
-                  <Avatar className="h-10 w-10">
+                  <Avatar className="h-12 w-12">
                     <AvatarFallback className="bg-primary/10 text-primary">
                       {otherParticipant?.name?.charAt(0)?.toUpperCase() ||
                         otherParticipant?.username?.charAt(0)?.toUpperCase() ||
@@ -130,20 +154,19 @@ export function ConversationList({
                     </AvatarFallback>
                   </Avatar>
 
-                  {/* Role indicator */}
-                  {(otherParticipant?.role === "super_admin" ||
-                    otherParticipant?.role === "co_admin") && (
-                    <div className="absolute -bottom-1 -right-1 bg-yellow-500 rounded-full p-1">
-                      <Crown className="h-2 w-2 text-white" />
-                    </div>
-                  )}
-                  {otherParticipant?.role &&
-                    otherParticipant?.role !== "super_admin" &&
-                    otherParticipant?.role !== "co_admin" && (
-                      <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1">
-                        <User className="h-2 w-2 text-white" />
-                      </div>
+                  {/* Role indicator removed from avatar; now shown near the name */}
+
+                  {/* Online/offline presence indicator (bottom-right, larger size) */}
+                  <span
+                    className={cn(
+                      "absolute bottom-0 right-0 h-4 w-4 rounded-full border-2",
+                      // Use border to create an outline against the avatar
+                      "border-background",
+                      isOnline ? "bg-emerald-500" : "bg-gray-400"
                     )}
+                    aria-label={isOnline ? "Online" : "Offline"}
+                    title={isOnline ? "Online" : "Offline"}
+                  />
                 </div>
 
                 {/* Content */}
@@ -161,6 +184,22 @@ export function ConversationList({
                           "Unknown User"}
                       </h4>
 
+                      {/* Role badge after name */}
+                      <Badge variant="secondary" className="text-[10px] py-0.5">
+                        {otherParticipant?.role === "super_admin" ||
+                        otherParticipant?.role === "co_admin" ? (
+                          <>
+                            <Crown className="h-3 w-3 mr-1" />
+                            Administrator
+                          </>
+                        ) : (
+                          <>
+                            <User className="h-3 w-3 mr-1" />
+                            {otherParticipant?.username || "User"}
+                          </>
+                        )}
+                      </Badge>
+
                       {/* Unread badge next to name */}
                       {unreadCount > 0 && (
                         <Badge
@@ -172,31 +211,28 @@ export function ConversationList({
                       )}
                     </div>
 
-                    {/* Timestamp */}
-                    {conversation.lastMessage && (
+                    {/* Timestamp (fallback to lastMessageAt/updatedAt when lastMessage missing) */}
+                    {timestamp && (
                       <span className="text-xs text-muted-foreground flex-shrink-0 whitespace-nowrap">
-                        {formatRelativeTime(
-                          conversation.lastMessage.timestamp ||
-                            conversation.lastMessage.created_at
-                        )}
+                        {formattedTime}
                       </span>
                     )}
                   </div>
 
-                  {/* Last message preview */}
+                  
+
+                  {/* Last message preview (moved below role, reduced font size) */}
                   {conversation.lastMessage ? (
-                    <div className="flex items-center gap-1 min-w-0 w-full">
+                    <div className="flex items-center gap-1 min-w-0 w-full mt-1">
                       {(conversation.lastMessage.senderType === "admin" ||
-                        conversation.lastMessage.sender?.role ===
-                          "super_admin" ||
-                        conversation.lastMessage.sender?.role ===
-                          "co_admin") && (
+                        conversation.lastMessage.sender?.role === "super_admin" ||
+                        conversation.lastMessage.sender?.role === "co_admin") && (
                         <Crown className="h-3 w-3 text-yellow-500 flex-shrink-0" />
                       )}
                       <span
                         className={cn(
                           // Allow wrapping so preview doesn't cut off; keep layout stable
-                          "text-sm text-muted-foreground block flex-1 min-w-0 whitespace-normal break-words",
+                          "text-xs text-muted-foreground block flex-1 min-w-0 whitespace-normal break-words",
                           // If line-clamp is available in Tailwind config, this limits to 2 lines while wrapping
                           "line-clamp-2",
                           unreadCount > 0 && "text-foreground font-medium"
@@ -207,17 +243,10 @@ export function ConversationList({
                       </span>
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs text-muted-foreground mt-1">
                       No messages yet
                     </p>
                   )}
-
-                  {/* User role */}
-                  <div className="flex items-center mt-1">
-                    <span className="text-xs text-muted-foreground">
-                      {getRoleDisplayName(otherParticipant?.role)}
-                    </span>
-                  </div>
                 </div>
               </div>
             </Button>

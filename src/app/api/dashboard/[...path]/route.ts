@@ -26,7 +26,6 @@ export async function GET(
     const resp = await fetch(url.toString(), {
       method: "GET",
       headers: { ...(cookie ? { cookie } : {}) },
-      cache: "no-store",
     });
 
     const data = await resp.json().catch(() => ({}));
@@ -39,7 +38,17 @@ export async function GET(
       cacheExpiresAtUtc,
       cacheMaxAgeSeconds: cacheMaxAge ? Number(cacheMaxAge) : undefined,
     } as const;
-    return NextResponse.json({ ...data, _meta: meta }, { status: resp.status });
+
+    // Create response with cache headers forwarded
+    const nextResponse = NextResponse.json({ ...data, _meta: meta }, { status: resp.status });
+
+    // Forward cache headers from backend
+    const cacheControl = resp.headers.get('cache-control');
+    if (cacheControl) {
+      nextResponse.headers.set('Cache-Control', cacheControl);
+    }
+
+    return nextResponse;
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "Proxy error" },

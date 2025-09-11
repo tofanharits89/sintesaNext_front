@@ -62,6 +62,24 @@ export function reconcileTempMessageId(conversationId: string, tempId: string, r
   }
 }
 
+export function clearTempMessages(conversationId: string): void {
+  if (!conversationId) return;
+  const store = getStore();
+  store.delete(conversationId);
+  emitTempMessagesUpdated(conversationId);
+}
+
+export function clearAllTempMessages(): void {
+  const store = getStore();
+  const conversationIds = Array.from(store.keys());
+  store.clear();
+  
+  // Emit update events for all cleared conversations
+  conversationIds.forEach(conversationId => {
+    emitTempMessagesUpdated(conversationId);
+  });
+}
+
 export function emitTempMessagesUpdated(conversationId: string) {
   try {
     if (typeof window !== 'undefined') {

@@ -1,40 +1,50 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { backendPath } from "@/lib/backend";
+import { DashboardProvider } from "@/components/providers/dashboard-provider";
+import { DashboardSkeleton } from "@/components/layout/dashboard-skeleton";
+
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  full_name?: string;
+  role?: string;
+  [key: string]: any;
+}
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Server-side guard: verify via backend to align with new auth/session
-  const c = await cookies();
-  const candidateNames = [
-    "accessToken",
-    "token",
-    "authState",
-    "access_token",
-    "authToken",
-    "auth_token",
-    "socket_token",
-  ];
-  const token = (candidateNames
-    .map((n) => c.get(n)?.value)
-    .find((v) => typeof v === "string" && v.trim()) || null) as string | null;
-  if (!token) {
-    redirect("/login");
-  }
-  try {
-    const resp = await fetch(backendPath("/auth/verify"), {
-      method: "GET",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      cache: "no-store",
-    });
-    if (!resp.ok) throw new Error("verify failed");
-    const data = await resp.json().catch(() => ({}));
-    if (!data?.success) throw new Error("invalid");
-  } catch {
-    redirect("/login");
-  }
-  return children as React.ReactElement;
+  // Auth check is now handled by middleware - no need for additional checks
+  // User data will be fetched by components as needed
+  const user: User | null = null;
+
+  return (
+    <DashboardProvider initialUser={user}>
+      <Suspense fallback={<DashboardSkeleton />}>
+        {children as React.ReactElement}
+      </Suspense>
+    </DashboardProvider>
+  );
+}
+
+/**
+ * Streaming dashboard layout component for better perceived performance
+ */
+export function StreamingDashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-h-screen bg-background">
+      <Suspense fallback={<DashboardSkeleton />}>
+        {children}
+      </Suspense>
+    </div>
+  );
 }

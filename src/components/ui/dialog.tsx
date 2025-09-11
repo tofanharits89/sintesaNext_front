@@ -63,8 +63,12 @@ function DialogContent({
       // Our DialogDescription sets data-slot="dialog-description"
       // Recurse through nested children (e.g., inside DialogHeader)
       // @ts-ignore - data-slot is not in React type defs
-      if (child.props?.["data-slot"] === "dialog-description") return true;
-      if (child.props?.children && hasDialogDescription(child.props.children))
+      if ((child as any).props?.["data-slot"] === "dialog-description")
+        return true;
+      const propsAny = (child as any).props as
+        | { children?: React.ReactNode }
+        | undefined;
+      if (propsAny?.children && hasDialogDescription(propsAny.children))
         return true;
     }
     return false;

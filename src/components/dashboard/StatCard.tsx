@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 interface StatCardProps {
   label: string;
@@ -16,16 +17,21 @@ export function StatCard({
   icon,
   value,
   loading = false,
-  className = "rounded-lg p-3 bg-white dark:bg-neutral-900 shadow relative",
-  valueClassName = "mt-1 text-lg font-semibold",
+  className,
+  valueClassName,
 }: StatCardProps) {
   return (
-    <div className={className}>
+    <div className={cn(
+      "rounded-lg p-3 bg-white dark:bg-neutral-900 shadow border border-gray-200 dark:border-gray-700 relative",
+      className
+    )}>
       <div className="flex items-center gap-2">
         {icon}
         <p className="text-xs text-muted-foreground">{label}</p>
       </div>
-      <p className={valueClassName}>{loading ? "..." : value}</p>
+      <p className={cn("mt-1 text-lg font-semibold", valueClassName)}>
+        {loading ? "..." : value}
+      </p>
     </div>
   );
 }

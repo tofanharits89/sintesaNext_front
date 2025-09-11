@@ -14,11 +14,12 @@ export async function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   try {
-    const resp = await fetch(backendPath("/auth/verify"), {
+    const resp = await fetch(backendPath("/auth/verify-fast"), {
       method: "GET",
       headers: cookieHeader ? { cookie: cookieHeader } : {},
-      // Avoid caching SSR verification
-      cache: "no-store",
+      // Strategic caching: 30s TTL for auth verification (industry standard)
+      cache: "force-cache",
+      next: { revalidate: 30 },
     });
     if (!resp.ok) {
       redirect("/login");

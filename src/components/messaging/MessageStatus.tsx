@@ -6,32 +6,27 @@ import { cn } from "@/lib/utils";
 
 export interface MessageStatusProps {
   isDelivered?: boolean;
-  isOpened?: boolean;
   isRead?: boolean;
   deliveredAt?: string | null;
-  openedAt?: string | null;
   readAt?: string | null;
   showTimestamp?: boolean;
   className?: string;
 }
 
 /**
- * WhatsApp-style message status indicator
+ * Simplified 2-state message status indicator
  * - Single checkmark (gray) = Delivered
- * - Double checkmark (gray) = Opened/Viewed
  * - Double checkmark (blue) = Read
  */
 export const MessageStatus: React.FC<MessageStatusProps> = ({
   isDelivered = false,
-  isOpened = false,
   isRead = false,
   deliveredAt,
-  openedAt,
   readAt,
   showTimestamp = false,
   className,
 }) => {
-  // Determine the status and icon to show
+  // Determine the status and icon to show (2-state system)
   const getStatusInfo = () => {
     if (isRead) {
       return {
@@ -39,13 +34,6 @@ export const MessageStatus: React.FC<MessageStatusProps> = ({
         color: "text-blue-500",
         status: "Read",
         timestamp: readAt,
-      };
-    } else if (isOpened) {
-      return {
-        icon: <CheckCheck className="h-3 w-3" />,
-        color: "text-gray-400",
-        status: "Opened",
-        timestamp: openedAt,
       };
     } else if (isDelivered) {
       return {

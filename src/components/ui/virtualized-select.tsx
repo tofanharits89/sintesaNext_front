@@ -1,16 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import * as ReactWindow from "react-window";
 import { ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-// Resolve react-window List across different export shapes (ESM/CJS)
-// If not found, List will be undefined and we will fall back to non-virtualized rendering.
-const List: any =
-  (ReactWindow as any)?.FixedSizeList ||
-  (ReactWindow as any)?.default?.FixedSizeList ||
-  undefined;
 
 interface Option {
   value: string;
@@ -42,6 +34,7 @@ export function VirtualizedSelect({
   const [searchTerm, setSearchTerm] = useState("");
   const selectRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [ListComp, setListComp] = useState<any | null>(null);
 
   // Filter options based on search term
   const filteredOptions = options.filter((option) =>
@@ -76,6 +69,18 @@ export function VirtualizedSelect({
       inputRef.current.focus();
     }
   }, [isOpen]);
+
+  // Lazy-load react-window only when needed to avoid build-time export resolution issues
+  useEffect(() => {
+    if (isOpen && filteredOptions.length > 10 && !ListComp) {
+      import("react-window")
+        .then((mod: any) => {
+          const L = mod?.FixedSizeList ?? mod?.default?.FixedSizeList ?? null;
+          setListComp(() => L);
+        })
+        .catch(() => setListComp(null));
+    }
+  }, [isOpen, filteredOptions.length, ListComp]);
 
   const handleOptionSelect = (optionValue: string) => {
     onValueChange(optionValue);
@@ -163,16 +168,16 @@ export function VirtualizedSelect({
           {/* Options List */}
           {filteredOptions.length > 0 ? (
             <div className="max-h-[200px] overflow-y-auto">
-              {filteredOptions.length > 10 && List ? (
+              {filteredOptions.length > 10 && ListComp ? (
                 // Use virtualization for large lists
-                <List
+                <ListComp
                   height={listHeight}
                   itemCount={filteredOptions.length}
                   itemSize={itemHeight}
                   width="100%"
                 >
                   {OptionItem}
-                </List>
+                </ListComp>
               ) : (
                 // Render normally for small lists
                 <div className="py-1">

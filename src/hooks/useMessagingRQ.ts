@@ -7,7 +7,6 @@ import { FrontendMessage } from "@/shared/socket-events";
 import {
   useSendMessageMutation,
   useMarkAsReadMutation,
-  useMarkAsOpenedMutation,
 } from "./useMessageMutationsRQ";
 import { useMessagingSocketRQ } from "./useMessagingSocketRQ";
 import {
@@ -96,19 +95,23 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
   const markAsReadMutation = useMarkAsReadMutation(
     activeConversationId || undefined
   );
-  const markAsOpenedMutation = useMarkAsOpenedMutation(
-    activeConversationId || undefined
-  );
 
   // WebSocket integration
   const { isConnected: socketConnected } = useMessagingSocketRQ();
 
-  // Sync unread counts from conversations to Zustand store
+  // Sync unread counts from conversations to Zustand store using the centralized utility
   const lastUnreadSyncKeyRef = useRef<string>("");
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   useEffect(() => {
-    if (!conversations) return;
+    if (!conversations || conversations.length === 0) return;
 
-    // Build a stable key of the unread state we intend to push into the store (include zeros)
+    // Clear any pending sync to debounce rapid changes
+    if (syncTimeoutRef.current) {
+      clearTimeout(syncTimeoutRef.current);
+    }
+
+    // Build a stable key of the unread state we intend to push into the store
     const entries = conversations
       .map((c) => {
         const cnt = c.unread_count || 0;
@@ -124,40 +127,35 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
       return;
     }
 
-    const updates: Record<string, any> = {};
-    const unreadState = useUnreadBadgesStore.getState();
-    const activeId = useMessagingUIStore.getState().activeConversationId || "";
-    conversations.forEach((conv) => {
-      const serverCount = conv.unread_count || 0;
-      const storeInfo = unreadState.unreadCounts[conv.id];
-      const currentStoreCount = storeInfo?.count || 0;
-      const lastReadId = storeInfo?.lastReadMessageId || null;
-      const lastMsgId = conv.lastMessage?.id || null;
+    // Debounce the sync operation to prevent excessive updates
+    syncTimeoutRef.current = setTimeout(() => {
+      // Import the sync utility dynamically to avoid circular dependencies
+      import('@/utils/unread-sync').then(({ debouncedSyncUnreadCounts, sanitizeUnreadData }) => {
+        const updates = conversations
+          .map((conv) => sanitizeUnreadData({
+            conversationId: conv.id,
+            count: conv.unread_count || 0,
+            lastMessageId: conv.lastMessage?.id,
+            lastMessageTimestamp: conv.lastMessage?.timestamp,
+          }))
+          .filter(Boolean) as any[];
 
-      // If we've recorded that the last read message matches the conversation's last message,
-      // we can confidently say unread is 0 even if the server is stale.
-      const readCoversLastMessage =
-        lastReadId && lastMsgId && lastReadId === lastMsgId;
+        debouncedSyncUnreadCounts(updates, {
+          preserveActiveConversation: true,
+          source: 'api',
+        });
+      });
 
-      let effectiveCount = serverCount;
-      if (readCoversLastMessage) {
-        effectiveCount = 0;
-      } else if (conv.id === activeId) {
-        // Preserve locally-cleared unread for the active conversation to avoid badge bouncing
-        effectiveCount = Math.min(currentStoreCount, serverCount);
+      lastUnreadSyncKeyRef.current = key;
+    }, 100); // 100ms debounce
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
       }
-
-      updates[conv.id] = {
-        count: effectiveCount,
-        lastMessageId: conv.lastMessage?.id,
-        lastMessageTimestamp: conv.lastMessage?.timestamp,
-      };
-    });
-
-    // Always sync (including zeros) when key changed so cleared counts propagate
-    lastUnreadSyncKeyRef.current = key;
-    replaceAllUnreadCounts(updates);
-  }, [conversations, replaceAllUnreadCounts]);
+    };
+  }, [conversations]);
 
   // Remember last submitted message IDs for mark-as-read to avoid duplicate requests
   const lastSubmittedReadRef = useRef<{
@@ -204,22 +202,26 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
     }
 
     const now = Date.now();
-    if (now - lastMarkAtRef.current < 800) {
-      // Cooldown 0.8s to prevent rapid consecutive mutations
+    if (now - lastMarkAtRef.current < 1200) {
+      // Increased cooldown to 1.2s to prevent rapid consecutive mutations
       return;
     }
 
     const timer = setTimeout(() => {
+      // Double-check conditions before executing to prevent stale closures
+      if (!activeConversationId || !idsKey || unreadIds.length === 0) return;
+      if (markAsReadMutation.isPending) return;
+      
       lastSubmittedReadRef.current = {
         conversationId: activeConversationId,
         idsKey,
       };
       lastMarkAtRef.current = Date.now();
       markAsReadMutation.mutate({ messageIds: unreadIds });
-    }, 500);
+    }, 800); // Increased delay to 800ms
 
     return () => clearTimeout(timer);
-  }, [activeConversationId, idsKey, markAsReadMutation.isPending]);
+  }, [activeConversationId, idsKey, unreadIds.length, markAsReadMutation.isPending]);
 
   // Helper functions
   const selectConversation = useCallback(
@@ -236,9 +238,20 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
       // Reset conversation-specific UI state
       resetConversationState(conversationId);
 
-      setTimeout(() => {
+      // For temp conversations, clear loading immediately to avoid perceived lag
+      const safeConversationId = String(conversationId || "");
+      const isTemp =
+        safeConversationId.startsWith("temp-") ||
+        safeConversationId.startsWith("temp_conv-") ||
+        safeConversationId.startsWith("temp-conv-");
+      if (isTemp) {
         setLoadingConversation(false);
-      }, 500);
+      } else {
+        // Keep a short delay for real conversations to allow UI to settle
+        setTimeout(() => {
+          setLoadingConversation(false);
+        }, 500);
+      }
     },
     [
       activeConversationId,
@@ -253,7 +266,8 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
     async (
       content: string,
       recipientId?: string,
-      conversationIdOverride?: string
+      conversationIdOverride?: string,
+      skipOptimistic?: boolean
     ) => {
       if (!content.trim()) return;
 
@@ -269,7 +283,7 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
         "";
 
       // If we're in a temporary conversation (not fetchable), inject optimistic message into local store
-      const convId = latestActiveId || "";
+      const convId = String(latestActiveId || "");
       const isTempConv =
         convId.startsWith("temp-") ||
         convId.startsWith("temp_conv-") ||
@@ -286,7 +300,7 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
         throw err;
       }
 
-      if (isTempConv) {
+      if (isTempConv && !skipOptimistic) {
         const nowIso = new Date().toISOString();
         const tempMessage: FrontendMessage = {
           id: tempId,
@@ -303,7 +317,6 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
           senderType: "user",
           isRead: true,
           isDelivered: false,
-          isOpened: false,
         } as FrontendMessage;
         try {
           await optimisticInsert(tempMessage);
@@ -346,14 +359,7 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
     [activeConversationId, markAsReadMutation]
   );
 
-  const markMessagesAsOpened = useCallback(
-    (messageIds: string[]) => {
-      if (!activeConversationId || messageIds.length === 0) return;
 
-      markAsOpenedMutation.mutate({ messageIds });
-    },
-    [activeConversationId, markAsOpenedMutation]
-  );
 
   const loadMoreMessages = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -432,7 +438,6 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
     selectConversation,
     sendMessage,
     markMessagesAsRead,
-    markMessagesAsOpened,
     loadMoreMessages,
     startTyping,
     stopTyping,
@@ -461,7 +466,6 @@ export function useConversationRQ(conversationId: string) {
   const { messages, isLoading, hasNextPage, fetchNextPage } =
     useMessages(conversationId);
   const markAsReadMutation = useMarkAsReadMutation(conversationId);
-  const markAsOpenedMutation = useMarkAsOpenedMutation(conversationId);
 
   return {
     messages,
@@ -471,7 +475,5 @@ export function useConversationRQ(conversationId: string) {
     ...conversationStores,
     markAsRead: (messageIds: string[]) =>
       markAsReadMutation.mutate({ messageIds }),
-    markAsOpened: (messageIds: string[]) =>
-      markAsOpenedMutation.mutate({ messageIds }),
   };
 }

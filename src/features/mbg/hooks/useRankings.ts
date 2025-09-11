@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { mbgKeys } from "@/features/mbg/api/queryKeys";
 import { getRankings } from "@/features/mbg/api/services";
+import { createQueryOptions, queryKeyFactories } from "@/lib/query-configs";
 
 export function useRankings() {
   return useQuery({
-    queryKey: mbgKeys.rankings(),
+    queryKey: queryKeyFactories.financial.mbg.all().concat('rankings'),
     queryFn: getRankings,
-    staleTime: 60_000,
+    ...createQueryOptions('financial'),
     gcTime: 5 * 60_000,
   });
 }

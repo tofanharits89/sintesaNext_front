@@ -135,11 +135,23 @@ export const useMessagingUIStore = create<
         // Active conversation actions
         setActiveConversation: (conversationId) => {
           set(
-            (state) => ({
-              activeConversationId: conversationId,
-              // Clear message input when switching conversations
-              messageInput: { ...initialMessageInput },
-            }),
+            (state) => {
+              try {
+                console.log("[MessagingDebug] setActiveConversation", {
+                  from: state.activeConversationId,
+                  to: conversationId,
+                  same: state.activeConversationId === conversationId,
+                });
+              } catch {}
+              // No-op if selecting the same conversation; don't clear the input
+              if (state.activeConversationId === conversationId)
+                return {} as Partial<MessagingUIState>;
+              return {
+                activeConversationId: conversationId,
+                // Clear message input only when switching to a different conversation
+                messageInput: { ...initialMessageInput },
+              };
+            },
             false,
             "setActiveConversation"
           );

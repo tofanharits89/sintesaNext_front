@@ -8,7 +8,7 @@ import { BACKEND_BASE_URL, backendPath } from "./backend";
 import { apiPath } from "./base-path";
 
 // Utilities to read cookies in browser
-function getCookie(name: string): string | null {
+export function getCookie(name: string): string | null {
   if (typeof document === "undefined") return null;
   const value = document.cookie
     .split(";")

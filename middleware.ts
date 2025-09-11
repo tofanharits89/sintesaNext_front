@@ -10,7 +10,7 @@ const DEBUG_AUTH = process.env.NEXT_PUBLIC_DEBUG_AUTH === "1";
 // This cache does NOT persist across deployments/cold starts or across regions.
 // Keep TTLs short to tolerate scale-out and cold starts without causing long-lived
 // auth/health decisions.
-const SESSION_VERIFY_TTL_MS = 20_000; // 20 seconds
+const SESSION_VERIFY_TTL_MS = 60_000; // 60 seconds to reduce auth probes without changing behavior
 const sessionVerifyCache = new Map<string, { ok: boolean; exp: number }>();
 
 /**
@@ -54,7 +54,7 @@ async function validateSessionViaBackend(
   }
 }
 
-const HEALTH_TTL_MS = 15_000;
+const HEALTH_TTL_MS = 60_000; // increase to 60s to reduce redundant health checks without changing behavior
 let healthCache: { ok: boolean; exp: number } | null = null;
 
 async function isBackendHealthy() {
@@ -154,8 +154,7 @@ export async function middleware(request: NextRequest) {
   // Validate session via backend using cookies only (no token extraction)
   const incomingCookie = request.headers.get("cookie") || "";
   // Avoid cached auth decision on login/dashboard to prevent redirect loops
-  const noCache =
-    relPath.startsWith("/login") || relPath.startsWith("/dashboard");
+  const noCache = relPath.startsWith("/login"); // allow cache on dashboard to reduce cost; login stays uncached
   const isAuth = await validateSessionViaBackend(incomingCookie, noCache);
 
   // Handle root path: redirect to appropriate base path

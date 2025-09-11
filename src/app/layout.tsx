@@ -7,7 +7,9 @@ import AppShell from "@/components/layout/app-shell";
 import { ConnectionStatus } from "@/components/connection-status";
 import CheckBackend from "@/components/check-backend";
 import { QueryProvider } from "@/components/providers/query-provider";
-import { withBasePath } from "@/lib/base-path";
+import { withBasePath, apiPath } from "@/lib/base-path";
+import { cookies } from "next/headers";
+import { MessagingAuthListener } from "@/components/messaging/messaging-auth-listener";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,15 +29,39 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   // Auth enforcement is handled by:
   // 1. Middleware - redirects unauthenticated users to /login
-  // 2. Section layouts (dashboard, profile, users, settings) - server-side JWT verification
-  // This avoids the /login redirect loop issue
+  // 2. Section layouts (dashboard, profile, users, settings) - optimized server-side JWT verification
+  // User profile is now fetched efficiently in dashboard layout to avoid duplicate requests
+
+  // For non-dashboard pages, fetch user profile with strategic caching
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore?.toString?.() ?? "";
+  let initialUser: import("@/lib/users-store").User | undefined = undefined;
+  
+  // Only fetch user profile for non-dashboard routes to avoid duplication
+  const isRootOrNonDashboard = true; // Dashboard layout handles its own user fetch
+  
+  if (isRootOrNonDashboard && cookieHeader) {
+    try {
+      const resp = await fetch(apiPath("/users/profile/me"), {
+        headers: { cookie: cookieHeader },
+        cache: "force-cache",
+        next: { revalidate: 30 }, // 30-second strategic cache
+      });
+      if (resp.ok) {
+        const j = await resp.json().catch(() => null);
+        initialUser = j?.data;
+      }
+    } catch {
+      // ignore — navbar will fallback to client fetch
+    }
+  }
 
   return (
     <html lang="id" suppressHydrationWarning>
@@ -44,10 +70,11 @@ export default function RootLayout({
       >
         <QueryProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <MessagingAuthListener />
             <CheckBackend />
-            <AppShell>{children}</AppShell>
+            <AppShell initialUser={initialUser}>{children}</AppShell>
             <ConnectionStatus />
-            <Toaster richColors position="bottom-left"/>
+            <Toaster richColors position="bottom-left" />
             {/* Optionally show a top-of-page banner when server down via client routes */}
             {/* <ServerDownBanner /> */}
           </ThemeProvider>

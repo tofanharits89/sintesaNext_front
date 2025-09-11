@@ -11,8 +11,7 @@ export { useMessages, messageKeys } from '../useMessagesRQ';
 // Mutation hooks (React Query)
 export { 
   useSendMessageMutation, 
-  useMarkAsReadMutation, 
-  useMarkAsOpenedMutation 
+  useMarkAsReadMutation
 } from '../useMessageMutationsRQ';
 
 // WebSocket integration
@@ -144,7 +143,6 @@ declare module '../useMessagingRQ' {
     selectConversation: (conversationId: string) => void;
     sendMessage: (content: string, recipientId?: string) => Promise<void>;
     markMessagesAsRead: (messageIds: string[]) => void;
-    markMessagesAsOpened: (messageIds: string[]) => void;
     loadMoreMessages: () => void;
     startTyping: () => void;
     stopTyping: () => void;
@@ -180,6 +178,5 @@ declare module '../useMessagingRQ' {
     unreadInfo: any;
     hasUnreadMessages: boolean;
     markAsRead: (messageIds: string[]) => void;
-    markAsOpened: (messageIds: string[]) => void;
   }
 }

@@ -2,8 +2,9 @@
 
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useCallback } from "react";
-import { apiPath } from "@/lib/base-path";
+import { backendPath } from "@/lib/backend";
 import { http } from "@/lib/httpClient"; // keep for other callers; not used in fetcher
+import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 import { useSocket } from "./useSocket";
 import {
   SOCKET_EVENTS,
@@ -35,23 +36,44 @@ const fetchConversationsPage = async (
   limit: number = 20
 ): Promise<ConversationsPage> => {
   const url = new URL(
-    apiPath("/messaging/conversations"),
+    backendPath("/messaging/conversations"),
     window.location.origin
   );
   if (cursor) url.searchParams.set("cursor", String(cursor));
   if (limit) url.searchParams.set("limit", String(limit));
 
+  console.log('🔍 [DEBUG] Fetching conversations from:', url.toString());
+
   const resp = await fetch(url.toString(), {
     credentials: "include",
     cache: "no-store",
+    headers: {
+      "Content-Type": "application/json"
+    },
   });
   if (!resp.ok) throw new Error(`Failed to fetch: ${resp.status}`);
   const json: any = await resp.json().catch(() => ({}));
+
+  console.log('🔍 [DEBUG] Raw API Response:', JSON.stringify(json, null, 2));
+  console.log('🔍 [DEBUG] Conversations from API:', json?.data?.conversations || json?.conversations || []);
 
   const conversations: Conversation[] =
     json?.data?.conversations || json?.conversations || [];
   const nextCursor: string | null =
     json?.data?.nextCursor ?? json?.nextCursor ?? null;
+
+  // Log each conversation's structure
+  conversations.forEach((conv, index) => {
+    console.log(`🔍 [DEBUG] Raw Conversation ${index}:`, {
+      id: conv.id,
+      lastMessage: conv.lastMessage,
+      lastMessage_timestamp: conv.lastMessage?.timestamp,
+      lastMessage_created_at: conv.lastMessage?.created_at,
+      lastMessage_sentAt: conv.lastMessage?.sentAt,
+      updated_at: (conv as any)?.updated_at,
+      created_at: (conv as any)?.created_at
+    });
+  });
 
   return { conversations, nextCursor };
 };
@@ -88,8 +110,20 @@ export function useConversations(options?: { enabled?: boolean }) {
   // Normalize conversations to ensure lastMessage.timestamp exists and updated_at is sane
   const normalizeConversation = (c: Conversation): Conversation => {
     const conv: any = { ...(c as any) };
+    
+    console.log('🔍 [DEBUG] Raw conversation before normalization:', JSON.stringify({
+      id: conv.id,
+      lastMessage: conv.lastMessage,
+      updated_at: conv.updated_at,
+      created_at: conv.created_at
+    }, null, 2));
+    
     const lm: any = conv.lastMessage || undefined;
     if (lm) {
+      const originalTimestamp = lm.timestamp;
+      const originalCreatedAt = lm.created_at;
+      const originalSentAt = lm.sentAt;
+      
       const lmTs =
         lm.timestamp ||
         lm.created_at ||
@@ -97,43 +131,107 @@ export function useConversations(options?: { enabled?: boolean }) {
         lm.sent_at ||
         lm.sentAt;
       if (!lm.timestamp && lmTs) conv.lastMessage = { ...lm, timestamp: lmTs };
+      
+      console.log('🔍 [DEBUG] Last message timestamp normalization:', {
+        original_timestamp: originalTimestamp,
+        original_created_at: originalCreatedAt,
+        original_sentAt: originalSentAt,
+        final_timestamp: conv.lastMessage.timestamp,
+        message_content: conv.lastMessage.content,
+        message_type: conv.lastMessage.type
+      });
     }
     const convTs =
       (conv.lastMessage &&
         ((conv.lastMessage as any).timestamp ||
           (conv.lastMessage as any).created_at ||
           (conv.lastMessage as any).createdAt)) ||
+      conv.lastMessageAt ||
       conv.updated_at ||
       conv.updatedAt ||
       conv.created_at ||
       conv.createdAt;
     if (!conv.updated_at && convTs) conv.updated_at = convTs;
+    
+    console.log('🔍 [DEBUG] Final normalized conversation:', {
+      id: conv.id,
+      lastMessage: conv.lastMessage,
+      lastMessage_timestamp: conv.lastMessage?.timestamp,
+      lastMessage_content: conv.lastMessage?.content,
+      updated_at: conv.updated_at,
+      created_at: conv.created_at
+    });
+    
     return conv as Conversation;
   };
 
-  const normalizedConversations: Conversation[] = rawConversations.map(
-    normalizeConversation
-  );
+  // Remove any temporary conversations (created for optimistic UI) from the list
+  const normalizedConversations: Conversation[] = rawConversations
+    .filter((c) => {
+      const id = String((c as any)?.id || "");
+      return !(id.startsWith("temp-") || id.startsWith("temp_conversation") || id.startsWith("tempconv") || id.startsWith("temp-conv-"));
+    })
+    .map(normalizeConversation);
 
   const getLastActivity = (c: Conversation): number => {
-    const ts =
-      (c.lastMessage as any)?.timestamp ||
-      (c.lastMessage as any)?.created_at ||
-      (c.lastMessage as any)?.createdAt ||
-      (c.lastMessage as any)?.message?.timestamp ||
-      (c.lastMessage as any)?.message?.created_at ||
-      (c.lastMessage as any)?.message?.createdAt ||
-      (c as any)?.updated_at ||
-      (c as any)?.updatedAt ||
-      (c as any)?.created_at ||
-      (c as any)?.createdAt;
-    const t = ts ? new Date(ts).getTime() : 0;
-    return isNaN(t) ? 0 : t;
+    // Priority order for timestamp sources (most reliable first)
+    const timestampSources = [
+      (c.lastMessage as any)?.timestamp,
+      (c as any)?.lastMessageAt,
+      (c.lastMessage as any)?.created_at,
+      (c.lastMessage as any)?.createdAt,
+      (c as any)?.updated_at,
+      (c as any)?.updatedAt,
+      (c.lastMessage as any)?.message?.timestamp,
+      (c.lastMessage as any)?.message?.created_at,
+      (c.lastMessage as any)?.message?.createdAt,
+      (c as any)?.created_at,
+      (c as any)?.createdAt,
+    ];
+
+    for (const ts of timestampSources) {
+      if (ts) {
+        const t = new Date(ts).getTime();
+        if (!isNaN(t) && t > 0) {
+          return t;
+        }
+      }
+    }
+    
+    // Fallback to current time for conversations without valid timestamps
+    return Date.now();
   };
 
-  const conversations = [...normalizedConversations].sort(
-    (a, b) => getLastActivity(b) - getLastActivity(a)
-  );
+  // Sort conversations by last activity (most recent first) with stable sorting
+  const conversations = [...normalizedConversations].sort((a, b) => {
+    const aTime = getLastActivity(a);
+    const bTime = getLastActivity(b);
+    
+    // Primary sort: by timestamp (descending)
+    if (aTime !== bTime) {
+      return bTime - aTime;
+    }
+    
+    // Secondary sort: by conversation ID for stability
+    return (a.id || '').localeCompare(b.id || '');
+  });
+
+  // On mount and whenever the cache changes, purge any temp conversations from the cache itself
+  useEffect(() => {
+    const removeTemps = (id: any) => {
+      const s = String(id || "");
+      return s.startsWith("temp-") || s.startsWith("temp_conversation") || s.startsWith("tempconv") || s.startsWith("temp-conv-");
+    };
+    updateConversationsCache((prev) => {
+      if (!prev) return { pages: [{ conversations: [], nextCursor: null }], pageParams: [null] };
+      const pages = prev.pages.map((pg) => ({
+        ...pg,
+        conversations: (pg.conversations || []).filter((c: any) => !removeTemps(c?.id)),
+      }));
+      return { pages, pageParams: prev.pageParams };
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.pages?.length]);
 
   // Helper to update conversations cache for paginated data
   const updateConversationsCache = useCallback(
@@ -286,6 +384,7 @@ export function useConversations(options?: { enabled?: boolean }) {
           msgLike.message?.createdAt ||
           msgLike.message?.sent_at ||
           msgLike.message?.sentAt;
+        const tempId = (m as any)?.tempId || msgLike?.tempId || msgLike?.temp_id;
 
         // Locate conversation across pages
         const pages = prev.pages.map((pg) => ({
@@ -300,12 +399,19 @@ export function useConversations(options?: { enabled?: boolean }) {
           if (idx !== -1) found = { pageIdx: pIdx, idx };
         });
         if (!found) {
-          // Unknown conversation: create a minimal entry so UI updates immediately
-          const pages = prev.pages.map((pg) => ({
+          // Attempt reconcile: if we have a tempId entry, rename it to real conversationId
+          const pages2 = prev.pages.map((pg) => ({
             ...pg,
             conversations: [...pg.conversations],
           }));
-          const firstPage = pages[0] || { conversations: [], nextCursor: null };
+          let tempLoc: FoundLoc | null = null;
+          if (tempId) {
+            pages2.forEach((pg, pIdx) => {
+              const tIdx = pg.conversations.findIndex((c) => c.id === tempId);
+              if (tIdx !== -1) tempLoc = { pageIdx: pIdx, idx: tIdx };
+            });
+          }
+
           const effectiveTs =
             ts ||
             msgLike.timestamp ||
@@ -313,11 +419,84 @@ export function useConversations(options?: { enabled?: boolean }) {
             msgLike.createdAt ||
             new Date().toISOString();
 
+          const fromSelf = currentUser?.id && msgLike?.sender?.id === currentUser.id;
+
+          if (tempLoc) {
+            const { pageIdx: tPage, idx: tIdx } = tempLoc as FoundLoc;
+            const conv = { ...(pages2[tPage].conversations[tIdx] as any) };
+            conv.id = conversationId;
+            conv.lastMessage = {
+              ...(conv.lastMessage || {}),
+              id: msgLike.id,
+              content: msgLike.content || "",
+              timestamp: effectiveTs,
+              sender: msgLike.sender,
+              senderType: msgLike.senderType,
+              isRead: fromSelf ? true : false,
+              is_read: fromSelf ? true : false,
+            };
+            conv.updated_at = effectiveTs;
+
+            // remove temp and place updated at top
+            pages2[tPage].conversations.splice(tIdx, 1);
+            const firstPage = pages2[0] || { conversations: [], nextCursor: null };
+            firstPage.conversations.unshift(conv);
+            pages2[0] = firstPage;
+            return { pages: pages2, pageParams: prev.pageParams };
+          }
+
+          // If message is from self and we have no temp to reconcile, still allow updating existing conversations
+          // but avoid creating new unknown conversations (let onSuccess mutation handle that)
+          if (fromSelf) {
+            // Check if this is updating an existing real conversation that we already have
+            let existingFound: FoundLoc | null = null;
+            pages2.forEach((pg, pIdx) => {
+              const idx = pg.conversations.findIndex((c) => c.id === conversationId);
+              if (idx !== -1) existingFound = { pageIdx: pIdx, idx };
+            });
+            
+            if (!existingFound) {
+              // No existing conversation found, let onSuccess mutation handle creation
+              return prev;
+            }
+            
+            // Update the existing conversation with the new message data
+            const { pageIdx, idx } = existingFound;
+            const conv = { ...pages2[pageIdx].conversations[idx] } as any;
+            conv.lastMessage = {
+              ...(conv.lastMessage || {}),
+              id: msgLike.id,
+              content: msgLike.content || "",
+              timestamp: effectiveTs,
+              sender: msgLike.sender,
+              senderType: msgLike.senderType,
+              isRead: true, // Self messages are read
+              is_read: true,
+            };
+            conv.updated_at = effectiveTs;
+            
+            // Move to top of first page
+            pages2[pageIdx].conversations.splice(idx, 1);
+            const firstPage = pages2[0] || { conversations: [], nextCursor: null };
+            firstPage.conversations.unshift(conv);
+            pages2[0] = firstPage;
+            
+            // Re-sort the first page
+            firstPage.conversations.sort((a, b) => {
+              const aTime = new Date((a as any).updated_at || 0).getTime();
+              const bTime = new Date((b as any).updated_at || 0).getTime();
+              return bTime - aTime;
+            });
+            
+            return { pages: pages2, pageParams: prev.pageParams };
+          }
+
+          // Otherwise (incoming from other user), create minimal entry so UI updates
+          const firstPage = pages2[0] || { conversations: [], nextCursor: null };
           const minimalConv: any = {
             id: conversationId,
             updated_at: effectiveTs,
             unread_count: 1,
-            // Best-effort mapping: otherParticipant is the sender for recipient's view
             otherParticipant: msgLike.sender || msgLike.from || null,
             lastMessage: {
               id: msgLike.id,
@@ -329,21 +508,9 @@ export function useConversations(options?: { enabled?: boolean }) {
               is_read: false,
             },
           };
-
           firstPage.conversations.unshift(minimalConv);
-          pages[0] = firstPage;
-
-          try {
-            console.debug(
-              "[ConversationsRQ] Inserted minimal conversation for unknown conversation on new message",
-              {
-                conversationId,
-                lastMessageId: msgLike.id,
-              }
-            );
-          } catch {}
-
-          return { pages, pageParams: prev.pageParams };
+          pages2[0] = firstPage;
+          return { pages: pages2, pageParams: prev.pageParams };
         }
 
         const { pageIdx, idx } = found as FoundLoc;
@@ -362,7 +529,7 @@ export function useConversations(options?: { enabled?: boolean }) {
           (conv as any)?.created_at ||
           new Date().toISOString();
 
-        // Update lastMessage and updated_at
+        // Update lastMessage and timestamps with proper ordering consideration
         conv.lastMessage = {
           ...(conv.lastMessage || {}),
           id: msgLike.id ?? (conv.lastMessage as any)?.id,
@@ -374,6 +541,8 @@ export function useConversations(options?: { enabled?: boolean }) {
           isRead: false,
           is_read: false,
         };
+        
+        // Update updated_at for proper ordering
         conv.updated_at = effectiveTs || conv.updated_at;
 
         // Increase unread_count if the message is not from current user
@@ -381,12 +550,19 @@ export function useConversations(options?: { enabled?: boolean }) {
           currentUser?.id && msgLike?.sender?.id === currentUser.id;
         const currentUnread =
           typeof conv.unread_count === "number" ? conv.unread_count : 0;
-        conv.unread_count = fromSelf ? currentUnread : currentUnread + 1;
+        conv.unread_count = fromSelf ? currentUnread : Math.max(0, currentUnread + 1);
 
         // Move to top of first page (most recent first)
         const firstPage = pages[0] || { conversations: [], nextCursor: null };
         firstPage.conversations.unshift(conv);
         pages[0] = firstPage;
+
+        // Re-sort the first page to ensure proper ordering
+        firstPage.conversations.sort((a, b) => {
+          const aTime = new Date((a as any).updated_at || 0).getTime();
+          const bTime = new Date((b as any).updated_at || 0).getTime();
+          return bTime - aTime; // Descending order (newest first)
+        });
 
         try {
           console.debug(
@@ -508,18 +684,18 @@ export function useConversations(options?: { enabled?: boolean }) {
 
     // Register socket listeners with stable wrapper functions to allow proper cleanup
     const onRead = (p: any) => updateOnReadOrOpened(p, "read");
-    const onOpened = (p: any) => updateOnReadOrOpened(p, "opened");
+    // onOpened removed - using 2-state system
 
     on(SOCKET_EVENTS.MESSAGE_NEW, updateOnNewMessage);
     on(SOCKET_EVENTS.MESSAGE_RECEIVED, updateOnNewMessage);
     on(SOCKET_EVENTS.MESSAGE_READ, onRead);
-    on(SOCKET_EVENTS.MESSAGE_OPENED, onOpened);
+    // MESSAGE_OPENED event removed - using 2-state system
 
     return () => {
       off(SOCKET_EVENTS.MESSAGE_NEW, updateOnNewMessage);
       off(SOCKET_EVENTS.MESSAGE_RECEIVED, updateOnNewMessage);
       off(SOCKET_EVENTS.MESSAGE_READ, onRead);
-      off(SOCKET_EVENTS.MESSAGE_OPENED, onOpened);
+      // MESSAGE_OPENED cleanup removed - using 2-state system
     };
   }, [on, off, currentUser?.id, updateConversationsCache]);
 

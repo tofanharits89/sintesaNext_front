@@ -21,7 +21,6 @@ import {
 interface BarChartProps {
   data: Array<{
     name: string;
-    value: number;
     [key: string]: any;
   }>;
   title: string;

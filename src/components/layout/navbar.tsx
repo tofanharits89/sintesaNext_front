@@ -56,9 +56,11 @@ import { apiPath } from "@/lib/base-path";
 import { SatkerSearch } from "./satker-search";
 import { dispatchAuthEvent } from "@/utils/auth-utils";
 
-export function Navbar() {
+import type { User } from "@/lib/users-store";
+
+export function Navbar({ initialUser }: { initialUser?: User }) {
   const { theme, setTheme } = useTheme();
-  const { currentUser } = useCurrentUser();
+  const { currentUser } = useCurrentUser(initialUser);
   const router = useRouter();
   interface RecentMessage {
     id: string;
@@ -90,7 +92,9 @@ export function Navbar() {
   const [messagesOpen, setMessagesOpen] = useState(false);
 
   // Real-time messaging data via React Query + Zustand (enable globally so badges update even when popover is closed)
-  const { conversations, isSocketConnected } = useMessagingRQ({ enabled: true });
+  const { conversations, isSocketConnected } = useMessagingRQ({
+    enabled: true,
+  });
   // Mount socket listeners globally so unread badges update even when popover is closed
   const { isConnected: _socketReady } = useMessagingSocketRQ();
   // Derive recent messages directly from conversations so it updates on every socket/cache change
@@ -115,8 +119,12 @@ export function Navbar() {
         const otherParticipant = conv.otherParticipant;
         if (!otherParticipant) return null;
 
-        const convDate = new Date(conv.lastMessage?.created_at || conv.updated_at);
-        const timeDiff = isNaN(convDate.getTime()) ? 0 : Date.now() - convDate.getTime();
+        const convDate = new Date(
+          conv.lastMessage?.created_at || conv.updated_at
+        );
+        const timeDiff = isNaN(convDate.getTime())
+          ? 0
+          : Date.now() - convDate.getTime();
         const minutes = Math.floor(timeDiff / 60000);
         const hours = Math.floor(timeDiff / 3600000);
         const days = Math.floor(timeDiff / 86400000);
@@ -164,7 +172,8 @@ export function Navbar() {
         : 0,
     [conversations]
   );
-  const [totalUnreadNotificationsCount, setTotalUnreadNotificationsCount] = useState(0);
+  const [totalUnreadNotificationsCount, setTotalUnreadNotificationsCount] =
+    useState(0);
 
   // Listen for live notifications to update badge and list
   useEffect(() => {
@@ -421,7 +430,11 @@ export function Navbar() {
                 <span className="relative inline-block">
                   <Mail className="h-5 w-5" />
                   <span
-                    title={isSocketConnected ? "Socket connected" : "Socket disconnected"}
+                    title={
+                      isSocketConnected
+                        ? "Socket connected"
+                        : "Socket disconnected"
+                    }
                     className={`absolute -bottom-0.5 -left-0.5 h-2 w-2 rounded-full ring-2 ring-background ${
                       isSocketConnected ? "bg-emerald-500" : "bg-red-500"
                     }`}

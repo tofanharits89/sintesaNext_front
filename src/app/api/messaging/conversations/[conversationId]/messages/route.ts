@@ -18,6 +18,7 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const page = searchParams.get("page");
     const limit = searchParams.get("limit");
+    const before = searchParams.get("before");
 
     const url = new URL(
       backendPath(
@@ -28,6 +29,7 @@ export async function GET(
     );
     if (page) url.searchParams.set("page", page);
     if (limit) url.searchParams.set("limit", limit);
+    if (before) url.searchParams.set("before", before);
 
     const resp = await fetch(url.toString(), {
       method: "GET",

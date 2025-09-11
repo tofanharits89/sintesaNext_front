@@ -68,9 +68,28 @@ export class SocketClient {
     this.handleError = this.handleError.bind(this);
 
     if (this.config.autoConnect) {
-      this.connect().catch((error) => {
-        this.logError("Auto-connect failed:", error);
-      });
+      if (typeof window !== "undefined") {
+        const ric = (window as any).requestIdleCallback as
+          | ((cb: () => void, opts?: { timeout?: number }) => number)
+          | undefined;
+        if (ric) {
+          ric(
+            () => {
+              this.connect().catch((error) => {
+                this.logError("Auto-connect failed:", error);
+              });
+            },
+            { timeout: 1500 }
+          );
+        } else {
+          // Fallback: defer to next tick to avoid blocking initial render
+          setTimeout(() => {
+            this.connect().catch((error) => {
+              this.logError("Auto-connect failed:", error);
+            });
+          }, 0);
+        }
+      }
     }
   }
 

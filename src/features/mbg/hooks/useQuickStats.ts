@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { mbgKeys } from "@/features/mbg/api/queryKeys";
 import { getQuickStats } from "@/features/mbg/api/services";
+import { createQueryOptions, queryKeyFactories } from "@/lib/query-configs";
 
 export function useQuickStats() {
   return useQuery({
-    queryKey: mbgKeys.quickStats(),
+    queryKey: queryKeyFactories.financial.mbg.quickStats(),
     queryFn: getQuickStats,
-    staleTime: 60_000,
+    ...createQueryOptions('financial'),
     gcTime: 5 * 60_000,
   });
 }

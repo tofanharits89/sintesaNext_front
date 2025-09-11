@@ -5,6 +5,8 @@ import { useState, useRef, useEffect, useMemo, useLayoutEffect } from "react";
 import { useConversationRQ } from "@/hooks/messaging-rq";
 import { useAutoMarkAsRead } from "@/hooks/useAutoMarkAsRead";
 import { Conversation } from "@/shared/socket-events";
+import { messageQueue } from "@/services/messageQueue";
+import { useMessageQueue } from "@/hooks/useMessageQueue";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -56,6 +58,44 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Initialize message queue
+  useMessageQueue();
+
+  // Enable auto-load of older messages only after user intent (scroll near top or click)
+  const [autoLoadEnabled, setAutoLoadEnabled] = useState(false);
+
+  // Reset autoload gate when switching conversations so we don't auto-load immediately on short threads
+  useEffect(() => {
+    setAutoLoadEnabled(false);
+  }, [conversationId]);
+
+  // Enable autoload when user scrolls near the top of the viewport
+  useEffect(() => {
+    const viewport = scrollAreaRef.current?.querySelector(
+      "[data-radix-scroll-area-viewport]"
+    ) as HTMLElement | null;
+    if (!viewport) return;
+    const onScroll = () => {
+      try {
+        if (viewport.scrollTop <= 40) {
+          setAutoLoadEnabled(true);
+        }
+      } catch {}
+    };
+    try {
+      viewport.addEventListener(
+        "scroll",
+        onScroll as any,
+        { passive: true } as any
+      );
+    } catch {}
+    return () => {
+      try {
+        viewport.removeEventListener("scroll", onScroll as any);
+      } catch {}
+    };
+  }, [conversationId]);
+
   const { currentUser } = useCurrentUser();
 
   // Use the new React Query + Zustand messaging system
@@ -63,6 +103,7 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
     // Data
     conversations,
     messages,
+    activeConversationId,
 
     // UI State
     messageInput,
@@ -85,20 +126,39 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
     selectConversation,
     loadMoreMessages,
     markMessagesAsRead,
-    markMessagesAsOpened,
     setMessageContent,
     startTyping: startTypingRQ,
     stopTyping: stopTypingRQ,
   } = useMessagingRQ();
 
+  // Prefer real active id when prop is temporary to avoid falling back to temp after reconciliation
+  const effectiveConversationId = useMemo(() => {
+    const isTemp =
+      conversationId?.startsWith("temp-") ||
+      conversationId?.startsWith("temp_conv-") ||
+      conversationId?.startsWith("temp-conv-");
+    const activeIsReal =
+      !!activeConversationId &&
+      !activeConversationId.startsWith("temp-") &&
+      !activeConversationId.startsWith("temp_conv-") &&
+      !activeConversationId.startsWith("temp-conv-");
+    return isTemp && activeIsReal ? activeConversationId : conversationId;
+
+    useEffect(() => {
+      try {
+        console.log("[MessagingDebug] ChatWindow", {
+          effectiveConversationId,
+          activeConversationId,
+          messagesLen: messages?.length || 0,
+        });
+      } catch {}
+    }, [effectiveConversationId, activeConversationId, messages?.length]);
+  }, [conversationId, activeConversationId]);
+
   // Get conversation data from the new system or fallback to prop
   const conversationData =
-    conversations?.find((c) => c.id === conversationId) || conversation;
-
-  // The new React Query system handles conversation reconciliation automatically
-
-  // Use the conversationId prop directly since the new system handles reconciliation
-  const effectiveConversationId = conversationId;
+    conversations?.find((c) => c.id === effectiveConversationId) ||
+    conversation;
 
   // Messages are now handled by the useMessagingRQ hook above
   // No need for separate useMessagesData hook
@@ -129,14 +189,22 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
     // After React Query adds older messages to the top, adjust scrollTop to preserve view
     requestAnimationFrame(() => {
       const newHeight = viewport?.scrollHeight ?? 0;
-      if (viewport) viewport.scrollTop = (newHeight - prevHeight) + (viewport.scrollTop || 0);
+      if (viewport)
+        viewport.scrollTop = newHeight - prevHeight + (viewport.scrollTop || 0);
     });
   };
 
   // Top sentinel to auto-load previous pages
   const topSentinelRef = useRef<HTMLDivElement | null>(null);
+  // Avoid rapid duplicate loads from IO callbacks and re-renders
+  const isLoadingMoreRef = useRef(false);
+  const lastLoadAtRef = useRef(0);
   useEffect(() => {
-    if (!canLoadMore) return;
+    isLoadingMoreRef.current = isLoadingMoreMessages;
+  }, [isLoadingMoreMessages]);
+
+  useEffect(() => {
+    if (!canLoadMore || !autoLoadEnabled) return;
     const viewport = scrollAreaRef.current?.querySelector(
       "[data-radix-scroll-area-viewport]"
     ) as HTMLElement | null;
@@ -145,28 +213,43 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
     const io = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          if (entry.isIntersecting) {
-            loadOlderMessagesPreserveScroll();
-          }
+          if (!entry.isIntersecting) continue;
+          // Guard: do not trigger while a load is in-flight
+          if (isLoadingMoreRef.current) continue;
+          // Throttle triggers to avoid back-to-back same-page requests
+          const now = Date.now();
+          if (now - lastLoadAtRef.current < 600) continue;
+          lastLoadAtRef.current = now;
+
+          // Temporarily unobserve to prevent cascaded triggers while loading
+          try {
+            io.unobserve(target);
+          } catch {}
+          Promise.resolve()
+            .then(() => loadOlderMessagesPreserveScroll())
+            .finally(() => {
+              // Re-attach after a short delay so layout can settle
+              setTimeout(() => {
+                try {
+                  io.observe(target);
+                } catch {}
+              }, 200);
+            });
         }
       },
-      { root: viewport, rootMargin: "200px", threshold: 0 }
+      { root: viewport, rootMargin: "80px", threshold: 0 }
     );
     io.observe(target);
     return () => io.disconnect();
-  }, [canLoadMore, messages.length]);
+  }, [canLoadMore]);
 
   // Controlled auto-mark-as-read/opened functionality
   const { observeMessage, clearMarkedMessages } = useAutoMarkAsRead({
     messages,
     currentUserId: currentUser?.id,
     conversationId: effectiveConversationId,
-    // Make read a no-op here to avoid duplicate mutations; opened will still fire
+    // Make read a no-op here to avoid duplicate mutations
     markAsRead: async (_ids) => {},
-    markAsOpened: async (ids) => {
-      // Use the dedicated opened-status mutation instead of reusing read
-      markMessagesAsOpened(ids);
-    }, // Use the same function for now
     // Enable opened-only behavior
     enabled: true,
     debounceMs: 100, // Very fast for real-time feedback while chatting
@@ -215,7 +298,9 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
     const cid = effectiveConversationId;
     if (!cid) return;
     const isTemp =
-      cid.startsWith("temp-") || cid.startsWith("temp_conv-") || cid.startsWith("temp-conv-");
+      cid.startsWith("temp-") ||
+      cid.startsWith("temp_conv-") ||
+      cid.startsWith("temp-conv-");
     if (!isTemp) return;
     if (messages && messages.length > 0) return;
     const hint = getHint(cid);
@@ -223,7 +308,9 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
     if (!lm?.content) return;
     try {
       const nowIso = lm.timestamp || new Date().toISOString();
-      const tempMsgId = `temp-msg-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      const tempMsgId = `temp-msg-${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2, 9)}`;
       pushTempMessage(cid, {
         id: tempMsgId,
         conversationId: cid,
@@ -232,12 +319,20 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
         sender:
           lm.sender ||
           (currentUser
-            ? { id: currentUser.id, username: currentUser.username || "you", name: currentUser.name || "You" }
+            ? {
+                id: currentUser.id,
+                username: currentUser.username || "you",
+                name: currentUser.name || "You",
+              }
             : { id: "current-user", username: "you", name: "You" }),
-        senderType: lm.senderType || (currentUser?.role === "super_admin" || currentUser?.role === "co_admin" ? ("admin" as const) : ("user" as const)),
+        senderType:
+          lm.senderType ||
+          (currentUser?.role === "super_admin" ||
+          currentUser?.role === "co_admin"
+            ? ("admin" as const)
+            : ("user" as const)),
         isRead: true,
         isDelivered: false,
-        isOpened: false,
       } as any);
     } catch {}
   }, [effectiveConversationId, messages?.length, currentUser?.id]);
@@ -345,16 +440,32 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
     // TODO: Implement file upload functionality in the backend
     if (content) {
       try {
-        // Use the new React Query sendMessage which handles optimistic updates
+        // Generate temp ID and client timestamp for reliable delivery
+        const tempId = `temp-msg-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+        const clientTimestamp = new Date();
+        
         // For temp conversations, pass recipientId so backend can create the real conversation
         const isTempConv =
           effectiveConversationId?.startsWith("temp-") ||
           effectiveConversationId?.startsWith("temp_conv-") ||
           effectiveConversationId?.startsWith("temp-conv-");
         const recipientId = isTempConv ? otherParticipant?.id : undefined;
-        await sendMessageRQ(content, recipientId);
+
+        // Queue message for reliable delivery
+        await messageQueue.queueMessage({
+          id: tempId,
+          conversationId: effectiveConversationId || 'temp',
+          content,
+          recipientId,
+          tempId,
+          clientTimestamp
+        });
+
+        // Use the new React Query sendMessage which handles optimistic updates
+        await sendMessageRQ(content, recipientId, effectiveConversationId);
       } catch (error) {
-        // The new system handles error rollback automatically
+        // The message queue will handle retries automatically
+        console.error('Failed to send message:', error);
       }
     }
 
@@ -528,47 +639,47 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
             </AvatarFallback>
           </Avatar>
 
-          <div>
-            <h3 className="font-medium text-sm">
+          {/* Name + role badge + online badge on the same row */}
+          <div className="flex items-center gap-2 min-w-0">
+            <h3 className="font-medium text-sm truncate">
               {otherParticipant?.name ||
                 otherParticipant?.username ||
                 "Unknown User"}
             </h3>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="text-xs">
-                {otherParticipant?.role === "super_admin" ||
-                otherParticipant?.role === "co_admin" ? (
-                  <>
-                    <Crown className="h-3 w-3 mr-1" />
-                    Administrator
-                  </>
-                ) : (
-                  <>
-                    <User className="h-3 w-3 mr-1" />
-                    {otherParticipant?.username || "User"}
-                  </>
-                )}
-              </Badge>
 
-              {/* Online status - shows if the other participant is online */}
-              {isOtherParticipantOnline ? (
-                <Badge
-                  variant="secondary"
-                  className="text-green-600 bg-green-50 border-green-200 text-xs"
-                >
-                  <Wifi className="h-3 w-3 mr-1" />
-                  Online
-                </Badge>
+            <Badge variant="secondary" className="text-xs flex-shrink-0">
+              {otherParticipant?.role === "super_admin" ||
+              otherParticipant?.role === "co_admin" ? (
+                <>
+                  <Crown className="h-3 w-3 mr-1" />
+                  Administrator
+                </>
               ) : (
-                <Badge
-                  variant="secondary"
-                  className="text-orange-600 bg-orange-50 border-orange-200 text-xs"
-                >
-                  <WifiOff className="h-3 w-3 mr-1" />
-                  Offline
-                </Badge>
+                <>
+                  <User className="h-3 w-3 mr-1" />
+                  {otherParticipant?.username || "User"}
+                </>
               )}
-            </div>
+            </Badge>
+
+            {/* Online status - shows if the other participant is online */}
+            {isOtherParticipantOnline ? (
+              <Badge
+                variant="secondary"
+                className="text-green-600 bg-green-50 border-green-200 text-xs flex-shrink-0"
+              >
+                <Wifi className="h-3 w-3 mr-1" />
+                Online
+              </Badge>
+            ) : (
+              <Badge
+                variant="secondary"
+                className="text-orange-600 bg-orange-50 border-orange-200 text-xs flex-shrink-0"
+              >
+                <WifiOff className="h-3 w-3 mr-1" />
+                Offline
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -584,16 +695,25 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
         <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
           <div className="p-4">
             {/* Top loader: button + sentinel for older messages */}
-            {canLoadMore && (
-              <div className="mb-3 flex items-center justify-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={loadOlderMessagesPreserveScroll}
-                  disabled={isLoadingMoreMessages}
-                >
-                  {isLoadingMoreMessages ? "Loading…" : "Load previous messages"}
-                </Button>
+            {(canLoadMore || isLoadingMoreMessages) && (
+              <div className="mb-3 flex items-center justify-center min-h-9">
+                {canLoadMore ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setAutoLoadEnabled(true);
+                      loadOlderMessagesPreserveScroll();
+                    }}
+                    disabled={isLoadingMoreMessages}
+                  >
+                    {isLoadingMoreMessages
+                      ? "Loading…"
+                      : "Load previous messages"}
+                  </Button>
+                ) : (
+                  <div className="text-xs text-muted-foreground">Loading…</div>
+                )}
               </div>
             )}
             <div ref={topSentinelRef} className="h-1" />
@@ -679,32 +799,39 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
                         {/* Message status indicators */}
                         <div className="mt-1">
                           {isOwnMessage ? (
-                            // For sent messages: show WhatsApp-style status indicators using real-time fields
+                            // For sent messages: show 2-state status indicators (delivered → read)
                             <MessageStatus
                               isDelivered={message.isDelivered}
-                              // Sender side should reflect remote recipient's open state from socket/React Query cache only
-                              isOpened={message.isOpened}
                               isRead={message.isRead}
                               deliveredAt={message.deliveredAt}
-                              openedAt={message.openedAt}
                               readAt={message.readAt}
                               showTimestamp={false}
                               className="justify-end"
                             />
                           ) : (
-                            // For received messages: show opened/unopened status with timestamp
+                            // For received messages: show read/unread status with timestamp
                             <span
                               className={cn(
                                 "text-xs transition-colors duration-200",
-                                message.isOpened
+                                message.isRead
                                   ? "text-green-600"
                                   : "text-orange-600"
                               )}
                             >
-                              {message.isOpened ? `Opened` : "Unopened"}
+                              {message.isRead ? `Read` : "Unread"}
                             </span>
                           )}
                         </div>
+
+                        {typeof window !== "undefined" &&
+                          window.localStorage?.getItem("MSG_DEBUG") === "1" &&
+                          isOwnMessage && (
+                            <span className="block text-[10px] text-muted-foreground/70">
+                              dbg {message.id?.slice(0, 8)} d:
+                              {String(message.isDelivered)} r:
+                              {String(message.isRead)}
+                            </span>
+                          )}
                       </div>
                     </div>
                   );
@@ -762,17 +889,99 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <div className="text-muted-foreground">
-                  <h4 className="text-lg font-medium mb-2">
-                    Start the conversation
-                  </h4>
-                  <p className="text-sm">
-                    Send a message to begin chatting with{" "}
-                    {otherParticipant?.name || "this user"}
-                  </p>
-                </div>
-              </div>
+              // Fallback: If we just redirected to a real conversation and
+              // React Query hasn't loaded messages yet, show the lastMessage
+              // from the conversation as a placeholder so the chat isn't blank.
+              (() => {
+                const lm: any = (conversationData as any)?.lastMessage;
+                if (lm?.content) {
+                  const isOwn = lm?.sender?.id === currentUser?.id;
+                  return (
+                    <div className="p-4">
+                      <div
+                        className={cn(
+                          "flex gap-3 max-w-[80%]",
+                          isOwn ? "ml-auto flex-row-reverse" : "mr-auto"
+                        )}
+                      >
+                        <Avatar className="h-8 w-8 flex-shrink-0">
+                          <AvatarFallback
+                            className={cn(
+                              "text-sm",
+                              isOwn
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted"
+                            )}
+                          >
+                            {lm?.sender?.name?.charAt(0)?.toUpperCase() ||
+                              lm?.sender?.username?.charAt(0)?.toUpperCase() ||
+                              "?"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div
+                          className={cn(
+                            "flex flex-col",
+                            isOwn ? "items-end" : "items-start"
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "flex items-center gap-2 mb-1",
+                              isOwn ? "flex-row-reverse" : "flex-row"
+                            )}
+                          >
+                            <span className="text-xs font-medium">
+                              {isOwn
+                                ? "You"
+                                : lm?.sender?.name ||
+                                  lm?.sender?.username ||
+                                  "User"}
+                            </span>
+                            {lm?.senderType === "admin" && (
+                              <Crown className="h-3 w-3 text-yellow-500" />
+                            )}
+                            <span
+                              className="text-xs text-muted-foreground"
+                              title={formatEnhancedTimestamp(
+                                lm?.timestamp || lm?.created_at
+                              )}
+                            >
+                              {formatEnhancedTimestamp(
+                                lm?.timestamp || lm?.created_at
+                              )}
+                            </span>
+                          </div>
+                          <div
+                            className={cn(
+                              "rounded-lg px-3 py-2 max-w-full break-words",
+                              isOwn
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted"
+                            )}
+                          >
+                            <p className="text-sm whitespace-pre-wrap">
+                              {lm.content}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                return (
+                  <div className="flex flex-col items-center justify-center h-full text-center">
+                    <div className="text-muted-foreground">
+                      <h4 className="text-lg font-medium mb-2">
+                        Start the conversation
+                      </h4>
+                      <p className="text-sm">
+                        Send a message to begin chatting with{" "}
+                        {otherParticipant?.name || "this user"}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()
             )}
           </div>
         </ScrollArea>
