@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 import { canAccessSettings } from "@/lib/rbac-client";
 
 export default async function SettingsLayout({
@@ -9,51 +10,46 @@ export default async function SettingsLayout({
   children: React.ReactNode;
 }) {
   // Server-side guard: verify via backend to align with new auth/session
-  // Check for token in cookies (multiple possible names)
+  // Forward full cookie header to backend verify (do not rely on bearer token)
   const c = await cookies();
-  const candidateNames = [
-    "accessToken",
-    "token",
-    "authState",
-    "access_token",
-    "authToken",
-    "auth_token",
-    "socket_token",
-  ];
-  const authToken = (candidateNames
-    .map((n) => c.get(n)?.value)
-    .find((v) => typeof v === "string" && v.trim()) || null) as string | null;
-
-  if (!authToken) {
+  const cookiePairs = c.getAll().map(({ name, value }) => `${name}=${value}`);
+  const cookieHeader = cookiePairs.join("; ");
+  const hasAccessToken = Boolean(c.get("accessToken")?.value);
+  if (!cookieHeader) {
     redirect("/login");
   }
 
   // Verify token with backend and check RBAC permissions
   try {
-    const resp = await fetch(backendPath("/auth/verify"), {
+    // Fetch profile via backend using cookies to identify user session
+    const resp = await fetch(apiPath("/users/profile/me"), {
       method: "GET",
-      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+      headers: { cookie: cookieHeader },
       cache: "no-store",
     });
-    if (!resp.ok) throw new Error("verify failed");
-    const data = await resp.json().catch(() => ({}));
-    if (!data?.success) throw new Error("invalid");
 
-    // Check RBAC permissions for settings access
-    const user = data?.data?.user;
-    if (!user || !user.role) {
-      throw new Error("user role not found");
+    if (resp.status === 401) {
+      // If a session cookie exists but backend rejects, prefer unauthorized over login
+      if (hasAccessToken) {
+        redirect("/unauthorized?reason=settings_access_denied");
+      }
+      redirect("/login");
     }
 
-    // Verify user has settings access permission
+    if (!resp.ok) throw new Error("profile_failed");
+    const data = await resp.json().catch(() => ({}));
+
+    const user = data?.data;
+    if (!user || !user.role) {
+      // Authenticated but cannot resolve role – treat as unauthorized to avoid login bounce
+      redirect("/unauthorized?reason=settings_access_denied");
+    }
+
     if (!canAccessSettings(user.role)) {
       redirect("/unauthorized?reason=settings_access_denied");
     }
   } catch (error: any) {
-    if (
-      error.message === "user role not found" ||
-      error.message.includes("settings_access_denied")
-    ) {
+    if (hasAccessToken) {
       redirect("/unauthorized?reason=settings_access_denied");
     }
     redirect("/login");

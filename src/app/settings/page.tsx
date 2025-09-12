@@ -2,27 +2,38 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { PerformanceMonitoringDashboard } from "@/components/dashboard/PerformanceMonitoringDashboard";
 import { useAuth } from "@/hooks/useAuth";
-import { hasPermission } from "@/lib/rbac";
-import { 
-  Settings, 
-  User, 
-  Monitor, 
-  Shield, 
-  Palette, 
-  Bell, 
-  Globe, 
+import {
+  Settings,
+  User,
+  Monitor,
+  Shield,
+  Palette,
+  Bell,
+  Globe,
   Lock,
-  Save
+  Save,
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -33,16 +44,11 @@ export default function SettingsPage() {
     email: true,
     push: false,
     desktop: true,
-    sound: false
+    sound: false,
   });
 
-  // Check if user can access performance monitoring
-  const canAccessPerformanceMonitor = user && (user.role === 'super_admin' || user.role === 'co_admin');
-  
-  // Check if user can access system settings
-  const canAccessSystemSettings = user && hasPermission(user, 'settings', 'view');
-
-  if (isUserLoading) {
+  // Guard against cases where the profile query finished but user data isn't available yet
+  if (isUserLoading || !user) {
     return (
       <div className="space-y-4">
         <div className="h-8 bg-muted animate-pulse rounded"></div>
@@ -71,18 +77,14 @@ export default function SettingsPage() {
             <User className="h-4 w-4" />
             Profil
           </TabsTrigger>
-          {canAccessPerformanceMonitor && (
-            <TabsTrigger value="performance" className="flex items-center gap-2">
-              <Monitor className="h-4 w-4" />
-              Monitor Performa
-            </TabsTrigger>
-          )}
-          {canAccessSystemSettings && (
-            <TabsTrigger value="system" className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              Sistem
-            </TabsTrigger>
-          )}
+          <TabsTrigger value="performance" className="flex items-center gap-2">
+            <Monitor className="h-4 w-4" />
+            Monitor Performa
+          </TabsTrigger>
+          <TabsTrigger value="system" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Sistem
+          </TabsTrigger>
         </TabsList>
 
         {/* General Settings Tab */}
@@ -163,11 +165,14 @@ export default function SettingsPage() {
                         Terima notifikasi melalui email
                       </p>
                     </div>
-                    <Switch 
-                      checked={notifications.email} 
-                      onCheckedChange={(checked) => 
-                        setNotifications(prev => ({ ...prev, email: checked }))
-                      } 
+                    <Switch
+                      checked={notifications.email}
+                      onCheckedChange={(checked) =>
+                        setNotifications((prev) => ({
+                          ...prev,
+                          email: checked,
+                        }))
+                      }
                     />
                   </div>
                   <Separator />
@@ -178,11 +183,11 @@ export default function SettingsPage() {
                         Terima notifikasi push di browser
                       </p>
                     </div>
-                    <Switch 
-                      checked={notifications.push} 
-                      onCheckedChange={(checked) => 
-                        setNotifications(prev => ({ ...prev, push: checked }))
-                      } 
+                    <Switch
+                      checked={notifications.push}
+                      onCheckedChange={(checked) =>
+                        setNotifications((prev) => ({ ...prev, push: checked }))
+                      }
                     />
                   </div>
                   <Separator />
@@ -193,11 +198,14 @@ export default function SettingsPage() {
                         Tampilkan notifikasi desktop
                       </p>
                     </div>
-                    <Switch 
-                      checked={notifications.desktop} 
-                      onCheckedChange={(checked) => 
-                        setNotifications(prev => ({ ...prev, desktop: checked }))
-                      } 
+                    <Switch
+                      checked={notifications.desktop}
+                      onCheckedChange={(checked) =>
+                        setNotifications((prev) => ({
+                          ...prev,
+                          desktop: checked,
+                        }))
+                      }
                     />
                   </div>
                   <Separator />
@@ -208,11 +216,14 @@ export default function SettingsPage() {
                         Putar suara saat ada notifikasi
                       </p>
                     </div>
-                    <Switch 
-                      checked={notifications.sound} 
-                      onCheckedChange={(checked) => 
-                        setNotifications(prev => ({ ...prev, sound: checked }))
-                      } 
+                    <Switch
+                      checked={notifications.sound}
+                      onCheckedChange={(checked) =>
+                        setNotifications((prev) => ({
+                          ...prev,
+                          sound: checked,
+                        }))
+                      }
                     />
                   </div>
                 </div>
@@ -239,19 +250,19 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Nama Lengkap</Label>
-                    <Input 
-                      id="name" 
-                      value={user?.name || ''} 
+                    <Input
+                      id="name"
+                      value={user?.name || ""}
                       placeholder="Masukkan nama lengkap"
                       readOnly
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input 
-                      id="email" 
-                      type="email" 
-                      value={user?.email || ''} 
+                    <Input
+                      id="email"
+                      type="email"
+                      value={user?.email || ""}
                       placeholder="Masukkan email"
                       readOnly
                     />
@@ -259,14 +270,14 @@ export default function SettingsPage() {
                   <div className="space-y-2">
                     <Label htmlFor="role">Role</Label>
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary">{user?.role || 'N/A'}</Badge>
+                      <Badge variant="secondary">{user?.role || "N/A"}</Badge>
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="location">Lokasi</Label>
-                    <Input 
-                      id="location" 
-                      value={user?.location || 'N/A'} 
+                    <Input
+                      id="location"
+                      value={user?.location || "N/A"}
                       placeholder="Lokasi kerja"
                       readOnly
                     />
@@ -301,66 +312,63 @@ export default function SettingsPage() {
         </TabsContent>
 
         {/* Performance Monitor Tab */}
-        {canAccessPerformanceMonitor && (
-          <TabsContent value="performance" className="space-y-6">
-            <div>
-              <div className="mb-6">
-                <h3 className="text-lg font-medium">Monitor Performa Sistem</h3>
-                <p className="text-sm text-muted-foreground">
-                  Pantau performa cache, kompresi, dan kesehatan sistem secara real-time.
-                </p>
-              </div>
-              <PerformanceMonitoringDashboard />
+        <TabsContent value="performance" className="space-y-6">
+          <div>
+            <div className="mb-6">
+              <h3 className="text-lg font-medium">Monitor Performa Sistem</h3>
+              <p className="text-sm text-muted-foreground">
+                Pantau performa cache, kompresi, dan kesehatan sistem secara
+                real-time.
+              </p>
             </div>
-          </TabsContent>
-        )}
+            <PerformanceMonitoringDashboard />
+          </div>
+        </TabsContent>
 
         {/* System Settings Tab */}
-        {canAccessSystemSettings && (
-          <TabsContent value="system" className="space-y-6">
-            <div className="grid gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
-                    Pengaturan Sistem
-                  </CardTitle>
-                  <CardDescription>
-                    Konfigurasi tingkat sistem (hanya untuk administrator)
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Mode Maintenance</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Aktifkan mode maintenance untuk sistem
-                        </p>
-                      </div>
-                      <Switch />
+        <TabsContent value="system" className="space-y-6">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Pengaturan Sistem
+                </CardTitle>
+                <CardDescription>
+                  Konfigurasi tingkat sistem (hanya untuk administrator)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Mode Maintenance</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Aktifkan mode maintenance untuk sistem
+                      </p>
                     </div>
-                    <Separator />
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Debug Mode</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Aktifkan mode debug untuk troubleshooting
-                        </p>
-                      </div>
-                      <Switch />
-                    </div>
-                    <Separator />
-                    <div className="space-y-2">
-                      <Label>Cache TTL (detik)</Label>
-                      <Input type="number" placeholder="3600" />
-                    </div>
+                    <Switch />
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        )}
+                  <Separator />
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Debug Mode</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Aktifkan mode debug untuk troubleshooting
+                      </p>
+                    </div>
+                    <Switch />
+                  </div>
+                  <Separator />
+                  <div className="space-y-2">
+                    <Label>Cache TTL (detik)</Label>
+                    <Input type="number" placeholder="3600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
       </Tabs>
 
       {/* Save Button */}
@@ -373,4 +381,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 import { usePathname, useRouter } from "next/navigation";
 import { withBasePath } from "@/lib/base-path";
 
@@ -45,7 +45,7 @@ export default function CheckBackend() {
     timeoutRef.current = timeout;
 
     try {
-      const response = await fetch(backendPath("/health"), {
+      const response = await fetch(apiPath("/health"), {
         cache: "no-store",
         signal: ac.signal,
         headers: {

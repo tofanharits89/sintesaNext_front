@@ -61,8 +61,10 @@ async function ensureCsrfToken(instance: AxiosInstance) {
 }
 
 // Create a shared Axios instance
+// Option A: route all browser HTTP calls through same-origin Next API
+// Use an empty baseURL so absolute paths like "/v3/next/api/..." resolve on the current origin
 export const http: AxiosInstance = axios.create({
-  baseURL: BACKEND_BASE_URL,
+  baseURL: "",
   withCredentials: true, // send cookies for auth and CSRF
   xsrfCookieName: "XSRF-TOKEN",
   xsrfHeaderName: "X-CSRF-Token",
@@ -71,16 +73,16 @@ export const http: AxiosInstance = axios.create({
 // Request interceptor: attach CSRF header if available and set Content-Type
 http.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   const method = (config.method || "get").toLowerCase();
-  
+
   // Set Content-Type to application/json for non-FormData requests
   if (["post", "put", "patch", "delete"].includes(method)) {
     const h = (config.headers ||= {} as any);
-    
+
     // Only set Content-Type if it's not FormData (let browser set multipart/form-data)
     if (!(config.data instanceof FormData) && !h["Content-Type"]) {
       h["Content-Type"] = "application/json";
     }
-    
+
     // Attach CSRF token for state-changing methods
     let csrf = getCookie("XSRF-TOKEN") || lastCsrfToken;
     if (!csrf) {
@@ -194,11 +196,11 @@ http.interceptors.response.use(
 // Convenience helpers mirroring fetch-like API
 export const apiClient = {
   get: <T = any>(path: string, config?: AxiosRequestConfig) =>
-    http.get<T>(backendPath(path), config).then((r) => r.data),
+    http.get<T>(apiPath(path), config).then((r) => r.data),
   post: <T = any>(path: string, data?: any, config?: AxiosRequestConfig) =>
-    http.post<T>(backendPath(path), data, config).then((r) => r.data),
+    http.post<T>(apiPath(path), data, config).then((r) => r.data),
   put: <T = any>(path: string, data?: any, config?: AxiosRequestConfig) =>
-    http.put<T>(backendPath(path), data, config).then((r) => r.data),
+    http.put<T>(apiPath(path), data, config).then((r) => r.data),
   delete: <T = any>(path: string, config?: AxiosRequestConfig) =>
-    http.delete<T>(backendPath(path), config).then((r) => r.data),
+    http.delete<T>(apiPath(path), config).then((r) => r.data),
 };

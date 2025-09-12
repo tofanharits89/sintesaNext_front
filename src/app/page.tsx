@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 
 export default async function Home() {
   // Server-side: forward cookies to backend for validation
@@ -11,7 +11,7 @@ export default async function Home() {
     .join("; ");
 
   try {
-    const resp = await fetch(backendPath("/auth/session/validate"), {
+    const resp = await fetch(apiPath("/auth/session/validate"), {
       method: "GET",
       headers: cookieHeader ? { cookie: cookieHeader } : {},
       cache: "no-store",

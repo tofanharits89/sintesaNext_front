@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 import { withBasePath } from "@/lib/base-path";
 
 export default function AutoRetry() {
@@ -11,7 +11,7 @@ export default function AutoRetry() {
     function tick() {
       const ac = new AbortController();
       const timeout = setTimeout(() => ac.abort(), 2000);
-      fetch(backendPath("/auth/health"), { cache: "no-store", signal: ac.signal })
+      fetch(apiPath("/health"), { cache: "no-store", signal: ac.signal })
         .then((res) => {
           clearTimeout(timeout);
           if (res.ok) {
@@ -34,4 +34,3 @@ export default function AutoRetry() {
 
   return null;
 }
-

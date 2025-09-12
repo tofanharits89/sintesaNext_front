@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 
 export default async function EPALayout({
   children,
@@ -25,7 +25,7 @@ export default async function EPALayout({
     redirect("/login");
   }
   try {
-    const resp = await fetch(backendPath("/auth/verify"), {
+    const resp = await fetch(apiPath("/auth/verify"), {
       method: "GET",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       cache: "no-store",
