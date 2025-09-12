@@ -3,7 +3,7 @@
  * Provides optimized caching strategies based on data characteristics
  */
 
-import { UseQueryOptions, UseInfiniteQueryOptions } from '@tanstack/react-query'
+import { UseQueryOptions, UseInfiniteQueryOptions, type QueryKey } from '@tanstack/react-query'
 
 // Base configuration types
 export interface QueryConfig {
@@ -99,24 +99,38 @@ export const queryConfigs = {
 // Helper function to create typed query options
 export function createQueryOptions<TData = unknown, TError = Error>(
   configType: keyof typeof queryConfigs,
-  overrides?: Partial<UseQueryOptions<TData, TError>>
-): UseQueryOptions<TData, TError> {
+  overrides?: Partial<Omit<UseQueryOptions<TData, TError>, 'queryKey' | 'queryFn'>>
+): Omit<UseQueryOptions<TData, TError>, 'queryKey' | 'queryFn'> {
   const config = queryConfigs[configType]
   return {
     ...config,
-    ...overrides,
+    ...(overrides as any),
   }
 }
 
 // Helper function to create typed infinite query options
-export function createInfiniteQueryOptions<TData = unknown, TError = Error>(
+export function createInfiniteQueryOptions<
+  TData = unknown,
+  TError = Error,
+  TInfiniteData = TData,
+  TQueryKey extends QueryKey = QueryKey,
+  TPageParam = unknown
+>(
   configType: keyof typeof queryConfigs,
-  overrides?: Partial<UseInfiniteQueryOptions<TData, TError>>
-): UseInfiniteQueryOptions<TData, TError> {
+  overrides?: Partial<
+    Omit<
+      UseInfiniteQueryOptions<TData, TError, TInfiniteData, TQueryKey, TPageParam>,
+      'queryKey' | 'queryFn'
+    >
+  >
+): Omit<
+  UseInfiniteQueryOptions<TData, TError, TInfiniteData, TQueryKey, TPageParam>,
+  'queryKey' | 'queryFn'
+> {
   const config = queryConfigs[configType]
   return {
     ...config,
-    ...overrides,
+    ...(overrides as any),
   }
 }
 
@@ -130,6 +144,8 @@ export const queryKeyFactories = {
       quickStats: () => [...queryKeyFactories.financial.mbg.all(), 'quickStats'] as const,
       charts: () => [...queryKeyFactories.financial.mbg.all(), 'charts'] as const,
       rankings: () => [...queryKeyFactories.financial.mbg.all(), 'rankings'] as const,
+      mapStats: (scope: 'national' | 'province' | 'regency', id?: string) =>
+        [...queryKeyFactories.financial.mbg.all(), 'mapStats', scope, id ?? 'all'] as const,
     },
   },
   
@@ -139,22 +155,22 @@ export const queryKeyFactories = {
     stats: () => [...queryKeyFactories.dashboard.all(), 'stats'] as const,
     charts: () => [...queryKeyFactories.dashboard.all(), 'charts'] as const,
   },
-  
-  // User data keys
+
+  // User data keys (auth-related)
   user: {
     all: () => ['auth'] as const, // Keep 'auth' for backward compatibility
     profile: () => [...queryKeyFactories.user.all(), 'user'] as const,
     verify: () => [...queryKeyFactories.user.all(), 'verify'] as const,
     preferences: () => [...queryKeyFactories.user.all(), 'preferences'] as const,
   },
-  
+
   // Messaging keys
   messaging: {
     all: () => ['messaging'] as const,
     conversations: () => [...queryKeyFactories.messaging.all(), 'conversations'] as const,
     messages: (conversationId: string) => [...queryKeyFactories.messaging.all(), 'messages', conversationId] as const,
   },
-  
+
   // Search keys
   search: {
     all: () => ['search'] as const,
@@ -164,29 +180,28 @@ export const queryKeyFactories = {
 
 // Cache invalidation helpers
 export const cacheInvalidation = {
-  // Invalidate all user-related data
   invalidateUser: (queryClient: any, userId?: string) => {
-    queryClient.invalidateQueries({ queryKey: queryKeyFactories.user.all })
+    queryClient.invalidateQueries({ queryKey: queryKeyFactories.user.profile() })
     if (userId) {
-      queryClient.invalidateQueries({ queryKey: queryKeyFactories.user.profile(userId) })
+      queryClient.invalidateQueries({ queryKey: [...queryKeyFactories.user.profile(), userId] })
     }
   },
 
-  // Invalidate dashboard data
   invalidateDashboard: (queryClient: any) => {
-    queryClient.invalidateQueries({ queryKey: queryKeyFactories.dashboard.all })
+    queryClient.invalidateQueries({ queryKey: queryKeyFactories.dashboard.all() })
+    queryClient.invalidateQueries({ queryKey: queryKeyFactories.dashboard.stats() })
+    queryClient.invalidateQueries({ queryKey: queryKeyFactories.dashboard.charts() })
   },
 
-  // Invalidate messaging data
   invalidateMessaging: (queryClient: any, conversationId?: string) => {
-    queryClient.invalidateQueries({ queryKey: queryKeyFactories.messaging.all })
+    queryClient.invalidateQueries({ queryKey: queryKeyFactories.messaging.all() })
     if (conversationId) {
       queryClient.invalidateQueries({ queryKey: queryKeyFactories.messaging.messages(conversationId) })
     }
   },
 
-  // Invalidate financial data
   invalidateFinancial: (queryClient: any) => {
-    queryClient.invalidateQueries({ queryKey: queryKeyFactories.financial.all })
+    queryClient.invalidateQueries({ queryKey: queryKeyFactories.financial.all() })
+    queryClient.invalidateQueries({ queryKey: queryKeyFactories.financial.mbg.all() })
   },
 }

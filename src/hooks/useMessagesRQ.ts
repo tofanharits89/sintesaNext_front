@@ -1,6 +1,6 @@
 "use client";
 
-import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient, type QueryFunctionContext } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { backendPath } from "@/lib/backend";
 import { useSocket } from "./useSocket";
@@ -29,12 +29,11 @@ const PAGE_SIZE = 25;
 export const messageKeys = queryKeyFactories.messaging;
 
 // Fetcher with auth headers and safe JSON parsing (cursor-based)
-const fetchMessages = async (context: {
-  pageParam: string | undefined;
-  queryKey: readonly string[];
-}) => {
+const fetchMessages = async (
+  context: QueryFunctionContext<ReturnType<typeof messageKeys.messages>, string | undefined>
+) => {
   const { pageParam, queryKey } = context;
-  const [, , conversationId] = queryKey as [string, string, string];
+  const [, , conversationId] = queryKey;
 
   const url = new URL(
     backendPath(`/messaging/conversations/${conversationId}/messages`),
@@ -119,26 +118,26 @@ export function useMessages(conversationId?: string) {
     isFetching,
     isFetchingNextPage,
     isLoading,
-  } = useInfiniteQuery({
+  } = useInfiniteQuery<any, Error, any, ReturnType<typeof messageKeys.messages>, string | undefined>({
     queryKey: messageKeys.messages(conversationId || ""),
     queryFn: fetchMessages,
     enabled: isFetchable && !!conversationId,
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => {
-      // Support multiple possible locations for pagination cursor
-      const pg =
-        lastPage?.data?.pagination ||
-        lastPage?.pagination ||
-        lastPage?.data?.data?.pagination ||
-        lastPage?.result?.pagination ||
-        null;
-      const nextBefore =
-        pg?.nextBefore || pg?.next_before || pg?.next || undefined;
-      return nextBefore || undefined;
-    },
-    ...createInfiniteQueryOptions('realtime', {
+    // getNextPageParam moved to createInfiniteQueryOptions overrides to avoid duplicate property
+    ...createInfiniteQueryOptions<any, Error, any, ReturnType<typeof messageKeys.messages>, string | undefined>('realtime', {
       refetchOnWindowFocus: false, // rely on sockets for live updates
       gcTime: 30 * 60 * 1000, // 30 minutes (avoid dropping cache during short idles)
+      getNextPageParam: (lastPage) => {
+        // Support multiple possible locations for pagination cursor
+        const pg =
+          lastPage?.data?.pagination ||
+          lastPage?.pagination ||
+          lastPage?.data?.data?.pagination ||
+          lastPage?.result?.pagination ||
+          null;
+        const nextBefore =
+          (pg as any)?.nextBefore || (pg as any)?.next_before || (pg as any)?.next || undefined;
+        return nextBefore || undefined;
+      },
     }),
   });
 
@@ -243,7 +242,7 @@ export function useMessages(conversationId?: string) {
       return 0;
     };
 
-    const mappedWithSort = pages.flatMap((p) =>
+    const mappedWithSort: Array<FrontendMessage & { _sortTs: number }> = pages.flatMap((p: any) =>
       extractMessages(p).map((msg: any) => {
         const rawTs = msg.timestamp ?? msg.created_at;
         const ms = toMs(rawTs);
@@ -262,7 +261,7 @@ export function useMessages(conversationId?: string) {
           isDelivered: msg.isDelivered ?? msg.is_delivered ?? false,
           deliveredAt: msg.deliveredAt ?? msg.delivered_at ?? null,
         } as FrontendMessage & { _sortTs: number };
-
+    
         const known = lastKnownFlags.get(id);
         if (known) {
           // Once true, keep true (do not downgrade from true -> false on refetch)
@@ -272,7 +271,6 @@ export function useMessages(conversationId?: string) {
         return fromApi;
       })
     );
-
     const sorted = mappedWithSort.sort((a, b) => a._sortTs - b._sortTs);
     // De-duplicate by id while preserving chronological order; keep the last occurrence
     const seen = new Set<string>();

@@ -5,10 +5,8 @@ import { backendPath } from '@/lib/backend';
 const isClient = typeof window !== 'undefined';
 
 interface PersentaseRealisasiKL {
-  kl_id: string;
-  kl_nama: string;
-  pagu: number;
-  realisasi: number;
+  kode_ba: string;
+  nama_ba: string;
   persentase: number;
 }
 
@@ -18,11 +16,17 @@ interface PersentaseRealisasiKLResponse {
   message?: string;
 }
 
-export function usePersentaseRealisasiKL() {
-  return useQuery<PersentaseRealisasiKLResponse>({
-    queryKey: ['persentase-realisasi-kl'],
+// Allow optional filtering by kanwil (to match usage in dashboard page)
+export function usePersentaseRealisasiKL(params?: { kanwil?: string }) {
+  return useQuery<PersentaseRealisasiKL[]>({
+    queryKey: ['persentase-realisasi-kl', params?.kanwil],
     queryFn: async () => {
-      const response = await fetch(backendPath('/dashboard/persentase-realisasi-kl'), {
+      const url = new URL(backendPath('/dashboard/persentase-realisasi-kl'));
+      if (params?.kanwil) {
+        url.searchParams.set('kanwil', params.kanwil);
+      }
+
+      const response = await fetch(url.toString(), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -45,8 +49,8 @@ export function usePersentaseRealisasiKL() {
     staleTime: 5 * 60 * 1000,
     retry: (failureCount, error) => {
       if (
-        error.message?.includes("authentication") ||
-        error.message?.includes("401")
+        (error as any).message?.includes("authentication") ||
+        (error as any).message?.includes("401")
       ) {
         return false;
       }

@@ -1,5 +1,12 @@
 import { User } from "./users-store";
 
+// Define a minimal user shape for RBAC checks to improve compatibility with different user sources
+export type MinimalUser = {
+  role?: User["role"] | string;
+  kdkanwil?: string;
+  kdkppn?: string;
+};
+
 // Define permissions for each role
 export const PERMISSIONS = {
   // Super Admin - has all permissions
@@ -177,13 +184,13 @@ export const PERMISSIONS = {
 
 // Helper function to check if user has permission
 export function hasPermission(
-  user: User | null | undefined,
+  user: MinimalUser | null | undefined,
   module: keyof typeof PERMISSIONS.super_admin,
   action: string
 ): boolean {
-  if (!user) return false;
+  if (!user || !user.role) return false;
   
-  const rolePermissions = PERMISSIONS[user.role];
+  const rolePermissions = (PERMISSIONS as any)[user.role];
   if (!rolePermissions) return false;
   
   const modulePermissions = rolePermissions[module];
@@ -193,30 +200,30 @@ export function hasPermission(
 }
 
 // Check if user can access user management
-export function canAccessUserManagement(user: User | null | undefined): boolean {
+export function canAccessUserManagement(user: MinimalUser | null | undefined): boolean {
   return hasPermission(user, "users", "view");
 }
 
 // Check if user can edit roles and locations
-export function canEditRoleAndLocation(user: User | null | undefined): boolean {
+export function canEditRoleAndLocation(user: MinimalUser | null | undefined): boolean {
   return hasPermission(user, "profile", "editRole") && hasPermission(user, "profile", "editLocation");
 }
 
 // Check if user can manage other users
-export function canManageUsers(user: User | null | undefined): boolean {
+export function canManageUsers(user: MinimalUser | null | undefined): boolean {
   return hasPermission(user, "users", "create") || 
          hasPermission(user, "users", "edit") || 
          hasPermission(user, "users", "delete");
 }
 
 // Check if user can access settings
-export function canAccessSettings(user: User | null | undefined): boolean {
+export function canAccessSettings(user: MinimalUser | null | undefined): boolean {
   return hasPermission(user, "settings", "view");
 }
 
 // Get filtered data based on user role and location
 export function filterDataByRole<T extends { kdkanwil?: string; kdkppn?: string }>(
-  user: User | null | undefined,
+  user: MinimalUser | null | undefined,
   data: T[]
 ): T[] {
   if (!user) return [];
@@ -241,7 +248,7 @@ export function filterDataByRole<T extends { kdkanwil?: string; kdkppn?: string 
 }
 
 // Get role display name with code
-export function getRoleDisplayName(role: User["role"]): string {
+export function getRoleDisplayName(role: MinimalUser["role"]): string {
   const roleNames = {
     super_admin: "Super Admin (X)",
     co_admin: "Co-Admin (0)",
@@ -249,7 +256,8 @@ export function getRoleDisplayName(role: User["role"]): string {
     kanwil_djpb: "Kanwil DJPb (2)",
     kppn: "KPPN (3)",
     lainnya: "User Lainnya (4)",
-  };
+  } as const;
   
-  return roleNames[role] || role;
+  if (!role || typeof role !== "string") return "";
+  return (roleNames as any)[role] || role;
 }

@@ -9,7 +9,7 @@ import { Suspense } from 'react';
 function UnauthorizedContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const reason = searchParams.get('reason');
+  const reason = searchParams?.get('reason') ?? undefined;
 
   const getErrorMessage = () => {
     switch (reason) {

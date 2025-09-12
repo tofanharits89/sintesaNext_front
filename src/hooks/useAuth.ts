@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiPath } from "@/lib/base-path";
+import { backendPath } from "@/lib/backend";
 import { toast } from "sonner";
 import { createQueryOptions, queryKeyFactories, cacheInvalidation } from "@/lib/query-configs";
 
@@ -28,7 +29,7 @@ export function useAuthVerification() {
   return useQuery({
     queryKey: authKeys.verify(),
     queryFn: async (): Promise<AuthResponse> => {
-      const response = await fetch(apiPath("/auth/verify"), {
+      const response = await fetch(backendPath("/auth/verify"), {
         method: "GET",
         credentials: "include",
         headers: {
@@ -107,7 +108,7 @@ export function useLogout() {
     onSuccess: () => {
       // Clear all auth-related cache using centralized invalidation
       cacheInvalidation.invalidateUser(queryClient);
-      queryClient.removeQueries({ queryKey: authKeys.all });
+      queryClient.removeQueries({ queryKey: authKeys.all() });
       
       // Redirect to login
       window.location.href = "/login";
