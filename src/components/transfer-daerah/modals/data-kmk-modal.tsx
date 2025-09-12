@@ -98,7 +98,7 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
           kdkppn: formData.kppn || undefined,
           kdpemda: formData.kabkota || undefined,
         };
-        const resp = await http.post(`/transfer-daerah/dau/kmk/penundaan`, payload);
+        const resp = await http.post(`/api/transfer-daerah/dau/kmk/penundaan`, payload);
         data = resp.data;
       } else {
         // Build multipart form data for upload (KMK DAU create)
@@ -117,7 +117,7 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
         if (formData.file) {
           fd.append("file", formData.file);
         }
-        const resp = await http.post(`/transfer-daerah/dau/kmk`, fd);
+        const resp = await http.post(`/api/transfer-daerah/dau/kmk`, fd);
         data = resp.data;
       }
       if (data?.success === false) {

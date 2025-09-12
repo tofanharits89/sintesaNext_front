@@ -15,7 +15,7 @@ export function useSatkerData(kdsatker?: string) {
       setError(null);
 
       try {
-        const resp = await http.get(`/carisatker/${kdsatker}`);
+        const resp = await http.get(`/api/satker/${kdsatker}`);
         const result = resp.data;
         if (result?.success === false) {
           throw new Error(result?.message || "Failed to fetch satker data");
@@ -51,7 +51,7 @@ export function useSatkerSearch() {
     setError(null);
 
     try {
-      const resp = await http.get(`/carisatker`, { params: { search: searchTerm } });
+      const resp = await http.get(`/api/satker`, { params: { search: searchTerm } });
       const result = resp.data;
       if (result?.success === false) {
         throw new Error(result?.message || "Failed to search satker data");

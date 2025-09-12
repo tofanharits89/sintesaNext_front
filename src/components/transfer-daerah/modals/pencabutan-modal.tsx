@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 import { KmkPenundaanListModal } from "./kmk-penundaan-list-modal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { http } from "@/lib/httpClient";
+import { apiPath } from "@/lib/base-path";
 import { useKppnByNoKmk } from "@/hooks/use-kppn-by-nokmk";
 import { useKabKotaByNoKmk } from "@/hooks/use-kabkota-by-nokmk";
 
@@ -64,7 +65,7 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
     useQuery<{ no_kmk: string }[]>({
       queryKey: ["dasar-penundaan-options"],
       queryFn: async () => {
-        const res = await http.get(`/transfer-daerah/dau/kmk/penundaan/dasar`, {
+        const res = await http.get(apiPath(`/transfer-daerah/dau/kmk/penundaan/dasar`), {
           signal: AbortSignal.timeout(20000),
         });
         const json = res.data;
@@ -109,7 +110,7 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
         uraiancabut: formData.uraianKmk?.trim() || null,
         // kdkppn and kdpemda are optional for pencabutan save
       };
-      const res = await http.post(`/transfer-daerah/dau/kmk/penundaan`, payload, {
+      const res = await http.post(apiPath(`/transfer-daerah/dau/kmk/penundaan`), payload, {
         signal: AbortSignal.timeout(20000),
       });
       const json = res.data;

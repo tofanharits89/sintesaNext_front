@@ -35,7 +35,7 @@ export function WhatsappQrModal({ open, onOpenChange }: WhatsappQrModalProps) {
 
   async function fetchStatus() {
     try {
-      const resp = await http.get(`/whatsapp/status`);
+      const resp = await http.get(`/api/whatsapp/status`);
       const data = resp.data;
       if (data?.success === false) throw new Error(data?.error || "Gagal memeriksa status");
       setStatus(data?.data || null);
@@ -49,7 +49,7 @@ export function WhatsappQrModal({ open, onOpenChange }: WhatsappQrModalProps) {
   async function fetchQr() {
     setLoading(true);
     try {
-      const resp = await http.get(`/whatsapp/qr`);
+      const resp = await http.get(`/api/whatsapp/qr`);
       const data = resp.data;
       if (!data?.success) throw new Error(data?.error || "QR tidak tersedia");
       setQrText(data?.data?.qr || null);

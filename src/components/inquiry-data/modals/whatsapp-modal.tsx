@@ -67,7 +67,7 @@ export function WhatsappModal({
     if (!open) return;
     (async () => {
       try {
-        const resp = await http.get(`/whatsapp/status`);
+        const resp = await http.get(`/api/whatsapp/status`);
         const data = resp.data;
         setShowQr(!(data?.success && data?.data?.authenticated));
       } catch {
@@ -80,7 +80,7 @@ export function WhatsappModal({
     if (!selectedFileType || !phone) return;
     // If not authenticated, open QR modal instead of sending
     try {
-      const respStatus = await http.get(`/whatsapp/status`);
+      const respStatus = await http.get(`/api/whatsapp/status`);
       const statusData = respStatus.data;
       const isAuthenticated = Boolean(
         statusData?.success && statusData?.data?.authenticated
@@ -101,7 +101,7 @@ export function WhatsappModal({
         let becameReady = false;
         for (let i = 0; i < maxAttempts; i++) {
           await new Promise((r) => setTimeout(r, delayMs));
-          const resp = await http.get(`/whatsapp/status`);
+          const resp = await http.get(`/api/whatsapp/status`);
           const d = resp.data;
           const readyNow = Boolean(d?.success && d?.data?.ready);
           const authNow = Boolean(d?.success && d?.data?.authenticated);
@@ -138,7 +138,7 @@ export function WhatsappModal({
       );
       const encryptedQuery = encryptQuery(sqlQuery);
 
-      const resp = await http.post(`/whatsapp/send`, {
+      const resp = await http.post(`/api/whatsapp/send`, {
         encryptedQuery,
         fileType: selectedFileType === "excel" ? "excel" : "csv",
         phone,
