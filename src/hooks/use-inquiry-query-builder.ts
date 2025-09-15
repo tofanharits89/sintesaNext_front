@@ -357,7 +357,62 @@ export function useInquiryQueryBuilder() {
               (needsJoinForSelect || needsJoinForWhere)
             ) {
               // Add the additional columns from register reference table
-              selectColumns.push(`${alias}.register AS register_kode`);
+              // Use pre-normalized register column for better performance
+              selectColumns.push(`main.register_normalized AS register_kode`);
+
+              // Add kdctarik from m_detail_harian_part table when register filter is selected (except when uraian only)
+              const year = reportParams.tahun || new Date().getFullYear();
+              const detailAlias = "detail_ref";
+              const detailJoinTable = `monev${year}.m_detail_harian_part_${year}`;
+
+              if (!joinedTables.has(detailAlias)) {
+                joinTables.push(
+                  `LEFT JOIN (
+                    SELECT 
+                      COALESCE(NULLIF(register, ''), 'EMPTY') AS register_normalized,
+                      MAX(kdctarik) AS kdctarik
+                    FROM ${detailJoinTable}
+                    GROUP BY COALESCE(NULLIF(register, ''), 'EMPTY')
+                  ) AS ${detailAlias} ON main.register_normalized = ${detailAlias}.register_normalized`
+                );
+                joinedTables.add(detailAlias);
+              }
+
+              // Add kdctarik with COALESCE for records without register (default to 0)
+              if (jenisTampilan !== "uraian") {
+                selectColumns.push(
+                  `COALESCE(MAX(${detailAlias}.kdctarik), 0) AS kdctarik`
+                );
+              }
+
+              // Add LEFT JOIN to t_ctarik table for uraian when needed
+              if (
+                jenisTampilan === "uraian" ||
+                jenisTampilan === "kode_uraian"
+              ) {
+                const ctarikAlias = "ctarik_ref";
+                const ctarikJoinTable = `dbref.t_ctarik_${year}`;
+
+                if (!joinedTables.has(ctarikAlias)) {
+                  joinTables.push(
+                    `LEFT JOIN ${ctarikJoinTable} AS ${ctarikAlias} ON COALESCE(${detailAlias}.kdctarik, 0) = ${ctarikAlias}.kdctarik`
+                  );
+                  joinedTables.add(ctarikAlias);
+                }
+
+                // Add uraian column from ctarik table
+                if (jenisTampilan === "uraian") {
+                  selectColumns.push(
+                    `${ctarikAlias}.nmctarik AS kdctarik_uraian`
+                  );
+                } else if (jenisTampilan === "kode_uraian") {
+                  selectColumns.push(
+                    `${ctarikAlias}.nmctarik AS kdctarik_uraian`
+                  );
+                }
+              }
+
+              // Add remaining register reference table columns
               selectColumns.push(`${alias}.nonpln AS nonpln`);
               selectColumns.push(`${alias}.kdvalas AS kdvalas`);
               selectColumns.push(`${alias}.tglnpln AS tglnpln`);
@@ -366,7 +421,40 @@ export function useInquiryQueryBuilder() {
               selectColumns.push(`${alias}.nmdonor AS nmdonor`);
               selectColumns.push(`${alias}.jmlpnrk AS jmlpnrk`);
               selectColumns.push(`${alias}.closingdate AS closingdate`);
-            } else {
+            } else if (filterKey === "register") {
+              // Add register_kode first, then kdctarik from m_detail_harian_part table when register filter is selected (even without JOIN)
+              // Use pre-normalized register column for better performance
+              selectColumns.push(`main.register_normalized AS ${filterKey}_kode`);
+
+              const year = reportParams.tahun || new Date().getFullYear();
+              const detailAlias = "detail_ref";
+              const detailJoinTable = `monev${year}.m_detail_harian_part_${year}`;
+
+              if (!joinedTables.has(detailAlias)) {
+                joinTables.push(
+                  `LEFT JOIN (
+                    SELECT 
+                      COALESCE(NULLIF(register, ''), 'EMPTY') AS register_normalized,
+                      MAX(kdctarik) AS kdctarik
+                    FROM ${detailJoinTable}
+                    GROUP BY COALESCE(NULLIF(register, ''), 'EMPTY')
+                  ) AS ${detailAlias} ON main.register_normalized = ${detailAlias}.register_normalized`
+                );
+                joinedTables.add(detailAlias);
+              }
+
+              // Add kdctarik with COALESCE for records without register (default to 0)
+              if (jenisTampilan !== "uraian") {
+                selectColumns.push(
+                  `COALESCE(MAX(${detailAlias}.kdctarik), 0) AS kdctarik`
+                );
+              }
+            }
+
+            if (
+              filterKey !== "register" ||
+              !(needsJoinForSelect || needsJoinForWhere)
+            ) {
               switch (jenisTampilan) {
                 case "kode":
                   // Special handling for akun filter with different types
@@ -394,8 +482,8 @@ export function useInquiryQueryBuilder() {
                     selectColumns.push(
                       `LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`
                     );
-                  } else {
-                    // Only use main table column, no JOIN needed for SELECT
+                  } else if (filterKey !== "register") {
+                    // Only use main table column, no JOIN needed for SELECT (exclude register as it's handled separately)
                     selectColumns.push(
                       `main.${config.columnName} AS ${filterKey}_kode`
                     );
@@ -890,6 +978,9 @@ export function useInquiryQueryBuilder() {
           addGroupBy(`LEFT(main.${config.columnName}, 4)`);
         } else if (filterKey === "jenisBelanja") {
           addGroupBy(`LEFT(main.${config.columnName}, 2)`);
+        } else if (filterKey === "register") {
+          // Use pre-normalized register column for better performance on large datasets
+          addGroupBy(`main.register_normalized`);
         } else {
           addGroupBy(`main.${config.columnName}`);
         }
@@ -907,6 +998,10 @@ export function useInquiryQueryBuilder() {
 
           // Special handling for register filter - add all additional columns to GROUP BY
           if (filterKey === "register") {
+            // Always add detail_ref columns when register filter is selected (except register and kdctarik to avoid duplication)
+            const detailAlias = "detail_ref";
+            // Note: Removed ${detailAlias}.register and ${detailAlias}.kdctarik from GROUP BY
+
             // Check if we need to join (either for SELECT or WHERE with mengandung kata)
             const mengandungKata = filterValue?.mengandungKata;
             const needsJoinForWhere = mengandungKata && mengandungKata.trim();
@@ -914,7 +1009,7 @@ export function useInquiryQueryBuilder() {
               jenisTampilan === "uraian" || jenisTampilan === "kode_uraian";
 
             if (needsJoinForSelect || needsJoinForWhere) {
-              addGroupBy(`${alias}.register`);
+              // Note: Removed ${alias}.register to avoid duplicate grouping with main.register
               addGroupBy(`${alias}.nonpln`);
               addGroupBy(`${alias}.kdvalas`);
               addGroupBy(`${alias}.tglnpln`);
@@ -924,6 +1019,9 @@ export function useInquiryQueryBuilder() {
               addGroupBy(`${alias}.jmlpnrk`);
               addGroupBy(`${alias}.closingdate`);
             }
+
+            // Note: Removed ctarik_ref.kdctarik from GROUP BY to avoid duplicate rows
+            // The LEFT JOIN will still provide the uraian values in SELECT, but we don't group by kdctarik
           }
           // Note: We don't add uraian columns to GROUP BY to avoid duplicate rows
           // when multiple uraian values exist for the same kode (e.g., unit eselon 1)
@@ -979,10 +1077,28 @@ export function useInquiryQueryBuilder() {
           reportParams
         );
 
-        // Build the complete query
-        let query = `SELECT\n  ${selectColumns.join(
-          ",\n  "
-        )}\nFROM ${mainTable} AS main`;
+        // Check if register filter is active to determine if we need pre-normalization
+        const hasRegisterFilter = activeFilters.includes('register');
+        
+        // Build the complete query with pre-normalization for register column when needed
+        let query;
+        if (hasRegisterFilter) {
+          // Use pre-normalized subquery for better performance on large datasets
+          query = `SELECT
+  ${selectColumns.join(
+            ",\n  "
+          )}\nFROM (
+  SELECT *,
+    COALESCE(NULLIF(register, ''), 'EMPTY') AS register_normalized
+  FROM ${mainTable}
+) AS main`;
+        } else {
+          // Standard query without pre-normalization
+          query = `SELECT
+  ${selectColumns.join(
+            ",\n  "
+          )}\nFROM ${mainTable} AS main`;
+        }
 
         // Add JOINs
         if (joinTables.length > 0) {
