@@ -4,6 +4,9 @@ import { backendPath } from "@/lib/backend";
 export async function POST(request: NextRequest) {
   try {
     const cookie = request.headers.get("cookie") || "";
+    // Forward CSRF headers if present so backend CSRF middleware can validate
+    const csrfHeader = request.headers.get("x-csrf-token");
+    const xsrfHeader = request.headers.get("x-xsrf-token");
     if (!cookie) {
       return NextResponse.json(
         { success: false, message: "No session" },
@@ -18,6 +21,8 @@ export async function POST(request: NextRequest) {
       headers: {
         "Content-Type": "application/json",
         ...(cookie ? { cookie } : {}),
+        ...(csrfHeader ? { "X-CSRF-Token": csrfHeader } : {}),
+        ...(xsrfHeader ? { "X-XSRF-TOKEN": xsrfHeader } : {}),
       },
       body: JSON.stringify(body),
     });

@@ -184,29 +184,7 @@ export function FilterCard({
 
   // Sync internal state with external currentFilterValue (for loading saved queries)
   useEffect(() => {
-    console.log(`[FilterCard-${filterKey}] useEffect triggered:`, {
-      currentFilterValue,
-      hasCurrentFilterValue: !!currentFilterValue,
-      currentSelection: currentFilterValue?.selection,
-      currentFilterValueType: typeof currentFilterValue,
-      currentFilterValueKeys: currentFilterValue
-        ? Object.keys(currentFilterValue)
-        : [],
-      filterDataSelection: filterData.selection,
-    });
-
     if (currentFilterValue) {
-      console.log(
-        `[FilterCard-${filterKey}] Updating internal state from:`,
-        filterData.selection,
-        "to:",
-        currentFilterValue.selection
-      );
-      console.log(
-        `[FilterCard-${filterKey}] Full currentFilterValue:`,
-        currentFilterValue
-      );
-
       setFilterData((prev) => {
         const newState = {
           ...prev,
@@ -217,7 +195,6 @@ export function FilterCard({
           jenisTampilan: currentFilterValue.jenisTampilan ?? prev.jenisTampilan,
           akunType: currentFilterValue.akunType ?? prev.akunType,
         };
-        console.log(`[FilterCard-${filterKey}] New internal state:`, newState);
         return newState;
       });
       // Mark that we initialized from a saved query so dependency clearing can skip once

@@ -66,6 +66,7 @@ export class SocketClient {
     this.handleDisconnect = this.handleDisconnect.bind(this);
     this.handleConnectError = this.handleConnectError.bind(this);
     this.handleError = this.handleError.bind(this);
+    this.handleSessionExpired = this.handleSessionExpired.bind(this);
 
     if (this.config.autoConnect) {
       if (typeof window !== "undefined") {
@@ -158,6 +159,7 @@ export class SocketClient {
     this.socket.on("disconnect", this.handleDisconnect);
     this.socket.on("connect_error", this.handleConnectError);
     this.socket.on("error", this.handleError);
+    this.socket.on("session:expired", this.handleSessionExpired);
 
     // Re-attach any previously registered custom listeners after (re)connect
     this.rebindRegisteredListeners();
@@ -190,6 +192,7 @@ export class SocketClient {
       this.socket.off("disconnect", this.handleDisconnect);
       this.socket.off("connect_error", this.handleConnectError);
       this.socket.off("error", this.handleError);
+      this.socket.off("session:expired", this.handleSessionExpired);
 
       this.eventListenersAttached = false;
       this.log("Event listeners removed");
@@ -256,6 +259,27 @@ export class SocketClient {
    */
   private handleError(error: Error): void {
     this.logError("Socket error:", error);
+
+    // Some servers may emit structured error envelopes
+    const anyErr: any = error as any;
+    const code = anyErr?.code || anyErr?.error?.code || anyErr?.reason;
+    const message = anyErr?.message || anyErr?.error?.message;
+
+    if (code === "SESSION_EXPIRED" || code === "SESSION_REVOKED") {
+      // Treat as auth failure and trigger re-auth flow
+      this.setState("auth_failed");
+      toast.error("Session expired", {
+        description: message || "Please sign in again.",
+      });
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("socket:auth-required"));
+      }
+      // Disconnect to avoid noisy retries with invalid session
+      this.socket?.disconnect();
+      return;
+    }
+
     this.setState("error");
   }
 
@@ -526,6 +550,26 @@ export class SocketClient {
 
     this.reconnectionManager.cleanup();
     this.setState("disconnected");
+  }
+
+  /**
+   * Handle explicit session expiration event from server
+   */
+  private handleSessionExpired(payload: any): void {
+    this.log("Session expired event received", payload);
+    this.setState("auth_failed");
+
+    const reason = payload?.reason || "Session expired";
+    toast.error("Session expired", {
+      description: payload?.message || reason,
+    });
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("socket:auth-required", { detail: payload }));
+    }
+
+    // Proactively disconnect
+    this.socket?.disconnect();
   }
 }
 

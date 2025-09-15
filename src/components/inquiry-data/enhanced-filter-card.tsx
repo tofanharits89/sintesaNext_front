@@ -124,14 +124,6 @@ export function EnhancedFilterCard({
   // Extract current filter's values for this specific filter
   const currentFilterValue = activeFilterValues[filterKey];
 
-  console.log(`[EnhancedFilterCard-${filterKey}] Rendering with:`, {
-    activeFilterValues: Object.keys(activeFilterValues),
-    currentFilterValue,
-    currentSelection: currentFilterValue?.selection,
-    hasCurrentFilterValue: !!currentFilterValue,
-    filterValueKeys: currentFilterValue ? Object.keys(currentFilterValue) : [],
-  });
-
   return (
     <FilterCard
       filterKey={filterKey}
