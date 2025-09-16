@@ -1,4 +1,4 @@
-import { getAllMandatoryFilterKeys } from "./categoryRegistry";
+import { SCOPE_EXCLUSIONS_BASE, getBelanjaDynamicExclusions } from "./scopeFilterConfig";
 
 export type JenisTampilan =
   | "kode"
@@ -707,100 +707,19 @@ export const getAvailableFiltersForScope = (
 ): string[] => {
   const allUIFilters = getUIFilters().map((f) => f.key);
 
-  // Define scope-specific exclusions
-  const scopeExclusions: Record<string, string[]> = {
-    // Hide specific tematik filters from Belanja per request
-    belanja: [
-      "cutOff", // Hide cut off switch on Belanja page
-      "belanjaPemerintah", // Bantuan Pemerintah
-      "mbgIntervensi", // Makan Bergizi Gratis
-      "swasembadaPangan", // Swasembada Pangan
-      "jenisProgramStrategis", // Program Strategis (not used on Belanja page)
-      "komponen", // RKAKL Detail specific
-      "subKomponen", // RKAKL Detail specific
-      "item", // RKAKL Detail specific
-      "jenisBlokir", // RKAKL Detail specific
-    ],
-    tematik: [
-      "register",
-      "kemiskinanEkstrim",
-      "belanjaPemilu",
-      "ibuKotaNusantara",
-      "ketahananPangan",
-      "swasembadaPangan",
-      "belanjaPemerintah",
-      "komponen", // RKAKL Detail specific
-      "subKomponen", // RKAKL Detail specific
-      "item", // RKAKL Detail specific
-      "jenisBlokir", // RKAKL Detail specific
-    ], // Exclude switches from Tematik page
-    rkakl_detail: [
-      "cutOff", // No cutOff needed for RKAKL Detail since no realisasi
-      // "register" filter restored for RKAKL Detail scope
-      "kemiskinanEkstrim",
-      "belanjaPemilu",
-      "ibuKotaNusantara",
-      "ketahananPangan",
-      "swasembadaPangan",
-      "belanjaPemerintah",
-      "mbgIntervensi",
-      "jenisProgramStrategis",
-      "jenisPn",
-      "programPrioritas",
-      "kegiatanPrioritas",
-      "proyekPrioritas",
-      "jenisMajorProject",
-      "jenisInflasiIntervensi",
-      "jenisInflasiPengeluaran",
-      "stuntingIntervensi",
-      "jenisTemaAnggaran",
-    ], // RKAKL Detail scope excludes cutOff and all tematik filters
-    general: [], // General scope has all filters
-  };
+  // Base exclusions from centralized config
+  const baseExclusions = SCOPE_EXCLUSIONS_BASE[scope] || [];
 
-  // Base exclusions
+  // Dynamic exclusions (currently only Belanja has dynamic rules)
+  const dynamicExclusions =
+    scope === "belanja" ? getBelanjaDynamicExclusions(options?.tipeLaporan) : [];
+
+  // Aggregate exclusions preserving previous behavior
   const filtersToExclude: string[] = [
-    ...(scopeExclusions[scope] || []),
+    ...baseExclusions,
     ...excludeFilters,
+    ...dynamicExclusions,
   ];
-
-  // Additional rule: On Belanja page, conditional visibility based on tipe laporan
-  if (scope === "belanja") {
-    const tipe = options?.tipeLaporan;
-
-    if (tipe === "volume_output_kegiatan") {
-      // For tipe 7, hide these filters: akun, sumberDana, register
-      const hideOnTipe7 = ["akun", "sumberDana", "register"];
-      hideOnTipe7.forEach((k) => {
-        if (!filtersToExclude.includes(k)) {
-          filtersToExclude.push(k);
-        }
-      });
-    } else {
-      // For non-tipe 7:
-      // 1) Hide all tematik mandatory filters (PN/MP/Inflasi/Stunting/MBG, etc.)
-      const tematikMandatoryKeys = getAllMandatoryFilterKeys();
-      for (const k of tematikMandatoryKeys) {
-        if (!filtersToExclude.includes(k)) {
-          filtersToExclude.push(k);
-        }
-      }
-
-      // 2) Also hide switch-type tematik filters from Belanja unless tipe 7:
-      //    kemiskinanEkstrim, belanjaPemilu, ibuKotaNusantara, ketahananPangan
-      const tematikSwitchesToHide = [
-        "kemiskinanEkstrim",
-        "belanjaPemilu",
-        "ibuKotaNusantara",
-        "ketahananPangan",
-      ];
-      tematikSwitchesToHide.forEach((k) => {
-        if (!filtersToExclude.includes(k)) {
-          filtersToExclude.push(k);
-        }
-      });
-    }
-  }
 
   return allUIFilters.filter(
     (filterKey) => !filtersToExclude.includes(filterKey)
@@ -815,7 +734,7 @@ export const getAvailableFiltersForScope = (
  */
 export const isFilterAvailableInScope = (
   filterKey: string,
-  scope: "belanja" | "tematik" | "general" = "general"
+  scope: "belanja" | "tematik" | "general" | "rkakl_detail" = "general"
 ): boolean => {
   const availableFilters = getAvailableFiltersForScope(scope);
   return availableFilters.includes(filterKey);
@@ -829,7 +748,7 @@ export const isFilterAvailableInScope = (
  */
 export const validateFiltersForScope = (
   activeFilters: string[],
-  scope: "belanja" | "tematik" | "general"
+  scope: "belanja" | "tematik" | "general" | "rkakl_detail"
 ): { isValid: boolean; incompatibleFilters: string[] } => {
   const availableFilters = getAvailableFiltersForScope(scope);
   const incompatibleFilters = activeFilters.filter(

@@ -13,7 +13,10 @@ import { Input } from "@/components/ui/input";
 import { Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { PenundaanTable } from "./_penundaan-table";
 import { ConfirmationModals } from "@/components/ui/confirmation-modal";
-import { useKmkPotongan } from "@/hooks/use-kmk-potongan";
+import { useKmkPotongan, RawPotonganItem } from "@/hooks/use-kmk-potongan";
+import { backendPath } from "@/lib/backend";
+import { getAuthTokenFromCookie } from "@/utils/auth-utils";
+import { addCsrfToHeaders } from "@/utils/csrf-utils";
 
 interface DataPenundaanModalProps {
   open: boolean;
@@ -44,7 +47,7 @@ export function DataPenundaanModal({
       : data?.tahun != null
       ? String(data.tahun)
       : undefined;
-  const { rows, isLoading, error, grandTotal } = useKmkPotongan(
+  const { rows, isLoading, error, grandTotal, mutate } = useKmkPotongan(
     resolvedNoKmk,
     resolvedThang,
     open
@@ -74,9 +77,36 @@ export function DataPenundaanModal({
     [filteredRows, startIndex, endIndex]
   );
 
-  const handleDelete = async (item: any) => {
-    // TODO: Wire up actual delete API for penundaan item
-    console.log("Deleting penundaan item:", item);
+  const handleDelete = async (item: RawPotonganItem) => {
+    try {
+      const id = item?.id;
+      if (!id) throw new Error("ID penundaan tidak ditemukan");
+
+      const token = getAuthTokenFromCookie();
+      const headers: HeadersInit = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const headersWithCsrf = addCsrfToHeaders(headers);
+
+      const url = backendPath(`/transfer-daerah/dau/kmk/penundaan/${encodeURIComponent(String(id))}`);
+      const resp = await fetch(url, {
+        method: "DELETE",
+        headers: headersWithCsrf,
+        credentials: "include",
+      });
+      if (!resp.ok) {
+        let msg = `HTTP ${resp.status}`;
+        try {
+          const j = await resp.json();
+          msg = j?.message || j?.error || msg;
+        } catch {}
+        throw new Error(msg);
+      }
+      // refresh list
+      await mutate();
+    } catch (e) {
+      console.error("Delete penundaan failed", e);
+      alert(`Gagal menghapus data penundaan: ${String((e as any)?.message || e)}`);
+    }
   };
 
   return (
@@ -119,7 +149,7 @@ export function DataPenundaanModal({
               <div className="flex-1 min-h-0">
                 <PenundaanTable
                   rows={paginatedRows}
-                  renderActions={(r: any) => (
+                  renderActions={(r: RawPotonganItem) => (
                     <ConfirmationModals.Delete
                       trigger={
                         <Button

@@ -3,7 +3,7 @@ import { backendPath } from "@/lib/backend";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
+  ctx: { params: Promise<{ path: string[] }> }
 ) {
   try {
     const cookie = request.headers.get("cookie") || "";
@@ -13,7 +13,7 @@ export async function GET(
         { status: 401 }
       );
     }
-    const { path } = await params;
+    const { path } = await ctx.params;
     const segments = (path || []).join("/");
     const url = new URL(backendPath(`/transfer-daerah/${segments}`));
     const { searchParams } = new URL(request.url);
@@ -36,7 +36,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
+  ctx: { params: Promise<{ path: string[] }> }
 ) {
   try {
     const cookie = request.headers.get("cookie") || "";
@@ -46,7 +46,7 @@ export async function POST(
         { status: 401 }
       );
     }
-    const { path } = await params;
+    const { path } = await ctx.params;
     const segments = (path || []).join("/");
     const url = new URL(backendPath(`/transfer-daerah/${segments}`));
     

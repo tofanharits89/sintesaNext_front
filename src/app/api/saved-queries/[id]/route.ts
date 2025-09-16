@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { backendPath } from "@/lib/backend";
 
 // PUT /v3/next/api/saved-queries/[id] -> proxies to backend PUT /api/v1/saved-queries/:id
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const cookie = request.headers.get("cookie") || "";
   if (!cookie) {
     return NextResponse.json(
@@ -14,7 +14,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   const csrf = request.headers.get("x-csrf-token");
   const body = await request.json().catch(() => ({}));
 
-  const resp = await fetch(backendPath(`/saved-queries/${params.id}`), {
+  const { id } = await ctx.params;
+  const resp = await fetch(backendPath(`/saved-queries/${id}`), {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -28,7 +29,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 // DELETE /v3/next/api/saved-queries/[id] -> proxies to backend DELETE /api/v1/saved-queries/:id
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const cookie = request.headers.get("cookie") || "";
   if (!cookie) {
     return NextResponse.json(
@@ -39,7 +40,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 
   const csrf = request.headers.get("x-csrf-token");
 
-  const resp = await fetch(backendPath(`/saved-queries/${params.id}`), {
+  const { id: delId } = await ctx.params;
+  const resp = await fetch(backendPath(`/saved-queries/${delId}`), {
     method: "DELETE",
     headers: {
       ...(cookie ? { cookie } : {}),

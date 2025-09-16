@@ -227,6 +227,77 @@ export function useInquiryQueryBuilder() {
       const joinedTables = new Set<string>(); // Track which tables we've already joined
       const cfg = getReportTypeConfig(reportParams.tipeLaporan);
 
+      // Helper to build SELECT columns and JOINs for the `register` filter.
+      // This preserves the exact ordering and semantics of the previous inline logic.
+      const buildRegisterSelectAndJoins = (
+        params: {
+          jenisTampilan: "kode" | "kode_uraian" | "uraian" | "jangan_tampilkan";
+          includeRefColumns: boolean; // when true, also include ctarik join for uraian and ref table extra columns
+          refAlias?: string; // alias to the register reference table (when includeRefColumns is true)
+        }
+      ) => {
+        const { jenisTampilan, includeRefColumns, refAlias } = params;
+
+        // 1) Always include normalized register code first
+        selectColumns.push(`main.register_normalized AS register_kode`);
+
+        // 2) LEFT JOIN aggregated kdctarik from m_detail_harian_{year}
+        const year = reportParams.tahun || new Date().getFullYear();
+        const detailAlias = "detail_ref";
+        const detailJoinTable = `monev${year}.m_detail_harian_${year}`;
+
+        if (!joinedTables.has(detailAlias)) {
+          joinTables.push(
+            `LEFT JOIN (
+                    SELECT 
+                      COALESCE(NULLIF(register, ''), '-') AS register_normalized,
+                      MAX(kdctarik) AS kdctarik
+                    FROM ${detailJoinTable}
+                    GROUP BY COALESCE(NULLIF(register, ''), '-')
+                  ) AS ${detailAlias} ON main.register_normalized = ${detailAlias}.register_normalized`
+          );
+          joinedTables.add(detailAlias);
+        }
+
+        // 3) Add kdctarik value when not uraian-only
+        if (jenisTampilan !== "uraian") {
+          selectColumns.push(`COALESCE(MAX(${detailAlias}.kdctarik), 0) AS kdctarik`);
+        }
+
+        // 4) If ref columns are included, add ctarik join and extra ref columns
+        if (includeRefColumns && refAlias) {
+          // Add LEFT JOIN to t_ctarik for uraian when needed
+          if (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian") {
+            const ctarikAlias = "ctarik_ref";
+            const ctarikJoinTable = `dbref.t_ctarik_${year}`;
+
+            if (!joinedTables.has(ctarikAlias)) {
+              joinTables.push(
+                `LEFT JOIN ${ctarikJoinTable} AS ${ctarikAlias} ON COALESCE(${detailAlias}.kdctarik, 0) = ${ctarikAlias}.kdctarik`
+              );
+              joinedTables.add(ctarikAlias);
+            }
+
+            // Add uraian column from ctarik table
+            if (jenisTampilan === "uraian") {
+              selectColumns.push(`${ctarikAlias}.nmctarik AS kdctarik_uraian`);
+            } else if (jenisTampilan === "kode_uraian") {
+              selectColumns.push(`${ctarikAlias}.nmctarik AS kdctarik_uraian`);
+            }
+          }
+
+          // Extra columns from register reference table
+          selectColumns.push(`${refAlias}.nonpln AS nonpln`);
+          selectColumns.push(`${refAlias}.kdvalas AS kdvalas`);
+          selectColumns.push(`${refAlias}.tglnpln AS tglnpln`);
+          selectColumns.push(`${refAlias}.kddonor AS kddonor`);
+          selectColumns.push(`${refAlias}.kdkreditor AS kdkreditor`);
+          selectColumns.push(`${refAlias}.nmdonor AS nmdonor`);
+          selectColumns.push(`${refAlias}.jmlpnrk AS jmlpnrk`);
+          selectColumns.push(`${refAlias}.closingdate AS closingdate`);
+        }
+      };
+
       // Deduplicate activeFilters to prevent duplicate SELECT columns
       const uniqueActiveFilters = Array.from(new Set(activeFilters));
 
@@ -369,6 +440,16 @@ export function useInquiryQueryBuilder() {
 
         // Add SELECT columns based on jenisTampilan (skip if jangan_tampilkan)
         if (jenisTampilan !== "jangan_tampilkan") {
+          // Special handling for 'register' filter to include kdctarik and extra columns
+          if (filterKey === "register") {
+            buildRegisterSelectAndJoins({
+              jenisTampilan,
+              includeRefColumns: Boolean(needsJoinForSelect || needsJoinForWhere),
+              refAlias: `${filterKey}_ref`,
+            });
+            return; // Skip default handling for this iteration
+          }
+
           if (config.referenceTable && config.referenceDatabase) {
             // Determine the correct name column based on filter type
             let nameColumn = config.nameColumn;
@@ -379,187 +460,43 @@ export function useInquiryQueryBuilder() {
                 nameColumn = "nmgbkpk";
               }
             }
-
-            // Special handling for register filter - add additional columns when reference table is used
-            if (
-              filterKey === "register" &&
-              (needsJoinForSelect || needsJoinForWhere)
-            ) {
-              // Add the additional columns from register reference table
-              // Use pre-normalized register column for better performance
-              selectColumns.push(`main.register_normalized AS register_kode`);
-
-              // Add kdctarik from m_detail_harian_part table when register filter is selected (except when uraian only)
-              const year = reportParams.tahun || new Date().getFullYear();
-              const detailAlias = "detail_ref";
-              const detailJoinTable = `monev${year}.m_detail_harian_${year}`;
-
-              if (!joinedTables.has(detailAlias)) {
-                joinTables.push(
-                  `LEFT JOIN (
-                    SELECT 
-                      COALESCE(NULLIF(register, ''), '-') AS register_normalized,
-                      MAX(kdctarik) AS kdctarik
-                    FROM ${detailJoinTable}
-                    GROUP BY COALESCE(NULLIF(register, ''), '-')
-                  ) AS ${detailAlias} ON main.register_normalized = ${detailAlias}.register_normalized`
-                );
-                joinedTables.add(detailAlias);
-              }
-
-              // Add kdctarik with COALESCE for records without register (default to 0)
-              if (jenisTampilan !== "uraian") {
-                selectColumns.push(
-                  `COALESCE(MAX(${detailAlias}.kdctarik), 0) AS kdctarik`
-                );
-              }
-
-              // Add LEFT JOIN to t_ctarik table for uraian when needed
-              if (
-                jenisTampilan === "uraian" ||
-                jenisTampilan === "kode_uraian"
-              ) {
-                const ctarikAlias = "ctarik_ref";
-                const ctarikJoinTable = `dbref.t_ctarik_${year}`;
-
-                if (!joinedTables.has(ctarikAlias)) {
-                  joinTables.push(
-                    `LEFT JOIN ${ctarikJoinTable} AS ${ctarikAlias} ON COALESCE(${detailAlias}.kdctarik, 0) = ${ctarikAlias}.kdctarik`
-                  );
-                  joinedTables.add(ctarikAlias);
+            switch (jenisTampilan) {
+              case "kode":
+                // Special handling for akun filter with different types
+                if (filterKey === "akun" && filterValue?.akunType === "kodeBkpk") {
+                  selectColumns.push(`LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`);
+                } else if (filterKey === "akun" && filterValue?.akunType === "jenisBelanja") {
+                  selectColumns.push(`LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`);
                 }
-
-                // Add uraian column from ctarik table
-                if (jenisTampilan === "uraian") {
-                  selectColumns.push(
-                    `${ctarikAlias}.nmctarik AS kdctarik_uraian`
-                  );
-                } else if (jenisTampilan === "kode_uraian") {
-                  selectColumns.push(
-                    `${ctarikAlias}.nmctarik AS kdctarik_uraian`
-                  );
+                // Special handling for dedicated kodeBkpk and jenisBelanja filters
+                else if (filterKey === "kodeBkpk") {
+                  selectColumns.push(`LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`);
+                } else if (filterKey === "jenisBelanja") {
+                  selectColumns.push(`LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`);
+                } else if (filterKey !== "register") {
+                  // Only use main table column, no JOIN needed for SELECT (exclude register as it's handled separately)
+                  selectColumns.push(`main.${config.columnName} AS ${filterKey}_kode`);
                 }
-              }
-
-              // Add remaining register reference table columns
-              selectColumns.push(`${alias}.nonpln AS nonpln`);
-              selectColumns.push(`${alias}.kdvalas AS kdvalas`);
-              selectColumns.push(`${alias}.tglnpln AS tglnpln`);
-              selectColumns.push(`${alias}.kddonor AS kddonor`);
-              selectColumns.push(`${alias}.kdkreditor AS kdkreditor`);
-              selectColumns.push(`${alias}.nmdonor AS nmdonor`);
-              selectColumns.push(`${alias}.jmlpnrk AS jmlpnrk`);
-              selectColumns.push(`${alias}.closingdate AS closingdate`);
-            } else if (filterKey === "register") {
-              // Add register_kode first, then kdctarik from m_detail_harian_part table when register filter is selected (even without JOIN)
-              // Use pre-normalized register column for better performance
-              selectColumns.push(
-                `main.register_normalized AS ${filterKey}_kode`
-              );
-
-              const year = reportParams.tahun || new Date().getFullYear();
-              const detailAlias = "detail_ref";
-              const detailJoinTable = `monev${year}.m_detail_harian_${year}`;
-
-              if (!joinedTables.has(detailAlias)) {
-                joinTables.push(
-                  `LEFT JOIN (
-                    SELECT 
-                      COALESCE(NULLIF(register, ''), '-') AS register_normalized,
-                      MAX(kdctarik) AS kdctarik
-                    FROM ${detailJoinTable}
-                    GROUP BY COALESCE(NULLIF(register, ''), '-')
-                  ) AS ${detailAlias} ON main.register_normalized = ${detailAlias}.register_normalized`
-                );
-                joinedTables.add(detailAlias);
-              }
-
-              // Add kdctarik with COALESCE for records without register (default to 0)
-              if (jenisTampilan !== "uraian") {
-                selectColumns.push(
-                  `COALESCE(MAX(${detailAlias}.kdctarik), 0) AS kdctarik`
-                );
-              }
-            }
-
-            if (
-              filterKey !== "register" ||
-              !(needsJoinForSelect || needsJoinForWhere)
-            ) {
-              switch (jenisTampilan) {
-                case "kode":
-                  // Special handling for akun filter with different types
-                  if (
-                    filterKey === "akun" &&
-                    filterValue?.akunType === "kodeBkpk"
-                  ) {
-                    selectColumns.push(
-                      `LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`
-                    );
-                  } else if (
-                    filterKey === "akun" &&
-                    filterValue?.akunType === "jenisBelanja"
-                  ) {
-                    selectColumns.push(
-                      `LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`
-                    );
-                  }
-                  // Special handling for dedicated kodeBkpk and jenisBelanja filters
-                  else if (filterKey === "kodeBkpk") {
-                    selectColumns.push(
-                      `LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`
-                    );
-                  } else if (filterKey === "jenisBelanja") {
-                    selectColumns.push(
-                      `LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`
-                    );
-                  } else if (filterKey !== "register") {
-                    // Only use main table column, no JOIN needed for SELECT (exclude register as it's handled separately)
-                    selectColumns.push(
-                      `main.${config.columnName} AS ${filterKey}_kode`
-                    );
-                  }
-                  break;
-                case "uraian":
-                  // Use description from joined table
-                  selectColumns.push(
-                    `${alias}.${nameColumn} AS ${filterKey}_uraian`
-                  );
-                  break;
-                case "kode_uraian":
-                  // Use both code and description
-                  if (
-                    filterKey === "akun" &&
-                    filterValue?.akunType === "kodeBkpk"
-                  ) {
-                    selectColumns.push(
-                      `LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`
-                    );
-                  } else if (
-                    filterKey === "akun" &&
-                    filterValue?.akunType === "jenisBelanja"
-                  ) {
-                    selectColumns.push(
-                      `LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`
-                    );
-                  } else if (filterKey === "kodeBkpk") {
-                    selectColumns.push(
-                      `LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`
-                    );
-                  } else if (filterKey === "jenisBelanja") {
-                    selectColumns.push(
-                      `LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`
-                    );
-                  } else {
-                    selectColumns.push(
-                      `main.${config.columnName} AS ${filterKey}_kode`
-                    );
-                  }
-                  selectColumns.push(
-                    `${alias}.${nameColumn} AS ${filterKey}_uraian`
-                  );
-                  break;
-              }
+                break;
+              case "uraian":
+                // Use description from joined table
+                selectColumns.push(`${alias}.${nameColumn} AS ${filterKey}_uraian`);
+                break;
+              case "kode_uraian":
+                // Use both code and description
+                if (filterKey === "akun" && filterValue?.akunType === "kodeBkpk") {
+                  selectColumns.push(`LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`);
+                } else if (filterKey === "akun" && filterValue?.akunType === "jenisBelanja") {
+                  selectColumns.push(`LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`);
+                } else if (filterKey === "kodeBkpk") {
+                  selectColumns.push(`LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`);
+                } else if (filterKey === "jenisBelanja") {
+                  selectColumns.push(`LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`);
+                } else {
+                  selectColumns.push(`main.${config.columnName} AS ${filterKey}_kode`);
+                }
+                selectColumns.push(`${alias}.${nameColumn} AS ${filterKey}_uraian`);
+                break;
             }
           } else {
             // No reference table, support optional nameColumn expression for uraian

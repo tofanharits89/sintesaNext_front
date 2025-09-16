@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { backendPath } from "@/lib/backend";
 
 export async function PUT(
-  request: NextRequest,
+  request: Request,
   context: { params: Promise<{ conversationId: string }> }
 ) {
   try {

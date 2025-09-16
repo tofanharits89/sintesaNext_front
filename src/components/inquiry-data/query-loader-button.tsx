@@ -35,7 +35,7 @@ interface QueryLoaderButtonProps {
   hasUnsavedChanges?: boolean;
   disabled?: boolean;
   className?: string;
-  scope?: "belanja" | "tematik" | "general";
+  scope?: "belanja" | "tematik" | "general" | "rkakl_detail";
 }
 
 const QueryLoaderButtonComponent = function QueryLoaderButton({

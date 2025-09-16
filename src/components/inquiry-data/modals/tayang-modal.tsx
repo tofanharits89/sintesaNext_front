@@ -44,7 +44,7 @@ interface TayangModalProps {
     tematikKategori?: string;
   };
   filterValues?: Record<string, FilterValue>;
-  scope?: "belanja" | "tematik" | "general";
+  scope?: "belanja" | "tematik" | "general" | "rkakl_detail";
 }
 
 export function TayangModal({

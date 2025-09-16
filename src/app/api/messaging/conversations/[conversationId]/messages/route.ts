@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { backendPath } from "@/lib/backend";
 
 export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ conversationId: string }> }
+  request: Request,
+  context: { params: Promise<Record<string, string | string[]>> }
 ) {
   try {
     const cookie = request.headers.get("cookie") || "";
@@ -14,7 +14,8 @@ export async function GET(
       );
     }
 
-    const { conversationId } = await context.params;
+    const { conversationId: convIdRaw } = await context.params;
+    const conversationId = String(convIdRaw || "");
     const { searchParams } = new URL(request.url);
     const page = searchParams.get("page");
     const limit = searchParams.get("limit");

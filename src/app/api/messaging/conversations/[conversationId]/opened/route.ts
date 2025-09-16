@@ -1,10 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { backendPath } from "@/lib/backend";
 
-export async function PUT(
-  request: NextRequest,
-  context: { params: Promise<{ conversationId: string }> }
-) {
+export async function PUT(request: Request) {
   try {
     const cookie = request.headers.get("cookie") || "";
     if (!cookie) {
@@ -14,7 +11,9 @@ export async function PUT(
       );
     }
 
-    const { conversationId } = await context.params;
+    const { pathname } = new URL(request.url);
+    const parts = pathname.split("/");
+    const conversationId = decodeURIComponent(parts[parts.indexOf("conversations") + 1] || "");
     const body = await request.json().catch(() => ({}));
 
     // Extract CSRF token from incoming cookies (set by backend as XSRF-TOKEN)

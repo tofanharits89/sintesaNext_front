@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { backendPath } from "@/lib/backend";
 
 // GET /v3/next/api/saved-queries -> proxies to backend GET /api/v1/saved-queries
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   const cookie = request.headers.get("cookie") || "";
   if (!cookie) {
     return NextResponse.json(
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /v3/next/api/saved-queries -> proxies to backend POST /api/v1/saved-queries
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   const cookie = request.headers.get("cookie") || "";
   if (!cookie) {
     return NextResponse.json(

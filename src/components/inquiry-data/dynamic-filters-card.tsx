@@ -33,7 +33,7 @@ interface DynamicFiltersCardProps {
   onClearAllFilters: () => void;
   filterValues: Record<string, FilterValue>;
   onFilterChange: (filterKey: string, field: string, value: string) => void;
-  scope?: "belanja" | "tematik" | "general"; // Add scope for query differentiation
+  scope?: "belanja" | "tematik" | "general" | "rkakl_detail"; // Add scope for query differentiation
   queryLoader?: {
     hasUnsavedChanges: boolean;
     loadQuery: (query: any) => Promise<void>;

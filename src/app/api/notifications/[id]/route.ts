@@ -4,7 +4,7 @@ import { backendPath } from "@/lib/backend";
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  ctx: { params: Promise<{ id: string }> }
 ) {
   const cookie = request.headers.get("cookie") || "";
   if (!cookie)
@@ -13,7 +13,7 @@ export async function DELETE(
       { status: 401 }
     );
 
-  const { id } = await params;
+  const { id } = await ctx.params;
   const resp = await fetch(backendPath(`/notifications/${id}`), {
     method: "DELETE",
     headers: { ...(cookie ? { cookie } : {}) },
