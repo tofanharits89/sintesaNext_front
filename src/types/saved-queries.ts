@@ -25,7 +25,7 @@ export interface SavedQuery {
   activeFilters: string[];
   filterValues: Record<string, FilterValue>;
   userId: string;
-  scope?: "belanja" | "tematik" | "general"; // New field to identify query scope
+  scope?: "belanja" | "tematik" | "general" | "rkakl_detail"; // New field to identify query scope
   createdAt: string;
   updatedAt: string;
 }
@@ -37,7 +37,7 @@ export interface CreateSavedQueryRequest {
   reportParams: ReportParams;
   activeFilters: string[];
   filterValues: Record<string, FilterValue>;
-  scope?: "belanja" | "tematik" | "general"; // New field for creating scoped queries
+  scope?: "belanja" | "tematik" | "general" | "rkakl_detail"; // New field for creating scoped queries
 }
 
 export interface UpdateSavedQueryRequest {
@@ -66,5 +66,5 @@ export interface GetSavedQueriesParams {
   page?: number;
   limit?: number;
   search?: string;
-  scope?: "belanja" | "tematik" | "general"; // Add scope for filtering queries
+  scope?: "belanja" | "tematik" | "general" | "rkakl_detail"; // Add scope for filtering queries
 }

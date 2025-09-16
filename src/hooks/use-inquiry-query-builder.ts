@@ -35,6 +35,7 @@ const TABLE_MAPPING = {
   pergerakan_blokir_bulanan: "pagu_real_detail_bulan",
   pergerakan_blokir_bulanan_per_jenis: "pa_pagu_blokir_akun_bulanan",
   volume_output_kegiatan: "pagu_output", // special-case suffix order handled in buildTableName
+  pagu_dan_blokir: "m_detail_harian", // RKAKL Detail specific table
 };
 
 import { getFilterConfigMap } from "@/components/inquiry-data/filterRegistry";
@@ -124,6 +125,12 @@ const REPORT_TYPE_REGISTRY: Record<string, ReportTypeConfig> = {
     isVolumeOutput: true,
     tableNameBuilder: (thang, baseTable) =>
       `monev${thang}.${baseTable}_${thang}_new`,
+  },
+  pagu_dan_blokir: {
+    includePaguDipa: true,
+    addBlokirAfterReal: false, // No realisasi needed for RKAKL Detail
+    tableNameBuilder: (thang, baseTable) =>
+      `monev${thang}.${baseTable}_${thang}`,
   },
 };
 
@@ -308,6 +315,28 @@ export function useInquiryQueryBuilder() {
             // A.KDPN=PR.KDPN AND A.KDPP=PR.KDPP AND A.KDKP=PR.KDKP AND A.KDPROY=PR.KDPROY
             joinCondition = `main.kdpn = ${alias}.kdpn AND main.kdpp = ${alias}.kdpp AND main.kdkp = ${alias}.kdkp AND main.${config.columnName} = ${alias}.${joinKey}`;
           }
+          // Add hierarchical JOINs for KL hierarchy filters
+          else if (filterKey === "program") {
+            // main.kddept=ref.kddept AND main.kdunit=ref.kdunit AND main.kdprogram=ref.kdprogram
+            joinCondition = `main.kddept = ${alias}.kddept AND main.kdunit = ${alias}.kdunit AND main.${config.columnName} = ${alias}.${joinKey}`;
+          } else if (filterKey === "kegiatan") {
+            // main.kddept=ref.kddept AND main.kdunit=ref.kdunit AND main.kdprogram=ref.kdprogram AND main.kdgiat=ref.kdgiat
+            joinCondition = `main.kddept = ${alias}.kddept AND main.kdunit = ${alias}.kdunit AND main.kdprogram = ${alias}.kdprogram AND main.${config.columnName} = ${alias}.${joinKey}`;
+          } else if (filterKey === "outputKro") {
+            // main.kddept=ref.kddept AND main.kdunit=ref.kdunit AND main.kdprogram=ref.kdprogram AND main.kdgiat=ref.kdgiat AND main.kdoutput=ref.kdoutput
+            joinCondition = `main.kddept = ${alias}.kddept AND main.kdunit = ${alias}.kdunit AND main.kdprogram = ${alias}.kdprogram AND main.kdgiat = ${alias}.kdgiat AND main.${config.columnName} = ${alias}.${joinKey}`;
+          } else if (filterKey === "subOutputRo") {
+            // main.kddept=ref.kddept AND main.kdunit=ref.kdunit AND main.kdprogram=ref.kdprogram AND main.kdgiat=ref.kdgiat AND main.kdoutput=ref.kdoutput AND main.kdsoutput=ref.kdsoutput
+            joinCondition = `main.kddept = ${alias}.kddept AND main.kdunit = ${alias}.kdunit AND main.kdprogram = ${alias}.kdprogram AND main.kdgiat = ${alias}.kdgiat AND main.kdoutput = ${alias}.kdoutput AND main.${config.columnName} = ${alias}.${joinKey}`;
+          }
+          // Add hierarchical JOINs for Komponen and Sub Komponen per RKAKL detail hierarchy
+          else if (filterKey === "komponen") {
+            // main.kddept=ref.kddept AND main.kdunit=ref.kdunit AND main.kdsatker=ref.kdsatker AND main.kdprogram=ref.kdprogram AND main.kdgiat=ref.kdgiat AND main.kdoutput=ref.kdoutput AND main.kdsoutput=ref.kdsoutput AND main.kdkmpnen=ref.kdkmpnen
+            joinCondition = `main.kddept = ${alias}.kddept AND main.kdunit = ${alias}.kdunit AND main.kdsatker = ${alias}.kdsatker AND main.kdprogram = ${alias}.kdprogram AND main.kdgiat = ${alias}.kdgiat AND main.kdoutput = ${alias}.kdoutput AND main.kdsoutput = ${alias}.kdsoutput AND main.${config.columnName} = ${alias}.${joinKey}`;
+          } else if (filterKey === "subKomponen") {
+            // main.kddept=ref.kddept AND main.kdunit=ref.kdunit AND main.kdsatker=ref.kdsatker AND main.kdprogram=ref.kdprogram AND main.kdgiat=ref.kdgiat AND main.kdoutput=ref.kdoutput AND main.kdsoutput=ref.kdsoutput AND main.kdkmpnen=ref.kdkmpnen AND main.kdskmpnen=ref.kdskmpnen
+            joinCondition = `main.kddept = ${alias}.kddept AND main.kdunit = ${alias}.kdunit AND main.kdsatker = ${alias}.kdsatker AND main.kdprogram = ${alias}.kdprogram AND main.kdgiat = ${alias}.kdgiat AND main.kdoutput = ${alias}.kdoutput AND main.kdsoutput = ${alias}.kdsoutput AND main.kdkmpnen = ${alias}.kdkmpnen AND main.${config.columnName} = ${alias}.${joinKey}`;
+          }
 
           // Special handling for akun filter with different types
           if (filterKey === "akun" && filterValue?.akunType) {
@@ -369,10 +398,10 @@ export function useInquiryQueryBuilder() {
                 joinTables.push(
                   `LEFT JOIN (
                     SELECT 
-                      COALESCE(NULLIF(register, ''), 'EMPTY') AS register_normalized,
+                      COALESCE(NULLIF(register, ''), '-') AS register_normalized,
                       MAX(kdctarik) AS kdctarik
                     FROM ${detailJoinTable}
-                    GROUP BY COALESCE(NULLIF(register, ''), 'EMPTY')
+                    GROUP BY COALESCE(NULLIF(register, ''), '-')
                   ) AS ${detailAlias} ON main.register_normalized = ${detailAlias}.register_normalized`
                 );
                 joinedTables.add(detailAlias);
@@ -424,7 +453,9 @@ export function useInquiryQueryBuilder() {
             } else if (filterKey === "register") {
               // Add register_kode first, then kdctarik from m_detail_harian_part table when register filter is selected (even without JOIN)
               // Use pre-normalized register column for better performance
-              selectColumns.push(`main.register_normalized AS ${filterKey}_kode`);
+              selectColumns.push(
+                `main.register_normalized AS ${filterKey}_kode`
+              );
 
               const year = reportParams.tahun || new Date().getFullYear();
               const detailAlias = "detail_ref";
@@ -434,10 +465,10 @@ export function useInquiryQueryBuilder() {
                 joinTables.push(
                   `LEFT JOIN (
                     SELECT 
-                      COALESCE(NULLIF(register, ''), 'EMPTY') AS register_normalized,
+                      COALESCE(NULLIF(register, ''), '-') AS register_normalized,
                       MAX(kdctarik) AS kdctarik
                     FROM ${detailJoinTable}
-                    GROUP BY COALESCE(NULLIF(register, ''), 'EMPTY')
+                    GROUP BY COALESCE(NULLIF(register, ''), '-')
                   ) AS ${detailAlias} ON main.register_normalized = ${detailAlias}.register_normalized`
                 );
                 joinedTables.add(detailAlias);
@@ -531,8 +562,36 @@ export function useInquiryQueryBuilder() {
               }
             }
           } else {
-            // No reference table, just use main column
-            selectColumns.push(`main.${config.columnName} AS ${filterKey}`);
+            // No reference table, support optional nameColumn expression for uraian
+            const jenisTampilan = filterValue.jenisTampilan || "kode";
+            switch (jenisTampilan) {
+              case "kode":
+                selectColumns.push(`main.${config.columnName} AS ${filterKey}`);
+                break;
+              case "uraian":
+                if (config.nameColumn) {
+                  selectColumns.push(
+                    `${config.nameColumn} AS ${filterKey}_uraian`
+                  );
+                } else {
+                  selectColumns.push(
+                    `main.${config.columnName} AS ${filterKey}_uraian`
+                  );
+                }
+                break;
+              case "kode_uraian":
+                selectColumns.push(`main.${config.columnName} AS ${filterKey}`);
+                if (config.nameColumn) {
+                  selectColumns.push(
+                    `${config.nameColumn} AS ${filterKey}_uraian`
+                  );
+                } else {
+                  selectColumns.push(
+                    `main.${config.columnName} AS ${filterKey}_uraian`
+                  );
+                }
+                break;
+            }
           }
         }
       });
@@ -581,6 +640,10 @@ export function useInquiryQueryBuilder() {
         selectColumns.push(
           `ROUND(SUM(main.pagu_dipa) / ${divisor}, 0) AS PAGU_DIPA`
         );
+      } else if (reportParams.tipeLaporan === "pagu_dan_blokir") {
+        // For RKAKL Detail report, add PAGU and BLOKIR columns
+        selectColumns.push(`ROUND(SUM(main.pagu) / ${divisor}, 0) AS PAGU`);
+        selectColumns.push(`ROUND(SUM(main.blokir) / ${divisor}, 0) AS BLOKIR`);
       } else if (!REPORTS_EXCLUDE_PAGU_DIPA.has(reportParams.tipeLaporan)) {
         // For other report types (except excluded), keep the original PAGU_DIPA column
         // Special handling for volume_output_kegiatan columns
@@ -659,6 +722,9 @@ export function useInquiryQueryBuilder() {
           );
         }
         // No REALISASI column for pergerakan_blokir_bulanan_per_jenis as it only fetches blokir data
+      } else if (reportParams.tipeLaporan === "pagu_dan_blokir") {
+        // For RKAKL Detail, no additional columns needed - PAGU and BLOKIR already added above
+        // Skip adding any realisasi columns
       } else {
         // For other report types
         // For volume_output_kegiatan, append monthly columns and OS/KET
@@ -900,6 +966,16 @@ export function useInquiryQueryBuilder() {
               `${alias}.${nameCol} LIKE '%${mengandungKata.trim()}%'`
             );
           }
+        } else if (
+          mengandungKata &&
+          mengandungKata.trim() &&
+          !config.referenceTable &&
+          config.nameColumn
+        ) {
+          // Non-reference filter with custom expression for uraian (e.g., Item)
+          whereConditions.push(
+            `${config.nameColumn} LIKE '%${mengandungKata.trim()}%'`
+          );
         }
       });
 
@@ -1078,26 +1154,22 @@ export function useInquiryQueryBuilder() {
         );
 
         // Check if register filter is active to determine if we need pre-normalization
-        const hasRegisterFilter = activeFilters.includes('register');
-        
+        const hasRegisterFilter = activeFilters.includes("register");
+
         // Build the complete query with pre-normalization for register column when needed
         let query;
         if (hasRegisterFilter) {
           // Use pre-normalized subquery for better performance on large datasets
           query = `SELECT
-  ${selectColumns.join(
-            ",\n  "
-          )}\nFROM (
+  ${selectColumns.join(",\n  ")}\nFROM (
   SELECT *,
-    COALESCE(NULLIF(register, ''), 'EMPTY') AS register_normalized
+    COALESCE(NULLIF(register, ''), '-') AS register_normalized
   FROM ${mainTable}
 ) AS main`;
         } else {
           // Standard query without pre-normalization
           query = `SELECT
-  ${selectColumns.join(
-            ",\n  "
-          )}\nFROM ${mainTable} AS main`;
+  ${selectColumns.join(",\n  ")}\nFROM ${mainTable} AS main`;
         }
 
         // Add JOINs

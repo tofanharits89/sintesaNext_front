@@ -94,6 +94,7 @@ const defaultMenu: MenuItem[] = [
     children: [
       { label: "Belanja" },
       { label: "Tematik" },
+      { label: "RKAKL Detail" },
     ],
   },
   {
@@ -212,6 +213,8 @@ export function ResponsiveSidebar({
       case "Inquiry Data__Belanja":
         return <Database className={cls} />;
       case "Inquiry Data__Tematik":
+        return <Database className={cls} />;
+      case "Inquiry Data__RKAKL Detail":
         return <Database className={cls} />;
       case "Laporan__Bulanan":
         return <Calendar className={cls} />;
@@ -506,6 +509,24 @@ export function ResponsiveSidebar({
                               <span>{c.label}</span>
                             </Link>
                           </DropdownMenuItem>
+                        ) : c.label === "RKAKL Detail" &&
+                          m.label === "Inquiry Data" ? (
+                          <DropdownMenuItem key={c.label} asChild>
+                            <Link
+                              href="/inquiry-data/rkakl-detail"
+                              className="flex items-center w-full"
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/inquiry-data/rkakl-detail",
+                                })
+                              }
+                            >
+                              {subIconFor(m.label, c.label)}
+                              <span>{c.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem
                             key={c.label}
@@ -747,6 +768,25 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/inquiry-data/tematik",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "RKAKL Detail" && m.label === "Inquiry Data" ? (
+                      <Link
+                        key={c.label}
+                        href="/inquiry-data/rkakl-detail"
+                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/inquiry-data/rkakl-detail",
                           });
                           setOpen(false);
                         }}

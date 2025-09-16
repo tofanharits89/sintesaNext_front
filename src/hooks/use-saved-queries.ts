@@ -119,7 +119,7 @@ const fetcher = async (url: string) => {
  */
 export function useSavedQueries(
   params: GetSavedQueriesParams & {
-    scope?: "belanja" | "tematik" | "general";
+    scope?: "belanja" | "tematik" | "general" | "rkakl_detail";
   } = {}
 ) {
   // Stabilize params to prevent infinite loops
@@ -127,7 +127,7 @@ export function useSavedQueries(
     () =>
       {
         // sanitize inputs before creating a stable ref
-        const allowedScopes = ["belanja", "tematik", "general"] as const;
+        const allowedScopes = ["belanja", "tematik", "general", "rkakl_detail"] as const;
         const rawPage = typeof params.page === "number" ? params.page : undefined;
         const rawLimit = typeof params.limit === "number" ? params.limit : undefined;
         const safePage = rawPage && Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
@@ -250,19 +250,28 @@ export function useSavedQueries(
           console.log("[useSavedQueries] Making request to:", url);
           console.log("[useSavedQueries] Request payload:", arg);
 
-          const result = await apiClient.post<any>("/saved-queries", arg, {
-            timeout: 15000,
-          });
+          try {
+            const result = await apiClient.post<any>("/saved-queries", arg, {
+              timeout: 15000,
+            });
+            console.log("[useSavedQueries] API response:", result);
 
-          // Backend returns wrapped response: { success: true, data }
-          if (result && result.success && result.data) {
-            return result.data as SavedQuery;
+            // Backend returns wrapped response: { success: true, data }
+            if (result && result.success && result.data) {
+              console.log("[useSavedQueries] Returning data:", result.data);
+              return result.data as SavedQuery;
+            }
+            console.log("[useSavedQueries] Returning full result:", result);
+            return result as SavedQuery;
+          } catch (apiError) {
+            console.error("[useSavedQueries] API call failed:", apiError);
+            throw apiError;
           }
-          return result as SavedQuery;
         }),
         "save",
         { showToast: false }
       );
+      console.log("[useSavedQueries] Final result from retrySavedQueryOperation:", res);
       return res as SavedQuery;
     },
     {
@@ -435,17 +444,22 @@ export function useSavedQueries(
   const createQuery = useCallback(
     async (queryData: CreateSavedQueryRequest): Promise<SavedQuery> => {
       try {
+        console.log("[useSavedQueries] Creating query with data:", queryData);
         const result = await createQueryMutation.trigger(queryData);
+        console.log("[useSavedQueries] Create query result:", result);
         if (!result) {
+          console.error("[useSavedQueries] No result received from createQueryMutation.trigger");
+          console.error("[useSavedQueries] Mutation error:", createQueryMutation.error);
           throw new Error("Failed to create query - no response received");
         }
         return result;
       } catch (error) {
         console.error("[useSavedQueries] Create query failed:", error);
+        console.error("[useSavedQueries] Mutation error:", createQueryMutation.error);
         throw error;
       }
     },
-    [createQueryMutation.trigger]
+    [createQueryMutation.trigger, createQueryMutation.error]
   );
 
   const updateQuery = useCallback(

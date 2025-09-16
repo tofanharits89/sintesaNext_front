@@ -562,9 +562,50 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
     },
   },
   {
+    key: "komponen",
+    label: "Komponen",
+    order: 19,
+    showInUI: true,
+    query: {
+      columnName: "kdkmpnen",
+      reference: {
+        database: "dbref",
+        table: "dipa_kmpnen",
+        joinKey: "kdkmpnen",
+        nameColumn: "urkmpnen",
+      },
+    },
+  },
+  {
+    key: "subKomponen",
+    label: "Sub Komponen",
+    order: 20,
+    showInUI: true,
+    query: {
+      columnName: "kdskmpnen",
+      reference: {
+        database: "dbref",
+        table: "dipa_skmpnen",
+        joinKey: "kdskmpnen",
+        nameColumn: "urskmpnen",
+      },
+    },
+  },
+  {
+    key: "item",
+    label: "Item",
+    order: 21,
+    showInUI: true,
+    query: {
+      columnName: "noitem",
+      nameColumn:
+        "CONCAT(CONVERT(main.nmitem USING utf8), ' ( VOL : ', main.volkeg, ' ', CONVERT(main.satkeg USING utf8), ' x ', FORMAT(main.hargasat, 0), ')' )",
+    },
+  },
+  {
     key: "register",
     label: "Register",
-    order: 19,
+    order: 22,
     showInUI: true,
     query: {
       columnName: "register",
@@ -573,6 +614,21 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
         table: "t_register",
         joinKey: "register",
         nameColumn: "register",
+      },
+    },
+  },
+  {
+    key: "jenisBlokir",
+    label: "Jenis Blokir",
+    order: 23,
+    showInUI: true,
+    query: {
+      columnName: "kdblokir",
+      reference: {
+        database: "dbref",
+        table: "t_blokir",
+        joinKey: "kdblokir",
+        nameColumn: "nmblokir",
       },
     },
   },
@@ -610,7 +666,7 @@ export const getFilterConfigMap = () => {
         referenceTable: d.query.reference?.table,
         referenceDatabase: d.query.reference?.database,
         joinKey: d.query.reference?.joinKey,
-        nameColumn: d.query.reference?.nameColumn,
+        nameColumn: d.query.reference?.nameColumn ?? d.query.nameColumn,
       };
     } else {
       // Still include keys that don't have query definitions (e.g., PN-only UI filters)
@@ -645,7 +701,7 @@ export const normalizeActiveFilters = (activeFilters: string[]): string[] => {
  * @returns Array of available filter keys for the scope
  */
 export const getAvailableFiltersForScope = (
-  scope: "belanja" | "tematik" | "general" = "general",
+  scope: "belanja" | "tematik" | "general" | "rkakl_detail" = "general",
   excludeFilters: string[] = [],
   options?: { tipeLaporan?: string }
 ): string[] => {
@@ -655,10 +711,15 @@ export const getAvailableFiltersForScope = (
   const scopeExclusions: Record<string, string[]> = {
     // Hide specific tematik filters from Belanja per request
     belanja: [
+      "cutOff", // Hide cut off switch on Belanja page
       "belanjaPemerintah", // Bantuan Pemerintah
       "mbgIntervensi", // Makan Bergizi Gratis
       "swasembadaPangan", // Swasembada Pangan
       "jenisProgramStrategis", // Program Strategis (not used on Belanja page)
+      "komponen", // RKAKL Detail specific
+      "subKomponen", // RKAKL Detail specific
+      "item", // RKAKL Detail specific
+      "jenisBlokir", // RKAKL Detail specific
     ],
     tematik: [
       "register",
@@ -668,7 +729,32 @@ export const getAvailableFiltersForScope = (
       "ketahananPangan",
       "swasembadaPangan",
       "belanjaPemerintah",
+      "komponen", // RKAKL Detail specific
+      "subKomponen", // RKAKL Detail specific
+      "item", // RKAKL Detail specific
+      "jenisBlokir", // RKAKL Detail specific
     ], // Exclude switches from Tematik page
+    rkakl_detail: [
+      "cutOff", // No cutOff needed for RKAKL Detail since no realisasi
+      // "register" filter restored for RKAKL Detail scope
+      "kemiskinanEkstrim",
+      "belanjaPemilu",
+      "ibuKotaNusantara",
+      "ketahananPangan",
+      "swasembadaPangan",
+      "belanjaPemerintah",
+      "mbgIntervensi",
+      "jenisProgramStrategis",
+      "jenisPn",
+      "programPrioritas",
+      "kegiatanPrioritas",
+      "proyekPrioritas",
+      "jenisMajorProject",
+      "jenisInflasiIntervensi",
+      "jenisInflasiPengeluaran",
+      "stuntingIntervensi",
+      "jenisTemaAnggaran",
+    ], // RKAKL Detail scope excludes cutOff and all tematik filters
     general: [], // General scope has all filters
   };
 

@@ -147,6 +147,7 @@ export function TayangModal({
     const summableColumns = [
       "PAGU_APBN",
       "PAGU_DIPA",
+      "PAGU", // Add PAGU for RKAKL Detail
       "REALISASI",
       "BLOKIR",
       "JAN",
@@ -161,6 +162,7 @@ export function TayangModal({
       "OKT",
       "NOV",
       "DES",
+      "JMLPNRK", // Treat jmlpnrk as summable for grand totals
     ];
     return summableColumns.includes(column.toUpperCase());
   };
@@ -248,6 +250,7 @@ export function TayangModal({
       lower.includes("realisasi") ||
       lower.includes("blokir") ||
       lower.includes("anggaran") ||
+      lower === "jmlpnrk" || // Format jmlpnrk like monetary columns
       rMonthly.includes(lower) ||
       baseMonthly.includes(lower)
     );

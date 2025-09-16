@@ -21,8 +21,8 @@ interface PilihLaporanCardProps {
     tematikKategori?: string;
   };
   setReportParams: React.Dispatch<React.SetStateAction<any>>;
-  // Optional overrides for tematik context
-  mode?: "general" | "tematik";
+  // Optional overrides for tematik and rkakl_detail context
+  mode?: "general" | "tematik" | "rkakl_detail";
   customTipeLaporanOptions?: { value: string; label: string }[];
   hideJenisAkumulasi?: boolean;
 }
@@ -57,10 +57,17 @@ export function PilihLaporanCard({
     },
   ];
 
-  // Use centralized category registry for tematik mode
+  // RKAKL Detail specific options - only Pagu dan Blokir
+  const rkaklDetailTipeLaporanOptions = [
+    { value: "pagu_dan_blokir", label: "Pagu dan Blokir" },
+  ];
+
+  // Use appropriate options based on mode
   const tipeLaporanOptions =
     mode === "tematik"
       ? customTipeLaporanOptions || getTematikCategoryOptions()
+      : mode === "rkakl_detail"
+      ? customTipeLaporanOptions || rkaklDetailTipeLaporanOptions
       : customTipeLaporanOptions || defaultTipeLaporanOptions;
 
   const pembulatanOptions = [
@@ -115,7 +122,11 @@ export function PilihLaporanCard({
             {/* Tipe Laporan Selection */}
             <div className="space-y-2">
               <label className="text-sm font-medium">
-                {mode === "tematik" ? "Kategori Tematik" : "Tipe Laporan"}
+                {mode === "tematik" 
+                  ? "Kategori Tematik" 
+                  : mode === "rkakl_detail"
+                  ? "Tipe Laporan RKAKL"
+                  : "Tipe Laporan"}
               </label>
               <Select
                 value={
@@ -135,6 +146,8 @@ export function PilihLaporanCard({
                     placeholder={
                       mode === "tematik"
                         ? "Pilih kategori tematik"
+                        : mode === "rkakl_detail"
+                        ? "Pilih tipe laporan RKAKL"
                         : "Pilih tipe laporan"
                     }
                   />
