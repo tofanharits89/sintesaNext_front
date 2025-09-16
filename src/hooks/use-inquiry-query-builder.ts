@@ -392,7 +392,7 @@ export function useInquiryQueryBuilder() {
               // Add kdctarik from m_detail_harian_part table when register filter is selected (except when uraian only)
               const year = reportParams.tahun || new Date().getFullYear();
               const detailAlias = "detail_ref";
-              const detailJoinTable = `monev${year}.m_detail_harian_part_${year}`;
+              const detailJoinTable = `monev${year}.m_detail_harian_${year}`;
 
               if (!joinedTables.has(detailAlias)) {
                 joinTables.push(
@@ -459,7 +459,7 @@ export function useInquiryQueryBuilder() {
 
               const year = reportParams.tahun || new Date().getFullYear();
               const detailAlias = "detail_ref";
-              const detailJoinTable = `monev${year}.m_detail_harian_part_${year}`;
+              const detailJoinTable = `monev${year}.m_detail_harian_${year}`;
 
               if (!joinedTables.has(detailAlias)) {
                 joinTables.push(
