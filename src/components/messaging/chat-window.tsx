@@ -2,11 +2,10 @@
 
 import { useState, useRef, useEffect, useMemo, useLayoutEffect } from "react";
 // Import the new React Query + Zustand messaging system
-import { useConversationRQ } from "@/hooks/messaging-rq";
+// useConversationRQ import removed (unused)
 import { useAutoMarkAsRead } from "@/hooks/useAutoMarkAsRead";
 import { Conversation } from "@/shared/socket-events";
-import { messageQueue } from "@/services/messageQueue";
-import { useMessageQueue } from "@/hooks/useMessageQueue";
+// Removed background message queue auto-retry usage
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -31,12 +30,17 @@ import {
   Image,
   FileText,
   X,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { MessageStatus } from "./MessageStatus";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useMessagingRQ } from "@/hooks/messaging-rq";
+import { useSendMessageMutation } from "@/hooks/useMessageMutationsRQ";
+import { useQueryClient } from "@tanstack/react-query";
+import { updateTempMessageById } from "@/features/messaging/temp-messages-store";
+import { messageKeys } from "@/hooks/useMessagesRQ";
 import dynamic from "next/dynamic";
 import { getHint } from "@/features/messaging/temp-conversation-hints";
 import { pushTempMessage } from "@/features/messaging/temp-messages-store";
@@ -58,8 +62,7 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize message queue
-  useMessageQueue();
+  // Background outbox disabled: we now surface real-time send status/errors
 
   // Enable auto-load of older messages only after user intent (scroll near top or click)
   const [autoLoadEnabled, setAutoLoadEnabled] = useState(false);
@@ -82,6 +85,8 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
         }
       } catch {}
     };
+
+  
     try {
       viewport.addEventListener(
         "scroll",
@@ -97,6 +102,8 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
   }, [conversationId]);
 
   const { currentUser } = useCurrentUser();
+  const queryClient = useQueryClient();
+  const resendMutation = useSendMessageMutation();
 
   // Use the new React Query + Zustand messaging system
   const {
@@ -118,7 +125,6 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
     isLoadingMoreMessages,
 
     // Connection state
-    isSocketConnected,
     isSendingMessage,
 
     // Actions
@@ -432,10 +438,7 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
     // TODO: Implement file upload functionality in the backend
     if (content) {
       try {
-        // Generate temp ID and client timestamp for reliable delivery
-        const tempId = `temp-msg-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-        const clientTimestamp = new Date();
-        
+        // Direct send without background outbox
         // For temp conversations, pass recipientId so backend can create the real conversation
         const isTempConv =
           effectiveConversationId?.startsWith("temp-") ||
@@ -443,20 +446,10 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
           effectiveConversationId?.startsWith("temp-conv-");
         const recipientId = isTempConv ? otherParticipant?.id : undefined;
 
-        // Queue message for reliable delivery
-        await messageQueue.queueMessage({
-          id: tempId,
-          conversationId: effectiveConversationId || 'temp',
-          content,
-          recipientId,
-          tempId,
-          clientTimestamp
-        });
-
-        // Use the new React Query sendMessage which handles optimistic updates
+        // Direct send via React Query mutation; UI shows loading/errors immediately
         await sendMessageRQ(content, recipientId, effectiveConversationId);
       } catch (error) {
-        // The message queue will handle retries automatically
+        // Error is surfaced via notifications in useMessagingRQ
         console.error('Failed to send message:', error);
       }
     }
@@ -524,6 +517,55 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
+  };
+
+  // Manual retry for failed outgoing messages
+  const handleRetryMessage = async (msg: any) => {
+    try {
+      const convId = String(msg.conversationId || effectiveConversationId || "");
+      const isTempConv =
+        convId.startsWith("temp-") ||
+        convId.startsWith("temp_conv-") ||
+        convId.startsWith("temp-conv-");
+
+      const recipientId = isTempConv ? otherParticipant?.id : undefined;
+
+      if (isTempConv) {
+        // For temp convs, update the in-memory store flags
+        updateTempMessageById(convId, String(msg.id), {
+          _sending: true as any,
+          _failed: false as any,
+        });
+      } else if (convId) {
+        // For real convs, update the React Query cache flags
+        queryClient.setQueryData(messageKeys.messages(convId), (prev: any) => {
+          if (!prev?.pages) return prev;
+          const copy = { ...prev, pages: prev.pages.map((p: any) => ({ ...p })) };
+          for (let pi = 0; pi < copy.pages.length; pi++) {
+            const p = copy.pages[pi];
+            const msgs = Array.isArray(p?.data?.messages)
+              ? p.data.messages.map((m: any) =>
+                  m?.id === msg.id ? { ...m, _sending: true, _failed: false } : m
+                )
+              : p?.data?.messages;
+            copy.pages[pi] = { ...p, data: { ...(p?.data || {}), messages: msgs } };
+          }
+          return copy;
+        });
+      }
+
+      // Resend using the same tempId so reconciliation works if accepted by server
+      await resendMutation.mutateAsync({
+        content: String(msg.content || ""),
+        conversationId: isTempConv ? undefined : convId,
+        recipientId,
+        tempId: String(msg.id),
+        // Mark this as an explicit manual retry so mutation success is accepted
+        // even if there was a prior failed attempt with the same tempId.
+        // The send mutation will treat onSuccess as authoritative.
+        isRetry: true as any,
+      });
+    } catch {}
   };
 
   // Prefer provided otherParticipant; fallback to React Query conversations list match; else derive from participants/lastMessage
@@ -788,13 +830,15 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
                           </p>
                         </div>
 
-                        {/* Message status indicators */}
-                        <div className="mt-1">
+                        {/* Message status indicators + retry when failed */}
+                        <div className="mt-1 flex items-center gap-2">
                           {isOwnMessage ? (
                             // For sent messages: show 2-state status indicators (delivered → read)
                             <MessageStatus
                               isDelivered={message.isDelivered}
                               isRead={message.isRead}
+                              isSending={Boolean((message as any)?._sending)}
+                              isFailed={Boolean((message as any)?._failed)}
                               deliveredAt={message.deliveredAt}
                               readAt={message.readAt}
                               showTimestamp={false}
@@ -812,6 +856,19 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
                             >
                               {message.isRead ? `Read` : "Unread"}
                             </span>
+                          )}
+
+                          {isOwnMessage && Boolean((message as any)?._failed) && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-red-600 hover:text-red-700"
+                              onClick={() => handleRetryMessage(message)}
+                              title="Retry sending"
+                              aria-label="Retry sending message"
+                            >
+                              <RefreshCw className="h-4 w-4" />
+                            </Button>
                           )}
                         </div>
 
@@ -1056,20 +1113,20 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
             <Button
               onClick={handleSendMessage}
               disabled={
-                !messageInput.content.trim() && attachedFiles.length === 0
+                (!messageInput.content.trim() && attachedFiles.length === 0) ||
+                isSendingMessage
               }
               size="icon"
               className="flex-shrink-0"
+              aria-busy={isSendingMessage}
+              aria-label={isSendingMessage ? "Sending message" : "Send message"}
+              title={isSendingMessage ? "Sending…" : "Send"}
             >
               <Send className="h-4 w-4" />
             </Button>
           </div>
 
-          {!isSocketConnected && (
-            <p className="text-xs text-muted-foreground mt-2">
-              You're offline. Messages will be sent when connection is restored.
-            </p>
-          )}
+          {/* Offline hint removed to avoid implying background retries */}
         </div>
       </CardContent>
     </Card>

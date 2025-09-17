@@ -18,6 +18,7 @@ interface SendMessageArgs {
   conversationId?: string;
   content: string;
   tempId?: string;
+  isRetry?: boolean;
 }
 
 interface ReadArgs {
@@ -33,6 +34,9 @@ interface SendMessageResponse {
   error?: string;
 }
 
+// Custom error type to mark offline failures without using 'any'
+type OfflineError = Error & { isOffline?: boolean };
+
 // Send message mutation
 export function useSendMessageMutation() {
   const queryClient = useQueryClient();
@@ -40,12 +44,43 @@ export function useSendMessageMutation() {
   const { ui, unread } = useMessagingActions();
   const { currentUser } = useCurrentUser();
 
+  const fetchWithTimeout = async (
+    input: RequestInfo | URL,
+    init: RequestInit & { timeoutMs?: number } = {}
+  ): Promise<Response> => {
+    const { timeoutMs = 10000, ...rest } = init;
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(input, { ...rest, signal: controller.signal });
+    } finally {
+      clearTimeout(id);
+    }
+  };
+
+  const isOffline = () => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator && 'onLine' in navigator) {
+        return navigator.onLine === false;
+      }
+    } catch {}
+    return false;
+  };
+
   return useMutation({
+    retry: false,
+    networkMode: "always",
     mutationFn: async (args: SendMessageArgs): Promise<SendMessageResponse> => {
       const { recipientId, conversationId, content, tempId } = args;
 
       // First try WebSocket for real-time delivery
       try {
+        // If offline, fail fast and do not attempt to send
+        if (isOffline()) {
+          const err: OfflineError = new Error('Offline');
+          err.isOffline = true;
+          throw err;
+        }
         const socketPayload = {
           // camelCase
           recipientId,
@@ -88,10 +123,15 @@ export function useSendMessageMutation() {
         throw new Error(errMsg);
       } catch (socketError) {
         // Socket failed, trying REST (silently fallback)
-
+        // If offline, do NOT fallback to REST. Require manual retry.
+        if (isOffline()) {
+          const err: OfflineError = new Error('Offline');
+          err.isOffline = true;
+          throw err;
+        }
         // Fallback to REST API via centralized Axios client
         const csrfToken = getCookie("XSRF-TOKEN");
-        const respRaw = await fetch(backendPath("/messaging/send"), {
+        const respRaw = await fetchWithTimeout(backendPath("/messaging/send"), {
           method: "POST",
           credentials: "include",
           headers: { 
@@ -123,9 +163,9 @@ export function useSendMessageMutation() {
         // Handle rate limiting specifically
         if (respRaw.status === 429) {
           const result = await respRaw.json().catch(() => ({ error: 'Rate limit exceeded' }));
-          const error = new Error(result.error || 'Rate limit exceeded');
-          (error as any).isRateLimit = true;
-          throw error;
+          const rateErr: Error & { isRateLimit?: boolean } = new Error(result.error || 'Rate limit exceeded');
+          rateErr.isRateLimit = true;
+          throw rateErr;
         }
 
         if (!respRaw.ok) {
@@ -146,6 +186,8 @@ export function useSendMessageMutation() {
       const convKeyId =
         conversationId != null ? String(conversationId) : undefined;
 
+      try { console.log('[MSG DEBUG] onMutate start', { convKeyId, tempId, len: (content||'').length, at: Date.now() }); } catch {}
+
       // Set sending state
       ui.setSendingMessage(true);
 
@@ -164,7 +206,7 @@ export function useSendMessageMutation() {
               }
             : { id: "current-user", username: "you", name: "You" },
           senderType: "user",
-          isRead: true,
+          isRead: false,
           isDelivered: false,
         };
 
@@ -185,7 +227,9 @@ export function useSendMessageMutation() {
                         created_at: optimisticMessage.timestamp,
                         sender: optimisticMessage.sender,
                         senderType: optimisticMessage.senderType,
-                        is_read: true,
+                        is_read: false,
+                        _sending: true,
+                        _failed: false,
                       },
                     ],
                     pagination: {
@@ -223,7 +267,9 @@ export function useSendMessageMutation() {
             created_at: optimisticMessage.timestamp,
             sender: optimisticMessage.sender,
             senderType: optimisticMessage.senderType,
-            is_read: true,
+            is_read: false,
+            _sending: true,
+            _failed: false,
           });
 
           last.data = { ...(last.data || {}), messages: list };
@@ -273,8 +319,8 @@ export function useSendMessageMutation() {
               timestamp: optimisticMessage.timestamp,
               sender: optimisticMessage.sender,
               senderType: optimisticMessage.senderType,
-              isRead: true,
-              is_read: true,
+              isRead: false,
+              is_read: false,
             };
             // Keep both snake_case and camelCase updated fields to be safe
             conv.updated_at = optimisticMessage.timestamp;
@@ -297,15 +343,95 @@ export function useSendMessageMutation() {
         // (moved to onSuccess for correct variables scope and timing)
       }
 
-      return { tempId };
+      // Watchdog: force-fail after 10s if still sending (for real conversations)
+      const startedAtNow = Date.now();
+      let watchdog: any = null;
+      if (convKeyId && tempId) {
+        watchdog = setTimeout(() => {
+          try {
+            queryClient.setQueryData(messageKeys.messages(convKeyId), (prev: any) => {
+              if (!prev?.pages) return prev;
+              const copy = { ...prev, pages: prev.pages.map((p: any) => ({ ...p })) };
+              for (let pi = 0; pi < copy.pages.length; pi++) {
+                const p = copy.pages[pi];
+                const msgs = Array.isArray(p?.data?.messages) ? p.data.messages.map((m: any) => {
+                  if (m?.id === tempId) {
+                    // Only flip if still sending
+                    if ((m as any)._sending) {
+                      return { ...m, _sending: false, _failed: true };
+                    }
+                  }
+                  return m;
+                }) : p?.data?.messages;
+                copy.pages[pi] = { ...p, data: { ...(p?.data || {}), messages: msgs } };
+              }
+              return copy;
+            });
+            try {
+              try { console.log('[MSG DEBUG] watchdog firing -> fail', { convKeyId, tempId, at: Date.now() }); } catch {}
+              if (typeof window !== 'undefined') {
+                // Record that this attempt (startedAtNow) has failed, to ignore any late success for the same tempId
+                try {
+                  (window as any).__failedAfterAttempt__ = (window as any).__failedAfterAttempt__ || {};
+                  (window as any).__failedAfterAttempt__[tempId] = startedAtNow;
+                } catch {}
+                window.dispatchEvent(new CustomEvent('message:failed', { detail: { id: tempId, content, conversationId: convKeyId, failedAt: Date.now(), startedAt: startedAtNow } }));
+              }
+            } catch {}
+          } catch {}
+        }, 10000);
+      }
+
+      return { tempId, conversationId: convKeyId, startedAt: startedAtNow, watchdog };
     },
-    onSuccess: (data, args) => {
+    onSuccess: (data, args, context) => {
       const { conversationId, tempId, content } = args as any;
       const convKeyId = conversationId != null ? String(conversationId) : undefined;
+
+      try { console.log('[MSG DEBUG] onSuccess', { convKeyId, tempId, at: Date.now(), data }); } catch {}
+
+      // If this tempId previously failed for this attempt and this isn't an explicit retry, ignore late success
+      try {
+        const isRetry = (args as any)?.isRetry === true;
+        const failedMap = (typeof window !== 'undefined') ? (window as any).__failedAfterAttempt__ : undefined;
+        const failedStartedAt = tempId && failedMap ? failedMap[String(tempId)] : undefined;
+        const ctxStartedAt = (context as any)?.startedAt as number | undefined;
+        if (!isRetry && tempId && failedStartedAt && ctxStartedAt && failedStartedAt === ctxStartedAt) {
+          console.log('[MSG DEBUG] onSuccess ignored due to prior fail latch for same attempt', { tempId, failedStartedAt, ctxStartedAt });
+          return;
+        }
+      } catch {}
+
+      // Clear watchdog
+      try {
+        const wd = (context as any)?.watchdog;
+        if (wd) clearTimeout(wd);
+      } catch {}
 
       // Clear sending state and input
       ui.setSendingMessage(false);
       ui.clearMessageInput();
+
+      // Best-effort: clear sending/failed flags on the optimistic temp message in original conversation
+      if (convKeyId && tempId) {
+        try {
+          queryClient.setQueryData(messageKeys.messages(convKeyId), (prev: any) => {
+            if (!prev?.pages) return prev;
+            const copy = { ...prev, pages: prev.pages.map((p: any) => ({ ...p })) };
+            for (let pi = 0; pi < copy.pages.length; pi++) {
+              const p = copy.pages[pi];
+              const msgs = Array.isArray(p?.data?.messages) ? p.data.messages.map((m: any) => {
+                if (m?.id === tempId) {
+                  return { ...m, _sending: false, _failed: false };
+                }
+                return m;
+              }) : p?.data?.messages;
+              copy.pages[pi] = { ...p, data: { ...(p?.data || {}), messages: msgs } };
+            }
+            return copy;
+          });
+        } catch {}
+      }
 
       // Derive real conversation id from various possible response shapes
       const derivedNewConvId: string | undefined = (() => {
@@ -535,10 +661,45 @@ export function useSendMessageMutation() {
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: conversationKeys.all });
       }, 600);
+
+      // Broadcast success for latch clearing (for both real id and temp id)
+      try {
+        if (typeof window !== 'undefined') {
+          const realMsgId: string | undefined = (data as any)?.data?.message?.id || (data as any)?.message?.id || undefined;
+          const ids: string[] = [];
+          if (realMsgId) ids.push(String(realMsgId));
+          if (tempId) ids.push(String(tempId));
+          try { console.log('[MSG DEBUG] dispatch message:succeeded', { ids }); } catch {}
+          ids.forEach((id) => {
+            window.dispatchEvent(new CustomEvent('message:succeeded', { detail: { id } }));
+          });
+          // Clear failed map entry on success
+          try { if (tempId && (window as any).__failedAfterAttempt__) { delete (window as any).__failedAfterAttempt__[tempId]; } } catch {}
+
+          // Remove any quarantine entries for this content/conv/user on success (manual retry path)
+          try {
+            const userId = currentUser?.id ? String(currentUser.id) : undefined;
+            if (userId && convKeyId && content) {
+              const raw = window.localStorage.getItem('MSG_QUARANTINE');
+              const arr = raw ? JSON.parse(raw) : [];
+              const next = Array.isArray(arr) ? arr.filter((q: any) => !(q && q.convId === convKeyId && q.userId === userId && q.content === content)) : [];
+              window.localStorage.setItem('MSG_QUARANTINE', JSON.stringify(next));
+            }
+          } catch {}
+        }
+      } catch {}
     },
     onError: (error, args, context) => {
       // Clear sending state
       ui.setSendingMessage(false);
+
+      try { console.log('[MSG DEBUG] onError', { err: String((error as any)?.message || error), args, at: Date.now() }); } catch {}
+
+      // Clear watchdog
+      try {
+        const wd = (context as any)?.watchdog;
+        if (wd) clearTimeout(wd);
+      } catch {}
 
       // Show user-friendly error notification
       const addNotification = useNotificationStore.getState().addNotification;
@@ -547,8 +708,8 @@ export function useSendMessageMutation() {
       if (isRateLimit) {
         addNotification({
           type: "warning",
-          title: "Pesan Tertunda",
-          message: "Anda mengirim pesan terlalu cepat. Pesan akan dikirim otomatis dalam beberapa menit.",
+          title: "Terlalu Cepat",
+          message: "Anda mengirim pesan terlalu cepat. Silakan coba kirim ulang beberapa saat lagi.",
           persistent: false,
           autoHideDelay: 8000
         });
@@ -556,38 +717,71 @@ export function useSendMessageMutation() {
         addNotification({
           type: "error",
           title: "Gagal Mengirim Pesan",
-          message: "Pesan gagal dikirim. Sistem akan mencoba mengirim ulang secara otomatis.",
+          message: "Pesan gagal dikirim. Ketuk ikon (!) pada pesan untuk mengirim ulang secara manual.",
           persistent: false,
           autoHideDelay: 5000
         });
       }
 
       // Revert optimistic updates
-      const { conversationId, tempId } = args;
+      const { conversationId, tempId, content } = args as any;
       const convKeyId =
         conversationId != null ? String(conversationId) : undefined;
-      if (convKeyId && tempId) {
-        // Remove optimistic message
-        queryClient.setQueryData(messageKeys.messages(convKeyId), (prev: any) => {
-          if (!prev?.pages) return prev;
+      const applyFail = () => {
+        try { console.log('[MSG DEBUG] applyFail()', { convKeyId, tempId, at: Date.now() }); } catch {}
+        if (convKeyId && tempId) {
+          // Mark optimistic message as failed (keep it visible with exclamation icon)
+          queryClient.setQueryData(messageKeys.messages(convKeyId), (prev: any) => {
+            if (!prev?.pages) return prev;
+            const copy = { ...prev, pages: prev.pages.map((p: any) => ({ ...p })) };
+            for (let pi = 0; pi < copy.pages.length; pi++) {
+              const p = copy.pages[pi];
+              const msgs = Array.isArray(p?.data?.messages) ? p.data.messages.map((m: any) => {
+                if (m?.id === tempId) {
+                  return { ...m, _sending: false, _failed: true };
+                }
+                return m;
+              }) : p?.data?.messages;
+              copy.pages[pi] = { ...p, data: { ...(p?.data || {}), messages: msgs } };
+            }
+            return copy;
+          });
+          // Broadcast failure so hooks can latch the failure state
+          try {
+            if (typeof window !== 'undefined') {
+              try { console.log('[MSG DEBUG] dispatch message:failed', { tempId, convKeyId }); } catch {}
+              // Record failed attempt to block late success
+              try {
+                (window as any).__failedAfterAttempt__ = (window as any).__failedAfterAttempt__ || {};
+                (window as any).__failedAfterAttempt__[tempId] = (context as any)?.startedAt || Date.now();
+              } catch {}
+              window.dispatchEvent(new CustomEvent('message:failed', { detail: { id: tempId, content, conversationId: convKeyId, failedAt: Date.now(), startedAt: (context as any)?.startedAt } }));
 
-          const copy = {
-            ...prev,
-            pages: prev.pages.map((p: any) => ({
-              ...p,
-              data: {
-                ...p.data,
-                messages: (p.data?.messages || []).filter(
-                  (m: any) => m.id !== tempId
-                ),
-              },
-            })),
-          };
-          return copy;
-        });
+              // Persist quarantine so a hard refresh still hides server echo until manual retry
+              try {
+                const userId = currentUser?.id ? String(currentUser.id) : undefined;
+                if (userId && convKeyId && content) {
+                  const raw = window.localStorage.getItem('MSG_QUARANTINE');
+                  const arr = raw ? JSON.parse(raw) : [];
+                  const now = Date.now();
+                  const entry = { convId: convKeyId, userId, content, failedAt: now };
+                  const next = Array.isArray(arr) ? [...arr.filter((q: any) => !(q && q.convId === convKeyId && q.userId === userId && q.content === content)), entry] : [entry];
+                  window.localStorage.setItem('MSG_QUARANTINE', JSON.stringify(next));
+                }
+              } catch {}
+            }
+          } catch {}
+        }
+      };
 
-        // Revert conversation list changes
-        queryClient.invalidateQueries({ queryKey: conversationKeys.all });
+      // Enforce minimum 600ms sending display to ensure clock visibility
+      const startedAt = (context as any)?.startedAt as number | undefined;
+      const elapsed = typeof startedAt === 'number' ? Date.now() - startedAt : 0;
+      const minMs = 600;
+      if (elapsed < minMs) {
+        setTimeout(applyFail, minMs - elapsed);
+      } else {
+        applyFail();
       }
     },
   });

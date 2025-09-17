@@ -1,12 +1,14 @@
 "use client";
 
 import React from "react";
-import { Check, CheckCheck } from "lucide-react";
+import { Check, CheckCheck, Clock, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface MessageStatusProps {
   isDelivered?: boolean;
   isRead?: boolean;
+  isSending?: boolean;
+  isFailed?: boolean;
   deliveredAt?: string | null;
   readAt?: string | null;
   showTimestamp?: boolean;
@@ -21,14 +23,30 @@ export interface MessageStatusProps {
 export const MessageStatus: React.FC<MessageStatusProps> = ({
   isDelivered = false,
   isRead = false,
+  isSending = false,
+  isFailed = false,
   deliveredAt,
   readAt,
   showTimestamp = false,
   className,
 }) => {
-  // Determine the status and icon to show (2-state system)
+  // Determine the status and icon to show (sending -> failed -> delivered -> read)
   const getStatusInfo = () => {
-    if (isRead) {
+    if (isFailed) {
+      return {
+        icon: <AlertCircle className="h-3 w-3" />,
+        color: "text-red-500",
+        status: "Failed",
+        timestamp: null,
+      };
+    } else if (isSending) {
+      return {
+        icon: <Clock className="h-3 w-3" />,
+        color: "text-gray-400",
+        status: "Sending",
+        timestamp: null,
+      };
+    } else if (isRead) {
       return {
         icon: <CheckCheck className="h-3 w-3" />,
         color: "text-blue-500",
@@ -77,7 +95,7 @@ export const MessageStatus: React.FC<MessageStatusProps> = ({
           minute: '2-digit' 
         });
       }
-    } catch (error) {
+    } catch {
       return "";
     }
   };

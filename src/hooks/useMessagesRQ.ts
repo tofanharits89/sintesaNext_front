@@ -23,6 +23,41 @@ const lastKnownFlags: Map<
   Partial<{ isDelivered: boolean; isRead: boolean }>
 > = new Map();
 
+// Latch for failed messages: once failed, keep failed until explicit retry succeeds
+const failedLatch: Set<string> = new Set();
+// Track recent failed messages to block reconciling MESSAGE_NEW that lacks tempId but matches content+conversation
+type FailedMeta = { tempId: string; content: string; convId: string; failedAt: number };
+const failedRecent: FailedMeta[] = [];
+const FAILED_RECENT_WINDOW_MS = 30_000; // 30s window to correlate reconnection events
+
+// Quarantine storage to survive hard refresh: entries indicate messages that failed locally and must not be shown as sent
+type QuarantineEntry = { convId: string; userId: string; content: string; failedAt: number };
+let quarantineCache: QuarantineEntry[] | null = null;
+const QUARANTINE_TTL_MS = 10 * 60_000; // 10 minutes
+
+const loadQuarantine = (): QuarantineEntry[] => {
+  try {
+    if (quarantineCache) return quarantineCache;
+    const raw = typeof window !== 'undefined' ? window.localStorage.getItem('MSG_QUARANTINE') : null;
+    const arr = raw ? (JSON.parse(raw) as any[]) : [];
+    const now = Date.now();
+    const filtered = Array.isArray(arr)
+      ? arr.filter((q) => q && typeof q === 'object' && now - Number(q.failedAt) <= QUARANTINE_TTL_MS)
+      : [];
+    quarantineCache = filtered as QuarantineEntry[];
+    if (typeof window !== 'undefined') window.localStorage.setItem('MSG_QUARANTINE', JSON.stringify(filtered));
+    return quarantineCache as QuarantineEntry[];
+  } catch {
+    return [];
+  }
+};
+
+const isQuarantined = (convId?: string, senderId?: string, content?: string): boolean => {
+  if (!convId || !senderId || !content) return false;
+  const list = loadQuarantine();
+  return list.some((q) => q.convId === convId && q.userId === senderId && q.content === content);
+};
+
 const PAGE_SIZE = 25;
 
 // Use centralized query keys
@@ -109,6 +144,60 @@ export function useMessages(conversationId?: string) {
         handler as EventListener
       );
   }, [conversationId, isFetchable]);
+
+  // Listen for global failure/success events to update the failedLatch and re-render
+  useEffect(() => {
+    // Guard to avoid duplicate global listeners if multiple hook instances mount
+    const win: any = typeof window !== 'undefined' ? window : undefined;
+    if (win && win.__msg_global_listeners_attached__) {
+      return;
+    }
+    if (win) win.__msg_global_listeners_attached__ = true;
+    const onFailed = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { id?: string; content?: string; conversationId?: string };
+      const id = detail?.id as string | undefined;
+      if (id) {
+        failedLatch.add(id);
+        setLocalTick((x) => x + 1);
+        try { console.log('[MSG DEBUG] latch:failed add', { id, convo: detail?.conversationId, hasContent: !!detail?.content, at: Date.now() }); } catch {}
+      }
+      // Store recent metadata for correlation if provided
+      const content = (detail?.content ?? "") as string;
+      const convId = (detail?.conversationId ?? "") as string;
+      if (id && content && convId) {
+        const now = Date.now();
+        // prune old entries
+        for (let i = failedRecent.length - 1; i >= 0; i--) {
+          if (now - failedRecent[i].failedAt > FAILED_RECENT_WINDOW_MS) failedRecent.splice(i, 1);
+        }
+        failedRecent.push({ tempId: id, content, convId, failedAt: now });
+        try { console.log('[MSG DEBUG] recentFailed push', { tempId: id, convId, contentLen: content.length, at: now }); } catch {}
+      }
+    };
+    const onSucceeded = (e: Event) => {
+      const id = (e as CustomEvent).detail?.id as string | undefined;
+      if (id) {
+        if (failedLatch.has(id)) {
+          failedLatch.delete(id);
+          setLocalTick((x) => x + 1);
+          try { console.log('[MSG DEBUG] latch:succeeded remove', { id, at: Date.now() }); } catch {}
+        }
+        // prune any recent entries for this tempId
+        for (let i = failedRecent.length - 1; i >= 0; i--) {
+          if (failedRecent[i].tempId === id) failedRecent.splice(i, 1);
+        }
+        // Also refresh quarantine cache; success path removes entries in mutation hook
+        quarantineCache = null;
+      }
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("message:failed", onFailed as EventListener);
+      window.addEventListener("message:succeeded", onSucceeded as EventListener);
+    }
+    return () => {
+      // Keep listeners attached globally during the app session to avoid churn
+    };
+  }, []);
 
   const {
     data,
@@ -242,7 +331,7 @@ export function useMessages(conversationId?: string) {
       return 0;
     };
 
-    const mappedWithSort: Array<FrontendMessage & { _sortTs: number }> = pages.flatMap((p: any) =>
+    const mappedWithSort: Array<FrontendMessage & { _sortTs: number } & { _sending?: boolean; _failed?: boolean }> = pages.flatMap((p: any) =>
       extractMessages(p).map((msg: any) => {
         const rawTs = msg.timestamp ?? msg.created_at;
         const ms = toMs(rawTs);
@@ -260,7 +349,39 @@ export function useMessages(conversationId?: string) {
           readAt: msg.readAt ?? msg.read_at ?? null,
           isDelivered: msg.isDelivered ?? msg.is_delivered ?? false,
           deliveredAt: msg.deliveredAt ?? msg.delivered_at ?? null,
-        } as FrontendMessage & { _sortTs: number };
+          // Propagate local UI flags if present in cache
+          _sending: msg._sending ?? false,
+          _failed: msg._failed ?? false,
+        } as FrontendMessage & { _sortTs: number } & { _sending?: boolean; _failed?: boolean };
+        // Apply failed latch: once failed, stay failed and never show sending automatically
+        if (fromApi._failed) {
+          failedLatch.add(id);
+        }
+        if (failedLatch.has(id)) {
+          fromApi._failed = true;
+          fromApi._sending = false;
+        }
+
+        // Apply quarantine on initial fetch or after refresh: convert server-accepted echoes into failed visuals
+        try {
+          const convId = fromApi.conversationId || msg.conversation_id;
+          const sId = (fromApi.sender as any)?.id || msg.sender_id;
+          if (isQuarantined(convId, sId, fromApi.content)) {
+            fromApi._failed = true;
+            fromApi._sending = false;
+            fromApi.isDelivered = false;
+            fromApi.isRead = false;
+          }
+        } catch {}
+
+        // Diagnostics at map-time
+        try {
+          if (typeof window !== 'undefined' && window.localStorage?.getItem('MSG_DEBUG') === '1') {
+            if (fromApi._failed || fromApi._sending) {
+              console.log('[MSG DEBUG] mapMessage', { id, convId: fromApi.conversationId || msg.conversation_id, failed: !!fromApi._failed, sending: !!fromApi._sending, at: Date.now() });
+            }
+          }
+        } catch {}
     
         const known = lastKnownFlags.get(id);
         if (known) {
@@ -362,7 +483,26 @@ export function useMessages(conversationId?: string) {
 
       if (!convMatches(normalized.conversationId, (normalized as any).tempId))
         return;
+      // If this message originates from a tempId that has been latched as failed, ignore it
+      const incomingTempId = (normalized as any).tempId as string | undefined;
+      if (incomingTempId && failedLatch.has(incomingTempId)) {
+        try { console.log('[MSG DEBUG] MESSAGE_NEW ignored due to tempId latch', { incomingTempId, at: Date.now(), normalized }); } catch {}
+        return;
+      }
+      // If there's no tempId, check recent failed correlation (same conv + same content within window)
+      if (!incomingTempId && normalized?.content && normalized?.conversationId) {
+        const now = Date.now();
+        for (let i = failedRecent.length - 1; i >= 0; i--) {
+          if (now - failedRecent[i].failedAt > FAILED_RECENT_WINDOW_MS) failedRecent.splice(i, 1);
+        }
+        const match = failedRecent.find((f) => f.convId === normalized.conversationId && f.content === normalized.content && failedLatch.has(f.tempId));
+        if (match) {
+          try { console.log('[MSG DEBUG] MESSAGE_NEW ignored by recentFailed correlation', { convId: normalized.conversationId, tempId: match.tempId, at: Date.now(), normalized }); } catch {}
+          return;
+        }
+      }
       if (recentIds.has(normalized.id)) return; // drop duplicate
+      try { console.log('[MSG DEBUG] MESSAGE_NEW accepted', { id: normalized.id, convId: normalized.conversationId, hasTempId: !!incomingTempId, at: Date.now() }); } catch {}
 
       // If not fetchable, append into local store and re-render
       if (!isFetchable) {
@@ -602,12 +742,13 @@ export function useMessages(conversationId?: string) {
     const onDelivered = (payload: any) => {
       const convId = payload?.conversationId || payload?.conversation_id;
       if (!convMatches(convId, (payload as any)?.tempId)) return;
-      const ids = getMsgIds(payload);
+      const ids = getMsgIds(payload).filter((id) => !failedLatch.has(String(id)));
       const atGlobal =
         payload?.deliveredAt ||
         payload?.delivered_at ||
         payload?.timestamp ||
         null;
+      try { console.log('[MSG DEBUG] MESSAGE_DELIVERED', { convId, ids, filteredOut: (getMsgIds(payload)||[]).filter((id:string)=>failedLatch.has(String(id))), at: Date.now() }); } catch {}
       if (ids.length === 0 && Array.isArray(payload?.messages)) {
         for (const m of payload.messages) {
           const id = m?.id;
@@ -631,9 +772,10 @@ export function useMessages(conversationId?: string) {
     const onRead = (payload: any) => {
       const convId = payload?.conversationId || payload?.conversation_id;
       if (!convMatches(convId, (payload as any)?.tempId)) return;
-      const ids = getMsgIds(payload);
+      const ids = getMsgIds(payload).filter((id) => !failedLatch.has(String(id)));
       const atGlobal =
         payload?.readAt || payload?.read_at || payload?.timestamp || null;
+      try { console.log('[MSG DEBUG] MESSAGE_READ', { convId, ids, filteredOut: (getMsgIds(payload)||[]).filter((id:string)=>failedLatch.has(String(id))), at: Date.now() }); } catch {}
       for (const id of ids) {
         const at = atGlobal || new Date().toISOString();
         updateMessageFlags(id, { isRead: true, readAt: at });

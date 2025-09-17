@@ -80,6 +80,24 @@ export function clearAllTempMessages(): void {
   });
 }
 
+export function updateTempMessageById(
+  conversationId: string,
+  messageId: string,
+  patch: Partial<FrontendMessage & { _sending?: boolean; _failed?: boolean }>
+): void {
+  if (!conversationId || !messageId) return;
+  const store = getStore();
+  const list = store.get(conversationId) || [];
+  const idx = list.findIndex((m) => m.id === messageId);
+  if (idx >= 0) {
+    // Preserve unknown fields and apply patch
+    const next: any = { ...(list[idx] as any), ...patch };
+    list[idx] = next as FrontendMessage;
+    store.set(conversationId, list);
+    emitTempMessagesUpdated(conversationId);
+  }
+}
+
 export function emitTempMessagesUpdated(conversationId: string) {
   try {
     if (typeof window !== 'undefined') {

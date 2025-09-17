@@ -44,7 +44,7 @@ export class PersistentMessageQueue {
 
       request.onsuccess = (event) => {
         this.db = (event.target as IDBOpenDBRequest).result;
-        this.startRetryLoop();
+        // Auto-retry loop disabled: retries are manual via retryFailedMessages()
         resolve();
       };
 
@@ -322,10 +322,7 @@ export class PersistentMessageQueue {
   }
 
   private startRetryLoop(): void {
-    // Retry failed messages every 2 minutes to avoid overwhelming rate limits
-    this.retryInterval = setInterval(() => {
-      this.retryFailedMessages().catch(console.error);
-    }, 120000); // 2 minutes
+    // No-op: background auto-retry has been disabled to avoid confusing UX
   }
 
   async cleanup(): Promise<void> {

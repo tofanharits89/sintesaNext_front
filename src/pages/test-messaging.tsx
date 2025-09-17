@@ -249,7 +249,7 @@ export default function TestMessagingPage() {
         <CardContent className="space-y-2 text-sm">
           <div>1. <strong>Queue Test:</strong> Enter a message and click "Queue" to test IndexedDB persistence</div>
           <div>2. <strong>Offline Test:</strong> Disconnect internet, queue messages, then reconnect</div>
-          <div>3. <strong>Retry Test:</strong> Messages will automatically retry every 30 seconds</div>
+          <div>3. <strong>Retry Test:</strong> Auto-retry is disabled. Use the <em>Retry Failed</em> button to resend.</div>
           <div>4. <strong>Browser Test:</strong> Close/reopen browser - queued messages should persist</div>
           <div>5. <strong>Rate Limit Test:</strong> Send 30+ messages rapidly via actual chat to test limits</div>
         </CardContent>

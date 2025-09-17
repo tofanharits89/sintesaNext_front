@@ -3,6 +3,7 @@
 import { useEffect, useCallback, useRef, useMemo } from "react";
 import { useConversations } from "./useConversationsRQ";
 import { useMessages } from "./useMessagesRQ";
+import { pushTempMessage, updateTempMessageById } from "@/features/messaging/temp-messages-store";
 import { FrontendMessage } from "@/shared/socket-events";
 import {
   useSendMessageMutation,
@@ -315,12 +316,31 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
               }
             : { id: "current-user", username: "you", name: "You" },
           senderType: "user",
-          isRead: true,
+          isRead: false,
           isDelivered: false,
         } as FrontendMessage;
+        // Mark as sending to show clock icon in UI
+        (tempMessage as any)._sending = true;
+        (tempMessage as any)._failed = false;
         try {
           await optimisticInsert(tempMessage);
         } catch {}
+
+        // Start a 10s watchdog for temp conversations as well
+        const localTempId = tempId;
+        const localConvId = convId;
+        let tempWatchdog: any = null;
+        tempWatchdog = setTimeout(() => {
+          try {
+            updateTempMessageById(localConvId, localTempId, {
+              _sending: false as any,
+              _failed: true as any,
+            });
+          } catch {}
+        }, 10000);
+
+        // Attach to window to allow clearing on success/error in this scope
+        (window as any).__temp_send_watchdog__ = tempWatchdog;
       }
 
       try {
@@ -340,7 +360,26 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
           message: "Failed to send message. Please try again.",
           persistent: true,
         });
+
+        // If this is a temporary conversation, flip the optimistic message to failed
+        if (isTempConv && tempId) {
+          try {
+            updateTempMessageById(convId, tempId, { _sending: false as any, _failed: true as any });
+          } catch {}
+        }
+
+        // Clear temp watchdog on error
+        try {
+          const wd = (window as any).__temp_send_watchdog__;
+          if (wd) clearTimeout(wd);
+        } catch {}
       }
+
+      // Clear temp watchdog on success
+      try {
+        const wd = (window as any).__temp_send_watchdog__;
+        if (wd) clearTimeout(wd);
+      } catch {}
     },
     [
       activeConversationId,
