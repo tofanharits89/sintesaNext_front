@@ -1,5 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
-import { backendPath } from "@/lib/backend";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 // Quick stats data format returned by the backend
 interface QuickStatsData {
@@ -24,6 +23,10 @@ interface QuickStatsResponse {
   _meta?: DashboardMeta;
 }
 
+type NotModifiedResponse = { success?: boolean; notModified: true; _meta?: DashboardMeta };
+type ProxyResponse = QuickStatsResponse | NotModifiedResponse | null;
+type QSReturn = QuickStatsData & { _meta?: DashboardMeta };
+
 interface UseQuickStatsOptions {
   kanwil?: string;
 }
@@ -31,8 +34,9 @@ interface UseQuickStatsOptions {
 export function useQuickStats(options: UseQuickStatsOptions = {}) {
   const { kanwil } = options;
   const isClient = typeof window !== "undefined";
+  const queryClient = useQueryClient();
 
-  return useQuery<QuickStatsData, Error>({
+  return useQuery<QSReturn, Error>({
     queryKey: ["quick-stats", kanwil],
     queryFn: async () => {
       try {
@@ -56,22 +60,55 @@ export function useQuickStats(options: UseQuickStatsOptions = {}) {
           headers: { "Content-Type": "application/json" },
         });
 
+        // If server responded 304 (Not Modified), reuse existing cached data
+        if (response.status === 304) {
+          const prev = queryClient.getQueryData<QuickStatsData & { _meta?: DashboardMeta }>([
+            "quick-stats",
+            kanwil,
+          ] as const);
+          if (prev) return prev;
+          // If no previous data, treat as error to trigger normal error flow
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Parse JSON payload if any
+        let result: ProxyResponse = null;
+        const rawText = await response.text();
+        if (rawText) {
+          try {
+            result = JSON.parse(rawText) as ProxyResponse;
+          } catch {
+            result = null;
+          }
+        }
+
+        // Our Next proxy may convert 304 into 200 with notModified flag. In that case, return cached data but update meta.
+        if ((result as NotModifiedResponse | null)?.notModified) {
+          const prev = queryClient.getQueryData<QSReturn>([
+            "quick-stats",
+            kanwil,
+          ] as const);
+          if (prev) {
+            return { ...prev, _meta: (result as NotModifiedResponse)._meta };
+          }
+          // If no previous data, fall through to error (no data to show)
+          throw new Error("No cached data available for notModified response");
+        }
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const result: QuickStatsResponse = await response.json();
-
-        if (!result.success) {
+        if (!result || ("success" in result && !result.success)) {
           throw new Error("Failed to fetch quick stats data");
         }
 
         // Attach meta to the returned data for optional use in UI (last refresh time)
-        const dataWithMeta: QuickStatsData & { _meta?: DashboardMeta } = {
-          ...(result.data as QuickStatsData),
-          _meta: result._meta,
-        } as any;
-        return dataWithMeta as any;
+        const dataWithMeta: QSReturn = {
+          ...(result as QuickStatsResponse).data,
+          _meta: (result as QuickStatsResponse)._meta,
+        };
+        return dataWithMeta;
       } catch (error: any) {
         console.error("Error fetching quick stats:", error);
         // Handle 401 errors specifically

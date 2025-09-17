@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { backendPath } from "@/lib/backend";
-import { apiPath } from "@/lib/base-path";
+// import { apiPath } from "@/lib/base-path";
 import { canAccessUserManagement } from "@/lib/rbac-client";
 
 export default async function UsersLayout({
@@ -19,7 +19,7 @@ export default async function UsersLayout({
   }
   try {
     // Fetch profile via backend using cookies
-    const resp = await fetch(apiPath("/users/profile/me"), {
+    const resp = await fetch(backendPath("/users/profile/me"), {
       method: "GET",
       headers: { cookie: cookieHeader },
       cache: "no-store",

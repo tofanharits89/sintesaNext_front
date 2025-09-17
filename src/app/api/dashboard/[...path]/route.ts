@@ -32,15 +32,27 @@ export async function GET(
       },
     });
 
-    // If backend signals Not Modified, forward 304 with headers only
+    // If backend signals Not Modified, return a JSON payload so client code can parse
+    // and still update UI meta while preserving cache headers.
     if (resp.status === 304) {
-      const notModified = new NextResponse(null, { status: 304 });
       const cacheControl304 = resp.headers.get("cache-control");
       const etag304 = resp.headers.get("etag");
-      if (cacheControl304)
-        notModified.headers.set("Cache-Control", cacheControl304);
-      if (etag304) notModified.headers.set("ETag", etag304);
-      return notModified;
+      const asOfJakarta304 = resp.headers.get("x-as-of-jakarta") || null;
+      const cacheExpiresAtUtc304 = resp.headers.get("x-cache-expires-at-utc") || null;
+      const cacheMaxAge304 = resp.headers.get("x-cache-maxage");
+      const meta304 = {
+        asOfJakarta: asOfJakarta304,
+        cacheExpiresAtUtc: cacheExpiresAtUtc304,
+        cacheMaxAgeSeconds: cacheMaxAge304 ? Number(cacheMaxAge304) : undefined,
+      } as const;
+
+      const json304 = NextResponse.json(
+        { success: true, notModified: true, _meta: meta304 },
+        { status: 200 }
+      );
+      if (cacheControl304) json304.headers.set("Cache-Control", cacheControl304);
+      if (etag304) json304.headers.set("ETag", etag304);
+      return json304;
     }
 
     const data = await resp.json().catch(() => ({}));
@@ -66,7 +78,7 @@ export async function GET(
     if (etag) nextResponse.headers.set("ETag", etag);
 
     return nextResponse;
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: "Proxy error" },
       { status: 500 }

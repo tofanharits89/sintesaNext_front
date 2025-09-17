@@ -605,8 +605,12 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                     </Link>
                   </DropdownMenuItem>
                 )}
-                {(currentUser?.role === "super_admin" ||
-                  currentUser?.role === "co_admin") && (
+                {(() => {
+                  const roleStr = String(currentUser?.role || "").toLowerCase();
+                  const isAdminLike =
+                    roleStr === "super_admin" || roleStr === "co_admin" || roleStr === "admin";
+                  return isAdminLike;
+                })() && (
                   <DropdownMenuItem asChild>
                     <Link href="/log-user" className="flex items-center">
                       <Activity className="mr-2 h-4 w-4" />

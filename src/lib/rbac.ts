@@ -182,6 +182,23 @@ export const PERMISSIONS = {
   },
 } as const;
 
+// Normalize potential legacy role strings
+const normalizeRole = (role: MinimalUser["role"]): User["role"] | undefined => {
+  if (!role) return undefined;
+  const r = String(role).toLowerCase();
+  if (r === "admin") return "super_admin";
+  // If role matches our known union, keep it; otherwise return undefined to fail closed
+  const known = [
+    "super_admin",
+    "co_admin",
+    "kantor_pusat",
+    "kanwil_djpb",
+    "kppn",
+    "lainnya",
+  ] as const;
+  return (known as readonly string[]).includes(r) ? (r as User["role"]) : undefined;
+};
+
 // Helper function to check if user has permission
 export function hasPermission(
   user: MinimalUser | null | undefined,
@@ -189,14 +206,15 @@ export function hasPermission(
   action: string
 ): boolean {
   if (!user || !user.role) return false;
-  
-  const rolePermissions = (PERMISSIONS as any)[user.role];
+  const effectiveRole = normalizeRole(user.role);
+  if (!effectiveRole) return false;
+  const rolePermissions = PERMISSIONS[effectiveRole];
   if (!rolePermissions) return false;
   
   const modulePermissions = rolePermissions[module];
   if (!modulePermissions) return false;
   
-  return (modulePermissions as any)[action] === true;
+  return (modulePermissions as Record<string, boolean>)[action] === true;
 }
 
 // Check if user can access user management
@@ -259,5 +277,7 @@ export function getRoleDisplayName(role: MinimalUser["role"]): string {
   } as const;
   
   if (!role || typeof role !== "string") return "";
-  return (roleNames as any)[role] || role;
+  const effectiveRole = normalizeRole(role);
+  if (!effectiveRole) return role;
+  return (roleNames as Record<string, string>)[effectiveRole] || effectiveRole;
 }

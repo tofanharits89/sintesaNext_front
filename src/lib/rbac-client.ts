@@ -65,14 +65,26 @@ export const PERMISSIONS: Record<Role, RolePermissions> = {
   },
 };
 
+// Normalize potential legacy role strings coming from backend
+// e.g., map "admin" -> "super_admin"
+const normalizeRole = (role: Role | string): Role | string => {
+  if (!role) return role;
+  const r = String(role).toLowerCase();
+  if (r === "admin") return "super_admin";
+  return role;
+};
+
 /**
  * Check if user has permission
  */
 export const hasPermission = (userRole: Role | string, module: ModuleName | string, action: string): boolean => {
   if (!userRole || !module || !action) return false;
-  const rolePermissions = (PERMISSIONS as any)[userRole];
+  const effectiveRole = normalizeRole(userRole) as Role | string;
+  const roleKey = effectiveRole as keyof typeof PERMISSIONS;
+  const rolePermissions = PERMISSIONS[roleKey];
   if (!rolePermissions) return false;
-  const modulePermissions = rolePermissions[module as ModuleName] as PermissionMap | undefined;
+  const moduleKey = module as ModuleName;
+  const modulePermissions = rolePermissions[moduleKey];
   if (!modulePermissions) return false;
   return modulePermissions[action] === true;
 };
@@ -117,5 +129,6 @@ export const getRoleDisplayName = (role: Role | string): string => {
     kppn: "KPPN (3)",
     lainnya: "User Lainnya (4)",
   };
-  return roleNames[role] || (role as string);
+  const effectiveRole = normalizeRole(role) as string;
+  return roleNames[effectiveRole] || effectiveRole;
 };

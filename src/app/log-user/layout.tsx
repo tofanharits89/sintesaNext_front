@@ -17,39 +17,51 @@ export default async function LogUserLayout({
     redirect("/login");
   }
 
+  // 1) Try via local Next API proxy (cookies auto-forwarded in server components)
+  let resp: Response | null = null;
   try {
-    // Fetch profile via backend using cookies
-    const resp = await fetch(apiPath("/users/profile/me"), {
+    resp = await fetch(apiPath("/users/profile/me"), {
       method: "GET",
-      headers: { cookie: cookieHeader },
       cache: "no-store",
     });
-
-    if (resp.status === 401) {
-      if (hasAccessToken) {
-        redirect("/unauthorized?reason=log_user_access_denied");
-      }
-      redirect("/login");
-    }
-
-    if (!resp.ok) throw new Error("profile_failed");
-    const data = await resp.json().catch(() => ({}));
-
-    const user = data?.data;
-    const role = user?.role as string | undefined;
-    if (!role) {
-      redirect("/unauthorized?reason=log_user_access_denied");
-    }
-
-    const allowed = role === "super_admin" || role === "co_admin";
-    if (!allowed) {
-      redirect("/unauthorized?reason=log_user_access_denied");
-    }
   } catch {
+    resp = null;
+  }
+
+  // 2) If local proxy errored, retry directly to backend with explicit cookie header
+  if (!resp) {
+    try {
+      resp = await fetch(backendPath("/users/profile/me"), {
+        method: "GET",
+        headers: { cookie: cookieHeader },
+        cache: "no-store",
+      });
+    } catch {
+      redirect("/unauthorized?reason=log_user_exception_fetch");
+    }
+  }
+
+  if (resp.status === 401) {
     if (hasAccessToken) {
-      redirect("/unauthorized?reason=log_user_access_denied");
+      redirect("/unauthorized?reason=log_user_profile_401");
     }
     redirect("/login");
+  }
+
+  if (!resp.ok) {
+    redirect("/unauthorized?reason=log_user_profile_not_ok");
+  }
+
+  const data = await resp.json().catch(() => ({}));
+  const user = data?.data;
+  const role = user?.role as string | undefined;
+  if (!role) {
+    redirect("/unauthorized?reason=log_user_no_role");
+  }
+
+  const allowed = role === "super_admin" || role === "co_admin" || role === "admin";
+  if (!allowed) {
+    redirect("/unauthorized?reason=log_user_rbac_denied");
   }
 
   return children as React.ReactElement;

@@ -1,8 +1,9 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { backendPath } from "@/lib/backend";
+// Fetch via Next API proxy to preserve browser cookies reliably
 import { apiPath } from "@/lib/base-path";
 import { canAccessSettings } from "@/lib/rbac-client";
+import { backendPath } from "@/lib/backend";
 
 export default async function SettingsLayout({
   children,
@@ -20,39 +21,52 @@ export default async function SettingsLayout({
   }
 
   // Verify token with backend and check RBAC permissions
+  // 1) Try via local Next API proxy (cookies are forwarded automatically)
+  let resp: Response | null = null;
   try {
-    // Fetch profile via backend using cookies to identify user session
-    const resp = await fetch(apiPath("/users/profile/me"), {
+    resp = await fetch(apiPath("/users/profile/me"), {
       method: "GET",
-      headers: { cookie: cookieHeader },
       cache: "no-store",
     });
+  } catch {
+    resp = null;
+  }
 
-    if (resp.status === 401) {
-      // If a session cookie exists but backend rejects, prefer unauthorized over login
-      if (hasAccessToken) {
-        redirect("/unauthorized?reason=settings_access_denied");
-      }
-      redirect("/login");
+  // 2) If local proxy errored, retry directly to backend with explicit cookie header
+  if (!resp) {
+    try {
+      resp = await fetch(backendPath("/users/profile/me"), {
+        method: "GET",
+        headers: { cookie: cookieHeader },
+        cache: "no-store",
+      });
+    } catch {
+      // Both attempts failed at network level
+      redirect("/unauthorized?reason=settings_exception_fetch");
     }
+  }
 
-    if (!resp.ok) throw new Error("profile_failed");
-    const data = await resp.json().catch(() => ({}));
-
-    const user = data?.data;
-    if (!user || !user.role) {
-      // Authenticated but cannot resolve role – treat as unauthorized to avoid login bounce
-      redirect("/unauthorized?reason=settings_access_denied");
-    }
-
-    if (!canAccessSettings(user.role)) {
-      redirect("/unauthorized?reason=settings_access_denied");
-    }
-  } catch (error: any) {
+  if (resp.status === 401) {
+    // If a session cookie exists but backend rejects, prefer unauthorized over login
     if (hasAccessToken) {
-      redirect("/unauthorized?reason=settings_access_denied");
+      redirect("/unauthorized?reason=settings_profile_401");
     }
     redirect("/login");
+  }
+
+  if (!resp.ok) {
+    redirect("/unauthorized?reason=settings_profile_not_ok");
+  }
+  const data = await resp.json().catch(() => ({}));
+
+  const user = data?.data;
+  if (!user || !user.role) {
+    // Authenticated but cannot resolve role – treat as unauthorized to avoid login bounce
+    redirect("/unauthorized?reason=settings_no_role");
+  }
+
+  if (!canAccessSettings(user.role)) {
+    redirect("/unauthorized?reason=settings_rbac_denied");
   }
   return children as React.ReactElement;
 }
