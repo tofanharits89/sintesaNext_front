@@ -404,7 +404,15 @@ export function useSavedQueries(
       return result as { id: string };
     },
     {
-      onSuccess: ({ id }: { id: string }) => {
+      onSuccess: (param: { id: string } | null) => {
+        // Handle case where param might be null
+        if (!param || !param.id) {
+          console.warn("[useSavedQueries] Delete success callback received null or invalid param:", param);
+          return;
+        }
+        
+        const { id } = param;
+        
         // Optimistically update the cache - use functional update to prevent stale closures
         mutate(
           (prev) => {

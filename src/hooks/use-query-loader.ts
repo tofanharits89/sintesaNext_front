@@ -108,6 +108,10 @@ export function useQueryLoader({
         ): boolean => {
           if (filterKey === "cutOff") {
             // cutOff filter is configured if it has a kondisiCode
+            // For rkakl_detail scope, cutOff is not required
+            if (scope === "rkakl_detail") {
+              return true; // Skip validation for rkakl_detail
+            }
             return !!(
               filterValue.kondisiCode &&
               typeof filterValue.kondisiCode === "string" &&
@@ -281,31 +285,45 @@ export function useQueryLoader({
       activeFilters: string[];
       filterValues: Record<string, FilterValue>;
     } => {
-      // Ensure cutOff is always included for belanja queries
+      // Handle cutOff filter based on scope
       const activeFilters = [...query.activeFilters];
-      if (!activeFilters.includes("cutOff")) {
-        activeFilters.unshift("cutOff");
-      }
-
-      // Restore filter values, ensuring cutOff has a default if missing
       const filterValues = { ...query.filterValues };
-      if (!filterValues.cutOff) {
-        const getCurrentMonth = () => {
-          const now = new Date();
-          return String(now.getMonth() + 1).padStart(2, "0");
-        };
 
-        filterValues.cutOff = {
-          selection: getCurrentMonth(),
-          kondisiCode: "equals",
-          mengandungKata: "",
-          jenisTampilan: "kode" as const,
-        };
+      // For belanja and tematik scopes, ensure cutOff is always included
+      if (scope === "belanja" || scope === "tematik") {
+        if (!activeFilters.includes("cutOff")) {
+          activeFilters.unshift("cutOff");
+        }
+
+        // Ensure cutOff has a default value if missing
+        if (!filterValues.cutOff) {
+          const getCurrentMonth = () => {
+            const now = new Date();
+            return String(now.getMonth() + 1).padStart(2, "0");
+          };
+
+          filterValues.cutOff = {
+            selection: getCurrentMonth(),
+            kondisiCode: "equals",
+            mengandungKata: "",
+            jenisTampilan: "kode" as const,
+          };
+        }
+      }
+      // For rkakl_detail scope, remove cutOff if present (not needed)
+      else if (scope === "rkakl_detail") {
+        const cutOffIndex = activeFilters.indexOf("cutOff");
+        if (cutOffIndex > -1) {
+          activeFilters.splice(cutOffIndex, 1);
+        }
+        if (filterValues.cutOff) {
+          delete filterValues.cutOff;
+        }
       }
 
       return { activeFilters, filterValues };
     },
-    []
+    [scope]
   );
 
   /**

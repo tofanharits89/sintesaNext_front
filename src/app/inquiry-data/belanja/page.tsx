@@ -421,6 +421,7 @@ export default function BelanjaPage() {
         <FilterParametersCard
           activeFilters={activeFilters}
           setActiveFilters={setActiveFilters}
+          excludeFilters={["cutOff"]} // Exclude cutOff from switches; it appears in DynamicFiltersCard
           scope="belanja"
           tipeLaporan={reportParams.tipeLaporan}
         />

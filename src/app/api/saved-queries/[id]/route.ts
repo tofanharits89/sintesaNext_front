@@ -48,6 +48,12 @@ export async function DELETE(request: Request, ctx: { params: Promise<{ id: stri
       ...(csrf ? { "X-CSRF-Token": csrf } : {}),
     },
   });
+
+  // Handle 204 No Content responses properly
+  if (resp.status === 204) {
+    return NextResponse.json({ success: true, id: delId }, { status: 200 });
+  }
+
   const data = await resp.json().catch(() => ({}));
   return NextResponse.json(data, { status: resp.status });
 }

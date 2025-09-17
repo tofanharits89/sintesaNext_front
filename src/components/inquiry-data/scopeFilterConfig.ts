@@ -9,7 +9,7 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
   string[]
 > = {
   belanja: [
-    "cutOff", // Hide cut off switch on Belanja page
+    // "cutOff", // Allow cutOff switch on Belanja page (like tematik)
     "belanjaPemerintah", // Bantuan Pemerintah
     "mbgIntervensi", // Makan Bergizi Gratis
     "swasembadaPangan", // Swasembada Pangan
