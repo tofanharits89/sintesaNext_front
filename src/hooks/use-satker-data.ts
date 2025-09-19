@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { CarisatkerData } from "@/types/satker";
-import { http } from "@/lib/httpClient";
+import { apiClient } from "@/lib/httpClient";
 
 export function useSatkerData(kdsatker?: string) {
   const [data, setData] = useState<CarisatkerData | null>(null);
@@ -15,12 +15,12 @@ export function useSatkerData(kdsatker?: string) {
       setError(null);
 
       try {
-        const resp = await http.get(`/api/satker/${kdsatker}`);
-        const result = resp.data;
+        // Use Next.js basePath-aware API proxy route: /api/satker/[kdsatker]
+        const result = await apiClient.get(`/satker/${kdsatker}`);
         if (result?.success === false) {
           throw new Error(result?.message || "Failed to fetch satker data");
         }
-        setData(result.data || result || null);
+        setData((result as any).data || result || null);
       } catch (err: any) {
         const message = err?.response?.data?.message || err?.message || "An error occurred";
         setError(message);
@@ -51,12 +51,12 @@ export function useSatkerSearch() {
     setError(null);
 
     try {
-      const resp = await http.get(`/api/satker`, { params: { search: searchTerm } });
-      const result = resp.data;
+      // Use Next.js basePath-aware API proxy route: /api/satker
+      const result = await apiClient.get(`/satker`, { params: { search: searchTerm } });
       if (result?.success === false) {
         throw new Error(result?.message || "Failed to search satker data");
       }
-      setResults(result.data || result || []);
+      setResults((result as any).data || (result as any) || []);
     } catch (err: any) {
       const message = err?.response?.data?.message || err?.message || "An error occurred";
       setError(message);

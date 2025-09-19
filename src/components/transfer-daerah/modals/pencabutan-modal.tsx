@@ -302,6 +302,8 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
                 variant="outline"
                 onClick={() => setIsKmkPenundaanListOpen(true)}
                 className="bg-slate-800 text-white hover:bg-slate-900"
+                disabled={!formData.dasarPenundaan}
+                title={!formData.dasarPenundaan ? "Pilih Dasar Penundaan terlebih dahulu" : ""}
               >
                 List KMK Penundaan
               </Button>
@@ -325,6 +327,8 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
       <KmkPenundaanListModal
         open={isKmkPenundaanListOpen}
         onOpenChange={setIsKmkPenundaanListOpen}
+        noKmk={formData.dasarPenundaan || undefined}
+        year={formData.tahun || undefined}
       />
     </>
   );

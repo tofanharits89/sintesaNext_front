@@ -6,6 +6,7 @@
  */
 
 import { toast } from 'sonner';
+import { apiPath } from '@/lib/base-path';
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -483,7 +484,7 @@ export class AuthStateManager {
   private async attemptTokenRefresh(): Promise<boolean> {
     try {
       // This would typically call your auth API
-      const response = await fetch('/api/auth/refresh', {
+      const response = await fetch(apiPath('/auth/refresh'), {
         method: 'POST',
         credentials: 'include'
       });

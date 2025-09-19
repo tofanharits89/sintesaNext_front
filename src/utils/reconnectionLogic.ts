@@ -246,11 +246,13 @@ export class ReconnectionManager {
    * Refresh authentication token
    */
   private async refreshAuthToken(): Promise<void> {
-    // Implementation depends on your auth system
-    // This is a placeholder
-    const response = await fetch("/api/auth/refresh", {
+    // Use same-origin Next API with base path helper; it proxies to backend and forwards cookies
+    const { apiPath } = await import("@/lib/base-path");
+    const response = await fetch(apiPath("/auth/refresh"), {
       method: "POST",
       credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
     });
 
     if (!response.ok) {

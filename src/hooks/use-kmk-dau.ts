@@ -71,7 +71,7 @@ export function useKmkDau(year?: string | number) {
   );
 
   const rows: KmkRow[] = (data || []).map((r, idx) => ({
-    id: String(r.id),
+    id: String((r as any).id ?? `${String(r.thang ?? "").trim()}-${String(r.no_kmk ?? "").trim()}`),
     no: idx + 1,
     tahun: String(r.thang ?? ""),
     tanggalKmk: r.tgl_kmk ?? "",

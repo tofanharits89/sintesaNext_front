@@ -189,8 +189,19 @@ function RekapByPemdaTable({ rows }: { rows: any[] }) {
 }
 
 export function KertasKerjaModal({ open, onOpenChange, data }: KertasKerjaModalProps) {
-  const kdpemda = data?.kdpemdaCode as string | undefined;
-  const bulan = data?.bulanNum as number | undefined;
+  // Derive parameters robustly from the selected row
+  const kdpemda: string | undefined = (data?.kdpemdaCode as string | undefined)
+    || (typeof data?.kabkota === "string" ? String(data.kabkota).split(" - ")[0] : undefined)
+    || (typeof data?.KDPEMDA === "string" ? data.KDPEMDA : undefined);
+
+  const bulan: number | undefined = (typeof data?.bulanNum === "number" ? data.bulanNum : undefined)
+    ?? (typeof data?.BULAN === "number" ? data.BULAN : undefined)
+    ?? (typeof data?.bulan === "string"
+      ? [
+          "Januari","Februari","Maret","April","Mei","Juni",
+          "Juli","Agustus","September","Oktober","November","Desember",
+        ].indexOf(data.bulan) + 1 || undefined
+      : undefined);
 
   // Queries
   const rekapBulanan = useDauRekapBulanan({ kdpemda, bulan });
@@ -218,7 +229,15 @@ export function KertasKerjaModal({ open, onOpenChange, data }: KertasKerjaModalP
               ) : rekapBulanan.error ? (
                 <div className="text-sm text-red-600">{String(rekapBulanan.error.message || rekapBulanan.error)}</div>
               ) : (
-                <RekapBulananTable rows={rekapBulanan.rows} />
+                <>
+                  <RekapBulananTable rows={rekapBulanan.rows} />
+                  {!rekapBulanan.rows?.length && (
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      Parameter: kdpemda=<span className="font-mono">{String(kdpemda || "-")}</span>, bulan=
+                      <span className="font-mono">{String(bulan || "-")}</span>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>

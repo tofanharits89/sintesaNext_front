@@ -41,6 +41,8 @@ interface DataTableProps<TData, TValue> {
   controlledPagination?: { pageIndex: number; pageSize: number };
   // Control react-table's auto reset behavior for page index
   autoResetPageIndex?: boolean;
+  // Optional className applied to the underlying Table element (to control font-size, spacing, etc.)
+  tableClassName?: string;
 }
 
 export function DataTable<TData, TValue>({
@@ -53,6 +55,7 @@ export function DataTable<TData, TValue>({
   onPaginationChange,
   controlledPagination,
   autoResetPageIndex = false,
+  tableClassName,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -118,7 +121,7 @@ export function DataTable<TData, TValue>({
         </div>
       )}
       <div className="rounded-md border">
-        <Table>
+        <Table className={tableClassName}>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>

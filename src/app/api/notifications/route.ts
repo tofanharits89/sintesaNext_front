@@ -27,11 +27,18 @@ export async function POST(request: NextRequest) {
     );
 
   const body = await request.json().catch(() => ({}));
+  // Forward CSRF headers from client to backend to satisfy csurf
+  const csrfHeader =
+    request.headers.get("x-csrf-token") ||
+    request.headers.get("x-xsrf-token") ||
+    request.headers.get("x-csrf-token" as any) ||
+    undefined;
   const resp = await fetch(backendPath("/notifications"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       ...(cookie ? { cookie } : {}),
+      ...(csrfHeader ? { "X-CSRF-Token": csrfHeader } : {}),
     },
     body: JSON.stringify(body),
   });

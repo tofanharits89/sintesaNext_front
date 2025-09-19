@@ -8,48 +8,38 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { DataTable } from "@/components/ui/data-table";
-import { useQuery } from "@tanstack/react-query";
-import { backendPath } from "@/lib/backend";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useKmkPencabutan } from "@/hooks/use-kmk-pencabutan";
 
 interface KmkPenundaanListModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  noKmk?: string; // required to query backend
+  year?: string;  // required to query backend (maps to thang)
 }
 
 type ApiRow = {
   kmktunda: string;
   thangcabut: string | number;
   no_kmkcabut: string;
-  tglcabut: string;
-  uraiancabut: string;
+  tglcabut: string | null;
+  uraiancabut?: string | null;
 };
 
 export function KmkPenundaanListModal({
   open,
   onOpenChange,
+  noKmk,
+  year,
 }: KmkPenundaanListModalProps) {
   const [pagination, setPagination] = useState<{ pageIndex: number; pageSize: number }>({ pageIndex: 0, pageSize: 10 });
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["kmk-penundaan-list"],
-    queryFn: async () => {
-      const token = getAuthTokenFromCookie();
-      const headers: HeadersInit = { "Content-Type": "application/json" };
-      if (token) headers.Authorization = `Bearer ${token}`;
-      const res = await fetch(backendPath("/transfer-daerah/dau/kmk/penundaan"), {
-        credentials: "include",
-        headers,
-        signal: AbortSignal.timeout(20000),
-      });
-      if (!res.ok) throw new Error("Failed to fetch KMK penundaan list");
-      const json = await res.json();
-      return (json?.data as ApiRow[]) ?? [];
-    },
-    staleTime: 5 * 60 * 1000,
-  });
+  const enabled = Boolean(open && noKmk);
+  const pencabutan = useKmkPencabutan(enabled ? noKmk : undefined);
+  const data = pencabutan.rows as any[] | undefined;
+  const isLoading = pencabutan.isLoading;
+  const isError = Boolean(pencabutan.error);
 
   // Reset to first page when modal opens
   useEffect(() => {
@@ -66,21 +56,57 @@ export function KmkPenundaanListModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data?.length]);
 
-  const rows = (data ?? []).map((d: ApiRow, idx: number) => ({
-    id: `${d.no_kmkcabut}-${idx}`,
-    no: idx + 1,
-    kmkPenundaan: d.kmktunda,
-    tahun: d.thangcabut,
-    tanggal: d.tglcabut,
-    nomor: d.no_kmkcabut,
-    uraian: d.uraiancabut,
-  }));
+  const rows = (data ?? []).map((d: any, idx: number) => {
+    const tgl = d.tglcabut ?? null;
+    const yearFromDate = (() => {
+      if (!tgl) return "";
+      const m = String(tgl).match(/^(\d{4})/);
+      return m ? m[1] : "";
+    })();
+    return {
+      id: `${String(d.no_kmkcabut ?? d.no_kmk ?? "-")}-${idx}`,
+      no: idx + 1,
+      kmkPenundaan: String(d.no_kmk ?? d.kmktunda ?? ""),
+      tahun: d.thangcabut ?? yearFromDate ?? "",
+      tanggal: tgl,
+      nomor: String(d.no_kmkcabut ?? ""),
+      uraian: String(d.nmjenis ? `${d.nmjenis}${d.nm_kriteria ? " - " + d.nm_kriteria : ""}` : (d.uraiancabut ?? "")),
+    };
+  });
 
   const total = rows.length;
   const totalPages = Math.max(1, Math.ceil(total / (pagination.pageSize || 10)));
   const startIndex = pagination.pageIndex * (pagination.pageSize || 10);
   const endIndex = Math.min(total, startIndex + (pagination.pageSize || 10));
   const paginatedRows = useMemo(() => rows.slice(startIndex, endIndex), [rows, startIndex, endIndex]);
+  // Helper to safely format date values. Accepts Date|string|number and returns a localized string or '-'.
+  const formatTanggal = (val: unknown) => {
+    if (!val) return "-";
+    try {
+      // If already a Date
+      if (val instanceof Date && !isNaN(val.getTime())) {
+        return val.toLocaleDateString("id-ID");
+      }
+      const str = String(val).trim();
+      if (!str) return "-";
+      // Try to parse ISO-like (YYYY-MM-DD) first
+      const isoMatch = str.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/);
+      if (isoMatch) {
+        const y = Number(isoMatch[1]);
+        const m = Number(isoMatch[2]);
+        const d = Number(isoMatch[3]);
+        const dt = new Date(y, m - 1, d);
+        if (!isNaN(dt.getTime())) return dt.toLocaleDateString("id-ID");
+      }
+      // Fallback to native Date parsing
+      const dt = new Date(str);
+      if (!isNaN(dt.getTime())) return dt.toLocaleDateString("id-ID");
+      return "-";
+    } catch {
+      return "-";
+    }
+  };
+
   const columns = useMemo(() => [
     {
       accessorKey: "no",
@@ -106,7 +132,7 @@ export function KmkPenundaanListModal({
       ),
       cell: ({ row }: any) => (
         <div className="text-center">
-          {new Date(row.getValue("tanggal")).toLocaleDateString("id-ID")}
+          {formatTanggal(row.getValue("tanggal"))}
         </div>
       ),
     },
@@ -151,11 +177,14 @@ export function KmkPenundaanListModal({
               Gagal memuat data KMK Penundaan.
             </div>
           ) : (
-            <DataTable
-              columns={columns}
-              data={paginatedRows}
-              hidePagination
-            />
+            <div className="text-xs sm:text-sm">
+              <DataTable
+                columns={columns}
+                data={paginatedRows}
+                hidePagination
+                tableClassName="text-xs"
+              />
+            </div>
           )}
         </div>
         <DialogFooter className="flex items-center justify-between mt-2">

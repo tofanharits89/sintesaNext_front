@@ -39,7 +39,7 @@ export async function GET(
 
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
-    console.error("Error fetching satker details:", error);
+    console.error("[api/satker/[kdsatker]] Error fetching satker details:", error);
     return NextResponse.json(
       { success: false, message: "Internal server error" },
       { status: 500 }
