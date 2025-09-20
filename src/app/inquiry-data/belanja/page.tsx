@@ -247,42 +247,9 @@ export default function BelanjaPage() {
     [unsavedChangesWarning]
   );
 
-  // Cleanup effect to ensure UI is not left in blocked state
-  useEffect(() => {
-    const cleanup = () => {
-      // Remove any potential overlay or backdrop elements that might be stuck
-      const overlays = document.querySelectorAll(
-        "[data-radix-popper-content-wrapper]"
-      );
-      overlays.forEach((overlay) => {
-        if (overlay.parentNode) {
-          overlay.parentNode.removeChild(overlay);
-        }
-      });
-
-      // Remove any stuck modal backdrops
-      const backdrops = document.querySelectorAll(
-        "[data-radix-dialog-overlay]"
-      );
-      backdrops.forEach((backdrop) => {
-        const style = window.getComputedStyle(backdrop);
-        if (style.pointerEvents === "auto" && style.opacity === "0") {
-          if (backdrop.parentNode) {
-            backdrop.parentNode.removeChild(backdrop);
-          }
-        }
-      });
-    };
-
-    // Run cleanup when component unmounts or when warning modal closes
-    if (
-      !unsavedChangesWarning.isWarningOpen &&
-      !unsavedChangesWarning.isProcessing
-    ) {
-      const timeoutId = setTimeout(cleanup, 200);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [unsavedChangesWarning.isWarningOpen, unsavedChangesWarning.isProcessing]);
+  // Note: Avoid manual DOM cleanup of Radix overlays/backdrops here.
+  // React/Radix manage their own lifecycles; manual removal can conflict
+  // with Next.js/React error boundaries and cause NotFoundError.
 
   // Create stable queryLoader object for DynamicFiltersCard
   const stableQueryLoader = useMemo(
