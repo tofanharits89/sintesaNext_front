@@ -1,7 +1,5 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { backendPath } from "@/lib/backend";
+import { AuthGuard } from "@/components/auth/auth-guard";
 import { DashboardProvider } from "@/components/providers/dashboard-provider";
 import { DashboardSkeleton } from "@/components/layout/dashboard-skeleton";
 
@@ -19,16 +17,17 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Auth check is now handled by middleware - no need for additional checks
-  // User data will be fetched by components as needed
+  // Server-side auth guard: ensures redirect to /login when unauthenticated
   const user: User | null = null;
 
   return (
-    <DashboardProvider initialUser={user}>
-      <Suspense fallback={<DashboardSkeleton />}>
-        {children as React.ReactElement}
-      </Suspense>
-    </DashboardProvider>
+    <AuthGuard>
+      <DashboardProvider initialUser={user}>
+        <Suspense fallback={<DashboardSkeleton />}>
+          {children as React.ReactElement}
+        </Suspense>
+      </DashboardProvider>
+    </AuthGuard>
   );
 }
 

@@ -10,7 +10,7 @@ const DEBUG_AUTH = process.env.NEXT_PUBLIC_DEBUG_AUTH === "1";
 // This cache does NOT persist across deployments/cold starts or across regions.
 // Keep TTLs short to tolerate scale-out and cold starts without causing long-lived
 // auth/health decisions.
-const SESSION_VERIFY_TTL_MS = 60_000; // 60 seconds to reduce auth probes without changing behavior
+const SESSION_VERIFY_TTL_MS = 5_000; // reduce to 5s to avoid stale auth decisions after token expiry
 const sessionVerifyCache = new Map<string, { ok: boolean; exp: number }>();
 
 /**
@@ -144,35 +144,52 @@ export async function middleware(request: NextRequest) {
     const healthyEarly = await isBackendHealthy();
     if (!healthyEarly) {
       const url = request.nextUrl.clone();
-      // Set path relative to current base path. Do NOT prepend BASE_PATH here,
-      // because Next middleware will apply basePath automatically.
+      // Do NOT prepend BASE_PATH here; Next middleware applies basePath automatically
       url.pathname = `/server-error`;
       return NextResponse.redirect(url);
     }
   }
 
   // Validate session via backend using cookies only (no token extraction)
-  const incomingCookie = request.headers.get("cookie") || "";
-  // Avoid cached auth decision on login/dashboard to prevent redirect loops
-  const noCache = relPath.startsWith("/login"); // allow cache on dashboard to reduce cost; login stays uncached
-  const isAuth = await validateSessionViaBackend(incomingCookie, noCache);
+  // Prefer NextRequest cookies API for reliability across runtimes
+  const accessToken = request.cookies.get("accessToken")?.value?.trim();
+  const filteredCookie = accessToken ? `accessToken=${encodeURIComponent(accessToken)}` : "";
+
+  // Local fast-fail: if no accessToken cookie present, treat as unauthenticated
+  if (!isPublicPath && !filteredCookie) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    const res = NextResponse.redirect(url);
+    if (DEBUG_AUTH) {
+      res.headers.set("x-auth-debug", "no-accessToken;redirect-login");
+      res.headers.set("x-auth-relpath", relPath);
+    }
+    return res;
+  }
+  // Avoid cached auth decision on ALL non-public routes to prevent stale "authenticated" states
+  // When a token expires between requests, we want an immediate redirect instead of waiting for TTL
+  const noCache = !isPublicPath;
+  const isAuth = await validateSessionViaBackend(filteredCookie, noCache);
 
   // Handle root path: redirect to appropriate base path
   if (relPath === "/") {
     const url = request.nextUrl.clone();
-    url.pathname = isAuth ? "/dashboard" : "/login";
+    // Do NOT prepend BASE_PATH here; Next middleware applies basePath automatically
+    url.pathname = isAuth ? `/dashboard` : `/login`;
     return NextResponse.redirect(url);
   }
 
   if (!isAuth && !isPublicPath) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    // Do NOT prepend BASE_PATH here; Next middleware applies basePath automatically
+    url.pathname = `/login`;
     return NextResponse.redirect(url);
   }
 
   if (isAuth && relPath.startsWith("/login")) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    // Do NOT prepend BASE_PATH here; Next middleware applies basePath automatically
+    url.pathname = `/dashboard`;
     return NextResponse.redirect(url);
   }
 
@@ -182,6 +199,12 @@ export async function middleware(request: NextRequest) {
   const res = NextResponse.next({ request: { headers: requestHeaders } });
   if (!isPublicPath) {
     res.headers.set("Cache-Control", "no-store");
+  }
+  if (DEBUG_AUTH) {
+    res.headers.set("x-auth-public", isPublicPath ? "1" : "0");
+    res.headers.set("x-auth-isAuth", isAuth ? "1" : "0");
+    res.headers.set("x-auth-hasAccessToken", filteredCookie ? "1" : "0");
+    res.headers.set("x-auth-relpath", relPath);
   }
   return res;
 }

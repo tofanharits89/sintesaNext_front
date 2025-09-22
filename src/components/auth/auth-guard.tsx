@@ -5,10 +5,9 @@ import { backendPath } from "@/lib/backend";
 export async function AuthGuard({ children }: { children: React.ReactNode }) {
   // Server-side guard: verify via backend by forwarding cookies (cookie-only auth)
   const c = await cookies();
-  const cookieHeader = c
-    .getAll()
-    .map(({ name, value }) => `${name}=${value}`)
-    .join("; ");
+  // Only forward accessToken to backend to prevent legacy cookie names from faking auth
+  const accessToken = c.get("accessToken")?.value?.trim();
+  const cookieHeader = accessToken ? `accessToken=${accessToken}` : "";
   if (!cookieHeader) {
     redirect("/login");
   }
@@ -17,9 +16,8 @@ export async function AuthGuard({ children }: { children: React.ReactNode }) {
     const resp = await fetch(backendPath("/auth/verify-fast"), {
       method: "GET",
       headers: cookieHeader ? { cookie: cookieHeader } : {},
-      // Strategic caching: 30s TTL for auth verification (industry standard)
-      cache: "force-cache",
-      next: { revalidate: 30 },
+      // Disable caching to avoid stale auth state after token expiry
+      cache: "no-store",
     });
     if (!resp.ok) {
       redirect("/login");

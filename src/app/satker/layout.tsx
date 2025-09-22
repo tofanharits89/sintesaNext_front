@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { AuthGuard } from "@/components/auth/auth-guard";
 
 export const metadata: Metadata = {
   title: "Profil Satker",
@@ -10,5 +11,5 @@ export default function SatkerLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return <AuthGuard>{children}</AuthGuard>;
 }
