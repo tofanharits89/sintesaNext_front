@@ -34,6 +34,9 @@ import {
   Upload,
   Search,
   Database,
+  PieChart,
+  TriangleAlert,
+  Share2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -66,8 +69,15 @@ const defaultMenu: MenuItem[] = [
     ],
   },
   {
-    label: "Profil K/L",
-    children: [{ label: "Kementerian" }, { label: "Lembaga" }],
+    label: "Data Supplier",
+    children: [
+      { label: "Dashboard Supplier" },
+      { label: "Profil Supplier" },
+      { label: "Konsentrasi Supplier" },
+      { label: "Deteksi Anomali Supplier" },
+      { label: "Klaster Supplier" },
+      { label: "Jaringan Supplier" },
+    ],
   },
   {
     label: "EPA",
@@ -96,6 +106,10 @@ const defaultMenu: MenuItem[] = [
       { label: "Tematik" },
       { label: "RKAKL Detail" },
     ],
+  },
+  {
+    label: "Profil K/L",
+    children: [{ label: "Kementerian" }, { label: "Lembaga" }],
   },
   {
     label: "Laporan",
@@ -157,6 +171,10 @@ export function ResponsiveSidebar({
       case "Inquiry Data":
         return (
           <Inbox className={`${cls} text-fuchsia-600 dark:text-fuchsia-400`} />
+        );
+      case "Data Supplier":
+        return (
+          <Database className={`${cls} text-purple-600 dark:text-purple-400`} />
         );
       case "Laporan":
         return (
@@ -226,6 +244,18 @@ export function ResponsiveSidebar({
         return <User className={cls} />;
       case "Tentang Kita__Kontak":
         return <Phone className={cls} />;
+      case "Data Supplier__Dashboard Supplier":
+        return <LineChart className={cls} />;
+      case "Data Supplier__Profil Supplier":
+        return <Search className={cls} />;
+      case "Data Supplier__Konsentrasi Supplier":
+        return <PieChart className={cls} />;
+      case "Data Supplier__Deteksi Anomali Supplier":
+        return <TriangleAlert className={cls} />;
+      case "Data Supplier__Klaster Supplier":
+        return <Layers className={cls} />;
+      case "Data Supplier__Jaringan Supplier":
+        return <Share2 className={cls} />;
       default:
         return null;
     }
@@ -527,6 +557,108 @@ export function ResponsiveSidebar({
                               <span>{c.label}</span>
                             </Link>
                           </DropdownMenuItem>
+                        ) : c.label === "Dashboard Supplier" && m.label === "Data Supplier" ? (
+                          <DropdownMenuItem key={c.label} asChild>
+                            <Link
+                              href="/data-supplier/dashboard"
+                              className="flex items-center w-full"
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/data-supplier/dashboard",
+                                })
+                              }
+                            >
+                              {subIconFor(m.label, c.label)}
+                              <span>{c.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        ) : c.label === "Profil Supplier" && m.label === "Data Supplier" ? (
+                          <DropdownMenuItem key={c.label} asChild>
+                            <Link
+                              href="/data-supplier/profil"
+                              className="flex items-center w-full"
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/data-supplier/profil",
+                                })
+                              }
+                            >
+                              {subIconFor(m.label, c.label)}
+                              <span>{c.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        ) : c.label === "Konsentrasi Supplier" && m.label === "Data Supplier" ? (
+                          <DropdownMenuItem key={c.label} asChild>
+                            <Link
+                              href="/data-supplier/konsentrasi"
+                              className="flex items-center w-full"
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/data-supplier/konsentrasi",
+                                })
+                              }
+                            >
+                              {subIconFor(m.label, c.label)}
+                              <span>{c.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        ) : c.label === "Deteksi Anomali Supplier" && m.label === "Data Supplier" ? (
+                          <DropdownMenuItem key={c.label} asChild>
+                            <Link
+                              href="/data-supplier/anomali"
+                              className="flex items-center w-full"
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/data-supplier/anomali",
+                                })
+                              }
+                            >
+                              {subIconFor(m.label, c.label)}
+                              <span>{c.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        ) : c.label === "Klaster Supplier" && m.label === "Data Supplier" ? (
+                          <DropdownMenuItem key={c.label} asChild>
+                            <Link
+                              href="/data-supplier/klaster"
+                              className="flex items-center w-full"
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/data-supplier/klaster",
+                                })
+                              }
+                            >
+                              {subIconFor(m.label, c.label)}
+                              <span>{c.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        ) : c.label === "Jaringan Supplier" && m.label === "Data Supplier" ? (
+                          <DropdownMenuItem key={c.label} asChild>
+                            <Link
+                              href="/data-supplier/jaringan"
+                              className="flex items-center w-full"
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/data-supplier/jaringan",
+                                })
+                              }
+                            >
+                              {subIconFor(m.label, c.label)}
+                              <span>{c.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem
                             key={c.label}
@@ -787,6 +919,120 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/inquiry-data/rkakl-detail",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Dashboard Supplier" && m.label === "Data Supplier" ? (
+                      <Link
+                        key={c.label}
+                        href="/data-supplier/dashboard"
+                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/data-supplier/dashboard",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Profil Supplier" && m.label === "Data Supplier" ? (
+                      <Link
+                        key={c.label}
+                        href="/data-supplier/profil"
+                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/data-supplier/profil",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Konsentrasi Supplier" && m.label === "Data Supplier" ? (
+                      <Link
+                        key={c.label}
+                        href="/data-supplier/konsentrasi"
+                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/data-supplier/konsentrasi",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Deteksi Anomali Supplier" && m.label === "Data Supplier" ? (
+                      <Link
+                        key={c.label}
+                        href="/data-supplier/anomali"
+                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/data-supplier/anomali",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Klaster Supplier" && m.label === "Data Supplier" ? (
+                      <Link
+                        key={c.label}
+                        href="/data-supplier/klaster"
+                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/data-supplier/klaster",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Jaringan Supplier" && m.label === "Data Supplier" ? (
+                      <Link
+                        key={c.label}
+                        href="/data-supplier/jaringan"
+                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/data-supplier/jaringan",
                           });
                           setOpen(false);
                         }}
