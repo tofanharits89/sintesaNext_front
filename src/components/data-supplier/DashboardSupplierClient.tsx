@@ -1,10 +1,11 @@
 "use client";
 
-import { Card, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
 import { LineChartComponent } from "@/components/ui/line-chart";
 import { StackedAreaChartComponent } from "@/components/ui/stacked-area-chart";
 import DashboardSupplierSkeleton from "@/components/data-supplier/DashboardSupplierSkeleton";
 import { useSupplierDashboard } from "@/hooks/useSupplierDashboard";
+import { StatCard } from "@/components/dashboard/StatCard";
+import { Users, Briefcase, Receipt, Layers, Percent } from "lucide-react";
 
 export default function DashboardSupplierClient({ selectedYear }: { selectedYear?: string }) {
   const { data, isLoading, error } = useSupplierDashboard(selectedYear);
@@ -111,39 +112,61 @@ export default function DashboardSupplierClient({ selectedYear }: { selectedYear
   const yMaxSpmWithHeadroom = Math.ceil(maxNilaiSpmNonKontraktual * 1.0);
   const nonKontraktualSpmForChart = nonKontraktualSpm;
 
+  // New third-row charts: counts
+  const kontrakCountData: Array<{ name: string; kontrak_count: number }> = Array.isArray(
+    d?.top_vendors_by_kontrak_count,
+  )
+    ? d.top_vendors_by_kontrak_count.map((v: any) => ({
+        name: cleanVendorName(v.nama_vendor || v.NPWP_SUPPLIER || "-"),
+        kontrak_count: Number(v.kontrak_count || 0),
+      }))
+    : [];
+
+  const yMaxKontrakCount = Math.ceil(
+    kontrakCountData.reduce((max, v) => Math.max(max, v.kontrak_count || 0), 0) * 1.05,
+  );
+
+  const nonKontrakTxnCountData: Array<{ name: string; txn_count: number }> = Array.isArray(
+    d?.top_vendors_non_kontraktual_by_txn_count,
+  )
+    ? d.top_vendors_non_kontraktual_by_txn_count.map((v: any) => ({
+        name: cleanVendorName(v.nama_vendor || v.NPWP_SUPPLIER || "-"),
+        txn_count: Number(v.txn_count || 0),
+      }))
+    : [];
+
+  const yMaxNonKontrakTxn = Math.ceil(
+    nonKontrakTxnCountData.reduce((max, v) => Math.max(max, v.txn_count || 0), 0) * 1.05,
+  );
+
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <Card>
-          <CardHeader>
-            <CardDescription>Total Vendor</CardDescription>
-            <CardTitle className="text-3xl">{totals?.total_vendors ?? 0}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardDescription>Jumlah Vendor Kontraktual</CardDescription>
-            <CardTitle className="text-3xl">{totals?.vendors_kontraktual ?? 0}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardDescription>Jumlah Vendor Non-Kontraktual</CardDescription>
-            <CardTitle className="text-3xl">{totals?.vendors_non_kontraktual ?? 0}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardDescription>Jumlah Kontrak</CardDescription>
-            <CardTitle className="text-3xl">{totals?.total_kontrak ?? 0}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardDescription>Rasio Realisasi</CardDescription>
-            <CardTitle className="text-3xl">{((totals?.realization_ratio ?? 0) * 100).toFixed(2)}%</CardTitle>
-          </CardHeader>
-        </Card>
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
+        <StatCard
+          label="Total Vendor"
+          icon={<Users className="h-4 w-4 text-blue-500" />}
+          value={(totals?.total_vendors ?? 0).toLocaleString("id-ID")}
+        />
+        <StatCard
+          label="Vendor Kontraktual"
+          icon={<Briefcase className="h-4 w-4 text-green-500" />}
+          value={(totals?.vendors_kontraktual ?? 0).toLocaleString("id-ID")}
+        />
+        <StatCard
+          label="Vendor Non-Kontraktual"
+          icon={<Receipt className="h-4 w-4 text-purple-500" />}
+          value={(totals?.vendors_non_kontraktual ?? 0).toLocaleString("id-ID")}
+        />
+        <StatCard
+          label="Jumlah Kontrak"
+          icon={<Layers className="h-4 w-4 text-orange-500" />}
+          value={(totals?.total_kontrak ?? 0).toLocaleString("id-ID")}
+        />
+        <StatCard
+          label="Rasio Realisasi"
+          icon={<Percent className="h-4 w-4 text-teal-500" />}
+          value={`${((totals?.realization_ratio ?? 0) * 100).toFixed(2)}%`}
+        />
       </div>
 
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -187,6 +210,68 @@ export default function DashboardSupplierClient({ selectedYear }: { selectedYear
             wrapXTicks
             xTickMaxChars={12}
             yDomain={[0, yMaxSpmWithHeadroom]}
+            yAllowDecimals={false}
+            xAxisPadding={{ left: 20, right: 36 }}
+            chartMargin={{ top: 48, left: 16, right: 16 }}
+            yHideTicks
+            badgeText="Top 5"
+          />
+        </div>
+      </div>
+
+      {/* Third row: count-based rankings */}
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="lg:col-span-1">
+          <StackedAreaChartComponent
+            data={kontrakCountData}
+            title="Vendor dengan Kontrak Terbanyak (Kontraktual)"
+            description="Jumlah kontrak per vendor (distinct NOMOR_KONTRAK)"
+            series={[
+              {
+                dataKey: "kontrak_count",
+                name: "Jumlah Kontrak",
+                color: "#0ea5e9",
+                showLabel: true,
+                labelPosition: "top",
+              },
+            ]}
+            height={340}
+            xTickAngle={0}
+            xTickFontSize={11}
+            xAxisHeight={76}
+            showAllXTicks
+            wrapXTicks
+            xTickMaxChars={12}
+            yDomain={[0, yMaxKontrakCount || 0]}
+            yAllowDecimals={false}
+            xAxisPadding={{ left: 20, right: 36 }}
+            chartMargin={{ top: 48, left: 16, right: 16 }}
+            yHideTicks
+            badgeText="Top 5"
+          />
+        </div>
+        <div className="lg:col-span-1">
+          <StackedAreaChartComponent
+            data={nonKontrakTxnCountData}
+            title="Vendor dengan Transaksi Terbanyak (Non-Kontraktual)"
+            description="Jumlah transaksi per vendor tanpa nomor kontrak"
+            series={[
+              {
+                dataKey: "txn_count",
+                name: "Jumlah Transaksi",
+                color: "#10b981",
+                showLabel: true,
+                labelPosition: "top",
+              },
+            ]}
+            height={340}
+            xTickAngle={0}
+            xTickFontSize={11}
+            xAxisHeight={76}
+            showAllXTicks
+            wrapXTicks
+            xTickMaxChars={12}
+            yDomain={[0, yMaxNonKontrakTxn || 0]}
             yAllowDecimals={false}
             xAxisPadding={{ left: 20, right: 36 }}
             chartMargin={{ top: 48, left: 16, right: 16 }}
