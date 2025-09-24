@@ -43,6 +43,10 @@ interface DataTableProps<TData, TValue> {
   autoResetPageIndex?: boolean;
   // Optional className applied to the underlying Table element (to control font-size, spacing, etc.)
   tableClassName?: string;
+  // Initial page size for uncontrolled pagination (default 10)
+  initialPageSize?: number;
+  // Custom footer info text. If provided, overrides the default "Showing X of Y entries" text.
+  footerInfoText?: string;
 }
 
 export function DataTable<TData, TValue>({
@@ -56,11 +60,13 @@ export function DataTable<TData, TValue>({
   controlledPagination,
   autoResetPageIndex = false,
   tableClassName,
+  initialPageSize,
+  footerInfoText,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [uncontrolledPagination, setUncontrolledPagination] = useState({ pageIndex: 0, pageSize: 10 });
+  const [uncontrolledPagination, setUncontrolledPagination] = useState({ pageIndex: 0, pageSize: initialPageSize ?? 10 });
   const effectivePagination = controlledPagination ?? uncontrolledPagination;
 
   const table = useReactTable({
@@ -96,6 +102,13 @@ export function DataTable<TData, TValue>({
     // We intentionally do not add onTableInstance to deps to avoid re-calling unnecessarily
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table, sorting, columnFilters, columnVisibility, data]);
+
+  // Keep react-table internal page size in sync with the requested initialPageSize
+  useEffect(() => {
+    if (initialPageSize && table.getState().pagination.pageSize !== initialPageSize) {
+      table.setPageSize(initialPageSize);
+    }
+  }, [initialPageSize, table]);
 
   // Notify parent when uncontrolled pagination changes so external UIs can re-render
   useEffect(() => {
@@ -173,8 +186,11 @@ export function DataTable<TData, TValue>({
       {hidePagination ? null : (
         <div className="flex items-center justify-between space-x-2 py-4">
           <div className="flex-1 text-sm text-muted-foreground">
-            Showing {table.getFilteredRowModel().rows.length} of{" "}
-            {table.getCoreRowModel().rows.length} entries
+            {footerInfoText ?? (
+              <>
+                Showing {table.getFilteredRowModel().rows.length} of {table.getCoreRowModel().rows.length} entries
+              </>
+            )}
           </div>
           <div className="flex items-center space-x-2">
             <Button
