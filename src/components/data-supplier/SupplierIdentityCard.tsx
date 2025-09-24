@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Building2, IdCard, Percent, Landmark, MapPin } from "lucide-react";
@@ -16,6 +17,12 @@ export interface SupplierIdentityCardProps {
   realizationRatio?: number; // 0..1
   satkersServed?: number;
   regionsServed?: number;
+  onShowKementerian?: () => void;
+  onShowSatker?: () => void;
+  onShowKppn?: () => void;
+  kementerianDetailAvailable?: boolean;
+  satkerDetailAvailable?: boolean;
+  kppnDetailAvailable?: boolean;
 }
 
 function formatIDRCurrency(n?: number) {
@@ -34,6 +41,12 @@ export function SupplierIdentityCard({
   realizationRatio,
   satkersServed,
   regionsServed,
+  onShowKementerian,
+  onShowSatker,
+  onShowKppn,
+  kementerianDetailAvailable,
+  satkerDetailAvailable,
+  kppnDetailAvailable,
 }: SupplierIdentityCardProps) {
   const ratioPct = Math.max(0, Math.min(100, Number((realizationRatio ?? 0) * 100)));
 
@@ -86,19 +99,55 @@ export function SupplierIdentityCard({
             <div className="text-base font-semibold">
               {Number(kementerianCount ?? 0).toLocaleString("id-ID")}
             </div>
+            {onShowKementerian ? (
+              <Button
+                type="button"
+                onClick={onShowKementerian}
+                className="mt-3 h-7 px-2 text-xs"
+                variant="outline"
+                size="sm"
+                disabled={kementerianDetailAvailable === false}
+              >
+                Detail
+              </Button>
+            ) : null}
           </div>
           <div className="grid grid-cols-2 gap-3 lg:col-span-1">
-            <div className="rounded-md border p-3">
+            <div className="rounded-md border p-3 flex flex-col">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Landmark className="h-4 w-4" /> Satker
               </div>
-              <div className="text-base font-semibold">{Number(satkersServed ?? 0).toLocaleString("id-ID")}</div>
+              <div className="mt-1 text-base font-semibold">{Number(satkersServed ?? 0).toLocaleString("id-ID")}</div>
+              {onShowSatker ? (
+                <Button
+                  type="button"
+                  onClick={onShowSatker}
+                  className="mt-3 h-7 px-2 text-xs"
+                  variant="outline"
+                  size="sm"
+                  disabled={satkerDetailAvailable === false}
+                >
+                  Detail
+                </Button>
+              ) : null}
             </div>
-            <div className="rounded-md border p-3">
+            <div className="rounded-md border p-3 flex flex-col">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <MapPin className="h-4 w-4" /> KPPN
               </div>
-              <div className="text-base font-semibold">{Number(regionsServed ?? 0).toLocaleString("id-ID")}</div>
+              <div className="mt-1 text-base font-semibold">{Number(regionsServed ?? 0).toLocaleString("id-ID")}</div>
+              {onShowKppn ? (
+                <Button
+                  type="button"
+                  onClick={onShowKppn}
+                  className="mt-3 h-7 px-2 text-xs"
+                  variant="outline"
+                  size="sm"
+                  disabled={kppnDetailAvailable === false}
+                >
+                  Detail
+                </Button>
+              ) : null}
             </div>
           </div>
         </div>

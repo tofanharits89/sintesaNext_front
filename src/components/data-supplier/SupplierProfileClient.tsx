@@ -12,6 +12,7 @@ import { SupplierContractsTable } from "./SupplierContractsTable";
 import { useSupplierProfile } from "@/hooks/useSupplierProfile";
 import YearFilter from "./year-filter";
 import { Info } from "lucide-react";
+import { SupplierEntityDetailModal, SupplierEntityDetailType, SupplierEntityDetailItem } from "./SupplierEntityDetailModal";
 
 interface SupplierProfileClientProps {
   years?: number[];
@@ -46,6 +47,10 @@ export default function SupplierProfileClient({ years, selectedYear }: SupplierP
   const supplier = data?.data?.supplier;
   const kontrak = data?.data?.raw_kontrak || [];
 
+  const [detailModalType, setDetailModalType] = React.useState<SupplierEntityDetailType | undefined>(undefined);
+  const [detailModalItems, setDetailModalItems] = React.useState<SupplierEntityDetailItem[]>([]);
+  const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
+
   const filteredKontrak = React.useMemo(() => {
     if (!Array.isArray(kontrak) || kontrak.length === 0) return [] as any[];
     const year = activeYear;
@@ -67,6 +72,9 @@ export default function SupplierProfileClient({ years, selectedYear }: SupplierP
     totalNilaiSpmKontraktual,
     totalNilaiSpmNonKontraktual,
     kementerianCount,
+    kementerianItems,
+    satkerItems,
+    kppnItems,
   } = React.useMemo(() => {
     const kontraktual: any[] = [];
     const nonKontraktual: any[] = [];
@@ -74,6 +82,9 @@ export default function SupplierProfileClient({ years, selectedYear }: SupplierP
     let spmKontraktualTotal = 0;
     let spmNonKontraktualTotal = 0;
     const kementerianSet = new Set<string>();
+    const kementerianMap = new Map<string, SupplierEntityDetailItem>();
+    const satkerMap = new Map<string, SupplierEntityDetailItem>();
+    const kppnMap = new Map<string, SupplierEntityDetailItem>();
 
     filteredKontrak.forEach((row) => {
       const rawNomor = row?.NOMOR_KONTRAK ?? row?.nomor_kontrak;
@@ -87,6 +98,52 @@ export default function SupplierProfileClient({ years, selectedYear }: SupplierP
       const kodeBa = typeof rawKodeBa === "string" ? rawKodeBa.trim() : rawKodeBa;
       if (kodeBa) {
         kementerianSet.add(String(kodeBa));
+        const key = String(kodeBa);
+        const next = kementerianMap.get(key) ?? {
+          code: key,
+          name: row?.NAMA_BA ?? row?.nama_ba ?? null,
+          extra: row?.NAMA_ESELON_1 ?? row?.nama_eselon_1 ?? null,
+          count: 0,
+        };
+        next.count = (next.count ?? 0) + 1;
+        if (!next.name && (row?.NAMA_BA || row?.nama_ba)) {
+          next.name = (row?.NAMA_BA ?? row?.nama_ba) ?? null;
+        }
+        kementerianMap.set(key, next);
+      }
+
+      const satkerCodeRaw = row?.KODE_SATKER ?? row?.kode_satker ?? row?.KDSATKER;
+      const satkerCode = typeof satkerCodeRaw === "string" ? satkerCodeRaw.trim() : satkerCodeRaw;
+      if (satkerCode) {
+        const key = String(satkerCode);
+        const next = satkerMap.get(key) ?? {
+          code: key,
+          name: row?.NAMA_SATKER ?? row?.nama_satker ?? row?.SATKER ?? null,
+          extra: row?.NAMA_KANWIL ?? row?.nama_kanwil ?? null,
+          count: 0,
+        };
+        next.count = (next.count ?? 0) + 1;
+        if (!next.name && (row?.NAMA_SATKER || row?.nama_satker || row?.SATKER)) {
+          next.name = (row?.NAMA_SATKER ?? row?.nama_satker ?? row?.SATKER) ?? null;
+        }
+        satkerMap.set(key, next);
+      }
+
+      const kppnCodeRaw = row?.KODE_KPPN ?? row?.kode_kppn;
+      const kppnCode = typeof kppnCodeRaw === "string" ? kppnCodeRaw.trim() : kppnCodeRaw;
+      if (kppnCode) {
+        const key = String(kppnCode);
+        const next = kppnMap.get(key) ?? {
+          code: key,
+          name: row?.NAMA_KPPN ?? row?.nama_kppn ?? null,
+          extra: row?.NAMA_KANWIL ?? row?.nama_kanwil ?? null,
+          count: 0,
+        };
+        next.count = (next.count ?? 0) + 1;
+        if (!next.name && (row?.NAMA_KPPN || row?.nama_kppn)) {
+          next.name = (row?.NAMA_KPPN ?? row?.nama_kppn) ?? null;
+        }
+        kppnMap.set(key, next);
       }
 
       if (isKontraktual) {
@@ -106,6 +163,9 @@ export default function SupplierProfileClient({ years, selectedYear }: SupplierP
       totalNilaiSpmKontraktual: spmKontraktualTotal,
       totalNilaiSpmNonKontraktual: spmNonKontraktualTotal,
       kementerianCount: kementerianSet.size,
+      kementerianItems: Array.from(kementerianMap.values()).sort((a, b) => (b.count ?? 0) - (a.count ?? 0)),
+      satkerItems: Array.from(satkerMap.values()).sort((a, b) => (b.count ?? 0) - (a.count ?? 0)),
+      kppnItems: Array.from(kppnMap.values()).sort((a, b) => (b.count ?? 0) - (a.count ?? 0)),
     };
   }, [filteredKontrak]);
 
@@ -123,6 +183,19 @@ export default function SupplierProfileClient({ years, selectedYear }: SupplierP
       router.push(`${pathname}?${sp.toString()}`);
     },
     [router, pathname, searchParams]
+  );
+
+  const openModalFor = React.useCallback(
+    (type: SupplierEntityDetailType) => {
+      let items: SupplierEntityDetailItem[] = [];
+      if (type === "kementerian") items = kementerianItems;
+      if (type === "satker") items = satkerItems;
+      if (type === "kppn") items = kppnItems;
+      setDetailModalItems(items);
+      setDetailModalType(type);
+      setIsDetailModalOpen(true);
+    },
+    [kementerianItems, satkerItems, kppnItems]
   );
 
   return (
@@ -172,10 +245,16 @@ export default function SupplierProfileClient({ years, selectedYear }: SupplierP
             totalNilaiKontrak={totalNilaiKontrak}
             totalNilaiSpmKontraktual={totalNilaiSpmKontraktual}
             totalNilaiSpmNonKontraktual={totalNilaiSpmNonKontraktual}
-            kementerianCount={kementerianCount}
+            kementerianCount={kementerianItems.length}
             realizationRatio={supplier?.realization_ratio}
-            satkersServed={supplier?.satkers_served}
-            regionsServed={supplier?.regions_served}
+            satkersServed={satkerItems.length}
+            regionsServed={kppnItems.length}
+            onShowKementerian={kementerianItems.length > 0 ? () => openModalFor("kementerian") : undefined}
+            onShowSatker={satkerItems.length > 0 ? () => openModalFor("satker") : undefined}
+            onShowKppn={kppnItems.length > 0 ? () => openModalFor("kppn") : undefined}
+            kementerianDetailAvailable={kementerianItems.length > 0}
+            satkerDetailAvailable={satkerItems.length > 0}
+            kppnDetailAvailable={kppnItems.length > 0}
           />
         )}
 
@@ -191,6 +270,13 @@ export default function SupplierProfileClient({ years, selectedYear }: SupplierP
           />
         </div>
       </div>
+
+      <SupplierEntityDetailModal
+        open={isDetailModalOpen}
+        onOpenChange={setIsDetailModalOpen}
+        type={detailModalType}
+        items={detailModalItems}
+      />
     </div>
   );
 }
