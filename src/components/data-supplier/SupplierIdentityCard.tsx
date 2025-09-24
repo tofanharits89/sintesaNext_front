@@ -9,8 +9,10 @@ import { Building2, IdCard, Percent, Landmark, MapPin } from "lucide-react";
 export interface SupplierIdentityCardProps {
   namaVendor?: string | null;
   npwpSupplier?: string | null;
-  totalKontrak?: number;
-  totalSpm?: number;
+  totalNilaiKontrak?: number;
+  totalNilaiSpmKontraktual?: number;
+  totalNilaiSpmNonKontraktual?: number;
+  kementerianCount?: number;
   realizationRatio?: number; // 0..1
   satkersServed?: number;
   regionsServed?: number;
@@ -25,8 +27,10 @@ function formatIDRCurrency(n?: number) {
 export function SupplierIdentityCard({
   namaVendor,
   npwpSupplier,
-  totalKontrak,
-  totalSpm,
+  totalNilaiKontrak,
+  totalNilaiSpmKontraktual,
+  totalNilaiSpmNonKontraktual,
+  kementerianCount,
   realizationRatio,
   satkersServed,
   regionsServed,
@@ -55,23 +59,35 @@ export function SupplierIdentityCard({
 
         <Separator />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
           <div className="rounded-md border p-3">
-            <div className="text-xs text-muted-foreground">Nilai Kontrak</div>
-            <div className="text-base md:text-lg font-semibold">{formatIDRCurrency(totalKontrak)}</div>
+            <div className="text-xs text-muted-foreground">Total Nilai Kontrak</div>
+            <div className="text-base md:text-lg font-semibold">{formatIDRCurrency(totalNilaiKontrak)}</div>
           </div>
           <div className="rounded-md border p-3">
-            <div className="text-xs text-muted-foreground">Nilai SPM</div>
-            <div className="text-base md:text-lg font-semibold">{formatIDRCurrency(totalSpm)}</div>
+            <div className="text-xs text-muted-foreground">Total Nilai SPM Kontraktual</div>
+            <div className="text-base md:text-lg font-semibold">{formatIDRCurrency(totalNilaiSpmKontraktual)}</div>
           </div>
           <div className="rounded-md border p-3">
+            <div className="text-xs text-muted-foreground">Total Nilai SPM Non-Kontraktual</div>
+            <div className="text-base md:text-lg font-semibold">{formatIDRCurrency(totalNilaiSpmNonKontraktual)}</div>
+          </div>
+          <div className="rounded-md border p-3 lg:col-span-1">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Percent className="h-4 w-4" /> Realisasi
+              <Percent className="h-4 w-4" /> Realisasi Kontraktual
             </div>
             <div className="text-sm font-medium">{ratioPct.toFixed(2)}%</div>
             <Progress value={ratioPct} className="mt-2 h-2" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-md border p-3 lg:col-span-1">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Landmark className="h-4 w-4" /> Kementerian
+            </div>
+            <div className="text-base font-semibold">
+              {Number(kementerianCount ?? 0).toLocaleString("id-ID")}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3 lg:col-span-1">
             <div className="rounded-md border p-3">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Landmark className="h-4 w-4" /> Satker

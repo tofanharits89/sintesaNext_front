@@ -9,6 +9,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 export interface SupplierContractsTableProps {
   rows?: any[];
   loading?: boolean;
+  title?: string;
+  description?: string;
+  footerLabel?: string;
 }
 
 function formatIDR(n?: number) {
@@ -17,7 +20,13 @@ function formatIDR(n?: number) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(v);
 }
 
-export function SupplierContractsTable({ rows = [], loading = false }: SupplierContractsTableProps) {
+export function SupplierContractsTable({
+  rows = [],
+  loading = false,
+  title = "List Kontrak",
+  description = "Kontrak yang dikelola oleh supplier ini",
+  footerLabel = "Kontrak",
+}: SupplierContractsTableProps) {
   const columns = React.useMemo<ColumnDef<any, any>[]>(
     () => [
       {
@@ -113,8 +122,8 @@ export function SupplierContractsTable({ rows = [], loading = false }: SupplierC
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base">List Kontrak</CardTitle>
-        <div className="text-xs text-muted-foreground">Kontrak yang dikelola oleh supplier ini</div>
+        <CardTitle className="text-base">{title}</CardTitle>
+        <div className="text-xs text-muted-foreground">{description}</div>
       </CardHeader>
       <CardContent>
         {loading ? (
@@ -128,7 +137,7 @@ export function SupplierContractsTable({ rows = [], loading = false }: SupplierC
             columns={columns}
             data={rows}
             initialPageSize={20}
-            footerInfoText={`Total Kontrak : ${rows.length.toLocaleString("id-ID")} Kontrak`}
+            footerInfoText={`Total ${footerLabel} : ${rows.length.toLocaleString("id-ID")} ${footerLabel}`}
           />
         )}
       </CardContent>

@@ -20,17 +20,18 @@ export interface SupplierProfileResponse {
   message?: string;
 }
 
-export function useSupplierProfile(params: { npwp?: string; vendor?: string; limit?: number }) {
+export function useSupplierProfile(params: { npwp?: string; vendor?: string; limit?: number; year?: string }) {
   const isClient = typeof window !== "undefined";
-  const { npwp, vendor, limit = 50 } = params || {};
+  const { npwp, vendor, limit = 50, year } = params || {};
 
   return useQuery<SupplierProfileResponse, Error>({
-    queryKey: ["supplier-profile", npwp || "", vendor || "", limit],
+    queryKey: ["supplier-profile", npwp || "", vendor || "", limit, year || ""],
     queryFn: async () => {
       const qs = new URLSearchParams();
       if (npwp) qs.set("npwp", npwp);
       if (vendor) qs.set("vendor", vendor);
       if (limit) qs.set("limit", String(limit));
+      if (year && /^\d{4}$/.test(year)) qs.set("year", year);
 
       const url = new URL(
         (process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next") + `/api/supplier-analytics/profile?${qs.toString()}`,

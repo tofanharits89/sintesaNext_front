@@ -3,14 +3,20 @@ import DashboardSupplierClient from "@/components/data-supplier/DashboardSupplie
 
 export const dynamic = "force-dynamic";
 
-export default function Page({ searchParams }: { searchParams?: { [k: string]: string | string[] | undefined } }) {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams?: Promise<{ [k: string]: string | string[] | undefined }>;
+}) {
   // Define available years based on the current year (ensure the latest year is the current year)
   const currentYear = new Date().getFullYear();
   const years = [currentYear - 2, currentYear - 1, currentYear];
   const latestYear = String(currentYear);
 
   // Determine selectedYear from URL if valid, otherwise default to latestYear
-  const spYear = typeof searchParams?.year === "string" ? (searchParams?.year as string) : "";
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const spYear =
+    typeof resolvedSearchParams.year === "string" ? (resolvedSearchParams.year as string) : "";
   const selectedYear = /^\d{4}$/.test(spYear) ? spYear : latestYear;
 
   return (
