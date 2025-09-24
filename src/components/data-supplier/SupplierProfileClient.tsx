@@ -23,10 +23,9 @@ export default function SupplierProfileClient({ years, selectedYear }: SupplierP
   const router = useRouter();
   const pathname = usePathname();
 
-  const npwp = searchParams?.get("npwp") || undefined;
-  const vendor = searchParams?.get("vendor") || undefined;
+  const vendor = searchParams?.get("vendor")?.trim() || undefined;
 
-  const initialQuery = npwp || vendor || "";
+  const initialQuery = vendor || "";
 
   const availableYears = React.useMemo(() => {
     if (Array.isArray(years) && years.length > 0) {
@@ -43,7 +42,7 @@ export default function SupplierProfileClient({ years, selectedYear }: SupplierP
     : String(availableYears[0] ?? new Date().getFullYear());
   const activeYear = validYearFromParams ?? fallbackYear;
 
-  const { data, isLoading, isError, error, isFetching } = useSupplierProfile({ npwp, vendor, limit: 100, year: activeYear });
+  const { data, isLoading, isError, error, isFetching } = useSupplierProfile({ vendor, limit: 100, year: activeYear });
   const supplier = data?.data?.supplier;
   const kontrak = data?.data?.raw_kontrak || [];
 
@@ -113,18 +112,14 @@ export default function SupplierProfileClient({ years, selectedYear }: SupplierP
   const loadingState = isLoading || isFetching;
 
   const handleSearch = React.useCallback(
-    (q: { npwp?: string; vendor?: string; raw: string }) => {
+    (q: { vendor?: string; raw: string }) => {
       const sp = new URLSearchParams(searchParams?.toString() || "");
-      if (q.npwp) {
-        sp.set("npwp", q.npwp);
-        sp.delete("vendor");
-      } else if (q.vendor) {
-        sp.set("vendor", q.vendor);
-        sp.delete("npwp");
+      if (q.vendor && q.vendor.trim()) {
+        sp.set("vendor", q.vendor.trim());
       } else {
-        sp.delete("npwp");
         sp.delete("vendor");
       }
+      sp.delete("npwp");
       router.push(`${pathname}?${sp.toString()}`);
     },
     [router, pathname, searchParams]

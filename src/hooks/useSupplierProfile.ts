@@ -20,15 +20,14 @@ export interface SupplierProfileResponse {
   message?: string;
 }
 
-export function useSupplierProfile(params: { npwp?: string; vendor?: string; limit?: number; year?: string }) {
+export function useSupplierProfile(params: { vendor?: string; limit?: number; year?: string }) {
   const isClient = typeof window !== "undefined";
-  const { npwp, vendor, limit = 50, year } = params || {};
+  const { vendor, limit = 50, year } = params || {};
 
   return useQuery<SupplierProfileResponse, Error>({
-    queryKey: ["supplier-profile", npwp || "", vendor || "", limit, year || ""],
+    queryKey: ["supplier-profile", vendor || "", limit, year || ""],
     queryFn: async () => {
       const qs = new URLSearchParams();
-      if (npwp) qs.set("npwp", npwp);
       if (vendor) qs.set("vendor", vendor);
       if (limit) qs.set("limit", String(limit));
       if (year && /^\d{4}$/.test(year)) qs.set("year", year);
@@ -46,7 +45,7 @@ export function useSupplierProfile(params: { npwp?: string; vendor?: string; lim
       const data = (await resp.json().catch(() => ({}))) as SupplierProfileResponse;
       return data;
     },
-    enabled: isClient && (!!npwp || !!vendor),
+    enabled: isClient && !!vendor,
     staleTime: 60_000,
   });
 }
