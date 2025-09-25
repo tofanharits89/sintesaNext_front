@@ -87,9 +87,16 @@ export default function LogUserPage() {
 
   // Process weekly login data for chart display
   const weeklyLogins = useMemo(() => {
+    type ChartData = {
+      day: string;
+      date: string;
+      count: number;
+      fullDate: string;
+    };
+
     if (!weeklyStats || weeklyStats.length === 0) {
       // Fallback to show empty chart structure for the last 7 days
-      const days = [];
+      const days: ChartData[] = [];
       for (let i = 6; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);

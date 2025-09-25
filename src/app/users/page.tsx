@@ -237,17 +237,20 @@ export default function UsersPage() {
     mutate();
   }
 
-  async function remove(id: string) {
+  async function remove(id: string): Promise<void> {
     const res = await fetch(`${apiPath("/users")}?id=${id}`, {
       method: "DELETE",
       credentials: "include",
     });
-    if (!res.ok) return toast.error("Gagal menghapus");
+    if (!res.ok) {
+      toast.error("Gagal menghapus");
+      return;
+    }
     toast.success("Pengguna berhasil dihapus");
     mutate();
   }
 
-  async function bulkRemove() {
+  async function bulkRemove(): Promise<void> {
     if (!selected.size) return;
     const qs = Array.from(selected)
       .map((id) => `ids=${id}`)
@@ -256,7 +259,10 @@ export default function UsersPage() {
       method: "DELETE",
       credentials: "include",
     });
-    if (!res.ok) return toast.error("Gagal menghapus massal");
+    if (!res.ok) {
+      toast.error("Gagal menghapus massal");
+      return;
+    }
     toast.success(`${selected.size} pengguna berhasil dihapus`);
     setSelected(new Set());
     mutate();

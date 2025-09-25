@@ -4,6 +4,7 @@
  */
 
 import { toast } from "sonner";
+import { logger } from "@/lib/utils";
 
 // Error types and their user-friendly configurations
 interface ErrorConfig {
@@ -223,7 +224,7 @@ export async function retryOperation<T>(
     } catch (error) {
       lastError = error;
 
-      console.log(
+      logger.debug(
         `[retryOperation] Attempt ${attempt + 1}/${maxRetries + 1} failed:`,
         {
           error: (error as Error)?.message || String(error),
@@ -248,7 +249,7 @@ export async function retryOperation<T>(
         onRetry(attempt + 1, error);
       }
 
-      console.log(
+      logger.debug(
         `[retryOperation] Waiting ${delay}ms before retry ${attempt + 2}/${
           maxRetries + 1
         }`
@@ -384,7 +385,7 @@ export async function handleErrorWithRetry<T>(
   } catch (error) {
     const config = getErrorConfig(error);
 
-    console.error(`[${context}] Error:`, error);
+    logger.error(`[${context}] Error:`, error);
 
     if (showToast) {
       if (config.recoverable) {
@@ -417,7 +418,7 @@ export async function handleErrorWithRetry<T>(
 export function showUserFriendlyError(error: any, context: string = "") {
   const config = getErrorConfig(error);
 
-  console.error(`[${context}] Error:`, error);
+  logger.error(`[${context}] Error:`, error);
 
   toast.error(config.message, {
     description: config.suggestion,
@@ -475,7 +476,7 @@ export { ERROR_CONFIGS };
 export function handleSavedQueryError(error: any, operation: string = "operation") {
   const config = getErrorConfig(error);
   
-  console.error(`[SavedQueries] ${operation} failed:`, error);
+  logger.error(`[SavedQueries] ${operation} failed:`, error);
   
   // Determine if this is a specific saved query error
   const errorMessage = error?.message || error?.toString() || "";

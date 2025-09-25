@@ -8,6 +8,7 @@
  */
 
 import { toast } from "sonner";
+import { logger } from "@/lib/utils";
 import { parse } from "cookie";
 
 // Simplified types for authentication recovery
@@ -332,12 +333,12 @@ export class AuthRecoveryClient {
 
   private log(message: string, data?: any): void {
     if (this.options.debugMode) {
-      console.log(`🔄 [AUTH-RECOVERY] ${message}`, data || "");
+      logger.debug(`🔄 [AUTH-RECOVERY] ${message}`, data || "");
     }
   }
 
   private logError(message: string, data?: any): void {
-    console.error(`❌ [AUTH-RECOVERY] ${message}`, data || "");
+    logger.error(`❌ [AUTH-RECOVERY] ${message}`, data || "");
   }
 }
 

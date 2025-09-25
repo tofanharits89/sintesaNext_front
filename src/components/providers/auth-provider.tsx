@@ -4,6 +4,7 @@ import React, { createContext, useContext, ReactNode, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { logger } from "@/lib/utils";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -27,28 +28,27 @@ export function AuthProvider({ children, fallback }: AuthProviderProps) {
 
   // Handle auth errors
   useEffect(() => {
-    if (auth.authError || auth.userError) {
-      const error = auth.authError || auth.userError;
-      console.error("Auth error:", error);
+    if (auth.error) {
+      logger.error("Auth error:", auth.error);
       
       // Handle specific error cases
-      if (error?.message.includes('401') || error?.message.includes('403')) {
+      if (auth.error?.message.includes('401') || auth.error?.message.includes('403')) {
         toast.error("Session expired. Please log in again.");
         router.push("/login");
-      } else if (!error?.message.includes('fetch')) {
+      } else if (!auth.error?.message.includes('fetch')) {
         // Don't show toast for network errors (too noisy)
         toast.error("Authentication error occurred");
       }
     }
-  }, [auth.authError, auth.userError, router]);
+  }, [auth.error, router]);
 
   const contextValue: AuthContextType = {
     isAuthenticated: auth.isAuthenticated,
-    isLoading: auth.isAuthLoading || auth.isUserLoading,
+    isLoading: auth.isLoading,
     user: auth.user,
-    error: auth.authError || auth.userError,
+    error: auth.error,
     logout: auth.logout,
-    refetchAuth: auth.refetchAuth,
+    refetchAuth: auth.refetch,
   };
 
   // Show fallback during initial loading

@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 
 export default function SettingsPage() {
-  const { user, isUserLoading } = useAuth();
+  const { user, isLoading } = useAuth();
   const [theme, setTheme] = useState("system");
   const [language, setLanguage] = useState("id");
   const [notifications, setNotifications] = useState({
@@ -48,7 +48,7 @@ export default function SettingsPage() {
   });
 
   // Guard against cases where the profile query finished but user data isn't available yet
-  if (isUserLoading || !user) {
+  if (isLoading || !user) {
     return (
       <div className="space-y-4">
         <div className="h-8 bg-muted animate-pulse rounded"></div>

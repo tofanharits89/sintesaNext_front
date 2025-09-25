@@ -37,7 +37,7 @@ export default function TestMessagingFixes() {
 
   // Test conversation ordering
   const testConversationOrdering = () => {
-    const results = [];
+    const results: Array<{test: string; status: string; message: string}> = [];
     
     if (!conversations || conversations.length === 0) {
       results.push({
@@ -50,7 +50,7 @@ export default function TestMessagingFixes() {
 
     // Check if conversations are properly sorted by lastMessageAt
     let isProperlyOrdered = true;
-    let orderingIssues = [];
+    let orderingIssues: Array<{index: number; currentId: string; nextId: string; currentTime: string; nextTime: string}> = [];
 
     for (let i = 0; i < conversations.length - 1; i++) {
       const current = conversations[i];
@@ -86,7 +86,6 @@ export default function TestMessagingFixes() {
       message: isProperlyOrdered 
         ? `All ${conversations.length} conversations properly ordered by lastMessageAt`
         : `Found ${orderingIssues.length} ordering issues`,
-      details: orderingIssues.length > 0 ? orderingIssues : undefined,
     });
 
     return results;

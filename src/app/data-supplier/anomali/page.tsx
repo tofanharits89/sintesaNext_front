@@ -3,9 +3,14 @@ import { apiPath } from "@/lib/base-path";
 
 export const dynamic = "force-dynamic";
 
-export default async function Page({ searchParams }: { searchParams?: { [k: string]: string | string[] | undefined } }) {
-  const lowRatio = (searchParams?.lowRatio as string) || "0.1";
-  const minKontrak = (searchParams?.minKontrak as string) || "1000000";
+export default async function Page({ 
+  searchParams 
+}: { 
+  searchParams?: Promise<{ [k: string]: string | string[] | undefined }> 
+}) {
+  const params = await searchParams;
+  const lowRatio = (params?.lowRatio as string) || "0.1";
+  const minKontrak = (params?.minKontrak as string) || "1000000";
   const cookieStore = await cookies();
   const cookieHeader = cookieStore?.toString?.() ?? "";
 

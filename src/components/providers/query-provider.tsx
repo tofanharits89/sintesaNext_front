@@ -11,6 +11,7 @@ import { useState, useEffect } from "react";
 import { queryConfigs, createQueryOptions } from "@/lib/query-configs";
 import { cacheInvalidation } from "@/lib/query-configs";
 import { initializeCacheWarming } from "@/lib/cache-warmer";
+import { logger } from "@/lib/utils";
 
 // Cache analytics for monitoring performance
 class CacheAnalytics {
@@ -125,13 +126,13 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
         },
         onError: (error, query) => {
           analytics.recordError();
-          console.error("Query error:", error, "Query key:", query.queryKey);
+          logger.error("Query error:", error, "Query key:", query.queryKey);
         },
       }),
       mutationCache: new MutationCache({
         onError: (error, variables, context, mutation) => {
           analytics.recordError();
-          console.error("Mutation error:", error, "Variables:", variables);
+          logger.error("Mutation error:", error, "Variables:", variables);
         },
       }),
     });

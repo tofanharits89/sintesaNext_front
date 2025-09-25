@@ -70,7 +70,7 @@ export function useEPAFilters() {
   // Generate year options (current year and previous 5 years)
   const yearOptions = useMemo(() => {
     const currentYear = new Date().getFullYear();
-    const years = [];
+    const years: Array<{value: string; label: string}> = [];
     for (let i = 0; i < 6; i++) {
       years.push({
         value: (currentYear - i).toString(),

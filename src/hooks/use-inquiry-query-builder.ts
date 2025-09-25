@@ -562,7 +562,7 @@ export function useInquiryQueryBuilder() {
       const cutOffNum = parseInt(cutOffMonth);
 
       // Build realization sum based on cut-off month
-      const realizationColumns = [];
+      const realizationColumns: string[] = [];
       for (let month = 1; month <= cutOffNum; month++) {
         realizationColumns.push(`real${month}`);
       }
@@ -607,7 +607,7 @@ export function useInquiryQueryBuilder() {
 
           if (jenisAkumulasi === "akumulatif") {
             // Akumulatif: each month sums from January until that month
-            const cumulativeRealColumns = [];
+            const cumulativeRealColumns: string[] = [];
             for (let i = 1; i <= month; i++) {
               cumulativeRealColumns.push(`real${i}`);
             }

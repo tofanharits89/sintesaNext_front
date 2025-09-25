@@ -1107,7 +1107,7 @@ export function FilterCard({
               "Desember",
             ];
 
-            const monthOptions = [];
+            const monthOptions: Array<{value: string; label: string}> = [];
 
             // Add months 1-12
             for (let month = 1; month <= 12; month++) {

@@ -5,6 +5,7 @@
 
 import { backendPath } from '@/lib/backend';
 import { getCookie } from '@/lib/httpClient';
+import { logger } from '@/lib/utils';
 
 export interface QueuedMessage {
   id: string;
@@ -201,14 +202,14 @@ export class PersistentMessageQueue {
           message.lastRetryAt = new Date(Date.now() + 5 * 60 * 1000); // Wait 5 minutes before next retry
           await this.updateMessageInStore(message);
           
-          console.warn('Message rate limited, will retry in 5 minutes:', result.error);
+          logger.warn('Message rate limited, will retry in 5 minutes:', result.error);
           return; // Don't throw error, just wait for next retry cycle
         }
         
         throw new Error(result.error || 'Send failed');
       }
     } catch (error) {
-      console.error('Failed to send message:', error);
+      logger.error('Failed to send message:', error);
       
       if (message.retryCount >= 3) {
         message.status = 'failed';

@@ -1,4 +1,5 @@
 import React from 'react';
+import { logger } from '@/lib/utils';
 
 /**
  * Utility for tracking component renders to detect infinite loops
@@ -62,13 +63,13 @@ export function trackRender(
 
   // Warn about potential infinite loop
   if (newCount > maxRenders) {
-    console.warn(
+    logger.warn(
       `🔄 Potential infinite loop detected in ${componentName}:`,
       `${newCount} renders in ${timeWindow}ms`
     );
     
     if (logProps && props) {
-      console.warn('Props that might be causing re-renders:', props);
+      logger.warn('Props that might be causing re-renders:', props);
     }
     
     // Reset to prevent spam

@@ -10,7 +10,7 @@ const DEBUG_AUTH = process.env.NEXT_PUBLIC_DEBUG_AUTH === "1";
 // This cache does NOT persist across deployments/cold starts or across regions.
 // Keep TTLs short to tolerate scale-out and cold starts without causing long-lived
 // auth/health decisions.
-const SESSION_VERIFY_TTL_MS = 5_000; // reduce to 5s to avoid stale auth decisions after token expiry
+const SESSION_VERIFY_TTL_MS = 30_000; // 30s - balance between freshness and performance
 const sessionVerifyCache = new Map<string, { ok: boolean; exp: number }>();
 
 /**
@@ -54,7 +54,7 @@ async function validateSessionViaBackend(
   }
 }
 
-const HEALTH_TTL_MS = 60_000; // increase to 60s to reduce redundant health checks without changing behavior
+const HEALTH_TTL_MS = 120_000; // 2 minutes - reduce health check frequency
 let healthCache: { ok: boolean; exp: number } | null = null;
 
 async function isBackendHealthy() {

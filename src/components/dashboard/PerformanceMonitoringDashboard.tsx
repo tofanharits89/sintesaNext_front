@@ -124,10 +124,10 @@ export function PerformanceMonitoringDashboard() {
     const points = selectedTimeRange === '1h' ? 12 : selectedTimeRange === '24h' ? 24 : 7;
     const interval = selectedTimeRange === '1h' ? 5 : selectedTimeRange === '24h' ? 60 : 1440; // minutes
     
-    const hitRateHistory = [];
-    const responseTimeHistory = [];
-    const compressionHistory = [];
-    const errorRateHistory = [];
+    const hitRateHistory: Array<{name: string; hitRate: number; missRate: number}> = [];
+    const responseTimeHistory: Array<{name: string; avgResponseTime: number; p95ResponseTime: number; p99ResponseTime: number}> = [];
+    const compressionHistory: Array<{name: string; compressionRatio: number; originalSize: number; compressedSize: number}> = [];
+    const errorRateHistory: Array<{name: string; errorRate: number; successRate: number}> = [];
     
     for (let i = points - 1; i >= 0; i--) {
       const time = new Date(now.getTime() - i * interval * 60000);

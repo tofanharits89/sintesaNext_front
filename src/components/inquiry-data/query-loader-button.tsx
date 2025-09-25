@@ -176,6 +176,7 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
 
       return () => clearTimeout(timeoutId);
     }
+    return undefined;
   }, [pendingQueryLoad, isLoading]);
 
   // Handle dropdown open/close

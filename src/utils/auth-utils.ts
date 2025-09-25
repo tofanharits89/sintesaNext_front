@@ -2,6 +2,7 @@
 
 import { parse } from "cookie";
 import { apiPath } from "@/lib/base-path";
+import { logger } from "@/lib/utils";
 
 /**
  * Get authentication token from cookies
@@ -152,7 +153,7 @@ export function clearAuthToken(): void {
     // Dispatch logout event
     dispatchAuthEvent("logout");
   } catch (error) {
-    console.error("[Auth Utils Error] Failed to clear auth tokens:", error);
+    logger.error("[Auth Utils Error] Failed to clear auth tokens:", error);
   }
 }
 
@@ -191,7 +192,7 @@ export async function refreshAccessToken(): Promise<{
       return { success: false, error: data.message || "Refresh failed" };
     }
   } catch (error) {
-    console.error("[Auth Utils] Token refresh error:", error);
+    logger.error("[Auth Utils] Token refresh error:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",

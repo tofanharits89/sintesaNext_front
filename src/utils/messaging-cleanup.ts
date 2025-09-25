@@ -9,6 +9,7 @@ import { useTypingIndicatorsStore } from "@/stores/typing-indicators-store";
 import { useUnreadBadgesStore } from "@/stores/unread-badges-store";
 import { clearAllTempMessages } from "@/features/messaging/temp-messages-store";
 import { messageQueue } from "@/services/messageQueue";
+import logger from "@/lib/logger";
 
 /**
  * Clear all messaging-related state
@@ -25,9 +26,9 @@ export async function clearAllMessagingState() {
     // Clear message queue
     await messageQueue.clearAllMessages();
     
-    console.log("[Messaging Cleanup] All messaging state cleared");
+    logger.info("All messaging state cleared");
   } catch (error) {
-    console.error("[Messaging Cleanup] Error clearing messaging state:", error);
+    logger.error("Error clearing messaging state", error);
   }
 }
 
@@ -61,9 +62,9 @@ export function clearMessagingStores() {
     const unreadStore = useUnreadBadgesStore.getState();
     unreadStore.clearAllUnread();
     
-    console.log("[Messaging Cleanup] Zustand stores cleared");
+    logger.info("Zustand stores cleared");
   } catch (error) {
-    console.error("[Messaging Cleanup] Error clearing Zustand stores:", error);
+    logger.error("Error clearing Zustand stores", error);
   }
 }
 
@@ -84,9 +85,9 @@ export function clearMessagingQueryCache(queryClient: ReturnType<typeof useQuery
     // Clear all query data to ensure fresh start
     queryClient.clear();
     
-    console.log("[Messaging Cleanup] React Query cache cleared");
+    logger.info("React Query cache cleared");
   } catch (error) {
-    console.error("[Messaging Cleanup] Error clearing React Query cache:", error);
+    logger.error("Error clearing React Query cache", error);
   }
 }
 

@@ -2,6 +2,17 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { format, isToday, isYesterday, isValid } from "date-fns";
 
+// Centralized logger that removes console statements in production
+export const logger = {
+  debug: process.env.NODE_ENV === 'development' ? console.log : () => {},
+  info: process.env.NODE_ENV === 'development' ? console.info : () => {},
+  warn: process.env.NODE_ENV === 'development' ? console.warn : () => {},
+  error: console.error, // Always log errors
+  log: process.env.NODE_ENV === 'development' ? console.log : () => {},
+  group: process.env.NODE_ENV === 'development' ? console.group : () => {},
+  groupEnd: process.env.NODE_ENV === 'development' ? console.groupEnd : () => {},
+};
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -29,7 +40,7 @@ export function safeFormatDate(
 
     return format(date, "PPP");
   } catch (error) {
-    console.error(`Error formatting date: ${dateString}`, error);
+    logger.error(`Error formatting date: ${dateString}`, error);
     return fallback;
   }
 }
@@ -51,7 +62,7 @@ export function safeFormatTime(
 
     // Check if the date is valid
     if (!isValid(date)) {
-      console.warn(`Invalid date string received: ${dateString}`);
+      logger.warn(`Invalid date string received: ${dateString}`);
       return fallback;
     }
 
@@ -63,7 +74,7 @@ export function safeFormatTime(
       return format(date, "MMM dd, HH:mm");
     }
   } catch (error) {
-    console.error(`Error formatting time: ${dateString}`, error);
+    logger.error(`Error formatting time: ${dateString}`, error);
     return fallback;
   }
 }
@@ -85,13 +96,13 @@ export function safeFormatDateTime(
 
     // Check if the date is valid
     if (!isValid(date)) {
-      console.warn(`Invalid date string received: ${dateString}`);
+      logger.warn(`Invalid date string received: ${dateString}`);
       return fallback;
     }
 
     return format(date, "PPP HH:mm");
   } catch (error) {
-    console.error(`Error formatting datetime: ${dateString}`, error);
+    logger.error(`Error formatting datetime: ${dateString}`, error);
     return fallback;
   }
 }

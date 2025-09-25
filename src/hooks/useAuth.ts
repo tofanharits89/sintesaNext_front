@@ -5,6 +5,7 @@ import { apiPath } from "@/lib/base-path";
 import { backendPath } from "@/lib/backend";
 import { toast } from "sonner";
 import { createQueryOptions, queryKeyFactories, cacheInvalidation } from "@/lib/query-configs";
+import { logger } from "@/lib/utils";
 
 interface User {
   id: string;
@@ -22,7 +23,10 @@ interface AuthResponse {
 }
 
 // Use centralized query keys from query-configs
-export const authKeys = queryKeyFactories.user;
+export const authKeys = {
+  ...queryKeyFactories.user,
+  combined: () => ['auth', 'combined'] as const,
+};
 
 // Client-side auth verification with React Query
 export function useAuthVerification() {
@@ -116,36 +120,84 @@ export function useLogout() {
       toast.success("Logged out successfully");
     },
     onError: (error) => {
-      console.error("Logout error:", error);
+      logger.error("Logout error:", error);
       toast.error("Logout failed. Please try again.");
     },
   });
 }
 
-// Combined auth hook for convenience
+// Consolidated auth hook that combines verification and profile in a single query
 export function useAuth() {
-  const authVerification = useAuthVerification();
-  const userProfile = useUserProfile();
+  const queryClient = useQueryClient();
   const logout = useLogout();
+  
+  // Single query that handles both auth verification and user profile
+  const authQuery = useQuery({
+    queryKey: authKeys.combined(),
+    queryFn: async (): Promise<{ isAuthenticated: boolean; user?: User }> => {
+      try {
+        // First verify auth
+        const authResponse = await fetch(backendPath("/auth/verify"), {
+          method: "GET",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        });
+        
+        if (!authResponse.ok) {
+          return { isAuthenticated: false };
+        }
+        
+        const authData: AuthResponse = await authResponse.json();
+        if (!authData.success) {
+          return { isAuthenticated: false };
+        }
+        
+        // If authenticated, fetch user profile
+        const profileResponse = await fetch(apiPath("/users/profile/me"), {
+          method: "GET",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        });
+        
+        if (!profileResponse.ok) {
+          return { isAuthenticated: true }; // Auth valid but profile fetch failed
+        }
+        
+        const profileData: AuthResponse = await profileResponse.json();
+        return {
+          isAuthenticated: true,
+          user: profileData.data || undefined,
+        };
+      } catch (error) {
+        logger.error("Auth query error:", error);
+        return { isAuthenticated: false };
+      }
+    },
+    ...createQueryOptions('critical', {
+      retry: (failureCount, error) => {
+        if (error instanceof Error && (error.message.includes('401') || error.message.includes('403'))) {
+          return false;
+        }
+        return failureCount < 2;
+      },
+    }),
+  });
   
   return {
     // Auth state
-    isAuthenticated: authVerification.data?.success ?? false,
-    isAuthLoading: authVerification.isLoading,
-    authError: authVerification.error,
+    isAuthenticated: authQuery.data?.isAuthenticated ?? false,
+    isLoading: authQuery.isLoading,
+    error: authQuery.error,
     
     // User data
-    user: userProfile.data,
-    isUserLoading: userProfile.isLoading,
-    userError: userProfile.error,
+    user: authQuery.data?.user,
     
     // Actions
     logout: logout.mutate,
     isLoggingOut: logout.isPending,
     
     // Refetch functions
-    refetchAuth: authVerification.refetch,
-    refetchUser: userProfile.refetch,
+    refetch: authQuery.refetch,
   };
 }
 
@@ -153,7 +205,7 @@ export function useAuth() {
 export function useRequireAuth() {
   const auth = useAuth();
   
-  if (auth.isAuthLoading || auth.isUserLoading) {
+  if (auth.isLoading) {
     return { ...auth, isLoading: true };
   }
   
@@ -163,3 +215,4 @@ export function useRequireAuth() {
   
   return { ...auth, isLoading: false, user: auth.user };
 }
+

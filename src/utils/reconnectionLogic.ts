@@ -6,6 +6,7 @@
 
 import { toast } from "sonner";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
+import { logger } from "@/lib/utils";
 
 // Configuration for business-specific reconnection features
 const RECONNECTION_CONFIG = {
@@ -141,7 +142,7 @@ export class ReconnectionManager {
    * Handle socket connection error
    */
   private handleSocketError(error: any) {
-    console.error("Socket connection error:", error);
+    logger.error("Socket connection error", error);
 
     // Check if it's a token expiry error
     if (error.message?.includes("token") || error.message?.includes("auth")) {
@@ -177,7 +178,7 @@ export class ReconnectionManager {
 
     if (this.isActiveTab) {
       // Tab became active, check token expiry
-      this.checkAndRefreshToken().catch(console.error);
+      this.checkAndRefreshToken().catch(error => logger.error("Token refresh failed on tab focus", error));
     }
   }
 
@@ -206,7 +207,7 @@ export class ReconnectionManager {
    * Handle token expiry
    */
   private async handleTokenExpiry() {
-    console.log("Token expired, attempting refresh...");
+    logger.debug("Token expired, attempting refresh...");
 
     try {
       // Try to refresh token
@@ -229,7 +230,7 @@ export class ReconnectionManager {
         this.socket.connect();
       }
     } catch (error) {
-      console.error("Token refresh failed:", error);
+      logger.error("Token refresh failed", error);
 
       // Redirect to login
       toast.error("Session expired", {
@@ -269,7 +270,7 @@ export class ReconnectionManager {
     if (!token) {
       // No token available - user might not be logged in
       // This is not necessarily an error, just log it for debugging
-      console.debug("No auth token available - user may not be logged in");
+      logger.debug("No auth token available - user may not be logged in");
       return;
     }
 
@@ -284,7 +285,7 @@ export class ReconnectionManager {
       }
     } catch (error) {
       // Token parsing failed, assume it's valid
-      console.warn("Could not parse token for expiry check");
+      logger.warn("Could not parse token for expiry check");
     }
   }
 
@@ -298,7 +299,7 @@ export class ReconnectionManager {
 
     // Schedule refresh 5 minutes before expiry
     this.tokenExpiryTimer = setTimeout(() => {
-      this.checkAndRefreshToken().catch(console.error);
+      this.checkAndRefreshToken().catch(error => logger.error("Scheduled token refresh failed", error));
     }, RECONNECTION_CONFIG.TOKEN_REFRESH_THRESHOLD);
   }
 
@@ -358,7 +359,12 @@ export class ReconnectionManager {
     window.addEventListener("focus", () => {
       this.isActiveTab = true;
       // Check token when tab becomes active
-      this.checkAndRefreshToken().catch(console.error);
+      this.checkAndRefreshToken().catch((error) => {
+        // Import logger locally to avoid circular dependencies
+        if (process.env.NODE_ENV === 'development') {
+          logger.error('Token refresh error:', error);
+        }
+      });
     });
 
     window.addEventListener("blur", () => {
@@ -395,7 +401,7 @@ export class ReconnectionManager {
    * Force token refresh
    */
   forceTokenRefresh() {
-    this.checkAndRefreshToken().catch(console.error);
+    this.checkAndRefreshToken().catch(error => logger.error("Force token refresh failed", error));
   }
 
   /**

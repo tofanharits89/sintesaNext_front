@@ -6,6 +6,7 @@
  */
 
 import { toast } from 'sonner';
+import { logger } from '@/lib/utils';
 
 // Error types and categories
 export enum AuthErrorType {
@@ -86,13 +87,13 @@ export class AuthErrorReporter {
     };
 
     if (this.debugMode) {
-      console.group('🚨 Authentication Error Report');
-      console.error('Error:', authError);
-      console.log('Suggestions:', suggestions);
-      console.log('Diagnostics:', diagnostics);
-      console.log('Can Auto Recover:', report.canAutoRecover);
-      console.log('Requires User Action:', report.requiresUserAction);
-      console.groupEnd();
+      logger.group('🚨 Authentication Error Report');
+      logger.error('Error:', authError);
+      logger.debug('Suggestions:', suggestions);
+      logger.debug('Diagnostics:', diagnostics);
+      logger.debug('Can Auto Recover:', report.canAutoRecover);
+      logger.debug('Requires User Action:', report.requiresUserAction);
+      logger.groupEnd();
     }
 
     // Show user-friendly error notification

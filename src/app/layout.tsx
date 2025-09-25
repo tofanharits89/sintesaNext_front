@@ -7,6 +7,7 @@ import AppShell from "@/components/layout/app-shell";
 import { ConnectionStatus } from "@/components/connection-status";
 import CheckBackend from "@/components/check-backend";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { ErrorBoundary, ComponentErrorBoundary } from "@/lib/error-boundary";
 import { withBasePath, apiPath } from "@/lib/base-path";
 import { cookies } from "next/headers";
 import { MessagingAuthListener } from "@/components/messaging/messaging-auth-listener";
@@ -68,17 +69,27 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <QueryProvider>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <MessagingAuthListener />
-            <CheckBackend />
-            <AppShell initialUser={initialUser}>{children}</AppShell>
-            <ConnectionStatus />
-            <Toaster richColors position="bottom-left" />
-            {/* Optionally show a top-of-page banner when server down via client routes */}
-            {/* <ServerDownBanner /> */}
-          </ThemeProvider>
-        </QueryProvider>
+        <ErrorBoundary>
+          <QueryProvider>
+            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+              <ComponentErrorBoundary>
+                <MessagingAuthListener />
+              </ComponentErrorBoundary>
+              <ComponentErrorBoundary>
+                <CheckBackend />
+              </ComponentErrorBoundary>
+              <ComponentErrorBoundary>
+                <AppShell initialUser={initialUser}>{children}</AppShell>
+              </ComponentErrorBoundary>
+              <ComponentErrorBoundary>
+                <ConnectionStatus />
+              </ComponentErrorBoundary>
+              <Toaster richColors position="bottom-left" />
+              {/* Optionally show a top-of-page banner when server down via client routes */}
+              {/* <ServerDownBanner /> */}
+            </ThemeProvider>
+          </QueryProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

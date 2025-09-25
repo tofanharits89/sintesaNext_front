@@ -4,6 +4,12 @@
  * to ensure consistency between backend and frontend
  */
 
+// Simple logger for JavaScript files
+const logger = {
+  warn: process.env.NODE_ENV === 'development' ? console.warn : () => {},
+  error: console.error, // Always log errors
+};
+
 /**
  * Versioning for socket events.
  * Increment this when breaking changes to event contracts are introduced.
@@ -143,7 +149,7 @@ export function formatRelativeTime(dateString, fallback = "—") {
 
     // Check if the date is valid
     if (isNaN(date.getTime())) {
-      console.warn(`Invalid date string received: ${dateString}`);
+      logger.warn(`Invalid date string received: ${dateString}`);
       return fallback;
     }
 
@@ -168,7 +174,7 @@ export function formatRelativeTime(dateString, fallback = "—") {
       return date.toLocaleDateString();
     }
   } catch (error) {
-    console.error(`Error formatting relative time: ${dateString}`, error);
+    logger.error(`Error formatting relative time: ${dateString}`, error);
     return fallback;
   }
 }

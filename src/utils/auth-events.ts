@@ -4,6 +4,8 @@
  * Authentication event utilities for coordinating auth state across components
  */
 
+import logger from "@/lib/logger";
+
 export interface AuthUser {
   id: string;
   username: string;
@@ -183,7 +185,8 @@ export function isAuthenticated(): boolean {
     try {
       const payload = JSON.parse(atob(parts[1]));
       return !payload.exp || payload.exp * 1000 > Date.now();
-    } catch {
+    } catch (error) {
+      logger.debug("Failed to parse JWT token", error);
       return false;
     }
   });

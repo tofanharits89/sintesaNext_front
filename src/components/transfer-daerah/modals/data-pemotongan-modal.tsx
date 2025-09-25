@@ -34,7 +34,11 @@ export function DataPemotonganModal({
 
   const handleDelete = async (item: any) => {
     // TODO: Wire up actual delete API for pemotongan item
-    console.log("Deleting pemotongan item:", item);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Deleting pemotongan item:", item);
+    }
+    // Placeholder for future implementation
+    throw new Error("Delete functionality not yet implemented");
   };
 
   const [searchTerm, setSearchTerm] = useState("");

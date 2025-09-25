@@ -391,11 +391,13 @@ if (typeof window !== 'undefined') {
     config: CONFIG
   };
   
-  console.log('🔧 Socket debugging utilities available at window.socketDebug');
-  console.log('   - window.socketDebug.runDebugging() - Run full debugging suite');
-  console.log('   - window.socketDebug.testConnection() - Test socket connection');
-  console.log('   - window.socketDebug.extractToken() - Extract token from cookies');
-  console.log('   - window.socketDebug.analyzeToken(token) - Analyze JWT token');
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔧 Socket debugging utilities available at window.socketDebug');
+    console.log('   - window.socketDebug.runDebugging() - Run full debugging suite');
+    console.log('   - window.socketDebug.testConnection() - Test socket connection');
+    console.log('   - window.socketDebug.extractToken() - Extract token from cookies');
+    console.log('   - window.socketDebug.analyzeToken(token) - Analyze JWT token');
+  }
 }
 
 export default {

@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
-import { getCookie } from "@/lib/httpClient";
+import { getCookie, prefetchCsrf } from "@/lib/httpClient";
 import { conversationKeys } from "./useConversationsRQ";
 import { messageKeys } from "./useMessagesRQ";
 import { useSocket } from "./useSocket";
@@ -130,35 +130,59 @@ export function useSendMessageMutation() {
           throw err;
         }
         // Fallback to REST API via centralized Axios client
-        const csrfToken = getCookie("XSRF-TOKEN");
-        const respRaw = await fetchWithTimeout(backendPath("/messaging/send"), {
-          method: "POST",
-          credentials: "include",
-          headers: { 
-            "Content-Type": "application/json",
-            ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {})
-          },
-          body: JSON.stringify({
-            // camelCase
-            recipientId,
-            conversationId,
-            content: content.trim(),
-            type: "text",
-            tempId,
-            senderId: currentUser?.id,
-            participant1Id: conversationId ? undefined : currentUser?.id,
-            participant2Id: conversationId ? undefined : recipientId,
-            // snake_case duplicates
-            recipient_id: recipientId,
-            conversation_id: conversationId,
-            message: content.trim(),
-            message_type: "text",
-            temp_id: tempId,
-            sender_id: currentUser?.id,
-            participant1_id: conversationId ? undefined : currentUser?.id,
-            participant2_id: conversationId ? undefined : recipientId,
-          }),
-        });
+        const ensureCsrfToken = async () => {
+          let token = getCookie("XSRF-TOKEN");
+          if (!token) {
+            try {
+              await prefetchCsrf();
+            } catch {}
+            token = getCookie("XSRF-TOKEN");
+          }
+          return token;
+        };
+
+        const executeRestSend = async (csrfToken?: string) =>
+          fetchWithTimeout(backendPath("/messaging/send"), {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+              ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+            },
+            body: JSON.stringify({
+              // camelCase
+              recipientId,
+              conversationId,
+              content: content.trim(),
+              type: "text",
+              tempId,
+              senderId: currentUser?.id,
+              participant1Id: conversationId ? undefined : currentUser?.id,
+              participant2Id: conversationId ? undefined : recipientId,
+              // snake_case duplicates
+              recipient_id: recipientId,
+              conversation_id: conversationId,
+              message: content.trim(),
+              message_type: "text",
+              temp_id: tempId,
+              sender_id: currentUser?.id,
+              participant1_id: conversationId ? undefined : currentUser?.id,
+              participant2_id: conversationId ? undefined : recipientId,
+            }),
+          });
+
+        let csrfToken = await ensureCsrfToken();
+        let respRaw = await executeRestSend(csrfToken || undefined);
+
+        if (respRaw.status === 403) {
+          try {
+            await prefetchCsrf();
+          } catch {}
+          const refreshedToken = getCookie("XSRF-TOKEN");
+          // Always retry once after attempting to refresh the token
+          respRaw = await executeRestSend(refreshedToken || undefined);
+          csrfToken = refreshedToken ?? csrfToken;
+        }
 
         // Handle rate limiting specifically
         if (respRaw.status === 429) {

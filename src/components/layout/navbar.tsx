@@ -213,6 +213,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
         socketClient.getSocket()?.off("notification:new:v2", handleNewV2);
       };
     }
+    return undefined;
   }, []);
 
   // Load user's messages and notifications

@@ -7,6 +7,7 @@
 
 import { toast } from 'sonner';
 import { apiPath } from '@/lib/base-path';
+import { logger } from '@/lib/utils';
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -132,7 +133,7 @@ export class AuthStateManager {
       
       this.log('Cross-tab synchronization enabled');
     } catch (error) {
-      console.warn('Failed to setup cross-tab sync:', error);
+      logger.warn('Failed to setup cross-tab sync:', error);
     }
   }
 
@@ -295,7 +296,7 @@ export class AuthStateManager {
         sessionStorage.removeItem(`${this.storageKey}_session`);
       }
     } catch (error) {
-      console.error('Failed to persist auth state:', error);
+      logger.error('Failed to persist auth state:', error);
     }
   }
 
@@ -362,7 +363,7 @@ export class AuthStateManager {
       
       return { success: true, state: this.getState() };
     } catch (error) {
-      console.error('Failed to recover auth state:', error);
+      logger.error('Failed to recover auth state:', error);
       this.clearState();
       return { 
         success: false, 
@@ -423,7 +424,7 @@ export class AuthStateManager {
       localStorage.removeItem(this.storageKey);
       sessionStorage.removeItem(`${this.storageKey}_session`);
     } catch (error) {
-      console.error('Failed to clear storage:', error);
+      logger.error('Failed to clear storage:', error);
     }
     
     // Broadcast logout to other tabs
@@ -506,7 +507,7 @@ export class AuthStateManager {
         return false;
       }
     } catch (error) {
-      console.error('Token refresh error:', error);
+      logger.error('Token refresh error:', error);
       this.handleSessionExpiry('token_expired');
       return false;
     }
@@ -582,7 +583,7 @@ export class AuthStateManager {
       try {
         callback(this.getState());
       } catch (error) {
-        console.error('Error in auth state listener:', error);
+        logger.error('Error in auth state listener:', error);
       }
     });
   }
@@ -609,7 +610,7 @@ export class AuthStateManager {
    */
   private log(...args: any[]): void {
     if (this.options.debugMode) {
-      console.log('[AuthStateManager]', ...args);
+      logger.debug('[AuthStateManager]', ...args);
     }
   }
 
