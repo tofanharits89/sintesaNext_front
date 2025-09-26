@@ -129,6 +129,7 @@ const getFilterIcon = (filterKey: string) => {
     mbgIntervensi: <Target className="h-4 w-4" />,
     jenisProgramStrategis: <Target className="h-4 w-4" />,
     jenisTemaAnggaran: <Target className="h-4 w-4" />,
+    jenisKontrak: <Settings className="h-4 w-4" />,
   };
 
   return iconMap[filterKey] || <Filter className="h-4 w-4" />;
@@ -513,6 +514,14 @@ export function FilterCard({
 
       try {
         switch (key) {
+          case "jenisKontrak": {
+            // Special simple options for Kontrak scope
+            const options = [
+              { value: "SYC", label: "SYC - Single Year Contract" },
+              { value: "MYC", label: "MYC - Multi Years Contract" },
+            ];
+            return [...commonOptions, ...options];
+          }
           case "jenisTemaAnggaran": {
             // No "Semua" option for Jenis Tema Anggaran; default should be 000
             const options = (
@@ -1113,7 +1122,7 @@ export function FilterCard({
             for (let month = 1; month <= 12; month++) {
               const monthStr = String(month).padStart(2, "0");
               const value = monthStr;
-              const label = months[month - 1];
+              const label = months[month - 1] as string; // assert to satisfy TS (index is within range)
               monthOptions.push({ value, label });
             }
 

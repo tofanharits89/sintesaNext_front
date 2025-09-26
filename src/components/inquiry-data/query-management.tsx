@@ -53,7 +53,7 @@ import { QueryListItem } from "./query-list-item";
 interface QueryManagementProps {
   onLoadQuery: (query: SavedQuery) => void;
   currentUserId: string;
-  scope?: "belanja" | "tematik" | "general" | "rkakl_detail"; // Add scope for filtering queries
+  scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak"; // Add scope for filtering queries
   onRefreshReady?: (refreshFn: () => void) => void;
 }
 

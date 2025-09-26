@@ -44,7 +44,7 @@ interface TayangModalProps {
     tematikKategori?: string;
   };
   filterValues?: Record<string, FilterValue>;
-  scope?: "belanja" | "tematik" | "general" | "rkakl_detail";
+  scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak";
 }
 
 export function TayangModal({
@@ -97,6 +97,18 @@ export function TayangModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, activeFilters, filterValues, reportParams, currentPage, pageSize]);
 
+  // Case-insensitive safe getter for a row's column value
+  const getRowValue = (row: any, column: string) => {
+    if (!row) return undefined;
+    if (column in row) return row[column];
+    const target = column.toUpperCase();
+    // find case-insensitive key match
+    for (const k of Object.keys(row)) {
+      if (k.toUpperCase() === target) return row[k];
+    }
+    return undefined;
+  };
+
   // Process data for search, sort, and pagination
   const processedData = useMemo(() => {
     if (!lastResult?.data) return [];
@@ -115,8 +127,8 @@ export function TayangModal({
     // Apply sorting
     if (sortColumn) {
       filtered = [...filtered].sort((a, b) => {
-        const aVal = a[sortColumn];
-        const bVal = b[sortColumn];
+        const aVal = getRowValue(a, sortColumn);
+        const bVal = getRowValue(b, sortColumn);
 
         // Handle null/undefined values
         if (aVal == null && bVal == null) return 0;
@@ -149,6 +161,8 @@ export function TayangModal({
       "PAGU_DIPA",
       "PAGU", // Add PAGU for RKAKL Detail
       "REALISASI",
+      "PAGU_KONTRAK",
+      "REALISASI_KONTRAK",
       "BLOKIR",
       "JAN",
       "FEB",
@@ -169,22 +183,34 @@ export function TayangModal({
 
   // Grand totals across all data (prefer server-provided totals; fallback to client sum)
   const grandTotals = useMemo(() => {
-    if (lastResult?.grandTotals) return lastResult.grandTotals;
-    if (!lastResult?.data?.length || !lastResult?.columns) return {};
+    if (!lastResult?.columns) return {};
 
-    const totals: Record<string, number> = {};
-
+    // Compute client totals
+    const clientTotals: Record<string, number> = {};
     lastResult.columns.forEach((column) => {
       if (!isSummableColumn(column)) return;
-      const sum = (lastResult.data || []).reduce((acc, row) => {
-        const val = row[column];
-        const num = Number(val);
-        return acc + (!isNaN(num) && val != null ? num : 0);
+      const sum = (lastResult?.data || []).reduce((acc, row) => {
+        const raw = getRowValue(row, column);
+        const cleaned =
+          typeof raw === "string"
+            ? raw.replace(/[\,\s]/g, "").replace(/\.(?=\d{3}(\D|$))/g, "")
+            : raw;
+        const num = Number(cleaned);
+        return acc + (!isNaN(num) && raw != null ? num : 0);
       }, 0);
-      if (sum !== 0) totals[column] = sum;
+      clientTotals[column] = sum;
     });
 
-    return totals;
+    const serverTotals = lastResult?.grandTotals;
+    if (serverTotals) {
+      // Use server totals only if at least one summable column has a positive number
+      const hasMeaningfulServerTotal = Object.entries(serverTotals).some(
+        ([key, val]) => isSummableColumn(key) && typeof val === "number" && val > 0
+      );
+      if (hasMeaningfulServerTotal) return serverTotals;
+    }
+
+    return clientTotals;
   }, [lastResult?.grandTotals, lastResult?.data, lastResult?.columns]);
 
   // Pagination (server-aware)
@@ -659,14 +685,14 @@ export function TayangModal({
                                     column
                                   )} text-xs font-mono w-40 min-w-[180px] whitespace-nowrap`}
                                 >
-                                  {formatCellValue(row[column], column)}
+                                  {formatCellValue(getRowValue(row, column), column)}
                                 </td>
                               ))}
                             </tr>
                           ))}
 
                           {/* Grand Total Row (All Data) */}
-                          {Object.keys(grandTotals).length > 0 && (
+                          {lastResult.columns?.some((c) => isSummableColumn(c)) && (
                             <tr className="border-t-2 border-primary bg-muted font-medium sticky bottom-0 z-20">
                               {(() => {
                                 // Find the first summable column index
@@ -698,9 +724,9 @@ export function TayangModal({
                                             column
                                           )} text-sm font-mono font-medium w-40 min-w-[180px] whitespace-nowrap`}
                                         >
-                                          {grandTotals[column] !== undefined
+                                          {isSummableColumn(column)
                                             ? formatCellValue(
-                                                grandTotals[column],
+                                                grandTotals[column] ?? 0,
                                                 column
                                               )
                                             : "-"}

@@ -5,7 +5,7 @@ import { getAllMandatoryFilterKeys } from "./categoryRegistry";
  * Do not modify behavior when moving from filterRegistry.ts.
  */
 export const SCOPE_EXCLUSIONS_BASE: Record<
-  "belanja" | "tematik" | "rkakl_detail" | "general",
+  "belanja" | "tematik" | "rkakl_detail" | "kontrak" | "general",
   string[]
 > = {
   belanja: [
@@ -18,6 +18,8 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "subKomponen", // RKAKL Detail specific
     "item", // RKAKL Detail specific
     "jenisBlokir", // RKAKL Detail specific
+    // Kontrak-specific filter should not appear on Belanja
+    "jenisKontrak",
   ],
   tematik: [
     "register",
@@ -31,6 +33,8 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "subKomponen", // RKAKL Detail specific
     "item", // RKAKL Detail specific
     "jenisBlokir", // RKAKL Detail specific
+    // Kontrak-specific filter should not appear on Tematik
+    "jenisKontrak",
   ],
   rkakl_detail: [
     "cutOff", // No cutOff needed for RKAKL Detail since no realisasi
@@ -52,6 +56,48 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "jenisInflasiPengeluaran",
     "stuntingIntervensi",
     "jenisTemaAnggaran",
+    // Kontrak-specific filter should not appear on RKAKL Detail
+    "jenisKontrak",
+  ],
+  kontrak: [
+    // Explicitly exclude all filters that are NOT required on Kontrak page.
+    // Allowed (visible) filters on Kontrak page:
+    // - kementerian, eselonI, kewenangan, kanwil, kppn, satker,
+    //   program, kegiatan, outputKro, sumberDana, akun
+    // Everything else should be hidden via exclusions below.
+    "provinsi",
+    "kabkota",
+    "fungsi",
+    "subFungsi",
+    // Tematik & special switches not used on Kontrak
+    "jenisPn",
+    "programPrioritas",
+    "kegiatanPrioritas",
+    "proyekPrioritas",
+    "jenisMajorProject",
+    "jenisInflasiIntervensi",
+    "jenisInflasiPengeluaran",
+    "stuntingIntervensi",
+    "mbgIntervensi",
+    "jenisProgramStrategis",
+    "jenisTemaAnggaran",
+    "kemiskinanEkstrim",
+    "belanjaPemilu",
+    "ibuKotaNusantara",
+    "ketahananPangan",
+    "swasembadaPangan",
+    "belanjaPemerintah",
+    // RKAKL Detail specific hierarchy not needed on Kontrak
+    "subOutputRo",
+    "komponen",
+    "subKomponen",
+    "item",
+    // Internal akun variants not shown on UI
+    "kodeBkpk",
+    "jenisBelanja",
+    // Other UI filters not required
+    "register",
+    "jenisBlokir",
   ],
   general: [],
 };

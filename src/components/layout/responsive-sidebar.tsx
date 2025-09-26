@@ -104,6 +104,7 @@ const defaultMenu: MenuItem[] = [
     children: [
       { label: "Belanja" },
       { label: "Tematik" },
+      { label: "Kontrak" },
       { label: "RKAKL Detail" },
     ],
   },
@@ -233,6 +234,8 @@ export function ResponsiveSidebar({
       case "Inquiry Data__Tematik":
         return <Database className={cls} />;
       case "Inquiry Data__RKAKL Detail":
+        return <Database className={cls} />;
+      case "Inquiry Data__Kontrak":
         return <Database className={cls} />;
       case "Laporan__Bulanan":
         return <Calendar className={cls} />;
@@ -371,6 +374,24 @@ export function ResponsiveSidebar({
                                   menu: m.label,
                                   submenu: c.label,
                                   path: "/dashboard/utama",
+                                })
+                              }
+                            >
+                              {subIconFor(m.label, c.label)}
+                              <span>{c.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        ) : c.label === "Kontrak" &&
+                          m.label === "Inquiry Data" ? (
+                          <DropdownMenuItem key={c.label} asChild>
+                            <Link
+                              href="/inquiry-data/kontrak"
+                              className="flex items-center w-full"
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/inquiry-data/kontrak",
                                 })
                               }
                             >

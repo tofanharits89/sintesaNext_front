@@ -26,6 +26,7 @@ import { useSavedQueries } from "@/hooks/use-saved-queries";
 import { ButtonSpinner, InlineSpinner } from "@/components/ui/loading-states";
 import type { SavedQuery } from "@/types/saved-queries";
 import { formatCalendarDate } from "@/lib/utils";
+import type { GetSavedQueriesParams } from "@/types/saved-queries";
 
 // Using built-in date formatting instead of date-fns
 
@@ -35,7 +36,7 @@ interface QueryLoaderButtonProps {
   hasUnsavedChanges?: boolean;
   disabled?: boolean;
   className?: string;
-  scope?: "belanja" | "tematik" | "general" | "rkakl_detail";
+  scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak";
 }
 
 const QueryLoaderButtonComponent = function QueryLoaderButton({
@@ -66,16 +67,20 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
   );
 
   // Memoize query parameters to prevent infinite loops
-  const queryParams = useMemo(() => {
-    if (!isOpen) {
-      return {}; // Return empty object when closed to prevent unnecessary fetches
-    }
+  const queryParams = useMemo<
+    (GetSavedQueriesParams & { scope?: QueryLoaderButtonProps["scope"] }) | undefined
+  >(() => {
+    if (!isOpen) return undefined; // Prevent unnecessary fetches when closed
 
-    return {
-      search: searchQuery.trim() || undefined,
-      limit: 10, // Limit for dropdown
+    const trimmed = searchQuery.trim();
+    const base: GetSavedQueriesParams & { scope?: QueryLoaderButtonProps["scope"] } = {
+      limit: 10,
       scope,
-    } as const;
+    };
+    if (trimmed) {
+      base.search = trimmed;
+    }
+    return base;
   }, [isOpen, searchQuery, scope]);
 
   // Fetch saved queries with search - only when needed

@@ -22,7 +22,7 @@ interface PilihLaporanCardProps {
   };
   setReportParams: React.Dispatch<React.SetStateAction<any>>;
   // Optional overrides for tematik and rkakl_detail context
-  mode?: "general" | "tematik" | "rkakl_detail";
+  mode?: "general" | "tematik" | "rkakl_detail" | "kontrak";
   customTipeLaporanOptions?: { value: string; label: string }[];
   hideJenisAkumulasi?: boolean;
 }
@@ -62,12 +62,19 @@ export function PilihLaporanCard({
     { value: "pagu_dan_blokir", label: "Pagu dan Blokir" },
   ];
 
+  const kontrakTipeLaporanOptions = [
+    { value: "semua_kontrak", label: "1. Semua Kontrak" },
+    { value: "kontrak_valas", label: "2. Kontrak Valas" },
+  ];
+
   // Use appropriate options based on mode
   const tipeLaporanOptions =
     mode === "tematik"
       ? customTipeLaporanOptions || getTematikCategoryOptions()
       : mode === "rkakl_detail"
       ? customTipeLaporanOptions || rkaklDetailTipeLaporanOptions
+      : mode === "kontrak"
+      ? customTipeLaporanOptions || kontrakTipeLaporanOptions
       : customTipeLaporanOptions || defaultTipeLaporanOptions;
 
   const pembulatanOptions = [
@@ -116,16 +123,17 @@ export function PilihLaporanCard({
               </SelectContent>
             </Select>
           </div>
-
           {/* Tipe Laporan and Jenis Akumulasi Column */}
           <div className="space-y-4">
             {/* Tipe Laporan Selection */}
             <div className="space-y-2">
               <label className="text-sm font-medium">
-                {mode === "tematik" 
-                  ? "Kategori Tematik" 
+                {mode === "tematik"
+                  ? "Kategori Tematik"
                   : mode === "rkakl_detail"
                   ? "Tipe Laporan RKAKL"
+                  : mode === "kontrak"
+                  ? "Tipe Laporan Kontrak"
                   : "Tipe Laporan"}
               </label>
               <Select
@@ -148,6 +156,8 @@ export function PilihLaporanCard({
                         ? "Pilih kategori tematik"
                         : mode === "rkakl_detail"
                         ? "Pilih tipe laporan RKAKL"
+                        : mode === "kontrak"
+                        ? "Pilih tipe laporan kontrak"
                         : "Pilih tipe laporan"
                     }
                   />

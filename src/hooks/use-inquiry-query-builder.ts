@@ -36,6 +36,9 @@ const TABLE_MAPPING = {
   pergerakan_blokir_bulanan_per_jenis: "pa_pagu_blokir_akun_bulanan",
   volume_output_kegiatan: "pagu_output", // special-case suffix order handled in buildTableName
   pagu_dan_blokir: "m_detail_harian", // RKAKL Detail specific table
+  // Kontrak report types → base table name (use custom tableNameBuilder for _baru suffix)
+  semua_kontrak: "pa_kontrak",
+  kontrak_valas: "pa_kontrak",
 };
 
 import { getFilterConfigMap } from "@/components/inquiry-data/filterRegistry";
@@ -131,6 +134,17 @@ const REPORT_TYPE_REGISTRY: Record<string, ReportTypeConfig> = {
     addBlokirAfterReal: false, // No realisasi needed for RKAKL Detail
     tableNameBuilder: (thang, baseTable) =>
       `monev${thang}.${baseTable}_${thang}`,
+  },
+  // Kontrak report types: custom table builder and no PAGU_DIPA/BLOKIR defaults
+  semua_kontrak: {
+    includePaguDipa: false,
+    addBlokirAfterReal: false,
+    tableNameBuilder: (thang) => `monev${thang}.pa_kontrak_${thang}_baru`,
+  },
+  kontrak_valas: {
+    includePaguDipa: false,
+    addBlokirAfterReal: false,
+    tableNameBuilder: (thang) => `monev${thang}.pa_kontrak_${thang}_baru`,
   },
 };
 
@@ -308,6 +322,17 @@ export function useInquiryQueryBuilder() {
 
         const config = FILTER_CONFIG[filterKey];
         if (!config) return;
+
+        // Special-case: jenisKontrak is computed from main.can with no reference table
+        // Always include the computed column in SELECT when the filter is active,
+        // regardless of jenisTampilan settings
+        if (filterKey === "jenisKontrak") {
+          selectColumns.push(
+            "CASE WHEN SUBSTR(main.can,16,1) = '0' THEN 'SYC' WHEN SUBSTR(main.can,16,1) <> '0' THEN 'MYC' END AS tipe_kontrak"
+          );
+          // Continue to next filter (skip generic handling below)
+          return;
+        }
 
         // Special-case: kemiskinanEkstrim and belanjaPemilu are boolean flags without uraian.
         // When active, always select the raw column even if no filter value object exists
@@ -500,7 +525,7 @@ export function useInquiryQueryBuilder() {
             }
           } else {
             // No reference table, support optional nameColumn expression for uraian
-            const jenisTampilan = filterValue.jenisTampilan || "kode";
+            const jenisTampilan = (filterValue?.jenisTampilan) || "kode";
             switch (jenisTampilan) {
               case "kode":
                 selectColumns.push(`main.${config.columnName} AS ${filterKey}`);
@@ -567,6 +592,59 @@ export function useInquiryQueryBuilder() {
         realizationColumns.push(`real${month}`);
       }
       const realizationSum = realizationColumns.join(" + ");
+
+      // Kontrak reports: add mandatory columns and custom sums (with pembulatan divisor), then return early
+      if (reportParams.tipeLaporan === "semua_kontrak") {
+        // Mandatory columns for semua_kontrak
+        selectColumns.push("main.nokontrak AS nokontrak");
+        selectColumns.push("main.can AS can");
+        selectColumns.push("CAST(main.tgkontrak AS CHAR) AS tgkontrak");
+        selectColumns.push("CAST(main.tgterima AS CHAR) AS tgterima");
+        selectColumns.push("main.termin_ke AS termin_ke");
+        selectColumns.push(
+          "CAST(main.tgljatuhtempo_termin AS CHAR) AS tgljatuhtempo_termin"
+        );
+        selectColumns.push(
+          "CAST(main.tgljatuhtempo AS CHAR) AS tgljatuhtempo"
+        );
+        selectColumns.push("main.deskripsi AS deskripsi");
+
+        // Custom aggregates with pembulatan divisor
+        selectColumns.push(
+          `ROUND(SUM(CONVERT(main.pagu, SIGNED)) / ${divisor}, 0) AS PAGU_KONTRAK`
+        );
+        selectColumns.push(
+          `ROUND(SUM(main.realisasi) / ${divisor}, 0) AS REALISASI_KONTRAK`
+        );
+
+        return { selectColumns, joinTables };
+      }
+      if (reportParams.tipeLaporan === "kontrak_valas") {
+        // Mandatory columns for kontrak_valas
+        selectColumns.push("main.currency AS currency");
+        selectColumns.push("main.kurs_user AS kurs_user");
+        selectColumns.push("main.nokontrak AS nokontrak");
+        selectColumns.push("CAST(main.tgkontrak AS CHAR) AS tgkontrak");
+        selectColumns.push("CAST(main.tgterima AS CHAR) AS tgterima");
+        selectColumns.push("main.termin_ke AS termin_ke");
+        selectColumns.push(
+          "CAST(main.tgljatuhtempo_termin AS CHAR) AS tgljatuhtempo_termin"
+        );
+        selectColumns.push(
+          "CAST(main.tgljatuhtempo AS CHAR) AS tgljatuhtempo"
+        );
+        selectColumns.push("main.deskripsi AS deskripsi");
+
+        // Custom aggregates with pembulatan divisor
+        selectColumns.push(
+          `ROUND(SUM(CONVERT(main.pagu, SIGNED)) / ${divisor}, 0) AS PAGU_KONTRAK`
+        );
+        selectColumns.push(
+          `ROUND(SUM(main.realisasi) / ${divisor}, 0) AS REALISASI_KONTRAK`
+        );
+
+        return { selectColumns, joinTables };
+      }
 
       // Add mandatory columns based on report type
       if (reportParams.tipeLaporan === "pagu_apbn") {
@@ -746,6 +824,11 @@ export function useInquiryQueryBuilder() {
         }
       }
 
+      // Kontrak Valas specific filter: exclude IDR
+      if (reportParams?.tipeLaporan === "kontrak_valas") {
+        whereConditions.push("main.currency <> 'IDR'");
+      }
+
       // Global switches: enforce IS NOT NULL conditions when switches are active
       // Applies to all scopes (e.g., belanja and tematik) that use the shared filter switches
       if (activeFilters.includes("kemiskinanEkstrim")) {
@@ -786,6 +869,16 @@ export function useInquiryQueryBuilder() {
         if (!config || !filterValue) return;
 
         const { selection, kondisiCode, mengandungKata } = filterValue;
+
+        // Special-case WHERE for jenisKontrak (computed from main.can)
+        if (filterKey === "jenisKontrak") {
+          if (selection === "SYC") {
+            whereConditions.push("SUBSTR(main.can,16,1) = '0'");
+          } else if (selection === "MYC") {
+            whereConditions.push("SUBSTR(main.can,16,1) <> '0'");
+          }
+          return; // Skip generic handling for this filter
+        }
 
         // Handle main selection
         if (selection && selection !== "all") {
@@ -937,6 +1030,31 @@ export function useInquiryQueryBuilder() {
         }
       };
 
+      // Kontrak reports: enforce grouping by mandatory identifier/date columns
+      if (reportParams.tipeLaporan === "semua_kontrak") {
+        addGroupBy("main.nokontrak");
+        addGroupBy("main.can");
+        addGroupBy("main.tgkontrak");
+        addGroupBy("main.tgterima");
+        addGroupBy("main.termin_ke");
+        addGroupBy("main.tgljatuhtempo_termin");
+        addGroupBy("main.tgljatuhtempo");
+        addGroupBy("main.deskripsi");
+        return groupByColumns;
+      }
+      if (reportParams.tipeLaporan === "kontrak_valas") {
+        addGroupBy("main.currency");
+        addGroupBy("main.kurs_user");
+        addGroupBy("main.nokontrak");
+        addGroupBy("main.tgkontrak");
+        addGroupBy("main.tgterima");
+        addGroupBy("main.termin_ke");
+        addGroupBy("main.tgljatuhtempo_termin");
+        addGroupBy("main.tgljatuhtempo");
+        addGroupBy("main.deskripsi");
+        return groupByColumns;
+      }
+
       // For tipe laporan 6, add mandatory GROUP BY kdblokir and nmblokir
       if (reportParams.tipeLaporan === "pergerakan_blokir_bulanan_per_jenis") {
         addGroupBy("main.kdblokir");
@@ -949,6 +1067,12 @@ export function useInquiryQueryBuilder() {
       // Ensure GROUP BY for switch filters regardless of tampilan/selection
       if (uniqueActiveFilters.includes("kemiskinanEkstrim")) {
         addGroupBy("main.kemiskinan_ekstrim");
+      }
+      // Group by computed jenisKontrak expression when active
+      if (uniqueActiveFilters.includes("jenisKontrak")) {
+        addGroupBy(
+          "CASE WHEN SUBSTR(main.can,16,1) = '0' THEN 'SYC' WHEN SUBSTR(main.can,16,1) <> '0' THEN 'MYC' END"
+        );
       }
       if (uniqueActiveFilters.includes("belanjaPemilu")) {
         addGroupBy("main.pemilu");

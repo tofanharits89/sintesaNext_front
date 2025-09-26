@@ -515,6 +515,17 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
       },
     },
   },
+  // Kontrak-specific UI filter (computed from main.can, no reference table)
+  {
+    key: "jenisKontrak",
+    label: "Jenis Kontrak",
+    order: 999,
+    showInUI: true,
+    query: {
+      // Use main table column for computation in query builder
+      columnName: "can",
+    },
+  },
   // Internal variants for akun grouping (not shown in UI)
   {
     key: "kodeBkpk",
@@ -660,14 +671,35 @@ export const getFilterConfigMap = () => {
   > = {};
   for (const d of INQUIRY_FILTER_DEFS) {
     if (d.query?.columnName) {
-      map[d.key] = {
+      const entry: {
+        key: string;
+        columnName: string;
+        referenceTable?: string;
+        referenceDatabase?: string;
+        joinKey?: string;
+        nameColumn?: string;
+      } = {
         key: d.key,
         columnName: d.query.columnName,
-        referenceTable: d.query.reference?.table,
-        referenceDatabase: d.query.reference?.database,
-        joinKey: d.query.reference?.joinKey,
-        nameColumn: d.query.reference?.nameColumn ?? d.query.nameColumn,
       };
+
+      const reference = d.query.reference;
+      if (reference?.table) {
+        entry.referenceTable = reference.table;
+      }
+      if (reference?.database) {
+        entry.referenceDatabase = reference.database;
+      }
+      if (reference?.joinKey) {
+        entry.joinKey = reference.joinKey;
+      }
+
+      const nameColumn = reference?.nameColumn ?? d.query.nameColumn;
+      if (nameColumn) {
+        entry.nameColumn = nameColumn;
+      }
+
+      map[d.key] = entry;
     } else {
       // Still include keys that don't have query definitions (e.g., PN-only UI filters)
       map[d.key] = {
@@ -701,7 +733,7 @@ export const normalizeActiveFilters = (activeFilters: string[]): string[] => {
  * @returns Array of available filter keys for the scope
  */
 export const getAvailableFiltersForScope = (
-  scope: "belanja" | "tematik" | "general" | "rkakl_detail" = "general",
+  scope: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" = "general",
   excludeFilters: string[] = [],
   options?: { tipeLaporan?: string }
 ): string[] => {
@@ -734,7 +766,7 @@ export const getAvailableFiltersForScope = (
  */
 export const isFilterAvailableInScope = (
   filterKey: string,
-  scope: "belanja" | "tematik" | "general" | "rkakl_detail" = "general"
+  scope: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" = "general"
 ): boolean => {
   const availableFilters = getAvailableFiltersForScope(scope);
   return availableFilters.includes(filterKey);
@@ -748,7 +780,7 @@ export const isFilterAvailableInScope = (
  */
 export const validateFiltersForScope = (
   activeFilters: string[],
-  scope: "belanja" | "tematik" | "general" | "rkakl_detail"
+  scope: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak"
 ): { isValid: boolean; incompatibleFilters: string[] } => {
   const availableFilters = getAvailableFiltersForScope(scope);
   const incompatibleFilters = activeFilters.filter(

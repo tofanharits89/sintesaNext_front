@@ -119,7 +119,7 @@ const fetcher = async (url: string) => {
  */
 export function useSavedQueries(
   params: GetSavedQueriesParams & {
-    scope?: "belanja" | "tematik" | "general" | "rkakl_detail";
+    scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak";
   } = {}
 ) {
   // Stabilize params to prevent infinite loops
@@ -127,7 +127,13 @@ export function useSavedQueries(
     () =>
       {
         // sanitize inputs before creating a stable ref
-        const allowedScopes = ["belanja", "tematik", "general", "rkakl_detail"] as const;
+        const allowedScopes = [
+          "belanja",
+          "tematik",
+          "general",
+          "rkakl_detail",
+          "kontrak",
+        ] as const;
         const rawPage = typeof params.page === "number" ? params.page : undefined;
         const rawLimit = typeof params.limit === "number" ? params.limit : undefined;
         const safePage = rawPage && Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
@@ -261,6 +267,31 @@ export function useSavedQueries(
               console.log("[useSavedQueries] Returning data:", result.data);
               return result.data as SavedQuery;
             }
+
+            // Some backends may return the resource directly
+            if (result && result.id && result.name) {
+              console.log("[useSavedQueries] Returning raw resource:", result);
+              return result as SavedQuery;
+            }
+
+            // Fallback: if no result body, attempt to fetch the newly created query by name/scope
+            if (!result) {
+              console.warn("[useSavedQueries] Empty response on create; attempting fallback fetch");
+              const searchParams = new URLSearchParams();
+              searchParams.set("limit", "1");
+              if (arg.name) searchParams.set("search", arg.name);
+              if (arg.scope) searchParams.set("scope", arg.scope);
+              const path = `/saved-queries?${searchParams.toString()}`;
+              const lookup = await apiClient.get<any>(path, { timeout: 10000 });
+              // Handle wrapped response { success, data }
+              const data = lookup?.data ?? lookup;
+              const queries = (data?.queries ?? []) as SavedQuery[];
+              if (Array.isArray(queries) && queries.length > 0) {
+                console.log("[useSavedQueries] Fallback fetch returned:", queries[0]);
+                return queries[0];
+              }
+            }
+
             console.log("[useSavedQueries] Returning full result:", result);
             return result as SavedQuery;
           } catch (apiError) {
@@ -272,6 +303,25 @@ export function useSavedQueries(
         { showToast: false }
       );
       console.log("[useSavedQueries] Final result from retrySavedQueryOperation:", res);
+      if (!res) {
+        // Fallback fetch by name/scope after retries returned null
+        try {
+          const searchParams = new URLSearchParams();
+          searchParams.set("limit", "1");
+          if (arg.name) searchParams.set("search", arg.name);
+          if (arg.scope) searchParams.set("scope", arg.scope);
+          const path = `/saved-queries?${searchParams.toString()}`;
+          const lookup = await apiClient.get<any>(path, { timeout: 10000 });
+          const data = lookup?.data ?? lookup;
+          const queries = (data?.queries ?? []) as SavedQuery[];
+          if (Array.isArray(queries) && queries.length > 0) {
+            return queries[0] as SavedQuery;
+          }
+        } catch (e) {
+          console.warn("[useSavedQueries] Fallback fetch after retry failed:", e);
+        }
+        throw new Error("Failed to create query - no response received");
+      }
       return res as SavedQuery;
     },
     {
