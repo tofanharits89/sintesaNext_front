@@ -30,9 +30,8 @@ function PopoverContent({
       const dialogs = document.querySelectorAll<HTMLElement>(
         '[data-slot="dialog-content"]'
       );
-      if (dialogs.length > 0) {
-        setContainer(dialogs[dialogs.length - 1]);
-      }
+      const el = dialogs.item(dialogs.length - 1);
+      setContainer(el);
     } catch {
       // no-op on SSR or if document unavailable
     }

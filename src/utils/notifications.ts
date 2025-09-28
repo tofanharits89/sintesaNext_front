@@ -273,11 +273,18 @@ export const notificationUtils = {
     options?: NotificationOptions
   ) => {
     const toastFn = toast[type];
-    return toastFn(title, {
-      description: options?.description,
-      duration: options?.duration,
-      action: options?.action,
-    });
+    // With exactOptionalPropertyTypes enabled, avoid passing possibly undefined props.
+    const payload: Record<string, any> = {};
+    if (options?.description !== undefined) {
+      payload.description = options.description;
+    }
+    if (options?.duration !== undefined) {
+      payload.duration = options.duration;
+    }
+    if (options?.action !== undefined) {
+      payload.action = options.action;
+    }
+    return toastFn(title, payload);
   },
 
   // Progress notification that can be updated
@@ -294,11 +301,16 @@ export const notificationUtils = {
       },
       success: (message: string, description?: string) => {
         toast.dismiss(toastId);
-        toast.success(message, { description });
+        // Build payload conditionally
+        const payload: Record<string, any> = {};
+        if (description !== undefined) payload.description = description;
+        toast.success(message, payload);
       },
       error: (message: string, description?: string) => {
         toast.dismiss(toastId);
-        toast.error(message, { description });
+        const payload: Record<string, any> = {};
+        if (description !== undefined) payload.description = description;
+        toast.error(message, payload);
       },
       dismiss: () => {
         toast.dismiss(toastId);

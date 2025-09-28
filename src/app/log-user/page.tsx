@@ -109,7 +109,7 @@ export default function LogUserPage() {
           day: dayName,
           date: dateStr,
           count: 0,
-          fullDate: date.toISOString().split("T")[0],
+          fullDate: date.toISOString().split("T")[0] ?? "",
         });
       }
       return days;

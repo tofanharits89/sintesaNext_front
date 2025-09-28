@@ -62,20 +62,22 @@ export function SatkerSearch() {
         switch (e.key) {
             case "ArrowDown":
                 e.preventDefault();
-                setSelectedIndex(prev =>
+                setSelectedIndex((prev) =>
                     prev < filteredResults.length - 1 ? prev + 1 : prev
                 );
                 break;
             case "ArrowUp":
                 e.preventDefault();
-                setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
+                setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));
                 break;
             case "Enter":
                 e.preventDefault();
                 if (selectedIndex >= 0 && selectedIndex < filteredResults.length) {
-                    handleSelect(filteredResults[selectedIndex]);
+                    const picked = filteredResults[selectedIndex];
+                    if (picked) handleSelect(picked);
                 } else if (filteredResults.length > 0) {
-                    handleSelect(filteredResults[0]);
+                    const first = filteredResults[0];
+                    if (first) handleSelect(first);
                 }
                 break;
             case "Escape":

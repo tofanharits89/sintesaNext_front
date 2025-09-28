@@ -177,8 +177,8 @@ export function MapSearch() {
           mapRef={mapRef}
           loaded={loaded}
           overlayScope={overlayScope}
-          overlayName={overlayName}
-          stats={stats}
+          {...(overlayName !== undefined ? { overlayName } : {})}
+          {...(typeof stats !== 'undefined' ? { stats } : {})}
           statsLoading={statsLoading}
           statsError={overlayError}
         />

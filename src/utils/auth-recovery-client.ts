@@ -282,13 +282,19 @@ export class AuthRecoveryClient {
       }
 
       // Decode payload to get expiration
-      const payload = JSON.parse(atob(parts[1]));
+      const [, payloadSegment] = parts as [string, string, string];
+      const payload = JSON.parse(atob(payloadSegment));
 
-      return {
+      const token: AuthToken = {
         value: tokenValue,
         source,
-        expiresAt: payload.exp ? payload.exp * 1000 : undefined,
       };
+
+      if (payload && typeof payload.exp === "number") {
+        token.expiresAt = payload.exp * 1000;
+      }
+
+      return token;
     } catch (error) {
       this.logError(`Failed to parse stored token from ${source}`, error);
       return null;

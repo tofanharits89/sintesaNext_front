@@ -139,7 +139,7 @@ export function PilihLaporanCard({
               <Select
                 value={
                   mode === "tematik"
-                    ? reportParams.tematikKategori || undefined
+                    ? reportParams.tematikKategori ?? ""
                     : reportParams.tipeLaporan
                 }
                 onValueChange={(value) =>

@@ -78,7 +78,9 @@ export default async function RootLayout({
                 <CheckBackend />
               </ComponentErrorBoundary>
               <ComponentErrorBoundary>
-                <AppShell initialUser={initialUser}>{children}</AppShell>
+                <AppShell {...(initialUser ? { initialUser } : {})}>
+                  {children}
+                </AppShell>
               </ComponentErrorBoundary>
               <ComponentErrorBoundary>
                 <ConnectionStatus />

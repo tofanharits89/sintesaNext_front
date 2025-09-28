@@ -27,7 +27,8 @@ const fetcher = async (url: string) => {
 };
 
 export function useDauPenundaanCabutByPemda(params: { kdpemda?: string }) {
-  const key = params?.kdpemda
+  const enabled = Boolean(params?.kdpemda);
+  const url = params?.kdpemda
     ? backendPath(`/transfer-daerah/dau/penundaan-cabut?kdpemda=${encodeURIComponent(params.kdpemda)}`)
     : null;
 

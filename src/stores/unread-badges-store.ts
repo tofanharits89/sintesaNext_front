@@ -225,10 +225,14 @@ export const useUnreadBadgesStore = create<
             (state) => {
               const updatedUnreadCounts = { ...state.unreadCounts };
               Object.keys(updatedUnreadCounts).forEach((conversationId) => {
+                const prev = updatedUnreadCounts[conversationId] || defaultUnreadInfo;
                 updatedUnreadCounts[conversationId] = {
-                  ...updatedUnreadCounts[conversationId],
+                  ...prev,
                   count: 0,
                   hasUnreadMentions: false,
+                  lastMessageId: prev.lastMessageId ?? null,
+                  lastMessageTimestamp: prev.lastMessageTimestamp ?? null,
+                  lastReadMessageId: prev.lastReadMessageId ?? null,
                 };
               });
 

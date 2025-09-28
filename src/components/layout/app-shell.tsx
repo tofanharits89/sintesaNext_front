@@ -29,7 +29,7 @@ export default function AppShell({
 
   return (
     <div className="min-h-svh">
-      <Navbar initialUser={initialUser} />
+      <Navbar {...(initialUser ? { initialUser } : {})} />
       <ResponsiveSidebar />
       <div className="bg-slate-100 dark:bg-black">
         <main className="container mx-auto px-4 py-6 md:py-8">{children}</main>

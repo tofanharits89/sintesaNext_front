@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { http } from "@/lib/httpClient";
 import { apiPath } from "@/lib/base-path";
 
@@ -109,7 +110,7 @@ function mapFromBackendItem(
   } else if (typeof item.read === "boolean" && currentUsername) {
     readBy = item.read ? [currentUsername] : [];
   }
-  return {
+  const base: Notification = {
     id: item.id,
     title: item.title,
     message: item.message,
@@ -120,7 +121,11 @@ function mapFromBackendItem(
     createdAt,
     expiresAt: expiresAt || undefined,
     readBy,
-  };
+  } as Notification;
+  if (typeof expiresAt === "string") {
+    (base as any).expiresAt = expiresAt;
+  }
+  return base;
 }
 
 // Get notifications for current user (via Next API -> backend)

@@ -300,12 +300,12 @@ export function useConversations(options?: { enabled?: boolean }) {
         });
 
         if (realExists) {
-          pages[pageIdx].conversations = pages[pageIdx].conversations.filter(
+          pages[pageIdx]!.conversations = pages[pageIdx]!.conversations.filter(
             (c) => c.id !== tempId
           );
         } else {
-          pages[pageIdx].conversations[idx] = {
-            ...pages[pageIdx].conversations[idx],
+          pages[pageIdx]!.conversations[idx] = {
+            ...pages[pageIdx]!.conversations[idx],
             id: realId,
           } as any;
         }
@@ -342,6 +342,7 @@ export function useConversations(options?: { enabled?: boolean }) {
           (m as any)?.conversationId ||
           msgLike.conversation_id ||
           msgLike.conversationId;
+        const safeConversationId = String(conversationId || "");
         const ts =
           msgLike.timestamp ||
           msgLike.created_at ||
@@ -361,9 +362,12 @@ export function useConversations(options?: { enabled?: boolean }) {
           conversations: [...pg.conversations],
         }));
         let found: FoundLoc | null = null;
+        if (!safeConversationId) {
+          return prev; // cannot process message without a valid conversation id
+        }
         pages.forEach((pg, pIdx) => {
           const idx = pg.conversations.findIndex(
-            (c) => c.id === conversationId
+            (c) => c.id === safeConversationId
           );
           if (idx !== -1) found = { pageIdx: pIdx, idx };
         });
@@ -388,12 +392,12 @@ export function useConversations(options?: { enabled?: boolean }) {
             msgLike.createdAt ||
             new Date().toISOString();
 
-          const fromSelf = currentUser?.id && msgLike?.sender?.id === currentUser.id;
+          const fromSelf = !!currentUser?.id && msgLike?.sender?.id === currentUser?.id;
 
           if (tempLoc) {
             const { pageIdx: tPage, idx: tIdx } = tempLoc as FoundLoc;
-            const conv = { ...(pages2[tPage].conversations[tIdx] as any) };
-            conv.id = conversationId;
+            const conv = { ...(pages2[tPage]!.conversations[tIdx] as any) };
+            conv.id = safeConversationId;
             conv.lastMessage = {
               ...(conv.lastMessage || {}),
               id: msgLike.id,
@@ -407,7 +411,7 @@ export function useConversations(options?: { enabled?: boolean }) {
             conv.updated_at = effectiveTs;
 
             // remove temp and place updated at top
-            pages2[tPage].conversations.splice(tIdx, 1);
+            pages2[tPage]!.conversations.splice(tIdx, 1);
             const firstPage = pages2[0] || { conversations: [], nextCursor: null };
             firstPage.conversations.unshift(conv);
             pages2[0] = firstPage;
@@ -420,7 +424,7 @@ export function useConversations(options?: { enabled?: boolean }) {
             // Check if this is updating an existing real conversation that we already have
             let existingFound: FoundLoc | null = null;
             pages2.forEach((pg, pIdx) => {
-              const idx = pg.conversations.findIndex((c) => c.id === conversationId);
+              const idx = pg.conversations.findIndex((c) => c.id === safeConversationId);
               if (idx !== -1) existingFound = { pageIdx: pIdx, idx };
             });
             
@@ -431,7 +435,7 @@ export function useConversations(options?: { enabled?: boolean }) {
             
             // Update the existing conversation with the new message data
             const { pageIdx, idx } = existingFound;
-            const conv = { ...pages2[pageIdx].conversations[idx] } as any;
+            const conv = { ...pages2[pageIdx]!.conversations[idx] } as any;
             conv.lastMessage = {
               ...(conv.lastMessage || {}),
               id: msgLike.id,
@@ -445,7 +449,7 @@ export function useConversations(options?: { enabled?: boolean }) {
             conv.updated_at = effectiveTs;
             
             // Move to top of first page
-            pages2[pageIdx].conversations.splice(idx, 1);
+            pages2[pageIdx]!.conversations.splice(idx, 1);
             const firstPage = pages2[0] || { conversations: [], nextCursor: null };
             firstPage.conversations.unshift(conv);
             pages2[0] = firstPage;
@@ -463,7 +467,7 @@ export function useConversations(options?: { enabled?: boolean }) {
           // Otherwise (incoming from other user), create minimal entry so UI updates
           const firstPage = pages2[0] || { conversations: [], nextCursor: null };
           const minimalConv: any = {
-            id: conversationId,
+            id: safeConversationId,
             updated_at: effectiveTs,
             unread_count: 1,
             otherParticipant: msgLike.sender || msgLike.from || null,
@@ -483,7 +487,7 @@ export function useConversations(options?: { enabled?: boolean }) {
         }
 
         const { pageIdx, idx } = found as FoundLoc;
-        const fromPage = pages[pageIdx];
+        const fromPage = pages[pageIdx]!;
         const [removed] = fromPage.conversations.splice(idx, 1);
         const conv = { ...(removed || {}) } as Conversation & {
           lastMessage?: any;
@@ -498,6 +502,10 @@ export function useConversations(options?: { enabled?: boolean }) {
           (conv as any)?.created_at ||
           new Date().toISOString();
 
+        // Determine if the message is from the current user (used for flags and unread logic)
+        const fromSelf =
+          !!currentUser?.id && msgLike?.sender?.id === currentUser?.id;
+
         // Update lastMessage and timestamps with proper ordering consideration
         conv.lastMessage = {
           ...(conv.lastMessage || {}),
@@ -507,16 +515,15 @@ export function useConversations(options?: { enabled?: boolean }) {
           sender: msgLike.sender ?? (conv.lastMessage as any)?.sender,
           senderType:
             msgLike.senderType ?? (conv.lastMessage as any)?.senderType,
-          isRead: false,
-          is_read: false,
+          // Self messages should be marked as read immediately
+          isRead: !!fromSelf,
+          is_read: !!fromSelf,
         };
         
         // Update updated_at for proper ordering
         conv.updated_at = effectiveTs || conv.updated_at;
 
-        // Increase unread_count if the message is not from current user
-        const fromSelf =
-          currentUser?.id && msgLike?.sender?.id === currentUser.id;
+        // Increase unread_count only if the message is not from current user
         const currentUnread =
           typeof conv.unread_count === "number" ? conv.unread_count : 0;
         conv.unread_count = fromSelf ? currentUnread : Math.max(0, currentUnread + 1);
@@ -608,7 +615,7 @@ export function useConversations(options?: { enabled?: boolean }) {
 
         const { pageIdx, idx } = found as FoundLoc;
         const conv = {
-          ...pages[pageIdx].conversations[idx],
+          ...pages[pageIdx]!.conversations[idx],
         } as Conversation & { lastMessage?: any };
 
         // Only decrement unread_count for READ events; OPENED should not affect unread badges
@@ -635,7 +642,7 @@ export function useConversations(options?: { enabled?: boolean }) {
           };
         }
 
-        pages[pageIdx].conversations[idx] = conv;
+        pages[pageIdx]!.conversations[idx] = conv;
         try {
           console.debug(
             "[ConversationsRQ] Updated conversation on read/opened",

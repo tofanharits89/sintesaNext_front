@@ -269,9 +269,7 @@ export function LaporanKppnModal({
                         // Reset sub-periode and set default value
                         const subPeriodeOptions = getSubPeriodeOptions(value);
                         const defaultSubPeriode =
-                          subPeriodeOptions.length > 0
-                            ? subPeriodeOptions[0].value
-                            : "";
+                          subPeriodeOptions[0]?.value ?? "";
                         form.setValue("subPeriodeLaporan", defaultSubPeriode);
                       }}
                       value={field.value}
@@ -308,7 +306,7 @@ export function LaporanKppnModal({
                     <FormLabel>Sub-Periode Laporan</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      value={field.value}
+                      value={field.value ?? ""}
                       disabled={
                         !watchedPeriode ||
                         watchedJenisLaporan === "laporan-monev"

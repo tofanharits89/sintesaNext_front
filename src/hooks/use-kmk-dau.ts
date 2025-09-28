@@ -57,7 +57,7 @@ const fetcher = async (url: string) => {
 };
 
 export function useKmkDau(year?: string | number) {
-  const key =
+  const url =
     (process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next") +
     `/api/transfer-daerah/dau/kmk${
       year ? `?year=${encodeURIComponent(String(year))}` : ""

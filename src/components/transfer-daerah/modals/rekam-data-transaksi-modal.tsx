@@ -168,8 +168,14 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataT
     setSaving(true);
     try {
       // Map modal state to backend payload
-      const kdkppnCodeOnly = (kppnText || "").split(" - ")[0].trim();
+      const [kppnFirstPart] = (kppnText || "").split(" - ");
+      const kdkppnCodeOnly = (kppnFirstPart ?? "").trim();
       const bulanTwoDigit = Number.isFinite(bulanNumber) ? String(bulanNumber).padStart(2, "0") : "";
+      const nmbulanComputed =
+        nmbulanText ||
+        (Number.isFinite(bulanNumber) && bulanNumber >= 1 && bulanNumber <= 12
+          ? (months[bulanNumber - 1] ?? "")
+          : "");
       const payload = {
         kdkppn: kdkppnCodeOnly,
         bulan: bulanTwoDigit,
@@ -182,7 +188,7 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataT
         nilai: Number(formData.nilaiPotongan || 0),
         kdsatker: String(formData.kdsatker || "").trim(),
         kdlokasi: String(formData.kdlokasi || "").trim(),
-        nmbulan: (nmbulanText || (Number.isFinite(bulanNumber) && bulanNumber >= 1 && bulanNumber <= 12 ? months[bulanNumber - 1] : "")).toString(),
+        nmbulan: nmbulanComputed,
       };
 
       // Basic front-end validation

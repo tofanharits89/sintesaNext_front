@@ -68,14 +68,14 @@ export function LineChartComponent({
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={height}>
-          <LineChart data={data} margin={chartMargin}>
+          <LineChart data={data} {...(chartMargin ? { margin: chartMargin } : {})}>
             <XAxis
               dataKey="name"
               stroke="#888888"
               fontSize={12}
               tickLine={false}
               axisLine={false}
-              padding={xAxisPadding}
+              {...(xAxisPadding ? { padding: xAxisPadding } : {})}
             />
             <YAxis
               stroke="#888888"
@@ -83,8 +83,7 @@ export function LineChartComponent({
               tickLine={false}
               axisLine={false}
               tickFormatter={(value) => `${value}`}
-              tick={!hideYAxisTicks}
-              width={hideYAxisTicks ? 0 : undefined}
+              {...(hideYAxisTicks ? { tick: false, width: 0 } : {})}
             />
             <Tooltip
               content={({ active, payload, label }) => {
@@ -125,11 +124,11 @@ export function LineChartComponent({
                 return null;
               }}
             />
-            <Legend
-              wrapperStyle={
-                legendFontSize ? { fontSize: `${legendFontSize}px` } : undefined
-              }
-            />
+            {legendFontSize ? (
+              <Legend wrapperStyle={{ fontSize: `${legendFontSize}px` }} />
+            ) : (
+              <Legend />
+            )}
             {lines.map((line, index) => (
               <Line
                 key={index}

@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { apiPath } from "@/lib/base-path";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import useSWR from "swr";
 import { User } from "@/lib/users-store";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { canAccessUserManagement } from "@/lib/rbac";
@@ -41,8 +42,10 @@ import { ModernUsersTable } from "@/components/ui/modern-users-table";
 import kdkanwilData from "@/data/kdkanwil.json";
 import kdkppnData from "@/data/kdkppn.json";
 
-const fetcher = (url: string) =>
-  fetch(url, { credentials: "include" }).then((r) => r.json());
+const fetchUsers = async () => {
+  const res = await fetch(apiPath("/users"), { credentials: "include" });
+  return res.json();
+};
 
 type FormState = {
   id?: string;
@@ -63,12 +66,7 @@ type FormState = {
 export default function UsersPage() {
   const router = useRouter();
   const { currentUser } = useCurrentUser();
-  const queryClient = useQueryClient();
-  const { data, isLoading } = useQuery({
-    queryKey: ["users"],
-    queryFn: () => fetcher(apiPath("/users")),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  const { data, mutate, isLoading } = useSWR(apiPath("/users"), fetcher);
   const users: User[] = data?.success ? data?.data ?? [] : [];
 
   const mutate = () => {
@@ -243,7 +241,7 @@ export default function UsersPage() {
     }
     toast.success("Tersimpan");
     setOpen(false);
-    mutate();
+    queryClient.invalidateQueries({ queryKey: ["users"] });
   }
 
   async function remove(id: string): Promise<void> {
@@ -256,7 +254,7 @@ export default function UsersPage() {
       return;
     }
     toast.success("Pengguna berhasil dihapus");
-    mutate();
+    queryClient.invalidateQueries({ queryKey: ["users"] });
   }
 
   async function bulkRemove(): Promise<void> {
@@ -274,7 +272,7 @@ export default function UsersPage() {
     }
     toast.success(`${selected.size} pengguna berhasil dihapus`);
     setSelected(new Set());
-    mutate();
+    queryClient.invalidateQueries({ queryKey: ["users"] });
   }
 
   function handleDeleteClick(userId: string, userName: string) {
@@ -516,7 +514,7 @@ export default function UsersPage() {
               <div className="grid gap-2">
                 <Label>Pilih Kanwil DJPb</Label>
                 <Select
-                  value={form.kdkanwil}
+                  value={form.kdkanwil ?? ""}
                   onValueChange={(v) => {
                     const selectedKanwil = kdkanwilData.find(
                       (k) => k.kdkanwil === v
@@ -548,7 +546,7 @@ export default function UsersPage() {
                 <div className="grid gap-2">
                   <Label>Pilih Kanwil</Label>
                   <Select
-                    value={form.kdkanwil}
+                    value={form.kdkanwil ?? ""}
                     onValueChange={(v) => {
                       const selectedKanwil = kdkanwilData.find(
                         (k) => k.kdkanwil === v
@@ -579,7 +577,7 @@ export default function UsersPage() {
                   <div className="grid gap-2">
                     <Label>Pilih KPPN</Label>
                     <Select
-                      value={form.kdkppn}
+                      value={form.kdkppn ?? ""}
                       onValueChange={(v) => {
                         const selectedKppn = filteredKppn.find(
                           (k) => k.kdkppn === v

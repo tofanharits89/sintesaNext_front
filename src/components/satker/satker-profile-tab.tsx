@@ -151,18 +151,18 @@ export function SatkerProfileTab({ kdsatker }: SatkerProfileTabProps) {
           <InfoItem
             icon={Mail}
             label="Email Satker"
-            value={profileData.emailSatker}
+            value={profileData.emailSatker ?? ""}
             type="email"
           />
           <InfoItem
             icon={Landmark}
             label="Kementerian"
-            value={profileData.kementerian}
+            value={profileData.kementerian ?? ""}
           />
           <InfoItem
             icon={Users}
             label="Unit Eselon I"
-            value={profileData.unitEselonI}
+            value={profileData.unitEselonI ?? ""}
           />
         </CardContent>
       </Card>
@@ -179,18 +179,18 @@ export function SatkerProfileTab({ kdsatker }: SatkerProfileTabProps) {
           <InfoItem
             icon={Shield}
             label="Kewenangan"
-            value={profileData.kewenangan}
+            value={profileData.kewenangan ?? ""}
           />
           <InfoItem
             icon={MapPin}
             label="Kanwil DJPb"
-            value={profileData.kanwilDJPb}
+            value={profileData.kanwilDJPb ?? ""}
           />
-          <InfoItem icon={Landmark} label="KPPN" value={profileData.kppn} />
+          <InfoItem icon={Landmark} label="KPPN" value={profileData.kppn ?? ""} />
           <InfoItem
             icon={Calendar}
             label="Tahun Anggaran"
-            value={profileData.tahunAnggaran}
+            value={profileData.tahunAnggaran ?? ""}
           />
         </CardContent>
       </Card>
@@ -207,15 +207,15 @@ export function SatkerProfileTab({ kdsatker }: SatkerProfileTabProps) {
           <InfoItem
             icon={User}
             label="Kuasa Pengguna Anggaran"
-            value={profileData.kuasaPenggunaAnggaran}
+            value={profileData.kuasaPenggunaAnggaran ?? ""}
           />
           <InfoItem
             icon={User}
             label="Bendahara"
-            value={profileData.bendahara}
+            value={profileData.bendahara ?? ""}
           />
-          <InfoItem icon={User} label="PPSPM" value={profileData.ppspm} />
-          <InfoItem icon={CreditCard} label="NPWP" value={profileData.npwp} />
+          <InfoItem icon={User} label="PPSPM" value={profileData.ppspm ?? ""} />
+          <InfoItem icon={CreditCard} label="NPWP" value={profileData.npwp ?? ""} />
         </CardContent>
       </Card>
 
@@ -237,7 +237,7 @@ export function SatkerProfileTab({ kdsatker }: SatkerProfileTabProps) {
           <InfoItem
             icon={FileText}
             label="Jenis Dokumen"
-            value={profileData.jenisDokumen}
+            value={profileData.jenisDokumen ?? ""}
           />
         </CardContent>
       </Card>

@@ -38,7 +38,8 @@ const fetcher = async (url: string) => {
 };
 
 export function useKodeAkunOptions(kriteria?: string) {
-  const key = kriteria
+  const enabled = Boolean(kriteria);
+  const url = kriteria
     ? backendPath(
         `/transfer-daerah/dau/ref/kode-akun?kriteria=${encodeURIComponent(
           kriteria

@@ -404,7 +404,7 @@ export function DataKmkTab({}: DataKmkTabProps) {
       <DataPencabutanModal
         open={isDataPencabutanModalOpen}
         onOpenChange={setIsDataPencabutanModalOpen}
-        noKmk={selectedNoKmkForPencabutan}
+        noKmk={selectedNoKmkForPencabutan ?? ""}
       />
       <DeleteConfirmModal
         open={isDeleteModalOpen}
@@ -442,7 +442,7 @@ export function DataKmkTab({}: DataKmkTabProps) {
       <PdfjsViewerIframeModal
         open={isPdfOpen}
         onOpenChange={setIsPdfOpen}
-        url={pdfUrl}
+        url={pdfUrl ?? ""}
         title={pdfTitle || "Pratinjau KMK"}
       />
     </div>

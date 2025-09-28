@@ -32,7 +32,8 @@ const fetcher = async (url: string) => {
 export function useKabKotaByNoKmk(_no_kmk?: string, kppn?: string) {
   const params = new URLSearchParams();
   if (kppn) params.set("kppn", kppn);
-  const key = kppn
+  const enabled = Boolean(kppn);
+  const url = kppn
     ? `${
         process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next"
       }/api/transfer-daerah/dau/kmk/penundaan/kabkota?${params.toString()}`

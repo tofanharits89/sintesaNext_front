@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
@@ -39,16 +39,15 @@ const fetcher = async (url: string) => {
 };
 
 export function useDasarPencabutanOptions(enabled: boolean = true) {
-  const key = enabled
-    ? backendPath("/transfer-daerah/dau/kmk/pencabutan/dasar")
-    : null;
-  const { data, error, isLoading, refetch } = useQuery<DasarPencabutanItem[]>({
-    queryKey: ["dasar-pencabutan"],
-    queryFn: () => fetcher(key!),
-    enabled: !!key && enabled,
+  const url = backendPath("/transfer-daerah/dau/kmk/pencabutan/dasar");
+  const queryClient = useQueryClient();
+  const { data, error, isLoading } = useQuery<DasarPencabutanItem[]>({
+    queryKey: ["dasar-pencabutan-options"],
+    queryFn: () => fetcher(url),
+    enabled,
     refetchOnWindowFocus: false,
-    staleTime: 20 * 60 * 1000, // 20 minutes - reference data
-    gcTime: 60 * 60 * 1000, // 60 minutes
+    refetchOnReconnect: true,
+    staleTime: 0,
   });
 
   const options = (data || []).map((d) => ({
@@ -56,7 +55,7 @@ export function useDasarPencabutanOptions(enabled: boolean = true) {
     label: d.no_kmkcabut,
   }));
 
-  const mutate = refetch; // For backward compatibility
-
+  const mutate = () =>
+    queryClient.invalidateQueries({ queryKey: ["dasar-pencabutan-options"] });
   return { items: data || [], options, isLoading, error, mutate } as const;
 }

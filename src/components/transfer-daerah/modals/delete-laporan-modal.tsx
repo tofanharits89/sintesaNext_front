@@ -20,7 +20,7 @@ interface DeleteLaporanModalProps {
     uraian: string;
     kppn?: string;
     kanwil?: string;
-  };
+  } | undefined;
 }
 
 export function DeleteLaporanModal({

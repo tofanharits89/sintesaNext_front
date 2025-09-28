@@ -43,7 +43,11 @@ export default function SupplierProfileClient({ years, selectedYear }: SupplierP
     : String(availableYears[0] ?? new Date().getFullYear());
   const activeYear = validYearFromParams ?? fallbackYear;
 
-  const { data, isLoading, isError, error, isFetching } = useSupplierProfile({ vendor, limit: 100, year: activeYear });
+  const { data, isLoading, isError, error, isFetching } = useSupplierProfile({
+    ...(vendor ? { vendor } : {}),
+    limit: 100,
+    year: activeYear,
+  });
   const supplier = data?.data?.supplier;
   const kontrak = data?.data?.raw_kontrak || [];
 
@@ -240,18 +244,18 @@ export default function SupplierProfileClient({ years, selectedYear }: SupplierP
           </Alert>
         ) : (
           <SupplierIdentityCard
-            namaVendor={supplier?.nama_vendor}
-            npwpSupplier={supplier?.npwp}
+            namaVendor={supplier?.nama_vendor ?? null}
+            npwpSupplier={supplier?.npwp ?? null}
             totalNilaiKontrak={totalNilaiKontrak}
             totalNilaiSpmKontraktual={totalNilaiSpmKontraktual}
             totalNilaiSpmNonKontraktual={totalNilaiSpmNonKontraktual}
             kementerianCount={kementerianItems.length}
-            realizationRatio={supplier?.realization_ratio}
+            realizationRatio={supplier?.realization_ratio ?? 0}
             satkersServed={satkerItems.length}
             regionsServed={kppnItems.length}
-            onShowKementerian={kementerianItems.length > 0 ? () => openModalFor("kementerian") : undefined}
-            onShowSatker={satkerItems.length > 0 ? () => openModalFor("satker") : undefined}
-            onShowKppn={kppnItems.length > 0 ? () => openModalFor("kppn") : undefined}
+            onShowKementerian={kementerianItems.length > 0 ? () => openModalFor("kementerian") : (() => {})}
+            onShowSatker={satkerItems.length > 0 ? () => openModalFor("satker") : (() => {})}
+            onShowKppn={kppnItems.length > 0 ? () => openModalFor("kppn") : (() => {})}
             kementerianDetailAvailable={kementerianItems.length > 0}
             satkerDetailAvailable={satkerItems.length > 0}
             kppnDetailAvailable={kppnItems.length > 0}
@@ -274,7 +278,7 @@ export default function SupplierProfileClient({ years, selectedYear }: SupplierP
       <SupplierEntityDetailModal
         open={isDetailModalOpen}
         onOpenChange={setIsDetailModalOpen}
-        type={detailModalType}
+        type={detailModalType ?? "kementerian"}
         items={detailModalItems}
       />
     </div>

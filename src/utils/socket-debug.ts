@@ -50,7 +50,7 @@ export function extractAuthTokenFromCookies(): string | null {
     const parts = cookies.authState.split('.');
     if (parts.length === 3) {
       try {
-        const payload = JSON.parse(atob(parts[1]));
+        const payload = JSON.parse(atob(parts[1]!));
         if (payload.exp && payload.exp * 1000 > Date.now()) {
           log.success('Found valid authState token');
           return cookies.authState;
@@ -105,8 +105,8 @@ export function decodeJWT(token: string): any {
       return { error: 'Invalid JWT structure - expected 3 parts, got ' + parts.length };
     }
     
-    const header = JSON.parse(atob(parts[0]));
-    const payload = JSON.parse(atob(parts[1]));
+    const header = JSON.parse(atob(parts[0]!));
+    const payload = JSON.parse(atob(parts[1]!));
     
     const now = Date.now() / 1000;
     const isExpired = payload.exp ? now > payload.exp : false;
@@ -256,7 +256,7 @@ export function testSocketConnection(token?: string): Promise<{
           transport: socket.io.engine.transport.name,
           connected: socket.connected,
           connectionTimeMs: connectionTime,
-          url: socket.io.opts?.hostname || 'unknown',
+          url: CONFIG.SOCKET_URL,
           userId: tokenAnalysis.userId,
           username: tokenAnalysis.username
         });
@@ -271,7 +271,7 @@ export function testSocketConnection(token?: string): Promise<{
         
         resolve({
           success: true,
-          socketId: socket.id,
+          ...(socket.id ? { socketId: socket.id } : {}),
           details: {
             transport: socket.io.engine.transport.name,
             connectionTime: connectionTime,

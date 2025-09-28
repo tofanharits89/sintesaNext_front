@@ -217,19 +217,15 @@ export function LaporanMonevKanwilTab() {
       {/* Delete Confirmation Modal */}
       <DeleteLaporanModal
         open={isDeleteModalOpen}
-        onOpenChange={setIsDeleteModalOpen}
+        onOpenChange={(open) => setIsDeleteModalOpen(open)}
         onConfirm={handleConfirmDelete}
-        itemData={
-          selectedItem
-            ? {
-                tahun: selectedItem.tahun,
-                kanwil: selectedItem.kanwil,
-                jenis: selectedItem.jenis,
-                periode: selectedItem.periode,
-                uraian: selectedItem.uraian,
-              }
-            : undefined
-        }
+        itemData={{
+          tahun: selectedItem?.tahun ?? "",
+          jenis: selectedItem?.jenis ?? "",
+          periode: selectedItem?.periode ?? "",
+          uraian: selectedItem?.uraian ?? "",
+          ...(selectedItem?.kanwil ? { kanwil: selectedItem.kanwil } : {}),
+        }}
       />
     </Card>
   );

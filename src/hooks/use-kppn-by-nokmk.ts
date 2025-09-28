@@ -31,7 +31,8 @@ const fetcher = async (url: string) => {
 };
 
 export function useKppnByNoKmk(no_kmk?: string) {
-  const key = no_kmk
+  const enabled = Boolean(no_kmk);
+  const url = no_kmk
     ? `${
         process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next"
       }/api/transfer-daerah/dau/kmk/penundaan/kppn?no_kmk=${encodeURIComponent(

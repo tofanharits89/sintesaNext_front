@@ -17,7 +17,32 @@ interface ErrorConfig {
   retryDelay?: number;
 }
 
-const ERROR_CONFIGS: Record<string, ErrorConfig> = {
+// Strongly-typed error keys for safer usage across helpers
+type ErrorType =
+  | "NETWORK_ERROR"
+  | "QUERY_SAVE_FAILED"
+  | "QUERY_LOAD_FAILED"
+  | "QUERY_UPDATE_FAILED"
+  | "QUERY_DELETE_FAILED"
+  | "QUERY_DUPLICATE_NAME"
+  | "QUERY_NOT_FOUND"
+  | "QUERY_INVALID_DATA"
+  | "CONNECTION_TIMEOUT"
+  | "SERVER_UNAVAILABLE"
+  | "AUTHENTICATION_FAILED"
+  | "TOKEN_EXPIRED"
+  | "PERMISSION_DENIED"
+  | "VALIDATION_ERROR"
+  | "MISSING_REQUIRED_FIELD"
+  | "INVALID_INPUT"
+  | "MESSAGE_SEND_FAILED"
+  | "MESSAGE_NOT_FOUND"
+  | "CONVERSATION_NOT_FOUND"
+  | "RECIPIENT_NOT_FOUND"
+  | "RATE_LIMIT_EXCEEDED"
+  | "UNKNOWN_ERROR";
+
+const ERROR_CONFIGS: Record<ErrorType, ErrorConfig> = {
   // Network and connection errors
   NETWORK_ERROR: {
     message: "Connection problem detected",
@@ -195,6 +220,11 @@ const ERROR_CONFIGS: Record<string, ErrorConfig> = {
   },
 };
 
+// Type guard to safely check if a dynamic value is a valid ErrorType key
+function isErrorTypeKey(key: unknown): key is ErrorType {
+  return typeof key === "string" && key in ERROR_CONFIGS;
+}
+
 // Retry operation with exponential backoff
 export async function retryOperation<T>(
   operation: (attempt?: number) => Promise<T>,
@@ -259,20 +289,21 @@ export async function retryOperation<T>(
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
-
   throw lastError;
 }
 
 // Check if an error is retryable
 export function isRetryableError(error: any): boolean {
   // Check if error has a type that's configured as retryable
-  if (error?.error?.type && ERROR_CONFIGS[error.error.type]) {
-    return ERROR_CONFIGS[error.error.type].retryable;
+  const typeKey = error?.error?.type as unknown;
+  if (isErrorTypeKey(typeKey)) {
+    return ERROR_CONFIGS[typeKey].retryable;
   }
 
   // Check error message patterns
   const errorMessage =
     error?.message || error?.error?.message || error?.toString() || "";
+
 
   const retryablePatterns = [
     /network/i,
@@ -312,8 +343,9 @@ export function isRetryableError(error: any): boolean {
 // Get error configuration
 function getErrorConfig(error: any): ErrorConfig {
   // Check if error has a specific type
-  if (error?.error?.type && ERROR_CONFIGS[error.error.type]) {
-    return ERROR_CONFIGS[error.error.type];
+  const typeKey = error?.error?.type as unknown;
+  if (isErrorTypeKey(typeKey)) {
+    return ERROR_CONFIGS[typeKey];
   }
 
   // Try to match error message patterns
@@ -415,10 +447,17 @@ export async function handleErrorWithRetry<T>(
 }
 
 // Simple error display function
-export function showUserFriendlyError(error: any, context: string = "") {
-  const config = getErrorConfig(error);
+export function showUserFriendlyError(
+  error: any,
+  contextOrType: string = ""
+) {
+  // If the provided context matches a known error type, use its config.
+  // This allows callers like handleSavedQueryError to force a specific user-facing message.
+  const config = isErrorTypeKey(contextOrType)
+    ? ERROR_CONFIGS[contextOrType]
+    : getErrorConfig(error);
 
-  logger.error(`[${context}] Error:`, error);
+  logger.error(`[${contextOrType}] Error:`, error);
 
   toast.error(config.message, {
     description: config.suggestion,
@@ -449,7 +488,7 @@ export function showWarningMessage(message: string, description?: string) {
 // Auto-retry wrapper for socket operations
 export function createAutoRetrySocketOperation<T>(
   operation: () => Promise<T>,
-  errorType: string = "UNKNOWN_ERROR"
+  errorType: ErrorType = "UNKNOWN_ERROR"
 ) {
   const config = ERROR_CONFIGS[errorType] || ERROR_CONFIGS.UNKNOWN_ERROR;
 
@@ -604,6 +643,9 @@ export async function handleBulkOperation<T>(
   
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
+    if (typeof item === "undefined") {
+      continue;
+    }
     
     try {
       await operation(item);
@@ -619,7 +661,6 @@ export async function handleBulkOperation<T>(
         break;
       }
     }
-    
     if (onProgress) {
       onProgress(successful.length, items.length, failed.length);
     }

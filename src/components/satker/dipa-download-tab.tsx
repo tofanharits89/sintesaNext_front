@@ -222,7 +222,7 @@ export function DipaDownloadTab({ kdsatker }: DipaDownloadTabProps) {
   ];
 
   // Filter documents based on search term
-  const filteredDocuments = allDocuments.filter(doc =>
+  const filteredDocuments = allDocuments.filter((doc) =>
     doc.namaFile.toLowerCase().includes(searchTerm.toLowerCase()) ||
     doc.folder.toLowerCase().includes(searchTerm.toLowerCase()) ||
     doc.year.toString().includes(searchTerm)
@@ -230,16 +230,14 @@ export function DipaDownloadTab({ kdsatker }: DipaDownloadTabProps) {
 
   // Group documents by year (descending order)
   const documentsByYear = filteredDocuments.reduce((acc, doc) => {
-    if (!acc[doc.year]) {
-      acc[doc.year] = [];
-    }
-    acc[doc.year].push(doc);
+    const bucket = acc[doc.year] ?? (acc[doc.year] = []);
+    bucket.push(doc);
     return acc;
   }, {} as Record<number, DipaDocument[]>);
 
   const years = Object.keys(documentsByYear)
     .map(Number)
-    .sort((a, b) => b - a); // Sort years in descending order
+    .sort((a, b) => b - a);
 
   const handleDownload = (document: DipaDocument) => {
     // Mock download functionality
@@ -329,7 +327,7 @@ export function DipaDownloadTab({ kdsatker }: DipaDownloadTabProps) {
                 <Calendar className="h-5 w-5" />
                 Tahun {year}
                 <Badge variant="outline" className="ml-2">
-                  {documentsByYear[year].length} dokumen
+                  {(documentsByYear[year]?.length ?? 0)} dokumen
                 </Badge>
               </CardTitle>
             </CardHeader>
@@ -348,7 +346,7 @@ export function DipaDownloadTab({ kdsatker }: DipaDownloadTabProps) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {documentsByYear[year].map((doc, index) => (
+                    {(documentsByYear[year] ?? []).map((doc, index) => (
                       <TableRow key={doc.id}>
                         <TableCell className="font-medium text-center">{index + 1}</TableCell>
                         <TableCell className="text-center">

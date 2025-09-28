@@ -130,7 +130,7 @@ export function EnhancedFilterCard({
       filterLabel={filterLabel}
       onRemove={onRemove}
       activeFilterValues={normalizedActiveValues}
-      currentFilterValue={currentFilterValue}
+      {...(currentFilterValue ? { currentFilterValue } : {})}
       onFilterChange={modifiedOnFilterChange}
       removable={removable}
     />

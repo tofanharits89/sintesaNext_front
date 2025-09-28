@@ -170,7 +170,7 @@ export function useAuth() {
         const profileData: AuthResponse = await profileResponse.json();
         return {
           isAuthenticated: true,
-          user: profileData.data || undefined,
+          ...(profileData.data ? { user: profileData.data } : {}),
         };
       } catch (error) {
         logger.error("Auth query error:", error);

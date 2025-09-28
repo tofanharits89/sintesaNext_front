@@ -56,7 +56,7 @@ export function reconcileTempMessageId(conversationId: string, tempId: string, r
   const list = store.get(conversationId) || [];
   const idx = list.findIndex((m) => m.id === tempId);
   if (idx >= 0) {
-    list[idx] = { ...list[idx], id: realId };
+    list[idx] = { ...list[idx], id: realId } as FrontendMessage;
     store.set(conversationId, list);
     emitTempMessagesUpdated(conversationId);
   }

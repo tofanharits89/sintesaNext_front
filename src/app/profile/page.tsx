@@ -109,11 +109,14 @@ export default function ProfilePage() {
     // Hanya admin yang bisa mengubah role & lokasi
     if (canEditRoleAndLocation) {
       payload.role = role;
-      payload.limitKodeBA = limitKodeBA || undefined;
-      payload.kdkanwil = kdkanwil || undefined;
-      payload.kdkppn = kdkppn || undefined;
-      payload.nmkanwil = nmkanwil || undefined;
-      payload.nmkppn = nmkppn || undefined;
+      // Only include fields when they have non-empty values
+      Object.assign(payload, {
+        ...(limitKodeBA ? { limitKodeBA } : {}),
+        ...(kdkanwil ? { kdkanwil } : {}),
+        ...(kdkppn ? { kdkppn } : {}),
+        ...(nmkanwil ? { nmkanwil } : {}),
+        ...(nmkppn ? { nmkppn } : {}),
+      });
     }
 
     try {

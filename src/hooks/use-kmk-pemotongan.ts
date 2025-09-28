@@ -48,7 +48,7 @@ const fetcher = async (url: string) => {
 };
 
 export function useKmkPemotongan(no_kmk?: string, enabled: boolean = true) {
-  const key =
+  const url =
     no_kmk && enabled
       ? `${
           process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next"

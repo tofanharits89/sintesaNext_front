@@ -24,7 +24,7 @@ interface LihatSqlModalProps {
     tipeLaporan: string;
     pembulatan: string;
     jenisAkumulasi?: string;
-    scope?: "belanja" | "tematik" | "general" | "rkakl_detail";
+    scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak";
     tematikKategori?: string;
   };
   filterValues?: Record<

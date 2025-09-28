@@ -97,7 +97,7 @@ export function SimpanModal({
   // Helper function to check if a filter is actually configured by the user
   const isFilterConfigured = (
     filterName: string,
-    filterValue: FilterValue
+    filterValue: FilterValue | undefined
   ): boolean => {
     if (!filterValue) return false;
 
@@ -454,11 +454,9 @@ export function SimpanModal({
               {error && (
                 <InlineError
                   error={error}
-                  onRetry={
-                    error.includes("koneksi") || error.includes("server")
-                      ? handleRetry
-                      : undefined
-                  }
+                  {...((error.includes("koneksi") || error.includes("server"))
+                    ? { onRetry: handleRetry }
+                    : {})}
                 />
               )}
               {error &&

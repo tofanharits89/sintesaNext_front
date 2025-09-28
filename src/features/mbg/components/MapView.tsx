@@ -32,10 +32,10 @@ export function MapView({
       )}
       <MapStatsOverlay
         scope={overlayScope}
-        scopeName={overlayName}
-        stats={stats}
+        {...(overlayName !== undefined ? { scopeName: overlayName } : {})}
+        {...(typeof stats !== 'undefined' ? { stats } : {})}
         isLoading={statsLoading}
-        error={statsError}
+        {...(statsError !== null ? { error: statsError } : {})}
       />
     </div>
   );
