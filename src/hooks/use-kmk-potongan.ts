@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 
 export interface RawPotonganItem {
@@ -69,13 +69,14 @@ export function useKmkPotongan(
         )
       : null;
 
-  const { data, error, isLoading, mutate } = useSWR<RawPotonganItem[]>(
-    key,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-    }
-  );
+  const { data, error, isLoading, refetch } = useQuery<RawPotonganItem[]>({
+    queryKey: ["kmk-potongan", { no_kmk, thang }],
+    queryFn: () => fetcher(key!),
+    enabled: !!key && enabled,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes - financial data
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
 
   const rows: PotonganRow[] = (data || []).map((r, idx) => ({
     ...r,
@@ -99,6 +100,8 @@ export function useKmkPotongan(
       (r.des || 0)
   );
   const grandTotal = totals.reduce((a, b) => a + b, 0);
+
+  const mutate = refetch; // For backward compatibility
 
   return { rows, isLoading, error, mutate, grandTotal } as const;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 
 export interface KppnItem {
@@ -38,13 +38,21 @@ export function useKppnByNoKmk(no_kmk?: string) {
         no_kmk
       )}`
     : null;
-  const { data, error, isLoading, mutate } = useSWR<KppnItem[]>(key, fetcher, {
-    revalidateOnFocus: false,
+  const { data, error, isLoading, refetch } = useQuery<KppnItem[]>({
+    queryKey: ["kppn-lookup", { no_kmk }],
+    queryFn: () => fetcher(key!),
+    enabled: !!key,
+    refetchOnWindowFocus: false,
+    staleTime: 15 * 60 * 1000, // 15 minutes - lookup data
+    gcTime: 30 * 60 * 1000, // 30 minutes
   });
 
   const options = (data || []).map((d) => ({
     value: d.kdkppn,
     label: `${d.kdkppn} - ${d.nmkppn}`,
   }));
+
+  const mutate = refetch; // For backward compatibility
+
   return { items: data || [], options, isLoading, error, mutate } as const;
 }

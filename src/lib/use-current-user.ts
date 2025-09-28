@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import useSWR from "swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { User } from "./users-store";
 import { apiPath } from "./base-path";
 
@@ -16,17 +16,27 @@ const fetcher = async () => {
 };
 
 export function useCurrentUser(initial?: User) {
+  const queryClient = useQueryClient();
+  
   // Fetch current user's profile directly from backend; hydrate with server-provided initial user if available
-  const { data: profileResp, mutate } = useSWR(
-    "current-user-profile",
-    fetcher,
-    initial ? { fallbackData: { data: initial } as any } : undefined
-  );
+  const { data: profileResp, refetch, isLoading } = useQuery({
+    queryKey: ["current-user-profile"],
+    queryFn: fetcher,
+    initialData: initial ? { data: initial } as any : undefined,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+  });
 
   const currentUser = useMemo(() => {
     const u = profileResp?.data as User | undefined;
     return u as unknown as User;
   }, [profileResp]);
 
-  return { currentUser, mutate, isLoading: !profileResp };
+  const clearCache = () => {
+    queryClient.setQueryData(["current-user-profile"], undefined);
+  };
+
+  const mutate = refetch; // For backward compatibility
+
+  return { currentUser, mutate, clearCache, isLoading };
 }

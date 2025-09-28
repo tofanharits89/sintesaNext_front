@@ -108,6 +108,11 @@ export default function LoginForm() {
 
   async function onSubmit(values: z.infer<typeof schema>) {
     try {
+      // Clear any existing user cache before login to prevent stale data
+      const { QueryClient } = await import("@tanstack/react-query");
+      const queryClient = new QueryClient();
+      queryClient.setQueryData(["current-user-profile"], undefined);
+
       // Ensure CSRF token cookie is present before POST
       await prefetchCsrf();
 
@@ -137,7 +142,8 @@ export default function LoginForm() {
         // Small delay to ensure cookies are written before redirect
         await new Promise((resolve) => setTimeout(resolve, 250));
 
-        router.push("/dashboard");
+        // Force a hard refresh to ensure fresh user data is loaded
+        window.location.href = "/dashboard";
       } else {
         toast.error("Login gagal. Periksa kredensial dan captcha");
         setSeed(Math.random().toString(36).slice(2));

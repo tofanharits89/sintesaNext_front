@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
@@ -33,7 +33,17 @@ export function useDauRekapByPemda(params: { kdpemda?: string }) {
     ? backendPath(`/transfer-daerah/dau/rekap?kdpemda=${encodeURIComponent(params.kdpemda)}`)
     : null;
 
-  const { data, error, isLoading, mutate } = useSWR<DauRekapByPemdaRow[] | DauRekapByPemdaRow>(key, fetcher, { revalidateOnFocus: false });
+  const { data, error, isLoading, refetch } = useQuery<DauRekapByPemdaRow[] | DauRekapByPemdaRow>({
+    queryKey: ["dau-rekap-by-pemda", params.kdpemda],
+    queryFn: () => fetcher(key!),
+    enabled: !!key,
+    refetchOnWindowFocus: false,
+    staleTime: 2 * 60 * 1000, // 2 minutes - financial data changes more frequently
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+
   const rows: DauRekapByPemdaRow[] = Array.isArray(data) ? data : (data ? [data] : []);
+  const mutate = refetch; // For backward compatibility
+
   return { rows, isLoading, error, mutate } as const;
 }

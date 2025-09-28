@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiPath } from "@/lib/base-path";
 
 // Quick stats data format returned by the backend
 interface QuickStatsData {
@@ -47,10 +48,9 @@ export function useQuickStats(options: UseQuickStatsOptions = {}) {
         }
 
         const url = new URL(
-          (process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next") +
-            `/api/dashboard/quick-stats${
-              params.toString() ? "?" + params.toString() : ""
-            }`,
+          apiPath(`/dashboard/quick-stats${
+            params.toString() ? "?" + params.toString() : ""
+          }`),
           window.location.origin
         );
 

@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 
 export interface KabKotaItem {
@@ -37,15 +37,21 @@ export function useKabKotaByNoKmk(_no_kmk?: string, kppn?: string) {
         process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next"
       }/api/transfer-daerah/dau/kmk/penundaan/kabkota?${params.toString()}`
     : null;
-  const { data, error, isLoading, mutate } = useSWR<KabKotaItem[]>(
-    key,
-    fetcher,
-    { revalidateOnFocus: false }
-  );
+  const { data, error, isLoading, refetch } = useQuery<KabKotaItem[]>({
+    queryKey: ["kabkota-lookup", { kppn }],
+    queryFn: () => fetcher(key!),
+    enabled: !!key,
+    refetchOnWindowFocus: false,
+    staleTime: 15 * 60 * 1000, // 15 minutes - lookup data
+    gcTime: 30 * 60 * 1000, // 30 minutes
+  });
 
   const options = (data || []).map((d) => ({
     value: d.kdkabkota,
     label: `${d.kdkabkota} - ${d.nmkabkota}`,
   }));
+
+  const mutate = refetch; // For backward compatibility
+
   return { items: data || [], options, isLoading, error, mutate } as const;
 }

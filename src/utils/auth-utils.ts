@@ -150,6 +150,15 @@ export function clearAuthToken(): void {
           .join(".")}`;
       }
     });
+
+    // Clear React Query cache for user profile to prevent stale data
+    import("@tanstack/react-query").then(({ QueryClient }) => {
+      const queryClient = new QueryClient();
+      queryClient.setQueryData(["current-user-profile"], undefined);
+    }).catch(() => {
+      // Ignore if React Query is not available
+    });
+
     // Dispatch logout event
     dispatchAuthEvent("logout");
   } catch (error) {

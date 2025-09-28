@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 
 export interface RawKmkDauItem {
@@ -62,13 +62,13 @@ export function useKmkDau(year?: string | number) {
     `/api/transfer-daerah/dau/kmk${
       year ? `?year=${encodeURIComponent(String(year))}` : ""
     }`;
-  const { data, error, isLoading, mutate } = useSWR<RawKmkDauItem[]>(
-    key,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-    }
-  );
+  const { data, error, isLoading, refetch } = useQuery<RawKmkDauItem[]>({
+    queryKey: ["kmk-dau", year],
+    queryFn: () => fetcher(key),
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes - financial data
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
 
   const rows: KmkRow[] = (data || []).map((r, idx) => ({
     id: String((r as any).id ?? `${String(r.thang ?? "").trim()}-${String(r.no_kmk ?? "").trim()}`),
@@ -117,6 +117,8 @@ export function useKmkDau(year?: string | number) {
       return just;
     })(),
   }));
+
+  const mutate = refetch; // For backward compatibility
 
   return { rows, isLoading, error, mutate } as const;
 }

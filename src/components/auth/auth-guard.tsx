@@ -13,7 +13,7 @@ export async function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   try {
-    const resp = await fetch(backendPath("/auth/verify-fast"), {
+    const resp = await fetch(backendPath("/auth/session/validate"), {
       method: "GET",
       headers: cookieHeader ? { cookie: cookieHeader } : {},
       // Disable caching to avoid stale auth state after token expiry

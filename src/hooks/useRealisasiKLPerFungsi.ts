@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { apiPath } from "@/lib/base-path";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 import { backendPath } from "@/lib/backend";
 
@@ -39,10 +40,9 @@ export function useRealisasiKLPerFungsi(
         }
 
         const url = new URL(
-          (process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next") +
-            `/api/dashboard/realisasi-kl-per-fungsi${
-              params.toString() ? "?" + params.toString() : ""
-            }`,
+          apiPath(`/dashboard/realisasi-kl-per-fungsi${
+            params.toString() ? "?" + params.toString() : ""
+          }`),
           window.location.origin
         );
 

@@ -108,6 +108,9 @@ export function useClientAuth(options: UseClientAuthOptions = {}) {
       queryClient.removeQueries({ queryKey: ["auth"] });
       queryClient.removeQueries({ queryKey: ["user"] });
       
+      // Clear React Query cache for user profile to prevent stale data
+      queryClient.setQueryData(["current-user-profile"], undefined);
+      
       // Redirect to login
       router.push("/login");
     }

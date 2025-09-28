@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 
 export interface KmkPencabutanRow {
@@ -46,10 +46,16 @@ export function useKmkPencabutan(no_kmk?: string) {
         no_kmk
       )}`
     : null;
-  const { data, error, isLoading, mutate } = useSWR<KmkPencabutanRow[]>(
-    key,
-    fetcher,
-    { revalidateOnFocus: false }
-  );
+  const { data, error, isLoading, refetch } = useQuery<KmkPencabutanRow[]>({
+    queryKey: ["kmk-pencabutan", { no_kmk }],
+    queryFn: () => fetcher(key!),
+    enabled: !!key,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes - financial data
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+
+  const mutate = refetch; // For backward compatibility
+
   return { rows: data || [], isLoading, error, mutate } as const;
 }

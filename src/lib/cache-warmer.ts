@@ -4,10 +4,9 @@
  */
 
 import { QueryClient } from "@tanstack/react-query";
+import { apiPath } from "@/lib/base-path";
 import { cacheMetrics } from "./cache-metrics";
 import { queryKeyFactories } from "./query-configs";
-
-import { apiPath } from "@/lib/base-path";
 
 export interface WarmingConfig {
   endpoint: string;
@@ -262,7 +261,7 @@ export class CacheWarmer {
         priority: "high",
         queryKey: queryKeyFactories.dashboard.stats(),
         queryFn: () =>
-          fetch("/api/v1/dashboard/stats").then((res) => res.json()),
+          fetch(apiPath("/v1/dashboard/stats")).then((res) => res.json()),
         staleTime: 2 * 60 * 1000, // 2 minutes
       },
       {
@@ -270,7 +269,7 @@ export class CacheWarmer {
         priority: "high",
         queryKey: queryKeyFactories.financial.mbg.rankings(),
         queryFn: () =>
-          fetch("/api/v1/financial/rankings").then((res) => res.json()),
+          fetch(apiPath("/v1/financial/rankings")).then((res) => res.json()),
         staleTime: 5 * 60 * 1000, // 5 minutes
       },
     ];
@@ -283,7 +282,7 @@ export class CacheWarmer {
         priority: "high",
         queryKey: queryKeyFactories.user.preferences(),
         queryFn: () =>
-          fetch(`/api/v1/users/${userId}/preferences`).then((res) =>
+          fetch(apiPath(`/v1/users/${userId}/preferences`)).then((res) =>
             res.json()
           ),
         staleTime: 10 * 60 * 1000, // 10 minutes
@@ -293,7 +292,7 @@ export class CacheWarmer {
         priority: "medium",
         queryKey: ["user", "savedQueries", userId],
         queryFn: () =>
-          fetch(`/api/v1/users/${userId}/saved-queries`).then((res) =>
+          fetch(apiPath(`/v1/users/${userId}/saved-queries`)).then((res) =>
             res.json()
           ),
         staleTime: 5 * 60 * 1000, // 5 minutes
@@ -308,7 +307,7 @@ export class CacheWarmer {
         priority: "high",
         queryKey: queryKeyFactories.dashboard.charts(),
         queryFn: () =>
-          fetch("/api/v1/dashboard/charts").then((res) => res.json()),
+          fetch(apiPath("/v1/dashboard/charts")).then((res) => res.json()),
         staleTime: 3 * 60 * 1000, // 3 minutes
       },
       {
@@ -316,7 +315,7 @@ export class CacheWarmer {
         priority: "medium",
         queryKey: ["dashboard", "recentActivity"],
         queryFn: () =>
-          fetch("/api/v1/dashboard/recent-activity").then((res) => res.json()),
+          fetch(apiPath("/v1/dashboard/recent-activity")).then((res) => res.json()),
         staleTime: 1 * 60 * 1000, // 1 minute
       },
     ];

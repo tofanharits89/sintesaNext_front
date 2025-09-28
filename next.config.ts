@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
-  basePath: "/v3/next",
+  // basePath: "/v3/next", // Commented out to serve at root
   
   // Performance optimizations
   poweredByHeader: false,
@@ -103,9 +103,8 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/",
-        destination: "/v3/next/login",
+        destination: "/login", // ✅ Let Next.js handle basePath automatically
         permanent: false,
-        basePath: false,
       },
     ];
   },

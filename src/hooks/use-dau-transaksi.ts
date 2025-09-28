@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
@@ -60,7 +60,13 @@ export function useDauTransaksi(params: { thang?: number | string; bulan?: numbe
   if (params?.kabkota) q.push(`kabkota=${encodeURIComponent(params.kabkota)}`);
   const key = backendPath(`/transfer-daerah/dau/transaksi${q.length ? `?${q.join("&")}` : ""}`);
 
-  const { data, error, isLoading, mutate } = useSWR<RawDauTransaksiRow[]>(key, fetcher, { revalidateOnFocus: false });
+  const { data, error, isLoading, refetch } = useQuery<RawDauTransaksiRow[]>({
+    queryKey: ["dau-transaksi", params],
+    queryFn: () => fetcher(key),
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes - financial data
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
 
   const rows: DauTransaksiRowUi[] = (data || []).map((r, idx) => ({
     id: String(r.ID ?? `${r.KDKPPN}-${r.KDPEMDA}-${r.BULAN}-${r.THANG}`),
@@ -74,6 +80,8 @@ export function useDauTransaksi(params: { thang?: number | string; bulan?: numbe
     alokasi: Number(r.ALOKASI ?? 0),
     nilaiPotongan: Number(r.NILAI ?? 0),
   }));
+
+  const mutate = refetch; // For backward compatibility
 
   return { rows, isLoading, error, mutate } as const;
 }

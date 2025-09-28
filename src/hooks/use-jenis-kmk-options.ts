@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 
 export interface OptionItem {
@@ -31,8 +31,12 @@ const fetcher = async (url: string) => {
 
 export function useJenisKmkOptions() {
   const key = backendPath("/transfer-daerah/dau/ref/jenis");
-  const { data, error, isLoading, mutate } = useSWR<any[]>(key, fetcher, {
-    revalidateOnFocus: false,
+  const { data, error, isLoading, refetch } = useQuery<any[]>({
+    queryKey: ["jenis-kmk-options", key],
+    queryFn: () => fetcher(key),
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes - reference data doesn't change often
+    gcTime: 30 * 60 * 1000, // 30 minutes
   });
 
   const options: OptionItem[] = (data || [])
@@ -46,6 +50,8 @@ export function useJenisKmkOptions() {
       } as OptionItem;
     })
     .filter(Boolean) as OptionItem[];
+
+  const mutate = refetch; // For backward compatibility
 
   return { options, isLoading, error, mutate } as const;
 }

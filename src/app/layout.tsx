@@ -52,8 +52,7 @@ export default async function RootLayout({
     try {
       const resp = await fetch(apiPath("/users/profile/me"), {
         headers: { cookie: cookieHeader },
-        cache: "force-cache",
-        next: { revalidate: 30 }, // 30-second strategic cache
+        cache: "no-store", // Don't cache user profiles to prevent stale data after login/logout
       });
       if (resp.ok) {
         const j = await resp.json().catch(() => null);

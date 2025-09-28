@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 
 export interface RawPemotonganItem {
@@ -57,18 +57,21 @@ export function useKmkPemotongan(no_kmk?: string, enabled: boolean = true) {
         )}`
       : null;
 
-  const { data, error, isLoading, mutate } = useSWR<RawPemotonganItem[]>(
-    key,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-    }
-  );
+  const { data, error, isLoading, refetch } = useQuery<RawPemotonganItem[]>({
+    queryKey: ["kmk-pemotongan", { no_kmk }],
+    queryFn: () => fetcher(key!),
+    enabled: !!key && enabled,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes - financial data
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
 
   const rows: PemotonganRow[] = (data || []).map((r, idx) => ({
     ...r,
     no: idx + 1,
   }));
+
+  const mutate = refetch; // For backward compatibility
 
   return { rows, isLoading, error, mutate } as const;
 }

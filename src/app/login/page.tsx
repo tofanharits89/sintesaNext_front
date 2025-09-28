@@ -1,39 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import LoginForm from "@/components/auth/login-form";
-import { backendPath } from "@/lib/backend";
 
 export default function LoginPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function checkSession() {
-      try {
-        // Rely on httpOnly cookies: ask backend directly
-        const resp = await fetch(backendPath("/auth/session/validate"), {
-          method: "GET",
-          credentials: "include",
-          cache: "no-store",
-        });
-        const data = await resp.json().catch(() => ({}));
-        // Backend session validation response
-        if (!cancelled && data?.success) {
-          router.replace("/dashboard");
-        }
-      } catch (e) {
-        // ignore; show login form
-      }
-    }
-
-    checkSession();
-    return () => {
-      cancelled = true;
-    };
-  }, [router]);
-
+  // Removed client-side auth check since middleware handles redirects
+  // This prevents redirect loops between login and dashboard
   return <LoginForm />;
 }

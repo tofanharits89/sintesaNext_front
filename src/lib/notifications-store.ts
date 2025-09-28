@@ -1,6 +1,4 @@
-import useSWR from "swr";
-import useSWRMutation from "swr/mutation";
-import { mutate as swrMutate } from "swr";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { http } from "@/lib/httpClient";
 import { apiPath } from "@/lib/base-path";
 
@@ -120,7 +118,7 @@ function mapFromBackendItem(
     sender: senderName,
     recipients,
     createdAt,
-    expiresAt,
+    expiresAt: expiresAt || undefined,
     readBy,
   };
 }
@@ -236,55 +234,125 @@ export async function getNotificationStats(notificationId: string): Promise<{
   return { totalRecipients, readCount, readPercentage };
 }
 
-// SWR utilities
-const swrFetcher = async (url: string) => {
+// React Query utilities
+const queryFetcher = async (url: string) => {
   const resp = await http.get(apiPath(url));
   return resp.data;
 };
 
 // Admin notifications list hooks
 export function useAdminNotifications() {
-  const key = `/notifications/admin`;
-  const { data, error, isLoading, mutate } = useSWR(key, swrFetcher);
+  const { data, error, isLoading, refetch } = useQuery({
+    queryKey: ["admin-notifications"],
+    queryFn: () => queryFetcher(`/notifications/admin`),
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    staleTime: 2 * 60 * 1000, // 2 minutes for notification data
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+  
   const items = (data?.data?.notifications || []).map(
     (it: NotificationApiItem) => mapFromBackendItem(it)
   );
+  
+  // Add mutate alias for backward compatibility
+  const mutate = refetch;
+  
   return { items, error, isLoading, mutate } as const;
 }
 
 export function useDeleteNotificationMutation() {
-  // Key for invalidation should match the list key(s)
-  const listKey = `/notifications/admin`;
-  const { trigger, isMutating, error } = useSWRMutation(
-    (id: string) => `/notifications/${id}`,
-    async (
-      key: (id: string) => string,
-      { arg: _ }: Readonly<{ arg: never }>
-    ) => {
-      const url = key as unknown as string;
-      const resp = await http.delete(apiPath(url));
+  const queryClient = useQueryClient();
+  
+  const { mutate: trigger, isPending: isMutating, error } = useMutation({
+    mutationFn: async (id: string) => {
+      const resp = await http.delete(apiPath(`/notifications/${id}`));
       const data = resp.data ?? {};
       if (data?.success === false) {
         throw new Error(data?.message || "Request failed");
       }
-      await swrMutate(listKey);
       return true;
-    }
-  );
+    },
+    onSuccess: () => {
+      // Invalidate admin notifications list
+      queryClient.invalidateQueries({
+        queryKey: ["admin-notifications"],
+      });
+    },
+  });
+  
   return { trigger, isMutating, error } as const;
 }
 
 // User notifications list hooks
 export function useUserNotifications(username?: string) {
-  const key = username ? `/notifications` : null;
-  const { data, error, isLoading, mutate } = useSWR(key, swrFetcher);
+  const { data, error, isLoading, refetch } = useQuery({
+    queryKey: ["user-notifications", username],
+    queryFn: () => queryFetcher(`/notifications`),
+    enabled: !!username,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    staleTime: 2 * 60 * 1000, // 2 minutes for notification data
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+  
   const items = (data?.data?.notifications || []).map(
     (it: NotificationApiItem) => mapFromBackendItem(it, username)
   );
+  
+  // Add mutate alias for backward compatibility
+  const mutate = refetch;
+  
   return { items, error, isLoading, mutate } as const;
 }
 
-// Export an API response envelope type for SWR mutate typing
+// Mark notification as read mutation hook
+export function useMarkNotificationAsReadMutation() {
+  const queryClient = useQueryClient();
+  
+  const { mutate: trigger, isPending: isMutating, error } = useMutation({
+    mutationFn: async ({ notificationId, username }: { notificationId: string; username: string }) => {
+      return await markNotificationAsRead(notificationId, username);
+    },
+    onSuccess: (_, { username }) => {
+      // Invalidate user notifications list
+      queryClient.invalidateQueries({
+        queryKey: ["user-notifications", username],
+      });
+      // Also invalidate admin notifications if they exist
+      queryClient.invalidateQueries({
+        queryKey: ["admin-notifications"],
+      });
+    },
+  });
+  
+  return { trigger, isMutating, error } as const;
+}
+
+// Mark all notifications as read mutation hook
+export function useMarkAllNotificationsAsReadMutation() {
+  const queryClient = useQueryClient();
+  
+  const { mutate: trigger, isPending: isMutating, error } = useMutation({
+    mutationFn: async (username: string) => {
+      return await markAllNotificationsAsRead(username);
+    },
+    onSuccess: (_, username) => {
+      // Invalidate user notifications list
+      queryClient.invalidateQueries({
+        queryKey: ["user-notifications", username],
+      });
+      // Also invalidate admin notifications if they exist
+      queryClient.invalidateQueries({
+        queryKey: ["admin-notifications"],
+      });
+    },
+  });
+  
+  return { trigger, isMutating, error } as const;
+}
+
+// Export an API response envelope type for React Query typing
 export type NotificationsApiResponse = {
   data?: { notifications?: NotificationApiItem[] };
 };

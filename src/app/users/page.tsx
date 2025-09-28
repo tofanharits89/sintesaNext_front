@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiPath } from "@/lib/base-path";
-import useSWR from "swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { User } from "@/lib/users-store";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { canAccessUserManagement } from "@/lib/rbac";
@@ -63,8 +63,17 @@ type FormState = {
 export default function UsersPage() {
   const router = useRouter();
   const { currentUser } = useCurrentUser();
-  const { data, mutate, isLoading } = useSWR(apiPath("/users"), fetcher);
+  const queryClient = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["users"],
+    queryFn: () => fetcher(apiPath("/users")),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
   const users: User[] = data?.success ? data?.data ?? [] : [];
+
+  const mutate = () => {
+    queryClient.invalidateQueries({ queryKey: ["users"] });
+  };
 
   // Check if user has permission to access this page
   useEffect(() => {

@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
@@ -32,7 +32,14 @@ const fetcher = async (url: string) => {
 export function useKriteriaOptions(jenis?: string) {
   // Hierarchical: only fetch when jenis is provided
   const key = jenis ? backendPath(`/transfer-daerah/dau/ref/kriteria?jenis=${encodeURIComponent(jenis)}`) : null;
-  const { data, error, isLoading, mutate } = useSWR<any[]>(key, fetcher, { revalidateOnFocus: false });
+  const { data, error, isLoading, refetch } = useQuery<any[]>({
+    queryKey: ["kriteria-options", jenis],
+    queryFn: () => fetcher(key!),
+    enabled: !!key, // Only run when key exists (jenis provided)
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+  });
 
   const options: OptionItem[] = (data || [])
     .map((r) => {
@@ -45,6 +52,8 @@ export function useKriteriaOptions(jenis?: string) {
       } as OptionItem;
     })
     .filter(Boolean) as OptionItem[];
+
+  const mutate = refetch; // For backward compatibility
 
   return { options, isLoading, error, mutate } as const;
 }

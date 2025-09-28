@@ -629,17 +629,29 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                 className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950"
                 onClick={async () => {
                   const { apiPath } = await import("@/lib/base-path");
+                  const { QueryClient } = await import("@tanstack/react-query");
+                  
                   // Proactively disconnect socket so backend presence updates immediately
                   try {
                     socketClient.disconnect();
                   } catch {}
-                  await fetch(apiPath("/auth/logout"), {
+                  
+                  // Call logout endpoint with cache-busting parameter
+                  await fetch(apiPath("/auth/logout") + "?t=" + Date.now(), {
                     method: "POST",
                     credentials: "include",
+                    cache: "no-store",
                   });
+                  
+                  // Clear React Query cache for user profile to prevent stale data
+                  const queryClient = new QueryClient();
+                  queryClient.setQueryData(["current-user-profile"], undefined);
+                  
                   // Dispatch a logout event so other listeners react
                   dispatchAuthEvent("logout", { reason: "user_action" });
-                  router.push("/login");
+                  
+                  // Force a hard refresh to clear all caches (both client and server)
+                  window.location.href = "/login";
                 }}
               >
                 <LogOut className="mr-2 h-4 w-4" />

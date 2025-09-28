@@ -62,6 +62,9 @@ export function dispatchLoginSuccess(user: AuthUser, accessToken: string) {
 export function dispatchLogout(reason?: string) {
   if (typeof window === 'undefined') return;
   
+  // Clear auth data first
+  clearAuthData();
+  
   const event = new CustomEvent('auth:logout', {
     detail: {
       reason,
@@ -138,6 +141,14 @@ export function clearAuthData() {
     } catch (error) {
       // Ignore errors if storage is not available
     }
+  });
+
+  // Clear React Query cache for user profile to prevent stale data
+  import("@tanstack/react-query").then(({ QueryClient }) => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(["current-user-profile"], undefined);
+  }).catch(() => {
+    // Ignore if React Query is not available
   });
 }
 

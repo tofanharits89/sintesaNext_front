@@ -114,6 +114,10 @@ export function useLogout() {
       cacheInvalidation.invalidateUser(queryClient);
       queryClient.removeQueries({ queryKey: authKeys.all() });
       
+      // Optionally nuke the whole cache to ensure clean slate after logout
+      // This acts on the app's existing QueryClient instance
+      queryClient.clear();
+      
       // Redirect to login
       window.location.href = "/login";
       
