@@ -11,6 +11,7 @@ import { ErrorBoundary, ComponentErrorBoundary } from "@/lib/error-boundary";
 import { withBasePath, apiPath } from "@/lib/base-path";
 import { cookies } from "next/headers";
 import { MessagingAuthListener } from "@/components/messaging/messaging-auth-listener";
+import { performanceMonitor } from "@/utils/performance-monitor";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,6 +43,11 @@ export default async function RootLayout({
 
   // Skip server-side user fetch - let React Query handle with stale-while-revalidate
   const initialUser: import("@/lib/users-store").User | undefined = undefined;
+
+  // Initialize performance monitoring
+  if (typeof window !== 'undefined') {
+    performanceMonitor.measurePageLoad();
+  }
 
   return (
     <html lang="id" suppressHydrationWarning>

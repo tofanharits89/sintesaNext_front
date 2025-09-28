@@ -1,12 +1,13 @@
 "use client";
 
+import { memo, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { ResponsiveSidebar } from "@/components/layout/responsive-sidebar";
 import { useLoginNotifications } from "@/hooks/use-login-notifications";
 import type { User } from "@/lib/users-store";
 
-export default function AppShell({
+const AppShell = memo(function AppShell({
   children,
   initialUser,
 }: {
@@ -14,8 +15,11 @@ export default function AppShell({
   initialUser?: User;
 }) {
   const pathname = usePathname();
-  const isAuthPage = pathname?.startsWith("/login");
-  const isServerError = pathname?.startsWith("/server-error");
+  
+  const isSpecialPage = useMemo(() => 
+    pathname?.startsWith("/login") || pathname?.startsWith("/server-error"),
+    [pathname]
+  );
 
   // Initialize login notifications for admin users
   useLoginNotifications();
@@ -23,7 +27,7 @@ export default function AppShell({
   // Socket connection is now handled by useSocket hook in individual components
   // This prevents conflicts and ensures proper connection management
 
-  if (isAuthPage || isServerError) {
+  if (isSpecialPage) {
     return <>{children}</>;
   }
 
@@ -36,4 +40,6 @@ export default function AppShell({
       </div>
     </div>
   );
-}
+});
+
+export default AppShell;

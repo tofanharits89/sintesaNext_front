@@ -79,16 +79,21 @@ export const useSocket = (): UseSocketReturn => {
     // Initial state sync
     syncState();
 
-    // Set up periodic state sync
-    const syncInterval = setInterval(() => {
-      if (mountedRef.current) {
-        syncState();
-      }
-    }, 1000);
+    // Event-driven state sync instead of polling
+    const handleStateChange = () => syncState();
+    
+    socketClient.on('connect', handleStateChange);
+    socketClient.on('disconnect', handleStateChange);
+    socketClient.on('error', handleStateChange);
+    socketClient.on('reconnect', handleStateChange);
 
     return () => {
       mountedRef.current = false;
-      clearInterval(syncInterval);
+      
+      socketClient.off('connect', handleStateChange);
+      socketClient.off('disconnect', handleStateChange);
+      socketClient.off('error', handleStateChange);
+      socketClient.off('reconnect', handleStateChange);
 
       if (stateUpdateTimeoutRef.current) {
         clearTimeout(stateUpdateTimeoutRef.current);

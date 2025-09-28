@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
@@ -30,8 +30,19 @@ const fetcher = async (url: string) => {
 };
 
 export function useDasarPemotonganOptions(kriteria?: string) {
-  const key = kriteria ? backendPath(`/transfer-daerah/dau/ref/dasar-pemotongan?kriteria=${encodeURIComponent(kriteria)}`) : null;
-  const { data, error, isLoading, mutate } = useSWR<any[]>(key, fetcher, { revalidateOnFocus: false });
+  const key = kriteria
+    ? backendPath(`/transfer-daerah/dau/ref/dasar-pemotongan?kriteria=${encodeURIComponent(kriteria)}`)
+    : null;
+  const { data, error, isLoading, refetch } = useQuery<any[]>(
+    {
+      queryKey: ["dasar-pemotongan-options", kriteria],
+      queryFn: () => fetcher(key!),
+      enabled: !!key,
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+    }
+  );
 
   const options: OptionItem[] = (data || [])
     .map((r) => {
@@ -41,6 +52,8 @@ export function useDasarPemotonganOptions(kriteria?: string) {
       return { value: noKmk, label } as OptionItem;
     })
     .filter(Boolean) as OptionItem[];
+
+  const mutate = refetch;
 
   return { options, isLoading, error, mutate } as const;
 }

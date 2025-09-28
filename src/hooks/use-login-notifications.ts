@@ -36,16 +36,15 @@ const getRoleDisplayName = (role: string): string => {
 
 export const useLoginNotifications = () => {
   const { currentUser } = useCurrentUser();
+  
+  // Early return if not admin - prevents unnecessary socket operations
+  if (!currentUser || !["super_admin", "co_admin"].includes(currentUser.role)) {
+    return;
+  }
+  
   const { socket, isConnected, isReady } = useSocket();
 
   useEffect(() => {
-    // Only enable for admin users
-    if (
-      !currentUser ||
-      !["super_admin", "co_admin"].includes(currentUser.role)
-    ) {
-      return;
-    }
 
     if (!socket || !isConnected || !isReady) {
       console.log("[LoginNotifications] Socket not ready:", {

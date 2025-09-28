@@ -147,10 +147,13 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize cache warming on mount
   useEffect(() => {
-    // Start cache warming after a short delay to avoid blocking initial render
+    // Defer cache warming to avoid blocking initial render
     const timer = setTimeout(() => {
-      initializeCacheWarming(queryClient);
-    }, 100);
+      // Only warm cache if user is authenticated and page is visible
+      if (document.visibilityState === 'visible') {
+        initializeCacheWarming(queryClient);
+      }
+    }, 2000); // Increased delay from 100ms to 2000ms
 
     return () => clearTimeout(timer);
   }, [queryClient]);

@@ -33,9 +33,9 @@ export const queryConfigs = {
   user: {
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 15 * 60 * 1000, // 15 minutes
-    retry: 2,
-    retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 10000),
-    refetchOnWindowFocus: true,
+    retry: 1, // Reduced from 2
+    retryDelay: 1000, // Fixed delay
+    refetchOnWindowFocus: false, // Disable for better performance
     refetchOnReconnect: true,
     refetchInterval: false,
   } as QueryConfig,
@@ -44,9 +44,9 @@ export const queryConfigs = {
   dashboard: {
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
-    retry: 2,
-    retryDelay: (attemptIndex: number) => Math.min(500 * 2 ** attemptIndex, 5000),
-    refetchOnWindowFocus: true,
+    retry: 1, // Reduced from 2
+    retryDelay: 1000, // Fixed delay instead of exponential
+    refetchOnWindowFocus: false, // Disable for better performance
     refetchOnReconnect: true,
     refetchInterval: false,
   } as QueryConfig,
