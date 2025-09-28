@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 
 export interface OptionItem {
@@ -38,18 +38,23 @@ const fetcher = async (url: string) => {
 };
 
 export function useKodeAkunOptions(kriteria?: string) {
-  const key = kriteria
+  const enabled = Boolean(kriteria);
+  const url = kriteria
     ? backendPath(
         `/transfer-daerah/dau/ref/kode-akun?kriteria=${encodeURIComponent(
           kriteria
         )}`
       )
-    : null;
-  const { data, error, isLoading, mutate } = useSWR<KodeAkunRow[]>(
-    key,
-    fetcher,
-    { revalidateOnFocus: false }
-  );
+    : "";
+  const queryClient = useQueryClient();
+  const { data, error, isLoading } = useQuery<KodeAkunRow[]>({
+    queryKey: ["kode-akun-options", kriteria ?? null],
+    queryFn: () => fetcher(url),
+    enabled,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    staleTime: 0,
+  });
 
   const options: OptionItem[] = (data || [])
     .map((r) => {
@@ -80,5 +85,6 @@ export function useKodeAkunOptions(kriteria?: string) {
     { kdsatker: string; nmakun: string; jenis_pmk: string; kriteria: string }
   >;
 
+  const mutate = () => queryClient.invalidateQueries({ queryKey: ["kode-akun-options"] });
   return { options, akunMap, isLoading, error, mutate } as const;
 }

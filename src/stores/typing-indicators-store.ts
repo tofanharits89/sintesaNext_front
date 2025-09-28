@@ -13,12 +13,16 @@ export interface TypingUser {
 // Shared empty array to keep a stable reference when there are no typing users
 const EMPTY_USERS: ReadonlyArray<TypingUser> = Object.freeze([]);
 
+// Safely get a display name without throwing if fields are missing
+const getUserDisplayName = (u?: { name?: string; username?: string }) =>
+  (u?.name && u.name.trim()) || (u?.username && u.username.trim()) || "Someone";
+
 export interface TypingIndicatorsState {
   // Map of conversationId -> array of users currently typing
   typingUsers: Record<string, TypingUser[]>;
 
   // Map of conversationId -> timeout IDs for cleanup
-  typingTimeouts: Record<string, Record<string, NodeJS.Timeout>>;
+  typingTimeouts: Record<string, Record<string, ReturnType<typeof setTimeout>>>;
 
   // Current user's typing state per conversation
   currentUserTyping: Record<string, boolean>;
@@ -116,7 +120,7 @@ export const useTypingIndicatorsStore = create<
             typingTimeouts: {
               ...state.typingTimeouts,
               [conversationId]: {
-                ...state.typingTimeouts[conversationId],
+                ...(state.typingTimeouts[conversationId] ?? {}),
                 [user.userId]: timeoutId,
               },
             },
@@ -142,7 +146,7 @@ export const useTypingIndicatorsStore = create<
         );
 
         // Clean up timeout reference
-        const updatedTimeouts = { ...state.typingTimeouts[conversationId] };
+        const updatedTimeouts = { ...(state.typingTimeouts[conversationId] ?? {}) };
         delete updatedTimeouts[userId];
 
         set(
@@ -243,26 +247,30 @@ export const useTypingIndicatorsStore = create<
         }
 
         if (typingUsers.length === 1) {
-          return `${typingUsers[0].name} is typing...`;
+          return `${getUserDisplayName(typingUsers[0])} is typing...`;
         }
 
         if (typingUsers.length === 2) {
-          return `${typingUsers[0].name} and ${typingUsers[1].name} are typing...`;
+          return `${getUserDisplayName(typingUsers[0])} and ${getUserDisplayName(
+            typingUsers[1]
+          )} are typing...`;
         }
 
         if (typingUsers.length <= MAX_TYPING_USERS_DISPLAY) {
           const names = typingUsers
             .slice(0, -1)
-            .map((u) => u.name)
+            .map((u) => getUserDisplayName(u))
             .join(", ");
-          const lastName = typingUsers[typingUsers.length - 1].name;
+          const lastName = getUserDisplayName(
+            typingUsers[typingUsers.length - 1]
+          );
           return `${names}, and ${lastName} are typing...`;
         }
 
         // More than MAX_TYPING_USERS_DISPLAY users
         const displayNames = typingUsers
           .slice(0, MAX_TYPING_USERS_DISPLAY)
-          .map((u) => u.name)
+          .map((u) => getUserDisplayName(u))
           .join(", ");
         const remainingCount = typingUsers.length - MAX_TYPING_USERS_DISPLAY;
         return `${displayNames} and ${remainingCount} other${
@@ -308,15 +316,24 @@ export const useTypingText = (
   const users = useTypingUsers(conversationId, currentUserId);
   return useMemo(() => {
     if (users.length === 0) return "";
-    if (users.length === 1) return `${users[0].name} is typing...`;
+    if (users.length === 1)
+      return `${getUserDisplayName(users[0])} is typing...`;
     if (users.length === 2)
-      return `${users[0].name} and ${users[1].name} are typing...`;
+      return `${getUserDisplayName(users[0])} and ${getUserDisplayName(
+        users[1]
+      )} are typing...`;
     if (users.length <= 3) {
-      const names = users.slice(0, -1).map((u) => u.name).join(", ");
-      const lastName = users[users.length - 1].name;
+      const names = users
+        .slice(0, -1)
+        .map((u) => getUserDisplayName(u))
+        .join(", ");
+      const lastName = getUserDisplayName(users[users.length - 1]);
       return `${names}, and ${lastName} are typing...`;
     }
-    const displayNames = users.slice(0, 3).map((u) => u.name).join(", ");
+    const displayNames = users
+      .slice(0, 3)
+      .map((u) => getUserDisplayName(u))
+      .join(", ");
     const remainingCount = users.length - 3;
     return `${displayNames} and ${remainingCount} other${
       remainingCount > 1 ? "s" : ""

@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
@@ -27,11 +27,21 @@ const fetcher = async (url: string) => {
 };
 
 export function useDauPenundaanCabutByPemda(params: { kdpemda?: string }) {
-  const key = params?.kdpemda
+  const enabled = Boolean(params?.kdpemda);
+  const url = params?.kdpemda
     ? backendPath(`/transfer-daerah/dau/penundaan-cabut?kdpemda=${encodeURIComponent(params.kdpemda)}`)
-    : null;
-
-  const { data, error, isLoading, mutate } = useSWR<DauPenundaanCabutRow[] | DauPenundaanCabutRow>(key, fetcher, { revalidateOnFocus: false });
+    : "";
+  const queryClient = useQueryClient();
+  const { data, error, isLoading } = useQuery<DauPenundaanCabutRow[] | DauPenundaanCabutRow>({
+    queryKey: ["dau-penundaan-cabut-by-pemda", params?.kdpemda ?? null],
+    queryFn: () => fetcher(url),
+    enabled,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    staleTime: 0,
+  });
   const rows: DauPenundaanCabutRow[] = Array.isArray(data) ? data : (data ? [data] : []);
+  const mutate = () =>
+    queryClient.invalidateQueries({ queryKey: ["dau-penundaan-cabut-by-pemda"] });
   return { rows, isLoading, error, mutate } as const;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 
 export interface RawPotonganItem {
@@ -60,22 +60,23 @@ export function useKmkPotongan(
   thang?: string | number,
   enabled: boolean = true
 ) {
-  const key =
-    no_kmk && thang && enabled
-      ? backendPath(
-          `/transfer-daerah/dau/kmk/potongan?no_kmk=${encodeURIComponent(
-            no_kmk
-          )}&thang=${encodeURIComponent(String(thang))}`
-        )
-      : null;
-
-  const { data, error, isLoading, mutate } = useSWR<RawPotonganItem[]>(
-    key,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-    }
-  );
+  const isEnabled = Boolean(no_kmk) && (thang !== undefined && thang !== null && String(thang) !== "") && enabled;
+  const url = isEnabled
+    ? backendPath(
+        `/transfer-daerah/dau/kmk/potongan?no_kmk=${encodeURIComponent(
+          no_kmk as string
+        )}&thang=${encodeURIComponent(String(thang))}`
+      )
+    : "";
+  const queryClient = useQueryClient();
+  const { data, error, isLoading } = useQuery<RawPotonganItem[]>({
+    queryKey: ["kmk-potongan", no_kmk ?? null, thang ?? null, enabled],
+    queryFn: () => fetcher(url),
+    enabled: isEnabled,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    staleTime: 0,
+  });
 
   const rows: PotonganRow[] = (data || []).map((r, idx) => ({
     ...r,
@@ -100,5 +101,6 @@ export function useKmkPotongan(
   );
   const grandTotal = totals.reduce((a, b) => a + b, 0);
 
+  const mutate = () => queryClient.invalidateQueries({ queryKey: ["kmk-potongan"] });
   return { rows, isLoading, error, mutate, grandTotal } as const;
 }

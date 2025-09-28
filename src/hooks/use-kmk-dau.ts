@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 
 export interface RawKmkDauItem {
@@ -57,18 +57,19 @@ const fetcher = async (url: string) => {
 };
 
 export function useKmkDau(year?: string | number) {
-  const key =
+  const url =
     (process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next") +
     `/api/transfer-daerah/dau/kmk${
       year ? `?year=${encodeURIComponent(String(year))}` : ""
     }`;
-  const { data, error, isLoading, mutate } = useSWR<RawKmkDauItem[]>(
-    key,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-    }
-  );
+  const queryClient = useQueryClient();
+  const { data, error, isLoading } = useQuery<RawKmkDauItem[]>({
+    queryKey: ["kmk-dau", year ?? null],
+    queryFn: () => fetcher(url),
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    staleTime: 0,
+  });
 
   const rows: KmkRow[] = (data || []).map((r, idx) => ({
     id: String((r as any).id ?? `${String(r.thang ?? "").trim()}-${String(r.no_kmk ?? "").trim()}`),
@@ -118,5 +119,6 @@ export function useKmkDau(year?: string | number) {
     })(),
   }));
 
+  const mutate = () => queryClient.invalidateQueries({ queryKey: ["kmk-dau"] });
   return { rows, isLoading, error, mutate } as const;
 }

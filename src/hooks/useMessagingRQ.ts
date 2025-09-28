@@ -77,7 +77,9 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
     isFetchingNextPage: isFetchingNextConversations,
     invalidateConversations,
     refetchConversations,
-  } = useConversations({ enabled: options?.enabled });
+  } = useConversations(
+    typeof options?.enabled === "boolean" ? { enabled: options.enabled } : undefined
+  );
 
   const {
     messages,
@@ -344,14 +346,19 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
       }
 
       try {
-        await sendMessageMutation.mutateAsync({
+        const args: any = {
           content: content.trim(),
-          // IMPORTANT: Do not send a temp conversationId to the server.
-          // If it's a temp conversation, omit conversationId so the server creates a real one using recipientId.
-          conversationId: isTempConv ? undefined : latestActiveId || undefined,
-          recipientId,
           tempId,
-        });
+        };
+        // IMPORTANT: Do not send a temp conversationId to the server.
+        // If it's a temp conversation, omit conversationId so the server creates a real one using recipientId.
+        if (!isTempConv && latestActiveId) {
+          args.conversationId = latestActiveId;
+        }
+        if (recipientId) {
+          args.recipientId = recipientId;
+        }
+        await sendMessageMutation.mutateAsync(args);
       } catch (error) {
         // Show error notification
         addNotification({

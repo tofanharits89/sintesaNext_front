@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
@@ -29,11 +29,20 @@ const fetcher = async (url: string) => {
 };
 
 export function useDauRekapByPemda(params: { kdpemda?: string }) {
-  const key = params?.kdpemda
+  const enabled = Boolean(params?.kdpemda);
+  const url = params?.kdpemda
     ? backendPath(`/transfer-daerah/dau/rekap?kdpemda=${encodeURIComponent(params.kdpemda)}`)
-    : null;
-
-  const { data, error, isLoading, mutate } = useSWR<DauRekapByPemdaRow[] | DauRekapByPemdaRow>(key, fetcher, { revalidateOnFocus: false });
+    : "";
+  const queryClient = useQueryClient();
+  const { data, error, isLoading } = useQuery<DauRekapByPemdaRow[] | DauRekapByPemdaRow>({
+    queryKey: ["dau-rekap-by-pemda", params?.kdpemda ?? null],
+    queryFn: () => fetcher(url),
+    enabled,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    staleTime: 0,
+  });
   const rows: DauRekapByPemdaRow[] = Array.isArray(data) ? data : (data ? [data] : []);
+  const mutate = () => queryClient.invalidateQueries({ queryKey: ["dau-rekap-by-pemda"] });
   return { rows, isLoading, error, mutate } as const;
 }

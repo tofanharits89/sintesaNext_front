@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 
 export interface KmkPencabutanRow {
@@ -39,17 +39,23 @@ const fetcher = async (url: string) => {
 };
 
 export function useKmkPencabutan(no_kmk?: string) {
-  const key = no_kmk
+  const enabled = Boolean(no_kmk);
+  const url = no_kmk
     ? `${
         process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next"
       }/api/transfer-daerah/dau/kmk/pencabutan?no_kmk=${encodeURIComponent(
         no_kmk
       )}`
-    : null;
-  const { data, error, isLoading, mutate } = useSWR<KmkPencabutanRow[]>(
-    key,
-    fetcher,
-    { revalidateOnFocus: false }
-  );
+    : "";
+  const queryClient = useQueryClient();
+  const { data, error, isLoading } = useQuery<KmkPencabutanRow[]>({
+    queryKey: ["kmk-pencabutan", no_kmk ?? null],
+    queryFn: () => fetcher(url),
+    enabled,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    staleTime: 0,
+  });
+  const mutate = () => queryClient.invalidateQueries({ queryKey: ["kmk-pencabutan"] });
   return { rows: data || [], isLoading, error, mutate } as const;
 }

@@ -218,17 +218,13 @@ export function LaporanKeuanganKppnTab() {
         open={isDeleteModalOpen}
         onOpenChange={setIsDeleteModalOpen}
         onConfirm={handleConfirmDelete}
-        itemData={
-          selectedItem
-            ? {
-                tahun: selectedItem.tahun,
-                kppn: selectedItem.kppn,
-                jenis: selectedItem.jenis,
-                periode: selectedItem.periode,
-                uraian: selectedItem.uraian,
-              }
-            : undefined
-        }
+        itemData={{
+          tahun: selectedItem?.tahun ?? "",
+          jenis: selectedItem?.jenis ?? "",
+          periode: selectedItem?.periode ?? "",
+          uraian: selectedItem?.uraian ?? "",
+          ...(selectedItem?.kppn ? { kppn: selectedItem.kppn } : {}),
+        }}
       />
     </Card>
   );

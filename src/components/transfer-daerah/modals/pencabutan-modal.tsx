@@ -327,8 +327,8 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
       <KmkPenundaanListModal
         open={isKmkPenundaanListOpen}
         onOpenChange={setIsKmkPenundaanListOpen}
-        noKmk={formData.dasarPenundaan || undefined}
-        year={formData.tahun || undefined}
+        noKmk={formData.dasarPenundaan}
+        year={formData.tahun}
       />
     </>
   );

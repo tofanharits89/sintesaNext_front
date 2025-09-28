@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
@@ -38,11 +38,18 @@ export function useDauRekapBulanan(params: { kdpemda?: string; bulan?: number | 
   const q: string[] = [];
   if (params?.kdpemda) q.push(`kdpemda=${encodeURIComponent(params.kdpemda)}`);
   if (params?.bulan !== undefined && params?.bulan !== "") q.push(`bulan=${encodeURIComponent(String(params.bulan))}`);
-  const key = params?.kdpemda && params?.bulan !== undefined
-    ? backendPath(`/transfer-daerah/dau/rekap/bulanan?${q.join("&")}`)
-    : null; // only fetch when both provided
-
-  const { data, error, isLoading, mutate } = useSWR<DauRekapBulananRow[] | DauRekapBulananRow>(key, fetcher, { revalidateOnFocus: false });
+  const enabled = Boolean(params?.kdpemda) && params?.bulan !== undefined && params?.bulan !== "";
+  const url = enabled ? backendPath(`/transfer-daerah/dau/rekap/bulanan?${q.join("&")}`) : ""; // only fetch when both provided
+  const queryClient = useQueryClient();
+  const { data, error, isLoading } = useQuery<DauRekapBulananRow[] | DauRekapBulananRow>({
+    queryKey: ["dau-rekap-bulanan", params?.kdpemda ?? null, params?.bulan ?? null],
+    queryFn: () => fetcher(url),
+    enabled,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    staleTime: 0,
+  });
   const rows: DauRekapBulananRow[] = Array.isArray(data) ? data : (data ? [data] : []);
+  const mutate = () => queryClient.invalidateQueries({ queryKey: ["dau-rekap-bulanan"] });
   return { rows, isLoading, error, mutate } as const;
 }

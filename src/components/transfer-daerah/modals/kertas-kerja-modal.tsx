@@ -204,9 +204,17 @@ export function KertasKerjaModal({ open, onOpenChange, data }: KertasKerjaModalP
       : undefined);
 
   // Queries
-  const rekapBulanan = useDauRekapBulanan({ kdpemda, bulan });
-  const penundaanCabut = useDauPenundaanCabutByPemda({ kdpemda });
-  const rekapByPemda = useDauRekapByPemda({ kdpemda });
+  // Build params objects conditionally to satisfy exactOptionalPropertyTypes
+  const rekapBulananParams: { kdpemda?: string; bulan?: string | number } = {};
+  if (kdpemda !== undefined) rekapBulananParams.kdpemda = kdpemda;
+  if (bulan !== undefined) rekapBulananParams.bulan = bulan;
+
+  const byPemdaParams: { kdpemda?: string } = {};
+  if (kdpemda !== undefined) byPemdaParams.kdpemda = kdpemda;
+
+  const rekapBulanan = useDauRekapBulanan(rekapBulananParams);
+  const penundaanCabut = useDauPenundaanCabutByPemda(byPemdaParams);
+  const rekapByPemda = useDauRekapByPemda(byPemdaParams);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

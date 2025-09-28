@@ -116,8 +116,11 @@ export default function DashboardUtamaPage() {
     isLoading: isLoadingQuickStats,
     error: quickStatsError,
   } = useQuickStats({
-    kanwil: selectedKanwil !== "semua" ? selectedKanwil : undefined,
+    ...(selectedKanwil !== "semua" ? { kanwil: selectedKanwil } : {}),
   });
+
+  // Ensure strong typing for quickStats data shape
+  const qs = quickStats as import("@/hooks/useQuickStats").QSReturn | undefined;
 
   // Fetch Realisasi per Jenis Belanja data
   const {
@@ -125,7 +128,7 @@ export default function DashboardUtamaPage() {
     isLoading: isLoadingRealisasi,
     error: realisasiError,
   } = useRealisasiPerJenisBelanja({
-    kanwil: selectedKanwil !== "semua" ? selectedKanwil : undefined,
+    ...(selectedKanwil !== "semua" ? { kanwil: selectedKanwil } : {}),
   });
 
   // Fetch K/L dengan Pagu DIPA Terbesar data
@@ -134,7 +137,7 @@ export default function DashboardUtamaPage() {
     isLoading: isLoadingKLPagu,
     error: klPaguError,
   } = useRealisasiKLPaguTerbesar({
-    kanwil: selectedKanwil !== "semua" ? selectedKanwil : undefined,
+    ...(selectedKanwil !== "semua" ? { kanwil: selectedKanwil } : {}),
   });
 
   const {
@@ -142,7 +145,7 @@ export default function DashboardUtamaPage() {
     isLoading: isLoadingRealisasiKLPaguProgramTerbesar,
     error: errorRealisasiKLPaguProgramTerbesar,
   } = useRealisasiKLPaguProgramTerbesar({
-    kanwil: selectedKanwil !== "semua" ? selectedKanwil : undefined,
+    ...(selectedKanwil !== "semua" ? { kanwil: selectedKanwil } : {}),
   });
 
   // Fetch Tren Realisasi Bulanan Per Jenis Belanja data
@@ -151,7 +154,7 @@ export default function DashboardUtamaPage() {
     isLoading: isLoadingTrenRealisasi,
     error: trenRealisasiError,
   } = useTrenRealisasiBulananPerJenisBelanja({
-    kanwil: selectedKanwil !== "semua" ? selectedKanwil : undefined,
+    ...(selectedKanwil !== "semua" ? { kanwil: selectedKanwil } : {}),
   });
 
   // Fetch Persentase Realisasi K/L data
@@ -160,7 +163,7 @@ export default function DashboardUtamaPage() {
     isLoading: isLoadingPersentaseKL,
     error: persentaseKLError,
   } = usePersentaseRealisasiKL({
-    kanwil: selectedKanwil !== "semua" ? selectedKanwil : undefined,
+    ...(selectedKanwil !== "semua" ? { kanwil: selectedKanwil } : {}),
   });
 
   const {
@@ -168,7 +171,7 @@ export default function DashboardUtamaPage() {
     isLoading: isLoadingRealisasiKLPerFungsi,
     error: realisasiKLPerFungsiError,
   } = useRealisasiKLPerFungsi({
-    kanwil: selectedKanwil !== "semua" ? selectedKanwil : undefined,
+    ...(selectedKanwil !== "semua" ? { kanwil: selectedKanwil } : {}),
   });
 
   // Check if realisasi error is authentication related
@@ -330,37 +333,37 @@ export default function DashboardUtamaPage() {
               label="Jumlah DIPA"
               icon={<FileText className="h-4 w-4 text-blue-500" />}
               loading={isLoadingQuickStats}
-              value={quickStats?.jumlahDipa?.toLocaleString("id-ID") || "0"}
+              value={qs?.jumlahDipa?.toLocaleString("id-ID") || "0"}
             />
             <StatCard
               label="Pagu APBN"
               icon={<Banknote className="h-4 w-4 text-green-500" />}
               loading={isLoadingQuickStats}
-              value={formatCurrency(quickStats?.paguApbn || 0)}
+              value={formatCurrency(qs?.paguApbn || 0)}
             />
             <StatCard
               label="Pagu DIPA"
               icon={<Wallet className="h-4 w-4 text-purple-500" />}
               loading={isLoadingQuickStats}
-              value={formatCurrency(quickStats?.paguDipa || 0)}
+              value={formatCurrency(qs?.paguDipa || 0)}
             />
             <StatCard
               label="Realisasi"
               icon={<TrendingUp className="h-4 w-4 text-orange-500" />}
               loading={isLoadingQuickStats}
-              value={formatCurrency(quickStats?.realisasi || 0)}
+              value={formatCurrency(qs?.realisasi || 0)}
             />
             <StatCard
               label="Blokir"
               icon={<Lock className="h-4 w-4 text-red-500" />}
               loading={isLoadingQuickStats}
-              value={formatCurrency(quickStats?.blokir || 0)}
+              value={formatCurrency(qs?.blokir || 0)}
             />
             <StatCard
               label="Sisa Pagu DIPA"
               icon={<Calculator className="h-4 w-4 text-teal-500" />}
               loading={isLoadingQuickStats}
-              value={formatCurrency(quickStats?.sisaPaguDipa || 0)}
+              value={formatCurrency(qs?.sisaPaguDipa || 0)}
             />
           </>
         )}
@@ -553,10 +556,11 @@ export default function DashboardUtamaPage() {
             }
             lines={
               trenRealisasiBulananData?.series?.map((serie, index) => {
-                const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444"];
+                const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444"] as const;
+                const stroke: string = colors[index % colors.length] ?? "#3b82f6";
                 return {
                   dataKey: serie.name,
-                  stroke: colors[index % colors.length],
+                  stroke,
                   name: serie.name,
                 };
               }) || [

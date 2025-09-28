@@ -46,7 +46,9 @@ export function DatePicker({
 
   const handleDateSelect = (newDate: Date | undefined) => {
     if (newDate && showTime) {
-      const [hours, minutes] = timeValue.split(":").map(Number)
+      const [hStr, mStr] = timeValue.split(":");
+      const hours = Number(hStr ?? 0);
+      const minutes = Number(mStr ?? 0);
       newDate.setHours(hours, minutes)
     }
     setSelectedDate(newDate)
@@ -58,7 +60,9 @@ export function DatePicker({
     setTimeValue(newTimeValue)
     
     if (selectedDate) {
-      const [hours, minutes] = newTimeValue.split(":").map(Number)
+      const [hStr, mStr] = newTimeValue.split(":");
+      const hours = Number(hStr ?? 0);
+      const minutes = Number(mStr ?? 0);
       const newDate = new Date(selectedDate)
       newDate.setHours(hours, minutes)
       setSelectedDate(newDate)

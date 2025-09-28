@@ -97,10 +97,17 @@ export const queryConfigs = {
 } as const
 
 // Helper function to create typed query options
-export function createQueryOptions<TData = unknown, TError = Error>(
+export function createQueryOptions<
+  TQueryFnData = unknown,
+  TError = Error,
+  TData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey
+>(
   configType: keyof typeof queryConfigs,
-  overrides?: Partial<Omit<UseQueryOptions<TData, TError>, 'queryKey' | 'queryFn'>>
-): Omit<UseQueryOptions<TData, TError>, 'queryKey' | 'queryFn'> {
+  overrides?: Partial<
+    Omit<UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>, 'queryKey' | 'queryFn'>
+  >
+): Omit<UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>, 'queryKey' | 'queryFn'> {
   const config = queryConfigs[configType]
   return {
     ...config,
@@ -110,21 +117,21 @@ export function createQueryOptions<TData = unknown, TError = Error>(
 
 // Helper function to create typed infinite query options
 export function createInfiniteQueryOptions<
-  TData = unknown,
+  TQueryFnData = unknown,
   TError = Error,
-  TInfiniteData = TData,
+  TData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey,
   TPageParam = unknown
 >(
   configType: keyof typeof queryConfigs,
   overrides?: Partial<
     Omit<
-      UseInfiniteQueryOptions<TData, TError, TInfiniteData, TQueryKey, TPageParam>,
+      UseInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryKey, TPageParam>,
       'queryKey' | 'queryFn'
     >
   >
 ): Omit<
-  UseInfiniteQueryOptions<TData, TError, TInfiniteData, TQueryKey, TPageParam>,
+  UseInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryKey, TPageParam>,
   'queryKey' | 'queryFn'
 > {
   const config = queryConfigs[configType]

@@ -66,7 +66,7 @@ export async function POST(
     
     // Extract CSRF token from cookies
     const xsrfMatch = cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
-    const csrfToken = xsrfMatch ? decodeURIComponent(xsrfMatch[1]) : "";
+    const csrfToken = decodeURIComponent(xsrfMatch?.[1] ?? "");
     if (csrfToken) {
       headers["X-CSRF-Token"] = csrfToken;
       headers["X-XSRF-Token"] = csrfToken;

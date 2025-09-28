@@ -69,12 +69,12 @@ export function BarChartComponent({
               fontSize={xTickFontSize}
               tickLine={false}
               axisLine={false}
-              interval={showAllXTicks ? 0 : undefined}
               angle={xTickAngle}
               textAnchor={
                 xTickAngle ? (xTickAngle < 0 ? "end" : "start") : "middle"
               }
-              height={xAxisHeight}
+              {...(showAllXTicks ? { interval: 0 as const } : {})}
+              {...(xAxisHeight !== undefined ? { height: xAxisHeight } : {})}
             />
             <YAxis
               stroke="#888888"

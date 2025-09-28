@@ -102,7 +102,8 @@ export function VirtualizedSelect({
     index: number;
     style: React.CSSProperties;
   }) => {
-    const option = filteredOptions[index];
+    // Index is guaranteed by react-window since itemCount === filteredOptions.length
+    const option = filteredOptions[index]!;
     const isSelected = option.value === value;
 
     return (

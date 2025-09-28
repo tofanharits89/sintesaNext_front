@@ -31,12 +31,14 @@ export async function POST(request: NextRequest) {
     const allSetCookies = getSetCookieValues(csrfResp);
     const xsrfCookie = allSetCookies.find((c) => c.startsWith("XSRF-TOKEN="));
     if (xsrfCookie) {
-      const nameValue = xsrfCookie.split(";")[0]; // XSRF-TOKEN=...
-      xsrf = nameValue.split("=")[1];
+      const nameValue = xsrfCookie.split(";")[0] ?? ""; // XSRF-TOKEN=...
+      const parts = nameValue.split("=");
+      xsrf = parts.length > 1 ? parts[1] : xsrf;
       // Merge cookies for the subsequent login fetch
       const newCookies = allSetCookies
         .filter(Boolean)
-        .map((c) => c.split(";")[0])
+        .map((c) => (c.split(";")[0] ?? ""))
+        .filter(Boolean)
         .join("; ");
       cookie = [cookie, newCookies].filter(Boolean).join("; ");
     }
@@ -70,11 +72,13 @@ export async function POST(request: NextRequest) {
       const allSetCookies2 = getSetCookieValues(csrfResp2);
       const xsrfCookie2 = allSetCookies2.find((c) => c.startsWith("XSRF-TOKEN="));
       if (xsrfCookie2) {
-        const nameValue = xsrfCookie2.split(";")[0];
-        xsrf = nameValue.split("=")[1];
+        const nameValue = xsrfCookie2.split(";")[0] ?? "";
+        const parts = nameValue.split("=");
+        xsrf = parts.length > 1 ? parts[1] : xsrf;
         const merged = allSetCookies2
           .filter(Boolean)
-          .map((c) => c.split(";")[0])
+          .map((c) => (c.split(";")[0] ?? ""))
+          .filter(Boolean)
           .join("; ");
         cookie = [cookie, merged].filter(Boolean).join("; ");
       }

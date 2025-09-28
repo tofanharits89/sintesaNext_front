@@ -108,11 +108,14 @@ export function SupplierProfileSearch({ initialQuery = "", placeholder = "Cari N
     if (digits.length >= 10) {
       const matches = NPWP_INDEX.get(digits) ?? [];
       if (matches.length === 1) {
-        const vendorName = matches[0].displayName;
-        setValue(vendorName);
-        setIsDropdownOpen(false);
-        onSearch({ vendor: vendorName, raw: vendorName });
-        return;
+        const match = matches[0];
+        if (match) {
+          const vendorName = match.displayName;
+          setValue(vendorName);
+          setIsDropdownOpen(false);
+          onSearch({ vendor: vendorName, raw: vendorName });
+          return;
+        }
       }
 
       if (matches.length > 1) {
@@ -157,6 +160,7 @@ export function SupplierProfileSearch({ initialQuery = "", placeholder = "Cari N
 
     for (let i = 0; i < source.length && results.length < limit; i++) {
       const entry = source[i];
+      if (!entry) continue;
       if (
         entry.searchVendor.includes(query) ||
         entry.searchVendorBase.includes(query) ||

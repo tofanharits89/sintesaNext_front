@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 
 export interface KppnItem {
@@ -31,20 +31,28 @@ const fetcher = async (url: string) => {
 };
 
 export function useKppnByNoKmk(no_kmk?: string) {
-  const key = no_kmk
+  const enabled = Boolean(no_kmk);
+  const url = no_kmk
     ? `${
         process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next"
       }/api/transfer-daerah/dau/kmk/penundaan/kppn?no_kmk=${encodeURIComponent(
         no_kmk
       )}`
-    : null;
-  const { data, error, isLoading, mutate } = useSWR<KppnItem[]>(key, fetcher, {
-    revalidateOnFocus: false,
+    : "";
+  const queryClient = useQueryClient();
+  const { data, error, isLoading } = useQuery<KppnItem[]>({
+    queryKey: ["kppn-by-nokmk", no_kmk ?? null],
+    queryFn: () => fetcher(url),
+    enabled,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    staleTime: 0,
   });
 
   const options = (data || []).map((d) => ({
     value: d.kdkppn,
     label: `${d.kdkppn} - ${d.nmkppn}`,
   }));
+  const mutate = () => queryClient.invalidateQueries({ queryKey: ["kppn-by-nokmk"] });
   return { items: data || [], options, isLoading, error, mutate } as const;
 }

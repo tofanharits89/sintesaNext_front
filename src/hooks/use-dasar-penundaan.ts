@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
@@ -38,19 +38,23 @@ const fetcher = async (url: string) => {
 };
 
 export function useDasarPenundaanOptions(enabled: boolean = true) {
-  const key = enabled
-    ? backendPath("/transfer-daerah/dau/kmk/penundaan/dasar")
-    : null;
-  const { data, error, isLoading, mutate } = useSWR<DasarPenundaanItem[]>(
-    key,
-    fetcher,
-    { revalidateOnFocus: false }
-  );
+  const url = backendPath("/transfer-daerah/dau/kmk/penundaan/dasar");
+  const queryClient = useQueryClient();
+  const { data, error, isLoading } = useQuery<DasarPenundaanItem[]>({
+    queryKey: ["dasar-penundaan-options"],
+    queryFn: () => fetcher(url),
+    enabled,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    staleTime: 0,
+  });
 
   const options = (data || []).map((d) => ({
     value: d.no_kmk,
     label: d.no_kmk,
   }));
 
+  const mutate = () =>
+    queryClient.invalidateQueries({ queryKey: ["dasar-penundaan-options"] });
   return { options, isLoading, error, mutate } as const;
 }

@@ -162,7 +162,7 @@ export function isAuthenticated(): boolean {
     const parts = cookies.authState.split('.');
     if (parts.length === 3) {
       try {
-        const payload = JSON.parse(atob(parts[1]));
+        const payload = JSON.parse(atob(parts[1]!));
         if (payload.exp && payload.exp * 1000 > Date.now()) {
           return true;
         }
@@ -183,7 +183,7 @@ export function isAuthenticated(): boolean {
     if (parts.length !== 3) return false;
     
     try {
-      const payload = JSON.parse(atob(parts[1]));
+      const payload = JSON.parse(atob(parts[1]!));
       return !payload.exp || payload.exp * 1000 > Date.now();
     } catch (error) {
       logger.debug("Failed to parse JWT token", error);

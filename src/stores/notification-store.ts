@@ -146,10 +146,20 @@ const isInDoNotDisturbPeriod = (settings: NotificationSettings): boolean => {
   const now = new Date();
   const currentTime = now.getHours() * 60 + now.getMinutes();
 
-  const [startHour, startMin] = settings.doNotDisturbStart
-    .split(":")
-    .map(Number);
-  const [endHour, endMin] = settings.doNotDisturbEnd.split(":").map(Number);
+  const [startHourStr, startMinStr] = settings.doNotDisturbStart.split(":");
+  const [endHourStr, endMinStr] = settings.doNotDisturbEnd.split(":");
+
+  const startHour = Number(startHourStr);
+  const startMin = Number(startMinStr);
+  const endHour = Number(endHourStr);
+  const endMin = Number(endMinStr);
+
+  // If the configured times are malformed, do not enable DND
+  if (
+    [startHour, startMin, endHour, endMin].some((v) => Number.isNaN(v))
+  ) {
+    return false;
+  }
 
   const startTime = startHour * 60 + startMin;
   const endTime = endHour * 60 + endMin;
@@ -350,7 +360,7 @@ export const useNotificationStore = create<
             body: notification.message,
             icon: "/favicon.ico", // You can customize this
             tag: notification.id,
-            requireInteraction: notification.persistent,
+            requireInteraction: !!notification.persistent,
           });
 
           // Handle notification click

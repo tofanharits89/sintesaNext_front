@@ -155,12 +155,13 @@ export class AuthErrorReporter {
       severity = ErrorSeverity.MEDIUM;
     }
     
-    // CORS errors
     else if (errorMessage.includes('CORS') || errorMessage.includes('cross-origin')) {
       type = AuthErrorType.CORS_ERROR;
       severity = ErrorSeverity.HIGH;
     }
 
+    const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : undefined;
+    const url = typeof window !== 'undefined' ? window.location.href : undefined;
     return {
       type,
       severity,
@@ -168,14 +169,11 @@ export class AuthErrorReporter {
       originalError: error,
       context,
       timestamp: Date.now(),
-      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
-      url: typeof window !== 'undefined' ? window.location.href : undefined
+      ...(userAgent !== undefined ? { userAgent } : {}),
+      ...(url !== undefined ? { url } : {}),
     };
   }
 
-  /**
-   * Generate recovery suggestions based on error type
-   */
   private generateRecoverySuggestions(error: AuthError): RecoverySuggestion[] {
     const suggestions: RecoverySuggestion[] = [];
 

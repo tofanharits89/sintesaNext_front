@@ -1,7 +1,7 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 
 // Quick stats data format returned by the backend
-interface QuickStatsData {
+export interface QuickStatsData {
   jumlahDipa: number;
   paguApbn: number;
   paguDipa: number;
@@ -10,13 +10,13 @@ interface QuickStatsData {
   sisaPaguDipa: number;
 }
 
-interface DashboardMeta {
+export interface DashboardMeta {
   asOfJakarta?: string | null;
   cacheExpiresAtUtc?: string | null;
   cacheMaxAgeSeconds?: number;
 }
 
-interface QuickStatsResponse {
+export interface QuickStatsResponse {
   success: boolean;
   data: QuickStatsData;
   warning?: string;
@@ -25,13 +25,13 @@ interface QuickStatsResponse {
 
 type NotModifiedResponse = { success?: boolean; notModified: true; _meta?: DashboardMeta };
 type ProxyResponse = QuickStatsResponse | NotModifiedResponse | null;
-type QSReturn = QuickStatsData & { _meta?: DashboardMeta };
+export type QSReturn = QuickStatsData & { _meta?: DashboardMeta };
 
-interface UseQuickStatsOptions {
+export interface UseQuickStatsOptions {
   kanwil?: string;
 }
 
-export function useQuickStats(options: UseQuickStatsOptions = {}) {
+export function useQuickStats(options: UseQuickStatsOptions = {}): UseQueryResult<QSReturn, Error> {
   const { kanwil } = options;
   const isClient = typeof window !== "undefined";
   const queryClient = useQueryClient();
@@ -89,7 +89,8 @@ export function useQuickStats(options: UseQuickStatsOptions = {}) {
             kanwil,
           ] as const);
           if (prev) {
-            return { ...prev, _meta: (result as NotModifiedResponse)._meta };
+            const meta = (result as NotModifiedResponse)._meta;
+            return meta !== undefined ? { ...prev, _meta: meta } : { ...prev };
           }
           // If no previous data, fall through to error (no data to show)
           throw new Error("No cached data available for notModified response");
@@ -104,10 +105,9 @@ export function useQuickStats(options: UseQuickStatsOptions = {}) {
         }
 
         // Attach meta to the returned data for optional use in UI (last refresh time)
-        const dataWithMeta: QSReturn = {
-          ...(result as QuickStatsResponse).data,
-          _meta: (result as QuickStatsResponse)._meta,
-        };
+        const meta = (result as QuickStatsResponse)._meta;
+        const base = (result as QuickStatsResponse).data;
+        const dataWithMeta: QSReturn = meta !== undefined ? { ...base, _meta: meta } : { ...base };
         return dataWithMeta;
       } catch (error: any) {
         console.error("Error fetching quick stats:", error);

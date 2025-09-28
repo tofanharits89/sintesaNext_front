@@ -22,9 +22,13 @@ export function FilterParametersCard({
   tipeLaporan,
 }: FilterParametersCardProps) {
   // Determine allowed filters for the given scope then apply exclude list
-  const allowedKeys = getAvailableFiltersForScope(scope, excludeFilters, {
-    tipeLaporan,
-  });
+  const allowedKeys = getAvailableFiltersForScope(
+    scope,
+    excludeFilters,
+    {
+      ...(tipeLaporan !== undefined ? { tipeLaporan } : {}),
+    }
+  );
   const uiFilters = getUIFilters().filter((filter) =>
     allowedKeys.includes(filter.key)
   );

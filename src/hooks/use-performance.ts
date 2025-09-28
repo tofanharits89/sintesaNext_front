@@ -126,7 +126,6 @@ export function useAsyncPerformance() {
   return { measureAsync };
 }
 
-// Hook for Web Vitals monitoring
 export function useWebVitals() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -135,13 +134,13 @@ export function useWebVitals() {
     const observer = new PerformanceObserver((list) => {
       const entries = list.getEntries();
       const lastEntry = entries[entries.length - 1];
+      if (!lastEntry) return;
       
       logger.info('Web Vitals - LCP', {
         value: `${lastEntry.startTime.toFixed(2)}ms`,
         element: (lastEntry as any).element?.tagName,
       });
     });
-
     try {
       observer.observe({ entryTypes: ['largest-contentful-paint'] });
     } catch (error) {
@@ -151,9 +150,9 @@ export function useWebVitals() {
     // Measure Cumulative Layout Shift (CLS)
     let clsValue = 0;
     const clsObserver = new PerformanceObserver((list) => {
-      for (const entry of list.getEntries()) {
-        if (!(entry as any).hadRecentInput) {
-          clsValue += (entry as any).value;
+      for (const entry of list.getEntries() as any[]) {
+        if (!entry.hadRecentInput) {
+          clsValue += entry.value as number;
         }
       }
       

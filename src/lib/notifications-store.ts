@@ -1,6 +1,4 @@
-import useSWR from "swr";
-import useSWRMutation from "swr/mutation";
-import { mutate as swrMutate } from "swr";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { http } from "@/lib/httpClient";
 import { apiPath } from "@/lib/base-path";
 
@@ -111,7 +109,7 @@ function mapFromBackendItem(
   } else if (typeof item.read === "boolean" && currentUsername) {
     readBy = item.read ? [currentUsername] : [];
   }
-  return {
+  const base: Notification = {
     id: item.id,
     title: item.title,
     message: item.message,
@@ -120,9 +118,12 @@ function mapFromBackendItem(
     sender: senderName,
     recipients,
     createdAt,
-    expiresAt,
     readBy,
-  };
+  } as Notification;
+  if (typeof expiresAt === "string") {
+    (base as any).expiresAt = expiresAt;
+  }
+  return base;
 }
 
 // Get notifications for current user (via Next API -> backend)
@@ -236,51 +237,69 @@ export async function getNotificationStats(notificationId: string): Promise<{
   return { totalRecipients, readCount, readPercentage };
 }
 
-// SWR utilities
-const swrFetcher = async (url: string) => {
+// Simple fetcher compatible with React Query
+const rqFetcher = async (url: string) => {
   const resp = await http.get(apiPath(url));
   return resp.data;
 };
 
 // Admin notifications list hooks
 export function useAdminNotifications() {
-  const key = `/notifications/admin`;
-  const { data, error, isLoading, mutate } = useSWR(key, swrFetcher);
+  const queryClient = useQueryClient();
+  const key = ["notifications", "admin"] as const;
+  const { data, error, isLoading, refetch } = useQuery({
+    queryKey: key,
+    queryFn: () => rqFetcher(`/notifications/admin`),
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    staleTime: 0,
+  });
   const items = (data?.data?.notifications || []).map(
     (it: NotificationApiItem) => mapFromBackendItem(it)
   );
+  const mutate = () => queryClient.invalidateQueries({ queryKey: key as any });
   return { items, error, isLoading, mutate } as const;
 }
 
 export function useDeleteNotificationMutation() {
-  // Key for invalidation should match the list key(s)
-  const listKey = `/notifications/admin`;
-  const { trigger, isMutating, error } = useSWRMutation(
-    (id: string) => `/notifications/${id}`,
-    async (
-      key: (id: string) => string,
-      { arg: _ }: Readonly<{ arg: never }>
-    ) => {
-      const url = key as unknown as string;
-      const resp = await http.delete(apiPath(url));
+  const queryClient = useQueryClient();
+  const listKey = ["notifications", "admin"] as const;
+  const mutation = useMutation<boolean, any, { id: string }>({
+    mutationFn: async ({ id }) => {
+      const resp = await http.delete(apiPath(`/notifications/${id}`));
       const data = resp.data ?? {};
       if (data?.success === false) {
         throw new Error(data?.message || "Request failed");
       }
-      await swrMutate(listKey);
       return true;
-    }
-  );
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: listKey as any });
+    },
+  });
+  const trigger = (id: string) => mutation.mutateAsync({ id });
+  const isMutating = mutation.isPending;
+  const { error } = mutation;
   return { trigger, isMutating, error } as const;
 }
 
 // User notifications list hooks
 export function useUserNotifications(username?: string) {
-  const key = username ? `/notifications` : null;
-  const { data, error, isLoading, mutate } = useSWR(key, swrFetcher);
+  const queryClient = useQueryClient();
+  const enabled = Boolean(username);
+  const key = ["notifications", "user"] as const;
+  const { data, error, isLoading, refetch } = useQuery({
+    queryKey: key,
+    queryFn: () => rqFetcher(`/notifications`),
+    enabled,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    staleTime: 0,
+  });
   const items = (data?.data?.notifications || []).map(
     (it: NotificationApiItem) => mapFromBackendItem(it, username)
   );
+  const mutate = () => queryClient.invalidateQueries({ queryKey: key as any });
   return { items, error, isLoading, mutate } as const;
 }
 

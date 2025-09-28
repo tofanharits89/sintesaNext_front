@@ -117,31 +117,8 @@ export default function NotificationsPage() {
       markNotificationAsRead(selectedNotification.id, currentUser.username);
       // Optimistically update SWR cache for user list
       if (viewMode === "user") {
-        mutateUser(
-          (
-            current:
-              | { data?: { notifications?: Array<Record<string, unknown>> } }
-              | undefined
-          ) => {
-            const existing = current?.data?.notifications || [];
-            const next = existing.map((n: Record<string, any>) =>
-              n.id === selectedNotification.id
-                ? {
-                    ...n,
-                    reads: [
-                      ...((n as any).reads || []),
-                      { username: currentUser.username },
-                    ],
-                  }
-                : n
-            );
-            return {
-              ...current,
-              data: { ...(current?.data || {}), notifications: next },
-            };
-          },
-          { revalidate: false }
-        );
+        // Invalidate and refetch user notifications instead of SWR-style mutate
+        mutateUser();
       }
     }
   }, [viewMode, selectedNotification, currentUser?.username]);
@@ -168,47 +145,15 @@ export default function NotificationsPage() {
         resp && (resp as any).data ? (resp as any).data : (resp as any);
       if (!notif?.id) return;
       // Update admin and user lists if present
-      mutateAdmin(
-        (current: unknown) => {
-          const c = current as { data?: { notifications?: any[] } } | undefined;
-          const existing = c?.data?.notifications || [];
-          const next = [{ ...notif }, ...existing];
-          return { ...c, data: { ...(c?.data || {}), notifications: next } };
-        },
-        { revalidate: false }
-      );
-      mutateUser(
-        (current: unknown) => {
-          const c = current as { data?: { notifications?: any[] } } | undefined;
-          const existing = c?.data?.notifications || [];
-          const next = [{ ...notif }, ...existing];
-          return { ...c, data: { ...(c?.data || {}), notifications: next } };
-        },
-        { revalidate: false }
-      );
+      mutateAdmin();
+      mutateUser();
     };
 
     const handleDeleted = (resp: any) => {
       const id = resp?.data?.id || resp?.id;
       if (!id) return;
-      mutateAdmin(
-        (current: unknown) => {
-          const c = current as { data?: { notifications?: any[] } } | undefined;
-          const existing = c?.data?.notifications || [];
-          const next = existing.filter((n) => n.id !== id);
-          return { ...c, data: { ...(c?.data || {}), notifications: next } };
-        },
-        { revalidate: false }
-      );
-      mutateUser(
-        (current: unknown) => {
-          const c = current as { data?: { notifications?: any[] } } | undefined;
-          const existing = c?.data?.notifications || [];
-          const next = existing.filter((n) => n.id !== id);
-          return { ...c, data: { ...(c?.data || {}), notifications: next } };
-        },
-        { revalidate: false }
-      );
+      mutateAdmin();
+      mutateUser();
     };
 
     socket.on("notification:new", handleCreated);
@@ -290,19 +235,6 @@ export default function NotificationsPage() {
     if (!ids.length) return;
 
     try {
-      // Optimistic update for admin list via SWR
-      await mutateAdmin(
-        (current: any) => {
-          const existing = current?.data?.notifications || [];
-          const next = existing.filter((n: any) => !ids.includes(n.id));
-          return {
-            ...current,
-            data: { ...current?.data, notifications: next },
-          };
-        },
-        { revalidate: false }
-      );
-
       // Call backend to delete each notification
       await Promise.all(ids.map((id) => deleteNotification(id)));
 
@@ -322,22 +254,25 @@ export default function NotificationsPage() {
   function handleBroadcast() {
     if (!currentUser?.name) return;
 
-    const recipients =
+    const recipients: "all" | string[] =
       broadcastForm.recipients === "all" ? "all" : broadcastForm.specificUsers;
 
-    createNotification({
+    const payload = {
       title: broadcastForm.title,
       message: broadcastForm.message,
       type: broadcastForm.type,
       priority: broadcastForm.priority,
       recipients,
-      expiresAt: expiryDate ? expiryDate.toISOString() : undefined,
-    })
+      ...(expiryDate ? { expiresAt: expiryDate.toISOString() } : {}),
+    };
+
+    // Call API
+    createNotification(payload)
       .then(() => {
         toast.success("Notifikasi berhasil dikirim");
       })
-      .catch((e) => {
-        toast.error(e.message || "Gagal mengirim notifikasi");
+      .catch((e: any) => {
+        toast.error(e?.message || "Gagal mengirim notifikasi");
       });
 
     setShowBroadcast(false);
@@ -533,31 +468,8 @@ export default function NotificationsPage() {
                         !n.readBy.includes(currentUser.username)
                       ) {
                         markNotificationAsRead(n.id, currentUser.username);
-                        // Optimistically update SWR cache for user list item click
-                        mutateUser(
-                          (current: unknown) => {
-                            const c = current as
-                              | { data?: { notifications?: any[] } }
-                              | undefined;
-                            const existing = c?.data?.notifications || [];
-                            const next = existing.map((x) =>
-                              x.id === n.id
-                                ? {
-                                    ...x,
-                                    reads: [
-                                      ...(x.reads || []),
-                                      { username: currentUser.username },
-                                    ],
-                                  }
-                                : x
-                            );
-                            return {
-                              ...c,
-                              data: { ...(c?.data || {}), notifications: next },
-                            };
-                          },
-                          { revalidate: false }
-                        );
+                        // Invalidate and refetch notifications instead of SWR-style mutate
+                        mutateUser();
                       }
                     }}
                   >
@@ -739,7 +651,7 @@ export default function NotificationsPage() {
               <div className="grid gap-2">
                 <Label>Tanggal & Waktu Kadaluarsa (Opsional)</Label>
                 <DateTimePicker
-                  date={expiryDate}
+                  {...(expiryDate ? { date: expiryDate } : {})}
                   onDateChange={setExpiryDate}
                   placeholder="Pilih tanggal kadaluarsa"
                 />
@@ -933,24 +845,6 @@ export default function NotificationsPage() {
               onClick={async () => {
                 if (deleteTarget) {
                   try {
-                    // Optimistic update admin list
-                    await mutateAdmin(
-                      (current: unknown) => {
-                        const c = current as
-                          | { data?: { notifications?: any[] } }
-                          | undefined;
-                        const existing = c?.data?.notifications || [];
-                        const next = existing.filter(
-                          (x) => x.id !== deleteTarget.id
-                        );
-                        return {
-                          ...c,
-                          data: { ...(c?.data || {}), notifications: next },
-                        };
-                      },
-                      { revalidate: false }
-                    );
-
                     await deleteNotification(deleteTarget.id);
                     await mutateAdmin();
                     toast.success("Notifikasi dihapus");

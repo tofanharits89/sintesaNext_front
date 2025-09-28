@@ -34,7 +34,7 @@ export function getAuthTokenFromCookie(): string | null {
       if (parts.length === 3) {
         try {
           // Decode payload to check expiry
-          const payload = JSON.parse(atob(parts[1]));
+          const payload = JSON.parse(atob(parts[1]!));
           const now = Date.now();
           const expMs = (payload.exp ?? 0) * 1000;
 

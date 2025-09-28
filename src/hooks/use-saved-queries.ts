@@ -1,20 +1,11 @@
 "use client";
 
-import useSWR from "swr";
-import useSWRMutation from "swr/mutation";
-import { mutate as swrMutate } from "swr";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { backendPath } from "@/lib/backend";
 import { apiClient, http } from "@/lib/httpClient";
-import {
-  retrySavedQueryOperation,
-  createNetworkAwareOperation,
-} from "@/utils/errorHandling";
-import {
-  createStableRef,
-  logErrorWithContext,
-} from "@/utils/query-error-recovery";
-import { toast } from "sonner";
+import { retrySavedQueryOperation, createNetworkAwareOperation } from "@/utils/errorHandling";
+import { createStableRef } from "@/utils/query-error-recovery";
 import type {
   SavedQuery,
   CreateSavedQueryRequest,
@@ -23,7 +14,7 @@ import type {
   GetSavedQueriesParams,
 } from "@/types/saved-queries";
 
-// Enhanced SWR fetcher with Axios + interceptors and comprehensive error handling
+// Enhanced fetcher with Axios + interceptors and comprehensive error handling
 const fetcher = async (url: string) => {
   try {
     // Using http directly allows passing an absolute URL as key
@@ -114,7 +105,7 @@ const fetcher = async (url: string) => {
 };
 
 /**
- * Custom hook for saved queries management with SWR integration
+ * Custom hook for saved queries management with React Query integration
  * Provides caching, background refetching, and optimistic updates
  */
 export function useSavedQueries(
@@ -122,6 +113,7 @@ export function useSavedQueries(
     scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak";
   } = {}
 ) {
+  const queryClient = useQueryClient();
   // Stabilize params to prevent infinite loops
   const stableParams = useMemo(
     () =>
@@ -158,8 +150,8 @@ export function useSavedQueries(
     [params.page, params.limit, params.search, params.scope]
   );
 
-  // Build SWR key with query parameters - memoized to prevent infinite loops
-  const key = useMemo(() => {
+  // Build URL with query parameters - memoized to prevent infinite loops
+  const keyUrl = useMemo(() => {
     const searchParams = new URLSearchParams();
     if (stableParams.page)
       searchParams.set("page", stableParams.page.toString());
@@ -177,57 +169,25 @@ export function useSavedQueries(
     stableParams.scope,
   ]);
 
-  // Main SWR hook for fetching saved queries with enhanced error handling
-  const { data, error, isLoading, mutate } = useSWR<SavedQueriesResponse>(
-    key,
-    fetcher,
-    {
-      revalidateOnFocus: false, // Prevent excessive refetching
-      revalidateOnReconnect: true,
-      dedupingInterval: 10000, // Increase deduping interval to prevent rapid requests
-      errorRetryCount: 1, // Further reduce retry count to prevent loops
-      errorRetryInterval: 3000, // Increase retry interval
-      shouldRetryOnError: (error) => {
-        // Don't retry on authentication or client errors
-        if (
-          error?.status &&
-          (error.status === 401 || error.status === 403 || error.status === 404)
-        ) {
-          return false;
-        }
-        // Don't retry on validation errors
-        if (
-          error?.message &&
-          /validation|invalid|duplicate/i.test(error.message)
-        ) {
-          return false;
-        }
-        // Only retry on network/server errors
-        return error?.status >= 500 || !error?.status;
-      },
-      onError: (error) => {
-        logErrorWithContext(error, "useSavedQueries SWR", {
-          key,
-          params: stableParams,
-          timestamp: new Date().toISOString(),
-        });
-        // Don't show toast for every error, let components handle it
-      },
-      onErrorRetry: (error, _key, _config, _revalidate, { retryCount }) => {
-        console.log(
-          `[useSavedQueries] Retrying request (attempt ${retryCount + 1}):`,
-          error.message
-        );
-
-        // Only show toast on first retry and for retryable errors
-        if (retryCount === 0 && error?.status >= 500) {
-          toast.info("Mencoba memuat ulang data...", {
-            duration: 2000,
-          });
-        }
-      },
-    }
-  );
+  // Main React Query hook for fetching saved queries
+  const {
+    data,
+    error,
+    isLoading,
+  } = useQuery<SavedQueriesResponse>({
+    queryKey: ["saved-queries", stableParams],
+    queryFn: () => fetcher(keyUrl),
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    staleTime: 0,
+    retry: (failureCount, err: any) => {
+      if (err?.status && err.status >= 400 && err.status < 500) return false;
+      if (err?.message && /validation|invalid|duplicate/i.test(err.message)) return false;
+      return failureCount < 2;
+    },
+    throwOnError: false,
+    meta: { context: { params: stableParams } },
+  });
 
   const queries = data?.queries ?? [];
   const pagination = data?.pagination;
@@ -239,7 +199,7 @@ export function useSavedQueries(
     }
 
     // Filter queries by scope
-    return queries.filter((query) => {
+    return queries.filter((query: SavedQuery) => {
       // If query has no scope, assume it's general and show in all pages
       if (!query.scope) return true;
       // Only show queries that match the current scope
@@ -247,12 +207,12 @@ export function useSavedQueries(
     });
   }, [queries, stableParams.scope]);
 
-  // Create saved query mutation with enhanced error handling
-  const createQueryMutation = useSWRMutation<SavedQuery, any, string, CreateSavedQueryRequest>(
-    backendPath("/saved-queries"),
-    async (url: string, { arg }: { arg: CreateSavedQueryRequest }): Promise<SavedQuery> => {
+  // Create saved query mutation
+  const createQueryMutation = useMutation<SavedQuery, any, CreateSavedQueryRequest>({
+    mutationFn: async (arg: CreateSavedQueryRequest): Promise<SavedQuery> => {
       const res = await retrySavedQueryOperation(
         createNetworkAwareOperation(async () => {
+          const url = backendPath("/saved-queries");
           console.log("[useSavedQueries] Making request to:", url);
           console.log("[useSavedQueries] Request payload:", arg);
 
@@ -291,7 +251,6 @@ export function useSavedQueries(
                 return queries[0];
               }
             }
-
             console.log("[useSavedQueries] Returning full result:", result);
             return result as SavedQuery;
           } catch (apiError) {
@@ -302,7 +261,6 @@ export function useSavedQueries(
         "save",
         { showToast: false }
       );
-      console.log("[useSavedQueries] Final result from retrySavedQueryOperation:", res);
       if (!res) {
         // Fallback fetch by name/scope after retries returned null
         try {
@@ -324,57 +282,16 @@ export function useSavedQueries(
       }
       return res as SavedQuery;
     },
-    {
-      onSuccess: (newQuery: SavedQuery) => {
-        // Optimistically update the cache - use functional update to prevent stale closures
-        mutate(
-          (prev) => {
-            if (!prev || !Array.isArray(prev.queries)) {
-              return {
-                queries: [newQuery],
-                pagination: { page: 1, limit: 10, total: 1, totalPages: 1 },
-              };
-            }
-            return {
-              ...prev,
-              queries: [newQuery, ...prev.queries],
-              pagination: prev.pagination
-                ? {
-                    ...prev.pagination,
-                    total: prev.pagination.total + 1,
-                    totalPages: Math.ceil(
-                      (prev.pagination.total + 1) / prev.pagination.limit
-                    ),
-                  }
-                : {
-                    page: 1,
-                    limit: 10,
-                    total: prev.queries.length + 1,
-                    totalPages: 1,
-                  },
-            };
-          },
-          { revalidate: false }
-        );
-
-        // Debounce cache invalidation to prevent rapid updates
-        setTimeout(() => {
-          swrMutate(
-            (key) => typeof key === "string" && key.includes("/saved-queries"),
-            undefined,
-            { revalidate: true }
-          );
-        }, 100);
-      },
-    }
-  );
+    onSuccess: async () => {
+      // Invalidate all saved-queries caches to refresh lists
+      await queryClient.invalidateQueries({ queryKey: ["saved-queries"] });
+    },
+  });
 
   // Update saved query mutation with enhanced error handling
-  const updateQueryMutation = useSWRMutation<SavedQuery, any, string, { id: string; updates: UpdateSavedQueryRequest }>(
-    backendPath("/saved-queries/update"),
-    async (
-      _url: string,
-      { arg }: { arg: { id: string; updates: UpdateSavedQueryRequest } }
+  const updateQueryMutation = useMutation<SavedQuery, any, { id: string; updates: UpdateSavedQueryRequest }>({
+    mutationFn: async (
+      arg: { id: string; updates: UpdateSavedQueryRequest }
     ): Promise<SavedQuery> => {
       const res = await retrySavedQueryOperation(
         createNetworkAwareOperation(async () => {
@@ -394,40 +311,15 @@ export function useSavedQueries(
       );
       return res as SavedQuery;
     },
-    {
-      onSuccess: (updatedQuery: SavedQuery) => {
-        // Optimistically update the cache - use functional update to prevent stale closures
-        mutate(
-          (prev) => {
-            if (!prev || !Array.isArray(prev.queries)) return prev;
-            return {
-              ...prev,
-              queries: prev.queries.map((q) =>
-                q.id === updatedQuery.id ? updatedQuery : q
-              ),
-            };
-          },
-          { revalidate: false }
-        );
-
-        // Debounce cache invalidation to prevent rapid updates
-        setTimeout(() => {
-          swrMutate(
-            (key) => typeof key === "string" && key.includes("/saved-queries"),
-            undefined,
-            { revalidate: true }
-          );
-        }, 100);
-      },
-    }
-  );
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["saved-queries"] });
+    },
+  });
 
   // Delete saved query mutation with enhanced error handling
-  const deleteQueryMutation = useSWRMutation<{ id: string }, any, string, { id: string }>(
-    backendPath("/saved-queries/delete"),
-    async (
-      _url: string,
-      { arg }: { arg: { id: string } }
+  const deleteQueryMutation = useMutation<{ id: string }, any, { id: string }>({
+    mutationFn: async (
+      arg: { id: string }
     ): Promise<{ id: string }> => {
       const result = await retrySavedQueryOperation(
         createNetworkAwareOperation(async () => {
@@ -453,57 +345,17 @@ export function useSavedQueries(
       );
       return result as { id: string };
     },
-    {
-      onSuccess: (param: { id: string } | null) => {
-        // Handle case where param might be null
-        if (!param || !param.id) {
-          console.warn("[useSavedQueries] Delete success callback received null or invalid param:", param);
-          return;
-        }
-        
-        const { id } = param;
-        
-        // Optimistically update the cache - use functional update to prevent stale closures
-        mutate(
-          (prev) => {
-            if (!prev || !Array.isArray(prev.queries)) return prev;
-            return {
-              ...prev,
-              queries: prev.queries.filter((q) => q.id !== id),
-              pagination: prev.pagination
-                ? {
-                    ...prev.pagination,
-                    total: Math.max(0, prev.pagination.total - 1),
-                  }
-                : {
-                    page: 1,
-                    limit: 10,
-                    total: Math.max(0, prev.queries.length - 1),
-                    totalPages: 1,
-                  },
-            };
-          },
-          { revalidate: false }
-        );
-
-        // Debounce cache invalidation to prevent rapid updates
-        setTimeout(() => {
-          swrMutate(
-            (key) => typeof key === "string" && key.includes("/saved-queries"),
-            undefined,
-            { revalidate: true }
-          );
-        }, 100);
-      },
-    }
-  );
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["saved-queries"] });
+    },
+  });
 
   // Enhanced convenience methods with error handling
   const createQuery = useCallback(
     async (queryData: CreateSavedQueryRequest): Promise<SavedQuery> => {
       try {
         console.log("[useSavedQueries] Creating query with data:", queryData);
-        const result = await createQueryMutation.trigger(queryData);
+        const result = await createQueryMutation.mutateAsync(queryData);
         console.log("[useSavedQueries] Create query result:", result);
         if (!result) {
           console.error("[useSavedQueries] No result received from createQueryMutation.trigger");
@@ -517,7 +369,7 @@ export function useSavedQueries(
         throw error;
       }
     },
-    [createQueryMutation.trigger, createQueryMutation.error]
+    [createQueryMutation.mutateAsync, createQueryMutation.error]
   );
 
   const updateQuery = useCallback(
@@ -526,7 +378,7 @@ export function useSavedQueries(
       updates: UpdateSavedQueryRequest
     ): Promise<SavedQuery> => {
       try {
-        const result = await updateQueryMutation.trigger({ id, updates });
+        const result = await updateQueryMutation.mutateAsync({ id, updates });
         if (!result) {
           throw new Error("Failed to update query - no response received");
         }
@@ -536,13 +388,13 @@ export function useSavedQueries(
         throw error;
       }
     },
-    [updateQueryMutation.trigger]
+    [updateQueryMutation.mutateAsync]
   );
 
   const deleteQuery = useCallback(
     async (id: string): Promise<void> => {
       try {
-        const result = await deleteQueryMutation.trigger({ id });
+        const result = await deleteQueryMutation.mutateAsync({ id });
         if (!result) {
           throw new Error("Failed to delete query - no response received");
         }
@@ -551,7 +403,7 @@ export function useSavedQueries(
         throw error;
       }
     },
-    [deleteQueryMutation.trigger]
+    [deleteQueryMutation.mutateAsync]
   );
 
   // Load query function - this doesn't make API calls but helps with state management
@@ -564,8 +416,8 @@ export function useSavedQueries(
 
   // Refetch function
   const refetch = useCallback(() => {
-    mutate();
-  }, [mutate]);
+    queryClient.invalidateQueries({ queryKey: ["saved-queries"] });
+  }, [queryClient]);
 
   // Get single query by ID (uses the filtered cached data)
   const getQueryById = useCallback(
@@ -582,9 +434,9 @@ export function useSavedQueries(
 
     // Loading states
     isLoading,
-    isCreating: createQueryMutation.isMutating,
-    isUpdating: updateQueryMutation.isMutating,
-    isDeleting: deleteQueryMutation.isMutating,
+    isCreating: createQueryMutation.isPending,
+    isUpdating: updateQueryMutation.isPending,
+    isDeleting: deleteQueryMutation.isPending,
 
     // Error states
     error,
@@ -601,7 +453,7 @@ export function useSavedQueries(
     getQueryById,
 
     // Cache mutation for external updates
-    mutate,
+    mutate: refetch,
   } as const;
 }
 
@@ -609,13 +461,20 @@ export function useSavedQueries(
  * Hook for fetching a single saved query by ID
  */
 export function useSavedQuery(id: string | null) {
-  const key = id ? backendPath(`/saved-queries/${id}`) : null;
-
-  const { data, error, isLoading, mutate } = useSWR<SavedQuery>(key, fetcher, {
-    revalidateOnFocus: false,
-    revalidateOnReconnect: true,
-    dedupingInterval: 10000,
+  const queryClient = useQueryClient();
+  const url = id ? backendPath(`/saved-queries/${id}`) : null;
+  const { data, error, isLoading } = useQuery<SavedQuery | undefined>({
+    queryKey: ["saved-queries", "detail", id],
+    queryFn: () => fetcher(url as string),
+    enabled: Boolean(id),
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    staleTime: 0,
   });
+
+  const mutate = useCallback(() => {
+    return queryClient.invalidateQueries({ queryKey: ["saved-queries", "detail", id] });
+  }, [queryClient, id]);
 
   return {
     query: data,

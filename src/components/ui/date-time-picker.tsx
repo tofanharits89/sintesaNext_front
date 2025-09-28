@@ -47,27 +47,31 @@ export function DateTimePicker({
   const handleDateSelect = (newDate: Date | undefined) => {
     if (newDate) {
       // Apply the current time to the new date
-      const [hours, minutes] = time.split(":").map(Number)
-      newDate.setHours(hours, minutes, 0, 0)
-      setSelectedDate(newDate)
-      onDateChange?.(newDate)
-      setOpen(false)
+      const [hStr, mStr] = time.split(":");
+      const hours = Number(hStr ?? 0);
+      const minutes = Number(mStr ?? 0);
+      newDate.setHours(hours, minutes, 0, 0);
+      setSelectedDate(newDate);
+      onDateChange?.(newDate);
+      setOpen(false);
     } else {
-      setSelectedDate(undefined)
-      onDateChange?.(undefined)
+      setSelectedDate(undefined);
+      onDateChange?.(undefined);
     }
   }
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTime = e.target.value
-    setTime(newTime)
+    const newTime = e.target.value;
+    setTime(newTime);
     
     if (selectedDate && newTime) {
-      const [hours, minutes] = newTime.split(":").map(Number)
-      const newDate = new Date(selectedDate)
-      newDate.setHours(hours, minutes, 0, 0)
-      setSelectedDate(newDate)
-      onDateChange?.(newDate)
+      const [hStr, mStr] = newTime.split(":");
+      const hours = Number(hStr ?? 0);
+      const minutes = Number(mStr ?? 0);
+      const newDate = new Date(selectedDate);
+      newDate.setHours(hours, minutes, 0, 0);
+      setSelectedDate(newDate);
+      onDateChange?.(newDate);
     }
   }
 

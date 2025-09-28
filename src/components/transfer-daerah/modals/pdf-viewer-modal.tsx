@@ -109,7 +109,7 @@ export function PdfViewerModal({ open, onOpenChange, url, title }: PdfViewerModa
               >
                 <pdfMod.Page
                   pageNumber={pageNumber}
-                  width={containerWidth || undefined}
+                  {...(containerWidth ? { width: containerWidth } : {})}
                   renderTextLayer={false}
                   renderAnnotationLayer={false}
                 />

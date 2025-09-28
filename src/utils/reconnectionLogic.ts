@@ -59,8 +59,9 @@ export class ReconnectionManager {
   ) {
     this.tabId = `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    this.onConnectionStateChange = options.onConnectionStateChange;
-    this.onTokenRefreshNeeded = options.onTokenRefreshNeeded;
+    // Provide no-op defaults to satisfy exactOptionalPropertyTypes
+    this.onConnectionStateChange = options.onConnectionStateChange ?? (() => {});
+    this.onTokenRefreshNeeded = options.onTokenRefreshNeeded ?? (() => {});
 
     this.setupEventListeners();
     this.startNetworkMonitoring();
@@ -276,7 +277,11 @@ export class ReconnectionManager {
 
     // Check token expiry (if you can decode it)
     try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
+      const parts = token.split(".");
+      if (parts.length !== 3 || parts[1] === undefined) {
+        throw new Error("Invalid token format");
+      }
+      const payload = JSON.parse(atob(parts[1]));
       const expiryTime = payload.exp * 1000;
       const now = Date.now();
 

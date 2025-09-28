@@ -232,12 +232,13 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
 
   // Build query params and fetch live data
   const bulanNum = selectedMonth ? months.indexOf(selectedMonth) + 1 : undefined;
-  const { rows, isLoading, error } = useDauTransaksi({
+  const params = {
     thang: selectedYear,
-    bulan: bulanNum,
-    kppn: selectedKppn || undefined,
-    kabkota: selectedKabKota || undefined,
-  });
+    ...(bulanNum !== undefined ? { bulan: bulanNum } : {}),
+    ...(selectedKppn ? { kppn: selectedKppn } : {}),
+    ...(selectedKabKota ? { kabkota: selectedKabKota } : {}),
+  } as const;
+  const { rows, isLoading, error } = useDauTransaksi(params as any);
 
   return (
     <div className="space-y-6">
@@ -253,7 +254,7 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Tahun</label>
-              <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <Select value={selectedYear ?? ""} onValueChange={(v) => setSelectedYear(v)}>
                 <SelectTrigger className="w-full">
                   <SelectValue className="truncate" />
                 </SelectTrigger>
@@ -269,7 +270,7 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Bulan</label>
-              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <Select value={selectedMonth ?? ""} onValueChange={(v) => setSelectedMonth(v)}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih bulan" />
                 </SelectTrigger>
@@ -285,7 +286,7 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
 
             <div className="space-y-2">
               <label className="text-sm font-medium">KPPN</label>
-              <Select value={selectedKppn} onValueChange={setSelectedKppn}>
+              <Select value={selectedKppn ?? ""} onValueChange={(v) => setSelectedKppn(v)}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih KPPN" />
                 </SelectTrigger>
@@ -308,8 +309,8 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
             <div className="space-y-2">
               <label className="text-sm font-medium">Kab/Kota</label>
               <Select
-                value={selectedKabKota}
-                onValueChange={setSelectedKabKota}
+                value={selectedKabKota ?? ""}
+                onValueChange={(v) => setSelectedKabKota(v)}
               >
                 <SelectTrigger className="w-full" disabled={!selectedKppn}>
                   <SelectValue

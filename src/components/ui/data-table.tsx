@@ -80,14 +80,16 @@ export function DataTable<TData, TValue>({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    onPaginationChange: controlledPagination
-      ? undefined
-      : (updater) => {
-          // Uncontrolled: update internal state and notify parent
-          const next = typeof updater === "function" ? (updater as any)(uncontrolledPagination) : updater;
-          setUncontrolledPagination(next);
-          onPaginationChange?.(next);
-        },
+    ...(controlledPagination
+      ? {}
+      : {
+          onPaginationChange: (updater: any) => {
+            // Uncontrolled: update internal state and notify parent
+            const next = typeof updater === "function" ? updater(uncontrolledPagination) : updater;
+            setUncontrolledPagination(next);
+            onPaginationChange?.(next);
+          },
+        }),
     state: {
       sorting,
       columnFilters,

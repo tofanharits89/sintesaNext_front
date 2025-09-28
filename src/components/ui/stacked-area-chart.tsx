@@ -27,7 +27,7 @@ interface SeriesSpec {
   dataKey: string;
   name: string;
   color: string; // used for stroke and fill (with opacity)
-  stackId?: string; // optional: only series with the same stackId will stack
+  stackId?: string | number; // optional: only series with the same stackId will stack
   // Optional label configuration
   showLabel?: boolean;
   labelPosition?: "top" | "insideTop" | "insideBottom" | "inside" | "right" | "left";
@@ -166,22 +166,22 @@ export function StackedAreaChartComponent({
               fontSize={xTickFontSize}
               tickLine={false}
               axisLine={false}
-              interval={showAllXTicks ? 0 : undefined}
               angle={wrapXTicks ? 0 : xTickAngle}
               textAnchor={wrapXTicks ? "middle" : xTickAngle ? (xTickAngle < 0 ? "end" : "start") : "middle"}
-              height={xAxisHeight}
-              tick={wrapXTicks ? ((props: any) => <WrappedTick {...props} />) : undefined}
-              padding={xAxisPadding}
+              {...(showAllXTicks ? { interval: 0 as const } : {})}
+              {...(xAxisHeight !== undefined ? { height: xAxisHeight } : {})}
+              {...(wrapXTicks ? { tick: (props: any) => <WrappedTick {...props} /> } : {})}
+              {...(xAxisPadding ? { padding: xAxisPadding } : {})}
             />
             <YAxis
               stroke="#888888"
               fontSize={12}
               tickLine={false}
               axisLine={false}
-              tick={yHideTicks ? false : undefined}
+              {...(yHideTicks ? { tick: false } : {})}
               tickFormatter={(value) => (typeof value === "number" ? formatValue(value) : `${value}`)}
-              width={yHideTicks ? 0 : yAxisWidth}
-              domain={yDomain}
+              {...(!yHideTicks && yAxisWidth !== undefined ? { width: yAxisWidth } : {})}
+              {...(yDomain ? { domain: yDomain } : {})}
               allowDecimals={yAllowDecimals}
             />
             <Tooltip
@@ -230,7 +230,7 @@ export function StackedAreaChartComponent({
                 stroke={s.color}
                 fill={s.color}
                 fillOpacity={0.25}
-                stackId={s.stackId}
+                {...(s.stackId !== undefined ? { stackId: s.stackId } : {})}
                 strokeWidth={2}
                 activeDot={{ r: 5 }}
                 isAnimationActive={false}

@@ -557,7 +557,7 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
       // Resend using the same tempId so reconciliation works if accepted by server
       await resendMutation.mutateAsync({
         content: String(msg.content || ""),
-        conversationId: isTempConv ? undefined : convId,
+        ...(isTempConv ? {} : { conversationId: convId }),
         recipientId,
         tempId: String(msg.id),
         // Mark this as an explicit manual retry so mutation success is accepted
@@ -835,12 +835,12 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
                           {isOwnMessage ? (
                             // For sent messages: show 2-state status indicators (delivered → read)
                             <MessageStatus
-                              isDelivered={message.isDelivered}
-                              isRead={message.isRead}
+                              isDelivered={Boolean(message.isDelivered)}
+                              isRead={Boolean(message.isRead)}
                               isSending={Boolean((message as any)?._sending)}
                               isFailed={Boolean((message as any)?._failed)}
-                              deliveredAt={message.deliveredAt}
-                              readAt={message.readAt}
+                              deliveredAt={message.deliveredAt ?? null}
+                              readAt={message.readAt ?? null}
                               showTimestamp={false}
                               className="justify-end"
                             />

@@ -53,8 +53,9 @@ export default function TestMessagingFixes() {
     let orderingIssues: Array<{index: number; currentId: string; nextId: string; currentTime: string; nextTime: string}> = [];
 
     for (let i = 0; i < conversations.length - 1; i++) {
-      const current = conversations[i];
-      const next = conversations[i + 1];
+      const current = conversations[i]!; // non-null due to bounds
+      const next = conversations[i + 1]!; // non-null due to bounds
+      if (!current || !next) continue; // extra safety for TS
       
       const currentTime = new Date(
         (current as any).lastMessageAt || 

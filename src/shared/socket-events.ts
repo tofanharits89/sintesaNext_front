@@ -588,8 +588,8 @@ export function createStandardSuccessResponse<T>(
   return {
     success: true,
     data,
-    message,
     timestamp: new Date().toISOString(),
+    ...(message !== undefined ? { message } : {}),
   };
 }
 
@@ -608,9 +608,9 @@ export function createStandardErrorResponse(
   return {
     success: false,
     error,
-    type,
-    code,
     timestamp: new Date().toISOString(),
+    ...(type !== undefined ? { type } : {}),
+    ...(code !== undefined ? { code } : {}),
   };
 }
 

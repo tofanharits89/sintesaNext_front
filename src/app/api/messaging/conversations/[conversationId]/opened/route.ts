@@ -18,7 +18,7 @@ export async function PUT(request: Request) {
 
     // Extract CSRF token from incoming cookies (set by backend as XSRF-TOKEN)
     const xsrfMatch = cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
-    const csrfToken = xsrfMatch ? decodeURIComponent(xsrfMatch[1]) : "";
+    const csrfToken = decodeURIComponent(xsrfMatch?.[1] ?? "");
 
     const resp = await fetch(
       backendPath(

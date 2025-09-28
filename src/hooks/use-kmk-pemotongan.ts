@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 
 export interface RawPemotonganItem {
@@ -48,27 +48,29 @@ const fetcher = async (url: string) => {
 };
 
 export function useKmkPemotongan(no_kmk?: string, enabled: boolean = true) {
-  const key =
+  const url =
     no_kmk && enabled
       ? `${
           process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next"
         }/api/transfer-daerah/dau/kmk/pemotongan?no_kmk=${encodeURIComponent(
           no_kmk
         )}`
-      : null;
-
-  const { data, error, isLoading, mutate } = useSWR<RawPemotonganItem[]>(
-    key,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-    }
-  );
+      : "";
+  const queryClient = useQueryClient();
+  const { data, error, isLoading } = useQuery<RawPemotonganItem[]>({
+    queryKey: ["kmk-pemotongan", no_kmk ?? null, enabled],
+    queryFn: () => fetcher(url),
+    enabled: Boolean(no_kmk) && enabled,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    staleTime: 0,
+  });
 
   const rows: PemotonganRow[] = (data || []).map((r, idx) => ({
     ...r,
     no: idx + 1,
   }));
 
+  const mutate = () => queryClient.invalidateQueries({ queryKey: ["kmk-pemotongan"] });
   return { rows, isLoading, error, mutate } as const;
 }

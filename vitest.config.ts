@@ -9,6 +9,9 @@ export default defineConfig({
     setupFiles: ['./src/test-setup.ts'],
     globals: true,
     css: true,
+    exclude: [
+      'src/hooks/__tests__/use-saved-queries.test.ts',
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

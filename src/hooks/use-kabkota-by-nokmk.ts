@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 
 export interface KabKotaItem {
@@ -32,20 +32,26 @@ const fetcher = async (url: string) => {
 export function useKabKotaByNoKmk(_no_kmk?: string, kppn?: string) {
   const params = new URLSearchParams();
   if (kppn) params.set("kppn", kppn);
-  const key = kppn
+  const enabled = Boolean(kppn);
+  const url = kppn
     ? `${
         process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next"
       }/api/transfer-daerah/dau/kmk/penundaan/kabkota?${params.toString()}`
-    : null;
-  const { data, error, isLoading, mutate } = useSWR<KabKotaItem[]>(
-    key,
-    fetcher,
-    { revalidateOnFocus: false }
-  );
+    : "";
+  const queryClient = useQueryClient();
+  const { data, error, isLoading } = useQuery<KabKotaItem[]>({
+    queryKey: ["kabkota-by-nokmk", kppn ?? null],
+    queryFn: () => fetcher(url),
+    enabled,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    staleTime: 0,
+  });
 
   const options = (data || []).map((d) => ({
     value: d.kdkabkota,
     label: `${d.kdkabkota} - ${d.nmkabkota}`,
   }));
+  const mutate = () => queryClient.invalidateQueries({ queryKey: ["kabkota-by-nokmk"] });
   return { items: data || [], options, isLoading, error, mutate } as const;
 }

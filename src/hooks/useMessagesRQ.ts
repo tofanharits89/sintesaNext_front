@@ -168,7 +168,9 @@ export function useMessages(conversationId?: string) {
         const now = Date.now();
         // prune old entries
         for (let i = failedRecent.length - 1; i >= 0; i--) {
-          if (now - failedRecent[i].failedAt > FAILED_RECENT_WINDOW_MS) failedRecent.splice(i, 1);
+          const item = failedRecent[i];
+          if (!item) continue;
+          if (now - item.failedAt > FAILED_RECENT_WINDOW_MS) failedRecent.splice(i, 1);
         }
         failedRecent.push({ tempId: id, content, convId, failedAt: now });
         try { console.log('[MSG DEBUG] recentFailed push', { tempId: id, convId, contentLen: content.length, at: now }); } catch {}
@@ -184,7 +186,8 @@ export function useMessages(conversationId?: string) {
         }
         // prune any recent entries for this tempId
         for (let i = failedRecent.length - 1; i >= 0; i--) {
-          if (failedRecent[i].tempId === id) failedRecent.splice(i, 1);
+          const item = failedRecent[i];
+          if (item && item.tempId === id) failedRecent.splice(i, 1);
         }
         // Also refresh quarantine cache; success path removes entries in mutation hook
         quarantineCache = null;
@@ -493,7 +496,9 @@ export function useMessages(conversationId?: string) {
       if (!incomingTempId && normalized?.content && normalized?.conversationId) {
         const now = Date.now();
         for (let i = failedRecent.length - 1; i >= 0; i--) {
-          if (now - failedRecent[i].failedAt > FAILED_RECENT_WINDOW_MS) failedRecent.splice(i, 1);
+          const item = failedRecent[i];
+          if (!item) continue;
+          if (now - item.failedAt > FAILED_RECENT_WINDOW_MS) failedRecent.splice(i, 1);
         }
         const match = failedRecent.find((f) => f.convId === normalized.conversationId && f.content === normalized.content && failedLatch.has(f.tempId));
         if (match) {

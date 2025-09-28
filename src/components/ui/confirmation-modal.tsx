@@ -196,7 +196,6 @@ export function ConfirmationModal({
     </AlertDialog>
   );
 }
-
 /**
  * Pre-configured confirmation modals for common actions
  */
@@ -264,7 +263,7 @@ export const ConfirmationModals = {
       cancelText="Kembali"
       variant="warning"
       onConfirm={onConfirm}
-      onCancel={onCancel}
+      {...(onCancel ? { onCancel } : {})}
       {...props}
     />
   ),

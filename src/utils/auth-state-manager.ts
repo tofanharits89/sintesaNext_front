@@ -337,7 +337,7 @@ export class AuthStateManager {
         return { 
           success: false, 
           state: null, 
-          reason: validationResult.reason,
+          reason: validationResult.reason as string,
           requiresReauth: true
         };
       }

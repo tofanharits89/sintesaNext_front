@@ -124,7 +124,7 @@ export function createUser(input: Omit<User, "id" | "createdAt">) {
 export function updateUser(id: string, patch: Partial<Omit<User, "id" | "createdAt">>) {
   const idx = USERS.findIndex((u) => u.id === id);
   if (idx === -1) return undefined;
-  USERS[idx] = { ...USERS[idx], ...patch };
+  USERS[idx] = { ...USERS[idx], ...patch } as User;
   return USERS[idx];
 }
 

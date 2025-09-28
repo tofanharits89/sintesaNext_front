@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { backendPath } from "@/lib/backend";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
@@ -59,8 +59,14 @@ export function useDauTransaksi(params: { thang?: number | string; bulan?: numbe
   if (params?.kppn) q.push(`kppn=${encodeURIComponent(params.kppn)}`);
   if (params?.kabkota) q.push(`kabkota=${encodeURIComponent(params.kabkota)}`);
   const key = backendPath(`/transfer-daerah/dau/transaksi${q.length ? `?${q.join("&")}` : ""}`);
-
-  const { data, error, isLoading, mutate } = useSWR<RawDauTransaksiRow[]>(key, fetcher, { revalidateOnFocus: false });
+  const queryClient = useQueryClient();
+  const { data, error, isLoading } = useQuery<RawDauTransaksiRow[]>({
+    queryKey: ["dau-transaksi", params],
+    queryFn: () => fetcher(key),
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    staleTime: 0,
+  });
 
   const rows: DauTransaksiRowUi[] = (data || []).map((r, idx) => ({
     id: String(r.ID ?? `${r.KDKPPN}-${r.KDPEMDA}-${r.BULAN}-${r.THANG}`),
@@ -75,5 +81,6 @@ export function useDauTransaksi(params: { thang?: number | string; bulan?: numbe
     nilaiPotongan: Number(r.NILAI ?? 0),
   }));
 
+  const mutate = () => queryClient.invalidateQueries({ queryKey: ["dau-transaksi"] });
   return { rows, isLoading, error, mutate } as const;
 }
