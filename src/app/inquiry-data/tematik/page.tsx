@@ -17,12 +17,12 @@ import {
 } from "@/components/ui/dialog";
 import { PilihLaporanCard } from "@/components/inquiry-data/pilih-laporan-card";
 import { FilterParametersCard } from "@/components/inquiry-data/filter-parameters-card";
-import { DynamicFiltersCard } from "@/components/inquiry-data/dynamic-filters-card";
-import { EnhancedFilterCard } from "@/components/inquiry-data/enhanced-filter-card";
 import { CategoryMandatoryFilters } from "@/components/inquiry-data/category-mandatory-filters";
 import { QueryLoaderButton } from "@/components/inquiry-data/query-loader-button";
 import { UnsavedChangesModal } from "@/components/inquiry-data/modals/unsaved-changes-modal";
-import { QueryManagement } from "@/components/inquiry-data/query-management";
+import { DynamicFiltersCard, QueryManagement } from "@/components/lazy";
+import { ComponentLoadingFallback } from "@/components/ui/loading-fallback";
+import { Suspense } from "react";
 import {
   useQueryLoader,
   type QueryBuilderState,
@@ -531,16 +531,18 @@ export default function TematikPage() {
         />
 
         {/* 4. Dynamic Filters and Actions Card */}
-        <DynamicFiltersCard
-          activeFilters={activeFilters}
-          reportParams={reportParams}
-          onRemoveFilter={removeFilter}
-          onClearAllFilters={clearAllFilters}
-          filterValues={normalizedFilterValues}
-          onFilterChange={handleFilterChange}
-          scope="tematik" // Pass scope for query differentiation
-          hiddenFilterKeys={tematikConfig.getMandatoryFilterKeys()} // Hide mandatory filters from this card
-        />
+        <Suspense fallback={<ComponentLoadingFallback />}>
+          <DynamicFiltersCard
+            activeFilters={activeFilters}
+            reportParams={reportParams}
+            onRemoveFilter={removeFilter}
+            onClearAllFilters={clearAllFilters}
+            filterValues={normalizedFilterValues}
+            onFilterChange={handleFilterChange}
+            scope="tematik" // Pass scope for query differentiation
+            hiddenFilterKeys={tematikConfig.getMandatoryFilterKeys()} // Hide mandatory filters from this card
+          />
+        </Suspense>
       </div>
 
       {/* Unsaved Changes Warning Modal */}
@@ -589,17 +591,19 @@ export default function TematikPage() {
           </DialogHeader>
           <div className="overflow-y-auto max-h-[calc(90vh-160px)]">
             <QueryErrorBoundary>
-              <QueryManagement
-                onLoadQuery={(query) => {
-                  handleLoadQuery(query);
-                  setIsQueryManagementOpen(false); // Close modal after loading
-                }}
-                currentUserId={currentUser?.id || ""}
-                scope="tematik" // Pass scope to filter queries
-                onRefreshReady={(refreshFn) => {
-                  queryManagementRefreshRef.current = refreshFn;
-                }}
-              />
+              <Suspense fallback={<ComponentLoadingFallback />}>
+                <QueryManagement
+                  onLoadQuery={(query) => {
+                    handleLoadQuery(query);
+                    setIsQueryManagementOpen(false); // Close modal after loading
+                  }}
+                  currentUserId={currentUser?.id || ""}
+                  scope="tematik" // Pass scope to filter queries
+                  onRefreshReady={(refreshFn) => {
+                    queryManagementRefreshRef.current = refreshFn;
+                  }}
+                />
+              </Suspense>
             </QueryErrorBoundary>
           </div>
           <DialogFooter>

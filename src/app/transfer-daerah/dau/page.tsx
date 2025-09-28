@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DataKmkTab } from "@/components/transfer-daerah/data-kmk-tab";
-import { DataTransaksiTab } from "@/components/transfer-daerah/data-transaksi-tab";
-import { RekonsiliasiDataTab } from "@/components/transfer-daerah/rekonsilisasi-data-tab";
+import { DataKmkTab, DataTransaksiTab, RekonsiliasiDataTab } from "@/components/lazy";
+import { ComponentLoadingFallback } from "@/components/ui/loading-fallback";
+import { Suspense } from "react";
 
 export default function DAUPage() {
   return (
@@ -49,21 +49,27 @@ export default function DAUPage() {
           value="data-kmk"
           className="animate-in fade-in-50 duration-200"
         >
-          <DataKmkTab />
+          <Suspense fallback={<ComponentLoadingFallback />}>
+            <DataKmkTab />
+          </Suspense>
         </TabsContent>
 
         <TabsContent
           value="data-transaksi"
           className="animate-in fade-in-50 duration-200"
         >
-          <DataTransaksiTab />
+          <Suspense fallback={<ComponentLoadingFallback />}>
+            <DataTransaksiTab />
+          </Suspense>
         </TabsContent>
 
         <TabsContent
           value="rekonsilisasi-data"
           className="animate-in fade-in-50 duration-200"
         >
-          <RekonsiliasiDataTab />
+          <Suspense fallback={<ComponentLoadingFallback />}>
+            <RekonsiliasiDataTab />
+          </Suspense>
         </TabsContent>
       </Tabs>
     </div>

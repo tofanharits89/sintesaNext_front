@@ -16,16 +16,8 @@ import { useQuickStats } from "@/features/mbg/hooks/useQuickStats";
 import { useRankings } from "@/features/mbg/hooks/useRankings";
 import { useChartsReady } from "@/features/mbg/hooks/useChartsReady";
 
-const MapSearch = dynamic(
-  () =>
-    import("@/features/mbg/components/MapSearch").then((m) => ({
-      default: m.MapSearch,
-    })),
-  {
-    ssr: false,
-    loading: () => <MapSearchCardSkeleton className="h-96" />,
-  }
-);
+import { MapView } from "@/components/lazy";
+import { Suspense } from "react";
 
 export default function DashboardMBGPage() {
   // Replace simulated timers with data hooks preserving the same UX timings
@@ -65,7 +57,9 @@ export default function DashboardMBGPage() {
       <div className="grid gap-4 grid-cols-1 xl:grid-cols-4">
         <div className="xl:col-span-3">
           <QueryErrorBoundary>
-            <MapSearch />
+            <Suspense fallback={<MapSearchCardSkeleton className="h-96" />}>
+              <MapView />
+            </Suspense>
           </QueryErrorBoundary>
         </div>
         <div className="xl:col-span-1">

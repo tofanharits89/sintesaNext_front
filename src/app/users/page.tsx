@@ -37,7 +37,9 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Pencil, Trash2, AlertTriangle } from "lucide-react";
-import { ModernUsersTable } from "@/components/ui/modern-users-table";
+import { ModernUsersTable } from "@/components/lazy";
+import { TableLoadingFallback } from "@/components/ui/loading-fallback";
+import { Suspense } from "react";
 import kdkanwilData from "@/data/kdkanwil.json";
 import kdkppnData from "@/data/kdkppn.json";
 
@@ -387,16 +389,18 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <ModernUsersTable
-        users={paged}
-        selected={selected}
-        onToggleSelect={toggleSelect}
-        onToggleSelectAll={toggleSelectAll}
-        onEdit={openEdit}
-        onDelete={handleDeleteClick}
-        currentPage={page}
-        pageSize={pageSize}
-      />
+      <Suspense fallback={<TableLoadingFallback />}>
+        <ModernUsersTable
+          users={paged}
+          selected={selected}
+          onToggleSelect={toggleSelect}
+          onToggleSelectAll={toggleSelectAll}
+          onEdit={openEdit}
+          onDelete={handleDeleteClick}
+          currentPage={page}
+          pageSize={pageSize}
+        />
+      </Suspense>
 
       <div className="mt-4 flex items-center justify-between">
         <div className="text-xs text-muted-foreground">

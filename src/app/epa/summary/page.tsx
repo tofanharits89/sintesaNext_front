@@ -1,8 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { FilterCard } from "@/components/epa/filter-card";
-import { TabsCard } from "@/components/epa/tabs-card";
+import { EpaFilterCard, EpaTabsCard } from "@/components/lazy";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Loading skeleton for the filter card
@@ -67,12 +66,12 @@ export default function EPASummaryPage() {
 
       {/* Filter Section */}
       <Suspense fallback={<FilterCardSkeleton />}>
-        <FilterCard />
+        <EpaFilterCard />
       </Suspense>
 
       {/* Tabs Section */}
       <Suspense fallback={<TabsCardSkeleton />}>
-        <TabsCard />
+        <EpaTabsCard />
       </Suspense>
     </div>
   );

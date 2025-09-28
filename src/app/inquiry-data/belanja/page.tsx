@@ -17,10 +17,11 @@ import {
 } from "@/components/ui/dialog";
 import { PilihLaporanCard } from "@/components/inquiry-data/pilih-laporan-card";
 import { FilterParametersCard } from "@/components/inquiry-data/filter-parameters-card";
-import { DynamicFiltersCard } from "@/components/inquiry-data/dynamic-filters-card";
 import { QueryLoaderButton } from "@/components/inquiry-data/query-loader-button";
 import { UnsavedChangesModal } from "@/components/inquiry-data/modals/unsaved-changes-modal";
-import { QueryManagement } from "@/components/inquiry-data/query-management";
+import { DynamicFiltersCard, QueryManagement } from "@/components/lazy";
+import { ComponentLoadingFallback } from "@/components/ui/loading-fallback";
+import { Suspense } from "react";
 import {
   useQueryLoader,
   type QueryBuilderState,
@@ -394,16 +395,18 @@ export default function BelanjaPage() {
         />
 
         {/* 3. Dynamic Filters and Actions Card */}
-        <DynamicFiltersCard
-          activeFilters={activeFilters}
-          reportParams={reportParams}
-          onRemoveFilter={removeFilter}
-          onClearAllFilters={clearAllFilters}
-          filterValues={normalizedFilterValues}
-          onFilterChange={handleFilterChange}
-          scope="belanja" // Pass scope for query differentiation
-          queryLoader={stableQueryLoader}
-        />
+        <Suspense fallback={<ComponentLoadingFallback />}>
+          <DynamicFiltersCard
+            activeFilters={activeFilters}
+            reportParams={reportParams}
+            onRemoveFilter={removeFilter}
+            onClearAllFilters={clearAllFilters}
+            filterValues={normalizedFilterValues}
+            onFilterChange={handleFilterChange}
+            scope="belanja" // Pass scope for query differentiation
+            queryLoader={stableQueryLoader}
+          />
+        </Suspense>
       </div>
 
       {/* Unsaved Changes Warning Modal */}
@@ -451,17 +454,19 @@ export default function BelanjaPage() {
           </DialogHeader>
           <div className="overflow-y-auto max-h-[calc(90vh-160px)]">
             <QueryErrorBoundary>
-              <QueryManagement
-                onLoadQuery={(query) => {
-                  handleLoadQuery(query);
-                  setIsQueryManagementOpen(false); // Close modal after loading
-                }}
-                currentUserId={currentUser?.id || ""}
-                scope="belanja" // Pass scope to filter queries
-                onRefreshReady={(refreshFn) => {
-                  queryManagementRefreshRef.current = refreshFn;
-                }}
-              />
+              <Suspense fallback={<ComponentLoadingFallback />}>
+                <QueryManagement
+                  onLoadQuery={(query) => {
+                    handleLoadQuery(query);
+                    setIsQueryManagementOpen(false); // Close modal after loading
+                  }}
+                  currentUserId={currentUser?.id || ""}
+                  scope="belanja" // Pass scope to filter queries
+                  onRefreshReady={(refreshFn) => {
+                    queryManagementRefreshRef.current = refreshFn;
+                  }}
+                />
+              </Suspense>
             </QueryErrorBoundary>
           </div>
           <DialogFooter>

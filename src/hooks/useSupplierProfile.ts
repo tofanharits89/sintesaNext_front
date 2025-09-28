@@ -32,12 +32,10 @@ export function useSupplierProfile(params: { vendor?: string; limit?: number; ye
       if (limit) qs.set("limit", String(limit));
       if (year && /^\d{4}$/.test(year)) qs.set("year", year);
 
-      const url = new URL(
-        (process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next") + `/api/supplier-analytics/profile?${qs.toString()}`,
-        window.location.origin
-      );
+      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:88/api/v1";
+      const url = `${baseUrl}/supplier-analytics/profile?${qs.toString()}`;
 
-      const resp = await fetch(url.toString(), {
+      const resp = await fetch(url, {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
       });

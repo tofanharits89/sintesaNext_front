@@ -36,15 +36,16 @@ const getRoleDisplayName = (role: string): string => {
 
 export const useLoginNotifications = () => {
   const { currentUser } = useCurrentUser();
-  
-  // Early return if not admin - prevents unnecessary socket operations
-  if (!currentUser || !["super_admin", "co_admin"].includes(currentUser.role)) {
-    return;
-  }
-  
   const { socket, isConnected, isReady } = useSocket();
+  
+  // Check if user is admin - prevents unnecessary socket operations
+  const isAdmin = currentUser && ["super_admin", "co_admin"].includes(currentUser.role);
 
   useEffect(() => {
+    // Early return if not admin
+    if (!isAdmin) {
+      return;
+    }
 
     if (!socket || !isConnected || !isReady) {
       console.log("[LoginNotifications] Socket not ready:", {
@@ -106,5 +107,5 @@ export const useLoginNotifications = () => {
       socket.off("user:login", handleUserLogin);
       console.log("[LoginNotifications] Login notification listeners removed");
     };
-  }, [currentUser, socket, isConnected, isReady]);
+  }, [isAdmin, currentUser, socket, isConnected, isReady]);
 };

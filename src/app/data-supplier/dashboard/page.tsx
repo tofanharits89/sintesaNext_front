@@ -1,5 +1,7 @@
 import YearFilter from "@/components/data-supplier/year-filter";
-import DashboardSupplierClient from "@/components/data-supplier/DashboardSupplierClient";
+import { DashboardSupplierClient } from "@/components/lazy";
+import { ComponentLoadingFallback } from "@/components/ui/loading-fallback";
+import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +31,9 @@ export default async function Page({
         <YearFilter years={years} selectedYear={selectedYear} />
       </div>
 
-      <DashboardSupplierClient selectedYear={selectedYear} />
+      <Suspense fallback={<ComponentLoadingFallback />}>
+        <DashboardSupplierClient selectedYear={selectedYear} />
+      </Suspense>
     </div>
   );
 }

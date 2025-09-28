@@ -13,13 +13,10 @@ export function useSupplierDashboard(year?: string) {
     queryFn: async () => {
       const params = new URLSearchParams();
       if (year && /^\d{4}$/.test(year)) params.set("year", year);
-      const url = new URL(
-        (process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next") +
-          `/api/supplier-analytics/dashboard${params.toString() ? `?${params.toString()}` : ""}`,
-        window.location.origin
-      );
+      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:88/api/v1";
+      const url = `${baseUrl}/supplier-analytics/dashboard${params.toString() ? `?${params.toString()}` : ""}`;
 
-      const resp = await fetch(url.toString(), {
+      const resp = await fetch(url, {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
       });

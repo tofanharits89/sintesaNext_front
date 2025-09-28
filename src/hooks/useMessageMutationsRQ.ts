@@ -435,6 +435,7 @@ export function useSendMessageMutation() {
       // Clear sending state and input
       ui.setSendingMessage(false);
       ui.clearMessageInput();
+      console.log('[MSG DEBUG] Cleared input and sending state');
 
       // Best-effort: clear sending/failed flags on the optimistic temp message in original conversation
       if (convKeyId && tempId) {
@@ -663,28 +664,16 @@ export function useSendMessageMutation() {
         } catch {}
       }
 
-      // Invalidate and refetch to get the real message data, but avoid wiping the just-seeded cache
-      if (convKeyId) {
-        setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: messageKeys.messages(convKeyId) });
-        }, 200);
+      // Always invalidate conversations to show updated last message
+      queryClient.invalidateQueries({ queryKey: conversationKeys.all });
+      
+      // For existing conversations, invalidate messages immediately
+      const targetConvId = derivedNewConvId || conversationId;
+      if (targetConvId) {
+        queryClient.invalidateQueries({
+          queryKey: messageKeys.messages(String(targetConvId)),
+        });
       }
-      const newConvIdForInvalidate = (data as any)?.data?.conversationId || (data as any)?.conversationId;
-      if (newConvIdForInvalidate) {
-        setTimeout(() => {
-          const snapshot = queryClient.getQueryData<any>(messageKeys.messages(String(newConvIdForInvalidate)));
-          const hasSeed = !!snapshot && Array.isArray(snapshot?.pages) && snapshot.pages.some((p: any) => Array.isArray(p?.data?.messages) && p.data.messages.length > 0);
-          // Only invalidate if cache is still empty; otherwise let socket fill details to prevent flicker
-          if (!hasSeed) {
-            queryClient.invalidateQueries({
-              queryKey: messageKeys.messages(String(newConvIdForInvalidate)),
-            });
-          }
-        }, 1200);
-      }
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: conversationKeys.all });
-      }, 600);
 
       // Broadcast success for latch clearing (for both real id and temp id)
       try {

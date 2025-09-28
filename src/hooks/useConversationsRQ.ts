@@ -42,8 +42,9 @@ const fetchConversationsPage = async (
   if (cursor) url.searchParams.set("cursor", String(cursor));
   if (limit) url.searchParams.set("limit", String(limit));
 
-  // Fetching conversations from API
-
+  // Add timestamp to bust cache
+  url.searchParams.set("_t", Date.now().toString());
+  
   const resp = await fetch(url.toString(), {
     credentials: "include",
     cache: "no-store",
@@ -51,17 +52,14 @@ const fetchConversationsPage = async (
       "Content-Type": "application/json"
     },
   });
+  
   if (!resp.ok) throw new Error(`Failed to fetch: ${resp.status}`);
   const json: any = await resp.json().catch(() => ({}));
-
-  // Processing API response
 
   const conversations: Conversation[] =
     json?.data?.conversations || json?.conversations || [];
   const nextCursor: string | null =
     json?.data?.nextCursor ?? json?.nextCursor ?? null;
-
-  // Process each conversation structure
 
   return { conversations, nextCursor };
 };
@@ -83,11 +81,13 @@ export function useConversations(options?: { enabled?: boolean }) {
     queryFn: ({ pageParam }) =>
       fetchConversationsPage(pageParam as string | null, 20),
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-    staleTime: 30 * 1000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: 0,
+    gcTime: 1 * 60 * 1000,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
+    refetchInterval: 5000, // Refetch every 5 seconds
     enabled: options?.enabled ?? true,
+    retry: false, // Don't retry failed requests
   });
 
   // Flatten pages and ensure newest conversations appear first

@@ -78,6 +78,7 @@ const fetchMessages = async (
   url.searchParams.set("limit", String(PAGE_SIZE));
   url.searchParams.set("page_size", String(PAGE_SIZE));
   url.searchParams.set("pageSize", String(PAGE_SIZE));
+  url.searchParams.set("_t", Date.now().toString()); // Cache buster
   if (pageParam) {
     url.searchParams.set("before", pageParam);
     url.searchParams.set("cursor", pageParam);
@@ -85,7 +86,7 @@ const fetchMessages = async (
   }
 
   try {
-    // Fetching messages from API
+    console.log('[MSG DEBUG] Fetching messages from API', { conversationId, url: url.toString() });
   } catch {}
 
   const resp = await fetch(url.toString(), {
@@ -104,14 +105,16 @@ const fetchMessages = async (
       json?.data?.result?.messages,
     ];
     const arr = cands.find((a: any) => Array.isArray(a)) as any[] | undefined;
-    // Processing messages response
-  } catch {}
+    console.log('[MSG DEBUG] API response', { conversationId, messagesCount: arr?.length || 0, totalFromAPI: json?.data?.pagination?.total, firstFewMessages: arr?.slice(0, 3)?.map((m: any) => ({ id: m.id, content: m.content?.substring(0, 20) })) });
+  } catch (e) {
+    console.log('[MSG DEBUG] API response parsing error', e);
+  }
   return json;
 };
 
 export function useMessages(conversationId?: string) {
   const queryClient = useQueryClient();
-
+  
   const isFetchable = (() => {
     if (!conversationId) return false;
     const safeConversationId = String(conversationId);
@@ -214,23 +217,23 @@ export function useMessages(conversationId?: string) {
     queryKey: messageKeys.messages(conversationId || ""),
     queryFn: fetchMessages,
     enabled: isFetchable && !!conversationId,
-    // getNextPageParam moved to createInfiniteQueryOptions overrides to avoid duplicate property
-    ...createInfiniteQueryOptions<any, Error, any, ReturnType<typeof messageKeys.messages>, string | undefined>('realtime', {
-      refetchOnWindowFocus: false, // rely on sockets for live updates
-      gcTime: 30 * 60 * 1000, // 30 minutes (avoid dropping cache during short idles)
-      getNextPageParam: (lastPage) => {
-        // Support multiple possible locations for pagination cursor
-        const pg =
-          lastPage?.data?.pagination ||
-          lastPage?.pagination ||
-          lastPage?.data?.data?.pagination ||
-          lastPage?.result?.pagination ||
-          null;
-        const nextBefore =
-          (pg as any)?.nextBefore || (pg as any)?.next_before || (pg as any)?.next || undefined;
-        return nextBefore || undefined;
-      },
-    }),
+    staleTime: 0, // Always consider data stale
+    gcTime: 0, // No cache
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchOnReconnect: true, // Refetch on network reconnect
+    // refetchInterval: 1000, // Removed - use socket updates instead
+    getNextPageParam: (lastPage) => {
+      // Support multiple possible locations for pagination cursor
+      const pg =
+        lastPage?.data?.pagination ||
+        lastPage?.pagination ||
+        lastPage?.data?.data?.pagination ||
+        lastPage?.result?.pagination ||
+        null;
+      const nextBefore =
+        (pg as any)?.nextBefore || (pg as any)?.next_before || (pg as any)?.next || undefined;
+      return nextBefore || undefined;
+    },
   });
 
   // Map API pages to FrontendMessage[]
@@ -427,16 +430,23 @@ export function useMessages(conversationId?: string) {
   useEffect(() => {
     if (!conversationId) return;
 
-    // Simple de-dupe for rapid duplicate socket events (e.g., NEW + RECEIVED)
+    // Enhanced de-dupe for rapid duplicate socket events
     const recentIds = new Set<string>();
+    const recentContent = new Map<string, number>(); // content -> timestamp
     let recentTimer: any = null;
 
-    const remember = (id?: string | null) => {
+    const remember = (id?: string | null, content?: string) => {
       if (!id) return;
       recentIds.add(id);
+      if (content) {
+        recentContent.set(content, Date.now());
+      }
       // Clear after short window
       if (recentTimer) clearTimeout(recentTimer);
-      recentTimer = setTimeout(() => recentIds.clear(), 5000);
+      recentTimer = setTimeout(() => {
+        recentIds.clear();
+        recentContent.clear();
+      }, 5000);
     };
 
     const isTempConvId = (id?: string) =>
@@ -506,7 +516,21 @@ export function useMessages(conversationId?: string) {
           return;
         }
       }
-      if (recentIds.has(normalized.id)) return; // drop duplicate
+      // Enhanced duplicate detection
+      if (recentIds.has(normalized.id)) {
+        try { console.log('[MSG DEBUG] MESSAGE_NEW dropped - duplicate ID', { id: normalized.id, at: Date.now() }); } catch {}
+        return;
+      }
+      
+      // Also check for duplicate content within short window
+      if (normalized.content) {
+        const lastSeen = recentContent.get(normalized.content);
+        if (lastSeen && Date.now() - lastSeen < 5000) {
+          try { console.log('[MSG DEBUG] MESSAGE_NEW dropped - duplicate content', { id: normalized.id, content: normalized.content.substring(0, 20), at: Date.now() }); } catch {}
+          return;
+        }
+      }
+      
       try { console.log('[MSG DEBUG] MESSAGE_NEW accepted', { id: normalized.id, convId: normalized.conversationId, hasTempId: !!incomingTempId, at: Date.now() }); } catch {}
 
       // If not fetchable, append into local store and re-render
@@ -545,7 +569,7 @@ export function useMessages(conversationId?: string) {
             );
           } catch {}
         }
-        remember(normalized.id);
+        remember(normalized.id, normalized.content);
         bump();
         return;
       }
@@ -624,8 +648,19 @@ export function useMessages(conversationId?: string) {
         };
 
         // Skip if this exact message id already exists (guards against duplicate socket events)
-        if (!filtered.some((msg: any) => msg?.id === newMsg.id)) {
+        const existingIndex = filtered.findIndex((msg: any) => msg?.id === newMsg.id);
+        if (existingIndex === -1) {
+          // New message, add it
           filtered.push(newMsg);
+        } else {
+          // Message exists, update it while preserving any local UI state
+          const existing = filtered[existingIndex];
+          filtered[existingIndex] = {
+            ...newMsg,
+            // Preserve local UI flags if they exist
+            _sending: existing._sending || false,
+            _failed: existing._failed || false,
+          };
         }
         last.data = { ...(last.data || {}), messages: filtered };
         copy.pages[lastIdx] = last;

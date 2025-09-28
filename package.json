@@ -15,7 +15,8 @@
     "test:coverage": "vitest run --coverage",
     "type-check": "tsc --noEmit",
     "clean": "cross-env rimraf .next dist coverage",
-    "install:clean": "node scripts/install-clean.js"
+    "install:clean": "node scripts/install-clean.js",
+    "analyze:bundle": "node src/scripts/analyze-bundle.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",

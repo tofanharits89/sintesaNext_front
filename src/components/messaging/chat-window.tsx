@@ -38,6 +38,7 @@ import { MessageStatus } from "./MessageStatus";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useMessagingRQ } from "@/hooks/messaging-rq";
 import { useSendMessageMutation } from "@/hooks/useMessageMutationsRQ";
+import { useMessages } from "@/hooks/useMessagesRQ";
 import { useQueryClient } from "@tanstack/react-query";
 import { updateTempMessageById } from "@/features/messaging/temp-messages-store";
 import { messageKeys } from "@/hooks/useMessagesRQ";
@@ -105,11 +106,10 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
   const queryClient = useQueryClient();
   const resendMutation = useSendMessageMutation();
 
-  // Use the new React Query + Zustand messaging system
+  // Use the new React Query + Zustand messaging system (excluding messages)
   const {
     // Data
     conversations,
-    messages,
     activeConversationId,
 
     // UI State
@@ -136,6 +136,16 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
     startTyping: startTypingRQ,
     stopTyping: stopTypingRQ,
   } = useMessagingRQ();
+
+  // Get messages directly for this conversation
+  const { messages, refetchMessages } = useMessages(conversationId);
+  
+  // Force refetch when conversation changes
+  useEffect(() => {
+    if (conversationId) {
+      refetchMessages();
+    }
+  }, [conversationId]); // Remove refetchMessages from deps
 
   // Prefer real active id when prop is temporary to avoid falling back to temp after reconciliation
   const effectiveConversationId = useMemo(() => {

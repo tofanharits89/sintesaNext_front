@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 // Import the new React Query + Zustand messaging system
 import { useMessagingRQ } from "@/hooks/messaging-rq";
-import { ChatWindow } from "@/components/messaging/chat-window";
-import { ConversationList } from "@/components/messaging/conversation-list";
+import { ChatWindow, ConversationList } from "@/components/lazy";
+import { ComponentLoadingFallback } from "@/components/ui/loading-fallback";
+import { Suspense } from "react";
 import { NewMessageDialog } from "@/components/messaging/new-message-dialog";
 import { useUnreadBadgesStore } from "@/stores/unread-badges-store";
 import { Button } from "@/components/ui/button";
@@ -260,18 +261,20 @@ export default function MessagesPage() {
               <CardTitle className="text-lg">Percakapan</CardTitle>
             </CardHeader>
             <CardContent className="p-0 flex-1 overflow-hidden">
-              <ConversationList
-                conversations={conversations || []}
-                selectedConversationId={activeConversationId}
-                onConversationSelect={handleConversationSelect}
-                isLoading={isLoading}
-                getUnreadCount={getUnreadCount}
-                hasMore={!!conversationsHasNextPage}
-                onLoadMore={() =>
-                  fetchNextConversations && fetchNextConversations()
-                }
-                isLoadingMore={!!isFetchingNextConversations}
-              />
+              <Suspense fallback={<ComponentLoadingFallback />}>
+                <ConversationList
+                  conversations={conversations || []}
+                  selectedConversationId={activeConversationId}
+                  onConversationSelect={handleConversationSelect}
+                  isLoading={isLoading}
+                  getUnreadCount={getUnreadCount}
+                  hasMore={!!conversationsHasNextPage}
+                  onLoadMore={() =>
+                    fetchNextConversations && fetchNextConversations()
+                  }
+                  isLoadingMore={!!isFetchingNextConversations}
+                />
+              </Suspense>
             </CardContent>
           </Card>
         </div>
@@ -279,7 +282,9 @@ export default function MessagesPage() {
         {/* Chat Window */}
         <div className="lg:col-span-2">
           {activeConversationId ? (
-            <ChatWindow conversationId={activeConversationId} />
+            <Suspense fallback={<ComponentLoadingFallback />}>
+              <ChatWindow conversationId={activeConversationId} />
+            </Suspense>
           ) : (
             <Card className="h-[600px] max-h-[70vh] flex items-center justify-center">
               <CardContent className="text-center">
