@@ -122,7 +122,7 @@ export function useQuickStats(options: UseQuickStatsOptions = {}): UseQueryResul
       }
     },
     enabled: isClient,
-    staleTime: 24 * 60 * 60 * 1000, // 24 hours to match HTTP cache
+    staleTime: 24 * 60 * 60 * 1000, // 24 hours to match backend cache
     retry: (failureCount, error) => {
       // Don't retry on authentication errors
       if (

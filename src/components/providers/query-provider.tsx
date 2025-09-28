@@ -102,6 +102,10 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
                 return false;
               }
             }
+            // Don't retry on authentication errors
+            if (error?.message?.includes('401') || error?.message?.includes('Profile request failed: 401')) {
+              return false;
+            }
             return failureCount < 3;
           },
           retryDelay: (attemptIndex) =>
@@ -126,7 +130,10 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
         },
         onError: (error, query) => {
           analytics.recordError();
-          logger.error("Query error:", error, "Query key:", query.queryKey);
+          // Don't log 401 errors as they're expected when user is not authenticated
+          if (!error?.message?.includes('401') && !error?.message?.includes('Profile request failed: 401')) {
+            logger.error("Query error:", error, "Query key:", query.queryKey);
+          }
         },
       }),
       mutationCache: new MutationCache({

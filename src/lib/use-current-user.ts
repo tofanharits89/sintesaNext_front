@@ -10,6 +10,10 @@ const fetcher = async () => {
     cache: "no-store",
   });
   if (!resp.ok) {
+    // Don't throw error for 401 (unauthenticated) - just return null
+    if (resp.status === 401) {
+      return null;
+    }
     throw new Error(`Profile request failed: ${resp.status}`);
   }
   return resp.json();
@@ -25,6 +29,13 @@ export function useCurrentUser(initial?: User) {
     initialData: initial ? { data: initial } as any : undefined,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    retry: (failureCount, error) => {
+      // Don't retry on 401 errors (user not authenticated)
+      if (error?.message?.includes('401')) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 
   const currentUser = useMemo(() => {
