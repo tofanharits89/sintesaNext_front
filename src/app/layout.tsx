@@ -40,28 +40,8 @@ export default async function RootLayout({
   // 2. Section layouts (dashboard, profile, users, settings) - optimized server-side JWT verification
   // User profile is now fetched efficiently in dashboard layout to avoid duplicate requests
 
-  // For non-dashboard pages, fetch user profile with strategic caching
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore?.toString?.() ?? "";
-  let initialUser: import("@/lib/users-store").User | undefined = undefined;
-  
-  // Only fetch user profile for non-dashboard routes to avoid duplication
-  const isRootOrNonDashboard = true; // Dashboard layout handles its own user fetch
-  
-  if (isRootOrNonDashboard && cookieHeader) {
-    try {
-      const resp = await fetch(apiPath("/users/profile/me"), {
-        headers: { cookie: cookieHeader },
-        cache: "no-store", // Don't cache user profiles to prevent stale data after login/logout
-      });
-      if (resp.ok) {
-        const j = await resp.json().catch(() => null);
-        initialUser = j?.data;
-      }
-    } catch {
-      // ignore — navbar will fallback to client fetch
-    }
-  }
+  // Skip server-side user fetch - let React Query handle with stale-while-revalidate
+  const initialUser: import("@/lib/users-store").User | undefined = undefined;
 
   return (
     <html lang="id" suppressHydrationWarning>

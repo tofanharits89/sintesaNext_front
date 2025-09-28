@@ -296,8 +296,56 @@ async function validateSessionViaBackend(
   return authResult;
 }
 
-const HEALTH_TTL_MS = 60_000; // 1 minute - security-optimized health check frequency
+const HEALTH_TTL_MS = 300_000; // 5 minutes - reduced network overhead
 let healthCache: { ok: boolean; exp: number } | null = null;
+
+// Circuit breaker for health checks
+class HealthCircuitBreaker {
+  private failures = 0;
+  private lastFailure = 0;
+  private state: 'CLOSED' | 'OPEN' = 'CLOSED';
+  
+  async check(): Promise<boolean> {
+    if (this.state === 'OPEN' && Date.now() - this.lastFailure < 60000) {
+      return false; // Stay open for 1 minute after failure
+    }
+    
+    try {
+      const result = await this.performHealthCheck();
+      if (result) {
+        this.failures = 0;
+        this.state = 'CLOSED';
+      }
+      return result;
+    } catch {
+      this.failures++;
+      this.lastFailure = Date.now();
+      if (this.failures >= 3) {
+        this.state = 'OPEN';
+      }
+      return false;
+    }
+  }
+  
+  private async performHealthCheck(): Promise<boolean> {
+    const ac = new AbortController();
+    const timeout = setTimeout(() => ac.abort(), 2000);
+    
+    try {
+      const resp = await fetch(backendPath("/auth/health"), {
+        method: "HEAD",
+        cache: "no-store",
+        signal: ac.signal,
+      });
+      clearTimeout(timeout);
+      return resp.ok;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+}
+
+const healthCircuitBreaker = new HealthCircuitBreaker();
 
 async function isBackendHealthy() {
   const now = Date.now();
@@ -306,50 +354,9 @@ async function isBackendHealthy() {
     return healthCache.ok;
   }
 
-  const timeoutMs = 2500; // allow a bit more time than before
-
-  // Prefer a fast HEAD probe first
-  try {
-    const ac = new AbortController();
-    const timeout = setTimeout(() => ac.abort(), timeoutMs);
-    const headResp = await fetch(backendPath("/auth/health"), {
-      method: "HEAD",
-      cache: "no-store",
-      signal: ac.signal,
-    });
-    clearTimeout(timeout);
-    const ok = headResp.ok;
-    healthCache = { ok, exp: now + HEALTH_TTL_MS };
-    return ok;
-  } catch {
-    // Fallback to GET (some proxies/CDNs strip HEAD or mishandle it)
-    try {
-      const ac2 = new AbortController();
-      const timeout2 = setTimeout(() => ac2.abort(), timeoutMs);
-      const resp = await fetch(backendPath("/auth/health"), {
-        method: "GET",
-        cache: "no-store",
-        signal: ac2.signal,
-      });
-      clearTimeout(timeout2);
-      const ok =
-        resp.ok &&
-        Boolean(
-          (await resp.json().catch(() => ({})))?.success ||
-            (
-              await resp
-                .clone()
-                .json()
-                .catch(() => ({}))
-            )?.status === "healthy"
-        );
-      healthCache = { ok, exp: now + HEALTH_TTL_MS };
-      return ok;
-    } catch {
-      healthCache = { ok: false, exp: now + HEALTH_TTL_MS };
-      return false;
-    }
-  }
+  const ok = await healthCircuitBreaker.check();
+  healthCache = { ok, exp: now + HEALTH_TTL_MS };
+  return ok;
 }
 
 /**

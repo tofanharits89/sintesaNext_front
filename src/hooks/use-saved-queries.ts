@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { backendPath } from "@/lib/backend";
 import { apiClient, http } from "@/lib/httpClient";
@@ -116,7 +115,6 @@ export function useSavedQueries(
     scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak";
   } = {}
 ) {
-  const queryClient = useQueryClient();
   const queryClient = useQueryClient();
   // Stabilize params to prevent infinite loops
   const stableParams = useMemo(
@@ -473,7 +471,6 @@ export function useSavedQueries(
       try {
         console.log("[useSavedQueries] Creating query with data:", queryData);
         const result = await createQueryMutation.mutateAsync(queryData);
-        const result = await createQueryMutation.mutateAsync(queryData);
         console.log("[useSavedQueries] Create query result:", result);
         if (!result) {
           console.error("[useSavedQueries] No result received from createQueryMutation.mutateAsync");
@@ -488,7 +485,6 @@ export function useSavedQueries(
       }
     },
     [createQueryMutation.mutateAsync, createQueryMutation.error]
-    [createQueryMutation.mutateAsync, createQueryMutation.error]
   );
 
   const updateQuery = useCallback(
@@ -497,7 +493,6 @@ export function useSavedQueries(
       updates: UpdateSavedQueryRequest
     ): Promise<SavedQuery> => {
       try {
-        const result = await updateQueryMutation.mutateAsync({ id, updates });
         const result = await updateQueryMutation.mutateAsync({ id, updates });
         if (!result) {
           throw new Error("Failed to update query - no response received");
@@ -509,13 +504,11 @@ export function useSavedQueries(
       }
     },
     [updateQueryMutation.mutateAsync]
-    [updateQueryMutation.mutateAsync]
   );
 
   const deleteQuery = useCallback(
     async (id: string): Promise<void> => {
       try {
-        const result = await deleteQueryMutation.mutateAsync({ id });
         const result = await deleteQueryMutation.mutateAsync({ id });
         if (!result) {
           throw new Error("Failed to delete query - no response received");
@@ -525,7 +518,6 @@ export function useSavedQueries(
         throw error;
       }
     },
-    [deleteQueryMutation.mutateAsync]
     [deleteQueryMutation.mutateAsync]
   );
 
@@ -560,9 +552,6 @@ export function useSavedQueries(
 
     // Loading states
     isLoading,
-    isCreating: createQueryMutation.isPending,
-    isUpdating: updateQueryMutation.isPending,
-    isDeleting: deleteQueryMutation.isPending,
     isCreating: createQueryMutation.isPending,
     isUpdating: updateQueryMutation.isPending,
     isDeleting: deleteQueryMutation.isPending,
