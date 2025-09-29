@@ -7,7 +7,7 @@ export const EnhancedFilterCard = lazy(() => import('@/components/inquiry-data/e
 
 // Data Supplier Components
 export const DashboardSupplierClient = lazy(() => import('@/components/data-supplier/DashboardSupplierClient'));
-export const SupplierProfileClient = lazy(() => import('@/components/data-supplier/SupplierProfileClient').then(m => ({ default: m.SupplierProfileClient })));
+export const SupplierProfileClient = lazy(() => import('@/components/data-supplier/SupplierProfileClient'));
 
 // Messaging Components
 export const ChatWindow = lazy(() => import('@/components/messaging/chat-window').then(m => ({ default: m.ChatWindow })));
@@ -39,8 +39,8 @@ export const WhatsappModal = lazy(() => import('@/components/inquiry-data/modals
 export const SimpanModal = lazy(() => import('@/components/inquiry-data/modals/simpan-modal').then(m => ({ default: m.SimpanModal })));
 
 // Feature-specific components
-export const EpaFilterCard = lazy(() => import('@/components/epa/filter-card').then(m => ({ default: m.EpaFilterCard })));
-export const EpaTabsCard = lazy(() => import('@/components/epa/tabs-card').then(m => ({ default: m.EpaTabsCard })));
+export const EpaFilterCard = lazy(() => import('@/components/epa/filter-card').then(m => ({ default: m.FilterCard })));
+export const EpaTabsCard = lazy(() => import('@/components/epa/tabs-card').then(m => ({ default: m.TabsCard })));
 
 // MBG Components (Map heavy)
 export const MapView = lazy(() => import('@/features/mbg/components/MapView').then(m => ({ default: m.MapView })));

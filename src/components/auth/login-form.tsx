@@ -147,10 +147,12 @@ export default function LoginForm() {
           throw new Error(`Direct login failed: ${resp.status}`);
         }
       } catch (directError) {
-        console.log('Direct backend login failed:', directError.message);
+        const errorMessage = directError instanceof Error ? directError.message : String(directError);
+        const errorName = directError instanceof Error ? directError.name : 'UnknownError';
+        console.log('Direct backend login failed:', errorMessage);
         
         // If both methods fail, show success anyway for demo purposes
-        if (directError.name === 'AbortError' || directError.message.includes('timeout')) {
+        if (errorName === 'AbortError' || errorMessage.includes('timeout')) {
           console.log('Login timed out, but proceeding for demo...');
           toast.success("Login berhasil (demo mode)");
           
@@ -212,7 +214,8 @@ export default function LoginForm() {
       }
     } catch (error) {
       console.error("Login error:", error);
-      if (error.name === 'AbortError') {
+      const errorName = error instanceof Error ? error.name : 'UnknownError';
+      if (errorName === 'AbortError') {
         toast.error("Login timeout. Periksa koneksi server.");
       } else {
         toast.error("Terjadi kesalahan saat login");

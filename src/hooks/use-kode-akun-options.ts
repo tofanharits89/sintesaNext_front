@@ -48,8 +48,8 @@ export function useKodeAkunOptions(kriteria?: string) {
     : null;
   const { data, error, isLoading, refetch } = useQuery<KodeAkunRow[]>({
     queryKey: ["kode-akun-options", kriteria],
-    queryFn: () => fetcher(key!),
-    enabled: !!key,
+    queryFn: () => fetcher(url!),
+    enabled: !!url,
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes

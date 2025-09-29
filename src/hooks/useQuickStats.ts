@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, UseQueryResult } from "@tanstack/react-query";
 import { apiPath } from "@/lib/base-path";
 
 // Quick stats data format returned by the backend

@@ -16,7 +16,7 @@ import { useQuickStats } from "@/features/mbg/hooks/useQuickStats";
 import { useRankings } from "@/features/mbg/hooks/useRankings";
 import { useChartsReady } from "@/features/mbg/hooks/useChartsReady";
 
-import { MapView } from "@/components/lazy";
+import { MapSearch } from "@/features/mbg/components/MapSearch";
 import { Suspense } from "react";
 
 export default function DashboardMBGPage() {
@@ -58,7 +58,7 @@ export default function DashboardMBGPage() {
         <div className="xl:col-span-3">
           <QueryErrorBoundary>
             <Suspense fallback={<MapSearchCardSkeleton className="h-96" />}>
-              <MapView />
+              <MapSearch />
             </Suspense>
           </QueryErrorBoundary>
         </div>

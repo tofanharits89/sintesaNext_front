@@ -221,7 +221,7 @@ export function useMessages(conversationId?: string) {
     gcTime: 0, // No cache
     refetchOnWindowFocus: true, // Refetch when window gains focus
     refetchOnReconnect: true, // Refetch on network reconnect
-    // refetchInterval: 1000, // Removed - use socket updates instead
+    initialPageParam: undefined,
     getNextPageParam: (lastPage) => {
       // Support multiple possible locations for pagination cursor
       const pg =
@@ -788,7 +788,7 @@ export function useMessages(conversationId?: string) {
         payload?.delivered_at ||
         payload?.timestamp ||
         null;
-      try { console.log('[MSG DEBUG] MESSAGE_DELIVERED', { convId, ids, filteredOut: (getMsgIds(payload)||[]).filter((id:string)=>failedLatch.has(String(id))), at: Date.now() }); } catch {}
+      try { console.log('[MSG DEBUG] MESSAGE_DELIVERED', { convId, ids, at: Date.now() }); } catch {}
       if (ids.length === 0 && Array.isArray(payload?.messages)) {
         for (const m of payload.messages) {
           const id = m?.id;
@@ -815,7 +815,7 @@ export function useMessages(conversationId?: string) {
       const ids = getMsgIds(payload).filter((id) => !failedLatch.has(String(id)));
       const atGlobal =
         payload?.readAt || payload?.read_at || payload?.timestamp || null;
-      try { console.log('[MSG DEBUG] MESSAGE_READ', { convId, ids, filteredOut: (getMsgIds(payload)||[]).filter((id:string)=>failedLatch.has(String(id))), at: Date.now() }); } catch {}
+      try { console.log('[MSG DEBUG] MESSAGE_READ', { convId, ids, at: Date.now() }); } catch {}
       for (const id of ids) {
         const at = atGlobal || new Date().toISOString();
         updateMessageFlags(id, { isRead: true, readAt: at });

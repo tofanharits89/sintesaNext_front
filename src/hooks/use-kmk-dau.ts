@@ -64,7 +64,7 @@ export function useKmkDau(year?: string | number) {
     }`;
   const { data, error, isLoading, refetch } = useQuery<RawKmkDauItem[]>({
     queryKey: ["kmk-dau", year],
-    queryFn: () => fetcher(key),
+    queryFn: () => fetcher(url),
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // 5 minutes - financial data
     gcTime: 10 * 60 * 1000, // 10 minutes

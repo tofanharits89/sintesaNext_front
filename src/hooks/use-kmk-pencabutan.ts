@@ -49,8 +49,8 @@ export function useKmkPencabutan(no_kmk?: string) {
     : null;
   const { data, error, isLoading, refetch } = useQuery<KmkPencabutanRow[]>({
     queryKey: ["kmk-pencabutan", { no_kmk }],
-    queryFn: () => fetcher(key!),
-    enabled: !!key,
+    queryFn: () => fetcher(url!),
+    enabled: !!url,
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // 5 minutes - financial data
     gcTime: 10 * 60 * 1000, // 10 minutes

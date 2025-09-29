@@ -59,8 +59,8 @@ export function useKmkPemotongan(no_kmk?: string, enabled: boolean = true) {
 
   const { data, error, isLoading, refetch } = useQuery<RawPemotonganItem[]>({
     queryKey: ["kmk-pemotongan", { no_kmk }],
-    queryFn: () => fetcher(key!),
-    enabled: !!key && enabled,
+    queryFn: () => fetcher(url!),
+    enabled: !!url && enabled,
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // 5 minutes - financial data
     gcTime: 10 * 60 * 1000, // 10 minutes

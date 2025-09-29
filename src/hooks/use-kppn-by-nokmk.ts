@@ -41,8 +41,8 @@ export function useKppnByNoKmk(no_kmk?: string) {
     : null;
   const { data, error, isLoading, refetch } = useQuery<KppnItem[]>({
     queryKey: ["kppn-lookup", { no_kmk }],
-    queryFn: () => fetcher(key!),
-    enabled: !!key,
+    queryFn: () => fetcher(url!),
+    enabled: !!url,
     refetchOnWindowFocus: false,
     staleTime: 15 * 60 * 1000, // 15 minutes - lookup data
     gcTime: 30 * 60 * 1000, // 30 minutes

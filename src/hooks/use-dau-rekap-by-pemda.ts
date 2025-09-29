@@ -36,8 +36,8 @@ export function useDauRekapByPemda(params: { kdpemda?: string }) {
 
   const { data, error, isLoading, refetch } = useQuery<DauRekapByPemdaRow[] | DauRekapByPemdaRow>({
     queryKey: ["dau-rekap-by-pemda", params.kdpemda],
-    queryFn: () => fetcher(key!),
-    enabled: !!key,
+    queryFn: () => fetcher(url!),
+    enabled: !!url,
     refetchOnWindowFocus: false,
     staleTime: 2 * 60 * 1000, // 2 minutes - financial data changes more frequently
     gcTime: 10 * 60 * 1000, // 10 minutes

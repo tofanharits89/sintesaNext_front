@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiCall } from '@/lib/api-client';
+import { apiClient } from '@/lib/httpClient';
 
 export interface User {
   id: string;
@@ -13,8 +13,8 @@ export function useUserProfile() {
   return useQuery({
     queryKey: ['user', 'profile'],
     queryFn: async (): Promise<User> => {
-      const response = await apiCall('/users/profile/me');
-      return response.data;
+      const response = await apiClient.get('/users/profile/me');
+      return response;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes

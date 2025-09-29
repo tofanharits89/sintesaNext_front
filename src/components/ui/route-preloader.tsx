@@ -23,6 +23,8 @@ export function RoutePreloader() {
   const pathname = usePathname();
 
   useEffect(() => {
+    if (!pathname) return;
+    
     // Preload components for current route
     const preloadFunc = routePreloadMap[pathname];
     if (preloadFunc) {

@@ -6,6 +6,7 @@ import { backendPath } from "@/lib/backend";
 import { apiClient, http } from "@/lib/httpClient";
 import { retrySavedQueryOperation, createNetworkAwareOperation } from "@/utils/errorHandling";
 import { createStableRef } from "@/utils/query-error-recovery";
+import { toast } from "sonner";
 import type {
   SavedQuery,
   CreateSavedQueryRequest,
@@ -199,17 +200,11 @@ export function useSavedQueries(
       return failureCount < 1 && (error?.status >= 500 || !error?.status);
     },
     retryDelay: (attemptIndex) => {
-      // Show toast on first retry for retryable errors
-      if (attemptIndex === 0 && error?.status >= 500) {
-        toast.info("Mencoba memuat ulang data...", {
-          duration: 2000,
-        });
-      }
       return 3000; // 3 second delay between retries
     },
     meta: {
       onError: (error: any) => {
-        logErrorWithContext(error, "useSavedQueries React Query", {
+        console.error("useSavedQueries React Query error:", error, {
           key,
           params: stableParams,
           timestamp: new Date().toISOString(),
@@ -424,13 +419,7 @@ export function useSavedQueries(
       );
       return result as { id: string };
     },
-    onSuccess: (param: { id: string } | null) => {
-      // Handle case where param might be null
-      if (!param || !param.id) {
-        console.warn("[useSavedQueries] Delete success callback received null or invalid param:", param);
-        return;
-      }
-      
+    onSuccess: (param: { id: string }) => {
       const { id } = param;
       
       // Optimistically update the cache - use functional update to prevent stale closures

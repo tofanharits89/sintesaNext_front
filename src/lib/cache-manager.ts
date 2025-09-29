@@ -6,10 +6,15 @@
 
 const DEBUG_CACHE = process.env.NEXT_PUBLIC_DEBUG_AUTH === "1";
 
+// Ensure globalThis is available
+if (typeof globalThis === 'undefined' && typeof global !== 'undefined') {
+  (global as any).globalThis = global;
+}
+
 // Access the middleware cache from the global scope
 // Note: This is a reference to the same cache used in middleware.ts
 declare global {
-  var __middlewareSessionCache: Map<string, { ok: boolean; exp: number }> | undefined;
+  var __middlewareSessionCache: Map<string, { ok: boolean; exp: number; created?: number; reason?: string }> | undefined;
   var __cacheAuditTrail: CacheAuditEntry[] | undefined;
   var __cachePerformanceMetrics: CachePerformanceMetrics | undefined;
 }
@@ -41,7 +46,7 @@ interface CachePerformanceMetrics {
 const MAX_AUDIT_ENTRIES = 500; // Smaller limit for frontend
 
 export class CacheManager {
-  private sessionVerifyCache: Map<string, { ok: boolean; exp: number }>;
+  private sessionVerifyCache: Map<string, { ok: boolean; exp: number; created?: number; reason?: string }>;
   private auditTrail: CacheAuditEntry[];
   private performanceMetrics: CachePerformanceMetrics;
 
