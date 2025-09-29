@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { apiPath } from "@/lib/base-path";
+import { backendPath } from "@/lib/backend";
 import { User } from "@/lib/users-store";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { canAccessUserManagement } from "@/lib/rbac";
@@ -43,8 +43,27 @@ import { Suspense } from "react";
 import kdkanwilData from "@/data/kdkanwil.json";
 import kdkppnData from "@/data/kdkppn.json";
 
+// CSRF helpers: backend issues XSRF-TOKEN cookie; include it as x-csrf-token on mutating requests
+let __cachedCsrfToken: string | null = null;
+async function ensureCsrfToken(): Promise<string | null> {
+  if (__cachedCsrfToken) return __cachedCsrfToken;
+  try {
+    const resp = await fetch(backendPath("/csrf-token"), { credentials: "include" });
+    if (!resp.ok) return null;
+    const data = await resp.json().catch(() => ({} as any));
+    const token = typeof data?.token === "string" && data.token.length ? data.token : null;
+    __cachedCsrfToken = token || __cachedCsrfToken;
+    return token;
+  } catch {
+    return null;
+  }
+}
+
 const fetchUsers = async () => {
-  const res = await fetch(apiPath("/users"), { credentials: "include" });
+  const res = await fetch(backendPath("/users"), {
+    credentials: "include",
+    cache: "no-store",
+  });
   if (!res.ok) throw new Error('Failed to fetch users');
   return res.json();
 };
@@ -190,9 +209,11 @@ export default function UsersPage() {
     const { password, confirmPassword, ...payload } = form;
     const method = form.id ? "PUT" : "POST";
     const bodyPayload = method === "POST" ? { ...payload, password } : payload;
-    const res = await fetch(apiPath("/users"), {
+    const xsrf = await ensureCsrfToken();
+    const url = form.id ? backendPath(`/users/${form.id}`) : backendPath("/users");
+    const res = await fetch(url, {
       method,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...(xsrf ? { "x-csrf-token": xsrf } : {}) },
       credentials: "include",
       body: JSON.stringify(bodyPayload),
     });
@@ -248,9 +269,11 @@ export default function UsersPage() {
   }
 
   async function remove(id: string): Promise<void> {
-    const res = await fetch(`${apiPath("/users")}?id=${id}`, {
+    const xsrf = await ensureCsrfToken();
+    const res = await fetch(backendPath(`/users/${id}`), {
       method: "DELETE",
       credentials: "include",
+      headers: { ...(xsrf ? { "x-csrf-token": xsrf } : {}) },
     });
     if (!res.ok) {
       toast.error("Gagal menghapus");
@@ -262,18 +285,26 @@ export default function UsersPage() {
 
   async function bulkRemove(): Promise<void> {
     if (!selected.size) return;
-    const qs = Array.from(selected)
-      .map((id) => `ids=${id}`)
-      .join("&");
-    const res = await fetch(`${apiPath("/users")}?${qs}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-    if (!res.ok) {
-      toast.error("Gagal menghapus massal");
-      return;
+    const xsrf = await ensureCsrfToken();
+    const ids = Array.from(selected);
+    const results = await Promise.all(
+      ids.map(async (id) => {
+        const res = await fetch(backendPath(`/users/${id}`), {
+          method: "DELETE",
+          credentials: "include",
+          headers: { ...(xsrf ? { "x-csrf-token": xsrf } : {}) },
+        });
+        return { id, ok: res.ok };
+      })
+    );
+    const failed = results.filter((r) => !r.ok).length;
+    if (failed) {
+      toast.error(`${failed} pengguna gagal dihapus`);
     }
-    toast.success(`${selected.size} pengguna berhasil dihapus`);
+    const successCount = ids.length - failed;
+    if (successCount > 0) {
+      toast.success(`${successCount} pengguna berhasil dihapus`);
+    }
     setSelected(new Set());
     queryClient.invalidateQueries({ queryKey: ["users"] });
   }

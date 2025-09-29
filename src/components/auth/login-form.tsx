@@ -15,8 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info } from "lucide-react";
+ 
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { withBasePath } from "@/lib/base-path";
@@ -30,46 +29,6 @@ const schema = z.object({
   password: z.string().min(1, "Wajib diisi"),
   captcha: z.string().min(4, "Captcha 4 digit").max(4, "Captcha 4 digit"),
 });
-
-// Test accounts for RBAC demonstration
-const testAccounts = [
-  {
-    username: "superadmin",
-    password: "admin123",
-    role: "Super Admin (X)",
-    description: "Full system access",
-  },
-  {
-    username: "coadmin",
-    password: "admin123",
-    role: "Co-Admin (0)",
-    description: "User management",
-  },
-  {
-    username: "kantorpusat",
-    password: "user123",
-    role: "Kantor Pusat (1)",
-    description: "View all data",
-  },
-  {
-    username: "kanwil",
-    password: "user123",
-    role: "Kanwil DJPb (2)",
-    description: "View kanwil data",
-  },
-  {
-    username: "kppn",
-    password: "user123",
-    role: "KPPN (3)",
-    description: "View KPPN data",
-  },
-  {
-    username: "user",
-    password: "user123",
-    role: "User Lainnya (4)",
-    description: "Basic access",
-  },
-];
 
 export default function LoginForm() {
   const router = useRouter();
@@ -231,14 +190,9 @@ export default function LoginForm() {
     form.handleSubmit(onSubmit)(e);
   };
 
-  const handleQuickLogin = (username: string, password: string) => {
-    form.setValue("username", username);
-    form.setValue("password", password);
-  };
-
   return (
     <div className="flex min-h-svh items-center justify-center p-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-6">
+      <div className="w-full max-w-md">
         {/* Login Form */}
         <Card>
           <CardHeader className="space-y-1">
@@ -351,56 +305,6 @@ export default function LoginForm() {
                 Masuk
               </Button>
             </form>
-          </CardContent>
-        </Card>
-
-        {/* Test Accounts Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-2">
-              <Info className="h-5 w-5" />
-              Akun Testing RBAC
-            </CardTitle>
-            <CardDescription>
-              Klik pada akun untuk auto-fill form login
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {testAccounts.map((account) => (
-              <button
-                key={account.username}
-                type="button"
-                onClick={() =>
-                  handleQuickLogin(account.username, account.password)
-                }
-                className="w-full text-left p-3 rounded-lg border hover:bg-accent transition-colors"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="font-semibold text-sm">{account.role}</div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Username:{" "}
-                      <span className="font-mono">{account.username}</span>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Password:{" "}
-                      <span className="font-mono">{account.password}</span>
-                    </div>
-                  </div>
-                  <div className="text-xs text-muted-foreground text-right">
-                    {account.description}
-                  </div>
-                </div>
-              </button>
-            ))}
-            <Alert className="mt-4">
-              <Info className="h-4 w-4" />
-              <AlertDescription className="text-xs">
-                Sistem RBAC membatasi akses berdasarkan role. Super Admin &
-                Co-Admin dapat mengelola user. User lain hanya dapat mengubah
-                profil dasar mereka.
-              </AlertDescription>
-            </Alert>
           </CardContent>
         </Card>
       </div>
