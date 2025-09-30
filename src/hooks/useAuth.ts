@@ -1,222 +1,131 @@
 "use client";
 
+import { useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiPath } from "@/lib/base-path";
-import { backendPath } from "@/lib/backend";
+import { apiClient } from "@/lib/httpClient";
+import { collectDeviceMetadata, DeviceMetadata } from "@/utils/deviceInfo";
 import { toast } from "sonner";
 import { createQueryOptions, queryKeyFactories, cacheInvalidation } from "@/lib/query-configs";
 import { logger } from "@/lib/utils";
+import type { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 
-interface User {
-  id: string;
-  username: string;
-  email: string;
-  full_name?: string;
-  role?: string;
-  [key: string]: any;
+interface AuthStatusResponse {
+  isAuthenticated: boolean;
+  user?: unknown;
 }
 
-interface AuthResponse {
-  success: boolean;
-  data?: User;
-  message?: string;
+type DeviceHeaders = Record<string, string>;
+
+function buildDeviceHeaders(metadata: DeviceMetadata | null): DeviceHeaders | undefined {
+  if (!metadata || !metadata.deviceId) {
+    return undefined;
+  }
+
+  const headers: DeviceHeaders = {
+    "X-Device-Id": metadata.deviceId,
+  };
+
+  if (metadata.timezone) headers["X-Device-Timezone"] = metadata.timezone;
+  if (metadata.locale) headers["X-Device-Locale"] = metadata.locale;
+  if (metadata.platform) headers["X-Device-Platform"] = metadata.platform;
+
+  return headers;
 }
 
-// Use centralized query keys from query-configs
-export const authKeys = {
-  ...queryKeyFactories.user,
-  combined: () => ['auth', 'combined'] as const,
-};
-
-// Client-side auth verification with React Query
-export function useAuthVerification() {
-  return useQuery({
-    queryKey: authKeys.verify(),
-    queryFn: async (): Promise<AuthResponse> => {
-      const response = await fetch(backendPath("/auth/verify"), {
-        method: "GET",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Auth verification failed: ${response.status}`);
-      }
-      
-      return response.json();
-    },
-    ...createQueryOptions('critical', {
-      retry: (failureCount, error) => {
-        // Don't retry on 401/403 (auth failures)
-        if (error instanceof Error && (error.message.includes('401') || error.message.includes('403'))) {
-          return false;
-        }
-        return failureCount < 2;
-      },
-    }),
-  });
-}
-
-// Enhanced user profile hook with optimistic updates
-export function useUserProfile() {
-  return useQuery({
-    queryKey: authKeys.profile(),
-    queryFn: async (): Promise<User> => {
-      const response = await fetch(apiPath("/users/profile/me"), {
-        method: "GET",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Profile fetch failed: ${response.status}`);
-      }
-      
-      const data: AuthResponse = await response.json();
-      if (!data.success || !data.data) {
-        throw new Error("Invalid user data");
-      }
-      
-      return data.data;
-    },
-    ...createQueryOptions('user', {
-      refetchOnWindowFocus: false, // Don't refetch profile on focus (less critical)
-    }),
-  });
-}
-
-// Logout mutation with cache invalidation
-export function useLogout() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async () => {
-      const response = await fetch(apiPath("/auth/logout"), {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Logout failed: ${response.status}`);
-      }
-      
-      return response.json();
-    },
-    onSuccess: () => {
-      // Clear all auth-related cache using centralized invalidation
-      cacheInvalidation.invalidateUser(queryClient);
-      queryClient.removeQueries({ queryKey: authKeys.all() });
-      
-      // Optionally nuke the whole cache to ensure clean slate after logout
-      // This acts on the app's existing QueryClient instance
-      queryClient.clear();
-      
-      // Redirect to login
-      window.location.href = "/login";
-      
-      toast.success("Logged out successfully");
-    },
-    onError: (error) => {
-      logger.error("Logout error:", error);
-      toast.error("Logout failed. Please try again.");
-    },
-  });
-}
-
-// Consolidated auth hook that combines verification and profile in a single query
 export function useAuth() {
   const queryClient = useQueryClient();
-  const logout = useLogout();
-  
-  // Single query that handles both auth verification and user profile
-  const authQuery = useQuery({
-    queryKey: authKeys.combined(),
-    queryFn: async (): Promise<{ isAuthenticated: boolean; user?: User }> => {
+  const deviceMetadataRef = useRef<DeviceMetadata | null>(null);
+
+  const ensureMetadata = () => {
+    if (typeof window === "undefined") return null;
+    if (!deviceMetadataRef.current) {
+      deviceMetadataRef.current = collectDeviceMetadata();
+    }
+    return deviceMetadataRef.current;
+  };
+
+  const deviceHeaders = useMemo(() => buildDeviceHeaders(ensureMetadata()), []);
+
+  const authQuery = useQuery<AuthStatusResponse>({
+    queryKey: queryKeyFactories.user.profile(),
+    queryFn: async () => {
+      const headers = deviceHeaders ?? buildDeviceHeaders(ensureMetadata());
+      const config: AxiosRequestConfig | undefined = headers
+        ? { headers: headers as AxiosRequestHeaders }
+        : undefined;
       try {
-        // First verify auth
-        const authResponse = await fetch(backendPath("/auth/verify"), {
-          method: "GET",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-        });
-        
-        if (!authResponse.ok) {
-          return { isAuthenticated: false };
+        // Prefer frontend API bridge: GET /api/auth/me
+        const res = await apiClient.get<{ success: boolean; data?: any }>("/auth/me", config);
+        if (res && (res as any).success) {
+          return { isAuthenticated: true, user: (res as any).data } as AuthStatusResponse;
         }
-        
-        const authData: AuthResponse = await authResponse.json();
-        if (!authData.success) {
-          return { isAuthenticated: false };
+        // Fallback shape
+        return { isAuthenticated: !!(res as any)?.data, user: (res as any)?.data } as AuthStatusResponse;
+      } catch (err: any) {
+        // If unauthorized, attempt a one-time silent refresh then retry once
+        const status = err?.response?.status;
+        if (status === 401) {
+          try {
+            await apiClient.post("/auth/refresh", {});
+            const res2 = await apiClient.get<{ success: boolean; data?: any }>("/auth/me", config);
+            if (res2 && (res2 as any).success) {
+              return { isAuthenticated: true, user: (res2 as any).data } as AuthStatusResponse;
+            }
+            return { isAuthenticated: !!(res2 as any)?.data, user: (res2 as any)?.data } as AuthStatusResponse;
+          } catch {
+            return { isAuthenticated: false } as AuthStatusResponse;
+          }
         }
-        
-        // If authenticated, fetch user profile
-        const profileResponse = await fetch(apiPath("/users/profile/me"), {
-          method: "GET",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-        });
-        
-        if (!profileResponse.ok) {
-          return { isAuthenticated: true }; // Auth valid but profile fetch failed
-        }
-        
-        const profileData: AuthResponse = await profileResponse.json();
-        return {
-          isAuthenticated: true,
-          ...(profileData.data ? { user: profileData.data } : {}),
-        };
-      } catch (error) {
-        logger.error("Auth query error:", error);
-        return { isAuthenticated: false };
+        throw err;
       }
     },
-    ...createQueryOptions('critical', {
-      retry: (failureCount, error) => {
-        if (error instanceof Error && (error.message.includes('401') || error.message.includes('403'))) {
-          return false;
-        }
-        return failureCount < 2;
-      },
+    ...createQueryOptions("critical", {
+      refetchInterval: 30000,
     }),
+    refetchIntervalInBackground: true,
   });
-  
+
+  const logout = useMutation({
+    mutationFn: async () => {
+      const headers = deviceHeaders ?? buildDeviceHeaders(ensureMetadata());
+      const config: AxiosRequestConfig | undefined = headers
+        ? { headers: headers as AxiosRequestHeaders }
+        : undefined;
+      await apiClient.post(backendPath("/auth/logout"), {}, config);
+    },
+    onSuccess: () => {
+      cacheInvalidation.invalidateUser(queryClient);
+      queryClient.invalidateQueries({ queryKey: queryKeyFactories.user.profile() });
+      toast.success("Anda telah keluar");
+    },
+    onError: (error) => {
+      logger.error("Logout error", error);
+      toast.error("Gagal logout");
+    },
+  });
+
   return {
-    // Auth state
-    isAuthenticated: authQuery.data?.isAuthenticated ?? false,
+    isAuthenticated: !!authQuery.data?.isAuthenticated,
     isLoading: authQuery.isLoading,
-    error: authQuery.error,
-    
-    // User data
     user: authQuery.data?.user,
-    
-    // Actions
+    error: authQuery.error,
     logout: logout.mutate,
     isLoggingOut: logout.isPending,
-    
-    // Refetch functions
     refetch: authQuery.refetch,
+    deviceMetadata: deviceMetadataRef.current,
   };
 }
 
-// Hook for components that require authenticated user
 export function useRequireAuth() {
   const auth = useAuth();
-  
+
   if (auth.isLoading) {
     return { ...auth, isLoading: true };
   }
-  
+
   if (!auth.isAuthenticated || !auth.user) {
     throw new Error("Authentication required");
   }
-  
+
   return { ...auth, isLoading: false, user: auth.user };
 }
-

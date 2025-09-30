@@ -3,6 +3,26 @@ import type { NextRequest } from "next/server";
 import { backendPath } from "@/lib/backend";
 import { forwardSetCookies, getSetCookieValues } from "@/lib/cookie-helpers";
 
+function pickDeviceHeaders(req: NextRequest): Record<string, string> {
+  const h = req.headers;
+  const out: Record<string, string> = {};
+  const copy = (name: string) => {
+    const v = h.get(name);
+    if (v) out[name] = v;
+  };
+  [
+    "user-agent",
+    "accept-language",
+    "sec-ch-ua",
+    "sec-ch-ua-platform",
+    "x-device-id",
+    "x-device-timezone",
+    "x-device-locale",
+    "x-device-platform",
+  ].forEach(copy);
+  return out;
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const { username, password, captcha, expectedCaptcha } = body as {
@@ -45,12 +65,14 @@ export async function POST(request: NextRequest) {
   }
 
   async function doLogin(currentCookie: string, currentXsrf?: string) {
+    const deviceHeaders = pickDeviceHeaders(request);
     return fetch(backendPath("/auth/login"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         ...(currentCookie ? { cookie: currentCookie } : {}),
         ...(currentXsrf ? { "X-CSRF-Token": currentXsrf } : {}),
+        ...deviceHeaders,
       },
       body: JSON.stringify({ username, password, captcha, expectedCaptcha }),
       // Ensure cookies from backend are included so Next can forward them
@@ -112,5 +134,27 @@ export async function POST(request: NextRequest) {
   // Forward all Set-Cookie headers to client via helper
   forwardSetCookies(resp, res);
 
+  // Clear middleware cache after successful login
+  res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+  
+  // Invalidate other sessions and clear middleware cache
+  if (user?.id) {
+    try {
+      await fetch(backendPath(`/auth/invalidate-user-sessions/${user.id}`), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      // Clear middleware cache for this login
+      await fetch('/api/auth/invalidate-cache', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'login', userId: user.id })
+      });
+    } catch {
+      // Ignore errors - session invalidation is best effort
+    }
+  }
+  
   return res;
 }

@@ -2,6 +2,22 @@ import { NextResponse, NextRequest } from "next/server";
 import { backendPath } from "@/lib/backend";
 import { forwardSetCookies } from "@/lib/cookie-helpers";
 
+function pickDeviceHeaders(req: NextRequest): Record<string, string> {
+  const out: Record<string, string> = {};
+  const copy = (n: string) => { const v = req.headers.get(n); if (v) out[n] = v; };
+  [
+    "user-agent",
+    "accept-language",
+    "sec-ch-ua",
+    "sec-ch-ua-platform",
+    "x-device-id",
+    "x-device-timezone",
+    "x-device-locale",
+    "x-device-platform",
+  ].forEach(copy);
+  return out;
+}
+
 export async function POST(request: NextRequest) {
   // Collect client cookies and forward to backend so it can read refreshToken
   const incomingCookie = request.headers.get("cookie") || "";
@@ -28,6 +44,8 @@ export async function POST(request: NextRequest) {
       ...(incomingCookie ? { cookie: incomingCookie } : {}),
       // Forward CSRF headers (any that were provided)
       ...forwardedCsrfHeaders,
+      // Forward device headers to maintain fingerprint continuity
+      ...pickDeviceHeaders(request),
     },
     cache: "no-store",
   });

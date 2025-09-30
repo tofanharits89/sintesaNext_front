@@ -199,12 +199,14 @@ async function fallbackAuthVerification(incomingCookie: string): Promise<boolean
       cache: "no-store",
     });
     
-    const result = resp.ok && Boolean((await resp.json().catch(() => ({})))?.success);
+    const data = await resp.json().catch(() => ({}));
+    const result = resp.ok && Boolean(data?.success);
     
     if (DEBUG_AUTH) {
       console.debug("[Auth] Fallback verification result", {
         success: result,
         status: resp.status,
+        dataSuccess: data?.success,
         hasCookie: !!incomingCookie
       });
     }
@@ -230,6 +232,15 @@ async function validateSessionViaBackend(
 ): Promise<boolean> {
   const key = generateCacheKey(incomingCookie);
   const now = Date.now();
+  
+  if (DEBUG_AUTH) {
+    console.debug("[Auth] validateSessionViaBackend called", {
+      hasCookie: !!incomingCookie,
+      cookieLength: incomingCookie?.length || 0,
+      noCache,
+      key: key.substring(0, 30) + '...'
+    });
+  }
   
   // Check if we should bypass cache for this session (recently logged out)
   const shouldBypass = shouldBypassCache(key);
@@ -264,32 +275,59 @@ async function validateSessionViaBackend(
     }
   }
 
-  // Cache miss or bypass - use fallback verification
+  // Cache miss or bypass - perform validation
   let authResult: boolean;
   
-  if (shouldBypass || noCache) {
-    // Use fallback verification for bypassed sessions or explicit no-cache requests
-    authResult = await fallbackAuthVerification(incomingCookie);
-  } else {
-    // Standard verification with caching
-    try {
-      const resp = await fetch(backendPath("/auth/session/validate"), {
-        method: "GET",
-        headers: incomingCookie ? { cookie: incomingCookie } : {},
-        cache: "no-store",
+  try {
+    if (DEBUG_AUTH) {
+      console.debug("[Auth] Making backend validation request", {
+        url: backendPath("/auth/session/validate"),
+        hasCookie: !!incomingCookie
       });
-      authResult = resp.ok && Boolean((await resp.json().catch(() => ({})))?.success);
-    } catch {
-      authResult = false;
     }
+    
+    const resp = await fetch(backendPath("/auth/session/validate"), {
+      method: "GET",
+      headers: incomingCookie ? { cookie: incomingCookie } : {},
+      cache: "no-store",
+    });
+    
+    const data = await resp.json().catch(() => ({}));
+    authResult = resp.ok && Boolean(data?.success);
+    
+    // If auth failed, clear all related cache entries immediately
+    if (!authResult) {
+      sessionVerifyCache.delete(key);
+      // Also clear any variations of this cookie
+      for (const cacheKey of sessionVerifyCache.keys()) {
+        if (cacheKey.includes(incomingCookie.slice(0, 20))) {
+          sessionVerifyCache.delete(cacheKey);
+        }
+      }
+    }
+    
+    if (DEBUG_AUTH) {
+      console.debug("[Auth] Backend validation response", {
+        status: resp.status,
+        ok: resp.ok,
+        dataSuccess: data?.success,
+        authResult,
+        cacheCleared: !authResult
+      });
+    }
+  } catch (error) {
+    if (DEBUG_AUTH) {
+      console.error("[Auth] Backend validation error", error);
+    }
+    authResult = false;
   }
 
-  // Cache the result only if not bypassed and not explicitly no-cache
-  if (!noCache && !shouldBypass) {
+  // Only cache successful auth results, never cache failures
+  if (!noCache && !shouldBypass && authResult) {
     sessionVerifyCache.set(key, { 
       ok: authResult, 
       exp: now + SESSION_VERIFY_TTL_MS,
-      created: now // Add creation timestamp for security checks
+      created: now
     });
   }
 
@@ -615,9 +653,25 @@ export async function middleware(request: NextRequest) {
   // Prefer NextRequest cookies API for reliability across runtimes
   const accessToken = request.cookies.get("accessToken")?.value?.trim();
   const filteredCookie = accessToken ? `accessToken=${encodeURIComponent(accessToken)}` : "";
+  
+  if (DEBUG_AUTH) {
+    console.debug("[Auth] Cookie extraction", {
+      hasAccessToken: !!accessToken,
+      accessTokenLength: accessToken?.length || 0,
+      filteredCookieLength: filteredCookie.length,
+      relPath
+    });
+  }
 
   // Local fast-fail: if no accessToken cookie present, treat as unauthenticated
   if (!isPublicPath && !filteredCookie) {
+    if (DEBUG_AUTH) {
+      console.debug("[Auth] No access token found, redirecting to login", {
+        relPath,
+        isPublicPath,
+        hasFilteredCookie: !!filteredCookie
+      });
+    }
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     const res = NextResponse.redirect(url);
@@ -625,15 +679,30 @@ export async function middleware(request: NextRequest) {
       res.headers.set("x-auth-debug", "no-accessToken;redirect-login");
       res.headers.set("x-auth-relpath", relPath);
     }
+    // Clear any stale cache entries for this session
+    const cacheKey = generateCacheKey(filteredCookie || "");
+    if (sessionVerifyCache.has(cacheKey)) {
+      sessionVerifyCache.delete(cacheKey);
+    }
     return res;
   }
   
-  // Avoid cached auth decision on ALL non-public routes to prevent stale "authenticated" states
-  // When a token expires between requests, we want an immediate redirect instead of waiting for TTL
-  // Also bypass cache if this session was recently logged out
+  // Bypass cache for login page to get fresh auth state
   const cacheKey = generateCacheKey(filteredCookie);
-  const noCache = !isPublicPath || shouldBypassCache(cacheKey);
+  const isLoginPage = relPath.startsWith("/login");
+  const noCache = shouldBypassCache(cacheKey) || isLoginPage;
   const isAuth = await validateSessionViaBackend(filteredCookie, noCache);
+  
+  if (DEBUG_AUTH) {
+    console.debug("[Auth] Session validation result", {
+      relPath,
+      isAuth,
+      isLoginPage,
+      isPublicPath,
+      noCache,
+      hasAccessToken: !!filteredCookie
+    });
+  }
 
   // Handle root path: redirect to appropriate base path
   if (relPath === "/") {
@@ -644,15 +713,32 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!isAuth && !isPublicPath) {
+    if (DEBUG_AUTH) {
+      console.debug("[Auth] Unauthenticated user accessing protected route, redirecting to login", {
+        relPath,
+        isAuth,
+        isPublicPath
+      });
+    }
+    
+    // Clear cache entry for failed auth to prevent stale positive results
+    const cacheKey = generateCacheKey(filteredCookie);
+    if (sessionVerifyCache.has(cacheKey)) {
+      sessionVerifyCache.delete(cacheKey);
+      if (DEBUG_AUTH) {
+        console.debug("[Auth] Cleared stale cache entry for failed auth", { cacheKey: cacheKey.substring(0, 20) + '...' });
+      }
+    }
+    
     const url = request.nextUrl.clone();
     // Do NOT prepend BASE_PATH here; Next middleware applies basePath automatically
     url.pathname = `/login`;
     return NextResponse.redirect(url);
   }
 
+  // Redirect authenticated users away from login page
   if (isAuth && relPath.startsWith("/login")) {
     const url = request.nextUrl.clone();
-    // Do NOT prepend BASE_PATH here; Next middleware applies basePath automatically
     url.pathname = `/dashboard`;
     return NextResponse.redirect(url);
   }
@@ -664,10 +750,11 @@ export async function middleware(request: NextRequest) {
   if (!isPublicPath) {
     res.headers.set("Cache-Control", "no-store");
   }
+  // Always set auth headers for client sync
+  res.headers.set("x-auth-public", isPublicPath ? "1" : "0");
+  res.headers.set("x-auth-isAuth", isAuth ? "1" : "0");
+  res.headers.set("x-auth-hasAccessToken", filteredCookie ? "1" : "0");
   if (DEBUG_AUTH) {
-    res.headers.set("x-auth-public", isPublicPath ? "1" : "0");
-    res.headers.set("x-auth-isAuth", isAuth ? "1" : "0");
-    res.headers.set("x-auth-hasAccessToken", filteredCookie ? "1" : "0");
     res.headers.set("x-auth-relpath", relPath);
   }
   return res;

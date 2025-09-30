@@ -7,10 +7,12 @@ import AppShell from "@/components/layout/app-shell";
 import { ConnectionStatus } from "@/components/connection-status";
 import CheckBackend from "@/components/check-backend";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { AuthProvider } from "@/providers/AuthProvider";
 import { ErrorBoundary, ComponentErrorBoundary } from "@/lib/error-boundary";
 import { withBasePath, apiPath } from "@/lib/base-path";
 import { cookies } from "next/headers";
 import { MessagingAuthListener } from "@/components/messaging/messaging-auth-listener";
+import GlobalAuthCheck from "@/components/GlobalAuthCheck";
 import { performanceMonitor } from "@/utils/performance-monitor";
 import { preloadOnIdle } from "@/utils/chunk-preloader";
 import { RoutePreloader } from "@/components/ui/route-preloader";
@@ -60,7 +62,8 @@ export default async function RootLayout({
       >
         <ErrorBoundary>
           <QueryProvider>
-            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <AuthProvider>
+              <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
               <ComponentErrorBoundary>
                 <MessagingAuthListener />
               </ComponentErrorBoundary>
@@ -80,6 +83,7 @@ export default async function RootLayout({
               {/* Optionally show a top-of-page banner when server down via client routes */}
               {/* <ServerDownBanner /> */}
             </ThemeProvider>
+            </AuthProvider>
           </QueryProvider>
         </ErrorBoundary>
       </body>

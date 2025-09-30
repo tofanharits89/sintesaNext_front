@@ -88,7 +88,6 @@ export function useClientAuth(options: UseClientAuthOptions = {}) {
     queryClient.invalidateQueries({ queryKey: ["auth"] });
   }, [queryClient]);
 
-  // Force refresh auth status
   const refreshAuth = useCallback(() => {
     return refetch();
   }, [refetch]);
@@ -96,8 +95,8 @@ export function useClientAuth(options: UseClientAuthOptions = {}) {
   // Logout helper that clears cache and redirects
   const logout = useCallback(async () => {
     try {
-      // Call logout endpoint
-      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/logout`, {
+      // Call local API to ensure cookies are cleared on current origin
+      await fetch(`/api/auth/logout`, {
         method: "POST",
         credentials: "include",
       });

@@ -566,6 +566,11 @@ export class SocketClient {
 
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("socket:auth-required", { detail: payload }));
+      
+      // Redirect to login immediately
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1000); // Small delay to show the toast
     }
 
     // Proactively disconnect
