@@ -47,6 +47,20 @@ export function useSessionMonitor(options: UseSessionMonitorOptions = {}) {
     socket.on("session:expired", (data: SessionExpiredEvent) => {
       console.log("[SessionMonitor] Session expired:", data);
 
+      // Clear auth cookies immediately
+      if (typeof window !== 'undefined' && (window as any).__clearAuthCookies) {
+        console.log('[SessionMonitor] Clearing auth cookies via socket event');
+        (window as any).__clearAuthCookies();
+      } else {
+        // Fallback cookie clearing if __clearAuthCookies is not available
+        console.log('[SessionMonitor] Clearing auth cookies (fallback)');
+        const cookiesToClear = ['accessToken', 'refreshToken', 'access_token', 'refresh_token', 'authToken', 'auth_token', 'token'];
+        cookiesToClear.forEach(name => {
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+        });
+      }
+
       if (showNotification) {
         toast.error(data.message || "Your session has expired", {
           duration: 5000,

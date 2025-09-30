@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { backendPath } from "@/lib/backend";
 
+// Force dynamic, no caching at the route-handler level
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
 function pickDeviceHeaders(req: NextRequest): Record<string, string> {
   const out: Record<string, string> = {};
   const copy = (n: string) => { const v = req.headers.get(n); if (v) out[n] = v; };
@@ -24,37 +29,64 @@ function hasCookie(cookiesHeader: string, name: string): boolean {
   return parts.some((c) => c.startsWith(`${encodeURIComponent(name)}=`));
 }
 
+function setNoStoreHeaders(res: NextResponse) {
+  res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, private, max-age=0");
+  res.headers.set("Pragma", "no-cache");
+  res.headers.set("Expires", "0");
+  res.headers.set("Surrogate-Control", "no-store");
+  res.headers.set("CDN-Cache-Control", "no-store");
+  res.headers.set("Vary", "Cookie, Authorization, X-Device-Id");
+}
+
 export async function GET(request: NextRequest) {
   // Forward client cookies to backend; rely on backend to read httpOnly cookies
   const cookie = request.headers.get("cookie") || "";
 
-  // Frontend safeguard: if refresh token cookie is absent, treat as logged out
+  // Frontend safeguard: if refresh token cookie is absent, treat as logged out (strict mode)
   if (!hasCookie(cookie, "refreshToken") && !hasCookie(cookie, "refresh_token")) {
-    return NextResponse.json(
+    const res = NextResponse.json(
       { success: false, data: null, message: "Unauthorized" },
       { status: 401 }
     );
-  }
-
-  const resp = await fetch(backendPath("/auth/me"), {
-    method: "GET",
-    headers: cookie ? { cookie, ...pickDeviceHeaders(request) } : { ...pickDeviceHeaders(request) },
-    cache: "no-store",
-  });
-  const data = await resp.json().catch(() => ({}));
-
-  // Propagate backend status (e.g., 401/403) and disable caching
-  if (!resp.ok || !data?.success) {
-    const res = NextResponse.json(
-      { success: false, data: null, message: data?.message || "Unauthorized" },
-      { status: resp.status || 401 }
-    );
-    res.headers.set("Cache-Control", "no-store");
+    setNoStoreHeaders(res);
     return res;
   }
 
-  const user = data.data?.user || data.data;
+  // Add a cache-buster to ensure no intermediary caches this request
+  const url = new URL(backendPath("/auth/me"));
+  url.searchParams.set("_t", Date.now().toString());
+
+  let backendOk = false;
+  let status = 401;
+  let body: any = {};
+
+  try {
+    const resp = await fetch(url.toString(), {
+      method: "GET",
+      headers: cookie ? { cookie, ...pickDeviceHeaders(request) } : { ...pickDeviceHeaders(request) },
+      cache: "no-store",
+    });
+    status = resp.status;
+    body = await resp.json().catch(() => ({}));
+    backendOk = resp.ok && Boolean(body?.success);
+  } catch (e) {
+    backendOk = false;
+    status = 503;
+    body = { message: "Auth service unavailable" };
+  }
+
+  // STRICT MODE: Only return 200 when backend explicitly returns 200 AND success:true
+  if (!backendOk) {
+    const res = NextResponse.json(
+      { success: false, data: null, message: body?.message || "Unauthorized" },
+      { status: status || 401 }
+    );
+    setNoStoreHeaders(res);
+    return res;
+  }
+
+  const user = body.data?.user || body.data;
   const res = NextResponse.json({ success: true, data: user }, { status: 200 });
-  res.headers.set("Cache-Control", "no-store");
+  setNoStoreHeaders(res);
   return res;
 }

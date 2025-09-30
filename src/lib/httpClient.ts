@@ -108,6 +108,66 @@ function processQueue(error: any | null) {
   pendingQueue = [];
 }
 
+// Helper to clear auth cookies when session is invalid
+function clearAuthCookies(): void {
+  if (typeof document === "undefined") {
+    console.log('[Auth] Cannot clear cookies - document is undefined (SSR)');
+    return;
+  }
+  
+  console.log('[Auth] ⚠️ CLEARING AUTH COOKIES - Session invalidated');
+  console.log('[Auth] Cookies before clear:', document.cookie);
+  
+  const cookiesToClear = [
+    "accessToken",
+    "refreshToken",
+    "access_token",
+    "refresh_token",
+    "authToken",
+    "auth_token",
+    "token"
+  ];
+  
+  // Get all possible domain variations
+  const hostname = window.location.hostname;
+  const parts = hostname.split('.');
+  const domains = [
+    '', // No domain (current domain only)
+    hostname,
+    `.${hostname}`,
+  ];
+  
+  // If hostname has multiple parts (e.g., app.example.com), also try base domain
+  if (parts.length > 2) {
+    const baseDomain = parts.slice(-2).join('.');
+    domains.push(baseDomain);
+    domains.push(`.${baseDomain}`);
+  }
+  
+  // Clear each cookie with all domain/path combinations
+  cookiesToClear.forEach(name => {
+    domains.forEach(domain => {
+      const domainStr = domain ? `domain=${domain};` : '';
+      // Try multiple path combinations
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; ${domainStr}`;
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/api; ${domainStr}`;
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; ${domainStr}`;
+      // Also set to empty string as additional measure
+      document.cookie = `${name}=; path=/; ${domainStr} max-age=0;`;
+    });
+    console.log(`[Auth] Cleared cookie: ${name}`);
+  });
+  
+  console.log('[Auth] ✅ All auth cookies cleared');
+  console.log('[Auth] Cookies after clear:', document.cookie);
+}
+
+// Expose globally for debugging
+if (typeof window !== 'undefined') {
+  (window as any).__clearAuthCookies = clearAuthCookies;
+  console.log('[Auth] Debug: window.__clearAuthCookies() available for manual cookie cleanup');
+}
+
 async function refreshTokens(): Promise<void> {
   if (isRefreshing) {
     return new Promise<void>((resolve, reject) => {
@@ -115,6 +175,8 @@ async function refreshTokens(): Promise<void> {
     });
   }
   isRefreshing = true;
+  console.log('[Auth] 🔄 Attempting to refresh tokens...');
+  
   try {
     // Proactively ensure we have a CSRF token before hitting refresh endpoint
     await ensureCsrfToken(http);
@@ -129,9 +191,13 @@ async function refreshTokens(): Promise<void> {
       },
       body: JSON.stringify({}),
     });
+    
+    console.log(`[Auth] Refresh response status: ${resp.status}`);
+    
     if (!resp.ok) {
       // If CSRF failed, try once more after forcing token fetch
       if (resp.status === 403) {
+        console.log('[Auth] CSRF error, retrying with new token...');
         await ensureCsrfToken(http);
         const csrf2 = getCookie("XSRF-TOKEN") || lastCsrfToken;
         const retry = await fetch(apiPath("/auth/refresh"), {
@@ -143,13 +209,27 @@ async function refreshTokens(): Promise<void> {
           },
           body: JSON.stringify({}),
         });
-        if (!retry.ok) throw new Error(`Refresh failed: ${retry.status}`);
+        console.log(`[Auth] Retry response status: ${retry.status}`);
+        if (!retry.ok) {
+          // Refresh failed - clear cookies locally
+          console.log('[Auth] ❌ Refresh retry failed, clearing cookies');
+          clearAuthCookies();
+          throw new Error(`Refresh failed: ${retry.status}`);
+        }
       } else {
+        // Refresh failed - clear cookies locally
+        console.log(`[Auth] ❌ Refresh failed with status ${resp.status}, clearing cookies`);
+        clearAuthCookies();
         throw new Error(`Refresh failed: ${resp.status}`);
       }
     }
+    
+    console.log('[Auth] ✅ Token refresh successful');
     processQueue(null);
   } catch (err) {
+    // Clear cookies on any refresh failure
+    console.log('[Auth] ❌ Refresh error caught, clearing cookies:', err);
+    clearAuthCookies();
     processQueue(err);
     throw err;
   } finally {
@@ -181,12 +261,27 @@ http.interceptors.response.use(
     // Auth handling: attempt refresh on 401 once
     if (status === 401 && !original._retry) {
       original._retry = true;
+      console.log('[Auth] Received 401, attempting refresh...');
       try {
         await refreshTokens();
+        console.log('[Auth] Refresh succeeded, retrying original request');
         return http.request(original);
-      } catch (e) {
-        return Promise.reject(e);
+      } catch (refreshError) {
+        // Refresh failed - cookies should already be cleared by refreshTokens()
+        console.log('[Auth] Refresh failed, cookies should be cleared');
+        // Double-check cookies are cleared
+        if (typeof window !== 'undefined' && document.cookie.includes('Token')) {
+          console.warn('[Auth] WARNING: Cookies still present after refresh failure, clearing now...');
+          clearAuthCookies();
+        }
+        return Promise.reject(refreshError);
       }
+    }
+
+    // If this is a 401 and we already tried refresh (_retry = true), clear cookies
+    if (status === 401 && original._retry) {
+      console.log('[Auth] Received 401 after retry attempt, clearing cookies');
+      clearAuthCookies();
     }
 
     return Promise.reject(error);

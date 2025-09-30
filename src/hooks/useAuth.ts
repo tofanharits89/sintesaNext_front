@@ -72,7 +72,10 @@ export function useAuth() {
               return { isAuthenticated: true, user: (res2 as any).data } as AuthStatusResponse;
             }
             return { isAuthenticated: !!(res2 as any)?.data, user: (res2 as any)?.data } as AuthStatusResponse;
-          } catch {
+          } catch (refreshError) {
+            // Refresh failed - session is truly invalid
+            // Cookies are already cleared by httpClient interceptor
+            logger.warn('Session invalid and refresh failed - user needs to log in again');
             return { isAuthenticated: false } as AuthStatusResponse;
           }
         }
