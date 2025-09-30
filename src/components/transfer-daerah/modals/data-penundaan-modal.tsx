@@ -14,7 +14,7 @@ import { Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { PenundaanTable } from "./_penundaan-table";
 import { ConfirmationModals } from "@/components/ui/confirmation-modal";
 import { useKmkPotongan, RawPotonganItem } from "@/hooks/use-kmk-potongan";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
 
@@ -87,7 +87,7 @@ export function DataPenundaanModal({
       if (token) headers["Authorization"] = `Bearer ${token}`;
       const headersWithCsrf = addCsrfToHeaders(headers);
 
-      const url = backendPath(`/transfer-daerah/dau/kmk/penundaan/${encodeURIComponent(String(id))}`);
+      const url = apiPath(`/transfer-daerah/dau/kmk/penundaan/${encodeURIComponent(String(id))}`);
       const resp = await fetch(url, {
         method: "DELETE",
         headers: headersWithCsrf,

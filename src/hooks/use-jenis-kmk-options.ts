@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 
 export interface OptionItem {
   value: string;
@@ -30,7 +30,7 @@ const fetcher = async (url: string) => {
 };
 
 export function useJenisKmkOptions() {
-  const key = backendPath("/transfer-daerah/dau/ref/jenis");
+const key = apiPath("/transfer-daerah/dau/ref/jenis");
   const { data, error, isLoading, refetch } = useQuery<any[]>({
     queryKey: ["jenis-kmk-options", key],
     queryFn: () => fetcher(key),

@@ -2,7 +2,7 @@
 
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useCallback } from "react";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 import { http } from "@/lib/httpClient"; // keep for other callers; not used in fetcher
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 import { useSocket } from "./useSocket";
@@ -35,8 +35,8 @@ const fetchConversationsPage = async (
   cursor?: string | null,
   limit: number = 20
 ): Promise<ConversationsPage> => {
-  const url = new URL(
-    backendPath("/messaging/conversations"),
+const url = new URL(
+    apiPath("/messaging/conversations"),
     window.location.origin
   );
   if (cursor) url.searchParams.set("cursor", String(cursor));

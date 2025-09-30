@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
 export interface DauRekapByPemdaRow {
@@ -31,7 +31,7 @@ const fetcher = async (url: string) => {
 export function useDauRekapByPemda(params: { kdpemda?: string }) {
   const enabled = Boolean(params?.kdpemda);
   const url = params?.kdpemda
-    ? backendPath(`/transfer-daerah/dau/rekap?kdpemda=${encodeURIComponent(params.kdpemda)}`)
+? apiPath(`/transfer-daerah/dau/rekap?kdpemda=${encodeURIComponent(params.kdpemda)}`)
     : null;
 
   const { data, error, isLoading, refetch } = useQuery<DauRekapByPemdaRow[] | DauRekapByPemdaRow>({

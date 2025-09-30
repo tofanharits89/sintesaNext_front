@@ -7,11 +7,12 @@ const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhos
 
 export async function GET(request: NextRequest) {
   const cookie = request.headers.get("cookie") || "";
+  const accessToken = request.cookies.get("accessToken")?.value || null;
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search");
   const limit = searchParams.get("limit") || "20";
 
-  if (!cookie) {
+  if (!cookie && !accessToken) {
     return NextResponse.json(
       { success: false, message: "No session" },
       { status: 401 }
@@ -32,8 +33,12 @@ export async function GET(request: NextRequest) {
       apiPath += `?${queryParams.toString()}`;
     }
 
+    const headers: Record<string, string> = {};
+    if (cookie) headers["cookie"] = cookie;
+    if (accessToken) headers["authorization"] = `Bearer ${accessToken}`;
+
     const resp = await fetch(`${BACKEND_BASE_URL}${apiPath}`, {
-      headers: { ...(cookie ? { cookie } : {}) },
+      headers,
     });
 
     const data = await resp.json().catch(() => ({}));

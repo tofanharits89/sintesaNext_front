@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 
 export interface RawKmkDauItem {
   id: string | number;
@@ -57,11 +57,9 @@ const fetcher = async (url: string) => {
 };
 
 export function useKmkDau(year?: string | number) {
-  const url =
-    (process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next") +
-    `/api/transfer-daerah/dau/kmk${
-      year ? `?year=${encodeURIComponent(String(year))}` : ""
-    }`;
+const url = apiPath(
+    `/transfer-daerah/dau/kmk${year ? `?year=${encodeURIComponent(String(year))}` : ""}`
+  );
   const { data, error, isLoading, refetch } = useQuery<RawKmkDauItem[]>({
     queryKey: ["kmk-dau", year],
     queryFn: () => fetcher(url),
@@ -90,17 +88,17 @@ export function useKmkDau(year?: string | number) {
       }
       // If the path already contains our file-serving route, just prefix with backend
       if (/\/transfer-daerah\/dau\/kmk\/file\//.test(f)) {
-        return backendPath(f.startsWith("/") ? f : `/${f}`);
+return apiPath(f.startsWith("/") ? f : `/${f}`);
       }
       // If it's just a bare filename, point to the stream route (no .pdf in URL)
       if (!f.includes("/")) {
         const base = f.replace(/\.pdf$/i, "");
-        return backendPath(
+return apiPath(
           `/transfer-daerah/dau/kmk/file/stream/${encodeURIComponent(base)}`
         );
       }
       // Otherwise, treat as relative path
-      return backendPath(f.startsWith("/") ? f : `/${f}`);
+return apiPath(f.startsWith("/") ? f : `/${f}`);
     })(),
     fileName: (() => {
       const f = (r.filekmk ?? "").toString();

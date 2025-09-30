@@ -137,20 +137,22 @@ export async function POST(request: NextRequest) {
   // Clear middleware cache after successful login
   res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
   
-  // Invalidate other sessions and clear middleware cache
+  // Invalidate other sessions and clear middleware cache (fire-and-forget)
   if (user?.id) {
     try {
-      await fetch(backendPath(`/auth/invalidate-user-sessions/${user.id}`), {
+      // Kick off invalidation without blocking the response
+      // Backend session invalidation
+      void fetch(backendPath(`/auth/invalidate-user-sessions/${user.id}`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-      });
-      
-      // Clear middleware cache for this login
-      await fetch('/api/auth/invalidate-cache', {
+      }).catch(() => {});
+
+      // Clear middleware cache for this login on the frontend side
+      void fetch('/api/auth/invalidate-cache', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'login', userId: user.id })
-      });
+      }).catch(() => {});
     } catch {
       // Ignore errors - session invalidation is best effort
     }

@@ -21,7 +21,7 @@ import { DataPenundaanModal } from "./modals/data-penundaan-modal";
 import { DataPemotonganModal } from "./modals/data-pemotongan-modal";
 import { DeleteConfirmModal } from "./modals/delete-confirm-modal";
 import { useKmkDau } from "@/hooks/use-kmk-dau";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
 
@@ -422,7 +422,7 @@ export function DataKmkTab({}: DataKmkTabProps) {
              // Add CSRF token to headers
              const headersWithCsrf = addCsrfToHeaders(headers);
             
-            const resp = await fetch(backendPath(`/transfer-daerah/dau/kmk/${encodeURIComponent(String(id))}`), {
+const resp = await fetch(apiPath(`/transfer-daerah/dau/kmk/${encodeURIComponent(String(id))}`), {
               method: "DELETE",
               headers: headersWithCsrf,
               credentials: "include",

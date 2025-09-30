@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
 export interface DauPenundaanCabutRow {
@@ -29,7 +29,7 @@ const fetcher = async (url: string) => {
 export function useDauPenundaanCabutByPemda(params: { kdpemda?: string }) {
   const enabled = Boolean(params?.kdpemda);
   const url = params?.kdpemda
-    ? backendPath(`/transfer-daerah/dau/penundaan-cabut?kdpemda=${encodeURIComponent(params.kdpemda)}`)
+? apiPath(`/transfer-daerah/dau/penundaan-cabut?kdpemda=${encodeURIComponent(params.kdpemda)}`)
     : null;
 
   const { data, error, isLoading, refetch } = useQuery<DauPenundaanCabutRow[] | DauPenundaanCabutRow>({

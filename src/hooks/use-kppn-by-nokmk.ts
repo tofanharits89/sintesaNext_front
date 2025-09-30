@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 
 export interface KppnItem {
   kdkppn: string;
@@ -32,12 +32,8 @@ const fetcher = async (url: string) => {
 
 export function useKppnByNoKmk(no_kmk?: string) {
   const enabled = Boolean(no_kmk);
-  const url = no_kmk
-    ? `${
-        process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next"
-      }/api/transfer-daerah/dau/kmk/penundaan/kppn?no_kmk=${encodeURIComponent(
-        no_kmk
-      )}`
+const url = no_kmk
+    ? apiPath(`/transfer-daerah/dau/kmk/penundaan/kppn?no_kmk=${encodeURIComponent(no_kmk)}`)
     : null;
   const { data, error, isLoading, refetch } = useQuery<KppnItem[]>({
     queryKey: ["kppn-lookup", { no_kmk }],

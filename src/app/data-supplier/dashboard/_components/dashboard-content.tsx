@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { apiPath } from "@/lib/base-path";
 import { backendPath } from "@/lib/backend";
 import { Card, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
 import { LineChartComponent } from "@/components/ui/line-chart";
@@ -18,12 +19,23 @@ export default async function DashboardContent({ selectedYear }: Props) {
   let payload: any = null;
   try {
     const qs = selectedYear && /^\d{4}$/.test(selectedYear) ? `?year=${encodeURIComponent(selectedYear)}` : "";
-    const resp = await fetch(backendPath(`/supplier-analytics/dashboard${qs}`), {
-      headers: cookieHeader ? { cookie: cookieHeader } : {},
-      cache: "no-store",
-      next: { revalidate: 0 },
-    });
-    payload = await resp.json().catch(() => null);
+    // Try via Next proxy first
+    try {
+      const resp = await fetch(apiPath(`/supplier-analytics/dashboard${qs}`), {
+        cache: "no-store",
+        next: { revalidate: 0 },
+      });
+      payload = await resp.json().catch(() => null);
+    } catch {}
+    // Fallback to backend with cookies if proxy failed
+    if (!payload) {
+      const resp2 = await fetch(backendPath(`/supplier-analytics/dashboard${qs}`), {
+        headers: cookieHeader ? { cookie: cookieHeader } : {},
+        cache: "no-store",
+        next: { revalidate: 0 },
+      });
+      payload = await resp2.json().catch(() => null);
+    }
   } catch {}
 
   const data = payload?.data || {};

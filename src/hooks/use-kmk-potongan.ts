@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 
 export interface RawPotonganItem {
   id: number | string;
@@ -62,7 +62,7 @@ export function useKmkPotongan(
 ) {
   const key =
     no_kmk && thang && enabled
-      ? backendPath(
+? apiPath(
           `/transfer-daerah/dau/kmk/potongan?no_kmk=${encodeURIComponent(
             no_kmk
           )}&thang=${encodeURIComponent(String(thang))}`

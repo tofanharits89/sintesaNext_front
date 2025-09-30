@@ -53,6 +53,15 @@ const nextConfig: NextConfig = {
     config.resolve.alias = {
       ...config.resolve.alias,
       "@shared": path.resolve(__dirname, "./src/shared"),
+      // Force legacy pdfjs-dist build in Node.js environments to avoid warnings
+      // This affects only the server bundle when isServer === true
+      ...(isServer
+        ? {
+            "pdfjs-dist/build/pdf": "pdfjs-dist/legacy/build/pdf",
+            "pdfjs-dist/build/pdf.worker": "pdfjs-dist/legacy/build/pdf.worker",
+            "pdfjs-dist/build/pdf.min": "pdfjs-dist/legacy/build/pdf",
+          }
+        : {}),
     };
 
     // Bundle analyzer

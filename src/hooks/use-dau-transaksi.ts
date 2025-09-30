@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
 export interface RawDauTransaksiRow {
@@ -58,7 +58,7 @@ export function useDauTransaksi(params: { thang?: number | string; bulan?: numbe
   if (params?.bulan !== undefined && params?.bulan !== "") q.push(`bulan=${encodeURIComponent(String(params.bulan))}`);
   if (params?.kppn) q.push(`kppn=${encodeURIComponent(params.kppn)}`);
   if (params?.kabkota) q.push(`kabkota=${encodeURIComponent(params.kabkota)}`);
-  const key = backendPath(`/transfer-daerah/dau/transaksi${q.length ? `?${q.join("&")}` : ""}`);
+  const key = apiPath(`/transfer-daerah/dau/transaksi${q.length ? `?${q.join("&")}` : ""}`);
 
   const { data, error, isLoading, refetch } = useQuery<RawDauTransaksiRow[]>({
     queryKey: ["dau-transaksi", params],

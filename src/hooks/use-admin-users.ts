@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 import { getAuthTokenFromCookie } from "@/lib/socket";
 
 type AdminUser = {
@@ -25,7 +25,7 @@ export function useAdminUsers() {
       const token = getAuthTokenFromCookie();
       // Fetching admin users from API
 
-      const response = await fetch(backendPath("/users/admins"), {
+const response = await fetch(apiPath("/users/admins"), {
         headers: {
           Authorization: token ? `Bearer ${token}` : "",
           "Content-Type": "application/json",

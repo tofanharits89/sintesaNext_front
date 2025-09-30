@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
 export interface DasarPencabutanItem {
@@ -39,7 +39,7 @@ const fetcher = async (url: string) => {
 };
 
 export function useDasarPencabutanOptions(enabled: boolean = true) {
-  const url = backendPath("/transfer-daerah/dau/kmk/pencabutan/dasar");
+  const url = apiPath("/transfer-daerah/dau/kmk/pencabutan/dasar");
   const queryClient = useQueryClient();
   const { data, error, isLoading } = useQuery<DasarPencabutanItem[]>({
     queryKey: ["dasar-pencabutan-options"],

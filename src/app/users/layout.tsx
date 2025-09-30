@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { apiPath } from "@/lib/base-path";
 import { backendPath } from "@/lib/backend";
-// import { apiPath } from "@/lib/base-path";
 import { canAccessUserManagement } from "@/lib/rbac-client";
 
 export default async function UsersLayout({
@@ -18,12 +18,24 @@ export default async function UsersLayout({
     redirect("/login");
   }
   try {
-    // Fetch profile via backend using cookies
-    const resp = await fetch(backendPath("/users/profile/me"), {
-      method: "GET",
-      headers: { cookie: cookieHeader },
-      cache: "no-store",
-    });
+    // Prefer local Next API proxy first (cookies are forwarded automatically in server components)
+    let resp: Response | null = null;
+    try {
+      resp = await fetch(apiPath("/users/profile/me"), {
+        method: "GET",
+        cache: "no-store",
+      });
+    } catch {
+      resp = null;
+    }
+    // Fallback: call backend directly with explicit cookie header
+    if (!resp) {
+      resp = await fetch(backendPath("/users/profile/me"), {
+        method: "GET",
+        headers: { cookie: cookieHeader },
+        cache: "no-store",
+      });
+    }
 
     if (resp.status === 401) {
       if (hasAccessToken) {

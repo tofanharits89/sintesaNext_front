@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
 export interface OptionItem {
@@ -31,7 +31,7 @@ const fetcher = async (url: string) => {
 
 export function useDasarPemotonganOptions(kriteria?: string) {
   const key = kriteria
-    ? backendPath(`/transfer-daerah/dau/ref/dasar-pemotongan?kriteria=${encodeURIComponent(kriteria)}`)
+? apiPath(`/transfer-daerah/dau/ref/dasar-pemotongan?kriteria=${encodeURIComponent(kriteria)}`)
     : null;
   const { data, error, isLoading, refetch } = useQuery<any[]>(
     {

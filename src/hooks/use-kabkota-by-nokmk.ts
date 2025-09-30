@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 
 export interface KabKotaItem {
   kdkabkota: string; // kdpemda
@@ -33,10 +33,8 @@ export function useKabKotaByNoKmk(_no_kmk?: string, kppn?: string) {
   const params = new URLSearchParams();
   if (kppn) params.set("kppn", kppn);
   const enabled = Boolean(kppn);
-  const url = kppn
-    ? `${
-        process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next"
-      }/api/transfer-daerah/dau/kmk/penundaan/kabkota?${params.toString()}`
+const url = kppn
+    ? apiPath(`/transfer-daerah/dau/kmk/penundaan/kabkota?${params.toString()}`)
     : null;
   const { data, error, isLoading, refetch } = useQuery<KabKotaItem[]>({
     queryKey: ["kabkota-lookup", { kppn }],

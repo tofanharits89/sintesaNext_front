@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
 export interface DasarPenundaanItem {
@@ -39,7 +39,7 @@ const fetcher = async (url: string) => {
 
 export function useDasarPenundaanOptions(enabled: boolean = true) {
   const key = enabled
-    ? backendPath("/transfer-daerah/dau/kmk/penundaan/dasar")
+    ? apiPath("/transfer-daerah/dau/kmk/penundaan/dasar")
     : null;
   const { data, error, isLoading, refetch } = useQuery<DasarPenundaanItem[]>({
     queryKey: ["dasar-penundaan"],

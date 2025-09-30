@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 import { apiClient, http } from "@/lib/httpClient";
 import { retrySavedQueryOperation, createNetworkAwareOperation } from "@/utils/errorHandling";
 import { createStableRef } from "@/utils/query-error-recovery";
@@ -164,7 +164,7 @@ export function useSavedQueries(
     if (stableParams.scope) searchParams.set("scope", stableParams.scope); // Include scope in API request
 
     const queryString = searchParams.toString();
-    return backendPath(`/saved-queries${queryString ? `?${queryString}` : ""}`);
+return apiPath(`/saved-queries${queryString ? `?${queryString}` : ""}`);
   }, [
     stableParams.page,
     stableParams.limit,
@@ -568,7 +568,7 @@ export function useSavedQueries(
  * Hook for fetching a single saved query by ID
  */
 export function useSavedQuery(id: string | null) {
-  const key = id ? backendPath(`/saved-queries/${id}`) : null;
+const key = id ? apiPath(`/saved-queries/${id}`) : null;
 
   const { data, error, isLoading, refetch } = useQuery<SavedQuery>({
     queryKey: ["saved-query", id],

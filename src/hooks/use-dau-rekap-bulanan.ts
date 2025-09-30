@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
 export interface DauRekapBulananRow {
@@ -51,7 +51,7 @@ export function useDauRekapBulanan(params: {
     q.push(`bulan=${encodeURIComponent(String(params.bulan))}`);
   const key =
     params?.kdpemda && params?.bulan !== undefined
-      ? backendPath(`/transfer-daerah/dau/rekap/bulanan?${q.join("&")}`)
+? apiPath(`/transfer-daerah/dau/rekap/bulanan?${q.join("&")}`)
       : null; // only fetch when both provided
 
   const { data, error, isLoading, refetch } = useQuery<

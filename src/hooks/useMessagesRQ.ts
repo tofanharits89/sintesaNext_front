@@ -2,7 +2,7 @@
 
 import { useInfiniteQuery, useQueryClient, type QueryFunctionContext } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 import { useSocket } from "./useSocket";
 import { conversationKeys } from "./useConversationsRQ";
 import {
@@ -70,8 +70,8 @@ const fetchMessages = async (
   const { pageParam, queryKey } = context;
   const [, , conversationId] = queryKey;
 
-  const url = new URL(
-    backendPath(`/messaging/conversations/${conversationId}/messages`),
+const url = new URL(
+    apiPath(`/messaging/conversations/${conversationId}/messages`),
     window.location.origin
   );
   // Be liberal in what we send: support multiple backend param names after TS migration

@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 
 export interface RawPemotonganItem {
   id: number | string;
@@ -50,11 +50,7 @@ const fetcher = async (url: string) => {
 export function useKmkPemotongan(no_kmk?: string, enabled: boolean = true) {
   const url =
     no_kmk && enabled
-      ? `${
-          process.env.NEXT_PUBLIC_BASE_PATH || "/v3/next"
-        }/api/transfer-daerah/dau/kmk/pemotongan?no_kmk=${encodeURIComponent(
-          no_kmk
-        )}`
+? apiPath(`/transfer-daerah/dau/kmk/pemotongan?no_kmk=${encodeURIComponent(no_kmk)}`)
       : null;
 
   const { data, error, isLoading, refetch } = useQuery<RawPemotonganItem[]>({

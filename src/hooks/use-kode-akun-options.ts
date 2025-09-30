@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 
 export interface OptionItem {
   value: string;
@@ -40,7 +40,7 @@ const fetcher = async (url: string) => {
 export function useKodeAkunOptions(kriteria?: string) {
   const enabled = Boolean(kriteria);
   const url = kriteria
-    ? backendPath(
+? apiPath(
         `/transfer-daerah/dau/ref/kode-akun?kriteria=${encodeURIComponent(
           kriteria
         )}`

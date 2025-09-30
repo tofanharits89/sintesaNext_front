@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useInquiryQueryBuilder } from "./use-inquiry-query-builder";
 import { apiClient, http } from "@/lib/httpClient";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 
 export interface QueryExecutionResult {
   success: boolean;
@@ -106,7 +106,7 @@ export function useInquiryDataApi() {
 
         // Send to API using axios with blob response
         const { data: blob } = await http.post(
-          backendPath("/inquiry-data/query"),
+apiPath("/inquiry-data/query"),
           {
             encryptedQuery,
             format: "csv",
@@ -153,7 +153,7 @@ export function useInquiryDataApi() {
         const encryptedQuery = encryptQuery(sqlQuery);
 
         const { data: result } = await http.post<QueryExecutionResult>(
-          backendPath("/inquiry-data/query"),
+apiPath("/inquiry-data/query"),
           { encryptedQuery, format: "excel" }
         );
         if (!result.success || !result.data) {

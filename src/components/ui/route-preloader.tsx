@@ -25,8 +25,11 @@ export function RoutePreloader() {
   useEffect(() => {
     if (!pathname) return;
     
-    // Preload components for current route
-    const preloadFunc = routePreloadMap[pathname];
+    // Preload components for current or prefix-matched route
+    const preloadFunc =
+      routePreloadMap[pathname] ??
+      Object.entries(routePreloadMap).find(([prefix]) => pathname.startsWith(prefix))?.[1];
+
     if (preloadFunc) {
       preloadOnIdle(preloadFunc);
     }

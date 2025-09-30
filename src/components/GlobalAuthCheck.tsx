@@ -9,6 +9,7 @@ export default function GlobalAuthCheck() {
   const pathname = usePathname();
 
   useEffect(() => {
+    if (!pathname) return;
     // Skip auth check for public pages
     if (PUBLIC_PATHS.some(path => pathname.startsWith(path))) {
       return;

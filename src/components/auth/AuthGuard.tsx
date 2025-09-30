@@ -8,7 +8,7 @@ import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 interface AuthGuardProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
-  redirectTo?: string;
+  redirectTo?: string | undefined;
 }
 
 /**

@@ -1,10 +1,10 @@
-export const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
+// Base path disabled for simplicity: always use /api
+export const BASE_PATH = "";
 
 export function withBasePath(path: string) {
-  // If no base path, return the path as-is
-  if (!BASE_PATH) return path;
-  if (!path.startsWith("/")) return `${BASE_PATH}/${path}`;
-  return `${BASE_PATH}${path}`;
+  // Always return path as-is (no extra prefix)
+  if (!path.startsWith("/")) return `/${path}`;
+  return path;
 }
 
 export function apiPath(path: string) {

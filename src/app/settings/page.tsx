@@ -38,6 +38,7 @@ import {
 
 export default function SettingsPage() {
   const { user, isLoading } = useAuth();
+  const u = user as { name?: string; email?: string; role?: string; location?: string } | undefined;
   const [theme, setTheme] = useState("system");
   const [language, setLanguage] = useState("id");
   const [notifications, setNotifications] = useState({
@@ -252,7 +253,7 @@ export default function SettingsPage() {
                     <Label htmlFor="name">Nama Lengkap</Label>
                     <Input
                       id="name"
-                      value={user?.name || ""}
+                      value={u?.name || ""}
                       placeholder="Masukkan nama lengkap"
                       readOnly
                     />
@@ -262,7 +263,7 @@ export default function SettingsPage() {
                     <Input
                       id="email"
                       type="email"
-                      value={user?.email || ""}
+                      value={u?.email || ""}
                       placeholder="Masukkan email"
                       readOnly
                     />
@@ -270,14 +271,14 @@ export default function SettingsPage() {
                   <div className="space-y-2">
                     <Label htmlFor="role">Role</Label>
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary">{user?.role || "N/A"}</Badge>
+                      <Badge variant="secondary">{u?.role || "N/A"}</Badge>
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="location">Lokasi</Label>
                     <Input
                       id="location"
-                      value={user?.location || "N/A"}
+                      value={u?.location || "N/A"}
                       placeholder="Lokasi kerja"
                       readOnly
                     />

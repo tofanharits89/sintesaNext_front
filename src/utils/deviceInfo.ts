@@ -32,7 +32,7 @@ export function collectDeviceMetadata(): DeviceMetadata {
   const deviceId = getOrCreateDeviceId();
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const locale = navigator.language;
-  const platform = navigator.userAgentData?.platform || navigator.platform;
+  const platform = (navigator as any).userAgentData?.platform || navigator.platform;
 
   return {
     deviceId,

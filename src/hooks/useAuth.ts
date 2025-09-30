@@ -94,7 +94,7 @@ export function useAuth() {
       const config: AxiosRequestConfig | undefined = headers
         ? { headers: headers as AxiosRequestHeaders }
         : undefined;
-      await apiClient.post(backendPath("/auth/logout"), {}, config);
+      await apiClient.post("/auth/logout", {}, config);
     },
     onSuccess: () => {
       cacheInvalidation.invalidateUser(queryClient);

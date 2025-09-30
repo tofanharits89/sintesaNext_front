@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 import { User } from "@/lib/users-store";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { canAccessUserManagement } from "@/lib/rbac";
@@ -48,7 +48,7 @@ let __cachedCsrfToken: string | null = null;
 async function ensureCsrfToken(): Promise<string | null> {
   if (__cachedCsrfToken) return __cachedCsrfToken;
   try {
-    const resp = await fetch(backendPath("/csrf-token"), { credentials: "include" });
+const resp = await fetch(apiPath("/csrf-token"), { credentials: "include" });
     if (!resp.ok) return null;
     const data = await resp.json().catch(() => ({} as any));
     const token = typeof data?.token === "string" && data.token.length ? data.token : null;
@@ -60,7 +60,7 @@ async function ensureCsrfToken(): Promise<string | null> {
 }
 
 const fetchUsers = async () => {
-  const res = await fetch(backendPath("/users"), {
+const res = await fetch(apiPath("/users"), {
     credentials: "include",
     cache: "no-store",
   });
@@ -210,7 +210,7 @@ export default function UsersPage() {
     const method = form.id ? "PUT" : "POST";
     const bodyPayload = method === "POST" ? { ...payload, password } : payload;
     const xsrf = await ensureCsrfToken();
-    const url = form.id ? backendPath(`/users/${form.id}`) : backendPath("/users");
+const url = form.id ? apiPath(`/users/${form.id}`) : apiPath("/users");
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json", ...(xsrf ? { "x-csrf-token": xsrf } : {}) },
@@ -270,7 +270,7 @@ export default function UsersPage() {
 
   async function remove(id: string): Promise<void> {
     const xsrf = await ensureCsrfToken();
-    const res = await fetch(backendPath(`/users/${id}`), {
+const res = await fetch(apiPath(`/users/${id}`), {
       method: "DELETE",
       credentials: "include",
       headers: { ...(xsrf ? { "x-csrf-token": xsrf } : {}) },
@@ -289,7 +289,7 @@ export default function UsersPage() {
     const ids = Array.from(selected);
     const results = await Promise.all(
       ids.map(async (id) => {
-        const res = await fetch(backendPath(`/users/${id}`), {
+const res = await fetch(apiPath(`/users/${id}`), {
           method: "DELETE",
           credentials: "include",
           headers: { ...(xsrf ? { "x-csrf-token": xsrf } : {}) },

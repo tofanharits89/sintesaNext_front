@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 import { getCookie, prefetchCsrf } from "@/lib/httpClient";
 import { conversationKeys } from "./useConversationsRQ";
 import { messageKeys } from "./useMessagesRQ";
@@ -142,7 +142,7 @@ export function useSendMessageMutation() {
         };
 
         const executeRestSend = async (csrfToken?: string) =>
-          fetchWithTimeout(backendPath("/messaging/send"), {
+fetchWithTimeout(apiPath("/messaging/send"), {
             method: "POST",
             credentials: "include",
             headers: {
@@ -815,8 +815,8 @@ export function useMarkAsReadMutation(conversationId?: string) {
       }
 
       const csrfToken = getCookie("XSRF-TOKEN");
-      const readResp = await fetch(
-        backendPath(`/messaging/conversations/${conversationId}/read`),
+const readResp = await fetch(
+        apiPath(`/messaging/conversations/${conversationId}/read`),
         {
           method: "PUT",
           credentials: "include",

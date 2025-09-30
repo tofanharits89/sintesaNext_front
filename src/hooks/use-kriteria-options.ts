@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
 export interface OptionItem {
@@ -31,7 +31,7 @@ const fetcher = async (url: string) => {
 
 export function useKriteriaOptions(jenis?: string) {
   // Hierarchical: only fetch when jenis is provided
-  const key = jenis ? backendPath(`/transfer-daerah/dau/ref/kriteria?jenis=${encodeURIComponent(jenis)}`) : null;
+const key = jenis ? apiPath(`/transfer-daerah/dau/ref/kriteria?jenis=${encodeURIComponent(jenis)}`) : null;
   const { data, error, isLoading, refetch } = useQuery<any[]>({
     queryKey: ["kriteria-options", jenis],
     queryFn: () => fetcher(key!),

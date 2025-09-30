@@ -3,7 +3,7 @@
  * Implements outbox pattern for reliable message delivery
  */
 
-import { backendPath } from '@/lib/backend';
+import { apiPath } from '@/lib/base-path';
 import { getCookie } from '@/lib/httpClient';
 import { logger } from '@/lib/utils';
 
@@ -227,7 +227,7 @@ export class PersistentMessageQueue {
   private async sendMessage(message: QueuedMessage): Promise<{ success: boolean; messageId?: string; error?: string; isRateLimit?: boolean }> {
     try {
       const csrfToken = getCookie('XSRF-TOKEN');
-      const response = await fetch(backendPath('/messaging/send'), {
+const response = await fetch(apiPath('/messaging/send'), {
         method: 'POST',
         credentials: 'include',
         headers: {
