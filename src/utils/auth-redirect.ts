@@ -12,18 +12,18 @@ export function redirectToLoginIfNotAuth() {
     return;
   }
   
-  // Verify token is valid
-  fetch('/api/auth/verify', {
+  // Verify session via /me; only redirect on 401/403
+  fetch('/api/auth/me', {
     method: 'GET',
     credentials: 'include',
   })
   .then(response => {
-    if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
       window.location.href = '/login';
     }
   })
   .catch(() => {
-    window.location.href = '/login';
+    // Network error: do not force logout; middleware protects pages anyway
   });
 }
 

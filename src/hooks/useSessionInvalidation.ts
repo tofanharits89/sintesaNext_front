@@ -9,19 +9,13 @@ export function useSessionInvalidation() {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const response = await fetch('/api/auth/verify', {
+        const response = await fetch('/api/auth/me', {
           method: 'GET',
           credentials: 'include',
         });
         
-        if (!response.ok) {
-          // Session invalidated -> clear httpOnly cookies via local API (clears on current origin) then redirect
-          try {
-            await fetch('/api/auth/logout', {
-              method: 'POST',
-              credentials: 'include',
-            });
-          } catch {}
+        if (response.status === 401 || response.status === 403) {
+          // Session invalidated -> rely on middleware; just navigate to login
           router.push('/login');
         }
       } catch {

@@ -28,18 +28,18 @@ export default function GlobalAuthCheck() {
       return;
     }
     
-    // Verify token is valid
-    fetch('/api/auth/verify', {
+    // Verify session via lightweight /me endpoint; only redirect on 401/403
+    fetch('/api/auth/me', {
       method: 'GET',
       credentials: 'include',
     })
     .then(response => {
-      if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
         window.location.href = '/login';
       }
     })
     .catch(() => {
-      window.location.href = '/login';
+      // Network hiccup: do not force logout; let middleware protect pages
     });
   }, [pathname]);
 

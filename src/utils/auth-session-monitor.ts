@@ -14,13 +14,13 @@ export function startSessionMonitoring() {
     isChecking = true;
     
     try {
-      const response = await fetch('/api/auth/verify', {
+      const response = await fetch('/api/auth/me', {
         method: 'GET',
         credentials: 'include',
       });
       
-      if (!response.ok) {
-        console.log('[SessionMonitor] Auth check failed, redirecting to login');
+      if (response.status === 401 || response.status === 403) {
+        console.log('[SessionMonitor] Session expired (401/403), redirecting to login');
         window.location.href = '/login';
       }
     } catch (error) {
