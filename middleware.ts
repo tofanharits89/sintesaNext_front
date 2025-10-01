@@ -520,6 +520,15 @@ async function handleCacheInvalidation(request: NextRequest): Promise<NextRespon
 }
 
 export async function middleware(request: NextRequest) {
+  // Minimal probe mode to verify middleware registration and execution path
+  // Enable by setting NEXT_MW_PROBE=1 in .env.local, then every request will include probe headers
+  if (process.env.NEXT_MW_PROBE === "1") {
+    const res = NextResponse.next();
+    res.headers.set("x-mw-probe", "1");
+    res.headers.set("x-mw-path", request.nextUrl.pathname);
+    return res;
+  }
+
   const { pathname } = request.nextUrl;
 
   // Since we removed basePath, use pathname directly
@@ -645,7 +654,9 @@ export async function middleware(request: NextRequest) {
       const url = request.nextUrl.clone();
       // Do NOT prepend BASE_PATH here; Next middleware applies basePath automatically
       url.pathname = `/server-error`;
-      return NextResponse.redirect(url);
+      const res = NextResponse.redirect(url);
+      res.headers.set("x-mw-hit", "1");
+      return res;
     }
   }
 
@@ -675,6 +686,7 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     const res = NextResponse.redirect(url);
+    res.headers.set("x-mw-hit", "1");
     if (DEBUG_AUTH) {
       res.headers.set("x-auth-debug", "no-accessToken;redirect-login");
       res.headers.set("x-auth-relpath", relPath);
@@ -733,20 +745,25 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     // Do NOT prepend BASE_PATH here; Next middleware applies basePath automatically
     url.pathname = `/login`;
-    return NextResponse.redirect(url);
+    const res = NextResponse.redirect(url);
+    res.headers.set("x-mw-hit", "1");
+    return res;
   }
 
   // Redirect authenticated users away from login page
   if (isAuth && relPath.startsWith("/login")) {
     const url = request.nextUrl.clone();
     url.pathname = `/dashboard`;
-    return NextResponse.redirect(url);
+    const res = NextResponse.redirect(url);
+    res.headers.set("x-mw-hit", "1");
+    return res;
   }
 
   // Pass through, set request header for route visibility, and ensure no caching on protected pages
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-public-route", isPublicPath ? "1" : "0");
   const res = NextResponse.next({ request: { headers: requestHeaders } });
+  res.headers.set("x-mw-hit", "1");
   if (!isPublicPath) {
     res.headers.set("Cache-Control", "no-store");
   }

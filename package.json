@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:no-turbo": "next dev",
     "build": "next build",
     "build:analyze": "cross-env ANALYZE=true next build",
     "start": "next start",
@@ -49,6 +50,7 @@
     "cookie": "^1.0.2",
     "date-fns": "^4.1.0",
     "emoji-picker-react": "^4.13.2",
+    "indo-finance-dashboard": "file:",
     "jose": "^6.1.0",
     "lucide-react": "^0.544.0",
     "next": "^15.5.4",

@@ -76,8 +76,8 @@ const nextConfig: NextConfig = {
       );
     }
 
-    // Production optimizations
-    if (!dev) {
+    // Production optimizations (client build only)
+    if (!dev && !isServer) {
       // Optimize chunks for better caching
       config.optimization = {
         ...config.optimization,

@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { DashboardProvider } from "@/components/providers/dashboard-provider";
 import { DashboardSkeleton } from "@/components/layout/dashboard-skeleton";
@@ -18,6 +20,13 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   // Server-side auth guard: ensures redirect to /login when unauthenticated
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get("accessToken")?.value?.trim();
+  if (!accessToken) {
+    redirect("/login");
+  }
+
+  // Optionally, you could fetch the user here using the cookie and pass it down
   const user: User | null = null;
 
   return (
