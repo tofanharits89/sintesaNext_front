@@ -1,223 +1,341 @@
-# Sintesa Frontend
+# Indo Finance Dashboard (sintesaNEXT)
 
-A modern Next.js frontend application for the Sintesa Finance Dashboard with real-time messaging capabilities.
+A comprehensive financial dashboard application for Indonesian government finance management, built with Next.js 15, React 19, and modern web technologies.
 
-## Features
+## 🏗️ Architecture Overview
 
-- **Next.js 15** with App Router
-- **TypeScript** for type safety
-- **Tailwind CSS** for styling
-- **shadcn/ui** components
-- **Socket.io Client** for real-time communication
-- **JWT Authentication** with cookie-based sessions
-- **Real-time Messaging** system
-- **Responsive Design** with mobile support
+This is a full-stack Next.js application with a sophisticated architecture designed for enterprise-level financial data management:
 
-## Prerequisites
+- **Frontend**: Next.js 15 with App Router, React 19, TypeScript
+- **UI Framework**: Tailwind CSS with shadcn/ui components
+- **State Management**: Zustand + React Query (TanStack Query)
+- **Authentication**: JWT-based with role-based access control (RBAC)
+- **Real-time Features**: Socket.IO for messaging and notifications
+- **Data Visualization**: Recharts for financial charts and analytics
+- **Testing**: Vitest with React Testing Library
 
-- Node.js 18+
-- npm, yarn, or pnpm
-- Running Sintesa Backend (see backend README)
+## 🚀 Key Features
 
-## Installation
+### 📊 Financial Data Management
+- **Inquiry Data System**: Advanced query builder for financial data analysis
+  - Dynamic filter system with registry-based architecture
+  - SQL query generation with encryption
+  - Support for multiple report types (Pagu APBN, Realisasi, etc.)
+  - Export capabilities (CSV, Excel)
+  
+- **Dashboard Analytics**: Real-time financial monitoring
+  - Performance metrics and KPIs
+  - Interactive charts and visualizations
+  - Regional data analysis (Province/Regency)
 
-1. **Clone and navigate to the frontend directory:**
+### 🔐 Security & Authentication
+- **Enterprise-grade Authentication**: JWT with refresh tokens
+- **Role-Based Access Control (RBAC)**: 
+  - Super Admin, Co-Admin, Kantor Pusat, Kanwil DJPb, KPPN, Lainnya
+  - Hierarchical access control based on organizational structure
+- **Advanced Middleware**: Session validation with caching and security headers
+- **Cache Invalidation**: Dynamic cache management for logout events
 
-   ```bash
-   git clone <repository-url>
-   cd sintesa-frontend
-   ```
+### 💬 Messaging System
+- **Real-time Messaging**: Socket.IO-based chat system
+- **Typing Indicators**: Live typing status
+- **Unread Badges**: Message count management
+- **Notification System**: In-app and browser notifications
 
-2. **Install dependencies:**
+### 🏢 Organizational Data
+- **Satker Management**: Government unit (Satuan Kerja) search and profiles
+- **Supplier Analytics**: Data supplier dashboard and analytics
+- **Transfer Daerah**: Regional transfer data management
+- **EPA (Electronic Procurement Analytics)**: Procurement data analysis
 
-   ```bash
-   npm install
-   # or
-   yarn install
-   # or
-   pnpm install
-   ```
-
-3. **Set up environment variables:**
-
-   ```bash
-   cp .env.example .env.local
-   ```
-
-   Edit `.env.local` with your configuration:
-
-   ```env
-   NEXT_PUBLIC_BACKEND_URL=http://localhost:88/api/v1
-   NEXT_PUBLIC_SOCKET_URL=http://localhost:88
-   NEXT_PUBLIC_SOCKET_PATH=/socket.io
-   NEXT_PUBLIC_BASE_PATH=/v3/next
-   JWT_SECRET=your-jwt-secret-matching-backend
-   ```
-
-4. **Start the development server:**
-
-   ```bash
-   npm run dev
-   # or
-   yarn dev
-   # or
-   pnpm dev
-   ```
-
-5. **Open your browser:**
-   Navigate to [http://localhost:3000](http://localhost:3000)
-
-## Environment Variables
-
-| Variable                  | Description                             | Default                      |
-| ------------------------- | --------------------------------------- | ---------------------------- |
-| `NEXT_PUBLIC_BACKEND_URL` | Backend API base URL                    | `http://localhost:88/api/v1` |
-| `NEXT_PUBLIC_SOCKET_URL`  | Socket.IO server URL                    | `http://localhost:88`        |
-| `NEXT_PUBLIC_SOCKET_PATH` | Socket.IO path                          | `/socket.io`                 |
-| `NEXT_PUBLIC_BASE_PATH`   | Application base path                   | `/v3/next`                   |
-| `JWT_SECRET`              | JWT secret for server-side verification | Required                     |
-| `NODE_ENV`                | Environment mode                        | `development`                |
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 src/
-├── app/                    # Next.js App Router pages
-├── components/             # React components
-│   ├── ui/                # shadcn/ui components
-│   ├── auth/              # Authentication components
-│   ├── messaging/         # Messaging components
-│   └── layout/            # Layout components
-├── hooks/                 # Custom React hooks
-├── lib/                   # Utility libraries
-├── shared/                # Shared types and constants
-│   └── socket-events.ts   # Socket event definitions
-├── utils/                 # Utility functions
-└── data/                  # Static data files
+├── app/                          # Next.js App Router pages
+│   ├── (routes)/                 # Route groups
+│   ├── api/                      # API routes
+│   │   ├── auth/                 # Authentication endpoints
+│   │   ├── dashboard/            # Dashboard APIs
+│   │   ├── inquiry-data/         # Data inquiry APIs
+│   │   └── ...                   # Other API endpoints
+│   ├── dashboard/                # Main dashboard pages
+│   ├── data-supplier/            # Supplier analytics
+│   ├── inquiry-data/             # Data inquiry system
+│   │   ├── belanja/              # Budget expenditure
+│   │   ├── kontrak/              # Contract data
+│   │   └── tematik/              # Thematic analysis
+│   ├── login/                    # Authentication pages
+│   ├── messaging/                # Chat system
+│   └── ...                       # Other feature pages
+├── components/                   # React components
+│   ├── auth/                     # Authentication components
+│   ├── dashboard/                # Dashboard components
+│   ├── inquiry-data/             # Query builder components
+│   ├── messaging/                # Chat components
+│   ├── ui/                       # shadcn/ui components
+│   └── ...                       # Feature-specific components
+├── features/                     # Feature modules
+│   ├── mbg/                      # Makan Bergizi feature
+│   └── messaging/                # Messaging feature logic
+├── hooks/                        # Custom React hooks
+├── lib/                          # Utility libraries
+│   ├── auth-state.ts             # Authentication state
+│   ├── cache-manager.ts          # Cache management
+│   ├── rbac.ts                   # Role-based access control
+│   └── ...                       # Other utilities
+├── providers/                    # React context providers
+├── services/                     # Business logic services
+├── stores/                       # Zustand state stores
+│   ├── messaging-ui-store.ts     # Messaging UI state
+│   ├── notification-store.ts     # Notifications
+│   └── ...                       # Other stores
+├── types/                        # TypeScript type definitions
+└── utils/                        # Utility functions
 ```
 
-## Key Features
+## 🛠️ Technology Stack
 
-### Authentication
+### Core Technologies
+- **Next.js 15**: React framework with App Router
+- **React 19**: Latest React with concurrent features
+- **TypeScript**: Type-safe development
+- **Tailwind CSS**: Utility-first CSS framework
 
-- JWT-based authentication with HTTP-only cookies
-- Automatic token refresh
-- Protected routes with middleware
-- Role-based access control
+### UI & Components
+- **shadcn/ui**: Modern component library based on Radix UI
+- **Lucide React**: Icon library
+- **Recharts**: Data visualization
+- **React Hook Form**: Form management with Zod validation
 
-### Real-time Messaging
+### State Management & Data Fetching
+- **TanStack React Query**: Server state management
+- **Zustand**: Client state management
+- **Socket.IO Client**: Real-time communication
 
-- Socket.io integration for real-time communication
-- Conversation management
-- Typing indicators
-- Message read receipts
-- Connection status monitoring
+### Development & Testing
+- **Vitest**: Testing framework
+- **ESLint**: Code linting
+- **Prettier**: Code formatting (via Tailwind)
 
-### UI Components
+## 🚦 Getting Started
 
-- Modern design with shadcn/ui
-- Dark/light theme support
-- Responsive layout
-- Accessible components
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+- Access to backend API services
 
-## Development
+### Installation
 
-### Available Scripts
+1. **Clone the repository**
+```bash
+git clone <repository-url>
+cd indo-finance-dashboard
+```
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
+2. **Install dependencies**
+```bash
+npm install
+# or
+yarn install
+```
 
-### Testing
+3. **Environment Setup**
+```bash
+cp .env.example .env.local
+```
 
-- `npm test` - Run Vitest in watch mode
-- `npm run test:ui` - Run Vitest with UI
-- `npm run test:run` - Single test run (CI-friendly)
-- `npm run test:coverage` - Test run with coverage report
+Configure your environment variables:
+```env
+# Backend API Configuration
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+NEXT_PUBLIC_SOCKET_URL=http://localhost:8000
 
-### Code Style
+# Authentication
+NEXT_PUBLIC_DEBUG_AUTH=0
 
-- TypeScript for type safety
-- ESLint for code quality
-- Prettier for code formatting
-- Tailwind CSS for styling
+# Feature Flags
+ENABLE_CACHE_INVALIDATION=1
+CACHE_INVALIDATE_SECRET=your-secret-key
 
-## Deployment
+# Database (for API routes)
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your-password
+DB_NAME=monev
+DB_PORT=3306
+```
+
+4. **Development Server**
+```bash
+npm run dev
+# or with Turbopack (faster)
+npm run dev
+```
+
+5. **Open your browser**
+Navigate to [http://localhost:3000](http://localhost:3000)
+
+## 📋 Available Scripts
+
+```bash
+# Development
+npm run dev              # Start development server with Turbopack
+npm run dev:no-turbo     # Start development server without Turbopack
+
+# Building
+npm run build            # Build for production
+npm run build:analyze    # Build with bundle analyzer
+npm run start            # Start production server
+
+# Code Quality
+npm run lint             # Run ESLint
+npm run lint:fix         # Fix ESLint issues
+npm run type-check       # TypeScript type checking
+
+# Testing
+npm run test             # Run tests in watch mode
+npm run test:ui          # Run tests with UI
+npm run test:run         # Run tests once
+npm run test:coverage    # Run tests with coverage
+
+# Utilities
+npm run clean            # Clean build artifacts
+npm run install:clean    # Clean install dependencies
+npm run analyze:bundle   # Analyze bundle size
+```
+
+## 🔑 Authentication & Authorization
+
+### User Roles
+- **super_admin**: Full system access
+- **co_admin**: Administrative access
+- **kantor_pusat**: Central office access
+- **kanwil_djpb**: Regional office access (filtered by kdkanwil)
+- **kppn**: Local office access (filtered by kdkppn)
+- **lainnya**: Limited access
+
+### RBAC Implementation
+The system implements hierarchical access control:
+- Users can only access data within their organizational scope
+- Satker search is filtered based on user's kdkanwil/kdkppn
+- API endpoints respect user permissions
+- UI components adapt based on user roles
+
+## 🔍 Key Features Deep Dive
+
+### Inquiry Data System
+Advanced query builder with:
+- **Filter Registry**: Reusable filter definitions
+- **Category Registry**: Thematic analysis categories
+- **Dynamic SQL Generation**: Secure query building
+- **Export Capabilities**: CSV and Excel downloads
+- **Real-time Preview**: SQL query preview for admins
+
+### Messaging System
+Real-time communication with:
+- **WebSocket Integration**: Live messaging
+- **Typing Indicators**: Real-time typing status
+- **Unread Management**: Message count tracking
+- **Notification System**: In-app and browser notifications
+
+### Dashboard Analytics
+Comprehensive financial monitoring:
+- **Performance Metrics**: KPI tracking
+- **Regional Analysis**: Province/regency data
+- **Interactive Charts**: Recharts visualizations
+- **Real-time Updates**: Live data refresh
+
+## 🧪 Testing
+
+The project uses Vitest for testing with comprehensive coverage:
+
+```bash
+# Run all tests
+npm run test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run tests in UI mode
+npm run test:ui
+```
+
+Test files are located alongside source files with `.test.ts` or `.test.tsx` extensions.
+
+## 📦 Deployment
 
 ### Production Build
-
-1. **Build the application:**
-
-   ```bash
-   npm run build
-   ```
-
-2. **Start the production server:**
-   ```bash
-   npm run start
-   ```
-
-### Environment Configuration
-
-For production, update your environment variables:
-
-```env
-NEXT_PUBLIC_BACKEND_URL=https://your-backend-domain.com/api/v1
-NEXT_PUBLIC_SOCKET_URL=https://your-backend-domain.com
-NODE_ENV=production
+```bash
+npm run build
+npm run start
 ```
 
-## Troubleshooting
+### Environment Configuration
+Ensure all environment variables are properly configured for production:
+- API endpoints
+- Database connections
+- Authentication secrets
+- Feature flags
+
+### Performance Optimizations
+- **Bundle Analysis**: Use `npm run build:analyze` to analyze bundle size
+- **Image Optimization**: Next.js automatic image optimization
+- **Code Splitting**: Automatic route-based code splitting
+- **Caching**: Aggressive caching strategies for static assets
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Development Guidelines
+- Follow TypeScript best practices
+- Write tests for new features
+- Use conventional commit messages
+- Ensure code passes linting and type checking
+
+## 📚 Documentation
+
+Additional documentation is available in the `docs/` directory:
+- [RBAC Implementation](docs/RBAC_IMPLEMENTATION.md)
+- [Query Builder Documentation](docs/QUERY_BUILDER_DOCUMENTATION.md)
+- [Filter Registry System](docs/FILTER_REGISTRY_SYSTEM.md)
+- [Authentication Improvement Plan](docs/authentication-improvement-plan.md)
+
+## 🐛 Troubleshooting
 
 ### Common Issues
 
-1. **Module resolution errors:**
+1. **Authentication Issues**
+   - Check backend API connectivity
+   - Verify JWT token configuration
+   - Clear browser cookies and localStorage
 
-   - Ensure the backend is running on the correct port
-   - Check environment variables are set correctly
+2. **Build Errors**
+   - Run `npm run clean` to clear build cache
+   - Check TypeScript errors with `npm run type-check`
+   - Verify all dependencies are installed
 
-2. **Socket connection issues:**
+3. **Performance Issues**
+   - Use bundle analyzer to identify large dependencies
+   - Check for memory leaks in React components
+   - Optimize database queries
 
-   - Verify `NEXT_PUBLIC_SOCKET_URL` matches backend configuration
-   - Check CORS settings in backend
+## 📄 License
 
-3. **Authentication problems:**
-   - Ensure JWT secrets match between frontend and backend
-   - Check cookie settings and domain configuration
+This project is proprietary software for Indonesian government financial management.
 
-### Development Tips
+## 🙋‍♂️ Support
 
-- Use browser dev tools to monitor network requests
-- Check the console for Socket.io connection logs
-- Verify JWT tokens in browser cookies
+For support and questions:
+- Check the documentation in the `docs/` directory
+- Review existing issues and discussions
+- Contact the development team
 
-## Learn More
+---
 
-To learn more about the technologies used:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [shadcn/ui](https://ui.shadcn.com/) - UI component library
-- [Tailwind CSS](https://tailwindcss.com/) - utility-first CSS framework
-- [Socket.io](https://socket.io/) - real-time communication
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## License
-
-MIT License - see LICENSE file for details
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**sintesaNEXT** - Modern Financial Dashboard for Indonesian Government Finance Management
