@@ -161,7 +161,7 @@ function shouldBypassCache(cacheKey: string): boolean {
   
   if (DEBUG_AUTH) {
     console.debug("[Auth] Cache bypass active (dynamic expiration)", {
-      cacheKey,
+      cacheKey: cacheKey.substring(0, 50) + '...',
       reason: bypass.reason || 'logout_event',
       expiresAt: new Date(bypass.exp).toISOString(),
       remainingMs: bypass.exp - now
@@ -202,10 +202,16 @@ function isSecurityExpired(cacheEntry: { ok: boolean; exp: number; created?: num
 
 /**
  * Set cache bypass for logout events to implement dynamic expiration
+ * Only bypasses specific tokens, not entire users (to avoid blocking new logins)
  */
 function setCacheBypassForLogout(cacheKey: string, reason: string = 'logout_event'): void {
+  // Only set bypass for specific token cache keys, not user-wide
+  if (!cacheKey || cacheKey === '_no_cookie') {
+    return; // Don't set bypass for empty keys
+  }
+  
   const bypassKey = `bypass:${cacheKey}`;
-  const bypassDuration = 60000; // 60 seconds
+  const bypassDuration = 30000; // 30 seconds (reduced from 60)
   const bypassExpiry = Date.now() + bypassDuration;
   
   sessionVerifyCache.set(bypassKey, { 
@@ -217,7 +223,7 @@ function setCacheBypassForLogout(cacheKey: string, reason: string = 'logout_even
   
   if (DEBUG_AUTH) {
     console.debug("[Auth] Cache bypass set for logout event", {
-      cacheKey,
+      cacheKey: cacheKey.substring(0, 50) + '...',
       reason,
       duration: bypassDuration,
       expiresAt: new Date(bypassExpiry).toISOString()
@@ -759,30 +765,31 @@ export async function middleware(request: NextRequest) {
     if (DEBUG_AUTH) {
       console.debug("[Auth] Public path access granted", { relPath });
     }
-    // For login page, if user is already authenticated, redirect to dashboard
-    if (relPath.startsWith("/login") && hasAccessToken) {
-      // Quick check if user is authenticated
+    // For login page, if user has a valid access token, check if authenticated
+    // IMPORTANT: Don't redirect in a loop - check for "from_redirect" param
+    if (relPath.startsWith("/login") && hasAccessToken && !request.nextUrl.searchParams.has("from_redirect")) {
+      // Quick check if user is authenticated (bypass cache for fresh check)
       let isAuth = await validateSessionViaBackend(rawCookie, true);
       if (!isAuth) {
         // Grace period retry for very fresh tokens (post-login propagation)
         const cookieAge = extractCookieAge(rawCookie);
         if (cookieAge !== null && cookieAge < 3000) {
-          const delays = [150, 250, 300];
-          for (const d of delays) {
-            await new Promise(r => setTimeout(r, d));
-            isAuth = await validateSessionViaBackend(rawCookie, true);
-            if (isAuth) break;
-          }
+          // Single retry after brief delay
+          await new Promise(r => setTimeout(r, 200));
+          isAuth = await validateSessionViaBackend(rawCookie, true);
         }
       }
       if (isAuth) {
+        // User is authenticated, redirect to dashboard
         const url = request.nextUrl.clone();
         url.pathname = `/dashboard`;
         const res = NextResponse.redirect(url);
         res.headers.set("x-mw-hit", "1");
+        res.headers.set("Cache-Control", "no-store");
         return res;
       }
-      // Do NOT expire cookies on /login. Let the page render and client decide next action.
+      // Token exists but not valid - allow login page to render
+      // The login form will clear old tokens before attempting new login
       return NextResponse.next();
     }
     // Allow public path access
@@ -906,10 +913,12 @@ export async function middleware(request: NextRequest) {
     }
     const url = request.nextUrl.clone();
     url.pathname = `/login`;
-    // Tag once to avoid ping-pong loops; login handler will allow
+    // Tag to avoid ping-pong loops
     if (!url.searchParams.has("reason")) {
       url.searchParams.set("reason", "session_expired");
     }
+    // Add marker to prevent redirect loops
+    url.searchParams.set("from_redirect", "1");
     const res = NextResponse.redirect(url);
     res.headers.set("x-mw-hit", "1");
     res.headers.set("Cache-Control", "no-store");
