@@ -76,67 +76,8 @@ const nextConfig: NextConfig = {
       );
     }
 
-    // Production optimizations (client build only)
-    if (!dev && !isServer) {
-      // Optimize chunks for better caching
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            vendor: {
-              test: /[\\/]node_modules[\\/]/,
-              name: 'vendors',
-              chunks: 'all',
-              priority: 10,
-            },
-            common: {
-              name: 'common',
-              minChunks: 2,
-              chunks: 'all',
-              priority: 5,
-              reuseExistingChunk: true,
-            },
-            // Separate heavy libraries
-            charts: {
-              test: /[\\/]node_modules[\\/](recharts|d3)[\\/]/,
-              name: 'charts',
-              chunks: 'all',
-              priority: 15,
-            },
-            ui: {
-              test: /[\\/]node_modules[\\/](@radix-ui)[\\/]/,
-              name: 'ui',
-              chunks: 'all',
-              priority: 12,
-            },
-          },
-        },
-        usedExports: true,
-        sideEffects: false,
-      };
-
-      // Remove console logs in production (safely)
-      if (config.optimization?.minimizer) {
-        try {
-          const minimizer = config.optimization.minimizer[0];
-          if (minimizer && minimizer.options && minimizer.options.minimizer) {
-            if (!minimizer.options.minimizer.options) {
-              minimizer.options.minimizer.options = {};
-            }
-            if (!minimizer.options.minimizer.options.compress) {
-              minimizer.options.minimizer.options.compress = {};
-            }
-            minimizer.options.minimizer.options.compress.drop_console = true;
-          }
-        } catch (error) {
-          // Silently fail if minimizer structure is different
-          const message = (error as Error)?.message ?? String(error);
-          console.warn('Could not configure console removal:', message);
-        }
-      }
-    }
-
+    // Important: let Next.js handle client chunking to avoid invalid script URLs like 
+    // requesting a route (e.g., "/login") as a script. Custom splitChunks has been removed.
     return config;
   },
   
