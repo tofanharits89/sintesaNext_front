@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/sonner";
+import { ConditionalToaster } from "@/components/ui/conditional-toaster";
 import AppShell from "@/components/layout/app-shell";
 import { ConnectionStatus } from "@/components/connection-status";
 import CheckBackend from "@/components/check-backend";
@@ -80,7 +80,7 @@ export default async function RootLayout({
                 <ConnectionStatus />
               </ComponentErrorBoundary>
               <RoutePreloader />
-              <Toaster richColors position="bottom-left" />
+              <ConditionalToaster />
               {/* Optionally show a top-of-page banner when server down via client routes */}
               {/* <ServerDownBanner /> */}
             </ThemeProvider>

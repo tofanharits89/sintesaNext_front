@@ -6,6 +6,12 @@ import { parse } from "cookie";
 import { ReconnectionManager } from "@/utils/reconnectionLogic";
 import { getAuthTokenFromCookie, waitForAuthToken } from "@/utils/auth-utils";
 
+// Helper function to check if we're on login page
+const isLoginPage = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return window.location.pathname.startsWith('/login');
+};
+
 // Socket connection states
 export type SocketState =
   | "disconnected"
@@ -34,6 +40,10 @@ export class SocketClient {
   private reconnectionManager: ReconnectionManager;
   private eventListenersAttached = false;
   private readonly debugMode: boolean;
+
+  // Track connection-related toast IDs so we can dismiss them on reconnect
+  private connectionToastId: string | number | null = null;
+  private failureToastId: string | number | null = null;
 
   private listenerRegistry: Map<string, Set<(...args: any[]) => void>> =
     new Map();
@@ -69,7 +79,7 @@ export class SocketClient {
     this.handleSessionExpired = this.handleSessionExpired.bind(this);
 
     if (this.config.autoConnect) {
-      if (typeof window !== "undefined") {
+      if (typeof window !== "undefined" && !isLoginPage()) {
         const ric = (window as any).requestIdleCallback as
           | ((cb: () => void, opts?: { timeout?: number }) => number)
           | undefined;
@@ -206,6 +216,16 @@ export class SocketClient {
     this.log("Socket connected successfully");
     this.setState("connected");
 
+    // Dismiss any lingering connection/failure toasts
+    if (this.connectionToastId !== null) {
+      try { toast.dismiss(this.connectionToastId); } catch {}
+      this.connectionToastId = null;
+    }
+    if (this.failureToastId !== null) {
+      try { toast.dismiss(this.failureToastId); } catch {}
+      this.failureToastId = null;
+    }
+
     // Send handshake request to prevent server timeout
     this.socket?.emit("handshake:request", {
       timestamp: Date.now(),
@@ -221,11 +241,12 @@ export class SocketClient {
     this.log("Socket disconnected:", reason);
     this.setState("disconnected");
 
-    // Show user-friendly message for unexpected disconnections
-    if (reason !== "io client disconnect") {
-      toast.warning("Connection lost", {
+    // Show user-friendly message for unexpected disconnections (but not on login page)
+    if (reason !== "io client disconnect" && !isLoginPage()) {
+      const id = toast.warning("Connection lost", {
         description: "Attempting to reconnect...",
       });
+      this.connectionToastId = id;
     }
   }
 
@@ -243,14 +264,33 @@ export class SocketClient {
 
     if (isAuthError) {
       this.setState("auth_failed");
-      toast.error("Authentication failed", {
-        description: "Please refresh the page and log in again",
-      });
+      if (!isLoginPage()) {
+        toast.error("Authentication failed", {
+          description: "Please refresh the page and log in again",
+        });
+      }
     } else {
       this.setState("error");
-      toast.error("Connection failed", {
-        description: "Unable to connect to server",
-      });
+      
+      // For non-auth errors, try auto-reconnect after a delay (especially useful after login)
+      if (!isLoginPage()) {
+        setTimeout(() => {
+          if (this.state === "error" && !this.socket?.connected) {
+            this.log("Auto-reconnecting after connection error...");
+            this.connect().catch(() => {
+              // If auto-reconnect fails, show user notification
+              const id = toast.error("Connection failed", {
+                description: "Unable to connect to server. Click to retry.",
+                action: {
+                  label: "Retry",
+                  onClick: () => this.connect().catch(() => {})
+                }
+              });
+              this.failureToastId = id;
+            });
+          }
+        }, 2000); // Wait 2 seconds before auto-retry
+      }
     }
   }
 
@@ -268,9 +308,11 @@ export class SocketClient {
     if (code === "SESSION_EXPIRED" || code === "SESSION_REVOKED") {
       // Treat as auth failure and trigger re-auth flow
       this.setState("auth_failed");
-      toast.error("Session expired", {
-        description: message || "Please sign in again.",
-      });
+      if (!isLoginPage()) {
+        toast.error("Session expired", {
+          description: message || "Please sign in again.",
+        });
+      }
 
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("socket:auth-required"));
@@ -333,6 +375,16 @@ export class SocketClient {
       const oldState = this.state;
       this.state = newState;
       this.log(`State transition: ${oldState} -> ${newState}`);
+
+      // Broadcast state changes to the app to help UI sync immediately
+      if (typeof window !== 'undefined') {
+        try {
+          window.dispatchEvent(new CustomEvent('socket:state', { detail: { state: newState, connected: this.isConnected() } }));
+          if (newState === 'connected') {
+            window.dispatchEvent(new CustomEvent('socket:connected'));
+          }
+        } catch {}
+      }
     }
   }
 
@@ -366,9 +418,8 @@ export class SocketClient {
       return;
     }
 
-    // In cookie-only mode, proceed even when no JS-visible token exists.
-    // Token will be sent via cookies (withCredentials) and validated server-side.
-    const token = this.getAuthToken();
+    // Wait for auth token with retry logic for better post-login reliability
+    const token = await this.getAuthTokenWithRetry();
 
     this.setState("connecting");
 
@@ -386,7 +437,7 @@ export class SocketClient {
       // Connect
       this.socket.connect();
 
-      this.log("Connection initiated with token");
+      this.log("Connection initiated", { hasToken: !!token });
     } catch (error) {
       this.logError("Failed to initiate connection:", error);
       this.setState("error");
@@ -600,13 +651,16 @@ export class SocketClient {
     const isLoggedInElsewhere = reason === 'LOGGED_IN_ELSEWHERE' || 
                                  displayMessage?.includes('another device');
     
-    toast.error(
-      isLoggedInElsewhere ? "Logged in from another device" : "Session expired", 
-      {
-        description: displayMessage,
-        duration: 5000, // Longer duration for important message
-      }
-    );
+    // Don't show toast notifications on login page
+    if (!isLoginPage()) {
+      toast.error(
+        isLoggedInElsewhere ? "Logged in from another device" : "Session expired", 
+        {
+          description: displayMessage,
+          duration: 5000, // Longer duration for important message
+        }
+      );
+    }
 
     if (typeof window !== "undefined") {
       // Dispatch custom event for other components to handle

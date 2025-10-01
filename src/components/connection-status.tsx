@@ -11,59 +11,99 @@ import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 export function ConnectionStatus() {
   const pathname = usePathname();
   const isLoginPage = pathname?.startsWith("/login");
-  const hasToken = !!getAuthTokenFromCookie();
-
-  // Only use socket if not on login page and user has token
-  const shouldUseSocket = !isLoginPage && hasToken;
+  
+  // Don't rely on token check - if we're not on login page, assume we should show socket status
+  // The useSocket hook will handle the actual authentication
+  const shouldUseSocket = !isLoginPage;
   const { isConnected, connectionState, error, reconnect } = useSocket();
   const [showStatus, setShowStatus] = useState(false);
 
-  // Only show status after a delay to avoid brief flashes during normal reconnection
-  useEffect(() => {
-    let timeout: NodeJS.Timeout | undefined;
 
-    if (
-      !isConnected &&
-      (connectionState === "disconnected" || connectionState === "reconnecting")
-    ) {
-      // Only show if disconnected for more than 2 seconds to avoid showing during normal refresh
-      timeout = setTimeout(() => {
-        setShowStatus(true);
-      }, 2000);
-    } else if (isConnected && connectionState === "connected") {
-      // Hide immediately when connected
+
+  // Listen for explicit connected events to force-hide immediately (extra safety)
+  useEffect(() => {
+    const onConnected = () => setShowStatus(false);
+    const onState = (e: Event) => {
+      const detail = (e as CustomEvent).detail as any;
+      if (detail?.state === 'connected' || detail?.connected === true) {
+        setShowStatus(false);
+      }
+    };
+    window.addEventListener('socket:connected', onConnected as EventListener);
+    window.addEventListener('socket:state', onState as EventListener);
+    return () => {
+      window.removeEventListener('socket:connected', onConnected as EventListener);
+      window.removeEventListener('socket:state', onState as EventListener);
+    };
+  }, []);
+
+  // Single effect to manage showStatus state
+  useEffect(() => {
+    // Always hide immediately when connected
+    if (isConnected === true || connectionState === "connected") {
       setShowStatus(false);
-      if (timeout) clearTimeout(timeout);
+      sessionStorage.removeItem('just_logged_in');
+      return;
     }
 
-    return () => {
-      if (timeout) clearTimeout(timeout);
-    };
+    // Don't show during connecting states
+    if (connectionState === "connecting" || connectionState === "reconnecting") {
+      setShowStatus(false);
+      return;
+    }
+
+    // Only show for problematic states after a delay
+    if (connectionState === "disconnected" || connectionState === "error" || connectionState === "auth_failed") {
+      const isPostLogin = sessionStorage.getItem('just_logged_in') === 'true';
+      const delay = isPostLogin ? 5000 : 3000;
+      
+      const timeout = setTimeout(() => {
+        // Double-check state before showing
+        // connectionState is narrowed to problematic states here, so simply rely on isConnected
+        if (!isConnected) {
+          setShowStatus(true);
+        }
+      }, delay);
+
+      return () => {
+        clearTimeout(timeout);
+      };
+    }
+
+    // For any other state, hide
+    setShowStatus(false);
   }, [isConnected, connectionState]);
 
-  // Don't show on login page or when user has no token
-  if (!shouldUseSocket) {
+
+
+  // Primary checks - don't show in these cases
+  if (!shouldUseSocket || isLoginPage) {
     return null;
   }
 
-  // Don't show anything when connected or during brief connection states
-  if (isConnected && connectionState === "connected") {
+  // CRITICAL: Don't show when connected (multiple checks for safety)
+  if (isConnected === true || connectionState === "connected") {
     return null;
   }
 
-  // Don't show during brief initial connection states
+  // Don't show during active connection attempts
+  if (connectionState === "connecting" || connectionState === "reconnecting") {
+    return null;
+  }
+
+  // Don't show if we haven't waited long enough or if showStatus is explicitly false
   if (!showStatus) {
     return null;
   }
 
   const getStatusIcon = () => {
     switch (connectionState) {
-      case "connecting":
-        return <RotateCcw className="h-4 w-4 animate-spin" />;
-      case "reconnecting":
-        return <RotateCcw className="h-4 w-4 animate-spin" />;
       case "disconnected":
         return <WifiOff className="h-4 w-4" />;
+      case "error":
+        return <AlertCircle className="h-4 w-4" />;
+      case "auth_failed":
+        return <AlertCircle className="h-4 w-4" />;
       default:
         return <AlertCircle className="h-4 w-4" />;
     }
@@ -71,17 +111,16 @@ export function ConnectionStatus() {
 
   const getStatusMessage = () => {
     switch (connectionState) {
-      case "connecting":
-        return "Connecting to server...";
-      case "reconnecting":
-        return "Reconnecting...";
       case "disconnected":
         if (error) {
           if (error.includes("Authentication")) {
             return "Authentication failed. Please refresh and log in again.";
           }
-          if (error.includes("Failed to reconnect after login")) {
-            return "Connection lost after login. Please refresh the page.";
+          if (error.includes("Failed to connect after login")) {
+            return "Connecting after login...";
+          }
+          if (error.includes("Connection will retry automatically")) {
+            return "Connection lost. Retrying automatically...";
           }
           return error;
         }
@@ -97,9 +136,6 @@ export function ConnectionStatus() {
 
   const getAlertVariant = () => {
     switch (connectionState) {
-      case "connecting":
-      case "reconnecting":
-        return "default";
       case "disconnected":
       case "auth_failed":
       case "error":

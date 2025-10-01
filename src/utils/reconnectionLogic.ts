@@ -8,6 +8,12 @@ import { toast } from "sonner";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 import { logger } from "@/lib/utils";
 
+// Helper function to check if we're on login page
+const isLoginPage = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return window.location.pathname.startsWith('/login');
+};
+
 // Configuration for business-specific reconnection features
 const RECONNECTION_CONFIG = {
   TOKEN_REFRESH_THRESHOLD: 300000, // 5 minutes before expiry
@@ -46,6 +52,10 @@ export class ReconnectionManager {
   private tabId: string;
   private isActiveTab: boolean = true;
   private tokenExpiryTimer: NodeJS.Timeout | null = null;
+  
+  // Track toast IDs to dismiss/update on state changes
+  private disconnectToastId: string | number | null = null;
+  private networkOfflineToastId: string | number | null = null;
 
   // Event listeners
   private onConnectionStateChange?: (state: ConnectionState) => void;
@@ -120,9 +130,21 @@ export class ReconnectionManager {
     this.setConnectionState("connected");
     this.scheduleTokenRefresh();
 
-    toast.success("Connected", {
-      description: "Connection established successfully",
-    });
+    // Dismiss any disconnection/network toasts on successful connect
+    if (this.disconnectToastId !== null) {
+      try { toast.dismiss(this.disconnectToastId); } catch {}
+      this.disconnectToastId = null;
+    }
+    if (this.networkOfflineToastId !== null) {
+      try { toast.dismiss(this.networkOfflineToastId); } catch {}
+      this.networkOfflineToastId = null;
+    }
+
+    if (!isLoginPage()) {
+      toast.success("Connected", {
+        description: "Connection established successfully",
+      });
+    }
   }
 
   /**
@@ -131,11 +153,12 @@ export class ReconnectionManager {
   private handleSocketDisconnect(reason: string) {
     this.setConnectionState("disconnected");
 
-    // Only show toast for unexpected disconnections
-    if (reason !== "io client disconnect") {
-      toast.warning("Disconnected", {
+    // Only show toast for unexpected disconnections (and not on login page)
+    if (reason !== "io client disconnect" && !isLoginPage()) {
+      const id = toast.warning("Disconnected", {
         description: "Attempting to reconnect...",
       });
+      this.disconnectToastId = id;
     }
   }
 
@@ -156,7 +179,16 @@ export class ReconnectionManager {
    */
   private handleNetworkOnline() {
     this.updateNetworkState({ online: true });
-    toast.success("Network online", { description: "Connection restored" });
+
+    // Dismiss offline toast if present
+    if (this.networkOfflineToastId !== null) {
+      try { toast.dismiss(this.networkOfflineToastId); } catch {}
+      this.networkOfflineToastId = null;
+    }
+
+    if (!isLoginPage()) {
+      toast.success("Network online", { description: "Connection restored" });
+    }
   }
 
   /**
@@ -165,9 +197,12 @@ export class ReconnectionManager {
   private handleNetworkOffline() {
     this.updateNetworkState({ online: false });
 
-    toast.warning("Network offline", {
-      description: "Connection will resume when network is available",
-    });
+    if (!isLoginPage()) {
+      const id = toast.warning("Network offline", {
+        description: "Connection will resume when network is available",
+      });
+      this.networkOfflineToastId = id;
+    }
   }
 
   /**
@@ -234,13 +269,15 @@ export class ReconnectionManager {
       logger.error("Token refresh failed", error);
 
       // Redirect to login
-      toast.error("Session expired", {
-        description: "Please log in again",
-        action: {
-          label: "Login",
-          onClick: () => (window.location.href = "/login"),
-        },
-      });
+      if (!isLoginPage()) {
+        toast.error("Session expired", {
+          description: "Please log in again",
+          action: {
+            label: "Login",
+            onClick: () => (window.location.href = "/login"),
+          },
+        });
+      }
     }
   }
 

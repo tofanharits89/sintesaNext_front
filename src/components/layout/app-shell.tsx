@@ -21,7 +21,7 @@ const AppShell = memo(function AppShell({
     [pathname]
   );
 
-  // Initialize login notifications for admin users
+  // Initialize login notifications for admin users - always call hooks
   useLoginNotifications();
 
   // Socket connection is now handled by useSocket hook in individual components

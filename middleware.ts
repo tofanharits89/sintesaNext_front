@@ -780,9 +780,9 @@ export async function middleware(request: NextRequest) {
         }
       }
       if (isAuth) {
-        // User is authenticated, redirect to dashboard
+        // User is authenticated, redirect to dashboard utama directly
         const url = request.nextUrl.clone();
-        url.pathname = `/dashboard`;
+        url.pathname = `/dashboard/utama`;
         const res = NextResponse.redirect(url);
         res.headers.set("x-mw-hit", "1");
         res.headers.set("Cache-Control", "no-store");
@@ -890,7 +890,7 @@ export async function middleware(request: NextRequest) {
   if (relPath === "/") {
     const url = request.nextUrl.clone();
     // Do NOT prepend BASE_PATH here; Next middleware applies basePath automatically
-    url.pathname = isAuth ? `/dashboard` : `/login`;
+    url.pathname = isAuth ? `/dashboard/utama` : `/login`;
     return NextResponse.redirect(url);
   }
 

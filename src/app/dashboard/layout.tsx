@@ -32,9 +32,7 @@ export default async function DashboardLayout({
   return (
     <AuthGuard>
       <DashboardProvider initialUser={user}>
-        <Suspense fallback={<DashboardSkeleton />}>
-          {children as React.ReactElement}
-        </Suspense>
+        {children as React.ReactElement}
       </DashboardProvider>
     </AuthGuard>
   );

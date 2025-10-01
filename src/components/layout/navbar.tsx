@@ -16,6 +16,7 @@ import {
   HelpCircle,
   ChevronRight,
   Activity,
+  Loader2,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useMemo, useEffect, useState } from "react";
@@ -55,6 +56,8 @@ import { withBasePath } from "@/lib/base-path";
 import { apiPath } from "@/lib/base-path";
 import { SatkerSearch } from "./satker-search";
 import { dispatchAuthEvent } from "@/utils/auth-utils";
+import { useAuthContext } from "@/providers/AuthProvider";
+import { LoginLoading } from "@/components/ui/login-loading";
 
 import type { User } from "@/lib/users-store";
 
@@ -62,6 +65,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
   const { theme, setTheme } = useTheme();
   const { currentUser } = useCurrentUser(initialUser);
   const router = useRouter();
+  const auth = useAuthContext();
   interface RecentMessage {
     id: string;
     conversationId: string;
@@ -90,6 +94,8 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
   // State for controlling popovers (declare before hooks that depend on it)
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [messagesOpen, setMessagesOpen] = useState(false);
+  // Use centralized auth loading state for consistency
+  const isLoggingOut = auth.isLoggingOut;
 
   // Real-time messaging data via React Query + Zustand (enable globally so badges update even when popover is closed)
   const { conversations, isSocketConnected } = useMessagingRQ({
@@ -270,7 +276,9 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
   }, [currentUser]);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <>
+      <LoginLoading isVisible={isLoggingOut} message="Mengeluarkan..." />
+      <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-14 items-center gap-3 px-4">
         {/* left: logo */}
         <div className="flex items-center gap-2">
@@ -626,23 +634,21 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950"
+                className={`text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950 ${isLoggingOut ? 'opacity-60 pointer-events-none' : ''}`}
                 onClick={async () => {
-                  const { apiPath } = await import("@/lib/base-path");
+                  if (isLoggingOut) return;
                   const { QueryClient } = await import("@tanstack/react-query");
-                  
+
                   // Proactively disconnect socket so backend presence updates immediately
                   try {
                     socketClient.disconnect();
                   } catch {}
-                  
-                  // Call logout endpoint with cache-busting parameter
-                  const logoutResponse = await fetch(apiPath("/auth/logout") + "?t=" + Date.now(), {
-                    method: "POST",
-                    credentials: "include",
-                    cache: "no-store",
-                  });
-                  
+
+                  // Call centralized logout (uses shared mutation + loading state)
+                  try {
+                    await auth.logoutAsync();
+                  } catch {}
+
                   // ENTERPRISE BEST PRACTICE: Client-side cookie deletion as backup
                   // This ensures cookies are cleared even if Set-Cookie headers fail
                   const deleteCookie = (name: string) => {
@@ -682,13 +688,23 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                   window.location.href = "/login";
                 }}
               >
-                <LogOut className="mr-2 h-4 w-4" />
-                Keluar
+                {isLoggingOut ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Mengeluarkan...
+                  </>
+                ) : (
+                  <>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Keluar
+                  </>
+                )}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
     </header>
+    </>
   );
 }

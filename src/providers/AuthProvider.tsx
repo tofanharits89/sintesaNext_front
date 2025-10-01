@@ -11,6 +11,7 @@ interface AuthContextType {
   isLoading: boolean;
   user?: any;
   logout: () => void;
+  logoutAsync: () => Promise<void>;
   isLoggingOut: boolean;
   refetch: () => void;
 }
@@ -41,6 +42,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isLoading: auth.isLoading,
     user: auth.user,
     logout: auth.logout,
+    logoutAsync: auth.logoutAsync,
     isLoggingOut: auth.isLoggingOut,
     refetch: auth.refetch,
   };

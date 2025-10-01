@@ -90,11 +90,26 @@ export function useAuth() {
 
   const logout = useMutation({
     mutationFn: async () => {
-      const headers = deviceHeaders ?? buildDeviceHeaders(ensureMetadata());
-      const config: AxiosRequestConfig | undefined = headers
-        ? { headers: headers as AxiosRequestHeaders }
-        : undefined;
-      await apiClient.post("/auth/logout", {}, config);
+      // Prefer frontend API bridge to ensure HttpOnly cookies are cleared on this origin
+      const url = `/api/auth/logout?t=${Date.now()}`;
+      try {
+        await fetch(url, {
+          method: "POST",
+          credentials: "include",
+          cache: "no-store",
+        });
+      } catch (e) {
+        // Fall back to backend endpoint if bridge fails (network issues)
+        const headers = deviceHeaders ?? buildDeviceHeaders(ensureMetadata());
+        const config: AxiosRequestConfig | undefined = headers
+          ? { headers: headers as AxiosRequestHeaders }
+          : undefined;
+        try {
+          await apiClient.post("/auth/logout", {}, config);
+        } catch (inner) {
+          throw inner;
+        }
+      }
     },
     onSuccess: () => {
       cacheInvalidation.invalidateUser(queryClient);
@@ -113,6 +128,7 @@ export function useAuth() {
     user: authQuery.data?.user,
     error: authQuery.error,
     logout: logout.mutate,
+    logoutAsync: logout.mutateAsync,
     isLoggingOut: logout.isPending,
     refetch: authQuery.refetch,
     deviceMetadata: deviceMetadataRef.current,

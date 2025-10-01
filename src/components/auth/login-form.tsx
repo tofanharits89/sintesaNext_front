@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -23,6 +23,8 @@ import { prefetchCsrf, getCookie } from "@/lib/httpClient";
 import { apiPath } from "@/lib/base-path";
 import { dispatchAuthEvent } from "@/utils/auth-utils";
 import Image from "next/image";
+import { LoginLoading } from "@/components/ui/login-loading";
+import { Loader2 } from "lucide-react";
 
 const schema = z.object({
   username: z.string().min(1, "Wajib diisi"),
@@ -32,14 +34,23 @@ const schema = z.object({
 
 export default function LoginForm() {
   const router = useRouter();
+  const pathname = usePathname();
   const [seed, setSeed] = useState("");
   const [isClient, setIsClient] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Generate captcha seed only on client side to prevent hydration mismatch
   useEffect(() => {
     setIsClient(true);
     setSeed(Math.random().toString(36).slice(2));
   }, []);
+
+  // Reset redirecting state if we are on the login page (prevents stuck overlay after redirects)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && pathname?.startsWith('/login')) {
+      setIsRedirecting(false);
+    }
+  }, [pathname]);
 
   // Auto-regenerate captcha every 30 seconds
   useEffect(() => {
@@ -132,8 +143,9 @@ export default function LoginForm() {
           toast.success("Login berhasil (demo mode)");
           
           // Simulate successful login for demo
+          setIsRedirecting(true);
           setTimeout(() => {
-            window.location.href = "/dashboard";
+            router.push("/dashboard/utama");
           }, 500);
           return;
         }
@@ -170,17 +182,20 @@ export default function LoginForm() {
         // No client-side token mirroring. Auth is carried by httpOnly cookies set by backend.
         // Optionally, keep a lightweight, non-sensitive user mirror if needed (omitted here for security).
 
+        // Set flag to indicate user just logged in (for socket connection timing)
+        sessionStorage.setItem('just_logged_in', 'true');
+
         // Dispatch auth login event for socket system
         dispatchAuthEvent("login", {
           user: data.data?.user,
           timestamp: new Date().toISOString(),
         });
 
-        // Small delay to ensure cookies are written before redirect
-        await new Promise((resolve) => setTimeout(resolve, 250));
-
-        // Force a hard refresh to ensure fresh user data is loaded
-        window.location.href = "/dashboard";
+        // Show loading state and redirect
+        setIsRedirecting(true);
+        
+        // Use Next.js router for smooth client-side navigation - go directly to utama
+        router.push("/dashboard/utama");
       } else {
         console.log('Login failed with data:', data);
         toast.error(data?.error || data?.message || "Login gagal. Periksa kredensial dan captcha");
@@ -207,8 +222,10 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="flex min-h-svh items-center justify-center p-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <div className="w-full max-w-md">
+    <>
+      <LoginLoading isVisible={isRedirecting} />
+      <div className="flex min-h-svh items-center justify-center p-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+        <div className="w-full max-w-md">
         {/* Login Form */}
         <Card>
           <CardHeader className="space-y-1">
@@ -311,6 +328,7 @@ export default function LoginForm() {
               <Button 
                 className="w-full" 
                 type="submit"
+                disabled={form.formState.isSubmitting || isRedirecting}
                 onClick={(e) => {
                   console.log('Button clicked');
                   if (!form.formState.isValid) {
@@ -318,12 +336,20 @@ export default function LoginForm() {
                   }
                 }}
               >
-                Masuk
+                {form.formState.isSubmitting || isRedirecting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {isRedirecting ? "Redirecting..." : "Silahkan tunggu..."}
+                  </>
+                ) : (
+                  "Masuk"
+                )}
               </Button>
             </form>
           </CardContent>
         </Card>
       </div>
     </div>
+    </>
   );
 }

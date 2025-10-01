@@ -40,10 +40,13 @@ export const useLoginNotifications = () => {
   
   // Check if user is admin - prevents unnecessary socket operations
   const isAdmin = currentUser && ["super_admin", "co_admin"].includes(currentUser.role);
+  
+  // Don't show notifications on login page
+  const isLoginPage = typeof window !== 'undefined' && window.location.pathname.startsWith('/login');
 
   useEffect(() => {
-    // Early return if not admin
-    if (!isAdmin) {
+    // Early return if not admin or on login page
+    if (!isAdmin || isLoginPage) {
       return;
     }
 
@@ -107,5 +110,5 @@ export const useLoginNotifications = () => {
       socket.off("user:login", handleUserLogin);
       console.log("[LoginNotifications] Login notification listeners removed");
     };
-  }, [isAdmin, currentUser, socket, isConnected, isReady]);
+  }, [isAdmin, isLoginPage, currentUser, socket, isConnected, isReady]);
 };

@@ -240,11 +240,38 @@ export default function DashboardUtamaPage() {
     setShowLoadingIndicator(isLoadingQuickStats);
   }, [isLoadingQuickStats]);
 
+  // Show single loading state for initial load
+  const isInitialLoading = isLoadingQuickStats && !quickStats;
+
   // Handle kanwil selection change
   const handleKanwilChange = (value: string) => {
     setSelectedKanwil(value);
     // React Query will automatically refetch when selectedKanwil changes
   };
+
+  // Show unified loading state for better UX
+  if (isInitialLoading) {
+    return (
+      <div className="space-y-6">
+        <DashboardHeaderSkeleton />
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <StatCardSkeleton key={`skeleton-${i}`} />
+          ))}
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <MultipleBarChartSkeleton key={i} height={250} />
+          ))}
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <LineChartSkeleton height={280} />
+          <MultipleBarChartSkeleton height={280} />
+        </div>
+        <BarChartSkeleton height={360} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
