@@ -637,11 +637,36 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                   } catch {}
                   
                   // Call logout endpoint with cache-busting parameter
-                  await fetch(apiPath("/auth/logout") + "?t=" + Date.now(), {
+                  const logoutResponse = await fetch(apiPath("/auth/logout") + "?t=" + Date.now(), {
                     method: "POST",
                     credentials: "include",
                     cache: "no-store",
                   });
+                  
+                  // ENTERPRISE BEST PRACTICE: Client-side cookie deletion as backup
+                  // This ensures cookies are cleared even if Set-Cookie headers fail
+                  const deleteCookie = (name: string) => {
+                    // Delete with various domain/path combinations
+                    const domains = [
+                      window.location.hostname,
+                      '.' + window.location.hostname,
+                      window.location.hostname.split('.').slice(-2).join('.')
+                    ];
+                    const paths = ['/', ''];
+                    
+                    for (const domain of domains) {
+                      for (const path of paths) {
+                        // Delete with domain
+                        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain}`;
+                        // Delete without domain
+                        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}`;
+                      }
+                    }
+                  };
+                  
+                  // Delete all auth cookies
+                  ['accessToken', 'refreshToken', 'access_token', 'refresh_token', 
+                   'authToken', 'auth_token', 'token', 'socket_token', 'authState', 'auth_user'].forEach(deleteCookie);
                   
                   // Clear React Query cache for user profile to prevent stale data
                   const queryClient = new QueryClient();
@@ -649,6 +674,9 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                   
                   // Dispatch a logout event so other listeners react
                   dispatchAuthEvent("logout", { reason: "user_action" });
+                  
+                  // Small delay to ensure cookies are deleted before redirect
+                  await new Promise(resolve => setTimeout(resolve, 100));
                   
                   // Force a hard refresh to clear all caches (both client and server)
                   window.location.href = "/login";

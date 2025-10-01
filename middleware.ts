@@ -38,6 +38,23 @@ function isHexHash(value: unknown): value is string {
   return typeof value === "string" && HEX_HASH_REGEX.test(value);
 }
 
+// Helper: aggressively expire auth-related cookies on the response
+function expireAuthCookies(res: NextResponse) {
+  try {
+    const past = new Date(0);
+    const names = ["accessToken", "refreshToken", "socketToken", "XSRF-TOKEN", "csrfToken"]; 
+    for (const name of names) {
+      // Default path
+      res.cookies.set({ name, value: "", expires: past, path: "/" });
+      // Common app subpaths used by API routes
+      res.cookies.set({ name, value: "", expires: past, path: "/api" });
+      res.cookies.set({ name, value: "", expires: past, path: "/auth" });
+    }
+  } catch {
+    // ignore cookie set errors in middleware context
+  }
+}
+
 async function computeSha256Hex(value: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(value);
@@ -304,21 +321,48 @@ async function validateSessionViaBackend(
   let authResult: boolean;
   
   try {
+    const backendUrl = backendPath("/auth/session/validate");
+    
     if (DEBUG_AUTH) {
       console.debug("[Auth] Making backend validation request", {
-        url: backendPath("/auth/session/validate"),
-        hasCookie: !!incomingCookie
+        url: backendUrl,
+        hasCookie: !!incomingCookie,
+        cookieLength: incomingCookie?.length || 0
       });
     }
     
-    const resp = await fetch(backendPath("/auth/session/validate"), {
+    const resp = await fetch(backendUrl, {
       method: "GET",
       headers: incomingCookie ? { cookie: incomingCookie } : {},
       cache: "no-store",
     });
     
-    const data = await resp.json().catch(() => ({}));
+    if (DEBUG_AUTH) {
+      console.debug("[Auth] Backend response received", {
+        status: resp.status,
+        ok: resp.ok,
+        statusText: resp.statusText
+      });
+    }
+    
+    const data = await resp.json().catch((jsonError) => {
+      if (DEBUG_AUTH) {
+        console.error("[Auth] Failed to parse backend response as JSON", jsonError);
+      }
+      return {};
+    });
+    
     authResult = resp.ok && Boolean(data?.success);
+    
+    if (DEBUG_AUTH) {
+      console.debug("[Auth] Backend validation result", {
+        status: resp.status,
+        ok: resp.ok,
+        dataSuccess: data?.success,
+        authResult,
+        data: data
+      });
+    }
     
     // If auth failed, clear all related cache entries immediately
     if (!authResult) {
@@ -329,21 +373,17 @@ async function validateSessionViaBackend(
           sessionVerifyCache.delete(cacheKey);
         }
       }
-    }
-    
-    if (DEBUG_AUTH) {
-      console.debug("[Auth] Backend validation response", {
-        status: resp.status,
-        ok: resp.ok,
-        dataSuccess: data?.success,
-        authResult,
-        cacheCleared: !authResult
-      });
+      
+      if (DEBUG_AUTH) {
+        console.debug("[Auth] Cleared cache entries for failed auth");
+      }
     }
   } catch (error) {
-    if (DEBUG_AUTH) {
-      console.error("[Auth] Backend validation error", error);
-    }
+    console.error("[Auth] Backend validation error", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      url: backendPath("/auth/session/validate")
+    });
     authResult = false;
   }
 
@@ -490,16 +530,22 @@ async function handleCacheInvalidation(request: NextRequest): Promise<NextRespon
     if (body.type === 'logout') {
       const bypassTargets = new Set<string>();
 
-      if (extractAccessTokenValue(sessionKey)) {
-        bypassTargets.add(sessionKey);
-      }
-
+      // Add the exact session key
+      bypassTargets.add(sessionKey);
+      
+      // Add all matched cache keys
       for (const cacheKey of matchedCacheKeys) {
-        if (extractAccessTokenValue(cacheKey)) {
-          bypassTargets.add(cacheKey);
-        }
+        bypassTargets.add(cacheKey);
       }
+      
+      // ENTERPRISE BEST PRACTICE: Clear ALL cache entries on logout
+      // This ensures no stale authentication remains
+      if (DEBUG_AUTH) {
+        console.log("[Middleware] Clearing all cache entries for logout");
+      }
+      sessionVerifyCache.clear();
 
+      // Set bypass flags to prevent immediate re-authentication
       for (const target of bypassTargets) {
         setCacheBypassForLogout(target, 'logout_event');
         clearedKeySet.add(`bypass:${target}`);
@@ -678,12 +724,76 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Early: If backend is unhealthy, redirect to server-error page
+  // Validate session via backend using the full Cookie header to preserve all auth cookies
+  const rawCookie = request.headers.get("cookie") || "";
+  
+  // ENTERPRISE BEST PRACTICE: Check for valid accessToken with actual value
+  // Empty cookies (accessToken=) or deleted cookies should be treated as no token
+  const extractAccessToken = (cookieStr: string): string | null => {
+    if (!cookieStr) return null;
+    const match = cookieStr.match(/(?:^|;\s*)accessToken=([^;]+)/);
+    if (!match || !match[1]) return null;
+    const value = match[1].trim();
+    // Treat empty, 'deleted', 'null', 'undefined' as no token
+    if (!value || value === 'deleted' || value === 'null' || value === 'undefined' || value.length < 10) {
+      return null;
+    }
+    return value;
+  };
+  
+  const accessTokenValue = extractAccessToken(rawCookie);
+  const hasAccessToken = !!accessTokenValue;
+  
+  if (DEBUG_AUTH) {
+    console.debug("[Auth] Cookie extraction", {
+      hasAccessToken,
+      rawCookieLength: rawCookie.length,
+      relPath,
+      isPublicPath
+    });
+  }
+
+  // ENTERPRISE BEST PRACTICE: Always allow access to public paths (login, etc.)
+  // Public paths should NEVER be blocked by health checks or authentication
+  if (isPublicPath) {
+    if (DEBUG_AUTH) {
+      console.debug("[Auth] Public path access granted", { relPath });
+    }
+    // For login page, if user is already authenticated, redirect to dashboard
+    if (relPath.startsWith("/login") && hasAccessToken) {
+      // Quick check if user is authenticated
+      let isAuth = await validateSessionViaBackend(rawCookie, true);
+      if (!isAuth) {
+        // Grace period retry for very fresh tokens (post-login propagation)
+        const cookieAge = extractCookieAge(rawCookie);
+        if (cookieAge !== null && cookieAge < 3000) {
+          const delays = [150, 250, 300];
+          for (const d of delays) {
+            await new Promise(r => setTimeout(r, d));
+            isAuth = await validateSessionViaBackend(rawCookie, true);
+            if (isAuth) break;
+          }
+        }
+      }
+      if (isAuth) {
+        const url = request.nextUrl.clone();
+        url.pathname = `/dashboard`;
+        const res = NextResponse.redirect(url);
+        res.headers.set("x-mw-hit", "1");
+        return res;
+      }
+      // Do NOT expire cookies on /login. Let the page render and client decide next action.
+      return NextResponse.next();
+    }
+    // Allow public path access
+    return NextResponse.next();
+  }
+
+  // Health check ONLY for protected routes (not public paths)
   {
     const healthyEarly = await isBackendHealthy();
     if (!healthyEarly) {
       const url = request.nextUrl.clone();
-      // Do NOT prepend BASE_PATH here; Next middleware applies basePath automatically
       url.pathname = `/server-error`;
       const res = NextResponse.redirect(url);
       res.headers.set("x-mw-hit", "1");
@@ -691,20 +801,8 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Validate session via backend using the full Cookie header to preserve all auth cookies
-  const rawCookie = request.headers.get("cookie") || "";
-  const hasAccessToken = /(?:^|;\s*)accessToken=/.test(rawCookie);
-  
-  if (DEBUG_AUTH) {
-    console.debug("[Auth] Cookie extraction", {
-      hasAccessToken,
-      rawCookieLength: rawCookie.length,
-      relPath
-    });
-  }
-
   // Local fast-fail: if no accessToken cookie present, treat as unauthenticated
-  if (!isPublicPath && !hasAccessToken) {
+  if (!hasAccessToken) {
     if (DEBUG_AUTH) {
       console.debug("[Auth] No access token found, redirecting to login", {
         relPath,
@@ -731,30 +829,43 @@ export async function middleware(request: NextRequest) {
   // Bypass cache for login page to get fresh auth state
   const cacheKey = generateCacheKey(rawCookie);
   const isLoginPage = relPath.startsWith("/login");
-  const noCache = shouldBypassCache(cacheKey) || isLoginPage;
+  const shouldBypass = shouldBypassCache(cacheKey);
+  const noCache = shouldBypass || isLoginPage;
+  
+  // ENTERPRISE BEST PRACTICE: Validate session with backend
+  // Use cache bypass for recently logged out sessions to prevent stale authentication
   let isAuth = await validateSessionViaBackend(rawCookie, noCache);
-
-  // Post-login grace period: If validation fails but we have a fresh accessToken cookie,
-  // retry once after a brief delay to allow backend cache to populate
-  if (!isAuth && hasAccessToken && !isLoginPage) {
+  
+  // ENTERPRISE BEST PRACTICE: Post-login grace period with smart retry
+  // Only retry for VERY fresh cookies (< 2 seconds) to handle backend cache population delay
+  // This prevents false negatives on fresh logins while avoiding keeping logged-out users authenticated
+  if (!isAuth && hasAccessToken && !isLoginPage && !shouldBypass) {
     const cookieAge = extractCookieAge(rawCookie);
-    if (cookieAge !== null && cookieAge < 5000) { // Cookie less than 5 seconds old
+    
+    // Only retry for extremely fresh cookies (just logged in, < 2 seconds old)
+    if (cookieAge !== null && cookieAge < 2000) {
       if (DEBUG_AUTH) {
-        console.debug("[Auth] Fresh cookie detected, retrying validation after brief delay", {
+        console.debug("[Auth] Fresh cookie detected (post-login), retrying validation", {
+          cookieAge,
+          relPath,
+          reason: "backend_cache_sync"
+        });
+      }
+      
+      // Brief delay to allow backend cache to populate after login
+      await new Promise(resolve => setTimeout(resolve, 150));
+      
+      // Force fresh check, bypassing any stale cache
+      isAuth = await validateSessionViaBackend(rawCookie, true);
+      
+      if (DEBUG_AUTH) {
+        console.debug("[Auth] Post-login retry result", {
+          isAuth,
           cookieAge,
           relPath
         });
       }
-      // Brief delay to allow backend cache to populate after login
-      await new Promise(resolve => setTimeout(resolve, 100));
-      isAuth = await validateSessionViaBackend(rawCookie, true); // Force fresh check
     }
-  }
-
-  // Dev-friendly fallback: if backend validation fails but accessToken exists, trust in dev
-  const TRUST_COOKIE_IN_DEV = process.env.NODE_ENV !== 'production';
-  if (!isAuth && hasAccessToken && TRUST_COOKIE_IN_DEV) {
-    isAuth = true;
   }
   
   if (DEBUG_AUTH) {
@@ -764,8 +875,7 @@ export async function middleware(request: NextRequest) {
       isLoginPage,
       isPublicPath,
       noCache,
-      hasAccessToken,
-      trustedByDevFallback: !isAuth && hasAccessToken && TRUST_COOKIE_IN_DEV ? 1 : 0
+      hasAccessToken
     });
   }
 
@@ -777,12 +887,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (!isAuth && !isPublicPath) {
+  // Protected route without authentication - redirect to login
+  if (!isAuth) {
     if (DEBUG_AUTH) {
       console.debug("[Auth] Unauthenticated user accessing protected route, redirecting to login", {
         relPath,
-        isAuth,
-        isPublicPath
+        isAuth
       });
     }
     
@@ -794,21 +904,15 @@ export async function middleware(request: NextRequest) {
         console.debug("[Auth] Cleared stale cache entry for failed auth", { cacheKey: cacheKey.substring(0, 20) + '...' });
       }
     }
-    
     const url = request.nextUrl.clone();
-    // Do NOT prepend BASE_PATH here; Next middleware applies basePath automatically
     url.pathname = `/login`;
+    // Tag once to avoid ping-pong loops; login handler will allow
+    if (!url.searchParams.has("reason")) {
+      url.searchParams.set("reason", "session_expired");
+    }
     const res = NextResponse.redirect(url);
     res.headers.set("x-mw-hit", "1");
-    return res;
-  }
-
-  // Redirect authenticated users away from login page
-  if (isAuth && relPath.startsWith("/login")) {
-    const url = request.nextUrl.clone();
-    url.pathname = `/dashboard`;
-    const res = NextResponse.redirect(url);
-    res.headers.set("x-mw-hit", "1");
+    res.headers.set("Cache-Control", "no-store");
     return res;
   }
 

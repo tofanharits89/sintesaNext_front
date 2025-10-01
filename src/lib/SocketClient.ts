@@ -560,21 +560,104 @@ export class SocketClient {
     this.setState("auth_failed");
 
     const reason = payload?.reason || "Session expired";
-    toast.error("Session expired", {
-      description: payload?.message || reason,
-    });
-
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("socket:auth-required", { detail: payload }));
+    
+    // Disconnect socket immediately to prevent further requests
+    if (this.socket) {
+      this.socket.removeAllListeners();
+      this.socket.disconnect();
+      this.socket = null;
+    }
+    
+    // CRITICAL: Clear auth cookies immediately and aggressively
+    if (typeof window !== "undefined" && typeof document !== "undefined") {
+      // Clear cookies manually first (synchronous)
+      const cookiesToClear = ["accessToken", "refreshToken", "socketToken", "XSRF-TOKEN", "csrfToken"];
+      const hostname = window.location.hostname;
+      const paths = ["/", "/api", "/auth"];
       
-      // Redirect to login immediately
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, 1000); // Small delay to show the toast
+      // Try all combinations - be VERY aggressive
+      cookiesToClear.forEach(name => {
+        paths.forEach(path => {
+          // Without domain
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; max-age=0`;
+          // With hostname
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${hostname}; max-age=0`;
+          // With dot prefix
+          if (hostname.includes('.')) {
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=.${hostname}; max-age=0`;
+          }
+        });
+      });
+      
+      this.log("Auth cookies cleared immediately (manual)", {
+        cookiesCleared: cookiesToClear.length,
+        remainingCookies: document.cookie
+      });
     }
 
-    // Proactively disconnect
-    this.socket?.disconnect();
+    // Show toast notification with friendly message
+    const displayMessage = payload?.displayMessage || payload?.message || reason;
+    const isLoggedInElsewhere = reason === 'LOGGED_IN_ELSEWHERE' || 
+                                 displayMessage?.includes('another device');
+    
+    toast.error(
+      isLoggedInElsewhere ? "Logged in from another device" : "Session expired", 
+      {
+        description: displayMessage,
+        duration: 5000, // Longer duration for important message
+      }
+    );
+
+    if (typeof window !== "undefined") {
+      // Dispatch custom event for other components to handle
+      window.dispatchEvent(new CustomEvent("socket:auth-required", { detail: payload }));
+      window.dispatchEvent(new CustomEvent("auth:logout", { detail: { reason: "session_expired" } }));
+      
+      // CRITICAL: Wait a moment for cookies to be fully cleared before redirect
+      // Also ask server to clear HttpOnly cookies (client cannot delete those)
+      setTimeout(async () => {
+        // Verify cookies are cleared
+        const remainingCookies = document.cookie;
+        console.log('[SocketClient] Cookies before redirect:', remainingCookies);
+        
+        // Force clear again if any auth cookies remain
+        if (remainingCookies.includes('accessToken') || 
+            remainingCookies.includes('refreshToken') || 
+            remainingCookies.includes('socketToken')) {
+          console.warn('[SocketClient] Cookies still present, clearing again');
+          const cookiesToClear = ["accessToken", "refreshToken", "socketToken", "XSRF-TOKEN"];
+          cookiesToClear.forEach(name => {
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; max-age=0`;
+          });
+        }
+        
+        // Server-side logout to clear HttpOnly cookies reliably
+        try {
+          const { getCsrfToken } = await import("@/utils/csrf-utils");
+          let csrf = getCsrfToken();
+          if (!csrf) {
+            // Prime CSRF via same-origin endpoint
+            try { await fetch('/api/csrf-token', { method: 'GET', credentials: 'include', cache: 'no-store' }); } catch {}
+            csrf = getCsrfToken();
+          }
+          await fetch('/api/auth/logout', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
+            },
+            body: JSON.stringify({ reason: 'session_expired' }),
+            cache: 'no-store',
+          }).catch(() => {});
+        } catch (e) {
+          // non-fatal
+        }
+        
+        // Now redirect
+        window.location.replace('/login?reason=session_expired');
+      }, 100); // 100ms delay to ensure cookies are cleared
+    }
   }
 }
 

@@ -21,10 +21,10 @@ export function getAuthTokenFromCookie(): string | null {
 
   const cookies = parse(cookieString);
 
-  // Prefer httpOnly backend cookie only; no JS-visible mirrors in cookie-only mode
+  // Prefer non-httpOnly socketToken for Socket.IO, fallback to accessToken
   const candidateCookieNames = [
-    // Note: httpOnly cookies are not accessible via document.cookie; this will typically return null
-    "accessToken",
+    "socketToken",    // Non-httpOnly cookie specifically for Socket.IO
+    "accessToken",    // httpOnly cookie (won't be readable, but try anyway)
   ];
 
   for (const name of candidateCookieNames) {
@@ -128,6 +128,7 @@ export function clearAuthToken(): void {
     const cookieNames = [
       "accessToken",
       "refreshToken",
+      "socketToken",  // Non-httpOnly token for Socket.IO
       // Legacy cookie names for backward compatibility
       "authState",
       "socket_token",

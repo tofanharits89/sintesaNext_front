@@ -12,7 +12,7 @@ import { ErrorBoundary, ComponentErrorBoundary } from "@/lib/error-boundary";
 import { withBasePath, apiPath } from "@/lib/base-path";
 import { cookies } from "next/headers";
 import { MessagingAuthListener } from "@/components/messaging/messaging-auth-listener";
-import GlobalAuthCheck from "@/components/GlobalAuthCheck";
+import SessionMonitor from "@/components/SessionMonitor";
 import { performanceMonitor } from "@/utils/performance-monitor";
 import { preloadOnIdle } from "@/utils/chunk-preloader";
 import { RoutePreloader } from "@/components/ui/route-preloader";
@@ -71,6 +71,7 @@ export default async function RootLayout({
                 <CheckBackend />
               </ComponentErrorBoundary>
               <ComponentErrorBoundary>
+                <SessionMonitor />
                 <AppShell {...(initialUser ? { initialUser } : {})}>
                   {children}
                 </AppShell>
