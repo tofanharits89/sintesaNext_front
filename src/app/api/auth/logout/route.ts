@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     sameSite: (isProduction ? "strict" : "lax") as "strict" | "lax"
   };
 
-  // HttpOnly cookies set by backend - clear with production attributes
+  // HttpOnly cookies set by backend - clear with production attributes (default path=/)
   res.cookies.set("accessToken", "", clearHttpOnly);
   res.cookies.set("refreshToken", "", clearHttpOnly);
   // Legacy names
@@ -76,8 +76,40 @@ export async function POST(req: NextRequest) {
   // Best-effort clearing of legacy non-httpOnly names
   res.cookies.set("token", "", clearOpts);
   res.cookies.set("socket_token", "", clearOpts);
+  res.cookies.set("socketToken", "", clearOpts);
   res.cookies.set("authState", "", clearOpts);
   res.cookies.set("auth_user", "", clearOpts);
+
+  // Also clear with multiple common path variants to match cookies set on specific paths
+  const pathVariants = ["/", "/api", "/auth", "/v3", ""] as const;
+  const namesHttpOnly = [
+    "accessToken",
+    "refreshToken",
+    "access_token",
+    "refresh_token",
+    "authToken",
+    "auth_token",
+  ] as const;
+  const namesNonHttpOnly = [
+    "token",
+    "socket_token",
+    "socketToken",
+    "authState",
+    "auth_user",
+    "XSRF-TOKEN",
+  ] as const;
+
+  for (const p of pathVariants) {
+    const optHttpOnly = { ...clearHttpOnly, path: p } as const;
+    const optNonHttpOnly = { ...clearOpts, path: p } as const;
+
+    for (const n of namesHttpOnly) {
+      res.cookies.set(n, "", optHttpOnly);
+    }
+    for (const n of namesNonHttpOnly) {
+      res.cookies.set(n, "", optNonHttpOnly);
+    }
+  }
 
   // ENTERPRISE BEST PRACTICE: Clear with all possible domain/attribute combinations
   // This handles cookies set with different domain attributes
@@ -94,33 +126,65 @@ export async function POST(req: NextRequest) {
   
   // Clear with each domain variant and both sameSite values
   for (const d of domains) {
-    const domainClearHttpOnly = { 
+    const domainClearHttpOnlyBase = { 
       ...clearHttpOnly, 
       domain: d 
     };
-    const domainClearOpts = { 
+    const domainClearOptsBase = { 
       ...clearOpts, 
       domain: d 
     };
-    
-    // Clear with strict sameSite
-    res.cookies.set("accessToken", "", domainClearHttpOnly);
-    res.cookies.set("refreshToken", "", domainClearHttpOnly);
-    res.cookies.set("access_token", "", domainClearHttpOnly);
-    res.cookies.set("refresh_token", "", domainClearHttpOnly);
-    res.cookies.set("authToken", "", domainClearHttpOnly);
-    res.cookies.set("auth_token", "", domainClearHttpOnly);
+
+    // Clear with strict sameSite (default path=/)
+    res.cookies.set("accessToken", "", domainClearHttpOnlyBase);
+    res.cookies.set("refreshToken", "", domainClearHttpOnlyBase);
+    res.cookies.set("access_token", "", domainClearHttpOnlyBase);
+    res.cookies.set("refresh_token", "", domainClearHttpOnlyBase);
+    res.cookies.set("authToken", "", domainClearHttpOnlyBase);
+    res.cookies.set("auth_token", "", domainClearHttpOnlyBase);
     
     // Clear with lax sameSite (in case cookies were set with lax)
-    const laxClear = { ...domainClearHttpOnly, sameSite: "lax" as const };
+    const laxClear = { ...domainClearHttpOnlyBase, sameSite: "lax" as const };
     res.cookies.set("accessToken", "", laxClear);
     res.cookies.set("refreshToken", "", laxClear);
     
     // Non-httpOnly mirrors
-    res.cookies.set("token", "", domainClearOpts);
-    res.cookies.set("socket_token", "", domainClearOpts);
-    res.cookies.set("authState", "", domainClearOpts);
-    res.cookies.set("auth_user", "", domainClearOpts);
+    res.cookies.set("token", "", domainClearOptsBase);
+    res.cookies.set("socket_token", "", domainClearOptsBase);
+    res.cookies.set("socketToken", "", domainClearOptsBase);
+    res.cookies.set("authState", "", domainClearOptsBase);
+    res.cookies.set("auth_user", "", domainClearOptsBase);
+
+    // Also clear with multiple path variants under each domain
+    const pathVariants = ["/", "/api", "/auth", "/v3", ""] as const;
+    const namesHttpOnly = [
+      "accessToken",
+      "refreshToken",
+      "access_token",
+      "refresh_token",
+      "authToken",
+      "auth_token",
+    ] as const;
+    const namesNonHttpOnly = [
+      "token",
+      "socket_token",
+      "socketToken",
+      "authState",
+      "auth_user",
+      "XSRF-TOKEN",
+    ] as const;
+
+    for (const p of pathVariants) {
+      const domainClearHttpOnly = { ...domainClearHttpOnlyBase, path: p } as const;
+      const domainClearOpts = { ...domainClearOptsBase, path: p } as const;
+
+      for (const n of namesHttpOnly) {
+        res.cookies.set(n, "", domainClearHttpOnly);
+      }
+      for (const n of namesNonHttpOnly) {
+        res.cookies.set(n, "", domainClearOpts);
+      }
+    }
   }
 
   // Invalidate Next middleware auth cache immediately

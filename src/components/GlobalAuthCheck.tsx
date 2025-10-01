@@ -21,8 +21,11 @@ export default function GlobalAuthCheck() {
       return;
     }
 
-    // Skip if already being handled by AuthProvider
-    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/login')) {
+    // CRITICAL: Skip if on login page or coming from middleware redirect
+    if (typeof window !== 'undefined' && 
+        (window.location.pathname.startsWith('/login') ||
+         window.location.search.includes('from_redirect=1'))) {
+      console.debug('[GlobalAuthCheck] Skipping - on login page or from redirect');
       return;
     }
 

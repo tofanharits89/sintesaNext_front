@@ -766,30 +766,59 @@ export async function middleware(request: NextRequest) {
       console.debug("[Auth] Public path access granted", { relPath });
     }
     // For login page, if user has a valid access token, check if authenticated
-    // IMPORTANT: Don't redirect in a loop - check for "from_redirect" param
-    if (relPath.startsWith("/login") && hasAccessToken && !request.nextUrl.searchParams.has("from_redirect")) {
-      // Quick check if user is authenticated (bypass cache for fresh check)
+    // CRITICAL: Enhanced loop prevention with multiple safeguards
+    if (relPath.startsWith("/login") && hasAccessToken) {
+      const fromRedirect = request.nextUrl.searchParams.has("from_redirect");
+      const reasonParam = request.nextUrl.searchParams.get("reason");
+      
+      // Skip auth check if:
+      // 1. Already marked as from_redirect (prevent ping-pong)
+      // 2. Has session_expired reason (already failed auth)
+      // 3. Has any error/failure reason parameters
+      if (fromRedirect || reasonParam === 'session_expired' || reasonParam) {
+        if (DEBUG_AUTH) {
+          console.debug("[Auth] Skipping login page auth check - loop prevention", {
+            fromRedirect,
+            reason: reasonParam,
+            relPath
+          });
+        }
+        // Clear any stale cookies since user is on login page with error
+        const res = NextResponse.next();
+        // Expire stale cookies that might be causing confusion (cover common path variants)
+        const pastDate = new Date(0);
+        const paths = ['/', '/api', '/auth', '/v3', ''];
+        for (const p of paths) {
+          res.cookies.set('accessToken', '', { expires: pastDate, path: p as any });
+          res.cookies.set('refreshToken', '', { expires: pastDate, path: p as any });
+          res.cookies.set('socketToken', '', { expires: pastDate, path: p as any });
+        }
+        return res;
+      }
+      
+      // Only do auth check for "clean" login page access (no params)
       let isAuth = await validateSessionViaBackend(rawCookie, true);
       if (!isAuth) {
-        // Grace period retry for very fresh tokens (post-login propagation)
+        // Single retry for very fresh tokens only
         const cookieAge = extractCookieAge(rawCookie);
-        if (cookieAge !== null && cookieAge < 3000) {
-          // Single retry after brief delay
-          await new Promise(r => setTimeout(r, 200));
+        if (cookieAge !== null && cookieAge < 2000) {
+          await new Promise(r => setTimeout(r, 150));
           isAuth = await validateSessionViaBackend(rawCookie, true);
         }
       }
+      
       if (isAuth) {
-        // User is authenticated, redirect to dashboard utama directly
+        // User is authenticated, redirect to dashboard
         const url = request.nextUrl.clone();
         url.pathname = `/dashboard/utama`;
+        url.search = ''; // Clear any query parameters
         const res = NextResponse.redirect(url);
         res.headers.set("x-mw-hit", "1");
         res.headers.set("Cache-Control", "no-store");
         return res;
       }
+      
       // Token exists but not valid - allow login page to render
-      // The login form will clear old tokens before attempting new login
       return NextResponse.next();
     }
     // Allow public path access
@@ -819,6 +848,11 @@ export async function middleware(request: NextRequest) {
     }
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    // Add loop-prevention markers
+    if (!url.searchParams.has("reason")) {
+      url.searchParams.set("reason", "no_token");
+    }
+    url.searchParams.set("from_redirect", "1");
     const res = NextResponse.redirect(url);
     res.headers.set("x-mw-hit", "1");
     if (DEBUG_AUTH) {

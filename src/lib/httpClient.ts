@@ -99,6 +99,7 @@ http.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
 // Response interceptor: handle 401 by attempting refresh, then retry once
 let isRefreshing = false;
 let pendingQueue: Array<{ resolve: () => void; reject: (e: any) => void }> = [];
+let lastRefreshFailureAt = 0; // ms epoch
 
 function processQueue(error: any | null) {
   pendingQueue.forEach(({ resolve, reject }) => {
@@ -125,7 +126,9 @@ function clearAuthCookies(): void {
     "refresh_token",
     "authToken",
     "auth_token",
-    "token"
+    "token",
+    "socketToken",
+    "socket_token"
   ];
   
   // Get all possible domain variations
@@ -169,6 +172,12 @@ if (typeof window !== 'undefined') {
 }
 
 async function refreshTokens(): Promise<void> {
+  // Basic cooldown to avoid spam on repeated 401s
+  const now = Date.now();
+  if (now - lastRefreshFailureAt < 3000) {
+    console.warn('[Auth] Skipping refresh due to recent failure cooldown');
+    throw new Error('Refresh cooldown');
+  }
   if (isRefreshing) {
     return new Promise<void>((resolve, reject) => {
       pendingQueue.push({ resolve, reject });
@@ -230,6 +239,7 @@ async function refreshTokens(): Promise<void> {
     // Clear cookies on any refresh failure
     console.log('[Auth] ❌ Refresh error caught, clearing cookies:', err);
     clearAuthCookies();
+    lastRefreshFailureAt = Date.now();
     processQueue(err);
     throw err;
   } finally {
@@ -274,6 +284,8 @@ http.interceptors.response.use(
           console.warn('[Auth] WARNING: Cookies still present after refresh failure, clearing now...');
           clearAuthCookies();
         }
+        // Avoid retry storms: set failure time
+        lastRefreshFailureAt = Date.now();
         return Promise.reject(refreshError);
       }
     }

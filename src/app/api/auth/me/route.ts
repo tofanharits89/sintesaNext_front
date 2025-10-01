@@ -42,8 +42,10 @@ export async function GET(request: NextRequest) {
   // Forward client cookies to backend; rely on backend to read httpOnly cookies
   const cookie = request.headers.get("cookie") || "";
 
-  // Frontend safeguard: if refresh token cookie is absent, treat as logged out (strict mode)
-  if (!hasCookie(cookie, "refreshToken") && !hasCookie(cookie, "refresh_token")) {
+  // Frontend safeguard: require at least one auth cookie (access or refresh). Do not force 401 if refresh is absent.
+  const hasAccess = hasCookie(cookie, "accessToken") || hasCookie(cookie, "access_token") || hasCookie(cookie, "authToken") || hasCookie(cookie, "auth_token");
+  const hasRefresh = hasCookie(cookie, "refreshToken") || hasCookie(cookie, "refresh_token");
+  if (!hasAccess && !hasRefresh) {
     const res = NextResponse.json(
       { success: false, data: null, message: "Unauthorized" },
       { status: 401 }

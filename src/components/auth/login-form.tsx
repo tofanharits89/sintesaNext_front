@@ -109,50 +109,10 @@ export default function LoginForm() {
       console.log('Sending login request with CSRF token:', csrfToken);
       console.log('Expected captcha:', expectedCaptcha, 'User captcha:', values.captcha);
       
-      // Try direct backend login first (faster, bypasses Next.js API issues)
+      // Use same-origin Next.js API first to ensure correct cookie domain and CSRF
       let resp;
       try {
-        console.log('Trying direct backend login...');
-        const directController = new AbortController();
-        const directTimeoutId = setTimeout(() => directController.abort(), 5000); // 5 second timeout
-        
-        resp = await fetch('http://localhost:88/api/v1/auth/login', {
-          method: "POST",
-          credentials: "include",
-          headers: { 
-            "Content-Type": "application/json",
-            ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {})
-          },
-          body: JSON.stringify({ ...values, expectedCaptcha }),
-          signal: directController.signal,
-        });
-        
-        clearTimeout(directTimeoutId);
-        
-        if (!resp.ok) {
-          throw new Error(`Direct login failed: ${resp.status}`);
-        }
-      } catch (directError) {
-        const errorMessage = directError instanceof Error ? directError.message : String(directError);
-        const errorName = directError instanceof Error ? directError.name : 'UnknownError';
-        console.log('Direct backend login failed:', errorMessage);
-        
-        // If both methods fail, show success anyway for demo purposes
-        if (errorName === 'AbortError' || errorMessage.includes('timeout')) {
-          console.log('Login timed out, but proceeding for demo...');
-          toast.success("Login berhasil (demo mode)");
-          
-          // Simulate successful login for demo
-          setIsRedirecting(true);
-          setTimeout(() => {
-            router.push("/dashboard/utama");
-          }, 500);
-          return;
-        }
-        
-        console.log('Trying Next.js API as fallback...');
-        
-        // Fallback to Next API proxy
+        console.log('Trying same-origin Next.js API for login...');
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
         
@@ -168,6 +128,48 @@ export default function LoginForm() {
         });
         
         clearTimeout(timeoutId);
+        
+        if (!resp.ok) {
+          throw new Error(`Next API login failed: ${resp.status}`);
+        }
+      } catch (apiError) {
+        const errorMessage = apiError instanceof Error ? apiError.message : String(apiError);
+        console.log('Next API login failed:', errorMessage);
+        
+        // As a last resort, try direct backend only if env explicitly allows it
+        const directUrl = process.env.NEXT_PUBLIC_BACKEND_URL
+          ? `${process.env.NEXT_PUBLIC_BACKEND_URL.replace(/\/$/, '')}/auth/login`
+          : null;
+        
+        if (directUrl) {
+          try {
+            console.log('Trying direct backend login as fallback...', directUrl);
+            const directController = new AbortController();
+            const directTimeoutId = setTimeout(() => directController.abort(), 5000);
+            
+            resp = await fetch(directUrl, {
+              method: "POST",
+              credentials: "include",
+              headers: { 
+                "Content-Type": "application/json",
+                ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {})
+              },
+              body: JSON.stringify({ ...values, expectedCaptcha }),
+              signal: directController.signal,
+            });
+            
+            clearTimeout(directTimeoutId);
+            
+            if (!resp.ok) {
+              throw new Error(`Direct login failed: ${resp.status}`);
+            }
+          } catch (directError) {
+            console.log('Direct backend login failed:', directError);
+            throw directError;
+          }
+        } else {
+          throw apiError;
+        }
       }
       
       console.log('Login response status:', resp.status);

@@ -97,6 +97,9 @@ const nextConfig: NextConfig = {
     ];
   },
 
+  // Output configuration for Docker deployment
+  output: 'standalone',
+  
   // Experimental features for better performance
   experimental: {
     optimizePackageImports: [
