@@ -111,10 +111,10 @@ export const useSocket = (): UseSocketReturn => {
     socketClient.on('reconnect', handleConnect);
 
     // Auto-connect if not connected and we have auth cookies
-    const checkAndConnect = () => {
+    const checkAndConnect = async () => {
       if (!socketClient.isConnected() && !isLoginPage) {
         // Use the proper auth check function instead of manual cookie checking
-        const hasAuth = isAuthenticated();
+        const hasAuth = await isAuthenticated();
         
         if (hasAuth) {
           socketClient.connect().catch(() => {
@@ -163,11 +163,11 @@ export const useSocket = (): UseSocketReturn => {
       const maxAttempts = 10;
       const checkInterval = 200; // Check every 200ms
 
-      const attemptConnection = () => {
+      const attemptConnection = async () => {
         attempts++;
         
         // Use the proper auth check function
-        const hasAuth = isAuthenticated();
+        const hasAuth = await isAuthenticated();
         
         if (hasAuth || attempts >= maxAttempts) {
           // Auth is available or we've reached max attempts, try to connect

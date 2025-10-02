@@ -127,8 +127,7 @@ function clearAuthCookies(): void {
     "authToken",
     "auth_token",
     "token",
-    "socketToken",
-    "socket_token"
+    "socket_token" // SECURITY FIX: Removed socketToken
   ];
   
   // Get all possible domain variations

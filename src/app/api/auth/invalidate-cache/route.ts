@@ -6,37 +6,74 @@ import type {
 } from "@/types/cache-invalidation";
 
 const DEBUG_CACHE = process.env.NEXT_PUBLIC_DEBUG_AUTH === "1";
+const CACHE_INVALIDATE_SECRET = process.env.CACHE_INVALIDATE_SECRET || "";
 
 /**
- * Internal cache invalidation endpoint
- * This endpoint is designed for internal use only and should not be exposed publicly
+ * Internal cache invalidation endpoint with HMAC-SHA256 signature validation
+ * SECURITY: This endpoint requires proper authentication via shared secret signature
  */
 export async function POST(req: NextRequest): Promise<NextResponse<CacheInvalidationResponse | CacheInvalidationError>> {
   try {
-    // Security validation - ensure internal-only access
+    // SECURITY FIX: Implement robust signature-based authentication
     const userAgent = req.headers.get("user-agent") || "";
     const referer = req.headers.get("referer") || "";
     const host = req.headers.get("host") || "";
-    
+
     // Check if request is coming from internal sources
-    const isInternalRequest = 
+    const isInternalRequest =
       userAgent.includes("Next.js") || // Next.js internal requests
       referer.includes(host) || // Same-origin requests
       req.headers.get("x-internal-request") === "true"; // Explicit internal header
-    
-    if (!isInternalRequest) {
+
+    // SECURITY FIX: HMAC-SHA256 signature validation (same as middleware)
+    let signatureOk = true;
+    if (CACHE_INVALIDATE_SECRET) {
+      try {
+        // Clone request to read body without consuming it
+        const reqClone = req.clone();
+        const raw = await reqClone.text();
+        const enc = new TextEncoder();
+        const data = enc.encode(`${CACHE_INVALIDATE_SECRET}:${raw}`);
+        const digest = await crypto.subtle.digest("SHA-256", data);
+        const hex = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
+        const sig = (req.headers.get("x-internal-signature") || "").trim();
+        signatureOk = sig.length > 0 && sig.toLowerCase() === hex;
+
+        if (DEBUG_CACHE && !signatureOk) {
+          console.warn("[Cache] Invalid signature provided", {
+            expected: hex.substring(0, 16) + "...",
+            received: sig.substring(0, 16) + "..."
+          });
+        }
+      } catch (error) {
+        console.error("[Cache] Signature validation error:", error);
+        signatureOk = false;
+      }
+    } else {
+      // SECURITY WARNING: No secret configured - allow only same-origin requests
+      console.warn("🚨 SECURITY WARNING: CACHE_INVALIDATE_SECRET not configured!");
+      console.warn("   Cache invalidation endpoint is vulnerable to unauthorized access.");
+      console.warn("   Set CACHE_INVALIDATE_SECRET environment variable to secure this endpoint.");
+    }
+
+    const authorized = isInternalRequest && signatureOk;
+
+    if (!authorized) {
       if (DEBUG_CACHE) {
         console.warn("[Cache] Unauthorized cache invalidation attempt", {
-          userAgent,
-          referer,
-          host
+          userAgent: userAgent.substring(0, 50),
+          referer: referer.substring(0, 50),
+          host,
+          hasSignature: !!req.headers.get("x-internal-signature"),
+          secretConfigured: !!CACHE_INVALIDATE_SECRET,
+          signatureOk
         });
       }
-      
+
       return NextResponse.json<CacheInvalidationError>({
         success: false,
         error: "Unauthorized access to internal endpoint",
-        code: "UNAUTHORIZED",
+        code: CACHE_INVALIDATE_SECRET ? "INVALID_SIGNATURE" : "UNAUTHORIZED",
         timestamp: new Date().toISOString()
       }, { status: 403 });
     }

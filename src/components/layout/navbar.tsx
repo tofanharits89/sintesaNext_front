@@ -678,7 +678,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                   // Delete all auth cookies with multiple names
                   const cookiesToDelete = [
                     'accessToken', 'refreshToken', 'access_token', 'refresh_token',
-                    'authToken', 'auth_token', 'token', 'socket_token', 'socketToken', 'authState', 'auth_user',
+                    'authToken', 'auth_token', 'token', 'socket_token', 'authState', 'auth_user', // SECURITY FIX: Removed socketToken
                     'XSRF-TOKEN', '_csrf', 'auth_user', 'user_data'
                   ];
                   cookiesToDelete.forEach(deleteCookie);

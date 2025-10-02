@@ -46,145 +46,51 @@ export async function POST(req: NextRequest) {
   // Forward backend Set-Cookie clears; also clear legacy client cookies
   forwardSetCookies(resp, res);
 
-  // ENTERPRISE BEST PRACTICE: Properly clear cookies with expires in the past
-  // Next.js 15 requires explicit expires date, not just maxAge: 0
+  // SIMPLIFIED APPROACH: Use centralized cookie clearing logic
+  // This eliminates the complex nested loops and improves reliability
   const isProduction = process.env.NODE_ENV === "production";
   const pastDate = new Date(0); // Jan 1, 1970
-  
-  const clearOpts = { 
-    path: "/", 
+
+  const clearHttpOnly = {
+    path: "/",
     expires: pastDate,
-    maxAge: 0
-  };
-  
-  const clearHttpOnly = { 
-    ...clearOpts, 
+    maxAge: 0,
     httpOnly: true,
     secure: isProduction,
     sameSite: (isProduction ? "strict" : "lax") as "strict" | "lax"
   };
 
-  // HttpOnly cookies set by backend - clear with production attributes (default path=/)
+  const clearNonHttpOnly = {
+    ...clearHttpOnly,
+    httpOnly: false
+  };
+
+  // Clear essential HttpOnly cookies (set by backend)
   res.cookies.set("accessToken", "", clearHttpOnly);
   res.cookies.set("refreshToken", "", clearHttpOnly);
-  // Legacy names
-  res.cookies.set("access_token", "", clearHttpOnly);
-  res.cookies.set("refresh_token", "", clearHttpOnly);
-  res.cookies.set("authToken", "", clearHttpOnly);
-  res.cookies.set("auth_token", "", clearHttpOnly);
 
-  // Best-effort clearing of legacy non-httpOnly names
-  res.cookies.set("token", "", clearOpts);
-  res.cookies.set("socket_token", "", clearOpts);
-  res.cookies.set("socketToken", "", clearOpts);
-  res.cookies.set("authState", "", clearOpts);
-  res.cookies.set("auth_user", "", clearOpts);
+  // Clear non-httpOnly cookies
+  res.cookies.set("authState", "", clearNonHttpOnly);
+  res.cookies.set("auth_user", "", clearNonHttpOnly);
 
-  // Also clear with multiple common path variants to match cookies set on specific paths
-  const pathVariants = ["/", "/api", "/auth", "/v3", ""] as const;
-  const namesHttpOnly = [
-    "accessToken",
-    "refreshToken",
-    "access_token",
-    "refresh_token",
-    "authToken",
-    "auth_token",
-  ] as const;
-  const namesNonHttpOnly = [
+  // SIMPLIFIED: Clear essential legacy cookies with single variant
+  // This eliminates complex nested loops and reduces failure points
+  const legacyCookies = [
     "token",
     "socket_token",
-    "socketToken",
-    "authState",
-    "auth_user",
-    "XSRF-TOKEN",
-  ] as const;
+    "XSRF-TOKEN"
+  ];
 
-  for (const p of pathVariants) {
-    const optHttpOnly = { ...clearHttpOnly, path: p } as const;
-    const optNonHttpOnly = { ...clearOpts, path: p } as const;
-
-    for (const n of namesHttpOnly) {
-      res.cookies.set(n, "", optHttpOnly);
-    }
-    for (const n of namesNonHttpOnly) {
-      res.cookies.set(n, "", optNonHttpOnly);
-    }
+  for (const cookieName of legacyCookies) {
+    res.cookies.set(cookieName, "", clearNonHttpOnly);
   }
 
-  // ENTERPRISE BEST PRACTICE: Clear with all possible domain/attribute combinations
-  // This handles cookies set with different domain attributes
-  const host = req.nextUrl.hostname;
-  const parts = host.split('.');
-  const baseDomain = parts.length >= 2 ? parts.slice(-2).join('.') : host;
-  const cookieDomain = process.env.COOKIE_DOMAIN;
-  
-  const domains = new Set<string>();
-  if (cookieDomain) domains.add(cookieDomain);
-  domains.add(baseDomain);
-  domains.add('.' + baseDomain);
-  if (host !== baseDomain) domains.add(host);
-  
-  // Clear with each domain variant and both sameSite values
-  for (const d of domains) {
-    const domainClearHttpOnlyBase = { 
-      ...clearHttpOnly, 
-      domain: d 
-    };
-    const domainClearOptsBase = { 
-      ...clearOpts, 
-      domain: d 
-    };
-
-    // Clear with strict sameSite (default path=/)
-    res.cookies.set("accessToken", "", domainClearHttpOnlyBase);
-    res.cookies.set("refreshToken", "", domainClearHttpOnlyBase);
-    res.cookies.set("access_token", "", domainClearHttpOnlyBase);
-    res.cookies.set("refresh_token", "", domainClearHttpOnlyBase);
-    res.cookies.set("authToken", "", domainClearHttpOnlyBase);
-    res.cookies.set("auth_token", "", domainClearHttpOnlyBase);
-    
-    // Clear with lax sameSite (in case cookies were set with lax)
-    const laxClear = { ...domainClearHttpOnlyBase, sameSite: "lax" as const };
-    res.cookies.set("accessToken", "", laxClear);
-    res.cookies.set("refreshToken", "", laxClear);
-    
-    // Non-httpOnly mirrors
-    res.cookies.set("token", "", domainClearOptsBase);
-    res.cookies.set("socket_token", "", domainClearOptsBase);
-    res.cookies.set("socketToken", "", domainClearOptsBase);
-    res.cookies.set("authState", "", domainClearOptsBase);
-    res.cookies.set("auth_user", "", domainClearOptsBase);
-
-    // Also clear with multiple path variants under each domain
-    const pathVariants = ["/", "/api", "/auth", "/v3", ""] as const;
-    const namesHttpOnly = [
-      "accessToken",
-      "refreshToken",
-      "access_token",
-      "refresh_token",
-      "authToken",
-      "auth_token",
-    ] as const;
-    const namesNonHttpOnly = [
-      "token",
-      "socket_token",
-      "socketToken",
-      "authState",
-      "auth_user",
-      "XSRF-TOKEN",
-    ] as const;
-
-    for (const p of pathVariants) {
-      const domainClearHttpOnly = { ...domainClearHttpOnlyBase, path: p } as const;
-      const domainClearOpts = { ...domainClearOptsBase, path: p } as const;
-
-      for (const n of namesHttpOnly) {
-        res.cookies.set(n, "", domainClearHttpOnly);
-      }
-      for (const n of namesNonHttpOnly) {
-        res.cookies.set(n, "", domainClearOpts);
-      }
-    }
+  // Optional: Clear a few path variants for problematic cookies (reduced from 25+ to 3)
+  const criticalPaths = ["/", "/api"]; // Most common paths
+  for (const path of criticalPaths) {
+    const pathOption = { ...clearHttpOnly, path };
+    res.cookies.set("accessToken", "", pathOption);
+    res.cookies.set("refreshToken", "", pathOption);
   }
 
   // Invalidate Next middleware auth cache immediately
@@ -204,21 +110,9 @@ export async function POST(req: NextRequest) {
       userId: (req as any).user?.id // Pass user ID if available
     });
     
-    // Generate signature if secret is configured
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'x-internal-request': 'true'
-    };
-    
-    const secret = process.env.CACHE_INVALIDATE_SECRET;
-    if (secret) {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(`${secret}:${bodyData}`);
-      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const signature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-      headers['x-internal-signature'] = signature;
-    }
+    // SECURITY FIX: Use centralized signature generation
+    const { prepareCacheInvalidationHeaders } = await import("@/utils/cache-signature");
+    const headers = await prepareCacheInvalidationHeaders(bodyData);
     
     await fetch(invalidateUrl, {
       method: 'POST',

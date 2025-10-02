@@ -144,10 +144,10 @@ export class SocketClient {
       timeout: 20000,
     };
 
-    // Add auth token if available
-    if (token) {
-      socketConfig.auth = { token };
-    }
+    // SECURITY FIX: Don't send token in auth object to prevent XSS
+    // Backend will now read the HttpOnly accessToken cookie server-side
+    // This eliminates the XSS vulnerability while maintaining authentication
+    // No auth object needed - backend will handle cookie-based authentication
 
     const socket = io(this.config.url, socketConfig);
 
@@ -622,7 +622,7 @@ export class SocketClient {
     // CRITICAL: Clear auth cookies immediately and aggressively
     if (typeof window !== "undefined" && typeof document !== "undefined") {
       // Clear cookies manually first (synchronous)
-      const cookiesToClear = ["accessToken", "refreshToken", "socketToken", "XSRF-TOKEN", "csrfToken"];
+      const cookiesToClear = ["accessToken", "refreshToken", "XSRF-TOKEN", "csrfToken"]; // SECURITY FIX: Removed socketToken
       const hostname = window.location.hostname;
       const paths = ["/", "/api", "/auth"];
       
@@ -675,11 +675,10 @@ export class SocketClient {
         console.log('[SocketClient] Cookies before redirect:', remainingCookies);
         
         // Force clear again if any auth cookies remain
-        if (remainingCookies.includes('accessToken') || 
-            remainingCookies.includes('refreshToken') || 
-            remainingCookies.includes('socketToken')) {
+        if (remainingCookies.includes('accessToken') ||
+            remainingCookies.includes('refreshToken')) {
           console.warn('[SocketClient] Cookies still present, clearing again');
-          const cookiesToClear = ["accessToken", "refreshToken", "socketToken", "XSRF-TOKEN"];
+          const cookiesToClear = ["accessToken", "refreshToken", "XSRF-TOKEN"]; // SECURITY FIX: Removed socketToken
           cookiesToClear.forEach(name => {
             document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; max-age=0`;
           });

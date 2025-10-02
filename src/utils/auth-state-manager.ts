@@ -638,3 +638,105 @@ export class AuthStateManager {
 
 // Export singleton instance
 export const authStateManager = new AuthStateManager();
+
+/**
+ * Simple authentication validation for components
+ * Coordinates with useAuth hook and provides consistent validation
+ */
+export class SimpleAuthValidator {
+  private static instance: SimpleAuthValidator;
+  private validationCache: Map<string, { result: boolean; timestamp: number }> = new Map();
+  private readonly CACHE_DURATION = 30000; // 30 seconds
+
+  private constructor() {}
+
+  public static getInstance(): SimpleAuthValidator {
+    if (!SimpleAuthValidator.instance) {
+      SimpleAuthValidator.instance = new SimpleAuthValidator();
+    }
+    return SimpleAuthValidator.instance;
+  }
+
+  /**
+   * Validate authentication state with API call
+   * Uses same endpoint as useAuth for consistency
+   */
+  public async validateAuth(forceRefresh = false): Promise<boolean> {
+    const cacheKey = 'auth_validation';
+    const now = Date.now();
+
+    // Check cache unless force refresh
+    if (!forceRefresh) {
+      const cached = this.validationCache.get(cacheKey);
+      if (cached && now - cached.timestamp < this.CACHE_DURATION) {
+        logger.debug('[SimpleAuthValidator] Using cached auth result');
+        return cached.result;
+      }
+    }
+
+    try {
+      logger.debug('[SimpleAuthValidator] Validating auth state');
+
+      const response = await fetch('/api/auth/me', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      const isAuthenticated = response.status !== 401 && response.status !== 403;
+
+      // Validate response structure
+      let isValid = false;
+      if (isAuthenticated) {
+        try {
+          const data = await response.json();
+          isValid = data?.success === true && !!data?.data;
+        } catch (parseError) {
+          logger.warn('[SimpleAuthValidator] Failed to parse auth response:', parseError);
+          isValid = false;
+        }
+      }
+
+      // Cache the result
+      this.validationCache.set(cacheKey, {
+        result: isValid,
+        timestamp: now
+      });
+
+      logger.debug('[SimpleAuthValidator] Auth validation completed', {
+        isValid,
+        status: response.status
+      });
+
+      return isValid;
+    } catch (error) {
+      logger.warn('[SimpleAuthValidator] Auth validation failed:', error);
+      // Don't cache errors
+      return false;
+    }
+  }
+
+  /**
+   * Clear validation cache (used on logout)
+   */
+  public clearCache(): void {
+    this.validationCache.clear();
+    logger.debug('[SimpleAuthValidator] Validation cache cleared');
+  }
+
+  /**
+   * Check if validation is cached and fresh
+   */
+  public isCachedFresh(maxAgeMs = 10000): boolean {
+    const cached = this.validationCache.get('auth_validation');
+    if (!cached) return false;
+
+    return Date.now() - cached.timestamp < maxAgeMs;
+  }
+}
+
+// Export simple validator instance
+export const simpleAuthValidator = SimpleAuthValidator.getInstance();

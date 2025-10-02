@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { simpleAuthValidator } from '@/utils/auth-state-manager';
 
 const PUBLIC_PATHS = ['/login', '/server-error'];
 
@@ -15,14 +16,14 @@ export default function GlobalAuthCheck() {
 
   useEffect(() => {
     if (!pathname) return;
-    
+
     // Skip auth check for public pages
     if (PUBLIC_PATHS.some(path => pathname.startsWith(path))) {
       return;
     }
 
     // CRITICAL: Skip if on login page or coming from middleware redirect
-    if (typeof window !== 'undefined' && 
+    if (typeof window !== 'undefined' &&
         (window.location.pathname.startsWith('/login') ||
          window.location.search.includes('from_redirect=1'))) {
       console.debug('[GlobalAuthCheck] Skipping - on login page or from redirect');
@@ -37,10 +38,10 @@ export default function GlobalAuthCheck() {
     // Listen for session expiration events from Socket.IO
     const handleAuthLogout = (event: CustomEvent) => {
       if (isRedirecting) return;
-      
+
       console.log('[GlobalAuthCheck] Auth logout event received:', event.detail);
       isRedirecting = true;
-      
+
       // Clear any local state
       if (typeof window !== 'undefined') {
         sessionStorage.clear();
@@ -52,7 +53,7 @@ export default function GlobalAuthCheck() {
 
     const handleSocketAuthRequired = (event: CustomEvent) => {
       if (isRedirecting) return;
-      
+
       console.log('[GlobalAuthCheck] Socket auth required event received:', event.detail);
       isRedirecting = true;
       router.replace('/login?reason=auth_required');
@@ -64,34 +65,28 @@ export default function GlobalAuthCheck() {
     // Mark as checked to prevent duplicate checks
     hasCheckedRef.current = true;
 
-    // Check if user has any auth token (accessToken or socketToken)
-    const hasAccessToken = document.cookie.includes('accessToken=');
-    const hasSocketToken = document.cookie.includes('socketToken=');
-    
-    if (!hasAccessToken && !hasSocketToken) {
-      if (!isRedirecting) {
-        console.log('[GlobalAuthCheck] No auth tokens found, redirecting to login');
-        isRedirecting = true;
-        window.location.replace('/login');
+    // SECURITY FIX: Use centralized auth validation for consistency
+    // This ensures synchronization with the useAuth system and prevents stale auth state
+    const validateAuthState = async () => {
+      try {
+        const isValid = await simpleAuthValidator.validateAuth();
+
+        if (!isValid && !isRedirecting) {
+          console.log('[GlobalAuthCheck] Session invalid, redirecting to login');
+          isRedirecting = true;
+          window.location.replace('/login?reason=session_expired');
+        }
+
+        return isValid;
+      } catch (error) {
+        console.warn('[GlobalAuthCheck] Auth validation failed:', error);
+        // Network errors should not force logout - let middleware handle protection
+        return false;
       }
-      return;
-    }
-    
-    // Verify session via lightweight /me endpoint; only redirect on 401/403
-    fetch('/api/auth/me', {
-      method: 'GET',
-      credentials: 'include',
-    })
-    .then(response => {
-      if ((response.status === 401 || response.status === 403) && !isRedirecting) {
-        console.log('[GlobalAuthCheck] Session invalid (401/403), redirecting to login');
-        isRedirecting = true;
-        window.location.replace('/login');
-      }
-    })
-    .catch(() => {
-      // Network hiccup: do not force logout; let middleware protect pages
-    });
+    };
+
+    // Perform validation but don't block the component
+    validateAuthState();
 
     // Cleanup event listeners
     return () => {

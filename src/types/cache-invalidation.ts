@@ -19,6 +19,6 @@ export interface CacheInvalidationResponse {
 export interface CacheInvalidationError {
   success: false;
   error: string;
-  code: 'INVALID_REQUEST' | 'UNAUTHORIZED' | 'INTERNAL_ERROR';
+  code: 'INVALID_REQUEST' | 'UNAUTHORIZED' | 'INTERNAL_ERROR' | 'INVALID_SIGNATURE';
   timestamp: string;
 }

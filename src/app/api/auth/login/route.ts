@@ -147,11 +147,15 @@ export async function POST(request: NextRequest) {
         headers: { 'Content-Type': 'application/json' },
       }).catch(() => {});
 
-      // Clear middleware cache for this login on the frontend side
+      // SECURITY FIX: Clear middleware cache with proper authentication
+      const bodyData = JSON.stringify({ type: 'login', userId: user.id });
+      const { prepareCacheInvalidationHeaders } = await import("@/utils/cache-signature");
+      const headers = await prepareCacheInvalidationHeaders(bodyData);
+
       void fetch('/api/auth/invalidate-cache', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'login', userId: user.id })
+        headers,
+        body: bodyData
       }).catch(() => {});
     } catch {
       // Ignore errors - session invalidation is best effort

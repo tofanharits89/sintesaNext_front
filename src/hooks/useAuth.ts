@@ -76,6 +76,14 @@ export function useAuth() {
             // Refresh failed - session is truly invalid
             // Cookies are already cleared by httpClient interceptor
             logger.warn('Session invalid and refresh failed - user needs to log in again');
+
+            // Clear validation cache to prevent stale auth state
+            import("@/utils/auth-state-manager").then(({ simpleAuthValidator }) => {
+              simpleAuthValidator.clearCache();
+            }).catch(() => {
+              // Ignore if auth state manager is not available
+            });
+
             return { isAuthenticated: false } as AuthStatusResponse;
           }
         }

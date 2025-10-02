@@ -85,7 +85,7 @@ export default function LoginForm() {
         document.cookie.split(';').forEach(cookie => {
           const eqPos = cookie.indexOf('=');
           const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-          if (['accessToken', 'refreshToken', 'socketToken', 'authToken', 'auth_token'].includes(name)) {
+          if (['accessToken', 'refreshToken', 'authToken', 'auth_token'].includes(name)) { // SECURITY FIX: Removed socketToken
             document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
           }
         });

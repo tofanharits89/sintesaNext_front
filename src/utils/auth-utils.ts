@@ -21,10 +21,10 @@ export function getAuthTokenFromCookie(): string | null {
 
   const cookies = parse(cookieString);
 
-  // Prefer non-httpOnly socketToken for Socket.IO, fallback to accessToken
+  // SECURITY FIX: Removed socketToken preference to prevent XSS vulnerability
+  // Socket.IO will now use server-side cookie reading instead of client-side access
   const candidateCookieNames = [
-    "socketToken",    // Non-httpOnly cookie specifically for Socket.IO
-    "accessToken",    // httpOnly cookie (won't be readable, but try anyway)
+    "accessToken",    // httpOnly cookie (Socket.IO will read this server-side)
   ];
 
   for (const name of candidateCookieNames) {
@@ -108,15 +108,36 @@ export function dispatchAuthEvent(
 }
 
 /**
- * Check if user is authenticated by checking for valid token
+ * Check if user is authenticated by validating session with API
+ * SECURITY FIX: Replaced cookie presence check with proper validation
  */
-export function isAuthenticated(): boolean {
-  // In cookie-only mode, client-side cannot reliably read httpOnly cookies.
-  // Prefer SSR guards and middleware. This helper now always returns true if any cookies exist, false otherwise.
-  if (typeof document === "undefined") return false;
+export async function isAuthenticated(): Promise<boolean> {
+  // Server-side rendering: cannot validate
+  if (typeof window === "undefined") return false;
+
+  try {
+    // Use centralized validator for consistency
+    const { simpleAuthValidator } = await import('./auth-state-manager');
+    return await simpleAuthValidator.validateAuth();
+  } catch (error) {
+    // Network errors don't mean unauthenticated
+    logger.warn('[Auth Utils] Authentication check failed:', error);
+    return false;
+  }
+}
+
+/**
+ * Synchronous authentication check for immediate UI decisions
+ * Falls back to conservative approach when async check is not possible
+ * WARNING: This is less reliable than async isAuthenticated()
+ */
+export function isAuthSync(): boolean {
+  if (typeof window === "undefined") return false;
+
+  // Conservative approach: assume not authenticated unless we can verify
+  // This prevents false positives that could expose protected content
   const cookieString = document.cookie || "";
-  // document.cookie will not include httpOnly cookies; this becomes a best-effort hint only.
-  return Boolean(cookieString && cookieString.trim().length > 0);
+  return Boolean(cookieString && cookieString.includes('accessToken='));
 }
 
 /**
@@ -128,7 +149,7 @@ export function clearAuthToken(): void {
     const cookieNames = [
       "accessToken",
       "refreshToken",
-      "socketToken",  // Non-httpOnly token for Socket.IO
+      // SECURITY FIX: Removed socketToken to prevent XSS vulnerability
       // Legacy cookie names for backward compatibility
       "authState",
       "socket_token",
@@ -158,6 +179,13 @@ export function clearAuthToken(): void {
       queryClient.setQueryData(["current-user-profile"], undefined);
     }).catch(() => {
       // Ignore if React Query is not available
+    });
+
+    // Clear validation cache to prevent stale auth state
+    import("./auth-state-manager").then(({ simpleAuthValidator }) => {
+      simpleAuthValidator.clearCache();
+    }).catch(() => {
+      // Ignore if auth state manager is not available
     });
 
     // Dispatch logout event

@@ -42,7 +42,7 @@ function isHexHash(value: unknown): value is string {
 function expireAuthCookies(res: NextResponse) {
   try {
     const past = new Date(0);
-    const names = ["accessToken", "refreshToken", "socketToken", "XSRF-TOKEN", "csrfToken"]; 
+    const names = ["accessToken", "refreshToken", "XSRF-TOKEN", "csrfToken"]; // SECURITY FIX: Removed socketToken 
     for (const name of names) {
       // Default path
       res.cookies.set({ name, value: "", expires: past, path: "/" });
@@ -791,7 +791,7 @@ export async function middleware(request: NextRequest) {
         for (const p of paths) {
           res.cookies.set('accessToken', '', { expires: pastDate, path: p as any });
           res.cookies.set('refreshToken', '', { expires: pastDate, path: p as any });
-          res.cookies.set('socketToken', '', { expires: pastDate, path: p as any });
+          // SECURITY FIX: Removed socketToken clearing to prevent XSS vulnerability
         }
         return res;
       }
