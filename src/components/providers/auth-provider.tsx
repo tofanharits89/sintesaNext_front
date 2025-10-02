@@ -34,7 +34,10 @@ export function AuthProvider({ children, fallback }: AuthProviderProps) {
       // Handle specific error cases
       if (auth.error?.message.includes('401') || auth.error?.message.includes('403')) {
         toast.error("Session expired. Please log in again.");
-        router.push("/login");
+        // Use window.location.replace to prevent Next.js router conflicts
+        if (typeof window !== 'undefined') {
+          window.location.replace("/login");
+        }
       } else if (!auth.error?.message.includes('fetch')) {
         // Don't show toast for network errors (too noisy)
         toast.error("Authentication error occurred");
@@ -79,9 +82,12 @@ export function withAuth<P extends object>(Component: React.ComponentType<P>) {
 
     useEffect(() => {
       if (!isLoading && !isAuthenticated) {
-        router.push("/login");
+        // Use window.location.replace to prevent Next.js router conflicts
+        if (typeof window !== 'undefined') {
+          window.location.replace("/login");
+        }
       }
-    }, [isAuthenticated, isLoading, router]);
+    }, [isAuthenticated, isLoading]);
 
     if (isLoading) {
       return (

@@ -17,16 +17,50 @@ import logger from "@/lib/logger";
  */
 export async function clearAllMessagingState() {
   try {
-    // Clear Zustand stores
+    // CRITICAL FIX: Clear all messaging-related components aggressively
+
+    // 1. Clear Zustand stores first
     clearMessagingStores();
-    
-    // Clear temporary messages
+
+    // 2. Clear temporary messages
     clearAllTempMessages();
-    
-    // Clear message queue
+
+    // 3. Clear message queue and stop any queued operations
     await messageQueue.clearAllMessages();
-    
-    logger.info("All messaging state cleared");
+
+    // 4. CRITICAL FIX: Clear any persistent storage that might trigger reconnections
+    if (typeof window !== 'undefined') {
+      // Clear any messaging-related localStorage/sessionStorage that might cause reconnections
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.includes('messaging') || key.includes('conversation') || key.includes('message'))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+
+      // Clear sessionStorage messaging data
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key && (key.includes('messaging') || key.includes('conversation') || key.includes('message'))) {
+          sessionStorage.removeItem(key);
+        }
+      }
+    }
+
+    // 5. CRITICAL FIX: Force disconnect any remaining socket connections
+    try {
+      const { socketClient } = await import("@/lib/SocketClient");
+      if (socketClient.isConnected()) {
+        socketClient.disconnect();
+        logger.info("Socket disconnected during messaging cleanup");
+      }
+    } catch (socketError) {
+      logger.warn("Failed to disconnect socket during messaging cleanup", socketError);
+    }
+
+    logger.info("All messaging state cleared (enhanced)");
   } catch (error) {
     logger.error("Error clearing messaging state", error);
   }
@@ -74,18 +108,57 @@ export function clearMessagingStores() {
  */
 export function clearMessagingQueryCache(queryClient: ReturnType<typeof useQueryClient>) {
   try {
-    // Clear all messaging-related queries using the correct query keys
-    queryClient.removeQueries({ queryKey: ['conversations'] });
-    queryClient.removeQueries({ queryKey: ['messages'] });
-    
-    // Cancel any ongoing queries
+    // CRITICAL FIX: More aggressive query invalidation to stop all messaging API calls
+    // Clear all messaging-related queries with multiple approaches
+
+    // Approach 1: Direct key-based clearing
     queryClient.cancelQueries({ queryKey: ['conversations'] });
+    queryClient.removeQueries({ queryKey: ['conversations'] });
+    queryClient.invalidateQueries({ queryKey: ['conversations'] });
+
     queryClient.cancelQueries({ queryKey: ['messages'] });
-    
-    // Clear all query data to ensure fresh start
+    queryClient.removeQueries({ queryKey: ['messages'] });
+    queryClient.invalidateQueries({ queryKey: ['messages'] });
+
+    queryClient.cancelQueries({ queryKey: ['messaging'] });
+    queryClient.removeQueries({ queryKey: ['messaging'] });
+    queryClient.invalidateQueries({ queryKey: ['messaging'] });
+
+    // Approach 2: Predicate-based clearing for any remaining queries
+    queryClient.cancelQueries({
+      predicate: (query: any) => {
+        const keyStr = JSON.stringify(query.queryKey);
+        return keyStr.includes('conversation') || keyStr.includes('message') || keyStr.includes('messaging');
+      }
+    });
+
+    queryClient.removeQueries({
+      predicate: (query: any) => {
+        const keyStr = JSON.stringify(query.queryKey);
+        return keyStr.includes('conversation') || keyStr.includes('message') || keyStr.includes('messaging');
+      }
+    });
+
+    queryClient.invalidateQueries({
+      predicate: (query: any) => {
+        const keyStr = JSON.stringify(query.queryKey);
+        return keyStr.includes('conversation') || keyStr.includes('message') || keyStr.includes('messaging');
+      }
+    });
+
+    // Clear all query data as final cleanup
     queryClient.clear();
-    
-    logger.info("React Query cache cleared");
+
+    // CRITICAL FIX: Reset the query client to prevent any background refetches
+    // This is necessary because some queries might have auto-refetch enabled
+    queryClient.resetQueries({
+      predicate: (query: any) => {
+        const keyStr = JSON.stringify(query.queryKey);
+        return keyStr.includes('conversation') || keyStr.includes('message') || keyStr.includes('messaging');
+      }
+    });
+
+    logger.info("React Query cache cleared and queries reset");
   } catch (error) {
     logger.error("Error clearing React Query cache", error);
   }

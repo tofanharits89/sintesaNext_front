@@ -650,29 +650,38 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                   } catch {}
 
                   // ENTERPRISE BEST PRACTICE: Client-side cookie deletion as backup
-                  // This ensures cookies are cleared even if Set-Cookie headers fail
-                  const deleteCookie = (name: string) => {
-                    // Delete with various domain/path combinations
-                    const domains = [
-                      window.location.hostname,
-                      '.' + window.location.hostname,
-                      window.location.hostname.split('.').slice(-2).join('.')
-                    ];
-                    const paths = ['/', ''];
-                    
-                    for (const domain of domains) {
-                      for (const path of paths) {
-                        // Delete with domain
-                        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain}`;
-                        // Delete without domain
-                        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}`;
-                      }
+                // This ensures cookies are cleared even if Set-Cookie headers fail
+                const deleteCookie = (name: string) => {
+                  // More comprehensive cookie clearing
+                  const domains = [
+                    window.location.hostname,
+                    '.' + window.location.hostname,
+                    window.location.hostname.split('.').slice(-2).join('.'),
+                    // Try localhost variations
+                    'localhost',
+                    '127.0.0.1'
+                  ];
+                  const paths = ['/', '', '/api', '/auth'];
+
+                  for (const domain of domains) {
+                    for (const path of paths) {
+                      // HttpOnly cookies
+                      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain}; HttpOnly; Secure`;
+                      // Non-HttpOnly cookies
+                      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain}; SameSite=Lax`;
+                      // Fallback
+                      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path};`;
                     }
-                  };
-                  
-                  // Delete all auth cookies
-                  ['accessToken', 'refreshToken', 'access_token', 'refresh_token', 
-                   'authToken', 'auth_token', 'token', 'socket_token', 'authState', 'auth_user'].forEach(deleteCookie);
+                  }
+                };
+
+                  // Delete all auth cookies with multiple names
+                  const cookiesToDelete = [
+                    'accessToken', 'refreshToken', 'access_token', 'refresh_token',
+                    'authToken', 'auth_token', 'token', 'socket_token', 'socketToken', 'authState', 'auth_user',
+                    'XSRF-TOKEN', '_csrf', 'auth_user', 'user_data'
+                  ];
+                  cookiesToDelete.forEach(deleteCookie);
                   
                   // Clear React Query cache for user profile to prevent stale data
                   const queryClient = new QueryClient();
@@ -680,12 +689,22 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                   
                   // Dispatch a logout event so other listeners react
                   dispatchAuthEvent("logout", { reason: "user_action" });
-                  
-                  // Small delay to ensure cookies are deleted before redirect
-                  await new Promise(resolve => setTimeout(resolve, 100));
-                  
-                  // Force a hard refresh to clear all caches (both client and server)
-                  window.location.href = "/login";
+
+                  // Small delay to ensure cookies are deleted and events processed
+                  await new Promise(resolve => setTimeout(resolve, 500));
+
+                  // Reset global redirect flags to prevent conflicts
+                  if (typeof window !== 'undefined') {
+                    (window as any).isRedirecting = false;
+                    // Reset GlobalAuthCheck redirect flag
+                    if ((window as any).__globalAuthCheck) {
+                      (window as any).__globalAuthCheck.isRedirecting = false;
+                    }
+                  }
+
+                  // Use window.location.replace to bypass Next.js router and middleware conflicts
+                  // This ensures a clean redirect without refresh loops
+                  window.location.replace("/login");
                 }}
               >
                 {isLoggingOut ? (

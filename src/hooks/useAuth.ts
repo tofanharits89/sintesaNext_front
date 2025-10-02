@@ -114,6 +114,33 @@ export function useAuth() {
     onSuccess: () => {
       cacheInvalidation.invalidateUser(queryClient);
       queryClient.invalidateQueries({ queryKey: queryKeyFactories.user.profile() });
+
+      // CRITICAL FIX: Dispatch auth logout event for messaging components
+      // This ensures messaging components clean up their state properly
+      import("@/utils/auth-events").then(({ dispatchLogout }) => {
+        dispatchLogout("User logged out");
+
+        // Also dispatch a generic auth state change event
+        window.dispatchEvent(new CustomEvent('auth:state-change', {
+          detail: { authenticated: false, user: null }
+        }));
+
+        // Force socket disconnection to clean up messaging connections
+        import("@/lib/socket").then(({ disconnectSocket }) => {
+          try {
+            disconnectSocket();
+            logger.info("Socket disconnected during logout");
+          } catch (socketError) {
+            logger.error("Failed to disconnect socket during logout", socketError);
+          }
+        }).catch((error) => {
+          logger.error("Failed to import socket during logout", error);
+        });
+
+      }).catch((error) => {
+        logger.error("Failed to dispatch logout event", error);
+      });
+
       toast.success("Anda telah keluar");
     },
     onError: (error) => {
