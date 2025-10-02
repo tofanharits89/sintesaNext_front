@@ -368,8 +368,11 @@ export function MultipleBarChartSkeleton({
             {/* Chart bars area */}
             <div className="flex-1 flex items-end justify-between px-1 relative">
               {Array.from({ length: 6 }).map((_, i) => {
-                const height1 = Math.random() * 60 + 25;
-                const height2 = Math.random() * 60 + 25;
+                // Use deterministic heights to avoid hydration mismatch
+                const heights = [
+                  [65, 45], [55, 75], [70, 50], [60, 80], [50, 55], [75, 65]
+                ];
+                const [height1, height2] = heights[i] || [60, 60];
                 return (
                   <div key={i} className="flex gap-1 items-end relative">
                     <div className="relative">

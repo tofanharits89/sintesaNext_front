@@ -98,11 +98,11 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
   const isLoggingOut = auth.isLoggingOut;
 
   // Real-time messaging data via React Query + Zustand (enable globally so badges update even when popover is closed)
-  const { conversations, isSocketConnected } = useMessagingRQ({
+  const { conversations } = useMessagingRQ({
     enabled: true,
   });
-  // Mount socket listeners globally so unread badges update even when popover is closed
-  const { isConnected: _socketReady } = useMessagingSocketRQ();
+  // Direct socket connection status - bypass complex hook chains
+  const isSocketConnected = socketClient.isConnected();
   // Derive recent messages directly from conversations so it updates on every socket/cache change
   const recentMessages: RecentMessage[] = useMemo(() => {
     if (!Array.isArray(conversations) || !currentUser?.id) return [];

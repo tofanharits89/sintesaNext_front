@@ -2,24 +2,11 @@
 
 import { io, Socket } from "socket.io-client";
 import { toast } from "sonner";
-import { parse } from "cookie";
-import { ReconnectionManager } from "@/utils/reconnectionLogic";
 import { getAuthTokenFromCookie, waitForAuthToken } from "@/utils/auth-utils";
+import { SOCKET_EVENTS } from "@/shared/socket-events";
 
-// Helper function to check if we're on login page
-const isLoginPage = (): boolean => {
-  if (typeof window === 'undefined') return false;
-  return window.location.pathname.startsWith('/login');
-};
-
-// Socket connection states
-export type SocketState =
-  | "disconnected"
-  | "connecting"
-  | "connected"
-  | "reconnecting"
-  | "error"
-  | "auth_failed";
+// Socket connection states - simplified
+export type SocketState = "disconnected" | "connecting" | "connected" | "error";
 
 // Socket client configuration
 interface SocketClientConfig {
@@ -31,29 +18,22 @@ interface SocketClientConfig {
 
 /**
  * Simplified Socket Client
- * Consolidates socket functionality with clean API and simplified authentication
+ * Industry-grade socket client with single source of truth for connection state
  */
 export class SocketClient {
   private socket: Socket | null = null;
   private state: SocketState = "disconnected";
   private config: Required<SocketClientConfig>;
-  private reconnectionManager: ReconnectionManager;
-  private eventListenersAttached = false;
   private readonly debugMode: boolean;
-
-  // Track connection-related toast IDs so we can dismiss them on reconnect
   private connectionToastId: string | number | null = null;
-  private failureToastId: string | number | null = null;
-
-  private listenerRegistry: Map<string, Set<(...args: any[]) => void>> =
-    new Map();
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private reconnectDelay = 1000;
+  private listeners = new Map<string, Set<(...args: any[]) => void>>();
 
   constructor(config: SocketClientConfig = {}) {
     this.config = {
-      url:
-        config.url ||
-        process.env.NEXT_PUBLIC_SOCKET_URL ||
-        "http://localhost:88",
+      url: config.url || process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:88",
       path: config.path || process.env.NEXT_PUBLIC_SOCKET_PATH || "/socket.io",
       autoConnect: config.autoConnect ?? true,
       debug: config.debug ?? process.env.NODE_ENV === "development",
@@ -61,99 +41,60 @@ export class SocketClient {
 
     this.debugMode = this.config.debug;
 
-    // Initialize reconnection manager with callbacks
-    this.reconnectionManager = new ReconnectionManager({
-      onConnectionStateChange: (state) => {
-        this.handleReconnectionStateChange(state);
-      },
-      onTokenRefreshNeeded: () => {
-        this.handleTokenRefresh();
-      },
-    });
-
-    // Bind methods to preserve context
-    this.handleConnect = this.handleConnect.bind(this);
-    this.handleDisconnect = this.handleDisconnect.bind(this);
-    this.handleConnectError = this.handleConnectError.bind(this);
-    this.handleError = this.handleError.bind(this);
-    this.handleSessionExpired = this.handleSessionExpired.bind(this);
-
-    if (this.config.autoConnect) {
-      if (typeof window !== "undefined" && !isLoginPage()) {
-        const ric = (window as any).requestIdleCallback as
-          | ((cb: () => void, opts?: { timeout?: number }) => number)
-          | undefined;
-        if (ric) {
-          ric(
-            () => {
-              this.connect().catch((error) => {
-                this.logError("Auto-connect failed:", error);
-              });
-            },
-            { timeout: 1500 }
-          );
-        } else {
-          // Fallback: defer to next tick to avoid blocking initial render
-          setTimeout(() => {
-            this.connect().catch((error) => {
-              this.logError("Auto-connect failed:", error);
-            });
-          }, 0);
-        }
-      }
+    // Auto-connect after authentication is ready
+    if (this.config.autoConnect && typeof window !== "undefined") {
+      this.waitForAuthAndConnect();
     }
   }
 
   /**
-   * Get authentication token from cookies
+   * Wait for authentication and connect
    */
-  private getAuthToken(): string | null {
-    return getAuthTokenFromCookie();
-  }
+  private async waitForAuthAndConnect(): Promise<void> {
+    try {
+      // Wait for auth token to be available
+      await waitForAuthToken(5, 500);
 
-  /**
-   * Get authentication token with retry logic
-   */
-  private async getAuthTokenWithRetry(): Promise<string | null> {
-    return await waitForAuthToken(10, 100);
+      // Check if we're on login page
+      if (window.location.pathname.startsWith('/login')) {
+        return;
+      }
+
+      // Small delay to ensure page is ready
+      setTimeout(() => {
+        this.connect().catch((error) => {
+          this.logError("Auto-connect failed:", error);
+        });
+      }, 100);
+    } catch (error) {
+      this.logError("Failed to wait for auth:", error);
+    }
   }
 
   /**
    * Create socket connection
    */
   private createSocket(): Socket {
-    const token = this.getAuthToken();
+    const token = getAuthTokenFromCookie();
 
     this.log("Creating socket connection:", {
       url: this.config.url,
       path: this.config.path,
       hasToken: !!token,
-      tokenLength: token ? token.length : 0,
     });
 
-    // Socket configuration
+    // Simplified socket configuration
     const socketConfig: any = {
       path: this.config.path,
       transports: ["websocket", "polling"],
       withCredentials: true, // Enable credentials for httpOnly cookies
       autoConnect: false, // We'll connect manually
-      reconnection: true, // Let Socket.IO handle basic reconnection
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      timeout: 20000,
+      reconnection: false, // We'll handle reconnection ourselves
+      timeout: 10000,
     };
 
-    // SECURITY FIX: Don't send token in auth object to prevent XSS
-    // Backend will now read the HttpOnly accessToken cookie server-side
-    // This eliminates the XSS vulnerability while maintaining authentication
-    // No auth object needed - backend will handle cookie-based authentication
-
+    // Backend reads HttpOnly accessToken cookie - no auth object needed
     const socket = io(this.config.url, socketConfig);
-
-    // Set socket in reconnection manager
-    this.reconnectionManager.setSocket(socket);
-
     return socket;
   }
 
@@ -161,51 +102,52 @@ export class SocketClient {
    * Attach event listeners to socket
    */
   private attachEventListeners(): void {
-    if (!this.socket || this.eventListenersAttached) {
-      return;
-    }
+    if (!this.socket) return;
 
+    // Core socket events
     this.socket.on("connect", this.handleConnect);
     this.socket.on("disconnect", this.handleDisconnect);
     this.socket.on("connect_error", this.handleConnectError);
     this.socket.on("error", this.handleError);
     this.socket.on("session:expired", this.handleSessionExpired);
 
-    // Re-attach any previously registered custom listeners after (re)connect
-    this.rebindRegisteredListeners();
-
-    this.eventListenersAttached = true;
-    this.log("Event listeners attached");
+    // Re-attach custom listeners
+    this.rebindCustomListeners();
   }
 
   /**
-   * Rebind all previously registered custom listeners to the current socket
+   * Rebind custom listeners to the current socket
    */
-  private rebindRegisteredListeners(): void {
+  private rebindCustomListeners(): void {
     if (!this.socket) return;
-    for (const [event, listeners] of this.listenerRegistry.entries()) {
+
+    for (const [event, listeners] of this.listeners.entries()) {
       for (const listener of listeners) {
         this.socket.on(event, listener);
       }
     }
-    this.log("Rebound registered custom listeners", {
-      eventCount: this.listenerRegistry.size,
-    });
+
+    this.log(`Rebound ${this.listeners.size} custom event listeners`);
   }
 
   /**
    * Remove event listeners from socket
    */
   private removeEventListeners(): void {
-    if (this.socket && this.eventListenersAttached) {
-      this.socket.off("connect", this.handleConnect);
-      this.socket.off("disconnect", this.handleDisconnect);
-      this.socket.off("connect_error", this.handleConnectError);
-      this.socket.off("error", this.handleError);
-      this.socket.off("session:expired", this.handleSessionExpired);
+    if (!this.socket) return;
 
-      this.eventListenersAttached = false;
-      this.log("Event listeners removed");
+    // Remove core listeners
+    this.socket.off("connect", this.handleConnect);
+    this.socket.off("disconnect", this.handleDisconnect);
+    this.socket.off("connect_error", this.handleConnectError);
+    this.socket.off("error", this.handleError);
+    this.socket.off("session:expired", this.handleSessionExpired);
+
+    // Remove custom listeners
+    for (const [event, listeners] of this.listeners.entries()) {
+      for (const listener of listeners) {
+        this.socket.off(event, listener);
+      }
     }
   }
 
@@ -215,23 +157,16 @@ export class SocketClient {
   private handleConnect(): void {
     this.log("Socket connected successfully");
     this.setState("connected");
+    this.reconnectAttempts = 0;
 
-    // Dismiss any lingering connection/failure toasts
+    // Dismiss any error toasts
     if (this.connectionToastId !== null) {
       try { toast.dismiss(this.connectionToastId); } catch {}
       this.connectionToastId = null;
     }
-    if (this.failureToastId !== null) {
-      try { toast.dismiss(this.failureToastId); } catch {}
-      this.failureToastId = null;
-    }
 
-    // Send handshake request to prevent server timeout
-    this.socket?.emit("handshake:request", {
-      timestamp: Date.now(),
-      clientId: this.socket?.id,
-      attempt: 1,
-    });
+    // Send handshake immediately
+    this.sendHandshake();
   }
 
   /**
@@ -241,12 +176,9 @@ export class SocketClient {
     this.log("Socket disconnected:", reason);
     this.setState("disconnected");
 
-    // Show user-friendly message for unexpected disconnections (but not on login page)
-    if (reason !== "io client disconnect" && !isLoginPage()) {
-      const id = toast.warning("Connection lost", {
-        description: "Attempting to reconnect...",
-      });
-      this.connectionToastId = id;
+    // Auto-reconnect for unexpected disconnections
+    if (reason !== "io client disconnect" && this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.scheduleReconnect();
     }
   }
 
@@ -256,41 +188,21 @@ export class SocketClient {
   private handleConnectError(error: any): void {
     this.logError("Socket connection error:", error);
 
-    // Check if it's an authentication error
-    const isAuthError =
-      error.message?.includes("token") ||
-      error.message?.includes("auth") ||
-      error.message?.includes("unauthorized");
+    // Check for authentication errors
+    const isAuthError = error.message?.includes("token") ||
+                       error.message?.includes("auth") ||
+                       error.message?.includes("unauthorized");
 
     if (isAuthError) {
-      this.setState("auth_failed");
-      if (!isLoginPage()) {
+      this.setState("error");
+      if (!window.location.pathname.startsWith('/login')) {
         toast.error("Authentication failed", {
           description: "Please refresh the page and log in again",
         });
       }
     } else {
       this.setState("error");
-      
-      // For non-auth errors, try auto-reconnect after a delay (especially useful after login)
-      if (!isLoginPage()) {
-        setTimeout(() => {
-          if (this.state === "error" && !this.socket?.connected) {
-            this.log("Auto-reconnecting after connection error...");
-            this.connect().catch(() => {
-              // If auto-reconnect fails, show user notification
-              const id = toast.error("Connection failed", {
-                description: "Unable to connect to server. Click to retry.",
-                action: {
-                  label: "Retry",
-                  onClick: () => this.connect().catch(() => {})
-                }
-              });
-              this.failureToastId = id;
-            });
-          }
-        }, 2000); // Wait 2 seconds before auto-retry
-      }
+      this.scheduleReconnect();
     }
   }
 
@@ -300,25 +212,11 @@ export class SocketClient {
   private handleError(error: Error): void {
     this.logError("Socket error:", error);
 
-    // Some servers may emit structured error envelopes
     const anyErr: any = error as any;
-    const code = anyErr?.code || anyErr?.error?.code || anyErr?.reason;
-    const message = anyErr?.message || anyErr?.error?.message;
+    const code = anyErr?.code || anyErr?.error?.code;
 
     if (code === "SESSION_EXPIRED" || code === "SESSION_REVOKED") {
-      // Treat as auth failure and trigger re-auth flow
-      this.setState("auth_failed");
-      if (!isLoginPage()) {
-        toast.error("Session expired", {
-          description: message || "Please sign in again.",
-        });
-      }
-
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("socket:auth-required"));
-      }
-      // Disconnect to avoid noisy retries with invalid session
-      this.socket?.disconnect();
+      this.handleSessionExpired({ reason: code });
       return;
     }
 
@@ -326,60 +224,65 @@ export class SocketClient {
   }
 
   /**
-   * Handle reconnection manager state changes
+   * Schedule reconnection attempt
    */
-  private handleReconnectionStateChange(state: string): void {
-    this.log("Reconnection state change:", state);
-
-    switch (state) {
-      case "connecting":
-        this.setState("connecting");
-        break;
-      case "reconnecting":
-        this.setState("reconnecting");
-        break;
-      case "connected":
-        this.setState("connected");
-        break;
-      case "disconnected":
-        this.setState("disconnected");
-        break;
-      case "failed":
-        this.setState("error");
-        break;
+  private scheduleReconnect(): void {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      this.showErrorToast("Connection failed", "Unable to connect to server. Please refresh the page.");
+      return;
     }
+
+    this.reconnectAttempts++;
+    const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1), 10000);
+
+    this.log(`Scheduling reconnect attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${delay}ms`);
+
+    setTimeout(() => {
+      if (this.state === "disconnected" || this.state === "error") {
+        this.connect().catch(() => {});
+      }
+    }, delay);
   }
 
   /**
-   * Handle token refresh
+   * Show error toast
    */
-  private handleTokenRefresh(): void {
-    this.log("Token refresh needed, reconnecting...");
-
-    if (this.socket) {
-      // Disconnect and reconnect with new token
-      this.socket.disconnect();
-      setTimeout(() => {
-        if (this.socket) {
-          this.socket.connect();
-        }
-      }, 1000);
-    }
+  private showErrorToast(title: string, description: string): void {
+    this.connectionToastId = toast.error(title, { description });
   }
 
   /**
-   * Set socket state
+   * Send handshake request
+   */
+  private sendHandshake(): void {
+    if (!this.socket?.connected) {
+      this.logError("Cannot send handshake: socket not connected");
+      return;
+    }
+
+    this.log("Sending handshake request");
+    this.socket.emit("handshake:request", {
+      timestamp: Date.now(),
+      clientId: this.socket.id,
+    });
+  }
+
+  /**
+   * Set socket state and broadcast changes
    */
   private setState(newState: SocketState): void {
     if (this.state !== newState) {
       const oldState = this.state;
       this.state = newState;
-      this.log(`State transition: ${oldState} -> ${newState}`);
+      this.log(`State: ${oldState} -> ${newState}`);
 
-      // Broadcast state changes to the app to help UI sync immediately
+      // Broadcast state changes for UI components
       if (typeof window !== 'undefined') {
         try {
-          window.dispatchEvent(new CustomEvent('socket:state', { detail: { state: newState, connected: this.isConnected() } }));
+          window.dispatchEvent(new CustomEvent('socket:state', {
+            detail: { state: newState, connected: this.isConnected() }
+          }));
+
           if (newState === 'connected') {
             window.dispatchEvent(new CustomEvent('socket:connected'));
           }
@@ -392,7 +295,9 @@ export class SocketClient {
    * Log debug messages
    */
   private log(message: string, ...args: unknown[]): void {
-    // Debug logs silenced
+    if (this.debugMode) {
+      console.log(`[SocketClient] ${message}`, ...args);
+    }
   }
 
   /**
@@ -402,7 +307,7 @@ export class SocketClient {
     console.error(`[SocketClient Error] ${message}`, ...args);
   }
 
-  // Public API methods
+  // Public API
 
   /**
    * Connect to the socket server
@@ -418,9 +323,6 @@ export class SocketClient {
       return;
     }
 
-    // Wait for auth token with retry logic for better post-login reliability
-    const token = await this.getAuthTokenWithRetry();
-
     this.setState("connecting");
 
     try {
@@ -430,14 +332,12 @@ export class SocketClient {
         this.socket.disconnect();
       }
 
-      // Create new socket
+      // Create and connect new socket
       this.socket = this.createSocket();
       this.attachEventListeners();
-
-      // Connect
       this.socket.connect();
 
-      this.log("Connection initiated", { hasToken: !!token });
+      this.log("Connection initiated");
     } catch (error) {
       this.logError("Failed to initiate connection:", error);
       this.setState("error");
@@ -450,6 +350,7 @@ export class SocketClient {
    */
   public disconnect(): void {
     this.log("Disconnecting socket");
+    this.reconnectAttempts = 0;
 
     if (this.socket) {
       this.removeEventListeners();
@@ -461,89 +362,63 @@ export class SocketClient {
   }
 
   /**
-   * Emit an event to the server with connection state validation
+   * Emit an event to the server
    */
   public emit(event: string, ...args: any[]): void {
-    if (!this.socket) {
-      this.logError("Cannot emit: socket not available");
-      return;
-    }
-
-    if (!this.socket.connected) {
-      this.logError(
-        `Cannot emit ${event}: socket not connected (state: ${this.state})`
-      );
-      return;
-    }
-
-    if (this.state !== "connected") {
-      this.logError(
-        `Cannot emit ${event}: client not in connected state (current: ${this.state})`
-      );
+    if (!this.socket?.connected) {
+      this.logError(`Cannot emit ${event}: socket not connected`);
       return;
     }
 
     this.socket.emit(event, ...args);
-    this.log(`Emitted event: ${event}`, {
-      socketConnected: this.socket.connected,
-      clientState: this.state,
-    });
+    this.log(`Emitted: ${event}`);
   }
 
   /**
    * Listen for an event from the server
    */
   public on(event: string, listener: (...args: unknown[]) => void): void {
-    // Store in registry for rebind on reconnect
-    let set = this.listenerRegistry.get(event);
-    if (!set) {
-      set = new Set();
-      this.listenerRegistry.set(event, set);
+    // Store listener for reconnection
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, new Set());
     }
-    set.add(listener);
+    this.listeners.get(event)!.add(listener);
 
-    if (!this.socket) {
-      // Socket not ready yet; listener stored in registry and will be bound on connect
-      this.log("Deferring listener binding until socket is available");
-      return;
+    // Bind immediately if socket is connected
+    if (this.socket?.connected) {
+      this.socket.on(event, listener);
     }
 
-    this.socket.on(event, listener);
-    this.log(`Added listener for event: ${event}`);
+    this.log(`Added listener for: ${event}`);
   }
 
   /**
    * Remove event listener
    */
   public off(event: string, listener?: (...args: unknown[]) => void): void {
-    // Update registry
-    const set = this.listenerRegistry.get(event);
-    if (set) {
-      if (listener) {
-        set.delete(listener);
-      } else {
-        set.clear();
-      }
-      if (set.size === 0) {
-        this.listenerRegistry.delete(event);
-      }
-    }
-
-    if (!this.socket) {
-      // Socket not available; listener already removed from registry above
-      this.log(
-        `Listener removed from registry; socket not available for event: ${event}`
-      );
-      return;
-    }
+    const listeners = this.listeners.get(event);
+    if (!listeners) return;
 
     if (listener) {
-      this.socket.off(event, listener);
+      listeners.delete(listener);
+      if (listeners.size === 0) {
+        this.listeners.delete(event);
+      }
     } else {
-      this.socket.off(event);
+      listeners.clear();
+      this.listeners.delete(event);
     }
 
-    this.log(`Removed listener for event: ${event}`);
+    // Remove from socket
+    if (this.socket) {
+      if (listener) {
+        this.socket.off(event, listener);
+      } else {
+        this.socket.off(event);
+      }
+    }
+
+    this.log(`Removed listener for: ${event}`);
   }
 
   /**
@@ -568,13 +443,6 @@ export class SocketClient {
   }
 
   /**
-   * Force token refresh
-   */
-  public refreshToken(): void {
-    this.reconnectionManager.forceTokenRefresh();
-  }
-
-  /**
    * Get connection statistics
    */
   public getConnectionStats() {
@@ -582,7 +450,7 @@ export class SocketClient {
       state: this.state,
       connected: this.isConnected(),
       socketId: this.socket?.id || null,
-      ...this.reconnectionManager.getConnectionStats(),
+      reconnectAttempts: this.reconnectAttempts,
     };
   }
 
@@ -591,131 +459,88 @@ export class SocketClient {
    */
   public cleanup(): void {
     this.log("Cleaning up socket client");
-
-    this.removeEventListeners();
-
-    if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
-    }
-
-    this.reconnectionManager.cleanup();
-    this.setState("disconnected");
+    this.disconnect();
+    this.listeners.clear();
   }
 
   /**
-   * Handle explicit session expiration event from server
+   * Handle session expiration
    */
   private handleSessionExpired(payload: any): void {
     this.log("Session expired event received", payload);
-    this.setState("auth_failed");
+    this.setState("error");
 
-    const reason = payload?.reason || "Session expired";
-    
-    // Disconnect socket immediately to prevent further requests
-    if (this.socket) {
-      this.socket.removeAllListeners();
-      this.socket.disconnect();
-      this.socket = null;
-    }
-    
-    // CRITICAL: Clear auth cookies immediately and aggressively
-    if (typeof window !== "undefined" && typeof document !== "undefined") {
-      // Clear cookies manually first (synchronous)
-      const cookiesToClear = ["accessToken", "refreshToken", "XSRF-TOKEN", "csrfToken"]; // SECURITY FIX: Removed socketToken
+    // Disconnect socket immediately
+    this.disconnect();
+
+    // Clear auth cookies
+    if (typeof window !== "undefined") {
+      const cookiesToClear = ["accessToken", "refreshToken", "XSRF-TOKEN"];
       const hostname = window.location.hostname;
-      const paths = ["/", "/api", "/auth"];
-      
-      // Try all combinations - be VERY aggressive
+
       cookiesToClear.forEach(name => {
-        paths.forEach(path => {
-          // Without domain
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; max-age=0`;
-          // With hostname
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${hostname}; max-age=0`;
-          // With dot prefix
-          if (hostname.includes('.')) {
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=.${hostname}; max-age=0`;
-          }
-        });
-      });
-      
-      this.log("Auth cookies cleared immediately (manual)", {
-        cookiesCleared: cookiesToClear.length,
-        remainingCookies: document.cookie
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${hostname};`;
       });
     }
 
-    // Show toast notification with friendly message
-    const displayMessage = payload?.displayMessage || payload?.message || reason;
-    const isLoggedInElsewhere = reason === 'LOGGED_IN_ELSEWHERE' || 
-                                 displayMessage?.includes('another device');
-    
-    // Don't show toast notifications on login page
-    if (!isLoginPage()) {
+    // Show notification
+    const reason = payload?.reason || "Session expired";
+    const isLoggedInElsewhere = reason === 'LOGGED_IN_ELSEWHERE';
+
+    if (!window.location.pathname.startsWith('/login')) {
       toast.error(
-        isLoggedInElsewhere ? "Logged in from another device" : "Session expired", 
-        {
-          description: displayMessage,
-          duration: 5000, // Longer duration for important message
-        }
+        isLoggedInElsewhere ? "Logged in from another device" : "Session expired",
+        { description: payload?.displayMessage || reason }
       );
     }
 
+    // Dispatch events and redirect
     if (typeof window !== "undefined") {
-      // Dispatch custom event for other components to handle
       window.dispatchEvent(new CustomEvent("socket:auth-required", { detail: payload }));
       window.dispatchEvent(new CustomEvent("auth:logout", { detail: { reason: "session_expired" } }));
-      
-      // CRITICAL: Wait a moment for cookies to be fully cleared before redirect
-      // Also ask server to clear HttpOnly cookies (client cannot delete those)
+
+      // Server-side logout and redirect
       setTimeout(async () => {
-        // Verify cookies are cleared
-        const remainingCookies = document.cookie;
-        console.log('[SocketClient] Cookies before redirect:', remainingCookies);
-        
-        // Force clear again if any auth cookies remain
-        if (remainingCookies.includes('accessToken') ||
-            remainingCookies.includes('refreshToken')) {
-          console.warn('[SocketClient] Cookies still present, clearing again');
-          const cookiesToClear = ["accessToken", "refreshToken", "XSRF-TOKEN"]; // SECURITY FIX: Removed socketToken
-          cookiesToClear.forEach(name => {
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; max-age=0`;
-          });
-        }
-        
-        // Server-side logout to clear HttpOnly cookies reliably
         try {
-          const { getCsrfToken } = await import("@/utils/csrf-utils");
-          let csrf = getCsrfToken();
-          if (!csrf) {
-            // Prime CSRF via same-origin endpoint
-            try { await fetch('/api/csrf-token', { method: 'GET', credentials: 'include', cache: 'no-store' }); } catch {}
-            csrf = getCsrfToken();
-          }
           await fetch('/api/auth/logout', {
             method: 'POST',
             credentials: 'include',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ reason: 'session_expired' }),
-            cache: 'no-store',
-          }).catch(() => {});
-        } catch (e) {
-          // non-fatal
-        }
-        
-        // Now redirect
+          });
+        } catch {}
+
         window.location.replace('/login?reason=session_expired');
-      }, 100); // 100ms delay to ensure cookies are cleared
+      }, 100);
     }
   }
 }
 
-// Export singleton instance for backward compatibility
-export const socketClient = new SocketClient();
+// Singleton socket client instance
+let socketClientInstance: SocketClient | null = null;
+
+export const socketClient = {
+  getInstance: () => {
+    if (!socketClientInstance) {
+      socketClientInstance = new SocketClient();
+    }
+    return socketClientInstance;
+  },
+  connect: () => socketClient.getInstance().connect(),
+  disconnect: () => socketClient.getInstance().disconnect(),
+  emit: (event: string, ...args: any[]) => socketClient.getInstance().emit(event, ...args),
+  on: (event: string, listener: (...args: any[]) => void) => socketClient.getInstance().on(event, listener),
+  off: (event: string, listener?: (...args: any[]) => void) => socketClient.getInstance().off(event, listener),
+  getState: () => socketClient.getInstance().getState(),
+  isConnected: () => socketClient.getInstance().isConnected(),
+  getSocket: () => socketClient.getInstance().getSocket(),
+  getConnectionStats: () => socketClient.getInstance().getConnectionStats(),
+  cleanup: () => {
+    if (socketClientInstance) {
+      socketClientInstance.cleanup();
+    }
+  }
+};
 
 // Cleanup on page unload
 if (typeof window !== "undefined") {

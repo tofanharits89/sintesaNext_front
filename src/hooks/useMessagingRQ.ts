@@ -10,6 +10,7 @@ import {
   useMarkAsReadMutation,
 } from "./useMessageMutationsRQ";
 import { useMessagingSocketRQ } from "./useMessagingSocketRQ";
+import { useSocket } from "./useSocket";
 import {
   useMessagingStores,
   useConversationStores,
@@ -99,8 +100,8 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
     activeConversationId || undefined
   );
 
-  // WebSocket integration
-  const { isConnected: socketConnected } = useMessagingSocketRQ();
+  // Direct socket integration
+  const { isConnected: socketConnected } = useSocket();
 
   // Sync unread counts from conversations to Zustand store using the centralized utility
   const lastUnreadSyncKeyRef = useRef<string>("");

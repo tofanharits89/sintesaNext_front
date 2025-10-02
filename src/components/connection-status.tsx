@@ -10,13 +10,19 @@ import { getAuthTokenFromCookie } from "@/utils/auth-utils";
 
 export function ConnectionStatus() {
   const pathname = usePathname();
+  const [isClient, setIsClient] = useState(false);
   const isLoginPage = pathname?.startsWith("/login");
-  
+
   // Don't rely on token check - if we're not on login page, assume we should show socket status
   // The useSocket hook will handle the actual authentication
   const shouldUseSocket = !isLoginPage;
   const { isConnected, connectionState, error, reconnect } = useSocket();
   const [showStatus, setShowStatus] = useState(false);
+
+  // Prevent hydration issues
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
 
 
@@ -42,19 +48,21 @@ export function ConnectionStatus() {
     // Always hide immediately when connected
     if (isConnected === true || connectionState === "connected") {
       setShowStatus(false);
-      sessionStorage.removeItem('just_logged_in');
+      if (isClient) {
+        sessionStorage.removeItem('just_logged_in');
+      }
       return;
     }
 
     // Don't show during connecting states
-    if (connectionState === "connecting" || connectionState === "reconnecting") {
+    if (connectionState === "connecting") {
       setShowStatus(false);
       return;
     }
 
     // Only show for problematic states after a delay
-    if (connectionState === "disconnected" || connectionState === "error" || connectionState === "auth_failed") {
-      const isPostLogin = sessionStorage.getItem('just_logged_in') === 'true';
+    if (connectionState === "disconnected" || connectionState === "error") {
+      const isPostLogin = isClient && sessionStorage.getItem('just_logged_in') === 'true';
       const delay = isPostLogin ? 5000 : 3000;
       
       const timeout = setTimeout(() => {
@@ -72,7 +80,7 @@ export function ConnectionStatus() {
 
     // For any other state, hide
     setShowStatus(false);
-  }, [isConnected, connectionState]);
+  }, [isConnected, connectionState, isClient]);
 
 
 
@@ -87,7 +95,7 @@ export function ConnectionStatus() {
   }
 
   // Don't show during active connection attempts
-  if (connectionState === "connecting" || connectionState === "reconnecting") {
+  if (connectionState === "connecting") {
     return null;
   }
 
@@ -101,8 +109,6 @@ export function ConnectionStatus() {
       case "disconnected":
         return <WifiOff className="h-4 w-4" />;
       case "error":
-        return <AlertCircle className="h-4 w-4" />;
-      case "auth_failed":
         return <AlertCircle className="h-4 w-4" />;
       default:
         return <AlertCircle className="h-4 w-4" />;
@@ -125,9 +131,10 @@ export function ConnectionStatus() {
           return error;
         }
         return "Connection lost. Attempting to reconnect...";
-      case "auth_failed":
-        return "Authentication failed. Please refresh and log in again.";
       case "error":
+        if (error && error.includes("Authentication")) {
+          return "Authentication failed. Please refresh and log in again.";
+        }
         return "Connection error. Please check your internet connection.";
       default:
         return "Connection status unknown";
@@ -137,7 +144,6 @@ export function ConnectionStatus() {
   const getAlertVariant = () => {
     switch (connectionState) {
       case "disconnected":
-      case "auth_failed":
       case "error":
         return "destructive";
       default:
@@ -155,13 +161,12 @@ export function ConnectionStatus() {
         <AlertDescription className="flex items-center justify-between">
           <span className="text-sm">{getStatusMessage()}</span>
           {(connectionState === "disconnected" ||
-            connectionState === "auth_failed" ||
             connectionState === "error") && (
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
-                if (connectionState === "auth_failed") {
+                if (error && error.includes("Authentication")) {
                   window.location.reload();
                 } else {
                   reconnect();
@@ -170,7 +175,7 @@ export function ConnectionStatus() {
               className="ml-2 h-6 px-2 text-xs"
             >
               <RotateCcw className="h-3 w-3 mr-1" />
-              {connectionState === "auth_failed" ? "Refresh" : "Retry"}
+              {error && error.includes("Authentication") ? "Refresh" : "Retry"}
             </Button>
           )}
         </AlertDescription>

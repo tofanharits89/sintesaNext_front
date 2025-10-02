@@ -69,16 +69,13 @@ export function isSocketConnected(): boolean {
 export function getSocketConnectionState():
   | "connected"
   | "disconnected"
-  | "connecting"
-  | "reconnecting" {
+  | "connecting" {
   const state = socketClient.getState();
   switch (state) {
     case "connected":
       return "connected";
     case "connecting":
       return "connecting";
-    case "reconnecting":
-      return "reconnecting";
     default:
       return "disconnected";
   }
@@ -93,11 +90,10 @@ export function getSocketState(): SocketState {
 }
 
 /**
- * Reset reconnection attempts
- * Backward compatibility wrapper for SocketClient.refreshToken()
+ * Reset reconnection attempts - simplified version just reconnects
  */
 export function resetSocketReconnection(): void {
-  socketClient.refreshToken();
+  socketClient.connect().catch(() => {});
 }
 
 /**

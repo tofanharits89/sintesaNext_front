@@ -38,10 +38,7 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
   useEffect(() => {
     if (connectionState === "connected") {
       setConnectionStatus("connected");
-    } else if (
-      connectionState === "connecting" ||
-      connectionState === "reconnecting"
-    ) {
+    } else if (connectionState === "connecting") {
       setConnectionStatus("connecting");
     } else if (connectionState === "disconnected") {
       setConnectionStatus("disconnected");

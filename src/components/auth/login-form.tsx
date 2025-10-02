@@ -64,12 +64,12 @@ export default function LoginForm() {
   }, [isClient]);
 
   const expectedCaptcha = useMemo(() => {
-    if (!seed) return "0000"; // Default value during SSR
+    if (!isClient || !seed) return "0000"; // Default value during SSR
     // Simple deterministic 4-digit based on seed
     let sum = 0;
     for (let i = 0; i < seed.length; i++) sum += seed.charCodeAt(i);
     return ("0000" + (sum % 10000)).slice(-4);
-  }, [seed]);
+  }, [seed, isClient]);
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),

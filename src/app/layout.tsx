@@ -16,6 +16,7 @@ import SessionMonitor from "@/components/SessionMonitor";
 import { performanceMonitor } from "@/utils/performance-monitor";
 import { preloadOnIdle } from "@/utils/chunk-preloader";
 import { RoutePreloader } from "@/components/ui/route-preloader";
+import { ClientInit } from "@/components/client-init";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,13 +49,6 @@ export default async function RootLayout({
   // Skip server-side user fetch - let React Query handle with stale-while-revalidate
   const initialUser: import("@/lib/users-store").User | undefined = undefined;
 
-  // Initialize performance monitoring and preload common chunks
-  if (typeof window !== 'undefined') {
-    performanceMonitor.measurePageLoad();
-    preloadOnIdle(() => import('@/components/ui/data-table'));
-    preloadOnIdle(() => import('@/components/messaging/chat-window'));
-  }
-
   return (
     <html lang="id" suppressHydrationWarning>
       <body
@@ -79,6 +73,7 @@ export default async function RootLayout({
               <ComponentErrorBoundary>
                 <ConnectionStatus />
               </ComponentErrorBoundary>
+              <ClientInit />
               <RoutePreloader />
               <ConditionalToaster />
               {/* Optionally show a top-of-page banner when server down via client routes */}

@@ -8,6 +8,15 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
   
+  // Remove console statements in production
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' 
+      ? {
+          exclude: ['error', 'warn'], // Keep console.error and console.warn
+        }
+      : false,
+  },
+  
   // Image optimization
   images: {
     formats: ['image/webp', 'image/avif'],

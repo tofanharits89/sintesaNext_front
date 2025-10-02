@@ -29,9 +29,17 @@ export const AuthRequiredCard = lazy(() => import('@/components/dashboard/AuthRe
 // Heavy UI Components
 export const DataTable = lazy(() => import('@/components/ui/data-table').then(m => ({ default: m.DataTable })));
 export const ModernUsersTable = lazy(() => import('@/components/ui/modern-users-table').then(m => ({ default: m.ModernUsersTable })));
-export const MultipleBarChart = lazy(() => import('@/components/ui/multiple-bar-chart').then(m => ({ default: m.MultipleBarChartComponent })));
-export const BarChart = lazy(() => import('@/components/ui/bar-chart').then(m => ({ default: m.BarChartComponent })));
-export const LineChart = lazy(() => import('@/components/ui/line-chart').then(m => ({ default: m.LineChartComponent })));
+
+// Chart components - dynamically import to avoid SSR issues
+export const MultipleBarChart = lazy(() =>
+  import('@/components/ui/multiple-bar-chart').then(m => ({ default: m.MultipleBarChartComponent }))
+);
+export const BarChart = lazy(() =>
+  import('@/components/ui/bar-chart').then(m => ({ default: m.BarChartComponent }))
+);
+export const LineChart = lazy(() =>
+  import('@/components/ui/line-chart').then(m => ({ default: m.LineChartComponent }))
+);
 
 // Modals (Load on demand)
 export const TayangModal = lazy(() => import('@/components/inquiry-data/modals/tayang-modal').then(m => ({ default: m.TayangModal })));

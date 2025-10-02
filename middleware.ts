@@ -802,8 +802,22 @@ export async function middleware(request: NextRequest) {
         // Single retry for very fresh tokens only
         const cookieAge = extractCookieAge(rawCookie);
         if (cookieAge !== null && cookieAge < 2000) {
+          if (DEBUG_AUTH) {
+            console.debug("[Auth] Fresh cookie on login page, retrying validation", {
+              cookieAge,
+              url: request.nextUrl.pathname
+            });
+          }
           await new Promise(r => setTimeout(r, 150));
           isAuth = await validateSessionViaBackend(rawCookie, true);
+        } else {
+          if (DEBUG_AUTH) {
+            console.debug("[Auth] Login page auth failed", {
+              cookieAge,
+              isAuth,
+              url: request.nextUrl.pathname
+            });
+          }
         }
       }
       

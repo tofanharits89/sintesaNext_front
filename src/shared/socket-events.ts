@@ -275,6 +275,16 @@ export interface HandshakeResponse extends SuccessResponse {
 }
 
 /**
+ * Server ready signal payload - Race condition fix
+ */
+export interface ServerReadyPayload {
+  timestamp: number;
+  serverId: string;
+  userId: string;
+  handlersSetup: boolean;
+}
+
+/**
  * Authentication request payload - used when the client supplies tokens during connection or refresh.
  */
 export interface AuthRequestPayload {
