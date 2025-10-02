@@ -6,6 +6,7 @@ import axios, {
 } from "axios";
 import { BACKEND_BASE_URL, backendPath } from "./backend";
 import { apiPath } from "./base-path";
+import { setupRateLimitInterceptor } from "@/utils/rateLimitHandler";
 
 // Utilities to read cookies in browser
 export function getCookie(name: string): string | null {
@@ -69,6 +70,11 @@ export const http: AxiosInstance = axios.create({
   xsrfCookieName: "XSRF-TOKEN",
   xsrfHeaderName: "X-CSRF-Token",
 });
+
+// Setup rate limit interceptor for user-friendly notifications
+if (typeof window !== 'undefined') {
+  setupRateLimitInterceptor(http);
+}
 
 // Request interceptor: attach CSRF header if available and set Content-Type
 http.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {

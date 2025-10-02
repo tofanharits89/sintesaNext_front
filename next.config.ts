@@ -14,23 +14,100 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60,
   },
   
-  // Security headers
+  // Security headers - Comprehensive protection
   async headers() {
+    const isProduction = process.env.NODE_ENV === 'production';
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
     return [
       {
         source: '/(.*)',
         headers: [
+          // Prevent clickjacking attacks
           {
             key: 'X-Frame-Options',
             value: 'DENY',
           },
+          // Prevent MIME type sniffing
           {
             key: 'X-Content-Type-Options',
             value: 'nosniff',
           },
+          // Control referrer information
           {
             key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin',
+            value: 'strict-origin-when-cross-origin',
+          },
+          // XSS Protection (legacy browsers)
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+          // Permissions Policy - Restrict browser features
+          {
+            key: 'Permissions-Policy',
+            value: [
+              'camera=()',
+              'microphone=()',
+              'geolocation=()',
+              'interest-cohort=()',
+              'payment=()',
+              'usb=()',
+              'magnetometer=()',
+              'gyroscope=()',
+              'accelerometer=()',
+            ].join(', '),
+          },
+          // HSTS - Force HTTPS (only in production with HTTPS)
+          ...(isProduction ? [{
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains; preload',
+          }] : []),
+          // Content Security Policy
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              // Next.js requires unsafe-eval and unsafe-inline for development
+              isDevelopment 
+                ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'"
+                : "script-src 'self' 'unsafe-inline'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: https: blob:",
+              "font-src 'self' data:",
+              "connect-src 'self' ws: wss: http://localhost:* https://*",
+              "media-src 'self'",
+              "object-src 'none'",
+              "frame-src 'self'",
+              "frame-ancestors 'none'",
+              "form-action 'self'",
+              "base-uri 'self'",
+              isDevelopment ? "" : "upgrade-insecure-requests",
+            ].filter(Boolean).join('; '),
+          },
+          // Remove X-Powered-By header (already done via poweredByHeader: false)
+          // Cache Control for security-sensitive pages
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate, private',
+          },
+        ],
+      },
+      // Specific headers for API routes
+      {
+        source: '/api/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate, private, max-age=0',
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache',
+          },
+          {
+            key: 'Expires',
+            value: '0',
           },
         ],
       },
