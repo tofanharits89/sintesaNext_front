@@ -75,3 +75,6 @@ export default function DAUPage() {
     </div>
   );
 }
+
+// Force dynamic rendering to prevent SSR issues
+export const dynamic = 'force-dynamic';

@@ -24,6 +24,8 @@ export function preloadForRole(role: string) {
 }
 
 export function preloadOnIdle(importFunc: () => Promise<any>) {
+  if (typeof window === 'undefined') return;
+  
   if ('requestIdleCallback' in window) {
     requestIdleCallback(() => importFunc().catch(() => {}));
   } else {

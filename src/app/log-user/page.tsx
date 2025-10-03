@@ -903,3 +903,6 @@ export default function LogUserPage() {
     </div>
   );
 }
+
+// Force dynamic rendering to prevent SSR issues
+export const dynamic = 'force-dynamic';

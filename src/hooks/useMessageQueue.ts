@@ -8,6 +8,9 @@ import { messageQueue } from '@/services/messageQueue';
 export function useMessageQueue() {
   // Initialize message queue
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+
     let mounted = true;
 
     const initQueue = async () => {

@@ -1,11 +1,12 @@
 "use client";
 
 import { Socket } from "socket.io-client";
-import { socketClient, SocketClient, SocketState } from "./SocketClient";
+import { socketClient } from "./socket/index";
+import { SocketClient } from "./socket/SocketClient";
 import { getAuthTokenFromCookie, clearAuthToken } from "@/utils/auth-utils";
 
-// Re-export types for backward compatibility
-export type { SocketState };
+// Define SocketState type directly to avoid circular dependency
+export type SocketState = "disconnected" | "connecting" | "connected" | "error";
 
 // Re-export auth utilities for backward compatibility
 export { getAuthTokenFromCookie, clearAuthToken };
@@ -48,7 +49,7 @@ export function disconnectSocket(): void {
 export function reconnectSocket(): Socket | null {
   // Trigger reconnection by disconnecting and connecting again
   socketClient.disconnect();
-  socketClient.connect().catch((error) => {
+  socketClient.connect().catch((error: unknown) => {
     console.error("[Socket] Reconnection failed:", error);
   });
   return socketClient.getSocket();
@@ -93,7 +94,9 @@ export function getSocketState(): SocketState {
  * Reset reconnection attempts - simplified version just reconnects
  */
 export function resetSocketReconnection(): void {
-  socketClient.connect().catch(() => {});
+  socketClient.connect().catch(() => {
+    // Silently ignore connection errors during reset
+  });
 }
 
 /**
@@ -114,8 +117,7 @@ export function getSocketConnectionStats() {
 
 
 
-// Export the singleton instance for direct access if needed
-export { socketClient };
+// Note: socketClient singleton available through default export
 
 // Export SocketClient class for advanced usage
 export { SocketClient };

@@ -79,22 +79,30 @@ export default function LoginForm() {
   async function onSubmit(values: z.infer<typeof schema>) {
     console.log('Login form submitted with values:', values);
     try {
-      // Clear any existing auth state and caches before login to prevent stale data
+      // Only clear auth state if user is not currently in a refresh operation
+      // This prevents interrupting ongoing token refresh processes
       if (typeof window !== 'undefined') {
-        // Clear all auth-related cookies client-side
-        document.cookie.split(';').forEach(cookie => {
-          const eqPos = cookie.indexOf('=');
-          const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-          if (['accessToken', 'refreshToken', 'authToken', 'auth_token'].includes(name)) { // SECURITY FIX: Removed socketToken
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-          }
-        });
-        
-        // Clear local storage auth state
-        localStorage.removeItem('auth_state');
-        sessionStorage.clear();
+        // Check if there's an ongoing refresh operation
+        const isRefreshing = localStorage.getItem('token_refresh_in_progress');
+
+        if (!isRefreshing) {
+          // Clear all auth-related cookies client-side
+          document.cookie.split(';').forEach(cookie => {
+            const eqPos = cookie.indexOf('=');
+            const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+            if (['accessToken', 'refreshToken', 'authToken', 'auth_token'].includes(name)) { // SECURITY FIX: Removed socketToken
+              document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+            }
+          });
+
+          // Clear local storage auth state
+          localStorage.removeItem('auth_state');
+          sessionStorage.clear();
+        } else {
+          console.log('Skipping cache clear due to ongoing refresh operation');
+        }
       }
-      
+
       // Clear any existing user cache before login to prevent stale data
       const { QueryClient } = await import("@tanstack/react-query");
       const queryClient = new QueryClient();

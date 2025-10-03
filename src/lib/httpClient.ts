@@ -115,62 +115,10 @@ function processQueue(error: any | null) {
   pendingQueue = [];
 }
 
-// Helper to clear auth cookies when session is invalid
-function clearAuthCookies(): void {
-  if (typeof document === "undefined") {
-    console.log('[Auth] Cannot clear cookies - document is undefined (SSR)');
-    return;
-  }
-  
-  console.log('[Auth] ⚠️ CLEARING AUTH COOKIES - Session invalidated');
-  console.log('[Auth] Cookies before clear:', document.cookie);
-  
-  const cookiesToClear = [
-    "accessToken",
-    "refreshToken",
-    "access_token",
-    "refresh_token",
-    "authToken",
-    "auth_token",
-    "token",
-    "socket_token" // SECURITY FIX: Removed socketToken
-  ];
-  
-  // Get all possible domain variations
-  const hostname = window.location.hostname;
-  const parts = hostname.split('.');
-  const domains = [
-    '', // No domain (current domain only)
-    hostname,
-    `.${hostname}`,
-  ];
-  
-  // If hostname has multiple parts (e.g., app.example.com), also try base domain
-  if (parts.length > 2) {
-    const baseDomain = parts.slice(-2).join('.');
-    domains.push(baseDomain);
-    domains.push(`.${baseDomain}`);
-  }
-  
-  // Clear each cookie with all domain/path combinations
-  cookiesToClear.forEach(name => {
-    domains.forEach(domain => {
-      const domainStr = domain ? `domain=${domain};` : '';
-      // Try multiple path combinations
-      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; ${domainStr}`;
-      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/api; ${domainStr}`;
-      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; ${domainStr}`;
-      // Also set to empty string as additional measure
-      document.cookie = `${name}=; path=/; ${domainStr} max-age=0;`;
-    });
-    console.log(`[Auth] Cleared cookie: ${name}`);
-  });
-  
-  console.log('[Auth] ✅ All auth cookies cleared');
-  console.log('[Auth] Cookies after clear:', document.cookie);
-}
+// Import improved cookie manager
+import { clearAuthCookies, verifyAuthCookiesCleared } from './cookieManager';
 
-// Expose globally for debugging
+// Expose globally for debugging (using improved cookie manager)
 if (typeof window !== 'undefined') {
   (window as any).__clearAuthCookies = clearAuthCookies;
   console.log('[Auth] Debug: window.__clearAuthCookies() available for manual cookie cleanup');
