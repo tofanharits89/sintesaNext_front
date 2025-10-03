@@ -24,12 +24,19 @@ export class SocketManager implements ISocketManager {
   private handshakeResolve: (() => void) | null = null;
   private handshakeReject: ((error: Error) => void) | null = null;
 
+  // Server ready state management for race condition fix
+  private isServerReady = false;
+  private serverReadyPromise: Promise<void> | null = null;
+  private serverReadyResolve: (() => void) | null = null;
+  private serverReadyTimeout: NodeJS.Timeout | null = null;
+
   // Event handlers
   private onConnectHandlers: Set<() => void> = new Set();
   private onDisconnectHandlers: Set<(reason: string) => void> = new Set();
   private onConnectErrorHandlers: Set<(error: any) => void> = new Set();
   private onErrorHandlers: Set<(error: Error) => void> = new Set();
   private onHandshakeHandlers: Set<(response: any) => void> = new Set();
+  private onServerReadyHandlers: Set<() => void> = new Set();
 
   constructor(config: RequiredSocketClientConfig, logger: Logger) {
     this.config = config;
@@ -109,6 +116,7 @@ export class SocketManager implements ISocketManager {
     }
 
     this.isConnecting = true;
+    this.isServerReady = false; // Reset server ready state
 
     try {
       // Create socket if it doesn't exist
@@ -116,16 +124,20 @@ export class SocketManager implements ISocketManager {
         await this.createSocket();
       }
 
-      // Set up handshake promise
+      // Set up both handshake and server ready promises
       this.setupHandshakePromise();
+      this.setupServerReadyPromise();
 
       // Connect the socket
       this.socket?.connect();
 
-      // Wait for handshake completion
+      // Wait for handshake completion first
       await this.handshakePromise;
+      
+      // Then wait for server ready signal
+      await this.serverReadyPromise;
 
-      this.logger.info("Socket connected successfully");
+      this.logger.info("Socket connected and server ready successfully");
     } catch (error: unknown) {
       this.isConnecting = false;
       this.logger.error("Socket connection failed", { error });
@@ -135,7 +147,9 @@ export class SocketManager implements ISocketManager {
 
   disconnect(): void {
     this.isConnecting = false;
+    this.isServerReady = false;
     this.clearConnectionTimeout();
+    this.clearServerReadyTimeout();
 
     if (this.socket) {
       this.logger.debug("Disconnecting socket");
@@ -184,9 +198,28 @@ export class SocketManager implements ISocketManager {
     return () => this.onHandshakeHandlers.delete(handler);
   }
 
+  onServerReady(handler: () => void): () => void {
+    this.onServerReadyHandlers.add(handler);
+    return () => this.onServerReadyHandlers.delete(handler);
+  }
+
+  isReady(): boolean {
+    return this.isConnected() && this.isServerReady;
+  }
+
   emit(event: string, ...args: any[]): void {
     if (!this.socket?.connected) {
       this.logger.warn(`Cannot emit ${event}: socket not connected`);
+      return;
+    }
+
+    // Prevent emitting events before server is ready (race condition fix)
+    if (!this.isServerReady && !this.isSafeEvent(event)) {
+      this.logger.warn(`Cannot emit ${event}: server not ready yet`, { 
+        event, 
+        isServerReady: this.isServerReady,
+        socketId: this.socket?.id 
+      });
       return;
     }
 
@@ -198,7 +231,9 @@ export class SocketManager implements ISocketManager {
     this.logger.debug("Cleaning up SocketManager");
 
     this.isConnecting = false;
+    this.isServerReady = false;
     this.clearConnectionTimeout();
+    this.clearServerReadyTimeout();
     this.disconnect();
 
     // Clear all handlers
@@ -207,11 +242,14 @@ export class SocketManager implements ISocketManager {
     this.onConnectErrorHandlers.clear();
     this.onErrorHandlers.clear();
     this.onHandshakeHandlers.clear();
+    this.onServerReadyHandlers.clear();
 
-    // Clear handshake promise
+    // Clear promises
     this.handshakePromise = null;
     this.handshakeResolve = null;
     this.handshakeReject = null;
+    this.serverReadyPromise = null;
+    this.serverReadyResolve = null;
   }
 
   private buildSocketConfig(token: string | null): any {
@@ -241,6 +279,7 @@ export class SocketManager implements ISocketManager {
     this.socket.on("connect_error", this.handleConnectError.bind(this));
     this.socket.on("error", this.handleError.bind(this));
     this.socket.on("handshake:response", this.handleHandshakeResponse.bind(this));
+    this.socket.on("server:ready", this.handleServerReady.bind(this));
 
     this.logger.debug("Socket event listeners attached");
   }
@@ -253,6 +292,7 @@ export class SocketManager implements ISocketManager {
     this.socket.off("connect_error", this.handleConnectError);
     this.socket.off("error", this.handleError);
     this.socket.off("handshake:response", this.handleHandshakeResponse);
+    this.socket.off("server:ready", this.handleServerReady);
 
     this.logger.debug("Socket event listeners removed");
   }
@@ -348,6 +388,33 @@ export class SocketManager implements ISocketManager {
     });
   }
 
+  private handleServerReady(data: any): void {
+    this.logger.info("Server ready signal received", { data });
+    
+    this.isServerReady = true;
+    
+    // Clear server ready timeout
+    if (this.serverReadyTimeout) {
+      clearTimeout(this.serverReadyTimeout);
+      this.serverReadyTimeout = null;
+    }
+
+    // Resolve server ready promise
+    if (this.serverReadyResolve) {
+      this.serverReadyResolve();
+      this.serverReadyResolve = null;
+    }
+
+    // Notify handlers
+    this.onServerReadyHandlers.forEach(handler => {
+      try {
+        handler();
+      } catch (error: unknown) {
+        this.logger.error("Server ready handler error", { error });
+      }
+    });
+  }
+
   private setupHandshakePromise(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.handshakeResolve = resolve;
@@ -407,6 +474,61 @@ export class SocketManager implements ISocketManager {
       clearTimeout(this.connectionTimeout);
       this.connectionTimeout = null;
     }
+  }
+
+  private clearServerReadyTimeout(): void {
+    if (this.serverReadyTimeout) {
+      clearTimeout(this.serverReadyTimeout);
+      this.serverReadyTimeout = null;
+    }
+  }
+
+  private setupServerReadyPromise(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.serverReadyResolve = resolve;
+      this.serverReadyPromise = new Promise((res, rej) => {
+        const originalResolve = this.serverReadyResolve;
+
+        this.serverReadyResolve = () => {
+          originalResolve?.();
+          res();
+        };
+      });
+
+      // Set up timeout for server ready signal (fallback for race conditions)
+      this.serverReadyTimeout = setTimeout(() => {
+        this.logger.warn("Server ready timeout, proceeding anyway (possible race condition)");
+        this.isServerReady = true; // Proceed anyway to avoid hanging
+        
+        if (this.serverReadyResolve) {
+          this.serverReadyResolve();
+          this.serverReadyResolve = null;
+        }
+      }, 2000); // Reduced to 2 seconds for better login responsiveness
+    });
+  }
+
+  private isSafeEvent(event: string): boolean {
+    // Events that are safe to emit before server is ready
+    // Include essential authentication and session events needed for login
+    const safeEvents = [
+      "handshake:request",
+      "ping",
+      "disconnect",
+      // Authentication events - essential for login flow
+      "auth:request",
+      "auth:response", 
+      "auth:error",
+      // Session events - needed for session management during login
+      "session:expired",
+      "session:recovered",
+      // User events - needed for login state
+      "user:login",
+      "users:get-online",
+      // Health and connection events
+      "pong"
+    ];
+    return safeEvents.includes(event);
   }
 
   private getAuthToken(): string | null {

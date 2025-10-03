@@ -27,6 +27,16 @@ export class TokenRefreshManager implements ITokenRefreshManager {
   private logger: Logger;
   private isRunning = false;
 
+  // Token refresh lock mechanism
+  private isRefreshing = false;
+  private refreshQueue: Array<{
+    resolve: (result: boolean) => void;
+    reject: (error: Error) => void;
+    timestamp: number;
+  }> = [];
+  private readonly REFRESH_LOCK_TIMEOUT = 15000; // 15 seconds max lock time
+  private lockTimeout: NodeJS.Timeout | null = null;
+
   constructor(logger: Logger, options: TokenRefreshOptions = {}) {
     this.logger = logger;
     this.options = {
@@ -75,7 +85,7 @@ export class TokenRefreshManager implements ITokenRefreshManager {
       }
 
       if (this.isTokenExpiringSoon(token)) {
-        return await this.performTokenRefresh();
+        return await this.performTokenRefreshWithLock();
       }
 
       return true;
@@ -206,6 +216,79 @@ export class TokenRefreshManager implements ITokenRefreshManager {
     }
 
     return null;
+  }
+
+  private async performTokenRefreshWithLock(): Promise<boolean> {
+    // If already refreshing, queue this request and wait for the result
+    if (this.isRefreshing) {
+      this.logger.debug("Token refresh already in progress, queuing request");
+      return new Promise<boolean>((resolve, reject) => {
+        this.refreshQueue.push({
+          resolve,
+          reject,
+          timestamp: Date.now()
+        });
+      });
+    }
+
+    // Acquire the refresh lock
+    this.isRefreshing = true;
+    this.refreshQueue = []; // Clear any stale queue entries
+
+    // Set a timeout to prevent the lock from being held indefinitely
+    if (this.lockTimeout) {
+      clearTimeout(this.lockTimeout);
+    }
+    this.lockTimeout = setTimeout(() => {
+      this.logger.warn("Token refresh lock timeout, releasing lock");
+      this.releaseRefreshLock();
+    }, this.REFRESH_LOCK_TIMEOUT);
+
+    try {
+      const result = await this.performTokenRefresh();
+      this.releaseRefreshLock();
+      return result;
+    } catch (error) {
+      this.releaseRefreshLock();
+      throw error;
+    }
+  }
+
+  private releaseRefreshLock(): void {
+    if (!this.isRefreshing) {
+      return; // Lock already released
+    }
+
+    // Clear lock timeout
+    if (this.lockTimeout) {
+      clearTimeout(this.lockTimeout);
+      this.lockTimeout = null;
+    }
+
+    // Release the lock
+    this.isRefreshing = false;
+
+    // Process queued requests (they should get the same result as the current refresh)
+    const queuedRequests = this.refreshQueue.splice(0);
+    if (queuedRequests.length > 0) {
+      this.logger.debug(`Processing ${queuedRequests.length} queued token refresh requests`);
+      
+      // For queued requests, we can just check if the token is valid now
+      // rather than performing another refresh immediately
+      const token = this.getAuthToken();
+      const isValid = token && !this.isTokenExpiringSoon(token);
+      
+      queuedRequests.forEach(({ resolve, reject, timestamp }) => {
+        const waitTime = Date.now() - timestamp;
+        this.logger.debug(`Resolving queued refresh request after ${waitTime}ms`, { isValid });
+        
+        if (isValid) {
+          resolve(true);
+        } else {
+          reject(new Error("Token still invalid after refresh"));
+        }
+      });
+    }
   }
 
   private async performTokenRefresh(): Promise<boolean> {
@@ -344,6 +427,15 @@ export class TokenRefreshManager implements ITokenRefreshManager {
   cleanup(): void {
     this.stop();
     this.refreshListeners.clear();
+    
+    // Clean up refresh lock
+    if (this.lockTimeout) {
+      clearTimeout(this.lockTimeout);
+      this.lockTimeout = null;
+    }
+    this.isRefreshing = false;
+    this.refreshQueue = [];
+    
     this.lastRefreshAttempt = 0;
     this.refreshCount = 0;
     this.refreshErrors = 0;

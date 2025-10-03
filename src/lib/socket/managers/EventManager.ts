@@ -302,8 +302,17 @@ export class EventManager implements IEventHandlerManager {
 
     const eventListener = eventListeners.get(listenerId);
     if (eventListener?.wrappedListener) {
-      this.socket.off(event, eventListener.wrappedListener);
-      delete eventListener.wrappedListener;
+      try {
+        this.socket.off(event, eventListener.wrappedListener);
+      } catch (error) {
+        this.logger.error("Error detaching listener from socket", {
+          event,
+          listenerId,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      } finally {
+        delete eventListener.wrappedListener;
+      }
     }
   }
 
@@ -313,11 +322,31 @@ export class EventManager implements IEventHandlerManager {
     const eventListeners = this.listeners.get(event);
     if (!eventListeners) return;
 
+    const detachedCount = eventListeners.size;
+    const errors: Array<{ listenerId: string; error: string }> = [];
+
     for (const eventListener of eventListeners.values()) {
       if (eventListener.wrappedListener) {
-        this.socket.off(event, eventListener.wrappedListener);
-        delete (eventListener.wrappedListener);
+        try {
+          this.socket.off(event, eventListener.wrappedListener);
+        } catch (error) {
+          errors.push({
+            listenerId: eventListener.id,
+            error: error instanceof Error ? error.message : String(error)
+          });
+        } finally {
+          delete eventListener.wrappedListener;
+        }
       }
+    }
+
+    if (errors.length > 0) {
+      this.logger.warn("Errors detaching listeners from socket", {
+        event,
+        detachedCount,
+        errorCount: errors.length,
+        errors
+      });
     }
   }
 

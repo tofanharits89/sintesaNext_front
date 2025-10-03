@@ -261,6 +261,13 @@ export class SocketClient {
       }
     });
 
+    // Add server ready handler for race condition fix
+    this.socketManager.onServerReady(() => {
+      this.logger.info("Server ready, connection fully established");
+      // Additional verification that server is ready to handle events
+      this.stateManager.setState("connected", "Server ready - connection fully established");
+    });
+
     // State changes -> External events
     this.stateManager.onStateChange((event) => {
       this.logger.debug("State changed", {
