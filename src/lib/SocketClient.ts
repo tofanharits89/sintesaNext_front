@@ -49,30 +49,59 @@ export class SocketClient {
 
   /**
    * Wait for authentication and connect
+   * Enhanced with retry logic and better error handling
    */
   private async waitForAuthAndConnect(): Promise<void> {
-    try {
-      // Wait for auth token to be available
-      await waitForAuthToken(5, 500);
-
-      // Check if we're on login page
-      if (window.location.pathname.startsWith('/login')) {
+    const maxRetries = 3;
+    let retries = 0;
+    
+    while (retries < maxRetries) {
+      try {
+        // Increase timeout to 5 seconds (10 attempts * 500ms)
+        await waitForAuthToken(10, 500);
+        
+        // Don't connect on login page
+        if (window.location.pathname.startsWith('/login')) {
+          this.log("Skipping auto-connect on login page");
+          return;
+        }
+        
+        // Wait a bit for page to stabilize
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // Attempt connection
+        await this.connect();
+        this.log("Auto-connect successful");
         return;
+        
+      } catch (error) {
+        retries++;
+        this.logError(`Auto-connect attempt ${retries}/${maxRetries} failed:`, error);
+        
+        if (retries < maxRetries) {
+          // Exponential backoff: 1s, 2s, 3s
+          const delay = 1000 * retries;
+          this.log(`Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          // All retries exhausted - surface error to UI
+          this.logError("Failed to establish socket connection after all retries");
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('socket:connection-failed', {
+              detail: { 
+                error: 'Failed to establish socket connection',
+                retries: maxRetries 
+              }
+            }));
+          }
+        }
       }
-
-      // Small delay to ensure page is ready
-      setTimeout(() => {
-        this.connect().catch((error) => {
-          this.logError("Auto-connect failed:", error);
-        });
-      }, 100);
-    } catch (error) {
-      this.logError("Failed to wait for auth:", error);
     }
   }
 
   /**
    * Create socket connection
+   * Enhanced with explicit token authentication
    */
   private createSocket(): Socket {
     const token = getAuthTokenFromCookie();
@@ -81,19 +110,28 @@ export class SocketClient {
       url: this.config.url,
       path: this.config.path,
       hasToken: !!token,
+      tokenLength: token?.length,
     });
 
-    // Simplified socket configuration
+    // Simplified socket configuration with explicit auth
     const socketConfig: any = {
       path: this.config.path,
       transports: ["websocket", "polling"],
-      withCredentials: true, // Enable credentials for httpOnly cookies
+      withCredentials: true, // Send cookies
       autoConnect: false, // We'll connect manually
       reconnection: false, // We'll handle reconnection ourselves
       timeout: 10000,
+      // CRITICAL: Send token explicitly as backup to cookies
+      auth: token ? { token } : undefined,
     };
 
-    // Backend reads HttpOnly accessToken cookie - no auth object needed
+    this.log("Socket config:", {
+      path: socketConfig.path,
+      transports: socketConfig.transports,
+      withCredentials: socketConfig.withCredentials,
+      hasAuth: !!socketConfig.auth,
+    });
+
     const socket = io(this.config.url, socketConfig);
     return socket;
   }
@@ -104,12 +142,16 @@ export class SocketClient {
   private attachEventListeners(): void {
     if (!this.socket) return;
 
-    // Core socket events
-    this.socket.on("connect", this.handleConnect);
-    this.socket.on("disconnect", this.handleDisconnect);
-    this.socket.on("connect_error", this.handleConnectError);
-    this.socket.on("error", this.handleError);
-    this.socket.on("session:expired", this.handleSessionExpired);
+    // Core socket events - bind to this context
+    this.socket.on("connect", this.handleConnect.bind(this));
+    this.socket.on("disconnect", this.handleDisconnect.bind(this));
+    this.socket.on("connect_error", this.handleConnectError.bind(this));
+    this.socket.on("error", this.handleError.bind(this));
+    this.socket.on("session:expired", this.handleSessionExpired.bind(this));
+    this.socket.on("auth:token-expired", this.handleTokenExpired.bind(this));
+    
+    // CRITICAL: Handle handshake response to prevent timeout
+    this.socket.on("handshake:response", this.handleHandshakeResponse.bind(this));
 
     // Re-attach custom listeners
     this.rebindCustomListeners();
@@ -142,6 +184,8 @@ export class SocketClient {
     this.socket.off("connect_error", this.handleConnectError);
     this.socket.off("error", this.handleError);
     this.socket.off("session:expired", this.handleSessionExpired);
+    this.socket.off("auth:token-expired", this.handleTokenExpired);
+    this.socket.off("handshake:response", this.handleHandshakeResponse);
 
     // Remove custom listeners
     for (const [event, listeners] of this.listeners.entries()) {
@@ -184,22 +228,56 @@ export class SocketClient {
 
   /**
    * Handle socket connection error
+   * Enhanced with detailed error logging and categorization
    */
   private handleConnectError(error: any): void {
-    this.logError("Socket connection error:", error);
+    // Enhanced error logging
+    this.logError("Socket connection error:", {
+      message: error.message,
+      type: error.type,
+      description: error.description,
+      context: error.context,
+      url: this.config.url,
+      path: this.config.path,
+      hasToken: !!getAuthTokenFromCookie(),
+      currentState: this.state,
+      reconnectAttempts: this.reconnectAttempts,
+    });
 
-    // Check for authentication errors
+    // Check for specific error types
     const isAuthError = error.message?.includes("token") ||
                        error.message?.includes("auth") ||
-                       error.message?.includes("unauthorized");
+                       error.message?.includes("unauthorized") ||
+                       error.message?.includes("AUTH_REQUIRED") ||
+                       error.message?.includes("INVALID_TOKEN");
+
+    const isCorsError = error.message?.includes("CORS") ||
+                       error.message?.includes("cross-origin");
+
+    const isNetworkError = error.message?.includes("network") ||
+                          error.message?.includes("timeout") ||
+                          error.type === "TransportError";
 
     if (isAuthError) {
       this.setState("error");
+      this.logError("Authentication error detected - token may be missing or invalid");
+      
       if (!window.location.pathname.startsWith('/login')) {
         toast.error("Authentication failed", {
           description: "Please refresh the page and log in again",
         });
       }
+    } else if (isCorsError) {
+      this.setState("error");
+      this.logError("CORS error detected - check server CORS configuration");
+      
+      toast.error("Connection blocked", {
+        description: "Server configuration issue. Please contact support.",
+      });
+    } else if (isNetworkError) {
+      this.setState("error");
+      this.logError("Network error detected - will retry");
+      this.scheduleReconnect();
     } else {
       this.setState("error");
       this.scheduleReconnect();
@@ -265,6 +343,22 @@ export class SocketClient {
       timestamp: Date.now(),
       clientId: this.socket.id,
     });
+  }
+
+  /**
+   * Handle handshake response from server
+   * CRITICAL: This prevents handshake timeout disconnections
+   */
+  private handleHandshakeResponse(response: any): void {
+    if (response.success) {
+      this.log("Handshake successful:", {
+        serverId: response.data?.serverId,
+        userId: response.data?.userId,
+        username: response.data?.username,
+      });
+    } else {
+      this.logError("Handshake failed:", response.error);
+    }
   }
 
   /**
@@ -461,6 +555,40 @@ export class SocketClient {
     this.log("Cleaning up socket client");
     this.disconnect();
     this.listeners.clear();
+  }
+
+  /**
+   * Handle token expiration (but session still valid)
+   * CRITICAL: This allows socket to stay connected while token refreshes
+   */
+  private async handleTokenExpired(payload: any): Promise<void> {
+    this.log("Token expired event received, triggering refresh", payload);
+    
+    try {
+      // Trigger token refresh via HTTP request
+      const response = await fetch('/api/auth/refresh-token', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        this.log("Token refreshed successfully, reconnecting socket");
+        
+        // Reconnect socket with new token
+        await this.disconnect();
+        await new Promise(resolve => setTimeout(resolve, 500)); // Brief delay
+        await this.connect();
+      } else {
+        this.logError("Token refresh failed, session may be expired");
+        this.handleSessionExpired({ reason: 'TOKEN_REFRESH_FAILED' });
+      }
+    } catch (error) {
+      this.logError("Error refreshing token:", error);
+      this.handleSessionExpired({ reason: 'TOKEN_REFRESH_ERROR' });
+    }
   }
 
   /**
