@@ -67,8 +67,8 @@ const nextConfig: NextConfig = {
               'accelerometer=()',
             ].join(', '),
           },
-          // HSTS - Force HTTPS (only in production with HTTPS)
-          ...(isProduction ? [{
+          // HSTS - Force HTTPS (only in production with HTTPS enabled)
+          ...(isProduction && process.env.HTTPS === 'true' ? [{
             key: 'Strict-Transport-Security',
             value: 'max-age=31536000; includeSubDomains; preload',
           }] : []),
@@ -78,20 +78,22 @@ const nextConfig: NextConfig = {
             value: [
               "default-src 'self'",
               // Next.js requires unsafe-eval and unsafe-inline for development
+              // Google Maps API requires maps.googleapis.com
               isDevelopment 
-                ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'"
-                : "script-src 'self' 'unsafe-inline'",
+                ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://maps.googleapis.com"
+                : "script-src 'self' 'unsafe-inline' https://maps.googleapis.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
-              "connect-src 'self' ws: wss: http://localhost:* https://*",
+              "connect-src 'self' ws: wss: http://localhost:* http://10.0.8.42:* https://*",
               "media-src 'self'",
               "object-src 'none'",
               "frame-src 'self'",
               "frame-ancestors 'none'",
               "form-action 'self'",
               "base-uri 'self'",
-              isDevelopment ? "" : "upgrade-insecure-requests",
+              // Only upgrade to HTTPS if HTTPS is explicitly enabled
+              (isDevelopment || process.env.HTTPS !== 'true') ? "" : "upgrade-insecure-requests",
             ].filter(Boolean).join('; '),
           },
           // Remove X-Powered-By header (already done via poweredByHeader: false)
