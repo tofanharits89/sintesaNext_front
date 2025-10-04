@@ -279,451 +279,472 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
     <>
       <LoginLoading isVisible={isLoggingOut} message="Mengeluarkan..." />
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-14 items-center gap-3 px-4">
-        {/* left: logo */}
-        <div className="flex items-center gap-2">
-          {/* Brand logo – CSS toggles by theme to avoid SSR mismatch and persist on refresh */}
-          {/* Dark variant shown on light theme (default), hidden on dark */}
-          <Image
-            src={withBasePath("/snext_logoonly_dark.svg")}
-            alt="sintesaNEXT"
-            width={28}
-            height={28}
-            className="rounded dark:hidden"
-            style={{ height: "auto" }}
-          />
-          {/* Light variant shown on dark theme */}
-          <Image
-            src={withBasePath("/snext_logoonly_light.svg")}
-            alt="sintesaNEXT"
-            width={28}
-            height={28}
-            className="rounded hidden dark:inline"
-            style={{ height: "auto" }}
-          />
-          {/* Wordmark – dark version on light theme */}
-          <Image
-            src={withBasePath("/snext_typeonly_dark.svg")}
-            alt="sintesaNEXT"
-            width={110}
-            height={20}
-            className="dark:hidden"
-            style={{ height: "auto" }}
-          />
-          {/* Wordmark – light version on dark theme */}
-          <Image
-            src={withBasePath("/snext_typeonly_light.svg")}
-            alt="sintesaNEXT"
-            width={110}
-            height={20}
-            className="hidden dark:inline"
-            style={{ height: "auto" }}
-          />
-        </div>
+        <div className="container mx-auto flex h-14 items-center gap-3 px-4">
+          {/* left: logo */}
+          <div className="flex items-center gap-2">
+            {/* Brand logo – CSS toggles by theme to avoid SSR mismatch and persist on refresh */}
+            {/* Dark variant shown on light theme (default), hidden on dark */}
+            <Image
+              src={withBasePath("/snext_logoonly_dark.svg")}
+              alt="sintesaNEXT"
+              width={28}
+              height={28}
+              className="rounded dark:hidden"
+              style={{ height: "auto" }}
+            />
+            {/* Light variant shown on dark theme */}
+            <Image
+              src={withBasePath("/snext_logoonly_light.svg")}
+              alt="sintesaNEXT"
+              width={28}
+              height={28}
+              className="rounded hidden dark:inline"
+              style={{ height: "auto" }}
+            />
+            {/* Wordmark – dark version on light theme */}
+            <Image
+              src={withBasePath("/snext_typeonly_dark.svg")}
+              alt="sintesaNEXT"
+              width={110}
+              height={20}
+              className="dark:hidden"
+              style={{ height: "auto" }}
+            />
+            {/* Wordmark – light version on dark theme */}
+            <Image
+              src={withBasePath("/snext_typeonly_light.svg")}
+              alt="sintesaNEXT"
+              width={110}
+              height={20}
+              className="hidden dark:inline"
+              style={{ height: "auto" }}
+            />
+          </div>
 
-        {/* middle: search - hidden on xs */}
-        <SatkerSearch />
+          {/* middle: search - hidden on xs */}
+          <SatkerSearch />
 
-        {/* right: icons */}
-        <div className="ml-auto flex items-center gap-2">
-          {/* Notifications popover */}
-          <Popover open={notificationsOpen} onOpenChange={setNotificationsOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Notifikasi"
-                className="relative"
-              >
-                <Bell className="h-5 w-5" />
-                {totalUnreadNotificationsCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white">
-                    {totalUnreadNotificationsCount > 9
-                      ? "9+"
-                      : totalUnreadNotificationsCount}
-                  </span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-80 p-0">
-              <div className="p-3 border-b font-medium flex items-center justify-between">
-                <span>Notifikasi terbaru</span>
-                {totalUnreadNotificationsCount > 0 && (
-                  <span className="text-xs font-normal text-muted-foreground">
-                    {totalUnreadNotificationsCount} belum dibaca
-                  </span>
-                )}
-              </div>
-              <ul className="max-h-64 overflow-auto divide-y">
-                {recentNotifications.length > 0 ? (
-                  recentNotifications.map((n) => (
-                    <li key={n.id}>
-                      <Link
-                        href="/notifications"
-                        className={`block px-3 py-2.5 hover:bg-muted/50 transition-colors ${
-                          n.unread ? "bg-orange-50 dark:bg-orange-950/20" : ""
-                        }`}
-                        onClick={() => setNotificationsOpen(false)}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <div
-                              className={`text-sm ${
-                                n.unread ? "font-semibold" : "font-medium"
-                              }`}
-                            >
-                              {n.title}
-                            </div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span
-                                className={`text-xs px-1.5 py-0.5 rounded ${
-                                  n.type === "info"
-                                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"
-                                    : n.type === "warning"
-                                    ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300"
-                                    : n.type === "success"
-                                    ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300"
-                                    : "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300"
-                                }`}
-                              >
-                                {n.type}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {n.time} lalu
-                              </span>
-                            </div>
-                          </div>
-                          {n.unread && (
-                            <span className="inline-block h-2 w-2 rounded-full bg-orange-500 flex-shrink-0 mt-1.5" />
-                          )}
-                        </div>
-                      </Link>
-                    </li>
-                  ))
-                ) : (
-                  <li className="px-3 py-4 text-center text-sm text-muted-foreground">
-                    Tidak ada notifikasi
-                  </li>
-                )}
-              </ul>
-              <div className="p-2 border-t bg-muted/50">
+          {/* right: icons */}
+          <div className="ml-auto flex items-center gap-2">
+            {/* Notifications popover */}
+            <Popover
+              open={notificationsOpen}
+              onOpenChange={setNotificationsOpen}
+            >
+              <PopoverTrigger asChild>
                 <Button
-                  asChild
                   variant="ghost"
-                  className="w-full h-auto py-2 px-3 justify-between hover:bg-background"
+                  size="icon"
+                  aria-label="Notifikasi"
+                  className="relative"
                 >
-                  <Link
-                    href="/notifications"
-                    className="flex items-center"
-                    onClick={() => setNotificationsOpen(false)}
-                  >
-                    <span className="text-sm font-medium">
-                      Lihat semua notifikasi
+                  <Bell className="h-5 w-5" />
+                  {totalUnreadNotificationsCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white">
+                      {totalUnreadNotificationsCount > 9
+                        ? "9+"
+                        : totalUnreadNotificationsCount}
                     </span>
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Link>
+                  )}
                 </Button>
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          {/* Messages popover */}
-          <Popover open={messagesOpen} onOpenChange={setMessagesOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Pesan"
-                className="relative"
-              >
-                <span className="relative inline-block">
-                  <Mail className="h-5 w-5" />
-                  <span
-                    title={
-                      isSocketConnected
-                        ? "Socket connected"
-                        : "Socket disconnected"
-                    }
-                    className={`absolute -bottom-0.5 -left-0.5 h-2 w-2 rounded-full ring-2 ring-background ${
-                      isSocketConnected ? "bg-emerald-500" : "bg-red-500"
-                    }`}
-                  />
-                </span>
-                {totalUnreadMessagesCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white">
-                    {totalUnreadMessagesCount > 9
-                      ? "9+"
-                      : totalUnreadMessagesCount}
-                  </span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-80 p-0">
-              <div className="p-3 border-b font-medium flex items-center justify-between">
-                <span>Pesan terbaru</span>
-                {totalUnreadMessagesCount > 0 && (
-                  <span className="text-xs font-normal text-muted-foreground">
-                    {totalUnreadMessagesCount} belum dibaca
-                  </span>
-                )}
-              </div>
-              <ul className="max-h-64 overflow-auto divide-y">
-                {recentMessages.length > 0 ? (
-                  recentMessages.map((m) => (
-                    <li key={m.id}>
-                      <Link
-                        href={`/messages?conversation=${m.conversationId}`}
-                        className={`block px-3 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer ${
-                          m.unread ? "bg-blue-50 dark:bg-blue-950/20" : ""
-                        }`}
-                        onClick={() => setMessagesOpen(false)}
-                      >
-                        <div className="flex items-start gap-2.5">
-                          <Avatar className="h-7 w-7 mt-0.5 flex-shrink-0">
-                            <AvatarFallback className="text-[10px]">
-                              {m.otherParticipant?.name
-                                ?.slice(0, 2)
-                                .toUpperCase() ||
-                                m.from.slice(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2 mb-0.5">
-                              <span
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-80 p-0">
+                <div className="p-3 border-b font-medium flex items-center justify-between">
+                  <span>Notifikasi terbaru</span>
+                  {totalUnreadNotificationsCount > 0 && (
+                    <span className="text-xs font-normal text-muted-foreground">
+                      {totalUnreadNotificationsCount} belum dibaca
+                    </span>
+                  )}
+                </div>
+                <ul className="max-h-64 overflow-auto divide-y">
+                  {recentNotifications.length > 0 ? (
+                    recentNotifications.map((n) => (
+                      <li key={n.id}>
+                        <Link
+                          href="/notifications"
+                          className={`block px-3 py-2.5 hover:bg-muted/50 transition-colors ${
+                            n.unread ? "bg-orange-50 dark:bg-orange-950/20" : ""
+                          }`}
+                          onClick={() => setNotificationsOpen(false)}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1">
+                              <div
                                 className={`text-sm ${
-                                  m.unread ? "font-semibold" : "font-medium"
+                                  n.unread ? "font-semibold" : "font-medium"
                                 }`}
                               >
-                                {m.from}
-                              </span>
-                              <span className="text-xs text-muted-foreground flex-shrink-0">
-                                {m.time} lalu
-                              </span>
+                                {n.title}
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span
+                                  className={`text-xs px-1.5 py-0.5 rounded ${
+                                    n.type === "info"
+                                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"
+                                      : n.type === "warning"
+                                      ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300"
+                                      : n.type === "success"
+                                      ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300"
+                                      : "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300"
+                                  }`}
+                                >
+                                  {n.type}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  {n.time} lalu
+                                </span>
+                              </div>
                             </div>
-                            <div
-                              className={`text-sm ${
-                                m.unread ? "font-medium" : ""
-                              } text-gray-600 dark:text-gray-400 truncate`}
-                            >
-                              {m.subject}
-                            </div>
+                            {n.unread && (
+                              <span className="inline-block h-2 w-2 rounded-full bg-orange-500 flex-shrink-0 mt-1.5" />
+                            )}
                           </div>
-                          {m.unread && (
-                            <div className="mt-2">
-                              <span className="inline-block h-2 w-2 rounded-full bg-blue-500 flex-shrink-0" />
-                            </div>
-                          )}
-                        </div>
-                      </Link>
+                        </Link>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="px-3 py-4 text-center text-sm text-muted-foreground">
+                      Tidak ada notifikasi
                     </li>
-                  ))
-                ) : (
-                  <li className="px-3 py-8 text-center text-sm text-muted-foreground">
-                    Belum ada pesan
-                  </li>
-                )}
-              </ul>
-              <div className="p-2 border-t bg-muted/50">
-                <Button
-                  asChild
-                  variant="ghost"
-                  className="w-full h-auto py-2 px-3 justify-between hover:bg-background"
-                >
-                  <Link
-                    href="/messages"
-                    className="flex items-center"
-                    onClick={() => setMessagesOpen(false)}
+                  )}
+                </ul>
+                <div className="p-2 border-t bg-muted/50">
+                  <Button
+                    asChild
+                    variant="ghost"
+                    className="w-full h-auto py-2 px-3 justify-between hover:bg-background"
                   >
-                    <span className="text-sm font-medium">
-                      Lihat semua pesan
+                    <Link
+                      href="/notifications"
+                      className="flex items-center"
+                      onClick={() => setNotificationsOpen(false)}
+                    >
+                      <span className="text-sm font-medium">
+                        Lihat semua notifikasi
+                      </span>
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Link>
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            {/* Messages popover */}
+            <Popover open={messagesOpen} onOpenChange={setMessagesOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Pesan"
+                  className="relative"
+                >
+                  <span className="relative inline-block">
+                    <Mail className="h-5 w-5" />
+                    <span
+                      title={
+                        isSocketConnected
+                          ? "Socket connected"
+                          : "Socket disconnected"
+                      }
+                      className={`absolute -bottom-0.5 -left-0.5 h-2 w-2 rounded-full ring-2 ring-background ${
+                        isSocketConnected ? "bg-emerald-500" : "bg-red-500"
+                      }`}
+                    />
+                  </span>
+                  {totalUnreadMessagesCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white">
+                      {totalUnreadMessagesCount > 9
+                        ? "9+"
+                        : totalUnreadMessagesCount}
                     </span>
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Link>
+                  )}
                 </Button>
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          {/* Theme toggle switch */}
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Tema"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          >
-            <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            <span className="sr-only">Toggle theme</span>
-          </Button>
-
-          {/* profile dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="relative flex items-center gap-2 h-auto py-1.5 px-2 rounded-full hover:bg-accent"
-              >
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src="" alt={currentUser?.name || "profil"} />
-                  <AvatarFallback className="text-xs font-medium">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="hidden md:block text-left">
-                  <div className="text-sm font-medium">
-                    {currentUser?.name || "User"}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {currentUser ? getRoleDisplayName(currentUser.role) : ""}
-                  </div>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-80 p-0">
+                <div className="p-3 border-b font-medium flex items-center justify-between">
+                  <span>Pesan terbaru</span>
+                  {totalUnreadMessagesCount > 0 && (
+                    <span className="text-xs font-normal text-muted-foreground">
+                      {totalUnreadMessagesCount} belum dibaca
+                    </span>
+                  )}
                 </div>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    {currentUser?.name || "User"}
-                  </p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {currentUser?.email || "user@example.com"}
-                  </p>
+                <ul className="max-h-64 overflow-auto divide-y">
+                  {recentMessages.length > 0 ? (
+                    recentMessages.map((m) => (
+                      <li key={m.id}>
+                        <Link
+                          href={`/messages?conversation=${m.conversationId}`}
+                          className={`block px-3 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer ${
+                            m.unread ? "bg-blue-50 dark:bg-blue-950/20" : ""
+                          }`}
+                          onClick={() => setMessagesOpen(false)}
+                        >
+                          <div className="flex items-start gap-2.5">
+                            <Avatar className="h-7 w-7 mt-0.5 flex-shrink-0">
+                              <AvatarFallback className="text-[10px]">
+                                {m.otherParticipant?.name
+                                  ?.slice(0, 2)
+                                  .toUpperCase() ||
+                                  m.from.slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2 mb-0.5">
+                                <span
+                                  className={`text-sm ${
+                                    m.unread ? "font-semibold" : "font-medium"
+                                  }`}
+                                >
+                                  {m.from}
+                                </span>
+                                <span className="text-xs text-muted-foreground flex-shrink-0">
+                                  {m.time} lalu
+                                </span>
+                              </div>
+                              <div
+                                className={`text-sm ${
+                                  m.unread ? "font-medium" : ""
+                                } text-gray-600 dark:text-gray-400 truncate`}
+                              >
+                                {m.subject}
+                              </div>
+                            </div>
+                            {m.unread && (
+                              <div className="mt-2">
+                                <span className="inline-block h-2 w-2 rounded-full bg-blue-500 flex-shrink-0" />
+                              </div>
+                            )}
+                          </div>
+                        </Link>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="px-3 py-8 text-center text-sm text-muted-foreground">
+                      Belum ada pesan
+                    </li>
+                  )}
+                </ul>
+                <div className="p-2 border-t bg-muted/50">
+                  <Button
+                    asChild
+                    variant="ghost"
+                    className="w-full h-auto py-2 px-3 justify-between hover:bg-background"
+                  >
+                    <Link
+                      href="/messages"
+                      className="flex items-center"
+                      onClick={() => setMessagesOpen(false)}
+                    >
+                      <span className="text-sm font-medium">
+                        Lihat semua pesan
+                      </span>
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Link>
+                  </Button>
                 </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem asChild>
-                  <Link href="/profile" className="flex items-center">
-                    <UserCircle className="mr-2 h-4 w-4" />
-                    Halaman Profil
-                  </Link>
-                </DropdownMenuItem>
-                {canAccessUserManagement(currentUser) && (
+              </PopoverContent>
+            </Popover>
+
+            {/* Theme toggle switch */}
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Tema"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            >
+              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <span className="sr-only">Toggle theme</span>
+            </Button>
+
+            {/* profile dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="relative flex items-center gap-2 h-auto py-1.5 px-2 rounded-full hover:bg-accent"
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src="" alt={currentUser?.name || "profil"} />
+                    <AvatarFallback className="text-xs font-medium">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="hidden md:block text-left">
+                    <div className="text-sm font-medium">
+                      {currentUser?.name || "User"}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {currentUser ? getRoleDisplayName(currentUser.role) : ""}
+                    </div>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {currentUser?.name || "User"}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {currentUser?.email || "user@example.com"}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
                   <DropdownMenuItem asChild>
-                    <Link href="/users" className="flex items-center">
-                      <Users className="mr-2 h-4 w-4" />
-                      Akun Manajemen
+                    <Link href="/profile" className="flex items-center">
+                      <UserCircle className="mr-2 h-4 w-4" />
+                      Halaman Profil
                     </Link>
                   </DropdownMenuItem>
-                )}
-                {canAccessSettings(currentUser) && (
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings" className="flex items-center">
-                      <Settings className="mr-2 h-4 w-4" />
-                      Pengaturan
-                    </Link>
+                  {canAccessUserManagement(currentUser) && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/users" className="flex items-center">
+                        <Users className="mr-2 h-4 w-4" />
+                        Akun Manajemen
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {canAccessSettings(currentUser) && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings" className="flex items-center">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Pengaturan
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {(() => {
+                    const roleStr = String(
+                      currentUser?.role || ""
+                    ).toLowerCase();
+                    const isAdminLike =
+                      roleStr === "super_admin" ||
+                      roleStr === "co_admin" ||
+                      roleStr === "admin";
+                    return isAdminLike;
+                  })() && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/log-user" className="flex items-center">
+                        <Activity className="mr-2 h-4 w-4" />
+                        Log User
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem className="flex items-center">
+                    <HelpCircle className="mr-2 h-4 w-4" />
+                    Bantuan
                   </DropdownMenuItem>
-                )}
-                {(() => {
-                  const roleStr = String(currentUser?.role || "").toLowerCase();
-                  const isAdminLike =
-                    roleStr === "super_admin" || roleStr === "co_admin" || roleStr === "admin";
-                  return isAdminLike;
-                })() && (
-                  <DropdownMenuItem asChild>
-                    <Link href="/log-user" className="flex items-center">
-                      <Activity className="mr-2 h-4 w-4" />
-                      Log User
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem className="flex items-center">
-                  <HelpCircle className="mr-2 h-4 w-4" />
-                  Bantuan
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className={`text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950 ${isLoggingOut ? 'opacity-60 pointer-events-none' : ''}`}
-                onClick={async () => {
-                  if (isLoggingOut) return;
-                  const { QueryClient } = await import("@tanstack/react-query");
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className={`text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950 ${
+                    isLoggingOut ? "opacity-60 pointer-events-none" : ""
+                  }`}
+                  onClick={async () => {
+                    if (isLoggingOut) return;
+                    const { QueryClient } = await import(
+                      "@tanstack/react-query"
+                    );
 
-                  // Proactively disconnect socket so backend presence updates immediately
-                  try {
-                    socketClient.disconnect();
-                  } catch {}
+                    // Proactively disconnect socket so backend presence updates immediately
+                    try {
+                      socketClient.disconnect();
+                    } catch {}
 
-                  // Call centralized logout (uses shared mutation + loading state)
-                  try {
-                    await auth.logoutAsync();
-                  } catch {}
+                    // ENTERPRISE BEST PRACTICE: Client-side cookie deletion as backup
+                    // This ensures cookies are cleared even if Set-Cookie headers fail
+                    const deleteCookie = (name: string) => {
+                      // More comprehensive cookie clearing
+                      const domains = [
+                        window.location.hostname,
+                        "." + window.location.hostname,
+                        window.location.hostname.split(".").slice(-2).join("."),
+                        // Try localhost variations
+                        "localhost",
+                        "127.0.0.1",
+                      ];
+                      const paths = ["/", "", "/api", "/auth"];
 
-                  // ENTERPRISE BEST PRACTICE: Client-side cookie deletion as backup
-                // This ensures cookies are cleared even if Set-Cookie headers fail
-                const deleteCookie = (name: string) => {
-                  // More comprehensive cookie clearing
-                  const domains = [
-                    window.location.hostname,
-                    '.' + window.location.hostname,
-                    window.location.hostname.split('.').slice(-2).join('.'),
-                    // Try localhost variations
-                    'localhost',
-                    '127.0.0.1'
-                  ];
-                  const paths = ['/', '', '/api', '/auth'];
+                      for (const domain of domains) {
+                        for (const path of paths) {
+                          // HttpOnly cookies
+                          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain}; HttpOnly; Secure`;
+                          // Non-HttpOnly cookies
+                          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain}; SameSite=Lax`;
+                          // Fallback
+                          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path};`;
+                        }
+                      }
+                    };
 
-                  for (const domain of domains) {
-                    for (const path of paths) {
-                      // HttpOnly cookies
-                      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain}; HttpOnly; Secure`;
-                      // Non-HttpOnly cookies
-                      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain}; SameSite=Lax`;
-                      // Fallback
-                      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path};`;
+                    // Delete all auth cookies with multiple names
+                    const cookiesToDelete = [
+                      "accessToken",
+                      "refreshToken",
+                      "access_token",
+                      "refresh_token",
+                      "authToken",
+                      "auth_token",
+                      "token",
+                      "socket_token",
+                      "authState",
+                      "auth_user",
+                      "XSRF-TOKEN",
+                      "_csrf",
+                      "auth_user",
+                      "user_data",
+                    ];
+                    cookiesToDelete.forEach(deleteCookie);
+
+                    // Clear React Query cache for user profile to prevent stale data
+                    const queryClient = new QueryClient();
+                    queryClient.setQueryData(
+                      ["current-user-profile"],
+                      undefined
+                    );
+
+                    // Dispatch a logout event so other listeners react
+                    dispatchAuthEvent("logout", { reason: "user_action" });
+
+                    // Reset global redirect flags to prevent conflicts
+                    if (typeof window !== "undefined") {
+                      (window as any).isRedirecting = false;
+                      // Reset GlobalAuthCheck redirect flag
+                      if ((window as any).__globalAuthCheck) {
+                        (window as any).__globalAuthCheck.isRedirecting = false;
+                      }
                     }
-                  }
-                };
 
-                  // Delete all auth cookies with multiple names
-                  const cookiesToDelete = [
-                    'accessToken', 'refreshToken', 'access_token', 'refresh_token',
-                    'authToken', 'auth_token', 'token', 'socket_token', 'authState', 'auth_user', // SECURITY FIX: Removed socketToken
-                    'XSRF-TOKEN', '_csrf', 'auth_user', 'user_data'
-                  ];
-                  cookiesToDelete.forEach(deleteCookie);
-                  
-                  // Clear React Query cache for user profile to prevent stale data
-                  const queryClient = new QueryClient();
-                  queryClient.setQueryData(["current-user-profile"], undefined);
-                  
-                  // Dispatch a logout event so other listeners react
-                  dispatchAuthEvent("logout", { reason: "user_action" });
+                    // Call centralized logout (don't await - let it run in background)
+                    // This prevents the loading state from disappearing before redirect
+                    auth.logoutAsync().catch(() => {});
 
-                  // Small delay to ensure cookies are deleted and events processed
-                  await new Promise(resolve => setTimeout(resolve, 500));
-
-                  // Reset global redirect flags to prevent conflicts
-                  if (typeof window !== 'undefined') {
-                    (window as any).isRedirecting = false;
-                    // Reset GlobalAuthCheck redirect flag
-                    if ((window as any).__globalAuthCheck) {
-                      (window as any).__globalAuthCheck.isRedirecting = false;
-                    }
-                  }
-
-                  // Use window.location.replace to bypass Next.js router and middleware conflicts
-                  // This ensures a clean redirect without refresh loops
-                  window.location.replace("/login");
-                }}
-              >
-                {isLoggingOut ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Mengeluarkan...
-                  </>
-                ) : (
-                  <>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Keluar
-                  </>
-                )}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                    // Redirect immediately to prevent showing previous page
+                    // Use window.location.replace to bypass Next.js router and middleware conflicts
+                    window.location.replace("/login");
+                  }}
+                >
+                  {isLoggingOut ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Mengeluarkan...
+                    </>
+                  ) : (
+                    <>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Keluar
+                    </>
+                  )}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
     </>
   );
 }
