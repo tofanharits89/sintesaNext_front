@@ -526,6 +526,7 @@ export const SOCKET_EVENTS = {
   // Handshake & Auth Events
   HANDSHAKE_REQUEST: "handshake:request",
   HANDSHAKE_RESPONSE: "handshake:response",
+  SERVER_READY: "server:ready", // Race condition fix
   AUTH_REQUEST: "auth:request",
   AUTH_RESPONSE: "auth:response",
   AUTH_ERROR: "auth:error",
@@ -538,6 +539,7 @@ export const SOCKET_EVENTS = {
   MESSAGE_NEW: "message:new",
   MESSAGE_RECEIVED: "message:received",
   MESSAGE_READ: "message:read",
+  MESSAGE_OPENED: "message:opened",
   MESSAGE_DELETE: "message:delete",
   MESSAGE_DELETED: "message:deleted",
   MESSAGE_DELIVERED: "message:delivered",

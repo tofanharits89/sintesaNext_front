@@ -278,8 +278,11 @@ export class SocketManager implements ISocketManager {
     this.socket.on("disconnect", this.handleDisconnect.bind(this));
     this.socket.on("connect_error", this.handleConnectError.bind(this));
     this.socket.on("error", this.handleError.bind(this));
+    this.socket.on("auth:error", this.handleAuthError.bind(this));
     this.socket.on("handshake:response", this.handleHandshakeResponse.bind(this));
     this.socket.on("server:ready", this.handleServerReady.bind(this));
+    this.socket.on("session:refreshed", this.handleSessionRefreshed.bind(this));
+    this.socket.on("session:expired", this.handleSessionExpired.bind(this));
 
     this.logger.debug("Socket event listeners attached");
   }
@@ -291,8 +294,11 @@ export class SocketManager implements ISocketManager {
     this.socket.off("disconnect", this.handleDisconnect);
     this.socket.off("connect_error", this.handleConnectError);
     this.socket.off("error", this.handleError);
+    this.socket.off("auth:error", this.handleAuthError);
     this.socket.off("handshake:response", this.handleHandshakeResponse);
     this.socket.off("server:ready", this.handleServerReady);
+    this.socket.off("session:refreshed", this.handleSessionRefreshed);
+    this.socket.off("session:expired", this.handleSessionExpired);
 
     this.logger.debug("Socket event listeners removed");
   }
@@ -368,6 +374,34 @@ export class SocketManager implements ISocketManager {
     });
   }
 
+  private handleAuthError(error: any): void {
+    this.logger.error("Socket authentication error", {
+      code: error?.error?.code || error?.code,
+      message: error?.error?.message || error?.message,
+      timestamp: error?.timestamp,
+    });
+
+    // Convert to standard error format
+    const errorObj = new SocketClientError(
+      "authentication",
+      error?.error?.code || error?.code || SOCKET_CLIENT_ERROR_CODES.AUTH_FAILED,
+      error?.error?.message || error?.message || "Authentication failed",
+      false
+    );
+
+    // Notify error handlers
+    this.onErrorHandlers.forEach(handler => {
+      try {
+        handler(errorObj);
+      } catch (handlerError: unknown) {
+        this.logger.error("Auth error handler error", { handlerError });
+      }
+    });
+
+    // Also notify connect error handlers since auth errors prevent connection
+    this.notifyConnectError(errorObj);
+  }
+
   private handleHandshakeResponse(response: any): void {
     this.logger.debug("Handshake response received", { response });
 
@@ -413,6 +447,42 @@ export class SocketManager implements ISocketManager {
         this.logger.error("Server ready handler error", { error });
       }
     });
+  }
+
+  private handleSessionRefreshed(response: any): void {
+    this.logger.info("Session refreshed", {
+      userId: response?.data?.userId,
+      lastActivity: response?.data?.lastActivity,
+    });
+
+    // Session is still valid, no action needed
+    // The token refresh manager will handle token updates if needed
+  }
+
+  private handleSessionExpired(payload: any): void {
+    this.logger.warn("Session expired event received", {
+      userId: payload?.userId,
+      reason: payload?.reason,
+    });
+
+    // Notify error handlers about session expiration
+    const error = new SocketClientError(
+      "session",
+      "SESSION_EXPIRED",
+      payload?.reason || "Session expired",
+      false
+    );
+
+    this.onErrorHandlers.forEach(handler => {
+      try {
+        handler(error);
+      } catch (handlerError: unknown) {
+        this.logger.error("Session expired handler error", { handlerError });
+      }
+    });
+
+    // Disconnect socket since session is no longer valid
+    this.disconnect();
   }
 
   private setupHandshakePromise(): Promise<void> {
