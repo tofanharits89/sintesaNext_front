@@ -60,7 +60,11 @@ export function useSendMessageMutation() {
 
   const isOffline = () => {
     try {
-      if (typeof navigator !== 'undefined' && navigator && 'onLine' in navigator) {
+      if (
+        typeof navigator !== "undefined" &&
+        navigator &&
+        "onLine" in navigator
+      ) {
         return navigator.onLine === false;
       }
     } catch {}
@@ -77,7 +81,7 @@ export function useSendMessageMutation() {
       try {
         // If offline, fail fast and do not attempt to send
         if (isOffline()) {
-          const err: OfflineError = new Error('Offline');
+          const err: OfflineError = new Error("Offline");
           err.isOffline = true;
           throw err;
         }
@@ -125,7 +129,7 @@ export function useSendMessageMutation() {
         // Socket failed, trying REST (silently fallback)
         // If offline, do NOT fallback to REST. Require manual retry.
         if (isOffline()) {
-          const err: OfflineError = new Error('Offline');
+          const err: OfflineError = new Error("Offline");
           err.isOffline = true;
           throw err;
         }
@@ -142,7 +146,7 @@ export function useSendMessageMutation() {
         };
 
         const executeRestSend = async (csrfToken?: string) =>
-fetchWithTimeout(apiPath("/messaging/send"), {
+          fetchWithTimeout(apiPath("/messaging/send"), {
             method: "POST",
             credentials: "include",
             headers: {
@@ -186,15 +190,23 @@ fetchWithTimeout(apiPath("/messaging/send"), {
 
         // Handle rate limiting specifically
         if (respRaw.status === 429) {
-          const result = await respRaw.json().catch(() => ({ error: 'Rate limit exceeded' }));
-          const rateErr: Error & { isRateLimit?: boolean } = new Error(result.error || 'Rate limit exceeded');
+          const result = await respRaw
+            .json()
+            .catch(() => ({ error: "Rate limit exceeded" }));
+          const rateErr: Error & { isRateLimit?: boolean } = new Error(
+            result.error || "Rate limit exceeded"
+          );
           rateErr.isRateLimit = true;
           throw rateErr;
         }
 
         if (!respRaw.ok) {
-          const result = await respRaw.json().catch(() => ({ error: `HTTP ${respRaw.status}` }));
-          throw new Error(result.error || `HTTP ${respRaw.status}: ${respRaw.statusText}`);
+          const result = await respRaw
+            .json()
+            .catch(() => ({ error: `HTTP ${respRaw.status}` }));
+          throw new Error(
+            result.error || `HTTP ${respRaw.status}: ${respRaw.statusText}`
+          );
         }
 
         const result = await respRaw.json().catch(() => ({}));
@@ -210,7 +222,14 @@ fetchWithTimeout(apiPath("/messaging/send"), {
       const convKeyId =
         conversationId != null ? String(conversationId) : undefined;
 
-      try { console.log('[MSG DEBUG] onMutate start', { convKeyId, tempId, len: (content||'').length, at: Date.now() }); } catch {}
+      try {
+        console.log("[MSG DEBUG] onMutate start", {
+          convKeyId,
+          tempId,
+          len: (content || "").length,
+          at: Date.now(),
+        });
+      } catch {}
 
       // Set sending state
       ui.setSendingMessage(true);
@@ -235,71 +254,74 @@ fetchWithTimeout(apiPath("/messaging/send"), {
         };
 
         // Update messages cache optimistically
-        queryClient.setQueryData(messageKeys.messages(convKeyId), (prev: any) => {
-          if (!prev || !prev.pages || prev.pages.length === 0) {
-            // Initialize with first page containing the temp message
-            return {
-              pages: [
-                {
-                  data: {
-                    messages: [
-                      {
-                        id: tempId,
-                        conversation_id: convKeyId,
-                        content: content.trim(),
-                        timestamp: optimisticMessage.timestamp,
-                        created_at: optimisticMessage.timestamp,
-                        sender: optimisticMessage.sender,
-                        senderType: optimisticMessage.senderType,
-                        is_read: false,
-                        _sending: true,
-                        _failed: false,
+        queryClient.setQueryData(
+          messageKeys.messages(convKeyId),
+          (prev: any) => {
+            if (!prev || !prev.pages || prev.pages.length === 0) {
+              // Initialize with first page containing the temp message
+              return {
+                pages: [
+                  {
+                    data: {
+                      messages: [
+                        {
+                          id: tempId,
+                          conversation_id: convKeyId,
+                          content: content.trim(),
+                          timestamp: optimisticMessage.timestamp,
+                          created_at: optimisticMessage.timestamp,
+                          sender: optimisticMessage.sender,
+                          senderType: optimisticMessage.senderType,
+                          is_read: false,
+                          _sending: true,
+                          _failed: false,
+                        },
+                      ],
+                      pagination: {
+                        page: 1,
+                        limit: 50,
+                        total: 1,
+                        hasMore: false,
                       },
-                    ],
-                    pagination: {
-                      page: 1,
-                      limit: 50,
-                      total: 1,
-                      hasMore: false,
                     },
                   },
-                },
-              ],
-              pageParams: [1],
+                ],
+                pageParams: [1],
+              };
+            }
+
+            const copy = {
+              ...prev,
+              pages: prev.pages.map((p: any) => ({ ...p })),
             };
+            const lastIdx = copy.pages.length - 1;
+            const last = { ...copy.pages[lastIdx] };
+            const list = Array.isArray(last?.data?.messages)
+              ? [...last.data.messages]
+              : [];
+            // Guard: avoid duplicating the same temp message
+            if (list.some((m: any) => m.id === tempId)) {
+              return prev;
+            }
+
+            list.push({
+              id: tempId,
+              conversation_id: convKeyId,
+              content: content.trim(),
+              timestamp: optimisticMessage.timestamp,
+              created_at: optimisticMessage.timestamp,
+              sender: optimisticMessage.sender,
+              senderType: optimisticMessage.senderType,
+              is_read: false,
+              _sending: true,
+              _failed: false,
+            });
+
+            last.data = { ...(last.data || {}), messages: list };
+            copy.pages[lastIdx] = last;
+            return copy;
           }
-
-          const copy = {
-            ...prev,
-            pages: prev.pages.map((p: any) => ({ ...p })),
-          };
-          const lastIdx = copy.pages.length - 1;
-          const last = { ...copy.pages[lastIdx] };
-          const list = Array.isArray(last?.data?.messages)
-            ? [...last.data.messages]
-            : [];
-          // Guard: avoid duplicating the same temp message
-          if (list.some((m: any) => m.id === tempId)) {
-            return prev;
-          }
-
-          list.push({
-            id: tempId,
-            conversation_id: convKeyId,
-            content: content.trim(),
-            timestamp: optimisticMessage.timestamp,
-            created_at: optimisticMessage.timestamp,
-            sender: optimisticMessage.sender,
-            senderType: optimisticMessage.senderType,
-            is_read: false,
-            _sending: true,
-            _failed: false,
-          });
-
-          last.data = { ...(last.data || {}), messages: list };
-          copy.pages[lastIdx] = last;
-          return copy;
-        });
+        );
 
         // Update conversations list optimistically (align with useInfiniteQuery cache shape)
         queryClient.setQueryData(conversationKeys.lists(), (prev: any) => {
@@ -373,55 +395,109 @@ fetchWithTimeout(apiPath("/messaging/send"), {
       if (convKeyId && tempId) {
         watchdog = setTimeout(() => {
           try {
-            queryClient.setQueryData(messageKeys.messages(convKeyId), (prev: any) => {
-              if (!prev?.pages) return prev;
-              const copy = { ...prev, pages: prev.pages.map((p: any) => ({ ...p })) };
-              for (let pi = 0; pi < copy.pages.length; pi++) {
-                const p = copy.pages[pi];
-                const msgs = Array.isArray(p?.data?.messages) ? p.data.messages.map((m: any) => {
-                  if (m?.id === tempId) {
-                    // Only flip if still sending
-                    if ((m as any)._sending) {
-                      return { ...m, _sending: false, _failed: true };
-                    }
-                  }
-                  return m;
-                }) : p?.data?.messages;
-                copy.pages[pi] = { ...p, data: { ...(p?.data || {}), messages: msgs } };
+            queryClient.setQueryData(
+              messageKeys.messages(convKeyId),
+              (prev: any) => {
+                if (!prev?.pages) return prev;
+                const copy = {
+                  ...prev,
+                  pages: prev.pages.map((p: any) => ({ ...p })),
+                };
+                for (let pi = 0; pi < copy.pages.length; pi++) {
+                  const p = copy.pages[pi];
+                  const msgs = Array.isArray(p?.data?.messages)
+                    ? p.data.messages.map((m: any) => {
+                        if (m?.id === tempId) {
+                          // Only flip if still sending
+                          if ((m as any)._sending) {
+                            return { ...m, _sending: false, _failed: true };
+                          }
+                        }
+                        return m;
+                      })
+                    : p?.data?.messages;
+                  copy.pages[pi] = {
+                    ...p,
+                    data: { ...(p?.data || {}), messages: msgs },
+                  };
+                }
+                return copy;
               }
-              return copy;
-            });
+            );
             try {
-              try { console.log('[MSG DEBUG] watchdog firing -> fail', { convKeyId, tempId, at: Date.now() }); } catch {}
-              if (typeof window !== 'undefined') {
+              try {
+                console.log("[MSG DEBUG] watchdog firing -> fail", {
+                  convKeyId,
+                  tempId,
+                  at: Date.now(),
+                });
+              } catch {}
+              if (typeof window !== "undefined") {
                 // Record that this attempt (startedAtNow) has failed, to ignore any late success for the same tempId
                 try {
-                  (window as any).__failedAfterAttempt__ = (window as any).__failedAfterAttempt__ || {};
+                  (window as any).__failedAfterAttempt__ =
+                    (window as any).__failedAfterAttempt__ || {};
                   (window as any).__failedAfterAttempt__[tempId] = startedAtNow;
                 } catch {}
-                window.dispatchEvent(new CustomEvent('message:failed', { detail: { id: tempId, content, conversationId: convKeyId, failedAt: Date.now(), startedAt: startedAtNow } }));
+                window.dispatchEvent(
+                  new CustomEvent("message:failed", {
+                    detail: {
+                      id: tempId,
+                      content,
+                      conversationId: convKeyId,
+                      failedAt: Date.now(),
+                      startedAt: startedAtNow,
+                    },
+                  })
+                );
               }
             } catch {}
           } catch {}
         }, 10000);
       }
 
-      return { tempId, conversationId: convKeyId, startedAt: startedAtNow, watchdog };
+      return {
+        tempId,
+        conversationId: convKeyId,
+        startedAt: startedAtNow,
+        watchdog,
+      };
     },
     onSuccess: (data, args, context) => {
       const { conversationId, tempId, content } = args as any;
-      const convKeyId = conversationId != null ? String(conversationId) : undefined;
+      const convKeyId =
+        conversationId != null ? String(conversationId) : undefined;
 
-      try { console.log('[MSG DEBUG] onSuccess', { convKeyId, tempId, at: Date.now(), data }); } catch {}
+      try {
+        console.log("[MSG DEBUG] onSuccess", {
+          convKeyId,
+          tempId,
+          at: Date.now(),
+          data,
+        });
+      } catch {}
 
       // If this tempId previously failed for this attempt and this isn't an explicit retry, ignore late success
       try {
         const isRetry = (args as any)?.isRetry === true;
-        const failedMap = (typeof window !== 'undefined') ? (window as any).__failedAfterAttempt__ : undefined;
-        const failedStartedAt = tempId && failedMap ? failedMap[String(tempId)] : undefined;
+        const failedMap =
+          typeof window !== "undefined"
+            ? (window as any).__failedAfterAttempt__
+            : undefined;
+        const failedStartedAt =
+          tempId && failedMap ? failedMap[String(tempId)] : undefined;
         const ctxStartedAt = (context as any)?.startedAt as number | undefined;
-        if (!isRetry && tempId && failedStartedAt && ctxStartedAt && failedStartedAt === ctxStartedAt) {
-          console.log('[MSG DEBUG] onSuccess ignored due to prior fail latch for same attempt', { tempId, failedStartedAt, ctxStartedAt });
+        if (
+          !isRetry &&
+          tempId &&
+          failedStartedAt &&
+          ctxStartedAt &&
+          failedStartedAt === ctxStartedAt
+        ) {
+          console.log(
+            "[MSG DEBUG] onSuccess ignored due to prior fail latch for same attempt",
+            { tempId, failedStartedAt, ctxStartedAt }
+          );
           return;
         }
       } catch {}
@@ -435,26 +511,51 @@ fetchWithTimeout(apiPath("/messaging/send"), {
       // Clear sending state and input
       ui.setSendingMessage(false);
       ui.clearMessageInput();
-      console.log('[MSG DEBUG] Cleared input and sending state');
+      console.log("[MSG DEBUG] Cleared input and sending state");
 
-      // Best-effort: clear sending/failed flags on the optimistic temp message in original conversation
+      // Best-effort: clear sending/failed flags and update ID on the optimistic temp message
       if (convKeyId && tempId) {
         try {
-          queryClient.setQueryData(messageKeys.messages(convKeyId), (prev: any) => {
-            if (!prev?.pages) return prev;
-            const copy = { ...prev, pages: prev.pages.map((p: any) => ({ ...p })) };
-            for (let pi = 0; pi < copy.pages.length; pi++) {
-              const p = copy.pages[pi];
-              const msgs = Array.isArray(p?.data?.messages) ? p.data.messages.map((m: any) => {
-                if (m?.id === tempId) {
-                  return { ...m, _sending: false, _failed: false };
-                }
-                return m;
-              }) : p?.data?.messages;
-              copy.pages[pi] = { ...p, data: { ...(p?.data || {}), messages: msgs } };
+          // Extract the real message ID from the server response
+          const realMsgId: string | undefined =
+            (data as any)?.data?.message?.id ||
+            (data as any)?.message?.id ||
+            undefined;
+
+          queryClient.setQueryData(
+            messageKeys.messages(convKeyId),
+            (prev: any) => {
+              if (!prev?.pages) return prev;
+              const copy = {
+                ...prev,
+                pages: prev.pages.map((p: any) => ({ ...p })),
+              };
+              for (let pi = 0; pi < copy.pages.length; pi++) {
+                const p = copy.pages[pi];
+                const msgs = Array.isArray(p?.data?.messages)
+                  ? p.data.messages.map((m: any) => {
+                      if (m?.id === tempId) {
+                        // Update the message with real ID and clear sending flags
+                        return {
+                          ...m,
+                          id: realMsgId || m.id, // Use real ID if available
+                          _sending: false,
+                          _failed: false,
+                          isRead: true, // Mark as read since sender sent it
+                          is_read: true,
+                        };
+                      }
+                      return m;
+                    })
+                  : p?.data?.messages;
+                copy.pages[pi] = {
+                  ...p,
+                  data: { ...(p?.data || {}), messages: msgs },
+                };
+              }
+              return copy;
             }
-            return copy;
-          });
+          );
         } catch {}
       }
 
@@ -474,18 +575,22 @@ fetchWithTimeout(apiPath("/messaging/send"), {
       })();
 
       if (derivedNewConvId && derivedNewConvId !== conversationId) {
-        const activeId = useMessagingUIStore.getState().activeConversationId as string | null;
-        const isTempActive = !!activeId && (
-          String(activeId).startsWith("temp-") ||
-          String(activeId).startsWith("temp_conv-") ||
-          String(activeId).startsWith("temp-conv-")
-        );
+        const activeId = useMessagingUIStore.getState().activeConversationId as
+          | string
+          | null;
+        const isTempActive =
+          !!activeId &&
+          (String(activeId).startsWith("temp-") ||
+            String(activeId).startsWith("temp_conv-") ||
+            String(activeId).startsWith("temp-conv-"));
         const newId = String(derivedNewConvId);
         const notifySelected = (id: string) => {
           try {
             if (typeof window !== "undefined") {
               window.dispatchEvent(
-                new CustomEvent("conversation:selected", { detail: { conversationId: id } })
+                new CustomEvent("conversation:selected", {
+                  detail: { conversationId: id },
+                })
               );
             }
           } catch {}
@@ -503,7 +608,10 @@ fetchWithTimeout(apiPath("/messaging/send"), {
         // Also broadcast a reconciliation event for any listeners
         try {
           if (typeof window !== "undefined") {
-            const sourceTempId = activeId && String(activeId).startsWith("temp-") ? activeId : tempId;
+            const sourceTempId =
+              activeId && String(activeId).startsWith("temp-")
+                ? activeId
+                : tempId;
             if (sourceTempId) {
               window.dispatchEvent(
                 new CustomEvent("conversation:created", {
@@ -516,10 +624,17 @@ fetchWithTimeout(apiPath("/messaging/send"), {
 
         // Seed/migrate messages into the new conversation cache so the sent text remains visible
         const nowIso = new Date().toISOString();
-        const realMsgId: string | undefined = (data as any)?.data?.message?.id || (data as any)?.message?.id || undefined;
+        const realMsgId: string | undefined =
+          (data as any)?.data?.message?.id ||
+          (data as any)?.message?.id ||
+          undefined;
         queryClient.setQueryData(messageKeys.messages(newId), (prev: any) => {
           const optimisticSender = currentUser
-            ? { id: currentUser.id, username: currentUser.username || "you", name: currentUser.name || "You" }
+            ? {
+                id: currentUser.id,
+                username: currentUser.username || "you",
+                name: currentUser.name || "You",
+              }
             : { id: "current-user", username: "you", name: "You" };
 
           // Primary message (the one just sent)
@@ -534,11 +649,13 @@ fetchWithTimeout(apiPath("/messaging/send"), {
             is_read: true,
           } as any;
 
-        
           // Migrate any temp messages if present
           let migrated: any[] = [];
           try {
-            const sourceTempId = activeId && String(activeId).startsWith("temp-") ? activeId : tempId;
+            const sourceTempId =
+              activeId && String(activeId).startsWith("temp-")
+                ? activeId
+                : tempId;
             if (sourceTempId) {
               const list = getTempMessages(String(sourceTempId));
               if (Array.isArray(list) && list.length > 0) {
@@ -557,14 +674,20 @@ fetchWithTimeout(apiPath("/messaging/send"), {
           } catch {}
 
           // Build next cache state
-          const messagesToInsert = migrated.length > 0 ? migrated : [primaryMsg];
+          const messagesToInsert =
+            migrated.length > 0 ? migrated : [primaryMsg];
           if (!prev || !prev.pages || prev.pages.length === 0) {
             return {
               pages: [
                 {
                   data: {
                     messages: messagesToInsert,
-                    pagination: { page: 1, limit: 50, total: messagesToInsert.length, hasMore: false },
+                    pagination: {
+                      page: 1,
+                      limit: 50,
+                      total: messagesToInsert.length,
+                      hasMore: false,
+                    },
                   },
                 },
               ],
@@ -572,10 +695,15 @@ fetchWithTimeout(apiPath("/messaging/send"), {
             };
           }
 
-          const copy = { ...prev, pages: prev.pages.map((p: any) => ({ ...p })) };
+          const copy = {
+            ...prev,
+            pages: prev.pages.map((p: any) => ({ ...p })),
+          };
           const lastIdx = copy.pages.length - 1;
           const last = { ...copy.pages[lastIdx] };
-          const list = Array.isArray(last?.data?.messages) ? [...last.data.messages] : [];
+          const list = Array.isArray(last?.data?.messages)
+            ? [...last.data.messages]
+            : [];
           // If we have a temp message already in list, reconcile its id to realMsgId
           if (tempId && realMsgId) {
             for (let i = 0; i < list.length; i++) {
@@ -595,21 +723,34 @@ fetchWithTimeout(apiPath("/messaging/send"), {
         // Update conversations list: replace temp conversation with real or insert minimal
         const nowIso2 = new Date().toISOString();
         queryClient.setQueryData(conversationKeys.lists(), (prev: any) => {
-          const empty = { pages: [{ conversations: [], nextCursor: null }], pageParams: [null] };
+          const empty = {
+            pages: [{ conversations: [], nextCursor: null }],
+            pageParams: [null],
+          };
           const curr = prev && prev.pages ? prev : empty;
           const pages = curr.pages.map((pg: any) => ({
             ...pg,
-            conversations: Array.isArray(pg.conversations) ? [...pg.conversations] : [],
+            conversations: Array.isArray(pg.conversations)
+              ? [...pg.conversations]
+              : [],
           }));
 
           // Find temp conversation by the active temp conversation id, not the temp message id
           let foundPageIdx = -1;
           let foundIdx = -1;
-          const sourceTempConvId = activeId && String(activeId).startsWith("temp-") ? activeId : undefined;
+          const sourceTempConvId =
+            activeId && String(activeId).startsWith("temp-")
+              ? activeId
+              : undefined;
           if (sourceTempConvId) {
             pages.forEach((pg: any, pIdx: number) => {
-              const idx = pg.conversations.findIndex((c: any) => c.id === sourceTempConvId);
-              if (idx !== -1) { foundPageIdx = pIdx; foundIdx = idx; }
+              const idx = pg.conversations.findIndex(
+                (c: any) => c.id === sourceTempConvId
+              );
+              if (idx !== -1) {
+                foundPageIdx = pIdx;
+                foundIdx = idx;
+              }
             });
           }
 
@@ -618,7 +759,11 @@ fetchWithTimeout(apiPath("/messaging/send"), {
             content: (content || "").trim(),
             timestamp: nowIso2,
             sender: currentUser
-              ? { id: currentUser.id, username: currentUser.username || "you", name: currentUser.name || "You" }
+              ? {
+                  id: currentUser.id,
+                  username: currentUser.username || "you",
+                  name: currentUser.name || "You",
+                }
               : { id: "current-user", username: "you", name: "You" },
             senderType: "user",
             isRead: true,
@@ -626,7 +771,9 @@ fetchWithTimeout(apiPath("/messaging/send"), {
           } as any;
 
           if (foundIdx !== -1) {
-            const conv = { ...(pages[foundPageIdx].conversations[foundIdx] || {}) } as any;
+            const conv = {
+              ...(pages[foundPageIdx].conversations[foundIdx] || {}),
+            } as any;
             conv.id = newId;
             conv.lastMessage = minimalLast;
             conv.updated_at = nowIso2;
@@ -658,7 +805,9 @@ fetchWithTimeout(apiPath("/messaging/send"), {
         try {
           if (typeof window !== "undefined") {
             window.dispatchEvent(
-              new CustomEvent("messages:appended", { detail: { conversationId: newId } })
+              new CustomEvent("messages:appended", {
+                detail: { conversationId: newId },
+              })
             );
           }
         } catch {}
@@ -666,37 +815,67 @@ fetchWithTimeout(apiPath("/messaging/send"), {
 
       // Always invalidate conversations to show updated last message
       queryClient.invalidateQueries({ queryKey: conversationKeys.all });
-      
-      // For existing conversations, invalidate messages immediately
+
+      // For existing conversations, DON'T invalidate messages immediately
+      // The optimistic update already added the message, and socket events will keep it synced
+      // Invalidating here causes the message to disappear until refetch completes
+      // Instead, we'll let the socket handler update the cache when MESSAGE_NEW arrives
       const targetConvId = derivedNewConvId || conversationId;
       if (targetConvId) {
-        queryClient.invalidateQueries({
-          queryKey: messageKeys.messages(String(targetConvId)),
-        });
+        // Delay refetch to allow socket event to arrive first (non-blocking background refresh)
+        setTimeout(() => {
+          queryClient.refetchQueries({
+            queryKey: messageKeys.messages(String(targetConvId)),
+          });
+        }, 1000);
       }
 
       // Broadcast success for latch clearing (for both real id and temp id)
       try {
-        if (typeof window !== 'undefined') {
-          const realMsgId: string | undefined = (data as any)?.data?.message?.id || (data as any)?.message?.id || undefined;
+        if (typeof window !== "undefined") {
+          const realMsgId: string | undefined =
+            (data as any)?.data?.message?.id ||
+            (data as any)?.message?.id ||
+            undefined;
           const ids: string[] = [];
           if (realMsgId) ids.push(String(realMsgId));
           if (tempId) ids.push(String(tempId));
-          try { console.log('[MSG DEBUG] dispatch message:succeeded', { ids }); } catch {}
+          try {
+            console.log("[MSG DEBUG] dispatch message:succeeded", { ids });
+          } catch {}
           ids.forEach((id) => {
-            window.dispatchEvent(new CustomEvent('message:succeeded', { detail: { id } }));
+            window.dispatchEvent(
+              new CustomEvent("message:succeeded", { detail: { id } })
+            );
           });
           // Clear failed map entry on success
-          try { if (tempId && (window as any).__failedAfterAttempt__) { delete (window as any).__failedAfterAttempt__[tempId]; } } catch {}
+          try {
+            if (tempId && (window as any).__failedAfterAttempt__) {
+              delete (window as any).__failedAfterAttempt__[tempId];
+            }
+          } catch {}
 
           // Remove any quarantine entries for this content/conv/user on success (manual retry path)
           try {
             const userId = currentUser?.id ? String(currentUser.id) : undefined;
             if (userId && convKeyId && content) {
-              const raw = window.localStorage.getItem('MSG_QUARANTINE');
+              const raw = window.localStorage.getItem("MSG_QUARANTINE");
               const arr = raw ? JSON.parse(raw) : [];
-              const next = Array.isArray(arr) ? arr.filter((q: any) => !(q && q.convId === convKeyId && q.userId === userId && q.content === content)) : [];
-              window.localStorage.setItem('MSG_QUARANTINE', JSON.stringify(next));
+              const next = Array.isArray(arr)
+                ? arr.filter(
+                    (q: any) =>
+                      !(
+                        q &&
+                        q.convId === convKeyId &&
+                        q.userId === userId &&
+                        q.content === content
+                      )
+                  )
+                : [];
+              window.localStorage.setItem(
+                "MSG_QUARANTINE",
+                JSON.stringify(next)
+              );
             }
           } catch {}
         }
@@ -706,7 +885,13 @@ fetchWithTimeout(apiPath("/messaging/send"), {
       // Clear sending state
       ui.setSendingMessage(false);
 
-      try { console.log('[MSG DEBUG] onError', { err: String((error as any)?.message || error), args, at: Date.now() }); } catch {}
+      try {
+        console.log("[MSG DEBUG] onError", {
+          err: String((error as any)?.message || error),
+          args,
+          at: Date.now(),
+        });
+      } catch {}
 
       // Clear watchdog
       try {
@@ -717,22 +902,24 @@ fetchWithTimeout(apiPath("/messaging/send"), {
       // Show user-friendly error notification
       const addNotification = useNotificationStore.getState().addNotification;
       const isRateLimit = (error as any)?.isRateLimit;
-      
+
       if (isRateLimit) {
         addNotification({
           type: "warning",
           title: "Terlalu Cepat",
-          message: "Anda mengirim pesan terlalu cepat. Silakan coba kirim ulang beberapa saat lagi.",
+          message:
+            "Anda mengirim pesan terlalu cepat. Silakan coba kirim ulang beberapa saat lagi.",
           persistent: false,
-          autoHideDelay: 8000
+          autoHideDelay: 8000,
         });
       } else {
         addNotification({
           type: "error",
           title: "Gagal Mengirim Pesan",
-          message: "Pesan gagal dikirim. Ketuk ikon (!) pada pesan untuk mengirim ulang secara manual.",
+          message:
+            "Pesan gagal dikirim. Ketuk ikon (!) pada pesan untuk mengirim ulang secara manual.",
           persistent: false,
-          autoHideDelay: 5000
+          autoHideDelay: 5000,
         });
       }
 
@@ -741,45 +928,102 @@ fetchWithTimeout(apiPath("/messaging/send"), {
       const convKeyId =
         conversationId != null ? String(conversationId) : undefined;
       const applyFail = () => {
-        try { console.log('[MSG DEBUG] applyFail()', { convKeyId, tempId, at: Date.now() }); } catch {}
+        try {
+          console.log("[MSG DEBUG] applyFail()", {
+            convKeyId,
+            tempId,
+            at: Date.now(),
+          });
+        } catch {}
         if (convKeyId && tempId) {
           // Mark optimistic message as failed (keep it visible with exclamation icon)
-          queryClient.setQueryData(messageKeys.messages(convKeyId), (prev: any) => {
-            if (!prev?.pages) return prev;
-            const copy = { ...prev, pages: prev.pages.map((p: any) => ({ ...p })) };
-            for (let pi = 0; pi < copy.pages.length; pi++) {
-              const p = copy.pages[pi];
-              const msgs = Array.isArray(p?.data?.messages) ? p.data.messages.map((m: any) => {
-                if (m?.id === tempId) {
-                  return { ...m, _sending: false, _failed: true };
-                }
-                return m;
-              }) : p?.data?.messages;
-              copy.pages[pi] = { ...p, data: { ...(p?.data || {}), messages: msgs } };
+          queryClient.setQueryData(
+            messageKeys.messages(convKeyId),
+            (prev: any) => {
+              if (!prev?.pages) return prev;
+              const copy = {
+                ...prev,
+                pages: prev.pages.map((p: any) => ({ ...p })),
+              };
+              for (let pi = 0; pi < copy.pages.length; pi++) {
+                const p = copy.pages[pi];
+                const msgs = Array.isArray(p?.data?.messages)
+                  ? p.data.messages.map((m: any) => {
+                      if (m?.id === tempId) {
+                        return { ...m, _sending: false, _failed: true };
+                      }
+                      return m;
+                    })
+                  : p?.data?.messages;
+                copy.pages[pi] = {
+                  ...p,
+                  data: { ...(p?.data || {}), messages: msgs },
+                };
+              }
+              return copy;
             }
-            return copy;
-          });
+          );
           // Broadcast failure so hooks can latch the failure state
           try {
-            if (typeof window !== 'undefined') {
-              try { console.log('[MSG DEBUG] dispatch message:failed', { tempId, convKeyId }); } catch {}
+            if (typeof window !== "undefined") {
+              try {
+                console.log("[MSG DEBUG] dispatch message:failed", {
+                  tempId,
+                  convKeyId,
+                });
+              } catch {}
               // Record failed attempt to block late success
               try {
-                (window as any).__failedAfterAttempt__ = (window as any).__failedAfterAttempt__ || {};
-                (window as any).__failedAfterAttempt__[tempId] = (context as any)?.startedAt || Date.now();
+                (window as any).__failedAfterAttempt__ =
+                  (window as any).__failedAfterAttempt__ || {};
+                (window as any).__failedAfterAttempt__[tempId] =
+                  (context as any)?.startedAt || Date.now();
               } catch {}
-              window.dispatchEvent(new CustomEvent('message:failed', { detail: { id: tempId, content, conversationId: convKeyId, failedAt: Date.now(), startedAt: (context as any)?.startedAt } }));
+              window.dispatchEvent(
+                new CustomEvent("message:failed", {
+                  detail: {
+                    id: tempId,
+                    content,
+                    conversationId: convKeyId,
+                    failedAt: Date.now(),
+                    startedAt: (context as any)?.startedAt,
+                  },
+                })
+              );
 
               // Persist quarantine so a hard refresh still hides server echo until manual retry
               try {
-                const userId = currentUser?.id ? String(currentUser.id) : undefined;
+                const userId = currentUser?.id
+                  ? String(currentUser.id)
+                  : undefined;
                 if (userId && convKeyId && content) {
-                  const raw = window.localStorage.getItem('MSG_QUARANTINE');
+                  const raw = window.localStorage.getItem("MSG_QUARANTINE");
                   const arr = raw ? JSON.parse(raw) : [];
                   const now = Date.now();
-                  const entry = { convId: convKeyId, userId, content, failedAt: now };
-                  const next = Array.isArray(arr) ? [...arr.filter((q: any) => !(q && q.convId === convKeyId && q.userId === userId && q.content === content)), entry] : [entry];
-                  window.localStorage.setItem('MSG_QUARANTINE', JSON.stringify(next));
+                  const entry = {
+                    convId: convKeyId,
+                    userId,
+                    content,
+                    failedAt: now,
+                  };
+                  const next = Array.isArray(arr)
+                    ? [
+                        ...arr.filter(
+                          (q: any) =>
+                            !(
+                              q &&
+                              q.convId === convKeyId &&
+                              q.userId === userId &&
+                              q.content === content
+                            )
+                        ),
+                        entry,
+                      ]
+                    : [entry];
+                  window.localStorage.setItem(
+                    "MSG_QUARANTINE",
+                    JSON.stringify(next)
+                  );
                 }
               } catch {}
             }
@@ -789,7 +1033,8 @@ fetchWithTimeout(apiPath("/messaging/send"), {
 
       // Enforce minimum 600ms sending display to ensure clock visibility
       const startedAt = (context as any)?.startedAt as number | undefined;
-      const elapsed = typeof startedAt === 'number' ? Date.now() - startedAt : 0;
+      const elapsed =
+        typeof startedAt === "number" ? Date.now() - startedAt : 0;
       const minMs = 600;
       if (elapsed < minMs) {
         setTimeout(applyFail, minMs - elapsed);
@@ -815,14 +1060,14 @@ export function useMarkAsReadMutation(conversationId?: string) {
       }
 
       const csrfToken = getCookie("XSRF-TOKEN");
-const readResp = await fetch(
+      const readResp = await fetch(
         apiPath(`/messaging/conversations/${conversationId}/read`),
         {
           method: "PUT",
           credentials: "include",
-          headers: { 
+          headers: {
             "Content-Type": "application/json",
-            ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {})
+            ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
           },
           body: JSON.stringify({ messageIds }),
         }

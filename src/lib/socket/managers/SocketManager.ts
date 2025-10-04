@@ -384,7 +384,7 @@ export class SocketManager implements ISocketManager {
     // Convert to standard error format
     const errorObj = new SocketClientError(
       "authentication",
-      error?.error?.code || error?.code || SOCKET_CLIENT_ERROR_CODES.AUTH_FAILED,
+      error?.error?.code || error?.code || SOCKET_CLIENT_ERROR_CODES.AUTHENTICATION_FAILED,
       error?.error?.message || error?.message || "Authentication failed",
       false
     );

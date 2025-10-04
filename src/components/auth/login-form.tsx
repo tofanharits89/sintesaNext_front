@@ -194,6 +194,9 @@ export default function LoginForm() {
 
         // Set flag to indicate user just logged in (for socket connection timing)
         sessionStorage.setItem('just_logged_in', 'true');
+        
+        // Set timestamp to help middleware detect fresh login
+        sessionStorage.setItem('login_timestamp', Date.now().toString());
 
         // Dispatch auth login event for socket system
         dispatchAuthEvent("login", {
@@ -203,6 +206,9 @@ export default function LoginForm() {
 
         // Show loading state and redirect
         setIsRedirecting(true);
+        
+        // Small delay to ensure cookies are set properly
+        await new Promise(resolve => setTimeout(resolve, 150));
         
         // Use Next.js router for smooth client-side navigation - go directly to utama
         router.push("/dashboard/utama");

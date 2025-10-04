@@ -341,6 +341,11 @@ export const QueryManagement = React.memo(function QueryManagement({
     }
   }, [onRefreshReady, handleRefresh]);
 
+  // Automatically refetch data when component mounts or scope changes
+  React.useEffect(() => {
+    refetch();
+  }, [scope, refetch]);
+
   // Show loading skeleton on initial load
   if (isLoading && queries.length === 0) {
     return <QueryManagementSkeleton />;
