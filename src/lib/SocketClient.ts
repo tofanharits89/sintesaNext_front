@@ -1,24 +1,23 @@
 "use client";
 
 /**
- * Legacy SocketClient - Backward Compatibility Wrapper
+ * Simplified SocketClient - Backward Compatibility Wrapper
  *
  * This file maintains backward compatibility with the original SocketClient API
- * while internally using the new modular enterprise-grade architecture.
+ * while internally using the simplified architecture with only 3 essential managers.
  */
 
-// Re-export everything from the new modular implementation
+// Re-export from the simplified implementation
 export {
   SocketClient,
-  socketClient
-} from "./socket/index";
-
-export type { SocketState } from "./socket/index";
-export type { SocketClientConfig } from "./socket/types";
-export type { ConnectionStats } from "./socket/types";
+  socketClient,
+  type SocketState,
+  type SimpleSocketClientConfig as SocketClientConfig,
+  type ConnectionStats
+} from "./socket/SimpleSocketClient";
 
 // Re-export utilities for compatibility with existing imports
-import { socketClient } from "./socket/index";
+import { socketClient } from "./socket/SimpleSocketClient";
 
 // Backward compatibility exports
 export { socketClient as default };
@@ -37,8 +36,7 @@ export function disconnectSocket() {
 }
 
 export function reconnectSocket() {
-  socketClient.disconnect();
-  return socketClient.connect().catch(() => {});
+  return socketClient.reconnect().catch(() => {});
 }
 
 export function isSocketConnected() {
@@ -51,6 +49,7 @@ export function getSocketConnectionState() {
     case "connected":
       return "connected";
     case "connecting":
+    case "reconnecting":
       return "connecting";
     default:
       return "disconnected";
@@ -62,7 +61,7 @@ export function getSocketState() {
 }
 
 export function resetSocketReconnection() {
-  socketClient.connect().catch(() => {});
+  return socketClient.reconnect().catch(() => {});
 }
 
 export function cleanupSocket() {

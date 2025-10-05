@@ -37,10 +37,10 @@ class CircuitBreaker {
   private async performHealthCheck(): Promise<boolean> {
     const ac = new AbortController();
     const timeout = setTimeout(() => ac.abort(), 2000);
-    
+
     try {
-      const resp = await fetch(backendPath("/auth/health"), {
-        method: "HEAD",
+      const resp = await fetch(backendPath("/health"), {
+        method: "GET",
         cache: "no-store",
         signal: ac.signal,
       });

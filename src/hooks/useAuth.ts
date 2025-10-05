@@ -119,6 +119,24 @@ export function useAuth() {
         }
       }
     },
+    onMutate: async () => {
+      // ENTERPRISE PATTERN: Optimistic update - clear auth state BEFORE API call completes
+      // This prevents the glimpse by immediately updating UI
+      await queryClient.cancelQueries({ queryKey: queryKeyFactories.user.profile() });
+      
+      // Immediately set auth state to logged out
+      queryClient.setQueryData(queryKeyFactories.user.profile(), {
+        isAuthenticated: false,
+        user: null
+      });
+
+      // Clear validation cache immediately
+      import("@/utils/auth-state-manager").then(({ simpleAuthValidator }) => {
+        simpleAuthValidator.clearCache();
+      }).catch(() => {});
+
+      return { previousAuth: queryClient.getQueryData(queryKeyFactories.user.profile()) };
+    },
     onSuccess: () => {
       cacheInvalidation.invalidateUser(queryClient);
       queryClient.invalidateQueries({ queryKey: queryKeyFactories.user.profile() });
@@ -151,7 +169,11 @@ export function useAuth() {
 
       toast.success("Anda telah keluar");
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // Rollback optimistic update on error
+      if (context?.previousAuth) {
+        queryClient.setQueryData(queryKeyFactories.user.profile(), context.previousAuth);
+      }
       logger.error("Logout error", error);
       toast.error("Gagal logout");
     },

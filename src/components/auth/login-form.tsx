@@ -22,6 +22,7 @@ import { withBasePath } from "@/lib/base-path";
 import { prefetchCsrf, getCookie } from "@/lib/httpClient";
 import { apiPath } from "@/lib/base-path";
 import { dispatchAuthEvent } from "@/utils/auth-utils";
+import { socketClient } from "@/lib/SocketClient";
 import Image from "next/image";
 import { LoginLoading } from "@/components/ui/login-loading";
 import { Loader2 } from "lucide-react";
@@ -212,6 +213,18 @@ export default function LoginForm() {
         
         // Use Next.js router for smooth client-side navigation - go directly to utama
         router.push("/dashboard/utama");
+
+        // Trigger socket connection after successful login
+        setTimeout(() => {
+          console.log('[LoginForm] Triggering socket connection after login');
+          socketClient.connect()
+            .then(() => {
+              console.log('[LoginForm] Socket connection successful after login');
+            })
+            .catch((error: Error) => {
+              console.error('[LoginForm] Socket connection failed after login:', error);
+            });
+        }, 1500); // Allow time for navigation and cookie processing
       } else {
         console.log('Login failed with data:', data);
         toast.error(data?.error || data?.message || "Login gagal. Periksa kredensial dan captcha");

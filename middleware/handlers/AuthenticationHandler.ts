@@ -40,11 +40,11 @@ export class AuthenticationHandler {
     const fromRedirect = request.nextUrl.searchParams.has("from_redirect");
     const reasonParam = request.nextUrl.searchParams.get("reason");
 
-    // Skip auth check for loop prevention
-    if (fromRedirect || reasonParam === "session_expired" || reasonParam) {
+    // Skip auth check for loop prevention and explicit logout
+    if (fromRedirect || reasonParam === "session_expired" || reasonParam === "logout" || reasonParam) {
       if (MiddlewareConfig.debugAuth) {
         console.debug(
-          "[Auth] Skipping login page auth check - loop prevention",
+          "[Auth] Skipping login page auth check - loop prevention or explicit logout",
           {
             fromRedirect,
             reason: reasonParam,
@@ -54,6 +54,7 @@ export class AuthenticationHandler {
       }
 
       const res = NextResponse.next();
+      // Always expire auth cookies when on login page with reason param
       CookieUtils.expireAuthCookies(res);
       return res;
     }

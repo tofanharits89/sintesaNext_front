@@ -5,8 +5,8 @@ import { backendPath } from "@/lib/backend";
 // HEAD for fast probes; GET returns JSON status
 export async function HEAD(_request: NextRequest) {
   try {
-    const resp = await fetch(backendPath("/auth/health"), {
-      method: "HEAD",
+    const resp = await fetch(backendPath("/health"), {
+      method: "GET",
       cache: "no-store",
     });
     return new NextResponse(null, { status: resp.ok ? 200 : resp.status || 503 });
@@ -17,7 +17,7 @@ export async function HEAD(_request: NextRequest) {
 
 export async function GET(_request: NextRequest) {
   try {
-    const resp = await fetch(backendPath("/auth/health"), {
+    const resp = await fetch(backendPath("/health"), {
       method: "GET",
       cache: "no-store",
     });

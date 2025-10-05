@@ -4,7 +4,7 @@
  * and ensure consistent state management
  */
 
-import Logger from "./socket/utils/Logger";
+import logger from "@/lib/logger";
 
 interface AuthEvent {
   type: 'token_refresh_start' | 'token_refresh_success' | 'token_refresh_error' | 'auth_expired' | 'login_start' | 'login_success';
@@ -16,17 +16,6 @@ class AuthEventCoordinator {
   private eventQueue: AuthEvent[] = [];
   private isProcessing = false;
   private eventListeners: Map<string, Function[]> = new Map();
-  private logger: Logger;
-
-  constructor() {
-    this.logger = new Logger({
-      prefix: '[AuthEventCoordinator]',
-      enabled: true,
-      level: 'info',
-      maxLogEntries: 500,
-      includeTimestamp: true
-    });
-  }
 
   /**
    * Add event listener for auth events
@@ -81,7 +70,7 @@ class AuthEventCoordinator {
    * Process individual event
    */
   private async processEvent(event: AuthEvent): Promise<void> {
-    this.logger.debug(`Processing auth event: ${event.type}`, {
+    logger.debug(`[AuthEventCoordinator] Processing auth event: ${event.type}`, {
       timestamp: event.timestamp,
       data: event.data
     });
@@ -92,7 +81,7 @@ class AuthEventCoordinator {
       try {
         await listener(event);
       } catch (error: any) {
-        this.logger.error(`Error in auth event listener for ${event.type}:`, error);
+        logger.error(`[AuthEventCoordinator] Error in auth event listener for ${event.type}:`, error);
       }
     }
   }
@@ -126,7 +115,7 @@ class AuthEventCoordinator {
    */
   clearQueue(): void {
     this.eventQueue.length = 0;
-    this.logger.info("Auth event queue cleared");
+    logger.info("[AuthEventCoordinator] Auth event queue cleared");
   }
 }
 

@@ -37,12 +37,11 @@ export const useSocket = (): UseSocketReturn => {
 
   // Sync state with socket client
   const syncState = useCallback(() => {
-    const instance = socketClient.getInstance();
     setState({
-      socket: instance.getSocket(),
-      isConnected: instance.isConnected(),
-      connectionState: instance.getState(),
-      error: instance.getState() === "error" ? "Connection error" : null,
+      socket: socketClient.getSocket(),
+      isConnected: socketClient.isConnected(),
+      connectionState: socketClient.getState(),
+      error: socketClient.getState() === "error" ? "Connection error" : null,
     });
   }, []);
 

@@ -1,14 +1,11 @@
 "use client";
 
 import { Socket } from "socket.io-client";
-import { socketClient } from "./socket/index";
-import { SocketClient } from "./socket/SocketClient";
+import { socketClient, SocketClient, type SocketState } from "./socket/SimpleSocketClient";
 import { getAuthTokenFromCookie, clearAuthToken } from "@/utils/auth-utils";
 
-// Define SocketState type directly to avoid circular dependency
-export type SocketState = "disconnected" | "connecting" | "connected" | "error";
-
-// Re-export auth utilities for backward compatibility
+// Re-export types and utilities for backward compatibility
+export type { SocketState };
 export { getAuthTokenFromCookie, clearAuthToken };
 
 

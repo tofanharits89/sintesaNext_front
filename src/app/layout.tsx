@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ConditionalToaster } from "@/components/ui/conditional-toaster";
@@ -17,16 +16,8 @@ import { performanceMonitor } from "@/utils/performance-monitor";
 import { preloadOnIdle } from "@/utils/chunk-preloader";
 import { RoutePreloader } from "@/components/ui/route-preloader";
 import { ClientInit } from "@/components/client-init";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { GlobalSocketInitializer } from "@/components/socket/GlobalSocketInitializer";
+import { geistSans, geistMono } from "./fonts";
 
 export const metadata: Metadata = {
   title: "sintesaNEXT",
@@ -65,6 +56,7 @@ export default async function RootLayout({
                 <CheckBackend />
               </ComponentErrorBoundary>
               <ComponentErrorBoundary>
+                <GlobalSocketInitializer />
                 <SessionMonitor />
                 <AppShell {...(initialUser ? { initialUser } : {})}>
                   {children}

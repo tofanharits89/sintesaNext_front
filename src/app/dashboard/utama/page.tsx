@@ -109,6 +109,9 @@ export default function DashboardUtamaPage() {
   const router = useRouter();
   const [selectedKanwil, setSelectedKanwil] = useState<string>("semua");
 
+  // Socket connection is handled by DashboardSocketInitializer in DashboardProvider
+  // No need for page-specific socket initialization
+
   // Fetch Quick Stats data using React Query
   const {
     data: quickStats,

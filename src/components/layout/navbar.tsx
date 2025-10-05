@@ -277,6 +277,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
 
   return (
     <>
+      {/* Full-screen overlay during logout to prevent glimpse of protected content */}
       <LoginLoading isVisible={isLoggingOut} message="Mengeluarkan..." />
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-14 items-center gap-3 px-4">
@@ -646,24 +647,34 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                   }`}
                   onClick={async () => {
                     if (isLoggingOut) return;
+
+                    // ENTERPRISE PATTERN: Optimistic UI update first
+                    // This immediately hides protected content before any async operations
                     const { QueryClient } = await import(
                       "@tanstack/react-query"
                     );
+                    const queryClient = new QueryClient();
 
-                    // Proactively disconnect socket so backend presence updates immediately
+                    // 1. SYNCHRONOUSLY clear auth state to trigger immediate re-render
+                    queryClient.setQueryData(["current-user-profile"], {
+                      isAuthenticated: false,
+                      user: null,
+                    });
+
+                    // 2. Disconnect socket immediately
                     try {
                       socketClient.disconnect();
                     } catch {}
 
-                    // ENTERPRISE BEST PRACTICE: Client-side cookie deletion as backup
-                    // This ensures cookies are cleared even if Set-Cookie headers fail
+                    // 3. Dispatch logout event synchronously
+                    dispatchAuthEvent("logout", { reason: "user_action" });
+
+                    // 4. Clear client-side cookies synchronously (best effort)
                     const deleteCookie = (name: string) => {
-                      // More comprehensive cookie clearing
                       const domains = [
                         window.location.hostname,
                         "." + window.location.hostname,
                         window.location.hostname.split(".").slice(-2).join("."),
-                        // Try localhost variations
                         "localhost",
                         "127.0.0.1",
                       ];
@@ -671,17 +682,13 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
 
                       for (const domain of domains) {
                         for (const path of paths) {
-                          // HttpOnly cookies
                           document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain}; HttpOnly; Secure`;
-                          // Non-HttpOnly cookies
                           document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain}; SameSite=Lax`;
-                          // Fallback
                           document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path};`;
                         }
                       }
                     };
 
-                    // Delete all auth cookies with multiple names
                     const cookiesToDelete = [
                       "accessToken",
                       "refreshToken",
@@ -695,37 +702,49 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                       "auth_user",
                       "XSRF-TOKEN",
                       "_csrf",
-                      "auth_user",
                       "user_data",
                     ];
                     cookiesToDelete.forEach(deleteCookie);
 
-                    // Clear React Query cache for user profile to prevent stale data
-                    const queryClient = new QueryClient();
-                    queryClient.setQueryData(
-                      ["current-user-profile"],
-                      undefined
-                    );
-
-                    // Dispatch a logout event so other listeners react
-                    dispatchAuthEvent("logout", { reason: "user_action" });
-
-                    // Reset global redirect flags to prevent conflicts
+                    // 5. Reset global redirect flags
                     if (typeof window !== "undefined") {
                       (window as any).isRedirecting = false;
-                      // Reset GlobalAuthCheck redirect flag
                       if ((window as any).__globalAuthCheck) {
                         (window as any).__globalAuthCheck.isRedirecting = false;
                       }
                     }
 
-                    // Call centralized logout (don't await - let it run in background)
-                    // This prevents the loading state from disappearing before redirect
-                    auth.logoutAsync().catch(() => {});
+                    // 6. CRITICAL: Wait for logout API to complete and clear httpOnly cookies
+                    // This prevents middleware from seeing stale cookies and redirecting back
+                    try {
+                      await auth.logoutAsync();
+                      console.log("[Logout] API call completed successfully");
+                    } catch (error) {
+                      // Even if API fails, proceed with redirect (client-side logout succeeded)
+                      console.warn("[Logout] API failed, but proceeding with redirect:", error);
+                    }
 
-                    // Redirect immediately to prevent showing previous page
-                    // Use window.location.replace to bypass Next.js router and middleware conflicts
-                    window.location.replace("/login");
+                    // 7. Verify cookies are cleared before redirecting
+                    let retries = 0;
+                    const maxRetries = 5;
+                    while (retries < maxRetries) {
+                      const hasAccessToken = document.cookie.includes('accessToken=') && 
+                                            !document.cookie.includes('accessToken=;') &&
+                                            !document.cookie.includes('accessToken=deleted');
+                      
+                      if (!hasAccessToken) {
+                        console.log("[Logout] Cookies cleared, proceeding with redirect");
+                        break;
+                      }
+                      
+                      console.log(`[Logout] Waiting for cookies to clear (attempt ${retries + 1}/${maxRetries})`);
+                      await new Promise((resolve) => setTimeout(resolve, 50));
+                      retries++;
+                    }
+
+                    // 8. Hard redirect with reason param to prevent middleware loop
+                    console.log("[Logout] Redirecting to login page");
+                    window.location.replace("/login?reason=logout&from_redirect=1&t=" + Date.now());
                   }}
                 >
                   {isLoggingOut ? (
