@@ -1,24 +1,12 @@
 /**
- * Middleware Module Exports
- * Central export point for all middleware components
+ * Simplified Middleware Module Exports
+ *
+ * Central export point for simplified middleware components
+ * Replaces complex service-oriented architecture
  */
 
 // Configuration
-export * from './config';
+export * from './config-simplified';
+
+// Types
 export * from './types';
-
-// Cache
-export { CacheManager } from './cache/CacheManager';
-
-// Services
-export { SessionValidationService } from './services/SessionValidationService';
-export { HealthCheckService } from './services/HealthCheckService';
-export { CacheInvalidationService } from './services/CacheInvalidationService';
-
-// Handlers
-export { AuthenticationHandler } from './handlers/AuthenticationHandler';
-
-// Utilities
-export { PathUtils } from './utils/PathUtils';
-export { TokenUtils } from './utils/TokenUtils';
-export { CookieUtils } from './utils/CookieUtils';

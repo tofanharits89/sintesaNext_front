@@ -2,8 +2,6 @@
 
 import { useSocket } from "@/hooks/useSocket";
 import { AlertCircle, Wifi, WifiOff, RotateCcw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { getAuthTokenFromCookie } from "@/utils/auth-utils";
@@ -118,26 +116,11 @@ export function ConnectionStatus() {
   const getStatusMessage = () => {
     switch (connectionState) {
       case "disconnected":
-        if (error) {
-          if (error.includes("Authentication")) {
-            return "Authentication failed. Please refresh and log in again.";
-          }
-          if (error.includes("Failed to connect after login")) {
-            return "Connecting after login...";
-          }
-          if (error.includes("Connection will retry automatically")) {
-            return "Connection lost. Retrying automatically...";
-          }
-          return error;
-        }
-        return "Connection lost. Attempting to reconnect...";
+        return "Reconnecting...";
       case "error":
-        if (error && error.includes("Authentication")) {
-          return "Authentication failed. Please refresh and log in again.";
-        }
-        return "Connection error. Please check your internet connection.";
+        return "Connection lost";
       default:
-        return "Connection status unknown";
+        return "Offline";
     }
   };
 
@@ -152,34 +135,27 @@ export function ConnectionStatus() {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-40 max-w-sm">
-      <Alert
-        variant={getAlertVariant() as "default" | "destructive"}
-        className="shadow-lg border-2"
-      >
+    <div className="fixed bottom-4 right-4 z-40">
+      <div className="bg-gray-900 text-white px-3 py-2 rounded-lg shadow-lg flex items-center space-x-2 text-xs">
         {getStatusIcon()}
-        <AlertDescription className="flex items-center justify-between">
-          <span className="text-sm">{getStatusMessage()}</span>
-          {(connectionState === "disconnected" ||
-            connectionState === "error") && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (error && error.includes("Authentication")) {
-                  window.location.reload();
-                } else {
-                  reconnect();
-                }
-              }}
-              className="ml-2 h-6 px-2 text-xs"
-            >
-              <RotateCcw className="h-3 w-3 mr-1" />
-              {error && error.includes("Authentication") ? "Refresh" : "Retry"}
-            </Button>
-          )}
-        </AlertDescription>
-      </Alert>
+        <span>{getStatusMessage()}</span>
+        {(connectionState === "disconnected" ||
+          connectionState === "error") && (
+          <button
+            onClick={() => {
+              if (error && error.includes("Authentication")) {
+                window.location.reload();
+              } else {
+                reconnect();
+              }
+            }}
+            className="ml-1 hover:text-gray-300 transition-colors"
+            title={error && error.includes("Authentication") ? "Refresh page" : "Retry connection"}
+          >
+            <RotateCcw className="h-3 w-3" />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,60 +1,77 @@
-"use client";
+/**
+ * Legacy Auth State Manager
+ *
+ * This file provides backward compatibility for components that still import
+ * from the old auth-state.ts file. It delegates to the new unified auth system.
+ *
+ * @deprecated Use useUnifiedAuth from auth-state-unified.tsx instead
+ */
 
-// Centralized auth state management to prevent middleware/client conflicts
-class AuthStateManager {
-  private static instance: AuthStateManager;
-  private authState: { isAuthenticated: boolean; timestamp: number } | null = null;
-  private listeners: Set<(state: boolean) => void> = new Set();
+import { authUtils, type AuthState, type User } from '@/lib/auth-state-unified';
+import { logger } from '@/lib/utils';
 
-  static getInstance(): AuthStateManager {
-    if (!AuthStateManager.instance) {
-      AuthStateManager.instance = new AuthStateManager();
+// Legacy auth state manager for backward compatibility
+export const authStateManager = {
+  /**
+   * Set auth state from middleware headers
+   * @deprecated This functionality is now handled automatically by useUnifiedAuth
+   */
+  setFromHeaders: (headers: Headers): void => {
+    try {
+      const isAuth = headers.get('x-auth-isAuth') === '1';
+      const hasToken = headers.get('x-auth-hasAccessToken') === '1';
+
+      if (isAuth && hasToken) {
+        // Set optimistic auth state
+        authUtils.setAuthState({
+          isAuthenticated: true,
+          isLoading: false,
+          isLoggingOut: false,
+          lastActivity: Date.now(),
+        });
+      } else {
+        // Clear auth state
+        authUtils.clearAuthState();
+      }
+    } catch (error) {
+      logger.warn('[AuthStateManager] Failed to set auth state from headers:', error);
     }
-    return AuthStateManager.instance;
-  }
+  },
 
-  // Set auth state from middleware headers
-  setFromHeaders(headers: Headers): void {
-    const isAuth = headers.get('x-auth-isAuth') === '1';
-    const hasToken = headers.get('x-auth-hasAccessToken') === '1';
-    
-    this.authState = {
-      isAuthenticated: isAuth && hasToken,
-      timestamp: Date.now()
+  /**
+   * Get current auth state
+   * @deprecated Use useUnifiedAuth hook instead
+   */
+  getAuthState: (): AuthState => {
+    // Return default state - actual state should come from useUnifiedAuth
+    return {
+      isAuthenticated: false,
+      user: null,
+      isLoading: false,
+      isLoggingOut: false,
+      lastActivity: Date.now(),
     };
-    
-    this.notifyListeners();
-  }
+  },
 
-  // Get current auth state
-  getAuthState(): boolean {
-    if (!this.authState) return false;
-    
-    // Expire state after 30 seconds
-    if (Date.now() - this.authState.timestamp > 30000) {
-      this.authState = null;
-      return false;
-    }
-    
-    return this.authState.isAuthenticated;
-  }
+  /**
+   * Clear auth state
+   * @deprecated Use authUtils.clearAuthState() instead
+   */
+  clearAuthState: (): void => {
+    authUtils.clearAuthState();
+  },
 
-  // Subscribe to auth state changes
-  subscribe(callback: (isAuth: boolean) => void): () => void {
-    this.listeners.add(callback);
-    return () => this.listeners.delete(callback);
-  }
+  /**
+   * Set auth state
+   * @deprecated Use authUtils.setAuthState() instead
+   */
+  setAuthState: (state: Partial<AuthState>): void => {
+    authUtils.setAuthState(state);
+  },
+};
 
-  private notifyListeners(): void {
-    const isAuth = this.getAuthState();
-    this.listeners.forEach(callback => callback(isAuth));
-  }
+// Export types for backward compatibility
+export type { AuthState, User };
 
-  // Clear auth state on logout
-  clear(): void {
-    this.authState = null;
-    this.notifyListeners();
-  }
-}
-
-export const authStateManager = AuthStateManager.getInstance();
+// Export utils for backward compatibility
+export { authUtils };

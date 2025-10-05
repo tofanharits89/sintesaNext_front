@@ -55,15 +55,10 @@ export function useAuthRedirect(options: UseAuthRedirectOptions = {}) {
     }
 
     // Set up periodic auth check for authenticated users
-    intervalRef.current = setInterval(async () => {
+    intervalRef.current = setInterval(() => {
       try {
-        const result = await refetch();
-        
-        // If refetch shows user is no longer authenticated, redirect
-        if (!result.data?.isAuthenticated) {
-          console.log("[AuthRedirect] Periodic check failed, redirecting to login");
-          router.push(redirectTo);
-        }
+        // Trigger refetch to check auth status
+        refetch();
       } catch (error) {
         console.warn("[AuthRedirect] Periodic auth check failed:", error);
         // On auth check failure, redirect to login
@@ -85,6 +80,18 @@ export function useAuthRedirect(options: UseAuthRedirectOptions = {}) {
       router.push(redirectTo);
     }
   }, [error, isLoading, router, redirectTo]);
+
+  // Monitor auth state changes and redirect if user becomes unauthenticated
+  useEffect(() => {
+    if (!enabled || isLoading) return;
+
+    if (lastAuthState.current === true && isAuthenticated === false) {
+      console.log("[AuthRedirect] Auth state changed from authenticated to unauthenticated");
+      router.push(redirectTo);
+    }
+
+    lastAuthState.current = isAuthenticated;
+  }, [enabled, isAuthenticated, isLoading, router, redirectTo]);
 
   return {
     isRedirecting: !isAuthenticated && !isLoading,

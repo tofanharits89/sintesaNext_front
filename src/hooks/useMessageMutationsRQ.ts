@@ -468,6 +468,12 @@ export function useSendMessageMutation() {
       const convKeyId =
         conversationId != null ? String(conversationId) : undefined;
 
+      // Extract the real message ID from the server response
+      const realMsgId: string | undefined =
+        (data as any)?.data?.message?.id ||
+        (data as any)?.message?.id ||
+        undefined;
+
       try {
         console.log("[MSG DEBUG] onSuccess", {
           convKeyId,
@@ -522,23 +528,76 @@ export function useSendMessageMutation() {
             (data as any)?.message?.id ||
             undefined;
 
+          console.log("[MSG DEBUG] Updating optimistic message", {
+            convKeyId,
+            tempId,
+            realMsgId,
+            content: (content || "").trim()
+          });
+
           queryClient.setQueryData(
             messageKeys.messages(convKeyId),
             (prev: any) => {
-              if (!prev?.pages) return prev;
+              if (!prev?.pages) {
+                console.log("[MSG DEBUG] No existing messages cache, creating new one");
+                // Create new cache with this message
+                const optimisticSender = currentUser
+                  ? {
+                      id: currentUser.id,
+                      username: currentUser.username || "you",
+                      name: currentUser.name || "You",
+                    }
+                  : { id: "current-user", username: "you", name: "You" };
+                
+                return {
+                  pages: [
+                    {
+                      data: {
+                        messages: [
+                          {
+                            id: realMsgId || tempId,
+                            conversation_id: convKeyId,
+                            content: content.trim(),
+                            timestamp: new Date().toISOString(),
+                            created_at: new Date().toISOString(),
+                            sender: optimisticSender,
+                            senderType: "user",
+                            is_read: true,
+                            isRead: true,
+                            _sending: false,
+                            _failed: false,
+                          },
+                        ],
+                        pagination: {
+                          page: 1,
+                          limit: 50,
+                          total: 1,
+                          hasMore: false,
+                        },
+                      },
+                    },
+                  ],
+                  pageParams: [1],
+                };
+              }
+
               const copy = {
                 ...prev,
                 pages: prev.pages.map((p: any) => ({ ...p })),
               };
+              
+              let messageUpdated = false;
               for (let pi = 0; pi < copy.pages.length; pi++) {
                 const p = copy.pages[pi];
                 const msgs = Array.isArray(p?.data?.messages)
                   ? p.data.messages.map((m: any) => {
                       if (m?.id === tempId) {
+                        messageUpdated = true;
                         // Update the message with real ID and clear sending flags
                         return {
                           ...m,
                           id: realMsgId || m.id, // Use real ID if available
+                          content: content.trim(),
                           _sending: false,
                           _failed: false,
                           isRead: true, // Mark as read since sender sent it
@@ -548,15 +607,46 @@ export function useSendMessageMutation() {
                       return m;
                     })
                   : p?.data?.messages;
+                
+                // If we didn't find the temp message, add this new message
+                if (!messageUpdated && pi === copy.pages.length - 1) {
+                  const optimisticSender = currentUser
+                    ? {
+                        id: currentUser.id,
+                        username: currentUser.username || "you",
+                        name: currentUser.name || "You",
+                      }
+                    : { id: "current-user", username: "you", name: "You" };
+                  
+                  msgs.push({
+                    id: realMsgId || tempId,
+                    conversation_id: convKeyId,
+                    content: content.trim(),
+                    timestamp: new Date().toISOString(),
+                    created_at: new Date().toISOString(),
+                    sender: optimisticSender,
+                    senderType: "user",
+                    is_read: true,
+                    isRead: true,
+                    _sending: false,
+                    _failed: false,
+                  });
+                  console.log("[MSG DEBUG] Added new message to cache");
+                }
+                
                 copy.pages[pi] = {
                   ...p,
                   data: { ...(p?.data || {}), messages: msgs },
                 };
               }
+              
+              console.log("[MSG DEBUG] Message cache updated", { messageUpdated, realMsgId });
               return copy;
             }
           );
-        } catch {}
+        } catch (error) {
+          console.error("[MSG DEBUG] Error updating message cache:", error);
+        }
       }
 
       // Derive real conversation id from various possible response shapes
@@ -624,10 +714,6 @@ export function useSendMessageMutation() {
 
         // Seed/migrate messages into the new conversation cache so the sent text remains visible
         const nowIso = new Date().toISOString();
-        const realMsgId: string | undefined =
-          (data as any)?.data?.message?.id ||
-          (data as any)?.message?.id ||
-          undefined;
         queryClient.setQueryData(messageKeys.messages(newId), (prev: any) => {
           const optimisticSender = currentUser
             ? {
@@ -813,8 +899,10 @@ export function useSendMessageMutation() {
         } catch {}
       }
 
-      // Always invalidate conversations to show updated last message
-      queryClient.invalidateQueries({ queryKey: conversationKeys.all });
+      // DON'T invalidate conversations immediately - this erases our optimistic update
+      // Instead, let the socket events and our cache updates handle the UI
+      // Only invalidate if we need to refresh for other reasons
+      // queryClient.invalidateQueries({ queryKey: conversationKeys.all });
 
       // For existing conversations, DON'T invalidate messages immediately
       // The optimistic update already added the message, and socket events will keep it synced
@@ -827,8 +915,71 @@ export function useSendMessageMutation() {
           queryClient.refetchQueries({
             queryKey: messageKeys.messages(String(targetConvId)),
           });
-        }, 1000);
+        }, 2000); // Increased delay to allow socket events to process first
       }
+
+      // Update conversations list without invalidating - use setQueryData instead
+      queryClient.setQueryData(conversationKeys.lists(), (prev: any) => {
+        const empty = {
+          pages: [{ conversations: [], nextCursor: null }],
+          pageParams: [null],
+        };
+        const curr = prev && prev.pages ? prev : empty;
+        const pages = curr.pages.map((pg: any) => ({
+          ...pg,
+          conversations: Array.isArray(pg.conversations)
+            ? [...pg.conversations]
+            : [],
+        }));
+
+        // Find and update the conversation with the new message
+        let foundPageIdx = -1;
+        let foundIdx = -1;
+        pages.forEach((pg: any, pIdx: number) => {
+          const idx = pg.conversations.findIndex(
+            (c: any) => String(c.id) === String(targetConvId)
+          );
+          if (idx !== -1) {
+            foundPageIdx = pIdx;
+            foundIdx = idx;
+          }
+        });
+
+        if (foundIdx !== -1) {
+          const conv = { ...(pages[foundPageIdx].conversations[foundIdx] || {}) } as any;
+          const optimisticSender = currentUser
+            ? {
+                id: currentUser.id,
+                username: currentUser.username || "you",
+                name: currentUser.name || "You",
+              }
+            : { id: "current-user", username: "you", name: "You" };
+
+          const minimalLast = {
+            id: realMsgId || tempId || `temp-msg-${Date.now()}`,
+            content: content.trim(),
+            timestamp: new Date().toISOString(),
+            sender: optimisticSender,
+            senderType: "user",
+            isRead: true,
+            is_read: true,
+          } as any;
+
+          conv.lastMessage = minimalLast;
+          conv.updated_at = new Date().toISOString();
+          conv.updatedAt = new Date().toISOString();
+
+          // Move conversation to top of first page
+          pages[foundPageIdx].conversations.splice(foundIdx, 1);
+          const firstPage = pages[0] || { conversations: [], nextCursor: null };
+          firstPage.conversations.unshift(conv);
+          pages[0] = firstPage;
+
+          console.log("[MSG DEBUG] Updated conversation list with new message");
+        }
+
+        return { pages, pageParams: curr.pageParams };
+      });
 
       // Broadcast success for latch clearing (for both real id and temp id)
       try {

@@ -327,6 +327,14 @@ export function useConversations(options?: { enabled?: boolean }) {
           "[ConversationsRQ] MESSAGE_NEW/RECEIVED incoming payload",
           m
         );
+        console.debug(
+          "[ConversationsRQ] Conversation ID analysis",
+          {
+            originalPayload: m,
+            extractedConversationId: (m as any)?.conversationId || (m as any)?.message?.conversation_id || (m as any)?.message?.conversationId,
+            safeConversationId: String((m as any)?.conversationId || (m as any)?.message?.conversation_id || (m as any)?.message?.conversationId || "")
+          }
+        );
       } catch {}
       updateConversationsCache((prev) => {
         if (!prev)
@@ -363,14 +371,32 @@ export function useConversations(options?: { enabled?: boolean }) {
         }));
         let found: FoundLoc | null = null;
         if (!safeConversationId) {
+          console.debug("[ConversationsRQ] No valid conversation ID, skipping");
           return prev; // cannot process message without a valid conversation id
         }
+        
+        // Debug: Log all conversation IDs to compare
+        const allConvIds: string[] = [];
+        pages.forEach((pg, pIdx) => {
+          pg.conversations.forEach((conv, cIdx) => {
+            allConvIds.push(`Page ${pIdx}[${cIdx}]: ${conv.id}`);
+          });
+        });
+        console.debug("[ConversationsRQ] Looking for conversation ID:", safeConversationId, "Available IDs:", allConvIds);
+        
         pages.forEach((pg, pIdx) => {
           const idx = pg.conversations.findIndex(
             (c) => c.id === safeConversationId
           );
           if (idx !== -1) found = { pageIdx: pIdx, idx };
         });
+        
+        if (found) {
+          const { pageIdx, idx } = found;
+          console.debug("[ConversationsRQ] Conversation search result:", `Found at page ${pageIdx}, index ${idx}`);
+        } else {
+          console.debug("[ConversationsRQ] Conversation search result: Not found");
+        }
         if (!found) {
           // Attempt reconcile: if we have a tempId entry, rename it to real conversationId
           const pages2 = prev.pages.map((pg) => ({

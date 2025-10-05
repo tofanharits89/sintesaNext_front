@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+import { useUnifiedAuth } from "@/lib/auth-state-unified";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 
 interface AuthGuardProps {
@@ -19,7 +19,7 @@ export function AuthGuard({
   fallback = <div>Loading...</div>,
   redirectTo = "/login" 
 }: AuthGuardProps) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useUnifiedAuth();
   const { isRedirecting } = useAuthRedirect({ redirectTo });
 
   // Show loading state while checking auth

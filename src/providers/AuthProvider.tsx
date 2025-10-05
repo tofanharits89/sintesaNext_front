@@ -2,8 +2,7 @@
 
 import { createContext, useContext, useEffect } from "react";
 
-import { useAuth } from "@/hooks/useAuth";
-import { useSessionInvalidation } from "@/hooks/useSessionInvalidation";
+import { useUnifiedAuth } from "@/lib/auth-state-unified";
 // Removed client-side redirects - middleware is authoritative
 
 interface AuthContextType {
@@ -30,12 +29,10 @@ interface AuthProviderProps {
  * - Cache invalidation on logout
  */
 export function AuthProvider({ children }: AuthProviderProps) {
-  const auth = useAuth();
-  
-  // Monitor for session invalidation from other devices
-  useSessionInvalidation();
-  
+  const auth = useUnifiedAuth();
+
   // No client-side redirects - middleware handles all auth
+  // Session invalidation monitoring is built into useUnifiedAuth
 
   const contextValue: AuthContextType = {
     isAuthenticated: auth.isAuthenticated,
