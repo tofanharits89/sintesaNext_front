@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { apiPath } from "@/lib/base-path";
 import { User } from "@/lib/users-store";
-import { useCurrentUser } from "@/lib/use-current-user";
+import { useUnifiedAuth } from "@/lib/auth-state-unified";
 import { canAccessUserManagement } from "@/lib/rbac";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -86,7 +86,7 @@ type FormState = {
 
 export default function UsersPage() {
   const router = useRouter();
-  const { currentUser } = useCurrentUser();
+  const { user: currentUser } = useUnifiedAuth();
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["users"],

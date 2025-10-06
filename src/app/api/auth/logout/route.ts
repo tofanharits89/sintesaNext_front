@@ -43,55 +43,26 @@ export async function POST(req: NextRequest) {
 
   const res = NextResponse.json(body, { status: resp.ok ? 200 : resp.status });
 
-  // Forward backend Set-Cookie clears; also clear legacy client cookies
+  // CRITICAL: Forward ALL backend Set-Cookie headers first
+  // The backend is responsible for clearing HttpOnly cookies
   forwardSetCookies(resp, res);
-
-  // SIMPLIFIED APPROACH: Use centralized cookie clearing logic
-  // This eliminates the complex nested loops and improves reliability
-  const isProduction = process.env.NODE_ENV === "production";
-  const pastDate = new Date(0); // Jan 1, 1970
-
-  const clearHttpOnly = {
-    path: "/",
-    expires: pastDate,
-    maxAge: 0,
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: (isProduction ? "strict" : "lax") as "strict" | "lax"
-  };
-
-  const clearNonHttpOnly = {
-    ...clearHttpOnly,
-    httpOnly: false
-  };
-
-  // Clear essential HttpOnly cookies (set by backend)
-  res.cookies.set("accessToken", "", clearHttpOnly);
-  res.cookies.set("refreshToken", "", clearHttpOnly);
-
-  // Clear non-httpOnly cookies
-  res.cookies.set("authState", "", clearNonHttpOnly);
-  res.cookies.set("auth_user", "", clearNonHttpOnly);
-
-  // SIMPLIFIED: Clear essential legacy cookies with single variant
-  // This eliminates complex nested loops and reduces failure points
-  const legacyCookies = [
-    "token",
-    "socket_token",
-    "XSRF-TOKEN"
+  
+  console.log("[Logout Route] Forwarded Set-Cookie headers from backend");
+  
+  // Also manually append cookie clearing headers to ensure they're sent
+  // This is a backup in case forwardSetCookies doesn't work
+  const clearHeaders = [
+    'accessToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax',
+    'refreshToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax',
+    'accessToken=; Domain=localhost; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax',
+    'refreshToken=; Domain=localhost; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax',
   ];
-
-  for (const cookieName of legacyCookies) {
-    res.cookies.set(cookieName, "", clearNonHttpOnly);
-  }
-
-  // Optional: Clear a few path variants for problematic cookies (reduced from 25+ to 3)
-  const criticalPaths = ["/", "/api"]; // Most common paths
-  for (const path of criticalPaths) {
-    const pathOption = { ...clearHttpOnly, path };
-    res.cookies.set("accessToken", "", pathOption);
-    res.cookies.set("refreshToken", "", pathOption);
-  }
+  
+  clearHeaders.forEach(header => {
+    res.headers.append('set-cookie', header);
+  });
+  
+  console.log("[Logout Route] Added manual Set-Cookie headers");
 
   // Invalidate Next middleware auth cache immediately
   try {

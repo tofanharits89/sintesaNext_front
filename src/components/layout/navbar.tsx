@@ -21,7 +21,7 @@ import {
 import { useTheme } from "next-themes";
 import { useMemo, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useCurrentUser } from "@/lib/use-current-user";
+import { useUnifiedAuth } from "@/lib/auth-state-unified";
 import {
   canAccessUserManagement,
   canAccessSettings,
@@ -55,17 +55,21 @@ import {
 import { withBasePath } from "@/lib/base-path";
 import { apiPath } from "@/lib/base-path";
 import { SatkerSearch } from "./satker-search";
-import { dispatchAuthEvent } from "@/utils/auth-utils";
+import { dispatchAuthEvent } from "@/lib/cookieManager";
 import { useAuthContext } from "@/providers/AuthProvider";
 import { LoginLoading } from "@/components/ui/login-loading";
 
-import type { User } from "@/lib/users-store";
+import type { User } from "@/lib/auth-state-unified";
 
 export function Navbar({ initialUser }: { initialUser?: User }) {
   const { theme, setTheme } = useTheme();
-  const { currentUser } = useCurrentUser(initialUser);
+  const { user: currentUser } = useUnifiedAuth();
   const router = useRouter();
   const auth = useAuthContext();
+  
+  // Fallback to unified auth if currentUser is not available
+  const { user: unifiedUser } = useUnifiedAuth();
+  const displayUser = currentUser || unifiedUser;
   interface RecentMessage {
     id: string;
     conversationId: string;
@@ -105,7 +109,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
   const isSocketConnected = socketClient.isConnected();
   // Derive recent messages directly from conversations so it updates on every socket/cache change
   const recentMessages: RecentMessage[] = useMemo(() => {
-    if (!Array.isArray(conversations) || !currentUser?.id) return [];
+    if (!Array.isArray(conversations) || !displayUser?.id) return [];
 
     const recentConversations = conversations.filter(
       (conv) => (conv as any).lastMessage && (conv as any).otherParticipant
@@ -165,7 +169,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
       .filter((m: any) => m !== null) as RecentMessage[];
 
     return sorted;
-  }, [conversations, currentUser?.id]);
+  }, [conversations, displayUser?.id]);
   const [recentNotifications, setRecentNotifications] = useState<
     RecentNotification[]
   >([]);
@@ -224,9 +228,9 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
 
   // Load user's messages and notifications
   useEffect(() => {
-    if (currentUser?.username) {
+    if (displayUser?.username) {
       // Load notifications from backend
-      getNotificationsForUser(currentUser.username)
+      getNotificationsForUser(displayUser.username)
         .then((userNotifications) => {
           const recentNotifs = userNotifications.slice(0, 5).map((notif) => {
             const notifDate = new Date(notif.createdAt);
@@ -248,32 +252,32 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
               type: notif.type,
               priority: notif.priority,
               time: timeStr,
-              unread: !notif.readBy.includes(currentUser.username),
+              unread: !notif.readBy.includes(displayUser.username),
             };
           });
           setRecentNotifications(recentNotifs);
         })
         .catch((e) => console.warn("Failed to fetch notifications:", e));
 
-      getUnreadNotificationCount(currentUser.username)
+      getUnreadNotificationCount(displayUser.username)
         .then((count) => setTotalUnreadNotificationsCount(count))
         .catch(() => setTotalUnreadNotificationsCount(0));
     }
-  }, [currentUser]);
+  }, [displayUser]);
 
   // The old state/effect approach is removed to ensure immediate updates without stale state
 
   // Generate initials for avatar fallback
   const initials = useMemo(() => {
-    if (!currentUser?.name) return "US";
-    const parts = currentUser.name.trim().split(/\s+/);
+    if (!displayUser?.name) return "US";
+    const parts = displayUser.name.trim().split(/\s+/);
     return (
       parts
         .slice(0, 2)
         .map((p) => p[0]?.toUpperCase() ?? "")
         .join("") || "US"
     );
-  }, [currentUser]);
+  }, [displayUser]);
 
   return (
     <>
@@ -568,17 +572,17 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                   className="relative flex items-center gap-2 h-auto py-1.5 px-2 rounded-full hover:bg-accent"
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="" alt={currentUser?.name || "profil"} />
+                    <AvatarImage src="" alt={displayUser?.name || "profil"} />
                     <AvatarFallback className="text-xs font-medium">
                       {initials}
                     </AvatarFallback>
                   </Avatar>
                   <div className="hidden md:block text-left">
                     <div className="text-sm font-medium">
-                      {currentUser?.name || "User"}
+                      {displayUser?.name || "User"}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {currentUser ? getRoleDisplayName(currentUser.role) : ""}
+                      {displayUser ? getRoleDisplayName(displayUser.role) : ""}
                     </div>
                   </div>
                 </Button>
@@ -587,10 +591,10 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
-                      {currentUser?.name || "User"}
+                      {displayUser?.name || "User"}
                     </p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      {currentUser?.email || "user@example.com"}
+                      {displayUser?.email || "user@example.com"}
                     </p>
                   </div>
                 </DropdownMenuLabel>
@@ -602,7 +606,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                       Halaman Profil
                     </Link>
                   </DropdownMenuItem>
-                  {canAccessUserManagement(currentUser) && (
+                  {canAccessUserManagement(displayUser) && (
                     <DropdownMenuItem asChild>
                       <Link href="/users" className="flex items-center">
                         <Users className="mr-2 h-4 w-4" />
@@ -610,7 +614,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  {canAccessSettings(currentUser) && (
+                  {canAccessSettings(displayUser) && (
                     <DropdownMenuItem asChild>
                       <Link href="/settings" className="flex items-center">
                         <Settings className="mr-2 h-4 w-4" />
@@ -620,7 +624,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                   )}
                   {(() => {
                     const roleStr = String(
-                      currentUser?.role || ""
+                      displayUser?.role || ""
                     ).toLowerCase();
                     const isAdminLike =
                       roleStr === "super_admin" ||
@@ -645,106 +649,73 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                   className={`text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950 ${
                     isLoggingOut ? "opacity-60 pointer-events-none" : ""
                   }`}
-                  onClick={async () => {
-                    if (isLoggingOut) return;
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    console.log("[Logout] ========== LOGOUT CLICKED ==========");
+                    console.log("[Logout] isLoggingOut:", isLoggingOut);
+                    
+                    if (isLoggingOut) {
+                      console.log("[Logout] Already logging out, ignoring click");
+                      return;
+                    }
 
-                    // ENTERPRISE PATTERN: Optimistic UI update first
-                    // This immediately hides protected content before any async operations
-                    const { QueryClient } = await import(
-                      "@tanstack/react-query"
-                    );
-                    const queryClient = new QueryClient();
-
-                    // 1. SYNCHRONOUSLY clear auth state to trigger immediate re-render
-                    queryClient.setQueryData(["current-user-profile"], {
-                      isAuthenticated: false,
-                      user: null,
-                    });
-
-                    // 2. Disconnect socket immediately
+                    console.log("[Logout] Step 1: Starting logout process");
+                    console.log("[Logout] Current URL:", window.location.href);
+                    console.log("[Logout] Current cookies:", document.cookie);
+                    
+                    // Disconnect socket immediately and prevent reconnection
+                    console.log("[Logout] Step 2: Disconnecting socket");
                     try {
                       socketClient.disconnect();
-                    } catch {}
-
-                    // 3. Dispatch logout event synchronously
-                    dispatchAuthEvent("logout", { reason: "user_action" });
-
-                    // 4. Clear client-side cookies synchronously (best effort)
-                    const deleteCookie = (name: string) => {
-                      const domains = [
-                        window.location.hostname,
-                        "." + window.location.hostname,
-                        window.location.hostname.split(".").slice(-2).join("."),
-                        "localhost",
-                        "127.0.0.1",
-                      ];
-                      const paths = ["/", "", "/api", "/auth"];
-
-                      for (const domain of domains) {
-                        for (const path of paths) {
-                          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain}; HttpOnly; Secure`;
-                          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain}; SameSite=Lax`;
-                          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path};`;
-                        }
-                      }
-                    };
-
-                    const cookiesToDelete = [
-                      "accessToken",
-                      "refreshToken",
-                      "access_token",
-                      "refresh_token",
-                      "authToken",
-                      "auth_token",
-                      "token",
-                      "socket_token",
-                      "authState",
-                      "auth_user",
-                      "XSRF-TOKEN",
-                      "_csrf",
-                      "user_data",
-                    ];
-                    cookiesToDelete.forEach(deleteCookie);
-
-                    // 5. Reset global redirect flags
-                    if (typeof window !== "undefined") {
-                      (window as any).isRedirecting = false;
-                      if ((window as any).__globalAuthCheck) {
-                        (window as any).__globalAuthCheck.isRedirecting = false;
-                      }
+                      socketClient.cleanup();
+                      console.log("[Logout] Socket disconnected successfully");
+                    } catch (error) {
+                      console.error("[Logout] Socket disconnect failed:", error);
                     }
 
-                    // 6. CRITICAL: Wait for logout API to complete and clear httpOnly cookies
-                    // This prevents middleware from seeing stale cookies and redirecting back
+                    console.log("[Logout] Step 3: Calling logout API");
                     try {
                       await auth.logoutAsync();
-                      console.log("[Logout] API call completed successfully");
+                      console.log("[Logout] ✅ Logout API completed successfully");
                     } catch (error) {
-                      // Even if API fails, proceed with redirect (client-side logout succeeded)
-                      console.warn("[Logout] API failed, but proceeding with redirect:", error);
+                      console.error("[Logout] ❌ Logout API error:", error);
                     }
 
-                    // 7. Verify cookies are cleared before redirecting
-                    let retries = 0;
-                    const maxRetries = 5;
-                    while (retries < maxRetries) {
-                      const hasAccessToken = document.cookie.includes('accessToken=') && 
-                                            !document.cookie.includes('accessToken=;') &&
-                                            !document.cookie.includes('accessToken=deleted');
-                      
-                      if (!hasAccessToken) {
-                        console.log("[Logout] Cookies cleared, proceeding with redirect");
-                        break;
+                    console.log("[Logout] Step 4: Checking cookies after logout");
+                    console.log("[Logout] Cookies after API:", document.cookie);
+                    
+                    console.log("[Logout] Step 5: Attempting redirect");
+                    console.log("[Logout] window.location object:", {
+                      href: window.location.href,
+                      pathname: window.location.pathname,
+                      search: window.location.search
+                    });
+                    
+                    // Redirect to login page
+                    const redirectUrl = "/login?reason=logout&_t=" + Date.now();
+                    console.log("[Logout] Redirect URL:", redirectUrl);
+                    
+                    try {
+                      console.log("[Logout] Calling window.location.replace()");
+                      window.location.replace(redirectUrl);
+                      console.log("[Logout] ✅ Replace called (if you see this, redirect didn't happen immediately)");
+                    } catch (error) {
+                      console.error("[Logout] ❌ Replace failed:", error);
+                    }
+                    
+                    // Fallback
+                    setTimeout(() => {
+                      console.log("[Logout] ⚠️ Fallback redirect triggered (main redirect didn't work)");
+                      console.log("[Logout] Current URL:", window.location.href);
+                      try {
+                        window.location.href = "/login";
+                        console.log("[Logout] Fallback href set");
+                      } catch (error) {
+                        console.error("[Logout] Fallback failed:", error);
                       }
-                      
-                      console.log(`[Logout] Waiting for cookies to clear (attempt ${retries + 1}/${maxRetries})`);
-                      await new Promise((resolve) => setTimeout(resolve, 50));
-                      retries++;
-                    }
-
-                    // 8. Hard redirect with reason param to prevent middleware loop
-                    console.log("[Logout] Redirecting to login page");
-                    window.location.replace("/login?reason=logout&from_redirect=1&t=" + Date.now());
+                    }, 100);
+                    
+                    console.log("[Logout] ========== LOGOUT FUNCTION END ==========");
                   }}
                 >
                   {isLoggingOut ? (

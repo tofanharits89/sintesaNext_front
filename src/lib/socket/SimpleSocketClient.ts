@@ -12,7 +12,7 @@
 "use client";
 
 import { Socket } from "socket.io-client";
-import { waitForAuthToken } from "@/utils/auth-utils";
+import { waitForAuthToken } from "@/lib/cookieManager";
 import { SOCKET_EVENTS } from "@/shared/socket-events";
 
 export type SocketState = "disconnected" | "connecting" | "connected" | "error" | "reconnecting";

@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { apiPath } from "@/lib/base-path";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
+import { getAuthTokenFromCookie } from "@/lib/cookieManager";
 
 export interface DauRekapBulananRow {
   // shape depends on backend query; include common fields

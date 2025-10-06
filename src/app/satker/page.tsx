@@ -7,7 +7,7 @@ import { Search, Building2, ArrowRight, Shield, Info } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import carisatkerData from "@/data/carisatker.json";
-import { useCurrentUser } from "@/lib/use-current-user";
+import { useUnifiedAuth } from "@/lib/auth-state-unified";
 import { filterSatkerByUserAccess, getUserAccessDescription } from "@/utils/satker-rbac";
 import { useSatkerSearch } from "@/hooks/use-satker-data";
 import { formatSatkerDisplayName, formatSatkerSubtitle } from "@/utils/satker-data";
@@ -18,7 +18,7 @@ export default function SatkerPage() {
   const [searchResults, setSearchResults] = useState<typeof carisatkerData>([]);
   const [useAPI, setUseAPI] = useState(true); // Toggle between API and JSON data
   const router = useRouter();
-  const { currentUser, isLoading } = useCurrentUser();
+  const { user: currentUser, isLoading } = useUnifiedAuth();
   const { results: apiResults, loading: apiLoading, error: apiError, searchSatker } = useSatkerSearch();
 
   const handleSearch = async () => {

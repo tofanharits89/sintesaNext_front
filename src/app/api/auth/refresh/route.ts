@@ -1,60 +1,43 @@
-import { NextResponse, NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { backendPath } from "@/lib/backend";
 import { forwardSetCookies } from "@/lib/cookie-helpers";
 
-function pickDeviceHeaders(req: NextRequest): Record<string, string> {
-  const out: Record<string, string> = {};
-  const copy = (n: string) => { const v = req.headers.get(n); if (v) out[n] = v; };
-  [
-    "user-agent",
-    "accept-language",
-    "sec-ch-ua",
-    "sec-ch-ua-platform",
-    "x-device-id",
-    "x-device-timezone",
-    "x-device-locale",
-    "x-device-platform",
-  ].forEach(copy);
-  return out;
-}
-
 export async function POST(request: NextRequest) {
-  // Collect client cookies and forward to backend so it can read refreshToken
-  const incomingCookie = request.headers.get("cookie") || "";
+  const cookie = request.headers.get("cookie") || "";
+  const xsrfToken = request.cookies.get("XSRF-TOKEN")?.value;
 
-  // Forward CSRF headers if present
-  const csrfHeaderCandidates = [
-    "x-csrf-token",
-    "X-CSRF-Token",
-    "x-xsrf-token",
-    "X-XSRF-TOKEN",
-  ] as const;
+  try {
+    const resp = await fetch(backendPath("/auth/refresh"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(cookie ? { cookie } : {}),
+        ...(xsrfToken ? { "X-CSRF-Token": xsrfToken } : {}),
+      },
+      credentials: "include",
+      cache: "no-store",
+    });
 
-  const forwardedCsrfHeaders: Record<string, string> = {};
-  for (const name of csrfHeaderCandidates) {
-    const v = request.headers.get(name);
-    if (v) forwardedCsrfHeaders[name] = v;
+    const data = await resp.json().catch(() => ({}));
+
+    if (!resp.ok) {
+      const errRes = NextResponse.json(
+        { success: false, error: data?.message || "Token refresh failed" },
+        { status: resp.status }
+      );
+      forwardSetCookies(resp, errRes);
+      return errRes;
+    }
+
+    const res = NextResponse.json(data, { status: 200 });
+    forwardSetCookies(resp, res);
+    return res;
+  } catch (error: any) {
+    console.error("[API /auth/refresh] Error:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
   }
-
-  const resp = await fetch(backendPath("/auth/refresh-token"), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      // Forward cookies to backend
-      ...(incomingCookie ? { cookie: incomingCookie } : {}),
-      // Forward CSRF headers (any that were provided)
-      ...forwardedCsrfHeaders,
-      // Forward device headers to maintain fingerprint continuity
-      ...pickDeviceHeaders(request),
-    },
-    cache: "no-store",
-  });
-
-  const resBody = await resp.json().catch(() => ({}));
-
-  const res = NextResponse.json(resBody, { status: resp.status });
-  // Forward Set-Cookie from backend so browser updates httpOnly cookies
-  forwardSetCookies(resp, res);
-
-  return res;
 }

@@ -95,7 +95,7 @@ export function TayangModal({
       fetchData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, activeFilters, filterValues, reportParams, currentPage, pageSize]);
+  }, [open, JSON.stringify(activeFilters), JSON.stringify(filterValues), JSON.stringify(reportParams), currentPage, pageSize]);
 
   // Case-insensitive safe getter for a row's column value
   const getRowValue = (row: any, column: string) => {

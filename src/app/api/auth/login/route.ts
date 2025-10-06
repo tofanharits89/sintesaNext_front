@@ -3,25 +3,6 @@ import type { NextRequest } from "next/server";
 import { backendPath } from "@/lib/backend";
 import { forwardSetCookies, getSetCookieValues } from "@/lib/cookie-helpers";
 
-function pickDeviceHeaders(req: NextRequest): Record<string, string> {
-  const h = req.headers;
-  const out: Record<string, string> = {};
-  const copy = (name: string) => {
-    const v = h.get(name);
-    if (v) out[name] = v;
-  };
-  [
-    "user-agent",
-    "accept-language",
-    "sec-ch-ua",
-    "sec-ch-ua-platform",
-    "x-device-id",
-    "x-device-timezone",
-    "x-device-locale",
-    "x-device-platform",
-  ].forEach(copy);
-  return out;
-}
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
@@ -65,17 +46,15 @@ export async function POST(request: NextRequest) {
   }
 
   async function doLogin(currentCookie: string, currentXsrf?: string) {
-    const deviceHeaders = pickDeviceHeaders(request);
     return fetch(backendPath("/auth/login"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         ...(currentCookie ? { cookie: currentCookie } : {}),
         ...(currentXsrf ? { "X-CSRF-Token": currentXsrf } : {}),
-        ...deviceHeaders,
       },
       body: JSON.stringify({ username, password, captcha, expectedCaptcha }),
-      // Ensure cookies from backend are included so Next can forward them
+      // CRITICAL FIX: Ensure cookies are sent and received
       credentials: "include",
     });
   }
@@ -131,22 +110,25 @@ export async function POST(request: NextRequest) {
   };
 
   const res = NextResponse.json(responseBody, { status: 200 });
+  
+  // Debug: Log Set-Cookie headers from backend
+  const setCookies = resp.headers.get('set-cookie');
+  console.log('[Login Route] Backend Set-Cookie headers:', setCookies);
+  console.log('[Login Route] All backend headers:', Array.from(resp.headers.entries()));
+  
   // Forward all Set-Cookie headers to client via helper
   forwardSetCookies(resp, res);
+  
+  // Debug: Log forwarded headers
+  console.log('[Login Route] Forwarded Set-Cookie to client:', res.headers.get('set-cookie'));
 
   // Clear middleware cache after successful login
   res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
   
-  // Invalidate other sessions and clear middleware cache (fire-and-forget)
+  // Clear middleware cache (fire-and-forget)
+  // Note: Backend LoginManager already handles session invalidation with proper auth
   if (user?.id) {
     try {
-      // Kick off invalidation without blocking the response
-      // Backend session invalidation
-      void fetch(backendPath(`/auth/invalidate-user-sessions/${user.id}`), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      }).catch(() => {});
-
       // SECURITY FIX: Clear middleware cache with proper authentication
       const bodyData = JSON.stringify({ type: 'login', userId: user.id });
       const { prepareCacheInvalidationHeaders } = await import("@/utils/cache-signature");
@@ -158,7 +140,7 @@ export async function POST(request: NextRequest) {
         body: bodyData
       }).catch(() => {});
     } catch {
-      // Ignore errors - session invalidation is best effort
+      // Ignore errors - cache invalidation is best effort
     }
   }
   

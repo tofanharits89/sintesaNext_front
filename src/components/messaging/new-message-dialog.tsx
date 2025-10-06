@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useMessagingRQ } from "@/hooks/useMessagingRQ";
-import { useCurrentUser } from "@/lib/use-current-user";
+import { useUnifiedAuth } from "@/lib/auth-state-unified";
 import {
   Dialog,
   DialogContent,
@@ -68,7 +68,7 @@ export function NewMessageDialog({
 
   const { sendMessage, selectConversation } = useMessagingRQ();
   const { conversations, optimisticAddConversation } = useConversationsRQ();
-  const { currentUser } = useCurrentUser();
+  const { user: currentUser } = useUnifiedAuth();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -199,7 +199,7 @@ export function NewMessageDialog({
       try {
         setHint(tempId, {
           otherParticipant: selectedUser,
-          participant1_id: currentUser?.id,
+          participant1_id: currentUser?.id || 'unknown',
           participant2_id: selectedUser.id,
           participant1: currentUser || undefined,
           participant2: selectedUser,

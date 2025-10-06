@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
+import { getAuthTokenFromCookie } from "@/lib/cookieManager";
 import { backendPath } from "@/lib/backend";
 
 // Cache statistics interface matching backend response

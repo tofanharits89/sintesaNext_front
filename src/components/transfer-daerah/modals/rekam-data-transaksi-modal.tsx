@@ -27,7 +27,7 @@ import { useKriteriaOptions } from "@/hooks/use-kriteria-options";
 import { useDasarPemotonganOptions } from "@/hooks/use-dasar-pemotongan-options";
 import { useKodeAkunOptions } from "@/hooks/use-kode-akun-options";
 import { backendPath } from "@/lib/backend";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
+import { getAuthTokenFromCookie } from "@/lib/cookieManager";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
 
 interface RekamDataTransaksiModalProps {

@@ -10,7 +10,7 @@ import { FrontendMessage } from "@/shared/socket-events";
 import { useMessagingActions, useMessagingUIStore } from "@/stores";
 import { useNotificationStore } from "@/stores/notification-store";
 import { getTempMessages } from "@/features/messaging/temp-messages-store";
-import { useCurrentUser } from "@/lib/use-current-user";
+import { useUnifiedAuth } from "@/lib/auth-state-unified";
 
 // Types for mutation arguments
 interface SendMessageArgs {
@@ -42,7 +42,7 @@ export function useSendMessageMutation() {
   const queryClient = useQueryClient();
   const { emit } = useSocket();
   const { ui, unread } = useMessagingActions();
-  const { currentUser } = useCurrentUser();
+  const { user: currentUser } = useUnifiedAuth();
 
   const fetchWithTimeout = async (
     input: RequestInfo | URL,

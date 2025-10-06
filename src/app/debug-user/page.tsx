@@ -1,10 +1,10 @@
 'use client';
 
-import { useCurrentUser } from '@/lib/use-current-user';
+import { useUnifiedAuth } from '@/lib/auth-state-unified';
 import { canAccessSettings } from '@/lib/rbac';
 
 export default function DebugUserPage() {
-  const { currentUser, isLoading } = useCurrentUser();
+  const { user: currentUser, isLoading } = useUnifiedAuth();
 
   if (isLoading) {
     return <div className="p-4">Loading user information...</div>;

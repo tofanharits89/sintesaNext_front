@@ -4,14 +4,14 @@ import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useCallback } from "react";
 import { apiPath } from "@/lib/base-path";
 import { http } from "@/lib/httpClient"; // keep for other callers; not used in fetcher
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
+import { getAuthTokenFromCookie } from "@/lib/cookieManager";
 import { useSocket } from "./useSocket";
 import {
   SOCKET_EVENTS,
   Conversation,
   SocketMessageData,
 } from "@/shared/socket-events";
-import { useCurrentUser } from "@/lib/use-current-user";
+import { useUnifiedAuth } from "@/lib/auth-state-unified";
 
 // Query keys for React Query
 export const conversationKeys = {
@@ -318,7 +318,7 @@ export function useConversations(options?: { enabled?: boolean }) {
 
   // Bridge socket events -> in-place cache updates for snappy UI
   const { on, off } = useSocket();
-  const { currentUser } = useCurrentUser();
+  const { user: currentUser } = useUnifiedAuth();
 
   useEffect(() => {
     const updateOnNewMessage = (m: SocketMessageData) => {

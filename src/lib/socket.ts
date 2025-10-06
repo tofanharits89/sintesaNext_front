@@ -2,7 +2,7 @@
 
 import { Socket } from "socket.io-client";
 import { socketClient, SocketClient, type SocketState } from "./socket/SimpleSocketClient";
-import { getAuthTokenFromCookie, clearAuthToken } from "@/utils/auth-utils";
+import { getAuthTokenFromCookie, clearAuthToken } from "@/lib/cookieManager";
 
 // Re-export types and utilities for backward compatibility
 export type { SocketState };

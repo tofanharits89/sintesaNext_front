@@ -15,7 +15,7 @@ import {
   SOCKET_EVENTS,
   SocketMessageData,
 } from "@/shared/socket-events";
-import { useCurrentUser } from "@/lib/use-current-user";
+import { useUnifiedAuth } from "@/lib/auth-state-unified";
 
 /**
  * Simplified WebSocket integration for messaging
@@ -24,7 +24,7 @@ import { useCurrentUser } from "@/lib/use-current-user";
 export function useMessagingSocketRQ() {
   const queryClient = useQueryClient();
   const { socket, on, off, isConnected, emit } = useSocket();
-  const { currentUser } = useCurrentUser();
+  const { user: currentUser } = useUnifiedAuth();
 
   // Store actions
   const typingActions = useTypingActions();

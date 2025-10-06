@@ -33,7 +33,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useCurrentUser } from "@/lib/use-current-user";
+import { useUnifiedAuth } from "@/lib/auth-state-unified";
 import { MessageStatus } from "./MessageStatus";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useMessagingRQ } from "@/hooks/messaging-rq";
@@ -102,7 +102,7 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
     };
   }, [conversationId]);
 
-  const { currentUser } = useCurrentUser();
+  const { user: currentUser } = useUnifiedAuth();
   const queryClient = useQueryClient();
   const resendMutation = useSendMessageMutation();
 
@@ -254,7 +254,7 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
   // Controlled auto-mark-as-read/opened functionality
   const { observeMessage, clearMarkedMessages } = useAutoMarkAsRead({
     messages,
-    currentUserId: currentUser?.id,
+    currentUserId: currentUser?.id || 'unknown',
     conversationId: effectiveConversationId,
     // Make read a no-op here to avoid duplicate mutations
     markAsRead: async (_ids) => {},

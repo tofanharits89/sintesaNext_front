@@ -15,8 +15,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Simple utility functions instead of complex service classes
-const PROTECTED_ROUTES = ['/dashboard', '/inquiry-data', '/admin', '/profile'];
-const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/'];
+const PROTECTED_ROUTES = ['/dashboard', '/inquiry-data', '/admin', '/profile', '/users', '/settings', '/messages', '/notifications'];
+const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/', '/server-error', '/unauthorized'];
 
 /**
  * Extract access token from HttpOnly cookie
@@ -40,24 +40,7 @@ function isPublicRoute(pathname: string): boolean {
 }
 
 /**
- * Simple health check without complex service dependencies
- */
-async function isBackendHealthy(): Promise<boolean> {
-  try {
-    const healthUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/health`;
-    const response = await fetch(healthUrl, {
-      method: 'GET',
-      cache: 'no-store',
-      signal: AbortSignal.timeout(2000) // 2 second timeout
-    });
-    return response.ok;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Main middleware function - simplified from 186 lines to ~40 lines
+ * Main middleware function - simplified and optimized
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -75,8 +58,8 @@ export async function middleware(request: NextRequest) {
   if (isPublicRoute(pathname)) {
     const token = extractAccessToken(request);
 
-    // If user has valid token, redirect to dashboard
-    if (token) {
+    // If user has valid token and is on login/register, redirect to dashboard
+    if (token && (pathname === '/login' || pathname === '/register')) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
 
@@ -97,14 +80,6 @@ export async function middleware(request: NextRequest) {
     // Token exists - optimistic validation (no DB call in middleware)
     // Full validation happens in API routes and server components
     return NextResponse.next();
-  }
-
-  // Backend health check for critical routes
-  if (pathname.startsWith('/dashboard') || pathname.startsWith('/admin')) {
-    const isHealthy = await isBackendHealthy();
-    if (!isHealthy) {
-      return NextResponse.redirect(new URL('/server-error', request.url));
-    }
   }
 
   return NextResponse.next();

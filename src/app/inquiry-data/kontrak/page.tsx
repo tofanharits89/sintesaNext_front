@@ -28,7 +28,7 @@ import {
 } from "@/hooks/use-query-loader";
 import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
 import { useSavedQueries } from "@/hooks/use-saved-queries";
-import { useCurrentUser } from "@/lib/use-current-user";
+import { useUnifiedAuth } from "@/lib/auth-state-unified";
 import type { FilterValue, SavedQuery } from "@/types/saved-queries";
 import { Settings, Keyboard, RefreshCw, Database } from "lucide-react";
 import { QueryErrorBoundary } from "@/components/ui/query-error-boundary";
@@ -137,7 +137,7 @@ export default function KontrakPage() {
   const { createQuery, isCreating } = useSavedQueries();
 
   // Get current user for query management
-  const { currentUser } = useCurrentUser();
+  const { user: currentUser } = useUnifiedAuth();
 
   // Function to save current query state
   const saveCurrentQueryReal = useCallback(async (): Promise<{ success: boolean; error?: string }> => {

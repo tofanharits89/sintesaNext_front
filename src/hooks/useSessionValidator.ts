@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { clearAuthToken } from '@/utils/auth-utils';
+import { clearAuthToken } from '@/lib/cookieManager';
 
 const PUBLIC_PATHS = ['/login', '/server-error', '/unauthorized'];
 const CHECK_INTERVAL = 30000; // Check every 30 seconds

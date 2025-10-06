@@ -20,8 +20,17 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { withBasePath } from "@/lib/base-path";
 import { prefetchCsrf, getCookie } from "@/lib/httpClient";
+
+// Add debug for missing imports
+if (typeof window !== 'undefined') {
+  console.log('[LoginForm] Component loaded, checking dependencies...');
+  console.log('[LoginForm] httpClient functions available:', { 
+    prefetchCsrf: typeof prefetchCsrf, 
+    getCookie: typeof getCookie 
+  });
+}
 import { apiPath } from "@/lib/base-path";
-import { dispatchAuthEvent } from "@/utils/auth-utils";
+import { dispatchAuthEvent } from "@/lib/cookieManager";
 import { socketClient } from "@/lib/SocketClient";
 import Image from "next/image";
 import { LoginLoading } from "@/components/ui/login-loading";
@@ -78,6 +87,7 @@ export default function LoginForm() {
   });
 
   async function onSubmit(values: z.infer<typeof schema>) {
+    console.log('=== LOGIN FORM SUBMISSION START ===');
     console.log('Login form submitted with values:', values);
     try {
       // Only clear auth state if user is not currently in a refresh operation
@@ -193,6 +203,13 @@ export default function LoginForm() {
         // No client-side token mirroring. Auth is carried by httpOnly cookies set by backend.
         // Optionally, keep a lightweight, non-sensitive user mirror if needed (omitted here for security).
 
+        // Clear logout flag if present (both window and sessionStorage)
+        if (typeof window !== "undefined") {
+          (window as any).__isLoggingOut = false;
+          sessionStorage.removeItem("__isLoggingOut");
+          console.log("[LoginForm] Cleared __isLoggingOut flag");
+        }
+        
         // Set flag to indicate user just logged in (for socket connection timing)
         sessionStorage.setItem('just_logged_in', 'true');
         
@@ -247,7 +264,17 @@ export default function LoginForm() {
   const handleFormSubmit = (e: React.FormEvent) => {
     console.log('Form submit event triggered');
     e.preventDefault();
-    form.handleSubmit(onSubmit)(e);
+    
+    // Add more detailed debugging
+    console.log('Form values:', form.getValues());
+    console.log('Form is valid:', form.formState.isValid);
+    console.log('Form errors:', form.formState.errors);
+    
+    // Trigger form validation and submission
+    form.handleSubmit(onSubmit)(e).catch(error => {
+      console.error('Form submission error:', error);
+      toast.error('Form submission failed. Please try again.');
+    });
   };
 
   return (
@@ -359,9 +386,17 @@ export default function LoginForm() {
                 type="submit"
                 disabled={form.formState.isSubmitting || isRedirecting}
                 onClick={(e) => {
-                  console.log('Button clicked');
+                  console.log('=== LOGIN BUTTON CLICKED ===');
+                  console.log('Button disabled?', form.formState.isSubmitting || isRedirecting);
+                  console.log('Form values:', form.getValues());
+                  console.log('Form is valid:', form.formState.isValid);
+                  console.log('Form errors:', form.formState.errors);
+                  console.log('Form dirty fields:', form.formState.dirtyFields);
+                  
+                  // Don't prevent default - let the form handle submission
                   if (!form.formState.isValid) {
-                    console.log('Form validation errors:', form.formState.errors);
+                    console.log('Form validation failed - showing errors');
+                    toast.error('Please fill in all required fields correctly');
                   }
                 }}
               >

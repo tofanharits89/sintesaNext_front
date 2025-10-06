@@ -5,7 +5,7 @@
  */
 
 import { toast } from "sonner";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
+import { getAuthTokenFromCookie } from "@/lib/cookieManager";
 import { logger } from "@/lib/utils";
 
 // Helper function to check if we're on login page

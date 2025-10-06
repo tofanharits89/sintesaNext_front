@@ -7,6 +7,7 @@ import axios, {
 import { BACKEND_BASE_URL, backendPath } from "./backend";
 import { apiPath } from "./base-path";
 import { setupRateLimitInterceptor } from "@/utils/rateLimitHandler";
+import { csrfManager } from "./csrfManager";
 
 // Utilities to read cookies in browser
 export function getCookie(name: string): string | null {
@@ -89,14 +90,20 @@ http.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
       h["Content-Type"] = "application/json";
     }
 
-    // Attach CSRF token for state-changing methods
-    let csrf = getCookie("XSRF-TOKEN") || lastCsrfToken;
-    if (!csrf) {
-      await ensureCsrfToken(http);
-      csrf = getCookie("XSRF-TOKEN") || lastCsrfToken;
-    }
-    if (csrf) {
-      h["X-CSRF-Token"] = csrf;
+    // Attach CSRF token for state-changing methods using unified manager
+    try {
+      await csrfManager.attachCSRFToken(h);
+    } catch (error) {
+      console.warn('[CSRF] Failed to attach token:', error);
+      // Fallback to cookie-based approach
+      let csrf = getCookie("XSRF-TOKEN") || lastCsrfToken;
+      if (!csrf) {
+        await ensureCsrfToken(http);
+        csrf = getCookie("XSRF-TOKEN") || lastCsrfToken;
+      }
+      if (csrf) {
+        h["X-CSRF-Token"] = csrf;
+      }
     }
   }
   return config;
@@ -115,13 +122,13 @@ function processQueue(error: any | null) {
   pendingQueue = [];
 }
 
-// Import improved cookie manager
-import { clearAuthCookies, verifyAuthCookiesCleared } from './cookieManager';
+// Simplified cookie management for HTTP-only only approach
+import { clearNonHttpOnlyCookies } from './cookieManager';
 
-// Expose globally for debugging (using improved cookie manager)
+// Expose globally for debugging
 if (typeof window !== 'undefined') {
-  (window as any).__clearAuthCookies = clearAuthCookies;
-  console.log('[Auth] Debug: window.__clearAuthCookies() available for manual cookie cleanup');
+  (window as any).__clearNonHttpOnlyCookies = clearNonHttpOnlyCookies;
+  console.log('[Auth] Debug: window.__clearNonHttpOnlyCookies() available for manual cleanup');
 }
 
 async function refreshTokens(): Promise<void> {
@@ -137,7 +144,7 @@ async function refreshTokens(): Promise<void> {
     });
   }
   isRefreshing = true;
-  console.log('[Auth] 🔄 Attempting to refresh tokens...');
+  console.log('[Auth] 🔄 Attempting to refresh HTTP-only tokens...');
   
   try {
     // Proactively ensure we have a CSRF token before hitting refresh endpoint
@@ -146,12 +153,12 @@ async function refreshTokens(): Promise<void> {
     const csrf = getCookie("XSRF-TOKEN") || lastCsrfToken;
     const resp = await fetch(apiPath("/auth/refresh"), {
       method: "POST",
-      credentials: "include",
+      credentials: "include", // Critical: Include HTTP-only cookies
       headers: {
         "Content-Type": "application/json",
         ...(csrf ? { "X-CSRF-Token": String(csrf) } : {}),
       },
-      body: JSON.stringify({}),
+      body: JSON.stringify({}), // Backend will use cookies, no body token needed
     });
     
     console.log(`[Auth] Refresh response status: ${resp.status}`);
@@ -173,25 +180,28 @@ async function refreshTokens(): Promise<void> {
         });
         console.log(`[Auth] Retry response status: ${retry.status}`);
         if (!retry.ok) {
-          // Refresh failed - clear cookies locally
-          console.log('[Auth] ❌ Refresh retry failed, clearing cookies');
-          clearAuthCookies();
+          // Refresh failed - clear non-HTTP-only cookies and CSRF cache
+          console.log('[Auth] ❌ Refresh retry failed');
+          clearNonHttpOnlyCookies();
+          csrfManager.clearCache();
           throw new Error(`Refresh failed: ${retry.status}`);
         }
       } else {
-        // Refresh failed - clear cookies locally
-        console.log(`[Auth] ❌ Refresh failed with status ${resp.status}, clearing cookies`);
-        clearAuthCookies();
+        // Refresh failed - clear non-HTTP-only cookies and CSRF cache
+        console.log(`[Auth] ❌ Refresh failed with status ${resp.status}`);
+        clearNonHttpOnlyCookies();
+        csrfManager.clearCache();
         throw new Error(`Refresh failed: ${resp.status}`);
       }
     }
     
-    console.log('[Auth] ✅ Token refresh successful');
+    console.log('[Auth] ✅ HTTP-only token refresh successful');
     processQueue(null);
   } catch (err) {
-    // Clear cookies on any refresh failure
-    console.log('[Auth] ❌ Refresh error caught, clearing cookies:', err);
-    clearAuthCookies();
+    // Clear non-HTTP-only cookies and CSRF cache on any refresh failure
+    console.log('[Auth] ❌ Refresh error caught:', err);
+    clearNonHttpOnlyCookies();
+    csrfManager.clearCache();
     lastRefreshFailureAt = Date.now();
     processQueue(err);
     throw err;
@@ -203,14 +213,18 @@ async function refreshTokens(): Promise<void> {
 http.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
-    const original = error.config as AxiosRequestConfig & { _retry?: boolean };
+    const original = error.config as AxiosRequestConfig & { _retry?: boolean; _skipAuthRefresh?: boolean };
     const status = error.response?.status;
 
+    // Skip auth refresh for logout and refresh endpoints
+    const isLogoutOrRefresh = original.url?.includes('/auth/logout') || original.url?.includes('/auth/refresh');
+    
     // CSRF error handling: if 403 with EBADCSRFTOKEN, fetch new token then retry once
     if (
       status === 403 &&
       (error.response?.data as any)?.error?.code === "EBADCSRFTOKEN" &&
-      !original._retry
+      !original._retry &&
+      !isLogoutOrRefresh
     ) {
       original._retry = true;
       try {
@@ -221,32 +235,28 @@ http.interceptors.response.use(
       }
     }
 
-    // Auth handling: attempt refresh on 401 once
-    if (status === 401 && !original._retry) {
+    // Auth handling: attempt refresh on 401 once (but skip for logout/refresh endpoints)
+    if (status === 401 && !original._retry && !isLogoutOrRefresh && !original._skipAuthRefresh) {
       original._retry = true;
-      console.log('[Auth] Received 401, attempting refresh...');
+      console.log('[Auth] Received 401, attempting HTTP-only refresh...');
       try {
         await refreshTokens();
-        console.log('[Auth] Refresh succeeded, retrying original request');
+        console.log('[Auth] HTTP-only refresh succeeded, retrying original request');
         return http.request(original);
       } catch (refreshError) {
-        // Refresh failed - cookies should already be cleared by refreshTokens()
-        console.log('[Auth] Refresh failed, cookies should be cleared');
-        // Double-check cookies are cleared
-        if (typeof window !== 'undefined' && document.cookie.includes('Token')) {
-          console.warn('[Auth] WARNING: Cookies still present after refresh failure, clearing now...');
-          clearAuthCookies();
-        }
+        // Refresh failed - non-HTTP-only cookies should already be cleared by refreshTokens()
+        console.log('[Auth] HTTP-only refresh failed, non-HTTP-only cookies cleared');
         // Avoid retry storms: set failure time
         lastRefreshFailureAt = Date.now();
         return Promise.reject(refreshError);
       }
     }
 
-    // If this is a 401 and we already tried refresh (_retry = true), clear cookies
-    if (status === 401 && original._retry) {
-      console.log('[Auth] Received 401 after retry attempt, clearing cookies');
-      clearAuthCookies();
+    // If this is a 401 and we already tried refresh (_retry = true), clear non-HTTP-only cookies and CSRF cache
+    if (status === 401 && original._retry && !isLogoutOrRefresh) {
+      console.log('[Auth] Received 401 after retry attempt, clearing non-HTTP-only cookies and CSRF cache');
+      clearNonHttpOnlyCookies();
+      csrfManager.clearCache();
     }
 
     return Promise.reject(error);

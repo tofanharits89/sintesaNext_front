@@ -5,7 +5,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import carisatkerData from "@/data/carisatker.json";
-import { useCurrentUser } from "@/lib/use-current-user";
+import { useUnifiedAuth } from "@/lib/auth-state-unified";
 import { filterSatkerByUserAccess } from "@/utils/satker-rbac";
 
 interface SatkerItem {
@@ -23,7 +23,7 @@ export function SatkerSearch() {
     const router = useRouter();
     const inputRef = useRef<HTMLInputElement>(null);
     const resultsRef = useRef<HTMLDivElement>(null);
-    const { currentUser } = useCurrentUser();
+    const { user: currentUser } = useUnifiedAuth();
 
     // Filter results based on search input and user access
     useEffect(() => {

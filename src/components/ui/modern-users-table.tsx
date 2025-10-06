@@ -257,7 +257,10 @@ export function ModernUsersTable({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => onEdit(row.original)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(row.original);
+              }}
               className="h-8 w-8 hover:bg-blue-100 hover:text-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400"
               aria-label="Edit pengguna"
             >
@@ -266,7 +269,10 @@ export function ModernUsersTable({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => onDelete(row.original.id, row.original.name)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(row.original.id, row.original.name);
+              }}
               className="h-8 w-8 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
               aria-label="Hapus pengguna"
             >

@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useCurrentUser } from "@/lib/use-current-user";
+import { useUnifiedAuth } from "@/lib/auth-state-unified";
 import { apiClient, prefetchCsrf } from "@/lib/httpClient";
-import { User } from "@/lib/users-store";
+import { User } from "@/lib/auth-state-unified";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,7 @@ import kdkanwilData from "@/data/kdkanwil.json";
 import kdkppnData from "@/data/kdkppn.json";
 
 export default function ProfilePage() {
-  const { currentUser: current, mutate } = useCurrentUser();
+  const { user: current, refetch } = useUnifiedAuth();
 
   // Check if user can edit role and location fields (only super_admin and co_admin can)
   const canEditRoleAndLocation =
@@ -130,7 +130,7 @@ export default function ProfilePage() {
         return;
       }
       toast.success("Profil tersimpan");
-      mutate();
+      refetch();
     } catch (e: Error | unknown) {
       toast.error(
         e instanceof Error ? e.message : "Terjadi kesalahan jaringan"
@@ -195,7 +195,7 @@ export default function ProfilePage() {
       setNewPassword("");
       setConfirmPassword("");
       // Optionally refresh user data
-      mutate();
+      refetch();
     } catch (e: Error | unknown) {
       const respData = (e as any)?.response?.data;
       const enMsg: string | undefined = respData?.message;
@@ -245,7 +245,7 @@ export default function ProfilePage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Profil Akun</h1>
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => mutate()}>
+          <Button variant="secondary" onClick={() => refetch()}>
             Reset
           </Button>
           <Button onClick={onSave}>Simpan</Button>

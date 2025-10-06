@@ -19,7 +19,7 @@ import {
   useUnreadBadgesStore,
   useNotificationStore,
 } from "@/stores";
-import { useCurrentUser } from "@/lib/use-current-user";
+import { useUnifiedAuth } from "@/lib/auth-state-unified";
 
 /**
  * Comprehensive messaging hook that integrates React Query + Zustand + WebSocket
@@ -32,7 +32,7 @@ import { useCurrentUser } from "@/lib/use-current-user";
  * - Optimistic updates and mutations
  */
 export function useMessagingRQ(options?: { enabled?: boolean }) {
-  const { currentUser } = useCurrentUser();
+  const { user: currentUser } = useUnifiedAuth();
 
   // Global messaging state from Zustand
   const { activeConversationId, messageInput, totalUnreadCount } =

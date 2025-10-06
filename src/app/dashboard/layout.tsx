@@ -19,13 +19,9 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Server-side auth guard: ensures redirect to /login when unauthenticated
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get("accessToken")?.value?.trim();
-  if (!accessToken) {
-    redirect("/login");
-  }
-
+  // Auth is handled by middleware - no need for redundant server-side check
+  // Middleware already redirects unauthenticated users to /login
+  
   // Optionally, you could fetch the user here using the cookie and pass it down
   const user: User | null = null;
 

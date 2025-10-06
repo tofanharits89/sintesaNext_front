@@ -2,14 +2,14 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { useCurrentUser } from '@/lib/use-current-user';
+import { useUnifiedAuth } from '@/lib/auth-state-unified';
 import { canAccessSettings } from '@/lib/rbac-client';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertTriangle, Settings } from 'lucide-react';
 
 export default function PengaturanPage() {
   const router = useRouter();
-  const { currentUser, isLoading } = useCurrentUser();
+  const { user: currentUser, isLoading } = useUnifiedAuth();
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {

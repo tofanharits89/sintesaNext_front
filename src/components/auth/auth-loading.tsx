@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useClientAuth } from "@/hooks/useClientAuth";
+import { useUnifiedAuth } from "@/lib/auth-state-unified";
 import { AuthSkeleton } from "@/components/layout/dashboard-skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -25,13 +25,9 @@ export function AuthLoading({
   const { 
     isAuthenticated, 
     isLoading, 
-    isError, 
     error, 
-    refreshAuth 
-  } = useClientAuth({
-    redirectOnFailure: true,
-    redirectTo: "/login"
-  });
+    refetch 
+  } = useUnifiedAuth();
 
   // Show loading state
   if (isLoading) {
@@ -39,7 +35,7 @@ export function AuthLoading({
   }
 
   // Show error state with retry option
-  if (isError) {
+  if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen p-4">
         <div className="max-w-md w-full space-y-4">
@@ -51,7 +47,7 @@ export function AuthLoading({
           
           {showRetry && (
             <Button 
-              onClick={() => refreshAuth()} 
+              onClick={() => refetch()} 
               variant="outline" 
               className="w-full"
             >
@@ -83,9 +79,7 @@ export function AuthStatus({
   children: React.ReactNode;
   fallback?: React.ReactNode;
 }) {
-  const { isAuthenticated, isLoading } = useClientAuth({
-    redirectOnFailure: false
-  });
+  const { isAuthenticated, isLoading } = useUnifiedAuth();
 
   if (isLoading) {
     return <>{fallback}</>;
@@ -111,9 +105,7 @@ export function ProgressiveAuth({
   basicContent: React.ReactNode;
   loadingContent?: React.ReactNode;
 }) {
-  const { isAuthenticated, isLoading } = useClientAuth({
-    redirectOnFailure: false
-  });
+  const { isAuthenticated, isLoading } = useUnifiedAuth();
 
   // Show basic content immediately
   if (isLoading) {

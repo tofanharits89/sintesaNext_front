@@ -76,6 +76,26 @@ export function WhatsappModal({
     })();
   }, [open]);
 
+  // Re-check status when QR modal closes
+  React.useEffect(() => {
+    if (!showQr || !open) return;
+    
+    // Poll to check if authentication completed
+    const interval = setInterval(async () => {
+      try {
+        const resp = await http.get(`/api/whatsapp/status`);
+        const data = resp.data;
+        if (data?.success && data?.data?.authenticated) {
+          setShowQr(false);
+        }
+      } catch {
+        // Keep showing QR on error
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [showQr, open]);
+
   const handleSendToWhatsApp = async () => {
     if (!selectedFileType || !phone) return;
     // If not authenticated, open QR modal instead of sending

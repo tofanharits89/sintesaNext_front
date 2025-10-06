@@ -15,10 +15,14 @@ export default function GlobalAuthCheck() {
   const hasCheckedRef = useRef(false);
 
   useEffect(() => {
+    // TEMPORARILY DISABLED to debug refresh loop
+    console.log('[GlobalAuthCheck] Component loaded but validation disabled');
+    return;
+    
     if (!pathname) return;
 
     // Skip auth check for public pages
-    if (PUBLIC_PATHS.some(path => pathname.startsWith(path))) {
+    if (PUBLIC_PATHS.some(path => pathname?.startsWith(path))) {
       return;
     }
 

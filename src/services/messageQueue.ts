@@ -312,8 +312,10 @@ const response = await fetch(apiPath('/messaging/send'), {
   }
 
   private getAuthToken(): string {
-    // Get token from your auth system
-    return localStorage.getItem('accessToken') || '';
+    // HTTP-only cookies are used for auth tokens
+    // JavaScript cannot access HTTP-only cookies directly
+    // For Socket.IO authentication, the server will read cookies automatically
+    return '';
   }
 
   private emitMessageEvent(event: string, data: any): void {

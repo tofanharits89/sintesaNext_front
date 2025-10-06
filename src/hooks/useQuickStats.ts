@@ -58,6 +58,7 @@ export function useQuickStats(options: UseQuickStatsOptions = {}): UseQueryResul
         const response = await fetch(url.toString(), {
           credentials: "include",
           headers: { "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(10000), // 10 second timeout
         });
 
         // If server responded 304 (Not Modified), reuse existing cached data
@@ -118,20 +119,35 @@ export function useQuickStats(options: UseQuickStatsOptions = {}): UseQueryResul
         ) {
           throw new Error("Authentication failed. Please log in to continue.");
         }
+        // Handle timeout errors
+        if (
+          error.name === "AbortError" ||
+          error.message?.includes("timeout") ||
+          error.message?.includes("AbortError")
+        ) {
+          throw new Error("Server is taking too long to respond. Please try again later.");
+        }
+        // Handle network errors
+        if (error.message?.includes("fetch")) {
+          throw new Error("Unable to connect to server. Please check your connection.");
+        }
         throw error;
       }
     },
     enabled: isClient,
     staleTime: 24 * 60 * 60 * 1000, // 24 hours to match backend cache
     retry: (failureCount, error) => {
-      // Don't retry on authentication errors
+      // Don't retry on authentication errors or timeout errors
       if (
         error.message?.includes("authentication") ||
-        error.message?.includes("401")
+        error.message?.includes("401") ||
+        error.message?.includes("timeout") ||
+        error.message?.includes("AbortError") ||
+        error.name === "AbortError"
       ) {
         return false;
       }
-      return failureCount < 3;
+      return failureCount < 2; // Allow more retries for transient network issues
     },
   });
 }

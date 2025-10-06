@@ -60,6 +60,33 @@ export function GlobalSocketInitializer() {
       sessionStorage.removeItem("just_logged_in");
     }
 
+    // Check if logout is in progress - prevent reconnection
+    // Check both window and sessionStorage for persistence across redirect
+    const isLoggingOut =
+      (typeof window !== "undefined" && (window as any).__isLoggingOut) ||
+      (typeof sessionStorage !== "undefined" &&
+        sessionStorage.getItem("__isLoggingOut") === "true");
+
+    console.log("[GlobalSocketInitializer] Logout flag check:", {
+      isLoggingOut,
+      pathname,
+      windowFlag:
+        typeof window !== "undefined"
+          ? (window as any).__isLoggingOut
+          : undefined,
+      sessionStorageFlag:
+        typeof sessionStorage !== "undefined"
+          ? sessionStorage.getItem("__isLoggingOut")
+          : undefined,
+    });
+
+    if (isLoggingOut) {
+      console.log(
+        "[GlobalSocketInitializer] Logout in progress, skipping socket connection"
+      );
+      return;
+    }
+
     // Attempt to connect if not already connected
     // This handles: page refresh, direct navigation, and post-login scenarios
     if (currentState === "disconnected" || currentState === "error") {
@@ -69,6 +96,19 @@ export function GlobalSocketInitializer() {
       const connectionDelay = justLoggedIn === "true" ? 1000 : 0;
 
       setTimeout(() => {
+        // Double-check logout flag before connecting
+        const isLoggingOutNow =
+          (typeof window !== "undefined" && (window as any).__isLoggingOut) ||
+          (typeof sessionStorage !== "undefined" &&
+            sessionStorage.getItem("__isLoggingOut") === "true");
+
+        if (isLoggingOutNow) {
+          console.log(
+            "[GlobalSocketInitializer] Logout detected during connection delay, aborting"
+          );
+          return;
+        }
+
         socketClient
           .connect()
           .then(() => {
@@ -86,6 +126,20 @@ export function GlobalSocketInitializer() {
 
             // Retry connection after a delay if first attempt fails
             setTimeout(() => {
+              // Check logout flag before retry
+              const isLoggingOutRetry =
+                (typeof window !== "undefined" &&
+                  (window as any).__isLoggingOut) ||
+                (typeof sessionStorage !== "undefined" &&
+                  sessionStorage.getItem("__isLoggingOut") === "true");
+
+              if (isLoggingOutRetry) {
+                console.log(
+                  "[GlobalSocketInitializer] Logout detected before retry, aborting"
+                );
+                return;
+              }
+
               console.log(
                 "[GlobalSocketInitializer] Retrying socket connection..."
               );

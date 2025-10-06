@@ -15,7 +15,7 @@ import { PenundaanTable } from "./_penundaan-table";
 import { ConfirmationModals } from "@/components/ui/confirmation-modal";
 import { useKmkPotongan, RawPotonganItem } from "@/hooks/use-kmk-potongan";
 import { apiPath } from "@/lib/base-path";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
+import { getAuthTokenFromCookie } from "@/lib/cookieManager";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
 
 interface DataPenundaanModalProps {

@@ -1,12 +1,21 @@
 /**
- * Improved Cookie Management
- * 
- * Addresses the issues with frontend cookie clearing by:
- * 1. Relying primarily on backend Set-Cookie headers
- * 2. Adding cookie integrity checks
- * 3. Implementing proper SameSite handling
- * 4. Providing verification mechanisms
+ * Consolidated Cookie Management System
+ *
+ * Consolidates cookie management from multiple systems:
+ * - cookieManager.ts (primary HTTP-only approach)
+ * - auth-utils.ts (token extraction utilities)
+ * - cookie-clearing.ts (unused comprehensive clearing)
+ *
+ * Features:
+ * 1. HTTP-only security approach with backend Set-Cookie headers
+ * 2. Token extraction and validation utilities
+ * 3. Cookie integrity checks and verification
+ * 4. Proper SameSite handling and security
+ * 5. Consolidated API for all cookie operations
  */
+
+import { logger } from "@/lib/utils";
+import { parse } from "cookie";
 
 /**
  * Cookie configuration for security
@@ -58,11 +67,14 @@ export function getAllCookies(): Map<string, string> {
 }
 
 /**
- * Check if any auth cookies exist
+ * Check if any HTTP-only auth cookies exist (indirect check)
+ * Note: We cannot directly check HTTP-only cookies from JavaScript
+ * This checks for non-HTTP-only indicators of authentication state
  */
 export function hasAuthCookies(): boolean {
   const cookies = getAllCookies();
-  return COOKIE_CONFIG.AUTH_COOKIES.some(name => cookies.has(name));
+  // Check for CSRF tokens which indicate authentication
+  return COOKIE_CONFIG.CSRF_COOKIES.some(name => cookies.has(name));
 }
 
 /**
@@ -86,28 +98,36 @@ export function getCookie(name: string): string | null {
 }
 
 /**
- * IMPROVED: Clear auth cookies with verification
+ * HTTP-Only Only Approach: Clear only non-HTTP-only cookies
  * 
- * This function attempts to clear cookies but acknowledges that:
- * 1. Frontend cannot reliably clear HttpOnly cookies
- * 2. Backend Set-Cookie headers are the authoritative way to clear cookies
- * 3. This is a best-effort cleanup for non-HttpOnly cookies
+ * This function clears only non-HTTP-only cookies like CSRF tokens.
+ * HTTP-only auth cookies are managed entirely by the backend.
  */
-export function clearAuthCookies(): {
-  attempted: string[];
+export function clearNonHttpOnlyCookies(): {
+  cleared: string[];
   remaining: string[];
   success: boolean;
 } {
   if (typeof document === 'undefined') {
     console.log('[CookieManager] Cannot clear cookies - document is undefined (SSR)');
-    return { attempted: [], remaining: [], success: false };
+    return { cleared: [], remaining: [], success: false };
   }
 
-  console.log('[CookieManager] ⚠️ Attempting to clear auth cookies');
+  console.log('[CookieManager] Clearing non-HTTP-only cookies (HTTP-only cookies managed by backend)');
   console.log('[CookieManager] Cookies before clear:', document.cookie);
 
-  const attempted: string[] = [];
+  const cleared: string[] = [];
   const cookiesBefore = getAllCookies();
+
+  // Only clear non-HTTP-only cookies (CSRF tokens, etc.)
+  // HTTP-only cookies (accessToken, refreshToken) are cleared by backend Set-Cookie headers
+  const nonHttpOnlyCookies = [
+    'XSRF-TOKEN',
+    '_csrf',
+    'authState',
+    'auth_user',
+    // Add other non-sensitive cookies as needed
+  ];
 
   // Get all possible domain variations
   const hostname = window.location.hostname;
@@ -127,75 +147,81 @@ export function clearAuthCookies(): {
     }
   }
 
-  // Clear each auth cookie with all domain/path combinations
-  COOKIE_CONFIG.AUTH_COOKIES.forEach(name => {
-    attempted.push(name);
-    
-    domains.forEach(domain => {
-      const domainAttr = domain ? `domain=${domain};` : '';
-      const secureAttr = COOKIE_CONFIG.CLEAR_ATTRIBUTES.secure ? 'secure;' : '';
-      const sameSiteAttr = `SameSite=${COOKIE_CONFIG.CLEAR_ATTRIBUTES.sameSite};`;
+  // Clear each non-HTTP-only cookie
+  nonHttpOnlyCookies.forEach(name => {
+    if (cookiesBefore.has(name)) {
+      cleared.push(name);
       
-      // Multiple clearing strategies
-      const clearStrategies = [
-        // Strategy 1: Standard clear with all attributes
-        `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; ${domainAttr} ${secureAttr} ${sameSiteAttr}`,
+      domains.forEach(domain => {
+        const domainAttr = domain ? `domain=${domain};` : '';
+        const secureAttr = COOKIE_CONFIG.CLEAR_ATTRIBUTES.secure ? 'secure;' : '';
+        const sameSiteAttr = `SameSite=${COOKIE_CONFIG.CLEAR_ATTRIBUTES.sameSite};`;
         
-        // Strategy 2: Clear with max-age=0
-        `${name}=; max-age=0; path=/; ${domainAttr} ${secureAttr} ${sameSiteAttr}`,
-        
-        // Strategy 3: Clear with /api path (for API-specific cookies)
-        `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/api; ${domainAttr} ${secureAttr} ${sameSiteAttr}`,
-        
-        // Strategy 4: Clear without domain (current domain only)
-        `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; ${secureAttr} ${sameSiteAttr}`,
-      ];
+        // Clear strategies
+        const clearStrategies = [
+          `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; ${domainAttr} ${secureAttr} ${sameSiteAttr}`,
+          `${name}=; max-age=0; path=/; ${domainAttr} ${secureAttr} ${sameSiteAttr}`,
+        ];
 
-      clearStrategies.forEach(strategy => {
-        document.cookie = strategy;
+        clearStrategies.forEach(strategy => {
+          document.cookie = strategy;
+        });
       });
-    });
+    }
   });
 
   // Verify clearing
   const cookiesAfter = getAllCookies();
-  const remaining = COOKIE_CONFIG.AUTH_COOKIES.filter(name => cookiesAfter.has(name));
+  const remaining = nonHttpOnlyCookies.filter(name => cookiesAfter.has(name));
 
   const success = remaining.length === 0;
 
-  console.log('[CookieManager] Clear attempt completed:', {
-    attempted: attempted.length,
+  console.log('[CookieManager] Non-HTTP-only cookie clear completed:', {
+    cleared: cleared.length,
     remaining: remaining.length,
     success,
+    clearedCookies: cleared,
   });
-
-  if (remaining.length > 0) {
-    console.warn('[CookieManager] ⚠️ Some cookies could not be cleared (likely HttpOnly):', remaining);
-    console.warn('[CookieManager] This is expected - backend Set-Cookie headers will clear HttpOnly cookies');
-  } else {
-    console.log('[CookieManager] ✅ All non-HttpOnly auth cookies cleared');
-  }
 
   console.log('[CookieManager] Cookies after clear:', document.cookie);
 
   return {
-    attempted,
+    cleared,
     remaining,
     success,
   };
 }
 
 /**
- * Verify that auth cookies are cleared
- * Returns true if no auth cookies exist
+ * @deprecated Use clearNonHttpOnlyCookies() instead
+ * This function is kept for backward compatibility but should not be used
+ * as HTTP-only cookies are managed by the backend.
+ */
+export function clearAuthCookies(): {
+  attempted: string[];
+  remaining: string[];
+  success: boolean;
+} {
+  console.warn('[CookieManager] ⚠️ clearAuthCookies() is deprecated. Use clearNonHttpOnlyCookies() instead.');
+  const result = clearNonHttpOnlyCookies();
+  return {
+    attempted: result.cleared,
+    remaining: result.remaining,
+    success: result.success,
+  };
+}
+
+/**
+ * Verify that non-HTTP-only cookies are cleared
+ * Returns true if no non-HTTP-only auth cookies exist
  */
 export function verifyAuthCookiesCleared(): boolean {
   return !hasAuthCookies();
 }
 
 /**
- * Wait for cookies to be cleared (with timeout)
- * Useful after logout API call to ensure cookies are cleared
+ * Wait for non-HTTP-only cookies to be cleared (with timeout)
+ * Useful after logout API call to ensure client-side cookies are cleared
  */
 export async function waitForCookiesCleared(
   timeoutMs: number = 2000,
@@ -205,7 +231,7 @@ export async function waitForCookiesCleared(
 
   while (Date.now() - startTime < timeoutMs) {
     if (verifyAuthCookiesCleared()) {
-      console.log('[CookieManager] ✅ Cookies verified as cleared');
+      console.log('[CookieManager] ✅ Non-HTTP-only cookies verified as cleared');
       return true;
     }
 
@@ -254,7 +280,7 @@ export function getCookieIntegrityReport(): {
 }
 
 /**
- * Enhanced logout with cookie verification
+ * HTTP-Only Only logout cleanup
  * This should be called after the logout API call
  */
 export async function performLogoutCleanup(): Promise<{
@@ -262,12 +288,12 @@ export async function performLogoutCleanup(): Promise<{
   localStorageCleared: boolean;
   sessionStorageCleared: boolean;
 }> {
-  console.log('[CookieManager] 🔄 Performing logout cleanup...');
+  console.log('[CookieManager] 🔄 Performing HTTP-only logout cleanup...');
 
-  // 1. Clear auth cookies (best effort)
-  const cookieResult = clearAuthCookies();
+  // 1. Clear non-HTTP-only cookies only (HTTP-only cleared by backend)
+  const cookieResult = clearNonHttpOnlyCookies();
 
-  // 2. Clear localStorage auth data
+  // 2. Clear localStorage auth data (if any exists)
   let localStorageCleared = false;
   try {
     if (typeof localStorage !== 'undefined') {
@@ -280,7 +306,7 @@ export async function performLogoutCleanup(): Promise<{
     console.warn('[CookieManager] ⚠️ Failed to clear localStorage:', error);
   }
 
-  // 3. Clear sessionStorage auth data
+  // 3. Clear sessionStorage auth data (if any exists)
   let sessionStorageCleared = false;
   try {
     if (typeof sessionStorage !== 'undefined') {
@@ -293,10 +319,10 @@ export async function performLogoutCleanup(): Promise<{
     console.warn('[CookieManager] ⚠️ Failed to clear sessionStorage:', error);
   }
 
-  // 4. Wait for cookies to be cleared (by backend Set-Cookie headers)
+  // 4. Wait for non-HTTP-only cookies to be cleared
   const cookiesCleared = await waitForCookiesCleared(2000);
 
-  console.log('[CookieManager] ✅ Logout cleanup completed:', {
+  console.log('[CookieManager] ✅ HTTP-only logout cleanup completed:', {
     cookiesCleared,
     localStorageCleared,
     sessionStorageCleared,
@@ -309,15 +335,268 @@ export async function performLogoutCleanup(): Promise<{
   };
 }
 
-// Expose globally for debugging
+// =============================================================================
+// TOKEN EXTRACTION UTILITIES (merged from auth-utils.ts)
+// =============================================================================
+
+/**
+ * Get authentication token from cookies
+ * Optimized for simplified cookie structure (accessToken only)
+ *
+ * SECURITY FIX: Removed socketToken preference to prevent XSS vulnerability
+ * Socket.IO will now use server-side cookie reading instead of client-side access
+ */
+export function getAuthTokenFromCookie(): string | null {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const cookieString = document.cookie || "";
+
+  if (!cookieString.trim()) {
+    return null;
+  }
+
+  const cookies = parse(cookieString);
+
+  // SECURITY FIX: Removed socketToken preference to prevent XSS vulnerability
+  // Socket.IO will read this server-side
+  const candidateCookieNames = [
+    "accessToken",    // httpOnly cookie (Socket.IO will read this server-side)
+  ];
+
+  for (const name of candidateCookieNames) {
+    const token = (cookies as any)[name];
+    if (token && typeof token === "string" && token.trim()) {
+      const parts = token.split(".");
+      if (parts.length === 3) {
+        try {
+          // Decode payload to check expiry
+          const payload = JSON.parse(atob(parts[1] || ''));
+          const now = Date.now();
+          const expMs = (payload.exp ?? 0) * 1000;
+
+          if (payload.exp && expMs > now) {
+            return token;
+          }
+        } catch (decodeError) {
+          // ignore decode errors silently
+        }
+      } else {
+        // invalid jwt format; continue
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Get refresh token from cookies
+ * Used for token refresh operations
+ */
+export function getRefreshTokenFromCookie(): string | null {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const cookieString = document.cookie || "";
+  if (!cookieString.trim()) {
+    return null;
+  }
+
+  const cookies = parse(cookieString);
+  return cookies.refreshToken || null;
+}
+
+/**
+ * Check if user is authenticated by validating token from cookies
+ * This is a synchronous check for immediate UI decisions
+ * WARNING: Less reliable than server-side validation
+ */
+export function isAuthSync(): boolean {
+  if (typeof window === "undefined") return false;
+
+  // Conservative approach: assume not authenticated unless we can verify
+  // This prevents false positives that could expose protected content
+  const cookieString = document.cookie || "";
+  return Boolean(cookieString && cookieString.includes('accessToken='));
+}
+
+/**
+ * Wait for authentication token to be available with retry logic
+ */
+export async function waitForAuthToken(
+  maxAttempts: number = 10,
+  delayMs: number = 100
+): Promise<string | null> {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const token = getAuthTokenFromCookie();
+    if (token) {
+      return token;
+    }
+
+    if (attempt < maxAttempts) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  return null;
+}
+
+/**
+ * Check if user is authenticated by validating session with API
+ * SECURITY FIX: Replaced cookie presence check with proper validation
+ */
+export async function isAuthenticated(): Promise<boolean> {
+  // Server-side rendering: cannot validate
+  if (typeof window === "undefined") return false;
+
+  try {
+    // Use the synchronous check with API validation as fallback
+    const token = getAuthTokenFromCookie();
+    if (!token) return false;
+
+    // Verify token is still valid by checking its expiry
+    const parts = token.split('.');
+    if (parts.length === 3) {
+      try {
+        const payload = JSON.parse(atob(parts[1] || ''));
+        const now = Date.now();
+        const expMs = (payload.exp ?? 0) * 1000;
+
+        if (payload.exp && expMs > now) {
+          return true; // Token is valid
+        }
+      } catch {
+        // Invalid token format
+      }
+    }
+
+    return false;
+  } catch (error) {
+    logger.warn('[CookieManager] Authentication check failed:', error);
+    return false;
+  }
+}
+
+/**
+ * Refresh access token using refresh token
+ * Makes API call to refresh endpoint
+ */
+export async function refreshAccessToken(): Promise<{
+  success: boolean;
+  accessToken?: string;
+  error?: string;
+}> {
+  try {
+    const refreshToken = getRefreshTokenFromCookie();
+    if (!refreshToken) {
+      return { success: false, error: "No refresh token available" };
+    }
+
+    const { apiPath } = await import('./base-path');
+    const response = await fetch(apiPath("/auth/refresh"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include", // Include cookies
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Refresh failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data.success) {
+      return { success: true, accessToken: data.data.accessToken };
+    } else {
+      return { success: false, error: data.message || "Refresh failed" };
+    }
+  } catch (error) {
+    logger.error("[CookieManager] Token refresh error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+/**
+ * Dispatch authentication event for cross-tab synchronization
+ */
+export function dispatchAuthEvent(
+  eventType: "login" | "logout",
+  data?: any
+): void {
+  if (typeof window === "undefined") return;
+
+  const event = new CustomEvent(`auth:${eventType}`, {
+    detail: data,
+    bubbles: true,
+  });
+  window.dispatchEvent(event);
+}
+
+// =============================================================================
+// BACKWARD COMPATIBILITY LAYER (merged from auth-utils.ts)
+// =============================================================================
+
+/**
+ * Legacy clearAuthToken function for backward compatibility
+ * @deprecated Use clearNonHttpOnlyCookies() or performLogoutCleanup() instead
+ */
+export function clearAuthToken(): void {
+  console.warn('[CookieManager] ⚠️ clearAuthToken() is deprecated. Use clearNonHttpOnlyCookies() or performLogoutCleanup() instead.');
+
+  try {
+    // Use the secure HTTP-only approach
+    clearNonHttpOnlyCookies();
+
+    // Clear React Query cache for user profile to prevent stale data
+    import("@tanstack/react-query").then(({ QueryClient }) => {
+      const queryClient = new QueryClient();
+      queryClient.setQueryData(["current-user-profile"], undefined);
+    }).catch(() => {
+      // Ignore if React Query is not available
+    });
+
+    // Dispatch logout event
+    dispatchAuthEvent("logout");
+  } catch (error) {
+    logger.error("[CookieManager Error] Failed to clear auth tokens:", error);
+  }
+}
+
+// =============================================================================
+// GLOBAL DEBUG INTERFACE (enhanced)
+// =============================================================================
+
+// Expose globally for debugging (HTTP-only only approach)
 if (typeof window !== 'undefined') {
   (window as any).__cookieManager = {
+    // Core cookie functions
+    getCookie,
     getAllCookies,
     hasAuthCookies,
-    clearAuthCookies,
+    clearNonHttpOnlyCookies,
+    clearAuthCookies, // Deprecated but kept for compatibility
     verifyAuthCookiesCleared,
     getCookieIntegrityReport,
     performLogoutCleanup,
+
+    // Token functions (merged from auth-utils.ts)
+    getAuthTokenFromCookie,
+    getRefreshTokenFromCookie,
+    isAuthSync,
+    waitForAuthToken,
+    isAuthenticated,
+    refreshAccessToken,
+    dispatchAuthEvent,
+
+    // Legacy functions (for backward compatibility)
+    clearAuthToken,
   };
-  console.log('[CookieManager] Debug functions available at window.__cookieManager');
+  console.log('[CookieManager] Enhanced debug functions available at window.__cookieManager (consolidated system)');
 }

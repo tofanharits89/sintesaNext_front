@@ -35,13 +35,25 @@ export function WhatsappQrModal({ open, onOpenChange }: WhatsappQrModalProps) {
 
   async function fetchStatus() {
     try {
+      console.log("[WhatsApp Modal] Fetching status from /api/whatsapp/status");
       const resp = await http.get(`/api/whatsapp/status`);
+      console.log("[WhatsApp Modal] Status response:", resp);
       const data = resp.data;
-      if (data?.success === false) throw new Error(data?.error || "Gagal memeriksa status");
-      setStatus(data?.data || null);
-      return data?.data as typeof status;
-    } catch (e) {
+      if (!data || data?.success === false) {
+        throw new Error(data?.error || "Gagal memeriksa status");
+      }
+      const statusData = data?.data || null;
+      setStatus(statusData);
+      return statusData as typeof status;
+    } catch (e: any) {
       console.error("QR status error", e);
+      console.error("Error details:", {
+        status: e?.response?.status,
+        statusText: e?.response?.statusText,
+        data: e?.response?.data,
+        message: e?.message
+      });
+      setStatus(null);
       return null;
     }
   }
@@ -51,11 +63,14 @@ export function WhatsappQrModal({ open, onOpenChange }: WhatsappQrModalProps) {
     try {
       const resp = await http.get(`/api/whatsapp/qr`);
       const data = resp.data;
-      if (!data?.success) throw new Error(data?.error || "QR tidak tersedia");
+      if (!data || !data?.success) {
+        throw new Error(data?.error || "QR tidak tersedia");
+      }
       setQrText(data?.data?.qr || null);
     } catch (e) {
       console.error("QR fetch error", e);
       setQrText(null);
+      toast.error("Gagal memuat QR code");
     } finally {
       setLoading(false);
     }
@@ -69,6 +84,8 @@ export function WhatsappQrModal({ open, onOpenChange }: WhatsappQrModalProps) {
 
     (async () => {
       const s = await fetchStatus();
+      console.log("[WhatsApp Modal] Initial status check:", s);
+      
       if (!s?.authenticated) {
         if (s?.hasQr && !fetchedQrRef.current) {
           await fetchQr();
@@ -77,17 +94,24 @@ export function WhatsappQrModal({ open, onOpenChange }: WhatsappQrModalProps) {
         setPolling(true);
         interval = setInterval(async () => {
           const st = await fetchStatus();
+          console.log("[WhatsApp Modal] Polling status:", st);
+          
           if (st?.authenticated) {
-            toast.success("WhatsApp tersambung");
+            console.log("[WhatsApp Modal] Authenticated! Closing modal...");
             clearInterval(interval);
             setPolling(false);
-            onOpenChange(false);
+            toast.success("WhatsApp tersambung");
+            // Small delay to ensure toast is visible before closing
+            setTimeout(() => {
+              onOpenChange(false);
+            }, 500);
           } else if (st?.hasQr && !fetchedQrRef.current) {
             await fetchQr();
             fetchedQrRef.current = true;
           }
         }, 3000);
       } else {
+        console.log("[WhatsApp Modal] Already authenticated, closing modal");
         toast.info("WhatsApp sudah tersambung");
         onOpenChange(false);
       }

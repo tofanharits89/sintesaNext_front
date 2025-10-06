@@ -4,7 +4,7 @@ import { useSocket } from "@/hooks/useSocket";
 import { AlertCircle, Wifi, WifiOff, RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
+import { getAuthTokenFromCookie } from "@/lib/cookieManager";
 
 export function ConnectionStatus() {
   const pathname = usePathname();

@@ -4,7 +4,7 @@ import BelanjaPage from "../page";
 import { useQueryLoader } from "@/hooks/use-query-loader";
 import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
 import { useSavedQueries } from "@/hooks/use-saved-queries";
-import { useCurrentUser } from "@/lib/use-current-user";
+import { useUnifiedAuth } from "@/lib/auth-state-unified";
 import { it } from "date-fns/locale";
 import { it } from "date-fns/locale";
 import { it } from "date-fns/locale";
@@ -60,14 +60,14 @@ jest.mock("@/components/inquiry-data/query-management", () => ({
   ),
 }));
 
-jest.mock("@/lib/use-current-user", () => ({
-  useCurrentUser: jest.fn(),
+jest.mock("@/lib/auth-state-unified", () => ({
+  useUnifiedAuth: jest.fn(),
 }));
 
 const mockUseQueryLoader = useQueryLoader as jest.MockedFunction<typeof useQueryLoader>;
 const mockUseUnsavedChangesWarning = useUnsavedChangesWarning as jest.MockedFunction<typeof useUnsavedChangesWarning>;
 const mockUseSavedQueries = useSavedQueries as jest.MockedFunction<typeof useSavedQueries>;
-const mockUseCurrentUser = useCurrentUser as jest.MockedFunction<typeof useCurrentUser>;
+const mockUseUnifiedAuth = useUnifiedAuth as jest.MockedFunction<typeof useUnifiedAuth>;
 
 describe("BelanjaPage - Query Management Integration", () => {
   const mockQueryLoader = {
@@ -98,8 +98,8 @@ describe("BelanjaPage - Query Management Integration", () => {
     mockUseQueryLoader.mockReturnValue(mockQueryLoader as any);
     mockUseUnsavedChangesWarning.mockReturnValue(mockUnsavedChangesWarning as any);
     mockUseSavedQueries.mockReturnValue(mockSavedQueries as any);
-    mockUseCurrentUser.mockReturnValue({
-      currentUser: {
+    mockUseUnifiedAuth.mockReturnValue({
+      user: {
         id: "user-123",
         name: "Test User",
         email: "test@example.com",

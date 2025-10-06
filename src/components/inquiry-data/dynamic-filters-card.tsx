@@ -18,7 +18,7 @@ import {
   FileSpreadsheet,
   FileText,
 } from "lucide-react";
-import { useCurrentUser } from "@/lib/use-current-user";
+import { useUnifiedAuth } from "@/lib/auth-state-unified";
 import { useInquiryDataApi, FilterValue } from "@/hooks/use-inquiry-data-api";
 
 interface DynamicFiltersCardProps {
@@ -65,7 +65,7 @@ export function DynamicFiltersCard({
   });
 
   // Get current user to check if admin for SQL view
-  const { currentUser } = useCurrentUser();
+  const { user: currentUser } = useUnifiedAuth();
   const isAdmin =
     currentUser?.role === "super_admin" || currentUser?.role === "co_admin";
 

@@ -26,12 +26,20 @@ export function StatCard({
       className
     )}>
       <div className="flex items-center gap-2">
-        {icon}
+        {loading ? (
+          <div className="h-4 w-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+        ) : (
+          icon
+        )}
         <p className="text-xs text-muted-foreground">{label}</p>
       </div>
-      <p className={cn("mt-1 text-lg font-semibold", valueClassName)}>
-        {loading ? "..." : value}
-      </p>
+      {loading ? (
+        <div className="mt-1 h-7 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+      ) : (
+        <p className={cn("mt-1 text-lg font-semibold", valueClassName)}>
+          {value}
+        </p>
+      )}
     </div>
   );
 }

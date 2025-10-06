@@ -22,7 +22,7 @@ import { DataPemotonganModal } from "./modals/data-pemotongan-modal";
 import { DeleteConfirmModal } from "./modals/delete-confirm-modal";
 import { useKmkDau } from "@/hooks/use-kmk-dau";
 import { apiPath } from "@/lib/base-path";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
+import { getAuthTokenFromCookie } from "@/lib/cookieManager";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
 
 interface DataKmkTabProps {

@@ -10,7 +10,7 @@ import { Building2, FileText, Calendar, User, MapPin, CreditCard, Shield, AlertT
 import carisatkerData from "@/data/carisatker.json";
 import { SatkerProfileTab } from "@/components/satker/satker-profile-tab";
 import { DipaDownloadTab } from "@/components/satker/dipa-download-tab";
-import { useCurrentUser } from "@/lib/use-current-user";
+import { useUnifiedAuth } from "@/lib/auth-state-unified";
 import { hasAccessToSatker } from "@/utils/satker-rbac";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ export default function SatkerDetailPage() {
   const kdsatker = params?.kdsatker as string;
   const [satkerData, setSatkerData] = useState<SatkerData | null>(null);
   const [loading, setLoading] = useState(true);
-  const { currentUser, isLoading: userLoading } = useCurrentUser();
+  const { user: currentUser, isLoading: userLoading } = useUnifiedAuth();
 
   useEffect(() => {
     // Find satker data from JSON

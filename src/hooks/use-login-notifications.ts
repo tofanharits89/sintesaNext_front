@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { useSocket } from "@/hooks/useSocket";
-import { useCurrentUser } from "@/lib/use-current-user";
+import { useUnifiedAuth } from "@/lib/auth-state-unified";
 
 interface LoginEvent {
   user: {
@@ -35,7 +35,7 @@ const getRoleDisplayName = (role: string): string => {
 };
 
 export const useLoginNotifications = () => {
-  const { currentUser } = useCurrentUser();
+  const { user: currentUser } = useUnifiedAuth();
   const { socket, isConnected, isReady } = useSocket();
   
   // Check if user is admin - prevents unnecessary socket operations

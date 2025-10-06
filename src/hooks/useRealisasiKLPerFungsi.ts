@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiPath } from "@/lib/base-path";
-import { getAuthTokenFromCookie } from "@/utils/auth-utils";
+import { getAuthTokenFromCookie } from "@/lib/cookieManager";
 import { backendPath } from "@/lib/backend";
 
 // Chart data format returned by the backend
