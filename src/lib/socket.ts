@@ -2,11 +2,11 @@
 
 import { Socket } from "socket.io-client";
 import { socketClient, SocketClient, type SocketState } from "./socket/SimpleSocketClient";
-import { getAuthTokenFromCookie, clearAuthToken } from "@/lib/cookieManager";
+import { getAuthTokenFromCookie, performLogoutCleanup } from "@/lib/cookieManager";
 
 // Re-export types and utilities for backward compatibility
 export type { SocketState };
-export { getAuthTokenFromCookie, clearAuthToken };
+export { getAuthTokenFromCookie, performLogoutCleanup };
 
 
 

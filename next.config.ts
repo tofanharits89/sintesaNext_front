@@ -185,6 +185,16 @@ const nextConfig: NextConfig = {
     ];
   },
 
+  async rewrites() {
+    return [
+      // Proxy API requests to backend
+      {
+        source: '/api/v1/:path*',
+        destination: 'http://localhost:88/api/v1/:path*',
+      },
+    ];
+  },
+
   // Output configuration for Docker deployment
   output: 'standalone',
   

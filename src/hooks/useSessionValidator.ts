@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { clearAuthToken } from '@/lib/cookieManager';
+import { performLogoutCleanup } from '@/lib/cookieManager';
 
 const PUBLIC_PATHS = ['/login', '/server-error', '/unauthorized'];
 const CHECK_INTERVAL = 30000; // Check every 30 seconds
@@ -41,15 +41,13 @@ export function useSessionValidator() {
       isCheckingRef.current = true;
 
       try {
-        const response = await fetch('/api/auth/check-session', {
+        const response = await fetch('/api/v1/auth/session/validate', {
           method: 'GET',
           credentials: 'include',
           cache: 'no-store',
         });
 
-        const data = await response.json();
-
-        if (!response.ok || !data.valid) {
+        if (!response.ok) {
           // Prevent multiple logout attempts
           if (hasLoggedOutRef.current || isLoggingOut) {
             return;
@@ -65,8 +63,8 @@ export function useSessionValidator() {
             intervalRef.current = null;
           }
           
-          // Clear cookies
-          clearAuthToken();
+          // Clear cookies and perform logout cleanup
+          await performLogoutCleanup();
           
           // Clear local storage
           if (typeof window !== 'undefined') {

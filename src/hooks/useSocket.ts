@@ -119,9 +119,54 @@ export const useSocket = (): UseSocketReturn => {
     const handleAuthExpired = (event: any) => {
       try {
         console.log('Auth expired event received:', event);
+        const { reason, displayMessage } = event.detail || {};
+
+        // Show user-friendly message about being logged out from another device
+        const message = displayMessage || 'Your session has expired. Please log in again.';
+        const isFromOtherDevice = reason === 'LOGGED_IN_ELSEWHERE';
+
+        // Show toast notification
+        if (typeof window !== 'undefined' && (window as any).toast) {
+          (window as any).toast.error(message, {
+            duration: 5000,
+            position: 'top-center'
+          });
+        } else {
+          // Fallback to alert if toast not available
+          alert(message);
+        }
+
+        // Disconnect socket immediately
+        socketClient.disconnect();
+
+        // Clear any auth-related data
+        if (typeof window !== 'undefined') {
+          // Clear any client-side auth state
+          localStorage.removeItem('auth_state');
+          sessionStorage.removeItem('auth_state');
+          sessionStorage.removeItem('just_logged_in');
+        }
+
+        // Update state
         setState(prev => ({ ...prev, error: 'Session expired', connectionState: 'disconnected' }));
+
+        // Redirect to login page after a short delay to allow user to see the message
+        setTimeout(() => {
+          if (typeof window !== 'undefined') {
+            const currentPath = window.location.pathname;
+            const loginUrl = isFromOtherDevice
+              ? `/login?reason=session_expired&message=${encodeURIComponent('You have been logged in from another device')}`
+              : `/login?reason=session_expired&from=${encodeURIComponent(currentPath)}`;
+            window.location.href = loginUrl;
+          }
+        }, 1000);
+
       } catch (error) {
         console.error('Error in handleAuthExpired:', error);
+        // Fallback: redirect immediately
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login?reason=session_expired';
+        }
       }
     };
 

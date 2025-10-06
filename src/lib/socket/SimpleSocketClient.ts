@@ -219,6 +219,15 @@ class SimpleEventManager {
       this.setState("error");
     });
 
+    // Listen for session expired events from backend
+    socket.on("session:expired", (data: any) => {
+      console.warn("Session expired event received:", data);
+      this.notificationManager.showSessionExpired(
+        data.reason || 'SESSION_EXPIRED',
+        data.displayMessage
+      );
+    });
+
     // Apply any queued listeners
     this.applyQueuedListeners();
   }

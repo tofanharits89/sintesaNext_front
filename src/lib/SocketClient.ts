@@ -73,4 +73,4 @@ export function getSocketConnectionStats() {
 }
 
 // Export socket utilities that might be imported
-export { getAuthTokenFromCookie, clearAuthToken } from "@/lib/cookieManager";
+export { getAuthTokenFromCookie, performLogoutCleanup } from "@/lib/cookieManager";
