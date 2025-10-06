@@ -59,7 +59,16 @@ export async function middleware(request: NextRequest) {
     const token = extractAccessToken(request);
 
     // If user has valid token and is on login/register, redirect to dashboard
+    // UNLESS they're being redirected due to session expiration (to prevent loops)
     if (token && (pathname === '/login' || pathname === '/register')) {
+      const reason = request.nextUrl.searchParams.get('reason');
+      
+      // Don't auto-redirect if user was just logged out due to session expiration
+      if (reason === 'session_expired' || reason === 'logged_in_elsewhere') {
+        console.log('[Middleware] Skipping auto-redirect due to session expiration');
+        return NextResponse.next();
+      }
+      
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
 

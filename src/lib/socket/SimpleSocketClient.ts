@@ -172,7 +172,10 @@ class SimpleEventManager {
   private state: SocketState = "disconnected";
   private stateChangeListeners: Set<(state: SocketState) => void> = new Set();
 
-  constructor(private connectionManager: SimpleConnectionManager) {
+  constructor(
+    private connectionManager: SimpleConnectionManager,
+    private notificationManager?: SimpleNotificationManager
+  ) {
     // Setup listeners will be called after connection is established
   }
 
@@ -222,10 +225,12 @@ class SimpleEventManager {
     // Listen for session expired events from backend
     socket.on("session:expired", (data: any) => {
       console.warn("Session expired event received:", data);
-      this.notificationManager.showSessionExpired(
-        data.reason || 'SESSION_EXPIRED',
-        data.displayMessage
-      );
+      if (this.notificationManager) {
+        this.notificationManager.showSessionExpired(
+          data.reason || 'SESSION_EXPIRED',
+          data.displayMessage
+        );
+      }
     });
 
     // Apply any queued listeners
@@ -369,14 +374,56 @@ class SimpleNotificationManager {
     }
   }
 
-  showSessionExpired(reason: string, displayMessage?: string): void {
+  async showSessionExpired(reason: string, displayMessage?: string): Promise<void> {
     console.warn("Session expired:", reason, displayMessage);
 
-    // Trigger logout flow
+    // Prevent multiple simultaneous session expiration handlers
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('auth:expired', {
-        detail: { reason, displayMessage }
-      }));
+      // Check if already handling session expiration
+      if ((window as any).__handlingSessionExpired) {
+        console.log('[SessionExpired] Already handling session expiration, skipping...');
+        return;
+      }
+      
+      // Set flag to prevent duplicate handling
+      (window as any).__handlingSessionExpired = true;
+
+      try {
+        // Call backend logout API to invalidate session server-side
+        console.log('[SessionExpired] Calling backend logout API...');
+        try {
+          await fetch('/api/auth/logout', {
+            method: 'POST',
+            credentials: 'include',
+          });
+        } catch (logoutError) {
+          console.warn('[SessionExpired] Backend logout failed (continuing anyway):', logoutError);
+        }
+
+        // Import performLogoutCleanup dynamically to avoid circular dependencies
+        const { performLogoutCleanup } = await import('@/lib/cookieManager');
+        
+        console.log('[SessionExpired] Clearing cookies and storage...');
+        await performLogoutCleanup();
+        
+        // Trigger logout flow event
+        window.dispatchEvent(new CustomEvent('auth:expired', {
+          detail: { reason, displayMessage }
+        }));
+
+        // Redirect to login page with appropriate message
+        const message = displayMessage || 'Your session has expired';
+        const redirectReason = reason === 'LOGGED_IN_ELSEWHERE' 
+          ? 'logged_in_elsewhere' 
+          : 'session_expired';
+        
+        console.log('[SessionExpired] Redirecting to login...');
+        window.location.href = `/login?reason=${redirectReason}&message=${encodeURIComponent(message)}`;
+      } catch (error) {
+        console.error('[SessionExpired] Error during cleanup:', error);
+        // Fallback: redirect anyway
+        window.location.href = '/login?reason=session_expired';
+      }
     }
   }
 
@@ -400,7 +447,7 @@ export class SimpleSocketClient {
   constructor(config: SimpleSocketClientConfig = {}) {
     this.connectionManager = new SimpleConnectionManager(config);
     this.notificationManager = new SimpleNotificationManager(config.debug);
-    this.eventManager = new SimpleEventManager(this.connectionManager);
+    this.eventManager = new SimpleEventManager(this.connectionManager, this.notificationManager);
   }
 
   async connect(): Promise<Socket> {
@@ -413,7 +460,7 @@ export class SimpleSocketClient {
       const socket = await this.connectionManager.connect();
 
       // Re-setup event listeners after connection
-      this.eventManager = new SimpleEventManager(this.connectionManager);
+      this.eventManager = new SimpleEventManager(this.connectionManager, this.notificationManager);
       this.eventManager.setupConnectionListeners();
 
       this.notificationManager.debugLog("Connected successfully");
@@ -445,7 +492,7 @@ export class SimpleSocketClient {
       const socket = await this.connectionManager.reconnect();
 
       // Re-setup event listeners after reconnection
-      this.eventManager = new SimpleEventManager(this.connectionManager);
+      this.eventManager = new SimpleEventManager(this.connectionManager, this.notificationManager);
       this.eventManager.setupConnectionListeners();
 
       this.notificationManager.debugLog("Reconnected successfully");

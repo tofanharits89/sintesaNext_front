@@ -44,21 +44,33 @@ export function useSessionMonitor(options: UseSessionMonitorOptions = {}) {
     socketRef.current = socket;
 
     // Listen for session expiration events
-    socket.on("session:expired", (data: SessionExpiredEvent) => {
+    socket.on("session:expired", async (data: SessionExpiredEvent) => {
       console.log("[SessionMonitor] Session expired:", data);
 
-      // Clear auth cookies immediately
-      if (typeof window !== 'undefined' && (window as any).__clearAuthCookies) {
-        console.log('[SessionMonitor] Clearing auth cookies via socket event');
-        (window as any).__clearAuthCookies();
-      } else {
-        // Fallback cookie clearing if __clearAuthCookies is not available
-        console.log('[SessionMonitor] Clearing auth cookies (fallback)');
-        const cookiesToClear = ['accessToken', 'refreshToken', 'access_token', 'refresh_token', 'authToken', 'auth_token', 'token'];
-        cookiesToClear.forEach(name => {
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+      // Prevent multiple simultaneous handlers
+      if ((window as any).__handlingSessionExpired) {
+        console.log('[SessionMonitor] Already handling session expiration, skipping...');
+        return;
+      }
+      (window as any).__handlingSessionExpired = true;
+
+      // Call backend logout API to invalidate session
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include',
         });
+      } catch (logoutError) {
+        console.warn('[SessionMonitor] Backend logout failed (continuing anyway):', logoutError);
+      }
+
+      // Clear auth cookies and storage properly
+      try {
+        const { performLogoutCleanup } = await import('@/lib/cookieManager');
+        console.log('[SessionMonitor] Clearing cookies and storage...');
+        await performLogoutCleanup();
+      } catch (error) {
+        console.error('[SessionMonitor] Error clearing cookies:', error);
       }
 
       if (showNotification) {
@@ -70,8 +82,13 @@ export function useSessionMonitor(options: UseSessionMonitorOptions = {}) {
       // Clear all cached data
       queryClient.clear();
 
-      // Redirect to login
-      router.push(redirectTo);
+      // Redirect to login with reason
+      const redirectReason = data.reason === 'LOGGED_IN_ELSEWHERE' 
+        ? 'logged_in_elsewhere' 
+        : 'session_expired';
+      const message = data.message || 'Your session has expired';
+      
+      window.location.href = `${redirectTo}?reason=${redirectReason}&message=${encodeURIComponent(message)}`;
     });
 
     // Listen for connection events
