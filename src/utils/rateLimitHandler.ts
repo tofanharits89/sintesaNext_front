@@ -51,8 +51,8 @@ export function handleRateLimitError(error: AxiosError<RateLimitError>): void {
   const data = error.response?.data;
   
   if (!data) {
-    toast.error('Request failed', {
-      description: 'Please try again later'
+    toast.error('Permintaan gagal', {
+      description: 'Silakan coba lagi nanti'
     });
     return;
   }
@@ -64,8 +64,8 @@ export function handleRateLimitError(error: AxiosError<RateLimitError>): void {
     const reason = data.blockReason || data.error || 'Too many failed attempts or suspicious activity detected';
     
     // Show toast notification
-    toast.error('Access Blocked', {
-      description: 'Redirecting to blocked page...',
+    toast.error('Akses Diblokir', {
+      description: 'Mengalihkan ke halaman blokir...',
       duration: 3000,
     });
     
@@ -89,14 +89,14 @@ export function handleRateLimitError(error: AxiosError<RateLimitError>): void {
     const retryAfter = data.retryAfter || 60;
     const timeRemaining = formatTimeRemaining(retryAfter);
     
-    toast.error('Too Many Login Attempts', {
-      description: `Please wait ${timeRemaining} before trying again. This protects your account from unauthorized access.`,
+    toast.error('Terlalu Banyak Percobaan Login', {
+      description: `Silakan tunggu ${timeRemaining} sebelum mencoba lagi. Ini melindungi akun Anda dari akses tidak sah.`,
       duration: 8000,
       action: {
-        label: 'Why?',
+        label: 'Kenapa?',
         onClick: () => {
-          toast.info('Security Protection', {
-            description: 'We limit login attempts to 5 per minute to protect against brute force attacks. This keeps your account secure.',
+          toast.info('Perlindungan Keamanan', {
+            description: 'Kami membatasi percobaan login hingga 5 kali per menit untuk melindungi dari serangan brute force. Ini menjaga keamanan akun Anda.',
             duration: 8000
           });
         }
@@ -109,8 +109,8 @@ export function handleRateLimitError(error: AxiosError<RateLimitError>): void {
     const retryAfter = data.retryAfter || 60;
     const timeRemaining = formatTimeRemaining(retryAfter);
     
-    toast.warning('Session Refresh Limit', {
-      description: `Too many refresh attempts. Please wait ${timeRemaining}.`,
+    toast.warning('Batas Refresh Sesi', {
+      description: `Terlalu banyak percobaan refresh. Silakan tunggu ${timeRemaining}.`,
       duration: 6000
     });
     return;
@@ -120,8 +120,8 @@ export function handleRateLimitError(error: AxiosError<RateLimitError>): void {
     const retryAfter = data.retryAfter || 300;
     const timeRemaining = formatTimeRemaining(retryAfter);
     
-    toast.error('Registration Limit Reached', {
-      description: `Please wait ${timeRemaining} before creating another account.`,
+    toast.error('Batas Registrasi Tercapai', {
+      description: `Silakan tunggu ${timeRemaining} sebelum membuat akun lain.`,
       duration: 8000
     });
     return;
@@ -132,25 +132,25 @@ export function handleRateLimitError(error: AxiosError<RateLimitError>): void {
     const resetTime = data.resetTime;
     const retryAfter = data.retryAfter;
     
-    let description = 'You\'ve made too many requests. Please slow down.';
+    let description = 'Anda telah membuat terlalu banyak permintaan. Silakan perlambat.';
     
     if (retryAfter) {
       const timeRemaining = formatTimeRemaining(retryAfter);
-      description = `Please wait ${timeRemaining} before trying again.`;
+      description = `Silakan tunggu ${timeRemaining} sebelum mencoba lagi.`;
     } else if (resetTime) {
       const resetTimeStr = formatResetTime(resetTime);
-      description = `Rate limit resets at ${resetTimeStr}.`;
+      description = `Batas rate limit direset pada ${resetTimeStr}.`;
     }
     
     if (data.current && data.limit) {
       description += ` (${data.current}/${data.limit} requests used)`;
     }
     
-    toast.warning('Rate Limit Exceeded', {
+    toast.warning('Batas Rate Limit Terlampaui', {
       description,
       duration: 6000,
       action: {
-        label: 'Got it',
+        label: 'Mengerti',
         onClick: () => toast.dismiss()
       }
     });
@@ -158,8 +158,8 @@ export function handleRateLimitError(error: AxiosError<RateLimitError>): void {
   }
 
   // Generic rate limit error
-  toast.warning('Too Many Requests', {
-    description: data.error || 'Please slow down and try again in a moment.',
+  toast.warning('Terlalu Banyak Permintaan', {
+    description: data.error || 'Silakan perlambat dan coba lagi sebentar lagi.',
     duration: 5000
   });
 }
@@ -224,7 +224,7 @@ export function handleError(error: any): void {
                    error?.message || 
                    'An error occurred';
     
-    toast.error('Error', {
+    toast.error('Kesalahan', {
       description: message,
       duration: 5000
     });

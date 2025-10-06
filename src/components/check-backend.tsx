@@ -66,40 +66,20 @@ export default function CheckBackend() {
           // Check if this is an IP block
           if (data.code === 'IP_BLOCKED' || data.error?.includes('blocked')) {
             console.log('[CheckBackend] IP blocked detected, redirecting to IP blocked page');
+            
+            // Use the real TTL from backend (Redis)
             const expiresIn = data.expiresIn || 3600;
             const reason = data.error || 'Access temporarily blocked due to suspicious activity';
             
-            // Check if we already have a stored blockedAt timestamp
-            let blockedAt: number;
-            const storedBlockedAt = localStorage.getItem('ipBlockedAt');
-            const storedDuration = localStorage.getItem('ipBlockDuration');
+            // Calculate blockedAt based on real TTL from Redis
+            // This ensures the countdown is always accurate even after browser restart
+            const blockedAt = Date.now() - ((3600 - expiresIn) * 1000);
             
-            if (storedBlockedAt && storedDuration) {
-              // Check if the stored block has expired
-              const elapsed = Math.floor((Date.now() - parseInt(storedBlockedAt)) / 1000);
-              const duration = parseInt(storedDuration);
-              
-              if (elapsed < duration) {
-                // Block still active, use existing timestamp
-                blockedAt = parseInt(storedBlockedAt);
-                console.log('[CheckBackend] Using stored blockedAt timestamp:', blockedAt);
-              } else {
-                // Block expired, create new timestamp
-                blockedAt = Date.now();
-                localStorage.setItem('ipBlockedAt', blockedAt.toString());
-                localStorage.setItem('ipBlockDuration', expiresIn.toString());
-                console.log('[CheckBackend] Previous block expired, storing new timestamp:', blockedAt);
-              }
-            } else {
-              // First time being blocked, store the timestamp
-              blockedAt = Date.now();
-              localStorage.setItem('ipBlockedAt', blockedAt.toString());
-              localStorage.setItem('ipBlockDuration', expiresIn.toString());
-              console.log('[CheckBackend] Storing new blockedAt timestamp:', blockedAt);
-            }
+            console.log('[CheckBackend] Using real TTL from Redis:', expiresIn, 'seconds remaining');
+            console.log('[CheckBackend] Calculated blockedAt:', blockedAt);
             
             const params = new URLSearchParams({
-              duration: expiresIn.toString(),
+              duration: '3600', // Original block duration (1 hour)
               blockedAt: blockedAt.toString(),
               reason: reason,
             });
@@ -118,30 +98,8 @@ export default function CheckBackend() {
           // If JSON parsing fails, assume it's IP block (403 is most likely IP block)
           console.warn('[CheckBackend] Failed to parse 403 response, assuming IP block:', jsonError);
           
-          // Check if we already have a stored blockedAt timestamp
-          let blockedAt: number;
-          const storedBlockedAt = localStorage.getItem('ipBlockedAt');
-          const storedDuration = localStorage.getItem('ipBlockDuration');
-          
-          if (storedBlockedAt && storedDuration) {
-            // Check if the stored block has expired
-            const elapsed = Math.floor((Date.now() - parseInt(storedBlockedAt)) / 1000);
-            const duration = parseInt(storedDuration);
-            
-            if (elapsed < duration) {
-              // Block still active, use existing timestamp
-              blockedAt = parseInt(storedBlockedAt);
-            } else {
-              // Block expired, create new timestamp
-              blockedAt = Date.now();
-              localStorage.setItem('ipBlockedAt', blockedAt.toString());
-              localStorage.setItem('ipBlockDuration', '3600');
-            }
-          } else {
-            blockedAt = Date.now();
-            localStorage.setItem('ipBlockedAt', blockedAt.toString());
-            localStorage.setItem('ipBlockDuration', '3600');
-          }
+          // Assume full block duration since we can't get real TTL
+          const blockedAt = Date.now();
           
           const params = new URLSearchParams({
             duration: '3600',

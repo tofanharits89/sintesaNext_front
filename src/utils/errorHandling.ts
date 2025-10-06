@@ -45,8 +45,8 @@ type ErrorType =
 const ERROR_CONFIGS: Record<ErrorType, ErrorConfig> = {
   // Network and connection errors
   NETWORK_ERROR: {
-    message: "Connection problem detected",
-    suggestion: "Please check your internet connection and try again",
+    message: "Terdeteksi masalah koneksi",
+    suggestion: "Silakan periksa koneksi internet Anda dan coba lagi",
     recoverable: true,
     retryable: true,
     autoRetry: true,
@@ -56,8 +56,8 @@ const ERROR_CONFIGS: Record<ErrorType, ErrorConfig> = {
   
   // Saved queries specific errors
   QUERY_SAVE_FAILED: {
-    message: "Failed to save query",
-    suggestion: "Please check your input and try again",
+    message: "Gagal menyimpan query",
+    suggestion: "Silakan periksa input Anda dan coba lagi",
     recoverable: true,
     retryable: true,
     autoRetry: false,
@@ -65,8 +65,8 @@ const ERROR_CONFIGS: Record<ErrorType, ErrorConfig> = {
     retryDelay: 1000,
   },
   QUERY_LOAD_FAILED: {
-    message: "Failed to load query",
-    suggestion: "The query may have been deleted or corrupted",
+    message: "Gagal memuat query",
+    suggestion: "Query mungkin telah dihapus atau rusak",
     recoverable: true,
     retryable: true,
     autoRetry: false,
@@ -74,8 +74,8 @@ const ERROR_CONFIGS: Record<ErrorType, ErrorConfig> = {
     retryDelay: 1000,
   },
   QUERY_UPDATE_FAILED: {
-    message: "Failed to update query",
-    suggestion: "Please try again or refresh the page",
+    message: "Gagal memperbarui query",
+    suggestion: "Silakan coba lagi atau muat ulang halaman",
     recoverable: true,
     retryable: true,
     autoRetry: false,
@@ -83,8 +83,8 @@ const ERROR_CONFIGS: Record<ErrorType, ErrorConfig> = {
     retryDelay: 1000,
   },
   QUERY_DELETE_FAILED: {
-    message: "Failed to delete query",
-    suggestion: "Please try again or refresh the page",
+    message: "Gagal menghapus query",
+    suggestion: "Silakan coba lagi atau muat ulang halaman",
     recoverable: true,
     retryable: true,
     autoRetry: false,
@@ -92,26 +92,26 @@ const ERROR_CONFIGS: Record<ErrorType, ErrorConfig> = {
     retryDelay: 1000,
   },
   QUERY_DUPLICATE_NAME: {
-    message: "Query name already exists",
-    suggestion: "Please choose a different name for your query",
+    message: "Nama query sudah ada",
+    suggestion: "Silakan pilih nama yang berbeda untuk query Anda",
     recoverable: true,
     retryable: false,
   },
   QUERY_NOT_FOUND: {
-    message: "Query not found",
-    suggestion: "The query may have been deleted",
+    message: "Query tidak ditemukan",
+    suggestion: "Query mungkin telah dihapus",
     recoverable: false,
     retryable: false,
   },
   QUERY_INVALID_DATA: {
-    message: "Invalid query data",
-    suggestion: "The query contains invalid or corrupted data",
+    message: "Data query tidak valid",
+    suggestion: "Query mengandung data yang tidak valid atau rusak",
     recoverable: true,
     retryable: false,
   },
   CONNECTION_TIMEOUT: {
-    message: "Request timed out",
-    suggestion: "The server is taking too long to respond. Trying again...",
+    message: "Permintaan timeout",
+    suggestion: "Server membutuhkan waktu terlalu lama untuk merespons. Mencoba lagi...",
     recoverable: true,
     retryable: true,
     autoRetry: true,
@@ -119,8 +119,8 @@ const ERROR_CONFIGS: Record<ErrorType, ErrorConfig> = {
     retryDelay: 3000,
   },
   SERVER_UNAVAILABLE: {
-    message: "Service temporarily unavailable",
-    suggestion: "Please try again in a few moments",
+    message: "Layanan sementara tidak tersedia",
+    suggestion: "Silakan coba lagi dalam beberapa saat",
     recoverable: true,
     retryable: true,
     autoRetry: false,
@@ -130,48 +130,48 @@ const ERROR_CONFIGS: Record<ErrorType, ErrorConfig> = {
 
   // Authentication errors
   AUTHENTICATION_FAILED: {
-    message: "Authentication failed",
-    suggestion: "Please log in again to continue",
+    message: "Autentikasi gagal",
+    suggestion: "Silakan login kembali untuk melanjutkan",
     recoverable: true,
     retryable: false,
   },
   TOKEN_EXPIRED: {
-    message: "Your session has expired",
-    suggestion: "Redirecting to login page...",
+    message: "Sesi Anda telah berakhir",
+    suggestion: "Mengalihkan ke halaman login...",
     recoverable: true,
     retryable: false,
   },
   PERMISSION_DENIED: {
-    message: "Access denied",
-    suggestion: "You don't have permission to perform this action",
+    message: "Akses ditolak",
+    suggestion: "Anda tidak memiliki izin untuk melakukan tindakan ini",
     recoverable: false,
     retryable: false,
   },
 
   // Validation errors
   VALIDATION_ERROR: {
-    message: "Please check your input",
-    suggestion: "Make sure all required fields are filled correctly",
+    message: "Silakan periksa input Anda",
+    suggestion: "Pastikan semua kolom yang wajib diisi telah terisi dengan benar",
     recoverable: true,
     retryable: false,
   },
   MISSING_REQUIRED_FIELD: {
-    message: "Required information is missing",
-    suggestion: "Please fill in all required fields",
+    message: "Informasi yang diperlukan tidak lengkap",
+    suggestion: "Silakan isi semua kolom yang wajib diisi",
     recoverable: true,
     retryable: false,
   },
   INVALID_INPUT: {
-    message: "Invalid input format",
-    suggestion: "Please check your input and try again",
+    message: "Format input tidak valid",
+    suggestion: "Silakan periksa input Anda dan coba lagi",
     recoverable: true,
     retryable: false,
   },
 
   // Messaging specific errors
   MESSAGE_SEND_FAILED: {
-    message: "Failed to send message",
-    suggestion: "Your message will be sent when connection is restored",
+    message: "Gagal mengirim pesan",
+    suggestion: "Pesan Anda akan dikirim saat koneksi pulih",
     recoverable: true,
     retryable: true,
     autoRetry: true,
@@ -179,28 +179,28 @@ const ERROR_CONFIGS: Record<ErrorType, ErrorConfig> = {
     retryDelay: 1000,
   },
   MESSAGE_NOT_FOUND: {
-    message: "Message not found",
-    suggestion: "This message may have been deleted",
+    message: "Pesan tidak ditemukan",
+    suggestion: "Pesan ini mungkin telah dihapus",
     recoverable: false,
     retryable: false,
   },
   CONVERSATION_NOT_FOUND: {
-    message: "Conversation not found",
-    suggestion: "This conversation may have been deleted",
+    message: "Percakapan tidak ditemukan",
+    suggestion: "Percakapan ini mungkin telah dihapus",
     recoverable: false,
     retryable: false,
   },
   RECIPIENT_NOT_FOUND: {
-    message: "User not found",
-    suggestion: "Please check the username and try again",
+    message: "Pengguna tidak ditemukan",
+    suggestion: "Silakan periksa nama pengguna dan coba lagi",
     recoverable: true,
     retryable: false,
   },
 
   // Rate limiting
   RATE_LIMIT_EXCEEDED: {
-    message: "Too many requests",
-    suggestion: "Please wait a moment before trying again",
+    message: "Terlalu banyak permintaan",
+    suggestion: "Silakan tunggu sebentar sebelum mencoba lagi",
     recoverable: true,
     retryable: true,
     autoRetry: false,
@@ -210,8 +210,8 @@ const ERROR_CONFIGS: Record<ErrorType, ErrorConfig> = {
 
   // Generic errors
   UNKNOWN_ERROR: {
-    message: "Something went wrong",
-    suggestion: "Please try again or contact support if the problem continues",
+    message: "Terjadi kesalahan",
+    suggestion: "Silakan coba lagi atau hubungi dukungan jika masalah berlanjut",
     recoverable: true,
     retryable: true,
     autoRetry: false,

@@ -17,7 +17,15 @@ export default function SessionMonitor() {
 
   // Add window focus listener as additional safety net
   useEffect(() => {
+    const PUBLIC_PATHS = ['/login', '/server-error', '/unauthorized', '/ip-blocked'];
+    
     const handleVisibilityChange = () => {
+      // Skip validation for public paths
+      const currentPath = window.location.pathname;
+      if (PUBLIC_PATHS.some(path => currentPath.startsWith(path))) {
+        return;
+      }
+
       if (!document.hidden) {
         // User returned to the tab, validate session immediately
         fetch('/api/v1/auth/session/validate', {

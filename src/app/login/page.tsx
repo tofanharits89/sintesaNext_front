@@ -7,17 +7,22 @@ export default function LoginPage() {
   const hasCheckedRef = useRef(false);
   
   useEffect(() => {
-    // Determine if we arrived here from a middleware redirect
+    // Determine if we arrived here from a middleware redirect or session expiration
     let fromRedirect = false;
+    let reason = '';
     try {
       const params = new URLSearchParams(window.location.search);
       fromRedirect = params.has('from_redirect');
+      reason = params.get('reason') || '';
     } catch {}
 
-    // CRITICAL: Only check auth if NOT coming from a middleware redirect
-    // This prevents infinite redirect loops between middleware and login page
-    if (fromRedirect || hasCheckedRef.current) {
-      console.debug('[LoginPage] Skipping auth check - redirect loop prevention');
+    // CRITICAL: Skip auth check if:
+    // 1. Coming from a middleware redirect
+    // 2. Coming due to session expiration (prevents loop after logout)
+    // 3. Already checked (prevents duplicate checks)
+    if (fromRedirect || hasCheckedRef.current || 
+        reason === 'session_expired' || reason === 'logged_in_elsewhere') {
+      console.debug('[LoginPage] Skipping auth check - redirect loop prevention (reason:', reason, ')');
       return;
     }
     

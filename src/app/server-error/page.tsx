@@ -1,4 +1,7 @@
-import { Metadata } from "next";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -10,13 +13,76 @@ import {
 import { AlertTriangle } from "lucide-react";
 import { RetryActions } from "@/components/retry-actions";
 import AutoRetry from "@/components/auto-retry";
-
-export const metadata: Metadata = {
-  title: "Server Connection Error",
-  description: "We can't reach the server right now.",
-};
+import { apiPath } from "@/lib/base-path";
+import { PageSpinner } from "@/components/ui/spinner";
 
 export default function ServerErrorPage() {
+  const router = useRouter();
+  const [isValidating, setIsValidating] = useState(true);
+
+  useEffect(() => {
+    // Validate that backend is actually unreachable
+    // If backend is reachable, redirect to appropriate page
+    const validateBackendDown = async () => {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        const response = await fetch(apiPath("/health"), {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        // If backend responds successfully, redirect away
+        if (response.ok) {
+          console.log("[ServerError] Backend is up, redirecting to login");
+          router.replace("/login");
+          return;
+        }
+
+        // Check for IP block (403)
+        if (response.status === 403) {
+          try {
+            const data = await response.json();
+            if (data.code === 'IP_BLOCKED' || data.error?.includes('blocked')) {
+              console.log("[ServerError] IP is blocked, redirecting to ip-blocked page");
+              
+              const expiresIn = data.expiresIn || 3600;
+              const blockedAt = Date.now() - ((3600 - expiresIn) * 1000);
+              const reason = data.error || 'Access temporarily blocked';
+              
+              const params = new URLSearchParams({
+                duration: '3600',
+                blockedAt: blockedAt.toString(),
+                reason: reason,
+              });
+              
+              router.replace(`/ip-blocked?${params.toString()}`);
+              return;
+            }
+          } catch (jsonError) {
+            // Failed to parse JSON, stay on server-error page
+          }
+        }
+
+        // Backend is down (other status codes), stay on this page
+        setIsValidating(false);
+      } catch (error) {
+        // Network error, backend is truly down, stay on this page
+        console.log("[ServerError] Backend is down, staying on error page");
+        setIsValidating(false);
+      }
+    };
+
+    validateBackendDown();
+  }, [router]);
+
+  if (isValidating) {
+    return <PageSpinner text="Validating server connection..." />;
+  }
+
   return (
     <div className="min-h-[100svh] w-full flex items-center justify-center bg-gradient-to-b from-background to-muted/40 p-6">
       <div className="max-w-xl w-full">

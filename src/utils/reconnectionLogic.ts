@@ -141,8 +141,8 @@ export class ReconnectionManager {
     }
 
     if (!isLoginPage()) {
-      toast.success("Connected", {
-        description: "Connection established successfully",
+      toast.success("Terhubung", {
+        description: "Koneksi berhasil dibuat",
       });
     }
   }
@@ -155,8 +155,8 @@ export class ReconnectionManager {
 
     // Only show toast for unexpected disconnections (and not on login page)
     if (reason !== "io client disconnect" && !isLoginPage()) {
-      const id = toast.warning("Disconnected", {
-        description: "Attempting to reconnect...",
+      const id = toast.warning("Terputus", {
+        description: "Mencoba menghubungkan kembali...",
       });
       this.disconnectToastId = id;
     }
@@ -187,7 +187,7 @@ export class ReconnectionManager {
     }
 
     if (!isLoginPage()) {
-      toast.success("Network online", { description: "Connection restored" });
+      toast.success("Jaringan online", { description: "Koneksi dipulihkan" });
     }
   }
 
@@ -198,8 +198,8 @@ export class ReconnectionManager {
     this.updateNetworkState({ online: false });
 
     if (!isLoginPage()) {
-      const id = toast.warning("Network offline", {
-        description: "Connection will resume when network is available",
+      const id = toast.warning("Jaringan offline", {
+        description: "Koneksi akan dilanjutkan saat jaringan tersedia",
       });
       this.networkOfflineToastId = id;
     }
@@ -270,8 +270,8 @@ export class ReconnectionManager {
 
       // Redirect to login
       if (!isLoginPage()) {
-        toast.error("Session expired", {
-          description: "Please log in again",
+        toast.error("Sesi berakhir", {
+          description: "Silakan login kembali",
           action: {
             label: "Login",
             onClick: () => (window.location.href = "/login"),

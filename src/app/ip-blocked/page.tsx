@@ -12,17 +12,85 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShieldAlert, Clock, RefreshCw } from "lucide-react";
+import { PageSpinner } from "@/components/ui/spinner";
 
 function IPBlockedContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   
   // Get block duration from URL params (in seconds) or default to 1 hour
-  const blockDuration = parseInt(searchParams?.get('duration') || '3600');
-  const blockedAt = parseInt(searchParams?.get('blockedAt') || Date.now().toString());
+  const initialDuration = parseInt(searchParams?.get('duration') || '3600');
+  const initialBlockedAt = parseInt(searchParams?.get('blockedAt') || Date.now().toString());
   const reason = searchParams?.get('reason') || 'Suspicious activity detected';
   
-  const [timeRemaining, setTimeRemaining] = useState(blockDuration);
+  const [blockDuration, setBlockDuration] = useState(initialDuration);
+  const [blockedAt, setBlockedAt] = useState(initialBlockedAt);
+  const [timeRemaining, setTimeRemaining] = useState(initialDuration);
   const [isExpired, setIsExpired] = useState(false);
+  const [isValidating, setIsValidating] = useState(true);
+
+  // Sync with backend to get real TTL from Redis and validate actual block
+  useEffect(() => {
+    let hasValidated = false;
+    
+    const syncWithBackend = async () => {
+      try {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:88/api/v1';
+        const response = await fetch(`${backendUrl}/auth/me`, {
+          credentials: 'include',
+        });
+        
+        if (response.status === 403) {
+          const data = await response.json();
+          if (data.code === 'IP_BLOCKED' && data.expiresIn) {
+            // Got real TTL from Redis, recalculate blockedAt
+            const realExpiresIn = data.expiresIn;
+            const realBlockedAt = Date.now() - ((3600 - realExpiresIn) * 1000);
+            
+            console.log('[IPBlocked] Synced with backend, real TTL:', realExpiresIn);
+            setBlockDuration(3600);
+            setBlockedAt(realBlockedAt);
+            setTimeRemaining(realExpiresIn);
+            setIsValidating(false);
+          } else {
+            // 403 but not IP_BLOCKED - redirect to login
+            console.log('[IPBlocked] 403 but not IP blocked, redirecting to login');
+            router.replace('/login');
+          }
+        } else if (response.ok) {
+          // Block has been lifted or never existed!
+          console.log('[IPBlocked] Not blocked, redirecting to login');
+          if (!hasValidated) {
+            // First validation - redirect to login
+            router.replace('/login');
+          } else {
+            // Subsequent checks - block has been lifted
+            setIsExpired(true);
+          }
+        } else {
+          // Other errors (500, etc.) - assume backend is down
+          console.log('[IPBlocked] Backend error, redirecting to server-error');
+          router.replace('/server-error');
+        }
+      } catch (error) {
+        console.log('[IPBlocked] Failed to sync with backend:', error);
+        // Network error - assume backend is down
+        if (!hasValidated) {
+          router.replace('/server-error');
+        }
+      }
+      
+      hasValidated = true;
+    };
+
+    // Sync immediately on mount (handles browser restart and direct access)
+    syncWithBackend();
+
+    // Sync every 30 seconds to stay accurate
+    const syncInterval = setInterval(syncWithBackend, 30000);
+
+    return () => clearInterval(syncInterval);
+  }, [router]);
 
   useEffect(() => {
     // Calculate actual time remaining based on when block started
@@ -49,12 +117,7 @@ function IPBlockedContent() {
       if (remaining === 0) {
         setIsExpired(true);
         clearInterval(interval);
-        // Clear the stored timestamp when block expires
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('ipBlockedAt');
-          localStorage.removeItem('ipBlockDuration');
-          console.log('[IPBlocked] Block expired, cleared stored timestamp');
-        }
+        console.log('[IPBlocked] Block expired');
       }
     }, 1000);
 
@@ -73,11 +136,7 @@ function IPBlockedContent() {
   };
 
   const handleRetry = () => {
-    // Clear the stored blockedAt timestamp since block has expired
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('ipBlockedAt');
-      localStorage.removeItem('ipBlockDuration');
-      console.log('[IPBlocked] Cleared stored blockedAt timestamp');
       window.location.href = '/login';
     }
   };
@@ -86,6 +145,10 @@ function IPBlockedContent() {
     // You can customize this to your support email or page
     window.location.href = 'mailto:support@example.com?subject=IP Blocked - Need Assistance';
   };
+
+  if (isValidating) {
+    return <PageSpinner text="Validating block status..." />;
+  }
 
   return (
     <div className="min-h-[100svh] w-full flex items-center justify-center bg-gradient-to-b from-background to-muted/40 p-6">
@@ -177,14 +240,7 @@ function IPBlockedContent() {
 
 export default function IPBlockedPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-[100svh] w-full flex items-center justify-center bg-gradient-to-b from-background to-muted/40">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<PageSpinner text="Loading..." />}>
       <IPBlockedContent />
     </Suspense>
   );

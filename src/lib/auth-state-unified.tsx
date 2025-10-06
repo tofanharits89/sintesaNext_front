@@ -14,8 +14,9 @@
  * - Performance optimized with smart caching
  */
 
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { usePathname } from "next/navigation";
 import { apiClient } from "@/lib/httpClient";
 import { toast } from "sonner";
 import { logger } from "@/lib/utils";
@@ -118,8 +119,18 @@ const authCache = new AuthCache();
  */
 export function useUnifiedAuth() {
   const queryClient = useQueryClient();
+  const pathname = usePathname();
   const activityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [lastActivity, setLastActivity] = useState(() => Date.now());
+
+  // Public paths where auth query should be disabled
+  // login/register/forgot-password: Truly public authentication pages
+  // server-error/ip-blocked: Error pages that validate their own conditions
+  const PUBLIC_PATHS = ['/login', '/register', '/forgot-password', '/server-error', '/ip-blocked'];
+  const isPublicPath = useMemo(
+    () => PUBLIC_PATHS.some(path => pathname?.startsWith(path)),
+    [pathname]
+  );
 
   // Optimistic auth state from cache/middleware
   const getOptimisticAuth = useCallback((): AuthState => {
@@ -248,6 +259,7 @@ export function useUnifiedAuth() {
     refetchInterval: ACTIVITY_UPDATE_INTERVAL,
     refetchIntervalInBackground: true,
     enabled: typeof window !== "undefined" && 
+             !isPublicPath && // Disable on public pages (login, etc.)
              !(typeof sessionStorage !== "undefined" && sessionStorage.getItem("__isLoggingOut") === "true"), // Disable during logout
   });
 
@@ -334,6 +346,11 @@ export function useUnifiedAuth() {
 
   // Activity tracking (from auth-state-manager.ts functionality)
   useEffect(() => {
+    // Skip activity tracking on public pages
+    if (isPublicPath) {
+      return;
+    }
+
     const updateActivity = () => {
       const now = Date.now();
       setLastActivity(now);
@@ -372,7 +389,7 @@ export function useUnifiedAuth() {
         clearInterval(activityTimerRef.current);
       }
     };
-  }, []);
+  }, [isPublicPath]);
 
   // Cross-tab synchronization (from auth-state-manager.ts functionality)
   useEffect(() => {
