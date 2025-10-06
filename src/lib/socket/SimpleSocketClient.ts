@@ -380,13 +380,14 @@ class SimpleNotificationManager {
     // Prevent multiple simultaneous session expiration handlers
     if (typeof window !== 'undefined') {
       // Check if already handling session expiration
-      if ((window as any).__handlingSessionExpired) {
+      if ((window as any).__handlingSessionExpired || (window as any).__isLoggingOut) {
         console.log('[SessionExpired] Already handling session expiration, skipping...');
         return;
       }
       
-      // Set flag to prevent duplicate handling
+      // Set flags to prevent duplicate handling and block new requests
       (window as any).__handlingSessionExpired = true;
+      (window as any).__isLoggingOut = true;
 
       try {
         // Call backend logout API to invalidate session server-side

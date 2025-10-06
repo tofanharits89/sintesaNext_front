@@ -55,6 +55,111 @@ export default function CheckBackend() {
 
       clearTimeout(timeout);
 
+      // Check for IP blocking (403 status)
+      if (response.status === 403) {
+        console.log('[CheckBackend] 403 response detected, checking for IP block');
+        
+        try {
+          const data = await response.json();
+          console.log('[CheckBackend] Response data:', data);
+          
+          // Check if this is an IP block
+          if (data.code === 'IP_BLOCKED' || data.error?.includes('blocked')) {
+            console.log('[CheckBackend] IP blocked detected, redirecting to IP blocked page');
+            const expiresIn = data.expiresIn || 3600;
+            const reason = data.error || 'Access temporarily blocked due to suspicious activity';
+            
+            // Check if we already have a stored blockedAt timestamp
+            let blockedAt: number;
+            const storedBlockedAt = localStorage.getItem('ipBlockedAt');
+            const storedDuration = localStorage.getItem('ipBlockDuration');
+            
+            if (storedBlockedAt && storedDuration) {
+              // Check if the stored block has expired
+              const elapsed = Math.floor((Date.now() - parseInt(storedBlockedAt)) / 1000);
+              const duration = parseInt(storedDuration);
+              
+              if (elapsed < duration) {
+                // Block still active, use existing timestamp
+                blockedAt = parseInt(storedBlockedAt);
+                console.log('[CheckBackend] Using stored blockedAt timestamp:', blockedAt);
+              } else {
+                // Block expired, create new timestamp
+                blockedAt = Date.now();
+                localStorage.setItem('ipBlockedAt', blockedAt.toString());
+                localStorage.setItem('ipBlockDuration', expiresIn.toString());
+                console.log('[CheckBackend] Previous block expired, storing new timestamp:', blockedAt);
+              }
+            } else {
+              // First time being blocked, store the timestamp
+              blockedAt = Date.now();
+              localStorage.setItem('ipBlockedAt', blockedAt.toString());
+              localStorage.setItem('ipBlockDuration', expiresIn.toString());
+              console.log('[CheckBackend] Storing new blockedAt timestamp:', blockedAt);
+            }
+            
+            const params = new URLSearchParams({
+              duration: expiresIn.toString(),
+              blockedAt: blockedAt.toString(),
+              reason: reason,
+            });
+            
+            // Set state to prevent further checks
+            setHealthState({
+              attempts: 0,
+              lastCheck: Date.now(),
+              isChecking: false,
+            });
+            
+            router.replace(`/ip-blocked?${params.toString()}`);
+            return;
+          }
+        } catch (jsonError) {
+          // If JSON parsing fails, assume it's IP block (403 is most likely IP block)
+          console.warn('[CheckBackend] Failed to parse 403 response, assuming IP block:', jsonError);
+          
+          // Check if we already have a stored blockedAt timestamp
+          let blockedAt: number;
+          const storedBlockedAt = localStorage.getItem('ipBlockedAt');
+          const storedDuration = localStorage.getItem('ipBlockDuration');
+          
+          if (storedBlockedAt && storedDuration) {
+            // Check if the stored block has expired
+            const elapsed = Math.floor((Date.now() - parseInt(storedBlockedAt)) / 1000);
+            const duration = parseInt(storedDuration);
+            
+            if (elapsed < duration) {
+              // Block still active, use existing timestamp
+              blockedAt = parseInt(storedBlockedAt);
+            } else {
+              // Block expired, create new timestamp
+              blockedAt = Date.now();
+              localStorage.setItem('ipBlockedAt', blockedAt.toString());
+              localStorage.setItem('ipBlockDuration', '3600');
+            }
+          } else {
+            blockedAt = Date.now();
+            localStorage.setItem('ipBlockedAt', blockedAt.toString());
+            localStorage.setItem('ipBlockDuration', '3600');
+          }
+          
+          const params = new URLSearchParams({
+            duration: '3600',
+            blockedAt: blockedAt.toString(),
+            reason: 'Access temporarily blocked',
+          });
+          
+          setHealthState({
+            attempts: 0,
+            lastCheck: Date.now(),
+            isChecking: false,
+          });
+          
+          router.replace(`/ip-blocked?${params.toString()}`);
+          return;
+        }
+      }
+
       if (!response.ok) {
         throw new Error(`Backend unhealthy: ${response.status}`);
       }
@@ -89,7 +194,7 @@ export default function CheckBackend() {
         );
 
         setTimeout(() => {
-          if (!pathname?.includes("/server-error")) {
+          if (!pathname?.includes("/server-error") && !pathname?.includes("/ip-blocked")) {
             checkBackendHealth(attempt + 1);
           }
         }, retryDelay);
@@ -105,8 +210,8 @@ export default function CheckBackend() {
           isChecking: false,
         });
 
-        // Only redirect if we're not already on the error page
-        if (!pathname?.includes("/server-error")) {
+        // Only redirect if we're not already on an error page
+        if (!pathname?.includes("/server-error") && !pathname?.includes("/ip-blocked")) {
           router.replace("/server-error");
         }
       }
@@ -116,8 +221,8 @@ export default function CheckBackend() {
   useEffect(() => {
     if (!pathname) return;
 
-    // Avoid loop on server-error page
-    if (pathname.includes("/server-error")) {
+    // Avoid loop on error pages and skip health check on IP blocked page
+    if (pathname.includes("/server-error") || pathname.includes("/ip-blocked")) {
       setHealthState({ attempts: 0, lastCheck: 0, isChecking: false });
       return;
     }

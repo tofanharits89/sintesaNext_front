@@ -73,12 +73,18 @@ export const http: AxiosInstance = axios.create({
 });
 
 // Setup rate limit interceptor for user-friendly notifications
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   setupRateLimitInterceptor(http);
 }
 
 // Request interceptor: attach CSRF header if available and set Content-Type
 http.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
+  // Block all requests if we're logging out (except logout itself)
+  if (isLoggingOut && !config.url?.includes("/auth/logout")) {
+    console.log("[Auth] Request blocked - logout in progress:", config.url);
+    throw new Error("Logout in progress");
+  }
+
   const method = (config.method || "get").toLowerCase();
 
   // Set Content-Type to application/json for non-FormData requests
@@ -94,7 +100,7 @@ http.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
     try {
       await csrfManager.attachCSRFToken(h);
     } catch (error) {
-      console.warn('[CSRF] Failed to attach token:', error);
+      console.warn("[CSRF] Failed to attach token:", error);
       // Fallback to cookie-based approach
       let csrf = getCookie("XSRF-TOKEN") || lastCsrfToken;
       if (!csrf) {
@@ -113,6 +119,7 @@ http.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
 let isRefreshing = false;
 let pendingQueue: Array<{ resolve: () => void; reject: (e: any) => void }> = [];
 let lastRefreshFailureAt = 0; // ms epoch
+let isLoggingOut = false; // Flag to prevent requests during logout/redirect
 
 function processQueue(error: any | null) {
   pendingQueue.forEach(({ resolve, reject }) => {
@@ -123,20 +130,23 @@ function processQueue(error: any | null) {
 }
 
 // Simplified cookie management for HTTP-only only approach
-import { clearNonHttpOnlyCookies } from './cookieManager';
+import { clearNonHttpOnlyCookies } from "./cookieManager";
 
-// Expose globally for debugging
-if (typeof window !== 'undefined') {
+// Expose globally for debugging and coordination
+if (typeof window !== "undefined") {
   (window as any).__clearNonHttpOnlyCookies = clearNonHttpOnlyCookies;
-  console.log('[Auth] Debug: window.__clearNonHttpOnlyCookies() available for manual cleanup');
+  (window as any).__isLoggingOut = false; // Shared flag across all modules
+  console.log(
+    "[Auth] Debug: window.__clearNonHttpOnlyCookies() available for manual cleanup"
+  );
 }
 
 async function refreshTokens(): Promise<void> {
   // Basic cooldown to avoid spam on repeated 401s
   const now = Date.now();
   if (now - lastRefreshFailureAt < 3000) {
-    console.warn('[Auth] Skipping refresh due to recent failure cooldown');
-    throw new Error('Refresh cooldown');
+    console.warn("[Auth] Skipping refresh due to recent failure cooldown");
+    throw new Error("Refresh cooldown");
   }
   if (isRefreshing) {
     return new Promise<void>((resolve, reject) => {
@@ -144,8 +154,8 @@ async function refreshTokens(): Promise<void> {
     });
   }
   isRefreshing = true;
-  console.log('[Auth] 🔄 Attempting to refresh HTTP-only tokens...');
-  
+  console.log("[Auth] 🔄 Attempting to refresh HTTP-only tokens...");
+
   try {
     // Proactively ensure we have a CSRF token before hitting refresh endpoint
     await ensureCsrfToken(http);
@@ -160,13 +170,13 @@ async function refreshTokens(): Promise<void> {
       },
       body: JSON.stringify({}), // Backend will use cookies, no body token needed
     });
-    
+
     console.log(`[Auth] Refresh response status: ${resp.status}`);
-    
+
     if (!resp.ok) {
       // If CSRF failed, try once more after forcing token fetch
       if (resp.status === 403) {
-        console.log('[Auth] CSRF error, retrying with new token...');
+        console.log("[Auth] CSRF error, retrying with new token...");
         await ensureCsrfToken(http);
         const csrf2 = getCookie("XSRF-TOKEN") || lastCsrfToken;
         const retry = await fetch(apiPath("/auth/refresh"), {
@@ -180,26 +190,22 @@ async function refreshTokens(): Promise<void> {
         });
         console.log(`[Auth] Retry response status: ${retry.status}`);
         if (!retry.ok) {
-          // Refresh failed - clear non-HTTP-only cookies and CSRF cache
-          console.log('[Auth] ❌ Refresh retry failed');
-          clearNonHttpOnlyCookies();
-          csrfManager.clearCache();
+          // Refresh failed - call logout to clear HTTP-only cookies and redirect
+          await handleRefreshFailure(retry.status);
           throw new Error(`Refresh failed: ${retry.status}`);
         }
       } else {
-        // Refresh failed - clear non-HTTP-only cookies and CSRF cache
-        console.log(`[Auth] ❌ Refresh failed with status ${resp.status}`);
-        clearNonHttpOnlyCookies();
-        csrfManager.clearCache();
+        // Refresh failed - call logout to clear HTTP-only cookies and redirect
+        await handleRefreshFailure(resp.status);
         throw new Error(`Refresh failed: ${resp.status}`);
       }
     }
-    
-    console.log('[Auth] ✅ HTTP-only token refresh successful');
+
+    console.log("[Auth] ✅ HTTP-only token refresh successful");
     processQueue(null);
   } catch (err) {
     // Clear non-HTTP-only cookies and CSRF cache on any refresh failure
-    console.log('[Auth] ❌ Refresh error caught:', err);
+    console.log("[Auth] ❌ Refresh error caught:", err);
     clearNonHttpOnlyCookies();
     csrfManager.clearCache();
     lastRefreshFailureAt = Date.now();
@@ -210,15 +216,169 @@ async function refreshTokens(): Promise<void> {
   }
 }
 
+/**
+ * Handle refresh token failure by calling logout API and redirecting to login
+ */
+async function handleRefreshFailure(status: number): Promise<void> {
+  // Prevent multiple simultaneous logout attempts
+  if (isLoggingOut) {
+    console.log("[Auth] Already logging out, skipping duplicate logout");
+    throw new Error("Already logging out");
+  }
+
+  isLoggingOut = true;
+  if (typeof window !== "undefined") {
+    (window as any).__isLoggingOut = true;
+  }
+  console.log(
+    `[Auth] ❌ Refresh failed with status ${status} - logging out and redirecting`
+  );
+
+  // Clear non-HTTP-only cookies and CSRF cache
+  clearNonHttpOnlyCookies();
+  csrfManager.clearCache();
+
+  // Call backend logout to clear HTTP-only cookies (only once)
+  try {
+    await fetch(apiPath("/auth/logout"), {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "X-Skip-Auth-Refresh": "true", // Prevent this request from triggering refresh
+      },
+    });
+    console.log("[Auth] Backend logout successful");
+  } catch (logoutError) {
+    console.warn(
+      "[Auth] Backend logout failed (continuing anyway):",
+      logoutError
+    );
+  }
+
+  // Redirect to login page
+  if (typeof window !== "undefined") {
+    console.log("[Auth] Redirecting to login due to refresh token expiration");
+
+    // Small delay to ensure logout completes
+    setTimeout(() => {
+      window.location.href =
+        "/login?reason=session_expired&message=" +
+        encodeURIComponent("Your session has expired. Please log in again.");
+    }, 100);
+  }
+}
+
 http.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
-    const original = error.config as AxiosRequestConfig & { _retry?: boolean; _skipAuthRefresh?: boolean };
+    const original = error.config as AxiosRequestConfig & {
+      _retry?: boolean;
+      _skipAuthRefresh?: boolean;
+    };
     const status = error.response?.status;
+    const data = error.response?.data as any;
 
-    // Skip auth refresh for logout and refresh endpoints
-    const isLogoutOrRefresh = original.url?.includes('/auth/logout') || original.url?.includes('/auth/refresh');
+    // If we're in the process of logging out, reject all requests immediately
+    if (isLoggingOut) {
+      console.log("[Auth] Request blocked - logout in progress");
+      return Promise.reject(new Error("Logout in progress"));
+    }
+
+    // Handle IP blocking - redirect to dedicated page
+    // Log 403 errors for debugging
+    if (status === 403) {
+      console.log('[httpClient] 403 error detected:', {
+        url: original.url,
+        data: data,
+        hasCode: !!data?.code,
+        code: data?.code,
+        error: data?.error,
+      });
+    }
     
+    // Check for IP_BLOCKED code OR any 403 with "blocked" in error message
+    // OR just assume any 403 is IP block (since that's the most common case)
+    const isIPBlocked = status === 403 && (
+      data?.code === 'IP_BLOCKED' || 
+      data?.error?.toLowerCase().includes('blocked') ||
+      data?.error?.toLowerCase().includes('suspicious activity') ||
+      // If it's a 403 and not a permission error, assume IP block
+      (!data?.error?.toLowerCase().includes('permission') && 
+       !data?.error?.toLowerCase().includes('forbidden') &&
+       !data?.error?.toLowerCase().includes('access denied'))
+    );
+    
+    if (isIPBlocked) {
+      console.log('[httpClient] IP blocked detected');
+      
+      if (typeof window !== 'undefined') {
+        // Don't redirect if already on IP blocked page
+        if (window.location.pathname.includes('/ip-blocked')) {
+          console.log('[httpClient] Already on IP blocked page, not redirecting');
+          return Promise.reject(error);
+        }
+        
+        // Prevent multiple redirects
+        if ((window as any).__redirectingToIPBlocked) {
+          console.log('[httpClient] Already redirecting to IP blocked page, skipping');
+          return Promise.reject(error);
+        }
+        (window as any).__redirectingToIPBlocked = true;
+        
+        const expiresIn = data?.expiresIn || 3600;
+        const reason = data?.error || 'Access temporarily blocked due to suspicious activity';
+        
+        // Check if we already have a stored blockedAt timestamp
+        let blockedAt: number;
+        const storedBlockedAt = localStorage.getItem('ipBlockedAt');
+        const storedDuration = localStorage.getItem('ipBlockDuration');
+        
+        if (storedBlockedAt && storedDuration) {
+          // Check if the stored block has expired
+          const elapsed = Math.floor((Date.now() - parseInt(storedBlockedAt)) / 1000);
+          const duration = parseInt(storedDuration);
+          
+          if (elapsed < duration) {
+            // Block still active, use existing timestamp
+            blockedAt = parseInt(storedBlockedAt);
+            console.log('[httpClient] Using stored blockedAt timestamp:', blockedAt, 'elapsed:', elapsed, 'duration:', duration);
+          } else {
+            // Block expired, create new timestamp
+            blockedAt = Date.now();
+            localStorage.setItem('ipBlockedAt', blockedAt.toString());
+            localStorage.setItem('ipBlockDuration', expiresIn.toString());
+            console.log('[httpClient] Previous block expired, storing new timestamp:', blockedAt);
+          }
+        } else {
+          // First time being blocked, store the timestamp
+          blockedAt = Date.now();
+          localStorage.setItem('ipBlockedAt', blockedAt.toString());
+          localStorage.setItem('ipBlockDuration', expiresIn.toString());
+          console.log('[httpClient] Storing new blockedAt timestamp:', blockedAt);
+        }
+        
+        const params = new URLSearchParams({
+          duration: expiresIn.toString(),
+          blockedAt: blockedAt.toString(),
+          reason: reason,
+        });
+        
+        console.log('[httpClient] Redirecting to /ip-blocked with params:', params.toString());
+        
+        // Use setTimeout to ensure redirect happens after current execution
+        setTimeout(() => {
+          window.location.href = `/ip-blocked?${params.toString()}`;
+        }, 100);
+      }
+      return Promise.reject(error);
+    }
+
+    // Skip auth refresh for logout and refresh endpoints, or if header says to skip
+    const isLogoutOrRefresh =
+      original.url?.includes("/auth/logout") ||
+      original.url?.includes("/auth/refresh") ||
+      original.headers?.["X-Skip-Auth-Refresh"] === "true";
+
     // CSRF error handling: if 403 with EBADCSRFTOKEN, fetch new token then retry once
     if (
       status === 403 &&
@@ -236,16 +396,25 @@ http.interceptors.response.use(
     }
 
     // Auth handling: attempt refresh on 401 once (but skip for logout/refresh endpoints)
-    if (status === 401 && !original._retry && !isLogoutOrRefresh && !original._skipAuthRefresh) {
+    if (
+      status === 401 &&
+      !original._retry &&
+      !isLogoutOrRefresh &&
+      !original._skipAuthRefresh
+    ) {
       original._retry = true;
-      console.log('[Auth] Received 401, attempting HTTP-only refresh...');
+      console.log("[Auth] Received 401, attempting HTTP-only refresh...");
       try {
         await refreshTokens();
-        console.log('[Auth] HTTP-only refresh succeeded, retrying original request');
+        console.log(
+          "[Auth] HTTP-only refresh succeeded, retrying original request"
+        );
         return http.request(original);
       } catch (refreshError) {
         // Refresh failed - non-HTTP-only cookies should already be cleared by refreshTokens()
-        console.log('[Auth] HTTP-only refresh failed, non-HTTP-only cookies cleared');
+        console.log(
+          "[Auth] HTTP-only refresh failed, non-HTTP-only cookies cleared"
+        );
         // Avoid retry storms: set failure time
         lastRefreshFailureAt = Date.now();
         return Promise.reject(refreshError);
@@ -254,7 +423,9 @@ http.interceptors.response.use(
 
     // If this is a 401 and we already tried refresh (_retry = true), clear non-HTTP-only cookies and CSRF cache
     if (status === 401 && original._retry && !isLogoutOrRefresh) {
-      console.log('[Auth] Received 401 after retry attempt, clearing non-HTTP-only cookies and CSRF cache');
+      console.log(
+        "[Auth] Received 401 after retry attempt, clearing non-HTTP-only cookies and CSRF cache"
+      );
       clearNonHttpOnlyCookies();
       csrfManager.clearCache();
     }

@@ -121,7 +121,8 @@ export const useSocket = (): UseSocketReturn => {
         console.log('Auth expired event received:', event);
         
         // Prevent multiple simultaneous handlers
-        if (typeof window !== 'undefined' && (window as any).__handlingSessionExpired) {
+        if (typeof window !== 'undefined' && 
+            ((window as any).__handlingSessionExpired || (window as any).__isLoggingOut)) {
           console.log('[useSocket] Already handling session expiration, skipping...');
           return;
         }

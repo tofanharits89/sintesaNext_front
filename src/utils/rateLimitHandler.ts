@@ -57,24 +57,30 @@ export function handleRateLimitError(error: AxiosError<RateLimitError>): void {
     return;
   }
 
-  // Handle IP blocking
+  // Handle IP blocking - redirect to dedicated page
   if (data.code === 'IP_BLOCKED') {
     const expiresIn = data.expiresIn || 3600;
-    const timeRemaining = formatTimeRemaining(expiresIn);
+    const blockedAt = Date.now();
+    const reason = data.blockReason || data.error || 'Too many failed attempts or suspicious activity detected';
     
-    toast.error('Access Temporarily Blocked', {
-      description: `Your access has been temporarily blocked due to suspicious activity. Please try again in ${timeRemaining}.`,
-      duration: 10000,
-      action: {
-        label: 'Understand',
-        onClick: () => {
-          toast.info('Security Notice', {
-            description: 'Multiple failed attempts or rate limit violations triggered this block. The block will be automatically lifted after the time period.',
-            duration: 8000
-          });
-        }
-      }
+    // Show toast notification
+    toast.error('Access Blocked', {
+      description: 'Redirecting to blocked page...',
+      duration: 3000,
     });
+    
+    // Redirect to IP blocked page with details
+    setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams({
+          duration: expiresIn.toString(),
+          blockedAt: blockedAt.toString(),
+          reason: reason,
+        });
+        window.location.href = `/ip-blocked?${params.toString()}`;
+      }
+    }, 1000);
+    
     return;
   }
 
@@ -170,8 +176,14 @@ export function isRateLimitError(error: any): error is AxiosError<RateLimitError
   // Check for 429 status code
   if (status === 429) return true;
   
-  // Check for 403 with IP_BLOCKED code
-  if (status === 403 && data?.code === 'IP_BLOCKED') return true;
+  // Check for 403 with IP_BLOCKED code or blocked message
+  if (status === 403 && (
+    data?.code === 'IP_BLOCKED' || 
+    data?.error?.toLowerCase().includes('blocked') ||
+    data?.error?.toLowerCase().includes('suspicious activity')
+  )) {
+    return true;
+  }
   
   // Check for rate limit error messages
   if (data?.error?.includes('Rate limit') || data?.error?.includes('rate limit')) {

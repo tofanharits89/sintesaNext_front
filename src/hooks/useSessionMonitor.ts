@@ -48,11 +48,12 @@ export function useSessionMonitor(options: UseSessionMonitorOptions = {}) {
       console.log("[SessionMonitor] Session expired:", data);
 
       // Prevent multiple simultaneous handlers
-      if ((window as any).__handlingSessionExpired) {
+      if ((window as any).__handlingSessionExpired || (window as any).__isLoggingOut) {
         console.log('[SessionMonitor] Already handling session expiration, skipping...');
         return;
       }
       (window as any).__handlingSessionExpired = true;
+      (window as any).__isLoggingOut = true;
 
       // Call backend logout API to invalidate session
       try {

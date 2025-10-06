@@ -15,8 +15,25 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Simple utility functions instead of complex service classes
-const PROTECTED_ROUTES = ['/dashboard', '/inquiry-data', '/admin', '/profile', '/users', '/settings', '/messages', '/notifications'];
-const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/', '/server-error', '/unauthorized'];
+const PROTECTED_ROUTES = [
+  "/dashboard",
+  "/inquiry-data",
+  "/admin",
+  "/profile",
+  "/users",
+  "/settings",
+  "/messages",
+  "/notifications",
+];
+const PUBLIC_ROUTES = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/",
+  "/server-error",
+  "/unauthorized",
+  "/ip-blocked",
+];
 
 /**
  * Extract access token from HttpOnly cookie
@@ -29,14 +46,14 @@ function extractAccessToken(request: NextRequest): string | null {
  * Check if route requires authentication
  */
 function isProtectedRoute(pathname: string): boolean {
-  return PROTECTED_ROUTES.some(route => pathname.startsWith(route));
+  return PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
 }
 
 /**
  * Check if route is public (login, register, etc.)
  */
 function isPublicRoute(pathname: string): boolean {
-  return PUBLIC_ROUTES.some(route => pathname.startsWith(route));
+  return PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
 }
 
 /**
@@ -47,9 +64,9 @@ export async function middleware(request: NextRequest) {
 
   // Skip middleware for API routes, static assets, and Next.js internals
   if (
-    pathname.startsWith('/api/') ||
-    pathname.startsWith('/_next/') ||
-    pathname.includes('.')
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/_next/") ||
+    pathname.includes(".")
   ) {
     return NextResponse.next();
   }
@@ -60,16 +77,18 @@ export async function middleware(request: NextRequest) {
 
     // If user has valid token and is on login/register, redirect to dashboard
     // UNLESS they're being redirected due to session expiration (to prevent loops)
-    if (token && (pathname === '/login' || pathname === '/register')) {
-      const reason = request.nextUrl.searchParams.get('reason');
-      
+    if (token && (pathname === "/login" || pathname === "/register")) {
+      const reason = request.nextUrl.searchParams.get("reason");
+
       // Don't auto-redirect if user was just logged out due to session expiration
-      if (reason === 'session_expired' || reason === 'logged_in_elsewhere') {
-        console.log('[Middleware] Skipping auto-redirect due to session expiration');
+      if (reason === "session_expired" || reason === "logged_in_elsewhere") {
+        console.log(
+          "[Middleware] Skipping auto-redirect due to session expiration"
+        );
         return NextResponse.next();
       }
-      
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+
+      return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
     return NextResponse.next();
@@ -81,8 +100,8 @@ export async function middleware(request: NextRequest) {
 
     // No token - redirect to login with return URL
     if (!token) {
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('returnTo', pathname);
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("returnTo", pathname);
       return NextResponse.redirect(loginUrl);
     }
 
@@ -103,6 +122,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    "/((?!api|_next/static|_next/image|favicon.ico).*)",
   ],
 };

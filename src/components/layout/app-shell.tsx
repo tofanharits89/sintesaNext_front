@@ -17,7 +17,9 @@ const AppShell = memo(function AppShell({
   const pathname = usePathname();
   
   const isSpecialPage = useMemo(() => 
-    pathname?.startsWith("/login") || pathname?.startsWith("/server-error"),
+    pathname?.startsWith("/login") || 
+    pathname?.startsWith("/server-error") || 
+    pathname?.startsWith("/ip-blocked"),
     [pathname]
   );
 
