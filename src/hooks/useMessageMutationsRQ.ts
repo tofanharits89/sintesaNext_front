@@ -6,7 +6,7 @@ import { getCookie, prefetchCsrf } from "@/lib/httpClient";
 import { conversationKeys } from "./useConversationsRQ";
 import { messageKeys } from "./useMessagesRQ";
 import { useSocket } from "./useSocket";
-import { FrontendMessage } from "@/shared/socket-events";
+import { FrontendMessage } from "@/types/socket-events";
 import { useMessagingActions, useMessagingUIStore } from "@/stores";
 import { useNotificationStore } from "@/stores/notification-store";
 import { getTempMessages } from "@/features/messaging/temp-messages-store";
@@ -237,9 +237,20 @@ export function useSendMessageMutation() {
       // Create optimistic message
       if (convKeyId && tempId) {
         const optimisticMessage: FrontendMessage = {
+          // Required base Message properties
           id: tempId,
-          conversationId: convKeyId,
+          sender_id: currentUser?.id || "current-user",
+          recipient_id: "unknown",
+          conversation_id: convKeyId,
           content: content.trim(),
+          type: "text",
+          is_read: false,
+          is_deleted: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          
+          // Frontend-specific properties
+          conversationId: convKeyId,
           timestamp: new Date().toISOString(),
           sender: currentUser
             ? {

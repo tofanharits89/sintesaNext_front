@@ -15,7 +15,7 @@ export default async function SettingsLayout({
   const c = await cookies();
   const cookiePairs = c.getAll().map(({ name, value }) => `${name}=${value}`);
   const cookieHeader = cookiePairs.join("; ");
-  const hasAccessToken = Boolean(c.get("accessToken")?.value);
+  const hasAccessToken = Boolean(c.get("access_token")?.value) || Boolean(c.get("accessToken")?.value);
   if (!cookieHeader) {
     redirect("/login");
   }
@@ -27,6 +27,7 @@ export default async function SettingsLayout({
     resp = await fetch(apiPath("/users/profile/me"), {
       method: "GET",
       cache: "no-store",
+      credentials: "include",
     });
   } catch {
     resp = null;
@@ -59,7 +60,7 @@ export default async function SettingsLayout({
   }
   const data = await resp.json().catch(() => ({}));
 
-  const user = data?.data;
+  const user = data?.data?.user || data?.data;
   if (!user || !user.role) {
     // Authenticated but cannot resolve role – treat as unauthorized to avoid login bounce
     redirect("/unauthorized?reason=settings_no_role");

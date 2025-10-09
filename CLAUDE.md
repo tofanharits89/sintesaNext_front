@@ -72,7 +72,7 @@ cd frontendNEx && npm run dev
 ### Socket.IO Real-time System
 - **Connection Management**: `src/components/connection-status.tsx` displays socket connection state
 - **Socket Client**: `src/lib/socket/SimpleSocketClient.ts` handles all socket operations
-- **Event Definitions**: `src/shared/socket-events.ts` contains standardized event schemas with full TypeScript support
+- **Event Definitions**: `src/types/socket-events.ts` contains standardized event schemas with full TypeScript support
 - **Global Initialization**: `src/components/socket/GlobalSocketInitializer.ts` manages lifecycle
 - **Race Condition Fix**: Server ready signals prevent race conditions during connection
 
@@ -105,7 +105,7 @@ Advanced financial query builder with:
 - **Hooks**: `src/hooks/` for reusable logic
 
 ### Socket Event Handling
-Always use standardized events from `src/shared/socket-events.ts`. The system includes:
+Always use standardized events from `src/types/socket-events.ts`. The system includes:
 - Message events (send, receive, read, typing indicators)
 - Presence events (online/offline users)
 - Connection events (connect, disconnect, reconnect)
@@ -127,7 +127,7 @@ Always use standardized events from `src/shared/socket-events.ts`. The system in
 - `src/app/layout.tsx` - Root layout with all providers
 - `middleware.ts` - Simplified authentication middleware (optimistic validation)
 - `src/lib/auth-state-unified.tsx` - Unified authentication state management
-- `src/shared/socket-events.ts` - Complete socket event definitions
+- `src/types/socket-events.ts` - Complete socket event definitions
 - `src/components/connection-status.tsx` - Connection feedback (recently simplified)
 - `src/hooks/useSocket.ts` - Socket state management hook
 - `src/lib/rbac.ts` - Role-based access control logic

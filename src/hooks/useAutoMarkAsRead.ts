@@ -1,5 +1,5 @@
 import { useRef, useCallback, useEffect } from "react";
-import { FrontendMessage } from "@/shared/socket-events";
+import { FrontendMessage } from "@/types/socket-events";
 
 interface UseAutoMarkAsReadOptions {
   messages: FrontendMessage[];
@@ -140,7 +140,7 @@ export function useAutoMarkAsRead({
 
     // Find messages that are visible and not sent by current user (regardless of read status)
     const unreadMessages = messages.filter((msg) => {
-      const isNotFromCurrentUser = msg.sender.id !== currentUserId;
+      const isNotFromCurrentUser = msg.sender?.id !== currentUserId;
       const isVisible = visibleMessagesRef.current.has(msg.id);
       const notAlreadyMarked = !tracker.markedMessageIds.has(msg.id);
 
@@ -157,7 +157,7 @@ export function useAutoMarkAsRead({
     if (unreadMessages.length === 0) {
       const fallbackUnreadMessages = messages.filter((msg) => {
         const isNotRead = !msg.isRead;
-        const isNotFromCurrentUser = msg.sender.id !== currentUserId;
+        const isNotFromCurrentUser = msg.sender?.id !== currentUserId;
         const notAlreadyMarked = !tracker.markedMessageIds.has(msg.id);
 
         return isNotRead && isNotFromCurrentUser && notAlreadyMarked;

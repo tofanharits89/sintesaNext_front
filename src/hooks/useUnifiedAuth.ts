@@ -11,7 +11,7 @@
  * - Type-safe and predictable state management
  */
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { 
   useAuthSessionStore, 
@@ -21,6 +21,8 @@ import {
 import { authClient } from '@/lib/auth-client';
 import { queryKeyFactories } from '@/lib/query-configs';
 import { toast } from 'sonner';
+import { logger } from '@/lib/utils';
+import { crossTabSync } from '@/lib/cross-tab-sync';
 
 // Enhanced hook return type for better TypeScript support
 export interface UseUnifiedAuthReturn extends Omit<AuthSessionState, 'setAuthenticated' | 'updateUser' | 'logout'> {
@@ -81,6 +83,10 @@ const getRoleDisplayName = (user: AuthUser | null): string => {
 export function useUnifiedAuth(): UseUnifiedAuthReturn {
   const queryClient = useQueryClient();
   const authState = useAuthSessionStore();
+  
+  // Proactive refresh timer reference
+  const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastActivityTimeRef = useRef<number>(Date.now());
 
   // Enhanced login with optimistic updates and cache management
   const login = useCallback(async (
@@ -107,6 +113,9 @@ export function useUnifiedAuth(): UseUnifiedAuthReturn {
         queryClient.setQueryData(['auth', 'user'], result.user);
         queryClient.setQueryData(queryKeyFactories.user.profile(), result.user);
         
+        // Notify other tabs about successful login
+        crossTabSync.notifyLogin();
+        
         toast.success(`Selamat datang, ${result.user.name}!`);
         
         return { success: true, user: result.user };
@@ -124,10 +133,13 @@ export function useUnifiedAuth(): UseUnifiedAuthReturn {
     }
   }, [authState, queryClient]);
 
-  // Enhanced logout with comprehensive cleanup
+  // Enhanced logout with comprehensive cleanup and cross-tab sync
   const logout = useCallback(async (reason = 'manual_logout'): Promise<void> => {
     try {
       authState.setLoggingOut(true);
+      
+      // Notify other tabs about logout before clearing state
+      crossTabSync.notifyLogout();
       
       // Optimistic update: clear auth state immediately
       authState.logout();
@@ -205,6 +217,59 @@ export function useUnifiedAuth(): UseUnifiedAuthReturn {
     queryClient.setQueryData(['auth', 'user'], updatedUser);
     queryClient.setQueryData(queryKeyFactories.user.profile(), updatedUser);
   }, [authState, queryClient]);
+
+  // Proactive token refresh mechanism
+  const startProactiveRefresh = useCallback(() => {
+    // Clear any existing timer
+    if (refreshTimerRef.current) {
+      clearTimeout(refreshTimerRef.current);
+    }
+
+    // Set timer to refresh token 5 minutes before expiry (access tokens last 30 min)
+    const refreshInterval = 25 * 60 * 1000; // 25 minutes
+    
+    refreshTimerRef.current = setTimeout(async () => {
+      if (authState.isAuthenticated && authState.user) {
+        try {
+          const result = await authClient.refreshToken();
+          if (result.success) {
+            logger.info("Proactive token refresh successful");
+            
+            // Notify other tabs about token refresh
+            crossTabSync.notifyTokenRefresh();
+            
+            // Restart the timer for next refresh cycle
+            startProactiveRefresh();
+          } else {
+            logger.warn("Proactive token refresh failed, may need to re-authenticate");
+            // Don't automatically logout - let manual validation handle it
+          }
+        } catch (error) {
+          logger.error("Proactive refresh error:", error);
+        }
+      }
+    }, refreshInterval);
+  }, [authState.isAuthenticated, authState.user]);
+
+  // Start or stop proactive refresh based on auth state
+  useEffect(() => {
+    if (authState.isAuthenticated && authState.user) {
+      startProactiveRefresh();
+    } else {
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+        refreshTimerRef.current = null;
+      }
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+        refreshTimerRef.current = null;
+      }
+    };
+  }, [authState.isAuthenticated, authState.user, startProactiveRefresh]);
 
   // Ensure consistent state on mount and when cache changes
   useEffect(() => {

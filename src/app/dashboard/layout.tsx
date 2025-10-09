@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { AuthGuard } from "@/components/auth/auth-guard";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 import { DashboardProvider } from "@/components/providers/dashboard-provider";
 import { DashboardSkeleton } from "@/components/layout/dashboard-skeleton";
 

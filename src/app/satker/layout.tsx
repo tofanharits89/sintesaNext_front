@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { AuthGuard } from "@/components/auth/auth-guard";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 
 export const metadata: Metadata = {
   title: "Profil Satker",

@@ -13,7 +13,7 @@ export default async function UsersLayout({
   const c = await cookies();
   const cookiePairs = c.getAll().map(({ name, value }) => `${name}=${value}`);
   const cookieHeader = cookiePairs.join("; ");
-  const hasAccessToken = Boolean(c.get("accessToken")?.value);
+  const hasAccessToken = Boolean(c.get("access_token")?.value) || Boolean(c.get("accessToken")?.value);
   if (!cookieHeader) {
     redirect("/login");
   }
@@ -24,6 +24,7 @@ export default async function UsersLayout({
       resp = await fetch(apiPath("/users/profile/me"), {
         method: "GET",
         cache: "no-store",
+        credentials: "include",
       });
     } catch {
       resp = null;
@@ -47,7 +48,7 @@ export default async function UsersLayout({
     if (!resp.ok) throw new Error("profile_failed");
     const data = await resp.json().catch(() => ({}));
 
-    const user = data?.data;
+    const user = data?.data?.user || data?.data;
     if (!user || !user.role) {
       redirect("/unauthorized?reason=user_management_access_denied");
     }

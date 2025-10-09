@@ -1,53 +1,18 @@
-"use client";
+import React from "react";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
-import { useAuthRedirect } from "@/hooks/useAuthRedirect";
+// Server-side AuthGuard fallback: if middleware doesn't run, enforce auth here.
+// Checks for presence of the "accessToken" httpOnly cookie and redirects to /login when missing.
+export async function AuthGuard({ children }: { children: React.ReactNode }) {
+  const c = await cookies();
+  const accessToken = c.get("access_token")?.value?.trim();
 
-interface AuthGuardProps {
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
-  redirectTo?: string | undefined;
-}
-
-/**
- * Component that protects routes and automatically redirects when session expires
- */
-export function AuthGuard({ 
-  children, 
-  fallback = <div>Loading...</div>,
-  redirectTo = "/login" 
-}: AuthGuardProps) {
-  const { isAuthenticated, isLoading } = useUnifiedAuth();
-  const { isRedirecting } = useAuthRedirect({ redirectTo });
-
-  // Show loading state while checking auth
-  if (isLoading || isRedirecting) {
-    return <>{fallback}</>;
+  // If no access token cookie, redirect to login
+  if (!accessToken) {
+    redirect("/login");
   }
 
-  // Show children only if authenticated
-  if (isAuthenticated) {
-    return <>{children}</>;
-  }
-
-  // This should rarely be reached due to useAuthRedirect, but provides fallback
-  return <>{fallback}</>;
-}
-
-/**
- * Higher-order component version of AuthGuard
- */
-export function withAuthGuard<P extends object>(
-  Component: React.ComponentType<P>,
-  options?: { redirectTo?: string; fallback?: React.ReactNode }
-) {
-  return function AuthGuardedComponent(props: P) {
-    return (
-      <AuthGuard redirectTo={options?.redirectTo} fallback={options?.fallback}>
-        <Component {...props} />
-      </AuthGuard>
-    );
-  };
+  // Otherwise, render children. RBAC/extra checks can be done in section-specific layouts.
+  return <>{children}</>;
 }

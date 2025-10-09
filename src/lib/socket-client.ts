@@ -8,7 +8,7 @@
 "use client";
 
 import { io, Socket } from "socket.io-client";
-import { SOCKET_EVENTS } from "@/shared/socket-events";
+import { SOCKET_EVENTS } from "@/types/socket-events";
 
 export type SocketState = "disconnected" | "connecting" | "connected" | "error" | "reconnecting";
 

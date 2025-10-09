@@ -1,5 +1,5 @@
 /**
- * Simplified Next.js Middleware - Industry Standard 2025
+ * Consolidated Next.js Middleware - Industry Standard 2025
  *
  * Replaces complex service-oriented architecture with simple, maintainable code
  * Follows Next.js 15 best practices: no response bodies, only redirects/rewrites
@@ -8,13 +8,13 @@
  * - Simple utility functions instead of service classes
  * - Optimistic cookie-based validation (no DB calls in middleware)
  * - Clear separation of concerns
- * - 40 lines vs 186 lines previously
+ * - Single file for easier maintenance
  */
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Simple utility functions instead of complex service classes
+// Route definitions
 const PROTECTED_ROUTES = [
   "/dashboard",
   "/inquiry-data",
@@ -24,7 +24,16 @@ const PROTECTED_ROUTES = [
   "/settings",
   "/messages",
   "/notifications",
+  "/makan-bergizi",
+  "/data-supplier",
+  "/epa",
+  "/log-user",
+  "/pengaturan",
+  "/satker",
+  "/transfer-daerah",
+  "/tentang-kita",
 ];
+
 const PUBLIC_ROUTES = [
   "/login",
   "/register",
@@ -33,13 +42,70 @@ const PUBLIC_ROUTES = [
   "/server-error",
   "/unauthorized",
   "/ip-blocked",
+  "/test-rbac",
+  "/test-skeletons",
+  "/debug-user",
 ];
+
+// Environment-based configuration
+const ENV = {
+  API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:88',
+  NODE_ENV: process.env.NODE_ENV || 'development',
+  DEBUG_AUTH: process.env.NEXT_PUBLIC_DEBUG_AUTH === 'true',
+} as const;
+
+// Cookie configuration
+const COOKIE_CONFIG = {
+  ACCESS_TOKEN: 'access_token',
+  REFRESH_TOKEN: 'refresh_token',
+  OPTIONS: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+  },
+} as const;
 
 /**
  * Extract access token from HttpOnly cookie
  */
 function extractAccessToken(request: NextRequest): string | null {
-  return request.cookies.get("access_token")?.value || null;
+  return request.cookies.get(COOKIE_CONFIG.ACCESS_TOKEN)?.value || null;
+}
+
+/**
+ * Server-side session validation with proper token verification
+ */
+async function validateServerSession(accessToken: string): Promise<{ valid: boolean; user?: any; error?: string }> {
+  try {
+    const response = await fetch(`${ENV.API_BASE_URL}/api/v1/auth/validate`, {
+      method: "GET",
+      headers: {
+        "Cookie": `${COOKIE_CONFIG.ACCESS_TOKEN}=${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return { 
+        valid: data.success && data.data?.valid, 
+        user: data.data?.user,
+        error: !data.success ? data.error : undefined
+      };
+    } else {
+      // If validation fails, assume invalid
+      return { valid: false, error: "Server validation failed" };
+    }
+  } catch (error) {
+    // Network error during validation - assume valid for better UX but log
+    if (ENV.DEBUG_AUTH) {
+      console.log("[Middleware] Server validation error, allowing optimistic:", error);
+    }
+    return { valid: true, error: "Network error" };
+  }
 }
 
 /**
@@ -62,11 +128,22 @@ function isPublicRoute(pathname: string): boolean {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Debug logging in development
+  if (ENV.DEBUG_AUTH) {
+    console.log(`[Middleware] Processing: ${pathname}`);
+  }
+
   // Skip middleware for API routes, static assets, and Next.js internals
   if (
     pathname.startsWith("/api/") ||
     pathname.startsWith("/_next/") ||
-    pathname.includes(".")
+    pathname.startsWith("/favicon") ||
+    pathname.includes(".ico") ||
+    pathname.includes(".txt") ||
+    pathname.includes(".xml") ||
+    pathname.includes(".png") ||
+    pathname.includes(".jpg") ||
+    pathname.includes(".svg")
   ) {
     return NextResponse.next();
   }
@@ -82,9 +159,9 @@ export async function middleware(request: NextRequest) {
 
       // Don't auto-redirect if user was just logged out due to session expiration
       if (reason === "session_expired" || reason === "logged_in_elsewhere") {
-        console.log(
-          "[Middleware] Skipping auto-redirect due to session expiration"
-        );
+        if (ENV.DEBUG_AUTH) {
+          console.log("[Middleware] Skipping auto-redirect due to session expiration");
+        }
         return NextResponse.next();
       }
 
@@ -102,11 +179,33 @@ export async function middleware(request: NextRequest) {
     if (!token) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("returnTo", pathname);
+      
+      if (ENV.DEBUG_AUTH) {
+        console.log(`[Middleware] Redirecting to login: ${pathname} -> /login`);
+      }
+      
       return NextResponse.redirect(loginUrl);
     }
 
-    // Token exists - optimistic validation (no DB call in middleware)
-    // Full validation happens in API routes and server components
+    // Token exists - server-side validation with fallback to optimistic
+    const validation = await validateServerSession(token);
+    
+    if (!validation.valid) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("returnTo", pathname);
+      loginUrl.searchParams.set("reason", "session_expired");
+      
+      if (ENV.DEBUG_AUTH) {
+        console.log(`[Middleware] Session invalid, redirecting to login: ${pathname} -> /login (reason: ${validation.error})`);
+      }
+      
+      return NextResponse.redirect(loginUrl);
+    }
+    
+    if (ENV.DEBUG_AUTH) {
+      console.log(`[Middleware] Access granted to: ${pathname} (validation: ${validation.error || 'server'}/'optimistic')`);
+    }
+    
     return NextResponse.next();
   }
 
@@ -120,8 +219,8 @@ export const config = {
      * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
+     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
   ],
 };

@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Conversation } from "@/shared/socket-events";
+import { Conversation } from "@/types/socket-events";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatRelativeTime } from "@/shared/socket-events";
+import { formatRelativeTime } from "@/types/socket-events";
 import { cn } from "@/lib/utils";
 import { MessageCircle, Crown, User } from "lucide-react";
 import { useOnlineUsers } from "@/hooks/use-online-users";
@@ -224,7 +224,8 @@ export function ConversationList({
                   {/* Last message preview (moved below role, reduced font size) */}
                   {conversation.lastMessage ? (
                     <div className="flex items-center gap-1 min-w-0 w-full mt-1">
-                      {(conversation.lastMessage.senderType === "admin" ||
+                      {((conversation.lastMessage as any).senderType === "admin" ||
+                        (conversation.lastMessage as any).sender_type === "admin" ||
                         conversation.lastMessage.sender?.role === "super_admin" ||
                         conversation.lastMessage.sender?.role === "co_admin") && (
                         <Crown className="h-3 w-3 text-yellow-500 flex-shrink-0" />

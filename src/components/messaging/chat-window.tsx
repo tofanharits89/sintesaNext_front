@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useMemo, useLayoutEffect } from "react";
 // Import the new React Query + Zustand messaging system
 // useConversationRQ import removed (unused)
 import { useAutoMarkAsRead } from "@/hooks/useAutoMarkAsRead";
-import { Conversation } from "@/shared/socket-events";
+import { Conversation } from "@/types/socket-events";
 // Removed background message queue auto-retry usage
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -764,7 +764,7 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
             {messages.length > 0 ? (
               <div className="space-y-4">
                 {messages.map((message) => {
-                  const isOwnMessage = message.sender.id === currentUser?.id;
+                  const isOwnMessage = message.sender?.id === currentUser?.id;
 
                   return (
                     <div
@@ -790,8 +790,8 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
                               : "bg-muted"
                           )}
                         >
-                          {message.sender.name?.charAt(0)?.toUpperCase() ||
-                            message.sender.username?.charAt(0)?.toUpperCase() ||
+                          {message.sender?.name?.charAt(0)?.toUpperCase() ||
+                            message.sender?.username?.charAt(0)?.toUpperCase() ||
                             "?"}
                         </AvatarFallback>
                       </Avatar>
@@ -813,16 +813,16 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
                           <span className="text-xs font-medium">
                             {isOwnMessage
                               ? "You"
-                              : message.sender.name || message.sender.username}
+                              : message.sender?.name || message.sender?.username}
                           </span>
                           {message.senderType === "admin" && (
                             <Crown className="h-3 w-3 text-yellow-500" />
                           )}
                           <span
                             className="text-xs text-muted-foreground"
-                            title={formatEnhancedTimestamp(message.timestamp)}
+                            title={formatEnhancedTimestamp(message.timestamp || "")}
                           >
-                            {formatEnhancedTimestamp(message.timestamp)}
+                            {formatEnhancedTimestamp(message.timestamp || "")}
                           </span>
                         </div>
 

@@ -10,7 +10,7 @@ import {
   SOCKET_EVENTS,
   Conversation,
   SocketMessageData,
-} from "@/shared/socket-events";
+} from "@/types/socket-events";
 import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 
 // Query keys for React Query

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 import { useMemo } from "react";
-import type { Conversation, FrontendMessage } from "@/shared/socket-events";
+import type { Conversation, FrontendMessage } from "@/types/socket-events";
 
 // Types for UI state
 export interface MessageInputState {

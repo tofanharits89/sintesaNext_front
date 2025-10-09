@@ -26,7 +26,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { setHint } from "@/features/messaging/temp-conversation-hints";
 import { toast } from "sonner";
 import { pushTempMessage } from "@/features/messaging/temp-messages-store";
-import type { FrontendMessage } from "@/shared/socket-events";
+import type { FrontendMessage } from "@/types/socket-events";
 
 // Helper function to get role display name
 const getRoleDisplayName = (role?: string): string => {
@@ -220,9 +220,20 @@ export function NewMessageDialog({
           .toString(36)
           .slice(2, 9)}`;
         const optimistic: FrontendMessage = {
+          // Required base Message properties
           id: tempMsgId,
-          conversationId: tempId,
+          sender_id: currentUser?.id || "current-user",
+          recipient_id: selectedUser.id,
+          conversation_id: tempId, // Add conversation_id as required by Message interface
           content: message.trim(),
+          type: "text",
+          is_read: true,
+          is_deleted: false,
+          created_at: nowIso,
+          updated_at: nowIso,
+          
+          // Frontend-specific properties
+          conversationId: tempId,
           timestamp: nowIso,
           sender: currentUser
             ? { id: currentUser.id, username: currentUser.username || "you", name: currentUser.name || "You" }

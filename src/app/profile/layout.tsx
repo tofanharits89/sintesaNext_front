@@ -1,4 +1,4 @@
-import { AuthGuard } from "@/components/auth/auth-guard";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 
 export default async function ProfileLayout({
   children,

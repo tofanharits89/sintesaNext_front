@@ -3,8 +3,8 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ConditionalToaster } from "@/components/ui/conditional-toaster";
 import AppShell from "@/components/layout/app-shell";
-import { ConnectionStatus } from "@/components/connection-status";
-import CheckBackend from "@/components/check-backend";
+import { ConnectionStatus } from "@/components/ConnectionStatus";
+import CheckBackend from "@/components/CheckBackend";
 import { QueryProvider } from "@/components/providers/query-provider";
 
 import { ErrorBoundary, ComponentErrorBoundary } from "@/lib/error-boundary";
@@ -15,7 +15,7 @@ import SessionMonitor from "@/components/SessionMonitor";
 import { performanceMonitor } from "@/utils/performance-monitor";
 import { preloadOnIdle } from "@/utils/chunk-preloader";
 import { RoutePreloader } from "@/components/ui/route-preloader";
-import { ClientInit } from "@/components/client-init";
+import { ClientInit } from "@/components/ClientInit";
 // GlobalSocketInitializer is now integrated into useUnifiedSocket hook
 import { geistSans, geistMono } from "./fonts";
 

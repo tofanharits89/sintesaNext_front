@@ -11,8 +11,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
-import { RetryActions } from "@/components/retry-actions";
-import AutoRetry from "@/components/auto-retry";
+import { RetryActions } from "@/components/RetryActions";
+import AutoRetry from "@/components/AutoRetry";
 import { apiPath } from "@/lib/base-path";
 import { PageSpinner } from "@/components/ui/spinner";
 

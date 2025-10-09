@@ -21,7 +21,8 @@ import {
 import {
   SOCKET_EVENTS,
   SocketMessageData,
-} from "@/shared/socket-events";
+  FrontendMessage,
+} from "@/types/socket-events";
 import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 
 /**
@@ -180,27 +181,43 @@ function normalizeMessage(incoming: any): SocketMessageData | null {
 
   if (!conversationId) return null;
 
-  return {
+  // Create a complete SocketMessageData structure with required message property
+  const frontendMessage: FrontendMessage = {
+    // Required base Message properties
     id: msg.id,
+    sender_id: msg.sender?.id || msg.sender_id || "unknown",
+    recipient_id: msg.recipient_id || "unknown",
     conversation_id: conversationId,
-    sender_id: msg.sender?.id || msg.sender_id,
-    recipient_id: msg.recipient_id,
     content: msg.content,
     type: msg.type || "text",
-    sender_type: msg.senderType || msg.sender_type || "user",
     is_read: msg.is_read || false,
+    is_deleted: false,
     created_at: msg.timestamp || msg.created_at || new Date().toISOString(),
+    updated_at: msg.timestamp || msg.created_at || new Date().toISOString(),
+    
+    // Frontend-specific properties
+    conversationId,
     timestamp: msg.timestamp || msg.created_at || new Date().toISOString(),
     sender: msg.sender,
-    // Additional compatibility properties
-    conversationId,
     senderType: msg.senderType || msg.sender_type || "user",
+    isRead: msg.is_read || false,
+    isDelivered: false,
+  };
+
+  return {
+    message: frontendMessage,
+    conversationId: conversationId,
+    // Only include additional properties if they exist and match expected types
+    ...(msg.sender && { sender: msg.sender }),
+    ...(msg.sender_type && { senderType: msg.sender_type }),
   };
 }
 
 function updateMessagesCache(queryClient: any, message: SocketMessageData) {
   const conversationId = message.conversationId || message.conversation_id;
   if (!conversationId) return;
+
+  if (!message.message) return; // Ensure message property exists
 
   queryClient.setQueryData(
     messageKeys.messages(conversationId),
@@ -210,14 +227,14 @@ function updateMessagesCache(queryClient: any, message: SocketMessageData) {
           pages: [{
             data: {
               messages: [{
-                id: message.id,
+                id: message.message.id,
                 conversation_id: conversationId,
-                content: message.content,
-                timestamp: message.timestamp,
-                created_at: message.timestamp,
-                sender: message.sender,
-                senderType: message.senderType,
-                is_read: false,
+                content: message.message.content,
+                timestamp: message.message.timestamp,
+                created_at: message.message.created_at,
+                sender: message.message.sender,
+                senderType: message.message.senderType,
+                is_read: message.message.is_read,
               }],
               pagination: { page: 1, limit: 50, total: 1, hasMore: true },
             },
@@ -232,17 +249,17 @@ function updateMessagesCache(queryClient: any, message: SocketMessageData) {
       const messages = Array.isArray(last?.data?.messages) ? [...last.data.messages] : [];
 
       // Avoid duplicates
-      if (messages.some((m: any) => m.id === message.id)) return prev;
+      if (messages.some((m: any) => m.id === message.message.id)) return prev;
 
       messages.push({
-        id: message.id,
+        id: message.message.id,
         conversation_id: conversationId,
-        content: message.content,
-        timestamp: message.timestamp,
-        created_at: message.timestamp,
-        sender: message.sender,
-        senderType: message.senderType,
-        is_read: false,
+        content: message.message.content,
+        timestamp: message.message.timestamp,
+        created_at: message.message.created_at,
+        sender: message.message.sender,
+        senderType: message.message.senderType,
+        is_read: message.message.is_read,
       });
 
       last.data = { ...(last.data || {}), messages };
@@ -255,6 +272,8 @@ function updateMessagesCache(queryClient: any, message: SocketMessageData) {
 function updateConversationsCache(queryClient: any, message: SocketMessageData, currentUser: any) {
   const conversationId = message.conversationId || message.conversation_id;
   if (!conversationId) return;
+
+  if (!message.message) return; // Ensure message property exists
 
   queryClient.setQueryData(conversationKeys.lists(), (prev: any) => {
     const empty = { pages: [{ conversations: [], nextCursor: null }], pageParams: [null] };
@@ -272,16 +291,16 @@ function updateConversationsCache(queryClient: any, message: SocketMessageData, 
       if (conv) {
         found = true;
         conv.lastMessage = {
-          id: message.id,
-          content: message.content,
-          timestamp: message.timestamp,
-          sender: message.sender,
+          id: message.message.id,
+          content: message.message.content,
+          timestamp: message.message.timestamp,
+          sender: message.message.sender,
           isRead: false,
         };
-        conv.updated_at = message.timestamp;
+        conv.updated_at = message.message.timestamp;
 
         // Update unread count for messages from others
-        const fromSelf = currentUser?.id && message.sender?.id === currentUser.id;
+        const fromSelf = currentUser?.id && message.message.sender?.id === currentUser.id;
         if (!fromSelf) {
           conv.unread_count = (conv.unread_count || 0) + 1;
         }
@@ -329,18 +348,18 @@ function updateZustandStores(
   notificationActions: any
 ) {
   const conversationId = message.conversationId || message.conversation_id;
-  if (!conversationId) return;
+  if (!conversationId || !message.message) return;
 
-  const fromSelf = currentUser?.id && message.sender?.id === currentUser.id;
+  const fromSelf = currentUser?.id && message.message.sender?.id === currentUser.id;
 
   if (!fromSelf) {
-    unreadActions.incrementUnreadCount(conversationId, message.id, message.timestamp);
+    unreadActions.incrementUnreadCount(conversationId, message.message.id, message.message.timestamp);
     notificationActions.addNotification({
       type: "message",
       title: "New Message",
-      message: `${message.sender?.name || "Someone"}: ${message.content}`,
+      message: `${message.message.sender?.name || "Someone"}: ${message.message.content}`,
       conversationId,
-      userId: message.sender?.id,
+      userId: message.message.sender?.id,
     });
   }
 

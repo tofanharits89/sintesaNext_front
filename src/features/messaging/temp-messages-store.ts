@@ -1,7 +1,7 @@
 // Shared in-memory store for messages of temporary conversations (non-fetchable)
 // This allows multiple components/hooks to see the same optimistic/socket messages.
 
-import type { FrontendMessage } from '@/shared/socket-events';
+import type { FrontendMessage } from '@/types/socket-events';
 
 type TempMessagesStore = Map<string, FrontendMessage[]>; // key: conversationId
 

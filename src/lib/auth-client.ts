@@ -1,10 +1,11 @@
 /**
  * Simplified Authentication Client
  * Server-side token validation only - no client-side cookie access
- * Secure HTTP-only cookie implementation
+ * Secure HTTP-only cookie implementation with automatic token refresh
  */
 
 import { logger } from "@/lib/utils";
+import { authenticatedFetch } from "./http-client";
 
 // User interface (matches backend API response)
 export interface User {
@@ -12,7 +13,13 @@ export interface User {
   username: string;
   name: string;
   email: string;
-  role: "super_admin" | "co_admin" | "kantor_pusat" | "kanwil_djpb" | "kppn" | "lainnya";
+  role:
+    | "super_admin"
+    | "co_admin"
+    | "kantor_pusat"
+    | "kanwil_djpb"
+    | "kppn"
+    | "lainnya";
   limitKodeBA?: string | null;
   kdkanwil?: string | null;
   kdkppn?: string | null;
@@ -23,7 +30,7 @@ export interface User {
 }
 
 // API response interfaces
-interface AuthResponse<T = any> {
+interface AuthResponse<T = unknown> {
   success: boolean;
   data?: T;
   message?: string;
@@ -45,7 +52,11 @@ export class AuthClient {
    * Login with username and password
    * Cookies are set automatically by the server
    */
-  async login(username: string, password: string, rememberMe = false): Promise<{
+  async login(
+    username: string,
+    password: string,
+    rememberMe = false,
+  ): Promise<{
     success: boolean;
     user?: User;
     csrfToken?: string;
@@ -61,7 +72,8 @@ export class AuthClient {
         body: JSON.stringify({ username, password, rememberMe }),
       });
 
-      const data: AuthResponse<{ user: User; csrfToken: string }> = await response.json();
+      const data: AuthResponse<{ user: User; csrfToken: string }> =
+        await response.json();
 
       if (response.ok && data.success && data.data) {
         logger.info("Login successful");
@@ -77,9 +89,9 @@ export class AuthClient {
       }
     } catch (error) {
       logger.error("Login error:", error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : "Network error" 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Network error",
       };
     }
   }
@@ -110,29 +122,32 @@ export class AuthClient {
       }
     } catch (error) {
       logger.error("Logout error:", error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : "Network error" 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Network error",
       };
     }
   }
 
   /**
    * Get current user from server
-   * Uses HTTP-only cookies for authentication
+   * Uses HTTP-only cookies for authentication with automatic refresh
    */
-  async getCurrentUser(): Promise<{ success: boolean; user?: User; error?: string }> {
+  async getCurrentUser(): Promise<{
+    success: boolean;
+    user?: User;
+    error?: string;
+  }> {
     try {
-      const response = await fetch(`${this.baseURL}/auth/me`, {
+      const response = await authenticatedFetch(`${this.baseURL}/auth/me`, {
         method: "GET",
-        credentials: "include", // Important: sends HTTP-only cookies
       });
 
       const data: AuthResponse<User | { user: User }> = await response.json();
 
       if (response.ok && data.success && data.data) {
         // Handle both formats: data.data.user (new) or data.data (old)
-        const user = 'user' in data.data ? data.data.user : data.data;
+        const user = "user" in data.data ? data.data.user : data.data;
         return { success: true, user };
       } else {
         const error = data.error || data.message || "Failed to get user";
@@ -141,9 +156,9 @@ export class AuthClient {
       }
     } catch (error) {
       logger.error("Get user error:", error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : "Network error" 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Network error",
       };
     }
   }
@@ -151,20 +166,28 @@ export class AuthClient {
   /**
    * Validate current session
    */
-  async validateSession(): Promise<{ success: boolean; valid?: boolean; user?: User; error?: string }> {
+  async validateSession(): Promise<{
+    success: boolean;
+    valid?: boolean;
+    user?: User;
+    error?: string;
+  }> {
     try {
-      const response = await fetch(`${this.baseURL}/auth/validate`, {
-        method: "GET",
-        credentials: "include", // Important: sends HTTP-only cookies
-      });
+      const response = await authenticatedFetch(
+        `${this.baseURL}/auth/validate`,
+        {
+          method: "GET",
+        },
+      );
 
-      const data: AuthResponse<{ valid: boolean; user: User }> = await response.json();
+      const data: AuthResponse<{ valid: boolean; user: User }> =
+        await response.json();
 
       if (response.ok && data.success && data.data) {
-        return { 
-          success: true, 
-          valid: data.data.valid, 
-          user: data.data.user 
+        return {
+          success: true,
+          valid: data.data.valid,
+          user: data.data.user,
         };
       } else {
         const error = data.error || data.message || "Validation failed";
@@ -173,9 +196,9 @@ export class AuthClient {
       }
     } catch (error) {
       logger.error("Session validation error:", error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : "Network error" 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Network error",
       };
     }
   }
@@ -205,9 +228,9 @@ export class AuthClient {
       }
     } catch (error) {
       logger.error("Token refresh error:", error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : "Network error" 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Network error",
       };
     }
   }
@@ -215,7 +238,11 @@ export class AuthClient {
   /**
    * Get CSRF token
    */
-  async getCSRFToken(): Promise<{ success: boolean; csrfToken?: string; error?: string }> {
+  async getCSRFToken(): Promise<{
+    success: boolean;
+    csrfToken?: string;
+    error?: string;
+  }> {
     try {
       const response = await fetch(`${this.baseURL}/auth/csrf`, {
         method: "GET",
@@ -233,9 +260,9 @@ export class AuthClient {
       }
     } catch (error) {
       logger.error("CSRF token error:", error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : "Network error" 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Network error",
       };
     }
   }
@@ -245,8 +272,11 @@ export class AuthClient {
 export const authClient = new AuthClient();
 
 // Export convenience functions
-export const login = (username: string, password: string, rememberMe?: boolean) => 
-  authClient.login(username, password, rememberMe);
+export const login = (
+  username: string,
+  password: string,
+  rememberMe?: boolean,
+) => authClient.login(username, password, rememberMe);
 
 export const logout = () => authClient.logout();
 

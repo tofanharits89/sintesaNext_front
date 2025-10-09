@@ -234,9 +234,7 @@ export const MessagingRQExample: React.FC = () => {
                               >
                                 <div className="text-sm">{message.content}</div>
                                 <div className="text-xs opacity-70 mt-1">
-                                  {new Date(
-                                    message.timestamp
-                                  ).toLocaleTimeString()}
+                                  {new Date(message.timestamp || "").toLocaleTimeString()}
                                   {message.isRead && " ✓✓"}
                                 </div>
                               </div>

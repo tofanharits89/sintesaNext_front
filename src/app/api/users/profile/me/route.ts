@@ -14,18 +14,18 @@ export async function GET(request: NextRequest) {
   console.log("[API /users/profile/me] ========== REQUEST START ==========");
   console.log("[API /users/profile/me] Incoming cookies:", cookie);
   console.log(
-    "[API /users/profile/me] Has accessToken:",
-    cookie.includes("accessToken=") || cookie.includes("access_token="),
+    "[API /users/profile/me] Has access_token:",
+    cookie.includes("access_token=") || cookie.includes("accessToken="),
   );
   console.log(
-    "[API /users/profile/me] Has refreshToken:",
-    cookie.includes("refreshToken=") || cookie.includes("refresh_token="),
+    "[API /users/profile/me] Has refresh_token:",
+    cookie.includes("refresh_token=") || cookie.includes("refreshToken="),
   );
 
   // CRITICAL: If no auth cookies, return unauthenticated immediately
   // This prevents returning cached user data after logout
-  if (!cookie.includes("accessToken=") && !cookie.includes("access_token=") &&
-      !cookie.includes("refreshToken=") && !cookie.includes("refresh_token=")) {
+  if (!cookie.includes("access_token=") && !cookie.includes("accessToken=") &&
+      !cookie.includes("refresh_token=") && !cookie.includes("refreshToken=")) {
     console.log(
       "[API /users/profile/me] ❌ No auth cookies found - returning unauthenticated",
     );

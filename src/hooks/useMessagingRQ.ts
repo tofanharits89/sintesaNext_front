@@ -4,7 +4,7 @@ import { useEffect, useCallback, useRef, useMemo } from "react";
 import { useConversations } from "./useConversationsRQ";
 import { useMessages } from "./useMessagesRQ";
 import { pushTempMessage, updateTempMessageById } from "@/features/messaging/temp-messages-store";
-import { FrontendMessage } from "@/shared/socket-events";
+import { FrontendMessage } from "@/types/socket-events";
 import {
   useSendMessageMutation,
   useMarkAsReadMutation,

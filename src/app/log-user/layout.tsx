@@ -12,7 +12,7 @@ export default async function LogUserLayout({
   const c = await cookies();
   const cookiePairs = c.getAll().map(({ name, value }) => `${name}=${value}`);
   const cookieHeader = cookiePairs.join("; ");
-  const hasAccessToken = Boolean(c.get("accessToken")?.value);
+  const hasAccessToken = Boolean(c.get("access_token")?.value) || Boolean(c.get("accessToken")?.value);
   if (!cookieHeader) {
     redirect("/login");
   }
@@ -23,6 +23,7 @@ export default async function LogUserLayout({
     resp = await fetch(apiPath("/users/profile/me"), {
       method: "GET",
       cache: "no-store",
+      credentials: "include",
     });
   } catch {
     resp = null;
@@ -53,13 +54,13 @@ export default async function LogUserLayout({
   }
 
   const data = await resp.json().catch(() => ({}));
-  const user = data?.data;
+  const user = data?.data?.user || data?.data;
   const role = user?.role as string | undefined;
   if (!role) {
     redirect("/unauthorized?reason=log_user_no_role");
   }
 
-  const allowed = role === "super_admin" || role === "co_admin" || role === "admin";
+  const allowed = role === "super_admin" || role === "co_admin";
   if (!allowed) {
     redirect("/unauthorized?reason=log_user_rbac_denied");
   }
