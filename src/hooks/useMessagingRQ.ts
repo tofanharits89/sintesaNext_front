@@ -9,7 +9,7 @@ import {
   useSendMessageMutation,
   useMarkAsReadMutation,
 } from "./useMessageMutationsRQ";
-import { useMessagingSocketRQ } from "./useMessagingSocketRQ";
+import { useMessagingSocket } from "./useMessagingSocket";
 import { useSocket } from "./useSocket";
 import {
   useMessagingStores,
@@ -19,7 +19,7 @@ import {
   useUnreadBadgesStore,
   useNotificationStore,
 } from "@/stores";
-import { useUnifiedAuth } from "@/lib/auth-state-unified";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 
 /**
  * Comprehensive messaging hook that integrates React Query + Zustand + WebSocket

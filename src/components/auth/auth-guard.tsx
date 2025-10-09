@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 // Checks for presence of the "accessToken" httpOnly cookie and redirects to /login when missing.
 export async function AuthGuard({ children }: { children: React.ReactNode }) {
   const c = await cookies();
-  const accessToken = c.get("accessToken")?.value?.trim();
+  const accessToken = c.get("access_token")?.value?.trim();
 
   // If no access token cookie, redirect to login
   if (!accessToken) {

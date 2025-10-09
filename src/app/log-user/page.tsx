@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect, Fragment } from "react";
-import { useUnifiedAuth } from "@/lib/auth-state-unified";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useLoginHistory } from "@/hooks/use-login-history";
 import { Button } from "@/components/ui/button";
@@ -689,94 +689,110 @@ export default function LogUserPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {onlineUsers.map((userInfo) => (
-                          <TableRow
-                            key={userInfo.socketId}
-                            className="hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                          >
-                            <TableCell className="font-medium text-center">
-                              {userInfo.user.name}
-                            </TableCell>
-                            <TableCell className="font-mono text-sm text-center">
-                              {userInfo.user.username}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <Badge variant="outline" className="text-xs">
-                                {getRoleDisplayName(userInfo.user.role as any)}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground text-center">
-                              {userInfo.location || "Tidak diketahui"}
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground text-center">
-                              {userInfo.loginAt
-                                ? formatLoginDateTime(userInfo.loginAt)
-                                : "Tidak diketahui"}
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground text-center">
-                              {userInfo.loginAt
-                                ? calculateLoginDuration(userInfo.loginAt)
-                                : "Tidak diketahui"}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <Badge
-                                variant="default"
-                                className="bg-green-500 hover:bg-green-600 text-xs"
-                              >
-                                <div className="w-2 h-2 bg-white rounded-full mr-1 animate-pulse"></div>
-                                Online
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        {onlineUsers.map((userInfo) => {
+                          // Add null safety check
+                          if (!userInfo?.user) return null;
+
+                          return (
+                            <TableRow
+                              key={userInfo.socketId}
+                              className="hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                            >
+                              <TableCell className="font-medium text-center">
+                                {userInfo.user.name || "Unknown"}
+                              </TableCell>
+                              <TableCell className="font-mono text-sm text-center">
+                                {userInfo.user.username || "Unknown"}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge variant="outline" className="text-xs">
+                                  {getRoleDisplayName(
+                                    userInfo.user.role as any
+                                  )}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground text-center">
+                                {userInfo.location || "Tidak diketahui"}
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground text-center">
+                                {userInfo.loginAt
+                                  ? formatLoginDateTime(userInfo.loginAt)
+                                  : "Tidak diketahui"}
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground text-center">
+                                {userInfo.loginAt
+                                  ? calculateLoginDuration(userInfo.loginAt)
+                                  : "Tidak diketahui"}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge
+                                  variant="default"
+                                  className="bg-green-500 hover:bg-green-600 text-xs"
+                                >
+                                  <div className="w-2 h-2 bg-white rounded-full mr-1 animate-pulse"></div>
+                                  Online
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
 
                   {/* Mobile Card View */}
                   <div className="md:hidden space-y-3">
-                    {onlineUsers.map((userInfo) => (
-                      <Card key={userInfo.socketId} className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1">
-                            <p className="font-medium">{userInfo.user.name}</p>
-                            <p className="text-sm text-muted-foreground font-mono">
-                              {userInfo.user.username}
-                            </p>
-                            <div className="flex items-center space-x-2">
-                              <Badge variant="outline" className="text-xs">
-                                {getRoleDisplayName(userInfo.user.role as any)}
-                              </Badge>
-                              <Badge
-                                variant="default"
-                                className="bg-green-500 hover:bg-green-600 text-xs"
-                              >
-                                <div className="w-2 h-2 bg-white rounded-full mr-1 animate-pulse"></div>
-                                Online
-                              </Badge>
-                            </div>
+                    {onlineUsers.map((userInfo) => {
+                      // Add null safety check
+                      if (!userInfo?.user) return null;
+
+                      return (
+                        <Card key={userInfo.socketId} className="p-4">
+                          <div className="flex items-start justify-between">
                             <div className="space-y-1">
-                              <p className="text-xs text-muted-foreground">
-                                <span className="font-medium">Lokasi:</span>{" "}
-                                {userInfo.location || "Tidak diketahui"}
+                              <p className="font-medium">
+                                {userInfo.user.name || "Unknown"}
                               </p>
-                              <p className="text-xs text-muted-foreground">
-                                <span className="font-medium">Login:</span>{" "}
-                                {userInfo.loginAt
-                                  ? formatLoginDateTime(userInfo.loginAt)
-                                  : "Tidak diketahui"}
+                              <p className="text-sm text-muted-foreground font-mono">
+                                {userInfo.user.username || "Unknown"}
                               </p>
-                              <p className="text-xs text-muted-foreground">
-                                <span className="font-medium">Durasi:</span>{" "}
-                                {userInfo.loginAt
-                                  ? calculateLoginDuration(userInfo.loginAt)
-                                  : "Tidak diketahui"}
-                              </p>
+                              <div className="flex items-center space-x-2">
+                                <Badge variant="outline" className="text-xs">
+                                  {getRoleDisplayName(
+                                    userInfo.user.role as any
+                                  )}
+                                </Badge>
+                                <Badge
+                                  variant="default"
+                                  className="bg-green-500 hover:bg-green-600 text-xs"
+                                >
+                                  <div className="w-2 h-2 bg-white rounded-full mr-1 animate-pulse"></div>
+                                  Online
+                                </Badge>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-xs text-muted-foreground">
+                                  <span className="font-medium">Lokasi:</span>{" "}
+                                  {userInfo.location || "Tidak diketahui"}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  <span className="font-medium">Login:</span>{" "}
+                                  {userInfo.loginAt
+                                    ? formatLoginDateTime(userInfo.loginAt)
+                                    : "Tidak diketahui"}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  <span className="font-medium">Durasi:</span>{" "}
+                                  {userInfo.loginAt
+                                    ? calculateLoginDuration(userInfo.loginAt)
+                                    : "Tidak diketahui"}
+                                </p>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </Card>
-                    ))}
+                        </Card>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -869,22 +885,29 @@ export default function LogUserPage() {
                     </TableRow>
                   ) : (
                     menuAgg.map((parent) => (
-                      <Fragment key={parent.menu}>
-                        <TableRow key={parent.menu} className="bg-muted/40">
+                      <Fragment key={parent?.menu || Math.random()}>
+                        <TableRow
+                          key={parent?.menu || Math.random()}
+                          className="bg-muted/40"
+                        >
                           <TableCell className="font-medium">
-                            {parent.menu}
+                            {parent?.menu || "Unknown"}
                           </TableCell>
                           <TableCell className="text-right font-medium">
-                            {parent.total}
+                            {parent?.total || 0}
                           </TableCell>
                         </TableRow>
-                        {parent.items.map((it) => (
-                          <TableRow key={`${parent.menu}__${it.submenu}`}>
+                        {(parent?.items || []).map((it) => (
+                          <TableRow
+                            key={`${parent?.menu}__${
+                              it?.submenu || Math.random()
+                            }`}
+                          >
                             <TableCell className="pl-8 text-sm text-muted-foreground">
-                              {it.submenu}
+                              {it?.submenu || "Unknown"}
                             </TableCell>
                             <TableCell className="text-right text-sm text-muted-foreground">
-                              {it.count}
+                              {it?.count || 0}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -905,4 +928,4 @@ export default function LogUserPage() {
 }
 
 // Force dynamic rendering to prevent SSR issues
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";

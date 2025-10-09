@@ -4,7 +4,7 @@ import TematikPage from "../page";
 import { useQueryLoader } from "@/hooks/use-query-loader";
 import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
 import { useSavedQueries } from "@/hooks/use-saved-queries";
-import { useUnifiedAuth } from "@/lib/auth-state-unified";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 
 // Mock dependencies
 jest.mock("@/hooks/use-query-loader", () => ({
@@ -52,7 +52,7 @@ jest.mock("@/components/inquiry-data/query-management", () => ({
   ),
 }));
 
-jest.mock("@/lib/auth-state-unified", () => ({
+jest.mock("@/hooks/useUnifiedAuth", () => ({
   useUnifiedAuth: jest.fn(),
 }));
 

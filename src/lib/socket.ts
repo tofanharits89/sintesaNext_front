@@ -1,7 +1,7 @@
 "use client";
 
 import { Socket } from "socket.io-client";
-import { socketClient, SocketClient, type SocketState } from "./socket/SimpleSocketClient";
+import { socketClient, SocketClient, type SocketState } from "./socket-client";
 import { getAuthTokenFromCookie, performLogoutCleanup } from "@/lib/cookieManager";
 
 // Re-export types and utilities for backward compatibility

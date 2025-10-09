@@ -6,7 +6,7 @@ import AppShell from "@/components/layout/app-shell";
 import { ConnectionStatus } from "@/components/connection-status";
 import CheckBackend from "@/components/check-backend";
 import { QueryProvider } from "@/components/providers/query-provider";
-import { AuthProvider } from "@/providers/AuthProvider";
+
 import { ErrorBoundary, ComponentErrorBoundary } from "@/lib/error-boundary";
 import { withBasePath, apiPath } from "@/lib/base-path";
 import { cookies } from "next/headers";
@@ -16,7 +16,7 @@ import { performanceMonitor } from "@/utils/performance-monitor";
 import { preloadOnIdle } from "@/utils/chunk-preloader";
 import { RoutePreloader } from "@/components/ui/route-preloader";
 import { ClientInit } from "@/components/client-init";
-import { GlobalSocketInitializer } from "@/components/socket/GlobalSocketInitializer";
+// GlobalSocketInitializer is now integrated into useUnifiedSocket hook
 import { geistSans, geistMono } from "./fonts";
 
 export const metadata: Metadata = {
@@ -47,31 +47,32 @@ export default async function RootLayout({
       >
         <ErrorBoundary>
           <QueryProvider>
-            <AuthProvider>
-              <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-              <ComponentErrorBoundary>
-                <MessagingAuthListener />
-              </ComponentErrorBoundary>
-              <ComponentErrorBoundary>
-                <CheckBackend />
-              </ComponentErrorBoundary>
-              <ComponentErrorBoundary>
-                <GlobalSocketInitializer />
-                <SessionMonitor />
-                <AppShell {...(initialUser ? { initialUser } : {})}>
-                  {children}
-                </AppShell>
-              </ComponentErrorBoundary>
-              <ComponentErrorBoundary>
-                <ConnectionStatus />
-              </ComponentErrorBoundary>
-              <ClientInit />
-              <RoutePreloader />
-              <ConditionalToaster />
-              {/* Optionally show a top-of-page banner when server down via client routes */}
-              {/* <ServerDownBanner /> */}
-            </ThemeProvider>
-            </AuthProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+            >
+                <ComponentErrorBoundary>
+                  <MessagingAuthListener />
+                </ComponentErrorBoundary>
+                <ComponentErrorBoundary>
+                  <CheckBackend />
+                </ComponentErrorBoundary>
+                <ComponentErrorBoundary>
+                  <SessionMonitor />
+                  <AppShell {...(initialUser ? { initialUser } : {})}>
+                    {children}
+                  </AppShell>
+                </ComponentErrorBoundary>
+                <ComponentErrorBoundary>
+                  <ConnectionStatus />
+                </ComponentErrorBoundary>
+                <ClientInit />
+                <RoutePreloader />
+                <ConditionalToaster />
+                {/* Optionally show a top-of-page banner when server down via client routes */}
+                {/* <ServerDownBanner /> */}
+              </ThemeProvider>
           </QueryProvider>
         </ErrorBoundary>
       </body>

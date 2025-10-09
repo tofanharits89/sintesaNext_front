@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { PerformanceMonitoringDashboard } from "@/components/dashboard/PerformanceMonitoringDashboard";
-import { useUnifiedAuth } from "@/lib/auth-state-unified";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 import {
   Settings,
   User,

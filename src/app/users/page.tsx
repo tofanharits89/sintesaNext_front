@@ -5,8 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { apiPath } from "@/lib/base-path";
 import { User } from "@/lib/users-store";
-import { useUnifiedAuth } from "@/lib/auth-state-unified";
-import { canAccessUserManagement } from "@/lib/rbac";
+import { useUnifiedAuth, canManageUsers } from "@/hooks/useUnifiedAuth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -97,10 +96,10 @@ export default function UsersPage() {
 
   // Check if user has permission to access this page
   useEffect(() => {
-    if (currentUser && !canAccessUserManagement(currentUser)) {
+    if (!canManageUsers) {
       router.push("/");
     }
-  }, [currentUser, router]);
+  }, [canManageUsers, router]);
 
   const [query, setQuery] = useState("");
   const [role, setRole] = useState<string>("all");
@@ -354,7 +353,7 @@ const res = await fetch(apiPath(`/users/${id}`), {
   }
 
   // Show loading or redirect if no permission
-  if (!currentUser || !canAccessUserManagement(currentUser)) {
+  if (!canManageUsers) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center space-y-4">

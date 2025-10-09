@@ -21,19 +21,19 @@ import {
 import { useTheme } from "next-themes";
 import { useMemo, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useUnifiedAuth } from "@/lib/auth-state-unified";
 import {
-  canAccessUserManagement,
+  useUnifiedAuth,
+  canManageUsers,
   canAccessSettings,
-  getRoleDisplayName,
-} from "@/lib/rbac";
+} from "@/hooks/useUnifiedAuth";
+import { useUserProfile } from "@/hooks/use-user-profile";
 import {
   getNotificationsForUser,
   getUnreadNotificationCount,
 } from "@/lib/notifications-store";
 import { useMessagingRQ } from "@/hooks/useMessagingRQ";
-import { useMessagingSocketRQ } from "@/hooks/useMessagingSocketRQ";
-import { socketClient } from "@/lib/SocketClient";
+import { useMessagingSocket } from "@/hooks/useMessagingSocket";
+import { socketClient } from "@/lib/socket-client";
 import { useUnreadActions } from "@/stores/unread-badges-store";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -56,20 +56,30 @@ import { withBasePath } from "@/lib/base-path";
 import { apiPath } from "@/lib/base-path";
 import { SatkerSearch } from "./satker-search";
 import { dispatchAuthEvent } from "@/lib/cookieManager";
-import { useAuthContext } from "@/providers/AuthProvider";
 import { LoginLoading } from "@/components/ui/login-loading";
 
-import type { User } from "@/lib/auth-state-unified";
+import type { User } from "@/stores/session-store";
 
 export function Navbar({ initialUser }: { initialUser?: User }) {
   const { theme, setTheme } = useTheme();
-  const { user: currentUser } = useUnifiedAuth();
+
+  // Fetch user profile data using React Query
+  const { data: profileData, isLoading: isLoadingProfile } = useUserProfile();
+
+  // TRUE SSOT - Only use unified auth hook
+  const {
+    user: displayUser,
+    isAuthenticated,
+    isLoggingOut,
+    logout,
+    getRoleDisplayName,
+    canManageUsers,
+    canAccessSettings,
+  } = useUnifiedAuth();
+
+  // Use profile data from React Query if available, otherwise fall back to Zustand store
+  const currentUser: User | null | undefined = profileData || displayUser;
   const router = useRouter();
-  const auth = useAuthContext();
-  
-  // Fallback to unified auth if currentUser is not available
-  const { user: unifiedUser } = useUnifiedAuth();
-  const displayUser = currentUser || unifiedUser;
   interface RecentMessage {
     id: string;
     conversationId: string;
@@ -98,8 +108,8 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
   // State for controlling popovers (declare before hooks that depend on it)
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [messagesOpen, setMessagesOpen] = useState(false);
-  // Use centralized auth loading state for consistency
-  const isLoggingOut = auth.isLoggingOut;
+  // Use unified auth loading state (SSOT)
+  // const isLoggingOut = isLoggingOut; // Already destructured from useUnifiedAuth
 
   // Real-time messaging data via React Query + Zustand (enable globally so badges update even when popover is closed)
   const { conversations } = useMessagingRQ({
@@ -109,7 +119,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
   const isSocketConnected = socketClient.isConnected();
   // Derive recent messages directly from conversations so it updates on every socket/cache change
   const recentMessages: RecentMessage[] = useMemo(() => {
-    if (!Array.isArray(conversations) || !displayUser?.id) return [];
+    if (!Array.isArray(conversations) || !currentUser?.id) return [];
 
     const recentConversations = conversations.filter(
       (conv) => (conv as any).lastMessage && (conv as any).otherParticipant
@@ -169,7 +179,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
       .filter((m: any) => m !== null) as RecentMessage[];
 
     return sorted;
-  }, [conversations, displayUser?.id]);
+  }, [conversations, currentUser?.id]);
   const [recentNotifications, setRecentNotifications] = useState<
     RecentNotification[]
   >([]);
@@ -228,9 +238,9 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
 
   // Load user's messages and notifications
   useEffect(() => {
-    if (displayUser?.username) {
+    if (currentUser?.username) {
       // Load notifications from backend
-      getNotificationsForUser(displayUser.username)
+      getNotificationsForUser(currentUser.username)
         .then((userNotifications) => {
           const recentNotifs = userNotifications.slice(0, 5).map((notif) => {
             const notifDate = new Date(notif.createdAt);
@@ -252,32 +262,49 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
               type: notif.type,
               priority: notif.priority,
               time: timeStr,
-              unread: !notif.readBy.includes(displayUser.username),
+              unread: !notif.readBy.includes(currentUser.username),
             };
           });
           setRecentNotifications(recentNotifs);
         })
         .catch((e) => console.warn("Failed to fetch notifications:", e));
 
-      getUnreadNotificationCount(displayUser.username)
+      getUnreadNotificationCount(currentUser.username)
         .then((count) => setTotalUnreadNotificationsCount(count))
         .catch(() => setTotalUnreadNotificationsCount(0));
     }
-  }, [displayUser]);
+  }, [currentUser]);
 
   // The old state/effect approach is removed to ensure immediate updates without stale state
 
+  // Debug: Log currentUser data to diagnose the issue
+  useEffect(() => {
+    if (currentUser) {
+      console.log(
+        "[Navbar DEBUG] currentUser data:",
+        JSON.stringify(currentUser, null, 2)
+      );
+      console.log("[Navbar DEBUG] currentUser.name:", currentUser.name);
+      console.log(
+        "[Navbar DEBUG] currentUser.name type:",
+        typeof currentUser.name
+      );
+    } else {
+      console.log("[Navbar DEBUG] currentUser is null/undefined");
+    }
+  }, [currentUser]);
+
   // Generate initials for avatar fallback
   const initials = useMemo(() => {
-    if (!displayUser?.name) return "US";
-    const parts = displayUser.name.trim().split(/\s+/);
+    if (!currentUser?.name) return "US";
+    const parts = currentUser.name.trim().split(/\s+/);
     return (
       parts
         .slice(0, 2)
         .map((p) => p[0]?.toUpperCase() ?? "")
         .join("") || "US"
     );
-  }, [displayUser]);
+  }, [currentUser]);
 
   return (
     <>
@@ -572,17 +599,17 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                   className="relative flex items-center gap-2 h-auto py-1.5 px-2 rounded-full hover:bg-accent"
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="" alt={displayUser?.name || "profil"} />
+                    <AvatarImage src="" alt={currentUser?.name || "profil"} />
                     <AvatarFallback className="text-xs font-medium">
                       {initials}
                     </AvatarFallback>
                   </Avatar>
                   <div className="hidden md:block text-left">
                     <div className="text-sm font-medium">
-                      {displayUser?.name || "User"}
+                      {currentUser?.name || "User"}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {displayUser ? getRoleDisplayName(displayUser.role) : ""}
+                      {getRoleDisplayName}
                     </div>
                   </div>
                 </Button>
@@ -591,10 +618,10 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
-                      {displayUser?.name || "User"}
+                      {currentUser?.name || "User"}
                     </p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      {displayUser?.email || "user@example.com"}
+                      {currentUser?.email || "user@example.com"}
                     </p>
                   </div>
                 </DropdownMenuLabel>
@@ -606,7 +633,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                       Halaman Profil
                     </Link>
                   </DropdownMenuItem>
-                  {canAccessUserManagement(displayUser) && (
+                  {canManageUsers && (
                     <DropdownMenuItem asChild>
                       <Link href="/users" className="flex items-center">
                         <Users className="mr-2 h-4 w-4" />
@@ -614,7 +641,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  {canAccessSettings(displayUser) && (
+                  {canAccessSettings && (
                     <DropdownMenuItem asChild>
                       <Link href="/settings" className="flex items-center">
                         <Settings className="mr-2 h-4 w-4" />
@@ -624,7 +651,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                   )}
                   {(() => {
                     const roleStr = String(
-                      displayUser?.role || ""
+                      currentUser?.role || ""
                     ).toLowerCase();
                     const isAdminLike =
                       roleStr === "super_admin" ||
@@ -651,18 +678,22 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                   }`}
                   onClick={async (e) => {
                     e.preventDefault();
-                    console.log("[Logout] ========== LOGOUT CLICKED ==========");
+                    console.log(
+                      "[Logout] ========== LOGOUT CLICKED =========="
+                    );
                     console.log("[Logout] isLoggingOut:", isLoggingOut);
-                    
+
                     if (isLoggingOut) {
-                      console.log("[Logout] Already logging out, ignoring click");
+                      console.log(
+                        "[Logout] Already logging out, ignoring click"
+                      );
                       return;
                     }
 
                     console.log("[Logout] Step 1: Starting logout process");
                     console.log("[Logout] Current URL:", window.location.href);
                     console.log("[Logout] Current cookies:", document.cookie);
-                    
+
                     // Disconnect socket immediately and prevent reconnection
                     console.log("[Logout] Step 2: Disconnecting socket");
                     try {
@@ -670,43 +701,57 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                       socketClient.cleanup();
                       console.log("[Logout] Socket disconnected successfully");
                     } catch (error) {
-                      console.error("[Logout] Socket disconnect failed:", error);
+                      console.error(
+                        "[Logout] Socket disconnect failed:",
+                        error
+                      );
                     }
 
                     console.log("[Logout] Step 3: Calling logout API");
                     try {
-                      await auth.logoutAsync();
-                      console.log("[Logout] ✅ Logout API completed successfully");
+                      await logout();
+                      console.log(
+                        "[Logout] ✅ Logout API completed successfully"
+                      );
                     } catch (error) {
                       console.error("[Logout] ❌ Logout API error:", error);
                     }
 
-                    console.log("[Logout] Step 4: Checking cookies after logout");
+                    console.log(
+                      "[Logout] Step 4: Checking cookies after logout"
+                    );
                     console.log("[Logout] Cookies after API:", document.cookie);
-                    
+
                     console.log("[Logout] Step 5: Attempting redirect");
                     console.log("[Logout] window.location object:", {
                       href: window.location.href,
                       pathname: window.location.pathname,
-                      search: window.location.search
+                      search: window.location.search,
                     });
-                    
+
                     // Redirect to login page
                     const redirectUrl = "/login?reason=logout&_t=" + Date.now();
                     console.log("[Logout] Redirect URL:", redirectUrl);
-                    
+
                     try {
                       console.log("[Logout] Calling window.location.replace()");
                       window.location.replace(redirectUrl);
-                      console.log("[Logout] ✅ Replace called (if you see this, redirect didn't happen immediately)");
+                      console.log(
+                        "[Logout] ✅ Replace called (if you see this, redirect didn't happen immediately)"
+                      );
                     } catch (error) {
                       console.error("[Logout] ❌ Replace failed:", error);
                     }
-                    
+
                     // Fallback
                     setTimeout(() => {
-                      console.log("[Logout] ⚠️ Fallback redirect triggered (main redirect didn't work)");
-                      console.log("[Logout] Current URL:", window.location.href);
+                      console.log(
+                        "[Logout] ⚠️ Fallback redirect triggered (main redirect didn't work)"
+                      );
+                      console.log(
+                        "[Logout] Current URL:",
+                        window.location.href
+                      );
                       try {
                         window.location.href = "/login";
                         console.log("[Logout] Fallback href set");
@@ -714,8 +759,10 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                         console.error("[Logout] Fallback failed:", error);
                       }
                     }, 100);
-                    
-                    console.log("[Logout] ========== LOGOUT FUNCTION END ==========");
+
+                    console.log(
+                      "[Logout] ========== LOGOUT FUNCTION END =========="
+                    );
                   }}
                 >
                   {isLoggingOut ? (

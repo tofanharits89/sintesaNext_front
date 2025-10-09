@@ -2,7 +2,7 @@
  * Role-Based Access Control utilities for Satker search
  */
 
-import { User } from "@/lib/auth-state-unified";
+import { User } from "@/stores/session-store";
 
 interface SatkerItem {
   kdsatker: string;

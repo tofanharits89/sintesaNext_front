@@ -2,8 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { useUnifiedAuth } from '@/lib/auth-state-unified';
-import { canAccessSettings } from '@/lib/rbac-client';
+import { useUnifiedAuth, canAccessSettings } from '@/hooks/useUnifiedAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertTriangle, Settings } from 'lucide-react';
 
@@ -21,7 +20,7 @@ export default function PengaturanPage() {
     }
 
     // Check if user has settings access permission
-    if (canAccessSettings(currentUser.role)) {
+    if (canAccessSettings(currentUser)) {
       router.push('/settings');
     } else {
       router.push('/unauthorized?reason=settings_access_denied');

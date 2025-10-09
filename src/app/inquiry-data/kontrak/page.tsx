@@ -28,7 +28,7 @@ import {
 } from "@/hooks/use-query-loader";
 import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
 import { useSavedQueries } from "@/hooks/use-saved-queries";
-import { useUnifiedAuth } from "@/lib/auth-state-unified";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 import type { FilterValue, SavedQuery } from "@/types/saved-queries";
 import { Settings, Keyboard, RefreshCw, Database } from "lucide-react";
 import { QueryErrorBoundary } from "@/components/ui/query-error-boundary";

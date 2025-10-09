@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { useSocket } from "@/hooks/useSocket";
-import { useUnifiedAuth } from "@/lib/auth-state-unified";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 
 interface LoginEvent {
   user: {

@@ -5,7 +5,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import carisatkerData from "@/data/carisatker.json";
-import { useUnifiedAuth } from "@/lib/auth-state-unified";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 import { filterSatkerByUserAccess } from "@/utils/satker-rbac";
 
 interface SatkerItem {

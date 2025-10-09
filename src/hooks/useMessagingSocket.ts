@@ -1,8 +1,15 @@
+/**
+ * Simplified Messaging Socket Hook
+ *
+ * Clean integration with unified socket for messaging functionality
+ * Replaces the complex useMessagingSocketRQ hook
+ */
+
 "use client";
 
 import { useEffect, useCallback, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useSocket } from "./useSocket";
+import { useUnifiedSocket } from "./useUnifiedSocket";
 import { conversationKeys } from "./useConversationsRQ";
 import { messageKeys } from "./useMessagesRQ";
 import {
@@ -15,15 +22,15 @@ import {
   SOCKET_EVENTS,
   SocketMessageData,
 } from "@/shared/socket-events";
-import { useUnifiedAuth } from "@/lib/auth-state-unified";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 
 /**
  * Simplified WebSocket integration for messaging
  * Handles real-time updates without complex race conditions
  */
-export function useMessagingSocketRQ() {
+export function useMessagingSocket() {
   const queryClient = useQueryClient();
-  const { socket, on, off, isConnected, emit } = useSocket();
+  const { socket, on, off, isConnected, emit } = useUnifiedSocket();
   const { user: currentUser } = useUnifiedAuth();
 
   // Store actions
@@ -156,28 +163,47 @@ export function useMessagingSocketRQ() {
       queryClient.invalidateQueries({ queryKey: conversationKeys.all });
       queryClient.invalidateQueries({ queryKey: messageKeys.all() });
     },
+    // Expose socket methods for advanced usage
+    emit,
+    on,
+    off,
   };
 }
 
-// Helper functions
+// Helper functions (reused from original implementation)
 
 function normalizeMessage(incoming: any): SocketMessageData | null {
   if (!incoming) return null;
 
   const msg = incoming.message || incoming;
+  const conversationId = incoming.conversationId || msg.conversation_id || msg.conversationId;
+
+  if (!conversationId) return null;
+
   return {
     id: msg.id,
+    conversation_id: conversationId,
+    sender_id: msg.sender?.id || msg.sender_id,
+    recipient_id: msg.recipient_id,
     content: msg.content,
+    type: msg.type || "text",
+    sender_type: msg.senderType || msg.sender_type || "user",
+    is_read: msg.is_read || false,
+    created_at: msg.timestamp || msg.created_at || new Date().toISOString(),
     timestamp: msg.timestamp || msg.created_at || new Date().toISOString(),
     sender: msg.sender,
+    // Additional compatibility properties
+    conversationId,
     senderType: msg.senderType || msg.sender_type || "user",
-    conversationId: incoming.conversationId || msg.conversation_id,
   };
 }
 
 function updateMessagesCache(queryClient: any, message: SocketMessageData) {
+  const conversationId = message.conversationId || message.conversation_id;
+  if (!conversationId) return;
+
   queryClient.setQueryData(
-    messageKeys.messages(message.conversationId),
+    messageKeys.messages(conversationId),
     (prev: any) => {
       if (!prev?.pages) {
         return {
@@ -185,7 +211,7 @@ function updateMessagesCache(queryClient: any, message: SocketMessageData) {
             data: {
               messages: [{
                 id: message.id,
-                conversation_id: message.conversationId,
+                conversation_id: conversationId,
                 content: message.content,
                 timestamp: message.timestamp,
                 created_at: message.timestamp,
@@ -210,7 +236,7 @@ function updateMessagesCache(queryClient: any, message: SocketMessageData) {
 
       messages.push({
         id: message.id,
-        conversation_id: message.conversationId,
+        conversation_id: conversationId,
         content: message.content,
         timestamp: message.timestamp,
         created_at: message.timestamp,
@@ -227,6 +253,9 @@ function updateMessagesCache(queryClient: any, message: SocketMessageData) {
 }
 
 function updateConversationsCache(queryClient: any, message: SocketMessageData, currentUser: any) {
+  const conversationId = message.conversationId || message.conversation_id;
+  if (!conversationId) return;
+
   queryClient.setQueryData(conversationKeys.lists(), (prev: any) => {
     const empty = { pages: [{ conversations: [], nextCursor: null }], pageParams: [null] };
     const curr = prev?.pages ? prev : empty;
@@ -239,7 +268,7 @@ function updateConversationsCache(queryClient: any, message: SocketMessageData, 
     // Find and update conversation
     let found = false;
     pages.forEach((pg: any) => {
-      const conv = pg.conversations.find((c: any) => c.id === message.conversationId);
+      const conv = pg.conversations.find((c: any) => c.id === conversationId);
       if (conv) {
         found = true;
         conv.lastMessage = {
@@ -262,7 +291,7 @@ function updateConversationsCache(queryClient: any, message: SocketMessageData, 
     // Move conversation to top if found
     if (found) {
       for (const pg of pages) {
-        const idx = pg.conversations.findIndex((c: any) => c.id === message.conversationId);
+        const idx = pg.conversations.findIndex((c: any) => c.id === conversationId);
         if (idx !== -1) {
           const [conv] = pg.conversations.splice(idx, 1);
           pages[0].conversations.unshift(conv);
@@ -299,15 +328,18 @@ function updateZustandStores(
   unreadActions: any,
   notificationActions: any
 ) {
+  const conversationId = message.conversationId || message.conversation_id;
+  if (!conversationId) return;
+
   const fromSelf = currentUser?.id && message.sender?.id === currentUser.id;
 
   if (!fromSelf) {
-    unreadActions.incrementUnreadCount(message.conversationId, message.id, message.timestamp);
+    unreadActions.incrementUnreadCount(conversationId, message.id, message.timestamp);
     notificationActions.addNotification({
       type: "message",
       title: "New Message",
       message: `${message.sender?.name || "Someone"}: ${message.content}`,
-      conversationId: message.conversationId,
+      conversationId,
       userId: message.sender?.id,
     });
   }
@@ -315,7 +347,9 @@ function updateZustandStores(
   // Notify UI components
   try {
     window.dispatchEvent(new CustomEvent("messages:appended", {
-      detail: { conversationId: message.conversationId }
+      detail: { conversationId }
     }));
   } catch {}
 }
+
+export default useMessagingSocket;

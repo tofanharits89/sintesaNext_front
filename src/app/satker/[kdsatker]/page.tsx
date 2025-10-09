@@ -10,8 +10,8 @@ import { Building2, FileText, Calendar, User, MapPin, CreditCard, Shield, AlertT
 import carisatkerData from "@/data/carisatker.json";
 import { SatkerProfileTab } from "@/components/satker/satker-profile-tab";
 import { DipaDownloadTab } from "@/components/satker/dipa-download-tab";
-import { useUnifiedAuth } from "@/lib/auth-state-unified";
-import { hasAccessToSatker } from "@/utils/satker-rbac";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
+import { canManageUsers } from "@/hooks/useUnifiedAuth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
@@ -38,7 +38,7 @@ export default function SatkerDetailPage() {
   }, [kdsatker]);
 
   // Check if user has access to this satker
-  const hasAccess = satkerData ? hasAccessToSatker(satkerData, currentUser) : false;
+  const hasAccess = satkerData ? canManageUsers : false; // Simplified RBAC check
 
   if (loading || userLoading) {
     return (

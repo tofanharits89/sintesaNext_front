@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "./useAuth";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 
 interface UseAuthRedirectOptions {
   enabled?: boolean;
@@ -22,7 +22,7 @@ export function useAuthRedirect(options: UseAuthRedirectOptions = {}) {
   } = options;
 
   const router = useRouter();
-  const { isAuthenticated, isLoading, error, refetch } = useAuth();
+  const { isAuthenticated, isLoading, refetch } = useUnifiedAuth();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastAuthState = useRef<boolean | null>(null);
 
@@ -71,22 +71,32 @@ export function useAuthRedirect(options: UseAuthRedirectOptions = {}) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [enabled, isAuthenticated, isLoading, redirectTo, checkInterval, router, refetch]);
+  }, [
+    enabled,
+    isAuthenticated,
+    isLoading,
+    redirectTo,
+    checkInterval,
+    router,
+    refetch,
+  ]);
 
-  // Handle auth errors by redirecting
+  // Handle session expiration by redirecting when not authenticated
   useEffect(() => {
-    if (error && !isLoading) {
-      console.log("[AuthRedirect] Auth error detected, redirecting to login");
+    if (!isAuthenticated && !isLoading) {
+      console.log("[AuthRedirect] Session expired or not authenticated, redirecting to login");
       router.push(redirectTo);
     }
-  }, [error, isLoading, router, redirectTo]);
+  }, [isAuthenticated, isLoading, router, redirectTo]);
 
   // Monitor auth state changes and redirect if user becomes unauthenticated
   useEffect(() => {
     if (!enabled || isLoading) return;
 
     if (lastAuthState.current === true && isAuthenticated === false) {
-      console.log("[AuthRedirect] Auth state changed from authenticated to unauthenticated");
+      console.log(
+        "[AuthRedirect] Auth state changed from authenticated to unauthenticated",
+      );
       router.push(redirectTo);
     }
 

@@ -39,7 +39,7 @@ const PUBLIC_ROUTES = [
  * Extract access token from HttpOnly cookie
  */
 function extractAccessToken(request: NextRequest): string | null {
-  return request.cookies.get("accessToken")?.value || null;
+  return request.cookies.get("access_token")?.value || null;
 }
 
 /**

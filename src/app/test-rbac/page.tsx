@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RBACDemo } from "@/components/demo/rbac-demo";
-import { useUnifiedAuth } from "@/lib/auth-state-unified";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 import { filterSatkerByUserAccess } from "@/utils/satker-rbac";
 import carisatkerData from "@/data/carisatker.json";
 import { Building2, Users, Shield } from "lucide-react";

@@ -11,7 +11,7 @@ import {
   Conversation,
   SocketMessageData,
 } from "@/shared/socket-events";
-import { useUnifiedAuth } from "@/lib/auth-state-unified";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 
 // Query keys for React Query
 export const conversationKeys = {

@@ -15,7 +15,7 @@ export {
 } from '../useMessageMutationsRQ';
 
 // WebSocket integration
-export { useMessagingSocketRQ } from '../useMessagingSocketRQ';
+export { useMessagingSocket } from '../useMessagingSocket';
 
 // Re-export Zustand stores for convenience
 export {

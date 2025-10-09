@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { backendPath } from "@/lib/backend";
+import { forwardSetCookies } from "@/lib/cookie-helpers";
 
 // Deprecated: cookie-only flow now forwards Cookie header to backend. Keep stub to avoid import errors.
 function getAuthTokenFromCookies(_request: NextRequest): string | null {
@@ -10,28 +11,93 @@ function getAuthTokenFromCookies(_request: NextRequest): string | null {
 export async function GET(request: NextRequest) {
   const cookie = request.headers.get("cookie") || "";
 
-  if (!cookie) {
+  console.log("[API /users/profile/me] ========== REQUEST START ==========");
+  console.log("[API /users/profile/me] Incoming cookies:", cookie);
+  console.log(
+    "[API /users/profile/me] Has accessToken:",
+    cookie.includes("accessToken=") || cookie.includes("access_token="),
+  );
+  console.log(
+    "[API /users/profile/me] Has refreshToken:",
+    cookie.includes("refreshToken=") || cookie.includes("refresh_token="),
+  );
+
+  // CRITICAL: If no auth cookies, return unauthenticated immediately
+  // This prevents returning cached user data after logout
+  if (!cookie.includes("accessToken=") && !cookie.includes("access_token=") &&
+      !cookie.includes("refreshToken=") && !cookie.includes("refresh_token=")) {
+    console.log(
+      "[API /users/profile/me] ❌ No auth cookies found - returning unauthenticated",
+    );
     return NextResponse.json(
-      { success: false, message: "No session" },
-      { status: 401 }
+      { success: false, error: "No authentication cookies" },
+      {
+        status: 401,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+          Pragma: "no-cache",
+        },
+      },
     );
   }
 
   // Call backend /users/profile/me endpoint
   const resp = await fetch(backendPath("/users/profile/me"), {
     method: "GET",
-    headers: { ...(cookie ? { cookie } : {}) },
+    headers: {
+      ...(cookie ? { cookie } : {}),
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+    },
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  const data = await resp.json().catch(() => ({}));
+
+  console.log("[API /users/profile/me] Backend response status:", resp.status);
+  console.log("[API /users/profile/me] Backend response data:", {
+    success: data?.success,
+    hasUser: !!data?.data?.user,
+    username: data?.data?.user?.username,
   });
 
   if (!resp.ok) {
-    return NextResponse.json(
-      { success: false, message: "Failed to fetch profile" },
-      { status: resp.status }
+    console.log(
+      "[API /users/profile/me] ❌ Backend returned error:",
+      resp.status,
     );
+    const errRes = NextResponse.json(
+      { success: false, error: data?.message || "Failed to fetch profile" },
+      {
+        status: resp.status,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+          Pragma: "no-cache",
+        },
+      },
+    );
+    // Forward any Set-Cookie headers even on error (for token refresh)
+    forwardSetCookies(resp, errRes);
+    return errRes;
   }
 
-  const data = await resp.json().catch(() => ({}));
-  return NextResponse.json(data, { status: 200 });
+  console.log(
+    "[API /users/profile/me] ✅ Backend returned user:",
+    data?.data?.user?.username,
+  );
+  console.log("[API /users/profile/me] ========== REQUEST END ==========");
+
+  const res = NextResponse.json(data, {
+    status: 200,
+    headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+      Pragma: "no-cache",
+    },
+  });
+  // Forward any Set-Cookie headers from backend
+  forwardSetCookies(resp, res);
+  return res;
 }
 
 export async function PUT(request: NextRequest) {
@@ -40,7 +106,7 @@ export async function PUT(request: NextRequest) {
   if (!cookie) {
     return NextResponse.json(
       { success: false, message: "No session" },
-      { status: 401 }
+      { status: 401 },
     );
   }
 

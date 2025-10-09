@@ -7,7 +7,7 @@ import {
   getNotificationsForUser,
   getUnreadNotificationCount,
 } from "@/lib/notifications-store";
-import { useUnifiedAuth } from "@/lib/auth-state-unified";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 
 export function useNotifications() {
   const { socket, isConnected } = useSocket();

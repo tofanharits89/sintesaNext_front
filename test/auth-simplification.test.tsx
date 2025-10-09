@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useUnifiedAuth } from '@/lib/auth-state-unified';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 
 // Mock API client
 vi.mock('@/lib/httpClient', () => ({

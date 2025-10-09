@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { socketClient, SocketState } from "@/lib/SocketClient";
+import { socketClient, SocketState } from "@/lib/socket-client";
 import type { Socket } from "socket.io-client";
 
 export interface UseSocketReturn {

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logout Test - Cookie Verification</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button.danger {
+            background: #e74c3c;
+        }
+        button.danger:hover {
+            background: #c0392b;
+        }
+        button.success {
+            background: #27ae60;
+        }
+        button.success:hover {
+            background: #229954;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .result.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .result.warning {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+        }
+        .step {
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+        }
+        .step h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.pass {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔬 Logout Cookie Verification Test</h1>
+        <p class="subtitle">This tool verifies that cookies are properly cleared after logout</p>
+
+        <div class="test-section">
+            <h2>📋 Test Instructions</h2>
+            <ol>
+                <li>Make sure you're logged in to the application</li>
+                <li>Click "Step 1: Check Current State" to see current cookies</li>
+                <li>Click "Step 2: Perform Logout" to logout</li>
+                <li>Click "Step 3: Verify Cookies Cleared" to check if cookies are gone</li>
+                <li>Click "Step 4: Test /auth/me" to verify API returns unauthenticated</li>
+            </ol>
+        </div>
+
+        <div class="step">
+            <h3>Step 1: Check Current State <span id="step1-status" class="status pending">PENDING</span></h3>
+            <button onclick="checkCurrentState()">▶️ Check Current State</button>
+            <div id="step1-result"></div>
+        </div>
+
+        <div class="step">
+            <h3>Step 2: Perform Logout <span id="step2-status" class="status pending">PENDING</span></h3>
+            <button class="danger" onclick="performLogout()">🚪 Logout</button>
+            <div id="step2-result"></div>
+        </div>
+
+        <div class="step">
+            <h3>Step 3: Verify Cookies Cleared <span id="step3-status" class="status pending">PENDING</span></h3>
+            <button onclick="verifyCookiesCleared()">🔍 Verify Cookies Cleared</button>
+            <div id="step3-result"></div>
+        </div>
+
+        <div class="step">
+            <h3>Step 4: Test /auth/me Response <span id="step4-status" class="status pending">PENDING</span></h3>
+            <button onclick="testAuthMe()">🧪 Test /auth/me</button>
+            <div id="step4-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔄 Quick Actions</h2>
+            <button class="success" onclick="runAllTests()">▶️ Run All Tests</button>
+            <button onclick="clearResults()">🗑️ Clear Results</button>
+            <button onclick="window.location.reload()">🔄 Refresh Page</button>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Summary</h2>
+            <div id="summary"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="result ${type}">${message}</div>`;
+        }
+
+        function updateStatus(stepId, status) {
+            const statusElement = document.getElementById(`${stepId}-status`);
+            statusElement.className = `status ${status}`;
+            statusElement.textContent = status.toUpperCase();
+        }
+
+        function parseCookies() {
+            const cookies = {};
+            document.cookie.split(';').forEach(cookie => {
+                const [name, ...rest] = cookie.split('=');
+                if (name && name.trim()) {
+                    cookies[name.trim()] = rest.join('=').trim();
+                }
+            });
+            return cookies;
+        }
+
+        async function checkCurrentState() {
+            showResult('step1-result', '⏳ Checking current state...', 'info');
+
+            const cookies = parseCookies();
+            const cookieList = Object.keys(cookies).map(key => `  ${key} = ${cookies[key].substring(0, 50)}...`).join('\n');
+
+            const hasAccessToken = !!cookies.accessToken;
+            const hasRefreshToken = !!cookies.refreshToken;
+
+            let message = `📊 Current Cookies:\n\n${cookieList || '  (no cookies found)'}\n\n`;
+            message += `Auth Status:\n`;
+            message += `  ✓ accessToken: ${hasAccessToken ? '✅ PRESENT' : '❌ MISSING'}\n`;
+            message += `  ✓ refreshToken: ${hasRefreshToken ? '✅ PRESENT' : '❌ MISSING'}\n\n`;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/me`, {
+                    credentials: 'include',
+                    cache: 'no-store'
+                });
+                const data = await response.json();
+
+                if (data.success && data.data?.user) {
+                    message += `User Info:\n`;
+                    message += `  Username: ${data.data.user.username}\n`;
+                    message += `  Name: ${data.data.user.name}\n`;
+                    message += `  Role: ${data.data.user.role}\n`;
+                    showResult('step1-result', message, 'success');
+                    updateStatus('step1', 'pass');
+                } else {
+                    message += `⚠️ Not authenticated`;
+                    showResult('step1-result', message, 'warning');
+                    updateStatus('step1', 'fail');
+                }
+            } catch (error) {
+                message += `❌ Error checking auth: ${error.message}`;
+                showResult('step1-result', message, 'error');
+                updateStatus('step1', 'fail');
+            }
+        }
+
+        async function performLogout() {
+            showResult('step2-result', '⏳ Performing logout...', 'info');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/logout`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    cache: 'no-store',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({})
+                });
+
+                const data = await response.json();
+
+                let message = `Logout Response:\n`;
+                message += `  Status: ${response.status}\n`;
+                message += `  Success: ${data.success ? '✅' : '❌'}\n\n`;
+
+                // Check Set-Cookie headers
+                const setCookieHeaders = response.headers.get('set-cookie');
+                message += `Set-Cookie Headers:\n`;
+                if (setCookieHeaders) {
+                    message += `  ${setCookieHeaders}\n\n`;
+                } else {
+                    message += `  ⚠️ No Set-Cookie headers found\n\n`;
+                }
+
+                // Check cookies immediately after logout
+                const cookies = parseCookies();
+                message += `Cookies after logout:\n`;
+                message += `  accessToken: ${cookies.accessToken ? '⚠️ STILL PRESENT' : '✅ CLEARED'}\n`;
+                message += `  refreshToken: ${cookies.refreshToken ? '⚠️ STILL PRESENT' : '✅ CLEARED'}\n`;
+
+                if (response.ok && !cookies.accessToken && !cookies.refreshToken) {
+                    showResult('step2-result', message, 'success');
+                    updateStatus('step2', 'pass');
+                } else if (response.ok) {
+                    message += `\n⚠️ WARNING: Logout API succeeded but cookies still present!`;
+                    showResult('step2-result', message, 'warning');
+                    updateStatus('step2', 'fail');
+                } else {
+                    showResult('step2-result', message, 'error');
+                    updateStatus('step2', 'fail');
+                }
+            } catch (error) {
+                showResult('step2-result', `❌ Error during logout: ${error.message}`, 'error');
+                updateStatus('step2', 'fail');
+            }
+        }
+
+        async function verifyCookiesCleared() {
+            showResult('step3-result', '⏳ Verifying cookies...', 'info');
+
+            // Wait a moment for cookies to clear
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            const cookies = parseCookies();
+            const hasAccessToken = !!cookies.accessToken;
+            const hasRefreshToken = !!cookies.refreshToken;
+
+            let message = `Cookie Verification:\n\n`;
+            message += `accessToken: ${hasAccessToken ? '❌ STILL PRESENT' : '✅ CLEARED'}\n`;
+            message += `refreshToken: ${hasRefreshToken ? '❌ STILL PRESENT' : '✅ CLEARED'}\n\n`;
+
+            if (hasAccessToken || hasRefreshToken) {
+                message += `⚠️ PROBLEM DETECTED:\n`;
+                message += `Cookies were not properly cleared!\n\n`;
+                message += `This means when User B logs in, the old cookies\n`;
+                message += `will still be present and might return User A's data.\n\n`;
+                message += `Remaining cookies:\n`;
+                Object.keys(cookies).forEach(key => {
+                    message += `  ${key} = ${cookies[key].substring(0, 50)}...\n`;
+                });
+                showResult('step3-result', message, 'error');
+                updateStatus('step3', 'fail');
+            } else {
+                message += `✅ SUCCESS: All auth cookies cleared properly!`;
+                showResult('step3-result', message, 'success');
+                updateStatus('step3', 'pass');
+            }
+        }
+
+        async function testAuthMe() {
+            showResult('step4-result', '⏳ Testing /auth/me...', 'info');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/me`, {
+                    credentials: 'include',
+                    cache: 'no-store',
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
+
+                const data = await response.json();
+
+                let message = `/auth/me Response:\n\n`;
+                message += `Status: ${response.status}\n`;
+                message += `Success: ${data.success ? 'true' : 'false'}\n\n`;
+
+                if (data.success && data.data?.user) {
+                    message += `❌ PROBLEM: /auth/me still returns user data!\n\n`;
+                    message += `User returned:\n`;
+                    message += `  Username: ${data.data.user.username}\n`;
+                    message += `  Name: ${data.data.user.name}\n`;
+                    message += `  Role: ${data.data.user.role}\n\n`;
+                    message += `This is the ROOT CAUSE of the bug!\n`;
+                    message += `After logout, /auth/me should return 401 or no user data.\n`;
+                    message += `But it's still returning the old user's data.\n`;
+                    showResult('step4-result', message, 'error');
+                    updateStatus('step4', 'fail');
+                } else {
+                    message += `✅ SUCCESS: /auth/me correctly returns unauthenticated!\n\n`;
+                    message += `Error message: ${data.error || 'N/A'}\n`;
+                    showResult('step4-result', message, 'success');
+                    updateStatus('step4', 'pass');
+                }
+            } catch (error) {
+                let message = `Error testing /auth/me: ${error.message}\n\n`;
+                message += `This might mean the API is correctly rejecting the request.`;
+                showResult('step4-result', message, 'warning');
+                updateStatus('step4', 'pass');
+            }
+        }
+
+        async function runAllTests() {
+            await checkCurrentState();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await performLogout();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await verifyCookiesCleared();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testAuthMe();
+            updateSummary();
+        }
+
+        function clearResults() {
+            ['step1', 'step2', 'step3', 'step4'].forEach(step => {
+                document.getElementById(`${step}-result`).innerHTML = '';
+                updateStatus(step, 'pending');
+            });
+            document.getElementById('summary').innerHTML = '';
+        }
+
+        function updateSummary() {
+            const statuses = ['step1', 'step2', 'step3', 'step4'].map(step => {
+                const element = document.getElementById(`${step}-status`);
+                return element.textContent.toLowerCase();
+            });
+
+            const passed = statuses.filter(s => s === 'pass').length;
+            const failed = statuses.filter(s => s === 'fail').length;
+            const pending = statuses.filter(s => s === 'pending').length;
+
+            let message = `<h3>Test Results</h3>`;
+            message += `<p><strong>Passed:</strong> ${passed}/4 ✅</p>`;
+            message += `<p><strong>Failed:</strong> ${failed}/4 ❌</p>`;
+            message += `<p><strong>Pending:</strong> ${pending}/4 ⏳</p>`;
+
+            if (failed === 0 && pending === 0) {
+                message += `<div class="result success">🎉 All tests passed! Logout is working correctly.</div>`;
+            } else if (failed > 0) {
+                message += `<div class="result error">⚠️ Some tests failed. Check the results above for details.</div>`;
+            }
+
+            document.getElementById('summary').innerHTML = message;
+        }
+    </script>
+</body>
+</html>

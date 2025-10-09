@@ -3,7 +3,6 @@ import type { NextRequest } from "next/server";
 import { backendPath } from "@/lib/backend";
 import { forwardSetCookies, getSetCookieValues } from "@/lib/cookie-helpers";
 
-
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const { username, password, captcha, expectedCaptcha } = body as {
@@ -13,11 +12,48 @@ export async function POST(request: NextRequest) {
     expectedCaptcha?: string;
   };
 
+  console.log("[Login Route] ========== LOGIN REQUEST START ==========");
+  console.log("[Login Route] Username attempting to login:", username);
+  console.log("[Login Route] Incoming cookies:", request.headers.get("cookie"));
+
   // Call backend login API and forward Set-Cookie headers
   let cookie = request.headers.get("cookie") || "";
   let xsrf =
     request.cookies.get("XSRF-TOKEN")?.value ||
     request.cookies.get("_csrf")?.value;
+
+  // CRITICAL: Check if old auth cookies are present (both old and new names)
+  const hasOldAccessToken = cookie.includes("accessToken=") || cookie.includes("access_token=");
+  const hasOldRefreshToken = cookie.includes("refreshToken=") || cookie.includes("refresh_token=");
+
+  if (hasOldAccessToken || hasOldRefreshToken) {
+    console.warn("[Login Route] ⚠️ OLD AUTH COOKIES DETECTED!");
+    console.warn("[Login Route] Old cookies:", {
+      hasAccessToken: hasOldAccessToken,
+      hasRefreshToken: hasOldRefreshToken,
+      cookies: cookie,
+    });
+    console.warn(
+      "[Login Route] These old cookies will be sent to backend and might cause issues!",
+    );
+
+    // Strip old auth cookies before sending to backend (both old and new names)
+    const cookieParts = cookie.split(";").map((c) => c.trim());
+    const filteredCookies = cookieParts.filter(
+      (c) =>
+        !c.startsWith("accessToken=") &&
+        !c.startsWith("access_token=") &&
+        !c.startsWith("refreshToken=") &&
+        !c.startsWith("refresh_token=") &&
+        !c.startsWith("authToken=") &&
+        !c.startsWith("auth_token="),
+    );
+    cookie = filteredCookies.join("; ");
+    console.log(
+      "[Login Route] Stripped old auth cookies, new cookie string:",
+      cookie,
+    );
+  }
 
   // If no XSRF token present, prime it by calling backend /csrf-token and reuse its cookies for login
   if (!xsrf) {
@@ -38,7 +74,7 @@ export async function POST(request: NextRequest) {
       // Merge cookies for the subsequent login fetch
       const newCookies = allSetCookies
         .filter(Boolean)
-        .map((c) => (c.split(";")[0] ?? ""))
+        .map((c) => c.split(";")[0] ?? "")
         .filter(Boolean)
         .join("; ");
       cookie = [cookie, newCookies].filter(Boolean).join("; ");
@@ -71,14 +107,16 @@ export async function POST(request: NextRequest) {
         cache: "no-store",
       });
       const allSetCookies2 = getSetCookieValues(csrfResp2);
-      const xsrfCookie2 = allSetCookies2.find((c) => c.startsWith("XSRF-TOKEN="));
+      const xsrfCookie2 = allSetCookies2.find((c) =>
+        c.startsWith("XSRF-TOKEN="),
+      );
       if (xsrfCookie2) {
         const nameValue = xsrfCookie2.split(";")[0] ?? "";
         const parts = nameValue.split("=");
         xsrf = parts.length > 1 ? parts[1] : xsrf;
         const merged = allSetCookies2
           .filter(Boolean)
-          .map((c) => (c.split(";")[0] ?? ""))
+          .map((c) => c.split(";")[0] ?? "")
           .filter(Boolean)
           .join("; ");
         cookie = [cookie, merged].filter(Boolean).join("; ");
@@ -91,10 +129,19 @@ export async function POST(request: NextRequest) {
   }
 
   const data = await resp.json().catch(() => ({}));
+
+  console.log("[Login Route] Backend response status:", resp.status);
+  console.log("[Login Route] Backend response data:", {
+    success: data?.success,
+    username: data?.data?.user?.username,
+    userId: data?.data?.user?.id,
+  });
+
   if (!resp.ok || !data?.success) {
+    console.error("[Login Route] Login failed:", data?.message);
     const errRes = NextResponse.json(
       { ok: false, error: data?.message || "Login failed" },
-      { status: resp.status || 401 }
+      { status: resp.status || 401 },
     );
     // Forward Set-Cookie headers from backend even on failure
     forwardSetCookies(resp, errRes);
@@ -102,6 +149,14 @@ export async function POST(request: NextRequest) {
   }
 
   const user = data?.data?.user || null;
+
+  console.log("[Login Route] ========== LOGIN SUCCESS ==========");
+  console.log("[Login Route] Backend returned user:", {
+    username: user?.username,
+    id: user?.id,
+    role: user?.role,
+  });
+
   const responseBody = {
     ok: true,
     success: true,
@@ -110,39 +165,48 @@ export async function POST(request: NextRequest) {
   };
 
   const res = NextResponse.json(responseBody, { status: 200 });
-  
+
   // Debug: Log Set-Cookie headers from backend
-  const setCookies = resp.headers.get('set-cookie');
-  console.log('[Login Route] Backend Set-Cookie headers:', setCookies);
-  console.log('[Login Route] All backend headers:', Array.from(resp.headers.entries()));
-  
+  const setCookies = resp.headers.get("set-cookie");
+  console.log("[Login Route] Backend Set-Cookie headers:", setCookies);
+  console.log("[Login Route] Forwarding cookies to client...");
+
   // Forward all Set-Cookie headers to client via helper
   forwardSetCookies(resp, res);
-  
+
   // Debug: Log forwarded headers
-  console.log('[Login Route] Forwarded Set-Cookie to client:', res.headers.get('set-cookie'));
+  const forwardedCookies = res.headers.getSetCookie?.() || [
+    res.headers.get("set-cookie"),
+  ];
+  console.log(
+    "[Login Route] Forwarded Set-Cookie to client:",
+    forwardedCookies,
+  );
+  console.log("[Login Route] ========== LOGIN REQUEST END ==========");
 
   // Clear middleware cache after successful login
-  res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
-  
+  res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+
   // Clear middleware cache (fire-and-forget)
   // Note: Backend LoginManager already handles session invalidation with proper auth
   if (user?.id) {
     try {
       // SECURITY FIX: Clear middleware cache with proper authentication
-      const bodyData = JSON.stringify({ type: 'login', userId: user.id });
-      const { prepareCacheInvalidationHeaders } = await import("@/utils/cache-signature");
+      const bodyData = JSON.stringify({ type: "login", userId: user.id });
+      const { prepareCacheInvalidationHeaders } = await import(
+        "@/utils/cache-signature"
+      );
       const headers = await prepareCacheInvalidationHeaders(bodyData);
 
-      void fetch('/api/auth/invalidate-cache', {
-        method: 'POST',
+      void fetch("/api/auth/invalidate-cache", {
+        method: "POST",
         headers,
-        body: bodyData
+        body: bodyData,
       }).catch(() => {});
     } catch {
       // Ignore errors - cache invalidation is best effort
     }
   }
-  
+
   return res;
 }

@@ -7,7 +7,7 @@ const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhos
 
 export async function GET(request: NextRequest) {
   const cookie = request.headers.get("cookie") || "";
-  const accessToken = request.cookies.get("accessToken")?.value || null;
+  const accessToken = request.cookies.get("access_token")?.value || null;
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search");
   const limit = searchParams.get("limit") || "20";

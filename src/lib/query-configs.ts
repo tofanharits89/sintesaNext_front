@@ -163,10 +163,10 @@ export const queryKeyFactories = {
     charts: () => [...queryKeyFactories.dashboard.all(), 'charts'] as const,
   },
 
-  // User data keys (auth-related)
+  // User data keys (auth-related) - FIXED CONSISTENCY
   user: {
     all: () => ['auth'] as const, // Keep 'auth' for backward compatibility
-    profile: () => [...queryKeyFactories.user.all(), 'user'] as const,
+    profile: () => ['auth', 'user'] as const, // SAME as login invalidation key
     verify: () => [...queryKeyFactories.user.all(), 'verify'] as const,
     preferences: () => [...queryKeyFactories.user.all(), 'preferences'] as const,
   },
@@ -188,9 +188,9 @@ export const queryKeyFactories = {
 // Cache invalidation helpers
 export const cacheInvalidation = {
   invalidateUser: (queryClient: any, userId?: string) => {
-    queryClient.invalidateQueries({ queryKey: queryKeyFactories.user.profile() })
+    queryClient.invalidateQueries({ queryKey: ['auth', 'user'] }) // Use SSOT key
     if (userId) {
-      queryClient.invalidateQueries({ queryKey: [...queryKeyFactories.user.profile(), userId] })
+      queryClient.invalidateQueries({ queryKey: ['auth', 'user', userId] })
     }
   },
 

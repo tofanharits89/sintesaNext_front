@@ -51,7 +51,7 @@ export async function clearAllMessagingState() {
 
     // 5. CRITICAL FIX: Force disconnect any remaining socket connections
     try {
-      const { socketClient } = await import("@/lib/SocketClient");
+      const { socketClient } = await import("@/lib/socket-client");
       if (socketClient.isConnected()) {
         socketClient.disconnect();
         logger.info("Socket disconnected during messaging cleanup");

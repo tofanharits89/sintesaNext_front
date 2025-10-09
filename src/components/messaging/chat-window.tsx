@@ -33,7 +33,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useUnifiedAuth } from "@/lib/auth-state-unified";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 import { MessageStatus } from "./MessageStatus";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useMessagingRQ } from "@/hooks/messaging-rq";

@@ -10,7 +10,7 @@ import { FrontendMessage } from "@/shared/socket-events";
 import { useMessagingActions, useMessagingUIStore } from "@/stores";
 import { useNotificationStore } from "@/stores/notification-store";
 import { getTempMessages } from "@/features/messaging/temp-messages-store";
-import { useUnifiedAuth } from "@/lib/auth-state-unified";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 
 // Types for mutation arguments
 interface SendMessageArgs {

@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquarePlus, Users, Wifi, WifiOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { socketClient } from "@/lib/SocketClient";
+import { socketClient } from "@/lib/socket-client";
 
 export default function MessagesPage() {
   const [showNewMessageDialog, setShowNewMessageDialog] = useState(false);

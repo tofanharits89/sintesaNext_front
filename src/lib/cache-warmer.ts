@@ -239,7 +239,7 @@ export class CacheWarmer {
       {
         endpoint: "/auth/profile",
         priority: "critical",
-        queryKey: queryKeyFactories.user.profile(),
+        queryKey: ['auth', 'user'], // Use consistent key matching invalidation
         queryFn: () =>
           fetch(apiPath("/users/profile/me")).then((res) => res.json()),
         staleTime: 5 * 60 * 1000, // 5 minutes
