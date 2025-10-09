@@ -9,15 +9,14 @@ import {
   useSendMessageMutation,
   useMarkAsReadMutation,
 } from "./useMessageMutationsRQ";
-import { useMessagingSocket } from "./useMessagingSocket";
 import { useSocket } from "./useSocket";
 import {
-  useMessagingStores,
-  useConversationStores,
-  useMessagingUIStore,
-  useTypingIndicatorsStore,
-  useUnreadBadgesStore,
-  useNotificationStore,
+  useMessagingStore,
+  useActiveConversationId,
+  useMessageInput,
+  useTypingUsers,
+  useMessagingConnection,
+  useTotalUnreadCount,
 } from "@/stores";
 import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 
@@ -34,39 +33,32 @@ import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 export function useMessagingRQ(options?: { enabled?: boolean }) {
   const { user: currentUser } = useUnifiedAuth();
 
-  // Global messaging state from Zustand
-  const { activeConversationId, messageInput, totalUnreadCount } =
-    useMessagingStores();
+  // Global messaging state from simplified Zustand store
+  const activeConversationId = useActiveConversationId();
+  const messageInput = useMessageInput();
+  const { isConnected, setActiveConversation, setConnectionStatus } = useMessagingConnection();
 
-  // Conversation-specific state from Zustand
-  const conversationStores = useConversationStores(activeConversationId || "");
+  // Get total unread count from store
+  const totalUnreadCount = useTotalUnreadCount();
 
-  // Actions (stable function refs from Zustand stores)
-  const setActiveConversation = useMessagingUIStore(
-    (s) => s.setActiveConversation
-  );
-  const setLoadingConversation = useMessagingUIStore(
-    (s) => s.setLoadingConversation
-  );
-  const clearMessageInput = useMessagingUIStore((s) => s.clearMessageInput);
-  const resetConversationState = useMessagingUIStore(
-    (s) => s.resetConversationState
-  );
-  const setIsTyping = useMessagingUIStore((s) => s.setIsTyping);
-  const setMessageContent = useMessagingUIStore((s) => s.setMessageContent);
-  const setNewMessageDialogOpen = useMessagingUIStore(
-    (s) => s.setNewMessageDialogOpen
-  );
+  // Typing users for current conversation
+  const typingUsers = useTypingUsers(activeConversationId || "");
 
-  const setCurrentUserTyping = useTypingIndicatorsStore(
-    (s) => s.setCurrentUserTyping
-  );
+  // Typing state for current conversation
+  const isAnyoneTyping = typingUsers.length > 0;
+  const typingText = typingUsers.length === 1 && typingUsers[0]
+    ? `${typingUsers[0].username} is typing...`
+    : `${typingUsers.length} people are typing...`;
 
-  const replaceAllUnreadCounts = useUnreadBadgesStore(
-    (s) => s.replaceAllUnreadCounts
-  );
-
-  const addNotification = useNotificationStore((s) => s.addNotification);
+  // Store actions
+  const {
+    setActiveConversation: setActive,
+    setMessageContent,
+    setTyping,
+    clearMessageInput,
+    addTypingUser,
+    removeTypingUser,
+  } = useMessagingStore();
 
   // React Query data
   const {
@@ -103,63 +95,8 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
   // Direct socket integration
   const { isConnected: socketConnected } = useSocket();
 
-  // Sync unread counts from conversations to Zustand store using the centralized utility
-  const lastUnreadSyncKeyRef = useRef<string>("");
-  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  useEffect(() => {
-    if (!conversations || conversations.length === 0) return;
-
-    // Clear any pending sync to debounce rapid changes
-    if (syncTimeoutRef.current) {
-      clearTimeout(syncTimeoutRef.current);
-    }
-
-    // Build a stable key of the unread state we intend to push into the store
-    const entries = conversations
-      .map((c) => {
-        const cnt = c.unread_count || 0;
-        const lid = c.lastMessage?.id || "";
-        const lts = c.lastMessage?.timestamp || "";
-        return `${c.id}:${cnt}:${lid}:${lts}`;
-      })
-      .sort();
-    const key = entries.join("|");
-
-    // If nothing changed since last sync, skip updating the store to avoid render loops
-    if (key === lastUnreadSyncKeyRef.current) {
-      return;
-    }
-
-    // Debounce the sync operation to prevent excessive updates
-    syncTimeoutRef.current = setTimeout(() => {
-      // Import the sync utility dynamically to avoid circular dependencies
-      import('@/utils/unread-sync').then(({ debouncedSyncUnreadCounts, sanitizeUnreadData }) => {
-        const updates = conversations
-          .map((conv) => sanitizeUnreadData({
-            conversationId: conv.id,
-            count: conv.unread_count || 0,
-            lastMessageId: conv.lastMessage?.id,
-            lastMessageTimestamp: conv.lastMessage?.timestamp,
-          }))
-          .filter(Boolean) as any[];
-
-        debouncedSyncUnreadCounts(updates, {
-          preserveActiveConversation: true,
-          source: 'api',
-        });
-      });
-
-      lastUnreadSyncKeyRef.current = key;
-    }, 100); // 100ms debounce
-
-    // Cleanup timeout on unmount
-    return () => {
-      if (syncTimeoutRef.current) {
-        clearTimeout(syncTimeoutRef.current);
-      }
-    };
-  }, [conversations]);
+  // TODO: Implement simplified unread count sync if needed
+  // Removed complex unread sync for simplified implementation
 
   // Remember last submitted message IDs for mark-as-read to avoid duplicate requests
   const lastSubmittedReadRef = useRef<{
@@ -230,40 +167,13 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
   // Helper functions
   const selectConversation = useCallback(
     (conversationId: string) => {
-      // Avoid redundant updates that can cascade through stores and queries
+      // Avoid redundant updates
       if (conversationId === activeConversationId) return;
 
-      setActiveConversation(conversationId);
-      setLoadingConversation(true);
-
-      // Clear any existing message input
+      setActive(conversationId);
       clearMessageInput();
-
-      // Reset conversation-specific UI state
-      resetConversationState(conversationId);
-
-      // For temp conversations, clear loading immediately to avoid perceived lag
-      const safeConversationId = String(conversationId || "");
-      const isTemp =
-        safeConversationId.startsWith("temp-") ||
-        safeConversationId.startsWith("temp_conv-") ||
-        safeConversationId.startsWith("temp-conv-");
-      if (isTemp) {
-        setLoadingConversation(false);
-      } else {
-        // Keep a short delay for real conversations to allow UI to settle
-        setTimeout(() => {
-          setLoadingConversation(false);
-        }, 500);
-      }
     },
-    [
-      activeConversationId,
-      setActiveConversation,
-      setLoadingConversation,
-      clearMessageInput,
-      resetConversationState,
-    ]
+    [activeConversationId, setActive, clearMessageInput]
   );
 
   const sendMessage = useCallback(
@@ -283,7 +193,7 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
       // Allow explicit override to avoid UI store timing races (e.g., just selected a temp conversation)
       const latestActiveId =
         conversationIdOverride ||
-        useMessagingUIStore.getState().activeConversationId ||
+        activeConversationId ||
         "";
 
       // If we're in a temporary conversation (not fetchable), inject optimistic message into local store
@@ -295,12 +205,8 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
 
       if (isTempConv && !recipientId) {
         const err = new Error("Recipient required to start a new conversation");
-        addNotification({
-          type: "error",
-          title: "Cannot send message",
-          message:
-            "Please select a recipient before sending the first message.",
-        });
+        // TODO: Add simple notification system if needed
+        console.error("Cannot send message: recipient required for new conversation");
         throw err;
       }
 
@@ -361,13 +267,8 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
         }
         await sendMessageMutation.mutateAsync(args);
       } catch (error) {
-        // Show error notification
-        addNotification({
-          type: "error",
-          title: "Message Failed",
-          message: "Failed to send message. Please try again.",
-          persistent: true,
-        });
+        // TODO: Add simple error notification if needed
+        console.error("Failed to send message:", error);
 
         // If this is a temporary conversation, flip the optimistic message to failed
         if (isTempConv && tempId) {
@@ -392,7 +293,6 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
     [
       activeConversationId,
       sendMessageMutation,
-      addNotification,
       optimisticInsert,
     ]
   );
@@ -417,22 +317,19 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
   const startTyping = useCallback(() => {
     if (!activeConversationId) return;
 
-    setIsTyping(true);
-    setCurrentUserTyping(activeConversationId, true);
+    setTyping(true);
 
     // Auto-stop typing after 3 seconds
     setTimeout(() => {
-      setIsTyping(false);
-      setCurrentUserTyping(activeConversationId, false);
+      setTyping(false);
     }, 3000);
-  }, [activeConversationId, setIsTyping, setCurrentUserTyping]);
+  }, [activeConversationId, setTyping]);
 
   const stopTyping = useCallback(() => {
     if (!activeConversationId) return;
 
-    setIsTyping(false);
-    setCurrentUserTyping(activeConversationId, false);
-  }, [activeConversationId, setIsTyping, setCurrentUserTyping]);
+    setTyping(false);
+  }, [activeConversationId, setTyping]);
 
   const refreshData = useCallback(() => {
     refetchConversations();
@@ -441,7 +338,7 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
     }
   }, [refetchConversations, refetchMessages, activeConversationId]);
 
-  // Return comprehensive messaging interface
+  // Return simplified messaging interface
   return {
     // Data
     conversations,
@@ -450,17 +347,10 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
 
     // UI State
     messageInput,
+    typingUsers,
+    isAnyoneTyping,
+    typingText,
     totalUnreadCount,
-    conversationState: conversationStores.conversationState,
-
-    // Typing indicators
-    typingUsers: conversationStores.typingUsers,
-    isAnyoneTyping: conversationStores.isAnyoneTyping,
-    typingText: conversationStores.typingText,
-
-    // Unread state
-    unreadCount: conversationStores.unreadCount,
-    hasUnreadMessages: conversationStores.hasUnreadMessages,
 
     // Loading states
     isLoading: conversationsLoading || messagesLoading,
@@ -493,7 +383,6 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
     // UI Actions
     setMessageContent,
     clearMessageInput,
-    setNewMessageDialogOpen,
 
     // Error states
     error: conversationsError,
@@ -509,17 +398,17 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
 
 // Convenience hook for conversation-specific operations
 export function useConversationRQ(conversationId: string) {
-  const conversationStores = useConversationStores(conversationId);
   const { messages, isLoading, hasNextPage, fetchNextPage } =
     useMessages(conversationId);
   const markAsReadMutation = useMarkAsReadMutation(conversationId);
+  const typingUsers = useTypingUsers(conversationId);
 
   return {
     messages,
     isLoading,
     hasNextPage,
     fetchNextPage,
-    ...conversationStores,
+    typingUsers,
     markAsRead: (messageIds: string[]) =>
       markAsReadMutation.mutate({ messageIds }),
   };

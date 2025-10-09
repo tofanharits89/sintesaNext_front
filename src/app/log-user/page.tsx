@@ -81,9 +81,24 @@ export default function LogUserPage() {
   // Fetch login history on component mount
   useEffect(() => {
     if (allowed) {
+      console.log("[LogUser] Fetching login history...");
       fetchLoginHistory(10);
     }
   }, [allowed, fetchLoginHistory]);
+
+  // Debug: Log data changes
+  useEffect(() => {
+    console.log("[LogUser] Data state changed:", {
+      onlineUsersCount: onlineUsers.length,
+      onlineUsers: onlineUsers,
+      isConnected,
+      connectionStatus,
+      loginHistoryCount: loginHistory.length,
+      weeklyStatsCount: weeklyStats.length,
+      isLoadingStats,
+      statsError
+    });
+  }, [onlineUsers, isConnected, connectionStatus, loginHistory, weeklyStats, isLoadingStats, statsError]);
 
   // Process weekly login data for chart display
   const weeklyLogins = useMemo(() => {

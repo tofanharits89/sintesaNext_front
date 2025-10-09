@@ -8,7 +8,11 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { socketClient, SocketState, SocketClientConfig } from "@/lib/socket-client";
+import {
+  socketClient,
+  SocketState,
+  SocketClientConfig,
+} from "@/lib/socket-client";
 import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 import type { Socket } from "socket.io-client";
 
@@ -21,10 +25,10 @@ export interface UseUnifiedSocketReturn {
   reconnect: () => void;
   connect: () => void;
   disconnect: () => void;
-  emit: (event: string, ...args: any[]) => void;
-  on: (event: string, listener: (...args: any[]) => void) => void;
-  off: (event: string, listener?: (...args: any[]) => void) => void;
-  getConnectionStats: () => any;
+  emit: (event: string, ...args: unknown[]) => void;
+  on: (event: string, listener: (...args: unknown[]) => void) => void;
+  off: (event: string, listener?: (...args: unknown[]) => void) => void;
+  getConnectionStats: () => unknown;
   debug: boolean;
 }
 
@@ -32,7 +36,9 @@ export interface UseUnifiedSocketReturn {
  * Simplified Socket Hook
  * Provides a clean React interface to the SocketClient with reliable state management
  */
-export function useUnifiedSocket(config?: SocketClientConfig): UseUnifiedSocketReturn {
+export function useUnifiedSocket(
+  config?: SocketClientConfig,
+): UseUnifiedSocketReturn {
   const [isClient, setIsClient] = useState(false);
   const [state, setState] = useState(() => ({
     socket: socketClient.getSocket(),
@@ -52,7 +58,7 @@ export function useUnifiedSocket(config?: SocketClientConfig): UseUnifiedSocketR
 
   // Sync state with socket client
   const syncState = useCallback(() => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       socket: socketClient.getSocket(),
       isConnected: socketClient.isConnected(),
@@ -65,24 +71,35 @@ export function useUnifiedSocket(config?: SocketClientConfig): UseUnifiedSocketR
   useEffect(() => {
     if (!isClient) return;
 
-    const handleStateChange = (event: CustomEvent) => {
+    const handleStateChange = () => {
       syncState();
     };
 
-    const handleConnect = (event: CustomEvent) => {
-      setState(prev => ({ ...prev, isConnected: true, connectionState: "connected", error: null }));
+    const handleConnect = () => {
+      setState((prev) => ({
+        ...prev,
+        isConnected: true,
+        connectionState: "connected",
+        error: null,
+      }));
     };
 
     // Listen to custom events from SocketClient
-    window.addEventListener('socket:state', handleStateChange as EventListener);
-    window.addEventListener('socket:connected', handleConnect as EventListener);
+    window.addEventListener("socket:state", handleStateChange as EventListener);
+    window.addEventListener("socket:connected", handleConnect as EventListener);
 
     // Initial sync
     syncState();
 
     return () => {
-      window.removeEventListener('socket:state', handleStateChange as EventListener);
-      window.removeEventListener('socket:connected', handleConnect as EventListener);
+      window.removeEventListener(
+        "socket:state",
+        handleStateChange as EventListener,
+      );
+      window.removeEventListener(
+        "socket:connected",
+        handleConnect as EventListener,
+      );
     };
   }, [isClient, syncState]);
 
@@ -100,16 +117,16 @@ export function useUnifiedSocket(config?: SocketClientConfig): UseUnifiedSocketR
     const initializeSocket = async () => {
       try {
         // Check if we just logged in
-        const justLoggedIn = sessionStorage.getItem('just_logged_in');
-        const connectionDelay = justLoggedIn === 'true' ? 1000 : 0;
+        const justLoggedIn = sessionStorage.getItem("just_logged_in");
+        const connectionDelay = justLoggedIn === "true" ? 1000 : 0;
 
-        if (justLoggedIn === 'true') {
-          sessionStorage.removeItem('just_logged_in');
+        if (justLoggedIn === "true") {
+          sessionStorage.removeItem("just_logged_in");
         }
 
         // Wait for connection delay if needed
         if (connectionDelay > 0) {
-          await new Promise(resolve => setTimeout(resolve, connectionDelay));
+          await new Promise((resolve) => setTimeout(resolve, connectionDelay));
         }
 
         // Check if already connected
@@ -118,28 +135,28 @@ export function useUnifiedSocket(config?: SocketClientConfig): UseUnifiedSocketR
           return;
         }
 
-        setState(prev => ({ ...prev, error: null }));
+        setState((prev) => ({ ...prev, error: null }));
 
         await socketClient.connect();
         initializedRef.current = true;
         syncState();
-
       } catch (error) {
-        console.error('Failed to initialize socket:', error);
-        setState(prev => ({
+        console.error("Failed to initialize socket:", error);
+        setState((prev) => ({
           ...prev,
-          error: error instanceof Error ? error.message : 'Connection failed'
+          error: error instanceof Error ? error.message : "Connection failed",
         }));
 
         // Retry once after a delay if first attempt fails
         setTimeout(() => {
           if (!socketClient.isConnected()) {
-            socketClient.connect()
+            socketClient
+              .connect()
               .then(() => {
                 syncState();
               })
               .catch((retryError) => {
-                console.error('Socket retry connection failed:', retryError);
+                console.error("Socket retry connection failed:", retryError);
               });
           }
         }, 2000);
@@ -162,7 +179,10 @@ export function useUnifiedSocket(config?: SocketClientConfig): UseUnifiedSocketR
       // Auto-connect after login
       setTimeout(() => {
         if (!socketClient.isConnected()) {
-          socketClient.connect().then(syncState).catch(() => {});
+          socketClient
+            .connect()
+            .then(syncState)
+            .catch(() => {});
         }
       }, 500);
     };
@@ -174,19 +194,31 @@ export function useUnifiedSocket(config?: SocketClientConfig): UseUnifiedSocketR
       syncState();
     };
 
-    const handleAuthExpired = (event: any) => {
-      console.log('Auth expired event received:', event);
+    const handleAuthExpired = (event: Event) => {
+      console.log("Auth expired event received:", event);
 
-      const { reason, displayMessage } = event.detail || {};
-      const message = displayMessage || 'Your session has expired. Please log in again.';
-      const isFromOtherDevice = reason === 'LOGGED_IN_ELSEWHERE';
+      const customEvent = event as CustomEvent;
+      const { displayMessage } = customEvent.detail || {};
+      const message =
+        displayMessage || "Your session has expired. Please log in again.";
 
       // Show user-friendly message
-      if (typeof window !== 'undefined' && (window as any).toast) {
-        (window as any).toast.error(message, {
-          duration: 5000,
-          position: 'top-center'
-        });
+      if (typeof window !== "undefined") {
+        const windowWithToast = window as Window & {
+          toast?: {
+            error: (
+              msg: string,
+              opts: { duration: number; position: string },
+            ) => void;
+          };
+        };
+
+        if (windowWithToast.toast) {
+          windowWithToast.toast.error(message, {
+            duration: 5000,
+            position: "top-center",
+          });
+        }
       }
 
       // Disconnect socket
@@ -195,36 +227,36 @@ export function useUnifiedSocket(config?: SocketClientConfig): UseUnifiedSocketR
       syncState();
     };
 
-    const handleTokenRefresh = (event: any) => {
-      console.log('Token refresh event received:', event);
+    const handleTokenRefresh = (event: Event) => {
+      console.log("Token refresh event received:", event);
       // Connection should remain active, just sync state
       syncState();
     };
 
     // Register auth event listeners
-    window.addEventListener('auth:login', handleLogin);
-    window.addEventListener('auth:logout', handleLogout);
-    window.addEventListener('auth:expired', handleAuthExpired);
-    window.addEventListener('token:refresh', handleTokenRefresh);
+    window.addEventListener("auth:login", handleLogin);
+    window.addEventListener("auth:logout", handleLogout);
+    window.addEventListener("auth:expired", handleAuthExpired);
+    window.addEventListener("token:refresh", handleTokenRefresh);
 
     return () => {
-      window.removeEventListener('auth:login', handleLogin);
-      window.removeEventListener('auth:logout', handleLogout);
-      window.removeEventListener('auth:expired', handleAuthExpired);
-      window.removeEventListener('token:refresh', handleTokenRefresh);
+      window.removeEventListener("auth:login", handleLogin);
+      window.removeEventListener("auth:logout", handleLogout);
+      window.removeEventListener("auth:expired", handleAuthExpired);
+      window.removeEventListener("token:refresh", handleTokenRefresh);
     };
   }, [isClient, syncState]);
 
   // Public API methods
   const connect = useCallback(async () => {
     try {
-      setState(prev => ({ ...prev, error: null }));
+      setState((prev) => ({ ...prev, error: null }));
       await socketClient.connect();
       syncState();
     } catch (error) {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
-        error: error instanceof Error ? error.message : 'Connection failed'
+        error: error instanceof Error ? error.message : "Connection failed",
       }));
     }
   }, [syncState]);
@@ -236,20 +268,29 @@ export function useUnifiedSocket(config?: SocketClientConfig): UseUnifiedSocketR
   }, [syncState]);
 
   const reconnect = useCallback(() => {
-    socketClient.reconnect().then(syncState).catch(() => {});
+    socketClient
+      .reconnect()
+      .then(syncState)
+      .catch(() => {});
   }, [syncState]);
 
-  const emit = useCallback((event: string, ...args: any[]) => {
+  const emit = useCallback((event: string, ...args: unknown[]) => {
     socketClient.emit(event, ...args);
   }, []);
 
-  const on = useCallback((event: string, listener: (...args: any[]) => void) => {
-    socketClient.on(event, listener);
-  }, []);
+  const on = useCallback(
+    (event: string, listener: (...args: unknown[]) => void) => {
+      socketClient.on(event, listener);
+    },
+    [],
+  );
 
-  const off = useCallback((event: string, listener?: (...args: any[]) => void) => {
-    socketClient.off(event, listener);
-  }, []);
+  const off = useCallback(
+    (event: string, listener?: (...args: unknown[]) => void) => {
+      socketClient.off(event, listener);
+    },
+    [],
+  );
 
   const getConnectionStats = useCallback(() => {
     return socketClient.getConnectionStats();

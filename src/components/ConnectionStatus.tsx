@@ -2,9 +2,8 @@
 
 import { useUnifiedSocket } from "@/hooks/useUnifiedSocket";
 import { AlertCircle, Wifi, WifiOff, RotateCcw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { getAuthTokenFromCookie } from "@/lib/cookieManager";
 
 export function ConnectionStatus() {
   const pathname = usePathname();
@@ -17,37 +16,27 @@ export function ConnectionStatus() {
   const { isConnected, connectionState, error, reconnect } = useUnifiedSocket();
   const [showStatus, setShowStatus] = useState(false);
 
+  // Use ref to track timeout and prevent multiple timers
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // Prevent hydration issues
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-
-
-  // Listen for explicit connected events to force-hide immediately (extra safety)
+  // Single consolidated effect to manage showStatus state
   useEffect(() => {
-    const onConnected = () => setShowStatus(false);
-    const onState = (e: Event) => {
-      const detail = (e as CustomEvent).detail as any;
-      if (detail?.state === 'connected' || detail?.connected === true) {
-        setShowStatus(false);
-      }
-    };
-    window.addEventListener('socket:connected', onConnected as EventListener);
-    window.addEventListener('socket:state', onState as EventListener);
-    return () => {
-      window.removeEventListener('socket:connected', onConnected as EventListener);
-      window.removeEventListener('socket:state', onState as EventListener);
-    };
-  }, []);
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
 
-  // Single effect to manage showStatus state
-  useEffect(() => {
     // Always hide immediately when connected
     if (isConnected === true || connectionState === "connected") {
       setShowStatus(false);
-      if (isClient) {
-        sessionStorage.removeItem('just_logged_in');
+      if (isClient && typeof window !== "undefined") {
+        sessionStorage.removeItem("just_logged_in");
       }
       return;
     }
@@ -60,27 +49,30 @@ export function ConnectionStatus() {
 
     // Only show for problematic states after a delay
     if (connectionState === "disconnected" || connectionState === "error") {
-      const isPostLogin = isClient && sessionStorage.getItem('just_logged_in') === 'true';
+      const isPostLogin =
+        isClient &&
+        typeof window !== "undefined" &&
+        sessionStorage.getItem("just_logged_in") === "true";
       const delay = isPostLogin ? 5000 : 3000;
-      
-      const timeout = setTimeout(() => {
+
+      timeoutRef.current = setTimeout(() => {
         // Double-check state before showing
-        // connectionState is narrowed to problematic states here, so simply rely on isConnected
         if (!isConnected) {
           setShowStatus(true);
         }
       }, delay);
 
       return () => {
-        clearTimeout(timeout);
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
       };
     }
 
     // For any other state, hide
     setShowStatus(false);
   }, [isConnected, connectionState, isClient]);
-
-
 
   // Primary checks - don't show in these cases
   if (!shouldUseSocket || isLoginPage) {
@@ -134,6 +126,14 @@ export function ConnectionStatus() {
     }
   };
 
+  const handleReconnect = () => {
+    if (error && error.includes("Authentication")) {
+      window.location.reload();
+    } else {
+      reconnect();
+    }
+  };
+
   return (
     <div className="fixed bottom-4 right-4 z-40">
       <div className="bg-gray-900 text-white px-3 py-2 rounded-lg shadow-lg flex items-center space-x-2 text-xs">
@@ -142,15 +142,13 @@ export function ConnectionStatus() {
         {(connectionState === "disconnected" ||
           connectionState === "error") && (
           <button
-            onClick={() => {
-              if (error && error.includes("Authentication")) {
-                window.location.reload();
-              } else {
-                reconnect();
-              }
-            }}
+            onClick={handleReconnect}
             className="ml-1 hover:text-gray-300 transition-colors"
-            title={error && error.includes("Authentication") ? "Refresh page" : "Retry connection"}
+            title={
+              error && error.includes("Authentication")
+                ? "Refresh page"
+                : "Retry connection"
+            }
           >
             <RotateCcw className="h-3 w-3" />
           </button>

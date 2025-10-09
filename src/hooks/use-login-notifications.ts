@@ -110,5 +110,5 @@ export const useLoginNotifications = () => {
       socket.off("user:login", handleUserLogin);
       console.log("[LoginNotifications] Login notification listeners removed");
     };
-  }, [isAdmin, isLoginPage, currentUser, socket, isConnected, isReady]);
+  }, [isAdmin, isLoginPage, currentUser?.id, socket, isConnected, isReady]);
 };

@@ -6,6 +6,9 @@
 
 import { logger } from '@/lib/utils';
 
+// Detect runtime environment
+const isBrowser = typeof window !== 'undefined';
+
 // Event types for cross-tab communication
 type CrossTabEvent = {
   type: 'auth_login' | 'auth_logout' | 'auth_token_refreshed';
@@ -19,6 +22,7 @@ const STORAGE_KEY = 'sintesa_auth_events';
  * Send auth event to other tabs
  */
 export const sendCrossTabEvent = (type: CrossTabEvent['type'], payload?: any): void => {
+  if (!isBrowser) return; // No-op on server
   const event: CrossTabEvent = {
     type,
     timestamp: Date.now(),
@@ -26,6 +30,8 @@ export const sendCrossTabEvent = (type: CrossTabEvent['type'], payload?: any): v
   };
 
   try {
+    // Guard localStorage access during SSR
+    if (!isBrowser) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(event));
     
     // Remove after a short delay to prevent stale events
@@ -45,6 +51,10 @@ export const sendCrossTabEvent = (type: CrossTabEvent['type'], payload?: any): v
  * Listen for cross-tab auth events
  */
 export const listenForCrossTabEvents = (onEvent: (event: CrossTabEvent) => void): (() => void) => {
+  if (!isBrowser) {
+    // Return a no-op cleanup function on server
+    return () => {};
+  }
   const handleStorageChange = (e: StorageEvent) => {
     if (e.key === STORAGE_KEY && e.newValue) {
       try {
@@ -65,6 +75,7 @@ export const listenForCrossTabEvents = (onEvent: (event: CrossTabEvent) => void)
 
   // Return cleanup function
   return () => {
+    if (!isBrowser) return;
     window.removeEventListener('storage', handleStorageChange);
   };
 };
@@ -76,7 +87,9 @@ export class CrossTabSyncManager {
   private unsubscribers: Array<() => void> = [];
   
   constructor() {
-    this.setupListeners();
+    if (isBrowser) {
+      this.setupListeners();
+    }
   }
 
   private setupListeners() {
@@ -87,7 +100,9 @@ export class CrossTabSyncManager {
         
         // Trigger page reload to clear local state
         // This is the safest approach to ensure all state is cleared
-        window.location.reload();
+        if (isBrowser) {
+          window.location.reload();
+        }
       }
     });
 
@@ -97,9 +112,11 @@ export class CrossTabSyncManager {
         logger.info('Received token refresh event from another tab');
         
         // Trigger a soft refetch of user data
-        window.dispatchEvent(new CustomEvent('auth-state-sync', {
-          detail: { action: 'refresh' }
-        }));
+        if (isBrowser) {
+          window.dispatchEvent(new CustomEvent('auth-state-sync', {
+            detail: { action: 'refresh' }
+          }));
+        }
       }
     });
 
@@ -136,5 +153,13 @@ export class CrossTabSyncManager {
   }
 }
 
-// Singleton instance
-export const crossTabSync = new CrossTabSyncManager();
+// Singleton instance (client-only). Provide a safe stub on server.
+type CrossTabSyncPublic = Pick<CrossTabSyncManager, 'notifyLogin' | 'notifyLogout' | 'notifyTokenRefresh' | 'destroy'>;
+export const crossTabSync: CrossTabSyncPublic = isBrowser
+  ? new CrossTabSyncManager()
+  : {
+      notifyLogin: () => {},
+      notifyLogout: () => {},
+      notifyTokenRefresh: () => {},
+      destroy: () => {},
+    };

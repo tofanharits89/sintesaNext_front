@@ -15,15 +15,17 @@ const AppShell = memo(function AppShell({
   initialUser?: User;
 }) {
   const pathname = usePathname();
-  
-  const isSpecialPage = useMemo(() => 
-    pathname?.startsWith("/login") || 
-    pathname?.startsWith("/server-error") || 
-    pathname?.startsWith("/ip-blocked"),
+
+  const isSpecialPage = useMemo(() =>
+    pathname?.startsWith("/login") ||
+    pathname?.startsWith("/server-error") ||
+    pathname?.startsWith("/ip-blocked") ||
+    pathname?.startsWith("/unauthorized"),
     [pathname]
   );
 
   // Initialize login notifications for admin users - always call hooks
+  // This hook has been optimized to prevent infinity loops
   useLoginNotifications();
 
   // Socket connection is now handled by useSocket hook in individual components

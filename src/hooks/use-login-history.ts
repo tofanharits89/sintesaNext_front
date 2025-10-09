@@ -104,6 +104,10 @@ export const useLoginHistory = (): UseLoginHistoryReturn => {
       endDate?: string,
       userId?: number
     ) => {
+      console.log("[useLoginHistory] Fetching login history with params:", {
+        limit, offset, startDate, endDate, userId
+      });
+
       setIsLoading(true);
       setError(null);
 
@@ -121,7 +125,10 @@ export const useLoginHistory = (): UseLoginHistoryReturn => {
         });
         const result: LoginHistoryResponse = resp.data;
 
+        console.log("[useLoginHistory] API Response:", result);
+
         if (result?.success) {
+          console.log("[useLoginHistory] Login history data:", result.data);
           setLoginHistory(result.data || []);
           setPagination({
             currentPage:

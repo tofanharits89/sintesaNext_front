@@ -4,7 +4,7 @@
  */
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useMessagingUIStore } from "@/stores/messaging-ui-store";
+import { useMessagingStore } from "@/stores/messaging-store";
 import { useTypingIndicatorsStore } from "@/stores/typing-indicators-store";
 import { useUnreadBadgesStore } from "@/stores/unread-badges-store";
 import { clearAllTempMessages } from "@/features/messaging/temp-messages-store";
@@ -71,31 +71,21 @@ export async function clearAllMessagingState() {
  */
 export function clearMessagingStores() {
   try {
-    // Clear messaging UI store
-    const messagingUIStore = useMessagingUIStore.getState();
-    messagingUIStore.setActiveConversation(null);
-    messagingUIStore.clearMessageInput();
-    messagingUIStore.setNewMessageDialogOpen(false);
-    messagingUIStore.setSelectedRecipient(null);
-    messagingUIStore.setSearchQuery("");
-    messagingUIStore.setFilteredConversations([]);
-    messagingUIStore.setLoadingConversation(false);
-    messagingUIStore.setSendingMessage(false);
-    
-    // Reset all conversation states
-    const conversationStates = messagingUIStore.conversationStates;
-    Object.keys(conversationStates).forEach(conversationId => {
-      messagingUIStore.resetConversationState(conversationId);
-    });
-    
+    // Clear messaging store
+    const messagingStore = useMessagingStore.getState();
+    messagingStore.setActiveConversation(null);
+    messagingStore.clearMessageInput();
+    messagingStore.setConnectionStatus(false);
+    messagingStore.reset(); // Reset all state to initial values
+
     // Clear typing indicators store
     const typingStore = useTypingIndicatorsStore.getState();
     typingStore.clearAllTyping();
-    
+
     // Clear unread badges store
     const unreadStore = useUnreadBadgesStore.getState();
     unreadStore.clearAllUnread();
-    
+
     logger.info("Zustand stores cleared");
   } catch (error) {
     logger.error("Error clearing Zustand stores", error);

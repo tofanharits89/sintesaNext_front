@@ -32,7 +32,6 @@ import {
   getUnreadNotificationCount,
 } from "@/lib/notifications-store";
 import { useMessagingRQ } from "@/hooks/useMessagingRQ";
-import { useMessagingSocket } from "@/hooks/useMessagingSocket";
 import { socketClient } from "@/lib/socket-client";
 import { useUnreadActions } from "@/stores/unread-badges-store";
 import { Input } from "@/components/ui/input";

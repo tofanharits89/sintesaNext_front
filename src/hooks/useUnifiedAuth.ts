@@ -1,9 +1,9 @@
 /**
  * TRUE Single Source of Truth (SSOT) Auth Hook
- * 
+ *
  * This replaces all fragmented auth approaches with one unified system.
  * Based on Zustand + React Query for optimal performance and consistency.
- * 
+ *
  * Design Principles:
  * - Single Zustand store for auth state (SSOT)
  * - React Query for server data synchronization
@@ -11,40 +11,49 @@
  * - Type-safe and predictable state management
  */
 
-import { useCallback, useEffect, useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { 
-  useAuthSessionStore, 
+import { useCallback, useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  useAuthSessionStore,
   type User as AuthUser,
-  type AuthSessionState 
-} from '@/stores/session-store';
-import { authClient } from '@/lib/auth-client';
-import { queryKeyFactories } from '@/lib/query-configs';
-import { toast } from 'sonner';
-import { logger } from '@/lib/utils';
-import { crossTabSync } from '@/lib/cross-tab-sync';
+  type AuthSessionState,
+} from "@/stores/session-store";
+import { authClient } from "@/lib/auth-client";
+import { queryKeyFactories } from "@/lib/query-configs";
+import { toast } from "sonner";
+import { logger } from "@/lib/utils";
+import { crossTabSync } from "@/lib/cross-tab-sync";
 
 // Enhanced hook return type for better TypeScript support
-export interface UseUnifiedAuthReturn extends Omit<AuthSessionState, 'setAuthenticated' | 'updateUser' | 'logout'> {
+export interface UseUnifiedAuthReturn
+  extends Omit<AuthSessionState, "setAuthenticated" | "updateUser" | "logout"> {
   // Primary data
   user: AuthUser | null;
-  
+
   // Enhanced actions with better naming
-  login: (username: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; user?: AuthUser; error?: string }>;
+  login: (
+    username: string,
+    password: string,
+    rememberMe?: boolean,
+  ) => Promise<{ success: boolean; user?: AuthUser; error?: string }>;
   logout: (reason?: string) => Promise<void>;
   refetch: () => Promise<{ success: boolean; user?: AuthUser; error?: string }>;
-  validateSession: () => Promise<{ success: boolean; user?: AuthUser; error?: string }>;
-  
+  validateSession: () => Promise<{
+    success: boolean;
+    user?: AuthUser;
+    error?: string;
+  }>;
+
   // Computed states for convenience
   isAuthenticated: boolean;
   isLoading: boolean;
   isLoggingOut: boolean;
-  
+
   // Helper methods
   canManageUsers: boolean;
   canAccessSettings: boolean;
   getRoleDisplayName: string;
-  
+
   // Cache control
   clearCache: () => void;
   updateUserProfile: (userData: Partial<AuthUser>) => void;
@@ -53,27 +62,31 @@ export interface UseUnifiedAuthReturn extends Omit<AuthSessionState, 'setAuthent
 // RBAC helper functions (extracted for reusability)
 const canManageUsers = (user: AuthUser | null): boolean => {
   if (!user) return false;
-  return user.role === 'super_admin' || user.role === 'co_admin';
+  return user.role === "super_admin" || user.role === "co_admin";
 };
 
 const canAccessSettings = (user: AuthUser | null): boolean => {
   if (!user) return false;
-  return user.role === 'super_admin' || user.role === 'co_admin' || user.role === 'kantor_pusat';
+  return (
+    user.role === "super_admin" ||
+    user.role === "co_admin" ||
+    user.role === "kantor_pusat"
+  );
 };
 
 const getRoleDisplayName = (user: AuthUser | null): string => {
-  if (!user) return '';
-  
+  if (!user) return "";
+
   const roleNames = {
-    super_admin: 'Super Admin',
-    co_admin: 'Admin',
-    kantor_pusat: 'Kantor Pusat',
-    kanwil_djpb: 'Kanwil DJPB',
-    kppn: 'KPPN',
-    lainnya: 'Lainnya',
+    super_admin: "Super Admin",
+    co_admin: "Admin",
+    kantor_pusat: "Kantor Pusat",
+    kanwil_djpb: "Kanwil DJPB",
+    kppn: "KPPN",
+    lainnya: "Lainnya",
   };
-  
-  return roleNames[user.role as keyof typeof roleNames] || 'Lainnya';
+
+  return roleNames[user.role as keyof typeof roleNames] || "Lainnya";
 };
 
 /**
@@ -83,140 +96,164 @@ const getRoleDisplayName = (user: AuthUser | null): string => {
 export function useUnifiedAuth(): UseUnifiedAuthReturn {
   const queryClient = useQueryClient();
   const authState = useAuthSessionStore();
-  
+
   // Proactive refresh timer reference
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityTimeRef = useRef<number>(Date.now());
 
+  // Cache management utilities (must be defined before login/logout)
+  const clearCache = useCallback(() => {
+    // Invalidate and clear all auth-related React Query caches
+    queryClient.invalidateQueries({ queryKey: queryKeyFactories.user.all() });
+    queryClient.removeQueries({ queryKey: ["auth", "user"] });
+    queryClient.removeQueries({ queryKey: queryKeyFactories.user.profile() });
+  }, [queryClient]);
+
   // Enhanced login with optimistic updates and cache management
-  const login = useCallback(async (
-    username: string, 
-    password: string, 
-    rememberMe = false
-  ): Promise<{ success: boolean; user?: AuthUser; error?: string }> => {
-    try {
-      // Set loading state
-      authState.setLoading(true);
-      
-      // Clear any existing cache first
-      clearCache();
-      
-      const result = await authClient.login(username, password, rememberMe);
-      
-      if (result.success && result.user) {
-        // Optimistic update: immediately update Zustand store
-        authState.setAuthenticated(true, result.user);
-        authState.updateUser(result.user);
-        authState.updateLastActivity();
-        
-        // Update React Query cache for consistency
-        queryClient.setQueryData(['auth', 'user'], result.user);
-        queryClient.setQueryData(queryKeyFactories.user.profile(), result.user);
-        
-        // Notify other tabs about successful login
-        crossTabSync.notifyLogin();
-        
-        toast.success(`Selamat datang, ${result.user.name}!`);
-        
-        return { success: true, user: result.user };
-      } else {
-        const errorMsg = result.error || 'Login gagal';
+  const login = useCallback(
+    async (
+      username: string,
+      password: string,
+      rememberMe = false,
+    ): Promise<{ success: boolean; user?: AuthUser; error?: string }> => {
+      try {
+        // Set loading state
+        authState.setLoading(true);
+
+        // Clear any existing cache first
+        clearCache();
+
+        const result = await authClient.login(username, password, rememberMe);
+
+        if (result.success && result.user) {
+          // Optimistic update: immediately update Zustand store
+          authState.setAuthenticated(true, result.user);
+          authState.updateUser(result.user);
+          authState.updateLastActivity();
+
+          // Update React Query cache for consistency
+          queryClient.setQueryData(["auth", "user"], result.user);
+          queryClient.setQueryData(
+            queryKeyFactories.user.profile(),
+            result.user,
+          );
+
+          // Notify other tabs about successful login
+          crossTabSync.notifyLogin();
+
+          toast.success(`Selamat datang, ${result.user.name}!`);
+
+          return { success: true, user: result.user };
+        } else {
+          const errorMsg = result.error || "Login gagal";
+          toast.error(errorMsg);
+          return { success: false, error: errorMsg };
+        }
+      } catch (error) {
+        const errorMsg =
+          error instanceof Error ? error.message : "Terjadi kesalahan koneksi";
         toast.error(errorMsg);
         return { success: false, error: errorMsg };
+      } finally {
+        authState.setLoading(false);
       }
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Terjadi kesalahan koneksi';
-      toast.error(errorMsg);
-      return { success: false, error: errorMsg };
-    } finally {
-      authState.setLoading(false);
-    }
-  }, [authState, queryClient]);
+    },
+    [authState, queryClient, clearCache],
+  );
 
   // Enhanced logout with comprehensive cleanup and cross-tab sync
-  const logout = useCallback(async (reason = 'manual_logout'): Promise<void> => {
-    try {
-      authState.setLoggingOut(true);
-      
-      // Notify other tabs about logout before clearing state
-      crossTabSync.notifyLogout();
-      
-      // Optimistic update: clear auth state immediately
-      authState.logout();
-      
-      // Clear all auth-related caches
-      clearCache();
-      
-      // Attempt server logout (don't await, fire and forget)
-      authClient.logout().catch(error => {
-        console.warn('Server logout failed:', error);
-      });
-      
-      if (reason === 'manual_logout') {
-        toast.success('Anda telah keluar dari sistem');
+  const logout = useCallback(
+    async (reason = "manual_logout"): Promise<void> => {
+      try {
+        authState.setLoggingOut(true);
+
+        // Notify other tabs about logout before clearing state
+        crossTabSync.notifyLogout();
+
+        // Optimistic update: clear auth state immediately
+        authState.logout();
+
+        // Clear all auth-related caches
+        clearCache();
+
+        // Attempt server logout (don't await, fire and forget)
+        authClient.logout().catch((error) => {
+          console.warn("Server logout failed:", error);
+        });
+
+        if (reason === "manual_logout") {
+          toast.success("Anda telah keluar dari sistem");
+        }
+      } catch (error) {
+        console.error("Logout error:", error);
+      } finally {
+        authState.setLoggingOut(false);
       }
-      
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      authState.setLoggingOut(false);
-    }
-  }, [authState]);
+    },
+    [authState, clearCache],
+  );
 
   // Enhanced session validation
-  const validateSession = useCallback(async (): Promise<{ success: boolean; user?: AuthUser; error?: string }> => {
+  const validateSession = useCallback(async (): Promise<{
+    success: boolean;
+    user?: AuthUser;
+    error?: string;
+  }> => {
     try {
       const result = await authClient.validateSession();
-      
+
       if (result.success && result.valid && result.user) {
         // Update Zustand with fresh user data
         authState.setAuthenticated(true, result.user);
         authState.updateUser(result.user);
         authState.updateLastActivity();
-        
+
         // Update React Query cache
-        queryClient.setQueryData(['auth', 'user'], result.user);
+        queryClient.setQueryData(["auth", "user"], result.user);
         queryClient.setQueryData(queryKeyFactories.user.profile(), result.user);
-        
+
         return { success: true, user: result.user };
       } else {
         // Session is invalid, perform logout
-        await logout('session_expired');
-        return { success: false, error: result.error || 'Sesi anda telah berakhir' };
+        await logout("session_expired");
+        return {
+          success: false,
+          error: result.error || "Sesi anda telah berakhir",
+        };
       }
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Gagal memvalidasi sesi';
+      const errorMsg =
+        error instanceof Error ? error.message : "Gagal memvalidasi sesi";
       // Don't automatically logout on network errors, just log the error
-      console.warn('Session validation error:', error);
+      console.warn("Session validation error:", error);
       return { success: false, error: errorMsg };
     }
   }, [authState, queryClient, logout]);
 
   // Refetch user data from server
-  const refetch = useCallback(async (): Promise<{ success: boolean; user?: AuthUser; error?: string }> => {
+  const refetch = useCallback(async (): Promise<{
+    success: boolean;
+    user?: AuthUser;
+    error?: string;
+  }> => {
     return validateSession();
   }, [validateSession]);
 
-  // Cache management utilities
-  const clearCache = useCallback(() => {
-    // Invalidate and clear all auth-related React Query caches
-    queryClient.invalidateQueries({ queryKey: queryKeyFactories.user.all() });
-    queryClient.removeQueries({ queryKey: ['auth', 'user'] });
-    queryClient.removeQueries({ queryKey: queryKeyFactories.user.profile() });
-  }, [queryClient]);
+  const updateUserProfile = useCallback(
+    (userData: Partial<AuthUser>) => {
+      if (!authState.user) return;
 
-  const updateUserProfile = useCallback((userData: Partial<AuthUser>) => {
-    if (!authState.user) return;
-    
-    const updatedUser = { ...authState.user, ...userData };
-    
-    // Update Zustand store
-    authState.updateUser(updatedUser);
-    
-    // Update React Query cache
-    queryClient.setQueryData(['auth', 'user'], updatedUser);
-    queryClient.setQueryData(queryKeyFactories.user.profile(), updatedUser);
-  }, [authState, queryClient]);
+      const updatedUser = { ...authState.user, ...userData };
+
+      // Update Zustand store
+      authState.updateUser(updatedUser);
+
+      // Update React Query cache
+      queryClient.setQueryData(["auth", "user"], updatedUser);
+      queryClient.setQueryData(queryKeyFactories.user.profile(), updatedUser);
+    },
+    [authState, queryClient],
+  );
 
   // Proactive token refresh mechanism
   const startProactiveRefresh = useCallback(() => {
@@ -227,21 +264,23 @@ export function useUnifiedAuth(): UseUnifiedAuthReturn {
 
     // Set timer to refresh token 5 minutes before expiry (access tokens last 30 min)
     const refreshInterval = 25 * 60 * 1000; // 25 minutes
-    
+
     refreshTimerRef.current = setTimeout(async () => {
       if (authState.isAuthenticated && authState.user) {
         try {
           const result = await authClient.refreshToken();
           if (result.success) {
             logger.info("Proactive token refresh successful");
-            
+
             // Notify other tabs about token refresh
             crossTabSync.notifyTokenRefresh();
-            
+
             // Restart the timer for next refresh cycle
             startProactiveRefresh();
           } else {
-            logger.warn("Proactive token refresh failed, may need to re-authenticate");
+            logger.warn(
+              "Proactive token refresh failed, may need to re-authenticate",
+            );
             // Don't automatically logout - let manual validation handle it
           }
         } catch (error) {
@@ -271,34 +310,53 @@ export function useUnifiedAuth(): UseUnifiedAuthReturn {
     };
   }, [authState.isAuthenticated, authState.user, startProactiveRefresh]);
 
+  // Track last synced user ID to prevent infinite loops
+  const lastSyncedUserIdRef = useRef<string | null>(null);
+
   // Ensure consistent state on mount and when cache changes
   useEffect(() => {
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
       // Sync React Query changes to Zustand
       const queryKey = event.query.queryKey;
-      if (queryKey && (queryKey.includes('user') || queryKey.includes('auth'))) {
-        const cachedUser = queryClient.getQueryData(['auth', 'user']) as AuthUser || 
-                           queryClient.getQueryData(queryKeyFactories.user.profile()) as AuthUser;
-        
+      if (
+        queryKey &&
+        (queryKey.includes("user") || queryKey.includes("auth"))
+      ) {
+        const cachedUser =
+          (queryClient.getQueryData(["auth", "user"]) as AuthUser) ||
+          (queryClient.getQueryData(
+            queryKeyFactories.user.profile(),
+          ) as AuthUser);
+
         // CRITICAL: Validate that cachedUser is actual user data, not an error object
-        const isValidUser = cachedUser && 
-                           typeof cachedUser === 'object' && 
-                           'id' in cachedUser && 
-                           'username' in cachedUser &&
-                           !('success' in cachedUser && cachedUser.success === false);
-        
-        if (isValidUser && cachedUser !== authState.user) {
-          console.log('[useUnifiedAuth] Syncing cached user data to Zustand');
+        const isValidUser =
+          cachedUser &&
+          typeof cachedUser === "object" &&
+          "id" in cachedUser &&
+          "username" in cachedUser &&
+          !("success" in cachedUser && cachedUser.success === false);
+
+        // FIXED: Use deep comparison via user ID instead of reference comparison
+        // This prevents infinite loops from object reference changes
+        const hasUserChanged =
+          isValidUser && cachedUser.id !== lastSyncedUserIdRef.current;
+
+        if (hasUserChanged) {
+          console.log("[useUnifiedAuth] Syncing cached user data to Zustand");
+          lastSyncedUserIdRef.current = cachedUser.id;
           authState.setAuthenticated(true, cachedUser);
           authState.updateUser(cachedUser);
         } else if (cachedUser && !isValidUser) {
-          console.warn('[useUnifiedAuth] Ignoring invalid cached user data:', cachedUser);
+          console.warn(
+            "[useUnifiedAuth] Ignoring invalid cached user data:",
+            cachedUser,
+          );
         }
       }
     });
 
     return unsubscribe;
-  }, [queryClient, authState]);
+  }, [queryClient, authState.setAuthenticated, authState.updateUser]);
 
   // Return the enhanced SSOT auth interface
   return {
@@ -310,7 +368,7 @@ export function useUnifiedAuth(): UseUnifiedAuthReturn {
     socketConnected: authState.socketConnected,
     sessionExpiry: authState.sessionExpiry,
     lastActivity: authState.lastActivity,
-    
+
     // State management methods (from AuthSessionState)
     setLoggingOut: authState.setLoggingOut,
     setLoading: authState.setLoading,
@@ -362,8 +420,10 @@ export const authUtils = {
       lainnya: 0,
     };
 
-    const userLevel = roleHierarchy[user.role as keyof typeof roleHierarchy] || 0;
-    const requiredLevel = roleHierarchy[requiredRole as keyof typeof roleHierarchy] || 0;
+    const userLevel =
+      roleHierarchy[user.role as keyof typeof roleHierarchy] || 0;
+    const requiredLevel =
+      roleHierarchy[requiredRole as keyof typeof roleHierarchy] || 0;
 
     return userLevel >= requiredLevel;
   },

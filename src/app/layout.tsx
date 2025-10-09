@@ -18,6 +18,8 @@ import { RoutePreloader } from "@/components/ui/route-preloader";
 import { ClientInit } from "@/components/ClientInit";
 // GlobalSocketInitializer is now integrated into useUnifiedSocket hook
 import { geistSans, geistMono } from "./fonts";
+import { Suspense } from "react";
+import { ComponentLoadingFallback } from "@/components/ui/loading-fallback";
 
 export const metadata: Metadata = {
   title: "sintesaNEXT",
@@ -61,7 +63,9 @@ export default async function RootLayout({
                 <ComponentErrorBoundary>
                   <SessionMonitor />
                   <AppShell {...(initialUser ? { initialUser } : {})}>
-                    {children}
+                    <Suspense fallback={<ComponentLoadingFallback />}>
+                      {children}
+                    </Suspense>
                   </AppShell>
                 </ComponentErrorBoundary>
                 <ComponentErrorBoundary>

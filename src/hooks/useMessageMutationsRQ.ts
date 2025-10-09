@@ -7,7 +7,7 @@ import { conversationKeys } from "./useConversationsRQ";
 import { messageKeys } from "./useMessagesRQ";
 import { useSocket } from "./useSocket";
 import { FrontendMessage } from "@/types/socket-events";
-import { useMessagingActions, useMessagingUIStore } from "@/stores";
+import { useMessageActions, useMessagingActions, useMessagingStore } from "@/stores";
 import { useNotificationStore } from "@/stores/notification-store";
 import { getTempMessages } from "@/features/messaging/temp-messages-store";
 import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
@@ -41,7 +41,8 @@ type OfflineError = Error & { isOffline?: boolean };
 export function useSendMessageMutation() {
   const queryClient = useQueryClient();
   const { emit } = useSocket();
-  const { ui, unread } = useMessagingActions();
+  const messageActions = useMessageActions();
+  const { unread } = useMessagingActions();
   const { user: currentUser } = useUnifiedAuth();
 
   const fetchWithTimeout = async (
@@ -231,8 +232,8 @@ export function useSendMessageMutation() {
         });
       } catch {}
 
-      // Set sending state
-      ui.setSendingMessage(true);
+      // Set sending state (using setTyping as a proxy for visual feedback)
+      messageActions.setTyping(true);
 
       // Create optimistic message
       if (convKeyId && tempId) {
@@ -526,8 +527,8 @@ export function useSendMessageMutation() {
       } catch {}
 
       // Clear sending state and input
-      ui.setSendingMessage(false);
-      ui.clearMessageInput();
+      messageActions.setTyping(false);
+      messageActions.clearMessageInput();
       console.log("[MSG DEBUG] Cleared input and sending state");
 
       // Best-effort: clear sending/failed flags and update ID on the optimistic temp message
@@ -676,7 +677,7 @@ export function useSendMessageMutation() {
       })();
 
       if (derivedNewConvId && derivedNewConvId !== conversationId) {
-        const activeId = useMessagingUIStore.getState().activeConversationId as
+        const activeId = useMessagingStore.getState().activeConversationId as
           | string
           | null;
         const isTempActive =
@@ -698,11 +699,11 @@ export function useSendMessageMutation() {
         };
         if (isTempActive) {
           setTimeout(() => {
-            ui.setActiveConversation(newId);
+            messageActions.setActiveConversation(newId);
             notifySelected(newId);
           }, 380);
         } else {
-          ui.setActiveConversation(newId);
+          messageActions.setActiveConversation(newId);
           notifySelected(newId);
         }
 
@@ -1045,7 +1046,7 @@ export function useSendMessageMutation() {
     },
     onError: (error, args, context) => {
       // Clear sending state
-      ui.setSendingMessage(false);
+      messageActions.setTyping(false);
 
       try {
         console.log("[MSG DEBUG] onError", {

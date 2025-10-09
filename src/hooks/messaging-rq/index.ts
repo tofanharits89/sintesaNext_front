@@ -14,9 +14,6 @@ export {
   useMarkAsReadMutation
 } from '../useMessageMutationsRQ';
 
-// WebSocket integration
-export { useMessagingSocket } from '../useMessagingSocket';
-
 // Re-export Zustand stores for convenience
 export {
   // Store hooks
@@ -38,11 +35,7 @@ export {
   useTotalUnreadCount,
   
   // Types
-  type MessagingUIState,
-  type MessagingUIActions,
-  type TypingUser,
-  type UnreadInfo,
-  type NotificationItem,
+  type MessagingClientState,
 } from '../../stores';
 
 // Migration utilities and compatibility
@@ -108,21 +101,21 @@ declare module '../useMessagingRQ' {
     conversations: any[] | undefined;
     messages: any[] | undefined;
     activeConversationId: string | null;
-    
+
     // UI State
     messageInput: any;
     totalUnreadCount: number;
     conversationState: any;
-    
+
     // Typing indicators
     typingUsers: any[];
     isAnyoneTyping: boolean;
     typingText: string;
-    
+
     // Unread state
     unreadCount: number;
     hasUnreadMessages: boolean;
-    
+
     // Loading states
     isLoading: boolean;
     isLoadingConversations: boolean;
@@ -131,14 +124,14 @@ declare module '../useMessagingRQ' {
     isLoadingMoreMessages: boolean;
     isSendingMessage: boolean;
     isMarkingAsRead: boolean;
-    
+
     // Connection state
     isSocketConnected: boolean;
-    
+
     // Pagination
     hasNextPage: boolean | undefined;
     canLoadMore: boolean;
-    
+
     // Actions
     selectConversation: (conversationId: string) => void;
     sendMessage: (content: string, recipientId?: string) => Promise<void>;
@@ -147,23 +140,23 @@ declare module '../useMessagingRQ' {
     startTyping: () => void;
     stopTyping: () => void;
     refreshData: () => void;
-    
+
     // UI Actions
     setMessageContent: (content: string) => void;
     clearMessageInput: () => void;
     setNewMessageDialogOpen: (open: boolean) => void;
-    
+
     // Error states
     error: any;
     sendError: any;
-    
+
     // Advanced
     invalidateConversations: () => void;
     invalidateMessages: () => void;
     refetchConversations: () => void;
     refetchMessages: () => void;
   }
-  
+
   interface UseConversationRQReturn {
     messages: any[] | undefined;
     isLoading: boolean;

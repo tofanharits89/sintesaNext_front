@@ -479,6 +479,7 @@ export default function DashboardUtamaPage() {
           />
         )}
       </div>
+
       {/* Fourth Row: Large Bar Chart */}
       {isLoadingPersentaseKL ? (
         <BarChartSkeleton height={360} />

@@ -4,7 +4,7 @@
  */
 
 import { useUnreadBadgesStore } from '@/stores/unread-badges-store';
-import { useMessagingUIStore } from '@/stores/messaging-ui-store';
+import { useMessagingStore } from '@/stores/messaging-store';
 
 export interface UnreadSyncData {
   conversationId: string;
@@ -28,7 +28,7 @@ export function syncUnreadCounts(
   const { preserveActiveConversation = true, source = 'api' } = options;
   
   const unreadStore = useUnreadBadgesStore.getState();
-  const messagingStore = useMessagingUIStore.getState();
+  const messagingStore = useMessagingStore.getState();
   const activeConversationId = messagingStore.activeConversationId;
 
   const syncUpdates: Record<string, any> = {};

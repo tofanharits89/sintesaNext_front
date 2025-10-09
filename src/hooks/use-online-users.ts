@@ -58,13 +58,17 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
           }
         | OnlineUser[]
     ) => {
+      console.log("[useOnlineUsers] Received users:online event:", response);
+
       try {
         // Handle legacy format (direct array)
         if (Array.isArray(response)) {
+          console.log("[useOnlineUsers] Processing legacy array format:", response.length, "users");
           const usersWithTimestamp = response.map((user) => ({
             ...user,
             connectedAt: user.connectedAt || new Date().toISOString(),
           }));
+          console.log("[useOnlineUsers] Setting online users:", usersWithTimestamp);
           setOnlineUsers(usersWithTimestamp);
           return;
         }
@@ -115,6 +119,8 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
 
   // Subscribe to users:online and request initial list when connected
   useEffect(() => {
+    console.log("[useOnlineUsers] Setting up socket listeners, isConnected:", isConnected);
+
     // Register listeners (support both legacy and v2 events)
     on("users:online", handleUsersOnline);
     on("users:online:v2", handleUsersOnline);
@@ -122,10 +128,12 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
     // If connected, request initial users
     if (isConnected) {
       try {
+        console.log("[useOnlineUsers] Socket connected, requesting online users...");
         emit("users:get-online");
         // Also refresh list when we hear any user presence signals
         const refreshOnPresenceEvent = () => {
           try {
+            console.log("[useOnlineUsers] Presence event detected, refreshing users...");
             emit("users:get-online");
           } catch (err) {
             console.warn(
@@ -146,6 +154,8 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
           err
         );
       }
+    } else {
+      console.log("[useOnlineUsers] Socket not connected, will request users when connected");
     }
 
     return () => {

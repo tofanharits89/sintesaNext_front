@@ -115,6 +115,7 @@ export const useSocket = (): UseSocketReturn => {
       }
     };
 
+    // Add additional auth event listeners for comprehensive coverage
     const handleAuthExpired = (event: any) => {
       try {
         console.log('Auth expired event received:', event);

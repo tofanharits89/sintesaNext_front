@@ -1,128 +1,98 @@
-# Messaging Stores - Phase 1 Complete
+# Simplified Messaging Store
 
-This directory contains the Zustand stores for managing messaging system state. This is Phase 1 of migrating to the recommended combo: **React Query + Zustand + WebSocket**.
+This directory contains the simplified Zustand store for managing messaging system state. The implementation follows the **React Query + Zustand + WebSocket** pattern.
 
-## 🎯 Phase 1 Completed: Zustand Stores Setup
+## 🎯 Current Implementation: Simplified Store
 
-### Created Stores
+### Messaging Store (`messaging-store.ts`)
 
-#### 1. **Messaging UI Store** (`messaging-ui-store.ts`)
-Manages all UI-related state for the messaging system:
-- Active conversation selection
-- Message input state (content, typing, attachments, emoji picker)
-- Per-conversation UI state (scroll position, drafts, composing status)
-- Modal states (new message dialog, recipient selection)
-- Search and filtering
-- UI preferences (sidebar collapsed, message preview)
-- Loading states
+A unified store that consolidates all messaging client state:
 
-#### 2. **Typing Indicators Store** (`typing-indicators-store.ts`)
-Handles real-time typing indicators:
-- Tracks who is typing in each conversation
-- Automatic timeout cleanup (3 seconds)
-- Current user typing state
-- Formatted typing text for display
-- Supports multiple users typing simultaneously
+**Core State:**
+- `activeConversationId` - Currently selected conversation
+- `messageInput` - Message composition state (content, typing, attachments, reply)
+- `sidebarCollapsed` - UI preference for sidebar state
+- `messagePreviewEnabled` - UI preference for message previews
+- `isConnected` - Socket connection status
+- `typingUsers` - Real-time typing indicators per conversation
 
-#### 3. **Unread Badges Store** (`unread-badges-store.ts`)
-Manages unread message counts and badges:
-- Per-conversation unread counts
-- Total unread count across all conversations
-- Last read message tracking
-- Mention flags for priority notifications
-- Conversation priority sorting
-- Persistent storage with localStorage
+**Actions:**
+- `setActiveConversation(id)` - Change active conversation
+- `setMessageContent(content)` - Update message input
+- `setTyping(isTyping)` - Set typing state
+- `clearMessageInput()` - Reset message input
+- `addTypingUser(conversationId, user)` - Add typing indicator
+- `removeTypingUser(conversationId, userId)` - Remove typing indicator
+- `reset()` - Reset all state
 
-#### 4. **Notification Store** (`notification-store.ts`)
-Comprehensive notification management:
-- In-app notifications with different types
-- Browser notification support
-- Do Not Disturb mode with time ranges
-- Sound notifications with throttling
-- Toast notification management
-- Notification settings and preferences
+### Selectors for Better Performance
 
-### Key Features
-
-✅ **TypeScript Support** - Full type safety with interfaces and proper typing
-✅ **Persistence** - Important state persisted to localStorage
-✅ **DevTools Integration** - Zustand DevTools for debugging
-✅ **Performance Optimized** - Selective subscriptions with custom selectors
-✅ **Cross-tab Sync** - Some stores support cross-tab synchronization
-✅ **Automatic Cleanup** - Timeouts and cleanup for temporary state
+- `useActiveConversationId()` - Get active conversation ID
+- `useMessageInput()` - Get message input state
+- `useTypingUsers(conversationId)` - Get typing users for conversation
+- `useMessagingConnection()` - Get connection state and actions
 
 ### Usage Examples
 
 ```typescript
-import { 
-  useMessagingStores, 
-  useConversationStores, 
-  useMessagingActions 
+import {
+  useMessagingStore,
+  useActiveConversationId,
+  useMessageInput,
+  useTypingUsers
 } from '@/stores';
 
-// Global messaging state
-const { activeConversationId, totalUnreadCount } = useMessagingStores();
+// Get active conversation
+const activeConversationId = useActiveConversationId();
 
-// Conversation-specific state
-const { unreadCount, isAnyoneTyping, typingText } = useConversationStores('conv-123');
+// Get message input state
+const messageInput = useMessageInput();
 
-// All actions
-const { ui, typing, unread, notifications } = useMessagingActions();
+// Get typing indicators
+const typingUsers = useTypingUsers(activeConversationId || '');
 
-// Set active conversation
-ui.setActiveConversation('conv-123');
+// Use store actions directly
+const { setActiveConversation, setMessageContent, setTyping } = useMessagingStore();
 
-// Add typing indicator
-typing.addTypingUser('conv-123', {
-  userId: 'user-456',
-  username: 'john_doe',
-  name: 'John Doe',
-  startedAt: Date.now(),
-});
+// Select a conversation
+setActiveConversation('conv-123');
 
-// Update unread count
-unread.incrementUnreadCount('conv-123', 'msg-789', new Date().toISOString());
+// Update message content
+setMessageContent('Hello world!');
 
-// Add notification
-notifications.addNotification({
-  type: 'message',
-  title: 'New Message',
-  message: 'You have a new message from John Doe',
-  conversationId: 'conv-123',
-});
+// Set typing state
+setTyping(true);
 ```
-
-### Demo Component
-
-A demo component is available at `src/components/messaging/messaging-store-example.tsx` to test the stores. You can import and use it in any page to see the stores in action.
-
-## 🚀 Next Steps: Phase 2
-
-The next phase will involve:
-
-1. **Convert SWR to React Query** - Replace current SWR hooks with React Query
-2. **Integrate WebSocket with new stores** - Make WebSocket updates trigger both Zustand and React Query
-3. **Update existing components** - Migrate current messaging components to use the new stores
-4. **Implement optimistic updates** - Enhance the optimistic update flow with the new state management
 
 ## 📁 File Structure
 
 ```
 src/stores/
-├── messaging-ui-store.ts          # UI state management
-├── typing-indicators-store.ts     # Typing indicators
-├── unread-badges-store.ts         # Unread counts and badges
-├── notification-store.ts          # Notifications system
-├── index.ts                       # Exports and combined hooks
-└── README.md                      # This file
+├── messaging-store.ts          # Unified messaging store
+├── notification-store.ts       # Legacy notification store (still used)
+├── typing-indicators-store.ts  # Legacy typing store (still used)
+├── unread-badges-store.ts      # Legacy unread store (still used)
+├── session-store.ts            # Session management store
+├── index.ts                    # Exports
+└── README.md                   # This file
 ```
 
 ## 🔧 Development Notes
 
-- All stores use Zustand with DevTools integration
-- Stores are designed to work independently but can be combined
-- Persistence is selective - only important state is persisted
-- Performance is optimized with selective subscriptions
-- TypeScript interfaces ensure type safety throughout
+- **Simplified Architecture**: Single store for all messaging client state
+- **TypeScript Support**: Full type safety with interfaces
+- **DevTools Integration**: Zustand DevTools for debugging
+- **Performance Optimized**: Selective subscriptions with custom selectors
+- **React Query Integration**: Server state managed separately by React Query
+- **Real-time Updates**: WebSocket integration handled separately
 
-The foundation is now ready for Phase 2 of the migration!
+## 🚀 Integration with React Query
+
+This store works alongside React Query hooks:
+
+- `useConversationsRQ()` - Server state for conversations
+- `useMessagesRQ()` - Server state for messages
+- `useMessageMutationsRQ()` - Server mutations
+- `useMessagingRQ()` - Combined hook integrating store + React Query + WebSocket
+
+The simplified approach provides better maintainability while preserving all the functionality needed for real-time messaging.

@@ -12,7 +12,7 @@ import { preloadOnIdle } from "@/utils/chunk-preloader";
 export function ClientInit() {
   useEffect(() => {
     // Ensure we're on the client side
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     // Initialize performance monitoring
     performanceMonitor.measurePageLoad();
@@ -24,8 +24,10 @@ export function ClientInit() {
     // Prevent WebSocket connections during hydration
     const timer = setTimeout(() => {
       // Mark client as initialized and dispatch event
-      (window as any).__clientInitialized = true;
-      window.dispatchEvent(new CustomEvent('client-initialized'));
+      (
+        window as Window & { __clientInitialized?: boolean }
+      ).__clientInitialized = true;
+      window.dispatchEvent(new CustomEvent("client-initialized"));
     }, 100);
 
     return () => clearTimeout(timer);
