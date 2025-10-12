@@ -142,6 +142,8 @@ if (typeof window !== "undefined") {
 }
 
 async function refreshTokens(): Promise<void> {
+  const refreshTrace = `rf_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+  console.log("[Auth] 🔄 Starting refresh attempt", { trace: refreshTrace });
   // Basic cooldown to avoid spam on repeated 401s
   const now = Date.now();
   if (now - lastRefreshFailureAt < 3000) {
@@ -167,6 +169,9 @@ async function refreshTokens(): Promise<void> {
       headers: {
         "Content-Type": "application/json",
         ...(csrf ? { "X-CSRF-Token": String(csrf) } : {}),
+        "X-Debug-Source": "httpClient.refresh",
+        "X-Debug-Trace": refreshTrace,
+        "X-Debug-Ts": String(Date.now()),
       },
       body: JSON.stringify({}), // Backend will use cookies, no body token needed
     });
@@ -185,6 +190,9 @@ async function refreshTokens(): Promise<void> {
           headers: {
             "Content-Type": "application/json",
             ...(csrf2 ? { "X-CSRF-Token": String(csrf2) } : {}),
+            "X-Debug-Source": "httpClient.refresh.retry",
+            "X-Debug-Trace": refreshTrace,
+            "X-Debug-Ts": String(Date.now()),
           },
           body: JSON.stringify({}),
         });
@@ -287,25 +295,30 @@ http.interceptors.response.use(
     // Handle IP blocking - redirect to dedicated page
     // Log 403 errors for debugging
     if (status === 403) {
+      const dbgError = (data && typeof data === 'object' && 'data' in (data as any)) ? ((data as any).data?.error ?? (data as any).error) : (data as any)?.error;
+      const dbgCode = (data && typeof data === 'object' && 'data' in (data as any)) ? ((data as any).data?.code ?? (data as any).code) : (data as any)?.code;
       console.log('[httpClient] 403 error detected:', {
         url: original.url,
-        data: data,
-        hasCode: !!data?.code,
-        code: data?.code,
-        error: data?.error,
+        data,
+        hasCode: !!dbgCode,
+        code: dbgCode,
+        error: dbgError,
       });
     }
     
     // Check for IP_BLOCKED code OR any 403 with "blocked" in error message
     // OR just assume any 403 is IP block (since that's the most common case)
+    // Unwrap nested shapes: { success:false, data:{...} }
+    const body: any = (data && typeof data === 'object' && 'data' in data && typeof (data as any).data === 'object') ? (data as any).data : data;
+
     const isIPBlocked = status === 403 && (
-      data?.code === 'IP_BLOCKED' || 
-      data?.error?.toLowerCase().includes('blocked') ||
-      data?.error?.toLowerCase().includes('suspicious activity') ||
+      body?.code === 'IP_BLOCKED' || 
+      body?.error?.toLowerCase?.().includes('blocked') ||
+      body?.error?.toLowerCase?.().includes('suspicious activity') ||
       // If it's a 403 and not a permission error, assume IP block
-      (!data?.error?.toLowerCase().includes('permission') && 
-       !data?.error?.toLowerCase().includes('forbidden') &&
-       !data?.error?.toLowerCase().includes('access denied'))
+      (!body?.error?.toLowerCase?.().includes('permission') && 
+       !body?.error?.toLowerCase?.().includes('forbidden') &&
+       !body?.error?.toLowerCase?.().includes('access denied'))
     );
     
     if (isIPBlocked) {
@@ -325,21 +338,35 @@ http.interceptors.response.use(
         }
         (window as any).__redirectingToIPBlocked = true;
         
-        // Use the real TTL from backend (Redis)
-        const expiresIn = data?.expiresIn || 3600;
-        const reason = data?.error || 'Access temporarily blocked due to suspicious activity';
-        
-        // Calculate blockedAt based on real TTL from Redis
-        // This ensures the countdown is always accurate even after browser restart
-        const blockedAt = Date.now() - ((3600 - expiresIn) * 1000);
-        
-        console.log('[httpClient] Using real TTL from Redis:', expiresIn, 'seconds remaining');
-        console.log('[httpClient] Calculated blockedAt:', blockedAt);
-        
+        // Prefer server-provided timing info (unwrapped body)
+        const expiresIn: number = typeof body?.expiresIn === 'number' ? data.expiresIn : 3600;
+        const expiresAt: number | undefined = typeof body?.expiresAt === 'number' ? data.expiresAt : undefined;
+        const serverBlockedAt: number | undefined = typeof body?.blockedAt === 'number' ? data.blockedAt : undefined;
+        const reason: string = body?.blockReason || body?.error || 'Access temporarily blocked due to suspicious activity';
+
+        // Compute blockedAt and duration for the /ip-blocked page params
+        const DEFAULT_DURATION_MS = 3600 * 1000;
+        let finalBlockedAt: number;
+        let finalDurationSec: number = 3600;
+
+        if (typeof serverBlockedAt === 'number' && typeof expiresAt === 'number') {
+          finalBlockedAt = serverBlockedAt;
+          finalDurationSec = Math.max(1, Math.ceil((expiresAt - serverBlockedAt) / 1000));
+        } else if (typeof expiresAt === 'number') {
+          finalBlockedAt = expiresAt - DEFAULT_DURATION_MS;
+          finalDurationSec = Math.max(1, Math.ceil(DEFAULT_DURATION_MS / 1000));
+        } else {
+          // Fallback: derive when the block likely started from TTL
+          finalBlockedAt = Date.now() - ((3600 - expiresIn) * 1000);
+          finalDurationSec = 3600;
+        }
+
+        console.log('[httpClient] Block timing:', { expiresIn, expiresAt, serverBlockedAt, finalBlockedAt, finalDurationSec });
+
         const params = new URLSearchParams({
-          duration: '3600', // Original block duration (1 hour)
-          blockedAt: blockedAt.toString(),
-          reason: reason,
+          duration: String(finalDurationSec),
+          blockedAt: String(finalBlockedAt),
+          reason,
         });
         
         console.log('[httpClient] Redirecting to /ip-blocked with params:', params.toString());
@@ -381,18 +408,21 @@ http.interceptors.response.use(
       !isLogoutOrRefresh &&
       !original._skipAuthRefresh
     ) {
+      console.log("[Auth] 401 from:", original.url, "src:", (original.headers as any)?.['X-Debug-Source']);
       original._retry = true;
-      console.log("[Auth] Received 401, attempting HTTP-only refresh...");
+      console.log("[Auth] Received 401, attempting HTTP-only refresh...", { url: original.url, src: (original.headers as any)?.['X-Debug-Source'] });
       try {
         await refreshTokens();
         console.log(
-          "[Auth] HTTP-only refresh succeeded, retrying original request"
+          "[Auth] HTTP-only refresh succeeded, retrying original request",
+          { url: original.url, src: (original.headers as any)?.['X-Debug-Source'] }
         );
         return http.request(original);
       } catch (refreshError) {
         // Refresh failed - non-HTTP-only cookies should already be cleared by refreshTokens()
         console.log(
-          "[Auth] HTTP-only refresh failed, non-HTTP-only cookies cleared"
+          "[Auth] HTTP-only refresh failed, non-HTTP-only cookies cleared",
+          { url: original.url, src: (original.headers as any)?.['X-Debug-Source'] }
         );
         // Avoid retry storms: set failure time
         lastRefreshFailureAt = Date.now();

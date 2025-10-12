@@ -21,8 +21,8 @@ export async function GET(req: NextRequest) {
       cache: "no-store",
     });
 
-    const data = await resp.json().catch(() => ({}));
-    return NextResponse.json(data, { status: resp.status });
+    const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+    return proxyJsonOrNoContent(resp);
   } catch (e: any) {
     return NextResponse.json(
       { success: false, message: e.message },

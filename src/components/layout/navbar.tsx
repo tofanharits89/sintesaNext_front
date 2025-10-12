@@ -76,8 +76,8 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
     canAccessSettings,
   } = useUnifiedAuth();
 
-  // Use profile data from React Query if available, otherwise fall back to Zustand store
-  const currentUser: User | null | undefined = profileData || displayUser;
+  // Use profile data from React Query if available and valid, otherwise fall back to Zustand store
+  const currentUser: User | null | undefined = (profileData && typeof profileData === 'object' && 'id' in profileData && 'username' in profileData) ? profileData : displayUser;
   const router = useRouter();
   interface RecentMessage {
     id: string;

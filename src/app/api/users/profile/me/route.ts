@@ -77,8 +77,10 @@ export async function GET(request: NextRequest) {
         },
       },
     );
-    // Forward any Set-Cookie headers even on error (for token refresh)
-    forwardSetCookies(resp, errRes);
+    // Avoid forwarding Set-Cookie on 401 to prevent clearing tokens mid-refresh
+    if (resp.status !== 401) {
+      forwardSetCookies(resp, errRes);
+    }
     return errRes;
   }
 
@@ -101,6 +103,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const debugSource = request.headers.get("x-debug-source") || "profile.put.next";
+  const debugTrace = request.headers.get("x-debug-trace") || `prof_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+  console.log(`[Profile PUT] trace=${debugTrace} source=${debugSource} :: request received`);
   const cookie = request.headers.get("cookie") || "";
 
   if (!cookie) {
@@ -111,6 +116,11 @@ export async function PUT(request: NextRequest) {
   }
 
   const body = await request.json();
+  const dbgSrcHeader = request.headers.get("x-debug-source") || undefined;
+  const dbgTraceHeader = request.headers.get("x-debug-trace") || undefined;
+  const dbgTsHeader = Date.now().toString();
+
+  console.log(`[Profile PUT] trace=${dbgTraceHeader ?? 'n/a'} :: outbound to backend with cookies=${!!cookie}, bodyKeys=${Object.keys(body||{}).join(',')}`);
 
   // Call backend /users/profile/me endpoint
   const resp = await fetch(backendPath("/users/profile/me"), {
@@ -118,10 +128,56 @@ export async function PUT(request: NextRequest) {
     headers: {
       "Content-Type": "application/json",
       ...(cookie ? { cookie } : {}),
+      ...(dbgSrcHeader ? { "X-Debug-Source": String(dbgSrcHeader) } : {}),
+      ...(dbgTraceHeader ? { "X-Debug-Trace": String(dbgTraceHeader) } : {}),
+      "X-Debug-Ts": dbgTsHeader,
     },
     body: JSON.stringify(body),
   });
 
+  const backendSetCookie = resp.headers.get("set-cookie");
+  console.log(`[Profile PUT] trace=${dbgTraceHeader ?? 'n/a'} :: backend status=${resp.status} setCookiePresent=${!!backendSetCookie}`);
+
+  // Build JSON response and forward backend cookies first
   const data = await resp.json().catch(() => ({}));
-  return NextResponse.json(data, { status: resp.ok ? 200 : resp.status });
+  const res = NextResponse.json(data, { status: resp.ok ? 200 : resp.status });
+  forwardSetCookies(resp, res);
+
+  // If profile update succeeded, proactively refresh tokens to keep session mapping in sync
+  if (resp.ok) {
+    try {
+      const xsrfHeader =
+        request.headers.get("x-csrf-token") ||
+        request.headers.get("x-xsrf-token") ||
+        request.cookies.get("XSRF-TOKEN")?.value ||
+        undefined;
+
+      const refreshResp = await fetch(backendPath("/auth/refresh"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(cookie ? { cookie } : {}),
+          ...(xsrfHeader ? { "X-CSRF-Token": xsrfHeader } : {}),
+          "X-Debug-Source": "profile.put.refresh",
+          "X-Debug-Trace": dbgTraceHeader || debugTrace,
+          "X-Debug-Ts": Date.now().toString(),
+        },
+        credentials: "include",
+        cache: "no-store",
+        body: JSON.stringify({}),
+      });
+      const refreshSetCookie = refreshResp.headers.get("set-cookie");
+      console.log(`[Profile PUT] trace=${dbgTraceHeader ?? debugTrace} :: refresh status=${refreshResp.status} setCookiePresent=${!!refreshSetCookie}`);
+      if (refreshResp.ok) {
+        // Forward any rotated cookies (access/refresh/CSRF)
+        forwardSetCookies(refreshResp, res);
+      }
+    } catch (e) {
+      // Non-fatal: if refresh fails, client interceptor will handle a subsequent 401
+      console.warn("[Profile PUT] Token refresh after update failed:", (e as any)?.message || e);
+    }
+  }
+
+  console.log(`[Profile PUT] trace=${dbgTraceHeader ?? debugTrace} :: returning status=${resp.ok ? 200 : resp.status}`);
+  return res;
 }

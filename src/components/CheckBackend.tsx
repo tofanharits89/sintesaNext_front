@@ -60,37 +60,43 @@ export default function CheckBackend() {
         console.log('[CheckBackend] 403 response detected, checking for IP block');
         
         try {
-          const data = await response.json();
-          console.log('[CheckBackend] Response data:', data);
+          const raw = await response.json();
+          console.log('[CheckBackend] Response data:', raw);
+
+          // Support nested payloads: { success:false, data: { ...fields } }
+          const data: any = (raw && typeof raw === 'object' && 'data' in raw && typeof raw.data === 'object') ? raw.data : raw;
           
-          // Check if this is an IP block
-          if (data.code === 'IP_BLOCKED' || data.error?.includes('blocked')) {
+          const isIPBlocked = data?.code === 'IP_BLOCKED' || data?.error?.toLowerCase?.().includes('blocked');
+          if (isIPBlocked) {
             console.log('[CheckBackend] IP blocked detected, redirecting to IP blocked page');
             
-            // Use the real TTL from backend (Redis)
-            const expiresIn = data.expiresIn || 3600;
-            const reason = data.error || 'Access temporarily blocked due to suspicious activity';
+            const expiresIn: number = typeof data?.expiresIn === 'number' ? data.expiresIn : (typeof data?.expiresAt === 'number' ? Math.max(0, Math.ceil((data.expiresAt - Date.now())/1000)) : 3600);
+            const expiresAt: number | undefined = typeof data?.expiresAt === 'number' ? data.expiresAt : undefined;
+            const serverBlockedAt: number | undefined = typeof data?.blockedAt === 'number' ? data.blockedAt : undefined;
+            const reason: string = data?.blockReason || data?.error || 'Access temporarily blocked due to suspicious activity';
             
-            // Calculate blockedAt based on real TTL from Redis
-            // This ensures the countdown is always accurate even after browser restart
-            const blockedAt = Date.now() - ((3600 - expiresIn) * 1000);
-            
-            console.log('[CheckBackend] Using real TTL from Redis:', expiresIn, 'seconds remaining');
-            console.log('[CheckBackend] Calculated blockedAt:', blockedAt);
+            // Derive stable duration and blockedAt
+            const DEFAULT_MS = 3600 * 1000;
+            let finalBlockedAt: number;
+            let finalDurationSec: number;
+            if (typeof serverBlockedAt === 'number' && typeof expiresAt === 'number') {
+              finalBlockedAt = serverBlockedAt;
+              finalDurationSec = Math.max(1, Math.ceil((expiresAt - serverBlockedAt) / 1000));
+            } else if (typeof expiresAt === 'number') {
+              finalBlockedAt = expiresAt - DEFAULT_MS;
+              finalDurationSec = 3600;
+            } else {
+              finalBlockedAt = Date.now() - ((3600 - expiresIn) * 1000);
+              finalDurationSec = 3600;
+            }
             
             const params = new URLSearchParams({
-              duration: '3600', // Original block duration (1 hour)
-              blockedAt: blockedAt.toString(),
-              reason: reason,
+              duration: String(finalDurationSec),
+              blockedAt: String(finalBlockedAt),
+              reason,
             });
             
-            // Set state to prevent further checks
-            setHealthState({
-              attempts: 0,
-              lastCheck: Date.now(),
-              isChecking: false,
-            });
-            
+            setHealthState({ attempts: 0, lastCheck: Date.now(), isChecking: false });
             router.replace(`/ip-blocked?${params.toString()}`);
             return;
           }
@@ -98,21 +104,13 @@ export default function CheckBackend() {
           // If JSON parsing fails, assume it's IP block (403 is most likely IP block)
           console.warn('[CheckBackend] Failed to parse 403 response, assuming IP block:', jsonError);
           
-          // Assume full block duration since we can't get real TTL
-          const blockedAt = Date.now();
-          
           const params = new URLSearchParams({
             duration: '3600',
-            blockedAt: blockedAt.toString(),
+            blockedAt: String(Date.now()),
             reason: 'Access temporarily blocked',
           });
           
-          setHealthState({
-            attempts: 0,
-            lastCheck: Date.now(),
-            isChecking: false,
-          });
-          
+          setHealthState({ attempts: 0, lastCheck: Date.now(), isChecking: false });
           router.replace(`/ip-blocked?${params.toString()}`);
           return;
         }

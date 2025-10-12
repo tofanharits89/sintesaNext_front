@@ -44,8 +44,39 @@ export default async function RootLayout({
 
   return (
     <html lang="id" suppressHydrationWarning>
+      <head>
+        {/* Preload critical fonts for instant loading */}
+        <link
+          rel="preload"
+          href="/fonts/Geist/webfonts/Geist-Regular.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/Geist/webfonts/Geist-Medium.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/Geist/webfonts/Geist-SemiBold.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/Geist/webfonts/Geist-Bold.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} font-geist-sans antialiased`}
       >
         <ErrorBoundary>
           <QueryProvider>

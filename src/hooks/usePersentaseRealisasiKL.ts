@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { backendPath } from '@/lib/backend';
+import { apiPath } from '@/lib/base-path';
 
 // Check if we're running on the client side
 const isClient = typeof window !== 'undefined';
@@ -17,20 +17,17 @@ interface PersentaseRealisasiKLResponse {
 }
 
 // Allow optional filtering by kanwil (to match usage in dashboard page)
-export function usePersentaseRealisasiKL(params?: { kanwil?: string }) {
+export function usePersentaseRealisasiKL(params?: { kanwil?: string; enabled?: boolean }) {
   return useQuery<PersentaseRealisasiKL[]>({
     queryKey: ['persentase-realisasi-kl', params?.kanwil],
     queryFn: async () => {
-      const url = new URL(backendPath('/dashboard/persentase-realisasi-kl'));
-      if (params?.kanwil) {
-        url.searchParams.set('kanwil', params.kanwil);
-      }
+      // Use same-origin Next API proxy so httpOnly cookies (global auth) are forwarded
+      const url = new URL(apiPath('/dashboard/persentase-realisasi-kl'), window.location.origin);
+      if (params?.kanwil) url.searchParams.set('kanwil', params.kanwil);
 
       const response = await fetch(url.toString(), {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
       });
 
@@ -45,7 +42,7 @@ export function usePersentaseRealisasiKL(params?: { kanwil?: string }) {
 
       return result.data;
     },
-    enabled: isClient,
+    enabled: isClient && (params?.enabled ?? true),
     staleTime: 5 * 60 * 1000,
     retry: (failureCount, error) => {
       if (

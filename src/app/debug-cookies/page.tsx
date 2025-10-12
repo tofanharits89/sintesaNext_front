@@ -42,7 +42,8 @@ export default function DebugCookiesPage() {
             <p><strong>Has accessToken:</strong> {cookies.includes("accessToken=") ? "✅ YES" : "❌ NO"}</p>
             <p><strong>Has refresh_token:</strong> {cookies.includes("refresh_token=") ? "✅ YES" : "❌ NO"}</p>
             <p><strong>Has refreshToken:</strong> {cookies.includes("refreshToken=") ? "✅ YES" : "❌ NO"}</p>
-            <p><strong>Has csrf_token:</strong> {cookies.includes("csrf_token=") ? "✅ YES" : "❌ NO"}</p>
+            <p><strong>Has XSRF-TOKEN:</strong> {cookies.includes("XSRF-TOKEN=") ? "✅ YES" : "❌ NO"}</p>
+            <p><strong>Has legacy csrf_token:</strong> {cookies.includes("csrf_token=") ? "✅ YES" : "❌ NO"}</p>
           </div>
         </div>
       </div>

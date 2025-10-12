@@ -1,6 +1,6 @@
 import { Metadata } from "next";
-import { geistSans, geistMono } from "../fonts";
-import "../globals.css";
+import { geistSans, geistMono } from "../../fonts";
+import "../../globals.css";
 
 export const metadata: Metadata = {
   title: "IP Blocked - Access Temporarily Restricted",
@@ -19,7 +19,7 @@ export default function IPBlockedLayout({
 }) {
   return (
     <html lang="id" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} font-geist-sans antialiased`}>
         {children}
       </body>
     </html>

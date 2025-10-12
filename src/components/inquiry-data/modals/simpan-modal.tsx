@@ -63,6 +63,16 @@ export function SimpanModal({
   const [isRetrying, setIsRetrying] = useState(false);
 
   const { createQuery, isCreating, queries } = useSavedQueries();
+
+  // Debug: Log when saving queries (development only)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 SimpanModal - component loaded:', {
+      scope,
+      currentQueriesCount: queries.length,
+      reportParams,
+      activeFiltersCount: activeFilters.length
+    });
+  }
   const { isOnline } = useNetworkStatus();
 
   const handleInputChange = (field: string, value: string) => {
@@ -258,6 +268,14 @@ export function SimpanModal({
         filterValues: configuredFilterValues,
         scope, // Include scope in the saved query
       };
+
+      console.log('🔍 SimpanModal - attempting to save query:', {
+        queryData,
+        scope,
+        configuredActiveFilters,
+        configuredFilterValuesKeys: Object.keys(configuredFilterValues),
+        timestamp: new Date().toISOString()
+      });
 
       const savedQuery = await createQuery(queryData);
 

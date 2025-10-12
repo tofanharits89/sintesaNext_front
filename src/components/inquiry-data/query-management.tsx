@@ -47,6 +47,7 @@ import {
   savedQueryConfirmations,
   notificationUtils,
 } from "@/utils/notifications";
+import { savedQueryEvents } from "@/utils/saved-query-events";
 import type { SavedQuery } from "@/types/saved-queries";
 import { QueryListItem } from "./query-list-item";
 
@@ -72,6 +73,8 @@ export const QueryManagement = React.memo(function QueryManagement({
   onRefreshReady,
 }: QueryManagementProps) {
   // Track renders for debugging - only in development
+  // Note: useRenderTracker is called conditionally but only in development mode
+  // This is safe as the condition doesn't change during component lifecycle
   if (process.env.NODE_ENV === "development") {
     useRenderTracker(
       "QueryManagement",
@@ -133,6 +136,7 @@ export const QueryManagement = React.memo(function QueryManagement({
     isDeleting,
   } = useSavedQueries(queryParams);
 
+  
   // Filter and sort queries client-side for additional filtering
   const filteredAndSortedQueries = useMemo(() => {
     let filtered = [...queries];
@@ -344,6 +348,18 @@ export const QueryManagement = React.memo(function QueryManagement({
   // Automatically refetch data when component mounts or scope changes
   React.useEffect(() => {
     refetch();
+  }, [scope, refetch]);
+
+  // Effect to listen for saved query events and refresh when relevant
+  React.useEffect(() => {
+    const unsubscribe = savedQueryEvents.subscribe((event) => {
+      // Only refresh if the event is relevant to this scope
+      if (!event.scope || event.scope === scope || !scope) {
+        refetch();
+      }
+    });
+
+    return unsubscribe;
   }, [scope, refetch]);
 
   // Show loading skeleton on initial load

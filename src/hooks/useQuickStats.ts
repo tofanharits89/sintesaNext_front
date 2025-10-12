@@ -30,10 +30,11 @@ export type QSReturn = QuickStatsData & { _meta?: DashboardMeta };
 
 export interface UseQuickStatsOptions {
   kanwil?: string;
+  enabled?: boolean;
 }
 
 export function useQuickStats(options: UseQuickStatsOptions = {}): UseQueryResult<QSReturn, Error> {
-  const { kanwil } = options;
+  const { kanwil, enabled } = options;
   const isClient = typeof window !== "undefined";
   const queryClient = useQueryClient();
 
@@ -134,7 +135,7 @@ export function useQuickStats(options: UseQuickStatsOptions = {}): UseQueryResul
         throw error;
       }
     },
-    enabled: isClient,
+    enabled: isClient && (enabled ?? true),
     staleTime: 24 * 60 * 60 * 1000, // 24 hours to match backend cache
     retry: (failureCount, error) => {
       // Don't retry on authentication errors or timeout errors

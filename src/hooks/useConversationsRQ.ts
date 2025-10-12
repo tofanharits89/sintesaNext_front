@@ -4,7 +4,6 @@ import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useCallback } from "react";
 import { apiPath } from "@/lib/base-path";
 import { http } from "@/lib/httpClient"; // keep for other callers; not used in fetcher
-import { getAuthTokenFromCookie } from "@/lib/cookieManager";
 import { useSocket } from "./useSocket";
 import {
   SOCKET_EVENTS,
@@ -15,12 +14,13 @@ import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 
 // Query keys for React Query
 export const conversationKeys = {
-  all: ["conversations"] as const,
-  lists: () => [...conversationKeys.all, "list"] as const,
-  list: (filters: Record<string, any>) =>
-    [...conversationKeys.lists(), { filters }] as const,
-  details: () => [...conversationKeys.all, "detail"] as const,
-  detail: (id: string) => [...conversationKeys.details(), id] as const,
+  all: (userId?: string | null) => ["conversations", userId ?? "anonymous"] as const,
+  lists: (userId?: string | null) => [...conversationKeys.all(userId), "list"] as const,
+  list: (userId?: string | null, filters: Record<string, any> = {}) =>
+    [...conversationKeys.lists(userId), { filters }] as const,
+  details: (userId?: string | null) => [...conversationKeys.all(userId), "detail"] as const,
+  detail: (userId?: string | null, id: string = "") =>
+    [...conversationKeys.details(userId), id] as const,
 };
 
 // Fetcher that attaches auth and parses JSON safely (paginated by cursor)
@@ -66,6 +66,8 @@ const url = new URL(
 
 export function useConversations(options?: { enabled?: boolean }) {
   const queryClient = useQueryClient();
+  const { user: authUser } = useUnifiedAuth();
+  const listKey = conversationKeys.lists(authUser?.id);
 
   const {
     data,
@@ -76,7 +78,7 @@ export function useConversations(options?: { enabled?: boolean }) {
     fetchNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: conversationKeys.lists(),
+    queryKey: listKey,
     initialPageParam: null as string | null,
     queryFn: ({ pageParam }) =>
       fetchConversationsPage(pageParam as string | null, 20),
@@ -86,7 +88,7 @@ export function useConversations(options?: { enabled?: boolean }) {
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     refetchInterval: 5000, // Refetch every 5 seconds
-    enabled: options?.enabled ?? true,
+    enabled: (options?.enabled ?? true) && !!authUser?.id,
     retry: false, // Don't retry failed requests
   });
 
@@ -211,9 +213,9 @@ export function useConversations(options?: { enabled?: boolean }) {
           | undefined
       ) => { pages: ConversationsPage[]; pageParams: (string | null)[] }
     ) => {
-      queryClient.setQueryData(conversationKeys.lists(), updater as any);
+      queryClient.setQueryData(listKey, updater as any);
     },
-    [queryClient]
+    [queryClient, listKey]
   );
 
   // Helpers: optimistic add and reconcile for new conversations
@@ -714,7 +716,7 @@ export function useConversations(options?: { enabled?: boolean }) {
     isFetchingNextPage: !!isFetchingNextPage,
     // Additional React Query specific methods
     invalidateConversations: () =>
-      queryClient.invalidateQueries({ queryKey: conversationKeys.all }),
+      queryClient.invalidateQueries({ queryKey: conversationKeys.all(authUser?.id) }),
     refetchConversations: refetch,
   } as const;
 }

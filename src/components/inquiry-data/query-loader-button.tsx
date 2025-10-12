@@ -21,9 +21,11 @@ import {
   FileText,
   Settings,
   AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import { useSavedQueries } from "@/hooks/use-saved-queries";
 import { ButtonSpinner, InlineSpinner } from "@/components/ui/loading-states";
+import { savedQueryEvents } from "@/utils/saved-query-events";
 import type { SavedQuery } from "@/types/saved-queries";
 import { formatCalendarDate } from "@/lib/utils";
 import type { GetSavedQueriesParams } from "@/types/saved-queries";
@@ -48,6 +50,8 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
   scope = "general",
 }: QueryLoaderButtonProps) {
   // Track renders for debugging - only in development
+  // Note: useRenderTracker is called conditionally but only in development mode
+  // This is safe as the condition doesn't change during component lifecycle
   if (process.env.NODE_ENV === "development") {
     useRenderTracker(
       "QueryLoaderButton",
@@ -70,8 +74,6 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
   const queryParams = useMemo<
     (GetSavedQueriesParams & { scope?: QueryLoaderButtonProps["scope"] }) | undefined
   >(() => {
-    if (!isOpen) return undefined; // Prevent unnecessary fetches when closed
-
     const trimmed = searchQuery.trim();
     const base: GetSavedQueriesParams & { scope?: QueryLoaderButtonProps["scope"] } = {
       limit: 10,
@@ -81,40 +83,60 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
       base.search = trimmed;
     }
     return base;
-  }, [isOpen, searchQuery, scope]);
+  }, [searchQuery, scope]);
 
-  // Fetch saved queries with search - only when needed
+  // Fetch saved queries with search - enabled even when closed to keep cache fresh
   const {
     queries,
     isLoading: isLoadingQueries,
     error,
+    refetch: refetchQueries,
   } = useSavedQueries(queryParams);
 
+  // Debug log to see what data the dropdown is getting (development only)
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 QueryLoaderButton - updated queries:', {
+        scope,
+        queryCount: queries.length,
+        queryNames: queries.map(q => q.name),
+        queryParams
+      });
+    }
+  }, [queries, scope, queryParams]);
+
+  
   // Get filtered queries - only process when dropdown is open
   const filteredQueries = useMemo(() => {
-    if (!isOpen || !queries.length) {
+    if (!queries.length) {
       return [];
     }
 
     // If no search query, return recent queries (last 5)
     if (!searchQuery.trim()) {
-      return [...queries]
+      const recent = [...queries]
         .sort(
           (a, b) =>
             new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
         )
         .slice(0, 5);
+
+      
+      return recent;
     }
 
     // Filter queries based on search
     const searchLower = searchQuery.toLowerCase();
-    return queries.filter(
+    const filtered = queries.filter(
       (query) =>
         query.name.toLowerCase().includes(searchLower) ||
         (query.description &&
           query.description.toLowerCase().includes(searchLower))
     );
-  }, [queries, searchQuery, isOpen]);
+
+    
+    return filtered;
+  }, [queries, searchQuery]);
 
   const handleLoadQuery = useCallback(
     async (query: SavedQuery) => {
@@ -184,13 +206,33 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
     return undefined;
   }, [pendingQueryLoad, isLoading]);
 
+  // Effect to listen for saved query events and refresh when relevant
+  React.useEffect(() => {
+    const unsubscribe = savedQueryEvents.subscribe((event) => {
+      console.log('🔍 QueryLoaderButton - received event:', {
+        type: event.type,
+        scope: event.scope,
+        componentScope: scope
+      });
+
+      // Always refresh on any saved query event to show latest data
+      console.log('🔍 QueryLoaderButton - refreshing due to event');
+      refetchQueries();
+    });
+
+    return unsubscribe;
+  }, [scope, refetchQueries]);
+
   // Handle dropdown open/close
   const handleOpenChange = useCallback(
     (open: boolean) => {
       setIsOpen(open);
 
-      // Clear search when closing
-      if (!open) {
+      if (open) {
+        // Refresh queries when opening dropdown to ensure we have latest data
+        refetchQueries();
+      } else {
+        // Clear search when closing
         setSearchQuery("");
         // Also clear any pending state when manually closing
         if (pendingQueryLoad) {
@@ -198,7 +240,7 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
         }
       }
     },
-    [pendingQueryLoad]
+    [pendingQueryLoad, refetchQueries]
   );
 
   return (
@@ -321,6 +363,133 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
             </ScrollArea>
           </>
         )}
+
+        {/* Force Refresh Option */}
+        <DropdownMenuItem
+          className="flex items-center gap-2"
+          onClick={async () => {
+            console.log('🔍 Force refresh triggered');
+            
+            // Try multiple cache-busting strategies
+            const strategies = [
+              // Strategy 1: Standard refetch
+              () => refetchQueries(),
+              
+              // Strategy 2: Direct fetch with cache-busting
+              async () => {
+                const cacheBuster = `_bust_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                const params = new URLSearchParams({ page: '1', limit: '10', [cacheBuster]: '1', t: String(Date.now()) });
+                if (scope) params.set('scope', scope);
+                const url = `/api/saved-queries?${params.toString()}`;
+                
+                try {
+                  const response = await fetch(url, {
+                    credentials: 'include',
+                    headers: {
+                      'Cache-Control': 'no-cache, no-store, must-revalidate',
+                      'Pragma': 'no-cache',
+                      'Expires': '0',
+                      'If-None-Match': '*',
+                      'If-Modified-Since': new Date(0).toUTCString(),
+                    }
+                  });
+                  
+                  const data = await response.json();
+                  console.log('🔍 Cache-busting fetch result:', data);
+                  return data;
+                } catch (error) {
+                  console.error('🔍 Cache-busting fetch error:', error);
+                  return null;
+                }
+              },
+              
+              // Strategy 3: Add random query params multiple times
+              async () => {
+                for (let i = 0; i < 3; i++) {
+                  const random = Date.now() + Math.random();
+                  const params = new URLSearchParams({ page: '1', limit: '10', random: String(random), attempt: String(i), t: String(Date.now()) });
+                  if (scope) params.set('scope', scope);
+                  const url = `/api/saved-queries?${params.toString()}`;
+                  
+                  try {
+                    await fetch(url, {
+                      credentials: 'include',
+                      headers: { 'Cache-Control': 'no-cache' }
+                    });
+                    // Small delay between attempts
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                  } catch (error) {
+                    console.error(`🔍 Cache-busting attempt ${i} failed:`, error);
+                  }
+                }
+              }
+            ];
+            
+            // Execute all strategies
+            for (const strategy of strategies) {
+              await strategy();
+            }
+            
+            // Final refetch to ensure we have the latest cached data in React Query
+            await refetchQueries();
+            console.log('🔍 All cache-busting strategies completed');
+          }}
+        >
+          <RefreshCw className="w-4 h-4" />
+          Force Refresh
+        </DropdownMenuItem>
+
+        {/* Try Different Endpoint */}
+        <DropdownMenuItem
+          className="flex items-center gap-2"
+          onClick={async () => {
+            console.log('🔍 Trying different endpoints to bypass cache...');
+            
+            try {
+              // Try GET with different parameters to force backend cache invalidation
+              const make = (extra: Record<string,string>) => {
+                const p = new URLSearchParams({ page: '1', limit: '10', ...extra });
+                if (scope) p.set('scope', scope);
+                return `/api/saved-queries?${p.toString()}`;
+              };
+              const endpoints = [
+                make({ bypass: '1' }),
+                make({ nocache: '1' }),
+                make({ fresh: '1' }),
+                (() => { const p = new URLSearchParams({ page: '2', limit: '10', t: String(Date.now()) }); if (scope) p.set('scope', scope); return `/api/saved-queries?${p.toString()}`; })(),
+                (() => { const p = new URLSearchParams({ page: '1', limit: '5', t: String(Date.now()) }); if (scope) p.set('scope', scope); return `/api/saved-queries?${p.toString()}`; })(),
+                (() => { const p = new URLSearchParams({ page: '1', limit: '15', refresh: '1' }); if (scope) p.set('scope', scope); return `/api/saved-queries?${p.toString()}`; })(),
+              ];
+              
+              for (const endpoint of endpoints) {
+                try {
+                  await fetch(endpoint, {
+                    credentials: 'include',
+                    headers: {
+                      'Cache-Control': 'no-cache, no-store, must-revalidate',
+                      'Pragma': 'no-cache'
+                    }
+                  });
+                  console.log('🔍 Tried endpoint:', endpoint);
+                  // Small delay between requests
+                  await new Promise(resolve => setTimeout(resolve, 100));
+                } catch (error) {
+                  console.error('🔍 Endpoint failed:', endpoint, error);
+                }
+              }
+              
+              // Now refetch the original endpoint
+              console.log('🔍 Now calling original refetch...');
+              await refetchQueries();
+              
+            } catch (error) {
+              console.error('🔍 Different endpoint strategy failed:', error);
+            }
+          }}
+        >
+          <AlertCircle className="w-4 h-4" />
+          Try Different Endpoints
+        </DropdownMenuItem>
 
         {/* Unsaved Changes Warning */}
         {hasUnsavedChanges && (

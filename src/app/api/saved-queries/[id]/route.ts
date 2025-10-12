@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { backendPath } from "@/lib/backend";
+import { forwardSetCookies } from "@/lib/cookie-helpers";
 
 // PUT /v3/next/api/saved-queries/[id] -> proxies to backend PUT /api/v1/saved-queries/:id
 export async function PUT(request: Request, ctx: { params: Promise<{ id: string }> }) {
@@ -24,13 +25,19 @@ export async function PUT(request: Request, ctx: { params: Promise<{ id: string 
     },
     body: JSON.stringify(body),
   });
-  const data = await resp.json().catch(() => ({}));
-  return NextResponse.json(data, { status: resp.status });
+  const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+  return proxyJsonOrNoContent(resp, { forwardCookies: true });
 }
 
 // DELETE /v3/next/api/saved-queries/[id] -> proxies to backend DELETE /api/v1/saved-queries/:id
 export async function DELETE(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const cookie = request.headers.get("cookie") || "";
+  const hdrSource = request.headers.get("x-debug-source");
+  const hdrTrace = request.headers.get("x-debug-trace");
+  console.log("[API /saved-queries/:id DELETE] Incoming cookies present:", !!cookie);
+  if (hdrSource || hdrTrace) {
+    console.log("[API /saved-queries/:id DELETE] Debug headers:", { source: hdrSource, trace: hdrTrace });
+  }
   if (!cookie) {
     return NextResponse.json(
       { success: false, message: "No session" },
@@ -49,11 +56,15 @@ export async function DELETE(request: Request, ctx: { params: Promise<{ id: stri
     },
   });
 
+  console.log("[API /saved-queries/:id DELETE] Backend status:", resp.status);
+
   // Handle 204 No Content responses properly
   if (resp.status === 204) {
-    return NextResponse.json({ success: true, id: delId }, { status: 200 });
+    const res = NextResponse.json({ success: true, id: delId }, { status: 200 });
+    forwardSetCookies(resp, res);
+    return res;
   }
 
-  const data = await resp.json().catch(() => ({}));
-  return NextResponse.json(data, { status: resp.status });
+  const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+  return proxyJsonOrNoContent(resp, { forwardCookies: true });
 }

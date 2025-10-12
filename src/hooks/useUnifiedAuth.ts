@@ -334,6 +334,9 @@ export function useUnifiedAuth(): UseUnifiedAuthReturn {
           typeof cachedUser === "object" &&
           "id" in cachedUser &&
           "username" in cachedUser &&
+          "name" in cachedUser &&
+          "email" in cachedUser &&
+          "role" in cachedUser &&
           !("success" in cachedUser && cachedUser.success === false);
 
         // FIXED: Use deep comparison via user ID instead of reference comparison

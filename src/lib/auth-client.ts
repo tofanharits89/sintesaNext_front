@@ -5,7 +5,8 @@
  */
 
 import { logger } from "@/lib/utils";
-import { authenticatedFetch } from "./http-client";
+import { http } from "./httpClient";
+import { apiPath } from "./base-path";
 
 // User interface (matches backend API response)
 export interface User {
@@ -44,7 +45,7 @@ interface AuthResponse<T = unknown> {
 export class AuthClient {
   private baseURL: string;
 
-  constructor(baseURL: string = "/api/v1") {
+  constructor(baseURL: string = "/api") {
     this.baseURL = baseURL;
   }
 
@@ -63,7 +64,8 @@ export class AuthClient {
     error?: string;
   }> {
     try {
-      const response = await fetch(`${this.baseURL}/auth/login`, {
+      // Use apiPath to ensure consistent URL routing with httpClient
+      const response = await fetch(apiPath(`${this.baseURL}/auth/login`), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -75,8 +77,17 @@ export class AuthClient {
       const data: AuthResponse<{ user: User; csrfToken: string }> =
         await response.json();
 
+      // Debug: Log the raw response data
+      logger.info("[Auth Client] Raw login response:", { 
+        status: response.status, 
+        ok: response.ok, 
+        data: data 
+      });
+
       if (response.ok && data.success && data.data) {
         logger.info("Login successful");
+        // Debug: Log the parsed user data
+        logger.info("[Auth Client] Parsed user data:", data.data.user);
         return {
           success: true,
           user: data.data.user,
@@ -139,13 +150,11 @@ export class AuthClient {
     error?: string;
   }> {
     try {
-      const response = await authenticatedFetch(`${this.baseURL}/auth/me`, {
-        method: "GET",
-      });
+      const response = await http.get(`${this.baseURL}/auth/me`);
 
-      const data: AuthResponse<User | { user: User }> = await response.json();
+      const data: AuthResponse<User | { user: User }> = response.data;
 
-      if (response.ok && data.success && data.data) {
+      if (response.status === 200 && data.success && data.data) {
         // Handle both formats: data.data.user (new) or data.data (old)
         const user = "user" in data.data ? data.data.user : data.data;
         return { success: true, user };
@@ -173,17 +182,15 @@ export class AuthClient {
     error?: string;
   }> {
     try {
-      const response = await authenticatedFetch(
-        `${this.baseURL}/auth/validate`,
-        {
-          method: "GET",
-        },
+      // Request user details explicitly to preserve current consumers
+      const response = await http.get(
+        `${this.baseURL}/auth/validate?include=user`
       );
 
       const data: AuthResponse<{ valid: boolean; user: User }> =
-        await response.json();
+        response.data;
 
-      if (response.ok && data.success && data.data) {
+      if (response.status === 200 && data.success && data.data) {
         return {
           success: true,
           valid: data.data.valid,

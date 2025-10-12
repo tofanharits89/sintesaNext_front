@@ -21,6 +21,40 @@ interface RateLimitError {
   limit?: number;
 }
 
+function redirectToIPBlocked(opts: { expiresIn?: number; expiresAt?: number; blockedAt?: number; reason: string }): void {
+  const DEFAULT_DURATION_MS = 3600 * 1000;
+  const { expiresIn, expiresAt, blockedAt: serverBlockedAt, reason } = opts;
+
+  let finalBlockedAt: number;
+  let finalDurationSec: number;
+
+  if (typeof serverBlockedAt === 'number' && typeof expiresAt === 'number') {
+    finalBlockedAt = serverBlockedAt;
+    finalDurationSec = Math.max(1, Math.ceil((expiresAt - serverBlockedAt) / 1000));
+  } else if (typeof expiresAt === 'number') {
+    finalBlockedAt = expiresAt - DEFAULT_DURATION_MS;
+    finalDurationSec = Math.max(1, Math.ceil(DEFAULT_DURATION_MS / 1000));
+  } else if (typeof expiresIn === 'number') {
+    finalDurationSec = Math.max(1, Math.round(expiresIn));
+    // Assume 1-hour window for deriving start time when only TTL provided
+    finalBlockedAt = Date.now() - ((3600 - finalDurationSec) * 1000);
+  } else {
+    // Fallback
+    finalDurationSec = 3600;
+    finalBlockedAt = Date.now();
+  }
+
+  setTimeout(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams({
+      duration: String(finalDurationSec),
+      blockedAt: String(finalBlockedAt),
+      reason,
+    });
+    window.location.href = `/ip-blocked?${params.toString()}`;
+  }, 1000);
+}
+
 /**
  * Format time remaining in human-readable format
  */
@@ -48,7 +82,8 @@ function formatResetTime(timestamp: number): string {
  * Handle rate limit errors with user-friendly notifications
  */
 export function handleRateLimitError(error: AxiosError<RateLimitError>): void {
-  const data = error.response?.data;
+  const raw: any = error.response?.data;
+  const data: any = (raw && typeof raw === 'object' && 'data' in raw && typeof (raw as any).data === 'object') ? (raw as any).data : raw;
   
   if (!data) {
     toast.error('Permintaan gagal', {
@@ -60,7 +95,6 @@ export function handleRateLimitError(error: AxiosError<RateLimitError>): void {
   // Handle IP blocking - redirect to dedicated page
   if (data.code === 'IP_BLOCKED') {
     const expiresIn = data.expiresIn || 3600;
-    const blockedAt = Date.now();
     const reason = data.blockReason || data.error || 'Too many failed attempts or suspicious activity detected';
     
     // Show toast notification
@@ -70,16 +104,7 @@ export function handleRateLimitError(error: AxiosError<RateLimitError>): void {
     });
     
     // Redirect to IP blocked page with details
-    setTimeout(() => {
-      if (typeof window !== 'undefined') {
-        const params = new URLSearchParams({
-          duration: expiresIn.toString(),
-          blockedAt: blockedAt.toString(),
-          reason: reason,
-        });
-        window.location.href = `/ip-blocked?${params.toString()}`;
-      }
-    }, 1000);
+    redirectToIPBlocked({ expiresIn, expiresAt: data.expiresAt, blockedAt: (data as any).blockedAt, reason });
     
     return;
   }
@@ -102,6 +127,8 @@ export function handleRateLimitError(error: AxiosError<RateLimitError>): void {
         }
       }
     });
+
+    redirectToIPBlocked({ expiresIn: retryAfter, reason: data.error || 'Terlalu banyak percobaan login' });
     return;
   }
 
@@ -171,7 +198,8 @@ export function isRateLimitError(error: any): error is AxiosError<RateLimitError
   if (!error?.response) return false;
   
   const status = error.response.status;
-  const data = error.response.data;
+  const raw: any = error.response.data;
+  const data: any = (raw && typeof raw === 'object' && 'data' in raw && typeof (raw as any).data === 'object') ? (raw as any).data : raw;
   
   // Check for 429 status code
   if (status === 429) return true;
@@ -179,8 +207,8 @@ export function isRateLimitError(error: any): error is AxiosError<RateLimitError
   // Check for 403 with IP_BLOCKED code or blocked message
   if (status === 403 && (
     data?.code === 'IP_BLOCKED' || 
-    data?.error?.toLowerCase().includes('blocked') ||
-    data?.error?.toLowerCase().includes('suspicious activity')
+    data?.error?.toLowerCase?.().includes('blocked') ||
+    data?.error?.toLowerCase?.().includes('suspicious activity')
   )) {
     return true;
   }

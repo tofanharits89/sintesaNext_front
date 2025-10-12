@@ -49,34 +49,6 @@ export async function POST(req: NextRequest) {
   // The backend is responsible for clearing HttpOnly cookies
   forwardSetCookies(resp, res);
 
-  console.log("[Logout Route] Forwarded Set-Cookie headers from backend");
-
-  // Also manually append cookie clearing headers to ensure they're sent
-  // This is a backup in case forwardSetCookies doesn't work
-  const clearHeaders = [
-    "accessToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax",
-    "refreshToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax",
-    "accessToken=; Domain=localhost; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax",
-    "refreshToken=; Domain=localhost; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax",
-    // More aggressive clearing for proxy scenarios
-    "accessToken=; Domain=localhost:3000; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax",
-    "refreshToken=; Domain=localhost:3000; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax",
-    "accessToken=; Domain=localhost:88; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax",
-    "refreshToken=; Domain=localhost:88; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax",
-    // Non-HTTP-only variants that might exist
-    "accessToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax",
-    "refreshToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax",
-    // Max-Age variants
-    "accessToken=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax",
-    "refreshToken=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax",
-  ];
-
-  clearHeaders.forEach((header) => {
-    res.headers.append("set-cookie", header);
-  });
-
-  console.log("[Logout Route] Added manual Set-Cookie headers");
-
   // Invalidate Next middleware auth cache immediately
   try {
     // Extract access token from cookies to invalidate specific session

@@ -8,7 +8,8 @@ export async function GET(request: NextRequest) {
 
   // CRITICAL: If no auth cookies, return unauthenticated immediately
   // This prevents returning cached user data after logout
-  if (!cookie.includes("accessToken=") && !cookie.includes("refreshToken=")) {
+  if (!cookie.includes("access_token=") && !cookie.includes("refresh_token=") &&
+      !cookie.includes("accessToken=") && !cookie.includes("refreshToken=")) {
     return NextResponse.json(
       { success: false, error: "No authentication cookies" },
       {

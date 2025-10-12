@@ -9,6 +9,8 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { apiPath } from "@/lib/base-path";
 import { useSocket } from "./useSocket";
 import { conversationKeys } from "./useConversationsRQ";
+import { applyMessageToCache } from "./messaging-rq/cache-helpers";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 import {
   SOCKET_EVENTS,
   FrontendMessage,
@@ -93,8 +95,14 @@ const isQuarantined = (
 
 const PAGE_SIZE = 25;
 
-// Use centralized query keys
-export const messageKeys = queryKeyFactories.messaging;
+// Use centralized query keys with user scoping
+export const messageKeys = {
+  root: (userId?: string | null) => queryKeyFactories.messaging.all(userId),
+  messages: (userId?: string | null, conversationId?: string | null) =>
+    queryKeyFactories.messaging.messages(userId, conversationId),
+  thread: (userId?: string | null, conversationId?: string | null) =>
+    queryKeyFactories.messaging.thread(userId, conversationId),
+} as const;
 
 // Fetcher with auth headers and safe JSON parsing (cursor-based)
 const fetchMessages = async (
@@ -104,7 +112,7 @@ const fetchMessages = async (
   >,
 ) => {
   const { pageParam, queryKey } = context;
-  const [, , conversationId] = queryKey;
+  const [, , , conversationId] = queryKey;
 
   const url = new URL(
     apiPath(`/messaging/conversations/${conversationId}/messages`),
@@ -160,6 +168,13 @@ const fetchMessages = async (
 
 export function useMessages(conversationId?: string) {
   const queryClient = useQueryClient();
+  const { user: authUser } = useUnifiedAuth();
+  const userScopeId = authUser?.id ?? null;
+  const resolveMessageKey = useCallback(
+    (convId?: string | null) => messageKeys.messages(userScopeId, convId ?? ""),
+    [userScopeId]
+  );
+  const listKey = resolveMessageKey(conversationId);
 
   const isFetchable = (() => {
     if (!conversationId) return false;
@@ -293,7 +308,7 @@ export function useMessages(conversationId?: string) {
     ReturnType<typeof messageKeys.messages>,
     string | undefined
   >({
-    queryKey: messageKeys.messages(conversationId || ""),
+    queryKey: listKey,
     queryFn: fetchMessages,
     enabled: isFetchable && !!conversationId,
     staleTime: 0, // Always consider data stale
@@ -519,9 +534,9 @@ export function useMessages(conversationId?: string) {
   const updateMessagesCache = useCallback(
     (updater: (prev: any) => any) => {
       if (!conversationId) return;
-      queryClient.setQueryData(messageKeys.messages(conversationId), updater);
+      queryClient.setQueryData(resolveMessageKey(conversationId), updater);
     },
-    [conversationId, queryClient],
+    [conversationId, queryClient, resolveMessageKey],
   );
 
   // Socket -> cache updates
@@ -717,108 +732,54 @@ export function useMessages(conversationId?: string) {
         return;
       }
 
-      // If cache is empty before appending, schedule a backfill fetch after seeding
-      const prevCache = queryClient.getQueryData(
-        messageKeys.messages(conversationId),
-      );
+      const targetConversationId =
+        normalized.conversationId ||
+        (normalized as { conversation_id?: string }).conversation_id ||
+        conversationId;
+
+      if (!targetConversationId) {
+        remember(normalized.id || "unknown", normalized.content || "");
+        bump();
+        return;
+      }
+
+      const cacheKey = resolveMessageKey(targetConversationId);
+      const previousCache = queryClient.getQueryData(cacheKey);
       const wasEmpty =
-        !prevCache ||
-        !(prevCache as any).pages ||
-        (prevCache as any).pages.length === 0;
+        !previousCache ||
+        !Array.isArray((previousCache as { pages?: unknown[] }).pages) ||
+        (((previousCache as { pages?: unknown[] }).pages?.length) ?? 0) === 0;
 
-      updateMessagesCache((prev: any) => {
-        // Initialize cache if empty so first realtime message appears
-        if (!prev || !prev.pages || prev.pages.length === 0) {
-          // Seed with the incoming message so UI renders immediately
-          const seededMsg = {
-            id: normalized.id,
-            conversation_id: normalized.conversationId,
-            content: normalized.content,
-            timestamp: normalized.timestamp,
-            created_at: normalized.timestamp,
-            sender: normalized.sender,
-            senderType: normalized.senderType,
-            is_read: false,
-          };
-          // Mark that we seeded so we can trigger a backfill fetch below (outside updater)
-          (window as any).__messagesSeeded__ = true;
-          return {
-            pages: [
-              {
-                data: {
-                  messages: [seededMsg],
-                  pagination: {
-                    page: 1,
-                    limit: PAGE_SIZE,
-                    total: 1,
-                    hasMore: true, // unknown; allow backfill to load older
-                  },
-                },
-              },
-            ],
-            pageParams: [undefined],
-          };
-        }
+      const messageForCache: FrontendMessage & Record<string, unknown> = {
+        id: normalized.id,
+        conversationId: targetConversationId,
+        conversation_id: targetConversationId,
+        content: normalized.content,
+        timestamp: normalized.timestamp,
+        created_at: normalized.timestamp,
+        sender: normalized.sender,
+        senderType: normalized.senderType,
+        is_read: false,
+        isRead: false,
+      };
 
-        const copy = {
-          ...prev,
-          pages: prev.pages.map((p: any) => ({ ...p })),
-        };
-        const lastIdx = copy.pages.length - 1;
-        const last = { ...copy.pages[lastIdx] };
-        const list = Array.isArray(last?.data?.messages)
-          ? [...last.data.messages]
-          : [];
-
-        // Handle tempId reconciliation and message insertion logic here
-        // (Similar to the original SWR implementation)
-        const tempId = (normalized as any).tempId || null;
-        let filtered = list;
-
-        if (tempId) {
-          filtered = filtered.filter((msg: any) => msg.id !== tempId);
-        }
-
-        const newMsg = {
-          id: normalized.id,
-          conversation_id: normalized.conversationId,
-          content: normalized.content,
-          timestamp: normalized.timestamp,
-          created_at: normalized.timestamp,
-          sender: normalized.sender,
-          senderType: normalized.senderType,
-          is_read: false,
-        };
-
-        // Skip if this exact message id already exists (guards against duplicate socket events)
-        const existingIndex = filtered.findIndex(
-          (msg: any) => msg?.id === newMsg.id,
-        );
-        if (existingIndex === -1) {
-          // New message, add it
-          filtered.push(newMsg);
-        } else {
-          // Message exists, update it while preserving any local UI state
-          const existing = filtered[existingIndex];
-          filtered[existingIndex] = {
-            ...newMsg,
-            // Preserve local UI flags if they exist
-            _sending: existing._sending || false,
-            _failed: existing._failed || false,
-          };
-        }
-        last.data = { ...(last.data || {}), messages: filtered };
-        copy.pages[lastIdx] = last;
-        return copy;
+      applyMessageToCache({
+        queryClient,
+        userId: userScopeId,
+        conversationId: targetConversationId,
+        message: messageForCache,
+        tempId: incomingTempId,
+        seedPagination: { page: 1, limit: PAGE_SIZE, total: 1, hasMore: true },
       });
-      // If we had to seed because cache was empty, backfill immediately to fetch full history
+
       if (wasEmpty) {
+        try {
+          (window as any).__messagesSeeded__ = true;
+        } catch {}
         try {
           setTimeout(() => {
             try {
-              queryClient.refetchQueries({
-                queryKey: messageKeys.messages(conversationId),
-              });
+              queryClient.refetchQueries({ queryKey: cacheKey });
             } catch {}
           }, 0);
         } catch {}
@@ -1009,7 +970,7 @@ export function useMessages(conversationId?: string) {
         if (!Array.isArray(migrated) || migrated.length === 0) return;
 
         queryClient.setQueryData(
-          messageKeys.messages(conversationId),
+          resolveMessageKey(conversationId),
           (prev: any) => {
             const nowIso = new Date().toISOString();
             const toCache = migrated.map((m: any) => ({
@@ -1080,7 +1041,7 @@ export function useMessages(conversationId?: string) {
         );
       }
     };
-  }, [conversationId, isFetchable, on, off, updateMessagesCache, queryClient]);
+  }, [conversationId, isFetchable, on, off, updateMessagesCache, queryClient, resolveMessageKey]);
 
   // Optimistic insert helper for sending
   const optimisticInsert = (temp: FrontendMessage) => {
@@ -1157,11 +1118,11 @@ export function useMessages(conversationId?: string) {
     // React Query specific methods
     invalidateMessages: () =>
       queryClient.invalidateQueries({
-        queryKey: messageKeys.messages(conversationId || ""),
+        queryKey: resolveMessageKey(conversationId),
       }),
     refetchMessages: () =>
       queryClient.refetchQueries({
-        queryKey: messageKeys.messages(conversationId || ""),
+        queryKey: resolveMessageKey(conversationId),
       }),
   } as const;
 }

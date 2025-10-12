@@ -77,9 +77,9 @@ function extractAccessToken(request: NextRequest): string | null {
 /**
  * Server-side session validation with proper token verification
  */
-async function validateServerSession(accessToken: string): Promise<{ valid: boolean; user?: any; error?: string }> {
+async function validateServerSession(accessToken: string): Promise<{ valid: boolean; user?: any; error?: string; ipBlocked?: boolean; ipParams?: { duration: string; blockedAt: string; reason: string } }> {
   try {
-    const response = await fetch(`${ENV.API_BASE_URL}/api/v1/auth/validate`, {
+    const response = await fetch(`${ENV.API_BASE_URL}/api/v1/auth/validate?include=user`, {
       method: "GET",
       headers: {
         "Cookie": `${COOKIE_CONFIG.ACCESS_TOKEN}=${accessToken}`,
@@ -95,6 +95,38 @@ async function validateServerSession(accessToken: string): Promise<{ valid: bool
         user: data.data?.user,
         error: !data.success ? data.error : undefined
       };
+    } else if (response.status === 403) {
+      // Check for IP block and prepare redirect params
+      try {
+        const data = await response.json();
+        const isIPBlocked = data?.code === 'IP_BLOCKED' || data?.error?.toLowerCase?.().includes('blocked');
+        if (isIPBlocked) {
+          const expiresIn: number = typeof data?.expiresIn === 'number' ? data.expiresIn : 3600;
+          const expiresAt: number | undefined = typeof data?.expiresAt === 'number' ? data.expiresAt : undefined;
+          const blockedAtServer: number | undefined = typeof data?.blockedAt === 'number' ? data.blockedAt : undefined;
+          const DEFAULT_MS = 3600 * 1000;
+          let finalBlockedAt: number;
+          let finalDurationSec: number;
+          if (typeof blockedAtServer === 'number' && typeof expiresAt === 'number') {
+            finalBlockedAt = blockedAtServer;
+            finalDurationSec = Math.max(1, Math.ceil((expiresAt - blockedAtServer) / 1000));
+          } else if (typeof expiresAt === 'number') {
+            finalBlockedAt = expiresAt - DEFAULT_MS;
+            finalDurationSec = 3600;
+          } else {
+            finalBlockedAt = Date.now() - ((3600 - expiresIn) * 1000);
+            finalDurationSec = 3600;
+          }
+          const reason = data?.blockReason || data?.error || 'Access temporarily blocked';
+          const ipParams = {
+            duration: String(finalDurationSec),
+            blockedAt: String(finalBlockedAt),
+            reason,
+          };
+          return { valid: false, error: 'IP_BLOCKED', ipBlocked: true, ipParams };
+        }
+      } catch {}
+      return { valid: false, error: "Forbidden" };
     } else {
       // If validation fails, assume invalid
       return { valid: false, error: "Server validation failed" };
@@ -168,6 +200,48 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
+    // If visiting login while IP is blocked, redirect to /ip-blocked instead of showing server-error
+    if (pathname === "/login") {
+      try {
+        const resp = await fetch(`${ENV.API_BASE_URL}/health`, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          cache: 'no-store',
+        });
+        if (resp.status === 403) {
+          try {
+            const raw = await resp.json();
+            const data: any = (raw && typeof raw === 'object' && 'data' in raw && typeof (raw as any).data === 'object') ? (raw as any).data : raw;
+            const isIPBlocked = data?.code === 'IP_BLOCKED' || data?.error?.toLowerCase?.().includes('blocked');
+            if (isIPBlocked) {
+              const expiresIn: number = typeof data?.expiresIn === 'number' ? data.expiresIn : 3600;
+              const expiresAt: number | undefined = typeof data?.expiresAt === 'number' ? data.expiresAt : undefined;
+              const blockedAtServer: number | undefined = typeof data?.blockedAt === 'number' ? data.blockedAt : undefined;
+              const DEFAULT_MS = 3600 * 1000;
+              let finalBlockedAt: number;
+              let finalDurationSec: number;
+              if (typeof blockedAtServer === 'number' && typeof expiresAt === 'number') {
+                finalBlockedAt = blockedAtServer;
+                finalDurationSec = Math.max(1, Math.ceil((expiresAt - blockedAtServer) / 1000));
+              } else if (typeof expiresAt === 'number') {
+                finalBlockedAt = expiresAt - DEFAULT_MS;
+                finalDurationSec = 3600;
+              } else {
+                finalBlockedAt = Date.now() - ((3600 - expiresIn) * 1000);
+                finalDurationSec = 3600;
+              }
+              const reason = data?.blockReason || data?.error || 'Access temporarily blocked';
+              const ipUrl = new URL('/ip-blocked', request.url);
+              ipUrl.searchParams.set('duration', String(finalDurationSec));
+              ipUrl.searchParams.set('blockedAt', String(finalBlockedAt));
+              ipUrl.searchParams.set('reason', reason);
+              return NextResponse.redirect(ipUrl);
+            }
+          } catch {}
+        }
+      } catch {}
+    }
+
     return NextResponse.next();
   }
 
@@ -191,6 +265,15 @@ export async function middleware(request: NextRequest) {
     const validation = await validateServerSession(token);
     
     if (!validation.valid) {
+      // Redirect blocked IPs to /ip-blocked instead of login
+      if (validation.ipBlocked && validation.ipParams) {
+        const ipUrl = new URL("/ip-blocked", request.url);
+        for (const [k, v] of Object.entries(validation.ipParams)) {
+          ipUrl.searchParams.set(k, v);
+        }
+        return NextResponse.redirect(ipUrl);
+      }
+
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("returnTo", pathname);
       loginUrl.searchParams.set("reason", "session_expired");

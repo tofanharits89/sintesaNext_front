@@ -1,12 +1,17 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useEffect as ReactUseEffect } from "react";
 import { apiPath } from "@/lib/base-path";
+import { backendPath } from "@/lib/backend";
 import { apiClient, http } from "@/lib/httpClient";
-import { retrySavedQueryOperation, createNetworkAwareOperation } from "@/utils/errorHandling";
+import {
+  retrySavedQueryOperation,
+  createNetworkAwareOperation,
+} from "@/utils/errorHandling";
 import { createStableRef } from "@/utils/query-error-recovery";
 import { toast } from "sonner";
+import { savedQueryEvents } from "@/utils/saved-query-events";
 import type {
   SavedQuery,
   CreateSavedQueryRequest,
@@ -19,12 +24,47 @@ import type {
 // Enhanced fetcher with Axios + interceptors and comprehensive error handling
 const fetcher = async (url: string) => {
   try {
+    console.log("[useSavedQueries] Fetching URL:", url);
     // Using http directly allows passing an absolute URL as key
+    const _scope = (() => {
+      try {
+        const base = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
+        const u = new URL(String(url), base);
+        return u.searchParams.get('scope') || undefined;
+      } catch (_err) {
+        return undefined;
+      }
+    })();
+    const sameOrigin = (() => {
+      try {
+        const base = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
+        const u = new URL(String(url), base);
+        return typeof window !== 'undefined' ? (u.origin === window.location.origin) : true;
+      } catch {
+        return true;
+      }
+    })();
+    const headers: Record<string, string> = {};
+    if (sameOrigin) {
+      headers['X-Debug-Source'] = 'useSavedQueries.fetcher';
+      if (_scope) headers['X-Debug-Scope'] = _scope;
+      headers['X-Debug-Ts'] = String(Date.now());
+      headers['Cache-Control'] = 'no-cache';
+      headers['Pragma'] = 'no-cache';
+    }
     const resp = await http.get(url, {
+      headers,
       withCredentials: true,
       timeout: 30000,
     });
     const result = resp.data;
+    console.log("[useSavedQueries] API response:", {
+      success: result?.success,
+      queryCount: result?.data?.queries?.length || 0,
+      totalCount: result?.data?.pagination?.total || 0,
+      currentPage: result?.data?.pagination?.page || 0,
+      url: url
+    });
     if (result && result.success && result.data) {
       return result.data;
     }
@@ -32,7 +72,15 @@ const fetcher = async (url: string) => {
   } catch (err: any) {
     const status = err?.response?.status as number | undefined;
     const statusText = err?.response?.statusText;
-    const data = err?.response?.data;
+    const raw = err?.response?.data;
+    let data: any = raw;
+    if (typeof raw === "string") {
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        data = { message: raw };
+      }
+    }
 
     // Handle specific HTTP status codes
     let errorMessage = `HTTP ${status ?? "Error"}`;
@@ -70,7 +118,8 @@ const fetcher = async (url: string) => {
         errorMessage = "Service temporarily unavailable";
         break;
       default:
-        if (status) errorMessage = `Server error: ${status} ${statusText ?? ""}`.trim();
+        if (status)
+          errorMessage = `Server error: ${status} ${statusText ?? ""}`.trim();
     }
 
     // Parse backend error object if present
@@ -78,9 +127,15 @@ const fetcher = async (url: string) => {
       // Prefer explicit backend messages
       if (typeof data.message === "string" && data.message.trim()) {
         errorMessage = data.message;
-      } else if (typeof (data as any).error === "string" && (data as any).error.trim()) {
+      } else if (
+        typeof (data as any).error === "string" &&
+        (data as any).error.trim()
+      ) {
         errorMessage = (data as any).error;
-      } else if (Array.isArray((data as any).errors) && (data as any).errors.length > 0) {
+      } else if (
+        Array.isArray((data as any).errors) &&
+        (data as any).errors.length > 0
+      ) {
         // If validation errors exist, summarize the first few
         const firstMessages = (data as any).errors
           .map((e: any) => e?.message)
@@ -114,44 +169,42 @@ const fetcher = async (url: string) => {
 export function useSavedQueries(
   params: GetSavedQueriesParams & {
     scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak";
-  } = {}
+  } = {},
 ) {
   const queryClient = useQueryClient();
   // Stabilize params to prevent infinite loops
-  const stableParams = useMemo(
-    () =>
-      {
-        // sanitize inputs before creating a stable ref
-        const allowedScopes = [
-          "belanja",
-          "tematik",
-          "general",
-          "rkakl_detail",
-          "kontrak",
-        ] as const;
-        const rawPage = typeof params.page === "number" ? params.page : undefined;
-        const rawLimit = typeof params.limit === "number" ? params.limit : undefined;
-        const safePage = rawPage && Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
-        const safeLimit = rawLimit && Number.isFinite(rawLimit)
-          ? Math.min(100, Math.max(1, rawLimit))
-          : 10;
-        const trimmedSearch = params.search?.trim();
-        const safeSearch = trimmedSearch
-          ? trimmedSearch.slice(0, 255)
-          : undefined;
-        const safeScope = params.scope && allowedScopes.includes(params.scope)
-          ? params.scope
-          : undefined; // omit invalid scopes; backend treats scope as optional
+  const stableParams = useMemo(() => {
+    // sanitize inputs before creating a stable ref
+    const allowedScopes = [
+      "belanja",
+      "tematik",
+      "general",
+      "rkakl_detail",
+      "kontrak",
+    ] as const;
+    const rawPage = typeof params.page === "number" ? params.page : undefined;
+    const rawLimit =
+      typeof params.limit === "number" ? params.limit : undefined;
+    const safePage =
+      rawPage && Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
+    const safeLimit =
+      rawLimit && Number.isFinite(rawLimit)
+        ? Math.min(100, Math.max(1, rawLimit))
+        : 10;
+    const trimmedSearch = params.search?.trim();
+    const safeSearch = trimmedSearch ? trimmedSearch.slice(0, 255) : undefined;
+    const safeScope =
+      params.scope && allowedScopes.includes(params.scope)
+        ? params.scope
+        : undefined; // omit invalid scopes; backend treats scope as optional
 
-        return createStableRef({
-          page: safePage,
-          limit: safeLimit,
-          search: safeSearch,
-          scope: safeScope, // Include scope in stable params only if valid
-        });
-      },
-    [params.page, params.limit, params.search, params.scope]
-  );
+    return createStableRef({
+      page: safePage,
+      limit: safeLimit,
+      search: safeSearch,
+      scope: safeScope, // Include scope in stable params only if valid
+    });
+  }, [params.page, params.limit, params.search, params.scope]);
 
   // Build query key with query parameters - memoized to prevent infinite loops
   const key = useMemo(() => {
@@ -163,13 +216,20 @@ export function useSavedQueries(
     if (stableParams.search) searchParams.set("search", stableParams.search);
     if (stableParams.scope) searchParams.set("scope", stableParams.scope); // Include scope in API request
 
+    // Add cache-busting for refetches to bypass backend caching
+    if ('_cb' in stableParams && stableParams._cb) {
+      searchParams.set("_cb", stableParams._cb.toString());
+    }
+
     const queryString = searchParams.toString();
-return apiPath(`/saved-queries${queryString ? `?${queryString}` : ""}`);
+    // IMPORTANT: Use backend base URL directly to avoid proxy inconsistencies for GET list
+    return backendPath(`/saved-queries${queryString ? `?${queryString}` : ""}`);
   }, [
     stableParams.page,
     stableParams.limit,
     stableParams.search,
     stableParams.scope,
+    stableParams._cb,
   ]);
 
   // Main React Query hook for fetching saved queries with enhanced error handling
@@ -232,19 +292,53 @@ return apiPath(`/saved-queries${queryString ? `?${queryString}` : ""}`);
     });
   }, [queries, stableParams.scope]);
 
-  // Create saved query mutation with enhanced error handling
-  const createQueryMutation = useMutation<SavedQuery, any, CreateSavedQueryRequest>({
+  // Debug: Log when this hook's data changes and refetches
+  ReactUseEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[useSavedQueries] Data changed for scope', stableParams.scope, {
+        queryCount: data?.queries?.length || 0,
+        isLoading,
+        filteredCount: filteredQueries.length,
+        filteredQueryNames: filteredQueries.map(q => q.name),
+      });
+    }
+  }, [data, isLoading, filteredQueries, stableParams.scope]);
+
+  
+  // Create saved query mutation with optimistic updates and enhanced error handling
+  const createQueryMutation = useMutation<
+    SavedQuery,
+    any,
+    CreateSavedQueryRequest
+  >({
+    // Force fresh data instead of optimistic updates (due to cache sync issues)
+    // onMutate: async (newQuery: CreateSavedQueryRequest) => {
+    //   // Cancel any outgoing refetches
+    //   await queryClient.cancelQueries({ queryKey: ["saved-queries"] });
+      
+    //   console.log("[useSavedQueries] Optimistic update - adding query to cache");
+      
+    //   // Snapshot the previous value
+    //   const previousQueries = queryClient.getQueryData(["saved-queries", { scope: newQuery.scope }]);
+      
+    //   // Skip optimistic updates for now due to cache sync issues
+    //   return { previousQueries };
+    // },
+    
     mutationFn: async (arg: CreateSavedQueryRequest): Promise<SavedQuery> => {
+      console.log("[useSavedQueries] Starting mutation with arg:", arg);
       const res = await retrySavedQueryOperation(
         createNetworkAwareOperation(async () => {
           console.log("[useSavedQueries] Making request to create saved query");
           console.log("[useSavedQueries] Request payload:", arg);
+          console.log("[useSavedQueries] Request payload scope:", arg.scope);
 
           try {
             const result = await apiClient.post<any>("/saved-queries", arg, {
               timeout: 15000,
             });
             console.log("[useSavedQueries] API response:", result);
+            console.log("[useSavedQueries] Response data:", result.data);
 
             // Backend returns wrapped response: { success: true, data }
             if (result && result.success && result.data) {
@@ -260,7 +354,9 @@ return apiPath(`/saved-queries${queryString ? `?${queryString}` : ""}`);
 
             // Fallback: if no result body, attempt to fetch the newly created query by name/scope
             if (!result) {
-              console.warn("[useSavedQueries] Empty response on create; attempting fallback fetch");
+              console.warn(
+                "[useSavedQueries] Empty response on create; attempting fallback fetch",
+              );
               const searchParams = new URLSearchParams();
               searchParams.set("limit", "1");
               if (arg.name) searchParams.set("search", arg.name);
@@ -271,7 +367,10 @@ return apiPath(`/saved-queries${queryString ? `?${queryString}` : ""}`);
               const data = lookup?.data ?? lookup;
               const queries = (data?.queries ?? []) as SavedQuery[];
               if (Array.isArray(queries) && queries.length > 0) {
-                console.log("[useSavedQueries] Fallback fetch returned:", queries[0]);
+                console.log(
+                  "[useSavedQueries] Fallback fetch returned:",
+                  queries[0],
+                );
                 return queries[0];
               }
             }
@@ -283,8 +382,11 @@ return apiPath(`/saved-queries${queryString ? `?${queryString}` : ""}`);
           }
         }),
         "save",
-        { showToast: false }
+        { showToast: false },
       );
+
+      console.log("[useSavedQueries] Retry operation completed, result:", res);
+
       if (!res) {
         // Fallback fetch by name/scope after retries returned null
         try {
@@ -300,62 +402,184 @@ return apiPath(`/saved-queries${queryString ? `?${queryString}` : ""}`);
             return queries[0] as SavedQuery;
           }
         } catch (e) {
-          console.warn("[useSavedQueries] Fallback fetch after retry failed:", e);
+          console.warn(
+            "[useSavedQueries] Fallback fetch after retry failed:",
+            e,
+          );
         }
         throw new Error("Failed to create query - no response received");
       }
+
+      console.log("[useSavedQueries] Mutation function returning result:", res);
       return res as SavedQuery;
     },
-    onSuccess: (newQuery: SavedQuery) => {
-      // Optimistically update the cache - use functional update to prevent stale closures
-      queryClient.setQueryData<SavedQueriesResponse>(
-        ["saved-queries", stableParams],
-        (prev) => {
-          if (!prev || !Array.isArray(prev.queries)) {
-            return {
-              queries: [newQuery],
-              pagination: { page: 1, limit: 10, total: 1, totalPages: 1 },
-            };
-          }
-          return {
-            ...prev,
-            queries: [newQuery, ...prev.queries],
-            pagination: prev.pagination
-              ? {
-                  ...prev.pagination,
-                  total: prev.pagination.total + 1,
-                  totalPages: Math.ceil(
-                    (prev.pagination.total + 1) / prev.pagination.limit
-                  ),
-                }
-              : {
-                  page: 1,
-                  limit: 10,
-                  total: prev.queries.length + 1,
-                  totalPages: 1,
-                },
-          };
-        }
-      );
-
-      // Debounce cache invalidation to prevent rapid updates
+    
+    onSettled: (data, error, variables, context) => {
+      // Hard reset: Clear ALL cached data and force fresh fetch from database
+      console.log("[useSavedQueries] HARD RESET - clearing all saved-queries cache");
+      
+      // Clear all cache entries
+      queryClient.removeQueries({
+        queryKey: ["saved-queries"],
+        exact: false
+      });
+      
+      // Force immediate fresh fetch to avoid stale data
       setTimeout(() => {
-        queryClient.invalidateQueries({
+        console.log("[useSavedQueries] Fetching fresh data from database");
+        queryClient.refetchQueries({
           queryKey: ["saved-queries"],
+          exact: false
         });
       }, 100);
+    },
+    
+    onError: (error, variables, context) => {
+      // Rollback on error
+      if (context?.previousQueries) {
+        console.log("[useSavedQueries] Rolling back optimistic update on error");
+        queryClient.setQueryData(["saved-queries", { scope: variables.scope }], context.previousQueries);
+      }
+    },
+    onSuccess: async (newQuery: SavedQuery) => {
+      console.log("[useSavedQueries] Query saved successfully - invalidating cache:", {
+        id: newQuery.id,
+        name: newQuery.name,
+        scope: newQuery.scope,
+        activeFiltersCount: newQuery.activeFilters?.length,
+        reportParams: newQuery.reportParams
+      });
+
+      // Simple cache invalidation following TanStack Query best practices
+      console.log("[useSavedQueries] Invalidating saved-queries cache...");
+      
+      // Invalidate cache and wait for refetch to complete
+      await queryClient.invalidateQueries({
+        queryKey: ["saved-queries"],
+        exact: false, // Match all cache keys starting with ["saved-queries"]
+      });
+      
+      // Additional delay to ensure database transaction commits
+      // This addresses the race condition where refetch happens before DB commit
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Force a fresh fetch with cache-busting to bypass backend caching
+      console.log("[useSavedQueries] Performing force refresh with cache-busting...");
+      
+      // Create cache-busting parameters
+      const cacheBustKey = `_cb_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Direct API call to get fresh data (via apiClient to leverage interceptors)
+      try {
+        // Build params safely to avoid sending scope=undefined
+        const refreshParams = new URLSearchParams({ page: "1", limit: "10" });
+        if (newQuery.scope) {
+          refreshParams.set("scope", newQuery.scope);
+        }
+        refreshParams.set(cacheBustKey, "1");
+        const forceRefreshPath = `/saved-queries?${refreshParams.toString()}`;
+        const forceRefreshUrl = backendPath(forceRefreshPath);
+        console.log("[useSavedQueries] Force refresh URL:", forceRefreshUrl);
+
+        const freshData = await http
+          .get<any>(forceRefreshUrl)
+          .then(r => r.data)
+          .catch(() => ({} as any));
+        console.log("[useSavedQueries] Fresh data response:", {
+          success: freshData?.success,
+          queryCount: freshData?.data?.queries?.length || 0,
+          totalCount: freshData?.data?.pagination?.total || 0,
+          hasNewQuery: freshData?.data?.queries?.some((q: any) => q.id === newQuery.id)
+        });
+        
+        if (freshData?.success && freshData?.data) {
+          // Update React Query cache with fresh data for ALL possible query key combinations
+          console.log("[useSavedQueries] Updating cache keys with fresh data...");
+          
+          const commonKeys = [
+            ["saved-queries", { scope: newQuery.scope, page: 1, limit: 10 }],
+            ["saved-queries", { page: 1, limit: 10 }],
+            ["saved-queries", { scope: newQuery.scope }],
+            // Also invalidate and set for exact matching key patterns
+            ["saved-queries", stableParams],
+          ];
+          
+          commonKeys.forEach(key => {
+            console.log("[useSavedQueries] Setting cache data for key:", key);
+            queryClient.setQueryData(key, freshData.data);
+          });
+          
+          // Force a global cache update by invalidating all existing queries
+          queryClient.invalidateQueries({
+            queryKey: ["saved-queries"],
+            exact: false
+          });
+          
+          console.log("[useSavedQueries] Cache updated with fresh data for all key combinations");
+        } else {
+          console.error("[useSavedQueries] Fresh data fetch failed, response:", freshData);
+          // Fallback: ensure consumers still see the new query quickly by merging into caches
+          const fallbackData = (existing: any) => {
+            const base = existing && typeof existing === 'object' ? existing : { queries: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } };
+            const queries = Array.isArray(base.queries) ? base.queries : [];
+            const exists = queries.some((q: any) => q?.id === newQuery.id);
+            const merged = exists ? queries : [newQuery, ...queries];
+            const total = (base.pagination?.total ?? merged.length) + (exists ? 0 : 1);
+            return { queries: merged, pagination: { page: 1, limit: base.pagination?.limit ?? 10, total, totalPages: Math.max(1, Math.ceil(total / (base.pagination?.limit ?? 10))) } };
+          };
+          const keysToPatch: any[] = [
+            ["saved-queries", { scope: newQuery.scope, page: 1, limit: 10 }],
+            ["saved-queries", { page: 1, limit: 10 }],
+            ["saved-queries", { scope: newQuery.scope }],
+          ];
+          keysToPatch.forEach(k => {
+            const prev = queryClient.getQueryData(k);
+            queryClient.setQueryData(k, fallbackData(prev));
+          });
+        }
+      } catch (error) {
+        console.error("[useSavedQueries] Force refresh error:", error);
+      }
+      
+      console.log("[useSavedQueries] Cache invalidation completed");
+
+      // Publish event to notify components that data has changed
+      console.log(
+        "[useSavedQueries] Publishing saved event for scope:",
+        newQuery.scope,
+      );
+      savedQueryEvents.notifySaved(newQuery.scope);
+      
+      // Verify success (debug only)
+      setTimeout(() => {
+        const cacheData = queryClient.getQueryData(["saved-queries", { scope: newQuery.scope }]);
+        if (cacheData && cacheData.queries) {
+          const foundNewQuery = cacheData.queries.find((q: any) => q.id === newQuery.id);
+          console.log("[useSavedQueries] FINAL - Query appeared in cache:", !!foundNewQuery, {
+            totalQueries: cacheData.queries.length,
+            queryNames: cacheData.queries.map(q => q.name)
+          });
+        }
+      }, 500);
     },
   });
 
   // Update saved query mutation with enhanced error handling
-  const updateQueryMutation = useMutation<SavedQuery, any, { id: string; updates: UpdateSavedQueryRequest }>({
-    mutationFn: async (arg: { id: string; updates: UpdateSavedQueryRequest }): Promise<SavedQuery> => {
+  const updateQueryMutation = useMutation<
+    SavedQuery,
+    any,
+    { id: string; updates: UpdateSavedQueryRequest }
+  >({
+    mutationFn: async (arg: {
+      id: string;
+      updates: UpdateSavedQueryRequest;
+    }): Promise<SavedQuery> => {
       const res = await retrySavedQueryOperation(
         createNetworkAwareOperation(async () => {
           const result = await apiClient.put<any>(
             `/saved-queries/${arg.id}`,
             arg.updates,
-            { timeout: 10000 }
+            { timeout: 10000 },
           );
 
           if (result && result.success && result.data) {
@@ -364,31 +588,24 @@ return apiPath(`/saved-queries${queryString ? `?${queryString}` : ""}`);
           return result as SavedQuery;
         }),
         "update",
-        { showToast: false } // Let the component handle success/error toasts
+        { showToast: false }, // Let the component handle success/error toasts
       );
       return res as SavedQuery;
     },
     onSuccess: (updatedQuery: SavedQuery) => {
-      // Optimistically update the cache - use functional update to prevent stale closures
-      queryClient.setQueryData<SavedQueriesResponse>(
-        ["saved-queries", stableParams],
-        (prev) => {
-          if (!prev || !Array.isArray(prev.queries)) return prev;
-          return {
-            ...prev,
-            queries: prev.queries.map((q) =>
-              q.id === updatedQuery.id ? updatedQuery : q
-            ),
-          };
-        }
+      console.log(
+        "[useSavedQueries] Query updated successfully - invalidating cache:",
+        updatedQuery,
       );
 
-      // Debounce cache invalidation to prevent rapid updates
-      setTimeout(() => {
-        queryClient.invalidateQueries({
-          queryKey: ["saved-queries"],
-        });
-      }, 100);
+      // Invalidate cache to force fresh data fetch with updated query
+      queryClient.invalidateQueries({
+        queryKey: ["saved-queries"],
+        exact: false,
+      });
+
+      // Publish event for real-time updates across components
+      savedQueryEvents.notifyUpdated(updatedQuery.id, updatedQuery.scope);
     },
   });
 
@@ -398,9 +615,13 @@ return apiPath(`/saved-queries${queryString ? `?${queryString}` : ""}`);
       const result = await retrySavedQueryOperation(
         createNetworkAwareOperation(async () => {
           try {
+            const trace = `del_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+            console.log("[useSavedQueries] DELETE starting", { id: arg.id, trace });
             await apiClient.delete(`/saved-queries/${arg.id}`, {
               timeout: 10000,
+              headers: { 'X-Debug-Source': 'useSavedQueries.delete', 'X-Debug-Trace': trace }
             });
+            console.log("[useSavedQueries] DELETE completed", { id: arg.id, trace });
             return { id: arg.id };
           } catch (e: any) {
             const status = e?.response?.status;
@@ -415,42 +636,29 @@ return apiPath(`/saved-queries${queryString ? `?${queryString}` : ""}`);
           }
         }),
         "delete",
-        { showToast: false } // Let the component handle success/error toasts
+        { showToast: false }, // Let the component handle success/error toasts
       );
       return result as { id: string };
     },
     onSuccess: (param: { id: string }) => {
       const { id } = param;
-      
-      // Optimistically update the cache - use functional update to prevent stale closures
-      queryClient.setQueryData<SavedQueriesResponse>(
-        ["saved-queries", stableParams],
-        (prev) => {
-          if (!prev || !Array.isArray(prev.queries)) return prev;
-          return {
-            ...prev,
-            queries: prev.queries.filter((q) => q.id !== id),
-            pagination: prev.pagination
-              ? {
-                  ...prev.pagination,
-                  total: Math.max(0, prev.pagination.total - 1),
-                }
-              : {
-                  page: 1,
-                  limit: 10,
-                  total: Math.max(0, prev.queries.length - 1),
-                  totalPages: 1,
-                },
-          };
-        }
+
+      // Get the deleted query info before cache invalidation (for event publishing)
+      const deletedQuery = filteredQueries.find((q) => q.id === id);
+
+      console.log(
+        "[useSavedQueries] Query deleted successfully - invalidating cache:",
+        { id, deletedQueryName: deletedQuery?.name },
       );
 
-      // Debounce cache invalidation to prevent rapid updates
-      setTimeout(() => {
-        queryClient.invalidateQueries({
-          queryKey: ["saved-queries"],
-        });
-      }, 100);
+      // Invalidate cache to force fresh data fetch without the deleted query
+      queryClient.invalidateQueries({
+        queryKey: ["saved-queries"],
+        exact: false,
+      });
+
+      // Publish event for real-time updates across components
+      savedQueryEvents.notifyDeleted(id, deletedQuery?.scope);
     },
   });
 
@@ -462,24 +670,32 @@ return apiPath(`/saved-queries${queryString ? `?${queryString}` : ""}`);
         const result = await createQueryMutation.mutateAsync(queryData);
         console.log("[useSavedQueries] Create query result:", result);
         if (!result) {
-          console.error("[useSavedQueries] No result received from createQueryMutation.mutateAsync");
-          console.error("[useSavedQueries] Mutation error:", createQueryMutation.error);
+          console.error(
+            "[useSavedQueries] No result received from createQueryMutation.mutateAsync",
+          );
+          console.error(
+            "[useSavedQueries] Mutation error:",
+            createQueryMutation.error,
+          );
           throw new Error("Failed to create query - no response received");
         }
         return result;
       } catch (error) {
         console.error("[useSavedQueries] Create query failed:", error);
-        console.error("[useSavedQueries] Mutation error:", createQueryMutation.error);
+        console.error(
+          "[useSavedQueries] Mutation error:",
+          createQueryMutation.error,
+        );
         throw error;
       }
     },
-    [createQueryMutation.mutateAsync, createQueryMutation.error]
+    [createQueryMutation.mutateAsync, createQueryMutation.error],
   );
 
   const updateQuery = useCallback(
     async (
       id: string,
-      updates: UpdateSavedQueryRequest
+      updates: UpdateSavedQueryRequest,
     ): Promise<SavedQuery> => {
       try {
         const result = await updateQueryMutation.mutateAsync({ id, updates });
@@ -492,7 +708,7 @@ return apiPath(`/saved-queries${queryString ? `?${queryString}` : ""}`);
         throw error;
       }
     },
-    [updateQueryMutation.mutateAsync]
+    [updateQueryMutation.mutateAsync],
   );
 
   const deleteQuery = useCallback(
@@ -507,7 +723,7 @@ return apiPath(`/saved-queries${queryString ? `?${queryString}` : ""}`);
         throw error;
       }
     },
-    [deleteQueryMutation.mutateAsync]
+    [deleteQueryMutation.mutateAsync],
   );
 
   // Load query function - this doesn't make API calls but helps with state management
@@ -528,7 +744,7 @@ return apiPath(`/saved-queries${queryString ? `?${queryString}` : ""}`);
     (id: string): SavedQuery | undefined => {
       return filteredQueries.find((q) => q.id === id);
     },
-    [filteredQueries]
+    [filteredQueries],
   );
 
   // Add mutate alias for backward compatibility
@@ -568,7 +784,7 @@ return apiPath(`/saved-queries${queryString ? `?${queryString}` : ""}`);
  * Hook for fetching a single saved query by ID
  */
 export function useSavedQuery(id: string | null) {
-const key = id ? apiPath(`/saved-queries/${id}`) : null;
+  const key = id ? apiPath(`/saved-queries/${id}`) : null;
 
   const { data, error, isLoading, refetch } = useQuery<SavedQuery>({
     queryKey: ["saved-query", id],
@@ -613,7 +829,7 @@ export interface UseSavedQueriesReturn {
   createQuery: (data: CreateSavedQueryRequest) => Promise<SavedQuery>;
   updateQuery: (
     id: string,
-    data: UpdateSavedQueryRequest
+    data: UpdateSavedQueryRequest,
   ) => Promise<SavedQuery>;
   deleteQuery: (id: string) => Promise<void>;
   loadQuery: (query: SavedQuery) => SavedQuery;

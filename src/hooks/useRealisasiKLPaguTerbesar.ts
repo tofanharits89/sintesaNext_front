@@ -1,7 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiPath } from "@/lib/base-path";
-import { getAuthTokenFromCookie } from "@/lib/cookieManager";
-import { backendPath } from "@/lib/backend";
 
 // Data format for K/L dengan Pagu DIPA Terbesar
 interface KLPaguTerbesarItem {
@@ -19,12 +17,13 @@ interface KLPaguTerbesarResponse {
 
 interface UseRealisasiKLPaguTerbesarOptions {
   kanwil?: string;
+  enabled?: boolean;
 }
 
 export function useRealisasiKLPaguTerbesar(
   options: UseRealisasiKLPaguTerbesarOptions = {}
 ) {
-  const { kanwil } = options;
+  const { kanwil, enabled } = options;
   const isClient = typeof window !== "undefined";
 
   return useQuery<KLPaguTerbesarItem[], Error>({
@@ -73,7 +72,7 @@ export function useRealisasiKLPaguTerbesar(
         throw error;
       }
     },
-    enabled: isClient,
+    enabled: isClient && (enabled ?? true),
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error) => {
       // Don't retry on authentication errors

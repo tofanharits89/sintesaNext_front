@@ -1,7 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiPath } from "@/lib/base-path";
-import { getAuthTokenFromCookie } from "@/lib/cookieManager";
-import { backendPath } from "@/lib/backend";
 
 // Chart data format returned by the backend
 interface ChartData {
@@ -21,12 +19,13 @@ interface RealisasiKLPerFungsiResponse {
 
 interface UseRealisasiKLPerFungsiOptions {
   kanwil?: string;
+  enabled?: boolean;
 }
 
 export function useRealisasiKLPerFungsi(
   options: UseRealisasiKLPerFungsiOptions = {}
 ) {
-  const { kanwil } = options;
+  const { kanwil, enabled } = options;
   const isClient = typeof window !== "undefined";
 
   return useQuery<ChartData, Error>({
@@ -75,7 +74,7 @@ export function useRealisasiKLPerFungsi(
         throw error;
       }
     },
-    enabled: isClient,
+    enabled: isClient && (enabled ?? true),
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error) => {
       // Don't retry on authentication errors

@@ -19,11 +19,6 @@ export async function DELETE(
     headers: { ...(cookie ? { cookie } : {}) },
   });
 
-  let data: any = {};
-  try {
-    data = await resp.json();
-  } catch {
-    // ignore parse error, backend may return empty body on success
-  }
-  return NextResponse.json(data, { status: resp.status });
+  const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+  return proxyJsonOrNoContent(resp);
 }

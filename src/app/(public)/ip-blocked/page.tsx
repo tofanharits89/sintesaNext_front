@@ -42,15 +42,30 @@ function IPBlockedContent() {
         
         if (response.status === 403) {
           const data = await response.json();
-          if (data.code === 'IP_BLOCKED' && data.expiresIn) {
-            // Got real TTL from Redis, recalculate blockedAt
-            const realExpiresIn = data.expiresIn;
-            const realBlockedAt = Date.now() - ((3600 - realExpiresIn) * 1000);
-            
-            console.log('[IPBlocked] Synced with backend, real TTL:', realExpiresIn);
-            setBlockDuration(3600);
-            setBlockedAt(realBlockedAt);
-            setTimeRemaining(realExpiresIn);
+          if (data.code === 'IP_BLOCKED') {
+            // Prefer server-provided times if available
+            const expiresAt: number | undefined = typeof data.expiresAt === 'number' ? data.expiresAt : undefined;
+            const serverBlockedAt: number | undefined = typeof data.blockedAt === 'number' ? data.blockedAt : undefined;
+            const expiresIn: number = typeof data.expiresIn === 'number' ? data.expiresIn : (expiresAt ? Math.max(0, Math.ceil((expiresAt - Date.now())/1000)) : 3600);
+
+            let finalBlockedAt: number;
+            let finalDurationSec: number;
+
+            if (typeof serverBlockedAt === 'number' && typeof expiresAt === 'number') {
+              finalBlockedAt = serverBlockedAt;
+              finalDurationSec = Math.max(1, Math.ceil((expiresAt - serverBlockedAt) / 1000));
+            } else if (typeof expiresAt === 'number') {
+              finalBlockedAt = expiresAt - (3600 * 1000);
+              finalDurationSec = 3600;
+            } else {
+              finalBlockedAt = Date.now() - ((3600 - expiresIn) * 1000);
+              finalDurationSec = 3600;
+            }
+
+            console.log('[IPBlocked] Synced with backend', { expiresIn, expiresAt, serverBlockedAt, finalBlockedAt, finalDurationSec });
+            setBlockDuration(finalDurationSec);
+            setBlockedAt(finalBlockedAt);
+            setTimeRemaining(Math.max(0, Math.min(finalDurationSec, expiresIn)));
             setIsValidating(false);
           } else {
             // 403 but not IP_BLOCKED - redirect to login

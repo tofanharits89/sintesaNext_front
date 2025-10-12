@@ -47,12 +47,14 @@ class CSRFManager {
       return this.refreshPromise;
     }
     
-    this.refreshPromise = this.fetchToken();
-    
-    try {
-      const token = await this.refreshPromise;
-      this.cacheToken(token);
+    this.refreshPromise = (async () => {
+      const { token, expiresIn } = await this.fetchToken();
+      this.cacheToken(token, expiresIn);
       return token;
+    })();
+
+    try {
+      return await this.refreshPromise;
     } finally {
       this.refreshPromise = null;
     }
@@ -73,8 +75,7 @@ class CSRFManager {
       return decodeURIComponent(value.split('=')[1] || '');
     };
     
-    // Try both cookie names for compatibility
-    return getCookie('XSRF-TOKEN') || getCookie('csrf-token');
+    return getCookie('XSRF-TOKEN');
   }
   
   /**
@@ -120,15 +121,19 @@ class CSRFManager {
   /**
    * Cache token with expiration
    */
-  private cacheToken(token: string): void {
-    const expiresAt = Date.now() + 8 * 60 * 60 * 1000; // 8 hours
+  private cacheToken(token: string, expiresInSeconds?: number): void {
+    const ttlMs =
+      typeof expiresInSeconds === 'number' && expiresInSeconds > 0
+        ? expiresInSeconds * 1000
+        : 8 * 60 * 60 * 1000;
+    const expiresAt = Date.now() + ttlMs;
     this.cache.set('default', { token, expiresAt });
   }
   
   /**
    * Fetch new token from backend
    */
-  private async fetchToken(): Promise<string> {
+  private async fetchToken(): Promise<{ token: string; expiresIn?: number }> {
     const response = await fetch(apiPath('/csrf-token'), {
       method: 'GET',
       credentials: 'include',
@@ -154,7 +159,7 @@ class CSRFManager {
       expiresIn: data.expiresIn
     });
     
-    return data.token;
+    return { token: data.token, expiresIn: data.expiresIn };
   }
   
   /**

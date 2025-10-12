@@ -49,14 +49,28 @@ export default function ServerErrorPage() {
             if (data.code === 'IP_BLOCKED' || data.error?.includes('blocked')) {
               console.log("[ServerError] IP is blocked, redirecting to ip-blocked page");
               
-              const expiresIn = data.expiresIn || 3600;
-              const blockedAt = Date.now() - ((3600 - expiresIn) * 1000);
-              const reason = data.error || 'Access temporarily blocked';
+              const expiresIn: number = typeof data.expiresIn === 'number' ? data.expiresIn : 3600;
+              const expiresAt: number | undefined = typeof data.expiresAt === 'number' ? data.expiresAt : undefined;
+              const serverBlockedAt: number | undefined = typeof data.blockedAt === 'number' ? data.blockedAt : undefined;
+              const reason = data.blockReason || data.error || 'Access temporarily blocked';
+              const DEFAULT_MS = 3600 * 1000;
+              let finalBlockedAt: number;
+              let finalDurationSec: number;
+              if (typeof serverBlockedAt === 'number' && typeof expiresAt === 'number') {
+                finalBlockedAt = serverBlockedAt;
+                finalDurationSec = Math.max(1, Math.ceil((expiresAt - serverBlockedAt) / 1000));
+              } else if (typeof expiresAt === 'number') {
+                finalBlockedAt = expiresAt - DEFAULT_MS;
+                finalDurationSec = 3600;
+              } else {
+                finalBlockedAt = Date.now() - ((3600 - expiresIn) * 1000);
+                finalDurationSec = 3600;
+              }
               
               const params = new URLSearchParams({
-                duration: '3600',
-                blockedAt: blockedAt.toString(),
-                reason: reason,
+                duration: String(finalDurationSec),
+                blockedAt: String(finalBlockedAt),
+                reason,
               });
               
               router.replace(`/ip-blocked?${params.toString()}`);

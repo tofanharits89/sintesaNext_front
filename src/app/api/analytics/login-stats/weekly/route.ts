@@ -24,8 +24,8 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    const data = await resp.json();
-    return NextResponse.json(data, { status: resp.status });
+    const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+    return proxyJsonOrNoContent(resp);
   } catch (error) {
     console.error("Error fetching weekly login stats:", error);
     return NextResponse.json(

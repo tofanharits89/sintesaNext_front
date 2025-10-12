@@ -5,6 +5,7 @@ import { apiPath } from "@/lib/base-path";
 import { getCookie, prefetchCsrf } from "@/lib/httpClient";
 import { conversationKeys } from "./useConversationsRQ";
 import { messageKeys } from "./useMessagesRQ";
+import { applyMessageToCache } from "./messaging-rq/cache-helpers";
 import { useSocket } from "./useSocket";
 import { FrontendMessage } from "@/types/socket-events";
 import { useMessageActions, useMessagingActions, useMessagingStore } from "@/stores";
@@ -44,6 +45,9 @@ export function useSendMessageMutation() {
   const messageActions = useMessageActions();
   const { unread } = useMessagingActions();
   const { user: currentUser } = useUnifiedAuth();
+  const userScopeId = currentUser?.id ?? null;
+  const messageKeyFor = (convId?: string | null) =>
+    messageKeys.messages(userScopeId, convId ?? "");
 
   const fetchWithTimeout = async (
     input: RequestInfo | URL,
@@ -265,75 +269,17 @@ export function useSendMessageMutation() {
           isDelivered: false,
         };
 
-        // Update messages cache optimistically
-        queryClient.setQueryData(
-          messageKeys.messages(convKeyId),
-          (prev: any) => {
-            if (!prev || !prev.pages || prev.pages.length === 0) {
-              // Initialize with first page containing the temp message
-              return {
-                pages: [
-                  {
-                    data: {
-                      messages: [
-                        {
-                          id: tempId,
-                          conversation_id: convKeyId,
-                          content: content.trim(),
-                          timestamp: optimisticMessage.timestamp,
-                          created_at: optimisticMessage.timestamp,
-                          sender: optimisticMessage.sender,
-                          senderType: optimisticMessage.senderType,
-                          is_read: false,
-                          _sending: true,
-                          _failed: false,
-                        },
-                      ],
-                      pagination: {
-                        page: 1,
-                        limit: 50,
-                        total: 1,
-                        hasMore: false,
-                      },
-                    },
-                  },
-                ],
-                pageParams: [1],
-              };
-            }
-
-            const copy = {
-              ...prev,
-              pages: prev.pages.map((p: any) => ({ ...p })),
-            };
-            const lastIdx = copy.pages.length - 1;
-            const last = { ...copy.pages[lastIdx] };
-            const list = Array.isArray(last?.data?.messages)
-              ? [...last.data.messages]
-              : [];
-            // Guard: avoid duplicating the same temp message
-            if (list.some((m: any) => m.id === tempId)) {
-              return prev;
-            }
-
-            list.push({
-              id: tempId,
-              conversation_id: convKeyId,
-              content: content.trim(),
-              timestamp: optimisticMessage.timestamp,
-              created_at: optimisticMessage.timestamp,
-              sender: optimisticMessage.sender,
-              senderType: optimisticMessage.senderType,
-              is_read: false,
-              _sending: true,
-              _failed: false,
-            });
-
-            last.data = { ...(last.data || {}), messages: list };
-            copy.pages[lastIdx] = last;
-            return copy;
-          }
-        );
+        applyMessageToCache({
+          queryClient,
+          userId: userScopeId,
+          conversationId: convKeyId,
+          message: {
+            ...optimisticMessage,
+            _sending: true,
+            _failed: false,
+          } as FrontendMessage & Record<string, unknown>,
+          seedPagination: { page: 1, limit: 50, total: 1, hasMore: false },
+        });
 
         // Update conversations list optimistically (align with useInfiniteQuery cache shape)
         queryClient.setQueryData(conversationKeys.lists(), (prev: any) => {
@@ -407,35 +353,17 @@ export function useSendMessageMutation() {
       if (convKeyId && tempId) {
         watchdog = setTimeout(() => {
           try {
-            queryClient.setQueryData(
-              messageKeys.messages(convKeyId),
-              (prev: any) => {
-                if (!prev?.pages) return prev;
-                const copy = {
-                  ...prev,
-                  pages: prev.pages.map((p: any) => ({ ...p })),
-                };
-                for (let pi = 0; pi < copy.pages.length; pi++) {
-                  const p = copy.pages[pi];
-                  const msgs = Array.isArray(p?.data?.messages)
-                    ? p.data.messages.map((m: any) => {
-                        if (m?.id === tempId) {
-                          // Only flip if still sending
-                          if ((m as any)._sending) {
-                            return { ...m, _sending: false, _failed: true };
-                          }
-                        }
-                        return m;
-                      })
-                    : p?.data?.messages;
-                  copy.pages[pi] = {
-                    ...p,
-                    data: { ...(p?.data || {}), messages: msgs },
-                  };
-                }
-                return copy;
-              }
-            );
+            applyMessageToCache({
+              queryClient,
+              userId: userScopeId,
+              conversationId: convKeyId,
+              message: {
+                id: tempId,
+                conversationId: convKeyId,
+                _sending: false,
+                _failed: true,
+              } as FrontendMessage & Record<string, unknown>,
+            });
             try {
               try {
                 console.log("[MSG DEBUG] watchdog firing -> fail", {
@@ -544,118 +472,38 @@ export function useSendMessageMutation() {
             convKeyId,
             tempId,
             realMsgId,
-            content: (content || "").trim()
+            content: (content || "").trim(),
           });
 
-          queryClient.setQueryData(
-            messageKeys.messages(convKeyId),
-            (prev: any) => {
-              if (!prev?.pages) {
-                console.log("[MSG DEBUG] No existing messages cache, creating new one");
-                // Create new cache with this message
-                const optimisticSender = currentUser
-                  ? {
-                      id: currentUser.id,
-                      username: currentUser.username || "you",
-                      name: currentUser.name || "You",
-                    }
-                  : { id: "current-user", username: "you", name: "You" };
-                
-                return {
-                  pages: [
-                    {
-                      data: {
-                        messages: [
-                          {
-                            id: realMsgId || tempId,
-                            conversation_id: convKeyId,
-                            content: content.trim(),
-                            timestamp: new Date().toISOString(),
-                            created_at: new Date().toISOString(),
-                            sender: optimisticSender,
-                            senderType: "user",
-                            is_read: true,
-                            isRead: true,
-                            _sending: false,
-                            _failed: false,
-                          },
-                        ],
-                        pagination: {
-                          page: 1,
-                          limit: 50,
-                          total: 1,
-                          hasMore: false,
-                        },
-                      },
-                    },
-                  ],
-                  pageParams: [1],
-                };
+          const optimisticSender = currentUser
+            ? {
+                id: currentUser.id,
+                username: currentUser.username || "you",
+                name: currentUser.name || "You",
               }
+            : { id: "current-user", username: "you", name: "You" };
 
-              const copy = {
-                ...prev,
-                pages: prev.pages.map((p: any) => ({ ...p })),
-              };
-              
-              let messageUpdated = false;
-              for (let pi = 0; pi < copy.pages.length; pi++) {
-                const p = copy.pages[pi];
-                const msgs = Array.isArray(p?.data?.messages)
-                  ? p.data.messages.map((m: any) => {
-                      if (m?.id === tempId) {
-                        messageUpdated = true;
-                        // Update the message with real ID and clear sending flags
-                        return {
-                          ...m,
-                          id: realMsgId || m.id, // Use real ID if available
-                          content: content.trim(),
-                          _sending: false,
-                          _failed: false,
-                          isRead: true, // Mark as read since sender sent it
-                          is_read: true,
-                        };
-                      }
-                      return m;
-                    })
-                  : p?.data?.messages;
-                
-                // If we didn't find the temp message, add this new message
-                if (!messageUpdated && pi === copy.pages.length - 1) {
-                  const optimisticSender = currentUser
-                    ? {
-                        id: currentUser.id,
-                        username: currentUser.username || "you",
-                        name: currentUser.name || "You",
-                      }
-                    : { id: "current-user", username: "you", name: "You" };
-                  
-                  msgs.push({
-                    id: realMsgId || tempId,
-                    conversation_id: convKeyId,
-                    content: content.trim(),
-                    timestamp: new Date().toISOString(),
-                    created_at: new Date().toISOString(),
-                    sender: optimisticSender,
-                    senderType: "user",
-                    is_read: true,
-                    isRead: true,
-                    _sending: false,
-                    _failed: false,
-                  });
-                  console.log("[MSG DEBUG] Added new message to cache");
-                }
-                
-                copy.pages[pi] = {
-                  ...p,
-                  data: { ...(p?.data || {}), messages: msgs },
-                };
-              }
-              
-              console.log("[MSG DEBUG] Message cache updated", { messageUpdated, realMsgId });
-              return copy;
-            }
-          );
+          applyMessageToCache({
+            queryClient,
+            userId: userScopeId,
+            conversationId: convKeyId,
+            message: {
+              id: realMsgId || tempId,
+              conversationId: convKeyId,
+              conversation_id: convKeyId,
+              content: content.trim(),
+              timestamp: new Date().toISOString(),
+              created_at: new Date().toISOString(),
+              sender: optimisticSender,
+              senderType: "user",
+              is_read: true,
+              isRead: true,
+              _sending: false,
+              _failed: false,
+            } as FrontendMessage & Record<string, unknown>,
+            tempId,
+            seedPagination: { page: 1, limit: 50, total: 1, hasMore: false },
+          });
         } catch (error) {
           console.error("[MSG DEBUG] Error updating message cache:", error);
         }
@@ -726,7 +574,7 @@ export function useSendMessageMutation() {
 
         // Seed/migrate messages into the new conversation cache so the sent text remains visible
         const nowIso = new Date().toISOString();
-        queryClient.setQueryData(messageKeys.messages(newId), (prev: any) => {
+        queryClient.setQueryData(messageKeyFor(newId), (prev: any) => {
           const optimisticSender = currentUser
             ? {
                 id: currentUser.id,
@@ -925,7 +773,7 @@ export function useSendMessageMutation() {
         // Delay refetch to allow socket event to arrive first (non-blocking background refresh)
         setTimeout(() => {
           queryClient.refetchQueries({
-            queryKey: messageKeys.messages(String(targetConvId)),
+            queryKey: messageKeyFor(String(targetConvId)),
           });
         }, 2000); // Increased delay to allow socket events to process first
       }
@@ -1101,7 +949,7 @@ export function useSendMessageMutation() {
         if (convKeyId && tempId) {
           // Mark optimistic message as failed (keep it visible with exclamation icon)
           queryClient.setQueryData(
-            messageKeys.messages(convKeyId),
+            messageKeyFor(convKeyId),
             (prev: any) => {
               if (!prev?.pages) return prev;
               const copy = {
@@ -1212,6 +1060,10 @@ export function useSendMessageMutation() {
 export function useMarkAsReadMutation(conversationId?: string) {
   const queryClient = useQueryClient();
   const { unread } = useMessagingActions();
+  const { user: currentUser } = useUnifiedAuth();
+  const userScopeId = currentUser?.id ?? null;
+  const messageKeyFor = (convId?: string | null) =>
+    messageKeys.messages(userScopeId, convId ?? "");
 
   return useMutation({
     mutationFn: async (args: ReadArgs) => {
@@ -1244,7 +1096,7 @@ export function useMarkAsReadMutation(conversationId?: string) {
 
       // Optimistically mark messages as read in cache
       queryClient.setQueryData(
-        messageKeys.messages(conversationId),
+        messageKeyFor(conversationId),
         (prev: any) => {
           if (!prev?.pages) return prev;
 
@@ -1295,7 +1147,7 @@ export function useMarkAsReadMutation(conversationId?: string) {
       // Invalidate to revert optimistic updates
       if (conversationId) {
         queryClient.invalidateQueries({
-          queryKey: messageKeys.messages(conversationId),
+          queryKey: messageKeyFor(conversationId),
         });
         queryClient.invalidateQueries({ queryKey: conversationKeys.all });
       }

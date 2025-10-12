@@ -37,8 +37,8 @@ export async function GET(
       headers: { ...(cookie ? { cookie } : {}) },
       cache: "no-store",
     });
-    const data = await resp.json().catch(() => ({}));
-    return NextResponse.json(data, { status: resp.status });
+    const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+    return proxyJsonOrNoContent(resp);
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "Proxy error" },

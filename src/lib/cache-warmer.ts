@@ -239,9 +239,34 @@ export class CacheWarmer {
       {
         endpoint: "/auth/profile",
         priority: "critical",
-        queryKey: ['auth', 'user'], // Use consistent key matching invalidation
-        queryFn: () =>
-          fetch(apiPath("/users/profile/me")).then((res) => res.json()),
+        // IMPORTANT: Always cache the actual User object for this key
+        // Never cache the raw API envelope to avoid invalid shapes like { success: false }
+        queryKey: ['auth', 'user'], // SSOT: must match useUserProfile/query-configs
+        queryFn: async () => {
+          const res = await fetch(apiPath("/users/profile/me"), {
+            credentials: "include",
+            cache: "no-store",
+          });
+
+          // Parse once
+          const body = await res.json().catch(() => ({}));
+
+          // On error statuses, throw so React Query does NOT cache the error object as data
+          if (!res.ok) {
+            const message = body?.error || body?.message || "Failed to fetch profile";
+            throw new Error(message);
+          }
+
+          // Extract the user payload consistently with useUserProfile
+          const user = body?.data?.user || body?.data || body;
+
+          // Basic validation to prevent caching malformed shapes
+          if (!user || !user.id || !user.username) {
+            throw new Error("Invalid user data structure");
+          }
+
+          return user;
+        },
         staleTime: 5 * 60 * 1000, // 5 minutes
       },
       {

@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { apiPath } from "@/lib/base-path";
-import { getAuthTokenFromCookie } from "@/lib/cookieManager";
 
 export interface OptionItem {
   value: string;
@@ -10,9 +9,7 @@ export interface OptionItem {
 }
 
 const fetcher = async (url: string) => {
-  const token = getAuthTokenFromCookie();
   const headers: HeadersInit = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
 
   const resp = await fetch(url, { credentials: "include", headers, signal: AbortSignal.timeout(20000) });
   const text = await resp.text();

@@ -75,14 +75,8 @@ export async function POST(request: NextRequest) {
     },
     body: JSON.stringify(body),
   });
-  const data = await resp.json().catch(() => ({}));
-  // Forward full backend payload and status so client can read message/errors
-  const response = NextResponse.json(data, { status: resp.status });
-  const setCookie = resp.headers.get("set-cookie");
-  if (setCookie) {
-    response.headers.set("set-cookie", setCookie);
-  }
-  return response;
+  const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+  return proxyJsonOrNoContent(resp, { forwardCookies: true });
 }
 
 export async function PUT(request: NextRequest) {
@@ -106,9 +100,8 @@ export async function PUT(request: NextRequest) {
     },
     body: JSON.stringify(body),
   });
-  const data = await resp.json().catch(() => ({}));
-  // Forward full backend payload and status so client can read message/errors
-  return NextResponse.json(data, { status: resp.status });
+  const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+  return proxyJsonOrNoContent(resp);
 }
 
 export async function DELETE(request: NextRequest) {

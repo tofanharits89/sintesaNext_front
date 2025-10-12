@@ -26,6 +26,7 @@ import { useTrenRealisasiBulananPerJenisBelanja } from "@/hooks/useTrenRealisasi
 import { useQuickStats } from "@/hooks/useQuickStats";
 import { usePersentaseRealisasiKL } from "@/hooks/usePersentaseRealisasiKL";
 import { useRealisasiKLPerFungsi } from "@/hooks/useRealisasiKLPerFungsi";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 
 import {
   StatCard,
@@ -109,6 +110,8 @@ export default function DashboardUtamaPage() {
   const [selectedKanwil, setSelectedKanwil] = useState<string>("semua");
   const [lastRefreshText, setLastRefreshText] = useState<string>("-");
   const [isClient, setIsClient] = useState(false);
+  const { isAuthenticated } = useUnifiedAuth();
+  const hooksEnabled = isAuthenticated; // gate dashboard queries behind global auth
 
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   const {
@@ -117,6 +120,7 @@ export default function DashboardUtamaPage() {
     error: quickStatsError,
   } = useQuickStats({
     ...(selectedKanwil !== "semua" ? { kanwil: selectedKanwil } : {}),
+    enabled: hooksEnabled,
   });
 
   const {
@@ -125,6 +129,7 @@ export default function DashboardUtamaPage() {
     error: realisasiError,
   } = useRealisasiPerJenisBelanja({
     ...(selectedKanwil !== "semua" ? { kanwil: selectedKanwil } : {}),
+    enabled: hooksEnabled,
   });
 
   const {
@@ -133,6 +138,7 @@ export default function DashboardUtamaPage() {
     error: klPaguError,
   } = useRealisasiKLPaguTerbesar({
     ...(selectedKanwil !== "semua" ? { kanwil: selectedKanwil } : {}),
+    enabled: hooksEnabled,
   });
 
   const {
@@ -141,6 +147,7 @@ export default function DashboardUtamaPage() {
     error: errorRealisasiKLPaguProgramTerbesar,
   } = useRealisasiKLPaguProgramTerbesar({
     ...(selectedKanwil !== "semua" ? { kanwil: selectedKanwil } : {}),
+    enabled: hooksEnabled,
   });
 
   const {
@@ -149,6 +156,7 @@ export default function DashboardUtamaPage() {
     error: trenRealisasiError,
   } = useTrenRealisasiBulananPerJenisBelanja({
     ...(selectedKanwil !== "semua" ? { kanwil: selectedKanwil } : {}),
+    enabled: hooksEnabled,
   });
 
   const {
@@ -157,6 +165,7 @@ export default function DashboardUtamaPage() {
     error: persentaseKLError,
   } = usePersentaseRealisasiKL({
     ...(selectedKanwil !== "semua" ? { kanwil: selectedKanwil } : {}),
+    enabled: hooksEnabled,
   });
 
   const {
@@ -165,6 +174,7 @@ export default function DashboardUtamaPage() {
     error: realisasiKLPerFungsiError,
   } = useRealisasiKLPerFungsi({
     ...(selectedKanwil !== "semua" ? { kanwil: selectedKanwil } : {}),
+    enabled: hooksEnabled,
   });
 
   const lastRefreshJakarta = (quickStats as any)?._meta?.asOfJakarta as

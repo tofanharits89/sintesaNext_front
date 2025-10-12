@@ -85,18 +85,11 @@ export class SocketClient {
     this.setState("connecting");
 
     try {
-      // Get auth token from cookie for Authorization header
-      const authToken = this.getAuthTokenFromCookie();
-      
-      if (!authToken) {
-        this.debugLog("⚠️ WARNING: No auth token found in cookies. Socket connection may fail authentication.");
-        console.warn("[SocketClient] No auth token found. Available cookies:", 
-          typeof document !== "undefined" ? document.cookie.split(";").map(c => c.trim().split("=")[0]) : "N/A"
-        );
-      } else {
-        this.debugLog("✅ Auth token found, will be sent with socket connection");
-      }
-      
+      // In dev we rely on HTTP-only cookies + withCredentials.
+      // Reading cookies via document.cookie won’t work for HttpOnly (by design),
+      // so we avoid noisy warnings here.
+      const authToken = null;
+
       const socketOptions: any = {
         path: this.config.path,
         transports: ["websocket", "polling"] as const,
@@ -105,15 +98,10 @@ export class SocketClient {
         reconnectionAttempts: this.config.reconnectionAttempts,
         reconnectionDelay: this.config.reconnectionDelay,
         reconnectionDelayMax: this.config.reconnectionDelayMax,
-        withCredentials: true, // Send httpOnly cookies
+        withCredentials: true, // Send httpOnly cookies in the handshake
         autoConnect: true,
-        // Add auth token to handshake if available
-        ...(authToken ? {
-          auth: { token: authToken },
-          extraHeaders: {
-            Authorization: `Bearer ${authToken}`
-          }
-        } : {}),
+        // If in the future we obtain a short-lived socket token from an API,
+        // we can place it here: auth: { token }
       };
 
       this.socket = io(this.config.url || "http://localhost:88", socketOptions);

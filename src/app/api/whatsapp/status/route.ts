@@ -33,8 +33,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const data = await resp.json().catch(() => ({ success: false, error: "Invalid JSON response" }));
-    return NextResponse.json(data, { status: resp.status });
+    const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+    return proxyJsonOrNoContent(resp);
   } catch (error: any) {
     console.error("[WhatsApp Status] Proxy error:", error);
     return NextResponse.json(

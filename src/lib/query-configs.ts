@@ -142,6 +142,8 @@ export function createInfiniteQueryOptions<
 }
 
 // Query key factories for consistent cache management
+const scopedUserKey = (userId?: string | null) => userId ?? 'anonymous';
+
 export const queryKeyFactories = {
   // Financial data keys
   financial: {
@@ -173,9 +175,13 @@ export const queryKeyFactories = {
 
   // Messaging keys
   messaging: {
-    all: () => ['messaging'] as const,
-    conversations: () => [...queryKeyFactories.messaging.all(), 'conversations'] as const,
-    messages: (conversationId: string) => [...queryKeyFactories.messaging.all(), 'messages', conversationId] as const,
+    all: (userId?: string | null) => ['messaging', scopedUserKey(userId)] as const,
+    conversations: (userId?: string | null) =>
+      [...queryKeyFactories.messaging.all(userId), 'conversations'] as const,
+    messages: (userId?: string | null, conversationId?: string | null) =>
+      [...queryKeyFactories.messaging.all(userId), 'messages', conversationId ?? ''] as const,
+    thread: (userId?: string | null, conversationId?: string | null) =>
+      [...queryKeyFactories.messaging.messages(userId, conversationId), 'thread'] as const,
   },
 
   // Search keys

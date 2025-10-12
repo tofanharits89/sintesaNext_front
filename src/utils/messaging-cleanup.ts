@@ -10,6 +10,7 @@ import { useUnreadBadgesStore } from "@/stores/unread-badges-store";
 import { clearAllTempMessages } from "@/features/messaging/temp-messages-store";
 import { messageQueue } from "@/services/messageQueue";
 import logger from "@/lib/logger";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 
 /**
  * Clear all messaging-related state
@@ -96,61 +97,46 @@ export function clearMessagingStores() {
  * Clear React Query messaging cache
  * This should be called from a component that has access to QueryClient
  */
-export function clearMessagingQueryCache(queryClient: ReturnType<typeof useQueryClient>) {
+export function clearMessagingQueryCache(
+  queryClient: ReturnType<typeof useQueryClient>,
+  options?: { keepUserId?: string | null }
+) {
   try {
-    // CRITICAL FIX: More aggressive query invalidation to stop all messaging API calls
-    // Clear all messaging-related queries with multiple approaches
+    const keepUserId = options?.keepUserId ?? null;
+    const anonymousScope = 'anonymous';
 
-    // Approach 1: Direct key-based clearing
-    queryClient.cancelQueries({ queryKey: ['conversations'] });
-    queryClient.removeQueries({ queryKey: ['conversations'] });
-    queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    const shouldInspect = (key: unknown[]): boolean => {
+      if (!key.length) return false;
+      const root = key[0];
+      return root === 'messaging' || root === 'messages' || root === 'conversations';
+    };
 
-    queryClient.cancelQueries({ queryKey: ['messages'] });
-    queryClient.removeQueries({ queryKey: ['messages'] });
-    queryClient.invalidateQueries({ queryKey: ['messages'] });
-
-    queryClient.cancelQueries({ queryKey: ['messaging'] });
-    queryClient.removeQueries({ queryKey: ['messaging'] });
-    queryClient.invalidateQueries({ queryKey: ['messaging'] });
-
-    // Approach 2: Predicate-based clearing for any remaining queries
-    queryClient.cancelQueries({
-      predicate: (query: any) => {
-        const keyStr = JSON.stringify(query.queryKey);
-        return keyStr.includes('conversation') || keyStr.includes('message') || keyStr.includes('messaging');
+    const belongsToKeptUser = (key: unknown[]): boolean => {
+      if (keepUserId == null) return false;
+      const scope = typeof key[1] === 'string' ? key[1] : anonymousScope;
+      if (key[0] === 'messaging') {
+        return scope === keepUserId;
       }
-    });
-
-    queryClient.removeQueries({
-      predicate: (query: any) => {
-        const keyStr = JSON.stringify(query.queryKey);
-        return keyStr.includes('conversation') || keyStr.includes('message') || keyStr.includes('messaging');
+      if (key[0] === 'messages' || key[0] === 'conversations') {
+        return scope === keepUserId;
       }
-    });
+      return false;
+    };
 
-    queryClient.invalidateQueries({
-      predicate: (query: any) => {
-        const keyStr = JSON.stringify(query.queryKey);
-        return keyStr.includes('conversation') || keyStr.includes('message') || keyStr.includes('messaging');
-      }
-    });
+    const predicate = (query: any) => {
+      const key = Array.isArray(query?.queryKey) ? query.queryKey : [];
+      if (!shouldInspect(key)) return false;
+      if (keepUserId == null) return true;
+      return !belongsToKeptUser(key);
+    };
 
-    // Clear all query data as final cleanup
-    queryClient.clear();
+    queryClient.cancelQueries({ predicate });
+    queryClient.removeQueries({ predicate });
+    queryClient.invalidateQueries({ predicate });
 
-    // CRITICAL FIX: Reset the query client to prevent any background refetches
-    // This is necessary because some queries might have auto-refetch enabled
-    queryClient.resetQueries({
-      predicate: (query: any) => {
-        const keyStr = JSON.stringify(query.queryKey);
-        return keyStr.includes('conversation') || keyStr.includes('message') || keyStr.includes('messaging');
-      }
-    });
-
-    logger.info("React Query cache cleared and queries reset");
+    logger.info('Targeted messaging queries cleared');
   } catch (error) {
-    logger.error("Error clearing React Query cache", error);
+    logger.error('Error clearing React Query cache', error);
   }
 }
 
@@ -160,10 +146,11 @@ export function clearMessagingQueryCache(queryClient: ReturnType<typeof useQuery
  */
 export function useMessagingCleanup() {
   const queryClient = useQueryClient();
+  const { user: currentUser } = useUnifiedAuth();
   
   const cleanupMessaging = async () => {
     await clearAllMessagingState();
-    clearMessagingQueryCache(queryClient);
+    clearMessagingQueryCache(queryClient, { keepUserId: currentUser?.id ?? null });
   };
   
   return { cleanupMessaging };

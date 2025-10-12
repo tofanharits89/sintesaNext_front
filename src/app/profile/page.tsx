@@ -122,7 +122,14 @@ export default function ProfilePage() {
     try {
       // Ensure CSRF token is present (interceptor also fetches if missing)
       await prefetchCsrf();
-      const data = await apiClient.put<any>("/users/profile/me", payload);
+      const trace = `prof_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+      console.log(`[Profile Page] onSave trace=${trace}`);
+      const data = await apiClient.put<any>("/users/profile/me", payload, {
+        headers: {
+          "X-Debug-Source": "profile.page.save",
+          "X-Debug-Trace": trace,
+        },
+      });
       if (!data || data?.success === false) {
         const message =
           data?.message || (data as any)?.error || "Gagal menyimpan profil";
@@ -159,8 +166,15 @@ export default function ProfilePage() {
     try {
       setChangingPassword(true);
       await prefetchCsrf();
+      const trace = `prof_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+      console.log(`[Profile Page] changePassword trace=${trace}`);
       const data = await apiClient.put<any>("/users/profile/me", {
         password: newPassword,
+      }, {
+        headers: {
+          "X-Debug-Source": "profile.page.changePassword",
+          "X-Debug-Trace": trace,
+        },
       });
       if (!data || data?.success === false) {
         const message =

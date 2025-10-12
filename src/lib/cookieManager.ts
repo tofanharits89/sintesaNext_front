@@ -52,7 +52,7 @@ export function clearNonHttpOnlyCookies(): void {
 
   // List of potential client-side cookies to clear
   const clientCookies = [
-    'old_token', 'legacy_auth', 'user_data', 'csrf_token',
+    'old_token', 'legacy_auth', 'user_data', 'XSRF-TOKEN', 'csrf_token',
     'session_state', 'auth_redirect'
   ];
 

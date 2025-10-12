@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getAuthTokenFromCookie } from "@/lib/cookieManager";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/base-path";
 
 // Cache statistics interface matching backend response
 export interface CacheMetricsResponse {
@@ -59,20 +58,10 @@ export function useCacheMetrics(options: UseCacheMetricsOptions = {}) {
     queryKey: ["cache-metrics"],
     queryFn: async () => {
       try {
-        const token = getAuthTokenFromCookie();
-        const headers: HeadersInit = { 
-          "Content-Type": "application/json" 
-        };
-        
-        if (token) {
-          headers.Authorization = `Bearer ${token}`;
-        }
-
-        const url = backendPath("/analytics/cache-metrics");
-        
-        const response = await fetch(url, {
+        const url = new URL(apiPath("/analytics/cache-metrics"), window.location.origin);
+        const response = await fetch(url.toString(), {
           credentials: "include",
-          headers,
+          headers: { "Content-Type": "application/json" },
           signal: AbortSignal.timeout(15000), // 15 second timeout
         });
 

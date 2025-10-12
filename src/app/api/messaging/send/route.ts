@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { backendPath } from "@/lib/backend";
 
+
 export async function POST(request: NextRequest) {
   const cookie = request.headers.get("cookie") || "";
   if (!cookie) {
@@ -30,9 +31,8 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
       cache: "no-store",
     });
-    
-    const data = await resp.json().catch(() => ({}));
-    return NextResponse.json(data, { status: resp.status });
+    const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+    return proxyJsonOrNoContent(resp, { forwardCookies: true });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "Proxy error" },
