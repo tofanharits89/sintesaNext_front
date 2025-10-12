@@ -6,7 +6,8 @@
       "Bash(npm run type-check:*)",
       "Bash(npm run lint)",
       "Bash(npm run build:*)",
-      "Bash(npm run clean:*)"
+      "Bash(npm run clean:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []
