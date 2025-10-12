@@ -221,7 +221,15 @@ const url = form.id ? apiPath(`/users/${form.id}`) : apiPath("/users");
       try {
         const err = await res.json();
         const enMsg = err?.message || "";
-        const errors: string[] = Array.isArray(err?.errors) ? err.errors : [];
+
+        // Extract detailed error messages from backend response
+        const details: string[] = [];
+        if (err?.context?.field?.details && Array.isArray(err.context.field.details)) {
+          details.push(...err.context.field.details);
+        }
+        if (Array.isArray(err?.errors)) {
+          details.push(...err.errors);
+        }
 
         const translateLine = (s: string) => {
           const map: Record<string, string> = {
@@ -233,15 +241,37 @@ const url = form.id ? apiPath(`/users/${form.id}`) : apiPath("/users");
               "Password harus mengandung setidaknya satu angka",
             "Password must contain at least one special character":
               "Password harus mengandung setidaknya satu karakter khusus",
+            "This password has been exposed in":
+              "Password ini telah terungkap dalam",
+            "data breaches and cannot be used":
+              "pelanggaran data dan tidak dapat digunakan",
           };
           return map[s] || s;
         };
 
-        if (
+        // If we have detailed error messages, show them with translation
+        if (details.length > 0) {
+          const translatedDetails = details.map(detail => translateLine(detail));
+          const title = enMsg ? translateLine(enMsg) : "Gagal menyimpan pengguna";
+
+          toast.error(title, {
+            description: (
+              <div className="space-y-1">
+                {translatedDetails.map((detail, index) => (
+                  <div key={index} className="text-sm">
+                    {detail}
+                  </div>
+                ))}
+              </div>
+            ),
+            duration: 12000,
+          });
+        } else if (
           enMsg === "Password does not meet complexity requirements" ||
-          (errors.length > 0 && /Password/.test(enMsg))
+          enMsg === "Password does not meet security requirements" ||
+          /Password/i.test(enMsg)
         ) {
-          const title = "Password tidak memenuhi persyaratan kompleksitas";
+          const title = "Password tidak memenuhi persyaratan keamanan";
           // Tampilkan poin tetap sesuai permintaan pengguna
           toast.error(title, {
             description: (
@@ -255,7 +285,7 @@ const url = form.id ? apiPath(`/users/${form.id}`) : apiPath("/users");
             duration: 12000,
           });
         } else {
-          toast.error(enMsg || "Gagal menyimpan pengguna");
+          toast.error(translateLine(enMsg) || "Gagal menyimpan pengguna");
         }
       } catch {
         toast.error("Gagal menyimpan pengguna");

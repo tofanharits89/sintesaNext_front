@@ -1,5 +1,5 @@
-import { useQuery, useQueryClient, UseQueryResult } from "@tanstack/react-query";
-import { apiPath } from "@/lib/base-path";
+import { useQuery, UseQueryResult } from "@tanstack/react-query";
+import { apiClient } from "@/lib/httpClient";
 
 // Quick stats data format returned by the backend
 export interface QuickStatsData {
@@ -24,8 +24,6 @@ export interface QuickStatsResponse {
   _meta?: DashboardMeta;
 }
 
-type NotModifiedResponse = { success?: boolean; notModified: true; _meta?: DashboardMeta };
-type ProxyResponse = QuickStatsResponse | NotModifiedResponse | null;
 export type QSReturn = QuickStatsData & { _meta?: DashboardMeta };
 
 export interface UseQuickStatsOptions {
@@ -36,7 +34,6 @@ export interface UseQuickStatsOptions {
 export function useQuickStats(options: UseQuickStatsOptions = {}): UseQueryResult<QSReturn, Error> {
   const { kanwil, enabled } = options;
   const isClient = typeof window !== "undefined";
-  const queryClient = useQueryClient();
 
   return useQuery<QSReturn, Error>({
     queryKey: ["quick-stats", kanwil],
@@ -48,107 +45,38 @@ export function useQuickStats(options: UseQuickStatsOptions = {}): UseQueryResul
           params.append("kanwil", kanwil);
         }
 
-        const url = new URL(
-          apiPath(`/dashboard/quick-stats${
-            params.toString() ? "?" + params.toString() : ""
-          }`),
-          window.location.origin
-        );
+        const endpoint = `/dashboard/quick-stats${
+          params.toString() ? "?" + params.toString() : ""
+        }`;
 
-        // Use same-origin Next API to forward httpOnly cookies; no Authorization header needed
-        const response = await fetch(url.toString(), {
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          signal: AbortSignal.timeout(10000), // 10 second timeout
-        });
+        // Use global HTTP client with automatic authentication handling
+        const result = await apiClient.get<QuickStatsResponse>(endpoint);
 
-        // If server responded 304 (Not Modified), reuse existing cached data
-        if (response.status === 304) {
-          const prev = queryClient.getQueryData<QuickStatsData & { _meta?: DashboardMeta }>([
-            "quick-stats",
-            kanwil,
-          ] as const);
-          if (prev) return prev;
-          // If no previous data, treat as error to trigger normal error flow
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        // Parse JSON payload if any
-        let result: ProxyResponse = null;
-        const rawText = await response.text();
-        if (rawText) {
-          try {
-            result = JSON.parse(rawText) as ProxyResponse;
-          } catch {
-            result = null;
-          }
-        }
-
-        // Our Next proxy may convert 304 into 200 with notModified flag. In that case, return cached data but update meta.
-        if ((result as NotModifiedResponse | null)?.notModified) {
-          const prev = queryClient.getQueryData<QSReturn>([
-            "quick-stats",
-            kanwil,
-          ] as const);
-          if (prev) {
-            const meta = (result as NotModifiedResponse)._meta;
-            return meta !== undefined ? { ...prev, _meta: meta } : { ...prev };
-          }
-          // If no previous data, fall through to error (no data to show)
-          throw new Error("No cached data available for notModified response");
-        }
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        if (!result || ("success" in result && !result.success)) {
+        if (!result.success) {
           throw new Error("Failed to fetch quick stats data");
         }
 
         // Attach meta to the returned data for optional use in UI (last refresh time)
-        const meta = (result as QuickStatsResponse)._meta;
-        const base = (result as QuickStatsResponse).data;
+        const meta = result._meta;
+        const base = result.data;
         const dataWithMeta: QSReturn = meta !== undefined ? { ...base, _meta: meta } : { ...base };
         return dataWithMeta;
       } catch (error: any) {
         console.error("Error fetching quick stats:", error);
-        // Handle 401 errors specifically
-        if (
-          error.message?.includes("401") ||
-          error.message?.includes("status: 401")
-        ) {
-          throw new Error("Authentication failed. Please log in to continue.");
-        }
-        // Handle timeout errors
-        if (
-          error.name === "AbortError" ||
-          error.message?.includes("timeout") ||
-          error.message?.includes("AbortError")
-        ) {
-          throw new Error("Server is taking too long to respond. Please try again later.");
-        }
-        // Handle network errors
-        if (error.message?.includes("fetch")) {
-          throw new Error("Unable to connect to server. Please check your connection.");
-        }
+        // Let the global HTTP client handle authentication errors automatically
+        // Just re-throw the error for TanStack Query to handle
         throw error;
       }
     },
     enabled: isClient && (enabled ?? true),
     staleTime: 24 * 60 * 60 * 1000, // 24 hours to match backend cache
     retry: (failureCount, error) => {
-      // Don't retry on authentication errors or timeout errors
-      if (
-        error.message?.includes("authentication") ||
-        error.message?.includes("401") ||
-        error.message?.includes("timeout") ||
-        error.message?.includes("AbortError") ||
-        error.name === "AbortError"
-      ) {
-        return false;
+      // Let the global HTTP client handle authentication retries
+      // Only retry for general network issues
+      if (error.message?.includes("Network Error") || error.message?.includes("fetch")) {
+        return failureCount < 2;
       }
-      return failureCount < 2; // Allow more retries for transient network issues
+      return false; // Don't retry other errors
     },
   });
 }
