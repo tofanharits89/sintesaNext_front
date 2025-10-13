@@ -86,7 +86,7 @@ const nextConfig: NextConfig = {
               // Google Maps API requires maps.googleapis.com
               isDevelopment
                 ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://maps.googleapis.com"
-                : "script-src 'self' 'unsafe-inline' https://maps.googleapis.com",
+                : "script-src 'self' https://maps.googleapis.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
