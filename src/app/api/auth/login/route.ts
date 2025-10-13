@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { backendPath } from "@/lib/backend";
-import { forwardSetCookies, getSetCookieValues } from "@/lib/cookie-helpers";
+import { forwardSetCookies, getSetCookieValues, extractCookieMetadata } from "@/lib/cookie-helpers";
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
@@ -14,7 +14,8 @@ export async function POST(request: NextRequest) {
 
   console.log("[Login Route] ========== LOGIN REQUEST START ==========");
   console.log("[Login Route] Username attempting to login:", username);
-  console.log("[Login Route] Incoming cookies:", request.headers.get("cookie"));
+  const cookieMetadata = extractCookieMetadata(request.headers.get("cookie") || "");
+  console.log("[Login Route] Incoming cookies metadata:", cookieMetadata);
 
   // Call backend login API and forward Set-Cookie headers
   let cookie = request.headers.get("cookie") || "";
@@ -28,10 +29,10 @@ export async function POST(request: NextRequest) {
 
   if (hasOldAccessToken || hasOldRefreshToken) {
     console.warn("[Login Route] ⚠️ OLD AUTH COOKIES DETECTED!");
-    console.warn("[Login Route] Old cookies:", {
+    console.warn("[Login Route] Old auth cookies detected:", {
       hasAccessToken: hasOldAccessToken,
       hasRefreshToken: hasOldRefreshToken,
-      cookies: cookie,
+      cookieCount: cookie.split(';').filter(c => c.trim()).length
     });
     console.warn(
       "[Login Route] These old cookies will be sent to backend and might cause issues!",
@@ -49,10 +50,8 @@ export async function POST(request: NextRequest) {
         !c.startsWith("auth_token="),
     );
     cookie = filteredCookies.join("; ");
-    console.log(
-      "[Login Route] Stripped old auth cookies, new cookie string:",
-      cookie,
-    );
+    const newMetadata = extractCookieMetadata(cookie);
+    console.log("[Login Route] Stripped old auth cookies. New metadata:", newMetadata);
   }
 
   // If no XSRF token present, prime it by calling backend /csrf-token and reuse its cookies for login
@@ -168,7 +167,7 @@ export async function POST(request: NextRequest) {
 
   // Debug: Log Set-Cookie headers from backend
   const setCookies = resp.headers.get("set-cookie");
-  console.log("[Login Route] Backend Set-Cookie headers:", setCookies);
+  console.log("[Login Route] Backend Set-Cookie headers received:", setCookies ? "Yes" : "No");
   console.log("[Login Route] Forwarding cookies to client...");
 
   // Forward all Set-Cookie headers to client via helper
@@ -178,10 +177,7 @@ export async function POST(request: NextRequest) {
   const forwardedCookies = res.headers.getSetCookie?.() || [
     res.headers.get("set-cookie"),
   ];
-  console.log(
-    "[Login Route] Forwarded Set-Cookie to client:",
-    forwardedCookies,
-  );
+  console.log("[Login Route] Forwarded Set-Cookie to client:", forwardedCookies?.length || 0, "cookies");
   console.log("[Login Route] ========== LOGIN REQUEST END ==========");
 
   // Clear middleware cache after successful login

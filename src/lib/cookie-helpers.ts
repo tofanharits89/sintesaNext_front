@@ -92,3 +92,54 @@ export function createCookieHeader(request: NextRequest): string {
     .map(([name, value]) => `${name}=${value}`)
     .join("; ");
 }
+
+/**
+ * Sanitize cookie string for logging by replacing sensitive values with redacted text
+ */
+export function sanitizeCookieLog(cookieString: string | null): string {
+  if (!cookieString) return "No cookies present";
+
+  const sensitivePatterns = [
+    /access_token=[^;]+/gi,
+    /refresh_token=[^;]+/gi,
+    /accessToken=[^;]+/gi,
+    /refreshToken=[^;]+/gi,
+    /auth_token=[^;]+/gi,
+    /authToken=[^;]+/gi,
+    /XSRF-TOKEN=[^;]+/gi,
+    /_csrf=[^;]+/gi,
+    /session=[^;]+/gi,
+    /jwt=[^;]+/gi
+  ];
+
+  let sanitized = cookieString;
+  sensitivePatterns.forEach(pattern => {
+    sanitized = sanitized.replace(pattern, (match) => {
+      const name = match.split('=')[0];
+      return `${name}=***REDACTED***`;
+    });
+  });
+
+  return sanitized.length > 100
+    ? sanitized.substring(0, 100) + "..."
+    : sanitized;
+}
+
+/**
+ * Extract metadata from cookie string for secure logging
+ */
+export function extractCookieMetadata(cookieString: string | null): {
+  count: number;
+  hasAuth: boolean;
+  hasCsrf: boolean;
+  hasSession: boolean;
+} {
+  if (!cookieString) return { count: 0, hasAuth: false, hasCsrf: false, hasSession: false };
+
+  return {
+    count: cookieString.split(';').filter(c => c.trim()).length,
+    hasAuth: /access_token|refresh_token|auth_token/i.test(cookieString),
+    hasCsrf: /xsrf-token|_csrf/i.test(cookieString),
+    hasSession: /session/i.test(cookieString)
+  };
+}
