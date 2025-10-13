@@ -52,6 +52,8 @@ const ENV = {
   API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:88',
   NODE_ENV: process.env.NODE_ENV || 'development',
   DEBUG_AUTH: process.env.NEXT_PUBLIC_DEBUG_AUTH === 'true',
+  // Allow optimistic auth only in development
+  OPTIMISTIC_AUTH: process.env.NODE_ENV === 'development',
 } as const;
 
 // Cookie configuration
@@ -132,11 +134,17 @@ async function validateServerSession(accessToken: string): Promise<{ valid: bool
       return { valid: false, error: "Server validation failed" };
     }
   } catch (error) {
-    // Network error during validation - assume valid for better UX but log
+    // Network error during validation - fail closed in production
     if (ENV.DEBUG_AUTH) {
-      console.log("[Middleware] Server validation error, allowing optimistic:", error);
+      console.log("[Middleware] Server validation error:", error);
     }
-    return { valid: true, error: "Network error" };
+    
+    // In production, fail closed. In development, allow optimistic for convenience
+    if (ENV.OPTIMISTIC_AUTH) {
+      return { valid: true, error: "Network error (dev mode)" };
+    }
+    
+    return { valid: false, error: "Authentication service unavailable" };
   }
 }
 
