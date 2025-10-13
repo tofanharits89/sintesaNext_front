@@ -44,9 +44,12 @@ const defaultSeedPagination: PaginationSeed = {
 
 export function getMessageCacheKey(
   userId: string | null | undefined,
-  conversationId: string | null | undefined
+  conversationId: string | null | undefined,
 ) {
-  return queryKeyFactories.messaging.messages(userId ?? null, conversationId ?? "");
+  return queryKeyFactories.messaging.messages(
+    userId ?? null,
+    conversationId ?? "",
+  );
 }
 
 export function applyMessageToCache({
@@ -79,101 +82,109 @@ export function applyMessageToCache({
       effectiveConversationId,
   };
 
-  queryClient.setQueryData(cacheKey, (previousCache: MessageCacheShape | undefined) => {
-    const previousPages = Array.isArray(previousCache?.pages)
-      ? previousCache.pages
-      : undefined;
+  queryClient.setQueryData(
+    cacheKey,
+    (previousCache: MessageCacheShape | undefined) => {
+      const previousPages = Array.isArray(previousCache?.pages)
+        ? previousCache.pages
+        : undefined;
 
-    if (
-      !previousPages ||
-      previousPages.length === 0 ||
-      !Array.isArray(previousPages[0]?.data?.messages)
-    ) {
-      const pagination =
-        (previousPages?.[0]?.data?.pagination as PaginationSeed | undefined) ??
-        seedPagination ??
-        defaultSeedPagination;
+      if (
+        !previousPages ||
+        previousPages.length === 0 ||
+        !Array.isArray(previousPages[0]?.data?.messages)
+      ) {
+        const pagination =
+          (previousPages?.[0]?.data?.pagination as
+            | PaginationSeed
+            | undefined) ??
+          seedPagination ??
+          defaultSeedPagination;
+
+        return {
+          pages: [
+            {
+              ...(previousPages?.[0] ?? {}),
+              data: {
+                ...(previousPages?.[0]?.data ?? {}),
+                messages: [messageForCache],
+                pagination,
+              },
+            },
+          ],
+          pageParams: Array.isArray(previousCache?.pageParams)
+            ? [...previousCache.pageParams]
+            : [undefined],
+        } satisfies MessageCacheShape;
+      }
+
+      const clonedPages = previousPages.map((page) => ({
+        ...page,
+        data: { ...(page.data ?? {}) },
+      }));
+
+      const lastIndex = clonedPages.length - 1;
+      const lastPage = clonedPages[lastIndex];
+      if (!lastPage) {
+        return previousCache;
+      }
+      const existingMessages = Array.isArray(lastPage.data?.messages)
+        ? [...(lastPage.data!.messages as FrontendMessage[])]
+        : [];
+
+      if (tempId) {
+        const tempIndex = existingMessages.findIndex(
+          (item) => item?.id === tempId,
+        );
+        if (tempIndex !== -1) {
+          existingMessages.splice(tempIndex, 1);
+        }
+      }
+
+      const messageId = messageForCache.id ?? tempId ?? null;
+      const existingIndex =
+        messageId != null
+          ? existingMessages.findIndex((item) => item?.id === messageId)
+          : -1;
+
+      const normalizedFlags = {
+        _sending: (messageForCache as { _sending?: boolean })._sending ?? false,
+        _failed: (messageForCache as { _failed?: boolean })._failed ?? false,
+      };
+
+      if (existingIndex !== -1) {
+        const existing = existingMessages[existingIndex] as FrontendMessage &
+          Record<string, unknown>;
+        const mergedMessage: FrontendMessage & Record<string, unknown> = {
+          ...existing,
+          ...messageForCache,
+          _failed:
+            normalizedFlags._failed ??
+            (existing as { _failed?: boolean })._failed ??
+            false,
+          _sending: normalizedFlags._sending,
+        };
+        existingMessages[existingIndex] = mergedMessage;
+      } else {
+        existingMessages.push({
+          ...messageForCache,
+          ...normalizedFlags,
+        });
+      }
+
+      lastPage.data = {
+        ...(lastPage.data ?? {}),
+        messages: existingMessages,
+      };
+      clonedPages[lastIndex] = lastPage;
 
       return {
-        pages: [
-          {
-            ...(previousPages?.[0] ?? {}),
-            data: {
-              ...(previousPages?.[0]?.data ?? {}),
-              messages: [messageForCache],
-              pagination,
-            },
-          },
-        ],
+        ...previousCache,
+        pages: clonedPages,
         pageParams: Array.isArray(previousCache?.pageParams)
-          ? [...previousCache.pageParams]
+          ? [...previousCache.pageParams!]
           : [undefined],
       } satisfies MessageCacheShape;
-    }
-
-    const clonedPages = previousPages.map((page) => ({
-      ...page,
-      data: { ...(page.data ?? {}) },
-    }));
-
-    const lastIndex = clonedPages.length - 1;
-    const lastPage = clonedPages[lastIndex];
-    const existingMessages = Array.isArray(lastPage.data?.messages)
-      ? [...(lastPage.data!.messages as FrontendMessage[])]
-      : [];
-
-    if (tempId) {
-      const tempIndex = existingMessages.findIndex((item) => item?.id === tempId);
-      if (tempIndex !== -1) {
-        existingMessages.splice(tempIndex, 1);
-      }
-    }
-
-    const messageId = messageForCache.id ?? tempId ?? null;
-    const existingIndex =
-      messageId != null
-        ? existingMessages.findIndex((item) => item?.id === messageId)
-        : -1;
-
-    const normalizedFlags = {
-      _sending:
-        (messageForCache as { _sending?: boolean })._sending ?? false,
-      _failed: (messageForCache as { _failed?: boolean })._failed ?? false,
-    };
-
-    if (existingIndex !== -1) {
-      const existing = existingMessages[existingIndex] as FrontendMessage &
-        Record<string, unknown>;
-      const mergedMessage: FrontendMessage & Record<string, unknown> = {
-        ...existing,
-        ...messageForCache,
-        _failed:
-          normalizedFlags._failed ??
-          (existing as { _failed?: boolean })._failed ??
-          false,
-        _sending: normalizedFlags._sending,
-      };
-      existingMessages[existingIndex] = mergedMessage;
-    } else {
-      existingMessages.push({
-        ...messageForCache,
-        ...normalizedFlags,
-      });
-    }
-
-    lastPage.data = {
-      ...(lastPage.data ?? {}),
-      messages: existingMessages,
-    };
-    clonedPages[lastIndex] = lastPage;
-
-    return {
-      ...previousCache,
-      pages: clonedPages,
-      pageParams: Array.isArray(previousCache?.pageParams)
-        ? [...previousCache.pageParams!]
-        : [undefined],
-    } satisfies MessageCacheShape;
-  });
+    },
+  );
 }
-

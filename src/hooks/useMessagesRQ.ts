@@ -172,7 +172,7 @@ export function useMessages(conversationId?: string) {
   const userScopeId = authUser?.id ?? null;
   const resolveMessageKey = useCallback(
     (convId?: string | null) => messageKeys.messages(userScopeId, convId ?? ""),
-    [userScopeId]
+    [userScopeId],
   );
   const listKey = resolveMessageKey(conversationId);
 
@@ -748,27 +748,29 @@ export function useMessages(conversationId?: string) {
       const wasEmpty =
         !previousCache ||
         !Array.isArray((previousCache as { pages?: unknown[] }).pages) ||
-        (((previousCache as { pages?: unknown[] }).pages?.length) ?? 0) === 0;
+        ((previousCache as { pages?: unknown[] }).pages?.length ?? 0) === 0;
 
-      const messageForCache: FrontendMessage & Record<string, unknown> = {
-        id: normalized.id,
+      const messageForCache = {
+        id:
+          normalized.id ??
+          `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`,
         conversationId: targetConversationId,
         conversation_id: targetConversationId,
-        content: normalized.content,
+        content: normalized.content ?? "",
         timestamp: normalized.timestamp,
-        created_at: normalized.timestamp,
+        created_at: normalized.timestamp ?? new Date().toISOString(),
         sender: normalized.sender,
         senderType: normalized.senderType,
         is_read: false,
         isRead: false,
-      };
+      } as unknown as FrontendMessage & Record<string, unknown>;
 
       applyMessageToCache({
         queryClient,
         userId: userScopeId,
         conversationId: targetConversationId,
         message: messageForCache,
-        tempId: incomingTempId,
+        tempId: incomingTempId ?? null,
         seedPagination: { page: 1, limit: PAGE_SIZE, total: 1, hasMore: true },
       });
 
@@ -1041,7 +1043,15 @@ export function useMessages(conversationId?: string) {
         );
       }
     };
-  }, [conversationId, isFetchable, on, off, updateMessagesCache, queryClient, resolveMessageKey]);
+  }, [
+    conversationId,
+    isFetchable,
+    on,
+    off,
+    updateMessagesCache,
+    queryClient,
+    resolveMessageKey,
+  ]);
 
   // Optimistic insert helper for sending
   const optimisticInsert = (temp: FrontendMessage) => {

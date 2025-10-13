@@ -8,7 +8,11 @@ import { messageKeys } from "./useMessagesRQ";
 import { applyMessageToCache } from "./messaging-rq/cache-helpers";
 import { useSocket } from "./useSocket";
 import { FrontendMessage } from "@/types/socket-events";
-import { useMessageActions, useMessagingActions, useMessagingStore } from "@/stores";
+import {
+  useMessageActions,
+  useMessagingActions,
+  useMessagingStore,
+} from "@/stores";
 import { useNotificationStore } from "@/stores/notification-store";
 import { getTempMessages } from "@/features/messaging/temp-messages-store";
 import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
@@ -51,7 +55,7 @@ export function useSendMessageMutation() {
 
   const fetchWithTimeout = async (
     input: RequestInfo | URL,
-    init: RequestInit & { timeoutMs?: number } = {}
+    init: RequestInit & { timeoutMs?: number } = {},
   ): Promise<Response> => {
     const { timeoutMs = 10000, ...rest } = init;
     const controller = new AbortController();
@@ -199,7 +203,7 @@ export function useSendMessageMutation() {
             .json()
             .catch(() => ({ error: "Rate limit exceeded" }));
           const rateErr: Error & { isRateLimit?: boolean } = new Error(
-            result.error || "Rate limit exceeded"
+            result.error || "Rate limit exceeded",
           );
           rateErr.isRateLimit = true;
           throw rateErr;
@@ -210,7 +214,7 @@ export function useSendMessageMutation() {
             .json()
             .catch(() => ({ error: `HTTP ${respRaw.status}` }));
           throw new Error(
-            result.error || `HTTP ${respRaw.status}: ${respRaw.statusText}`
+            result.error || `HTTP ${respRaw.status}: ${respRaw.statusText}`,
           );
         }
 
@@ -253,7 +257,7 @@ export function useSendMessageMutation() {
           is_deleted: false,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-          
+
           // Frontend-specific properties
           conversationId: convKeyId,
           timestamp: new Date().toISOString(),
@@ -302,7 +306,7 @@ export function useSendMessageMutation() {
           let foundIdx = -1;
           pages.forEach((pg: any, pIdx: number) => {
             const idx = pg.conversations.findIndex(
-              (c: any) => String(c.id) === convKeyId
+              (c: any) => String(c.id) === convKeyId,
             );
             if (idx !== -1) {
               foundPageIdx = pIdx;
@@ -313,7 +317,7 @@ export function useSendMessageMutation() {
           if (foundIdx !== -1) {
             const removed = pages[foundPageIdx].conversations.splice(
               foundIdx,
-              1
+              1,
             )[0];
             const conv = { ...(removed || {}) } as any;
             conv.lastMessage = {
@@ -362,7 +366,7 @@ export function useSendMessageMutation() {
                 conversationId: convKeyId,
                 _sending: false,
                 _failed: true,
-              } as FrontendMessage & Record<string, unknown>,
+              } as unknown as FrontendMessage & Record<string, unknown>,
             });
             try {
               try {
@@ -388,7 +392,7 @@ export function useSendMessageMutation() {
                       failedAt: Date.now(),
                       startedAt: startedAtNow,
                     },
-                  })
+                  }),
                 );
               }
             } catch {}
@@ -442,7 +446,7 @@ export function useSendMessageMutation() {
         ) {
           console.log(
             "[MSG DEBUG] onSuccess ignored due to prior fail latch for same attempt",
-            { tempId, failedStartedAt, ctxStartedAt }
+            { tempId, failedStartedAt, ctxStartedAt },
           );
           return;
         }
@@ -500,7 +504,7 @@ export function useSendMessageMutation() {
               isRead: true,
               _sending: false,
               _failed: false,
-            } as FrontendMessage & Record<string, unknown>,
+            } as unknown as FrontendMessage & Record<string, unknown>,
             tempId,
             seedPagination: { page: 1, limit: 50, total: 1, hasMore: false },
           });
@@ -540,7 +544,7 @@ export function useSendMessageMutation() {
               window.dispatchEvent(
                 new CustomEvent("conversation:selected", {
                   detail: { conversationId: id },
-                })
+                }),
               );
             }
           } catch {}
@@ -566,7 +570,7 @@ export function useSendMessageMutation() {
               window.dispatchEvent(
                 new CustomEvent("conversation:created", {
                   detail: { tempId: sourceTempId, conversationId: newId },
-                })
+                }),
               );
             }
           }
@@ -691,7 +695,7 @@ export function useSendMessageMutation() {
           if (sourceTempConvId) {
             pages.forEach((pg: any, pIdx: number) => {
               const idx = pg.conversations.findIndex(
-                (c: any) => c.id === sourceTempConvId
+                (c: any) => c.id === sourceTempConvId,
               );
               if (idx !== -1) {
                 foundPageIdx = pIdx;
@@ -753,7 +757,7 @@ export function useSendMessageMutation() {
             window.dispatchEvent(
               new CustomEvent("messages:appended", {
                 detail: { conversationId: newId },
-              })
+              }),
             );
           }
         } catch {}
@@ -797,7 +801,7 @@ export function useSendMessageMutation() {
         let foundIdx = -1;
         pages.forEach((pg: any, pIdx: number) => {
           const idx = pg.conversations.findIndex(
-            (c: any) => String(c.id) === String(targetConvId)
+            (c: any) => String(c.id) === String(targetConvId),
           );
           if (idx !== -1) {
             foundPageIdx = pIdx;
@@ -806,7 +810,9 @@ export function useSendMessageMutation() {
         });
 
         if (foundIdx !== -1) {
-          const conv = { ...(pages[foundPageIdx].conversations[foundIdx] || {}) } as any;
+          const conv = {
+            ...(pages[foundPageIdx].conversations[foundIdx] || {}),
+          } as any;
           const optimisticSender = currentUser
             ? {
                 id: currentUser.id,
@@ -856,7 +862,7 @@ export function useSendMessageMutation() {
           } catch {}
           ids.forEach((id) => {
             window.dispatchEvent(
-              new CustomEvent("message:succeeded", { detail: { id } })
+              new CustomEvent("message:succeeded", { detail: { id } }),
             );
           });
           // Clear failed map entry on success
@@ -880,12 +886,12 @@ export function useSendMessageMutation() {
                         q.convId === convKeyId &&
                         q.userId === userId &&
                         q.content === content
-                      )
+                      ),
                   )
                 : [];
               window.localStorage.setItem(
                 "MSG_QUARANTINE",
-                JSON.stringify(next)
+                JSON.stringify(next),
               );
             }
           } catch {}
@@ -948,32 +954,29 @@ export function useSendMessageMutation() {
         } catch {}
         if (convKeyId && tempId) {
           // Mark optimistic message as failed (keep it visible with exclamation icon)
-          queryClient.setQueryData(
-            messageKeyFor(convKeyId),
-            (prev: any) => {
-              if (!prev?.pages) return prev;
-              const copy = {
-                ...prev,
-                pages: prev.pages.map((p: any) => ({ ...p })),
+          queryClient.setQueryData(messageKeyFor(convKeyId), (prev: any) => {
+            if (!prev?.pages) return prev;
+            const copy = {
+              ...prev,
+              pages: prev.pages.map((p: any) => ({ ...p })),
+            };
+            for (let pi = 0; pi < copy.pages.length; pi++) {
+              const p = copy.pages[pi];
+              const msgs = Array.isArray(p?.data?.messages)
+                ? p.data.messages.map((m: any) => {
+                    if (m?.id === tempId) {
+                      return { ...m, _sending: false, _failed: true };
+                    }
+                    return m;
+                  })
+                : p?.data?.messages;
+              copy.pages[pi] = {
+                ...p,
+                data: { ...(p?.data || {}), messages: msgs },
               };
-              for (let pi = 0; pi < copy.pages.length; pi++) {
-                const p = copy.pages[pi];
-                const msgs = Array.isArray(p?.data?.messages)
-                  ? p.data.messages.map((m: any) => {
-                      if (m?.id === tempId) {
-                        return { ...m, _sending: false, _failed: true };
-                      }
-                      return m;
-                    })
-                  : p?.data?.messages;
-                copy.pages[pi] = {
-                  ...p,
-                  data: { ...(p?.data || {}), messages: msgs },
-                };
-              }
-              return copy;
             }
-          );
+            return copy;
+          });
           // Broadcast failure so hooks can latch the failure state
           try {
             if (typeof window !== "undefined") {
@@ -999,7 +1002,7 @@ export function useSendMessageMutation() {
                     failedAt: Date.now(),
                     startedAt: (context as any)?.startedAt,
                   },
-                })
+                }),
               );
 
               // Persist quarantine so a hard refresh still hides server echo until manual retry
@@ -1026,14 +1029,14 @@ export function useSendMessageMutation() {
                               q.convId === convKeyId &&
                               q.userId === userId &&
                               q.content === content
-                            )
+                            ),
                         ),
                         entry,
                       ]
                     : [entry];
                   window.localStorage.setItem(
                     "MSG_QUARANTINE",
-                    JSON.stringify(next)
+                    JSON.stringify(next),
                   );
                 }
               } catch {}
@@ -1085,7 +1088,7 @@ export function useMarkAsReadMutation(conversationId?: string) {
             ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
           },
           body: JSON.stringify({ messageIds }),
-        }
+        },
       );
       return (await readResp.json().catch(() => ({}))) ?? {};
     },
@@ -1095,28 +1098,25 @@ export function useMarkAsReadMutation(conversationId?: string) {
       const { messageIds } = args;
 
       // Optimistically mark messages as read in cache
-      queryClient.setQueryData(
-        messageKeyFor(conversationId),
-        (prev: any) => {
-          if (!prev?.pages) return prev;
+      queryClient.setQueryData(messageKeyFor(conversationId), (prev: any) => {
+        if (!prev?.pages) return prev;
 
-          const copy = {
-            ...prev,
-            pages: prev.pages.map((p: any) => ({
-              ...p,
-              data: {
-                ...p.data,
-                messages: (p.data?.messages || []).map((msg: any) =>
-                  messageIds.includes(msg.id)
-                    ? { ...msg, is_read: true, isRead: true }
-                    : msg
-                ),
-              },
-            })),
-          };
-          return copy;
-        }
-      );
+        const copy = {
+          ...prev,
+          pages: prev.pages.map((p: any) => ({
+            ...p,
+            data: {
+              ...p.data,
+              messages: (p.data?.messages || []).map((msg: any) =>
+                messageIds.includes(msg.id)
+                  ? { ...msg, is_read: true, isRead: true }
+                  : msg,
+              ),
+            },
+          })),
+        };
+        return copy;
+      });
 
       // Update conversation lastMessage flags only (do NOT change unread_count on READ)
       queryClient.setQueryData(conversationKeys.lists(), (prev: any) => {
@@ -1132,7 +1132,7 @@ export function useMarkAsReadMutation(conversationId?: string) {
                     ? { ...c.lastMessage, isRead: true, is_read: true }
                     : c.lastMessage,
               }
-            : c
+            : c,
         );
 
         return {
@@ -1149,7 +1149,9 @@ export function useMarkAsReadMutation(conversationId?: string) {
         queryClient.invalidateQueries({
           queryKey: messageKeyFor(conversationId),
         });
-        queryClient.invalidateQueries({ queryKey: conversationKeys.all });
+        queryClient.invalidateQueries({
+          queryKey: conversationKeys.all(userScopeId),
+        });
       }
     },
   });
