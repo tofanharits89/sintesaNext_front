@@ -88,7 +88,12 @@ export default function SimplifiedLoginForm() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Login gagal");
+        console.log('[LoginForm] Error response debugging:', {
+          errorData,
+          errorMessage: errorData.error?.message || errorData.message || "Login gagal",
+          directError: errorData.error
+        });
+        throw new Error(errorData.error || errorData.error?.message || errorData.message || "Login gagal");
       }
 
       const result = await response.json();
@@ -182,7 +187,10 @@ export default function SimplifiedLoginForm() {
             </CardHeader>
 
             <CardContent>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
                 {/* Username */}
                 <div className="space-y-2">
                   <Label htmlFor="username">Username</Label>

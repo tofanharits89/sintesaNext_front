@@ -137,9 +137,14 @@ export async function POST(request: NextRequest) {
   });
 
   if (!resp.ok || !data?.success) {
-    console.error("[Login Route] Login failed:", data?.message);
+    console.error("[Login Route] Login failed - debugging data:", {
+      dataKeys: Object.keys(data || {}),
+      errorMessage: data?.error?.message,
+      directMessage: data?.message,
+      fullData: data
+    });
     const errRes = NextResponse.json(
-      { ok: false, error: data?.message || "Login failed" },
+      { ok: false, error: data?.error?.message || data?.message || "Login failed" },
       { status: resp.status || 401 },
     );
     // Forward Set-Cookie headers from backend even on failure
