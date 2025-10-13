@@ -222,8 +222,8 @@ export function useSavedQueries(
     }
 
     const queryString = searchParams.toString();
-    // IMPORTANT: Use backend base URL directly to avoid proxy inconsistencies for GET list
-    return backendPath(`/saved-queries${queryString ? `?${queryString}` : ""}`);
+    // Route through same-origin Next API to leverage Axios interceptors uniformly
+    return apiPath(`/saved-queries${queryString ? `?${queryString}` : ""}`);
   }, [
     stableParams.page,
     stableParams.limit,

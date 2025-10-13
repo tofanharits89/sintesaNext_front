@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/httpClient";
 
 export interface SupplierProfileData {
   supplier?: {
@@ -31,16 +32,8 @@ export function useSupplierProfile(params: { vendor?: string; limit?: number; ye
       if (vendor) qs.set("vendor", vendor);
       if (limit) qs.set("limit", String(limit));
       if (year && /^\d{4}$/.test(year)) qs.set("year", year);
-
-      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:88/api/v1";
-      const url = `${baseUrl}/supplier-analytics/profile?${qs.toString()}`;
-
-      const resp = await fetch(url, {
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data = (await resp.json().catch(() => ({}))) as SupplierProfileResponse;
+      const path = `/supplier-analytics/profile?${qs.toString()}`;
+      const data = (await apiClient.get(path)) as SupplierProfileResponse;
       return data;
     },
     enabled: isClient && !!vendor,
