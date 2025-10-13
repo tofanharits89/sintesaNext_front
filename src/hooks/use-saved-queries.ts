@@ -25,6 +25,12 @@ import type {
 const fetcher = async (url: string) => {
   try {
     console.log("[useSavedQueries] Fetching URL:", url);
+
+    // Check if URL is valid
+    if (!url || typeof url !== "string") {
+      throw new Error("Invalid URL provided to fetcher");
+    }
+
     // Using http directly allows passing an absolute URL as key
     const _scope = (() => {
       try {
@@ -60,10 +66,26 @@ const fetcher = async (url: string) => {
       headers["Cache-Control"] = "no-cache";
       headers["Pragma"] = "no-cache";
     }
+
+    console.log("[useSavedQueries] Making HTTP request to:", url);
+    console.log("[useSavedQueries] Request headers:", headers);
+    console.log("[useSavedQueries] Request config:", {
+      withCredentials: true,
+      timeout: 30000,
+    });
+
     const resp = await http.get(url, {
       headers,
       withCredentials: true,
       timeout: 30000,
+    });
+
+    console.log("[useSavedQueries] HTTP response received:", {
+      status: resp.status,
+      statusText: resp.statusText,
+      headers: resp.headers,
+      hasData: !!resp.data,
+      dataType: typeof resp.data,
     });
     const result = resp.data;
     console.log("[useSavedQueries] API response:", {
@@ -72,12 +94,39 @@ const fetcher = async (url: string) => {
       totalCount: result?.data?.pagination?.total || 0,
       currentPage: result?.data?.pagination?.page || 0,
       url: url,
+      fullResult: result,
+      resultData: result?.data,
+      hasDataQueries: result?.data?.queries,
+      hasQueries: result?.queries,
     });
+
+    // Handle different response formats
     if (result && result.success && result.data) {
+      console.log("[useSavedQueries] Returning result.data:", result.data);
       return result.data;
     }
-    return result;
+
+    // Handle case where data is directly in result (no success wrapper)
+    if (result && result.queries && Array.isArray(result.queries)) {
+      console.log(
+        "[useSavedQueries] Returning result directly (has queries array):",
+        result,
+      );
+      return result;
+    }
+
+    console.log("[useSavedQueries] Returning fallback structure");
+    return {
+      queries: [],
+      pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+    };
   } catch (err: any) {
+    console.log("[useSavedQueries] ERROR CAUGHT:");
+    console.log("[useSavedQueries] Error type:", err.constructor.name);
+    console.log("[useSavedQueries] Error message:", err.message);
+    console.log("[useSavedQueries] Error code:", err.code);
+    console.log("[useSavedQueries] Error status:", err.status);
+    console.log("[useSavedQueries] Full error:", err);
     const status = err?.response?.status as number | undefined;
     const statusText = err?.response?.statusText;
     const raw = err?.response?.data;

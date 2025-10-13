@@ -59,7 +59,7 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
       {
         maxRenders: 20, // Lower threshold for earlier detection
         timeWindow: 2000, // 2 second window
-      }
+      },
     );
   }
 
@@ -67,15 +67,18 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [pendingQueryLoad, setPendingQueryLoad] = useState<SavedQuery | null>(
-    null
+    null,
   );
 
   // Memoize query parameters to prevent infinite loops
   const queryParams = useMemo<
-    (GetSavedQueriesParams & { scope?: QueryLoaderButtonProps["scope"] }) | undefined
+    | (GetSavedQueriesParams & { scope?: QueryLoaderButtonProps["scope"] })
+    | undefined
   >(() => {
     const trimmed = searchQuery.trim();
-    const base: GetSavedQueriesParams & { scope?: QueryLoaderButtonProps["scope"] } = {
+    const base: GetSavedQueriesParams & {
+      scope?: QueryLoaderButtonProps["scope"];
+    } = {
       limit: 10,
       scope,
     };
@@ -91,21 +94,24 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
     isLoading: isLoadingQueries,
     error,
     refetch: refetchQueries,
+    pagination,
   } = useSavedQueries(queryParams);
 
   // Debug log to see what data the dropdown is getting (development only)
   React.useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 QueryLoaderButton - updated queries:', {
+    if (process.env.NODE_ENV === "development") {
+      console.log("🔍 QueryLoaderButton - updated queries:", {
         scope,
         queryCount: queries.length,
-        queryNames: queries.map(q => q.name),
-        queryParams
+        queryNames: queries.map((q) => q.name),
+        queryParams,
+        isLoadingQueries,
+        error,
+        pagination,
       });
     }
-  }, [queries, scope, queryParams]);
+  }, [queries, scope, queryParams, isLoadingQueries, error, pagination]);
 
-  
   // Get filtered queries - only process when dropdown is open
   const filteredQueries = useMemo(() => {
     if (!queries.length) {
@@ -117,11 +123,10 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
       const recent = [...queries]
         .sort(
           (a, b) =>
-            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
         )
         .slice(0, 5);
 
-      
       return recent;
     }
 
@@ -131,10 +136,9 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
       (query) =>
         query.name.toLowerCase().includes(searchLower) ||
         (query.description &&
-          query.description.toLowerCase().includes(searchLower))
+          query.description.toLowerCase().includes(searchLower)),
     );
 
-    
     return filtered;
   }, [queries, searchQuery]);
 
@@ -165,7 +169,7 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
         }, 200);
       }
     },
-    [onLoadQuery]
+    [onLoadQuery],
   );
 
   const handleOpenQueryManagement = useCallback(() => {
@@ -209,14 +213,14 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
   // Effect to listen for saved query events and refresh when relevant
   React.useEffect(() => {
     const unsubscribe = savedQueryEvents.subscribe((event) => {
-      console.log('🔍 QueryLoaderButton - received event:', {
+      console.log("🔍 QueryLoaderButton - received event:", {
         type: event.type,
         scope: event.scope,
-        componentScope: scope
+        componentScope: scope,
       });
 
       // Always refresh on any saved query event to show latest data
-      console.log('🔍 QueryLoaderButton - refreshing due to event');
+      console.log("🔍 QueryLoaderButton - refreshing due to event");
       refetchQueries();
     });
 
@@ -240,7 +244,7 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
         }
       }
     },
-    [pendingQueryLoad, refetchQueries]
+    [pendingQueryLoad, refetchQueries],
   );
 
   return (
@@ -354,7 +358,7 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
                         (query as any).updatedAt ??
                           (query as any).updated_at ??
                           (query as any).createdAt ??
-                          (query as any).created_at
+                          (query as any).created_at,
                       )}
                     </span>
                   </div>
@@ -363,8 +367,6 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
             </ScrollArea>
           </>
         )}
-
-        
 
         {/* Unsaved Changes Warning */}
         {hasUnsavedChanges && (
@@ -395,5 +397,5 @@ export const QueryLoaderButton = React.memo(
       // Functions are intentionally not compared to prevent infinite loops
       // when parent components recreate them on every render
     );
-  }
+  },
 );
