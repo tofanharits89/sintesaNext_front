@@ -222,7 +222,7 @@ export function useSavedQueries(
     }
 
     const queryString = searchParams.toString();
-    // Route through same-origin Next API to leverage Axios interceptors uniformly
+    // Use unversioned Next API route; backend versioning handled inside proxy
     return apiPath(`/saved-queries${queryString ? `?${queryString}` : ""}`);
   }, [
     stableParams.page,

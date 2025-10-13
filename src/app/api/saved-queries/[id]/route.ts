@@ -26,7 +26,7 @@ export async function PUT(request: Request, ctx: { params: Promise<{ id: string 
     body: JSON.stringify(body),
   });
   const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
-  return proxyJsonOrNoContent(resp, { forwardCookies: true });
+  return await proxyJsonOrNoContent(resp, { forwardCookies: true });
 }
 
 // DELETE /v3/next/api/saved-queries/[id] -> proxies to backend DELETE /api/v1/saved-queries/:id
@@ -66,5 +66,5 @@ export async function DELETE(request: Request, ctx: { params: Promise<{ id: stri
   }
 
   const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
-  return proxyJsonOrNoContent(resp, { forwardCookies: true });
+  return await proxyJsonOrNoContent(resp, { forwardCookies: true });
 }

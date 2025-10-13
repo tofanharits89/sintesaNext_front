@@ -41,7 +41,6 @@ export async function GET(request: Request) {
     headers: { ...(cookie ? { cookie } : {}) },
     cache: "no-store",
   });
-  console.log("[API /saved-queries] Backend status:", resp.status);
   // Do not perform server-side refresh here; let client interceptors handle 401s
   // This avoids concurrent refresh races and unintended logout cascades
   const data = await resp.json().catch(() => ({}));
@@ -50,7 +49,7 @@ export async function GET(request: Request) {
     return NextResponse.json(data, { status: 401 });
   }
   const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
-  return proxyJsonOrNoContent(resp, { forwardCookies: true });
+  return await proxyJsonOrNoContent(resp, { forwardCookies: true });
 }
 
 // POST /v3/next/api/saved-queries -> proxies to backend POST /api/v1/saved-queries
@@ -77,5 +76,5 @@ export async function POST(request: Request) {
   });
   const data = await resp.json().catch(() => ({}));
   const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
-  return proxyJsonOrNoContent(resp, { forwardCookies: true });
+  return await proxyJsonOrNoContent(resp, { forwardCookies: true });
 }

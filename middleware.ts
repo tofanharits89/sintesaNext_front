@@ -14,6 +14,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { detectIpBlock } from "@/utils/ipBlock";
+import { getAuthCache, setAuthCache, hashKey } from "@/utils/auth-cache";
 
 // Route definitions
 const PROTECTED_ROUTES = [
@@ -228,8 +229,29 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
+    // Token exists - check short-lived cache first
+    const cacheKey = hashKey(token);
+    const cached = getAuthCache(cacheKey);
+    if (cached) {
+      if (!cached.valid) {
+        const loginUrl = new URL("/login", request.url);
+        loginUrl.searchParams.set("returnTo", pathname);
+        loginUrl.searchParams.set("reason", "session_expired");
+        if (ENV.DEBUG_AUTH) {
+          console.log(`[Middleware] Cached invalid session, redirecting: ${pathname} -> /login`);
+        }
+        return NextResponse.redirect(loginUrl);
+      }
+      if (ENV.DEBUG_AUTH) {
+        console.log(`[Middleware] Cached valid session for: ${pathname}`);
+      }
+      return NextResponse.next();
+    }
+
     // Token exists - server-side validation with fallback to optimistic
     const validation = await validateServerSession(token);
+    // Store validation result in short-lived cache
+    setAuthCache(cacheKey, { valid: validation.valid, user: validation.user });
     
     if (!validation.valid) {
       // Redirect blocked IPs to /ip-blocked instead of login

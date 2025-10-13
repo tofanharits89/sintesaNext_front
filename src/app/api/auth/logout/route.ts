@@ -51,8 +51,10 @@ export async function POST(req: NextRequest) {
 
   // Invalidate Next middleware auth cache immediately
   try {
-    // Extract access token from cookies to invalidate specific session
-    const accessToken = extractCookie(incomingCookie, "accessToken");
+    // Extract access token from cookies to invalidate specific session (prefer access_token)
+    const accessToken =
+      extractCookie(incomingCookie, "access_token") ||
+      extractCookie(incomingCookie, "accessToken");
     const sessionKey = accessToken || incomingCookie || "*";
 
     // Build absolute URL for cache invalidation

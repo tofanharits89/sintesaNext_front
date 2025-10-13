@@ -286,7 +286,7 @@ export class CacheWarmer {
         priority: "high",
         queryKey: queryKeyFactories.dashboard.stats(),
         queryFn: () =>
-          fetch(apiPath("/v1/dashboard/stats")).then((res) => res.json()),
+          fetch(apiPath("/dashboard/stats")).then((res) => res.json()),
         staleTime: 2 * 60 * 1000, // 2 minutes
       },
       {
@@ -294,7 +294,7 @@ export class CacheWarmer {
         priority: "high",
         queryKey: queryKeyFactories.financial.mbg.rankings(),
         queryFn: () =>
-          fetch(apiPath("/v1/financial/rankings")).then((res) => res.json()),
+          fetch(apiPath("/financial/rankings")).then((res) => res.json()),
         staleTime: 5 * 60 * 1000, // 5 minutes
       },
     ];
@@ -332,7 +332,7 @@ export class CacheWarmer {
         priority: "high",
         queryKey: queryKeyFactories.dashboard.charts(),
         queryFn: () =>
-          fetch(apiPath("/v1/dashboard/charts")).then((res) => res.json()),
+          fetch(apiPath("/dashboard/charts")).then((res) => res.json()),
         staleTime: 3 * 60 * 1000, // 3 minutes
       },
       {
@@ -340,7 +340,7 @@ export class CacheWarmer {
         priority: "medium",
         queryKey: ["dashboard", "recentActivity"],
         queryFn: () =>
-          fetch(apiPath("/v1/dashboard/recent-activity")).then((res) => res.json()),
+          fetch(apiPath("/dashboard/recent-activity")).then((res) => res.json()),
         staleTime: 1 * 60 * 1000, // 1 minute
       },
     ];
