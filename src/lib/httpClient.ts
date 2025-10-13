@@ -8,6 +8,7 @@ import { BACKEND_BASE_URL, backendPath } from "./backend";
 import { apiPath } from "./base-path";
 import { setupRateLimitInterceptor } from "@/utils/rateLimitHandler";
 import { csrfManager } from "./csrfManager";
+import { detectIpBlock } from "@/utils/ipBlock";
 
 // Utilities to read cookies in browser
 export function getCookie(name: string): string | null {
@@ -286,6 +287,28 @@ http.interceptors.response.use(
     const status = error.response?.status;
     const data = error.response?.data as any;
 
+    // Precompute logout/refresh detection
+    const isLogoutOrRefresh =
+      original.url?.includes("/auth/logout") ||
+      original.url?.includes("/auth/refresh") ||
+      original.headers?.["X-Skip-Auth-Refresh"] === "true";
+
+    // CSRF first: handle EBADCSRFTOKEN before other 403 handling
+    if (
+      status === 403 &&
+      (error.response?.data as any)?.error?.code === "EBADCSRFTOKEN" &&
+      !original._retry &&
+      !isLogoutOrRefresh
+    ) {
+      original._retry = true;
+      try {
+        await ensureCsrfToken(http);
+        return http.request(original);
+      } catch (e) {
+        return Promise.reject(e);
+      }
+    }
+
     // If we're in the process of logging out, reject all requests immediately
     if (isLoggingOut) {
       console.log("[Auth] Request blocked - logout in progress");
@@ -311,67 +334,23 @@ http.interceptors.response.use(
     // Unwrap nested shapes: { success:false, data:{...} }
     const body: any = (data && typeof data === 'object' && 'data' in data && typeof (data as any).data === 'object') ? (data as any).data : data;
 
-    const isIPBlocked = status === 403 && (
-      body?.code === 'IP_BLOCKED' || 
-      body?.error?.toLowerCase?.().includes('blocked') ||
-      body?.error?.toLowerCase?.().includes('suspicious activity') ||
-      // If it's a 403 and not a permission error, assume IP block
-      (!body?.error?.toLowerCase?.().includes('permission') && 
-       !body?.error?.toLowerCase?.().includes('forbidden') &&
-       !body?.error?.toLowerCase?.().includes('access denied'))
-    );
-    
-    if (isIPBlocked) {
+    const resIp = status === 403 ? detectIpBlock(body) : { ipBlocked: false as const };
+    if (resIp.ipBlocked) {
       console.log('[httpClient] IP blocked detected');
-      
+
       if (typeof window !== 'undefined') {
-        // Don't redirect if already on IP blocked page
         if (window.location.pathname.includes('/ip-blocked')) {
           console.log('[httpClient] Already on IP blocked page, not redirecting');
           return Promise.reject(error);
         }
-        
-        // Prevent multiple redirects
         if ((window as any).__redirectingToIPBlocked) {
           console.log('[httpClient] Already redirecting to IP blocked page, skipping');
           return Promise.reject(error);
         }
         (window as any).__redirectingToIPBlocked = true;
-        
-        // Prefer server-provided timing info (unwrapped body)
-        const expiresIn: number = typeof body?.expiresIn === 'number' ? data.expiresIn : 3600;
-        const expiresAt: number | undefined = typeof body?.expiresAt === 'number' ? data.expiresAt : undefined;
-        const serverBlockedAt: number | undefined = typeof body?.blockedAt === 'number' ? data.blockedAt : undefined;
-        const reason: string = body?.blockReason || body?.error || 'Access temporarily blocked due to suspicious activity';
 
-        // Compute blockedAt and duration for the /ip-blocked page params
-        const DEFAULT_DURATION_MS = 3600 * 1000;
-        let finalBlockedAt: number;
-        let finalDurationSec: number = 3600;
-
-        if (typeof serverBlockedAt === 'number' && typeof expiresAt === 'number') {
-          finalBlockedAt = serverBlockedAt;
-          finalDurationSec = Math.max(1, Math.ceil((expiresAt - serverBlockedAt) / 1000));
-        } else if (typeof expiresAt === 'number') {
-          finalBlockedAt = expiresAt - DEFAULT_DURATION_MS;
-          finalDurationSec = Math.max(1, Math.ceil(DEFAULT_DURATION_MS / 1000));
-        } else {
-          // Fallback: derive when the block likely started from TTL
-          finalBlockedAt = Date.now() - ((3600 - expiresIn) * 1000);
-          finalDurationSec = 3600;
-        }
-
-        console.log('[httpClient] Block timing:', { expiresIn, expiresAt, serverBlockedAt, finalBlockedAt, finalDurationSec });
-
-        const params = new URLSearchParams({
-          duration: String(finalDurationSec),
-          blockedAt: String(finalBlockedAt),
-          reason,
-        });
-        
+        const params = new URLSearchParams(resIp.params!);
         console.log('[httpClient] Redirecting to /ip-blocked with params:', params.toString());
-        
-        // Use setTimeout to ensure redirect happens after current execution
         setTimeout(() => {
           window.location.href = `/ip-blocked?${params.toString()}`;
         }, 100);
@@ -380,10 +359,7 @@ http.interceptors.response.use(
     }
 
     // Skip auth refresh for logout and refresh endpoints, or if header says to skip
-    const isLogoutOrRefresh =
-      original.url?.includes("/auth/logout") ||
-      original.url?.includes("/auth/refresh") ||
-      original.headers?.["X-Skip-Auth-Refresh"] === "true";
+    // using isLogoutOrRefresh computed above
 
     // CSRF error handling: if 403 with EBADCSRFTOKEN, fetch new token then retry once
     if (

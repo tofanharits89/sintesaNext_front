@@ -13,6 +13,7 @@
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { detectIpBlock } from "@/utils/ipBlock";
 
 // Route definitions
 const PROTECTED_ROUTES = [
@@ -101,31 +102,9 @@ async function validateServerSession(accessToken: string): Promise<{ valid: bool
       // Check for IP block and prepare redirect params
       try {
         const data = await response.json();
-        const isIPBlocked = data?.code === 'IP_BLOCKED' || data?.error?.toLowerCase?.().includes('blocked');
-        if (isIPBlocked) {
-          const expiresIn: number = typeof data?.expiresIn === 'number' ? data.expiresIn : 3600;
-          const expiresAt: number | undefined = typeof data?.expiresAt === 'number' ? data.expiresAt : undefined;
-          const blockedAtServer: number | undefined = typeof data?.blockedAt === 'number' ? data.blockedAt : undefined;
-          const DEFAULT_MS = 3600 * 1000;
-          let finalBlockedAt: number;
-          let finalDurationSec: number;
-          if (typeof blockedAtServer === 'number' && typeof expiresAt === 'number') {
-            finalBlockedAt = blockedAtServer;
-            finalDurationSec = Math.max(1, Math.ceil((expiresAt - blockedAtServer) / 1000));
-          } else if (typeof expiresAt === 'number') {
-            finalBlockedAt = expiresAt - DEFAULT_MS;
-            finalDurationSec = 3600;
-          } else {
-            finalBlockedAt = Date.now() - ((3600 - expiresIn) * 1000);
-            finalDurationSec = 3600;
-          }
-          const reason = data?.blockReason || data?.error || 'Access temporarily blocked';
-          const ipParams = {
-            duration: String(finalDurationSec),
-            blockedAt: String(finalBlockedAt),
-            reason,
-          };
-          return { valid: false, error: 'IP_BLOCKED', ipBlocked: true, ipParams };
+        const res = detectIpBlock(data);
+        if (res.ipBlocked && res.params) {
+          return { valid: false, error: 'IP_BLOCKED', ipBlocked: true, ipParams: res.params };
         }
       } catch {}
       return { valid: false, error: "Forbidden" };
@@ -219,30 +198,10 @@ export async function middleware(request: NextRequest) {
         if (resp.status === 403) {
           try {
             const raw = await resp.json();
-            const data: any = (raw && typeof raw === 'object' && 'data' in raw && typeof (raw as any).data === 'object') ? (raw as any).data : raw;
-            const isIPBlocked = data?.code === 'IP_BLOCKED' || data?.error?.toLowerCase?.().includes('blocked');
-            if (isIPBlocked) {
-              const expiresIn: number = typeof data?.expiresIn === 'number' ? data.expiresIn : 3600;
-              const expiresAt: number | undefined = typeof data?.expiresAt === 'number' ? data.expiresAt : undefined;
-              const blockedAtServer: number | undefined = typeof data?.blockedAt === 'number' ? data.blockedAt : undefined;
-              const DEFAULT_MS = 3600 * 1000;
-              let finalBlockedAt: number;
-              let finalDurationSec: number;
-              if (typeof blockedAtServer === 'number' && typeof expiresAt === 'number') {
-                finalBlockedAt = blockedAtServer;
-                finalDurationSec = Math.max(1, Math.ceil((expiresAt - blockedAtServer) / 1000));
-              } else if (typeof expiresAt === 'number') {
-                finalBlockedAt = expiresAt - DEFAULT_MS;
-                finalDurationSec = 3600;
-              } else {
-                finalBlockedAt = Date.now() - ((3600 - expiresIn) * 1000);
-                finalDurationSec = 3600;
-              }
-              const reason = data?.blockReason || data?.error || 'Access temporarily blocked';
+            const res = detectIpBlock(raw);
+            if (res.ipBlocked && res.params) {
               const ipUrl = new URL('/ip-blocked', request.url);
-              ipUrl.searchParams.set('duration', String(finalDurationSec));
-              ipUrl.searchParams.set('blockedAt', String(finalBlockedAt));
-              ipUrl.searchParams.set('reason', reason);
+              for (const [k, v] of Object.entries(res.params)) ipUrl.searchParams.set(k, v);
               return NextResponse.redirect(ipUrl);
             }
           } catch {}
