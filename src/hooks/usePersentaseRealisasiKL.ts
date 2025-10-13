@@ -43,7 +43,7 @@ export function usePersentaseRealisasiKL(params?: { kanwil?: string; enabled?: b
       return result.data;
     },
     enabled: isClient && (params?.enabled ?? true),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 12 * 60 * 60 * 1000,
     retry: (failureCount, error) => {
       if (
         (error as any).message?.includes("authentication") ||

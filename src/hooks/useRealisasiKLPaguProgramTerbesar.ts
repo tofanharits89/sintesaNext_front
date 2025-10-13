@@ -73,7 +73,7 @@ export function useRealisasiKLPaguProgramTerbesar(
       }
     },
     enabled: isClient && (enabled ?? true),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 12 * 60 * 60 * 1000, // 12 hours
     retry: (failureCount, error) => {
       // Don't retry on authentication errors
       if (
