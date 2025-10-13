@@ -9,6 +9,7 @@
 
 import { io, Socket } from "socket.io-client";
 import { SOCKET_EVENTS } from "@/types/socket-events";
+import { backendPath } from "@/lib/backend";
 
 export type SocketState = "disconnected" | "connecting" | "connected" | "error" | "reconnecting";
 
@@ -278,8 +279,8 @@ export class SocketClient {
     const reason = data.reason || 'SESSION_EXPIRED';
     const displayMessage = data.displayMessage || 'Your session has expired';
 
-    // Call backend logout API
-    fetch('/api/auth/logout', {
+    // Call backend logout API (versioned)
+    fetch(backendPath('/auth/logout'), {
       method: 'POST',
       credentials: 'include',
     }).catch(() => {
