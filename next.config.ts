@@ -82,11 +82,11 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              // Next.js requires unsafe-eval and unsafe-inline for development
+              // Next.js requires unsafe-eval and unsafe-inline
               // Google Maps API requires maps.googleapis.com
               isDevelopment
                 ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://maps.googleapis.com"
-                : "script-src 'self' https://maps.googleapis.com",
+                : "script-src 'self' 'unsafe-inline' https://maps.googleapis.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
@@ -197,11 +197,14 @@ const nextConfig: NextConfig = {
   },
 
   async rewrites() {
+    const backendHost =
+      process.env.NODE_ENV === "production" ? "backend" : "localhost";
+
     return [
       // Proxy API requests to backend
       {
         source: "/api/v1/:path*",
-        destination: "http://localhost:88/api/v1/:path*",
+        destination: `http://${backendHost}:88/api/v1/:path*`,
       },
     ];
   },

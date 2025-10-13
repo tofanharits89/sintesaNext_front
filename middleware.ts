@@ -51,7 +51,11 @@ const PUBLIC_ROUTES = [
 
 // Environment-based configuration
 const ENV = {
-  API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:88',
+  // Use server-side BACKEND_URL for middleware (Docker internal), fallback to localhost
+  API_BASE_URL: process.env.BACKEND_URL?.replace('/api/v1', '') || 
+                process.env.API_URL?.replace('/api/v1', '') || 
+                process.env.NEXT_PUBLIC_API_BASE_URL || 
+                'http://localhost:88',
   NODE_ENV: process.env.NODE_ENV || 'development',
   DEBUG_AUTH: process.env.NEXT_PUBLIC_DEBUG_AUTH === 'true',
   // Allow optimistic auth only in development
