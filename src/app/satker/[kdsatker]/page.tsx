@@ -1,19 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Building2, FileText, Calendar, User, MapPin, CreditCard, Shield, AlertTriangle } from "lucide-react";
-import carisatkerData from "@/data/carisatker.json";
 import { SatkerProfileTab } from "@/components/satker/satker-profile-tab";
 import { DipaDownloadTab } from "@/components/satker/dipa-download-tab";
 import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 import { canManageUsers } from "@/hooks/useUnifiedAuth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { useSatkerData } from "@/hooks/use-satker-data";
 
 interface SatkerData {
   kdsatker: string;
@@ -26,16 +25,8 @@ export default function SatkerDetailPage() {
   const params = useParams();
   const router = useRouter();
   const kdsatker = params?.kdsatker as string;
-  const [satkerData, setSatkerData] = useState<SatkerData | null>(null);
-  const [loading, setLoading] = useState(true);
   const { user: currentUser, isLoading: userLoading } = useUnifiedAuth();
-
-  useEffect(() => {
-    // Find satker data from JSON
-    const foundSatker = carisatkerData.find(item => item.kdsatker === kdsatker);
-    setSatkerData(foundSatker || null);
-    setLoading(false);
-  }, [kdsatker]);
+  const { data: satkerData, loading, error } = useSatkerData(kdsatker);
 
   // Check if user has access to this satker
   const hasAccess = satkerData ? canManageUsers : false; // Simplified RBAC check

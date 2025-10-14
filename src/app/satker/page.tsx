@@ -6,49 +6,24 @@ import { Button } from "@/components/ui/button";
 import { Search, Building2, ArrowRight, Shield, Info } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import carisatkerData from "@/data/carisatker.json";
 import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
-import { filterSatkerByUserAccess, getUserAccessDescription } from "@/utils/satker-rbac";
+import { getUserAccessDescription } from "@/utils/satker-rbac";
 import { useSatkerSearch } from "@/hooks/use-satker-data";
 import { formatSatkerDisplayName, formatSatkerSubtitle } from "@/utils/satker-data";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function SatkerPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchResults, setSearchResults] = useState<typeof carisatkerData>([]);
-  const [useAPI, setUseAPI] = useState(true); // Toggle between API and JSON data
   const router = useRouter();
   const { user: currentUser, isLoading } = useUnifiedAuth();
   const { results: apiResults, loading: apiLoading, error: apiError, searchSatker } = useSatkerSearch();
 
   const handleSearch = async () => {
     if (searchTerm.length < 2) {
-      setSearchResults([]);
       return;
     }
 
-    if (useAPI) {
-      // Try to use API first
-      try {
-        await searchSatker(searchTerm);
-        return;
-      } catch (error) {
-        console.warn("API search failed, falling back to JSON data:", error);
-        setUseAPI(false);
-      }
-    }
-
-    // Fallback to JSON data search
-    const accessibleSatkers = filterSatkerByUserAccess(carisatkerData, currentUser);
-    const filtered = accessibleSatkers.filter((item) => {
-      const searchLower = searchTerm.toLowerCase();
-      return (
-        item.kdsatker.toLowerCase().includes(searchLower) ||
-        item.nmsatker.toLowerCase().includes(searchLower)
-      );
-    }).slice(0, 20);
-
-    setSearchResults(filtered);
+    await searchSatker(searchTerm);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -131,17 +106,17 @@ export default function SatkerPage() {
       )}
 
       {/* Search Results */}
-      {((useAPI && apiResults.length > 0) || (!useAPI && searchResults.length > 0)) && currentUser && currentUser.role !== "lainnya" && (
+      {apiResults.length > 0 && currentUser && currentUser.role !== "lainnya" && (
         <Card className="max-w-4xl mx-auto">
           <CardHeader>
             <CardTitle>
-              Hasil Pencarian ({useAPI ? apiResults.length : searchResults.length})
+              Hasil Pencarian ({apiResults.length})
               {apiLoading && <span className="text-sm font-normal text-muted-foreground ml-2">(Memuat...)</span>}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {(useAPI ? apiResults : searchResults).map((satker) => (
+              {apiResults.map((satker) => (
                 <div
                   key={satker.kdsatker}
                   className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
@@ -164,9 +139,19 @@ export default function SatkerPage() {
         </Card>
       )}
 
+      {/* API Error */}
+      {apiError && searchTerm.length >= 2 && currentUser && currentUser.role !== "lainnya" && (
+        <Alert className="max-w-2xl mx-auto border-red-200 bg-red-50">
+          <Info className="h-4 w-4 text-red-600" />
+          <AlertDescription className="text-red-800">
+            <strong>Error:</strong> {apiError}
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* No Results */}
       {searchTerm.length >= 2 && 
-       ((useAPI && apiResults.length === 0 && !apiLoading) || (!useAPI && searchResults.length === 0)) && 
+       apiResults.length === 0 && !apiLoading && !apiError &&
        currentUser && currentUser.role !== "lainnya" && (
         <Card className="max-w-2xl mx-auto">
           <CardContent className="text-center py-8">

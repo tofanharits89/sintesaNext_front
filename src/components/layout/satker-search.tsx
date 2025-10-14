@@ -4,9 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
-import carisatkerData from "@/data/carisatker.json";
 import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
-import { filterSatkerByUserAccess } from "@/utils/satker-rbac";
+import { useSatkerSearch } from "@/hooks/use-satker-data";
 
 interface SatkerItem {
     kdsatker: string;
@@ -17,38 +16,29 @@ interface SatkerItem {
 
 export function SatkerSearch() {
     const [searchValue, setSearchValue] = useState("");
-    const [filteredResults, setFilteredResults] = useState<SatkerItem[]>([]);
     const [showResults, setShowResults] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(-1);
     const router = useRouter();
     const inputRef = useRef<HTMLInputElement>(null);
     const resultsRef = useRef<HTMLDivElement>(null);
     const { user: currentUser } = useUnifiedAuth();
+    const { results: filteredResults, loading, searchSatker } = useSatkerSearch();
 
-    // Filter results based on search input and user access
+    // Search using API when user types
     useEffect(() => {
         if (searchValue.length < 2) {
-            setFilteredResults([]);
             setShowResults(false);
             return;
         }
 
-        // First filter by user's access level (role-based access control)
-        const accessibleSatkers = filterSatkerByUserAccess(carisatkerData, currentUser);
+        const debounceTimer = setTimeout(() => {
+            searchSatker(searchValue);
+            setShowResults(true);
+            setSelectedIndex(-1);
+        }, 300); // Debounce for 300ms
 
-        // Then filter by search term
-        const filtered = accessibleSatkers.filter((item) => {
-            const searchLower = searchValue.toLowerCase();
-            return (
-                item.kdsatker.toLowerCase().includes(searchLower) ||
-                item.nmsatker.toLowerCase().includes(searchLower)
-            );
-        }).slice(0, 10); // Limit to 10 results for performance
-
-        setFilteredResults(filtered);
-        setShowResults(filtered.length > 0);
-        setSelectedIndex(-1);
-    }, [searchValue, currentUser]);
+        return () => clearTimeout(debounceTimer);
+    }, [searchValue, searchSatker]);
 
     const handleSelect = (satker: SatkerItem) => {
         setShowResults(false);
