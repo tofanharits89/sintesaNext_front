@@ -17,6 +17,20 @@ export interface QueryExecutionResult {
   query?: string;
 }
 
+export interface QueryPreviewResult {
+  success: boolean;
+  originalQuery?: string;
+  convertedQuery?: string;
+  conversions?: {
+    hasConvert: boolean;
+    hasIfnull: boolean;
+    hasDateFormat: boolean;
+    hasGroupConcat: boolean;
+    hasMysqlLimit: boolean;
+  };
+  error?: string;
+}
+
 export interface FilterValue {
   selection: string;
   kondisiCode: string;
@@ -28,7 +42,7 @@ export interface FilterValue {
 export function useInquiryDataApi() {
   const [isLoading, setIsLoading] = useState(false);
   const [lastResult, setLastResult] = useState<QueryExecutionResult | null>(
-    null
+    null,
   );
   const { buildQuery, encryptQuery } = useInquiryQueryBuilder();
 
@@ -43,7 +57,7 @@ export function useInquiryDataApi() {
         pembulatan: string;
         jenisAkumulasi?: string;
       },
-      pagination?: { page?: number; pageSize?: number }
+      pagination?: { page?: number; pageSize?: number },
     ): Promise<QueryExecutionResult> => {
       setIsLoading(true);
 
@@ -62,7 +76,7 @@ export function useInquiryDataApi() {
             format: "json",
             page: pagination?.page ?? 1,
             pageSize: pagination?.pageSize ?? 50,
-          }
+          },
         );
 
         setLastResult(result);
@@ -80,7 +94,7 @@ export function useInquiryDataApi() {
         setIsLoading(false);
       }
     },
-    [buildQuery, encryptQuery]
+    [buildQuery, encryptQuery],
   );
 
   // Download CSV
@@ -93,7 +107,7 @@ export function useInquiryDataApi() {
         tipeLaporan: string;
         pembulatan: string;
         jenisAkumulasi?: string;
-      }
+      },
     ): Promise<void> => {
       setIsLoading(true);
 
@@ -106,13 +120,13 @@ export function useInquiryDataApi() {
 
         // Send to API using axios with blob response
         const { data: blob } = await http.post(
-apiPath("/inquiry-data/query"),
+          apiPath("/inquiry-data/query"),
           {
             encryptedQuery,
             format: "csv",
             limit: 50000, // Higher limit for downloads
           },
-          { responseType: "blob" }
+          { responseType: "blob" },
         );
 
         const url = window.URL.createObjectURL(blob);
@@ -130,7 +144,7 @@ apiPath("/inquiry-data/query"),
         setIsLoading(false);
       }
     },
-    [buildQuery, encryptQuery]
+    [buildQuery, encryptQuery],
   );
 
   // Download Excel
@@ -143,7 +157,7 @@ apiPath("/inquiry-data/query"),
         tipeLaporan: string;
         pembulatan: string;
         jenisAkumulasi?: string;
-      }
+      },
     ): Promise<void> => {
       setIsLoading(true);
 
@@ -153,11 +167,13 @@ apiPath("/inquiry-data/query"),
         const encryptedQuery = encryptQuery(sqlQuery);
 
         const { data: result } = await http.post<QueryExecutionResult>(
-apiPath("/inquiry-data/query"),
-          { encryptedQuery, format: "excel" }
+          apiPath("/inquiry-data/query"),
+          { encryptedQuery, format: "excel" },
         );
         if (!result.success || !result.data) {
-          throw new Error(result.error || "Failed to get data for Excel export");
+          throw new Error(
+            result.error || "Failed to get data for Excel export",
+          );
         }
 
         const XLSX = await import("xlsx");
@@ -193,8 +209,8 @@ apiPath("/inquiry-data/query"),
           result.columns && result.columns.length > 0
             ? result.columns
             : result.data?.length
-            ? Object.keys(result.data[0])
-            : [];
+              ? Object.keys(result.data[0])
+              : [];
 
         // Build AOA with header first, then rows; coerce monetary cells to numbers
         const aoa: any[][] = [];
@@ -222,7 +238,7 @@ apiPath("/inquiry-data/query"),
         // Apply number format to monetary columns (thousands separator)
         const range = XLSX.utils.decode_range(
           ws["!ref"] ||
-            `A1:${XLSX.utils.encode_col(columns.length - 1)}${aoa.length}`
+            `A1:${XLSX.utils.encode_col(columns.length - 1)}${aoa.length}`,
         );
         columns.forEach((col, cIdx) => {
           if (!isMonetary(col)) return;
@@ -248,14 +264,72 @@ apiPath("/inquiry-data/query"),
         setIsLoading(false);
       }
     },
-    [executeQuery]
+    [executeQuery],
+  );
+
+  // Preview converted query
+  const previewConvertedQuery = useCallback(
+    async (
+      activeFilters: string[],
+      filterValues: Record<string, FilterValue>,
+      reportParams: {
+        tahun: string;
+        tipeLaporan: string;
+        pembulatan: string;
+        jenisAkumulasi?: string;
+      },
+    ): Promise<QueryPreviewResult> => {
+      setIsLoading(true);
+
+      try {
+        // Build the SQL query
+        const sqlQuery = buildQuery(activeFilters, filterValues, reportParams);
+
+        // Encrypt the query
+        const encryptedQuery = encryptQuery(sqlQuery);
+
+        // Get backend URL for direct call
+        const { BACKEND_BASE_URL } = await import("@/lib/backend");
+        const backendUrl = BACKEND_BASE_URL.replace(/\/api\/v1$/, "");
+
+        // Send directly to backend endpoint (bypassing Next.js API routes)
+        const response = await fetch(
+          `${backendUrl}/api/v1/inquiry-data/query/preview`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include", // Include cookies for authentication
+            body: JSON.stringify({ encryptedQuery }),
+          },
+        );
+
+        const result = await response.json();
+
+        // Note: We don't setLastResult for preview as it's a different result type
+        return result;
+      } catch (error) {
+        const errorResult: QueryPreviewResult = {
+          success: false,
+          error:
+            error instanceof Error ? error.message : "Unknown error occurred",
+        };
+
+        // Note: We don't setLastResult for preview as it's a different result type
+        return errorResult;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [buildQuery, encryptQuery],
   );
 
   // Test API connection
   const testConnection = useCallback(async (): Promise<boolean> => {
     try {
       const result = await apiClient.get<{ success: boolean }>(
-        "/inquiry-data/query"
+        "/inquiry-data/query",
       );
       return !!result.success;
     } catch (error) {
@@ -268,6 +342,7 @@ apiPath("/inquiry-data/query"),
     executeQuery,
     downloadCSV,
     downloadExcel,
+    previewConvertedQuery,
     testConnection,
     isLoading,
     lastResult,

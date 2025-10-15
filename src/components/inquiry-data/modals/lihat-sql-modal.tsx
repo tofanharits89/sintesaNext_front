@@ -11,8 +11,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Code, Copy, Download, Loader2, CheckCircle } from "lucide-react";
-import { useInquiryQueryBuilder } from "@/hooks/use-inquiry-query-builder";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Code,
+  Copy,
+  Download,
+  Loader2,
+  CheckCircle,
+  Database,
+} from "lucide-react";
+import { useInquiryDataApi } from "@/hooks/use-inquiry-data-api";
 import { normalizeActiveFilters } from "../filterRegistry";
 
 interface LihatSqlModalProps {
@@ -40,26 +48,47 @@ export function LihatSqlModal({
   reportParams,
   filterValues = {},
 }: LihatSqlModalProps) {
-  const [sqlQuery, setSqlQuery] = useState<string>("");
+  const [previewData, setPreviewData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const { buildQuery } = useInquiryQueryBuilder();
+  const [activeTab, setActiveTab] = useState("converted");
+  const { previewConvertedQuery } = useInquiryDataApi();
 
   const fetchSQL = React.useCallback(async () => {
     setIsLoading(true);
+    setPreviewData(null);
 
     try {
-      // Use the query builder to generate the actual SQL; normalize filter order for stability
+      // Use the preview endpoint to get both original and converted SQL
       const normalized = normalizeActiveFilters(activeFilters);
-      const generatedSQL = buildQuery(normalized, filterValues, reportParams);
-      setSqlQuery(generatedSQL);
+      const result = await previewConvertedQuery(
+        normalized,
+        filterValues,
+        reportParams,
+      );
+
+      if (result.success) {
+        setPreviewData(result);
+      } else {
+        setPreviewData({
+          success: false,
+          error: result.error || "Failed to preview query",
+          originalQuery: "-- Error generating query",
+          convertedQuery: "-- Error generating query",
+        });
+      }
     } catch (error) {
       console.error("Error generating SQL:", error);
-      setSqlQuery("-- Error generating SQL query: " + (error as Error).message);
+      setPreviewData({
+        success: false,
+        error: (error as Error).message,
+        originalQuery: "-- Error generating query",
+        convertedQuery: "-- Error generating query",
+      });
     } finally {
       setIsLoading(false);
     }
-  }, [activeFilters, filterValues, reportParams, buildQuery]);
+  }, [activeFilters, filterValues, reportParams, previewConvertedQuery]);
 
   useEffect(() => {
     if (open) {
@@ -67,9 +96,9 @@ export function LihatSqlModal({
     }
   }, [open, fetchSQL]);
 
-  const handleCopySQL = async () => {
+  const handleCopySQL = async (query: string) => {
     try {
-      await navigator.clipboard.writeText(sqlQuery);
+      await navigator.clipboard.writeText(query);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
@@ -77,12 +106,12 @@ export function LihatSqlModal({
     }
   };
 
-  const handleDownloadSQL = () => {
-    const blob = new Blob([sqlQuery], { type: "text/plain" });
+  const handleDownloadSQL = (query: string, suffix: string) => {
+    const blob = new Blob([query], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `query_${
+    a.download = `query_${suffix}_${
       reportParams.scope === "tematik" ? "tematik" : "belanja"
     }_${new Date().toISOString().split("T")[0]}.sql`;
     document.body.appendChild(a);
@@ -94,7 +123,7 @@ export function LihatSqlModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-7xl max-h-[80vh] sm:max-w-7xl"
+        className="max-w-7xl max-h-[90vh] sm:max-w-7xl"
         showCloseButton={false}
       >
         <DialogHeader>
@@ -127,63 +156,212 @@ export function LihatSqlModal({
                 </Badge>
               )}
               <Badge variant="outline">Filters: {activeFilters.length}</Badge>
+              {previewData?.conversions && (
+                <>
+                  {previewData.conversions.hasConvert && (
+                    <Badge variant="destructive" className="text-xs">
+                      CONVERT detected
+                    </Badge>
+                  )}
+                  {previewData.conversions.hasIfnull && (
+                    <Badge variant="destructive" className="text-xs">
+                      IFNULL detected
+                    </Badge>
+                  )}
+                  {previewData.conversions.hasDateFormat && (
+                    <Badge variant="destructive" className="text-xs">
+                      DATE_FORMAT detected
+                    </Badge>
+                  )}
+                  {previewData.conversions.hasGroupConcat && (
+                    <Badge variant="destructive" className="text-xs">
+                      GROUP_CONCAT detected
+                    </Badge>
+                  )}
+                  {previewData.conversions.hasMysqlLimit && (
+                    <Badge variant="destructive" className="text-xs">
+                      MySQL LIMIT syntax
+                    </Badge>
+                  )}
+                </>
+              )}
             </div>
           </div>
 
-          {/* SQL Display */}
+          {/* SQL Display with Tabs */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-medium">SQL Query</h4>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopySQL}
-                  disabled={isLoading || !sqlQuery}
-                >
-                  {copied ? (
-                    <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
-                  ) : (
-                    <Copy className="w-4 h-4 mr-2" />
-                  )}
-                  {copied ? "Copied!" : "Copy"}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleDownloadSQL}
-                  disabled={isLoading || !sqlQuery}
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download
-                </Button>
-              </div>
             </div>
 
-            <ScrollArea className="h-[40vh] w-full">
-              <div className="bg-slate-800 dark:bg-slate-900 text-slate-50 p-4 rounded-lg font-mono text-sm w-full overflow-hidden">
-                {isLoading ? (
-                  <div className="flex items-center justify-center h-32">
-                    <div className="text-center">
-                      <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
-                      <p className="text-slate-400">Generating SQL...</p>
-                    </div>
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full"
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger
+                  value="converted"
+                  className="flex items-center gap-2"
+                >
+                  <Database className="w-4 h-4" />
+                  PostgreSQL (Converted)
+                  {previewData?.conversions &&
+                    Object.values(previewData.conversions).some((v) => v) && (
+                      <Badge variant="secondary" className="text-xs ml-1">
+                        Converted
+                      </Badge>
+                    )}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="original"
+                  className="flex items-center gap-2"
+                >
+                  <Code className="w-4 h-4" />
+                  MySQL (Original)
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="converted" className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-600 dark:text-slate-400">
+                    Query yang dieksekusi di PostgreSQL (dengan konversi
+                    otomatis)
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        handleCopySQL(previewData?.convertedQuery || "")
+                      }
+                      disabled={isLoading || !previewData?.convertedQuery}
+                    >
+                      {copied ? (
+                        <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
+                      ) : (
+                        <Copy className="w-4 h-4 mr-2" />
+                      )}
+                      {copied ? "Copied!" : "Copy"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        handleDownloadSQL(
+                          previewData?.convertedQuery || "",
+                          "postgresql",
+                        )
+                      }
+                      disabled={isLoading || !previewData?.convertedQuery}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download
+                    </Button>
                   </div>
-                ) : (
-                  <pre className="whitespace-pre-wrap break-all">
-                    {sqlQuery || "-- No SQL query generated"}
-                  </pre>
-                )}
-              </div>
-            </ScrollArea>
+                </div>
+                <ScrollArea className="h-[40vh] w-full">
+                  <div className="bg-slate-800 dark:bg-slate-900 text-slate-50 p-4 rounded-lg font-mono text-sm w-full overflow-hidden">
+                    {isLoading ? (
+                      <div className="flex items-center justify-center h-32">
+                        <div className="text-center">
+                          <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
+                          <p className="text-slate-400">
+                            Converting to PostgreSQL...
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <pre className="whitespace-pre-wrap break-all">
+                        {previewData?.convertedQuery ||
+                          "-- No SQL query generated"}
+                      </pre>
+                    )}
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+
+              <TabsContent value="original" className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-600 dark:text-slate-400">
+                    Query asli yang di-generate oleh Query Builder (MySQL
+                    syntax)
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        handleCopySQL(previewData?.originalQuery || "")
+                      }
+                      disabled={isLoading || !previewData?.originalQuery}
+                    >
+                      {copied ? (
+                        <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
+                      ) : (
+                        <Copy className="w-4 h-4 mr-2" />
+                      )}
+                      {copied ? "Copied!" : "Copy"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        handleDownloadSQL(
+                          previewData?.originalQuery || "",
+                          "mysql",
+                        )
+                      }
+                      disabled={isLoading || !previewData?.originalQuery}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
+                </div>
+                <ScrollArea className="h-[40vh] w-full">
+                  <div className="bg-slate-700 dark:bg-slate-800 text-slate-50 p-4 rounded-lg font-mono text-sm w-full overflow-hidden">
+                    {isLoading ? (
+                      <div className="flex items-center justify-center h-32">
+                        <div className="text-center">
+                          <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
+                          <p className="text-slate-400">
+                            Generating original query...
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <pre className="whitespace-pre-wrap break-all">
+                        {previewData?.originalQuery ||
+                          "-- No SQL query generated"}
+                      </pre>
+                    )}
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+            </Tabs>
           </div>
+
+          {/* Conversion Info */}
+          {previewData?.conversions &&
+            Object.values(previewData.conversions).some((v) => v) && (
+              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 p-3 rounded-lg">
+                <p className="text-xs text-blue-800 dark:text-blue-200">
+                  <strong>Konversi yang diterapkan:</strong> Query telah
+                  dikonversi dari MySQL ke PostgreSQL untuk kompatibilitas
+                  dengan database yang digunakan. Beberapa fungsi seperti
+                  CONVERT, IFNULL, DATE_FORMAT, dan GROUP_CONCAT telah diubah ke
+                  fungsi PostgreSQL yang setara.
+                </p>
+              </div>
+            )}
 
           {/* Warning */}
           <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-3 rounded-lg">
             <p className="text-xs text-amber-800 dark:text-amber-200">
-              <strong>Catatan Admin:</strong> SQL Query ini ditampilkan untuk
-              tujuan meninjau. Eksekusi Query yang sesungguhnya bisa terdapat
-              fungsi tambahan untuk tujuan keamanan dan optimisasi.
+              <strong>Catatan Admin:</strong> SQL Query yang ditampilkan adalah
+              versi preview. Eksekusi Query yang sesungguhnya mungkin memiliki
+              tambahan filter keamanan dan optimasi berdasarkan role pengguna.
             </p>
           </div>
         </div>
