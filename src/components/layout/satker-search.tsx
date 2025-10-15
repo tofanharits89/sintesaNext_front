@@ -21,8 +21,17 @@ export function SatkerSearch() {
     const router = useRouter();
     const inputRef = useRef<HTMLInputElement>(null);
     const resultsRef = useRef<HTMLDivElement>(null);
-    const { user: currentUser } = useUnifiedAuth();
     const { results: filteredResults, loading, searchSatker } = useSatkerSearch();
+
+    // Debug: Log when results change
+    useEffect(() => {
+        console.log('[SatkerSearch] Results updated:', {
+            count: filteredResults.length,
+            loading,
+            showResults,
+            results: filteredResults
+        });
+    }, [filteredResults, loading, showResults]);
 
     // Search using API when user types
     useEffect(() => {
@@ -32,6 +41,7 @@ export function SatkerSearch() {
         }
 
         const debounceTimer = setTimeout(() => {
+            console.log('[SatkerSearch] Searching for:', searchValue);
             searchSatker(searchValue);
             setShowResults(true);
             setSelectedIndex(-1);
@@ -111,12 +121,18 @@ export function SatkerSearch() {
                 />
 
                 {/* Results dropdown */}
-                {showResults && filteredResults.length > 0 && (
+                {showResults && (
                     <div
                         ref={resultsRef}
                         className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-md shadow-lg z-50 max-h-80 overflow-y-auto"
                     >
-                        {filteredResults.map((satker, index) => (
+                        {loading && (
+                            <div className="px-4 py-3 text-sm text-muted-foreground text-center">
+                                Mencari...
+                            </div>
+                        )}
+                        
+                        {!loading && filteredResults.length > 0 && filteredResults.map((satker, index) => (
                             <div
                                 key={satker.kdsatker}
                                 className={`px-4 py-3 cursor-pointer border-b last:border-b-0 hover:bg-muted ${index === selectedIndex ? "bg-muted" : ""
@@ -133,7 +149,7 @@ export function SatkerSearch() {
                             </div>
                         ))}
 
-                        {searchValue.length >= 2 && filteredResults.length === 0 && (
+                        {!loading && searchValue.length >= 2 && filteredResults.length === 0 && (
                             <div className="px-4 py-3 text-sm text-muted-foreground text-center">
                                 Tidak ada satker ditemukan
                             </div>

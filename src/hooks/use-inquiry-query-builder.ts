@@ -1122,6 +1122,11 @@ export function useInquiryQueryBuilder() {
           addGroupBy(`main.${config.columnName}`);
         }
 
+        // Special handling for Program Strategis - add uraian column from main table to GROUP BY
+        if (filterKey === "jenisProgramStrategis" && (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian")) {
+          addGroupBy(`main.nmprogis`);
+        }
+
         // Add mandatory GROUP BY for volume_output_kegiatan
         if (reportParams.tipeLaporan === "volume_output_kegiatan") {
           addGroupBy("main.sat");
@@ -1159,10 +1164,22 @@ export function useInquiryQueryBuilder() {
 
             // Note: Removed ctarik_ref.kdctarik from GROUP BY to avoid duplicate rows
             // The LEFT JOIN will still provide the uraian values in SELECT, but we don't group by kdctarik
+          } else {
+            // Add uraian columns to GROUP BY when they are in SELECT
+            // Determine proper name column
+            let nameColumn = config.nameColumn;
+            if (filterKey === "akun" && filterValue?.akunType) {
+              if (filterValue.akunType === "kodeBkpk") {
+                nameColumn = "nmbkpk";
+              } else if (filterValue.akunType === "jenisBelanja") {
+                nameColumn = "nmgbkpk";
+              }
+            }
+            
+            if (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian") {
+              addGroupBy(`${alias}.${nameColumn}`);
+            }
           }
-          // Note: We don't add uraian columns to GROUP BY to avoid duplicate rows
-          // when multiple uraian values exist for the same kode (e.g., unit eselon 1)
-          // The LEFT JOIN will still provide the uraian values in SELECT, but we only group by kode
         }
       });
 

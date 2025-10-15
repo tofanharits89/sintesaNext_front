@@ -264,16 +264,14 @@ async function handleRefreshFailure(status: number): Promise<void> {
     );
   }
 
-  // Redirect to login page
+  // Redirect to login page immediately
   if (typeof window !== "undefined") {
-    console.log("[Auth] Redirecting to login due to refresh token expiration");
-
-    // Small delay to ensure logout completes
-    setTimeout(() => {
-      window.location.href =
-        "/login?reason=session_expired&message=" +
-        encodeURIComponent("Your session has expired. Please log in again.");
-    }, 100);
+    console.log("[Auth] 🚪 Redirecting to login - session invalidated");
+    
+    // Immediate redirect - don't wait
+    window.location.href =
+      "/login?reason=session_expired&message=" +
+      encodeURIComponent("Your session has expired. Please log in again.");
   }
 }
 
@@ -406,13 +404,14 @@ http.interceptors.response.use(
       }
     }
 
-    // If this is a 401 and we already tried refresh (_retry = true), clear non-HTTP-only cookies and CSRF cache
+    // If this is a 401 and we already tried refresh (_retry = true), session is truly invalid - logout and redirect
     if (status === 401 && original._retry && !isLogoutOrRefresh) {
       console.log(
-        "[Auth] Received 401 after retry attempt, clearing non-HTTP-only cookies and CSRF cache"
+        "[Auth] Received 401 after retry attempt - session invalidated, logging out"
       );
-      clearNonHttpOnlyCookies();
-      csrfManager.clearCache();
+      // Call handleRefreshFailure to properly logout and redirect
+      await handleRefreshFailure(status);
+      return Promise.reject(new Error("Session invalidated"));
     }
 
     return Promise.reject(error);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { CarisatkerData } from "@/types/satker";
 import { apiClient } from "@/lib/httpClient";
 
@@ -41,7 +41,7 @@ export function useSatkerSearch() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const searchSatker = async (searchTerm: string) => {
+  const searchSatker = useCallback(async (searchTerm: string) => {
     if (searchTerm.length < 2) {
       setResults([]);
       return;
@@ -53,18 +53,27 @@ export function useSatkerSearch() {
     try {
       // Use Next.js basePath-aware API proxy route: /api/satker
       const result = await apiClient.get(`/satker`, { params: { search: searchTerm } });
+      
+      console.log('[useSatkerSearch] API response:', result);
+      
       if (result?.success === false) {
         throw new Error(result?.message || "Failed to search satker data");
       }
-      setResults((result as any).data || (result as any) || []);
+      
+      // Extract data array from response
+      const dataArray = result?.data || [];
+      console.log('[useSatkerSearch] Extracted data array:', dataArray);
+      
+      setResults(Array.isArray(dataArray) ? dataArray : []);
     } catch (err: any) {
+      console.error('[useSatkerSearch] Error:', err);
       const message = err?.response?.data?.message || err?.message || "An error occurred";
       setError(message);
       setResults([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // Empty dependency array since it doesn't depend on any props or state
 
   return { results, loading, error, searchSatker };
 }

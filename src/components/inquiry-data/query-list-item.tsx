@@ -399,7 +399,11 @@ export function QueryListItem({
               </Badge>
               <Badge variant="outline" className="text-xs">
                 <Filter className="w-3 h-3 mr-1" />
-                {query.activeFilters.length} Filter
+                {Array.isArray(query.activeFilters) 
+                  ? query.activeFilters.length 
+                  : typeof query.activeFilters === 'string'
+                  ? JSON.parse(query.activeFilters).length
+                  : 0} Filter
               </Badge>
               {query.reportParams.pembulatan && (
                 <Badge variant="outline" className="text-xs">
@@ -409,39 +413,48 @@ export function QueryListItem({
             </div>
 
             {/* Active filters preview */}
-            {query.activeFilters.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs text-muted-foreground font-medium">
-                  Filter Aktif:
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {query.activeFilters.slice(0, 6).map((filter, index) => {
-                    const filterValue = query.filterValues[filter];
-                    return (
-                      <div
-                        key={index}
-                        className="text-xs bg-muted/50 rounded px-2 py-1"
-                      >
-                        <div className="font-medium truncate">{filter}</div>
-                        {filterValue && (
-                          <div className="text-muted-foreground truncate">
-                            {filterValue.kondisiCode}:{" "}
-                            {filterValue.selection ||
-                              filterValue.mengandungKata ||
-                              "N/A"}
-                          </div>
-                        )}
+            {(() => {
+              // Ensure activeFilters is always an array
+              const activeFiltersArray: string[] = Array.isArray(query.activeFilters)
+                ? query.activeFilters
+                : typeof query.activeFilters === 'string'
+                ? JSON.parse(query.activeFilters)
+                : [];
+              
+              return activeFiltersArray.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground font-medium">
+                    Filter Aktif:
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {activeFiltersArray.slice(0, 6).map((filter: string, index: number) => {
+                      const filterValue = query.filterValues[filter];
+                      return (
+                        <div
+                          key={index}
+                          className="text-xs bg-muted/50 rounded px-2 py-1"
+                        >
+                          <div className="font-medium truncate">{filter}</div>
+                          {filterValue && (
+                            <div className="text-muted-foreground truncate">
+                              {filterValue.kondisiCode}:{" "}
+                              {filterValue.selection ||
+                                filterValue.mengandungKata ||
+                                "N/A"}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {activeFiltersArray.length > 6 && (
+                      <div className="text-xs bg-muted/50 rounded px-2 py-1 flex items-center justify-center text-muted-foreground">
+                        +{activeFiltersArray.length - 6} lainnya
                       </div>
-                    );
-                  })}
-                  {query.activeFilters.length > 6 && (
-                    <div className="text-xs bg-muted/50 rounded px-2 py-1 flex items-center justify-center text-muted-foreground">
-                      +{query.activeFilters.length - 6} lainnya
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Timestamps */}
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
