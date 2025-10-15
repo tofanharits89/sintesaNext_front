@@ -3,19 +3,19 @@ import type { NextRequest } from "next/server";
 import { getToken } from "./_shared";
 
 // Direct backend URL without using backendPath to avoid basePath issues
-const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:88/api/v1';
+const BACKEND_BASE_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:88/api/v1";
 
 export async function GET(request: NextRequest) {
   const cookie = request.headers.get("cookie") || "";
   const accessToken = request.cookies.get("access_token")?.value || null;
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search");
-  const limit = searchParams.get("limit") || "20";
 
   if (!cookie && !accessToken) {
     return NextResponse.json(
       { success: false, message: "No session" },
-      { status: 401 }
+      { status: 401 },
     );
   }
 
@@ -27,7 +27,6 @@ export async function GET(request: NextRequest) {
     if (search) {
       queryParams.append("search", search);
     }
-    queryParams.append("limit", limit);
 
     if (queryParams.toString()) {
       apiPath += `?${queryParams.toString()}`;
@@ -50,7 +49,7 @@ export async function GET(request: NextRequest) {
           message: data.message || "Failed to fetch satker data",
           error: data.error,
         },
-        { status: resp.status }
+        { status: resp.status },
       );
     }
 
@@ -59,7 +58,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching satker data:", error);
     return NextResponse.json(
       { success: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
