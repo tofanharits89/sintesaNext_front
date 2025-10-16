@@ -529,15 +529,10 @@ export function useSendMessageMutation() {
             }
           } catch {}
         };
-        if (isTempActive) {
-          setTimeout(() => {
-            messageActions.setActiveConversation(newId);
-            notifySelected(newId);
-          }, 380);
-        } else {
-          messageActions.setActiveConversation(newId);
-          notifySelected(newId);
-        }
+        // Set active conversation immediately to show messages (reduced delay from 380ms)
+        // Socket handler now creates conversation in list, so chat can show messages
+        messageActions.setActiveConversation(newId);
+        notifySelected(newId);
 
         // Also broadcast a reconciliation event for any listeners
         try {
@@ -717,9 +712,13 @@ export function useSendMessageMutation() {
           } else {
             // Insert a minimal conversation at top if not found
             const first = pages[0] || { conversations: [], nextCursor: null };
+            // Extract recipient info from args (selectedUser or otherParticipant from response)
+            const recipientFromResponse = (data as any)?.data?.otherParticipant || 
+                                         (args as any)?.selectedUser ||
+                                         null;
             const conv = {
               id: newId,
-              otherParticipant: null,
+              otherParticipant: recipientFromResponse,
               lastMessage: minimalLast,
               updated_at: nowIso2,
               lastMessageAt: nowIso2,
@@ -764,6 +763,15 @@ export function useSendMessageMutation() {
             type: "all",
           });
         }, 1000); // Shorter delay since we're invalidating
+        
+        // For new conversations, also refetch the conversations list to get full participant data
+        if (derivedNewConvId && derivedNewConvId !== conversationId) {
+          setTimeout(() => {
+            queryClient.refetchQueries({
+              queryKey: conversationKeys.lists(),
+            });
+          }, 1500);
+        }
       }
 
       // Update conversations list without invalidating - use setQueryData instead

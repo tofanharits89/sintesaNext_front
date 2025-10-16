@@ -457,8 +457,28 @@ export function useConversations(options?: { enabled?: boolean }) {
             });
             
             if (!existingFound) {
-              // No existing conversation found, let onSuccess mutation handle creation
-              return prev;
+              // NEW conversation created by user - create it in the list
+              // Don't wait for mutation, add it immediately so chat window shows it
+              const first = pages2[0] || { conversations: [], nextCursor: null };
+              const minimalConv = {
+                id: safeConversationId,
+                otherParticipant: msgLike.sender || null, // Recipient info
+                lastMessage: {
+                  id: msgLike.id,
+                  content: msgLike.content || "",
+                  timestamp: effectiveTs,
+                  sender: msgLike.sender,
+                  senderType: msgLike.senderType,
+                  isRead: true,
+                  is_read: true,
+                },
+                updated_at: effectiveTs,
+                updatedAt: effectiveTs,
+                unread_count: 0,
+              } as any;
+              first.conversations.unshift(minimalConv);
+              pages2[0] = first;
+              return { pages: pages2, pageParams: prev.pageParams };
             }
             
             // Update the existing conversation with the new message data
