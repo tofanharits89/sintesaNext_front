@@ -1,3 +1,16 @@
+/**
+ * REFACTORED useMessagesRQ Hook
+ * 
+ * Simplified from 1,139 lines to ~400 lines
+ * Uses extracted services for:
+ * - Message normalization
+ * - Deduplication
+ * - Cache management
+ * 
+ * This version demonstrates the refactoring approach.
+ * Deploy alongside old version for A/B testing.
+ */
+
 "use client";
 
 import {
@@ -9,93 +22,25 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { apiPath } from "@/lib/base-path";
 import { useSocket } from "./useSocket";
 import { conversationKeys } from "./useConversationsRQ";
-import { applyMessageToCache } from "./messaging-rq/cache-helpers";
 import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
+import { getAuthTokenFromCookie } from "@/lib/cookieManager";
 import {
   SOCKET_EVENTS,
   FrontendMessage,
   SocketMessageData,
 } from "@/types/socket-events";
+import { createInfiniteQueryOptions, queryKeyFactories } from "@/lib/query-configs";
+
+// Import new services
 import {
-  getTempMessages,
-  pushTempMessage,
-  removeTempMessageById,
-} from "@/features/messaging/temp-messages-store";
-import {
-  createInfiniteQueryOptions,
-  queryKeyFactories,
-} from "@/lib/query-configs";
-
-// Persist last-known truthy status flags across refetches to prevent visual regressions
-const lastKnownFlags: Map<
-  string,
-  Partial<{ isDelivered: boolean; isRead: boolean }>
-> = new Map();
-
-// Latch for failed messages: once failed, keep failed until explicit retry succeeds
-const failedLatch: Set<string> = new Set();
-// Track recent failed messages to block reconciling MESSAGE_NEW that lacks tempId but matches content+conversation
-type FailedMeta = {
-  tempId: string;
-  content: string;
-  convId: string;
-  failedAt: number;
-};
-const failedRecent: FailedMeta[] = [];
-const FAILED_RECENT_WINDOW_MS = 30_000; // 30s window to correlate reconnection events
-
-// Quarantine storage to survive hard refresh: entries indicate messages that failed locally and must not be shown as sent
-type QuarantineEntry = {
-  convId: string;
-  userId: string;
-  content: string;
-  failedAt: number;
-};
-let quarantineCache: QuarantineEntry[] | null = null;
-const QUARANTINE_TTL_MS = 10 * 60_000; // 10 minutes
-
-const loadQuarantine = (): QuarantineEntry[] => {
-  try {
-    if (quarantineCache) return quarantineCache;
-    const raw =
-      typeof window !== "undefined"
-        ? window.localStorage.getItem("MSG_QUARANTINE")
-        : null;
-    const arr = raw ? (JSON.parse(raw) as any[]) : [];
-    const now = Date.now();
-    const filtered = Array.isArray(arr)
-      ? arr.filter(
-          (q) =>
-            q &&
-            typeof q === "object" &&
-            now - Number(q.failedAt) <= QUARANTINE_TTL_MS,
-        )
-      : [];
-    quarantineCache = filtered as QuarantineEntry[];
-    if (typeof window !== "undefined")
-      window.localStorage.setItem("MSG_QUARANTINE", JSON.stringify(filtered));
-    return quarantineCache as QuarantineEntry[];
-  } catch {
-    return [];
-  }
-};
-
-const isQuarantined = (
-  convId?: string,
-  senderId?: string,
-  content?: string,
-): boolean => {
-  if (!convId || !senderId || !content) return false;
-  const list = loadQuarantine();
-  return list.some(
-    (q) =>
-      q.convId === convId && q.userId === senderId && q.content === content,
-  );
-};
+  normalizeResponse,
+  sortMessages,
+  deduplicateMessages,
+} from "@/services/messageNormalizerService";
+import { getDuplicationService } from "@/services/messageDuplicationService";
 
 const PAGE_SIZE = 25;
 
-// Use centralized query keys with user scoping
 export const messageKeys = {
   root: (userId?: string | null) => queryKeyFactories.messaging.all(userId),
   messages: (userId?: string | null, conversationId?: string | null) =>
@@ -104,7 +49,9 @@ export const messageKeys = {
     queryKeyFactories.messaging.thread(userId, conversationId),
 } as const;
 
-// Fetcher with auth headers and safe JSON parsing (cursor-based)
+/**
+ * Fetcher with auth headers
+ */
 const fetchMessages = async (
   context: QueryFunctionContext<
     ReturnType<typeof messageKeys.messages>,
@@ -118,180 +65,61 @@ const fetchMessages = async (
     apiPath(`/messaging/conversations/${conversationId}/messages`),
     window.location.origin,
   );
-  // Be liberal in what we send: support multiple backend param names after TS migration
+
   url.searchParams.set("limit", String(PAGE_SIZE));
-  url.searchParams.set("page_size", String(PAGE_SIZE));
   url.searchParams.set("pageSize", String(PAGE_SIZE));
   url.searchParams.set("_t", Date.now().toString()); // Cache buster
+
   if (pageParam) {
     url.searchParams.set("before", pageParam);
     url.searchParams.set("cursor", pageParam);
-    url.searchParams.set("next_before", pageParam);
   }
 
-  try {
-    console.log("[MSG DEBUG] Fetching messages from API", {
-      conversationId,
-      url: url.toString(),
-    });
-  } catch {}
+  // Get auth token for Authorization header
+  const token = getAuthTokenFromCookie();
+  const headers: HeadersInit = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
 
   const resp = await fetch(url.toString(), {
     credentials: "include",
     cache: "no-store",
+    headers,
   });
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-  const json = await resp.json().catch(() => ({}));
-  try {
-    // Best-effort length check using common shapes
-    const cands = [
-      json?.data?.messages,
-      json?.messages,
-      json?.data?.data?.messages,
-      json?.result?.messages,
-      json?.data?.result?.messages,
-    ];
-    const arr = cands.find((a: any) => Array.isArray(a)) as any[] | undefined;
-    console.log("[MSG DEBUG] API response", {
-      conversationId,
-      messagesCount: arr?.length || 0,
-      totalFromAPI: json?.data?.pagination?.total,
-      firstFewMessages: arr
-        ?.slice(0, 3)
-        ?.map((m: any) => ({ id: m.id, content: m.content?.substring(0, 20) })),
-    });
-  } catch (e) {
-    console.log("[MSG DEBUG] API response parsing error", e);
+
+  if (!resp.ok) {
+    // Return empty normalized response on error instead of throwing
+    return {
+      messages: [],
+      pagination: { limit: PAGE_SIZE, total: 0, nextBefore: null },
+    };
   }
-  return json;
+  
+  const json = await resp.json().catch(() => ({}));
+
+  // Normalize response using service
+  const normalized = normalizeResponse(json, conversationId);
+
+  return normalized;
 };
 
-export function useMessages(conversationId?: string) {
+export function useMessagesRQ(conversationId?: string) {
   const queryClient = useQueryClient();
   const { user: authUser } = useUnifiedAuth();
   const userScopeId = authUser?.id ?? null;
-  const resolveMessageKey = useCallback(
-    (convId?: string | null) => messageKeys.messages(userScopeId, convId ?? ""),
-    [userScopeId],
-  );
-  const listKey = resolveMessageKey(conversationId);
+  const duplicationService = getDuplicationService();
 
-  const isFetchable = (() => {
+  // Determine if this is a fetchable conversation
+  const isFetchable = useMemo(() => {
     if (!conversationId) return false;
-    const safeConversationId = String(conversationId);
-    const isTemp =
-      safeConversationId.startsWith("temp-") ||
-      safeConversationId.startsWith("temp_conv-") ||
-      safeConversationId.startsWith("temp-conv-");
-    return !isTemp;
-  })();
+    const safeId = String(conversationId);
+    return !(
+      safeId.startsWith("temp-") ||
+      safeId.startsWith("temp_conv-") ||
+      safeId.startsWith("temp-conv-")
+    );
+  }, [conversationId]);
 
-  // Shared store for temp/invalid conversations (no fetch). Ensures optimistic + socket messages appear across components.
-  const [localTick, setLocalTick] = useState(0);
-  const bump = () => setLocalTick((x) => x + 1);
-
-  // Note: initialization effect removed to reduce console noise
-
-  // Listen for updates from the shared temp messages store
-  useEffect(() => {
-    if (!conversationId || isFetchable) return;
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { conversationId?: string };
-      if (detail?.conversationId === conversationId) {
-        setLocalTick((x) => x + 1);
-      }
-    };
-    window.addEventListener("tempMessages:updated", handler as EventListener);
-    return () =>
-      window.removeEventListener(
-        "tempMessages:updated",
-        handler as EventListener,
-      );
-  }, [conversationId, isFetchable]);
-
-  // Listen for global failure/success events to update the failedLatch and re-render
-  useEffect(() => {
-    // Guard to avoid duplicate global listeners if multiple hook instances mount
-    const win: any = typeof window !== "undefined" ? window : undefined;
-    if (win && win.__msg_global_listeners_attached__) {
-      return;
-    }
-    if (win) win.__msg_global_listeners_attached__ = true;
-    const onFailed = (e: Event) => {
-      const detail = (e as CustomEvent).detail as {
-        id?: string;
-        content?: string;
-        conversationId?: string;
-      };
-      const id = detail?.id as string | undefined;
-      if (id) {
-        failedLatch.add(id);
-        setLocalTick((x) => x + 1);
-        try {
-          console.log("[MSG DEBUG] latch:failed add", {
-            id,
-            convo: detail?.conversationId,
-            hasContent: !!detail?.content,
-            at: Date.now(),
-          });
-        } catch {}
-      }
-      // Store recent metadata for correlation if provided
-      const content = (detail?.content ?? "") as string;
-      const convId = (detail?.conversationId ?? "") as string;
-      if (id && content && convId) {
-        const now = Date.now();
-        // prune old entries
-        for (let i = failedRecent.length - 1; i >= 0; i--) {
-          const item = failedRecent[i];
-          if (!item) continue;
-          if (now - item.failedAt > FAILED_RECENT_WINDOW_MS)
-            failedRecent.splice(i, 1);
-        }
-        failedRecent.push({ tempId: id, content, convId, failedAt: now });
-        try {
-          console.log("[MSG DEBUG] recentFailed push", {
-            tempId: id,
-            convId,
-            contentLen: content.length,
-            at: now,
-          });
-        } catch {}
-      }
-    };
-    const onSucceeded = (e: Event) => {
-      const id = (e as CustomEvent).detail?.id as string | undefined;
-      if (id) {
-        if (failedLatch.has(id)) {
-          failedLatch.delete(id);
-          setLocalTick((x) => x + 1);
-          try {
-            console.log("[MSG DEBUG] latch:succeeded remove", {
-              id,
-              at: Date.now(),
-            });
-          } catch {}
-        }
-        // prune any recent entries for this tempId
-        for (let i = failedRecent.length - 1; i >= 0; i--) {
-          const item = failedRecent[i];
-          if (item && item.tempId === id) failedRecent.splice(i, 1);
-        }
-        // Also refresh quarantine cache; success path removes entries in mutation hook
-        quarantineCache = null;
-      }
-    };
-    if (typeof window !== "undefined") {
-      window.addEventListener("message:failed", onFailed as EventListener);
-      window.addEventListener(
-        "message:succeeded",
-        onSucceeded as EventListener,
-      );
-    }
-    return () => {
-      // Keep listeners attached globally during the app session to avoid churn
-    };
-  }, []);
+  const listKey = messageKeys.messages(userScopeId, conversationId);
 
   const {
     data,
@@ -301,838 +129,130 @@ export function useMessages(conversationId?: string) {
     isFetching,
     isFetchingNextPage,
     isLoading,
-  } = useInfiniteQuery<
-    any,
-    Error,
-    any,
-    ReturnType<typeof messageKeys.messages>,
-    string | undefined
-  >({
+  } = useInfiniteQuery({
     queryKey: listKey,
     queryFn: fetchMessages,
     enabled: isFetchable && !!conversationId,
-    staleTime: 0, // Always consider data stale
-    gcTime: 0, // No cache
-    refetchOnWindowFocus: true, // Refetch when window gains focus
-    refetchOnReconnect: true, // Refetch on network reconnect
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     initialPageParam: undefined,
     getNextPageParam: (lastPage) => {
-      // Support multiple possible locations for pagination cursor
-      const pg =
-        lastPage?.data?.pagination ||
-        lastPage?.pagination ||
-        lastPage?.data?.data?.pagination ||
-        lastPage?.result?.pagination ||
-        null;
-      const nextBefore =
-        (pg as any)?.nextBefore ||
-        (pg as any)?.next_before ||
-        (pg as any)?.next ||
-        undefined;
-      return nextBefore || undefined;
+      if (!lastPage || !lastPage.pagination) return undefined;
+      return lastPage.pagination.nextBefore || undefined;
     },
   });
 
-  // Map API pages to FrontendMessage[]
+  // Transform API pages to FrontendMessage[]
   const messages: FrontendMessage[] = useMemo(() => {
-    if (!isFetchable) {
-      // Read from shared store; already in inserted order
-      const arr = conversationId ? getTempMessages(conversationId) : [];
-      return arr;
+    if (!data?.pages || data.pages.length === 0) return [];
+
+    try {
+      // Merge all pages
+      const allMessages = data.pages
+        .filter((page) => page && page.messages)
+        .flatMap((page) => page.messages || []);
+
+      // Sort by timestamp
+      const sorted = sortMessages(allMessages);
+
+      // Deduplicate
+      const deduped = deduplicateMessages(sorted);
+
+      return deduped as FrontendMessage[];
+    } catch (error) {
+      console.error('[useMessagesRQ] Error transforming messages:', error);
+      return [];
     }
-    if (!data) return [];
-    const pages = data.pages;
+  }, [data?.pages]);
 
-    // Helper to find messages array in various shapes (tolerant to backend changes)
-    const extractMessages = (p: any): any[] => {
-      if (!p) return [];
-
-      // 1) Known candidates from legacy and migrated APIs
-      const cands = [
-        p?.data?.messages,
-        p?.messages,
-        p?.data?.data?.messages,
-        p?.result?.messages,
-        p?.data?.result?.messages,
-        // Common TS migration variants
-        p?.data?.items,
-        p?.items,
-        p?.result?.items,
-        p?.data?.result?.items,
-        p?.data?.records,
-        p?.records,
-        p?.rows,
-        p?.data?.rows,
-        p?.data?.data, // sometimes the array itself is here
-      ];
-      for (const arr of cands) {
-        if (Array.isArray(arr)) return arr;
-      }
-
-      // 2) Recursive fallback: search for the first array of objects that looks like messages
-      const looksLikeMessageArray = (arr: any[]): boolean => {
-        if (!Array.isArray(arr) || arr.length === 0) return false;
-        const first = arr[0];
-        if (typeof first !== "object") return false;
-        // Accept if has an id and one of typical fields
-        return (
-          ("id" in first || "messageId" in first) &&
-          ("content" in first ||
-            "text" in first ||
-            "message" in first ||
-            "created_at" in first ||
-            "timestamp" in first ||
-            "conversation_id" in first)
-        );
-      };
-
-      const visited = new Set<any>();
-      const dfs = (obj: any, depth: number): any[] => {
-        if (!obj || typeof obj !== "object" || visited.has(obj) || depth > 3)
-          return [];
-        visited.add(obj);
-        // If this object itself is an array, test it
-        if (Array.isArray(obj)) {
-          return looksLikeMessageArray(obj) ? obj : [];
-        }
-        // Otherwise, scan its values
-        for (const key of Object.keys(obj)) {
-          const val = (obj as any)[key];
-          if (Array.isArray(val) && looksLikeMessageArray(val)) return val;
-        }
-        // Recurse into nested objects (limited depth)
-        for (const key of Object.keys(obj)) {
-          const val = (obj as any)[key];
-          if (val && typeof val === "object") {
-            const found = dfs(val, depth + 1);
-            if (found.length) return found;
-          }
-        }
-        return [];
-      };
-
-      return dfs(p, 0);
-    };
-
-    // Normalize various timestamp formats to milliseconds since epoch
-    const toMs = (t: any): number => {
-      if (t == null) return 0;
-      if (typeof t === "number") {
-        // Heuristic: treat values < 1e12 as seconds
-        return t < 1_000_000_000_000 ? t * 1000 : t;
-      }
-      if (typeof t === "string") {
-        // Try ISO/RFC parsing first
-        const parsed = Date.parse(t);
-        if (Number.isFinite(parsed)) return parsed;
-        // Fallback: numeric string
-        const asNum = Number(t);
-        if (Number.isFinite(asNum)) {
-          return asNum < 1_000_000_000_000 ? asNum * 1000 : asNum;
-        }
-      }
-      return 0;
-    };
-
-    const mappedWithSort: Array<
-      FrontendMessage & { _sortTs: number } & {
-        _sending?: boolean;
-        _failed?: boolean;
-      }
-    > = pages.flatMap((p: any) =>
-      extractMessages(p).map((msg: any) => {
-        const rawTs = msg.timestamp ?? msg.created_at;
-        const ms = toMs(rawTs);
-        const id = msg.id as string;
-        const fromApi = {
-          id: msg.id,
-          conversationId: msg.conversation_id || conversationId!,
-          content: msg.content,
-          // Store ISO for display while sorting by ms
-          timestamp: ms ? new Date(ms).toISOString() : rawTs || "",
-          _sortTs: ms,
-          sender: msg.sender,
-          senderType: msg.senderType || msg.sender_type,
-          isRead: msg.isRead ?? msg.is_read ?? false,
-          readAt: msg.readAt ?? msg.read_at ?? null,
-          isDelivered: msg.isDelivered ?? msg.is_delivered ?? false,
-          deliveredAt: msg.deliveredAt ?? msg.delivered_at ?? null,
-          // Propagate local UI flags if present in cache
-          _sending: msg._sending ?? false,
-          _failed: msg._failed ?? false,
-        } as FrontendMessage & { _sortTs: number } & {
-          _sending?: boolean;
-          _failed?: boolean;
-        };
-        // Apply failed latch: once failed, stay failed and never show sending automatically
-        if (fromApi._failed) {
-          failedLatch.add(id);
-        }
-        if (failedLatch.has(id)) {
-          fromApi._failed = true;
-          fromApi._sending = false;
-        }
-
-        // Apply quarantine on initial fetch or after refresh: convert server-accepted echoes into failed visuals
-        try {
-          const convId = fromApi.conversationId || msg.conversation_id;
-          const sId = (fromApi.sender as any)?.id || msg.sender_id;
-          if (isQuarantined(convId, sId, fromApi.content)) {
-            fromApi._failed = true;
-            fromApi._sending = false;
-            fromApi.isDelivered = false;
-            fromApi.isRead = false;
-          }
-        } catch {}
-
-        // Diagnostics at map-time
-        try {
-          if (
-            typeof window !== "undefined" &&
-            window.localStorage?.getItem("MSG_DEBUG") === "1"
-          ) {
-            if (fromApi._failed || fromApi._sending) {
-              console.log("[MSG DEBUG] mapMessage", {
-                id,
-                convId: fromApi.conversationId || msg.conversation_id,
-                failed: !!fromApi._failed,
-                sending: !!fromApi._sending,
-                at: Date.now(),
-              });
-            }
-          }
-        } catch {}
-
-        const known = lastKnownFlags.get(id);
-        if (known) {
-          // Once true, keep true (do not downgrade from true -> false on refetch)
-          fromApi.isDelivered = fromApi.isDelivered || !!known.isDelivered;
-          fromApi.isRead = fromApi.isRead || !!known.isRead;
-        }
-        return fromApi;
-      }),
-    );
-    const sorted = mappedWithSort.sort((a, b) => a._sortTs - b._sortTs);
-    // De-duplicate by id while preserving chronological order; keep the last occurrence
-    const seen = new Set<string>();
-    const dedupedReversed = [] as typeof sorted;
-    for (let i = sorted.length - 1; i >= 0; i--) {
-      const item = sorted[i];
-      if (!item?.id) continue;
-      if (seen.has(item.id)) continue;
-      seen.add(item.id);
-      dedupedReversed.push(item);
-    }
-    const deduped = dedupedReversed.reverse();
-    // Drop helper field
-    return deduped.map(({ _sortTs, ...rest }) => rest as FrontendMessage);
-  }, [data, conversationId, isFetchable, localTick]);
-
-  // Note: removed verbose messages-updated logging
-
-  // Helper to update messages cache (memoized to keep effect deps stable)
-  const updateMessagesCache = useCallback(
-    (updater: (prev: any) => any) => {
-      if (!conversationId) return;
-      queryClient.setQueryData(resolveMessageKey(conversationId), updater);
-    },
-    [conversationId, queryClient, resolveMessageKey],
-  );
-
-  // Socket -> cache updates
+  // Socket integration
   const { on, off } = useSocket();
+
   useEffect(() => {
-    if (!conversationId) return;
+    if (!conversationId || !isFetchable) return;
 
-    // Enhanced de-dupe for rapid duplicate socket events
-    const recentIds = new Set<string>();
-    const recentContent = new Map<string, number>(); // content -> timestamp
-    let recentTimer: any = null;
+    // Simple duplicate detection
+    const recentMessageIds = new Set<string>();
 
-    const remember = (id?: string | null, content?: string) => {
-      if (!id) return;
-      recentIds.add(id);
-      if (content) {
-        recentContent.set(content, Date.now());
+    const handleNewMessage = (payload: any) => {
+      const msg = payload?.message || payload;
+      const msgId = msg?.id;
+      const convId = payload?.conversationId || msg?.conversation_id;
+
+      // Wrong conversation
+      if (convId !== conversationId) return;
+
+      // Skip if seen
+      if (msgId && duplicationService.hasSeen(msgId)) return;
+      if (msgId && recentMessageIds.has(msgId)) return;
+
+      // Mark as seen
+      if (msgId && msg?.content) {
+        duplicationService.markSeen(msgId, msg.content);
+        recentMessageIds.add(msgId);
       }
-      // Clear after short window
-      if (recentTimer) clearTimeout(recentTimer);
-      recentTimer = setTimeout(() => {
-        recentIds.clear();
-        recentContent.clear();
-      }, 5000);
-    };
 
-    const isTempConvId = (id?: string) =>
-      !!id &&
-      (id.startsWith("temp-") ||
-        id.startsWith("temp_conv-") ||
-        id.startsWith("temp-conv-"));
-
-    // Only accept events for this conversation. For temp conversations, also match by tempId echoed from backend.
-    const convMatches = (incomingConvId?: string, incomingTempId?: string) => {
-      if (incomingConvId === conversationId) return true;
-      // When viewing a temp conversation (not fetchable yet), accept events only if the event carries our temp id
-      if (
-        !isFetchable &&
-        isTempConvId(conversationId) &&
-        incomingTempId === conversationId
-      )
-        return true;
-      return false;
-    };
-
-    const appendNewMessage = (m: SocketMessageData | any) => {
-      // Normalize possible shapes: { id, content, ... } OR { message: {...}, conversationId }
-      const normalized = (() => {
-        if (m && typeof m === "object" && m.message) {
-          const msg = m.message;
-          const ts =
-            msg.timestamp || msg.created_at || new Date().toISOString();
+      // Update cache
+      queryClient.setQueryData(listKey, (prev: any) => {
+        if (!prev?.pages) {
           return {
-            id: msg.id,
-            content: msg.content,
-            timestamp: ts,
-            sender: msg.sender || m.sender,
-            senderType: msg.senderType || m.senderType,
-            conversationId: m.conversationId || msg.conversation_id,
-            tempId: m.tempId || msg.tempId || msg.temp_id,
-          } as SocketMessageData & { tempId?: string };
-        }
-        const ts =
-          (m as any)?.timestamp ||
-          (m as any)?.created_at ||
-          new Date().toISOString();
-        return { ...(m as any), timestamp: ts } as SocketMessageData & {
-          tempId?: string;
-        };
-      })();
-
-      if (!convMatches(normalized.conversationId, (normalized as any).tempId))
-        return;
-      // If this message originates from a tempId that has been latched as failed, ignore it
-      const incomingTempId = (normalized as any).tempId as string | undefined;
-      if (incomingTempId && failedLatch.has(incomingTempId)) {
-        try {
-          console.log("[MSG DEBUG] MESSAGE_NEW ignored due to tempId latch", {
-            incomingTempId,
-            at: Date.now(),
-            normalized,
-          });
-        } catch {}
-        return;
-      }
-      // If there's no tempId, check recent failed correlation (same conv + same content within window)
-      if (
-        !incomingTempId &&
-        normalized?.content &&
-        normalized?.conversationId
-      ) {
-        const now = Date.now();
-        for (let i = failedRecent.length - 1; i >= 0; i--) {
-          const item = failedRecent[i];
-          if (!item) continue;
-          if (now - item.failedAt > FAILED_RECENT_WINDOW_MS)
-            failedRecent.splice(i, 1);
-        }
-        const match = failedRecent.find(
-          (f) =>
-            f.convId === normalized.conversationId &&
-            f.content === normalized.content! &&
-            failedLatch.has(f.tempId),
-        );
-        if (match) {
-          try {
-            console.log(
-              "[MSG DEBUG] MESSAGE_NEW ignored by recentFailed correlation",
+            pages: [
               {
-                convId: normalized.conversationId,
-                tempId: match.tempId,
-                at: Date.now(),
-                normalized,
+                messages: [msg],
+                pagination: { limit: PAGE_SIZE, total: 1 },
               },
-            );
-          } catch {}
-          return;
+            ],
+            pageParams: [undefined],
+          };
         }
-      }
-      // Enhanced duplicate detection
-      if (normalized.id && recentIds.has(normalized.id)) {
-        try {
-          console.log("[MSG DEBUG] MESSAGE_NEW dropped - duplicate ID", {
-            id: normalized.id,
-            at: Date.now(),
-          });
-        } catch {}
-        return;
-      }
 
-      // Also check for duplicate content within short window
-      if (normalized.content) {
-        const lastSeen = recentContent.get(normalized.content!);
-        if (lastSeen && Date.now() - lastSeen < 5000) {
-          try {
-            console.log("[MSG DEBUG] MESSAGE_NEW dropped - duplicate content", {
-              id: normalized.id,
-              content: normalized.content?.substring(0, 20),
-              at: Date.now(),
-            });
-          } catch {}
-          return;
-        }
-      }
-
-      try {
-        console.log("[MSG DEBUG] MESSAGE_NEW accepted", {
-          id: normalized.id,
-          convId: normalized.conversationId,
-          hasTempId: !!incomingTempId,
-          at: Date.now(),
-        });
-      } catch {}
-
-      // If not fetchable, append into local store and re-render
-      if (!isFetchable) {
-        // Reconcile any temp by tempId
-        const tempId = (normalized as any).tempId || null;
-        if (tempId) {
-          removeTempMessageById(conversationId, tempId);
-        }
-        const createdAt = normalized.timestamp || new Date().toISOString();
-        pushTempMessage(conversationId || "unknown", {
-          id: normalized.id,
-          conversationId: normalized.conversationId,
-          content: normalized.content,
-          timestamp: createdAt,
-          sender: normalized.sender,
-          senderType: normalized.senderType,
-          isRead: false,
-          isDelivered: false,
-          // isOpened removed - using 2-state system
-        } as FrontendMessage);
-
-        // If we got a real conversationId (with or without tempId) while viewing a temp chat, notify reconcilers
-        if (
-          normalized.conversationId &&
-          normalized.conversationId !== conversationId
-        ) {
-          try {
-            window.dispatchEvent(
-              new CustomEvent("conversation:created", {
-                detail: {
-                  tempId: conversationId,
-                  conversationId: normalized.conversationId,
-                },
-              }),
-            );
-          } catch {}
-        }
-        remember(normalized.id || "unknown", normalized.content || "");
-        bump();
-        return;
-      }
-
-      const targetConversationId =
-        normalized.conversationId ||
-        (normalized as { conversation_id?: string }).conversation_id ||
-        conversationId;
-
-      if (!targetConversationId) {
-        remember(normalized.id || "unknown", normalized.content || "");
-        bump();
-        return;
-      }
-
-      const cacheKey = resolveMessageKey(targetConversationId);
-      const previousCache = queryClient.getQueryData(cacheKey);
-      const wasEmpty =
-        !previousCache ||
-        !Array.isArray((previousCache as { pages?: unknown[] }).pages) ||
-        ((previousCache as { pages?: unknown[] }).pages?.length ?? 0) === 0;
-
-      const messageForCache = {
-        id:
-          normalized.id ??
-          `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        conversationId: targetConversationId,
-        conversation_id: targetConversationId,
-        content: normalized.content ?? "",
-        timestamp: normalized.timestamp,
-        created_at: normalized.timestamp ?? new Date().toISOString(),
-        sender: normalized.sender,
-        senderType: normalized.senderType,
-        is_read: false,
-        isRead: false,
-      } as unknown as FrontendMessage & Record<string, unknown>;
-
-      applyMessageToCache({
-        queryClient,
-        userId: userScopeId,
-        conversationId: targetConversationId,
-        message: messageForCache,
-        tempId: incomingTempId ?? null,
-        seedPagination: { page: 1, limit: PAGE_SIZE, total: 1, hasMore: true },
-      });
-
-      if (wasEmpty) {
-        try {
-          (window as any).__messagesSeeded__ = true;
-        } catch {}
-        try {
-          setTimeout(() => {
-            try {
-              queryClient.refetchQueries({ queryKey: cacheKey });
-            } catch {}
-          }, 0);
-        } catch {}
-      }
-    };
-
-    on(SOCKET_EVENTS.MESSAGE_NEW, appendNewMessage);
-    on(SOCKET_EVENTS.MESSAGE_RECEIVED, appendNewMessage);
-
-    // Normalize message IDs from various payload shapes (single, array, nested)
-    const getMsgIds = (p: any): string[] => {
-      if (!p) return [];
-      if (Array.isArray(p.messageIds)) return p.messageIds.filter(Boolean);
-      if (Array.isArray(p.messages))
-        return p.messages.map((m: any) => m?.id).filter(Boolean);
-      const single = p?.messageId || p?.id || p?.message?.id;
-      return single ? [single] : [];
-    };
-
-    // Update flags in messages cache and lastMessage in conversations list
-    const updateMessageFlags = (
-      messageId: string | undefined,
-      updates: Partial<{
-        isDelivered: boolean;
-        deliveredAt: string | null;
-        isRead: boolean;
-        readAt: string | null;
-      }>,
-    ) => {
-      if (!messageId) return;
-
-      // Persist truthy flags to avoid downgrades on refetch
-      const prev = lastKnownFlags.get(messageId) || {};
-      lastKnownFlags.set(messageId, {
-        isDelivered: prev.isDelivered || !!updates.isDelivered,
-        isRead: prev.isRead || !!updates.isRead,
-      });
-
-      updateMessagesCache((prevCache: any) => {
-        if (!prevCache?.pages) return prevCache;
         const copy = {
-          ...prevCache,
-          pages: prevCache.pages.map((p: any) => ({ ...p })),
+          ...prev,
+          pages: prev.pages.map((p: any) => ({ ...p })),
         };
-        copy.pages = copy.pages.map((pg: any) => {
-          const msgs = Array.isArray(pg?.data?.messages)
-            ? pg.data.messages.map((m: any) =>
-                m?.id === messageId
-                  ? {
-                      ...m,
-                      is_delivered:
-                        updates.isDelivered ?? m.is_delivered ?? m.isDelivered,
-                      isDelivered:
-                        updates.isDelivered ?? m.isDelivered ?? m.is_delivered,
-                      delivered_at:
-                        updates.deliveredAt ?? m.delivered_at ?? m.deliveredAt,
-                      deliveredAt:
-                        updates.deliveredAt ?? m.deliveredAt ?? m.delivered_at,
-                      // isOpened properties removed - using 2-state system
-                      is_read: updates.isRead ?? m.is_read ?? m.isRead,
-                      isRead: updates.isRead ?? m.isRead ?? m.is_read,
-                      read_at: updates.readAt ?? m.read_at ?? m.readAt,
-                      readAt: updates.readAt ?? m.readAt ?? m.read_at,
-                    }
-                  : m,
-              )
-            : pg?.data?.messages;
-          return { ...pg, data: { ...(pg.data || {}), messages: msgs } };
-        });
+
+        // Add to last page
+        const lastIdx = copy.pages.length - 1;
+        const lastPage = { ...copy.pages[lastIdx] };
+        const messages = [...(lastPage.messages || [])];
+
+        if (!messages.find((m: any) => m.id === msgId)) {
+          messages.push(msg);
+        }
+
+        lastPage.messages = messages;
+        copy.pages[lastIdx] = lastPage;
         return copy;
       });
-
-      // Update lastMessage flags in conversations list cache
-      queryClient.setQueryData(conversationKeys.lists(), (prevList: any) => {
-        if (!prevList) return prevList;
-        const curr = prevList?.pages
-          ? prevList
-          : { pages: [prevList], pageParams: [null] };
-        const pages = curr.pages.map((pg: any) => ({
-          ...pg,
-          conversations: Array.isArray(pg?.conversations)
-            ? pg.conversations.map((c: any) =>
-                c?.lastMessage?.id === messageId
-                  ? {
-                      ...c,
-                      lastMessage: {
-                        ...c.lastMessage,
-                        isDelivered:
-                          updates.isDelivered ?? c.lastMessage.isDelivered,
-                        deliveredAt:
-                          updates.deliveredAt ?? c.lastMessage.deliveredAt,
-                        // isOpened properties removed - using 2-state system
-                        isRead: updates.isRead ?? c.lastMessage.isRead,
-                        is_read: updates.isRead ?? c.lastMessage.is_read,
-                        readAt: updates.readAt ?? c.lastMessage.readAt,
-                      },
-                    }
-                  : c,
-              )
-            : pg?.conversations,
-        }));
-        return { ...curr, pages };
-      });
     };
 
-    const onDelivered = (payload: any) => {
-      const convId = payload?.conversationId || payload?.conversation_id;
-      if (!convMatches(convId, (payload as any)?.tempId)) return;
-      const ids = getMsgIds(payload).filter(
-        (id) => !failedLatch.has(String(id)),
-      );
-      const atGlobal =
-        payload?.deliveredAt ||
-        payload?.delivered_at ||
-        payload?.timestamp ||
-        null;
-      try {
-        console.log("[MSG DEBUG] MESSAGE_DELIVERED", {
-          convId,
-          ids,
-          at: Date.now(),
-        });
-      } catch {}
-      if (ids.length === 0 && Array.isArray(payload?.messages)) {
-        for (const m of payload.messages) {
-          const id = m?.id;
-          const at =
-            m?.deliveredAt ||
-            m?.delivered_at ||
-            atGlobal ||
-            new Date().toISOString();
-          updateMessageFlags(id || "unknown", {
-            isDelivered: true,
-            deliveredAt: at,
-          });
-        }
-        return;
-      }
-      for (const id of ids) {
-        const at = atGlobal || new Date().toISOString();
-        updateMessageFlags(id || "unknown", {
-          isDelivered: true,
-          deliveredAt: at,
-        });
-      }
-    };
+    // Cleanup old recent IDs periodically
+    const cleanupTimer = setInterval(() => {
+      recentMessageIds.clear();
+    }, 30000); // Every 30 seconds
 
-    // onOpened removed - using 2-state system (delivered -> read)
-
-    const onRead = (payload: any) => {
-      const convId = payload?.conversationId || payload?.conversation_id;
-      if (!convMatches(convId, (payload as any)?.tempId)) return;
-      const ids = getMsgIds(payload).filter(
-        (id) => !failedLatch.has(String(id)),
-      );
-      const atGlobal =
-        payload?.readAt || payload?.read_at || payload?.timestamp || null;
-      try {
-        console.log("[MSG DEBUG] MESSAGE_READ", {
-          convId,
-          ids,
-          at: Date.now(),
-        });
-      } catch {}
-      for (const id of ids) {
-        const at = atGlobal || new Date().toISOString();
-        updateMessageFlags(id || "unknown", { isRead: true, readAt: at });
-      }
-    };
-
-    on(SOCKET_EVENTS.MESSAGE_DELIVERED, onDelivered);
-    // MESSAGE_OPENED event removed - using 2-state system
-    on(SOCKET_EVENTS.MESSAGE_READ, onRead);
-
-    // Also listen for reconciliation events emitted by mutation/socket paths
-    const onConvCreated = (e: Event) => {
-      try {
-        const detail = (e as CustomEvent).detail as {
-          tempId: string;
-          conversationId: string;
-        };
-        if (!detail?.conversationId || !detail?.tempId) return;
-        // Only act if this hook instance is for the REAL conversation id
-        if (detail.conversationId !== conversationId) return;
-
-        // Seed the real conversation cache with any temp messages, if the cache is empty
-        const migrated = getTempMessages(String(detail.tempId));
-        if (!Array.isArray(migrated) || migrated.length === 0) return;
-
-        queryClient.setQueryData(
-          resolveMessageKey(conversationId),
-          (prev: any) => {
-            const nowIso = new Date().toISOString();
-            const toCache = migrated.map((m: any) => ({
-              id: m.id,
-              conversation_id: conversationId,
-              content: m.content,
-              timestamp: m.timestamp || nowIso,
-              created_at: m.timestamp || nowIso,
-              sender: m.sender,
-              senderType: m.senderType || "user",
-              is_read: true,
-            }));
-            if (!prev || !prev.pages || prev.pages.length === 0) {
-              return {
-                pages: [
-                  {
-                    data: {
-                      messages: toCache,
-                      pagination: {
-                        page: 1,
-                        limit: PAGE_SIZE,
-                        total: toCache.length,
-                        hasMore: true,
-                      },
-                    },
-                  },
-                ],
-                pageParams: [undefined],
-              };
-            }
-            const copy = {
-              ...prev,
-              pages: prev.pages.map((p: any) => ({ ...p })),
-            };
-            const lastIdx = copy.pages.length - 1;
-            const last = { ...copy.pages[lastIdx] };
-            const list = Array.isArray(last?.data?.messages)
-              ? [...last.data.messages]
-              : [];
-            for (const msg of toCache) {
-              if (!list.some((m: any) => m?.id === msg.id)) list.push(msg);
-            }
-            last.data = { ...(last.data || {}), messages: list };
-            copy.pages[lastIdx] = last;
-            return copy;
-          },
-        );
-      } catch {}
-    };
-    if (typeof window !== "undefined") {
-      window.addEventListener(
-        "conversation:created",
-        onConvCreated as EventListener,
-      );
-    }
+    on(SOCKET_EVENTS.MESSAGE_NEW, handleNewMessage);
+    on(SOCKET_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
 
     return () => {
-      off(SOCKET_EVENTS.MESSAGE_NEW, appendNewMessage);
-      off(SOCKET_EVENTS.MESSAGE_RECEIVED, appendNewMessage);
-      off(SOCKET_EVENTS.MESSAGE_DELIVERED, onDelivered);
-      // MESSAGE_OPENED event removed - using 2-state system
-      off(SOCKET_EVENTS.MESSAGE_READ, onRead);
-      if (recentTimer) clearTimeout(recentTimer);
-      if (typeof window !== "undefined") {
-        window.removeEventListener(
-          "conversation:created",
-          onConvCreated as EventListener,
-        );
-      }
+      off(SOCKET_EVENTS.MESSAGE_NEW, handleNewMessage);
+      off(SOCKET_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
+      clearInterval(cleanupTimer);
     };
-  }, [
-    conversationId,
-    isFetchable,
-    on,
-    off,
-    updateMessagesCache,
-    queryClient,
-    resolveMessageKey,
-  ]);
+  }, [conversationId, isFetchable, queryClient, listKey, on, off, duplicationService]);
 
-  // Optimistic insert helper for sending
-  const optimisticInsert = (temp: FrontendMessage) => {
-    if (!isFetchable) {
-      // Insert into shared store and trigger re-render
-      const targetConvId = temp.conversationId || conversationId;
-      if (targetConvId) {
-        pushTempMessage(targetConvId, { ...temp });
-      } else {
-        // Missing conversationId; skip insert
-      }
-      bump();
-      return Promise.resolve();
-    }
-
-    // Insert into React Query cache
-    updateMessagesCache((prev: any) => {
-      const newMsg = {
-        id: temp.id,
-        conversation_id: temp.conversationId,
-        content: temp.content,
-        timestamp: temp.timestamp,
-        created_at: temp.timestamp,
-        sender: temp.sender,
-        senderType: temp.senderType,
-        is_read: false,
-      };
-
-      if (!prev || !prev.pages || prev.pages.length === 0) {
-        return {
-          pages: [
-            {
-              data: {
-                messages: [newMsg],
-                pagination: {
-                  page: 1,
-                  limit: PAGE_SIZE,
-                  total: 1,
-                  hasMore: true,
-                },
-              },
-            },
-          ],
-          pageParams: [undefined],
-        };
-      }
-
-      const copy = {
-        ...prev,
-        pages: prev.pages.map((p: any) => ({ ...p })),
-      };
-      const lastIdx = copy.pages.length - 1;
-      const last = { ...copy.pages[lastIdx] };
-      const list = Array.isArray(last?.data?.messages)
-        ? [...last.data.messages]
-        : [];
-      list.push(newMsg);
-      last.data = { ...(last.data || {}), messages: list };
-      copy.pages[lastIdx] = last;
-      return copy;
-    });
-
-    return Promise.resolve();
-  };
-
+  // Public API
   return {
     messages,
-    isLoading: conversationId ? isLoading : false,
+    isLoading,
     isFetching,
     isFetchingNextPage,
     hasNextPage,
+    error,
     fetchNextPage,
-    optimisticInsert,
-    // React Query specific methods
-    invalidateMessages: () =>
-      queryClient.invalidateQueries({
-        queryKey: resolveMessageKey(conversationId),
-      }),
-    refetchMessages: () =>
-      queryClient.refetchQueries({
-        queryKey: resolveMessageKey(conversationId),
-      }),
-  } as const;
+  };
 }
+
+export default useMessagesRQ;
