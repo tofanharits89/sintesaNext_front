@@ -141,91 +141,90 @@ export function useConversationReconciliation() {
               })),
             };
 
-            // Find and remove temp conversation
-            let foundTempPageIdx = -1;
-            let foundTempIdx = -1;
+            // AGGRESSIVE CLEANUP: Remove ALL temp conversations
+            // This prevents stale temp conversations from lingering in the list
+            copy.pages.forEach((pg: any) => {
+              pg.conversations = (pg.conversations || []).filter(
+                (c: any) =>
+                  !String(c.id).startsWith("temp-") &&
+                  !String(c.id).startsWith("temp_conv-") &&
+                  !String(c.id).startsWith("temp-conv-")
+              );
+            });
+
+            // Check if real conversation already exists
+            let foundRealPageIdx = -1;
+            let foundRealIdx = -1;
 
             copy.pages.forEach((pg: any, pIdx: number) => {
               const idx = pg.conversations.findIndex(
-                (c: any) => c.id === tempConvId
+                (c: any) => c.id === realConvId
               );
               if (idx !== -1) {
-                foundTempPageIdx = pIdx;
-                foundTempIdx = idx;
+                foundRealPageIdx = pIdx;
+                foundRealIdx = idx;
               }
             });
 
-            if (foundTempIdx !== -1) {
-              // Move temp conversation to real ID
-              const tempConv = copy.pages[foundTempPageIdx].conversations[
-                foundTempIdx
-              ];
-              copy.pages[foundTempPageIdx].conversations.splice(
-                foundTempIdx,
-                1
-              );
+            // Preserve otherParticipant info
+            let otherParticipant =
+              data?.data?.otherParticipant ||
+              data?.otherParticipant ||
+              canonicalMessages[0]?.sender ||
+              null;
+            
+            if (!otherParticipant && typeof window !== "undefined") {
+              try {
+                otherParticipant = (window as any).__selectedRecipient__;
+              } catch {}
+            }
 
-              // Preserve otherParticipant from temp conversation, or get from window context
-              let otherParticipant = tempConv.otherParticipant;
-              if (!otherParticipant && typeof window !== "undefined") {
-                try {
-                  otherParticipant = (window as any).__selectedRecipient__;
-                } catch {}
-              }
+            const lastMsg = canonicalMessages[canonicalMessages.length - 1];
+            const realConvData = {
+              id: realConvId,
+              otherParticipant,
+              lastMessage: lastMsg
+                ? {
+                    id: lastMsg.id,
+                    content: lastMsg.content,
+                    timestamp: lastMsg.timestamp,
+                    sender: lastMsg.sender,
+                  }
+                : null,
+              updated_at: new Date().toISOString(),
+              unread_count: 0,
+            };
 
-              const realConv = {
-                ...tempConv,
-                id: realConvId,
-                otherParticipant,
+            if (foundRealIdx !== -1) {
+              // Update existing real conversation
+              copy.pages[foundRealPageIdx].conversations[foundRealIdx] = {
+                ...copy.pages[foundRealPageIdx].conversations[foundRealIdx],
+                ...realConvData,
               };
-
-              // Place at top of first page
+              // Move to top of first page
+              const conv = copy.pages[foundRealPageIdx].conversations.splice(
+                foundRealIdx,
+                1
+              )[0];
               const firstPage = copy.pages[0] || {
                 conversations: [],
                 nextCursor: null,
               };
-              firstPage.conversations.unshift(realConv);
+              firstPage.conversations.unshift(conv);
               copy.pages[0] = firstPage;
             } else {
-              // If not found, insert minimal conversation
-              let otherParticipant =
-                data?.data?.otherParticipant ||
-                data?.otherParticipant ||
-                canonicalMessages[0]?.sender ||
-                null;
-              
-              // If still not found, try window context (set by new-message-dialog)
-              if (!otherParticipant && typeof window !== "undefined") {
-                try {
-                  otherParticipant = (window as any).__selectedRecipient__;
-                } catch {}
-              }
-
+              // Insert new real conversation at top
               const firstPage = copy.pages[0] || {
                 conversations: [],
                 nextCursor: null,
               };
-
-              const lastMsg = canonicalMessages[canonicalMessages.length - 1];
-              firstPage.conversations.unshift({
-                id: realConvId,
-                otherParticipant,
-                lastMessage: lastMsg
-                  ? {
-                      id: lastMsg.id,
-                      content: lastMsg.content,
-                      timestamp: lastMsg.timestamp,
-                      sender: lastMsg.sender,
-                    }
-                  : null,
-                updated_at: new Date().toISOString(),
-                unread_count: 0,
-              });
+              firstPage.conversations.unshift(realConvData);
               copy.pages[0] = firstPage;
             }
 
             console.log("[Reconciliation] Updated conversations list", {
               realConvId,
+              tempConvsRemoved: true,
             });
 
             return copy;

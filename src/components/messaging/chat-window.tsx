@@ -260,6 +260,14 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
     ) {
       const hint = getHint(cid);
       if (hint?.otherParticipant) return hint.otherParticipant as any;
+      
+      // Fallback: check window context for selected recipient (shows immediately)
+      try {
+        if (typeof window !== "undefined") {
+          const windowRecipient = (window as any).__selectedRecipient__;
+          if (windowRecipient) return windowRecipient;
+        }
+      } catch {}
     }
 
     const fromList = conversations?.find(

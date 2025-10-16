@@ -248,6 +248,11 @@ export function NewMessageDialog({
         pushTempMessage(tempId, optimistic);
       } catch {}
 
+      // Set window context BEFORE selecting conversation to ensure immediate display
+      try {
+        (window as any).__selectedRecipient__ = selectedUser;
+      } catch {}
+
       // Select the temp conversation so the chat binds immediately
       try {
         await selectConversation(tempId);
@@ -281,12 +286,6 @@ export function NewMessageDialog({
 
       // Close dialog to reveal chat window
       onOpenChange(false);
-
-      // Send the message now. Provide conversation override to avoid any timing issues
-      // Pass selectedUser through window context so mutation can access it
-      try {
-        (window as any).__selectedRecipient__ = selectedUser;
-      } catch {}
       
       await sendMessage(message.trim(), selectedUser.id, tempId, true);
 

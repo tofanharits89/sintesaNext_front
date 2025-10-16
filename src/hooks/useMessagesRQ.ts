@@ -234,60 +234,9 @@ export function useMessagesRQ(conversationId?: string) {
     on(SOCKET_EVENTS.MESSAGE_NEW, handleNewMessage);
     on(SOCKET_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
 
-    // Acknowledgment → immediately confirm delivery to clear server-side pending ack
-    const onAck = (ack: any) => {
-      try {
-        const convId = ack?.conversationId;
-        const msgId = ack?.messageId;
-        if (!msgId || !convId || convId !== conversationId) return;
-        emit(SOCKET_EVENTS.MESSAGE_DELIVERED, {
-          messageId: msgId,
-          conversationId: convId,
-          deliveredAt: Date.now(),
-        });
-        // Optionally, mark delivered in local cache (best-effort)
-        queryClient.setQueryData(listKey, (prev: any) => {
-          if (!prev?.pages) return prev;
-          const copy = {
-            ...prev,
-            pages: prev.pages.map((p: any) => ({ ...p })),
-          };
-          const li = copy.pages.length - 1;
-          const last = { ...(copy.pages[li] || {}) };
-          const arr = Array.isArray(last.messages)
-            ? [...last.messages]
-            : last?.data?.messages
-              ? [...last.data.messages]
-              : [];
-          let changed = false;
-          for (let i = 0; i < arr.length; i++) {
-            if (arr[i]?.id === msgId && !arr[i]?.isDelivered) {
-              arr[i] = {
-                ...arr[i],
-                isDelivered: true,
-                deliveredAt: new Date().toISOString(),
-              };
-              changed = true;
-              break;
-            }
-          }
-          if (!changed) return prev;
-          if (Array.isArray(last.messages)) {
-            last.messages = arr;
-          } else {
-            last.data = { ...(last.data || {}), messages: arr };
-          }
-          copy.pages[li] = last;
-          return copy;
-        });
-      } catch {}
-    };
-    on(SOCKET_EVENTS.MESSAGE_ACKNOWLEDGED, onAck);
-
     return () => {
       off(SOCKET_EVENTS.MESSAGE_NEW, handleNewMessage);
       off(SOCKET_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
-      off(SOCKET_EVENTS.MESSAGE_ACKNOWLEDGED, onAck);
       clearInterval(cleanupTimer);
     };
   }, [
