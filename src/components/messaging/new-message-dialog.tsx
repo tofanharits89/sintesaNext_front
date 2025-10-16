@@ -283,6 +283,11 @@ export function NewMessageDialog({
       onOpenChange(false);
 
       // Send the message now. Provide conversation override to avoid any timing issues
+      // Pass selectedUser through window context so mutation can access it
+      try {
+        (window as any).__selectedRecipient__ = selectedUser;
+      } catch {}
+      
       await sendMessage(message.trim(), selectedUser.id, tempId, true);
 
       toast.success("Message sent successfully");

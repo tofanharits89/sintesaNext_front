@@ -1,12 +1,12 @@
 /**
  * REFACTORED useMessagesRQ Hook
- * 
+ *
  * Simplified from 1,139 lines to ~400 lines
  * Uses extracted services for:
  * - Message normalization
  * - Deduplication
  * - Cache management
- * 
+ *
  * This version demonstrates the refactoring approach.
  * Deploy alongside old version for A/B testing.
  */
@@ -28,7 +28,10 @@ import {
   FrontendMessage,
   SocketMessageData,
 } from "@/types/socket-events";
-import { createInfiniteQueryOptions, queryKeyFactories } from "@/lib/query-configs";
+import {
+  createInfiniteQueryOptions,
+  queryKeyFactories,
+} from "@/lib/query-configs";
 
 // Import new services
 import {
@@ -86,7 +89,7 @@ const fetchMessages = async (
       pagination: { limit: PAGE_SIZE, total: 0, nextBefore: null },
     };
   }
-  
+
   const json = await resp.json().catch(() => ({}));
 
   // Normalize response using service
@@ -142,10 +145,12 @@ export function useMessagesRQ(conversationId?: string) {
     if (!data?.pages || data.pages.length === 0) return [];
 
     try {
-      // Merge all pages
-      const allMessages = data.pages
-        .filter((page) => page && page.messages)
-        .flatMap((page) => page.messages || []);
+      // Merge all pages (support both shapes: page.messages and page.data.messages)
+      const allMessages = (data.pages as any[]).flatMap((page: any) => {
+        if (Array.isArray(page?.messages)) return page.messages;
+        if (Array.isArray(page?.data?.messages)) return page.data.messages;
+        return [];
+      });
 
       // Sort by timestamp
       const sorted = sortMessages(allMessages);
@@ -155,13 +160,13 @@ export function useMessagesRQ(conversationId?: string) {
 
       return deduped as FrontendMessage[];
     } catch (error) {
-      console.error('[useMessagesRQ] Error transforming messages:', error);
+      console.error("[useMessagesRQ] Error transforming messages:", error);
       return [];
     }
   }, [data?.pages]);
 
   // Socket integration
-  const { on, off } = useSocket();
+  const { on, off, emit } = useSocket();
 
   useEffect(() => {
     if (!conversationId || !isFetchable) return;
@@ -229,12 +234,71 @@ export function useMessagesRQ(conversationId?: string) {
     on(SOCKET_EVENTS.MESSAGE_NEW, handleNewMessage);
     on(SOCKET_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
 
+    // Acknowledgment → immediately confirm delivery to clear server-side pending ack
+    const onAck = (ack: any) => {
+      try {
+        const convId = ack?.conversationId;
+        const msgId = ack?.messageId;
+        if (!msgId || !convId || convId !== conversationId) return;
+        emit(SOCKET_EVENTS.MESSAGE_DELIVERED, {
+          messageId: msgId,
+          conversationId: convId,
+          deliveredAt: Date.now(),
+        });
+        // Optionally, mark delivered in local cache (best-effort)
+        queryClient.setQueryData(listKey, (prev: any) => {
+          if (!prev?.pages) return prev;
+          const copy = {
+            ...prev,
+            pages: prev.pages.map((p: any) => ({ ...p })),
+          };
+          const li = copy.pages.length - 1;
+          const last = { ...(copy.pages[li] || {}) };
+          const arr = Array.isArray(last.messages)
+            ? [...last.messages]
+            : last?.data?.messages
+              ? [...last.data.messages]
+              : [];
+          let changed = false;
+          for (let i = 0; i < arr.length; i++) {
+            if (arr[i]?.id === msgId && !arr[i]?.isDelivered) {
+              arr[i] = {
+                ...arr[i],
+                isDelivered: true,
+                deliveredAt: new Date().toISOString(),
+              };
+              changed = true;
+              break;
+            }
+          }
+          if (!changed) return prev;
+          if (Array.isArray(last.messages)) {
+            last.messages = arr;
+          } else {
+            last.data = { ...(last.data || {}), messages: arr };
+          }
+          copy.pages[li] = last;
+          return copy;
+        });
+      } catch {}
+    };
+    on(SOCKET_EVENTS.MESSAGE_ACKNOWLEDGED, onAck);
+
     return () => {
       off(SOCKET_EVENTS.MESSAGE_NEW, handleNewMessage);
       off(SOCKET_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
+      off(SOCKET_EVENTS.MESSAGE_ACKNOWLEDGED, onAck);
       clearInterval(cleanupTimer);
     };
-  }, [conversationId, isFetchable, queryClient, listKey, on, off, duplicationService]);
+  }, [
+    conversationId,
+    isFetchable,
+    queryClient,
+    listKey,
+    on,
+    off,
+    duplicationService,
+  ]);
 
   // Public API
   return {

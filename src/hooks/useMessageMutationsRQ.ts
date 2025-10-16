@@ -16,6 +16,7 @@ import {
 import { useNotificationStore } from "@/stores/notification-store";
 import { getTempMessages } from "@/features/messaging/temp-messages-store";
 import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
+import { useConversationReconciliation } from "./messaging-rq/useConversationReconciliation";
 
 // Types for mutation arguments
 interface SendMessageArgs {
@@ -50,6 +51,7 @@ export function useSendMessageMutation() {
   const { unread } = useMessagingActions();
   const { user: currentUser } = useUnifiedAuth();
   const userScopeId = currentUser?.id ?? null;
+  const { reconcileTempToReal } = useConversationReconciliation();
   const messageKeyFor = (convId?: string | null) =>
     messageKeys.messages(userScopeId, convId ?? "");
 
@@ -267,67 +269,70 @@ export function useSendMessageMutation() {
 
         // Update conversations list optimistically (align with useInfiniteQuery cache shape)
         if (userScopeId) {
-        queryClient.setQueryData(conversationKeys.lists(userScopeId), (prev: any) => {
-          // Expected shape: { pages: ConversationsPage[], pageParams: any[] }
-          const empty = {
-            pages: [{ conversations: [], nextCursor: null }],
-            pageParams: [null],
-          };
-          const curr = prev && prev.pages ? prev : empty;
+          queryClient.setQueryData(
+            conversationKeys.lists(userScopeId),
+            (prev: any) => {
+              // Expected shape: { pages: ConversationsPage[], pageParams: any[] }
+              const empty = {
+                pages: [{ conversations: [], nextCursor: null }],
+                pageParams: [null],
+              };
+              const curr = prev && prev.pages ? prev : empty;
 
-          const pages = curr.pages.map((pg: any) => ({
-            ...pg,
-            conversations: Array.isArray(pg.conversations)
-              ? [...pg.conversations]
-              : [],
-          }));
+              const pages = curr.pages.map((pg: any) => ({
+                ...pg,
+                conversations: Array.isArray(pg.conversations)
+                  ? [...pg.conversations]
+                  : [],
+              }));
 
-          // find conversation in any page
-          let foundPageIdx = -1;
-          let foundIdx = -1;
-          pages.forEach((pg: any, pIdx: number) => {
-            const idx = pg.conversations.findIndex(
-              (c: any) => String(c.id) === convKeyId,
-            );
-            if (idx !== -1) {
-              foundPageIdx = pIdx;
-              foundIdx = idx;
-            }
-          });
+              // find conversation in any page
+              let foundPageIdx = -1;
+              let foundIdx = -1;
+              pages.forEach((pg: any, pIdx: number) => {
+                const idx = pg.conversations.findIndex(
+                  (c: any) => String(c.id) === convKeyId,
+                );
+                if (idx !== -1) {
+                  foundPageIdx = pIdx;
+                  foundIdx = idx;
+                }
+              });
 
-          if (foundIdx !== -1) {
-            const removed = pages[foundPageIdx].conversations.splice(
-              foundIdx,
-              1,
-            )[0];
-            const conv = { ...(removed || {}) } as any;
-            conv.lastMessage = {
-              ...(conv.lastMessage || {}),
-              id: tempId,
-              content: content.trim(),
-              timestamp: optimisticMessage.timestamp,
-              sender: optimisticMessage.sender,
-              senderType: optimisticMessage.senderType,
-              isRead: false,
-              is_read: false,
-            };
-            // Keep both snake_case and camelCase updated fields to be safe
-            conv.updated_at = optimisticMessage.timestamp;
-            conv.updatedAt = optimisticMessage.timestamp;
+              if (foundIdx !== -1) {
+                const removed = pages[foundPageIdx].conversations.splice(
+                  foundIdx,
+                  1,
+                )[0];
+                const conv = { ...(removed || {}) } as any;
+                conv.lastMessage = {
+                  ...(conv.lastMessage || {}),
+                  id: tempId,
+                  content: content.trim(),
+                  timestamp: optimisticMessage.timestamp,
+                  sender: optimisticMessage.sender,
+                  senderType: optimisticMessage.senderType,
+                  isRead: false,
+                  is_read: false,
+                };
+                // Keep both snake_case and camelCase updated fields to be safe
+                conv.updated_at = optimisticMessage.timestamp;
+                conv.updatedAt = optimisticMessage.timestamp;
 
-            // place at top of first page so ordering updates immediately
-            const firstPage = pages[0] || {
-              conversations: [],
-              nextCursor: null,
-            };
-            firstPage.conversations.unshift(conv);
-            pages[0] = firstPage;
+                // place at top of first page so ordering updates immediately
+                const firstPage = pages[0] || {
+                  conversations: [],
+                  nextCursor: null,
+                };
+                firstPage.conversations.unshift(conv);
+                pages[0] = firstPage;
 
-            return { pages, pageParams: curr.pageParams };
-          }
+                return { pages, pageParams: curr.pageParams };
+              }
 
-          return curr;
-        });
+              return curr;
+            },
+          );
         }
 
         // (moved to onSuccess for correct variables scope and timing)
@@ -389,7 +394,7 @@ export function useSendMessageMutation() {
         watchdog,
       };
     },
-    onSuccess: (data, args, context) => {
+    onSuccess: async (data, args, context) => {
       const { conversationId, tempId, content } = args as any;
       const convKeyId =
         conversationId != null ? String(conversationId) : undefined;
@@ -514,225 +519,37 @@ export function useSendMessageMutation() {
         const activeId = useMessagingStore.getState().activeConversationId as
           | string
           | null;
+        const newId = String(derivedNewConvId);
         const isTempActive =
           !!activeId &&
           (String(activeId).startsWith("temp-") ||
             String(activeId).startsWith("temp_conv-") ||
             String(activeId).startsWith("temp-conv-"));
-        const newId = String(derivedNewConvId);
-        const notifySelected = (id: string) => {
-          try {
-            if (typeof window !== "undefined") {
-              window.dispatchEvent(
-                new CustomEvent("conversation:selected", {
-                  detail: { conversationId: id },
-                }),
-              );
-            }
-          } catch {}
-        };
-        // Set active conversation immediately to show messages (reduced delay from 380ms)
-        // Socket handler now creates conversation in list, so chat can show messages
-        messageActions.setActiveConversation(newId);
-        notifySelected(newId);
+        const sourceTempConvId =
+          activeId && String(activeId).startsWith("temp-") ? activeId : undefined;
 
-        // Also broadcast a reconciliation event for any listeners
+        // Use reconciliation hook for clean migration
+        try {
+          await reconcileTempToReal(
+            sourceTempConvId || conversationId || `temp-conv-${tempId}`,
+            newId,
+            data
+          );
+        } catch (reconcileError) {
+          console.error("[MSG DEBUG] Reconciliation error:", reconcileError);
+        }
+
+        // Update active conversation and notify listeners
+        messageActions.setActiveConversation(newId);
         try {
           if (typeof window !== "undefined") {
-            const sourceTempId =
-              activeId && String(activeId).startsWith("temp-")
-                ? activeId
-                : tempId;
-            if (sourceTempId) {
-              window.dispatchEvent(
-                new CustomEvent("conversation:created", {
-                  detail: { tempId: sourceTempId, conversationId: newId },
-                }),
-              );
-            }
+            window.dispatchEvent(
+              new CustomEvent("conversation:selected", {
+                detail: { conversationId: newId },
+              })
+            );
           }
         } catch {}
-
-        // Seed/migrate messages into the new conversation cache so the sent text remains visible
-        const nowIso = new Date().toISOString();
-        queryClient.setQueryData(messageKeyFor(newId), (prev: any) => {
-          const optimisticSender = currentUser
-            ? {
-                id: currentUser.id,
-                username: currentUser.username || "you",
-                name: currentUser.name || "You",
-              }
-            : { id: "current-user", username: "you", name: "You" };
-
-          // Primary message (the one just sent)
-          const primaryMsg = {
-            id: realMsgId || tempId || `temp-msg-${Date.now()}`,
-            conversation_id: newId,
-            content: (content || "").trim(),
-            timestamp: nowIso,
-            created_at: nowIso,
-            sender: optimisticSender,
-            senderType: "user",
-            is_read: true,
-          } as any;
-
-          // Migrate any temp messages if present
-          let migrated: any[] = [];
-          try {
-            const sourceTempId =
-              activeId && String(activeId).startsWith("temp-")
-                ? activeId
-                : tempId;
-            if (sourceTempId) {
-              const list = getTempMessages(String(sourceTempId));
-              if (Array.isArray(list) && list.length > 0) {
-                migrated = list.map((m: any) => ({
-                  id: m.id === tempId && realMsgId ? realMsgId : m.id,
-                  conversation_id: newId,
-                  content: m.content,
-                  timestamp: m.timestamp || nowIso,
-                  created_at: m.timestamp || nowIso,
-                  sender: m.sender || optimisticSender,
-                  senderType: m.senderType || "user",
-                  is_read: true,
-                }));
-              }
-            }
-          } catch {}
-
-          // Build next cache state
-          const messagesToInsert =
-            migrated.length > 0 ? migrated : [primaryMsg];
-          if (!prev || !prev.pages || prev.pages.length === 0) {
-            return {
-              pages: [
-                {
-                  data: {
-                    messages: messagesToInsert,
-                    pagination: {
-                      page: 1,
-                      limit: 50,
-                      total: messagesToInsert.length,
-                      hasMore: false,
-                    },
-                  },
-                },
-              ],
-              pageParams: [1],
-            };
-          }
-
-          const copy = {
-            ...prev,
-            pages: prev.pages.map((p: any) => ({ ...p })),
-          };
-          const lastIdx = copy.pages.length - 1;
-          const last = { ...copy.pages[lastIdx] };
-          const list = Array.isArray(last?.data?.messages)
-            ? [...last.data.messages]
-            : [];
-          // If we have a temp message already in list, reconcile its id to realMsgId
-          if (tempId && realMsgId) {
-            for (let i = 0; i < list.length; i++) {
-              if (list[i]?.id === tempId) {
-                list[i] = { ...list[i], id: realMsgId };
-              }
-            }
-          }
-          for (const msg of messagesToInsert) {
-            if (!list.some((m: any) => m?.id === msg.id)) list.push(msg);
-          }
-          last.data = { ...(last.data || {}), messages: list };
-          copy.pages[lastIdx] = last;
-          return copy;
-        });
-
-        // Update conversations list: replace temp conversation with real or insert minimal
-        if (userScopeId) {
-        const nowIso2 = new Date().toISOString();
-        queryClient.setQueryData(conversationKeys.lists(userScopeId), (prev: any) => {
-          const empty = {
-            pages: [{ conversations: [], nextCursor: null }],
-            pageParams: [null],
-          };
-          const curr = prev && prev.pages ? prev : empty;
-          const pages = curr.pages.map((pg: any) => ({
-            ...pg,
-            conversations: Array.isArray(pg.conversations)
-              ? [...pg.conversations]
-              : [],
-          }));
-
-          // Find temp conversation by the active temp conversation id, not the temp message id
-          let foundPageIdx = -1;
-          let foundIdx = -1;
-          const sourceTempConvId =
-            activeId && String(activeId).startsWith("temp-")
-              ? activeId
-              : undefined;
-          if (sourceTempConvId) {
-            pages.forEach((pg: any, pIdx: number) => {
-              const idx = pg.conversations.findIndex(
-                (c: any) => c.id === sourceTempConvId,
-              );
-              if (idx !== -1) {
-                foundPageIdx = pIdx;
-                foundIdx = idx;
-              }
-            });
-          }
-
-          const minimalLast = {
-            id: realMsgId || tempId || `temp-msg-${Date.now()}`,
-            content: (content || "").trim(),
-            timestamp: nowIso2,
-            sender: currentUser
-              ? {
-                  id: currentUser.id,
-                  username: currentUser.username || "you",
-                  name: currentUser.name || "You",
-                }
-              : { id: "current-user", username: "you", name: "You" },
-            senderType: "user",
-            isRead: true,
-            is_read: true,
-          } as any;
-
-          if (foundIdx !== -1) {
-            const conv = {
-              ...(pages[foundPageIdx].conversations[foundIdx] || {}),
-            } as any;
-            conv.id = newId;
-            conv.lastMessage = minimalLast;
-            conv.updated_at = nowIso2;
-            conv.updatedAt = nowIso2;
-            // remove from its page and place at top of first page
-            pages[foundPageIdx].conversations.splice(foundIdx, 1);
-            const first = pages[0] || { conversations: [], nextCursor: null };
-            first.conversations.unshift(conv);
-            pages[0] = first;
-            return { pages, pageParams: curr.pageParams };
-          } else {
-            // Insert a minimal conversation at top if not found
-            const first = pages[0] || { conversations: [], nextCursor: null };
-            // Extract recipient info from args (selectedUser or otherParticipant from response)
-            const recipientFromResponse = (data as any)?.data?.otherParticipant || 
-                                         (args as any)?.selectedUser ||
-                                         null;
-            const conv = {
-              id: newId,
-              otherParticipant: recipientFromResponse,
-              lastMessage: minimalLast,
-              updated_at: nowIso2,
-              lastMessageAt: nowIso2,
-              unread_count: 0,
-            } as any;
-            first.conversations.unshift(conv);
-            pages[0] = first;
-            return { pages, pageParams: curr.pageParams };
-          }
-        });
-        }
 
         // Notify UI listeners so scroll stays pinned
         try {
@@ -740,7 +557,7 @@ export function useSendMessageMutation() {
             window.dispatchEvent(
               new CustomEvent("messages:appended", {
                 detail: { conversationId: newId },
-              }),
+              })
             );
           }
         } catch {}
@@ -754,95 +571,96 @@ export function useSendMessageMutation() {
       // For existing conversations, invalidate first, then refetch
       // This ensures pagination is reset and we get the latest messages
       const targetConvId = derivedNewConvId || conversationId;
-      if (targetConvId) {
-        // Delay refetch to allow socket event to arrive first
+      // IMPORTANT: Do not invalidate/refetch the thread immediately here.
+      // Socket events + local cache writes already keep the UI consistent, and
+      // an eager invalidate can briefly wipe the optimistic first message in
+      // a brand-new conversation. We keep the conversations list gentle refetch
+      // (below) only for new conversations to hydrate participant details.
+      if (
+        derivedNewConvId &&
+        derivedNewConvId !== conversationId &&
+        userScopeId
+      ) {
         setTimeout(() => {
-          // Invalidate to reset infinite query pagination
-          queryClient.invalidateQueries({
-            queryKey: messageKeyFor(String(targetConvId)),
-          });
-          // Then immediately refetch the first page
           queryClient.refetchQueries({
-            queryKey: messageKeyFor(String(targetConvId)),
-            type: "all",
+            queryKey: conversationKeys.lists(userScopeId),
           });
-        }, 1000); // Shorter delay since we're invalidating
-        
-        // For new conversations, also refetch the conversations list to get full participant data
-        if (derivedNewConvId && derivedNewConvId !== conversationId && userScopeId) {
-          setTimeout(() => {
-            queryClient.refetchQueries({
-              queryKey: conversationKeys.lists(userScopeId),
-            });
-          }, 1500);
-        }
+        }, 1500);
       }
 
       // Update conversations list without invalidating - use setQueryData instead
       if (userScopeId) {
-      queryClient.setQueryData(conversationKeys.lists(userScopeId), (prev: any) => {
-        const empty = {
-          pages: [{ conversations: [], nextCursor: null }],
-          pageParams: [null],
-        };
-        const curr = prev && prev.pages ? prev : empty;
-        const pages = curr.pages.map((pg: any) => ({
-          ...pg,
-          conversations: Array.isArray(pg.conversations)
-            ? [...pg.conversations]
-            : [],
-        }));
+        queryClient.setQueryData(
+          conversationKeys.lists(userScopeId),
+          (prev: any) => {
+            const empty = {
+              pages: [{ conversations: [], nextCursor: null }],
+              pageParams: [null],
+            };
+            const curr = prev && prev.pages ? prev : empty;
+            const pages = curr.pages.map((pg: any) => ({
+              ...pg,
+              conversations: Array.isArray(pg.conversations)
+                ? [...pg.conversations]
+                : [],
+            }));
 
-        // Find and update the conversation with the new message
-        let foundPageIdx = -1;
-        let foundIdx = -1;
-        pages.forEach((pg: any, pIdx: number) => {
-          const idx = pg.conversations.findIndex(
-            (c: any) => String(c.id) === String(targetConvId),
-          );
-          if (idx !== -1) {
-            foundPageIdx = pIdx;
-            foundIdx = idx;
-          }
-        });
-
-        if (foundIdx !== -1) {
-          const conv = {
-            ...(pages[foundPageIdx].conversations[foundIdx] || {}),
-          } as any;
-          const optimisticSender = currentUser
-            ? {
-                id: currentUser.id,
-                username: currentUser.username || "you",
-                name: currentUser.name || "You",
+            // Find and update the conversation with the new message
+            let foundPageIdx = -1;
+            let foundIdx = -1;
+            pages.forEach((pg: any, pIdx: number) => {
+              const idx = pg.conversations.findIndex(
+                (c: any) => String(c.id) === String(targetConvId),
+              );
+              if (idx !== -1) {
+                foundPageIdx = pIdx;
+                foundIdx = idx;
               }
-            : { id: "current-user", username: "you", name: "You" };
+            });
 
-          const minimalLast = {
-            id: realMsgId || tempId || `temp-msg-${Date.now()}`,
-            content: content.trim(),
-            timestamp: new Date().toISOString(),
-            sender: optimisticSender,
-            senderType: "user",
-            isRead: true,
-            is_read: true,
-          } as any;
+            if (foundIdx !== -1) {
+              const conv = {
+                ...(pages[foundPageIdx].conversations[foundIdx] || {}),
+              } as any;
+              const optimisticSender = currentUser
+                ? {
+                    id: currentUser.id,
+                    username: currentUser.username || "you",
+                    name: currentUser.name || "You",
+                  }
+                : { id: "current-user", username: "you", name: "You" };
 
-          conv.lastMessage = minimalLast;
-          conv.updated_at = new Date().toISOString();
-          conv.updatedAt = new Date().toISOString();
+              const minimalLast = {
+                id: realMsgId || tempId || `temp-msg-${Date.now()}`,
+                content: content.trim(),
+                timestamp: new Date().toISOString(),
+                sender: optimisticSender,
+                senderType: "user",
+                isRead: true,
+                is_read: true,
+              } as any;
 
-          // Move conversation to top of first page
-          pages[foundPageIdx].conversations.splice(foundIdx, 1);
-          const firstPage = pages[0] || { conversations: [], nextCursor: null };
-          firstPage.conversations.unshift(conv);
-          pages[0] = firstPage;
+              conv.lastMessage = minimalLast;
+              conv.updated_at = new Date().toISOString();
+              conv.updatedAt = new Date().toISOString();
 
-          console.log("[MSG DEBUG] Updated conversation list with new message");
-        }
+              // Move conversation to top of first page
+              pages[foundPageIdx].conversations.splice(foundIdx, 1);
+              const firstPage = pages[0] || {
+                conversations: [],
+                nextCursor: null,
+              };
+              firstPage.conversations.unshift(conv);
+              pages[0] = firstPage;
 
-        return { pages, pageParams: curr.pageParams };
-      });
+              console.log(
+                "[MSG DEBUG] Updated conversation list with new message",
+              );
+            }
+
+            return { pages, pageParams: curr.pageParams };
+          },
+        );
       }
 
       // Broadcast success for latch clearing (for both real id and temp id)
@@ -1118,27 +936,30 @@ export function useMarkAsReadMutation(conversationId?: string) {
 
       // Update conversation lastMessage flags only (do NOT change unread_count on READ)
       if (userScopeId) {
-      queryClient.setQueryData(conversationKeys.lists(userScopeId), (prev: any) => {
-        if (!prev?.data?.conversations) return prev;
+        queryClient.setQueryData(
+          conversationKeys.lists(userScopeId),
+          (prev: any) => {
+            if (!prev?.data?.conversations) return prev;
 
-        const conversations = prev.data.conversations.map((c: any) =>
-          c.id === conversationId
-            ? {
-                ...c,
-                unread_count: c.unread_count,
-                lastMessage:
-                  c.lastMessage && messageIds.includes(c.lastMessage.id)
-                    ? { ...c.lastMessage, isRead: true, is_read: true }
-                    : c.lastMessage,
-              }
-            : c,
+            const conversations = prev.data.conversations.map((c: any) =>
+              c.id === conversationId
+                ? {
+                    ...c,
+                    unread_count: c.unread_count,
+                    lastMessage:
+                      c.lastMessage && messageIds.includes(c.lastMessage.id)
+                        ? { ...c.lastMessage, isRead: true, is_read: true }
+                        : c.lastMessage,
+                  }
+                : c,
+            );
+
+            return {
+              ...prev,
+              data: { ...prev.data, conversations },
+            };
+          },
         );
-
-        return {
-          ...prev,
-          data: { ...prev.data, conversations },
-        };
-      });
       }
 
       // Note: do not update Zustand unread store on READ; OPENED mutation handles counters.

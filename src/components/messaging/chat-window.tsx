@@ -53,9 +53,7 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
     stopTyping: stopTypingRQ,
   } = useMessagingRQ();
 
-  const { messages } =
-    useMessagesRQ(conversationId);
-
+  // Compute effective ID before using it in hooks
   const effectiveConversationId = useMemo(() => {
     if (!conversationId) return activeConversationId || null;
     const isTemp =
@@ -72,6 +70,10 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
     }
     return conversationId;
   }, [conversationId, activeConversationId]);
+
+  // Use effectiveConversationId so that once the temp conversation reconciles
+  // to a real ID, the chat subscribes to the correct thread and preserves history
+  const { messages } = useMessagesRQ(effectiveConversationId || conversationId);
 
   const conversationData =
     conversations?.find((c) => c.id === effectiveConversationId) ||
