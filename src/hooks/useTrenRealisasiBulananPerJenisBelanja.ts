@@ -23,7 +23,7 @@ interface UseTrenRealisasiBulananPerJenisBelanjaOptions {
 }
 
 export function useTrenRealisasiBulananPerJenisBelanja(
-  options: UseTrenRealisasiBulananPerJenisBelanjaOptions = {}
+  options: UseTrenRealisasiBulananPerJenisBelanjaOptions = {},
 ) {
   const { kanwil, enabled } = options;
   const isClient = typeof window !== "undefined";
@@ -39,28 +39,22 @@ export function useTrenRealisasiBulananPerJenisBelanja(
         }
 
         const url = new URL(
-          apiPath(`/dashboard/tren-realisasi-bulanan-per-jenis-belanja${
-            params.toString() ? "?" + params.toString() : ""
-          }`),
-          window.location.origin
+          apiPath(
+            `/dashboard/tren-realisasi-bulanan-per-jenis-belanja${
+              params.toString() ? "?" + params.toString() : ""
+            }`,
+          ),
+          window.location.origin,
         );
 
-        // Use same-origin Next API to forward httpOnly cookies
-        const response = await fetch(url.toString(), {
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
+        // Use http client which includes auth interceptors and refresh logic
+        const { apiClient } = await import("@/lib/httpClient");
         const result: TrenRealisasiBulananPerJenisBelanjaResponse =
-          await response.json();
+          await apiClient.get(url.pathname + url.search);
 
         if (!result.success) {
           throw new Error(
-            "Failed to fetch tren realisasi bulanan per jenis belanja data"
+            "Failed to fetch tren realisasi bulanan per jenis belanja data",
           );
         }
 
@@ -69,7 +63,7 @@ export function useTrenRealisasiBulananPerJenisBelanja(
       } catch (error: any) {
         console.error(
           "Error fetching tren realisasi bulanan per jenis belanja:",
-          error
+          error,
         );
         // Handle 401 errors specifically
         if (

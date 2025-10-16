@@ -266,7 +266,8 @@ export function useSendMessageMutation() {
         });
 
         // Update conversations list optimistically (align with useInfiniteQuery cache shape)
-        queryClient.setQueryData(conversationKeys.lists(), (prev: any) => {
+        if (userScopeId) {
+        queryClient.setQueryData(conversationKeys.lists(userScopeId), (prev: any) => {
           // Expected shape: { pages: ConversationsPage[], pageParams: any[] }
           const empty = {
             pages: [{ conversations: [], nextCursor: null }],
@@ -327,6 +328,7 @@ export function useSendMessageMutation() {
 
           return curr;
         });
+        }
 
         // (moved to onSuccess for correct variables scope and timing)
       }
@@ -646,8 +648,9 @@ export function useSendMessageMutation() {
         });
 
         // Update conversations list: replace temp conversation with real or insert minimal
+        if (userScopeId) {
         const nowIso2 = new Date().toISOString();
-        queryClient.setQueryData(conversationKeys.lists(), (prev: any) => {
+        queryClient.setQueryData(conversationKeys.lists(userScopeId), (prev: any) => {
           const empty = {
             pages: [{ conversations: [], nextCursor: null }],
             pageParams: [null],
@@ -729,6 +732,7 @@ export function useSendMessageMutation() {
             return { pages, pageParams: curr.pageParams };
           }
         });
+        }
 
         // Notify UI listeners so scroll stays pinned
         try {
@@ -765,17 +769,18 @@ export function useSendMessageMutation() {
         }, 1000); // Shorter delay since we're invalidating
         
         // For new conversations, also refetch the conversations list to get full participant data
-        if (derivedNewConvId && derivedNewConvId !== conversationId) {
+        if (derivedNewConvId && derivedNewConvId !== conversationId && userScopeId) {
           setTimeout(() => {
             queryClient.refetchQueries({
-              queryKey: conversationKeys.lists(),
+              queryKey: conversationKeys.lists(userScopeId),
             });
           }, 1500);
         }
       }
 
       // Update conversations list without invalidating - use setQueryData instead
-      queryClient.setQueryData(conversationKeys.lists(), (prev: any) => {
+      if (userScopeId) {
+      queryClient.setQueryData(conversationKeys.lists(userScopeId), (prev: any) => {
         const empty = {
           pages: [{ conversations: [], nextCursor: null }],
           pageParams: [null],
@@ -838,6 +843,7 @@ export function useSendMessageMutation() {
 
         return { pages, pageParams: curr.pageParams };
       });
+      }
 
       // Broadcast success for latch clearing (for both real id and temp id)
       try {
@@ -1111,7 +1117,8 @@ export function useMarkAsReadMutation(conversationId?: string) {
       });
 
       // Update conversation lastMessage flags only (do NOT change unread_count on READ)
-      queryClient.setQueryData(conversationKeys.lists(), (prev: any) => {
+      if (userScopeId) {
+      queryClient.setQueryData(conversationKeys.lists(userScopeId), (prev: any) => {
         if (!prev?.data?.conversations) return prev;
 
         const conversations = prev.data.conversations.map((c: any) =>
@@ -1132,6 +1139,7 @@ export function useMarkAsReadMutation(conversationId?: string) {
           data: { ...prev.data, conversations },
         };
       });
+      }
 
       // Note: do not update Zustand unread store on READ; OPENED mutation handles counters.
     },

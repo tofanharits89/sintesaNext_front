@@ -6,7 +6,7 @@ export { useMessagingRQ, useConversationRQ } from '../useMessagingRQ';
 
 // Data hooks (React Query)
 export { useConversations, conversationKeys } from '../useConversationsRQ';
-export { useMessages, messageKeys } from '../useMessagesRQ';
+export { useMessagesRQ, messageKeys } from '../useMessagesRQ';
 
 // Mutation hooks (React Query)
 export { 

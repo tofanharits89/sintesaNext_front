@@ -8,7 +8,7 @@ import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useMessagingRQ } from "@/hooks/messaging-rq";
 import { useSendMessageMutation } from "@/hooks/useMessageMutationsRQ";
-import { useMessages, messageKeys } from "@/hooks/useMessagesRQ";
+import { useMessagesRQ, messageKeys } from "@/hooks/useMessagesRQ";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   pushTempMessage,
@@ -53,15 +53,8 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
     stopTyping: stopTypingRQ,
   } = useMessagingRQ();
 
-  const { messages: fetchedMessages, refetchMessages } =
-    useMessages(conversationId);
-  const messages = fetchedMessages ?? [];
-
-  useEffect(() => {
-    if (conversationId) {
-      refetchMessages();
-    }
-  }, [conversationId, refetchMessages]);
+  const { messages } =
+    useMessagesRQ(conversationId);
 
   const effectiveConversationId = useMemo(() => {
     if (!conversationId) return activeConversationId || null;
@@ -86,15 +79,14 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
 
   const loadOlderMessagesPreserveScroll = async () => {
     const viewport = scrollAreaRef.current?.querySelector(
-      "[data-radix-scroll-area-viewport]"
+      "[data-radix-scroll-area-viewport]",
     ) as HTMLElement | null;
     const prevHeight = viewport?.scrollHeight ?? 0;
     await loadMoreMessages();
     requestAnimationFrame(() => {
       const newHeight = viewport?.scrollHeight ?? 0;
       if (viewport) {
-        viewport.scrollTop =
-          newHeight - prevHeight + (viewport.scrollTop || 0);
+        viewport.scrollTop = newHeight - prevHeight + (viewport.scrollTop || 0);
       }
     });
   };
@@ -102,7 +94,7 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
   const { observeMessage } = useAutoMarkAsRead({
     messages,
     currentUserId: currentUser?.id || "unknown",
-    conversationId: effectiveConversationId,
+    conversationId: effectiveConversationId ?? conversationId,
     markAsRead: async () => {},
     enabled: true,
     debounceMs: 100,
@@ -111,7 +103,7 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
 
   const scrollToBottom = (smooth = false) => {
     const viewport = scrollAreaRef.current?.querySelector(
-      "[data-radix-scroll-area-viewport]"
+      "[data-radix-scroll-area-viewport]",
     ) as HTMLElement | null;
     if (!viewport) return;
     if (smooth) {
@@ -269,7 +261,7 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
     }
 
     const fromList = conversations?.find(
-      (c) => c.id === (effectiveConversationId || conversation?.id)
+      (c) => c.id === (effectiveConversationId || conversation?.id),
     );
     if (fromList?.otherParticipant) return fromList.otherParticipant;
 
@@ -300,8 +292,8 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
           p1Id && p1Id !== currentId
             ? p1Id
             : p2Id && p2Id !== currentId
-            ? p2Id
-            : undefined;
+              ? p2Id
+              : undefined;
       } else {
         candidateId = p2Id || p1Id;
       }
@@ -332,12 +324,14 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
   const isOtherParticipantOnline = useMemo(() => {
     if (!otherParticipant?.id) return false;
     return onlineUsers.some(
-      (onlineUser) => onlineUser.user.id === otherParticipant.id
+      (onlineUser) => onlineUser.user.id === otherParticipant.id,
     );
   }, [otherParticipant?.id, onlineUsers]);
   const handleRetryMessage = async (msg: any) => {
     try {
-      const convId = String(msg.conversationId || effectiveConversationId || "");
+      const convId = String(
+        msg.conversationId || effectiveConversationId || "",
+      );
       const isTempConv =
         convId.startsWith("temp-") ||
         convId.startsWith("temp_conv-") ||
@@ -353,17 +347,23 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
       } else if (convId) {
         queryClient.setQueryData(messageKeys.messages(convId), (prev: any) => {
           if (!prev?.pages) return prev;
-          const copy = { ...prev, pages: prev.pages.map((p: any) => ({ ...p })) };
+          const copy = {
+            ...prev,
+            pages: prev.pages.map((p: any) => ({ ...p })),
+          };
           for (let pi = 0; pi < copy.pages.length; pi++) {
             const page = copy.pages[pi];
             const updated =
               Array.isArray(page?.data?.messages) &&
               page.data.messages.map((m: any) =>
-                m?.id === msg.id ? { ...m, _sending: true, _failed: false } : m
+                m?.id === msg.id ? { ...m, _sending: true, _failed: false } : m,
               );
             copy.pages[pi] = {
               ...page,
-              data: { ...(page?.data || {}), messages: updated ?? page?.data?.messages },
+              data: {
+                ...(page?.data || {}),
+                messages: updated ?? page?.data?.messages,
+              },
             };
           }
           return copy;
@@ -402,7 +402,7 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
         await sendMessageRQ(
           content,
           recipientId,
-          effectiveConversationId || undefined
+          effectiveConversationId || undefined,
         );
       } catch (error) {
         console.error("Failed to send message:", error);
@@ -413,7 +413,7 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
       const fileNames = files.map((f) => f.name).join(", ");
       try {
         await sendMessageRQ(
-          `📎 Attached files: ${fileNames} (File upload feature coming soon)`
+          `📎 Attached files: ${fileNames} (File upload feature coming soon)`,
         );
       } catch (error) {
         console.error("Failed to send attachment placeholder:", error);
@@ -439,7 +439,7 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
           observeMessage={observeMessage}
           isAnyoneTyping={isAnyoneTyping}
           typingText={typingText}
-          conversationData={conversationData}
+          {...(conversationData ? { conversationData } : {})}
           otherParticipant={otherParticipant}
           onRetryMessage={handleRetryMessage}
           formatTimestamp={formatEnhancedTimestamp}

@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 import { useConversations } from "./useConversationsRQ";
-import { useMessages } from "./useMessagesRQ";
+import { useMessagesRQ } from "./useMessagesRQ";
 import { pushTempMessage, updateTempMessageById } from "@/features/messaging/temp-messages-store";
 import { FrontendMessage } from "@/types/socket-events";
 import {
@@ -82,10 +82,7 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
-    invalidateMessages,
-    refetchMessages,
-    optimisticInsert,
-  } = useMessages(activeConversationId || undefined);
+  } = useMessagesRQ(activeConversationId || undefined);
 
   // Mutations
   const sendMessageMutation = useSendMessageMutation();
@@ -106,10 +103,10 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
     const ids = Array.from(
       new Set(
         messages
-          .filter((msg) => !msg.isRead && msg.sender?.id !== currentUser?.id)
-          .map((m) => m.id)
+          .filter((msg: any) => !msg.isRead && msg.sender?.id !== currentUser?.id)
+          .map((m: any) => m.id)
       )
-    );
+    ) as string[];
     const key = ids.length ? ids.slice().sort().join("|") : "";
     return { unreadIds: ids, idsKey: key };
   }, [activeConversationId, messages, currentUser?.id]);
@@ -188,9 +185,7 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
         // Mark as sending to show clock icon in UI
         (tempMessage as any)._sending = true;
         (tempMessage as any)._failed = false;
-        try {
-          await optimisticInsert(tempMessage);
-        } catch {}
+        // optimisticInsert removed - temp messages are handled by temp-messages-store
 
         // Start a 10s watchdog for temp conversations as well
         const localTempId = tempId;
@@ -250,7 +245,6 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
     [
       activeConversationId,
       sendMessageMutation,
-      optimisticInsert,
     ]
   );
 
@@ -290,10 +284,8 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
 
   const refreshData = useCallback(() => {
     refetchConversations();
-    if (activeConversationId) {
-      refetchMessages();
-    }
-  }, [refetchConversations, refetchMessages, activeConversationId]);
+    // Messages are automatically refetched on conversation change
+  }, [refetchConversations, activeConversationId]);
 
   // Return simplified messaging interface
   return {
@@ -347,16 +339,14 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
 
     // Advanced
     invalidateConversations,
-    invalidateMessages,
     refetchConversations,
-    refetchMessages,
   };
 }
 
 // Convenience hook for conversation-specific operations
 export function useConversationRQ(conversationId: string) {
   const { messages, isLoading, hasNextPage, fetchNextPage } =
-    useMessages(conversationId);
+    useMessagesRQ(conversationId);
   const markAsReadMutation = useMarkAsReadMutation(conversationId);
   const typingUsers = useTypingUsers(conversationId);
 

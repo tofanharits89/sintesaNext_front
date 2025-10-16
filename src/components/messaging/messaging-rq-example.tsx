@@ -216,7 +216,7 @@ export const MessagingRQExample: React.FC = () => {
                               Load More Messages
                             </Button>
                           )}
-                          {messages?.map((message) => (
+                          {messages?.map((message: any) => (
                             <div
                               key={message.id}
                               className={`flex ${

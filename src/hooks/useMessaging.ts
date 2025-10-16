@@ -78,26 +78,35 @@ export function useMessaging() {
     }
   }, []);
   
-  // Setup event listeners
+  // Setup event listeners with proper cleanup to prevent memory leaks
   useEffect(() => {
     if (!socket?.connected) return;
     
-    // Connection events
-    socket.on('connect', handleConnectionChange);
-    socket.on('disconnect', handleConnectionChange);
-    
-    // Messaging events
-    socket.on(SOCKET_EVENTS.MESSAGE_NEW, handleNewMessage);
-    socket.on(SOCKET_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
-    socket.on(SOCKET_EVENTS.TYPING_USER, handleTypingUser);
-    
-    return () => {
-      socket.off('connect', handleConnectionChange);
-      socket.off('disconnect', handleConnectionChange);
-      socket.off(SOCKET_EVENTS.MESSAGE_NEW, handleNewMessage);
-      socket.off(SOCKET_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
-      socket.off(SOCKET_EVENTS.TYPING_USER, handleTypingUser);
-    };
+    try {
+      // Connection events
+      socket.on('connect', handleConnectionChange);
+      socket.on('disconnect', handleConnectionChange);
+      
+      // Messaging events
+      socket.on(SOCKET_EVENTS.MESSAGE_NEW, handleNewMessage);
+      socket.on(SOCKET_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
+      socket.on(SOCKET_EVENTS.TYPING_USER, handleTypingUser);
+      
+      return () => {
+        try {
+          socket.off('connect', handleConnectionChange);
+          socket.off('disconnect', handleConnectionChange);
+          socket.off(SOCKET_EVENTS.MESSAGE_NEW, handleNewMessage);
+          socket.off(SOCKET_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
+          socket.off(SOCKET_EVENTS.TYPING_USER, handleTypingUser);
+        } catch (e) {
+          // Silently handle cleanup errors (socket may be destroyed)
+        }
+      };
+    } catch (e) {
+      console.warn('[useMessaging] Error setting up socket listeners:', e);
+      return undefined;
+    }
   }, [socket, handleConnectionChange, handleNewMessage, handleTypingUser]);
   
   // Join conversation rooms automatically

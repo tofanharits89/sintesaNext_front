@@ -14,7 +14,7 @@ import { Smile, Paperclip, Image, FileText, X, Send } from "lucide-react";
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 
 interface ChatWindowComposerProps {
-  inputRef: React.RefObject<HTMLInputElement>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
   messageContent: string;
   isSending: boolean;
   attachedFiles: File[];
@@ -52,7 +52,7 @@ export function ChatWindowComposer({
         onTypingStop();
       }
     },
-    [onMessageChange, onTypingStart, onTypingStop, isTyping]
+    [onMessageChange, onTypingStart, onTypingStop, isTyping],
   );
 
   const handleKeyDown = useCallback(
@@ -62,7 +62,7 @@ export function ChatWindowComposer({
         void onSend();
       }
     },
-    [onSend]
+    [onSend],
   );
 
   const triggerFileInput = useCallback(() => {
@@ -80,14 +80,14 @@ export function ChatWindowComposer({
         event.target.value = "";
       }
     },
-    [attachedFiles, onAttachmentsChange]
+    [attachedFiles, onAttachmentsChange],
   );
 
   const removeAttachedFile = useCallback(
     (index: number) => {
       onAttachmentsChange(attachedFiles.filter((_, i) => i !== index));
     },
-    [attachedFiles, onAttachmentsChange]
+    [attachedFiles, onAttachmentsChange],
   );
 
   const handleEmojiClick = useCallback(
@@ -96,7 +96,7 @@ export function ChatWindowComposer({
       setShowEmojiPicker(false);
       inputRef.current?.focus();
     },
-    [messageContent, onMessageChange, inputRef]
+    [messageContent, onMessageChange, inputRef],
   );
 
   return (
@@ -128,7 +128,12 @@ export function ChatWindowComposer({
       )}
 
       <div className="flex gap-2">
-        <Button variant="ghost" size="icon" onClick={triggerFileInput} className="flex-shrink-0">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={triggerFileInput}
+          className="flex-shrink-0"
+        >
           <Paperclip className="h-4 w-4" />
         </Button>
 
@@ -157,13 +162,19 @@ export function ChatWindowComposer({
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" side="top" align="end">
-            <EmojiPicker onEmojiClick={handleEmojiClick} width={300} height={400} />
+            <EmojiPicker
+              onEmojiClick={handleEmojiClick}
+              width={300}
+              height={400}
+            />
           </PopoverContent>
         </Popover>
 
         <Button
           onClick={() => void onSend()}
-          disabled={(!messageContent.trim() && attachedFiles.length === 0) || isSending}
+          disabled={
+            (!messageContent.trim() && attachedFiles.length === 0) || isSending
+          }
           size="icon"
           className="flex-shrink-0"
           aria-busy={isSending}

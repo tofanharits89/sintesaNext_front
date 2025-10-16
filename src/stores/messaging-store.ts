@@ -39,6 +39,12 @@ interface MessagingClientState {
     startedAt: number;
   }>>;
   
+  // NEW: Sync/Queue state (Phase 3)
+  syncStatus: 'synced' | 'syncing' | 'failed' | 'offline';
+  queueDepth: number; // Number of pending messages
+  lastSyncAt: number | null;
+  failedMessageIds: Set<string>;
+  
   // Actions
   setActiveConversation: (id: string | null) => void;
   setMessageContent: (content: string) => void;
@@ -48,6 +54,12 @@ interface MessagingClientState {
   setConnectionStatus: (connected: boolean) => void;
   addTypingUser: (conversationId: string, user: any) => void;
   removeTypingUser: (conversationId: string, userId: string) => void;
+  setSyncStatus: (status: 'synced' | 'syncing' | 'failed' | 'offline') => void;
+  setQueueDepth: (depth: number) => void;
+  setLastSyncAt: (timestamp: number | null) => void;
+  addFailedMessage: (messageId: string) => void;
+  removeFailedMessage: (messageId: string) => void;
+  clearFailedMessages: () => void;
   reset: () => void;
 }
 
@@ -63,6 +75,10 @@ const initialState = {
   messagePreviewEnabled: true,
   isConnected: false,
   typingUsers: {},
+  syncStatus: 'synced' as const,
+  queueDepth: 0,
+  lastSyncAt: null,
+  failedMessageIds: new Set<string>(),
 };
 
 export const useMessagingStore = create<MessagingClientState>()(
@@ -106,6 +122,27 @@ export const useMessagingStore = create<MessagingClientState>()(
           }
         })),
       
+      setSyncStatus: (status) => set({ syncStatus: status }),
+      
+      setQueueDepth: (depth) => set({ queueDepth: depth }),
+      
+      setLastSyncAt: (timestamp) => set({ lastSyncAt: timestamp }),
+      
+      addFailedMessage: (messageId) => 
+        set((state) => ({
+          failedMessageIds: new Set([...state.failedMessageIds, messageId])
+        })),
+      
+      removeFailedMessage: (messageId) => 
+        set((state) => {
+          const updated = new Set(state.failedMessageIds);
+          updated.delete(messageId);
+          return { failedMessageIds: updated };
+        }),
+      
+      clearFailedMessages: () => 
+        set({ failedMessageIds: new Set<string>() }),
+      
       reset: () => set(initialState),
     }),
     { name: "messaging-store" }
@@ -139,6 +176,37 @@ export const useMessageActions = () => {
     setMessageContent,
     setTyping,
     clearMessageInput,
+  };
+};
+
+// NEW: Selectors for sync state (Phase 3)
+export const useSyncStatus = () =>
+  useMessagingStore((state) => state.syncStatus);
+
+export const useQueueDepth = () =>
+  useMessagingStore((state) => state.queueDepth);
+
+export const useLastSyncAt = () =>
+  useMessagingStore((state) => state.lastSyncAt);
+
+export const useFailedMessages = () =>
+  useMessagingStore((state) => state.failedMessageIds);
+
+export const useSyncActions = () => {
+  const setSyncStatus = useMessagingStore((state) => state.setSyncStatus);
+  const setQueueDepth = useMessagingStore((state) => state.setQueueDepth);
+  const setLastSyncAt = useMessagingStore((state) => state.setLastSyncAt);
+  const addFailedMessage = useMessagingStore((state) => state.addFailedMessage);
+  const removeFailedMessage = useMessagingStore((state) => state.removeFailedMessage);
+  const clearFailedMessages = useMessagingStore((state) => state.clearFailedMessages);
+
+  return {
+    setSyncStatus,
+    setQueueDepth,
+    setLastSyncAt,
+    addFailedMessage,
+    removeFailedMessage,
+    clearFailedMessages,
   };
 };
 

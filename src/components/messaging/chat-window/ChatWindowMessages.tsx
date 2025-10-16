@@ -18,7 +18,7 @@ type UserLike = {
 
 interface ChatWindowMessagesProps {
   conversationId: string;
-  scrollAreaRef: React.RefObject<HTMLDivElement>;
+  scrollAreaRef: React.RefObject<HTMLDivElement | null>;
   messages: Array<FrontendMessage & Record<string, any>>;
   currentUser?: UserLike | null;
   isLoading: boolean;
@@ -29,7 +29,10 @@ interface ChatWindowMessagesProps {
   isAnyoneTyping: boolean;
   typingText: string;
   conversationData?: Conversation;
-  otherParticipant?: Conversation["otherParticipant"] | Record<string, any> | null;
+  otherParticipant?:
+    | Conversation["otherParticipant"]
+    | Record<string, any>
+    | null;
   onRetryMessage: (message: FrontendMessage & Record<string, any>) => void;
   formatTimestamp: (timestamp: string) => string;
 }
@@ -62,7 +65,7 @@ export function ChatWindowMessages({
 
   useEffect(() => {
     const viewport = scrollAreaRef.current?.querySelector(
-      "[data-radix-scroll-area-viewport]"
+      "[data-radix-scroll-area-viewport]",
     ) as HTMLElement | null;
     if (!viewport) return;
 
@@ -82,14 +85,15 @@ export function ChatWindowMessages({
 
   const loadOlderMessages = useCallback(async () => {
     const viewport = scrollAreaRef.current?.querySelector(
-      "[data-radix-scroll-area-viewport]"
+      "[data-radix-scroll-area-viewport]",
     ) as HTMLElement | null;
     const previousHeight = viewport?.scrollHeight ?? 0;
     await Promise.resolve(onLoadMore());
     requestAnimationFrame(() => {
       const newHeight = viewport?.scrollHeight ?? 0;
       if (viewport) {
-        viewport.scrollTop = newHeight - previousHeight + (viewport.scrollTop || 0);
+        viewport.scrollTop =
+          newHeight - previousHeight + (viewport.scrollTop || 0);
       }
     });
   }, [scrollAreaRef, onLoadMore]);
@@ -97,7 +101,7 @@ export function ChatWindowMessages({
   useEffect(() => {
     if (!canLoadMore || !autoLoadEnabled) return;
     const viewport = scrollAreaRef.current?.querySelector(
-      "[data-radix-scroll-area-viewport]"
+      "[data-radix-scroll-area-viewport]",
     ) as HTMLElement | null;
     const target = topSentinelRef.current;
     if (!viewport || !target) return;
@@ -126,7 +130,7 @@ export function ChatWindowMessages({
             });
         }
       },
-      { root: viewport, rootMargin: "80px", threshold: 0 }
+      { root: viewport, rootMargin: "80px", threshold: 0 },
     );
 
     observer.observe(target);
@@ -155,7 +159,7 @@ export function ChatWindowMessages({
                 }}
                 className={cn(
                   "flex gap-3 max-w-[80%]",
-                  isOwnMessage ? "ml-auto flex-row-reverse" : "mr-auto"
+                  isOwnMessage ? "ml-auto flex-row-reverse" : "mr-auto",
                 )}
               >
                 <Avatar className="h-8 w-8 flex-shrink-0">
@@ -164,7 +168,7 @@ export function ChatWindowMessages({
                       "text-sm",
                       isOwnMessage
                         ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
+                        : "bg-muted",
                     )}
                   >
                     {message.sender?.name?.charAt(0)?.toUpperCase() ||
@@ -176,13 +180,13 @@ export function ChatWindowMessages({
                 <div
                   className={cn(
                     "flex flex-col",
-                    isOwnMessage ? "items-end" : "items-start"
+                    isOwnMessage ? "items-end" : "items-start",
                   )}
                 >
                   <div
                     className={cn(
                       "flex items-center gap-2 mb-1",
-                      isOwnMessage ? "flex-row-reverse" : "flex-row"
+                      isOwnMessage ? "flex-row-reverse" : "flex-row",
                     )}
                   >
                     <span className="text-xs font-medium">
@@ -206,7 +210,7 @@ export function ChatWindowMessages({
                       "rounded-lg px-3 py-2 max-w-full break-words",
                       isOwnMessage
                         ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
+                        : "bg-muted",
                     )}
                   >
                     <p className="text-sm whitespace-pre-wrap">
@@ -230,7 +234,7 @@ export function ChatWindowMessages({
                       <span
                         className={cn(
                           "text-xs transition-colors duration-200",
-                          message.isRead ? "text-green-600" : "text-orange-600"
+                          message.isRead ? "text-green-600" : "text-orange-600",
                         )}
                       >
                         {message.isRead ? "Read" : "Unread"}
@@ -255,7 +259,8 @@ export function ChatWindowMessages({
                     window.localStorage?.getItem("MSG_DEBUG") === "1" &&
                     isOwnMessage && (
                       <span className="block text-[10px] text-muted-foreground/70">
-                        dbg {message.id?.slice(0, 8)} d:{String(message.isDelivered)} r:
+                        dbg {message.id?.slice(0, 8)} d:
+                        {String(message.isDelivered)} r:
                         {String(message.isRead)}
                       </span>
                     )}
@@ -272,7 +277,9 @@ export function ChatWindowMessages({
                 </AvatarFallback>
               </Avatar>
               <div className="bg-muted rounded-lg px-3 py-2">
-                <div className="text-sm text-muted-foreground">{typingText}</div>
+                <div className="text-sm text-muted-foreground">
+                  {typingText}
+                </div>
               </div>
             </div>
           )}
@@ -288,21 +295,21 @@ export function ChatWindowMessages({
               key={index}
               className={cn(
                 "flex gap-3",
-                index % 2 === 0 ? "justify-start" : "justify-end"
+                index % 2 === 0 ? "justify-start" : "justify-end",
               )}
             >
               {index % 2 === 0 && <Skeleton className="h-8 w-8 rounded-full" />}
               <div
                 className={cn(
                   "space-y-1",
-                  index % 2 === 0 ? "items-start" : "items-end"
+                  index % 2 === 0 ? "items-start" : "items-end",
                 )}
               >
                 <Skeleton className="h-4 w-24" />
                 <Skeleton
                   className={cn(
                     "h-10 rounded-lg",
-                    index % 2 === 0 ? "w-48" : "w-32"
+                    index % 2 === 0 ? "w-48" : "w-32",
                   )}
                 />
               </div>
@@ -321,16 +328,14 @@ export function ChatWindowMessages({
           <div
             className={cn(
               "flex gap-3 max-w-[80%]",
-              isOwn ? "ml-auto flex-row-reverse" : "mr-auto"
+              isOwn ? "ml-auto flex-row-reverse" : "mr-auto",
             )}
           >
             <Avatar className="h-8 w-8 flex-shrink-0">
               <AvatarFallback
                 className={cn(
                   "text-sm",
-                  isOwn
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
+                  isOwn ? "bg-primary text-primary-foreground" : "bg-muted",
                 )}
               >
                 {fallbackMessage?.sender?.name?.charAt(0)?.toUpperCase() ||
@@ -341,13 +346,13 @@ export function ChatWindowMessages({
             <div
               className={cn(
                 "flex flex-col",
-                isOwn ? "items-end" : "items-start"
+                isOwn ? "items-end" : "items-start",
               )}
             >
               <div
                 className={cn(
                   "flex items-center gap-2 mb-1",
-                  isOwn ? "flex-row-reverse" : "flex-row"
+                  isOwn ? "flex-row-reverse" : "flex-row",
                 )}
               >
                 <span className="text-xs font-medium">
@@ -363,20 +368,18 @@ export function ChatWindowMessages({
                 <span
                   className="text-xs text-muted-foreground"
                   title={formatTimestamp(
-                    fallbackMessage?.timestamp || fallbackMessage?.created_at
+                    fallbackMessage?.timestamp || fallbackMessage?.created_at,
                   )}
                 >
                   {formatTimestamp(
-                    fallbackMessage?.timestamp || fallbackMessage?.created_at
+                    fallbackMessage?.timestamp || fallbackMessage?.created_at,
                   )}
                 </span>
               </div>
               <div
                 className={cn(
                   "rounded-lg px-3 py-2 max-w-full break-words",
-                  isOwn
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
+                  isOwn ? "bg-primary text-primary-foreground" : "bg-muted",
                 )}
               >
                 <p className="text-sm whitespace-pre-wrap">
@@ -394,7 +397,8 @@ export function ChatWindowMessages({
         <div className="text-muted-foreground">
           <h4 className="text-lg font-medium mb-2">Start the conversation</h4>
           <p className="text-sm">
-            Send a message to begin chatting with {otherParticipant?.name || "this user"}
+            Send a message to begin chatting with{" "}
+            {otherParticipant?.name || "this user"}
           </p>
         </div>
       </div>

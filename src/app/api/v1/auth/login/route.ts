@@ -10,8 +10,13 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // Forward to backend
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/login`, {
+    // Forward to backend (use server-side BACKEND_URL)
+    const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL;
+    if (!backendUrl) {
+      throw new Error("Backend URL not configured");
+    }
+    
+    const response = await fetch(`${backendUrl}/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

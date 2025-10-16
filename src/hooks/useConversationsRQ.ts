@@ -14,11 +14,14 @@ import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 
 // Query keys for React Query
 export const conversationKeys = {
-  all: (userId?: string | null) => ["conversations", userId ?? "anonymous"] as const,
-  lists: (userId?: string | null) => [...conversationKeys.all(userId), "list"] as const,
+  all: (userId?: string | null) =>
+    ["conversations", userId ?? "anonymous"] as const,
+  lists: (userId?: string | null) =>
+    [...conversationKeys.all(userId), "list"] as const,
   list: (userId?: string | null, filters: Record<string, any> = {}) =>
     [...conversationKeys.lists(userId), { filters }] as const,
-  details: (userId?: string | null) => [...conversationKeys.all(userId), "detail"] as const,
+  details: (userId?: string | null) =>
+    [...conversationKeys.all(userId), "detail"] as const,
   detail: (userId?: string | null, id: string = "") =>
     [...conversationKeys.details(userId), id] as const,
 };
@@ -33,26 +36,26 @@ type FoundLoc = { pageIdx: number; idx: number };
 
 const fetchConversationsPage = async (
   cursor?: string | null,
-  limit: number = 20
+  limit: number = 20,
 ): Promise<ConversationsPage> => {
-const url = new URL(
+  const url = new URL(
     apiPath("/messaging/conversations"),
-    window.location.origin
+    window.location.origin,
   );
   if (cursor) url.searchParams.set("cursor", String(cursor));
   if (limit) url.searchParams.set("limit", String(limit));
 
   // Add timestamp to bust cache
   url.searchParams.set("_t", Date.now().toString());
-  
+
   const resp = await fetch(url.toString(), {
     credentials: "include",
     cache: "no-store",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
     },
   });
-  
+
   if (!resp.ok) throw new Error(`Failed to fetch: ${resp.status}`);
   const json: any = await resp.json().catch(() => ({}));
 
@@ -94,21 +97,21 @@ export function useConversations(options?: { enabled?: boolean }) {
 
   // Flatten pages and ensure newest conversations appear first
   const rawConversations: Conversation[] = (data?.pages || []).flatMap(
-    (p) => p.conversations || []
+    (p) => p.conversations || [],
   );
 
   // Normalize conversations to ensure lastMessage.timestamp exists and updated_at is sane
   const normalizeConversation = (c: Conversation): Conversation => {
     const conv: any = { ...(c as any) };
-    
+
     // Normalizing conversation data
-    
+
     const lm: any = conv.lastMessage || undefined;
     if (lm) {
       const originalTimestamp = lm.timestamp;
       const originalCreatedAt = lm.created_at;
       const originalSentAt = lm.sentAt;
-      
+
       const lmTs =
         lm.timestamp ||
         lm.created_at ||
@@ -116,7 +119,7 @@ export function useConversations(options?: { enabled?: boolean }) {
         lm.sent_at ||
         lm.sentAt;
       if (!lm.timestamp && lmTs) conv.lastMessage = { ...lm, timestamp: lmTs };
-      
+
       // Last message timestamp normalized
     }
     const convTs =
@@ -130,9 +133,9 @@ export function useConversations(options?: { enabled?: boolean }) {
       conv.created_at ||
       conv.createdAt;
     if (!conv.updated_at && convTs) conv.updated_at = convTs;
-    
+
     // Conversation normalization completed
-    
+
     return conv as Conversation;
   };
 
@@ -140,7 +143,12 @@ export function useConversations(options?: { enabled?: boolean }) {
   const normalizedConversations: Conversation[] = rawConversations
     .filter((c) => {
       const id = String((c as any)?.id || "");
-      return !(id.startsWith("temp-") || id.startsWith("temp_conversation") || id.startsWith("tempconv") || id.startsWith("temp-conv-"));
+      return !(
+        id.startsWith("temp-") ||
+        id.startsWith("temp_conversation") ||
+        id.startsWith("tempconv") ||
+        id.startsWith("temp-conv-")
+      );
     })
     .map(normalizeConversation);
 
@@ -168,40 +176,62 @@ export function useConversations(options?: { enabled?: boolean }) {
         }
       }
     }
-    
+
     // Fallback to current time for conversations without valid timestamps
     return Date.now();
   };
 
+  // De-duplicate by id across pages (keep the most recent occurrence)
+  const uniqueConversations: Conversation[] = (() => {
+    const map = new Map<string, Conversation>();
+    for (const c of normalizedConversations) {
+      const id = String((c as any)?.id || "");
+      if (!id) continue;
+      map.set(id, c); // last occurrence wins
+    }
+    return Array.from(map.values());
+  })();
+
   // Sort conversations by last activity (most recent first) with stable sorting
-  const conversations = [...normalizedConversations].sort((a, b) => {
+  const conversations = [...uniqueConversations].sort((a, b) => {
     const aTime = getLastActivity(a);
     const bTime = getLastActivity(b);
-    
+
     // Primary sort: by timestamp (descending)
     if (aTime !== bTime) {
       return bTime - aTime;
     }
-    
+
     // Secondary sort: by conversation ID for stability
-    return (a.id || '').localeCompare(b.id || '');
+    return (a.id || "").localeCompare(b.id || "");
   });
 
   // On mount and whenever the cache changes, purge any temp conversations from the cache itself
   useEffect(() => {
     const removeTemps = (id: any) => {
       const s = String(id || "");
-      return s.startsWith("temp-") || s.startsWith("temp_conversation") || s.startsWith("tempconv") || s.startsWith("temp-conv-");
+      return (
+        s.startsWith("temp-") ||
+        s.startsWith("temp_conversation") ||
+        s.startsWith("tempconv") ||
+        s.startsWith("temp-conv-")
+      );
     };
     updateConversationsCache((prev) => {
-      if (!prev) return { pages: [{ conversations: [], nextCursor: null }], pageParams: [null] };
+      if (!prev)
+        return {
+          pages: [{ conversations: [], nextCursor: null }],
+          pageParams: [null],
+        };
       const pages = prev.pages.map((pg) => ({
         ...pg,
-        conversations: (pg.conversations || []).filter((c: any) => !removeTemps(c?.id)),
+        conversations: (pg.conversations || []).filter(
+          (c: any) => !removeTemps(c?.id),
+        ),
       }));
       return { pages, pageParams: prev.pageParams };
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data?.pages?.length]);
 
   // Helper to update conversations cache for paginated data
@@ -210,12 +240,12 @@ export function useConversations(options?: { enabled?: boolean }) {
       updater: (
         prev:
           | { pages: ConversationsPage[]; pageParams: (string | null)[] }
-          | undefined
-      ) => { pages: ConversationsPage[]; pageParams: (string | null)[] }
+          | undefined,
+      ) => { pages: ConversationsPage[]; pageParams: (string | null)[] },
     ) => {
       queryClient.setQueryData(listKey, updater as any);
     },
-    [queryClient, listKey]
+    [queryClient, listKey],
   );
 
   // Helpers: optimistic add and reconcile for new conversations
@@ -272,7 +302,7 @@ export function useConversations(options?: { enabled?: boolean }) {
         return { pages: nextPages, pageParams: curr.pageParams };
       });
     },
-    [updateConversationsCache]
+    [updateConversationsCache],
   );
 
   const reconcileConversationId = useCallback(
@@ -303,7 +333,7 @@ export function useConversations(options?: { enabled?: boolean }) {
 
         if (realExists) {
           pages[pageIdx]!.conversations = pages[pageIdx]!.conversations.filter(
-            (c) => c.id !== tempId
+            (c) => c.id !== tempId,
           );
         } else {
           pages[pageIdx]!.conversations[idx] = {
@@ -315,7 +345,7 @@ export function useConversations(options?: { enabled?: boolean }) {
         return { pages, pageParams: prev.pageParams };
       });
     },
-    [updateConversationsCache]
+    [updateConversationsCache],
   );
 
   // Bridge socket events -> in-place cache updates for snappy UI
@@ -327,16 +357,21 @@ export function useConversations(options?: { enabled?: boolean }) {
       try {
         console.debug(
           "[ConversationsRQ] MESSAGE_NEW/RECEIVED incoming payload",
-          m
+          m,
         );
-        console.debug(
-          "[ConversationsRQ] Conversation ID analysis",
-          {
-            originalPayload: m,
-            extractedConversationId: (m as any)?.conversationId || (m as any)?.message?.conversation_id || (m as any)?.message?.conversationId,
-            safeConversationId: String((m as any)?.conversationId || (m as any)?.message?.conversation_id || (m as any)?.message?.conversationId || "")
-          }
-        );
+        console.debug("[ConversationsRQ] Conversation ID analysis", {
+          originalPayload: m,
+          extractedConversationId:
+            (m as any)?.conversationId ||
+            (m as any)?.message?.conversation_id ||
+            (m as any)?.message?.conversationId,
+          safeConversationId: String(
+            (m as any)?.conversationId ||
+              (m as any)?.message?.conversation_id ||
+              (m as any)?.message?.conversationId ||
+              "",
+          ),
+        });
       } catch {}
       updateConversationsCache((prev) => {
         if (!prev)
@@ -364,7 +399,8 @@ export function useConversations(options?: { enabled?: boolean }) {
           msgLike.message?.createdAt ||
           msgLike.message?.sent_at ||
           msgLike.message?.sentAt;
-        const tempId = (m as any)?.tempId || msgLike?.tempId || msgLike?.temp_id;
+        const tempId =
+          (m as any)?.tempId || msgLike?.tempId || msgLike?.temp_id;
 
         // Locate conversation across pages
         const pages = prev.pages.map((pg) => ({
@@ -376,7 +412,7 @@ export function useConversations(options?: { enabled?: boolean }) {
           console.debug("[ConversationsRQ] No valid conversation ID, skipping");
           return prev; // cannot process message without a valid conversation id
         }
-        
+
         // Debug: Log all conversation IDs to compare
         const allConvIds: string[] = [];
         pages.forEach((pg, pIdx) => {
@@ -384,20 +420,30 @@ export function useConversations(options?: { enabled?: boolean }) {
             allConvIds.push(`Page ${pIdx}[${cIdx}]: ${conv.id}`);
           });
         });
-        console.debug("[ConversationsRQ] Looking for conversation ID:", safeConversationId, "Available IDs:", allConvIds);
-        
+        console.debug(
+          "[ConversationsRQ] Looking for conversation ID:",
+          safeConversationId,
+          "Available IDs:",
+          allConvIds,
+        );
+
         pages.forEach((pg, pIdx) => {
           const idx = pg.conversations.findIndex(
-            (c) => c.id === safeConversationId
+            (c) => c.id === safeConversationId,
           );
           if (idx !== -1) found = { pageIdx: pIdx, idx };
         });
-        
+
         if (found) {
           const { pageIdx, idx } = found;
-          console.debug("[ConversationsRQ] Conversation search result:", `Found at page ${pageIdx}, index ${idx}`);
+          console.debug(
+            "[ConversationsRQ] Conversation search result:",
+            `Found at page ${pageIdx}, index ${idx}`,
+          );
         } else {
-          console.debug("[ConversationsRQ] Conversation search result: Not found");
+          console.debug(
+            "[ConversationsRQ] Conversation search result: Not found",
+          );
         }
         if (!found) {
           // Attempt reconcile: if we have a tempId entry, rename it to real conversationId
@@ -420,7 +466,8 @@ export function useConversations(options?: { enabled?: boolean }) {
             msgLike.createdAt ||
             new Date().toISOString();
 
-          const fromSelf = !!currentUser?.id && msgLike?.sender?.id === currentUser?.id;
+          const fromSelf =
+            !!currentUser?.id && msgLike?.sender?.id === currentUser?.id;
 
           if (tempLoc) {
             const { pageIdx: tPage, idx: tIdx } = tempLoc as FoundLoc;
@@ -440,7 +487,10 @@ export function useConversations(options?: { enabled?: boolean }) {
 
             // remove temp and place updated at top
             pages2[tPage]!.conversations.splice(tIdx, 1);
-            const firstPage = pages2[0] || { conversations: [], nextCursor: null };
+            const firstPage = pages2[0] || {
+              conversations: [],
+              nextCursor: null,
+            };
             firstPage.conversations.unshift(conv);
             pages2[0] = firstPage;
             return { pages: pages2, pageParams: prev.pageParams };
@@ -452,17 +502,22 @@ export function useConversations(options?: { enabled?: boolean }) {
             // Check if this is updating an existing real conversation that we already have
             let existingFound: FoundLoc | null = null;
             pages2.forEach((pg, pIdx) => {
-              const idx = pg.conversations.findIndex((c) => c.id === safeConversationId);
+              const idx = pg.conversations.findIndex(
+                (c) => c.id === safeConversationId,
+              );
               if (idx !== -1) existingFound = { pageIdx: pIdx, idx };
             });
-            
+
             if (!existingFound) {
               // NEW conversation created by user - create it in the list
               // Don't wait for mutation, add it immediately so chat window shows it
-              const first = pages2[0] || { conversations: [], nextCursor: null };
+              const first = pages2[0] || {
+                conversations: [],
+                nextCursor: null,
+              };
               const minimalConv = {
                 id: safeConversationId,
-                otherParticipant: msgLike.sender || null, // Recipient info
+                otherParticipant: msgLike.recipient || null, // Use recipient, not sender (for conversations created by current user)
                 lastMessage: {
                   id: msgLike.id,
                   content: msgLike.content || "",
@@ -480,7 +535,7 @@ export function useConversations(options?: { enabled?: boolean }) {
               pages2[0] = first;
               return { pages: pages2, pageParams: prev.pageParams };
             }
-            
+
             // Update the existing conversation with the new message data
             const { pageIdx, idx } = existingFound;
             const conv = { ...pages2[pageIdx]!.conversations[idx] } as any;
@@ -495,25 +550,31 @@ export function useConversations(options?: { enabled?: boolean }) {
               is_read: true,
             };
             conv.updated_at = effectiveTs;
-            
+
             // Move to top of first page
             pages2[pageIdx]!.conversations.splice(idx, 1);
-            const firstPage = pages2[0] || { conversations: [], nextCursor: null };
+            const firstPage = pages2[0] || {
+              conversations: [],
+              nextCursor: null,
+            };
             firstPage.conversations.unshift(conv);
             pages2[0] = firstPage;
-            
+
             // Re-sort the first page
             firstPage.conversations.sort((a, b) => {
               const aTime = new Date((a as any).updated_at || 0).getTime();
               const bTime = new Date((b as any).updated_at || 0).getTime();
               return bTime - aTime;
             });
-            
+
             return { pages: pages2, pageParams: prev.pageParams };
           }
 
           // Otherwise (incoming from other user), create minimal entry so UI updates
-          const firstPage = pages2[0] || { conversations: [], nextCursor: null };
+          const firstPage = pages2[0] || {
+            conversations: [],
+            nextCursor: null,
+          };
           const minimalConv: any = {
             id: safeConversationId,
             updated_at: effectiveTs,
@@ -567,14 +628,16 @@ export function useConversations(options?: { enabled?: boolean }) {
           isRead: !!fromSelf,
           is_read: !!fromSelf,
         };
-        
+
         // Update updated_at for proper ordering
         conv.updated_at = effectiveTs || conv.updated_at;
 
         // Increase unread_count only if the message is not from current user
         const currentUnread =
           typeof conv.unread_count === "number" ? conv.unread_count : 0;
-        conv.unread_count = fromSelf ? currentUnread : Math.max(0, currentUnread + 1);
+        conv.unread_count = fromSelf
+          ? currentUnread
+          : Math.max(0, currentUnread + 1);
 
         // Move to top of first page (most recent first)
         const firstPage = pages[0] || { conversations: [], nextCursor: null };
@@ -596,7 +659,7 @@ export function useConversations(options?: { enabled?: boolean }) {
               unread_count: conv.unread_count,
               lastMessageId: (conv.lastMessage as any)?.id,
               pagesCount: pages.length,
-            }
+            },
           );
         } catch {}
 
@@ -609,12 +672,12 @@ export function useConversations(options?: { enabled?: boolean }) {
         conversationId: string;
         messageIds: string[];
       },
-      eventType: "read" | "opened" = "read"
+      eventType: "read" | "opened" = "read",
     ) => {
       try {
         console.debug(
           "[ConversationsRQ] MESSAGE_READ/OPENED incoming payload",
-          { eventType, payload }
+          { eventType, payload },
         );
       } catch {}
 
@@ -629,7 +692,7 @@ export function useConversations(options?: { enabled?: boolean }) {
               incomingUserId,
               me,
               conversationId: (payload as any)?.conversationId,
-            }
+            },
           );
         } catch {}
         return; // Do not decrement our unread due to other user's read/opened
@@ -647,7 +710,7 @@ export function useConversations(options?: { enabled?: boolean }) {
         let found: FoundLoc | null = null;
         pages.forEach((pg, pIdx) => {
           const idx = pg.conversations.findIndex(
-            (c) => c.id === payload.conversationId
+            (c) => c.id === payload.conversationId,
           );
           if (idx !== -1) found = { pageIdx: pIdx, idx };
         });
@@ -655,7 +718,7 @@ export function useConversations(options?: { enabled?: boolean }) {
           try {
             console.debug(
               "[ConversationsRQ] Read/opened for unknown conversation, skipping",
-              payload
+              payload,
             );
           } catch {}
           return prev;
@@ -672,7 +735,7 @@ export function useConversations(options?: { enabled?: boolean }) {
             typeof conv.unread_count === "number" ? conv.unread_count : 0;
           conv.unread_count = Math.max(
             0,
-            currentUnread - (payload.messageIds?.length || 0)
+            currentUnread - (payload.messageIds?.length || 0),
           );
         }
 
@@ -699,7 +762,7 @@ export function useConversations(options?: { enabled?: boolean }) {
               conversationId: payload.conversationId,
               decBy: payload.messageIds.length,
               unread_count: conv.unread_count,
-            }
+            },
           );
         } catch {}
         return { pages, pageParams: prev.pageParams };
@@ -736,7 +799,9 @@ export function useConversations(options?: { enabled?: boolean }) {
     isFetchingNextPage: !!isFetchingNextPage,
     // Additional React Query specific methods
     invalidateConversations: () =>
-      queryClient.invalidateQueries({ queryKey: conversationKeys.all(authUser?.id) }),
+      queryClient.invalidateQueries({
+        queryKey: conversationKeys.all(authUser?.id),
+      }),
     refetchConversations: refetch,
   } as const;
 }
