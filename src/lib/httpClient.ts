@@ -132,6 +132,7 @@ function processQueue(error: any | null) {
 
 // Simplified cookie management for HTTP-only only approach
 import { clearNonHttpOnlyCookies } from "./cookieManager";
+import { clearAuthCacheOnFail } from "./authCacheInvalidator";
 
 // Expose globally for debugging and coordination
 if (typeof window !== "undefined") {
@@ -217,6 +218,8 @@ async function refreshTokens(): Promise<void> {
     console.log("[Auth] ❌ Refresh error caught:", err);
     clearNonHttpOnlyCookies();
     csrfManager.clearCache();
+    // CRITICAL: Also clear React Query cache to prevent stale 401 errors
+    clearAuthCacheOnFail();
     lastRefreshFailureAt = Date.now();
     processQueue(err);
     throw err;
@@ -409,6 +412,9 @@ http.interceptors.response.use(
       console.log(
         "[Auth] Received 401 after retry attempt - session invalidated, logging out"
       );
+      // CRITICAL: Clear React Query cache before logout to prevent stale error states
+      // This prevents old 401 errors from blocking new API calls after re-login
+      clearAuthCacheOnFail();
       // Call handleRefreshFailure to properly logout and redirect
       await handleRefreshFailure(status);
       return Promise.reject(new Error("Session invalidated"));

@@ -23,6 +23,7 @@ import { queryKeyFactories } from "@/lib/query-configs";
 import { toast } from "sonner";
 import { logger } from "@/lib/utils";
 import { crossTabSync } from "@/lib/cross-tab-sync";
+import { setGlobalQueryClient, clearAuthCacheOnFail } from "@/lib/authCacheInvalidator";
 
 // Enhanced hook return type for better TypeScript support
 export interface UseUnifiedAuthReturn
@@ -97,6 +98,11 @@ export function useUnifiedAuth(): UseUnifiedAuthReturn {
   const queryClient = useQueryClient();
   const authState = useAuthSessionStore();
 
+  // Initialize global query client for auth interceptors
+  useEffect(() => {
+    setGlobalQueryClient(queryClient);
+  }, [queryClient]);
+
   // Proactive refresh timer reference
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityTimeRef = useRef<number>(Date.now());
@@ -120,7 +126,11 @@ export function useUnifiedAuth(): UseUnifiedAuthReturn {
         // Set loading state
         authState.setLoading(true);
 
-        // Clear any existing cache first
+        // CRITICAL: Clear all React Query cache first to remove any stale 401 errors
+        // from previous failed requests before attempting login
+        clearAuthCacheOnFail();
+        
+        // Clear any existing cache 
         clearCache();
 
         const result = await authClient.login(username, password, rememberMe);
@@ -214,7 +224,8 @@ export function useUnifiedAuth(): UseUnifiedAuthReturn {
 
         return { success: true, user: result.user };
       } else {
-        // Session is invalid, perform logout
+        // Session is invalid, clear React Query cache and perform logout
+        clearAuthCacheOnFail();
         await logout("session_expired");
         return {
           success: false,
@@ -224,6 +235,10 @@ export function useUnifiedAuth(): UseUnifiedAuthReturn {
     } catch (error) {
       const errorMsg =
         error instanceof Error ? error.message : "Gagal memvalidasi sesi";
+      // On auth validation errors, clear cache to prevent stale states
+      if (errorMsg.includes("Unauthorized") || errorMsg.includes("401")) {
+        clearAuthCacheOnFail();
+      }
       // Don't automatically logout on network errors, just log the error
       console.warn("Session validation error:", error);
       return { success: false, error: errorMsg };

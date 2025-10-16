@@ -101,19 +101,56 @@ export default function SimplifiedLoginForm() {
       if (result.success) {
         toast.success("Login berhasil");
 
-        // Update auth state
+        // CRITICAL: Update auth state BEFORE redirecting to prevent 401 race condition
         if (result.data?.user) {
+          // 1. Dispatch auth event for socket connection
           dispatchAuthEvent.login(result.data.user);
+          
+          // 2. Update React Query cache and Zustand store via dynamic import
+          // This ensures global auth state is ready before dashboard loads
+          try {
+            const { useAuthSessionStore } = await import("@/stores/session-store");
+            const { queryKeyFactories } = await import("@/lib/query-configs");
+            
+            const authStore = useAuthSessionStore.getState();
+            authStore.setAuthenticated(true, result.data.user);
+            authStore.updateUser(result.data.user);
+            
+            console.log("[LoginForm] Auth state updated with user:", result.data.user.username);
+            
+            // 3. Fetch full user profile to populate React Query cache before redirect
+            // This prevents 401 errors on the dashboard when it tries to fetch data
+            console.log("[LoginForm] Warming up user profile cache...");
+            const profileResp = await fetch(apiPath("/users/profile/me"), {
+              method: "GET",
+              credentials: "include",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+            
+            if (profileResp.ok) {
+              const profileData = await profileResp.json().catch(() => ({}));
+              if (profileData.success && profileData.data?.user) {
+                console.log("[LoginForm] User profile cached successfully");
+                // Update Zustand with complete profile if it has more details
+                authStore.updateUser(profileData.data.user);
+              }
+            } else {
+              console.warn("[LoginForm] User profile fetch returned:", profileResp.status);
+            }
+          } catch (error) {
+            console.warn("[LoginForm] Failed to warm up profile cache:", error);
+            // Continue anyway - API will retry on 401
+          }
         }
 
-        // Socket connection is handled automatically by useUnifiedSocket hook
-        // No need to manually connect here
-
         // Redirect to dashboard
+        // Give cookies time to fully settle in the browser before making API calls
         setIsRedirecting(true);
         setTimeout(() => {
           router.push("/dashboard/utama");
-        }, 500);
+        }, 1000);
       } else {
         throw new Error(result.message || "Login gagal");
       }

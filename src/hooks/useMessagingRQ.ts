@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback, useRef, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useConversations } from "./useConversationsRQ";
 import { useMessages } from "./useMessagesRQ";
 import { pushTempMessage, updateTempMessageById } from "@/features/messaging/temp-messages-store";
@@ -9,6 +9,7 @@ import {
   useSendMessageMutation,
   useMarkAsReadMutation,
 } from "./useMessageMutationsRQ";
+import { useMarkAsReadScheduler } from "./messaging-rq/useMarkAsReadScheduler";
 import { useSocket } from "./useSocket";
 import {
   useMessagingStore,
@@ -98,13 +99,6 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
   // TODO: Implement simplified unread count sync if needed
   // Removed complex unread sync for simplified implementation
 
-  // Remember last submitted message IDs for mark-as-read to avoid duplicate requests
-  const lastSubmittedReadRef = useRef<{
-    conversationId: string;
-    idsKey: string;
-  } | null>(null);
-  const lastMarkAtRef = useRef<number>(0);
-
   // Compute unread IDs and a stable key to avoid effect churn on array identity changes
   const { unreadIds, idsKey } = useMemo(() => {
     if (!activeConversationId || !messages || messages.length === 0)
@@ -120,49 +114,12 @@ export function useMessagingRQ(options?: { enabled?: boolean }) {
     return { unreadIds: ids, idsKey: key };
   }, [activeConversationId, messages, currentUser?.id]);
 
-  // Auto-mark messages as read when conversation is active and user is viewing
-  useEffect(() => {
-    if (!activeConversationId || !idsKey || unreadIds.length === 0) return;
-    if (markAsReadMutation.isPending) return;
-
-    // Only when tab visible; require window focus only if the API exists
-    if (typeof document !== "undefined") {
-      if (document.visibilityState !== "visible") return;
-      if (typeof (document as any).hasFocus === "function") {
-        if (!(document as any).hasFocus()) return;
-      }
-    }
-
-    // Avoid re-submitting the same batch and add a short cooldown
-    if (
-      lastSubmittedReadRef.current &&
-      lastSubmittedReadRef.current.conversationId === activeConversationId &&
-      lastSubmittedReadRef.current.idsKey === idsKey
-    ) {
-      return;
-    }
-
-    const now = Date.now();
-    if (now - lastMarkAtRef.current < 1200) {
-      // Increased cooldown to 1.2s to prevent rapid consecutive mutations
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      // Double-check conditions before executing to prevent stale closures
-      if (!activeConversationId || !idsKey || unreadIds.length === 0) return;
-      if (markAsReadMutation.isPending) return;
-      
-      lastSubmittedReadRef.current = {
-        conversationId: activeConversationId,
-        idsKey,
-      };
-      lastMarkAtRef.current = Date.now();
-      markAsReadMutation.mutate({ messageIds: unreadIds });
-    }, 800); // Increased delay to 800ms
-
-    return () => clearTimeout(timer);
-  }, [activeConversationId, idsKey, unreadIds.length, markAsReadMutation.isPending]);
+  useMarkAsReadScheduler({
+    activeConversationId,
+    idsKey,
+    unreadIds,
+    mutation: markAsReadMutation,
+  });
 
   // Helper functions
   const selectConversation = useCallback(

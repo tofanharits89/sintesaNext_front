@@ -12,6 +12,7 @@ import { queryConfigs, createQueryOptions } from "@/lib/query-configs";
 import { cacheInvalidation } from "@/lib/query-configs";
 import { initializeCacheWarming } from "@/lib/cache-warmer";
 import { logger } from "@/lib/utils";
+import { AuthCacheProvider } from "./AuthCacheProvider";
 
 // Cache analytics for monitoring performance
 class CacheAnalytics {
@@ -160,12 +161,14 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
-      <ReactQueryDevtools
-        initialIsOpen={false}
-        buttonPosition="bottom-left"
-        position="left"
-      />
+      <AuthCacheProvider>
+        {children}
+        <ReactQueryDevtools
+          initialIsOpen={false}
+          buttonPosition="bottom-left"
+          position="left"
+        />
+      </AuthCacheProvider>
     </QueryClientProvider>
   );
 }

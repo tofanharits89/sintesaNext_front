@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquarePlus, Users, Wifi, WifiOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useConversationUrlSync } from "@/hooks/messaging-rq/useConversationUrlSync";
 import { socketClient } from "@/lib/socket-client";
 
 export default function MessagesPage() {
@@ -50,61 +50,14 @@ export default function MessagesPage() {
     [unreadCounts]
   );
 
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const handleConversationSelect = async (conversationId: string) => {
-    try {
-      // Handling conversation selection
-    } catch {}
-
-    // Simple approach like navbar popover - just navigate with URL params
-    // This avoids complex race conditions and state synchronization issues
-    const params = new URLSearchParams(window.location.search);
-    params.set("conversation", conversationId);
-    router.push(`${pathname}?${params.toString()}`);
-  };
+  const { handleConversationSelect } = useConversationUrlSync({
+    activeConversationId,
+    selectConversation,
+  });
 
   const handleNewMessage = () => {
     setShowNewMessageDialog(true);
   };
-
-  // Handle URL-based conversation selection
-  const [urlConversationId, setUrlConversationId] = useState<string | null>(
-    null
-  );
-
-  // Update URL conversation ID when searchParams change
-  useEffect(() => {
-    setUrlConversationId(searchParams?.get("conversation") || null);
-  }, [searchParams]);
-
-  // Sync URL -> state: when URL changes, update active conversation
-  useEffect(() => {
-    if (urlConversationId && urlConversationId !== activeConversationId) {
-      selectConversation(urlConversationId);
-    } else if (!urlConversationId && activeConversationId) {
-      selectConversation("");
-    }
-  }, [urlConversationId, activeConversationId, selectConversation]);
-
-  // Handle temporary conversations - sync URL when temp conversation is created
-  useEffect(() => {
-    if (!activeConversationId) return;
-    const isTemp =
-      activeConversationId.startsWith("temp-") ||
-      activeConversationId.startsWith("temp_conv-") ||
-      activeConversationId.startsWith("temp-conv-");
-    if (!isTemp) return;
-    if (urlConversationId === activeConversationId) return;
-    
-    const params = new URLSearchParams(window.location.search);
-    params.set("conversation", activeConversationId);
-    router.replace(`${pathname}?${params.toString()}`);
-  }, [activeConversationId, urlConversationId, router, pathname]);
-
-  // Note: We intentionally do not listen for 'conversation:created' here to avoid double-selection loops.
 
   // Conditional refresh: only while on messages page
   useEffect(() => {
