@@ -748,18 +748,22 @@ export function useSendMessageMutation() {
       // Only invalidate if we need to refresh for other reasons
       // queryClient.invalidateQueries({ queryKey: conversationKeys.all });
 
-      // For existing conversations, DON'T invalidate messages immediately
-      // The optimistic update already added the message, and socket events will keep it synced
-      // Invalidating here causes the message to disappear until refetch completes
-      // Instead, we'll let the socket handler update the cache when MESSAGE_NEW arrives
+      // For existing conversations, invalidate first, then refetch
+      // This ensures pagination is reset and we get the latest messages
       const targetConvId = derivedNewConvId || conversationId;
       if (targetConvId) {
-        // Delay refetch to allow socket event to arrive first (non-blocking background refresh)
+        // Delay refetch to allow socket event to arrive first
         setTimeout(() => {
-          queryClient.refetchQueries({
+          // Invalidate to reset infinite query pagination
+          queryClient.invalidateQueries({
             queryKey: messageKeyFor(String(targetConvId)),
           });
-        }, 2000); // Increased delay to allow socket events to process first
+          // Then immediately refetch the first page
+          queryClient.refetchQueries({
+            queryKey: messageKeyFor(String(targetConvId)),
+            type: "all",
+          });
+        }, 1000); // Shorter delay since we're invalidating
       }
 
       // Update conversations list without invalidating - use setQueryData instead
