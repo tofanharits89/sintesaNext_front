@@ -8,8 +8,14 @@ export function withBasePath(path: string) {
 }
 
 export function apiPath(path: string) {
-  // ensure it starts with /api
-  const p = path.startsWith("/api") ? path : `/api${path}`;
+  // ensure it starts with /api/v1
+  let p = path;
+  if (!p.startsWith("/api")) {
+    p = `/api/v1${p}`;
+  } else if (!p.startsWith("/api/v1")) {
+    // If it starts with /api but not /api/v1, prepend v1
+    p = `/api/v1${p.substring(4)}`;
+  }
   return withBasePath(p);
 }
 

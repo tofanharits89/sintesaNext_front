@@ -11,7 +11,6 @@ import {
   SocketMessageData,
 } from "@/types/socket-events";
 import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
-import { getAuthTokenFromCookie } from "@/lib/cookieManager";
 
 // Query keys for React Query
 export const conversationKeys = {
@@ -46,15 +45,12 @@ const url = new URL(
   // Add timestamp to bust cache
   url.searchParams.set("_t", Date.now().toString());
   
-  // Get auth token for Authorization header
-  const token = getAuthTokenFromCookie();
-  const headers: HeadersInit = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
-  
   const resp = await fetch(url.toString(), {
     credentials: "include",
     cache: "no-store",
-    headers,
+    headers: {
+      "Content-Type": "application/json"
+    },
   });
   
   if (!resp.ok) throw new Error(`Failed to fetch: ${resp.status}`);

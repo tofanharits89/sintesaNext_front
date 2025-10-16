@@ -23,7 +23,6 @@ import { apiPath } from "@/lib/base-path";
 import { useSocket } from "./useSocket";
 import { conversationKeys } from "./useConversationsRQ";
 import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
-import { getAuthTokenFromCookie } from "@/lib/cookieManager";
 import {
   SOCKET_EVENTS,
   FrontendMessage,
@@ -75,15 +74,9 @@ const fetchMessages = async (
     url.searchParams.set("cursor", pageParam);
   }
 
-  // Get auth token for Authorization header
-  const token = getAuthTokenFromCookie();
-  const headers: HeadersInit = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
-
   const resp = await fetch(url.toString(), {
     credentials: "include",
     cache: "no-store",
-    headers,
   });
 
   if (!resp.ok) {
