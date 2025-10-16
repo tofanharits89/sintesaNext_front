@@ -95,7 +95,6 @@ export function useSendMessageMutation() {
           throw err;
         }
         const socketPayload = {
-          // camelCase
           recipientId,
           conversationId,
           content: content.trim(),
@@ -104,15 +103,6 @@ export function useSendMessageMutation() {
           senderId: currentUser?.id,
           participant1Id: conversationId ? undefined : currentUser?.id,
           participant2Id: conversationId ? undefined : recipientId,
-          // snake_case duplicates for compatibility
-          recipient_id: recipientId,
-          conversation_id: conversationId,
-          message: content.trim(),
-          message_type: "text",
-          temp_id: tempId,
-          sender_id: currentUser?.id,
-          participant1_id: conversationId ? undefined : currentUser?.id,
-          participant2_id: conversationId ? undefined : recipientId,
         } as any;
 
         // Emitting message:send (debug logging removed)
@@ -163,7 +153,6 @@ export function useSendMessageMutation() {
               ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
             },
             body: JSON.stringify({
-              // camelCase
               recipientId,
               conversationId,
               content: content.trim(),
@@ -172,15 +161,6 @@ export function useSendMessageMutation() {
               senderId: currentUser?.id,
               participant1Id: conversationId ? undefined : currentUser?.id,
               participant2Id: conversationId ? undefined : recipientId,
-              // snake_case duplicates
-              recipient_id: recipientId,
-              conversation_id: conversationId,
-              message: content.trim(),
-              message_type: "text",
-              temp_id: tempId,
-              sender_id: currentUser?.id,
-              participant1_id: conversationId ? undefined : currentUser?.id,
-              participant2_id: conversationId ? undefined : recipientId,
             }),
           });
 
