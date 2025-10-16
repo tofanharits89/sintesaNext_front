@@ -1,0 +1,76 @@
+================================================================================
+SOCKET CONNECTION TIMEOUT - QUICK START GUIDE
+================================================================================
+
+WHAT WAS FIXED:
+5 critical issues causing "Connection timeout" errors when navigating your app
+
+QUICK SUMMARY:
+  Fix 1: Connection Lock ✓
+    - Prevents concurrent socket connect() calls
+    - Location: src/lib/socket-client.ts
+    - Change: Added connectPromise + isConnecting flags
+
+  Fix 2: Global Init Lock ✓
+    - Prevents multiple hook instances from concurrent init
+    - Location: src/hooks/useUnifiedSocket.ts
+    - Change: Added globalInitLock object for coordination
+
+  Fix 3: Event Deduplication ✓
+    - Prevents duplicate event listener registration
+    - Location: src/lib/socket-client.ts applyQueuedListeners()
+    - Change: Added registeredListeners Set for tracking
+
+  Fix 4: Timeout Increased ✓
+    - Extended from 10s to 15s for slow networks
+    - Location: src/lib/socket-client.ts constructor
+    - Change: timeout: 15000 (was 10000)
+
+  Fix 5: Better Diagnostics ✓
+    - Improved error messages for debugging
+    - Location: socket-client.ts connect() method
+    - Change: Enhanced error logging with duration info
+
+ROOT CAUSE:
+  Race condition where multiple hook instances triggered concurrent socket
+  connections, overwhelming the backend auth/rate limiting middleware.
+
+KEY FILES CHANGED:
+  1. src/lib/socket-client.ts (added lock mechanism + deduplication)
+  2. src/hooks/useUnifiedSocket.ts (added global init coordination)
+
+TESTING:
+  npm run build      # Check for TypeScript errors
+  npm run dev        # Test in development
+  
+  Then verify in browser console (should see only ONE):
+    ✓ [SocketClient] Socket connected successfully
+    ✓ No "Connection timeout" errors
+    ✓ No duplicate event logs
+
+EXPECTED IMPROVEMENTS:
+  - Connection timeouts eliminated
+  - Reduced server load from concurrent attempts
+  - No more race condition errors
+  - Better error diagnostics
+
+NEXT STEPS:
+  1. Commit and push changes
+  2. Deploy to staging
+  3. Monitor socket error rates for 24-48 hours
+  4. Check backend logs for single "User connected" per session
+  5. Deploy to production
+
+ADDITIONAL DOCS:
+  - SOCKET_FIXES_GUIDE.md - Detailed breakdown of all issues
+  - SOCKET_FIXES_APPLIED.md - Technical details of fixes
+  - SOCKET_TROUBLESHOOTING.md - Debugging guide if issues persist
+
+REVERT (IF NEEDED):
+  git revert <commit-hash>
+  Then rebuild and test
+
+QUESTIONS?
+  See SOCKET_TROUBLESHOOTING.md for common issues and solutions
+
+================================================================================

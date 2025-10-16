@@ -33,6 +33,14 @@ export interface UseUnifiedSocketReturn {
 }
 
 /**
+ * Global initialization lock to prevent concurrent socket initialization across multiple hook instances
+ */
+const globalInitLock = {
+  isInitializing: false,
+  initPromise: null as Promise<void> | null,
+};
+
+/**
  * Simplified Socket Hook
  * Provides a clean React interface to the SocketClient with reliable state management
  */
@@ -103,39 +111,55 @@ export function useUnifiedSocket(
     };
   }, [isClient, syncState]);
 
-  // Auto-connect for authenticated users
+  // Auto-connect for authenticated users with global initialization lock
   useEffect(() => {
     if (!isClient || !isAuthenticated || !user) {
       return;
     }
 
-    // Prevent multiple initializations
-    if (initializedRef.current) {
+    // Check if already initialized and connected
+    if (initializedRef.current && socketClient.isConnected()) {
+      syncState();
+      return;
+    }
+
+    // If global initialization is in progress, wait for it
+    if (globalInitLock.isInitializing && globalInitLock.initPromise) {
+      globalInitLock.initPromise
+        .then(() => {
+          initializedRef.current = true;
+          syncState();
+        })
+        .catch(() => {
+          // Global init failed, let this instance try
+        });
       return;
     }
 
     const initializeSocket = async () => {
+      globalInitLock.isInitializing = true;
+
       try {
-        // Check if we just logged in
-        const justLoggedIn = sessionStorage.getItem("just_logged_in");
-        const connectionDelay = justLoggedIn === "true" ? 1000 : 0;
-
-        if (justLoggedIn === "true") {
-          sessionStorage.removeItem("just_logged_in");
-        }
-
-        // Wait for connection delay if needed
-        if (connectionDelay > 0) {
-          await new Promise((resolve) => setTimeout(resolve, connectionDelay));
-        }
-
-        // Check if already connected
+        // Check if already connected before attempting
         if (socketClient.isConnected()) {
+          initializedRef.current = true;
           syncState();
           return;
         }
 
         setState((prev) => ({ ...prev, error: null }));
+
+        // Check for post-login delay
+        const justLoggedIn = sessionStorage.getItem("just_logged_in");
+        const connectionDelay = justLoggedIn === "true" ? 500 : 0;
+
+        if (justLoggedIn === "true") {
+          sessionStorage.removeItem("just_logged_in");
+        }
+
+        if (connectionDelay > 0) {
+          await new Promise((resolve) => setTimeout(resolve, connectionDelay));
+        }
 
         await socketClient.connect();
         initializedRef.current = true;
@@ -147,12 +171,13 @@ export function useUnifiedSocket(
           error: error instanceof Error ? error.message : "Connection failed",
         }));
 
-        // Retry once after a delay if first attempt fails
+        // Retry once after delay
         setTimeout(() => {
           if (!socketClient.isConnected()) {
             socketClient
               .connect()
               .then(() => {
+                initializedRef.current = true;
                 syncState();
               })
               .catch((retryError) => {
@@ -160,10 +185,12 @@ export function useUnifiedSocket(
               });
           }
         }, 2000);
+      } finally {
+        globalInitLock.isInitializing = false;
       }
     };
 
-    initializeSocket();
+    globalInitLock.initPromise = initializeSocket();
 
     // Cleanup on unmount
     return () => {

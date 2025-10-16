@@ -48,6 +48,9 @@ export class SocketClient {
   private stateChangeListeners = new Set<(state: SocketState) => void>();
   private eventListeners = new Map<string, Set<(...args: any[]) => void>>();
   private isDestroyed = false;
+  private connectPromise: Promise<Socket> | null = null;
+  private isConnecting = false;
+  private registeredListeners = new Set<string>();
 
   constructor(config: SocketClientConfig = {}) {
     // Use NEXT_PUBLIC_BACKEND_URL without /api/v1 for socket connection
@@ -63,7 +66,7 @@ export class SocketClient {
       reconnectionAttempts: config.reconnectionAttempts ?? 5,
       reconnectionDelay: config.reconnectionDelay ?? 1000,
       reconnectionDelayMax: config.reconnectionDelayMax ?? 10000,
-      timeout: config.timeout ?? 10000,
+      timeout: config.timeout ?? 15000,
     };
   }
 
@@ -236,6 +239,12 @@ export class SocketClient {
     if (!this.socket) return;
 
     this.eventListeners.forEach((listeners, event) => {
+      const listenerKey = `${this.socket!.id}:${event}`;
+      if (this.registeredListeners.has(listenerKey)) {
+        return;
+      }
+      this.registeredListeners.add(listenerKey);
+
       this.socket!.on(event, (...args: any[]) => {
         const eventListeners = this.eventListeners.get(event);
         if (eventListeners) {
@@ -502,6 +511,7 @@ export class SocketClient {
       this.socket.removeAllListeners();
       this.socket = null;
     }
+    this.registeredListeners.clear();
   }
 
   /**
