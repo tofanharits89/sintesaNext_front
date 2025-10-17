@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect, Fragment } from "react";
-import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
+import { useUnifiedAuth } from "@/lib/auth";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useLoginHistory } from "@/hooks/use-login-history";
 import { Button } from "@/components/ui/button";

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { socketClient, SocketState } from "@/lib/socket-client";
 import type { Socket } from "socket.io-client";
+import { useAuthSessionStore } from "@/stores/session-store";
 
 export interface UseSocketReturn {
   socket: Socket | null;
@@ -29,6 +30,12 @@ export const useSocket = (): UseSocketReturn => {
     connectionState: socketClient.getState(),
     error: null as string | null,
   }));
+  
+  // Track if we've attempted initial connection
+  const hasAttemptedConnection = useRef(false);
+  
+  // Get authentication state
+  const isAuthenticated = useAuthSessionStore((state) => state.isAuthenticated);
 
   // Ensure client-side rendering
   useEffect(() => {
@@ -91,16 +98,59 @@ export const useSocket = (): UseSocketReturn => {
     };
   }, [isClient, syncState]);
 
+  // Auto-connect on mount if already authenticated (handles page refresh)
+  useEffect(() => {
+    if (!isClient || hasAttemptedConnection.current) return;
+    
+    // Check if user is authenticated and socket is not connected/connecting
+    const currentState = socketClient.getState();
+    if (isAuthenticated && currentState !== "connected" && currentState !== "connecting") {
+      hasAttemptedConnection.current = true;
+      
+      console.log('[useSocket] User authenticated on mount, connecting socket...');
+      
+      socketClient.connect()
+        .then(() => {
+          console.log('[useSocket] Socket connected successfully on mount');
+          syncState();
+        })
+        .catch((error) => {
+          console.error('[useSocket] Failed to connect socket on mount:', error);
+          // Reset flag on error so it can retry
+          hasAttemptedConnection.current = false;
+          syncState();
+        });
+    } else if (currentState === "connected") {
+      console.log('[useSocket] Socket already connected on mount');
+      hasAttemptedConnection.current = true;
+      syncState();
+    } else if (currentState === "connecting") {
+      console.log('[useSocket] Socket connection already in progress');
+      hasAttemptedConnection.current = true;
+    }
+  }, [isClient, isAuthenticated, syncState]);
+
   // Handle authentication events
   useEffect(() => {
     if (!isClient) return;
 
-    const handleLogin = () => {
+    const handleLogin = async () => {
       try {
-        // Let SocketClient handle post-login connection automatically
-        const timeoutId = setTimeout(syncState, 1000);
-        // Store timeout ID for cleanup
-        (handleLogin as any)._timeoutId = timeoutId;
+        console.log('[useSocket] Login detected, connecting socket...');
+        
+        // Mark that we've attempted connection
+        hasAttemptedConnection.current = true;
+        
+        // Connect socket after successful login
+        try {
+          await socketClient.connect();
+          console.log('[useSocket] Socket connected successfully after login');
+        } catch (error) {
+          console.error('[useSocket] Failed to connect socket after login:', error);
+        }
+        
+        // Sync state after connection attempt
+        syncState();
       } catch (error) {
         console.error('Error in handleLogin:', error);
       }
@@ -108,6 +158,11 @@ export const useSocket = (): UseSocketReturn => {
 
     const handleLogout = () => {
       try {
+        console.log('[useSocket] Logout detected, disconnecting socket...');
+        
+        // Reset connection attempt flag
+        hasAttemptedConnection.current = false;
+        
         socketClient.disconnect();
         syncState();
       } catch (error) {

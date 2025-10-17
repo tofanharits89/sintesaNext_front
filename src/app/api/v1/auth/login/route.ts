@@ -5,18 +5,13 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { forwardSetCookies } from "@/lib/cookie-helpers";
+import { apiPath } from "@/lib/config";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // Forward to backend (use server-side BACKEND_URL)
-    const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL;
-    if (!backendUrl) {
-      throw new Error("Backend URL not configured");
-    }
-    
-    const response = await fetch(`${backendUrl}/auth/login`, {
+    const response = await fetch(apiPath("/auth/login"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -25,7 +25,7 @@ import {
   useUnifiedAuth,
   canManageUsers,
   canAccessSettings,
-} from "@/hooks/useUnifiedAuth";
+} from "@/lib/auth";
 import { useUserProfile } from "@/hooks/use-user-profile";
 import {
   getNotificationsForUser,

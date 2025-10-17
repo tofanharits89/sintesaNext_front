@@ -10,9 +10,9 @@
  * Prevents: "token not active" errors when dashboard has old cached auth
  */
 
-import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
+import { useUnifiedAuth } from "@/lib/auth";
 import { useAuthSessionStore } from "@/stores/session-store";
-import { clearAuthCacheOnFail } from "@/lib/authCacheInvalidator";
+import { clearAuthCacheOnFail } from "@/lib/auth";
 
 /**
  * Check if auth state is consistent across all layers

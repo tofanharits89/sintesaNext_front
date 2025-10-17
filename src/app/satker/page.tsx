@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Building2, ArrowRight, Shield, Info } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
+import { useUnifiedAuth } from "@/lib/auth";
 import { getUserAccessDescription } from "@/utils/satker-rbac";
 import { useSatkerSearch } from "@/hooks/use-satker-data";
 import { formatSatkerDisplayName, formatSatkerSubtitle } from "@/utils/satker-data";

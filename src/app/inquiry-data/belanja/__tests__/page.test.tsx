@@ -4,7 +4,7 @@ import BelanjaPage from "../page";
 import { useQueryLoader } from "@/hooks/use-query-loader";
 import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
 import { useSavedQueries } from "@/hooks/use-saved-queries";
-import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
+import { useUnifiedAuth } from "@/lib/auth";
 import { it } from "date-fns/locale";
 import { it } from "date-fns/locale";
 import { it } from "date-fns/locale";
@@ -60,7 +60,7 @@ jest.mock("@/components/inquiry-data/query-management", () => ({
   ),
 }));
 
-jest.mock("@/hooks/useUnifiedAuth", () => ({
+jest.mock("@/lib/auth", () => ({
   useUnifiedAuth: jest.fn(),
 }));
 

@@ -9,7 +9,7 @@
 
 import { io, Socket } from "socket.io-client";
 import { SOCKET_EVENTS } from "@/types/socket-events";
-import { backendPath } from "@/lib/backend";
+import { config, backendPath } from "@/lib/config";
 
 export type SocketState = "disconnected" | "connecting" | "connected" | "error" | "reconnecting";
 
@@ -52,21 +52,17 @@ export class SocketClient {
   private isConnecting = false;
   private registeredListeners = new Set<string>();
 
-  constructor(config: SocketClientConfig = {}) {
-    // Use NEXT_PUBLIC_BACKEND_URL without /api/v1 for socket connection
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:88/api/v1";
-    const socketUrl = backendUrl.replace(/\/api\/v1$/, ''); // Remove /api/v1 suffix
-    
+  constructor(clientConfig: SocketClientConfig = {}) {
     this.config = {
-      url: config.url || process.env.NEXT_PUBLIC_SOCKET_URL || socketUrl,
-      path: config.path || process.env.NEXT_PUBLIC_SOCKET_PATH || "/socket.io",
-      autoConnect: config.autoConnect ?? false,
-      debug: config.debug ?? process.env.NODE_ENV === "development",
-      reconnection: config.reconnection ?? true,
-      reconnectionAttempts: config.reconnectionAttempts ?? 5,
-      reconnectionDelay: config.reconnectionDelay ?? 1000,
-      reconnectionDelayMax: config.reconnectionDelayMax ?? 10000,
-      timeout: config.timeout ?? 15000,
+      url: clientConfig.url || config.socketUrl,
+      path: clientConfig.path || config.socketPath,
+      autoConnect: clientConfig.autoConnect ?? false,
+      debug: clientConfig.debug ?? config.isDevelopment,
+      reconnection: clientConfig.reconnection ?? true,
+      reconnectionAttempts: clientConfig.reconnectionAttempts ?? 5,
+      reconnectionDelay: clientConfig.reconnectionDelay ?? 1000,
+      reconnectionDelayMax: clientConfig.reconnectionDelayMax ?? 10000,
+      timeout: clientConfig.timeout ?? 15000,
     };
   }
 
@@ -78,14 +74,25 @@ export class SocketClient {
       throw new Error("Socket client has been destroyed");
     }
 
+    // If already connected, return existing socket
     if (this.socket?.connected) {
+      this.debugLog("Already connected, returning existing socket");
       return this.socket;
     }
 
-    if (this.socket) {
+    // If connection is in progress, return the existing promise
+    if (this.isConnecting && this.connectPromise) {
+      this.debugLog("Connection already in progress, returning existing promise");
+      return this.connectPromise;
+    }
+
+    // If socket exists but not connected, cleanup first
+    if (this.socket && !this.socket.connected) {
+      this.debugLog("Cleaning up disconnected socket before reconnecting");
       this.cleanup();
     }
 
+    this.isConnecting = true;
     this.setState("connecting");
 
     try {
@@ -108,28 +115,42 @@ export class SocketClient {
         // we can place it here: auth: { token }
       };
 
-      this.socket = io(this.config.url || "http://localhost:88", socketOptions);
+      this.socket = io(this.config.url!, socketOptions);
 
       this.setupEventListeners();
       this.connectionStats.totalConnections++;
       this.connectionStats.connectedAt = new Date().toISOString();
 
-      return new Promise((resolve, reject) => {
+      // Store the connection promise to prevent concurrent attempts
+      this.connectPromise = new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {
+          this.isConnecting = false;
+          this.connectPromise = null;
+          this.debugLog("Connection timeout after " + this.config.timeout + "ms");
           reject(new Error("Connection timeout"));
         }, this.config.timeout);
 
         this.socket!.once("connect", () => {
           clearTimeout(timeout);
+          this.isConnecting = false;
+          this.connectPromise = null;
+          this.debugLog("Connection successful");
           resolve(this.socket!);
         });
 
         this.socket!.once("connect_error", (error) => {
           clearTimeout(timeout);
+          this.isConnecting = false;
+          this.connectPromise = null;
+          this.debugLog("Connection error:", error);
           reject(error);
         });
       });
+
+      return this.connectPromise;
     } catch (error) {
+      this.isConnecting = false;
+      this.connectPromise = null;
       this.setState("error");
       throw error;
     }

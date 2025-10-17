@@ -1,12 +1,12 @@
 /**
- * Simplified Authentication Client
+ * Consolidated Authentication Client
  * Server-side token validation only - no client-side cookie access
  * Secure HTTP-only cookie implementation with automatic token refresh
  */
 
 import { logger } from "@/lib/utils";
-import { http } from "./httpClient";
-import { apiPath } from "./base-path";
+import { http } from "../httpClient";
+import { apiPath } from "../base-path";
 
 // User interface (matches backend API response)
 export interface User {
@@ -64,20 +64,18 @@ export class AuthClient {
     error?: string;
   }> {
     try {
-      // Use apiPath to ensure consistent URL routing with httpClient
       const response = await fetch(apiPath(`${this.baseURL}/auth/login`), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // Important: sends HTTP-only cookies
+        credentials: "include",
         body: JSON.stringify({ username, password, rememberMe }),
       });
 
       const data: AuthResponse<{ user: User; csrfToken: string }> =
         await response.json();
 
-      // Debug: Log the raw response data
       logger.info("[Auth Client] Raw login response:", { 
         status: response.status, 
         ok: response.ok, 
@@ -86,7 +84,6 @@ export class AuthClient {
 
       if (response.ok && data.success && data.data) {
         logger.info("Login successful");
-        // Debug: Log the parsed user data
         logger.info("[Auth Client] Parsed user data:", data.data.user);
         return {
           success: true,
@@ -118,7 +115,7 @@ export class AuthClient {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // Important: sends HTTP-only cookies
+        credentials: "include",
       });
 
       const data: AuthResponse = await response.json();
@@ -151,11 +148,9 @@ export class AuthClient {
   }> {
     try {
       const response = await http.get(`${this.baseURL}/auth/me`);
-
       const data: AuthResponse<User | { user: User }> = response.data;
 
       if (response.status === 200 && data.success && data.data) {
-        // Handle both formats: data.data.user (new) or data.data (old)
         const user = "user" in data.data ? data.data.user : data.data;
         return { success: true, user };
       } else {
@@ -182,7 +177,6 @@ export class AuthClient {
     error?: string;
   }> {
     try {
-      // Request user details explicitly to preserve current consumers
       const response = await http.get(
         `${this.baseURL}/auth/validate?include=user`
       );
@@ -220,7 +214,7 @@ export class AuthClient {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // Important: sends HTTP-only cookies
+        credentials: "include",
       });
 
       const data: AuthResponse = await response.json();
@@ -253,7 +247,7 @@ export class AuthClient {
     try {
       const response = await fetch(`${this.baseURL}/auth/csrf`, {
         method: "GET",
-        credentials: "include", // Important: sends HTTP-only cookies
+        credentials: "include",
       });
 
       const data: AuthResponse<{ csrfToken: string }> = await response.json();
@@ -286,13 +280,9 @@ export const login = (
 ) => authClient.login(username, password, rememberMe);
 
 export const logout = () => authClient.logout();
-
 export const getCurrentUser = () => authClient.getCurrentUser();
-
 export const validateSession = () => authClient.validateSession();
-
 export const refreshToken = () => authClient.refreshToken();
-
 export const getCSRFToken = () => authClient.getCSRFToken();
 
 // Export types

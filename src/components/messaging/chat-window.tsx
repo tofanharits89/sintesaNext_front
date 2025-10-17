@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useMemo, useLayoutEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAutoMarkAsRead } from "@/hooks/useAutoMarkAsRead";
 import { Conversation } from "@/types/socket-events";
-import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
+import { useUnifiedAuth } from "@/lib/auth";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useMessagingRQ } from "@/hooks/messaging-rq";
 import { useSendMessageMutation } from "@/hooks/useMessageMutationsRQ";

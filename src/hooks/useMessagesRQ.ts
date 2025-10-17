@@ -22,7 +22,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { apiPath } from "@/lib/base-path";
 import { useSocket } from "./useSocket";
 import { conversationKeys } from "./useConversationsRQ";
-import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
+import { useUnifiedAuth } from "@/lib/auth";
 import {
   SOCKET_EVENTS,
   FrontendMessage,
@@ -83,7 +83,14 @@ const fetchMessages = async (
   });
 
   if (!resp.ok) {
-    // Return empty normalized response on error instead of throwing
+    // For 401 errors, throw to trigger retry logic
+    if (resp.status === 401) {
+      const error: any = new Error("Unauthorized");
+      error.status = 401;
+      throw error;
+    }
+    
+    // For other errors, return empty normalized response
     return {
       messages: [],
       pagination: { limit: PAGE_SIZE, total: 0, nextBefore: null },
@@ -131,8 +138,17 @@ export function useMessagesRQ(conversationId?: string) {
     enabled: isFetchable && !!conversationId,
     staleTime: 0,
     gcTime: 0,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
+    refetchOnWindowFocus: false, // Disable auto-refetch on focus to prevent 401 errors for newly created conversations
+    refetchOnReconnect: false, // Disable auto-refetch on reconnect to prevent race conditions
+    retry: (failureCount, error: any) => {
+      // Retry on 401 errors (auth issues) up to 2 times with delay
+      // This handles race conditions when conversation is just created
+      if (error?.status === 401 && failureCount < 2) {
+        return true;
+      }
+      return false;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * (attemptIndex + 1), 3000), // 1s, 2s, 3s
     initialPageParam: undefined,
     getNextPageParam: (lastPage) => {
       if (!lastPage || !lastPage.pagination) return undefined;

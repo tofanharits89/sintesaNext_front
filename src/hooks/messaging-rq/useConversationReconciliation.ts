@@ -14,7 +14,7 @@ import { conversationKeys } from "../useConversationsRQ";
 import { getTempMessages, clearTempMessages } from "@/features/messaging/temp-messages-store";
 import { setHint, clearHint } from "@/features/messaging/temp-conversation-hints";
 import { FrontendMessage } from "@/types/socket-events";
-import { useUnifiedAuth } from "../useUnifiedAuth";
+import { useAuth } from "@/lib/auth";
 
 /**
  * Reconcile temp conversation ID to real conversation ID
@@ -22,7 +22,7 @@ import { useUnifiedAuth } from "../useUnifiedAuth";
  */
 export function useConversationReconciliation() {
   const queryClient = useQueryClient();
-  const { user: currentUser } = useUnifiedAuth();
+  const { user: currentUser } = useAuth();
   const userScopeId = currentUser?.id ?? null;
 
   const reconcileTempToReal = useCallback(

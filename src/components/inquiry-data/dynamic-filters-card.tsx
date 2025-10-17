@@ -18,7 +18,7 @@ import {
   FileSpreadsheet,
   FileText,
 } from "lucide-react";
-import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
+import { useUnifiedAuth } from "@/lib/auth";
 import { useInquiryDataApi, FilterValue } from "@/hooks/use-inquiry-data-api";
 
 interface DynamicFiltersCardProps {

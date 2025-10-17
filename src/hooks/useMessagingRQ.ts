@@ -19,7 +19,7 @@ import {
   useMessagingConnection,
   useTotalUnreadCount,
 } from "@/stores";
-import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
+import { useUnifiedAuth } from "@/lib/auth";
 
 /**
  * Comprehensive messaging hook that integrates React Query + Zustand + WebSocket

@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { useUnifiedAuth, canAccessSettings } from '@/hooks/useUnifiedAuth';
+import { useUnifiedAuth, canAccessSettings } from '@/lib/auth';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertTriangle, Settings } from 'lucide-react';
 

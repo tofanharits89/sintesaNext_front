@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { apiPath } from "@/lib/base-path";
-import { getAuthTokenFromCookie } from "@/lib/socket";
 
 type AdminUser = {
   id: string;
@@ -21,13 +20,10 @@ export function useAdminUsers() {
     setError(null);
 
     try {
-      // Get token from cookies for authentication
-      const token = getAuthTokenFromCookie();
-      // Fetching admin users from API
-
-const response = await fetch(apiPath("/users/admins"), {
+      // Fetching admin users from API (cookies sent automatically)
+      const response = await fetch(apiPath("/users/admins"), {
+        credentials: "include", // Send HTTP-only cookies automatically
         headers: {
-          Authorization: token ? `Bearer ${token}` : "",
           "Content-Type": "application/json",
         },
       });

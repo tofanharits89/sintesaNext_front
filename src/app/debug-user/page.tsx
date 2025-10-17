@@ -1,6 +1,6 @@
 'use client';
 
-import { useUnifiedAuth, canAccessSettings } from '@/hooks/useUnifiedAuth';
+import { useUnifiedAuth, canAccessSettings } from '@/lib/auth';
 
 export default function DebugUserPage() {
   const { user: currentUser, isLoading } = useUnifiedAuth();

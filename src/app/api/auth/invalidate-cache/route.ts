@@ -2,7 +2,7 @@ export const runtime = "edge";
 
 import { NextResponse, NextRequest } from "next/server";
 import { verifyCacheInvalidationSignature } from "@/utils/cache-signature";
-import { hashKey, invalidateAuthCache } from "@/utils/auth-cache";
+import { hashKey, invalidateAuthCache } from "@/lib/auth";
 
 function extractAccessFromCookieStr(s: string): string | null {
   const m = /(?:^|;\s*)(access_token|accessToken)=([^;]+)/.exec(s || "");

@@ -123,7 +123,7 @@ let isLoggingOut = false; // Flag to prevent requests during logout/redirect
 
 // Simplified cookie management for HTTP-only only approach
 import { clearNonHttpOnlyCookies } from "./cookieManager";
-import { clearAuthCacheOnFail } from "./authCacheInvalidator";
+import { clearAuthCacheOnFail } from "./auth";
 
 // Expose globally for debugging and coordination
 if (typeof window !== "undefined") {

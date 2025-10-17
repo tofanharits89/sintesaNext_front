@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useMessagingRQ } from "@/hooks/useMessagingRQ";
-import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
+import { useUnifiedAuth } from "@/lib/auth";
 import {
   Dialog,
   DialogContent,

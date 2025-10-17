@@ -1,6 +1,6 @@
 "use client";
 
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useUnifiedAuth } from '@/lib/auth';
 
 /**
  * Simplified Session Monitoring Component

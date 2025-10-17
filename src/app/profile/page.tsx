@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
+import { useUnifiedAuth } from "@/lib/auth";
 import { apiClient, prefetchCsrf } from "@/lib/httpClient";
 import { User } from "@/stores/session-store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

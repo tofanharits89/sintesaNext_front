@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { apiPath } from "@/lib/base-path";
 import { User } from "@/lib/users-store";
-import { useUnifiedAuth, canManageUsers } from "@/hooks/useUnifiedAuth";
+import { useUnifiedAuth, canManageUsers } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

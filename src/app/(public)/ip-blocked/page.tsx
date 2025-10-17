@@ -35,8 +35,7 @@ function IPBlockedContent() {
     
     const syncWithBackend = async () => {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:88/api/v1';
-        const response = await fetch(`${backendUrl}/auth/me`, {
+        const response = await fetch('/api/v1/auth/me', {
           credentials: 'include',
         });
         

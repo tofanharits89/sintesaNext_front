@@ -1,39 +1,23 @@
-// Dynamic backend URL based on current host (for office network deployments)
-function getBackendUrl(): string {
-  // Server-side: use Docker internal hostname or env var
-  if (typeof window === 'undefined') {
-    const serverUrl = (
-      process.env.BACKEND_URL ||
-      process.env.API_URL ||
-      process.env.NEXT_PUBLIC_BACKEND_URL ||
-      "http://localhost:88/api/v1"
-    );
-    console.log('[Backend] Server-side URL:', serverUrl);
-    return serverUrl;
-  }
-  
-  // Client-side: use same host as frontend but port 88
-  // This ensures cookies work from any IP in the office network
-  const useEnvUrl = process.env.NEXT_PUBLIC_USE_STATIC_BACKEND_URL === 'true';
-  
-  if (useEnvUrl) {
-    // Use static URL from env (for specific deployments)
-    const staticUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:88/api/v1";
-    console.log('[Backend] Using static URL:', staticUrl);
-    return staticUrl;
-  }
-  
-  // Dynamic URL: use current hostname with backend port
-  const currentHost = window.location.hostname;
-  const backendPort = process.env.NEXT_PUBLIC_BACKEND_PORT || '88';
-  const dynamicUrl = `http://${currentHost}:${backendPort}/api/v1`;
-  console.log('[Backend] Using dynamic URL:', dynamicUrl, 'from hostname:', currentHost);
-  return dynamicUrl;
-}
+/**
+ * @deprecated This file is deprecated. Use @/lib/config instead.
+ * 
+ * Migration guide:
+ * - import { BACKEND_BASE_URL } from "@/lib/backend" → import { config } from "@/lib/config"; use config.apiUrl
+ * - import { backendPath } from "@/lib/backend" → import { backendPath } from "@/lib/config"
+ * 
+ * This file is kept for backward compatibility only.
+ */
 
-export const BACKEND_BASE_URL = getBackendUrl();
+import { config, backendPath as newBackendPath } from "@/lib/config";
 
-export function backendPath(path: string) {
-  if (!path.startsWith("/")) path = `/${path}`;
-  return `${BACKEND_BASE_URL}${path}`;
+/**
+ * @deprecated Use config.apiUrl from @/lib/config instead
+ */
+export const BACKEND_BASE_URL = config.apiUrl;
+
+/**
+ * @deprecated Use backendPath from @/lib/config instead
+ */
+export function backendPath(path: string): string {
+  return newBackendPath(path);
 }

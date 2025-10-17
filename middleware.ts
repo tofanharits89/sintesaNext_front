@@ -14,7 +14,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { detectIpBlock } from "@/utils/ipBlock";
-import { getAuthCache, setAuthCache, hashKey } from "@/utils/auth-cache";
+import { getAuthCache, setAuthCache, hashKey } from "@/lib/auth/utils-server";
 
 // Route definitions
 const PROTECTED_ROUTES = [
@@ -49,17 +49,17 @@ const PUBLIC_ROUTES = [
   "/debug-user",
 ];
 
+// Import unified configuration
+import { config as appConfig } from "@/lib/config";
+
 // Environment-based configuration
 const ENV = {
-  // Use server-side BACKEND_URL for middleware (Docker internal), fallback to localhost
-  API_BASE_URL: process.env.BACKEND_URL?.replace('/api/v1', '') || 
-                process.env.API_URL?.replace('/api/v1', '') || 
-                process.env.NEXT_PUBLIC_API_BASE_URL || 
-                'http://localhost:88',
+  // Use server-side API URL (automatically handles Docker internal vs localhost)
+  API_BASE_URL: appConfig.apiUrl.replace('/api/v1', ''),
   NODE_ENV: process.env.NODE_ENV || 'development',
-  DEBUG_AUTH: process.env.NEXT_PUBLIC_DEBUG_AUTH === 'true',
+  DEBUG_AUTH: appConfig.debugAuth,
   // Allow optimistic auth only in development
-  OPTIMISTIC_AUTH: process.env.NODE_ENV === 'development',
+  OPTIMISTIC_AUTH: appConfig.isDevelopment,
 } as const;
 
 // Cookie configuration

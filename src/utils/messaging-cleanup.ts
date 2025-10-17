@@ -10,7 +10,7 @@ import { useUnreadBadgesStore } from "@/stores/unread-badges-store";
 import { clearAllTempMessages } from "@/features/messaging/temp-messages-store";
 import { messageQueue } from "@/services/messageQueue";
 import logger from "@/lib/logger";
-import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
+import { useUnifiedAuth } from "@/lib/auth";
 
 /**
  * Clear all messaging-related state

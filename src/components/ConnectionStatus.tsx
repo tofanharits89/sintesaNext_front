@@ -1,6 +1,6 @@
 "use client";
 
-import { useUnifiedSocket } from "@/hooks/useUnifiedSocket";
+import { useSocket } from "@/hooks/useSocket";
 import { AlertCircle, Wifi, WifiOff, RotateCcw } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { usePathname } from "next/navigation";
@@ -13,7 +13,7 @@ export function ConnectionStatus() {
   // Don't rely on token check - if we're not on login page, assume we should show socket status
   // The useSocket hook will handle the actual authentication
   const shouldUseSocket = !isLoginPage;
-  const { isConnected, connectionState, error, reconnect } = useUnifiedSocket();
+  const { isConnected, connectionState, error, reconnect } = useSocket();
   const [showStatus, setShowStatus] = useState(false);
 
   // Use ref to track timeout and prevent multiple timers

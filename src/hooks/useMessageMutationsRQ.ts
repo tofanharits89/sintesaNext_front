@@ -15,7 +15,7 @@ import {
 } from "@/stores";
 import { useNotificationStore } from "@/stores/notification-store";
 import { getTempMessages } from "@/features/messaging/temp-messages-store";
-import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
+import { useUnifiedAuth } from "@/lib/auth";
 import { useConversationReconciliation } from "./messaging-rq/useConversationReconciliation";
 
 // Types for mutation arguments

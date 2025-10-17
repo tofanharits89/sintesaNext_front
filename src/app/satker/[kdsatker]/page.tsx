@@ -29,7 +29,9 @@ export default function SatkerDetailPage() {
   const { data: satkerData, loading, error } = useSatkerData(kdsatker);
 
   // Check if user has access to this satker
-  const hasAccess = satkerData ? canManageUsers : false; // Simplified RBAC check
+  // For now, allow access if user is authenticated and satker data exists
+  // TODO: Implement proper satker-level access control based on kdkanwil/kdkppn
+  const hasAccess = currentUser && satkerData ? true : false;
 
   if (loading || userLoading) {
     return (
