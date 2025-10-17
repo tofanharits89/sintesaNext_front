@@ -1459,9 +1459,22 @@ export function FilterCard({
         {filterKey !== "cutOff" && (
           <div className="mt-2 space-y-1">
             {filterData.kondisiCode && filterData.kondisiCode.trim() && (
-              <p className="text-xs text-muted-foreground">
-                💡 Contoh: 001,002,003 untuk multiple kode
-              </p>
+              <>
+                {filterKey === "akun" || filterKey === "kodeBkpk" || filterKey === "jenisBelanja" ? (
+                  <p className="text-xs text-muted-foreground">
+                    💡 Partial: 5 (5xxx) atau Exact: 5211 | Exclude: !5 atau !5211
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    💡 Include: 001,002,003 atau Exclude: !001,002,003
+                  </p>
+                )}
+                {(filterData.kondisiCode.startsWith('!') || filterData.kondisiCode.startsWith('-')) && (
+                  <p className="text-xs text-red-600">
+                    🚫 Mode Exclude aktif - data dengan kode ini akan dikecualikan
+                  </p>
+                )}
+              </>
             )}
             {filterData.mengandungKata && filterData.mengandungKata.trim() && (
               <p className="text-xs text-muted-foreground">

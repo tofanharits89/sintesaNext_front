@@ -243,13 +243,11 @@ export function useInquiryQueryBuilder() {
 
       // Helper to build SELECT columns and JOINs for the `register` filter.
       // This preserves the exact ordering and semantics of the previous inline logic.
-      const buildRegisterSelectAndJoins = (
-        params: {
-          jenisTampilan: "kode" | "kode_uraian" | "uraian" | "jangan_tampilkan";
-          includeRefColumns: boolean; // when true, also include ctarik join for uraian and ref table extra columns
-          refAlias?: string; // alias to the register reference table (when includeRefColumns is true)
-        }
-      ) => {
+      const buildRegisterSelectAndJoins = (params: {
+        jenisTampilan: "kode" | "kode_uraian" | "uraian" | "jangan_tampilkan";
+        includeRefColumns: boolean; // when true, also include ctarik join for uraian and ref table extra columns
+        refAlias?: string; // alias to the register reference table (when includeRefColumns is true)
+      }) => {
         const { jenisTampilan, includeRefColumns, refAlias } = params;
 
         // 1) Always include normalized register code first
@@ -275,7 +273,9 @@ export function useInquiryQueryBuilder() {
 
         // 3) Add kdctarik value when not uraian-only
         if (jenisTampilan !== "uraian") {
-          selectColumns.push(`COALESCE(MAX(${detailAlias}.kdctarik), 0) AS kdctarik`);
+          selectColumns.push(
+            `COALESCE(MAX(${detailAlias}.kdctarik), 0) AS kdctarik`
+          );
         }
 
         // 4) If ref columns are included, add ctarik join and extra ref columns
@@ -469,7 +469,9 @@ export function useInquiryQueryBuilder() {
           if (filterKey === "register") {
             buildRegisterSelectAndJoins({
               jenisTampilan,
-              includeRefColumns: Boolean(needsJoinForSelect || needsJoinForWhere),
+              includeRefColumns: Boolean(
+                needsJoinForSelect || needsJoinForWhere
+              ),
               refAlias: `${filterKey}_ref`,
             });
             return; // Skip default handling for this iteration
@@ -488,44 +490,80 @@ export function useInquiryQueryBuilder() {
             switch (jenisTampilan) {
               case "kode":
                 // Special handling for akun filter with different types
-                if (filterKey === "akun" && filterValue?.akunType === "kodeBkpk") {
-                  selectColumns.push(`LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`);
-                } else if (filterKey === "akun" && filterValue?.akunType === "jenisBelanja") {
-                  selectColumns.push(`LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`);
+                if (
+                  filterKey === "akun" &&
+                  filterValue?.akunType === "kodeBkpk"
+                ) {
+                  selectColumns.push(
+                    `LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`
+                  );
+                } else if (
+                  filterKey === "akun" &&
+                  filterValue?.akunType === "jenisBelanja"
+                ) {
+                  selectColumns.push(
+                    `LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`
+                  );
                 }
                 // Special handling for dedicated kodeBkpk and jenisBelanja filters
                 else if (filterKey === "kodeBkpk") {
-                  selectColumns.push(`LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`);
+                  selectColumns.push(
+                    `LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`
+                  );
                 } else if (filterKey === "jenisBelanja") {
-                  selectColumns.push(`LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`);
+                  selectColumns.push(
+                    `LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`
+                  );
                 } else if (filterKey !== "register") {
                   // Only use main table column, no JOIN needed for SELECT (exclude register as it's handled separately)
-                  selectColumns.push(`main.${config.columnName} AS ${filterKey}_kode`);
+                  selectColumns.push(
+                    `main.${config.columnName} AS ${filterKey}_kode`
+                  );
                 }
                 break;
               case "uraian":
                 // Use description from joined table
-                selectColumns.push(`${alias}.${nameColumn} AS ${filterKey}_uraian`);
+                selectColumns.push(
+                  `${alias}.${nameColumn} AS ${filterKey}_uraian`
+                );
                 break;
               case "kode_uraian":
                 // Use both code and description
-                if (filterKey === "akun" && filterValue?.akunType === "kodeBkpk") {
-                  selectColumns.push(`LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`);
-                } else if (filterKey === "akun" && filterValue?.akunType === "jenisBelanja") {
-                  selectColumns.push(`LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`);
+                if (
+                  filterKey === "akun" &&
+                  filterValue?.akunType === "kodeBkpk"
+                ) {
+                  selectColumns.push(
+                    `LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`
+                  );
+                } else if (
+                  filterKey === "akun" &&
+                  filterValue?.akunType === "jenisBelanja"
+                ) {
+                  selectColumns.push(
+                    `LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`
+                  );
                 } else if (filterKey === "kodeBkpk") {
-                  selectColumns.push(`LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`);
+                  selectColumns.push(
+                    `LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`
+                  );
                 } else if (filterKey === "jenisBelanja") {
-                  selectColumns.push(`LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`);
+                  selectColumns.push(
+                    `LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`
+                  );
                 } else {
-                  selectColumns.push(`main.${config.columnName} AS ${filterKey}_kode`);
+                  selectColumns.push(
+                    `main.${config.columnName} AS ${filterKey}_kode`
+                  );
                 }
-                selectColumns.push(`${alias}.${nameColumn} AS ${filterKey}_uraian`);
+                selectColumns.push(
+                  `${alias}.${nameColumn} AS ${filterKey}_uraian`
+                );
                 break;
             }
           } else {
             // No reference table, support optional nameColumn expression for uraian
-            const jenisTampilan = (filterValue?.jenisTampilan) || "kode";
+            const jenisTampilan = filterValue?.jenisTampilan || "kode";
             switch (jenisTampilan) {
               case "kode":
                 selectColumns.push(`main.${config.columnName} AS ${filterKey}`);
@@ -604,9 +642,7 @@ export function useInquiryQueryBuilder() {
         selectColumns.push(
           "CAST(main.tgljatuhtempo_termin AS CHAR) AS tgljatuhtempo_termin"
         );
-        selectColumns.push(
-          "CAST(main.tgljatuhtempo AS CHAR) AS tgljatuhtempo"
-        );
+        selectColumns.push("CAST(main.tgljatuhtempo AS CHAR) AS tgljatuhtempo");
         selectColumns.push("main.deskripsi AS deskripsi");
 
         // Custom aggregates with pembulatan divisor
@@ -630,9 +666,7 @@ export function useInquiryQueryBuilder() {
         selectColumns.push(
           "CAST(main.tgljatuhtempo_termin AS CHAR) AS tgljatuhtempo_termin"
         );
-        selectColumns.push(
-          "CAST(main.tgljatuhtempo AS CHAR) AS tgljatuhtempo"
-        );
+        selectColumns.push("CAST(main.tgljatuhtempo AS CHAR) AS tgljatuhtempo");
         selectColumns.push("main.deskripsi AS deskripsi");
 
         // Custom aggregates with pembulatan divisor
@@ -917,44 +951,121 @@ export function useInquiryQueryBuilder() {
 
         // Handle kondisi (multiple values)
         if (kondisiCode && kondisiCode.trim()) {
-          const values = kondisiCode
+          // Check for exclude prefix (! or -)
+          const isExclude =
+            kondisiCode.startsWith("!") || kondisiCode.startsWith("-");
+          const cleanKondisi = isExclude
+            ? kondisiCode.substring(1)
+            : kondisiCode;
+
+          const values = cleanKondisi
             .split(",")
             .map((v) => v.trim())
             .filter((v) => v);
           if (values.length > 0) {
-            const valuesList = values.map((v) => `'${v}'`).join(", ");
+            // Helper function to build flexible LIKE conditions for partial matching
+            const buildFlexibleCondition = (
+              columnExpr: string,
+              expectedLength: number,
+              values: string[],
+              isExclude: boolean
+            ): string => {
+              const conditions = values.map((v) => {
+                if (v.length < expectedLength) {
+                  // Partial match: use LIKE with wildcard
+                  return `${columnExpr} ${
+                    isExclude ? "NOT LIKE" : "LIKE"
+                  } '${v}%'`;
+                } else {
+                  // Exact match: use equality
+                  return `${columnExpr} ${isExclude ? "<>" : "="} '${v}'`;
+                }
+              });
+
+              // For exclude: use AND (must not match any), for include: use OR (match any)
+              const joinOperator = isExclude ? " AND " : " OR ";
+              return conditions.length > 1
+                ? `(${conditions.join(joinOperator)})`
+                : conditions[0] || "";
+            };
+
             // Special handling for akun filter with different types
             if (filterKey === "akun" && filterValue?.akunType === "kodeBkpk") {
+              // BKPK: 4 digits, support partial matching
               whereConditions.push(
-                `LEFT(main.${config.columnName}, 4) IN (${valuesList})`
+                buildFlexibleCondition(
+                  `LEFT(main.${config.columnName}, 4)`,
+                  4,
+                  values,
+                  isExclude
+                )
               );
             } else if (
               filterKey === "akun" &&
               filterValue?.akunType === "jenisBelanja"
             ) {
+              // Jenis Belanja: 2 digits, support partial matching
               whereConditions.push(
-                `LEFT(main.${config.columnName}, 2) IN (${valuesList})`
+                buildFlexibleCondition(
+                  `LEFT(main.${config.columnName}, 2)`,
+                  2,
+                  values,
+                  isExclude
+                )
+              );
+            } else if (
+              filterKey === "akun" &&
+              filterValue?.akunType === "kodeAkun"
+            ) {
+              // Kode Akun: 6 digits, support partial matching
+              whereConditions.push(
+                buildFlexibleCondition(
+                  `main.${config.columnName}`,
+                  6,
+                  values,
+                  isExclude
+                )
               );
             }
             // Special handling for dedicated kodeBkpk and jenisBelanja filters
             else if (filterKey === "kodeBkpk") {
+              // BKPK: 4 digits, support partial matching
               whereConditions.push(
-                `LEFT(main.${config.columnName}, 4) IN (${valuesList})`
+                buildFlexibleCondition(
+                  `LEFT(main.${config.columnName}, 4)`,
+                  4,
+                  values,
+                  isExclude
+                )
               );
             } else if (filterKey === "jenisBelanja") {
+              // Jenis Belanja: 2 digits, support partial matching
               whereConditions.push(
-                `LEFT(main.${config.columnName}, 2) IN (${valuesList})`
+                buildFlexibleCondition(
+                  `LEFT(main.${config.columnName}, 2)`,
+                  2,
+                  values,
+                  isExclude
+                )
               );
             }
             // Tematik Anggaran: OR-ed LIKEs for multiple kdtema codes
             else if (filterKey === "jenisTemaAnggaran") {
               const likeConds = values
-                .map((v) => `main.${config.columnName} LIKE '%${v}%'`)
-                .join(" OR ");
+                .map(
+                  (v) =>
+                    `main.${config.columnName} ${
+                      isExclude ? "NOT LIKE" : "LIKE"
+                    } '%${v}%'`
+                )
+                .join(isExclude ? " AND " : " OR ");
               whereConditions.push(`(${likeConds})`);
             } else {
+              // Default: use IN/NOT IN for exact matching
+              const valuesList = values.map((v) => `'${v}'`).join(", ");
+              const operator = isExclude ? "NOT IN" : "IN";
               whereConditions.push(
-                `main.${config.columnName} IN (${valuesList})`
+                `main.${config.columnName} ${operator} (${valuesList})`
               );
             }
           }
@@ -1123,7 +1234,10 @@ export function useInquiryQueryBuilder() {
         }
 
         // Special handling for Program Strategis - add uraian column from main table to GROUP BY
-        if (filterKey === "jenisProgramStrategis" && (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian")) {
+        if (
+          filterKey === "jenisProgramStrategis" &&
+          (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian")
+        ) {
           addGroupBy(`main.nmprogis`);
         }
 
@@ -1175,7 +1289,7 @@ export function useInquiryQueryBuilder() {
                 nameColumn = "nmgbkpk";
               }
             }
-            
+
             if (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian") {
               addGroupBy(`${alias}.${nameColumn}`);
             }

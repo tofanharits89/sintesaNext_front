@@ -106,7 +106,7 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
  * Dynamic exclusions for Belanja scope.
  * This preserves the existing logic:
  * - If tipeLaporan === "volume_output_kegiatan": hide akun, sumberDana, register
- * - Else: hide tematik mandatory keys and specified tematik switches
+ * - Else: hide tematik mandatory keys, specified tematik switches, and subOutputRo
  */
 export function getBelanjaDynamicExclusions(
   tipeLaporan?: string,
@@ -114,9 +114,10 @@ export function getBelanjaDynamicExclusions(
   const filtersToExclude: string[] = [];
 
   if (tipeLaporan === "volume_output_kegiatan") {
-    // For tipe 7, hide these filters: akun, sumberDana, register
+    // For tipe 7 (Volume Output Kegiatan), hide these filters: akun, sumberDana, register
     const hideOnTipe7 = ["akun", "sumberDana", "register"];
     filtersToExclude.push(...hideOnTipe7);
+    // subOutputRo is shown only for tipe 7, so don't exclude it here
   } else {
     // For non-tipe 7:
     // 1) Hide all tematik mandatory filters (PN/MP/Inflasi/Stunting/MBG, etc.)
@@ -132,6 +133,9 @@ export function getBelanjaDynamicExclusions(
       "ketahananPangan",
     ];
     filtersToExclude.push(...tematikSwitchesToHide);
+
+    // 3) Hide subOutputRo for all report types except Volume Output Kegiatan (tipe 7)
+    filtersToExclude.push("subOutputRo");
   }
 
   return filtersToExclude;
