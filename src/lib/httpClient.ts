@@ -21,46 +21,50 @@ export function getCookie(name: string): string | null {
   return decodeURIComponent(value.split("=")[1] || "");
 }
 
-// Public helper to proactively fetch CSRF token
-export async function prefetchCsrf(): Promise<void> {
-  await ensureCsrfToken(http);
-}
+// ✅ IMPROVED: Simplified CSRF token management with single-flight pattern
+let csrfToken: string | null = null;
+let csrfFetchPromise: Promise<string> | null = null;
 
-let lastCsrfToken: string | null = null;
+async function getCsrfToken(): Promise<string> {
+  // Return cached token if available
+  if (csrfToken) return csrfToken;
 
-// Force-fetch a fresh CSRF token (useful before critical POSTs like login/refresh)
-export async function refreshCsrf(): Promise<void> {
-  try {
-    // Use same-origin Next API to avoid third-party cookie issues
-    const resp = await fetch(apiPath("/csrf-token"), {
-      credentials: "include",
-      cache: "no-store",
-    });
-    const data = await resp.json().catch(() => ({}));
-    const token = (data as any)?.token;
-    if (token) lastCsrfToken = token as string;
-  } catch (e) {
-    // ignore
-  }
-}
+  // If fetch in progress, wait for it
+  if (csrfFetchPromise) return csrfFetchPromise;
 
-async function ensureCsrfToken(instance: AxiosInstance) {
-  // If no CSRF cookie yet, fetch it from the backend route
-  const xsrfCookie = getCookie("XSRF-TOKEN");
-  if (!xsrfCookie) {
+  // Fetch new token
+  csrfFetchPromise = (async () => {
     try {
-      // Call same-origin proxy which forwards cookies and Set-Cookie
       const resp = await fetch(apiPath("/csrf-token"), {
         credentials: "include",
         cache: "no-store",
       });
-      const data = await resp.json().catch(() => ({}));
-      const token = (data as any)?.token;
-      if (token) lastCsrfToken = token as string;
-    } catch (e) {
-      // ignore, backend will set token on next protected route
+      const data = await resp.json();
+      csrfToken = data.token;
+      return csrfToken!;
+    } finally {
+      csrfFetchPromise = null;
     }
-  }
+  })();
+
+  return csrfFetchPromise;
+}
+
+// Clear CSRF cache on logout
+export function clearCsrfCache() {
+  csrfToken = null;
+  csrfFetchPromise = null;
+}
+
+// Public helper to proactively fetch CSRF token
+export async function prefetchCsrf(): Promise<void> {
+  await getCsrfToken();
+}
+
+// Force-fetch a fresh CSRF token (useful before critical POSTs like login/refresh)
+export async function refreshCsrf(): Promise<void> {
+  clearCsrfCache();
+  await getCsrfToken();
 }
 
 // Create a shared Axios instance
@@ -97,38 +101,25 @@ http.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
       h["Content-Type"] = "application/json";
     }
 
-    // Attach CSRF token for state-changing methods using unified manager
+    // ✅ IMPROVED: Simplified CSRF token attachment
     try {
-      await csrfManager.attachCSRFToken(h);
+      const csrf = await getCsrfToken();
+      h["X-CSRF-Token"] = csrf;
     } catch (error) {
-      console.warn("[CSRF] Failed to attach token:", error);
-      // Fallback to cookie-based approach
-      let csrf = getCookie("XSRF-TOKEN") || lastCsrfToken;
-      if (!csrf) {
-        await ensureCsrfToken(http);
-        csrf = getCookie("XSRF-TOKEN") || lastCsrfToken;
-      }
-      if (csrf) {
-        h["X-CSRF-Token"] = csrf;
+      console.warn("[CSRF] Failed to get token:", error);
+      // Try cookie fallback
+      const cookieCsrf = getCookie("XSRF-TOKEN");
+      if (cookieCsrf) {
+        h["X-CSRF-Token"] = cookieCsrf;
       }
     }
   }
   return config;
 });
 
-// Response interceptor: handle 401 by attempting refresh, then retry once
-let isRefreshing = false;
-let pendingQueue: Array<{ resolve: () => void; reject: (e: any) => void }> = [];
-let lastRefreshFailureAt = 0; // ms epoch
+// ✅ IMPROVED: Simplified token refresh with single-flight pattern
+let refreshPromise: Promise<void> | null = null;
 let isLoggingOut = false; // Flag to prevent requests during logout/redirect
-
-function processQueue(error: any | null) {
-  pendingQueue.forEach(({ resolve, reject }) => {
-    if (error) reject(error);
-    else resolve();
-  });
-  pendingQueue = [];
-}
 
 // Simplified cookie management for HTTP-only only approach
 import { clearNonHttpOnlyCookies } from "./cookieManager";
@@ -143,89 +134,58 @@ if (typeof window !== "undefined") {
   );
 }
 
+// ✅ IMPROVED: Simplified token refresh with single-flight pattern
 async function refreshTokens(): Promise<void> {
-  const refreshTrace = `rf_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
-  console.log("[Auth] 🔄 Starting refresh attempt", { trace: refreshTrace });
-  // Basic cooldown to avoid spam on repeated 401s
-  const now = Date.now();
-  if (now - lastRefreshFailureAt < 3000) {
-    console.warn("[Auth] Skipping refresh due to recent failure cooldown");
-    throw new Error("Refresh cooldown");
+  // If refresh already in progress, wait for it
+  if (refreshPromise) {
+    return refreshPromise;
   }
-  if (isRefreshing) {
-    return new Promise<void>((resolve, reject) => {
-      pendingQueue.push({ resolve, reject });
-    });
-  }
-  isRefreshing = true;
-  console.log("[Auth] 🔄 Attempting to refresh HTTP-only tokens...");
 
-  try {
-    // Proactively ensure we have a CSRF token before hitting refresh endpoint
-    await ensureCsrfToken(http);
-    // Call same-origin Next API which proxies to backend and forwards cookies/CSRF
-    const csrf = getCookie("XSRF-TOKEN") || lastCsrfToken;
-    const resp = await fetch(apiPath("/auth/refresh"), {
-      method: "POST",
-      credentials: "include", // Critical: Include HTTP-only cookies
-      headers: {
-        "Content-Type": "application/json",
-        ...(csrf ? { "X-CSRF-Token": String(csrf) } : {}),
-        "X-Debug-Source": "httpClient.refresh",
-        "X-Debug-Trace": refreshTrace,
-        "X-Debug-Ts": String(Date.now()),
-      },
-      body: JSON.stringify({}), // Backend will use cookies, no body token needed
-    });
+  // Start new refresh
+  refreshPromise = (async () => {
+    try {
+      console.log("[Auth] 🔄 Starting token refresh...");
 
-    console.log(`[Auth] Refresh response status: ${resp.status}`);
+      // Get CSRF token
+      const csrf = await getCsrfToken();
 
-    if (!resp.ok) {
-      // If CSRF failed, try once more after forcing token fetch
-      if (resp.status === 403) {
-        console.log("[Auth] CSRF error, retrying with new token...");
-        await ensureCsrfToken(http);
-        const csrf2 = getCookie("XSRF-TOKEN") || lastCsrfToken;
-        const retry = await fetch(apiPath("/auth/refresh"), {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            ...(csrf2 ? { "X-CSRF-Token": String(csrf2) } : {}),
-            "X-Debug-Source": "httpClient.refresh.retry",
-            "X-Debug-Trace": refreshTrace,
-            "X-Debug-Ts": String(Date.now()),
-          },
-          body: JSON.stringify({}),
-        });
-        console.log(`[Auth] Retry response status: ${retry.status}`);
-        if (!retry.ok) {
-          // Refresh failed - call logout to clear HTTP-only cookies and redirect
-          await handleRefreshFailure(retry.status);
-          throw new Error(`Refresh failed: ${retry.status}`);
-        }
-      } else {
-        // Refresh failed - call logout to clear HTTP-only cookies and redirect
-        await handleRefreshFailure(resp.status);
+      // Call refresh endpoint
+      const resp = await fetch(apiPath("/auth/refresh"), {
+        method: "POST",
+        credentials: "include", // Critical: Include HTTP-only cookies
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrf,
+        },
+        body: JSON.stringify({}),
+      });
+
+      if (!resp.ok) {
         throw new Error(`Refresh failed: ${resp.status}`);
       }
-    }
 
-    console.log("[Auth] ✅ HTTP-only token refresh successful");
-    processQueue(null);
-  } catch (err) {
-    // Clear non-HTTP-only cookies and CSRF cache on any refresh failure
-    console.log("[Auth] ❌ Refresh error caught:", err);
-    clearNonHttpOnlyCookies();
-    csrfManager.clearCache();
-    // CRITICAL: Also clear React Query cache to prevent stale 401 errors
-    clearAuthCacheOnFail();
-    lastRefreshFailureAt = Date.now();
-    processQueue(err);
-    throw err;
-  } finally {
-    isRefreshing = false;
-  }
+      console.log("[Auth] ✅ Token refresh successful");
+    } catch (err) {
+      console.log("[Auth] ❌ Refresh error:", err);
+      
+      // Clear caches on failure
+      clearNonHttpOnlyCookies();
+      clearCsrfCache();
+      clearAuthCacheOnFail();
+      
+      // Handle refresh failure (logout and redirect)
+      await handleRefreshFailure(401);
+      
+      throw err;
+    } finally {
+      // Clear promise after 1 second to allow new refreshes
+      setTimeout(() => {
+        refreshPromise = null;
+      }, 1000);
+    }
+  })();
+
+  return refreshPromise;
 }
 
 /**
@@ -248,7 +208,7 @@ async function handleRefreshFailure(status: number): Promise<void> {
 
   // Clear non-HTTP-only cookies and CSRF cache
   clearNonHttpOnlyCookies();
-  csrfManager.clearCache();
+  clearCsrfCache();
 
   // Call backend logout to clear HTTP-only cookies (only once)
   try {
@@ -294,7 +254,7 @@ http.interceptors.response.use(
       original.url?.includes("/auth/refresh") ||
       original.headers?.["X-Skip-Auth-Refresh"] === "true";
 
-    // CSRF first: handle EBADCSRFTOKEN before other 403 handling
+    // ✅ IMPROVED: Simplified CSRF error handling
     if (
       status === 403 &&
       (error.response?.data as any)?.error?.code === "EBADCSRFTOKEN" &&
@@ -303,7 +263,9 @@ http.interceptors.response.use(
     ) {
       original._retry = true;
       try {
-        await ensureCsrfToken(http);
+        // Clear cache and get fresh token
+        clearCsrfCache();
+        await getCsrfToken();
         return http.request(original);
       } catch (e) {
         return Promise.reject(e);

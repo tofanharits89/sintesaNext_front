@@ -475,23 +475,9 @@ export class SocketClient {
     this.connectionStats.lastActivity = new Date().toISOString();
   }
 
-  /**
-   * Get auth token from cookie
-   */
-  private getAuthTokenFromCookie(): string | null {
-    if (typeof document === "undefined") return null;
-    
-    const cookies = document.cookie.split(";").reduce((acc: any, cookie: string) => {
-      const [key, value] = cookie.trim().split("=");
-      if (key && value) {
-        acc[key] = decodeURIComponent(value);
-      }
-      return acc;
-    }, {});
-    
-    // Try common cookie names (matching backend expectations)
-    return cookies.access_token || cookies.accessToken || cookies.authToken || cookies.auth_token || null;
-  }
+  // ✅ REMOVED: getAuthTokenFromCookie() method
+  // Socket.IO now relies on withCredentials: true to send HTTP-only cookies automatically
+  // No need to manually read cookies (which doesn't work for HTTP-only cookies anyway)
 
   /**
    * Debug logging
