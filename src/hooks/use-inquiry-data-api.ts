@@ -119,7 +119,7 @@ export function useInquiryDataApi() {
         const encryptedQuery = encryptQuery(sqlQuery);
 
         // Send to API using direct backend client with blob response
-        const { data: blob } = await directBackendClient.post(
+        const resp = await directBackendClient.post(
           "/inquiry-data/query",
           {
             encryptedQuery,
@@ -128,6 +128,7 @@ export function useInquiryDataApi() {
           },
           { responseType: "blob" },
         );
+        const blob: Blob = resp instanceof Blob ? resp : new Blob([resp]);
 
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -166,16 +167,31 @@ export function useInquiryDataApi() {
         const sqlQuery = buildQuery(activeFilters, filterValues, reportParams);
         const encryptedQuery = encryptQuery(sqlQuery);
 
-        const { data: result } =
-          await directBackendClient.post<QueryExecutionResult>(
-            "/inquiry-data/query",
-            { encryptedQuery, format: "excel" },
-          );
-        if (!result.success || !result.data) {
-          throw new Error(
-            result.error || "Failed to get data for Excel export",
-          );
+        const blobResp = await directBackendClient.post(
+          "/inquiry-data/query",
+          { encryptedQuery, format: "excel" },
+          { responseType: "blob" },
+        );
+
+        // Try to parse JSON error if backend replied with JSON
+        let isJson = false;
+        try {
+          const text = await (async () => {
+            if (blobResp instanceof Blob) return await blobResp.text();
+            if (blobResp && (blobResp as any).text) return await (blobResp as any).text();
+            return "";
+          })();
+          if (text && text.trim().startsWith("{")) {
+            const maybe = JSON.parse(text);
+            if (maybe && maybe.success === false) {
+              throw new Error(maybe.error || "Failed to get data for Excel export");
+            }
+          }
+        } catch (_) {
+          // not JSON, proceed as binary
         }
+
+        const blob: Blob = blobResp instanceof Blob ? blobResp : new Blob([blobResp]);
 
         const XLSX = await import("xlsx");
         const wb = XLSX.utils.book_new();
@@ -206,17 +222,26 @@ export function useInquiryDataApi() {
           );
         };
 
-        const columns =
-          result.columns && result.columns.length > 0
-            ? result.columns
-            : result.data?.length
-              ? Object.keys(result.data[0])
-              : [];
+        // Attempt to read JSON structure from the blob (columns + data); fallback to CSV parsing
+        let parsed: QueryExecutionResult | null = null;
+        try {
+          const text = await blob.text();
+          if (text && text.trim().startsWith("{")) {
+            parsed = JSON.parse(text);
+          }
+        } catch {}
+
+        const columns = parsed?.columns?.length
+          ? parsed.columns
+          : parsed?.data?.length
+            ? Object.keys(parsed.data[0])
+            : [];
 
         // Build AOA with header first, then rows; coerce monetary cells to numbers
         const aoa: any[][] = [];
         aoa.push(columns);
-        for (const row of result.data || []) {
+        const rows = parsed?.data || [] as any[];
+        for (const row of rows) {
           const arr: any[] = [];
           for (const col of columns) {
             const v = (row as any)[col];
@@ -238,8 +263,7 @@ export function useInquiryDataApi() {
 
         // Apply number format to monetary columns (thousands separator)
         const range = XLSX.utils.decode_range(
-          ws["!ref"] ||
-            `A1:${XLSX.utils.encode_col(columns.length - 1)}${aoa.length}`,
+          ws["!ref"] || (columns.length ? `A1:${XLSX.utils.encode_col(columns.length - 1)}${aoa.length}` : "A1:A1"),
         );
         columns.forEach((col, cIdx) => {
           if (!isMonetary(col)) return;
