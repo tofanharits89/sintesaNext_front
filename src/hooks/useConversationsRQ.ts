@@ -38,33 +38,29 @@ const fetchConversationsPage = async (
   cursor?: string | null,
   limit: number = 20,
 ): Promise<ConversationsPage> => {
-  const url = new URL(
-    apiPath("/messaging/conversations"),
-    window.location.origin,
-  );
-  if (cursor) url.searchParams.set("cursor", String(cursor));
-  if (limit) url.searchParams.set("limit", String(limit));
+  try {
+    // Use axios http client instead of fetch to enable automatic token refresh on 401
+    const response = await http.get(apiPath("/messaging/conversations"), {
+      params: {
+        ...(cursor && { cursor: String(cursor) }),
+        ...(limit && { limit: String(limit) }),
+        _t: Date.now().toString(), // Cache buster
+      },
+    });
 
-  // Add timestamp to bust cache
-  url.searchParams.set("_t", Date.now().toString());
+    const json = response.data as any;
+    const conversations: Conversation[] =
+      json?.data?.conversations || json?.conversations || [];
+    const nextCursor: string | null =
+      json?.data?.nextCursor ?? json?.nextCursor ?? null;
 
-  const resp = await fetch(url.toString(), {
-    credentials: "include",
-    cache: "no-store",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!resp.ok) throw new Error(`Failed to fetch: ${resp.status}`);
-  const json: any = await resp.json().catch(() => ({}));
-
-  const conversations: Conversation[] =
-    json?.data?.conversations || json?.conversations || [];
-  const nextCursor: string | null =
-    json?.data?.nextCursor ?? json?.nextCursor ?? null;
-
-  return { conversations, nextCursor };
+    return { conversations, nextCursor };
+  } catch (error) {
+    console.error("[ConversationsRQ] Fetch error:", error);
+    throw new Error(
+      `Failed to fetch conversations: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 };
 
 export function useConversations(options?: { enabled?: boolean }) {

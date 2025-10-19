@@ -40,6 +40,9 @@ export const BarChart = lazy(() =>
 export const LineChart = lazy(() =>
   import('@/components/ui/line-chart').then(m => ({ default: m.LineChartComponent }))
 );
+export const DonutChart = lazy(() =>
+  import('@/components/ui/donut-chart').then(m => ({ default: m.DonutChartComponent }))
+);
 
 // Modals (Load on demand)
 export const TayangModal = lazy(() => import('@/components/inquiry-data/modals/tayang-modal').then(m => ({ default: m.TayangModal })));

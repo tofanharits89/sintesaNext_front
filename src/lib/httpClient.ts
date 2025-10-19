@@ -211,6 +211,15 @@ async function handleRefreshFailure(status: number): Promise<void> {
   clearNonHttpOnlyCookies();
   clearCsrfCache();
 
+  // Clear Zustand auth store to remove persisted state from localStorage
+  try {
+    const { useAuthSessionStore } = await import("@/stores/session-store");
+    useAuthSessionStore.getState().logout();
+    console.log("[Auth] Zustand auth store cleared");
+  } catch (e) {
+    console.warn("[Auth] Failed to clear Zustand store:", e);
+  }
+
   // Call backend logout to clear HTTP-only cookies (only once)
   try {
     await fetch(apiPath("/auth/logout"), {
@@ -245,9 +254,14 @@ http.interceptors.response.use(
     const original = error.config as AxiosRequestConfig & {
       _retry?: boolean;
       _skipAuthRefresh?: boolean;
-    };
+    } | undefined;
     const status = error.response?.status;
     const data = error.response?.data as any;
+
+    // Guard: if no config, reject immediately
+    if (!original) {
+      return Promise.reject(error);
+    }
 
     // Precompute logout/refresh detection
     const isLogoutOrRefresh =
@@ -354,7 +368,8 @@ http.interceptors.response.use(
     ) {
       original._retry = true;
       try {
-        await ensureCsrfToken(http);
+        clearCsrfCache();
+        await getCsrfToken();
         return http.request(original);
       } catch (e) {
         return Promise.reject(e);
@@ -398,8 +413,6 @@ http.interceptors.response.use(
             src: (original.headers as any)?.["X-Debug-Source"],
           },
         );
-        // Avoid retry storms: set failure time
-        lastRefreshFailureAt = Date.now();
         return Promise.reject(refreshError);
       }
     }
@@ -479,9 +492,14 @@ backendHttp.interceptors.response.use(
     const original = error.config as AxiosRequestConfig & {
       _retry?: boolean;
       _skipAuthRefresh?: boolean;
-    };
+    } | undefined;
     const status = error.response?.status;
     const data = error.response?.data as any;
+
+    // Guard: if no config, reject immediately
+    if (!original) {
+      return Promise.reject(error);
+    }
 
     const isLogoutOrRefresh =
       original.url?.includes("/auth/logout") ||
@@ -549,7 +567,6 @@ backendHttp.interceptors.response.use(
         return backendHttp.request(original);
       } catch (refreshError) {
         console.log("[BackendHttp] Token refresh failed");
-        lastRefreshFailureAt = Date.now();
         return Promise.reject(refreshError);
       }
     }

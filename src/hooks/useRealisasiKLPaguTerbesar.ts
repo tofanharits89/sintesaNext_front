@@ -30,25 +30,20 @@ export function useRealisasiKLPaguTerbesar(
     queryKey: ["realisasi-kl-pagu-terbesar", kanwil],
     queryFn: async () => {
       try {
-        // Build URL with kanwil parameter if provided
+        // Build query parameters
         const params = new URLSearchParams();
         if (kanwil) {
           params.append("kanwil", kanwil);
         }
 
-        const url = new URL(
-          apiPath(
-            `/dashboard/realisasi-kl-pagu-terbesar${
-              params.toString() ? "?" + params.toString() : ""
-            }`,
-          ),
-          window.location.origin,
-        );
+        const endpoint = `/dashboard/realisasi-kl-pagu-terbesar${
+          params.toString() ? "?" + params.toString() : ""
+        }`;
 
         // Use http client which includes auth interceptors and refresh logic
         const { apiClient } = await import("@/lib/httpClient");
         const result: KLPaguTerbesarResponse = await apiClient.get(
-          url.pathname + url.search,
+          endpoint,
         );
 
         if (!result.success) {

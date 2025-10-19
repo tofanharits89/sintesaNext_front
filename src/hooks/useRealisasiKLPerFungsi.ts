@@ -32,25 +32,20 @@ export function useRealisasiKLPerFungsi(
     queryKey: ["realisasi-kl-per-fungsi", kanwil],
     queryFn: async () => {
       try {
-        // Build URL with kanwil parameter if provided
+        // Build query parameters
         const params = new URLSearchParams();
         if (kanwil) {
           params.append("kanwil", kanwil);
         }
 
-        const url = new URL(
-          apiPath(
-            `/dashboard/realisasi-kl-per-fungsi${
-              params.toString() ? "?" + params.toString() : ""
-            }`,
-          ),
-          window.location.origin,
-        );
+        const endpoint = `/dashboard/realisasi-kl-per-fungsi${
+          params.toString() ? "?" + params.toString() : ""
+        }`;
 
         // Use http client which includes auth interceptors and refresh logic
         const { apiClient } = await import("@/lib/httpClient");
         const result: RealisasiKLPerFungsiResponse = await apiClient.get(
-          url.pathname + url.search,
+          endpoint,
         );
 
         if (!result.success) {

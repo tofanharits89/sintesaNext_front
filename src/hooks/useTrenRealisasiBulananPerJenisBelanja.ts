@@ -32,25 +32,20 @@ export function useTrenRealisasiBulananPerJenisBelanja(
     queryKey: ["tren-realisasi-bulanan-per-jenis-belanja", kanwil],
     queryFn: async () => {
       try {
-        // Build URL with kanwil parameter if provided
+        // Build query parameters if provided
         const params = new URLSearchParams();
         if (kanwil) {
           params.append("kanwil", kanwil);
         }
 
-        const url = new URL(
-          apiPath(
-            `/dashboard/tren-realisasi-bulanan-per-jenis-belanja${
-              params.toString() ? "?" + params.toString() : ""
-            }`,
-          ),
-          window.location.origin,
-        );
+        const endpoint = `/dashboard/tren-realisasi-bulanan-per-jenis-belanja${
+          params.toString() ? "?" + params.toString() : ""
+        }`;
 
         // Use http client which includes auth interceptors and refresh logic
         const { apiClient } = await import("@/lib/httpClient");
         const result: TrenRealisasiBulananPerJenisBelanjaResponse =
-          await apiClient.get(url.pathname + url.search);
+          await apiClient.get(endpoint);
 
         if (!result.success) {
           throw new Error(

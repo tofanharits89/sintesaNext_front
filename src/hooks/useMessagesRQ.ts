@@ -20,6 +20,7 @@ import {
 } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { apiPath } from "@/lib/base-path";
+import { http } from "@/lib/httpClient";
 import { useSocket } from "./useSocket";
 import { conversationKeys } from "./useConversationsRQ";
 import { useUnifiedAuth } from "@/lib/auth";
@@ -63,46 +64,34 @@ const fetchMessages = async (
   const { pageParam, queryKey } = context;
   const [, , , conversationId] = queryKey;
 
-  const url = new URL(
-    apiPath(`/messaging/conversations/${conversationId}/messages`),
-    window.location.origin,
-  );
+  try {
+    // Use axios http client instead of fetch to enable automatic token refresh on 401
+    const response = await http.get(
+      apiPath(`/messaging/conversations/${conversationId}/messages`),
+      {
+        params: {
+          limit: String(PAGE_SIZE),
+          pageSize: String(PAGE_SIZE),
+          _t: Date.now().toString(), // Cache buster
+          ...(pageParam && { before: pageParam, cursor: pageParam }),
+        },
+      },
+    );
 
-  url.searchParams.set("limit", String(PAGE_SIZE));
-  url.searchParams.set("pageSize", String(PAGE_SIZE));
-  url.searchParams.set("_t", Date.now().toString()); // Cache buster
+    const json = response.data;
 
-  if (pageParam) {
-    url.searchParams.set("before", pageParam);
-    url.searchParams.set("cursor", pageParam);
-  }
+    // Normalize response using service
+    const normalized = normalizeResponse(json, conversationId);
 
-  const resp = await fetch(url.toString(), {
-    credentials: "include",
-    cache: "no-store",
-  });
-
-  if (!resp.ok) {
-    // For 401 errors, throw to trigger retry logic
-    if (resp.status === 401) {
-      const error: any = new Error("Unauthorized");
-      error.status = 401;
-      throw error;
-    }
-    
+    return normalized;
+  } catch (error) {
+    console.error("[MessagesRQ] Fetch error:", error);
     // For other errors, return empty normalized response
     return {
       messages: [],
       pagination: { limit: PAGE_SIZE, total: 0, nextBefore: null },
     };
   }
-
-  const json = await resp.json().catch(() => ({}));
-
-  // Normalize response using service
-  const normalized = normalizeResponse(json, conversationId);
-
-  return normalized;
 };
 
 export function useMessagesRQ(conversationId?: string) {

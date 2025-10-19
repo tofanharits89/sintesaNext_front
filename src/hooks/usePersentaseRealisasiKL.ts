@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { apiPath } from '@/lib/base-path';
 
 // Check if we're running on the client side
 const isClient = typeof window !== 'undefined';
@@ -21,26 +20,37 @@ export function usePersentaseRealisasiKL(params?: { kanwil?: string; enabled?: b
   return useQuery<PersentaseRealisasiKL[]>({
     queryKey: ['persentase-realisasi-kl', params?.kanwil],
     queryFn: async () => {
-      // Use same-origin Next API proxy so httpOnly cookies (global auth) are forwarded
-      const url = new URL(apiPath('/dashboard/persentase-realisasi-kl'), window.location.origin);
-      if (params?.kanwil) url.searchParams.set('kanwil', params.kanwil);
+      try {
+        // Build query parameters
+        const urlParams = new URLSearchParams();
+        if (params?.kanwil) {
+          urlParams.append('kanwil', params.kanwil);
+        }
 
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-      });
+        const endpoint = `/dashboard/persentase-realisasi-kl${
+          urlParams.toString() ? '?' + urlParams.toString() : ''
+        }`;
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Use http client which includes auth interceptors and refresh logic
+        const { apiClient } = await import('@/lib/httpClient');
+        const result: PersentaseRealisasiKLResponse = await apiClient.get(endpoint);
+
+        if (!result.success) {
+          throw new Error("Failed to fetch persentase realisasi K/L data");
+        }
+
+        return result.data;
+      } catch (error: any) {
+        console.error("Error fetching persentase realisasi K/L:", error);
+        // Handle 401 errors specifically
+        if (
+          error.message?.includes("401") ||
+          error.message?.includes("status: 401")
+        ) {
+          throw new Error("Authentication failed. Please log in to continue.");
+        }
+        throw error;
       }
-
-      const result: PersentaseRealisasiKLResponse = await response.json();
-      if (!result.success) {
-        throw new Error("Failed to fetch persentase realisasi K/L data");
-      }
-
-      return result.data;
     },
     enabled: isClient && (params?.enabled ?? true),
     staleTime: 12 * 60 * 60 * 1000,
