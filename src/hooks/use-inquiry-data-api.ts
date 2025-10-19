@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useInquiryQueryBuilder } from "./use-inquiry-query-builder";
-import { apiClient, http } from "@/lib/httpClient";
+import { apiClient, http, directBackendClient } from "@/lib/httpClient";
 import { apiPath } from "@/lib/base-path";
 
 export interface QueryExecutionResult {
@@ -68,8 +68,8 @@ export function useInquiryDataApi() {
         // Encrypt the query
         const encryptedQuery = encryptQuery(sqlQuery);
 
-        // Send to API via centralized client
-        const result = await apiClient.post<QueryExecutionResult>(
+        // Send to API via direct backend client (bypassing Next.js proxy)
+        const result = await directBackendClient.post<QueryExecutionResult>(
           "/inquiry-data/query",
           {
             encryptedQuery,
@@ -118,9 +118,9 @@ export function useInquiryDataApi() {
         // Encrypt the query
         const encryptedQuery = encryptQuery(sqlQuery);
 
-        // Send to API using axios with blob response
-        const { data: blob } = await http.post(
-          apiPath("/inquiry-data/query"),
+        // Send to API using direct backend client with blob response
+        const { data: blob } = await directBackendClient.post(
+          "/inquiry-data/query",
           {
             encryptedQuery,
             format: "csv",
@@ -166,10 +166,11 @@ export function useInquiryDataApi() {
         const sqlQuery = buildQuery(activeFilters, filterValues, reportParams);
         const encryptedQuery = encryptQuery(sqlQuery);
 
-        const { data: result } = await http.post<QueryExecutionResult>(
-          apiPath("/inquiry-data/query"),
-          { encryptedQuery, format: "excel" },
-        );
+        const { data: result } =
+          await directBackendClient.post<QueryExecutionResult>(
+            "/inquiry-data/query",
+            { encryptedQuery, format: "excel" },
+          );
         if (!result.success || !result.data) {
           throw new Error(
             result.error || "Failed to get data for Excel export",
@@ -288,24 +289,11 @@ export function useInquiryDataApi() {
         // Encrypt the query
         const encryptedQuery = encryptQuery(sqlQuery);
 
-        // Get backend URL for direct call
-        const { BACKEND_BASE_URL } = await import("@/lib/backend");
-        const backendUrl = BACKEND_BASE_URL.replace(/\/api\/v1$/, "");
-
-        // Send directly to backend endpoint (bypassing Next.js API routes)
-        const response = await fetch(
-          `${backendUrl}/api/v1/inquiry-data/query/preview`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include", // Include cookies for authentication
-            body: JSON.stringify({ encryptedQuery }),
-          },
+        // Send directly to backend endpoint using direct backend client
+        const result = await directBackendClient.post<QueryPreviewResult>(
+          "/inquiry-data/query/preview",
+          { encryptedQuery },
         );
-
-        const result = await response.json();
 
         // Note: We don't setLastResult for preview as it's a different result type
         return result;
@@ -328,7 +316,7 @@ export function useInquiryDataApi() {
   // Test API connection
   const testConnection = useCallback(async (): Promise<boolean> => {
     try {
-      const result = await apiClient.get<{ success: boolean }>(
+      const result = await directBackendClient.get<{ success: boolean }>(
         "/inquiry-data/query",
       );
       return !!result.success;
