@@ -294,7 +294,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
     <>
       {/* Full-screen overlay during logout to prevent glimpse of protected content */}
       <LoginLoading isVisible={isLoggingOut} message="Mengeluarkan..." />
-      <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header data-navbar="true" className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-14 items-center gap-3 px-4">
           {/* left: logo */}
           <div className="flex items-center gap-2">

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { ResponsiveSidebar } from "@/components/layout/responsive-sidebar";
 import { useLoginNotifications } from "@/hooks/use-login-notifications";
+import { usePageContext } from "@/contexts/page-context";
 import type { User } from "@/lib/users-store";
 
 const AppShell = memo(function AppShell({
@@ -15,13 +16,64 @@ const AppShell = memo(function AppShell({
   initialUser?: User;
 }) {
   const pathname = usePathname();
+  const { isNotFoundPage } = usePageContext();
+
+  // Define known valid routes
+  const knownRoutes = useMemo(() => [
+    '/login',
+    '/server-error', 
+    '/ip-blocked',
+    '/unauthorized',
+    '/dashboard',
+    '/profile',
+    '/users',
+    '/settings',
+    '/pengaturan',
+    '/notifications',
+    '/messages',
+    '/satker',
+    '/transfer-daerah',
+    '/data-supplier',
+    '/inquiry-data',
+    '/epa',
+    '/makan-bergizi',
+    'tentang-kita',
+    '/debug-cookies',
+    '/debug-user',
+    '/log-user',
+    '/test-rbac',
+    '/test-skeletons'
+  ], []);
+
+  const isLikely404Page = useMemo(() => {
+    if (!pathname) return false;
+    
+    // Check if pathname starts with any known valid route
+    const isKnownRoute = knownRoutes.some(route => 
+      pathname === route || 
+      pathname.startsWith(route + '/') ||
+      pathname.startsWith('/api/') ||
+      pathname.startsWith('/_next/') ||
+      pathname.startsWith('/fonts/') ||
+      pathname.startsWith('/images/')
+    );
+    
+    // Also check for static files and assets
+    const isStaticAsset = pathname.includes('.') || 
+                          pathname.includes('/favicon.ico') ||
+                          pathname.includes('/robots.txt');
+    
+    return !isKnownRoute && !isStaticAsset && !isNotFoundPage;
+  }, [pathname, knownRoutes, isNotFoundPage]);
 
   const isSpecialPage = useMemo(() =>
     pathname?.startsWith("/login") ||
     pathname?.startsWith("/server-error") ||
     pathname?.startsWith("/ip-blocked") ||
-    pathname?.startsWith("/unauthorized"),
-    [pathname]
+    pathname?.startsWith("/unauthorized") ||
+    isNotFoundPage ||
+    isLikely404Page,
+    [pathname, isNotFoundPage, isLikely404Page]
   );
 
   // Initialize login notifications for admin users - always call hooks

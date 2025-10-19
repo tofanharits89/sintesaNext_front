@@ -22,50 +22,21 @@ export function getCookie(name: string): string | null {
   return decodeURIComponent(value.split("=")[1] || "");
 }
 
-// ✅ IMPROVED: Simplified CSRF token management with single-flight pattern
-let csrfToken: string | null = null;
-let csrfFetchPromise: Promise<string> | null = null;
-
+// CSRF token management: delegate to unified csrfManager (no behavior change)
 async function getCsrfToken(): Promise<string> {
-  // Return cached token if available
-  if (csrfToken) return csrfToken;
-
-  // If fetch in progress, wait for it
-  if (csrfFetchPromise) return csrfFetchPromise;
-
-  // Fetch new token
-  csrfFetchPromise = (async () => {
-    try {
-      const resp = await fetch(apiPath("/csrf-token"), {
-        credentials: "include",
-        cache: "no-store",
-      });
-      const data = await resp.json();
-      csrfToken = data.token;
-      return csrfToken!;
-    } finally {
-      csrfFetchPromise = null;
-    }
-  })();
-
-  return csrfFetchPromise;
+  return csrfManager.getCSRFToken();
 }
 
-// Clear CSRF cache on logout
 export function clearCsrfCache() {
-  csrfToken = null;
-  csrfFetchPromise = null;
+  csrfManager.clearCache();
 }
 
-// Public helper to proactively fetch CSRF token
 export async function prefetchCsrf(): Promise<void> {
-  await getCsrfToken();
+  await csrfManager.getCSRFToken();
 }
 
-// Force-fetch a fresh CSRF token (useful before critical POSTs like login/refresh)
 export async function refreshCsrf(): Promise<void> {
-  clearCsrfCache();
-  await getCsrfToken();
+  await csrfManager.refreshToken();
 }
 
 // Create a shared Axios instance
@@ -133,6 +104,14 @@ if (typeof window !== "undefined") {
   console.log(
     "[Auth] Debug: window.__clearNonHttpOnlyCookies() available for manual cleanup",
   );
+}
+
+// Expose a safe reset for the logout guard (used after successful login)
+export function clearLogoutGuard() {
+  isLoggingOut = false;
+  if (typeof window !== "undefined") {
+    (window as any).__isLoggingOut = false;
+  }
 }
 
 // ✅ IMPROVED: Simplified token refresh with single-flight pattern
@@ -269,23 +248,7 @@ http.interceptors.response.use(
       original.url?.includes("/auth/refresh") ||
       original.headers?.["X-Skip-Auth-Refresh"] === "true";
 
-    // ✅ IMPROVED: Simplified CSRF error handling
-    if (
-      status === 403 &&
-      (error.response?.data as any)?.error?.code === "EBADCSRFTOKEN" &&
-      !original._retry &&
-      !isLogoutOrRefresh
-    ) {
-      original._retry = true;
-      try {
-        // Clear cache and get fresh token
-        clearCsrfCache();
-        await getCsrfToken();
-        return http.request(original);
-      } catch (e) {
-        return Promise.reject(e);
-      }
-    }
+    // (EBADCSRFTOKEN handling consolidated below)
 
     // If we're in the process of logging out, reject all requests immediately
     if (isLoggingOut) {

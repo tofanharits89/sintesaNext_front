@@ -62,6 +62,9 @@ const ENV = {
   OPTIMISTIC_AUTH: appConfig.isDevelopment,
 } as const;
 
+// Feature flag: protect-by-default (no behavior change unless enabled)
+const DEFAULT_PROTECT = process.env.NEXT_PUBLIC_DEFAULT_PROTECT === 'true';
+
 // Cookie configuration
 const COOKIE_CONFIG = {
   ACCESS_TOKEN: 'access_token',
@@ -146,6 +149,11 @@ function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
 }
 
+function needsAuth(pathname: string): boolean {
+  if (isPublicRoute(pathname)) return false;
+  return DEFAULT_PROTECT ? true : isProtectedRoute(pathname);
+}
+
 /**
  * Main middleware function - simplified and optimized
  */
@@ -217,8 +225,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Handle protected routes
-  if (isProtectedRoute(pathname)) {
+  // Handle protected routes (default-protect if flag enabled)
+  if (needsAuth(pathname)) {
     const token = extractAccessToken(request);
 
     // No token - redirect to login with return URL

@@ -20,6 +20,7 @@ import { ClientInit } from "@/components/ClientInit";
 import { geistSans, geistMono } from "./fonts";
 import { Suspense } from "react";
 import { ComponentLoadingFallback } from "@/components/ui/loading-fallback";
+import { PageProvider } from "@/contexts/page-context";
 
 export const metadata: Metadata = {
   title: "sintesaNEXT",
@@ -93,11 +94,13 @@ export default async function RootLayout({
                 </ComponentErrorBoundary>
                 <ComponentErrorBoundary>
                   <SessionMonitor />
-                  <AppShell {...(initialUser ? { initialUser } : {})}>
-                    <Suspense fallback={<ComponentLoadingFallback />}>
-                      {children}
-                    </Suspense>
-                  </AppShell>
+                  <PageProvider>
+                    <AppShell {...(initialUser ? { initialUser } : {})}>
+                      <Suspense fallback={<ComponentLoadingFallback />}>
+                        {children}
+                      </Suspense>
+                    </AppShell>
+                  </PageProvider>
                 </ComponentErrorBoundary>
                 <ComponentErrorBoundary>
                   <ConnectionStatus />

@@ -1,11 +1,30 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Home, ArrowLeft } from 'lucide-react';
+import { Home } from 'lucide-react';
+import { usePageContext } from '@/contexts/page-context';
 
 export default function NotFound() {
+  const { setIsNotFoundPage } = usePageContext();
+
+  useEffect(() => {
+    setIsNotFoundPage(true);
+    // Also hide navbar/sidebar immediately with CSS for instant effect
+    const navbar = document.querySelector('[data-navbar="true"]');
+    const sidebar = document.querySelector('[data-sidebar="true"]');
+    
+    if (navbar) (navbar as HTMLElement).style.display = 'none';
+    if (sidebar) (sidebar as HTMLElement).style.display = 'none';
+    
+    return () => {
+      setIsNotFoundPage(false);
+      // Restore navbar/sidebar visibility
+      if (navbar) (navbar as HTMLElement).style.display = '';
+      if (sidebar) (sidebar as HTMLElement).style.display = '';
+    };
+  }, [setIsNotFoundPage]);
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full text-center space-y-6">
@@ -19,16 +38,9 @@ export default function NotFound() {
 
         <div className="space-y-3">
           <Button asChild className="w-full">
-            <Link href="/dashboard">
+            <Link href="/login">
               <Home className="w-4 h-4 mr-2" />
-              Kembali ke Dashboard
-            </Link>
-          </Button>
-
-          <Button variant="outline" asChild className="w-full">
-            <Link href="javascript:history.back()">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Kembali ke Halaman Sebelumnya
+              Halaman Login
             </Link>
           </Button>
         </div>

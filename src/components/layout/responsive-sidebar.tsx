@@ -327,7 +327,7 @@ export function ResponsiveSidebar({
   return (
     <>
       {/* Horizontal menu on lg+ */}
-      <nav className="hidden lg:block sticky top-14 z-30 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <nav data-sidebar="true" className="hidden lg:block sticky top-14 z-30 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div ref={containerRef} className="container mx-auto px-4 relative">
           {/* Left pagination button */}
           {canGoLeft && (

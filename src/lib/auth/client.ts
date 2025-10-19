@@ -5,7 +5,7 @@
  */
 
 import { logger } from "@/lib/utils";
-import { http } from "../httpClient";
+import { http, clearLogoutGuard } from "../httpClient";
 import { apiPath } from "../base-path";
 
 // User interface (matches backend API response)
@@ -85,6 +85,8 @@ export class AuthClient {
       if (response.ok && data.success && data.data) {
         logger.info("Login successful");
         logger.info("[Auth Client] Parsed user data:", data.data.user);
+        // Reset any stale logout guard that could block follow-up requests
+        try { clearLogoutGuard(); } catch {}
         return {
           success: true,
           user: data.data.user,
