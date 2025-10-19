@@ -60,7 +60,7 @@ export const useSocket = (): UseSocketReturn => {
       try {
         syncState();
       } catch (error) {
-        console.error('Error in handleStateChange:', error);
+        // Error in handleStateChange
       }
     };
     
@@ -68,7 +68,7 @@ export const useSocket = (): UseSocketReturn => {
       try {
         setState(prev => ({ ...prev, isConnected: true, connectionState: "connected", error: null }));
       } catch (error) {
-        console.error('Error in handleConnect:', error);
+        // Error in handleConnect
       }
     };
     
@@ -76,7 +76,7 @@ export const useSocket = (): UseSocketReturn => {
       try {
         setState(prev => ({ ...prev, isConnected: false, connectionState: "disconnected" }));
       } catch (error) {
-        console.error('Error in handleDisconnect:', error);
+        // Error in handleDisconnect
       }
     };
 
@@ -93,7 +93,7 @@ export const useSocket = (): UseSocketReturn => {
         window.removeEventListener('socket:state', handleStateChange);
         window.removeEventListener('socket:connected', handleConnect);
       } catch (error) {
-        console.error('Error removing socket event listeners:', error);
+        // Error removing socket event listeners
       }
     };
   }, [isClient, syncState]);
@@ -107,25 +107,19 @@ export const useSocket = (): UseSocketReturn => {
     if (isAuthenticated && currentState !== "connected" && currentState !== "connecting") {
       hasAttemptedConnection.current = true;
       
-      console.log('[useSocket] User authenticated on mount, connecting socket...');
-      
       socketClient.connect()
         .then(() => {
-          console.log('[useSocket] Socket connected successfully on mount');
           syncState();
         })
         .catch((error) => {
-          console.error('[useSocket] Failed to connect socket on mount:', error);
           // Reset flag on error so it can retry
           hasAttemptedConnection.current = false;
           syncState();
         });
     } else if (currentState === "connected") {
-      console.log('[useSocket] Socket already connected on mount');
       hasAttemptedConnection.current = true;
       syncState();
     } else if (currentState === "connecting") {
-      console.log('[useSocket] Socket connection already in progress');
       hasAttemptedConnection.current = true;
     }
   }, [isClient, isAuthenticated, syncState]);
@@ -136,48 +130,40 @@ export const useSocket = (): UseSocketReturn => {
 
     const handleLogin = async () => {
       try {
-        console.log('[useSocket] Login detected, connecting socket...');
-        
         // Mark that we've attempted connection
         hasAttemptedConnection.current = true;
         
         // Connect socket after successful login
         try {
           await socketClient.connect();
-          console.log('[useSocket] Socket connected successfully after login');
         } catch (error) {
-          console.error('[useSocket] Failed to connect socket after login:', error);
+          // Failed to connect socket after login
         }
         
         // Sync state after connection attempt
         syncState();
       } catch (error) {
-        console.error('Error in handleLogin:', error);
+        // Error in handleLogin
       }
     };
 
     const handleLogout = () => {
       try {
-        console.log('[useSocket] Logout detected, disconnecting socket...');
-        
         // Reset connection attempt flag
         hasAttemptedConnection.current = false;
         
         socketClient.disconnect();
         syncState();
       } catch (error) {
-        console.error('Error in handleLogout:', error);
+        // Error in handleLogout
       }
     };
 
     const handleAuthExpired = (event: any) => {
       try {
-        console.log('Auth expired event received:', event);
-        
         // Prevent multiple simultaneous handlers
         if (typeof window !== 'undefined' && 
             ((window as any).__handlingSessionExpired || (window as any).__isLoggingOut)) {
-          console.log('[useSocket] Already handling session expiration, skipping...');
           return;
         }
 
@@ -206,17 +192,16 @@ export const useSocket = (): UseSocketReturn => {
         // to avoid duplicate cleanup
 
       } catch (error) {
-        console.error('Error in handleAuthExpired:', error);
+        // Error in handleAuthExpired
       }
     };
 
     const handleTokenRefresh = (event: any) => {
       try {
-        console.log('Token refresh event received:', event);
         // Sync state after token refresh
         syncState();
       } catch (error) {
-        console.error('Error in handleTokenRefresh:', error);
+        // Error in handleTokenRefresh
       }
     };
 
@@ -240,7 +225,7 @@ export const useSocket = (): UseSocketReturn => {
           clearTimeout(timeoutId);
         }
       } catch (error) {
-        console.error('Error removing auth event listeners:', error);
+        // Error removing auth event listeners
       }
     };
   }, [isClient, syncState]);
@@ -278,7 +263,7 @@ export const useSocket = (): UseSocketReturn => {
         // Just cleanup any component-specific resources
         setState(prev => ({ ...prev, socket: null }));
       } catch (error) {
-        console.error('Error during component cleanup:', error);
+        // Error during component cleanup
       }
     };
   }, []);

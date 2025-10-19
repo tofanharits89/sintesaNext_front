@@ -90,7 +90,6 @@ export const useLoginHistory = (): UseLoginHistoryReturn => {
       if (status === 401) setError("Sesi berakhir. Silakan login kembali.");
       else if (status >= 500) setError("Server bermasalah. Coba lagi nanti.");
       else setError(message);
-      console.error("Error fetching weekly stats:", err);
     } finally {
       setIsLoading(false);
     }
@@ -104,10 +103,6 @@ export const useLoginHistory = (): UseLoginHistoryReturn => {
       endDate?: string,
       userId?: number
     ) => {
-      console.log("[useLoginHistory] Fetching login history with params:", {
-        limit, offset, startDate, endDate, userId
-      });
-
       setIsLoading(true);
       setError(null);
 
@@ -125,10 +120,7 @@ export const useLoginHistory = (): UseLoginHistoryReturn => {
         });
         const result: LoginHistoryResponse = resp.data;
 
-        console.log("[useLoginHistory] API Response:", result);
-
         if (result?.success) {
-          console.log("[useLoginHistory] Login history data:", result.data);
           setLoginHistory(result.data || []);
           setPagination({
             currentPage:
@@ -152,7 +144,6 @@ export const useLoginHistory = (): UseLoginHistoryReturn => {
         if (status === 401) setError("Sesi berakhir. Silakan login kembali.");
         else if (status >= 500) setError("Server bermasalah. Coba lagi nanti.");
         else setError(message);
-        console.error("Error fetching login history:", err);
       } finally {
         setIsLoading(false);
       }

@@ -48,7 +48,6 @@ class CacheEventManager {
    */
   setQueryClient(client: QueryClient): void {
     this.queryClient = client;
-    logger.debug('[CacheEvents] Query client registered');
   }
 
   /**
@@ -64,21 +63,21 @@ class CacheEventManager {
       clearSessionStorage = true,
     } = options;
 
-    logger.info('[CacheEvents] Invalidating auth caches', options);
+    
 
     // Clear React Query cache
     if (clearReactQuery && this.queryClient) {
       this.queryClient.invalidateQueries({ queryKey: ['auth'] });
       this.queryClient.invalidateQueries({ queryKey: ['user'] });
       this.queryClient.removeQueries({ queryKey: ['auth', 'user'] });
-      logger.debug('[CacheEvents] ✅ React Query auth cache cleared');
+      
     }
 
     // Clear Zustand store
     if (clearZustand) {
       const authStore = useAuthSessionStore.getState();
       authStore.reset();
-      logger.debug('[CacheEvents] ✅ Zustand auth store reset');
+      
     }
 
     // Clear localStorage (preserve theme and language if requested)
@@ -102,13 +101,13 @@ class CacheEventManager {
         }
       });
 
-      logger.debug('[CacheEvents] ✅ localStorage cleared (preserved items restored)');
+      
     }
 
     // Clear sessionStorage
     if (clearSessionStorage && typeof window !== 'undefined') {
       sessionStorage.clear();
-      logger.debug('[CacheEvents] ✅ sessionStorage cleared');
+      
     }
 
     this.recordEvent('auth_logout');
@@ -118,7 +117,7 @@ class CacheEventManager {
    * Invalidate user-specific data caches
    */
   invalidateUser(userId?: string): void {
-    logger.info('[CacheEvents] Invalidating user caches', { userId });
+    
 
     if (this.queryClient) {
       if (userId) {
@@ -126,7 +125,7 @@ class CacheEventManager {
       } else {
         this.queryClient.invalidateQueries({ queryKey: ['user'] });
       }
-      logger.debug('[CacheEvents] ✅ User cache invalidated');
+      
     }
 
     this.recordEvent('user_updated');
@@ -136,10 +135,10 @@ class CacheEventManager {
    * Invalidate all data-related queries (dashboard, reports, etc.)
    */
   invalidateDataQueries(): void {
-    logger.info('[CacheEvents] Invalidating data queries');
+    
 
     if (!this.queryClient) {
-      logger.warn('[CacheEvents] No query client available');
+      
       return;
     }
 
@@ -159,7 +158,7 @@ class CacheEventManager {
       this.queryClient!.removeQueries({ queryKey: [key] });
     });
 
-    logger.debug('[CacheEvents] ✅ Data queries cleared');
+    
   }
 
   /**
@@ -171,18 +170,18 @@ class CacheEventManager {
       preserveLanguage = true,
     } = options;
 
-    logger.warn('[CacheEvents] CLEARING ALL CACHES');
+    
 
     // Clear React Query completely
     if (this.queryClient) {
       this.queryClient.clear();
-      logger.debug('[CacheEvents] ✅ All React Query cache cleared');
+      
     }
 
     // Reset Zustand
     const authStore = useAuthSessionStore.getState();
     authStore.reset();
-    logger.debug('[CacheEvents] ✅ Zustand reset');
+    
 
     // Clear localStorage
     if (typeof window !== 'undefined') {
@@ -204,13 +203,13 @@ class CacheEventManager {
         }
       });
 
-      logger.debug('[CacheEvents] ✅ localStorage cleared');
+      
     }
 
     // Clear sessionStorage
     if (typeof window !== 'undefined') {
       sessionStorage.clear();
-      logger.debug('[CacheEvents] ✅ sessionStorage cleared');
+      
     }
 
     this.recordEvent('clear_all');
@@ -220,7 +219,7 @@ class CacheEventManager {
    * Handle token refresh event
    */
   onTokenRefresh(): void {
-    logger.info('[CacheEvents] Token refreshed - no cache invalidation needed');
+    
     this.recordEvent('token_refreshed');
   }
 
@@ -228,7 +227,7 @@ class CacheEventManager {
    * Handle login event
    */
   onLogin(): void {
-    logger.info('[CacheEvents] Login successful - clearing stale caches');
+    
     
     // Clear any stale data from previous sessions
     if (this.queryClient) {
@@ -250,7 +249,7 @@ class CacheEventManager {
    * Handle session expiry event
    */
   onSessionExpired(): void {
-    logger.warn('[CacheEvents] Session expired - clearing all auth caches');
+    
     this.invalidateAuth();
     this.recordEvent('auth_expired');
   }
@@ -283,7 +282,7 @@ class CacheEventManager {
         stats.localStorageSize = Object.keys(localStorage).length;
         stats.sessionStorageSize = Object.keys(sessionStorage).length;
       } catch (error) {
-        logger.warn('[CacheEvents] Failed to get storage stats', error);
+        
       }
     }
 
@@ -311,12 +310,7 @@ class CacheEventManager {
   debugCacheState(): void {
     const stats = this.getCacheStats();
     
-    logger.info('[CacheEvents] Cache State:', {
-      reactQueryQueries: stats.reactQueryCacheSize,
-      localStorageKeys: stats.localStorageSize,
-      sessionStorageKeys: stats.sessionStorageSize,
-      recentEvents: stats.recentEvents,
-    });
+    
 
     // Log React Query cache details
     if (this.queryClient) {
@@ -327,7 +321,7 @@ class CacheEventManager {
         dataUpdatedAt: new Date(q.state.dataUpdatedAt).toISOString(),
       }));
       
-      logger.debug('[CacheEvents] React Query Details:', queryDetails);
+      
     }
 
     // Log localStorage contents
@@ -337,7 +331,7 @@ class CacheEventManager {
         return acc;
       }, {} as Record<string, string>);
       
-      logger.debug('[CacheEvents] localStorage Contents:', localStorageContents);
+      
     }
   }
 }
@@ -357,7 +351,7 @@ export const cacheEvents = new CacheEventManager();
  */
 export function initializeCacheEvents(queryClient: QueryClient): void {
   cacheEvents.setQueryClient(queryClient);
-  logger.info('[CacheEvents] Cache event system initialized');
+  
 }
 
 /**

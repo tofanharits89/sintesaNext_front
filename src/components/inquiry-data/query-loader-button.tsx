@@ -97,20 +97,7 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
     pagination,
   } = useSavedQueries(queryParams);
 
-  // Debug log to see what data the dropdown is getting (development only)
-  React.useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      console.log("🔍 QueryLoaderButton - updated queries:", {
-        scope,
-        queryCount: queries.length,
-        queryNames: queries.map((q) => q.name),
-        queryParams,
-        isLoadingQueries,
-        error,
-        pagination,
-      });
-    }
-  }, [queries, scope, queryParams, isLoadingQueries, error, pagination]);
+  
 
   // Get filtered queries - only process when dropdown is open
   const filteredQueries = useMemo(() => {
@@ -200,7 +187,6 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
     // If we have a pending query load but no loading state, something went wrong
     if (pendingQueryLoad && !isLoading) {
       const timeoutId = setTimeout(() => {
-        console.log("Cleaning up stuck query load state");
         setPendingQueryLoad(null);
         setIsLoading(false);
       }, 5000); // 5 second timeout for stuck states
@@ -213,14 +199,7 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
   // Effect to listen for saved query events and refresh when relevant
   React.useEffect(() => {
     const unsubscribe = savedQueryEvents.subscribe((event) => {
-      console.log("🔍 QueryLoaderButton - received event:", {
-        type: event.type,
-        scope: event.scope,
-        componentScope: scope,
-      });
-
       // Always refresh on any saved query event to show latest data
-      console.log("🔍 QueryLoaderButton - refreshing due to event");
       refetchQueries();
     });
 

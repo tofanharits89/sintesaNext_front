@@ -23,15 +23,7 @@ export function SatkerSearch() {
     const resultsRef = useRef<HTMLDivElement>(null);
     const { results: filteredResults, loading, searchSatker } = useSatkerSearch();
 
-    // Debug: Log when results change
-    useEffect(() => {
-        console.log('[SatkerSearch] Results updated:', {
-            count: filteredResults.length,
-            loading,
-            showResults,
-            results: filteredResults
-        });
-    }, [filteredResults, loading, showResults]);
+    
 
     // Search using API when user types
     useEffect(() => {
@@ -41,7 +33,6 @@ export function SatkerSearch() {
         }
 
         const debounceTimer = setTimeout(() => {
-            console.log('[SatkerSearch] Searching for:', searchValue);
             searchSatker(searchValue);
             setShowResults(true);
             setSelectedIndex(-1);

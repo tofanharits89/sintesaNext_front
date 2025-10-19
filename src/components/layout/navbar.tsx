@@ -266,7 +266,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
           });
           setRecentNotifications(recentNotifs);
         })
-        .catch((e) => console.warn("Failed to fetch notifications:", e));
+        .catch(() => setTotalUnreadNotificationsCount(0));
 
       getUnreadNotificationCount(currentUser.username)
         .then((count) => setTotalUnreadNotificationsCount(count))
@@ -276,22 +276,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
 
   // The old state/effect approach is removed to ensure immediate updates without stale state
 
-  // Debug: Log currentUser data to diagnose the issue
-  useEffect(() => {
-    if (currentUser) {
-      console.log(
-        "[Navbar DEBUG] currentUser data:",
-        JSON.stringify(currentUser, null, 2)
-      );
-      console.log("[Navbar DEBUG] currentUser.name:", currentUser.name);
-      console.log(
-        "[Navbar DEBUG] currentUser.name type:",
-        typeof currentUser.name
-      );
-    } else {
-      console.log("[Navbar DEBUG] currentUser is null/undefined");
-    }
-  }, [currentUser]);
+  
 
   // Generate initials for avatar fallback
   const initials = useMemo(() => {
@@ -677,91 +662,42 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                   }`}
                   onClick={async (e) => {
                     e.preventDefault();
-                    console.log(
-                      "[Logout] ========== LOGOUT CLICKED =========="
-                    );
-                    console.log("[Logout] isLoggingOut:", isLoggingOut);
 
                     if (isLoggingOut) {
-                      console.log(
-                        "[Logout] Already logging out, ignoring click"
-                      );
                       return;
                     }
 
-                    console.log("[Logout] Step 1: Starting logout process");
-                    console.log("[Logout] Current URL:", window.location.href);
-                    console.log("[Logout] Current cookies:", document.cookie);
-
                     // Disconnect socket immediately and prevent reconnection
-                    console.log("[Logout] Step 2: Disconnecting socket");
                     try {
                       socketClient.disconnect();
                       socketClient.cleanup();
-                      console.log("[Logout] Socket disconnected successfully");
                     } catch (error) {
-                      console.error(
-                        "[Logout] Socket disconnect failed:",
-                        error
-                      );
+                      console.error("Socket disconnect failed:", error);
                     }
 
-                    console.log("[Logout] Step 3: Calling logout API");
                     try {
                       await logout();
-                      console.log(
-                        "[Logout] ✅ Logout API completed successfully"
-                      );
                     } catch (error) {
-                      console.error("[Logout] ❌ Logout API error:", error);
+                      console.error("Logout API error:", error);
                     }
-
-                    console.log(
-                      "[Logout] Step 4: Checking cookies after logout"
-                    );
-                    console.log("[Logout] Cookies after API:", document.cookie);
-
-                    console.log("[Logout] Step 5: Attempting redirect");
-                    console.log("[Logout] window.location object:", {
-                      href: window.location.href,
-                      pathname: window.location.pathname,
-                      search: window.location.search,
-                    });
 
                     // Redirect to login page
                     const redirectUrl = "/login?reason=logout&_t=" + Date.now();
-                    console.log("[Logout] Redirect URL:", redirectUrl);
 
                     try {
-                      console.log("[Logout] Calling window.location.replace()");
                       window.location.replace(redirectUrl);
-                      console.log(
-                        "[Logout] ✅ Replace called (if you see this, redirect didn't happen immediately)"
-                      );
                     } catch (error) {
-                      console.error("[Logout] ❌ Replace failed:", error);
+                      console.error("Replace failed:", error);
                     }
 
                     // Fallback
                     setTimeout(() => {
-                      console.log(
-                        "[Logout] ⚠️ Fallback redirect triggered (main redirect didn't work)"
-                      );
-                      console.log(
-                        "[Logout] Current URL:",
-                        window.location.href
-                      );
                       try {
                         window.location.href = "/login";
-                        console.log("[Logout] Fallback href set");
                       } catch (error) {
-                        console.error("[Logout] Fallback failed:", error);
+                        console.error("Fallback failed:", error);
                       }
                     }, 100);
-
-                    console.log(
-                      "[Logout] ========== LOGOUT FUNCTION END =========="
-                    );
                   }}
                 >
                   {isLoggingOut ? (

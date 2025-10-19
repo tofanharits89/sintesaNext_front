@@ -18,7 +18,7 @@ class Logger {
   constructor(config: Partial<LoggerConfig> = {}) {
     this.config = {
       level: process.env.NODE_ENV === "development" ? "debug" : "warn",
-      enableConsole: process.env.NODE_ENV === "development",
+      enableConsole: false, // Disabled console logging
       enableRemote: process.env.NODE_ENV === "production",
       ...config,
     };
@@ -41,25 +41,19 @@ class Logger {
   debug(message: string, context?: any): void {
     if (!this.shouldLog("debug")) return;
 
-    if (this.config.enableConsole) {
-      console.debug(this.formatMessage("debug", message, context));
-    }
+    // Console logging disabled
   }
 
   info(message: string, context?: any): void {
     if (!this.shouldLog("info")) return;
 
-    if (this.config.enableConsole) {
-      console.info(this.formatMessage("info", message, context));
-    }
+    // Console logging disabled
   }
 
   warn(message: string, context?: any): void {
     if (!this.shouldLog("warn")) return;
 
-    if (this.config.enableConsole) {
-      console.warn(this.formatMessage("warn", message, context));
-    }
+    // Console logging disabled
   }
 
   error(message: string, error?: Error | any, context?: any): void {
@@ -77,9 +71,7 @@ class Logger {
           : error,
     };
 
-    if (this.config.enableConsole) {
-      console.error(this.formatMessage("error", message, errorContext));
-    }
+    // Console logging disabled
 
     // Send to remote logging service in production
     if (this.config.enableRemote && this.config.remoteEndpoint) {

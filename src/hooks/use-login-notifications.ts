@@ -51,17 +51,10 @@ export const useLoginNotifications = () => {
     }
 
     if (!socket || !isConnected || !isReady) {
-      console.log("[LoginNotifications] Socket not ready:", {
-        hasSocket: !!socket,
-        isConnected,
-        isReady,
-      });
       return;
     }
 
     const handleUserLogin = (data: LoginEvent) => {
-      console.log("[LoginNotifications] User login event received:", data);
-
       // Don't show notification for own login
       if (data.user.id === currentUser.id) {
         return;
@@ -85,10 +78,7 @@ export const useLoginNotifications = () => {
     };
 
     const handleUserLoginV2 = (response: LoginEventV2) => {
-      console.log("[LoginNotifications] User login v2 event received:", response);
-
       if (!response.success || !response.data) {
-        console.warn("[LoginNotifications] Invalid login event response:", response);
         return;
       }
 
@@ -99,16 +89,10 @@ export const useLoginNotifications = () => {
     socket.on("user:login:v2", handleUserLoginV2);
     socket.on("user:login", handleUserLogin);
 
-    console.log(
-      "[LoginNotifications] Login notification listener registered for admin user:",
-      currentUser.username
-    );
-
     // Cleanup
     return () => {
       socket.off("user:login:v2", handleUserLoginV2);
       socket.off("user:login", handleUserLogin);
-      console.log("[LoginNotifications] Login notification listeners removed");
     };
   }, [isAdmin, isLoginPage, currentUser?.id, socket, isConnected, isReady]);
 };

@@ -54,19 +54,15 @@ export function useSatkerSearch() {
       // Use Next.js basePath-aware API proxy route: /api/satker
       const result = await apiClient.get(`/satker`, { params: { search: searchTerm } });
       
-      console.log('[useSatkerSearch] API response:', result);
-      
       if (result?.success === false) {
         throw new Error(result?.message || "Failed to search satker data");
       }
       
       // Extract data array from response
       const dataArray = result?.data || [];
-      console.log('[useSatkerSearch] Extracted data array:', dataArray);
       
       setResults(Array.isArray(dataArray) ? dataArray : []);
     } catch (err: any) {
-      console.error('[useSatkerSearch] Error:', err);
       const message = err?.response?.data?.message || err?.message || "An error occurred";
       setError(message);
       setResults([]);

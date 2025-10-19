@@ -16,7 +16,6 @@ export function AuthCacheProvider({ children }: { children: React.ReactNode }) {
   // Initialize global query client for auth error handling
   useEffect(() => {
     setGlobalQueryClient(queryClient);
-    console.log('[AuthCacheProvider] ✅ Global query client initialized for auth error handling');
   }, [queryClient]);
 
   return <>{children}</>;

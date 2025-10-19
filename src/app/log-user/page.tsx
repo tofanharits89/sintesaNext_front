@@ -86,18 +86,9 @@ export default function LogUserPage() {
     }
   }, [allowed, fetchLoginHistory]);
 
-  // Debug: Log data changes
+  // Debug: Data state changes
   useEffect(() => {
-    console.log("[LogUser] Data state changed:", {
-      onlineUsersCount: onlineUsers.length,
-      onlineUsers: onlineUsers,
-      isConnected,
-      connectionStatus,
-      loginHistoryCount: loginHistory.length,
-      weeklyStatsCount: weeklyStats.length,
-      isLoadingStats,
-      statsError
-    });
+    // Data state monitoring
   }, [onlineUsers, isConnected, connectionStatus, loginHistory, weeklyStats, isLoadingStats, statsError]);
 
   // Process weekly login data for chart display
@@ -156,7 +147,6 @@ export default function LogUserPage() {
     try {
       const date = new Date(timestamp);
       if (isNaN(date.getTime())) {
-        console.warn(`Invalid timestamp received: ${timestamp}`);
         return "Invalid date";
       }
       return date.toLocaleString("id-ID", {
@@ -168,7 +158,6 @@ export default function LogUserPage() {
         second: "2-digit",
       });
     } catch (error) {
-      console.error(`Error formatting timestamp: ${timestamp}`, error);
       return "Invalid date";
     }
   };
@@ -203,7 +192,6 @@ export default function LogUserPage() {
       const connected = new Date(timestamp);
 
       if (isNaN(connected.getTime())) {
-        console.warn(`Invalid connection timestamp: ${timestamp}`);
         return "Invalid time";
       }
 
@@ -217,7 +205,6 @@ export default function LogUserPage() {
       const diffDays = Math.floor(diffHours / 24);
       return `${diffDays} hari yang lalu`;
     } catch (error) {
-      console.error(`Error formatting connection time: ${timestamp}`, error);
       return "Invalid time";
     }
   };
