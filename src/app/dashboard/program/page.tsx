@@ -113,9 +113,11 @@ export default function DashboardProgramPage() {
 
       {!isLoading && !error && programData && programData.length > 0 && (
         <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {programData.map((program) => (
-            <ProgramCard key={program.id} {...program} year={selectedYear} />
-          ))}
+          {[...programData]
+            .sort((a, b) => String(a.code).localeCompare(String(b.code)))
+            .map((program) => (
+              <ProgramCard key={program.id} {...program} year={selectedYear} />
+            ))}
         </div>
       )}
     </div>

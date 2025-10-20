@@ -67,7 +67,7 @@ export function ProgramCard({
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <CardTitle className="text-sm line-clamp-2">{title}</CardTitle>
+              <CardTitle className="text-base line-clamp-2">{title}</CardTitle>
               <CardDescription className="text-xs">{code}</CardDescription>
             </div>
             <Button
