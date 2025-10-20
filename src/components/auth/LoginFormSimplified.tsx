@@ -16,7 +16,7 @@ import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field";
 import {
   Card,
   CardContent,
@@ -231,85 +231,73 @@ export default function SimplifiedLoginForm() {
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-4"
               >
-                {/* Username */}
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
-                  <Input
-                    id="username"
-                    placeholder="Masukkan username"
-                    {...form.register("username")}
-                    disabled={isSubmitting}
-                  />
-                  {form.formState.errors.username && (
-                    <p className="text-xs text-destructive">
-                      {form.formState.errors.username.message}
-                    </p>
-                  )}
-                </div>
-
-                {/* Password */}
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Masukkan password"
-                    {...form.register("password")}
-                    disabled={isSubmitting}
-                  />
-                  {form.formState.errors.password && (
-                    <p className="text-xs text-destructive">
-                      {form.formState.errors.password.message}
-                    </p>
-                  )}
-                </div>
-
-                {/* Captcha */}
-                <div className="space-y-2">
-                  <Label htmlFor="captcha">Captcha</Label>
-                  <div className="flex items-center gap-2">
+                <FieldGroup>
+                  <Field>
+                    <FieldLabel htmlFor="username">Username</FieldLabel>
                     <Input
-                      id="captcha"
-                      placeholder="4 digit"
-                      maxLength={4}
-                      {...form.register("captcha")}
+                      id="username"
+                      placeholder="Masukkan username"
+                      {...form.register("username")}
                       disabled={isSubmitting}
                     />
-                    <div className="select-none rounded-md border px-3 py-2 text-base tracking-widest font-mono bg-muted">
-                      {expectedCaptcha}
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={refreshCaptcha}
-                      disabled={isSubmitting}
-                    >
-                      ↻
-                    </Button>
-                  </div>
-                  {form.formState.errors.captcha && (
-                    <p className="text-xs text-destructive">
-                      {form.formState.errors.captcha.message}
-                    </p>
-                  )}
-                </div>
+                    <FieldError errors={[form.formState.errors.username]} />
+                  </Field>
 
-                {/* Submit Button */}
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isSubmitting || isRedirecting}
-                >
-                  {isSubmitting || isRedirecting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {isRedirecting ? "Mengalihkan..." : "Memproses..."}
-                    </>
-                  ) : (
-                    "Masuk"
-                  )}
-                </Button>
+                  <Field>
+                    <FieldLabel htmlFor="password">Password</FieldLabel>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Masukkan password"
+                      {...form.register("password")}
+                      disabled={isSubmitting}
+                    />
+                    <FieldError errors={[form.formState.errors.password]} />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="captcha">Captcha</FieldLabel>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="captcha"
+                        placeholder="4 digit"
+                        maxLength={4}
+                        {...form.register("captcha")}
+                        disabled={isSubmitting}
+                      />
+                      <div className="select-none rounded-md border px-3 py-2 text-base tracking-widest font-mono bg-muted">
+                        {expectedCaptcha}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={refreshCaptcha}
+                        disabled={isSubmitting}
+                      >
+                        ↻
+                      </Button>
+                    </div>
+                    <FieldError errors={[form.formState.errors.captcha]} />
+                  </Field>
+
+                  <Field orientation="horizontal">
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={isSubmitting || isRedirecting}
+                    >
+                      {isSubmitting || isRedirecting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          {isRedirecting ? "Mengalihkan..." : "Memproses..."}
+                        </>
+                      ) : (
+                        "Masuk"
+                      )}
+                    </Button>
+                  </Field>
+                </FieldGroup>
               </form>
             </CardContent>
           </Card>

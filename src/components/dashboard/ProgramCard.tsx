@@ -64,7 +64,7 @@ export function ProgramCard({
     <>
       <Card className="flex flex-col overflow-hidden hover:shadow-md transition-shadow">
         {/* Card Header */}
-        <CardHeader className="pb-3">
+        <CardHeader>
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               <CardTitle className="text-base line-clamp-2">{title}</CardTitle>
@@ -83,10 +83,10 @@ export function ProgramCard({
         </CardHeader>
 
       {/* Card Body */}
-      <CardContent className="flex-1 pb-2">
+      <CardContent>
         <div className="flex gap-2">
           {/* Left side: Info */}
-          <div className="flex-1 space-y-1.5 text-xs">
+          <div className="flex-1 space-y-1 text-xs">
             <div>
               <p className="text-muted-foreground text-xs">Pagu</p>
               <p className="font-semibold text-blue-600 text-xs">
@@ -108,10 +108,10 @@ export function ProgramCard({
           </div>
 
           {/* Right side: Donut Chart */}
-          <div className="w-28 h-28 flex-shrink-0 flex items-center justify-center overflow-hidden">
+          <div className="w-24 h-24 flex-shrink-0 flex items-center justify-center overflow-hidden">
             <DonutChartComponent
               data={chartData}
-              height={112}
+              height={96}
               colors={["#10b981", "#ef4444", "#9ca3af"]}
               showLegend={false}
               showLabel={false}
@@ -122,7 +122,7 @@ export function ProgramCard({
       </CardContent>
 
       {/* Card Footer */}
-      <CardFooter className="pt-2 px-6 pb-3">
+      <CardFooter>
         <div className="text-xs text-muted-foreground w-full">
           <p>Sisa: {formatCurrency(Math.max(0, sisa))}</p>
         </div>

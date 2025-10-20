@@ -1274,7 +1274,7 @@ export function FilterCard({
 
   return (
     <Card className="w-full">
-      <CardContent className="p-4">
+      <CardContent>
         {/* Responsive layout: 1 col on mobile, 2 on tablet, 5 on desktop */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-start sm:items-center">
           {/* Column 1: Filter Title with Icon */}

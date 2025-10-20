@@ -35,16 +35,14 @@ export function StatCardSkeleton({ className }: BaseSkeletonProps) {
  */
 export function QuickStatCardSkeleton({ className }: BaseSkeletonProps) {
   return (
-    <Card className={cn("shadow", className)}>
-      <CardContent className="p-3 relative">
-        {/* Trend badge in top-right corner */}
-        <Skeleton className="absolute top-2 right-2 h-5 w-12 rounded-full" />
-        {/* Label */}
-        <Skeleton className="h-3 w-20 mb-1" />
-        {/* Value */}
-        <Skeleton className="h-6 w-16 mt-1" />
-      </CardContent>
-    </Card>
+    <div className={cn("rounded-lg p-3 bg-white dark:bg-neutral-900 shadow border border-gray-200 dark:border-gray-700 relative", className)}>
+      {/* Trend badge in top-right corner */}
+      <Skeleton className="absolute top-2 right-2 h-5 w-12 rounded-full" />
+      {/* Label */}
+      <Skeleton className="h-3 w-20" />
+      {/* Value */}
+      <Skeleton className="h-5 w-16 mt-1" />
+    </div>
   );
 }
 

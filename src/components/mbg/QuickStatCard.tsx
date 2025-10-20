@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
 export function QuickStatCard({
@@ -22,17 +22,15 @@ export function QuickStatCard({
       : "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300";
 
   return (
-    <Card className="shadow">
-      <CardContent className="p-3 relative">
-        {trend && (
-          <Badge variant="secondary" className={`absolute top-2 right-2 text-xs ${badgeClasses}`}>
-            {trend}
-          </Badge>
-        )}
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="mt-1 text-lg font-semibold">{value}</p>
-      </CardContent>
-    </Card>
+    <div className="rounded-lg p-3 bg-white dark:bg-neutral-900 shadow border border-gray-200 dark:border-gray-700 relative">
+      {trend && (
+        <Badge variant="secondary" className={cn("absolute top-2 right-2 text-xs", badgeClasses)}>
+          {trend}
+        </Badge>
+      )}
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="mt-1 text-lg font-semibold">{value}</p>
+    </div>
   );
 }
 
