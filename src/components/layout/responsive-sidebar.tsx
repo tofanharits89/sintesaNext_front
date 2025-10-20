@@ -38,9 +38,10 @@ import {
   TriangleAlert,
   Share2,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { trackMenuUsage } from "@/hooks/use-menu-usage";
+import { useUnifiedAuth } from "@/lib/auth";
 
 import {
   DropdownMenu,
@@ -132,6 +133,21 @@ export function ResponsiveSidebar({
   menu?: MenuItem[];
 }) {
   const [open, setOpen] = useState(false);
+  const { user } = useUnifiedAuth();
+
+  // Filter menu based on user role - only admins can see Data Supplier
+  const filteredMenu = useMemo(() => {
+    if (!user) return menu;
+    
+    const isAdmin = user.role === "super_admin" || user.role === "co_admin";
+    
+    // If not admin, filter out Data Supplier menu
+    if (!isAdmin) {
+      return menu.filter((item) => item.label !== "Data Supplier");
+    }
+    
+    return menu;
+  }, [menu, user]);
 
   // icon resolver for menu labels
   const iconFor = (label: string) => {
@@ -292,7 +308,7 @@ export function ResponsiveSidebar({
       const newItemsPerPage = calculateItemsPerPage();
       setItemsPerPage(newItemsPerPage);
       // Reset to first page if current page would be out of bounds
-      const maxPages = Math.ceil(menu.length / newItemsPerPage);
+      const maxPages = Math.ceil(filteredMenu.length / newItemsPerPage);
       if (currentPage >= maxPages) {
         setCurrentPage(0);
       }
@@ -305,13 +321,13 @@ export function ResponsiveSidebar({
     return () => {
       window.removeEventListener("resize", onResize);
     };
-  }, [menu.length, currentPage]);
+  }, [filteredMenu.length, currentPage]);
 
   // Calculate pagination
-  const totalPages = Math.ceil(menu.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredMenu.length / itemsPerPage);
   const startIndex = currentPage * itemsPerPage;
-  const endIndex = Math.min(startIndex + itemsPerPage, menu.length);
-  const currentPageItems = menu.slice(startIndex, endIndex);
+  const endIndex = Math.min(startIndex + itemsPerPage, filteredMenu.length);
+  const currentPageItems = filteredMenu.slice(startIndex, endIndex);
 
   const canGoLeft = currentPage > 0;
   const canGoRight = currentPage < totalPages - 1;
@@ -803,7 +819,7 @@ export function ResponsiveSidebar({
           <SheetContent side="left" className="p-0">
             <SheetTitle className="sr-only">Menu</SheetTitle>
             <div className="p-2 overflow-y-auto max-h-screen">
-              {menu.map((m) => (
+              {filteredMenu.map((m) => (
                 <div key={m.label} className="border-b">
                   <div className="px-3 py-2 font-medium inline-flex items-center">
                     {iconFor(m.label)}
