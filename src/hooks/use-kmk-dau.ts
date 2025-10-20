@@ -57,14 +57,18 @@ const fetcher = async (url: string) => {
 };
 
 export function useKmkDau(year?: string | number) {
-const url = apiPath(
-    `/transfer-daerah/dau/kmk${year ? `?year=${encodeURIComponent(String(year))}` : ""}`
-  );
   const { data, error, isLoading, refetch } = useQuery<RawKmkDauItem[]>({
     queryKey: ["kmk-dau", year],
-    queryFn: () => fetcher(url),
+    queryFn: () => {
+      // Add timestamp to bust cache
+      const timestamp = Date.now();
+      const url = apiPath(
+        `/transfer-daerah/dau/kmk${year ? `?year=${encodeURIComponent(String(year))}&_t=${timestamp}` : `?_t=${timestamp}`}`
+      );
+      return fetcher(url);
+    },
     refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes - financial data
+    staleTime: 0, // Always consider data stale for immediate refetch after mutations
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
@@ -78,7 +82,7 @@ const url = apiPath(
     jenis: String(r.jenis ?? ""),
     kriteria: (r.nm_kriteria ?? r.kriteria ?? "").toString(),
     fileUrl: (() => {
-      const f = (r.filekmk ?? "").toString();
+      const f = (r.filekmk ?? "").toString().trim(); // Trim whitespace
       if (!f) return "";
       // Absolute URL -> load directly in iframe to avoid backend proxy failures (502)
       // Browsers can usually render cross-origin PDFs in an iframe; if a site blocks framing,
@@ -88,20 +92,17 @@ const url = apiPath(
       }
       // If the path already contains our file-serving route, just prefix with backend
       if (/\/transfer-daerah\/dau\/kmk\/file\//.test(f)) {
-return apiPath(f.startsWith("/") ? f : `/${f}`);
+        return apiPath(f.startsWith("/") ? f : `/${f}`);
       }
-      // If it's just a bare filename, point to the stream route (no .pdf in URL)
+      // If it's just a bare filename, use the file serving route
       if (!f.includes("/")) {
-        const base = f.replace(/\.pdf$/i, "");
-return apiPath(
-          `/transfer-daerah/dau/kmk/file/stream/${encodeURIComponent(base)}`
-        );
+        return apiPath(`/transfer-daerah/dau/kmk/file/${encodeURIComponent(f)}`);
       }
       // Otherwise, treat as relative path
-return apiPath(f.startsWith("/") ? f : `/${f}`);
+      return apiPath(f.startsWith("/") ? f : `/${f}`);
     })(),
     fileName: (() => {
-      const f = (r.filekmk ?? "").toString();
+      const f = (r.filekmk ?? "").toString().trim(); // Trim whitespace
       if (!f) return "";
       try {
         if (/^https?:\/\//i.test(f)) {

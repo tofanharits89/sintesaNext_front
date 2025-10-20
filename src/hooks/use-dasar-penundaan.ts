@@ -6,6 +6,7 @@ import { getAuthTokenFromCookie } from "@/lib/cookieManager";
 
 export interface DasarPenundaanItem {
   no_kmk: string;
+  tgl_kmk?: string | null;
   jenis?: string | number | null;
   kriteria?: string | number | null;
   uraian?: string | null;
@@ -57,5 +58,5 @@ export function useDasarPenundaanOptions(enabled: boolean = true) {
 
   const mutate = refetch; // For backward compatibility
 
-  return { options, isLoading, error, mutate } as const;
+  return { items: data || [], options, isLoading, error, mutate } as const;
 }

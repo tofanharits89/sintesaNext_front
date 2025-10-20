@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +33,7 @@ interface DataKmkTabProps {
 // Data is now fetched from backend via useKmkDau
 
 export function DataKmkTab({}: DataKmkTabProps) {
+  const queryClient = useQueryClient();
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear.toString());
   const [isDataKmkModalOpen, setIsDataKmkModalOpen] = useState(false);
@@ -382,9 +384,14 @@ export function DataKmkTab({}: DataKmkTabProps) {
         open={isDataKmkModalOpen}
         onOpenChange={setIsDataKmkModalOpen}
         initialYear={selectedYear}
-        onCreated={() => {
-          // refresh list after creating new KMK
-          mutate();
+        onCreated={async () => {
+          // Invalidate and refetch KMK DAU list immediately
+          await queryClient.invalidateQueries({ 
+            queryKey: ["kmk-dau", selectedYear],
+            refetchType: 'active'
+          });
+          // Force immediate refetch
+          await mutate();
         }}
       />
       <PencabutanModal
@@ -430,7 +437,12 @@ const resp = await fetch(apiPath(`/transfer-daerah/dau/kmk/${encodeURIComponent(
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             setIsDeleteModalOpen(false);
             setSelectedItem(null);
-            mutate();
+            // Invalidate and refetch
+            await queryClient.invalidateQueries({ 
+              queryKey: ["kmk-dau", selectedYear],
+              refetchType: 'active'
+            });
+            await mutate();
           } catch (e) {
             console.error("Delete failed", e);
             alert(`Gagal menghapus data: ${String((e as any)?.message || e)}`);

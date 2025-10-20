@@ -35,6 +35,7 @@ import jenisKMK from "@/data/jeniskmk_tkd.json";
 import kriteriaKMK from "@/data/jeniskriteria_tkd.json";
 import kppnList from "@/data/kdkppn_tkd.json";
 import { http } from "@/lib/httpClient";
+import { apiPath } from "@/lib/base-path";
 import { useDasarPenundaanOptions } from "@/hooks/use-dasar-penundaan";
 import { useDasarPencabutanOptions } from "@/hooks/use-dasar-pencabutan";
 import { useKppnByNoKmk } from "@/hooks/use-kppn-by-nokmk";
@@ -84,42 +85,66 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
     try {
       setSubmitting(true);
       let data: any;
+      
+      // All jenis types (including 3) go to the same endpoint and insert into ref_kmk_dau
+      const fd = new FormData();
+      fd.append("jenis", formData.jenis);
+      fd.append("kriteria", formData.kriteria);
+      fd.append("thang", formData.tahun);
+      fd.append(
+        "tgl_kmk",
+        formData.tanggalKmk
+          ? `${formData.tanggalKmk.getFullYear()}-${String(formData.tanggalKmk.getMonth() + 1).padStart(2, "0")}-${String(formData.tanggalKmk.getDate()).padStart(2, "0")}`
+          : ""
+      );
+      
+      // For jenis 3, use data from Dasar Penundaan, otherwise use form inputs
       if (formData.jenis === "3") {
-        // Create KMK Pencabutan (Penundaan) row
-        const payload = {
-          no_kmk: formData.dasarPenundaan,
-          thangcabut: formData.tahun,
-          no_kmkcabut: formData.dasarPencabutan,
-          tglcabut: formData.tanggalKmk
-            ? `${formData.tanggalKmk.getFullYear()}-${String(formData.tanggalKmk.getMonth() + 1).padStart(2, "0")}-${String(formData.tanggalKmk.getDate()).padStart(2, "0")}`
-            : "",
-          uraiancabut: formData.uraian,
-          kriteria: formData.kriteria,
-          kdkppn: formData.kppn || undefined,
-          kdpemda: formData.kabkota || undefined,
-        };
-        const resp = await http.post(`/api/transfer-daerah/dau/kmk/penundaan`, payload);
-        data = resp.data;
-      } else {
-        // Build multipart form data for upload (KMK DAU create)
-        const fd = new FormData();
-        fd.append("jenis", formData.jenis);
-        fd.append("kriteria", formData.kriteria);
-        fd.append("thang", formData.tahun);
-        fd.append(
-          "tgl_kmk",
-          formData.tanggalKmk
-            ? `${formData.tanggalKmk.getFullYear()}-${String(formData.tanggalKmk.getMonth() + 1).padStart(2, "0")}-${String(formData.tanggalKmk.getDate()).padStart(2, "0")}`
-            : ""
+        // Find the selected Dasar Penundaan item to get its data
+        const selectedPenundaan = (dasarPenundaanItems || []).find(
+          (it: any) => String(it.no_kmk) === String(formData.dasarPenundaan)
         );
+        
+        console.log("Selected Dasar Penundaan:", selectedPenundaan);
+        console.log("Dasar Penundaan Items:", dasarPenundaanItems);
+        
+        // Override tgl_kmk with the date from selected Dasar Penundaan
+        if (selectedPenundaan?.tgl_kmk) {
+          fd.set("tgl_kmk", String(selectedPenundaan.tgl_kmk));
+        }
+        
+        // Main KMK fields come from Dasar Penundaan (the KMK being cancelled from ref_kmk_dau jenis='2')
+        fd.append("no_kmk", formData.dasarPenundaan); // The penundaan KMK number
+        const uraianValue = selectedPenundaan?.uraian ? String(selectedPenundaan.uraian).trim() : "";
+        console.log("Uraian value:", uraianValue);
+        fd.append("uraian", uraianValue); // Description from penundaan
+        
+        // Jenis 3 specific fields for ref_kmk_dau
+        fd.append("thangcabut", formData.tahun); // Year of cancellation
+        fd.append("no_kmkcabut", formData.dasarPencabutan); // The cancellation KMK number
+        fd.append("tglcabut", formData.tanggalKmk
+          ? `${formData.tanggalKmk.getFullYear()}-${String(formData.tanggalKmk.getMonth() + 1).padStart(2, "0")}-${String(formData.tanggalKmk.getDate()).padStart(2, "0")}`
+          : "");
+        fd.append("uraiancabut", formData.uraian || ""); // User-entered cancellation description
+        fd.append("status_cabut", "1"); // Always 1 for new cancellations
+        
+        if (formData.kppn) {
+          fd.append("kdkppn", formData.kppn);
+        }
+        if (formData.kabkota) {
+          fd.append("kdpemda", formData.kabkota);
+        }
+      } else {
         fd.append("no_kmk", formData.nomorKmk);
         fd.append("uraian", formData.uraian);
-        if (formData.file) {
-          fd.append("file", formData.file);
-        }
-        const resp = await http.post(`/api/transfer-daerah/dau/kmk`, fd);
-        data = resp.data;
       }
+      
+      if (formData.file) {
+        fd.append("file", formData.file);
+      }
+      
+      const resp = await http.post(apiPath(`/transfer-daerah/dau/kmk`), fd);
+      data = resp.data;
       if (data?.success === false) {
         const msg = data?.message || data?.error || "Gagal menyimpan data KMK";
         throw new Error(msg);
@@ -175,8 +200,8 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
     ? kriteriaOptions.filter((k) => k.id === formData.jenis)
     : [];
 
-  // Dasar Penundaan options from backend (tkd25.ref_kmk_dau where jenis='2')
-  const { options: dasarPenundaanOptions, isLoading: dasarPenundaanLoading, error: dasarPenundaanError } =
+  // Dasar Penundaan options from backend (tkd25.ref_kmk_penundaan where jenis='2')
+  const { items: dasarPenundaanItems, options: dasarPenundaanOptions, isLoading: dasarPenundaanLoading, error: dasarPenundaanError } =
     useDasarPenundaanOptions(formData.jenis === "3");
   const {
     items: dasarPencabutanItems,
@@ -303,9 +328,20 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
                   <VirtualizedSelect
                     options={dasarPenundaanOptions}
                     value={formData.dasarPenundaan}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, dasarPenundaan: value, kppn: "", kabkota: "" })
-                    }
+                    onValueChange={(value) => {
+                      // Find the selected item to populate form fields
+                      const selected = (dasarPenundaanItems || []).find(
+                        (it: any) => String(it.no_kmk) === String(value)
+                      );
+                      setFormData({ 
+                        ...formData, 
+                        dasarPenundaan: value, 
+                        kppn: "", 
+                        kabkota: "",
+                        // Keep jenis as "3", only update kriteria from the selected penundaan
+                        kriteria: selected?.kriteria ? String(selected.kriteria).trim() : formData.kriteria,
+                      });
+                    }}
                     placeholder="Pilih dasar penundaan"
                   />
                 ) : (
