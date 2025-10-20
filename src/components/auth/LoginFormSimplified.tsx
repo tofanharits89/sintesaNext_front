@@ -70,15 +70,18 @@ export default function SimplifiedLoginForm() {
     setIsSubmitting(true);
 
     try {
-      // Ensure CSRF token is available
+      // Get CSRF token
       await prefetchCsrf();
+      const { csrfManager } = await import("@/lib/csrfManager");
+      const csrfToken = await csrfManager.getCSRFToken();
 
-      // Call backend API
+      // Call backend API with CSRF token
       const response = await fetch(apiPath("/auth/login"), {
         method: "POST",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
         },
         body: JSON.stringify({
           ...data,
