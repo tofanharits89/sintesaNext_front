@@ -111,8 +111,9 @@ export default function DashboardUtamaPage() {
   const [selectedKanwil, setSelectedKanwil] = useState<string>("semua");
   const [lastRefreshText, setLastRefreshText] = useState<string>("-");
   const [isClient, setIsClient] = useState(false);
-  const { isAuthenticated } = useUnifiedAuth();
-  const queriesEnabled = isAuthenticated; // prevent dashboard queries during login/unauthenticated state
+  const { isAuthenticated, isLoading: isAuthLoading, user } = useUnifiedAuth();
+  // Only enable queries when authenticated AND user profile is loaded (not loading)
+  const queriesEnabled = isAuthenticated && !isAuthLoading && !!user;
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   const {
     data: quickStats,

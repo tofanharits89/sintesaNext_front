@@ -214,7 +214,7 @@ export function isRateLimitError(error: any): error is AxiosError<RateLimitError
   }
   
   // Check for rate limit error messages
-  if (data?.error?.includes('Rate limit') || data?.error?.includes('rate limit')) {
+  if (typeof data?.error === 'string' && (data.error.includes('Rate limit') || data.error.includes('rate limit'))) {
     return true;
   }
   
