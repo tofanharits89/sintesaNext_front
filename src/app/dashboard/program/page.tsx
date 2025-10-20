@@ -2,6 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { ProgramCard } from "@/components/dashboard/ProgramCard";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Sample data for 21 programs
 const samplePrograms = [
@@ -177,6 +184,9 @@ const samplePrograms = [
 
 export default function DashboardProgramPage() {
   const [isClient, setIsClient] = useState(false);
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState<string>(currentYear.toString());
+  const [selectedProgram, setSelectedProgram] = useState<string>("prioritas");
 
   useEffect(() => {
     setIsClient(true);
@@ -197,6 +207,36 @@ export default function DashboardProgramPage() {
           <p className="text-sm text-muted-foreground">
             Ringkasan realisasi per program dengan status Pagu, Realisasi, dan Blokir.
           </p>
+        </div>
+        
+        {/* Filters */}
+        <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-muted-foreground">Jenis Program</label>
+            <Select value={selectedProgram} onValueChange={setSelectedProgram}>
+              <SelectTrigger className="w-[220px]">
+                <SelectValue placeholder="Pilih Jenis Program" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="prioritas">Program Prioritas Presiden</SelectItem>
+                <SelectItem value="strategis">Program Strategis</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-muted-foreground">Tahun</label>
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-[100px]">
+                <SelectValue placeholder="Pilih Tahun" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2023">2023</SelectItem>
+                <SelectItem value="2024">2024</SelectItem>
+                <SelectItem value="2025">2025</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
