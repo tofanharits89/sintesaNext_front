@@ -20,12 +20,6 @@ interface ProgramCardProps {
 }
 
 function formatCurrency(value: number): string {
-  if (value >= 1000000000) {
-    return `Rp ${(value / 1000000000).toFixed(1)}M`;
-  }
-  if (value >= 1000000) {
-    return `Rp ${(value / 1000000).toFixed(1)}K`;
-  }
   return `Rp ${value.toLocaleString("id-ID")}`;
 }
 
@@ -87,6 +81,7 @@ export function ProgramCard({
               colors={["#10b981", "#ef4444", "#9ca3af"]}
               showLegend={false}
               showLabel={false}
+              centerLabel={`${realisasiPercentage}%`}
             />
           </div>
         </div>

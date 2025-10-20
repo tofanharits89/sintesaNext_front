@@ -11,6 +11,7 @@ interface DonutChartProps {
   colors?: string[];
   showLegend?: boolean;
   showLabel?: boolean;
+  centerLabel?: string;
 }
 
 const defaultColors = ["#3b82f6", "#10b981", "#ef4444"];
@@ -21,38 +22,48 @@ export function DonutChartComponent({
   colors = defaultColors,
   showLegend = false,
   showLabel = true,
+  centerLabel,
 }: DonutChartProps) {
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-        <Pie
-          data={data}
-          cx="50%"
-          cy="50%"
-          innerRadius={20}
-          outerRadius={40}
-          paddingAngle={1}
-          dataKey="value"
-          label={showLabel}
-        >
-          {data.map((entry, index) => (
-            <Cell
-              key={`cell-${index}`}
-              fill={colors[index % colors.length]}
-            />
-          ))}
-        </Pie>
-        {showLegend && <Legend />}
-        <Tooltip
-          formatter={(value) => value.toLocaleString("id-ID")}
-          contentStyle={{
-            backgroundColor: "rgba(0, 0, 0, 0.75)",
-            border: "none",
-            borderRadius: "4px",
-            color: "#fff",
-          }}
-        />
-      </PieChart>
-    </ResponsiveContainer>
+    <div className="relative" style={{ width: "100%", height }}>
+      <ResponsiveContainer width="100%" height={height}>
+        <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={20}
+            outerRadius={40}
+            paddingAngle={1}
+            dataKey="value"
+            label={showLabel}
+          >
+            {data.map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={colors[index % colors.length]}
+              />
+            ))}
+          </Pie>
+          {showLegend && <Legend />}
+          <Tooltip
+            formatter={(value) => value.toLocaleString("id-ID")}
+            contentStyle={{
+              backgroundColor: "rgba(0, 0, 0, 0.75)",
+              border: "none",
+              borderRadius: "4px",
+              color: "#fff",
+            }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+      {centerLabel && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span className="text-sm font-semibold text-foreground">
+            {centerLabel}
+          </span>
+        </div>
+      )}
+    </div>
   );
 }
