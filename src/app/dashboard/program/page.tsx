@@ -29,6 +29,16 @@ export default function DashboardProgramPage() {
     enabled: isClient,
   });
 
+  // Debug: log the fetched data
+  useEffect(() => {
+    if (programData) {
+      console.log('Fetched program data:', programData);
+      programData.forEach(p => {
+        console.log(`Program ${p.title}: has ${p.subOutputs?.length || 0} subOutputs`);
+      });
+    }
+  }, [programData]);
+
   if (!isClient) {
     return null;
   }
@@ -104,7 +114,7 @@ export default function DashboardProgramPage() {
       {!isLoading && !error && programData && programData.length > 0 && (
         <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {programData.map((program) => (
-            <ProgramCard key={program.id} {...program} />
+            <ProgramCard key={program.id} {...program} year={selectedYear} />
           ))}
         </div>
       )}

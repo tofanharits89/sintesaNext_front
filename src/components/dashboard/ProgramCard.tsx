@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -8,7 +9,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { DonutChartComponent } from "@/components/ui/donut-chart";
+import { ProgramDetailsModal } from "./ProgramDetailsModal";
+import { Info } from "lucide-react";
+
+interface SubOutputItem {
+  no: number;
+  nmsoutput: string;
+  kdsoutput: string;
+  vol: number;
+  realisasiFisik: number;
+}
 
 interface ProgramCardProps {
   id: string;
@@ -17,6 +29,8 @@ interface ProgramCardProps {
   pagu: number;
   realisasi: number;
   blokir: number;
+  year?: string;
+  subOutputs?: SubOutputItem[];
 }
 
 function formatCurrency(value: number): string {
@@ -30,9 +44,15 @@ export function ProgramCard({
   pagu,
   realisasi,
   blokir,
+  year = new Date().getFullYear().toString(),
+  subOutputs = [],
 }: ProgramCardProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const sisa = pagu - realisasi - blokir;
   const realisasiPercentage = ((realisasi / pagu) * 100).toFixed(1);
+
+  // Debug log
+  console.log(`Program ${title}: ${subOutputs.length} sub-outputs`, subOutputs);
 
   const chartData = [
     { name: "Realisasi", value: realisasi },
@@ -41,12 +61,26 @@ export function ProgramCard({
   ];
 
   return (
-    <Card className="flex flex-col overflow-hidden hover:shadow-md transition-shadow">
-      {/* Card Header */}
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm line-clamp-2">{title}</CardTitle>
-        <CardDescription className="text-xs">{code}</CardDescription>
-      </CardHeader>
+    <>
+      <Card className="flex flex-col overflow-hidden hover:shadow-md transition-shadow">
+        {/* Card Header */}
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-sm line-clamp-2">{title}</CardTitle>
+              <CardDescription className="text-xs">{code}</CardDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 flex-shrink-0"
+              onClick={() => setIsModalOpen(true)}
+              title="Lihat Detail"
+            >
+              <Info className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardHeader>
 
       {/* Card Body */}
       <CardContent className="flex-1 pb-2">
@@ -94,5 +128,13 @@ export function ProgramCard({
         </div>
       </CardFooter>
     </Card>
+
+    <ProgramDetailsModal
+      open={isModalOpen}
+      onOpenChange={setIsModalOpen}
+      programName={title}
+      subOutputs={subOutputs}
+    />
+    </>
   );
 }

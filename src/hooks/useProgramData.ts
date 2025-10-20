@@ -1,6 +1,14 @@
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { apiClient } from "@/lib/httpClient";
 
+export interface SubOutputItem {
+  no: number;
+  nmsoutput: string;
+  kdsoutput: string;
+  vol: number;
+  realisasiFisik: number;
+}
+
 export interface ProgramDataItem {
   id: string;
   title: string;
@@ -9,6 +17,7 @@ export interface ProgramDataItem {
   realisasi: number;
   blokir: number;
   sisaPagu: number;
+  subOutputs: SubOutputItem[];
 }
 
 export interface ProgramDataResponse {
