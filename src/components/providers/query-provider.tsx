@@ -13,8 +13,10 @@ import { cacheInvalidation } from "@/lib/query-configs";
 import { initializeCacheWarming } from "@/lib/cache-warmer";
 import { logger } from "@/lib/utils";
 import { AuthCacheProvider } from "./AuthCacheProvider";
+import { cacheMetrics } from "@/lib/cache-metrics";
 
 // Cache analytics for monitoring performance
+// FIXED: Now forwards all metrics to the global cacheMetrics singleton
 class CacheAnalytics {
   private static instance: CacheAnalytics;
   private metrics = {
@@ -41,6 +43,9 @@ class CacheAnalytics {
       this.metrics.avgResponseTime =
         this.metrics.responseTimeSum / this.metrics.totalQueries;
     }
+    
+    // FIXED: Forward to global cacheMetrics for dashboard
+    cacheMetrics.recordHit('react-query', 'cache-hit');
   }
 
   recordMiss(responseTime?: number) {
@@ -51,11 +56,17 @@ class CacheAnalytics {
       this.metrics.avgResponseTime =
         this.metrics.responseTimeSum / this.metrics.totalQueries;
     }
+    
+    // FIXED: Forward to global cacheMetrics for dashboard
+    cacheMetrics.recordMiss('react-query', 'cache-miss');
   }
 
   recordError() {
     this.metrics.errors++;
     this.metrics.totalQueries++;
+    
+    // FIXED: Forward to global cacheMetrics for dashboard
+    cacheMetrics.recordMiss('react-query', 'error');
   }
 
   getMetrics() {
@@ -79,6 +90,9 @@ class CacheAnalytics {
       avgResponseTime: 0,
       responseTimeSum: 0,
     };
+    
+    // FIXED: Also reset global cacheMetrics
+    cacheMetrics.reset();
   }
 }
 
@@ -128,6 +142,13 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
           const endTime = Date.now();
           const responseTime = startTime ? endTime - startTime : undefined;
           analytics.recordHit(responseTime);
+          
+          // FIXED: Track query performance in global cacheMetrics
+          if (responseTime) {
+            const queryKey = Array.isArray(query.queryKey) ? query.queryKey[0] : 'unknown';
+            const queryType = typeof queryKey === 'string' ? queryKey : 'react-query';
+            cacheMetrics.recordQueryPerformance(queryType, String(query.queryKey), endTime - responseTime);
+          }
         },
         onError: (error, query) => {
           analytics.recordError();

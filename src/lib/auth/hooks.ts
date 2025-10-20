@@ -270,7 +270,51 @@ export function useAuth(): UseAuthReturn {
       clearTimeout(refreshTimerRef.current);
     }
 
-    const refreshInterval = 25 * 60 * 1000; // 25 minutes
+    // CRITICAL FIX: Dynamic refresh interval based on actual token expiry
+    const getRefreshInterval = (): number => {
+      try {
+        // Extract access token from cookie
+        const tokenMatch = document.cookie.match(/access_token=([^;]+)/);
+        if (!tokenMatch || !tokenMatch[1]) {
+          logger.debug("No access token found, using default refresh interval");
+          return 25 * 60 * 1000; // Default 25 min
+        }
+        
+        const token = tokenMatch[1];
+        
+        // Decode JWT payload (without verification - just read expiry)
+        const parts = token.split('.');
+        if (parts.length !== 3 || !parts[1]) {
+          logger.debug("Invalid token format, using default refresh interval");
+          return 25 * 60 * 1000;
+        }
+        
+        const payload = JSON.parse(atob(parts[1]));
+        
+        if (payload.exp) {
+          const expiresAt = payload.exp * 1000; // Convert to milliseconds
+          const now = Date.now();
+          const timeUntilExpiry = expiresAt - now;
+          
+          // Refresh at 50% of token lifetime, minimum 5 minutes
+          const refreshAt = Math.max(timeUntilExpiry * 0.5, 5 * 60 * 1000);
+          
+          logger.debug(
+            `[Auth Refresh] Token expires in ${(timeUntilExpiry / 60000).toFixed(1)} min, ` +
+            `will refresh in ${(refreshAt / 60000).toFixed(1)} min (50% of lifetime)`
+          );
+          
+          return refreshAt;
+        }
+      } catch (error) {
+        logger.warn('Failed to parse token expiry, using default interval:', error);
+      }
+      
+      // Default fallback
+      return 25 * 60 * 1000; // 25 minutes
+    };
+
+    const refreshInterval = getRefreshInterval();
 
     refreshTimerRef.current = setTimeout(async () => {
       if (authState.isAuthenticated && authState.user) {
@@ -284,6 +328,7 @@ export function useAuth(): UseAuthReturn {
             
             crossTabSync.notifyTokenRefresh();
 
+            // Reschedule with new token expiry (dynamic timing)
             startProactiveRefresh();
           } else {
             logger.warn(

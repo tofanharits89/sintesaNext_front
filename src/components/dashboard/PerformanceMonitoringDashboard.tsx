@@ -251,14 +251,8 @@ export function PerformanceMonitoringDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Controls */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Performance Monitoring</h2>
-          <p className="text-muted-foreground">
-            Real-time cache performance and system metrics
-          </p>
-        </div>
         <div className="flex items-center gap-4">
           <Select value={selectedTimeRange} onValueChange={setSelectedTimeRange}>
             <SelectTrigger className="w-24">
