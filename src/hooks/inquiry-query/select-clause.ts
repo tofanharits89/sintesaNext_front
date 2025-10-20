@@ -284,8 +284,12 @@ export function buildSelectClause(
   } else if (reportParams.tipeLaporan === "pagu_dan_blokir") {
     selectColumns.push(`ROUND(SUM(main.pagu) / ${divisor}, 0) AS PAGU`);
     selectColumns.push(`ROUND(SUM(main.blokir) / ${divisor}, 0) AS BLOKIR`);
-  } else {
-    // All other types except excluded ones include PAGU_DIPA
+  } else if (
+    reportParams.tipeLaporan !== "pergerakan_pagu_bulanan" &&
+    reportParams.tipeLaporan !== "pergerakan_blokir_bulanan" &&
+    reportParams.tipeLaporan !== "pergerakan_blokir_bulanan_per_jenis"
+  ) {
+    // Include PAGU_DIPA for tipe laporan 1, 2, 3, and 7 (exclude 4, 5, 6)
     selectColumns.push(`ROUND(SUM(main.pagu) / ${divisor}, 0) AS PAGU_DIPA`);
   }
 

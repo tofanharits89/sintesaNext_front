@@ -427,14 +427,22 @@ export function TayangModal({
     // Default alignment
     return "text-center";
   };
-  // Page name for tematik vs belanja
-  const pageName = scope === "tematik" ? "Tematik" : "Belanja";
+  // Page name based on scope
+  const getPageName = (scope: string): string => {
+    const scopeNames: Record<string, string> = {
+      belanja: "Belanja",
+      tematik: "Tematik",
+      rkakl_detail: "RKAKL Detail",
+      kontrak: "Kontrak",
+      general: "General",
+    };
+    return scopeNames[scope] || "General";
+  };
+
+  const pageName = getPageName(scope);
 
   const handleRefresh = () => {
     fetchData();
-    // Resolve page name for header/description
-    const getPageName = () => (scope === "tematik" ? "Tematik" : "Belanja");
-
     setCurrentPage(1);
     setSearchTerm("");
   };
@@ -516,7 +524,7 @@ export function TayangModal({
               <Table className="w-5 h-5 text-blue-600" />
               <span>
                 Hasil Query {pageName} -{" "}
-                {getTematikKategoriLabel(reportParams.tematikKategori)}
+                {getReportTypeLabel(reportParams.tipeLaporan)}
               </span>
             </span>
             <div className="flex gap-2">
