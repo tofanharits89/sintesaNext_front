@@ -185,7 +185,20 @@ export function TayangModal({
   const grandTotals = useMemo(() => {
     if (!lastResult?.columns) return {};
 
-    // Compute client totals
+    // Prioritize server-provided grand totals (already computed across all data)
+    const serverTotals = lastResult?.grandTotals;
+    if (serverTotals && Object.keys(serverTotals).length > 0) {
+      // Use server totals if available - they're computed across ALL rows, not just current page
+      const hasMeaningfulServerTotal = Object.entries(serverTotals).some(
+        ([key, val]) => isSummableColumn(key) && typeof val === "number" && val > 0
+      );
+      if (hasMeaningfulServerTotal) {
+        return serverTotals;
+      }
+    }
+
+    // Fallback: Compute client totals only if server totals unavailable
+    // Note: This only sums the current page of data, not all data
     const clientTotals: Record<string, number> = {};
     lastResult.columns.forEach((column) => {
       if (!isSummableColumn(column)) return;
@@ -200,15 +213,6 @@ export function TayangModal({
       }, 0);
       clientTotals[column] = sum;
     });
-
-    const serverTotals = lastResult?.grandTotals;
-    if (serverTotals) {
-      // Use server totals only if at least one summable column has a positive number
-      const hasMeaningfulServerTotal = Object.entries(serverTotals).some(
-        ([key, val]) => isSummableColumn(key) && typeof val === "number" && val > 0
-      );
-      if (hasMeaningfulServerTotal) return serverTotals;
-    }
 
     return clientTotals;
   }, [lastResult?.grandTotals, lastResult?.data, lastResult?.columns]);
