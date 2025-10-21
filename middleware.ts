@@ -184,10 +184,18 @@ export async function middleware(request: NextRequest) {
   if (isPublicRoute(pathname)) {
     const token = extractAccessToken(request);
 
+    if (ENV.DEBUG_AUTH) {
+      console.log(`[Middleware] Public route ${pathname}, token present: ${!!token}`);
+    }
+
     // If user has valid token and is on login/register, redirect to dashboard
     // UNLESS they're being redirected due to session expiration (to prevent loops)
     if (token && (pathname === "/login" || pathname === "/register")) {
       const reason = request.nextUrl.searchParams.get("reason");
+
+      if (ENV.DEBUG_AUTH) {
+        console.log(`[Middleware] Token found on login/register page, reason: ${reason || 'none'}`);
+      }
 
       // Don't auto-redirect if user was just logged out due to session expiration
       if (reason === "session_expired" || reason === "logged_in_elsewhere") {
@@ -197,7 +205,51 @@ export async function middleware(request: NextRequest) {
         return NextResponse.next();
       }
 
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      // Validate token before redirecting away from login
+      const cacheKey = hashKey(token);
+      const cached = getAuthCache(cacheKey);
+      
+      if (cached) {
+        // Use cached validation result
+        if (ENV.DEBUG_AUTH) {
+          console.log(`[Middleware] Using cached validation for login redirect: valid=${cached.valid}`);
+        }
+        if (cached.valid) {
+          if (ENV.DEBUG_AUTH) {
+            console.log("[Middleware] Redirecting to dashboard (cached valid session)");
+          }
+          return NextResponse.redirect(new URL("/dashboard", request.url));
+        }
+        // Invalid cached session - allow access to login page
+        if (ENV.DEBUG_AUTH) {
+          console.log("[Middleware] Allowing login page access (cached invalid session)");
+        }
+        return NextResponse.next();
+      }
+
+      // No cache - validate with server
+      if (ENV.DEBUG_AUTH) {
+        console.log("[Middleware] No cache found, validating with server...");
+      }
+      const validation = await validateServerSession(token);
+      setAuthCache(cacheKey, { valid: validation.valid, user: validation.user });
+      
+      if (ENV.DEBUG_AUTH) {
+        console.log(`[Middleware] Server validation result: valid=${validation.valid}, error=${validation.error}`);
+      }
+      
+      if (validation.valid) {
+        if (ENV.DEBUG_AUTH) {
+          console.log("[Middleware] Redirecting to dashboard (server validated session)");
+        }
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
+      
+      // Invalid session - allow access to login page
+      if (ENV.DEBUG_AUTH) {
+        console.log("[Middleware] Allowing login page access (server validation failed)");
+      }
+      return NextResponse.next();
     }
 
     // If visiting login while IP is blocked, redirect to /ip-blocked instead of showing server-error

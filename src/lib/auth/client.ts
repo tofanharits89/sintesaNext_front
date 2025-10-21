@@ -112,11 +112,27 @@ export class AuthClient {
    */
   async logout(): Promise<{ success: boolean; error?: string }> {
     try {
+      // Get CSRF token from cookie for logout request
+      const getCookie = (name: string): string | null => {
+        if (typeof document === 'undefined') return null;
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+        return null;
+      };
+      
+      const csrfToken = getCookie('XSRF-TOKEN');
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      
+      if (csrfToken) {
+        headers["X-CSRF-Token"] = csrfToken;
+      }
+
       const response = await fetch(`${this.baseURL}/auth/logout`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         credentials: "include",
       });
 
