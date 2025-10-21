@@ -194,6 +194,9 @@ export class SocketClient {
       this.reconnectAttempts = 0;
       this.debugLog("Connected to socket server");
 
+      // Ensure any queued event listeners are bound after connect (id available)
+      this.applyQueuedListeners();
+
       // Send handshake request
       this.socket!.emit(SOCKET_EVENTS.HANDSHAKE_REQUEST, {
         timestamp: Date.now(),

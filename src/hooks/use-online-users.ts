@@ -47,7 +47,7 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
     }
   }, [connectionState]);
 
-  // Handler for users:online event
+  // Handler for users:online event (full list)
   const handleUsersOnline = useCallback(
     (
       response:
@@ -59,7 +59,6 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
         | OnlineUser[]
     ) => {
       try {
-        // Handle legacy format (direct array)
         if (Array.isArray(response)) {
           const usersWithTimestamp = response.map((user) => ({
             ...user,
@@ -69,27 +68,20 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
           return;
         }
 
-        if (!response || typeof response !== "object") {
-          setOnlineUsers([]);
-          return;
-        }
+        if (!response || typeof response !== "object") return;
+        if (!response.success) return;
 
-        if (!response.success) {
-          setOnlineUsers([]);
-          return;
-        }
-
-        // Handle new format: { success, data: { users } }
         let users: OnlineUser[] = [];
         if (
           response.data &&
           typeof response.data === "object" &&
           "users" in response.data
         ) {
-          users = Array.isArray(response.data.users) ? response.data.users : [];
-        } else if (Array.isArray(response.data)) {
-          // Handle old format: { success, data: OnlineUser[] }
-          users = response.data;
+          users = Array.isArray((response.data as any).users)
+            ? (response.data as any).users
+            : [];
+        } else if (Array.isArray((response as any).data)) {
+          users = (response as any).data as OnlineUser[];
         }
 
         const usersWithTimestamp = users.map((user) => ({
@@ -97,17 +89,48 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
           connectedAt: user.connectedAt || new Date().toISOString(),
         }));
         setOnlineUsers(usersWithTimestamp);
-      } catch (err) {
-        setOnlineUsers([]);
-      }
+      } catch {}
     },
     []
   );
+
+  // Incremental add on user:online (fallback to avoid race with refresh)
+  const handleUserOnlinePush = useCallback((payload: any) => {
+    try {
+      const u = payload?.user || payload;
+      if (!u || !u.id) return;
+      setOnlineUsers((prev) => {
+        if (prev.some((p) => p?.user?.id === String(u.id))) return prev;
+        const item: OnlineUser = {
+          socketId: payload?.socketId || `sock-${u.id}-${Date.now()}`,
+          user: {
+            id: String(u.id),
+            username: u.username || "",
+            name: u.name || u.username || "",
+            role: u.role || "",
+          },
+          connectedAt: payload?.connectedAt || new Date().toISOString(),
+          loginAt: payload?.loginAt || new Date().toISOString(),
+          location: payload?.location || null,
+        };
+        return [item, ...prev];
+      });
+    } catch {}
+  }, []);
+
+  const refreshOnPresenceEvent = useCallback(() => {
+    try {
+      emit("users:get-online");
+    } catch (err) {
+      // Failed to refresh on presence event
+    }
+  }, [emit]);
 
   // Subscribe to users:online and request initial list when connected
   useEffect(() => {
     // Register listeners (support both legacy and v2 events)
     on("users:online", handleUsersOnline);
+    on("user:online", handleUserOnlinePush);
     on("users:online:v2", handleUsersOnline);
 
     // If connected, request initial users
@@ -115,13 +138,7 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
       try {
         emit("users:get-online");
         // Also refresh list when we hear any user presence signals
-        const refreshOnPresenceEvent = () => {
-          try {
-            emit("users:get-online");
-          } catch (err) {
-            // Failed to refresh on presence event
-          }
-        };
+        on("user:online", refreshOnPresenceEvent);
         on("user:login", refreshOnPresenceEvent);
         on("user:offline", refreshOnPresenceEvent);
         on("user:logout", refreshOnPresenceEvent);
@@ -135,12 +152,13 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
     return () => {
       off("users:online", handleUsersOnline);
       off("users:online:v2", handleUsersOnline);
-      off("user:login");
-      off("user:offline");
-      off("user:logout");
+      off("user:online", refreshOnPresenceEvent);
+      off("user:login", refreshOnPresenceEvent);
+      off("user:offline", refreshOnPresenceEvent);
+      off("user:logout", refreshOnPresenceEvent);
       off("users:updated", handleUsersOnline);
     };
-  }, [isConnected, on, off, emit, handleUsersOnline]);
+  }, [isConnected, on, off, emit, handleUsersOnline, refreshOnPresenceEvent]);
 
   const refreshUsers = useCallback(() => {
     if (isConnected) {

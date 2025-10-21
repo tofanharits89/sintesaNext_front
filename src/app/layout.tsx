@@ -6,6 +6,7 @@ import AppShell from "@/components/layout/app-shell";
 import { ConnectionStatus } from "@/components/ConnectionStatus";
 import CheckBackend from "@/components/CheckBackend";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { AdminPresenceListener } from "@/components/AdminPresenceListener";
 
 import { ErrorBoundary, ComponentErrorBoundary } from "@/lib/error-boundary";
 import { withBasePath, apiPath } from "@/lib/base-path";
@@ -86,6 +87,9 @@ export default async function RootLayout({
               defaultTheme="system"
               enableSystem
             >
+                <ComponentErrorBoundary>
+                  <AdminPresenceListener />
+                </ComponentErrorBoundary>
                 <ComponentErrorBoundary>
                   <MessagingAuthListener />
                 </ComponentErrorBoundary>
