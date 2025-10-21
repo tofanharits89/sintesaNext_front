@@ -145,20 +145,7 @@ export function DataKmkTab({}: DataKmkTabProps) {
       ),
       cell: ({ row }: any) => {
         const jenisCode = row.getValue("jenis");
-        const getJenisDescription = (code: string) => {
-          switch (code) {
-            case "1":
-              return "Potongan SPM";
-            case "2":
-              return "Penundaan";
-            case "3":
-              return "Cabut Penundaan";
-            case "4":
-              return "Potongan ADD";
-            default:
-              return `Kode ${code}`;
-          }
-        };
+        const nmjenis = row.original?.nmjenis || "";
         const getJenisBadgeClasses = (code: string) => {
           // Soft red for Potongan (1,4), soft blue for Penundaan/Cabut (2,3)
           if (code === "1" || code === "4") {
@@ -166,15 +153,16 @@ export function DataKmkTab({}: DataKmkTabProps) {
           }
           return "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800";
         };
+        const displayText = nmjenis ? nmjenis : `Kode ${jenisCode}`;
         return (
           <div className="flex justify-center">
             <Badge
               variant="outline"
               className={getJenisBadgeClasses(jenisCode)}
-              title={`Kode ${jenisCode} - ${getJenisDescription(jenisCode)}`}
+              title={displayText}
             >
               <span className="truncate">
-                {jenisCode} - {getJenisDescription(jenisCode)}
+                {displayText}
               </span>
             </Badge>
           </div>
@@ -225,77 +213,64 @@ export function DataKmkTab({}: DataKmkTabProps) {
       header: ({ column }: any) => (
         <div className="text-center font-medium">Data</div>
       ),
-      cell: ({ row }: any) => (
-        <div className="flex items-center justify-center gap-2">
-          {/* Data Pemotongan (jenis 1 atau 4) */}
-          {(() => {
-            const jenis = String(row.original?.jenis ?? "");
-            if (jenis === "1" || jenis === "4") {
-              return (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
-                  onClick={() => {
-                    setSelectedItem(row.original);
-                    setIsDataPemotonganModalOpen(true);
-                  }}
-                  title="Data Pemotongan"
-                >
-                  <Scissors className="h-4 w-4" />
-                </Button>
-              );
-            }
-            return null;
-          })()}
+      cell: ({ row }: any) => {
+        // Get jenis from the jenis column - same as Kriteria column does
+        const jenis = String(row.original?.jenis ?? "");
+        
+        return (
+          <div className="flex items-center justify-center gap-2">
+            {/* Data Pemotongan (jenis 1 atau 4) */}
+            {(jenis === "1" || jenis === "4") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
+                onClick={() => {
+                  setSelectedItem(row.original);
+                  setIsDataPemotonganModalOpen(true);
+                }}
+                title="Data Pemotongan"
+              >
+                <Scissors className="h-4 w-4" />
+              </Button>
+            )}
 
-          {/* Data Penundaan (jenis 2 atau 3) */}
-          {(() => {
-            const jenis = String(row.original?.jenis ?? "");
-            if (jenis === "2" || jenis === "3") {
-              return (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800"
-                  onClick={() => {
-                    setSelectedItem(row.original);
-                    setIsDataPenundaanModalOpen(true);
-                  }}
-                  title="Data Penundaan"
-                >
-                  <PauseCircle className="h-4 w-4" />
-                </Button>
-              );
-            }
-            return null;
-          })()}
+            {/* Data Penundaan (jenis 2 atau 3) */}
+            {(jenis === "2" || jenis === "3") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800"
+                onClick={() => {
+                  setSelectedItem(row.original);
+                  setIsDataPenundaanModalOpen(true);
+                }}
+                title="Data Penundaan"
+              >
+                <PauseCircle className="h-4 w-4" />
+              </Button>
+            )}
 
-          {/* Data Pencabutan (hanya untuk jenis = 2) */}
-          {(() => {
-            const jenis = String(row.original?.jenis ?? "");
-            if (jenis === "2") {
-              return (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800"
-                  onClick={() => {
-                    setSelectedNoKmkForPencabutan(
-                      row.original?.nomorKmk || row.original?.no_kmk || row.getValue?.("nomorKmk")
-                    );
-                    setIsDataPencabutanModalOpen(true);
-                  }}
-                  title="Data Pencabutan"
-                >
-                  <Undo2 className="h-4 w-4" />
-                </Button>
-              );
-            }
-            return null;
-          })()}
-        </div>
-      ),
+            {/* Data Pencabutan (hanya untuk jenis = 2) */}
+            {jenis === "2" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800"
+                onClick={() => {
+                  setSelectedNoKmkForPencabutan(
+                    row.original?.nomorKmk || row.original?.no_kmk || row.getValue?.("nomorKmk")
+                  );
+                  setIsDataPencabutanModalOpen(true);
+                }}
+                title="Data Pencabutan"
+              >
+                <Undo2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        );
+      },
     },
     {
       id: "actions",

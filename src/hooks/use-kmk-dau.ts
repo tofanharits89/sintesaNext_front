@@ -28,6 +28,7 @@ export interface KmkRow {
   nomorKmk: string;
   uraian: string;
   jenis: string; // code as string (e.g., "1", "2")
+  nmjenis: string; // name from backend
   kriteria: string; // human readable
   fileUrl: string;
   fileName: string;
@@ -79,7 +80,8 @@ export function useKmkDau(year?: string | number) {
     tanggalKmk: r.tgl_kmk ?? "",
     nomorKmk: r.no_kmk ?? "",
     uraian: r.uraian ?? "",
-    jenis: String(r.jenis ?? ""),
+    jenis: String(r.jenis ?? "").trim(),
+    nmjenis: (r.nmjenis ?? "").toString().trim(),
     kriteria: (r.nm_kriteria ?? r.kriteria ?? "").toString(),
     fileUrl: (() => {
       const f = (r.filekmk ?? "").toString().trim(); // Trim whitespace
