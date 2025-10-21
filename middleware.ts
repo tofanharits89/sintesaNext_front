@@ -82,29 +82,50 @@ const COOKIE_CONFIG = {
  * Extract access token from HttpOnly cookie
  */
 function extractAccessToken(request: NextRequest): string | null {
-  return request.cookies.get(COOKIE_CONFIG.ACCESS_TOKEN)?.value || null;
+  // Prefer canonical name
+  const primary = request.cookies.get(COOKIE_CONFIG.ACCESS_TOKEN)?.value;
+  if (primary) return primary;
+  // Fallbacks for legacy cookie names to be resilient across envs
+  const candidates = [
+    "accessToken",
+    "auth_token",
+    "authToken",
+    "token",
+    "ACCESS_TOKEN",
+    "AccessToken",
+  ];
+  for (const name of candidates) {
+    const v = request.cookies.get(name)?.value;
+    if (v) return v;
+  }
+  return null;
 }
 
 /**
  * Server-side session validation with proper token verification
  */
-async function validateServerSession(accessToken: string): Promise<{ valid: boolean; user?: any; error?: string; ipBlocked?: boolean; ipParams?: { duration: string; blockedAt: string; reason: string } }> {
+async function validateServerSession(accessToken: string, request: NextRequest): Promise<{ valid: boolean; user?: any; error?: string; ipBlocked?: boolean; ipParams?: { duration: string; blockedAt: string; reason: string } }> {
   try {
-    const response = await fetch(`${ENV.API_BASE_URL}/api/v1/auth/validate?include=user`, {
+    // Prefer internal Next API proxy to avoid cross-origin cookie nuances
+    const validateUrl = new URL('/api/auth/validate?include=user', request.url);
+    const cookieHeader = request.headers.get("cookie") || `${COOKIE_CONFIG.ACCESS_TOKEN}=${accessToken}`;
+    const response = await fetch(validateUrl, {
       method: "GET",
       headers: {
-        "Cookie": `${COOKIE_CONFIG.ACCESS_TOKEN}=${accessToken}`,
+        // Forward full cookie header to preserve refresh token etc.
+        cookie: cookieHeader,
         "Content-Type": "application/json",
       },
+      credentials: "include",
       cache: "no-store",
     });
 
     if (response.ok) {
       const data = await response.json();
-      return { 
-        valid: data.success && data.data?.valid, 
+      return {
+        valid: data.success && data.data?.valid,
         user: data.data?.user,
-        error: !data.success ? data.error : undefined
+        error: !data.success ? data.error : undefined,
       };
     } else if (response.status === 403) {
       // Check for IP block and prepare redirect params
@@ -112,7 +133,7 @@ async function validateServerSession(accessToken: string): Promise<{ valid: bool
         const data = await response.json();
         const res = detectIpBlock(data);
         if (res.ipBlocked && res.params) {
-          return { valid: false, error: 'IP_BLOCKED', ipBlocked: true, ipParams: res.params };
+          return { valid: false, error: "IP_BLOCKED", ipBlocked: true, ipParams: res.params };
         }
       } catch {}
       return { valid: false, error: "Forbidden" };
@@ -122,15 +143,12 @@ async function validateServerSession(accessToken: string): Promise<{ valid: bool
     }
   } catch (error) {
     // Network error during validation - fail closed in production
-    if (ENV.DEBUG_AUTH) {
-      console.log("[Middleware] Server validation error:", error);
-    }
-    
+
     // In production, fail closed. In development, allow optimistic for convenience
     if (ENV.OPTIMISTIC_AUTH) {
       return { valid: true, error: "Network error (dev mode)" };
     }
-    
+
     return { valid: false, error: "Authentication service unavailable" };
   }
 }
@@ -160,10 +178,6 @@ function needsAuth(pathname: string): boolean {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Debug logging in development
-  if (ENV.DEBUG_AUTH) {
-    console.log(`[Middleware] Processing: ${pathname}`);
-  }
 
   // Skip middleware for API routes, static assets, and Next.js internals
   if (
@@ -184,71 +198,26 @@ export async function middleware(request: NextRequest) {
   if (isPublicRoute(pathname)) {
     const token = extractAccessToken(request);
 
-    if (ENV.DEBUG_AUTH) {
-      console.log(`[Middleware] Public route ${pathname}, token present: ${!!token}`);
-    }
-
-    // If user has valid token and is on login/register, redirect to dashboard
-    // UNLESS they're being redirected due to session expiration (to prevent loops)
+  
+    // If user has a token and visits login/register, validate first
     if (token && (pathname === "/login" || pathname === "/register")) {
-      const reason = request.nextUrl.searchParams.get("reason");
-
-      if (ENV.DEBUG_AUTH) {
-        console.log(`[Middleware] Token found on login/register page, reason: ${reason || 'none'}`);
-      }
-
-      // Don't auto-redirect if user was just logged out due to session expiration
-      if (reason === "session_expired" || reason === "logged_in_elsewhere") {
-        if (ENV.DEBUG_AUTH) {
-          console.log("[Middleware] Skipping auto-redirect due to session expiration");
-        }
-        return NextResponse.next();
-      }
-
-      // Validate token before redirecting away from login
       const cacheKey = hashKey(token);
       const cached = getAuthCache(cacheKey);
-      
+
       if (cached) {
-        // Use cached validation result
-        if (ENV.DEBUG_AUTH) {
-          console.log(`[Middleware] Using cached validation for login redirect: valid=${cached.valid}`);
-        }
         if (cached.valid) {
-          if (ENV.DEBUG_AUTH) {
-            console.log("[Middleware] Redirecting to dashboard (cached valid session)");
-          }
-          return NextResponse.redirect(new URL("/dashboard", request.url));
-        }
-        // Invalid cached session - allow access to login page
-        if (ENV.DEBUG_AUTH) {
-          console.log("[Middleware] Allowing login page access (cached invalid session)");
+          return NextResponse.redirect(new URL("/dashboard/utama", request.url));
         }
         return NextResponse.next();
       }
 
-      // No cache - validate with server
-      if (ENV.DEBUG_AUTH) {
-        console.log("[Middleware] No cache found, validating with server...");
-      }
-      const validation = await validateServerSession(token);
+      const validation = await validateServerSession(token, request);
       setAuthCache(cacheKey, { valid: validation.valid, user: validation.user });
-      
-      if (ENV.DEBUG_AUTH) {
-        console.log(`[Middleware] Server validation result: valid=${validation.valid}, error=${validation.error}`);
-      }
-      
+
       if (validation.valid) {
-        if (ENV.DEBUG_AUTH) {
-          console.log("[Middleware] Redirecting to dashboard (server validated session)");
-        }
-        return NextResponse.redirect(new URL("/dashboard", request.url));
+        return NextResponse.redirect(new URL("/dashboard/utama", request.url));
       }
-      
-      // Invalid session - allow access to login page
-      if (ENV.DEBUG_AUTH) {
-        console.log("[Middleware] Allowing login page access (server validation failed)");
-      }
+
       return NextResponse.next();
     }
 
@@ -285,11 +254,6 @@ export async function middleware(request: NextRequest) {
     if (!token) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("returnTo", pathname);
-      
-      if (ENV.DEBUG_AUTH) {
-        console.log(`[Middleware] Redirecting to login: ${pathname} -> /login`);
-      }
-      
       return NextResponse.redirect(loginUrl);
     }
 
@@ -301,19 +265,13 @@ export async function middleware(request: NextRequest) {
         const loginUrl = new URL("/login", request.url);
         loginUrl.searchParams.set("returnTo", pathname);
         loginUrl.searchParams.set("reason", "session_expired");
-        if (ENV.DEBUG_AUTH) {
-          console.log(`[Middleware] Cached invalid session, redirecting: ${pathname} -> /login`);
-        }
         return NextResponse.redirect(loginUrl);
-      }
-      if (ENV.DEBUG_AUTH) {
-        console.log(`[Middleware] Cached valid session for: ${pathname}`);
       }
       return NextResponse.next();
     }
 
     // Token exists - server-side validation with fallback to optimistic
-    const validation = await validateServerSession(token);
+    const validation = await validateServerSession(token, request);
     // Store validation result in short-lived cache
     setAuthCache(cacheKey, { valid: validation.valid, user: validation.user });
     
@@ -330,18 +288,9 @@ export async function middleware(request: NextRequest) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("returnTo", pathname);
       loginUrl.searchParams.set("reason", "session_expired");
-      
-      if (ENV.DEBUG_AUTH) {
-        console.log(`[Middleware] Session invalid, redirecting to login: ${pathname} -> /login (reason: ${validation.error})`);
-      }
-      
       return NextResponse.redirect(loginUrl);
     }
-    
-    if (ENV.DEBUG_AUTH) {
-      console.log(`[Middleware] Access granted to: ${pathname} (validation: ${validation.error || 'server'}/'optimistic')`);
-    }
-    
+
     return NextResponse.next();
   }
 

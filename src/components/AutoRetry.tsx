@@ -16,7 +16,7 @@ export default function AutoRetry() {
           clearTimeout(timeout);
           if (res.ok) {
             // Backend is up again, go to dashboard
-            window.location.href = withBasePath("/dashboard");
+            window.location.href = withBasePath("/dashboard/utama");
           }
         })
         .catch(() => {

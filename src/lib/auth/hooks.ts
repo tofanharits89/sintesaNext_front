@@ -276,7 +276,7 @@ export function useAuth(): UseAuthReturn {
         // Extract access token from cookie
         const tokenMatch = document.cookie.match(/access_token=([^;]+)/);
         if (!tokenMatch || !tokenMatch[1]) {
-          logger.debug("No access token found, using default refresh interval");
+          logger.debug("HttpOnly access token not readable from document.cookie; using default refresh interval");
           return 25 * 60 * 1000; // Default 25 min
         }
         

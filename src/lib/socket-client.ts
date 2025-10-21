@@ -64,6 +64,11 @@ export class SocketClient {
       reconnectionDelayMax: clientConfig.reconnectionDelayMax ?? 10000,
       timeout: clientConfig.timeout ?? 15000,
     };
+
+    if (this.config.debug) {
+      // Helpful runtime hint to verify URL/path used by the client
+      console.log('[SocketClient] Using URL:', this.config.url, 'path:', this.config.path);
+    }
   }
 
   /**

@@ -18,7 +18,7 @@ export default async function Home() {
     });
     const data = await resp.json().catch(() => ({}));
     if (data?.success) {
-      redirect("/dashboard");
+      redirect("/dashboard/utama");
     }
   } catch {
     // ignore

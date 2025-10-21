@@ -12,7 +12,7 @@ export function RetryActions() {
           fetch(apiPath("/health"), { cache: "no-store" })
             .then((res) => {
               if (res.ok) {
-                window.location.href = withBasePath("/dashboard");
+                window.location.href = withBasePath("/dashboard/utama");
               } else {
                 window.location.reload();
               }

@@ -9,10 +9,21 @@ export async function GET(request: NextRequest) {
   const cookie = request.headers.get("cookie") || "";
   const includeParam = request.nextUrl?.searchParams?.get("include");
 
+  if (process.env.NEXT_PUBLIC_DEBUG_AUTH === 'true') {
+    const namesOnly = cookie
+      .split(';')
+      .map((c) => c.trim().split('=')[0])
+      .filter(Boolean);
+    console.log('[API /auth/validate] Cookie names:', namesOnly);
+  }
+
   // If no auth cookies at all, short-circuit with 401 to avoid stale cache usage
   const hasAccess = cookie.includes("access_token=") || cookie.includes("accessToken=");
   const hasRefresh = cookie.includes("refresh_token=") || cookie.includes("refreshToken=");
   if (!hasAccess && !hasRefresh) {
+    if (process.env.NEXT_PUBLIC_DEBUG_AUTH === 'true') {
+      console.log('[API /auth/validate] Short-circuit 401: no auth cookies detected');
+    }
     return NextResponse.json(
       { success: false, error: "No authentication cookies" },
       {

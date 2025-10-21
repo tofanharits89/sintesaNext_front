@@ -76,7 +76,8 @@ export default function SimplifiedLoginForm() {
       const csrfToken = await csrfManager.getCSRFToken();
 
       // Call backend API with CSRF token
-      const response = await fetch(apiPath("/auth/login"), {
+      // Use internal Next API to ensure dev-friendly cookie forwarding and consistent origin
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         credentials: "include",
         headers: {
