@@ -49,7 +49,16 @@ function getSocketUrl(): string {
 
   if (typeof window !== 'undefined') {
     try {
-      const { protocol, hostname } = window.location;
+      const { protocol, hostname, port } = window.location;
+      
+      // In production with nginx, we're on port 443 (HTTPS) or 80 (HTTP)
+      // Socket.IO should connect to the same origin (nginx will proxy to backend)
+      if (process.env.NODE_ENV === 'production') {
+        // Use same origin as the page (works for both domain and IP)
+        return `${protocol}//${hostname}${port && port !== '80' && port !== '443' ? ':' + port : ''}`;
+      }
+      
+      // Development: connect to backend port
       const backendPort = (process.env.NEXT_PUBLIC_BACKEND_PORT || '88').trim();
       return `${protocol}//${hostname}:${backendPort}`;
     } catch {
