@@ -8,6 +8,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -42,9 +43,18 @@ type FormData = z.infer<typeof schema>;
 
 export default function SimplifiedLoginForm() {
   const router = useRouter();
+  const { user, isLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [captchaSeed, setCaptchaSeed] = useState("");
+
+  // Client-side redirect if already authenticated
+  useEffect(() => {
+    if (!isLoading && user) {
+      setIsRedirecting(true);
+      router.push("/dashboard/utama");
+    }
+  }, [user, isLoading, router]);
 
   // Initialize captcha on client side
   useEffect(() => {

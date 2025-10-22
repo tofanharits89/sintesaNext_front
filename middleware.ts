@@ -197,7 +197,6 @@ export async function middleware(request: NextRequest) {
   // Handle public routes
   if (isPublicRoute(pathname)) {
     const token = extractAccessToken(request);
-
   
     // If user has a token and visits login/register, validate first
     if (token && (pathname === "/login" || pathname === "/register")) {

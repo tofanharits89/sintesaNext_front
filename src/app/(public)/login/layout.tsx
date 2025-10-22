@@ -10,43 +10,54 @@ export default async function LoginLayout({
 }) {
   // Defense-in-depth: If middleware is skipped for any reason,
   // verify session server-side and redirect authenticated users.
-  const c = await cookies();
-  const cookiePairs = c.getAll().map(({ name, value }) => `${name}=${value}`);
-  const cookieHeader = cookiePairs.join("; ");
-
+  // 
+  // NOTE: In production Docker, server-side validation doesn't work because:
+  // - Cookies are set for the browser domain (sintesa-dev.kemenkeu.go.id)
+  // - Next.js server fetch to backend (http://backend:88) is a different origin
+  // - Cookies won't be forwarded in server-to-server requests
+  // 
+  // Solution: Only validate in development, rely on middleware in production
+  
   if (process.env.NODE_ENV !== 'production') {
-    console.log('[LoginLayout] Cookie names:', c.getAll().map(({name})=>name));
-  }
+    const c = await cookies();
+    const cookiePairs = c.getAll().map(({ name, value }) => `${name}=${value}`);
+    const cookieHeader = cookiePairs.join("; ");
 
-  const hasAnyAuthCookie = /(?:^|;\s*)(access_token|accessToken|auth_token|authToken|token)=/.test(cookieHeader);
-  if (hasAnyAuthCookie) {
-    try {
-      const h = await headers();
-      const proto = h.get('x-forwarded-proto') || 'http';
-      const host = h.get('host') || 'localhost:3000';
-      const absUrl = `${proto}://${host}/api/auth/validate?include=user`;
-      const resp = await fetch(absUrl, {
-        method: "GET",
-        headers: { ...(cookieHeader ? { cookie: cookieHeader } : {}) },
-        credentials: "include",
-        cache: "no-store",
-      });
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('[LoginLayout] /api/auth/validate status:', resp.status);
-      }
-      const data = await resp.json().catch(() => ({}));
-      if (resp.ok && data?.success && data?.data?.valid) {
-        redirect("/dashboard/utama");
-      }
-    } catch (e: any) {
-      // Let Next.js complete the redirect (redirect() throws to signal navigation)
-      if (e && typeof e === 'object' && 'digest' in e && String(e.digest).startsWith('NEXT_REDIRECT')) {
-        throw e;
-      }
-      if (process.env.NODE_ENV !== 'production') {
+    console.log('[LoginLayout] Cookie names:', c.getAll().map(({name})=>name));
+
+    const hasAnyAuthCookie = /(?:^|;\s*)(access_token|accessToken|auth_token|authToken|token)=/.test(cookieHeader);
+    if (hasAnyAuthCookie) {
+      try {
+        // Use server-side API URL (works in dev)
+        const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:88/api/v1';
+        const backendUrl = apiUrl.replace('/api/v1', '');
+        const validateUrl = `${backendUrl}/api/v1/auth/validate?include=user`;
+        
+        const resp = await fetch(validateUrl, {
+          method: "GET",
+          headers: { 
+            ...(cookieHeader ? { cookie: cookieHeader } : {}),
+            'Accept': 'application/json',
+          },
+          credentials: "include",
+          cache: "no-store",
+        });
+        
+        console.log('[LoginLayout] Backend validate URL:', validateUrl);
+        console.log('[LoginLayout] Backend validate status:', resp.status);
+        
+        const data = await resp.json().catch(() => ({}));
+        if (resp.ok && data?.success && data?.data?.valid) {
+          redirect("/dashboard/utama");
+        }
+      } catch (e: any) {
+        // Let Next.js complete the redirect (redirect() throws to signal navigation)
+        if (e && typeof e === 'object' && 'digest' in e && String(e.digest).startsWith('NEXT_REDIRECT')) {
+          throw e;
+        }
         console.log('[LoginLayout] validate fetch error:', e);
+        // ignore and show login
       }
-      // ignore and show login
     }
   }
 

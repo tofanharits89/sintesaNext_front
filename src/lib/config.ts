@@ -20,11 +20,13 @@ function getApiUrl(): string {
   }
 
   // Server-side: use server env var (Docker internal) or public fallback
-  return (
-    process.env.API_URL ||
-    process.env.NEXT_PUBLIC_API_URL ||
-    "http://localhost:88/api/v1"
-  );
+  const serverUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL;
+  if (serverUrl) return serverUrl;
+  
+  // Fallback: use Docker service name in production, localhost in dev
+  return process.env.NODE_ENV === 'production'
+    ? "http://backend:88/api/v1"
+    : "http://localhost:88/api/v1";
 }
 
 /**
@@ -54,8 +56,10 @@ function getSocketUrl(): string {
       // ignore and fall through
     }
   }
-  // Server-side fallback (dev docker default)
-  return 'http://localhost:88';
+  // Server-side fallback - use backend service name in Docker
+  return process.env.NODE_ENV === 'production' 
+    ? 'http://backend:88' 
+    : 'http://localhost:88';
 }
 
 /**
