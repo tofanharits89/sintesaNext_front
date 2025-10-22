@@ -9,8 +9,8 @@ import { FrontendMessage } from '@/types/socket-events';
 import { useNotificationStore } from '@/stores/notification-store';
 
 interface SendMessageArgs {
-  recipientId?: string;
-  conversationId?: string;
+  recipientId?: string | undefined;
+  conversationId?: string | undefined;
   content: string;
   tempId?: string;
   isRetry?: boolean;
@@ -60,8 +60,8 @@ export function useMessageMutationsRQ() {
 
     try {
       const result = await messageDelivery.mutateAsync({
-        recipientId,
-        conversationId,
+        recipientId: recipientId || undefined,
+        conversationId: conversationId || undefined,
         content,
         tempId,
       });

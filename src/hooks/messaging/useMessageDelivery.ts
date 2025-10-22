@@ -5,8 +5,8 @@ import { useSocket } from '../useSocket';
 import { useUnifiedAuth } from '@/lib/auth';
 
 interface SendMessageArgs {
-  recipientId?: string;
-  conversationId?: string;
+  recipientId?: string | undefined;
+  conversationId?: string | undefined;
   content: string;
   tempId?: string;
 }
@@ -81,7 +81,7 @@ export function useMessageDelivery() {
         const response = await emit('sendMessage', socketPayload);
         return { 
           success: true, 
-          data: response, 
+          data: response as any || { message: {}, conversationId: conversationId || '' }, 
           method: 'websocket' 
         };
       } catch (error) {

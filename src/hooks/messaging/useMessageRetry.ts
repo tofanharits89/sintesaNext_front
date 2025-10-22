@@ -8,8 +8,8 @@ import { FrontendMessage } from '@/types/socket-events';
 interface RetryableMessage {
   id: string;
   content: string;
-  recipientId?: string;
-  conversationId?: string;
+  recipientId: string | undefined;
+  conversationId: string | undefined;
   retryCount: number;
   maxRetries: number;
   nextRetryAt: number;
@@ -32,11 +32,11 @@ export function useMessageRetry() {
     const retryMessage: RetryableMessage = {
       id: messageId,
       content,
-      recipientId,
-      conversationId,
+      recipientId: recipientId || undefined,
+      conversationId: conversationId || undefined,
       retryCount: 0,
       maxRetries: MAX_RETRIES,
-      nextRetryAt: Date.now() + RETRY_DELAYS[0],
+      nextRetryAt: Date.now() + (RETRY_DELAYS[0] || 1000),
     };
 
     setRetryQueue(prev => new Map(prev).set(messageId, retryMessage));
@@ -65,8 +65,8 @@ export function useMessageRetry() {
     for (const [messageId, retryMessage] of messagesToRetry) {
       try {
         const result = await messageDelivery.mutateAsync({
-          recipientId: retryMessage.recipientId,
-          conversationId: retryMessage.conversationId,
+          recipientId: retryMessage.recipientId || undefined,
+          conversationId: retryMessage.conversationId || undefined,
           content: retryMessage.content,
           tempId: messageId,
         });
@@ -97,6 +97,7 @@ export function useMessageRetry() {
           } else {
             // Schedule next retry
             const nextDelay = RETRY_DELAYS[Math.min(newRetryCount, RETRY_DELAYS.length - 1)];
+            if (!nextDelay) throw new Error('Next delay is undefined');
             const updatedMessage: RetryableMessage = {
               ...retryMessage,
               retryCount: newRetryCount,
@@ -125,6 +126,7 @@ export function useMessageRetry() {
           removeFromRetryQueue(messageId);
         } else {
           const nextDelay = RETRY_DELAYS[Math.min(newRetryCount, RETRY_DELAYS.length - 1)];
+          if (!nextDelay) throw new Error('Next delay is undefined');
           const updatedMessage: RetryableMessage = {
             ...retryMessage,
             retryCount: newRetryCount,
@@ -138,14 +140,14 @@ export function useMessageRetry() {
   }, [messageDelivery, optimisticUpdates, removeFromRetryQueue, retryQueue]);
 
   const retryMessage = useCallback(async (messageId: string) => {
-    const retryMessage = retryQueue.get(messageId);
-    if (!retryMessage) return false;
+    const retryData = retryQueue.get(messageId);
+    if (!retryData) return false;
 
     try {
       const result = await messageDelivery.mutateAsync({
-        recipientId: retryMessage.recipientId,
-        conversationId: retryMessage.conversationId,
-        content: retryMessage.content,
+        recipientId: retryData.recipientId || undefined,
+        conversationId: retryData.conversationId || undefined,
+        content: retryData.content,
         tempId: messageId,
       });
 
@@ -154,7 +156,7 @@ export function useMessageRetry() {
         
         if (result.data?.message) {
           optimisticUpdates.replaceTempMessage(
-            retryMessage.conversationId || '',
+            retryData.conversationId || '',
             messageId,
             result.data.message
           );

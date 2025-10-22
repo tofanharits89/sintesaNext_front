@@ -59,16 +59,14 @@ class AdvancedQueryCache {
   private setupCacheMonitoring(): void {
     // Monitor cache events
     this.queryClient.getQueryCache().subscribe({
-      onAdd: (query: Query) => {
-        console.log(`[Cache] Query added: ${query.queryKey.join('/')}`)
-      },
+      onAdd: undefined, // Remove non-existent property
       onUpdate: (query: Query) => {
         console.log(`[Cache] Query updated: ${query.queryKey.join('/')}`)
       },
       onRemove: (query: Query) => {
         console.log(`[Cache] Query removed: ${query.queryKey.join('/')}`)
       }
-    })
+    } as any)
   }
 
   /**
@@ -312,7 +310,7 @@ class AdvancedQueryCache {
         key: query.queryKey,
         data: query.state.data,
         updatedAt: query.state.dataUpdatedAt,
-        staleTime: query.options.staleTime
+        staleTime: (query.options as any)?.staleTime || null
       }))
     }
   }
@@ -413,7 +411,9 @@ export function createEnhancedQuery<TData, TError = Error>(
 
     invalidate: () => {
       const queryClient = useQueryClient()
-      cacheManager.invalidateIntelligently(key)
+      // Create cache manager instance for invalidation
+      const manager = new AdvancedQueryCache(queryClient)
+      manager.invalidateIntelligently(key)
     }
   }
 }

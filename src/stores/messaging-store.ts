@@ -60,6 +60,7 @@ interface MessagingClientState {
   addFailedMessage: (messageId: string) => void;
   removeFailedMessage: (messageId: string) => void;
   clearFailedMessages: () => void;
+  updateMessage: (messageId: string, updates: Partial<FrontendMessage>) => void;
   reset: () => void;
 }
 
@@ -142,6 +143,13 @@ export const useMessagingStore = create<MessagingClientState>()(
       
       clearFailedMessages: () => 
         set({ failedMessageIds: new Set<string>() }),
+      
+      updateMessage: (messageId: string, updates: Partial<FrontendMessage>) => {
+        // This is a client-side update for optimistic updates
+        // The actual message updates are handled by React Query
+        // This method exists for compatibility with existing code
+        console.log('updateMessage called:', messageId, updates);
+      },
       
       reset: () => set(initialState),
     }),

@@ -125,7 +125,7 @@ class PerformanceMonitor {
       'default': 100
     };
 
-    return thresholds[name] || thresholds.default;
+    return thresholds[name] || thresholds.default || 100;
   }
 
   /**
@@ -142,7 +142,7 @@ class PerformanceMonitor {
               console.log('[Performance] Page load:', {
                 domContentLoaded: navEntry.domContentLoadedEventEnd - navEntry.domContentLoadedEventStart,
                 loadComplete: navEntry.loadEventEnd - navEntry.loadEventStart,
-                totalTime: navEntry.loadEventEnd - navEntry.navigationStart
+                totalTime: navEntry.loadEventEnd - (navEntry as any).navigationStart || 0
               });
             }
           }
@@ -246,7 +246,7 @@ export function withPerformanceMonitoring<TArgs extends any[], TReturn>(
       endTimer();
       return result;
     } catch (error) {
-      endTimer({ error: true });
+      endTimer();
       throw error;
     }
   };
@@ -268,7 +268,7 @@ export function withAsyncPerformanceMonitoring<TArgs extends any[], TReturn>(
       endTimer();
       return result;
     } catch (error) {
-      endTimer({ error: true });
+      endTimer();
       throw error;
     }
   };
@@ -357,10 +357,10 @@ export const networkMonitor = {
     
     try {
       const result = await fetcher();
-      endTimer({ success: true });
+      endTimer();
       return result;
     } catch (error) {
-      endTimer({ success: false, error: true });
+      endTimer();
       throw error;
     }
   },

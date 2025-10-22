@@ -5,11 +5,16 @@ import { messageKeys } from '../useMessagesRQ';
 import { conversationKeys } from '../useConversationsRQ';
 import { FrontendMessage } from '@/types/socket-events';
 import { useMessageActions, useMessagingActions } from '@/stores';
+import { useUnreadActions } from '@/stores/unread-badges-store';
+import { queryKeyFactories } from '@/lib/query-configs';
+import { useUnifiedAuth } from '@/lib/auth';
 
 export function useMessageOptimisticUpdates() {
   const queryClient = useQueryClient();
   const messageActions = useMessageActions();
   const { unread } = useMessagingActions();
+  const { incrementUnreadCount, markConversationAsRead } = useUnreadActions();
+  const { user } = useUnifiedAuth();
 
   const addOptimisticMessage = (conversationId: string, message: FrontendMessage) => {
     const messageKey = messageKeys.messages('', conversationId);
@@ -19,7 +24,7 @@ export function useMessageOptimisticUpdates() {
     });
 
     // Update conversation list
-    const conversationKey = conversationKeys.conversations('');
+    const conversationKey = queryKeyFactories.messaging.conversations(user?.id);
     queryClient.setQueryData(conversationKey, (old: any[] = []) => {
       return old.map((conv: any) => 
         conv.id === conversationId 
@@ -47,8 +52,11 @@ export function useMessageOptimisticUpdates() {
     });
 
     // Update message in store if needed
-    if (messageActions.updateMessage) {
-      messageActions.updateMessage(messageId, { deliveryStatus: status });
+    // Note: updateMessage method exists but may not be in the type definition
+    try {
+      (messageActions as any).updateMessage?.(messageId, { deliveryStatus: status });
+    } catch (error) {
+      console.warn('Failed to update message in store:', error);
     }
   };
 
@@ -66,7 +74,7 @@ export function useMessageOptimisticUpdates() {
     });
 
     // Update conversation list with real message
-    const conversationKey = conversationKeys.conversations('');
+    const conversationKey = queryKeyFactories.messaging.conversations(user?.id);
     queryClient.setQueryData(conversationKey, (old: any[] = []) => {
       return old.map((conv: any) => 
         conv.id === conversationId 
@@ -76,8 +84,8 @@ export function useMessageOptimisticUpdates() {
     });
 
     // Update unread count if message is from other user
-    if (realMessage.senderId !== realMessage.recipientId) {
-      unread.increment(conversationId);
+    if (realMessage.senderId !== user?.id && realMessage.id && realMessage.createdAt) {
+      incrementUnreadCount(conversationId, realMessage.id, realMessage.createdAt);
     }
   };
 
@@ -90,8 +98,11 @@ export function useMessageOptimisticUpdates() {
       );
     });
 
-    // Update unread count
-    unread.decrement(conversationId, messageIds.length);
+    // Update unread count - mark as read
+    const lastMessageId = messageIds[messageIds.length - 1];
+    if (lastMessageId) {
+      markConversationAsRead(conversationId, lastMessageId);
+    }
   };
 
   return {

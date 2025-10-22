@@ -9,12 +9,12 @@ import React, { lazy, ComponentType, Suspense } from 'react'
 export function dynamicImport<T = any>(
   importFn: () => Promise<T>,
   fallback?: React.ComponentType
-): React.LazyExoticComponent<ComponentType<T>> {
+): React.LazyExoticComponent<ComponentType<any>> {
   const LazyComponent = lazy(() => 
     importFn().catch(error => {
       console.error('Dynamic import failed:', error)
       // Return a fallback component or throw error
-      return {
+      return Promise.resolve({
         default: () => React.createElement('div', {
           className: "p-4 border border-red-300 rounded-md bg-red-50"
         }, [
@@ -27,16 +27,18 @@ export function dynamicImport<T = any>(
             className: "text-red-600 text-sm"
           }, 'Please refresh the page and try again.')
         ])
-      }
+      } as any)
     })
   )
 
   if (fallback) {
-    return (props: any) => React.createElement(
-      Suspense,
-      { fallback: React.createElement(fallback) },
-      React.createElement(LazyComponent, props)
-    )
+    return React.lazy(() => Promise.resolve({
+      default: (props: any) => React.createElement(
+        Suspense,
+        { fallback: React.createElement(fallback) },
+        React.createElement(LazyComponent, props)
+      )
+    }))
   }
 
   return LazyComponent
@@ -81,29 +83,31 @@ export const LoadingStates = {
 
 // Route-based code splitting
 export const LazyComponents = {
-  // Dashboard components
-  Dashboard: dynamicImport(() => import('../components/dashboard/DashboardClient'), LoadingStates.Card),
-  PerformanceMonitoring: dynamicImport(() => import('../components/dashboard/PerformanceMonitoringDashboard'), LoadingStates.Card),
+  // Dashboard components - commented out until components exist
+  // Dashboard: dynamicImport(() => import('../components/dashboard/DashboardClient'), LoadingStates.Card),
+  // PerformanceMonitoring: dynamicImport(() => import('../components/dashboard/PerformanceMonitoringDashboard'), LoadingStates.Card),
   
-  // Data supplier components
-  SupplierDashboard: dynamicImport(() => import('../components/data-supplier/DashboardSupplierClient'), LoadingStates.Card),
-  SupplierProfile: dynamicImport(() => import('../components/data-supplier/SupplierProfileClient'), LoadingStates.Card),
-  SupplierContracts: dynamicImport(() => import('../components/data-supplier/SupplierContractsTable'), LoadingStates.Table),
+  // Data supplier components - commented out until components exist
+  // SupplierDashboard: dynamicImport(() => import('../components/data-supplier/DashboardSupplierClient'), LoadingStates.Card),
+  // SupplierProfile: dynamicImport(() => import('../components/data-supplier/SupplierProfileClient'), LoadingStates.Card),
+  // SupplierContracts: dynamicImport(() => import('../components/data-supplier/SupplierContractsTable'), LoadingStates.Table),
   
-  // Auth components
-  LoginForm: dynamicImport(() => import('../components/auth/LoginFormSimplified'), LoadingStates.Form),
+  // Auth components - commented out until components exist
+  // LoginForm: dynamicImport(() => import('../components/auth/LoginFormSimplified'), LoadingStates.Form),
   
-  // UI components (load on demand)
-  AlertDialog: dynamicImport(() => import('../components/ui/alert-dialog')),
-  Calendar: dynamicImport(() => import('../components/ui/calendar')),
-  BarChart: dynamicImport(() => import('../components/ui/bar-chart'), LoadingStates.Chart),
+  // UI components (load on demand) - commented out until components exist
+  // AlertDialog: dynamicImport(() => import('../components/ui/alert-dialog')),
+  // Calendar: dynamicImport(() => import('../components/ui/calendar')),
+  // BarChart: dynamicImport(() => import('../components/ui/bar-chart'), LoadingStates.Chart),
 }
 
 // Preload critical components
 export function preloadCriticalComponents(): void {
   // Preload components likely to be needed soon
-  preloadComponent(() => import('../components/dashboard/DashboardClient'))
-  preloadComponent(() => import('../components/data-supplier/DashboardSupplierClient'))
+  // Commented out until components exist
+  // preloadComponent(() => import('../components/dashboard/DashboardClient'))
+  // preloadComponent(() => import('../components/data-supplier/DashboardSupplierClient'))
+  console.log('Critical component preloading disabled - components not found')
 }
 
 // Intersection Observer for lazy loading
@@ -118,8 +122,11 @@ export function useIntersectionObserver(
     if (!element) return
 
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsIntersecting(entry.isIntersecting)
+      (entries) => {
+        const entry = entries[0];
+        if (entry) {
+          setIsIntersecting(entry.isIntersecting)
+        }
       },
       {
         threshold: 0.1,
@@ -152,7 +159,7 @@ export function LazyComponentWithIntersection({
 }) {
   const [shouldLoad, setShouldLoad] = React.useState(false)
   const ref = React.useRef<HTMLDivElement>(null)
-  const isIntersecting = useIntersectionObserver(ref, { rootMargin })
+  const isIntersecting = useIntersectionObserver(ref as React.RefObject<Element>, { rootMargin })
 
   React.useEffect(() => {
     if (isIntersecting && !shouldLoad) {
@@ -169,7 +176,7 @@ export function LazyComponentWithIntersection({
     return React.createElement('div', { ref, ...props })
   }
 
-  return React.createElement(LazyComponent, props)
+  return LazyComponent ? React.createElement(LazyComponent, props) : null
 }
 
 // Bundle analysis utilities

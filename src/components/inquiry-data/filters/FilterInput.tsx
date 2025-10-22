@@ -81,10 +81,9 @@ export function FilterInput({
           Pilih {filterKey.replace(/kd/g, '').toUpperCase()}
         </Label>
         <VirtualizedSelect
-          id={`${filterKey}-selection`}
           options={options}
           value={currentValue.selection || ''}
-          onChange={handleSelectionChange}
+          onValueChange={handleSelectionChange}
           placeholder={`Pilih ${filterKey}...`}
           disabled={loading || isLoading(filterKey)}
           className="w-full"
