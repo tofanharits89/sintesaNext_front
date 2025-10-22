@@ -44,6 +44,17 @@ export const DonutChart = lazy(() =>
   import('@/components/ui/donut-chart').then(m => ({ default: m.DonutChartComponent }))
 );
 
+// Skeleton components
+export const MultipleBarChartSkeleton = lazy(() =>
+  import('@/components/ui/dashboard-skeletons').then(m => ({ default: m.MultipleBarChartSkeleton }))
+);
+export const BarChartSkeleton = lazy(() =>
+  import('@/components/ui/dashboard-skeletons').then(m => ({ default: m.BarChartSkeleton }))
+);
+export const LineChartSkeleton = lazy(() =>
+  import('@/components/ui/dashboard-skeletons').then(m => ({ default: m.LineChartSkeleton }))
+);
+
 // Modals (Load on demand)
 export const TayangModal = lazy(() => import('@/components/inquiry-data/modals/tayang-modal').then(m => ({ default: m.TayangModal })));
 export const WhatsappModal = lazy(() => import('@/components/inquiry-data/modals/whatsapp-modal').then(m => ({ default: m.WhatsappModal })));
