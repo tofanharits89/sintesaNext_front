@@ -165,7 +165,7 @@ export class CacheMetrics {
       totalHits: this.hits,
       totalMisses: this.misses,
       hitRate,
-      totalQueries: this.queryPerformances.length,
+      totalQueries: this.hits + this.misses,
       averageQueryTime,
       categories
     };

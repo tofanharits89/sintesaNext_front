@@ -33,7 +33,6 @@ import {
   Bell,
   Globe,
   Lock,
-  Save,
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -372,13 +371,7 @@ export default function SettingsPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Save Button */}
-      <div className="flex justify-end">
-        <Button className="flex items-center gap-2">
-          <Save className="h-4 w-4" />
-          Simpan Pengaturan
-        </Button>
-      </div>
+
     </div>
   );
 }
