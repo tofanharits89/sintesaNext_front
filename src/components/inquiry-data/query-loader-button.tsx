@@ -176,8 +176,9 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
 
   const getQuerySummary = useCallback((query: SavedQuery) => {
     const filterCount = query.activeFilters.length;
-    const year = query.reportParams.tahun;
-    const reportType = query.reportParams.tipeLaporan;
+    const reportParams = query.reportParams || {};
+    const year = reportParams.tahun || "N/A";
+    const reportType = reportParams.tipeLaporan || "N/A";
 
     return `${year} • ${reportType} • ${filterCount} filter`;
   }, []);

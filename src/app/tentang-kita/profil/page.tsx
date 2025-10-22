@@ -13,30 +13,80 @@ type Person = {
 
 const coreTeam: Person[] = [
   { role: "Direktur", name: "Moudy Hermawan", nip: "197504031994031001" },
-  { role: "Penanggung Jawab", name: "Arie Suwandani W. Wirastuti", nip: "197510221995122001" },
-  { role: "Project Manager", name: "Bayu Yudistira", nip: "198312142010121003" },
-  { role: "Fullstack Developer", name: "Taufan Maulana Harits", nip: "198910102012101001" },
-  { role: "Fullstack Developer", name: "Aln Pujo Priambodo", nip: "200109102023021004" },
-  { role: "UI/UX Designer", name: "Wirasukma Legendani", nip: "199312282014111001" },
-  { role: "Liaison Officer", name: "Nugraheni Vikri Puspitaningtyas", nip: "199712112019122001" },
+  {
+    role: "Penanggung Jawab",
+    name: "Arie Suwandani W. Wirastuti",
+    nip: "197510221995122001",
+  },
+  {
+    role: "Project Manager",
+    name: "Bayu Yudistira",
+    nip: "198312142010121003",
+  },
+  {
+    role: "Fullstack Developer",
+    name: "Taufan Maulana Harits",
+    nip: "198910102012101001",
+  },
+  {
+    role: "Fullstack Developer",
+    name: "Aln Pujo Priambodo",
+    nip: "200109102023021004",
+  },
+  {
+    role: "UI/UX Designer",
+    name: "Wirasukma Legendani",
+    nip: "199312282014111001",
+  },
+  {
+    role: "Liaison Officer",
+    name: "Nugraheni Vikri Puspitaningtyas",
+    nip: "199712112019122001",
+  },
 ];
 
 // Placeholder honorable mentions (silakan ubah nama & NIP di kemudian hari)
 const honorableMentions: Person[] = [
-  { role: "Developer (Alumni)", name: "Rizky Pratama", nip: "198701152010121001" },
-  { role: "Engineer (Alumni)", name: "Siti Rahmawati", nip: "199005202012122002" },
-  { role: "Data Analyst (Alumni)", name: "Dimas Saputra", nip: "199203112015031003" },
-  { role: "QA (Alumni)", name: "Putri Anindya", nip: "199411022016042004" },
-  { role: "Support (Alumni)", name: "Fajar Nugroho", nip: "198806302013052005" },
+  {
+    role: "Fullstack Developer (Alumni)",
+    name: "Yacob Yulis Setyoko",
+    nip: "1987xxxxxxxxxxx",
+  },
+  {
+    role: "Database Engineer (Alumni)",
+    name: "Restu Alam Siagian",
+    nip: "2000xxxxxxxxxxx",
+  },
+  {
+    role: "Project Manager (Alumni)",
+    name: "Catur Ery Prabowo",
+    nip: "1977xxxxxxxxxxxxx",
+  },
+  {
+    role: "Data Analyst (Alumni)",
+    name: "Fatqur Hidayat",
+    nip: "1988xxxxxxxxxxxxxx",
+  },
+  {
+    role: "Database Engineer (Alumni)",
+    name: "M Fajri Natsir",
+    nip: "1988xxxxxxxxxxxxxx",
+  },
+  {
+    role: "Fullstack Developer (Alumni)",
+    name: "Sabar Sautomo",
+    nip: "1984xxxxxxxxxxxx",
+  },
 ];
 
 function PhotoPlaceholder({ name }: { name: string }) {
-  const initials = name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? "")
-    .join("") || "US";
+  const initials =
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase() ?? "")
+      .join("") || "US";
   return (
     <div className="h-12 w-12 shrink-0 rounded-md bg-muted text-muted-foreground flex items-center justify-center text-xs font-medium">
       {initials}
@@ -47,17 +97,22 @@ function PhotoPlaceholder({ name }: { name: string }) {
 function CompactCard({ person }: { person: Person }) {
   return (
     <Card className="border shadow-sm">
-      <CardContent className="p-3">
+      <CardContent className="px-3">
         <div className="flex items-center gap-3">
           <PhotoPlaceholder name={person.name} />
           <div className="min-w-0">
             <div className="mb-0.5">
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 capitalize">
+              <Badge
+                variant="secondary"
+                className="text-[10px] px-1.5 py-0.5 capitalize"
+              >
                 {person.role}
               </Badge>
             </div>
             <div className="font-semibold leading-snug">{person.name}</div>
-            <div className="text-[11px] text-muted-foreground font-mono">NIP: {person.nip}</div>
+            <div className="text-[11px] text-muted-foreground font-mono">
+              NIP: {person.nip}
+            </div>
           </div>
         </div>
       </CardContent>
@@ -80,9 +135,12 @@ export default function TentangKitaProfilPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Tentang Kita — Profil</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Tentang Kita — Profil
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Mengenal para pengembang aplikasi dan apresiasi untuk rekan-rekan yang pernah berkontribusi.
+          Mengenal para pengembang aplikasi dan apresiasi untuk rekan-rekan yang
+          pernah berkontribusi.
         </p>
       </div>
 
@@ -115,7 +173,8 @@ export default function TentangKitaProfilPage() {
       <section className="space-y-4">
         <h2 className="text-base font-semibold">Honorable Mentions</h2>
         <p className="text-sm text-muted-foreground">
-          Mereka yang turut membangun pondasi aplikasi ini. Terima kasih atas dedikasi dan kontribusinya.
+          Mereka yang turut membangun pondasi aplikasi ini. Terima kasih atas
+          dedikasi dan kontribusinya.
         </p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {honorableMentions.map((p) => (

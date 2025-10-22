@@ -315,25 +315,12 @@ export function useSavedQueries(
     }
   }, [data, isLoading, filteredQueries, stableParams.scope]);
 
-  // Create saved query mutation with optimistic updates and enhanced error handling
+  // Create saved query mutation with enhanced error handling
   const createQueryMutation = useMutation<
     SavedQuery,
     any,
     CreateSavedQueryRequest
   >({
-    // Force fresh data instead of optimistic updates (due to cache sync issues)
-    // onMutate: async (newQuery: CreateSavedQueryRequest) => {
-    //   // Cancel any outgoing refetches
-    //   await queryClient.cancelQueries({ queryKey: ["saved-queries"] });
-
-    //   console.log("[useSavedQueries] Optimistic update - adding query to cache");
-
-    //   // Snapshot the previous value
-    //   const previousQueries = queryClient.getQueryData(["saved-queries", { scope: newQuery.scope }]);
-
-    //   // Skip optimistic updates for now due to cache sync issues
-    //   return { previousQueries };
-    // },
 
     mutationFn: async (arg: CreateSavedQueryRequest): Promise<SavedQuery> => {
       const res = await retrySavedQueryOperation(

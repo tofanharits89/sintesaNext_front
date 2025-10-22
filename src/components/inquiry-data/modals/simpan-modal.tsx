@@ -226,6 +226,20 @@ export function SimpanModal({
       return;
     }
 
+    // Add validation for required report parameters
+    if (!reportParams.tahun || reportParams.tahun.trim() === "") {
+      setError("Parameter tahun harus diisi sebelum menyimpan query.");
+      return;
+    }
+    if (!reportParams.tipeLaporan || reportParams.tipeLaporan.trim() === "") {
+      setError("Parameter tipe laporan harus diisi sebelum menyimpan query.");
+      return;
+    }
+    if (!reportParams.pembulatan || reportParams.pembulatan.trim() === "") {
+      setError("Parameter pembulatan harus diisi sebelum menyimpan query.");
+      return;
+    }
+
     const filterValidationError = validateFilterData();
     if (filterValidationError) {
       setError(filterValidationError);
@@ -244,6 +258,9 @@ export function SimpanModal({
     if (retryAttempt) {
       setIsRetrying(true);
     }
+
+    // Debug: Log the reportParams to see what values we're getting
+    console.log("[SimpanModal] Saving query with reportParams:", reportParams);
 
     try {
       // Get only the configured filters for saving

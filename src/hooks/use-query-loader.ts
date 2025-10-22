@@ -52,16 +52,17 @@ export function useQueryLoader({
       const errors: string[] = [];
 
       // Validate report parameters
-      if (!query.reportParams) {
+      const reportParams = query.reportParams || {};
+      if (!reportParams || typeof reportParams !== 'object') {
         errors.push("Query tidak memiliki parameter laporan yang valid");
       } else {
-        if (!query.reportParams.tahun) {
+        if (!reportParams.tahun) {
           errors.push("Parameter tahun tidak ditemukan");
         }
-        if (!query.reportParams.tipeLaporan) {
+        if (!reportParams.tipeLaporan) {
           errors.push("Parameter tipe laporan tidak ditemukan");
         }
-        if (!query.reportParams.pembulatan) {
+        if (!reportParams.pembulatan) {
           errors.push("Parameter pembulatan tidak ditemukan");
         }
       }
@@ -98,7 +99,8 @@ export function useQueryLoader({
       }
 
       // Validate filter values
-      if (!query.filterValues || typeof query.filterValues !== "object") {
+      const filterValues = query.filterValues || {};
+      if (!filterValues || typeof filterValues !== "object") {
         errors.push("Nilai filter tidak valid");
       } else {
         // Helper function to check if a filter is configured
@@ -145,7 +147,7 @@ export function useQueryLoader({
         };
 
         // Get only configured filters for validation
-        const configuredFilters = Object.entries(query.filterValues).filter(
+        const configuredFilters = Object.entries(filterValues).filter(
           ([filterKey, filterValue]) =>
             filterValue && isFilterConfigured(filterKey, filterValue)
         );
@@ -263,13 +265,16 @@ export function useQueryLoader({
    */
   const restoreReportParameters = useCallback(
     (query: SavedQuery): ReportParams => {
+      // Add safety checks for reportParams
+      const reportParams = query.reportParams || {};
+      
       return {
-        tahun: query.reportParams.tahun,
-        tipeLaporan: query.reportParams.tipeLaporan,
-        pembulatan: query.reportParams.pembulatan,
-        jenisAkumulasi: query.reportParams.jenisAkumulasi || "non_akumulatif",
+        tahun: reportParams.tahun || "",
+        tipeLaporan: reportParams.tipeLaporan || "",
+        pembulatan: reportParams.pembulatan || "",
+        jenisAkumulasi: reportParams.jenisAkumulasi || "non_akumulatif",
         // Preserve tematik category when present
-        tematikKategori: (query.reportParams as any).tematikKategori,
+        tematikKategori: (reportParams as any).tematikKategori,
       };
     },
     []
@@ -286,8 +291,8 @@ export function useQueryLoader({
       filterValues: Record<string, FilterValue>;
     } => {
       // Handle cutOff filter based on scope
-      const activeFilters = [...query.activeFilters];
-      const filterValues = { ...query.filterValues };
+      const activeFilters = [...(query.activeFilters || [])];
+      const filterValues = { ...(query.filterValues || {}) };
 
       // For belanja and tematik scopes, ensure cutOff is always included
       if (scope === "belanja" || scope === "tematik") {

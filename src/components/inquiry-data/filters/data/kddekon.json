@@ -1,0 +1,32 @@
+[
+  {
+    "kddekon": "1",
+    "nmdekon": "Kantor Pusat",
+    "nmdekon2": "KP"
+  },
+  {
+    "kddekon": "2",
+    "nmdekon": "Kantor Daerah",
+    "nmdekon2": "KD"
+  },
+  {
+    "kddekon": "3",
+    "nmdekon": "Dekonsentrasi",
+    "nmdekon2": "DK"
+  },
+  {
+    "kddekon": "4",
+    "nmdekon": "Tugas Pembantuan",
+    "nmdekon2": "TP"
+  },
+  {
+    "kddekon": "5",
+    "nmdekon": "Urusan Bersama",
+    "nmdekon2": "UB"
+  },
+  {
+    "kddekon": "6",
+    "nmdekon": "Kewenangan Desentralisasi",
+    "nmdekon2": "DS"
+  }
+]

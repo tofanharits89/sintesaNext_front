@@ -1,0 +1,46 @@
+[
+  {
+    "kdfungsi": "01",
+    "nmfungsi": "PELAYANAN UMUM"
+  },
+  {
+    "kdfungsi": "02",
+    "nmfungsi": "PERTAHANAN"
+  },
+  {
+    "kdfungsi": "03",
+    "nmfungsi": "KETERTIBAN DAN KEAMANAN"
+  },
+  {
+    "kdfungsi": "04",
+    "nmfungsi": "EKONOMI"
+  },
+  {
+    "kdfungsi": "05",
+    "nmfungsi": "PERLINDUNGAN LINGKUNGAN HIDUP"
+  },
+  {
+    "kdfungsi": "06",
+    "nmfungsi": "PERUMAHAN DAN FASILITAS UMUM"
+  },
+  {
+    "kdfungsi": "07",
+    "nmfungsi": "KESEHATAN"
+  },
+  {
+    "kdfungsi": "08",
+    "nmfungsi": "PARIWISATA"
+  },
+  {
+    "kdfungsi": "09",
+    "nmfungsi": "AGAMA"
+  },
+  {
+    "kdfungsi": "10",
+    "nmfungsi": "PENDIDIKAN"
+  },
+  {
+    "kdfungsi": "11",
+    "nmfungsi": "PERLINDUNGAN SOSIAL"
+  }
+]

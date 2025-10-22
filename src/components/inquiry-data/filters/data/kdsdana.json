@@ -1,0 +1,116 @@
+[
+  {
+    "kdsdana": "01",
+    "nmsdana": "RM",
+    "nmsdana2": "RUPIAH MURNI",
+    "kdspan": "A"
+  },
+  {
+    "kdsdana": "02",
+    "nmsdana": "PLN",
+    "nmsdana2": "PINJAMAN LUAR NEGERI",
+    "kdspan": "B"
+  },
+  {
+    "kdsdana": "03",
+    "nmsdana": "RMP",
+    "nmsdana2": "RUPIAH MURNI PENDAMPING",
+    "kdspan": "C"
+  },
+  {
+    "kdsdana": "04",
+    "nmsdana": "PNBP",
+    "nmsdana2": "PNBP",
+    "kdspan": "D"
+  },
+  {
+    "kdsdana": "05",
+    "nmsdana": "PDN",
+    "nmsdana2": "PINJAMAN DALAM NEGERI",
+    "kdspan": "E"
+  },
+  {
+    "kdsdana": "06",
+    "nmsdana": "BLU",
+    "nmsdana2": "BADAN LAYANAN UMUM",
+    "kdspan": "F"
+  },
+  {
+    "kdsdana": "07",
+    "nmsdana": "STM",
+    "nmsdana2": "STIMULUS",
+    "kdspan": "G"
+  },
+  {
+    "kdsdana": "08",
+    "nmsdana": "HDN",
+    "nmsdana2": "HIBAH DALAM NEGERI",
+    "kdspan": "H"
+  },
+  {
+    "kdsdana": "09",
+    "nmsdana": "HLN",
+    "nmsdana2": "HIBAH LUAR NEGERI",
+    "kdspan": "I"
+  },
+  {
+    "kdsdana": "10",
+    "nmsdana": "HLD",
+    "nmsdana2": "HIBAH LANGSUNG DALAM NEGERI",
+    "kdspan": "J"
+  },
+  {
+    "kdsdana": "11",
+    "nmsdana": "HLL",
+    "nmsdana2": "HIBAH LANGSUNG LUAR NEGERI",
+    "kdspan": "K"
+  },
+  {
+    "kdsdana": "12",
+    "nmsdana": "HLBD",
+    "nmsdana2": "HIBAH LANGSUNG BARANG DALAM NEGERI",
+    "kdspan": "L"
+  },
+  {
+    "kdsdana": "13",
+    "nmsdana": "HLBL",
+    "nmsdana2": "HIBAH LANGSUNG BARANG LUAR NEGERI",
+    "kdspan": "M"
+  },
+  {
+    "kdsdana": "14",
+    "nmsdana": "HLJD",
+    "nmsdana2": "HIBAH LANGSUNG JASA DALAM NEGERI",
+    "kdspan": "N"
+  },
+  {
+    "kdsdana": "15",
+    "nmsdana": "HLJL",
+    "nmsdana2": "HIBAH LANGSUNG JASA LUAR NEGERI",
+    "kdspan": "O"
+  },
+  {
+    "kdsdana": "16",
+    "nmsdana": "HLSD",
+    "nmsdana2": "HIBAH LANGSUNG SURAT BERHARGA DALAM NEGERI",
+    "kdspan": "P"
+  },
+  {
+    "kdsdana": "17",
+    "nmsdana": "HLSL",
+    "nmsdana2": "HIBAH LANGSUNG SURAT BERHARGA LUAR NEGERI",
+    "kdspan": "Q"
+  },
+  {
+    "kdsdana": "18",
+    "nmsdana": "SOBLU",
+    "nmsdana2": "SALDO AWAL BLU",
+    "kdspan": "S"
+  },
+  {
+    "kdsdana": "19",
+    "nmsdana": "SBSN",
+    "nmsdana2": "SURAT BERHARGA SYARIAH NEGARA",
+    "kdspan": "T"
+  }
+]

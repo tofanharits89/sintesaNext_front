@@ -1,24 +1,13 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiPath } from "@/lib/base-path";
-import { getCookie, prefetchCsrf } from "@/lib/httpClient";
-import { conversationKeys } from "./useConversationsRQ";
-import { messageKeys } from "./useMessagesRQ";
-import { applyMessageToCache } from "./messaging-rq/cache-helpers";
-import { useSocket } from "./useSocket";
-import { FrontendMessage } from "@/types/socket-events";
-import {
-  useMessageActions,
-  useMessagingActions,
-  useMessagingStore,
-} from "@/stores";
-import { useNotificationStore } from "@/stores/notification-store";
-import { getTempMessages } from "@/features/messaging/temp-messages-store";
-import { useUnifiedAuth } from "@/lib/auth";
-import { useConversationReconciliation } from "./messaging-rq/useConversationReconciliation";
+import { useCallback } from 'react';
+import { useMessageDelivery } from './messaging/useMessageDelivery';
+import { useMessageOptimisticUpdates } from './messaging/useMessageOptimisticUpdates';
+import { useMessageRetry } from './messaging/useMessageRetry';
+import { useUnifiedAuth } from '@/lib/auth';
+import { FrontendMessage } from '@/types/socket-events';
+import { useNotificationStore } from '@/stores/notification-store';
 
-// Types for mutation arguments
 interface SendMessageArgs {
   recipientId?: string;
   conversationId?: string;
@@ -29,953 +18,204 @@ interface SendMessageArgs {
 
 interface ReadArgs {
   messageIds: string[];
+  conversationId: string;
 }
 
-interface SendMessageResponse {
-  success: boolean;
-  data?: {
-    message: any;
-    conversationId: string;
-  };
-  error?: string;
-}
-
-// Custom error type to mark offline failures without using 'any'
-type OfflineError = Error & { isOffline?: boolean };
-
-// Send message mutation
-export function useSendMessageMutation() {
-  const queryClient = useQueryClient();
-  const { emit } = useSocket();
-  const messageActions = useMessageActions();
-  const { unread } = useMessagingActions();
+export function useMessageMutationsRQ() {
+  const messageDelivery = useMessageDelivery();
+  const optimisticUpdates = useMessageOptimisticUpdates();
+  const messageRetry = useMessageRetry();
   const { user: currentUser } = useUnifiedAuth();
-  const userScopeId = currentUser?.id ?? null;
-  const { reconcileTempToReal } = useConversationReconciliation();
-  const messageKeyFor = (convId?: string | null) =>
-    messageKeys.messages(userScopeId, convId ?? "");
+  const { addNotification } = useNotificationStore();
 
-  const fetchWithTimeout = async (
-    input: RequestInfo | URL,
-    init: RequestInit & { timeoutMs?: number } = {},
-  ): Promise<Response> => {
-    const { timeoutMs = 10000, ...rest } = init;
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      return await fetch(input, { ...rest, signal: controller.signal });
-    } finally {
-      clearTimeout(id);
+  const sendMessage = useCallback(async (args: SendMessageArgs) => {
+    const { recipientId, conversationId, content, isRetry = false } = args;
+    
+    // Generate temporary message for optimistic updates
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const tempMessage: FrontendMessage = {
+      id: tempId,
+      content,
+      conversation_id: conversationId || '',
+      sender_id: currentUser?.id || '',
+      recipient_id: recipientId || '',
+      type: 'text',
+      is_read: false,
+      is_deleted: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      // CamelCase aliases
+      senderId: currentUser?.id || '',
+      recipientId: recipientId || '',
+      conversationId: conversationId || '',
+      isRead: false,
+      deliveryStatus: 'sending',
+      tempId,
+    };
+
+    // Add optimistic message
+    if (conversationId) {
+      optimisticUpdates.addOptimisticMessage(conversationId, tempMessage);
     }
-  };
 
-  const isOffline = () => {
     try {
-      if (
-        typeof navigator !== "undefined" &&
-        navigator &&
-        "onLine" in navigator
-      ) {
-        return navigator.onLine === false;
-      }
-    } catch {}
-    return false;
-  };
-
-  return useMutation({
-    retry: false,
-    networkMode: "always",
-    mutationFn: async (args: SendMessageArgs): Promise<SendMessageResponse> => {
-      const { recipientId, conversationId, content, tempId } = args;
-
-      // First try WebSocket for real-time delivery
-      try {
-        // If offline, fail fast and do not attempt to send
-        if (isOffline()) {
-          const err: OfflineError = new Error("Offline");
-          err.isOffline = true;
-          throw err;
-        }
-        const socketPayload = {
-          recipientId,
-          conversationId,
-          content: content.trim(),
-          type: "text",
-          tempId,
-          senderId: currentUser?.id,
-          participant1Id: conversationId ? undefined : currentUser?.id,
-          participant2Id: conversationId ? undefined : recipientId,
-        } as any;
-
-        // Emitting message:send (debug logging removed)
-
-        const socketResponse: any = await new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => {
-            reject(new Error("Socket timeout"));
-          }, 5000);
-
-          emit("message:send", socketPayload, (response: any) => {
-            clearTimeout(timeout);
-            resolve(response);
-          });
-        });
-
-        if (socketResponse?.success) {
-          return socketResponse;
-        }
-
-        const errMsg = socketResponse?.error || "Socket send failed";
-        throw new Error(errMsg);
-      } catch (socketError) {
-        // Socket failed, trying REST (silently fallback)
-        // If offline, do NOT fallback to REST. Require manual retry.
-        if (isOffline()) {
-          const err: OfflineError = new Error("Offline");
-          err.isOffline = true;
-          throw err;
-        }
-        // Fallback to REST API via centralized Axios client
-        const ensureCsrfToken = async () => {
-          let token = getCookie("XSRF-TOKEN");
-          if (!token) {
-            try {
-              await prefetchCsrf();
-            } catch {}
-            token = getCookie("XSRF-TOKEN");
-          }
-          return token;
-        };
-
-        const executeRestSend = async (csrfToken?: string) =>
-          fetchWithTimeout(apiPath("/messaging/send"), {
-            method: "POST",
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-              ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
-            },
-            body: JSON.stringify({
-              recipientId,
-              conversationId,
-              content: content.trim(),
-              type: "text",
-              tempId,
-              senderId: currentUser?.id,
-              participant1Id: conversationId ? undefined : currentUser?.id,
-              participant2Id: conversationId ? undefined : recipientId,
-            }),
-          });
-
-        let csrfToken = await ensureCsrfToken();
-        let respRaw = await executeRestSend(csrfToken || undefined);
-
-        if (respRaw.status === 403) {
-          try {
-            await prefetchCsrf();
-          } catch {}
-          const refreshedToken = getCookie("XSRF-TOKEN");
-          // Always retry once after attempting to refresh the token
-          respRaw = await executeRestSend(refreshedToken || undefined);
-          csrfToken = refreshedToken ?? csrfToken;
-        }
-
-        // Handle rate limiting specifically
-        if (respRaw.status === 429) {
-          const result = await respRaw
-            .json()
-            .catch(() => ({ error: "Rate limit exceeded" }));
-          const rateErr: Error & { isRateLimit?: boolean } = new Error(
-            result.error || "Rate limit exceeded",
-          );
-          rateErr.isRateLimit = true;
-          throw rateErr;
-        }
-
-        if (!respRaw.ok) {
-          const result = await respRaw
-            .json()
-            .catch(() => ({ error: `HTTP ${respRaw.status}` }));
-          throw new Error(
-            result.error || `HTTP ${respRaw.status}: ${respRaw.statusText}`,
-          );
-        }
-
-        const result = await respRaw.json().catch(() => ({}));
-        if (!result.success) {
-          throw new Error(result.error || "Send failed");
-        }
-
-        return result;
-      }
-    },
-    onMutate: async (args) => {
-      const { conversationId, content, tempId } = args;
-      const convKeyId =
-        conversationId != null ? String(conversationId) : undefined;
-
-      try {
-        console.log("[MSG DEBUG] onMutate start", {
-          convKeyId,
-          tempId,
-          len: (content || "").length,
-          at: Date.now(),
-        });
-      } catch {}
-
-      // Set sending state (using setTyping as a proxy for visual feedback)
-      messageActions.setTyping(true);
-
-      // Create optimistic message
-      if (convKeyId && tempId) {
-        const optimisticMessage: FrontendMessage = {
-          // Required base Message properties
-          id: tempId,
-          sender_id: currentUser?.id || "current-user",
-          recipient_id: "unknown",
-          conversation_id: convKeyId,
-          content: content.trim(),
-          type: "text",
-          is_read: false,
-          is_deleted: false,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-
-          // Frontend-specific properties
-          conversationId: convKeyId,
-          timestamp: new Date().toISOString(),
-          sender: currentUser
-            ? {
-                id: currentUser.id,
-                username: currentUser.username || "you",
-                name: currentUser.name || "You",
-              }
-            : { id: "current-user", username: "you", name: "You" },
-          senderType: "user",
-          isRead: false,
-          isDelivered: false,
-        };
-
-        applyMessageToCache({
-          queryClient,
-          userId: userScopeId,
-          conversationId: convKeyId,
-          message: {
-            ...optimisticMessage,
-            _sending: true,
-            _failed: false,
-          } as FrontendMessage & Record<string, unknown>,
-          seedPagination: { page: 1, limit: 50, total: 1, hasMore: false },
-        });
-
-        // Update conversations list optimistically (align with useInfiniteQuery cache shape)
-        if (userScopeId) {
-          queryClient.setQueryData(
-            conversationKeys.lists(userScopeId),
-            (prev: any) => {
-              // Expected shape: { pages: ConversationsPage[], pageParams: any[] }
-              const empty = {
-                pages: [{ conversations: [], nextCursor: null }],
-                pageParams: [null],
-              };
-              const curr = prev && prev.pages ? prev : empty;
-
-              const pages = curr.pages.map((pg: any) => ({
-                ...pg,
-                conversations: Array.isArray(pg.conversations)
-                  ? [...pg.conversations]
-                  : [],
-              }));
-
-              // find conversation in any page
-              let foundPageIdx = -1;
-              let foundIdx = -1;
-              pages.forEach((pg: any, pIdx: number) => {
-                const idx = pg.conversations.findIndex(
-                  (c: any) => String(c.id) === convKeyId,
-                );
-                if (idx !== -1) {
-                  foundPageIdx = pIdx;
-                  foundIdx = idx;
-                }
-              });
-
-              if (foundIdx !== -1) {
-                const removed = pages[foundPageIdx].conversations.splice(
-                  foundIdx,
-                  1,
-                )[0];
-                const conv = { ...(removed || {}) } as any;
-                conv.lastMessage = {
-                  ...(conv.lastMessage || {}),
-                  id: tempId,
-                  content: content.trim(),
-                  timestamp: optimisticMessage.timestamp,
-                  sender: optimisticMessage.sender,
-                  senderType: optimisticMessage.senderType,
-                  isRead: false,
-                  is_read: false,
-                };
-                // Keep both snake_case and camelCase updated fields to be safe
-                conv.updated_at = optimisticMessage.timestamp;
-                conv.updatedAt = optimisticMessage.timestamp;
-
-                // place at top of first page so ordering updates immediately
-                const firstPage = pages[0] || {
-                  conversations: [],
-                  nextCursor: null,
-                };
-                firstPage.conversations.unshift(conv);
-                pages[0] = firstPage;
-
-                return { pages, pageParams: curr.pageParams };
-              }
-
-              return curr;
-            },
-          );
-        }
-
-        // (moved to onSuccess for correct variables scope and timing)
-      }
-
-      // Watchdog: force-fail after 10s if still sending (for real conversations)
-      const startedAtNow = Date.now();
-      let watchdog: any = null;
-      if (convKeyId && tempId) {
-        watchdog = setTimeout(() => {
-          try {
-            applyMessageToCache({
-              queryClient,
-              userId: userScopeId,
-              conversationId: convKeyId,
-              message: {
-                id: tempId,
-                conversationId: convKeyId,
-                _sending: false,
-                _failed: true,
-              } as unknown as FrontendMessage & Record<string, unknown>,
-            });
-            try {
-              try {
-                console.log("[MSG DEBUG] watchdog firing -> fail", {
-                  convKeyId,
-                  tempId,
-                  at: Date.now(),
-                });
-              } catch {}
-              if (typeof window !== "undefined") {
-                // Record that this attempt (startedAtNow) has failed, to ignore any late success for the same tempId
-                try {
-                  (window as any).__failedAfterAttempt__ =
-                    (window as any).__failedAfterAttempt__ || {};
-                  (window as any).__failedAfterAttempt__[tempId] = startedAtNow;
-                } catch {}
-                window.dispatchEvent(
-                  new CustomEvent("message:failed", {
-                    detail: {
-                      id: tempId,
-                      content,
-                      conversationId: convKeyId,
-                      failedAt: Date.now(),
-                      startedAt: startedAtNow,
-                    },
-                  }),
-                );
-              }
-            } catch {}
-          } catch {}
-        }, 10000);
-      }
-
-      return {
+      const result = await messageDelivery.mutateAsync({
+        recipientId,
+        conversationId,
+        content,
         tempId,
-        conversationId: convKeyId,
-        startedAt: startedAtNow,
-        watchdog,
-      };
-    },
-    onSuccess: async (data, args, context) => {
-      const { conversationId, tempId, content } = args as any;
-      const convKeyId =
-        conversationId != null ? String(conversationId) : undefined;
-
-      // Extract the real message ID from the server response
-      const realMsgId: string | undefined =
-        (data as any)?.data?.message?.id ||
-        (data as any)?.message?.id ||
-        undefined;
-
-      try {
-        console.log("[MSG DEBUG] onSuccess", {
-          convKeyId,
-          tempId,
-          at: Date.now(),
-          data,
-        });
-      } catch {}
-
-      // If this tempId previously failed for this attempt and this isn't an explicit retry, ignore late success
-      try {
-        const isRetry = (args as any)?.isRetry === true;
-        const failedMap =
-          typeof window !== "undefined"
-            ? (window as any).__failedAfterAttempt__
-            : undefined;
-        const failedStartedAt =
-          tempId && failedMap ? failedMap[String(tempId)] : undefined;
-        const ctxStartedAt = (context as any)?.startedAt as number | undefined;
-        if (
-          !isRetry &&
-          tempId &&
-          failedStartedAt &&
-          ctxStartedAt &&
-          failedStartedAt === ctxStartedAt
-        ) {
-          console.log(
-            "[MSG DEBUG] onSuccess ignored due to prior fail latch for same attempt",
-            { tempId, failedStartedAt, ctxStartedAt },
-          );
-          return;
-        }
-      } catch {}
-
-      // Clear watchdog
-      try {
-        const wd = (context as any)?.watchdog;
-        if (wd) clearTimeout(wd);
-      } catch {}
-
-      // Clear sending state and input
-      messageActions.setTyping(false);
-      messageActions.clearMessageInput();
-      console.log("[MSG DEBUG] Cleared input and sending state");
-
-      // Best-effort: clear sending/failed flags and update ID on the optimistic temp message
-      if (convKeyId && tempId) {
-        try {
-          // Extract the real message ID from the server response
-          const realMsgId: string | undefined =
-            (data as any)?.data?.message?.id ||
-            (data as any)?.message?.id ||
-            undefined;
-
-          console.log("[MSG DEBUG] Updating optimistic message", {
-            convKeyId,
-            tempId,
-            realMsgId,
-            content: (content || "").trim(),
-          });
-
-          const optimisticSender = currentUser
-            ? {
-                id: currentUser.id,
-                username: currentUser.username || "you",
-                name: currentUser.name || "You",
-              }
-            : { id: "current-user", username: "you", name: "You" };
-
-          applyMessageToCache({
-            queryClient,
-            userId: userScopeId,
-            conversationId: convKeyId,
-            message: {
-              id: realMsgId || tempId,
-              conversationId: convKeyId,
-              conversation_id: convKeyId,
-              content: content.trim(),
-              timestamp: new Date().toISOString(),
-              created_at: new Date().toISOString(),
-              sender: optimisticSender,
-              senderType: "user",
-              is_read: true,
-              isRead: true,
-              _sending: false,
-              _failed: false,
-            } as unknown as FrontendMessage & Record<string, unknown>,
-            tempId,
-            seedPagination: { page: 1, limit: 50, total: 1, hasMore: false },
-          });
-        } catch (error) {
-          console.error("[MSG DEBUG] Error updating message cache:", error);
-        }
-      }
-
-      // Derive real conversation id from various possible response shapes
-      const derivedNewConvId: string | undefined = (() => {
-        try {
-          return (
-            (data as any)?.data?.conversationId ||
-            (data as any)?.conversationId ||
-            (data as any)?.data?.conversation?.id ||
-            (data as any)?.conversation?.id ||
-            undefined
-          );
-        } catch {
-          return undefined;
-        }
-      })();
-
-      if (derivedNewConvId && derivedNewConvId !== conversationId) {
-        const activeId = useMessagingStore.getState().activeConversationId as
-          | string
-          | null;
-        const newId = String(derivedNewConvId);
-        const isTempActive =
-          !!activeId &&
-          (String(activeId).startsWith("temp-") ||
-            String(activeId).startsWith("temp_conv-") ||
-            String(activeId).startsWith("temp-conv-"));
-        const sourceTempConvId =
-          activeId && String(activeId).startsWith("temp-") ? activeId : undefined;
-
-        // Use reconciliation hook for clean migration
-        try {
-          await reconcileTempToReal(
-            sourceTempConvId || conversationId || `temp-conv-${tempId}`,
-            newId,
-            data
-          );
-        } catch (reconcileError) {
-          console.error("[MSG DEBUG] Reconciliation error:", reconcileError);
-        }
-
-        // Update active conversation and notify listeners
-        messageActions.setActiveConversation(newId);
-        try {
-          if (typeof window !== "undefined") {
-            window.dispatchEvent(
-              new CustomEvent("conversation:selected", {
-                detail: { conversationId: newId },
-              })
-            );
-          }
-        } catch {}
-
-        // Notify UI listeners so scroll stays pinned
-        try {
-          if (typeof window !== "undefined") {
-            window.dispatchEvent(
-              new CustomEvent("messages:appended", {
-                detail: { conversationId: newId },
-              })
-            );
-          }
-        } catch {}
-      }
-
-      // DON'T invalidate conversations immediately - this erases our optimistic update
-      // Instead, let the socket events and our cache updates handle the UI
-      // Only invalidate if we need to refresh for other reasons
-      // queryClient.invalidateQueries({ queryKey: conversationKeys.all });
-
-      // For existing conversations, invalidate first, then refetch
-      // This ensures pagination is reset and we get the latest messages
-      const targetConvId = derivedNewConvId || conversationId;
-      // IMPORTANT: Do not invalidate/refetch the thread immediately here.
-      // Socket events + local cache writes already keep the UI consistent, and
-      // an eager invalidate can briefly wipe the optimistic first message in
-      // a brand-new conversation. We keep the conversations list gentle refetch
-      // (below) only for new conversations to hydrate participant details.
-      if (
-        derivedNewConvId &&
-        derivedNewConvId !== conversationId &&
-        userScopeId
-      ) {
-        setTimeout(() => {
-          queryClient.refetchQueries({
-            queryKey: conversationKeys.lists(userScopeId),
-          });
-        }, 1500);
-      }
-
-      // Update conversations list without invalidating - use setQueryData instead
-      if (userScopeId) {
-        queryClient.setQueryData(
-          conversationKeys.lists(userScopeId),
-          (prev: any) => {
-            const empty = {
-              pages: [{ conversations: [], nextCursor: null }],
-              pageParams: [null],
-            };
-            const curr = prev && prev.pages ? prev : empty;
-            const pages = curr.pages.map((pg: any) => ({
-              ...pg,
-              conversations: Array.isArray(pg.conversations)
-                ? [...pg.conversations]
-                : [],
-            }));
-
-            // Find and update the conversation with the new message
-            let foundPageIdx = -1;
-            let foundIdx = -1;
-            pages.forEach((pg: any, pIdx: number) => {
-              const idx = pg.conversations.findIndex(
-                (c: any) => String(c.id) === String(targetConvId),
-              );
-              if (idx !== -1) {
-                foundPageIdx = pIdx;
-                foundIdx = idx;
-              }
-            });
-
-            if (foundIdx !== -1) {
-              const conv = {
-                ...(pages[foundPageIdx].conversations[foundIdx] || {}),
-              } as any;
-              const optimisticSender = currentUser
-                ? {
-                    id: currentUser.id,
-                    username: currentUser.username || "you",
-                    name: currentUser.name || "You",
-                  }
-                : { id: "current-user", username: "you", name: "You" };
-
-              const minimalLast = {
-                id: realMsgId || tempId || `temp-msg-${Date.now()}`,
-                content: content.trim(),
-                timestamp: new Date().toISOString(),
-                sender: optimisticSender,
-                senderType: "user",
-                isRead: true,
-                is_read: true,
-              } as any;
-
-              conv.lastMessage = minimalLast;
-              conv.updated_at = new Date().toISOString();
-              conv.updatedAt = new Date().toISOString();
-
-              // Move conversation to top of first page
-              pages[foundPageIdx].conversations.splice(foundIdx, 1);
-              const firstPage = pages[0] || {
-                conversations: [],
-                nextCursor: null,
-              };
-              firstPage.conversations.unshift(conv);
-              pages[0] = firstPage;
-
-              console.log(
-                "[MSG DEBUG] Updated conversation list with new message",
-              );
-            }
-
-            return { pages, pageParams: curr.pageParams };
-          },
-        );
-      }
-
-      // Broadcast success for latch clearing (for both real id and temp id)
-      try {
-        if (typeof window !== "undefined") {
-          const realMsgId: string | undefined =
-            (data as any)?.data?.message?.id ||
-            (data as any)?.message?.id ||
-            undefined;
-          const ids: string[] = [];
-          if (realMsgId) ids.push(String(realMsgId));
-          if (tempId) ids.push(String(tempId));
-          try {
-            console.log("[MSG DEBUG] dispatch message:succeeded", { ids });
-          } catch {}
-          ids.forEach((id) => {
-            window.dispatchEvent(
-              new CustomEvent("message:succeeded", { detail: { id } }),
-            );
-          });
-          // Clear failed map entry on success
-          try {
-            if (tempId && (window as any).__failedAfterAttempt__) {
-              delete (window as any).__failedAfterAttempt__[tempId];
-            }
-          } catch {}
-
-          // Remove any quarantine entries for this content/conv/user on success (manual retry path)
-          try {
-            const userId = currentUser?.id ? String(currentUser.id) : undefined;
-            if (userId && convKeyId && content) {
-              const raw = window.localStorage.getItem("MSG_QUARANTINE");
-              const arr = raw ? JSON.parse(raw) : [];
-              const next = Array.isArray(arr)
-                ? arr.filter(
-                    (q: any) =>
-                      !(
-                        q &&
-                        q.convId === convKeyId &&
-                        q.userId === userId &&
-                        q.content === content
-                      ),
-                  )
-                : [];
-              window.localStorage.setItem(
-                "MSG_QUARANTINE",
-                JSON.stringify(next),
-              );
-            }
-          } catch {}
-        }
-      } catch {}
-    },
-    onError: (error, args, context) => {
-      // Clear sending state
-      messageActions.setTyping(false);
-
-      try {
-        console.log("[MSG DEBUG] onError", {
-          err: String((error as any)?.message || error),
-          args,
-          at: Date.now(),
-        });
-      } catch {}
-
-      // Clear watchdog
-      try {
-        const wd = (context as any)?.watchdog;
-        if (wd) clearTimeout(wd);
-      } catch {}
-
-      // Show user-friendly error notification
-      const addNotification = useNotificationStore.getState().addNotification;
-      const isRateLimit = (error as any)?.isRateLimit;
-
-      if (isRateLimit) {
-        addNotification({
-          type: "warning",
-          title: "Terlalu Cepat",
-          message:
-            "Anda mengirim pesan terlalu cepat. Silakan coba kirim ulang beberapa saat lagi.",
-          persistent: false,
-          autoHideDelay: 8000,
-        });
-      } else {
-        addNotification({
-          type: "error",
-          title: "Gagal Mengirim Pesan",
-          message:
-            "Pesan gagal dikirim. Ketuk ikon (!) pada pesan untuk mengirim ulang secara manual.",
-          persistent: false,
-          autoHideDelay: 5000,
-        });
-      }
-
-      // Revert optimistic updates
-      const { conversationId, tempId, content } = args as any;
-      const convKeyId =
-        conversationId != null ? String(conversationId) : undefined;
-      const applyFail = () => {
-        try {
-          console.log("[MSG DEBUG] applyFail()", {
-            convKeyId,
-            tempId,
-            at: Date.now(),
-          });
-        } catch {}
-        if (convKeyId && tempId) {
-          // Mark optimistic message as failed (keep it visible with exclamation icon)
-          queryClient.setQueryData(messageKeyFor(convKeyId), (prev: any) => {
-            if (!prev?.pages) return prev;
-            const copy = {
-              ...prev,
-              pages: prev.pages.map((p: any) => ({ ...p })),
-            };
-            for (let pi = 0; pi < copy.pages.length; pi++) {
-              const p = copy.pages[pi];
-              const msgs = Array.isArray(p?.data?.messages)
-                ? p.data.messages.map((m: any) => {
-                    if (m?.id === tempId) {
-                      return { ...m, _sending: false, _failed: true };
-                    }
-                    return m;
-                  })
-                : p?.data?.messages;
-              copy.pages[pi] = {
-                ...p,
-                data: { ...(p?.data || {}), messages: msgs },
-              };
-            }
-            return copy;
-          });
-          // Broadcast failure so hooks can latch the failure state
-          try {
-            if (typeof window !== "undefined") {
-              try {
-                console.log("[MSG DEBUG] dispatch message:failed", {
-                  tempId,
-                  convKeyId,
-                });
-              } catch {}
-              // Record failed attempt to block late success
-              try {
-                (window as any).__failedAfterAttempt__ =
-                  (window as any).__failedAfterAttempt__ || {};
-                (window as any).__failedAfterAttempt__[tempId] =
-                  (context as any)?.startedAt || Date.now();
-              } catch {}
-              window.dispatchEvent(
-                new CustomEvent("message:failed", {
-                  detail: {
-                    id: tempId,
-                    content,
-                    conversationId: convKeyId,
-                    failedAt: Date.now(),
-                    startedAt: (context as any)?.startedAt,
-                  },
-                }),
-              );
-
-              // Persist quarantine so a hard refresh still hides server echo until manual retry
-              try {
-                const userId = currentUser?.id
-                  ? String(currentUser.id)
-                  : undefined;
-                if (userId && convKeyId && content) {
-                  const raw = window.localStorage.getItem("MSG_QUARANTINE");
-                  const arr = raw ? JSON.parse(raw) : [];
-                  const now = Date.now();
-                  const entry = {
-                    convId: convKeyId,
-                    userId,
-                    content,
-                    failedAt: now,
-                  };
-                  const next = Array.isArray(arr)
-                    ? [
-                        ...arr.filter(
-                          (q: any) =>
-                            !(
-                              q &&
-                              q.convId === convKeyId &&
-                              q.userId === userId &&
-                              q.content === content
-                            ),
-                        ),
-                        entry,
-                      ]
-                    : [entry];
-                  window.localStorage.setItem(
-                    "MSG_QUARANTINE",
-                    JSON.stringify(next),
-                  );
-                }
-              } catch {}
-            }
-          } catch {}
-        }
-      };
-
-      // Enforce minimum 600ms sending display to ensure clock visibility
-      const startedAt = (context as any)?.startedAt as number | undefined;
-      const elapsed =
-        typeof startedAt === "number" ? Date.now() - startedAt : 0;
-      const minMs = 600;
-      if (elapsed < minMs) {
-        setTimeout(applyFail, minMs - elapsed);
-      } else {
-        applyFail();
-      }
-    },
-  });
-}
-
-// Mark messages as read mutation
-export function useMarkAsReadMutation(conversationId?: string) {
-  const queryClient = useQueryClient();
-  const { unread } = useMessagingActions();
-  const { user: currentUser } = useUnifiedAuth();
-  const userScopeId = currentUser?.id ?? null;
-  const messageKeyFor = (convId?: string | null) =>
-    messageKeys.messages(userScopeId, convId ?? "");
-
-  return useMutation({
-    mutationFn: async (args: ReadArgs) => {
-      if (!conversationId) throw new Error("Conversation ID required");
-
-      const { messageIds } = args;
-      if (!Array.isArray(messageIds) || messageIds.length === 0) {
-        throw new Error("Message IDs required");
-      }
-
-      const csrfToken = getCookie("XSRF-TOKEN");
-      const readResp = await fetch(
-        apiPath(`/messaging/conversations/${conversationId}/read`),
-        {
-          method: "PUT",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
-          },
-          body: JSON.stringify({ messageIds }),
-        },
-      );
-      return (await readResp.json().catch(() => ({}))) ?? {};
-    },
-    onMutate: async (args) => {
-      if (!conversationId) return;
-
-      const { messageIds } = args;
-
-      // Optimistically mark messages as read in cache
-      queryClient.setQueryData(messageKeyFor(conversationId), (prev: any) => {
-        if (!prev?.pages) return prev;
-
-        const copy = {
-          ...prev,
-          pages: prev.pages.map((p: any) => ({
-            ...p,
-            data: {
-              ...p.data,
-              messages: (p.data?.messages || []).map((msg: any) =>
-                messageIds.includes(msg.id)
-                  ? { ...msg, is_read: true, isRead: true }
-                  : msg,
-              ),
-            },
-          })),
-        };
-        return copy;
       });
 
-      // Update conversation lastMessage flags only (do NOT change unread_count on READ)
-      if (userScopeId) {
-        queryClient.setQueryData(
-          conversationKeys.lists(userScopeId),
-          (prev: any) => {
-            if (!prev?.data?.conversations) return prev;
-
-            const conversations = prev.data.conversations.map((c: any) =>
-              c.id === conversationId
-                ? {
-                    ...c,
-                    unread_count: c.unread_count,
-                    lastMessage:
-                      c.lastMessage && messageIds.includes(c.lastMessage.id)
-                        ? { ...c.lastMessage, isRead: true, is_read: true }
-                        : c.lastMessage,
-                  }
-                : c,
-            );
-
-            return {
-              ...prev,
-              data: { ...prev.data, conversations },
-            };
-          },
+      if (result.success && result.data?.message) {
+        // Replace temp message with real message
+        optimisticUpdates.replaceTempMessage(
+          conversationId || '',
+          tempId,
+          result.data.message
         );
+        
+        addNotification({
+          type: 'success',
+          title: 'Message sent',
+          message: 'Your message was sent successfully',
+        });
+        
+        return result.data;
+      } else {
+        // Handle failure
+        optimisticUpdates.updateMessageStatus(
+          conversationId || '',
+          tempId,
+          'failed'
+        );
+
+        // Add to retry queue if not a manual retry
+        if (!isRetry) {
+          messageRetry.addToRetryQueue(tempId, content, recipientId, conversationId);
+        }
+
+        addNotification({
+          type: 'error',
+          title: 'Message failed',
+          message: result.error || 'Failed to send message',
+        });
+
+        throw new Error(result.error || 'Failed to send message');
+      }
+    } catch (error) {
+      // Handle network/offline errors
+      optimisticUpdates.updateMessageStatus(
+        conversationId || '',
+        tempId,
+        'failed'
+      );
+
+      if (!isRetry) {
+        messageRetry.addToRetryQueue(tempId, content, recipientId, conversationId);
       }
 
-      // Note: do not update Zustand unread store on READ; OPENED mutation handles counters.
-    },
-    onError: (error, args) => {
-      // Invalidate to revert optimistic updates
-      if (conversationId) {
-        queryClient.invalidateQueries({
-          queryKey: messageKeyFor(conversationId),
-        });
-        queryClient.invalidateQueries({
-          queryKey: conversationKeys.all(userScopeId),
-        });
+      addNotification({
+        type: 'error',
+        title: 'Message failed',
+        message: error instanceof Error ? error.message : 'Network error',
+      });
+
+      throw error;
+    }
+  }, [messageDelivery, optimisticUpdates, messageRetry, currentUser, addNotification]);
+
+  const markAsRead = useCallback(async (args: ReadArgs) => {
+    const { messageIds, conversationId } = args;
+
+    try {
+      const response = await fetch('/api/messages/read', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ messageIds }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    },
-  });
+
+      // Update optimistic cache
+      optimisticUpdates.markMessagesAsRead(conversationId, messageIds);
+
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to mark messages as read:', error);
+      throw error;
+    }
+  }, [optimisticUpdates]);
+
+  const retryMessage = useCallback(async (tempId: string) => {
+    return await messageRetry.retryMessage(tempId);
+  }, [messageRetry]);
+
+  const deleteMessage = useCallback(async (messageId: string, conversationId: string) => {
+    try {
+      const response = await fetch(`/api/messages/${messageId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Remove from optimistic cache
+      optimisticUpdates.removeOptimisticMessage(conversationId, messageId);
+
+      addNotification({
+        type: 'success',
+        title: 'Message deleted',
+        message: 'Message was deleted successfully',
+      });
+
+      return await response.json();
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        title: 'Delete failed',
+        message: 'Failed to delete message',
+      });
+      throw error;
+    }
+  }, [optimisticUpdates, addNotification]);
+
+  return {
+    sendMessage,
+    markAsRead,
+    retryMessage,
+    deleteMessage,
+    retryQueue: messageRetry.retryQueue,
+    processRetryQueue: messageRetry.processRetryQueue,
+  };
 }
 
-// useMarkAsOpenedMutation removed - using 2-state system (delivered -> read)
+// Individual hooks for compatibility with existing imports
+export function useSendMessageMutation() {
+  const { sendMessage } = useMessageMutationsRQ();
+  
+  return {
+    mutateAsync: sendMessage,
+    isPending: false, // TODO: Add proper loading state tracking
+    error: null, // TODO: Add proper error state tracking
+  };
+}
+
+export function useMarkAsReadMutation(conversationId?: string) {
+  const { markAsRead } = useMessageMutationsRQ();
+  
+  return {
+    mutate: ({ messageIds }: { messageIds: string[] }) => {
+      if (!conversationId) {
+        throw new Error('Conversation ID is required for markAsRead');
+      }
+      return markAsRead({ messageIds, conversationId });
+    },
+    isPending: false, // TODO: Add proper loading state tracking
+    error: null, // TODO: Add proper error state tracking
+  };
+}
