@@ -278,6 +278,11 @@ export function buildSelectClause(
     return { selectColumns, joinTables };
   }
 
+  if (reportParams.tipeLaporan === "outstanding_up_tup") {
+    selectColumns.push(`ROUND(SUM(main.RUPIAH) / ${divisor}, 0) AS RUPIAH`);
+    return { selectColumns, joinTables };
+  }
+
   if (reportParams.tipeLaporan === "pagu_apbn") {
     selectColumns.push(`ROUND(SUM(CONVERT(main.pagu_apbn, SIGNED)) / ${divisor}, 0) AS PAGU_APBN`);
     selectColumns.push(`ROUND(SUM(main.pagu) / ${divisor}, 0) AS PAGU_DIPA`);

@@ -106,6 +106,7 @@ const defaultMenu: MenuItem[] = [
       { label: "Belanja" },
       { label: "Tematik" },
       { label: "Kontrak" },
+      { label: "UP/TUP" },
       { label: "RKAKL Detail" },
     ],
   },
@@ -249,9 +250,11 @@ export function ResponsiveSidebar({
         return <Database className={cls} />;
       case "Inquiry Data__Tematik":
         return <Database className={cls} />;
-      case "Inquiry Data__RKAKL Detail":
-        return <Database className={cls} />;
       case "Inquiry Data__Kontrak":
+        return <Database className={cls} />;
+      case "Inquiry Data__UP/TUP":
+        return <Database className={cls} />;
+      case "Inquiry Data__RKAKL Detail":
         return <Database className={cls} />;
       case "Laporan__Bulanan":
         return <Calendar className={cls} />;
@@ -435,6 +438,27 @@ export function ResponsiveSidebar({
                                   menu: m.label,
                                   submenu: c.label,
                                   path: "/inquiry-data/kontrak",
+                                })
+                              }
+                            >
+                              {subIconFor(m.label, c.label)}
+                              <span>{c.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        ) : c.label === "UP/TUP" &&
+                          m.label === "Inquiry Data" ? (
+                          <DropdownMenuItem key={c.label} asChild>
+<Link
+                              href="/inquiry-data/up-tup"
+                              className="flex items-center w-full"
+                              onMouseEnter={() => {
+                                import('@/components/inquiry-data/enhanced-filter-card');
+                              }}
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/inquiry-data/up-tup",
                                 })
                               }
                             >

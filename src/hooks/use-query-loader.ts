@@ -26,7 +26,7 @@ export interface QueryBuilderState {
 export interface UseQueryLoaderProps {
   onStateChange: (state: QueryBuilderState) => void;
   getCurrentState: () => QueryBuilderState;
-  scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak"; // Add scope for compatibility validation
+  scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup"; // Add scope for compatibility validation
 }
 
 /**

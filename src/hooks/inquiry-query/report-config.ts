@@ -11,6 +11,7 @@ export const TABLE_MAPPING = {
   pagu_dan_blokir: "m_detail_harian",
   semua_kontrak: "pa_kontrak",
   kontrak_valas: "pa_kontrak",
+  outstanding_up_tup: "pa_up",
 } as const;
 
 const REPORTS_EXCLUDE_PAGU_DIPA = new Set([
@@ -78,6 +79,11 @@ const REPORT_TYPE_REGISTRY: Record<string, ReportTypeConfig> = {
     includePaguDipa: false,
     addBlokirAfterReal: false,
     tableNameBuilder: (thang) => `monev${thang}.pa_kontrak_${thang}_baru`,
+  },
+  outstanding_up_tup: {
+    includePaguDipa: false,
+    addBlokirAfterReal: false,
+    tableNameBuilder: (thang) => `monev${thang}.PA_UP_${thang}_OUTSTANDING`,
   },
 };
 

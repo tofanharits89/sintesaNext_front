@@ -22,7 +22,7 @@ interface PilihLaporanCardProps {
   };
   setReportParams: React.Dispatch<React.SetStateAction<any>>;
   // Optional overrides for tematik and rkakl_detail context
-  mode?: "general" | "tematik" | "rkakl_detail" | "kontrak";
+  mode?: "general" | "tematik" | "rkakl_detail" | "kontrak" | "up_tup";
   customTipeLaporanOptions?: { value: string; label: string }[];
   hideJenisAkumulasi?: boolean;
 }
@@ -67,6 +67,10 @@ export function PilihLaporanCard({
     { value: "kontrak_valas", label: "2. Kontrak Valas" },
   ];
 
+  const upTupTipeLaporanOptions = [
+    { value: "outstanding_up_tup", label: "Outstanding UP/TUP" },
+  ];
+
   // Use appropriate options based on mode
   const tipeLaporanOptions =
     mode === "tematik"
@@ -75,6 +79,8 @@ export function PilihLaporanCard({
       ? customTipeLaporanOptions || rkaklDetailTipeLaporanOptions
       : mode === "kontrak"
       ? customTipeLaporanOptions || kontrakTipeLaporanOptions
+      : mode === "up_tup"
+      ? customTipeLaporanOptions || upTupTipeLaporanOptions
       : customTipeLaporanOptions || defaultTipeLaporanOptions;
 
   const pembulatanOptions = [
@@ -134,6 +140,8 @@ export function PilihLaporanCard({
                   ? "Tipe Laporan RKAKL"
                   : mode === "kontrak"
                   ? "Tipe Laporan Kontrak"
+                  : mode === "up_tup"
+                  ? "Tipe Laporan UP/TUP"
                   : "Tipe Laporan"}
               </label>
               <Select
@@ -158,6 +166,8 @@ export function PilihLaporanCard({
                         ? "Pilih tipe laporan RKAKL"
                         : mode === "kontrak"
                         ? "Pilih tipe laporan kontrak"
+                        : mode === "up_tup"
+                        ? "Pilih tipe laporan UP/TUP"
                         : "Pilih tipe laporan"
                     }
                   />

@@ -5,7 +5,7 @@ import { getAllMandatoryFilterKeys } from "./categoryRegistry";
  * Do not modify behavior when moving from filterRegistry.ts.
  */
 export const SCOPE_EXCLUSIONS_BASE: Record<
-  "belanja" | "tematik" | "rkakl_detail" | "kontrak" | "general",
+  "belanja" | "tematik" | "rkakl_detail" | "kontrak" | "up_tup" | "general",
   string[]
 > = {
   belanja: [
@@ -98,6 +98,51 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     // Other UI filters not required
     "register",
     "jenisBlokir",
+  ],
+  up_tup: [
+    // Allowed filters on UP/TUP page:
+    // - cutOff, kementerian, eselonI, kewenangan, kanwil, kppn, satker, akun
+    // Everything else should be excluded
+    "provinsi",
+    "kabkota",
+    "fungsi",
+    "subFungsi",
+    // Tematik & special switches not used on UP/TUP
+    "jenisPn",
+    "programPrioritas",
+    "kegiatanPrioritas",
+    "proyekPrioritas",
+    "jenisMajorProject",
+    "jenisInflasiIntervensi",
+    "jenisInflasiPengeluaran",
+    "stuntingIntervensi",
+    "mbgIntervensi",
+    "jenisProgramStrategis",
+    "jenisTemaAnggaran",
+    "kemiskinanEkstrim",
+    "belanjaPemilu",
+    "ibuKotaNusantara",
+    "ketahananPangan",
+    "swasembadaPangan",
+    "belanjaPemerintah",
+    // RKAKL Detail specific hierarchy not needed on UP/TUP
+    "subOutputRo",
+    "komponen",
+    "subKomponen",
+    "item",
+    // Internal akun variants not shown on UI
+    "kodeBkpk",
+    "jenisBelanja",
+    // Other UI filters not required on UP/TUP
+    "register",
+    "jenisBlokir",
+    // Kontrak-specific filters not needed on UP/TUP
+    "jenisKontrak",
+    // UP/TUP doesn't use these hierarchy filters
+    "program",
+    "kegiatan",
+    "outputKro",
+    "sumberDana",
   ],
   general: [],
 };

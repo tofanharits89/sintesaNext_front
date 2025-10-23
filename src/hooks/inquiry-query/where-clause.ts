@@ -21,6 +21,14 @@ export function buildWhereClause(
     whereConditions.push("main.currency <> 'IDR'");
   }
 
+  // Add cutOff condition for UP/TUP report (accumulative: <= for all months up to cutoff)
+  if (reportParams?.tipeLaporan === "outstanding_up_tup") {
+    const cutOffValue = filterValues.cutOff?.selection;
+    if (cutOffValue) {
+      whereConditions.push(`main.bulan <= '${cutOffValue}'`);
+    }
+  }
+
   if (activeFilters.includes("kemiskinanEkstrim")) whereConditions.push("main.kemiskinan_ekstrim IS NOT NULL");
   if (activeFilters.includes("belanjaPemilu")) whereConditions.push("main.pemilu IS NOT NULL");
   if (activeFilters.includes("ibuKotaNusantara")) whereConditions.push("main.ikn IS NOT NULL");

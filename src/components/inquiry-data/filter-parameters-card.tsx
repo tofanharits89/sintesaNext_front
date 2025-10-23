@@ -10,7 +10,7 @@ interface FilterParametersCardProps {
   activeFilters: string[];
   setActiveFilters: React.Dispatch<React.SetStateAction<string[]>>;
   excludeFilters?: string[]; // Optional array of filter keys to exclude
-  scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak"; // Optional scope for context-aware visibility
+  scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup"; // Optional scope for context-aware visibility
   tipeLaporan?: string; // Pass current report type to gate tematik mandatory filters on Belanja
 }
 
