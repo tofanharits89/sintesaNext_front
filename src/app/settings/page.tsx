@@ -22,12 +22,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { PerformanceMonitoringDashboard } from "@/components/dashboard/PerformanceMonitoringDashboard";
+
 import { useUnifiedAuth } from "@/lib/auth";
 import {
   Settings,
   User,
-  Monitor,
   Shield,
   Palette,
   Bell,
@@ -59,27 +58,16 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Pengaturan</h1>
-        <p className="text-muted-foreground">
-          Kelola preferensi aplikasi, profil, dan pengaturan sistem Anda.
-        </p>
+    <div className="space-y-6 md:space-y-8">
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-xl font-semibold">Pengaturan</h1>
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="general" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
             Umum
-          </TabsTrigger>
-          <TabsTrigger value="profile" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            Profil
-          </TabsTrigger>
-          <TabsTrigger value="performance" className="flex items-center gap-2">
-            <Monitor className="h-4 w-4" />
-            Monitor Performa
           </TabsTrigger>
           <TabsTrigger value="system" className="flex items-center gap-2">
             <Shield className="h-4 w-4" />
@@ -232,98 +220,9 @@ export default function SettingsPage() {
           </div>
         </TabsContent>
 
-        {/* Profile Settings Tab */}
-        <TabsContent value="profile" className="space-y-6">
-          <div className="grid gap-6">
-            {/* Basic Profile Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Informasi Profil
-                </CardTitle>
-                <CardDescription>
-                  Kelola informasi dasar profil Anda
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nama Lengkap</Label>
-                    <Input
-                      id="name"
-                      value={u?.name || ""}
-                      placeholder="Masukkan nama lengkap"
-                      readOnly
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={u?.email || ""}
-                      placeholder="Masukkan email"
-                      readOnly
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="role">Role</Label>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary">{u?.role || "N/A"}</Badge>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Lokasi</Label>
-                    <Input
-                      id="location"
-                      value={u?.location || "N/A"}
-                      placeholder="Lokasi kerja"
-                      readOnly
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Security Settings */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lock className="h-5 w-5" />
-                  Keamanan
-                </CardTitle>
-                <CardDescription>
-                  Kelola pengaturan keamanan akun Anda
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-4">
-                  <Button variant="outline" className="w-full md:w-auto">
-                    Ubah Password
-                  </Button>
-                  <p className="text-sm text-muted-foreground">
-                    Terakhir diubah: Belum pernah
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
 
-        {/* Performance Monitor Tab */}
-        <TabsContent value="performance" className="space-y-6">
-          <div>
-            <div className="mb-6">
-              <h3 className="text-lg font-medium">Monitor Performa Sistem</h3>
-              <p className="text-sm text-muted-foreground">
-                Pantau performa cache, kompresi, dan kesehatan sistem secara
-                real-time.
-              </p>
-            </div>
-            <PerformanceMonitoringDashboard />
-          </div>
-        </TabsContent>
+
 
         {/* System Settings Tab */}
         <TabsContent value="system" className="space-y-6">

@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Activity,
   Loader2,
+  Monitor,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useMemo, useEffect, useState } from "react";
@@ -650,6 +651,12 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                       </Link>
                     </DropdownMenuItem>
                   )}
+                  <DropdownMenuItem asChild>
+                    <Link href="/monitor-performa" className="flex items-center">
+                      <Monitor className="mr-2 h-4 w-4" />
+                      Monitor Performa
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem className="flex items-center">
                     <HelpCircle className="mr-2 h-4 w-4" />
                     Bantuan

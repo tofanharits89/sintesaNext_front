@@ -41,6 +41,7 @@ const AppShell = memo(function AppShell({
     '/debug-cookies',
     '/debug-user',
     '/log-user',
+    '/monitor-performa',
     '/test-rbac',
     '/test-skeletons'
   ], []);

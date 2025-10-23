@@ -89,7 +89,15 @@ export default function LogUserPage() {
   // Debug: Data state changes
   useEffect(() => {
     // Data state monitoring
-  }, [onlineUsers, isConnected, connectionStatus, loginHistory, weeklyStats, isLoadingStats, statsError]);
+  }, [
+    onlineUsers,
+    isConnected,
+    connectionStatus,
+    loginHistory,
+    weeklyStats,
+    isLoadingStats,
+    statsError,
+  ]);
 
   // Process weekly login data for chart display
   const weeklyLogins = useMemo(() => {
@@ -403,12 +411,12 @@ export default function LogUserPage() {
                         Total login unik:{" "}
                         {weeklyStats.reduce(
                           (sum, stat) => sum + stat.distinctUsers,
-                          0
+                          0,
                         )}{" "}
                         | Total login:{" "}
                         {weeklyStats.reduce(
                           (sum, stat) => sum + stat.totalLogins,
-                          0
+                          0,
                         )}
                       </div>
                     )}
@@ -470,7 +478,7 @@ export default function LogUserPage() {
                     loginHistory.map((entry) => {
                       const loginTime = new Date(entry.loginTimestamp);
                       const timeAgo = calculateLoginDuration(
-                        entry.loginTimestamp
+                        entry.loginTimestamp,
                       );
 
                       return (
@@ -533,7 +541,7 @@ export default function LogUserPage() {
           {/* Connection Status and Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
-              <CardContent className="p-4">
+              <CardContent>
                 <div className="flex items-center space-x-2">
                   <StatusIcon
                     className={`h-5 w-5 ${statusInfo.color} ${
@@ -551,7 +559,7 @@ export default function LogUserPage() {
             </Card>
 
             <Card>
-              <CardContent className="p-4">
+              <CardContent>
                 <div className="flex items-center space-x-2">
                   <Users className="h-5 w-5 text-blue-500" />
                   <div>
@@ -565,7 +573,7 @@ export default function LogUserPage() {
             </Card>
 
             <Card>
-              <CardContent className="p-4">
+              <CardContent>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Clock className="h-5 w-5 text-purple-500" />
@@ -709,7 +717,7 @@ export default function LogUserPage() {
                               <TableCell className="text-center">
                                 <Badge variant="outline" className="text-xs">
                                   {getRoleDisplayName(
-                                    userInfo.user.role as any
+                                    userInfo.user.role as any,
                                   )}
                                 </Badge>
                               </TableCell>
@@ -761,7 +769,7 @@ export default function LogUserPage() {
                               <div className="flex items-center space-x-2">
                                 <Badge variant="outline" className="text-xs">
                                   {getRoleDisplayName(
-                                    userInfo.user.role as any
+                                    userInfo.user.role as any,
                                   )}
                                 </Badge>
                                 <Badge
@@ -837,7 +845,7 @@ export default function LogUserPage() {
                       const d = new Date();
                       d.setMonth(d.getMonth() - idx);
                       const val = `${d.getFullYear()}-${String(
-                        d.getMonth() + 1
+                        d.getMonth() + 1,
                       ).padStart(2, "0")}`;
                       const label = d.toLocaleString("id-ID", {
                         month: "long",
