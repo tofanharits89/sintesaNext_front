@@ -39,8 +39,11 @@ const schema = z.object({
   captcha: z.string().min(4, "Captcha 4 digit").max(4, "Captcha 4 digit"),
   rememberMe: z.boolean().optional().default(false),
 });
-
-type FormData = z.infer<typeof schema>;
+// Important: with exactOptionalPropertyTypes enabled, zod input/output differ
+// - input type (before parsing) allows optional fields
+// - output type (after parsing) applies defaults and makes fields required
+type FormInput = z.input<typeof schema>;
+type FormData = z.output<typeof schema>;
 
 export default function SimplifiedLoginForm() {
   const router = useRouter();
@@ -72,7 +75,7 @@ export default function SimplifiedLoginForm() {
 
   const expectedCaptcha = generateCaptcha(captchaSeed);
 
-  const form = useForm<FormData>({
+  const form = useForm<FormInput, any, FormData>({
     resolver: zodResolver(schema),
     defaultValues: { username: "", password: "", captcha: "", rememberMe: false },
   });
