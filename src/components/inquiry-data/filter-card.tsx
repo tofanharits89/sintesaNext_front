@@ -60,6 +60,8 @@ import infPengeluaranData from "./data/inf_pengeluaran.json";
 import kdprogisData from "./data/kdprogis.json";
 // Tematik Anggaran JSON
 import kdtemaData from "./data/kdtema.json";
+// Status Sumber JSON
+import statusSumberData from "./data/status_sumber.json";
 
 type Option = { value: string; label: string };
 
@@ -130,6 +132,7 @@ const getFilterIcon = (filterKey: string) => {
     jenisProgramStrategis: <Target className="h-4 w-4" />,
     jenisTemaAnggaran: <Target className="h-4 w-4" />,
     jenisKontrak: <Settings className="h-4 w-4" />,
+    statusSumber: <Settings className="h-4 w-4" />,
   };
 
   return iconMap[filterKey] || <Filter className="h-4 w-4" />;
@@ -1151,6 +1154,18 @@ export function FilterCard({
           case "belanjaPemerintah": {
             // Boolean-only flag/switch: WHERE-only handling; options remain default
             return commonOptions;
+          }
+
+          case "statusSumber": {
+            // Status Sumber filter with predefined options
+            const statusSumberOptions = (statusSumberData as Array<{ value: string; label: string }>).map(
+              (item) => ({
+                value: item.value,
+                label: item.label,
+              })
+            );
+            // Replace "all" option with "Semua Status" from data
+            return statusSumberOptions;
           }
 
           default:

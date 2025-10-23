@@ -643,6 +643,19 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
       },
     },
   },
+  {
+    key: "statusSumber",
+    label: "Status Sumber",
+    order: 24,
+    showInUI: true,
+    query: {
+      columnName: "JE_SOURCE",
+      referenceDatabase: "dbref",
+      referenceTable: "t_sumber_pnp",
+      joinKey: "JE_SOURCE",
+      nameColumn: "nmsumber",
+    },
+  },
 ];
 
 export type FilterKey = (typeof INQUIRY_FILTER_DEFS)[number]["key"];

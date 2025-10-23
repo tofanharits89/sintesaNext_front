@@ -20,6 +20,8 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "jenisBlokir", // RKAKL Detail specific
     // Kontrak-specific filter should not appear on Belanja
     "jenisKontrak",
+    // Status Sumber only on Penerimaan PNBP
+    "statusSumber",
   ],
   tematik: [
     "register",
@@ -35,6 +37,8 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "jenisBlokir", // RKAKL Detail specific
     // Kontrak-specific filter should not appear on Tematik
     "jenisKontrak",
+    // Status Sumber only on Penerimaan PNBP
+    "statusSumber",
   ],
   rkakl_detail: [
     "cutOff", // No cutOff needed for RKAKL Detail since no realisasi
@@ -58,6 +62,8 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "jenisTemaAnggaran",
     // Kontrak-specific filter should not appear on RKAKL Detail
     "jenisKontrak",
+    // Status Sumber only on Penerimaan PNBP
+    "statusSumber",
   ],
   kontrak: [
     // Explicitly exclude all filters that are NOT required on Kontrak page.
@@ -98,6 +104,8 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     // Other UI filters not required
     "register",
     "jenisBlokir",
+    // Status Sumber only on Penerimaan PNBP
+    "statusSumber",
   ],
   up_tup: [
     // Allowed filters on UP/TUP page:
@@ -143,6 +151,8 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "kegiatan",
     "outputKro",
     "sumberDana",
+    // Status Sumber not used on UP/TUP
+    "statusSumber",
   ],
   penerimaan_pnbp: [
     // Allowed filters on Penerimaan PNBP page:
@@ -187,7 +197,10 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "outputKro",
     "sumberDana",
   ],
-  general: [],
+  general: [
+    // Status Sumber only on Penerimaan PNBP
+    "statusSumber",
+  ],
 };
 
 /**

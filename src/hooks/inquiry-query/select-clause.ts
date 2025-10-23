@@ -93,6 +93,41 @@ export function buildSelectClause(
     const jenisTampilan = filterValue?.jenisTampilan || "kode";
     const mengandungKata = filterValue?.mengandungKata;
 
+    if (filterKey === "statusSumber") {
+      const jenisTampilan = filterValue?.jenisTampilan || "kode";
+      const alias = "statusSumber_ref";
+      
+      if (jenisTampilan !== "jangan_tampilkan") {
+        switch (jenisTampilan) {
+          case "kode":
+            selectColumns.push(`main.JE_SOURCE AS statusSumber_kode`);
+            break;
+          case "uraian":
+            const sumberJoinTable = `dbref.t_sumber_pnp`;
+            if (!joinedTables.has(alias)) {
+              joinTables.push(
+                `LEFT JOIN ${sumberJoinTable} AS ${alias} ON main.JE_SOURCE = ${alias}.JE_SOURCE`
+              );
+              joinedTables.add(alias);
+            }
+            selectColumns.push(`${alias}.nmsumber AS statusSumber_uraian`);
+            break;
+          case "kode_uraian":
+            const sumberJoinTable2 = `dbref.t_sumber_pnp`;
+            if (!joinedTables.has(alias)) {
+              joinTables.push(
+                `LEFT JOIN ${sumberJoinTable2} AS ${alias} ON main.JE_SOURCE = ${alias}.JE_SOURCE`
+              );
+              joinedTables.add(alias);
+            }
+            selectColumns.push(`main.JE_SOURCE AS statusSumber_kode`);
+            selectColumns.push(`${alias}.nmsumber AS statusSumber_uraian`);
+            break;
+        }
+      }
+      return;
+    }
+
     if (filterKey === "jenisProgramStrategis") {
       if (jenisTampilan !== "jangan_tampilkan") {
         switch (jenisTampilan) {

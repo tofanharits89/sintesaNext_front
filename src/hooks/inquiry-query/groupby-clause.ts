@@ -39,6 +39,15 @@ export function buildGroupByClause(
     return groupByColumns;
   }
 
+  if (reportParams.tipeLaporan === "outstanding_up_tup") {
+    return groupByColumns;
+  }
+
+  if (reportParams.tipeLaporan === "detil_penerimaan_pnbp") {
+    addGroupBy("main.TGPOS");
+    addGroupBy("main.NODOK");
+  }
+
   if (reportParams.tipeLaporan === "pergerakan_blokir_bulanan_per_jenis") {
     addGroupBy("main.kdblokir");
     addGroupBy("main.nmblokir");
@@ -54,9 +63,17 @@ export function buildGroupByClause(
   if (uniqueActiveFilters.includes("ibuKotaNusantara")) addGroupBy("main.ikn");
   if (uniqueActiveFilters.includes("ketahananPangan")) addGroupBy("main.pangan");
   if (uniqueActiveFilters.includes("swasembadaPangan")) addGroupBy("main.swasembada");
+  if (uniqueActiveFilters.includes("statusSumber")) {
+    const filterValue = filterValues["statusSumber"];
+    const jenisTampilan = filterValue?.jenisTampilan || "kode";
+    addGroupBy("main.JE_SOURCE");
+    if (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian") {
+      addGroupBy("statusSumber_ref.nmsumber");
+    }
+  }
 
   uniqueActiveFilters.forEach((filterKey) => {
-    if (filterKey === "cutOff") return;
+    if (filterKey === "cutOff" || filterKey === "statusSumber") return;
     const config = FILTER_CONFIG[filterKey];
     const filterValue = filterValues[filterKey];
     if (!config || !filterValue) return;

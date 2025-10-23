@@ -408,12 +408,14 @@ export function TayangModal({
 
   // Helper function to get cell alignment class
   const getCellAlignmentClass = (column: string): string => {
+    const lower = column.toLowerCase();
     // Special exceptions for tipe laporan 6 (pergerakan_blokir_bulanan_per_jenis)
     if (reportParams.tipeLaporan === "pergerakan_blokir_bulanan_per_jenis") {
       if (column === "kdblokir_kode") return "text-center";
       if (column === "nmblokir_uraian") return "text-left";
     }
-    const lower = column.toLowerCase();
+    // Center-align statusSumber_uraian
+    if (lower === "statussumber_uraian") return "text-center";
     // Right-align monetary, r* monthly, rp* metrics, p* percentages, and sum_vol
     if (
       lower === "sum_vol" ||

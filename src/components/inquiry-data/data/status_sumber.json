@@ -1,0 +1,14 @@
+[
+  {
+    "value": "all",
+    "label": "Semua Status"
+  },
+  {
+    "value": "1",
+    "label": "Potongan SPM"
+  },
+  {
+    "value": "2",
+    "label": "Setoran"
+  }
+]

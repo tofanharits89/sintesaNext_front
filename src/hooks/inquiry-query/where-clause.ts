@@ -49,10 +49,22 @@ export function buildWhereClause(
     );
   }
 
+  // Add statusSumber condition for PAYABLES/RECEIVABLES
+  if (activeFilters.includes("statusSumber")) {
+    const statusSumberValue = filterValues.statusSumber?.selection;
+    if (statusSumberValue && statusSumberValue !== "all") {
+      if (statusSumberValue === "1") {
+        whereConditions.push("main.JE_SOURCE = 'Payables'");
+      } else if (statusSumberValue === "2") {
+        whereConditions.push("main.JE_SOURCE = 'Receivables'");
+      }
+    }
+  }
+
   const uniqueActiveFilters = Array.from(new Set(activeFilters));
 
   uniqueActiveFilters.forEach((filterKey) => {
-    if (filterKey === "cutOff") return;
+    if (filterKey === "cutOff" || filterKey === "statusSumber") return;
 
     const config = FILTER_CONFIG[filterKey];
     const filterValue = filterValues[filterKey];
