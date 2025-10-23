@@ -98,6 +98,7 @@ export function useAuth(): UseAuthReturn {
   }, [queryClient]);
 
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const expiryWarnTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityTimeRef = useRef<number>(Date.now());
 
   const clearCache = useCallback(() => {
@@ -269,6 +270,9 @@ export function useAuth(): UseAuthReturn {
     if (refreshTimerRef.current) {
       clearTimeout(refreshTimerRef.current);
     }
+    if (expiryWarnTimerRef.current) {
+      clearTimeout(expiryWarnTimerRef.current);
+    }
 
     // CRITICAL FIX: Dynamic refresh interval based on actual token expiry
     const getRefreshInterval = (): number => {
@@ -296,6 +300,16 @@ export function useAuth(): UseAuthReturn {
           const now = Date.now();
           const timeUntilExpiry = expiresAt - now;
           
+          // Schedule a heads-up toast 5 minutes before expiry (non-blocking)
+          try {
+            const warnDelay = Math.max(timeUntilExpiry - 5 * 60 * 1000, 0);
+            if (warnDelay > 0) {
+              expiryWarnTimerRef.current = setTimeout(() => {
+                toast.warning("Sesi akan berakhir dalam 5 menit. Kami akan memperbarui secara otomatis.");
+              }, warnDelay);
+            }
+          } catch {}
+
           // Refresh at 50% of token lifetime, minimum 5 minutes
           const refreshAt = Math.max(timeUntilExpiry * 0.5, 5 * 60 * 1000);
           
@@ -350,12 +364,20 @@ export function useAuth(): UseAuthReturn {
         clearTimeout(refreshTimerRef.current);
         refreshTimerRef.current = null;
       }
+      if (expiryWarnTimerRef.current) {
+        clearTimeout(expiryWarnTimerRef.current);
+        expiryWarnTimerRef.current = null;
+      }
     }
 
     return () => {
       if (refreshTimerRef.current) {
         clearTimeout(refreshTimerRef.current);
         refreshTimerRef.current = null;
+      }
+      if (expiryWarnTimerRef.current) {
+        clearTimeout(expiryWarnTimerRef.current);
+        expiryWarnTimerRef.current = null;
       }
     };
   }, [authState.isAuthenticated, authState.user, startProactiveRefresh]);
