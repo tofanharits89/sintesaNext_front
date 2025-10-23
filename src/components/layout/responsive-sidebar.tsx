@@ -107,6 +107,7 @@ const defaultMenu: MenuItem[] = [
       { label: "Tematik" },
       { label: "Kontrak" },
       { label: "UP/TUP" },
+      { label: "Penerimaan PNBP" },
       { label: "RKAKL Detail" },
     ],
   },
@@ -253,6 +254,8 @@ export function ResponsiveSidebar({
       case "Inquiry Data__Kontrak":
         return <Database className={cls} />;
       case "Inquiry Data__UP/TUP":
+        return <Database className={cls} />;
+      case "Inquiry Data__Penerimaan PNBP":
         return <Database className={cls} />;
       case "Inquiry Data__RKAKL Detail":
         return <Database className={cls} />;
@@ -459,6 +462,27 @@ export function ResponsiveSidebar({
                                   menu: m.label,
                                   submenu: c.label,
                                   path: "/inquiry-data/up-tup",
+                                })
+                              }
+                            >
+                              {subIconFor(m.label, c.label)}
+                              <span>{c.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        ) : c.label === "Penerimaan PNBP" &&
+                          m.label === "Inquiry Data" ? (
+                          <DropdownMenuItem key={c.label} asChild>
+<Link
+                              href="/inquiry-data/penerimaan-pnbp"
+                              className="flex items-center w-full"
+                              onMouseEnter={() => {
+                                import('@/components/inquiry-data/enhanced-filter-card');
+                              }}
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/inquiry-data/penerimaan-pnbp",
                                 })
                               }
                             >

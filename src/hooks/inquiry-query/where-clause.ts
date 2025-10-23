@@ -29,6 +29,14 @@ export function buildWhereClause(
     }
   }
 
+  // Add cutOff condition for Penerimaan PNBP report (accumulative: <= for all months up to cutoff)
+  if (reportParams?.tipeLaporan === "detil_penerimaan_pnbp") {
+    const cutOffValue = filterValues.cutOff?.selection;
+    if (cutOffValue) {
+      whereConditions.push(`main.bulan <= '${cutOffValue}'`);
+    }
+  }
+
   if (activeFilters.includes("kemiskinanEkstrim")) whereConditions.push("main.kemiskinan_ekstrim IS NOT NULL");
   if (activeFilters.includes("belanjaPemilu")) whereConditions.push("main.pemilu IS NOT NULL");
   if (activeFilters.includes("ibuKotaNusantara")) whereConditions.push("main.ikn IS NOT NULL");

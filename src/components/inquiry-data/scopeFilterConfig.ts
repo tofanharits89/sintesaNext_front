@@ -5,7 +5,7 @@ import { getAllMandatoryFilterKeys } from "./categoryRegistry";
  * Do not modify behavior when moving from filterRegistry.ts.
  */
 export const SCOPE_EXCLUSIONS_BASE: Record<
-  "belanja" | "tematik" | "rkakl_detail" | "kontrak" | "up_tup" | "general",
+  "belanja" | "tematik" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "general",
   string[]
 > = {
   belanja: [
@@ -139,6 +139,49 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     // Kontrak-specific filters not needed on UP/TUP
     "jenisKontrak",
     // UP/TUP doesn't use these hierarchy filters
+    "program",
+    "kegiatan",
+    "outputKro",
+    "sumberDana",
+  ],
+  penerimaan_pnbp: [
+    // Allowed filters on Penerimaan PNBP page:
+    // - cutOff, kementerian, eselonI, kewenangan, provinsi, kabkota, kanwil, kppn, satker, akun
+    // Everything else should be excluded
+    "fungsi",
+    "subFungsi",
+    // Tematik & special switches not used on Penerimaan PNBP
+    "jenisPn",
+    "programPrioritas",
+    "kegiatanPrioritas",
+    "proyekPrioritas",
+    "jenisMajorProject",
+    "jenisInflasiIntervensi",
+    "jenisInflasiPengeluaran",
+    "stuntingIntervensi",
+    "mbgIntervensi",
+    "jenisProgramStrategis",
+    "jenisTemaAnggaran",
+    "kemiskinanEkstrim",
+    "belanjaPemilu",
+    "ibuKotaNusantara",
+    "ketahananPangan",
+    "swasembadaPangan",
+    "belanjaPemerintah",
+    // RKAKL Detail specific hierarchy not needed
+    "subOutputRo",
+    "komponen",
+    "subKomponen",
+    "item",
+    // Internal akun variants not shown on UI
+    "kodeBkpk",
+    "jenisBelanja",
+    // Other UI filters not required
+    "register",
+    "jenisBlokir",
+    // Kontrak-specific filters not needed
+    "jenisKontrak",
+    // Penerimaan PNBP doesn't use these hierarchy filters
     "program",
     "kegiatan",
     "outputKro",
