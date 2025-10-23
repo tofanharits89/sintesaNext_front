@@ -137,44 +137,71 @@ const generateMockHistoricalData = (timeRange: TimeRange): HistoricalData => {
 };
 
 const transformHistoricalData = (
-  apiData: HistoricalApiResponse,
+  apiData: any,
 ): HistoricalData => {
-  const historical = apiData.data.historical;
-  
+  // Support multiple API shapes
+  const historical =
+    apiData?.data?.historical ??
+    apiData?.historical ??
+    (apiData?.hit_rate_history ||
+    apiData?.response_time_history ||
+    apiData?.compression_history ||
+    apiData?.error_rate_history
+      ? {
+          hitRateHistory: apiData.hit_rate_history,
+          responseTimeHistory: apiData.response_time_history,
+          compressionHistory: apiData.compression_history,
+          errorRateHistory: apiData.error_rate_history,
+        }
+      : null);
+
+  if (!historical) {
+    throw new Error("Invalid historical response shape: missing 'data.historical'");
+  }
+
   return {
-    hitRateHistory: (historical.hitRateHistory || []).map((item) => ({
+    hitRateHistory: (historical.hitRateHistory ?? historical.hit_rate_history ?? []).map(
+      (item: any) => ({
+        name: new Date(item.timestamp).toLocaleTimeString("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        hitRate: Math.round((item.hitRate ?? item.hit_rate) * 100) / 100,
+        missRate: Math.round((item.missRate ?? item.miss_rate) * 100) / 100,
+      }),
+    ),
+    responseTimeHistory: (
+      historical.responseTimeHistory ?? historical.response_time_history ?? []
+    ).map((item: any) => ({
       name: new Date(item.timestamp).toLocaleTimeString("id-ID", {
         hour: "2-digit",
         minute: "2-digit",
       }),
-      hitRate: Math.round(item.hitRate * 100) / 100,
-      missRate: Math.round(item.missRate * 100) / 100,
+      avgResponseTime: Math.round(item.avgResponseTime ?? item.avg_response_time),
+      p95ResponseTime: Math.round(item.p95ResponseTime ?? item.p95_response_time),
+      p99ResponseTime: Math.round(item.p99ResponseTime ?? item.p99_response_time),
     })),
-    responseTimeHistory: (historical.responseTimeHistory || []).map((item) => ({
+    compressionHistory: (
+      historical.compressionHistory ?? historical.compression_history ?? []
+    ).map((item: any) => ({
       name: new Date(item.timestamp).toLocaleTimeString("id-ID", {
         hour: "2-digit",
         minute: "2-digit",
       }),
-      avgResponseTime: Math.round(item.avgResponseTime),
-      p95ResponseTime: Math.round(item.p95ResponseTime),
-      p99ResponseTime: Math.round(item.p99ResponseTime),
+      compressionRatio:
+        Math.round(((item.compressionRatio ?? item.compression_ratio) as number) * 100) / 100,
+      originalSize: item.originalSize ?? item.original_size,
+      compressedSize: item.compressedSize ?? item.compressed_size,
     })),
-    compressionHistory: (historical.compressionHistory || []).map((item) => ({
+    errorRateHistory: (
+      historical.errorRateHistory ?? historical.error_rate_history ?? []
+    ).map((item: any) => ({
       name: new Date(item.timestamp).toLocaleTimeString("id-ID", {
         hour: "2-digit",
         minute: "2-digit",
       }),
-      compressionRatio: Math.round(item.compressionRatio * 100) / 100,
-      originalSize: item.originalSize,
-      compressedSize: item.compressedSize,
-    })),
-    errorRateHistory: (historical.errorRateHistory || []).map((item) => ({
-      name: new Date(item.timestamp).toLocaleTimeString("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      errorRate: Math.round(item.errorRate * 100) / 100,
-      successRate: Math.round(item.successRate * 100) / 100,
+      errorRate: Math.round((item.errorRate ?? item.error_rate) * 100) / 100,
+      successRate: Math.round((item.successRate ?? item.success_rate) * 100) / 100,
     })),
   };
 };
@@ -210,8 +237,19 @@ export const useHistoricalData = (timeRange: TimeRange) => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const apiData: HistoricalApiResponse = await response.json();
-        const transformedData = transformHistoricalData(apiData);
+        const result = await response.json();
+        const hasNested = !!result?.data?.historical;
+        const hasHistorical = !!result?.historical;
+        const hasTopLevelSnake =
+          Array.isArray(result?.hit_rate_history) ||
+          Array.isArray(result?.response_time_history) ||
+          Array.isArray(result?.compression_history) ||
+          Array.isArray(result?.error_rate_history);
+        if (!hasNested && !hasHistorical && !hasTopLevelSnake) {
+          console.warn("Historical API response missing expected shape", result);
+          throw new Error("Historical API: invalid response structure");
+        }
+        const transformedData = transformHistoricalData(result);
         setHistoricalData(transformedData);
       } catch (error) {
         console.error("Failed to fetch historical data:", error);
