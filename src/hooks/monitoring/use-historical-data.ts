@@ -11,28 +11,53 @@ import type {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 interface HistoricalApiResponse {
-  hit_rate_history: Array<{
-    timestamp: string;
-    hit_rate: number;
-    miss_rate: number;
-  }>;
-  response_time_history: Array<{
-    timestamp: string;
-    avg_response_time: number;
-    p95_response_time: number;
-    p99_response_time: number;
-  }>;
-  compression_history: Array<{
-    timestamp: string;
-    compression_ratio: number;
-    original_size: number;
-    compressed_size: number;
-  }>;
-  error_rate_history: Array<{
-    timestamp: string;
-    error_rate: number;
-    success_rate: number;
-  }>;
+  success: boolean;
+  data: {
+    historical: {
+      timeRange: string;
+      hitRateHistory: Array<{
+        timestamp: string;
+        hitRate: number;
+        missRate: number;
+      }>;
+      responseTimeHistory: Array<{
+        timestamp: string;
+        avgResponseTime: number;
+        p95ResponseTime: number;
+        p99ResponseTime: number;
+      }>;
+      compressionHistory: Array<{
+        timestamp: string;
+        compressionRatio: number;
+        originalSize: number;
+        compressedSize: number;
+      }>;
+      errorRateHistory: Array<{
+        timestamp: string;
+        errorRate: number;
+        successRate: number;
+      }>;
+      systemMetricsHistory: Array<{
+        timestamp: string;
+        memoryUsage: number;
+        cpuUsage: number;
+        diskUsage: number;
+        activeConnections: number;
+      }>;
+    };
+    aggregated: {
+      avgHitRate: number;
+      avgResponseTime: number;
+      avgCompressionRatio: number;
+      avgMemoryUsage: number;
+      avgCpuUsage: number;
+      totalRequests: number;
+      maxErrorRate: number;
+      uptime: number;
+    };
+  };
+  timeRange: string;
+  timestamp: string;
 }
 
 const generateMockHistoricalData = (timeRange: TimeRange): HistoricalData => {
@@ -114,40 +139,42 @@ const generateMockHistoricalData = (timeRange: TimeRange): HistoricalData => {
 const transformHistoricalData = (
   apiData: HistoricalApiResponse,
 ): HistoricalData => {
+  const historical = apiData.data.historical;
+  
   return {
-    hitRateHistory: (apiData.hit_rate_history || []).map((item) => ({
+    hitRateHistory: (historical.hitRateHistory || []).map((item) => ({
       name: new Date(item.timestamp).toLocaleTimeString("id-ID", {
         hour: "2-digit",
         minute: "2-digit",
       }),
-      hitRate: Math.round(item.hit_rate * 100) / 100,
-      missRate: Math.round((100 - item.hit_rate) * 100) / 100,
+      hitRate: Math.round(item.hitRate * 100) / 100,
+      missRate: Math.round(item.missRate * 100) / 100,
     })),
-    responseTimeHistory: (apiData.response_time_history || []).map((item) => ({
+    responseTimeHistory: (historical.responseTimeHistory || []).map((item) => ({
       name: new Date(item.timestamp).toLocaleTimeString("id-ID", {
         hour: "2-digit",
         minute: "2-digit",
       }),
-      avgResponseTime: Math.round(item.avg_response_time),
-      p95ResponseTime: Math.round(item.p95_response_time),
-      p99ResponseTime: Math.round(item.p99_response_time),
+      avgResponseTime: Math.round(item.avgResponseTime),
+      p95ResponseTime: Math.round(item.p95ResponseTime),
+      p99ResponseTime: Math.round(item.p99ResponseTime),
     })),
-    compressionHistory: (apiData.compression_history || []).map((item) => ({
+    compressionHistory: (historical.compressionHistory || []).map((item) => ({
       name: new Date(item.timestamp).toLocaleTimeString("id-ID", {
         hour: "2-digit",
         minute: "2-digit",
       }),
-      compressionRatio: Math.round(item.compression_ratio * 100) / 100,
-      originalSize: item.original_size,
-      compressedSize: item.compressed_size,
+      compressionRatio: Math.round(item.compressionRatio * 100) / 100,
+      originalSize: item.originalSize,
+      compressedSize: item.compressedSize,
     })),
-    errorRateHistory: (apiData.error_rate_history || []).map((item) => ({
+    errorRateHistory: (historical.errorRateHistory || []).map((item) => ({
       name: new Date(item.timestamp).toLocaleTimeString("id-ID", {
         hour: "2-digit",
         minute: "2-digit",
       }),
-      errorRate: Math.round(item.error_rate * 100) / 100,
-      successRate: Math.round((100 - item.error_rate) * 100) / 100,
+      errorRate: Math.round(item.errorRate * 100) / 100,
+      successRate: Math.round(item.successRate * 100) / 100,
     })),
   };
 };

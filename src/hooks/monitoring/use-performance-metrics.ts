@@ -52,6 +52,13 @@ export const usePerformanceMetrics = () => {
       }
 
       const result = await response.json();
+      console.log("Compression API response:", result);
+      
+      if (!result.data?.stats) {
+        console.error("No stats found in compression response:", result);
+        throw new Error("Invalid response structure");
+      }
+      
       return transformCompressionData(result.data.stats); // Extract stats from the response structure
     } catch (error) {
       console.error("Failed to fetch compression stats:", error);
@@ -105,7 +112,21 @@ export const usePerformanceMetrics = () => {
       }
 
       const result = await response.json();
-      return result.data.metrics; // Extract metrics from the response structure
+      console.log("Real-time API response:", result);
+      
+      // Extract metrics from the response structure
+      const metrics = result.data?.metrics;
+      if (!metrics) {
+        console.error("No metrics found in response:", result);
+        throw new Error("Invalid response structure");
+      }
+      
+      return {
+        activeConnections: metrics.activeConnections || 0,
+        requestsPerSecond: metrics.requestsPerSecond || 0,
+        memoryUsage: metrics.memoryUsage || 0,
+        cpuUsage: metrics.cpuUsage || 0,
+      };
     } catch (error) {
       console.error("Failed to fetch real-time data:", error);
       // Fallback to mock data - in production, this should be handled differently
