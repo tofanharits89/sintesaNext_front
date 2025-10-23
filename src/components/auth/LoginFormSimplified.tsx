@@ -37,6 +37,7 @@ const schema = z.object({
   username: z.string().min(1, "Username wajib diisi"),
   password: z.string().min(1, "Password wajib diisi"),
   captcha: z.string().min(4, "Captcha 4 digit").max(4, "Captcha 4 digit"),
+  rememberMe: z.boolean().optional().default(false),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -73,7 +74,7 @@ export default function SimplifiedLoginForm() {
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { username: "", password: "", captcha: "" },
+    defaultValues: { username: "", password: "", captcha: "", rememberMe: false },
   });
 
   const onSubmit = async (data: FormData) => {
@@ -290,6 +291,18 @@ export default function SimplifiedLoginForm() {
                       </Button>
                     </div>
                     <FieldError errors={[form.formState.errors.captcha]} />
+                  </Field>
+
+                  <Field>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4"
+                        {...form.register("rememberMe")}
+                        disabled={isSubmitting}
+                      />
+                      <span>Ingat saya (perpanjang sesi)</span>
+                    </label>
                   </Field>
 
                   <Field orientation="horizontal">

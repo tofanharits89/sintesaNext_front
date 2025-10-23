@@ -5,11 +5,12 @@ import { forwardSetCookies, getSetCookieValues, extractCookieMetadata } from "@/
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
-  const { username, password, captcha, expectedCaptcha } = body as {
+  const { username, password, captcha, expectedCaptcha, rememberMe } = body as {
     username?: string;
     password?: string;
     captcha?: string;
     expectedCaptcha?: string;
+    rememberMe?: boolean;
   };
 
   console.log("[Login Route] ========== LOGIN REQUEST START ==========");
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
         ...(currentCookie ? { cookie: currentCookie } : {}),
         ...(currentXsrf ? { "X-CSRF-Token": currentXsrf } : {}),
       },
-      body: JSON.stringify({ username, password, captcha, expectedCaptcha }),
+      body: JSON.stringify({ username, password, captcha, expectedCaptcha, rememberMe: Boolean(rememberMe) }),
       // CRITICAL FIX: Ensure cookies are sent and received
       credentials: "include",
     });

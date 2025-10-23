@@ -510,7 +510,12 @@ export default function ProfilePage() {
 
       {/* Password change section (optional) */}
       <div className="rounded-lg p-4 bg-white dark:bg-neutral-900 shadow">
-        <h2 className="mb-4 text-base font-semibold">Keamanan</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold">Keamanan</h2>
+          <Button onClick={onChangePassword} disabled={changingPassword}>
+            {changingPassword ? "Menyimpan..." : "Ubah Password"}
+          </Button>
+        </div>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="grid gap-2">
             <Label>Password Baru</Label>
@@ -530,11 +535,6 @@ export default function ProfilePage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
           </div>
-        </div>
-        <div className="mt-4">
-          <Button onClick={onChangePassword} disabled={changingPassword}>
-            {changingPassword ? "Menyimpan..." : "Ubah Password"}
-          </Button>
         </div>
       </div>
     </div>

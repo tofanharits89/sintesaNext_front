@@ -33,6 +33,8 @@ export function getSetCookieValues(response: Response): string[] {
 function adjustCookieForDev(cookieValue: string): string {
   try {
     if (process.env.NODE_ENV === "production") return cookieValue;
+    // Allow opting into production-like cookie behavior during development
+    if (process.env.NEXT_PUBLIC_COOKIE_DEV_SECURE === "true") return cookieValue;
     // Only adjust auth cookies in dev to ensure they stick on http://localhost
     const isAuthCookie = /^(access_token|refresh_token)=/i.test(cookieValue);
     if (!isAuthCookie) return cookieValue;
