@@ -47,6 +47,7 @@
     "**/*.test.tsx",
     "**/__tests__/**",
     "src/test-setup.ts",
-    "vitest.config.ts"
+    "vitest.config.ts",
+    "src/components/animate-ui/**"
   ]
 }
