@@ -6,8 +6,9 @@
  * Reduced from 327 lines to ~120 lines
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { useAuth } from "@/lib/auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,6 +32,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { LoginLoading } from "@/components/ui/login-loading";
+import { StarsBackground } from "@/components/animate-ui/components/backgrounds/stars";
 import { withBasePath } from "@/lib/base-path";
 import { apiPath } from "@/lib/base-path";
 import { prefetchCsrf } from "@/lib/httpClient";
@@ -56,6 +58,27 @@ export default function SimplifiedLoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [captchaSeed, setCaptchaSeed] = useState("");
+  const { theme, resolvedTheme, setTheme } = useTheme();
+  const [isThemeReady, setIsThemeReady] = useState(false);
+
+  useEffect(() => {
+    setIsThemeReady(true);
+  }, []);
+
+  const effectiveTheme = useMemo(() => {
+    if (resolvedTheme) return resolvedTheme;
+    if (!isThemeReady) return undefined;
+    if (theme === "system") {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+    }
+    return theme;
+  }, [isThemeReady, resolvedTheme, theme]);
+
+  const starColor = effectiveTheme === "dark" ? "#ffffff" : "#1e293b";
+  const backgroundClass =
+    "flex min-h-svh items-center justify-center p-6 transition-colors duration-500 bg-[radial-gradient(ellipse_at_bottom,_#f4f4f5_0%,_#fafafa_100%)] dark:bg-[radial-gradient(ellipse_at_bottom,_#151515_0%,_#000000_100%)]";
 
   // Client-side redirect if already authenticated
   useEffect(() => {
@@ -187,6 +210,17 @@ export default function SimplifiedLoginForm() {
           }
         }
 
+        // Ensure theme from localStorage is applied before navigating
+        try {
+          const storedTheme = localStorage.getItem("theme");
+          if (storedTheme === "dark" || storedTheme === "light") {
+            setTheme(storedTheme);
+            const root = document.documentElement;
+            root.classList.remove("light", "dark");
+            root.classList.add(storedTheme);
+          }
+        } catch {}
+
         // Redirect to dashboard
         // Give cookies time to fully settle in the browser before making API calls
         setIsRedirecting(true);
@@ -217,8 +251,12 @@ export default function SimplifiedLoginForm() {
     <>
       <LoginLoading isVisible={isRedirecting} />
 
-      <div className="flex min-h-svh items-center justify-center p-6 bg-zinc-100 dark:bg-black">
-        <div className="w-full max-w-md">
+      <StarsBackground
+        className={backgroundClass}
+        pointerEvents={false}
+        starColor={starColor}
+      >
+        <div className="relative w-full max-w-md">
           <Card>
             <CardHeader className="space-y-1">
               <div className="flex items-center gap-2 mb-2">
@@ -353,7 +391,7 @@ export default function SimplifiedLoginForm() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </StarsBackground>
     </>
   );
 }

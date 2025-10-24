@@ -82,26 +82,41 @@ class CacheEventManager {
 
     // Clear localStorage (preserve theme and language if requested)
     if (clearLocalStorage && typeof window !== 'undefined') {
-      const preserved: Record<string, string | null> = {};
-      
-      if (preserveTheme) {
-        preserved.theme = localStorage.getItem('theme');
-      }
-      if (preserveLanguage) {
-        preserved.language = localStorage.getItem('language');
-        preserved.i18nextLng = localStorage.getItem('i18nextLng');
-      }
-
-      localStorage.clear();
-
-      // Restore preserved items
-      Object.entries(preserved).forEach(([key, value]) => {
-        if (value !== null) {
-          localStorage.setItem(key, value);
+      const preservedValues = new Map<string, string>();
+      const shouldPreserveKey = (key: string): boolean => {
+        const lowerKey = key.toLowerCase();
+        if (preserveTheme && lowerKey.includes('theme')) {
+          return true;
         }
-      });
+        if (
+          preserveLanguage &&
+          (key === 'language' || key === 'i18nextLng')
+        ) {
+          return true;
+        }
+        return false;
+      };
 
-      
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key) continue;
+
+        if (shouldPreserveKey(key)) {
+          const value = localStorage.getItem(key);
+          if (value !== null) {
+            preservedValues.set(key, value);
+          }
+          continue;
+        }
+
+        keysToRemove.push(key);
+      }
+
+      keysToRemove.forEach((key) => localStorage.removeItem(key));
+      preservedValues.forEach((value, key) => {
+        localStorage.setItem(key, value);
+      });
     }
 
     // Clear sessionStorage
@@ -185,25 +200,41 @@ class CacheEventManager {
 
     // Clear localStorage
     if (typeof window !== 'undefined') {
-      const preserved: Record<string, string | null> = {};
-      
-      if (preserveTheme) {
-        preserved.theme = localStorage.getItem('theme');
-      }
-      if (preserveLanguage) {
-        preserved.language = localStorage.getItem('language');
-        preserved.i18nextLng = localStorage.getItem('i18nextLng');
-      }
-
-      localStorage.clear();
-
-      Object.entries(preserved).forEach(([key, value]) => {
-        if (value !== null) {
-          localStorage.setItem(key, value);
+      const preservedValues = new Map<string, string>();
+      const shouldPreserveKey = (key: string): boolean => {
+        const lowerKey = key.toLowerCase();
+        if (preserveTheme && lowerKey.includes('theme')) {
+          return true;
         }
-      });
+        if (
+          preserveLanguage &&
+          (key === 'language' || key === 'i18nextLng')
+        ) {
+          return true;
+        }
+        return false;
+      };
 
-      
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key) continue;
+
+        if (shouldPreserveKey(key)) {
+          const value = localStorage.getItem(key);
+          if (value !== null) {
+            preservedValues.set(key, value);
+          }
+          continue;
+        }
+
+        keysToRemove.push(key);
+      }
+
+      keysToRemove.forEach((key) => localStorage.removeItem(key));
+      preservedValues.forEach((value, key) => {
+        localStorage.setItem(key, value);
+      });
     }
 
     // Clear sessionStorage
