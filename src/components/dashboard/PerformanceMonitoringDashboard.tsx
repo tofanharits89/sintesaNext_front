@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/components/animate-ui/components/animate/tabs";
 import { 
   usePerformanceMetrics, 
   useMonitoringControls, 
@@ -92,38 +92,42 @@ export function PerformanceMonitoringDashboard() {
         loading={metrics.loading}
       />
 
-      <Tabs defaultValue="cache" className="w-full space-y-6">
-         <TabsList className="grid w-full grid-cols-5">
-           <TabsTrigger value="cache">Cache Metrics</TabsTrigger>
-           <TabsTrigger value="compression">Compression</TabsTrigger>
-           <TabsTrigger value="realtime">Real-time</TabsTrigger>
-           <TabsTrigger value="health">Health Status</TabsTrigger>
-           <TabsTrigger value="analytics">Analytics</TabsTrigger>
-         </TabsList>
+      <Tabs defaultValue="cache" className="w-full gap-3">
+        <div className="border-b border-border/50 pb-3 mb-0">
+          <TabsList className="w-full h-12 md:h-14 p-2 rounded-xl">
+            <TabsTrigger value="cache" className="h-full px-4 md:px-5 py-0 text-base">Cache Metrics</TabsTrigger>
+            <TabsTrigger value="compression" className="h-full px-4 md:px-5 py-0 text-base">Compression</TabsTrigger>
+            <TabsTrigger value="realtime" className="h-full px-4 md:px-5 py-0 text-base">Real-time</TabsTrigger>
+            <TabsTrigger value="health" className="h-full px-4 md:px-5 py-0 text-base">Health Status</TabsTrigger>
+            <TabsTrigger value="analytics" className="h-full px-4 md:px-5 py-0 text-base">Analytics</TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="cache">
-          <CacheMetricsTab metrics={metrics.metrics} />
-        </TabsContent>
+        <TabsContents>
+          <TabsContent value="cache">
+            <CacheMetricsTab metrics={metrics.metrics} />
+          </TabsContent>
 
-        <TabsContent value="compression">
-          <CompressionTab metrics={metrics.metrics} />
-        </TabsContent>
+          <TabsContent value="compression">
+            <CompressionTab metrics={metrics.metrics} />
+          </TabsContent>
 
-        <TabsContent value="realtime">
-          <RealtimeTab metrics={metrics.metrics} />
-        </TabsContent>
+          <TabsContent value="realtime">
+            <RealtimeTab metrics={metrics.metrics} />
+          </TabsContent>
 
-        <TabsContent value="health">
-          <HealthTab metrics={metrics.metrics} />
-        </TabsContent>
+          <TabsContent value="health">
+            <HealthTab metrics={metrics.metrics} />
+          </TabsContent>
 
-        <TabsContent value="analytics">
-          <AnalyticsTab
-            metrics={metrics.metrics}
-            historicalData={historicalData.historicalData}
-            selectedTimeRange={controls.selectedTimeRange}
-          />
-        </TabsContent>
+          <TabsContent value="analytics">
+            <AnalyticsTab
+              metrics={metrics.metrics}
+              historicalData={historicalData.historicalData}
+              selectedTimeRange={controls.selectedTimeRange}
+            />
+          </TabsContent>
+        </TabsContents>
       </Tabs>
     </div>
   );

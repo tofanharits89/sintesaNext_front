@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/components/animate-ui/components/animate/tabs";
 import { FileText, Building2 } from "lucide-react";
 import { LaporanKppnModal } from "@/components/transfer-daerah/modals/laporan-kppn-modal";
 import { LaporanKanwilModal } from "@/components/transfer-daerah/modals/laporan-kanwil-modal";
@@ -47,48 +47,34 @@ export default function UploadLaporanPage() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="laporan-keuangan-kppn" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 bg-white dark:bg-slate-900 border shadow-sm p-2 h-15 gap-2 rounded-lg">
-          <TabsTrigger
-            value="laporan-keuangan-kppn"
-            className="text-sm font-semibold data-[state=active]:bg-slate-500 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=inactive]:hover:bg-slate-100 data-[state=inactive]:hover:text-slate-600 transition-all duration-200 rounded-md py-3 px-4"
-          >
-            Laporan Keuangan KPPN
-          </TabsTrigger>
-          <TabsTrigger
-            value="laporan-monev-kppn"
-            className="text-sm font-semibold data-[state=active]:bg-slate-500 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=inactive]:hover:bg-slate-100 data-[state=inactive]:hover:text-slate-600 transition-all duration-200 rounded-md py-3 px-4"
-          >
-            Laporan Monev KPPN
-          </TabsTrigger>
-          <TabsTrigger
-            value="laporan-monev-kanwil"
-            className="text-sm font-semibold data-[state=active]:bg-slate-500 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=inactive]:hover:bg-slate-100 data-[state=inactive]:hover:text-slate-600 transition-all duration-200 rounded-md py-3 px-4"
-          >
-            Laporan Monev Kanwil
-          </TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="laporan-keuangan-kppn" className="w-full gap-3">
+        <div className="border-b border-border/50 pb-3 mb-0">
+          <TabsList className="w-full h-12 md:h-14 p-2 rounded-xl">
+            <TabsTrigger value="laporan-keuangan-kppn" className="h-full px-4 md:px-5 py-0 text-base">
+              Laporan Keuangan KPPN
+            </TabsTrigger>
+            <TabsTrigger value="laporan-monev-kppn" className="h-full px-4 md:px-5 py-0 text-base">
+              Laporan Monev KPPN
+            </TabsTrigger>
+            <TabsTrigger value="laporan-monev-kanwil" className="h-full px-4 md:px-5 py-0 text-base">
+              Laporan Monev Kanwil
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent
-          value="laporan-keuangan-kppn"
-          className="animate-in fade-in-50 duration-200"
-        >
-          <LaporanKeuanganKppnTab />
-        </TabsContent>
+        <TabsContents>
+          <TabsContent value="laporan-keuangan-kppn">
+            <LaporanKeuanganKppnTab />
+          </TabsContent>
 
-        <TabsContent
-          value="laporan-monev-kppn"
-          className="animate-in fade-in-50 duration-200"
-        >
-          <LaporanMonevKppnTab />
-        </TabsContent>
+          <TabsContent value="laporan-monev-kppn">
+            <LaporanMonevKppnTab />
+          </TabsContent>
 
-        <TabsContent
-          value="laporan-monev-kanwil"
-          className="animate-in fade-in-50 duration-200"
-        >
-          <LaporanMonevKanwilTab />
-        </TabsContent>
+          <TabsContent value="laporan-monev-kanwil">
+            <LaporanMonevKanwilTab />
+          </TabsContent>
+        </TabsContents>
       </Tabs>
 
       {/* Modals */}

@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/components/animate-ui/components/animate/tabs";
 import {
   AlertTriangle,
   TrendingUp,
@@ -26,58 +26,42 @@ export function TabsCard() {
         <CardTitle>Analisis EPA Komprehensif</CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="isu-spesifik" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 h-auto">
-            <TabsTrigger
-              value="isu-spesifik"
-              className="flex flex-col items-center gap-1 p-3 text-xs"
-            >
-              <AlertTriangle className="h-4 w-4" />
-              <span>Isu Spesifik</span>
-            </TabsTrigger>
+        <Tabs defaultValue="isu-spesifik" className="w-full gap-3">
+          <div className="border-b border-border/50 pb-3 mb-0">
+            <TabsList className="w-full h-12 md:h-14 p-2 rounded-xl">
+              <TabsTrigger value="isu-spesifik" className="h-full px-4 md:px-5 py-0 text-sm md:text-base">
+                <AlertTriangle className="h-4 w-4 mr-2" />
+                <span>Isu Spesifik</span>
+              </TabsTrigger>
 
-            <TabsTrigger
-              value="tren-belanja"
-              className="flex flex-col items-center gap-1 p-3 text-xs"
-            >
-              <TrendingUp className="h-4 w-4" />
-              <span>Tren Belanja</span>
-            </TabsTrigger>
+              <TabsTrigger value="tren-belanja" className="h-full px-4 md:px-5 py-0 text-sm md:text-base">
+                <TrendingUp className="h-4 w-4 mr-2" />
+                <span>Tren Belanja</span>
+              </TabsTrigger>
 
-            <TabsTrigger
-              value="pagu-minus"
-              className="flex flex-col items-center gap-1 p-3 text-xs"
-            >
-              <Minus className="h-4 w-4" />
-              <span>Pagu Minus</span>
-            </TabsTrigger>
+              <TabsTrigger value="pagu-minus" className="h-full px-4 md:px-5 py-0 text-sm md:text-base">
+                <Minus className="h-4 w-4 mr-2" />
+                <span>Pagu Minus</span>
+              </TabsTrigger>
 
-            <TabsTrigger
-              value="outstanding-up"
-              className="flex flex-col items-center gap-1 p-3 text-xs"
-            >
-              <Clock className="h-4 w-4" />
-              <span>Outstanding UP</span>
-            </TabsTrigger>
+              <TabsTrigger value="outstanding-up" className="h-full px-4 md:px-5 py-0 text-sm md:text-base">
+                <Clock className="h-4 w-4 mr-2" />
+                <span>Outstanding UP</span>
+              </TabsTrigger>
 
-            <TabsTrigger
-              value="kinerja-utama"
-              className="flex flex-col items-center gap-1 p-3 text-xs"
-            >
-              <Star className="h-4 w-4" />
-              <span>Kinerja Utama</span>
-            </TabsTrigger>
+              <TabsTrigger value="kinerja-utama" className="h-full px-4 md:px-5 py-0 text-sm md:text-base">
+                <Star className="h-4 w-4 mr-2" />
+                <span>Kinerja Utama</span>
+              </TabsTrigger>
 
-            <TabsTrigger
-              value="target-capaian"
-              className="flex flex-col items-center gap-1 p-3 text-xs"
-            >
-              <Target className="h-4 w-4" />
-              <span>Target/Capaian</span>
-            </TabsTrigger>
-          </TabsList>
+              <TabsTrigger value="target-capaian" className="h-full px-4 md:px-5 py-0 text-sm md:text-base">
+                <Target className="h-4 w-4 mr-2" />
+                <span>Target/Capaian</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-          <div className="mt-6">
+          <TabsContents>
             <TabsContent value="isu-spesifik" className="space-y-4">
               <IsuSpesifikTab />
             </TabsContent>
@@ -101,7 +85,7 @@ export function TabsCard() {
             <TabsContent value="target-capaian" className="space-y-4">
               <TargetCapaianTab />
             </TabsContent>
-          </div>
+          </TabsContents>
         </Tabs>
       </CardContent>
     </Card>

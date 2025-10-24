@@ -241,10 +241,10 @@ function Highlight<T extends React.ElementType = 'div'>({
                     left: boundsState.left,
                     width: boundsState.width,
                     height: boundsState.height,
-                    opacity: 0,
+                    opacity: 1,
                   }}
                   exit={{
-                    opacity: 0,
+                    opacity: 1,
                     transition: {
                       ...transition,
                       delay: (transition?.delay ?? 0) + (exitDelay ?? 0) / 1000,
@@ -510,10 +510,10 @@ function HighlightItem<T extends React.ElementType>({
                 }}
                 className={cn(contextClassName, activeClassName)}
                 transition={itemTransition}
-                initial={{ opacity: 0 }}
+                initial={{ opacity: 1 }}
                 animate={{ opacity: 1 }}
                 exit={{
-                  opacity: 0,
+                  opacity: 1,
                   transition: {
                     ...itemTransition,
                     delay:
@@ -572,10 +572,10 @@ function HighlightItem<T extends React.ElementType>({
               }}
               className={cn(contextClassName, activeClassName)}
               transition={itemTransition}
-              initial={{ opacity: 0 }}
+              initial={{ opacity: 1 }}
               animate={{ opacity: 1 }}
               exit={{
-                opacity: 0,
+                opacity: 1,
                 transition: {
                   ...itemTransition,
                   delay:

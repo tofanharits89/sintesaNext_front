@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/components/animate-ui/components/animate/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Building2, FileText, Calendar, User, MapPin, CreditCard, Shield, AlertTriangle } from "lucide-react";
@@ -137,42 +137,46 @@ export default function SatkerDetailPage() {
       <Separator />
 
       {/* Tabs */}
-      <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 h-14 bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg p-1">
-          <TabsTrigger value="profile" className="flex items-center gap-2 h-11 font-medium data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-100 text-slate-600 dark:text-slate-400">
-            <User className="h-4 w-4" />
-            Profil Satker
-          </TabsTrigger>
-          <TabsTrigger value="dipa-download" className="flex items-center gap-2 h-11 font-medium data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-100 text-slate-600 dark:text-slate-400">
-            <FileText className="h-4 w-4" />
-            Unduh ADK/DIPA
-          </TabsTrigger>
-          <TabsTrigger value="documents" className="flex items-center gap-2 h-11 font-medium data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-100 text-slate-600 dark:text-slate-400">
-            <CreditCard className="h-4 w-4" />
-            Dokumen Lainnya
-          </TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="profile" className="w-full gap-3">
+        <div className="border-b border-border/50 pb-3 mb-0">
+          <TabsList className="w-full h-12 md:h-14 p-2 rounded-xl">
+            <TabsTrigger value="profile" className="h-full px-4 md:px-5 py-0 text-base flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Profil Satker
+            </TabsTrigger>
+            <TabsTrigger value="dipa-download" className="h-full px-4 md:px-5 py-0 text-base flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Unduh ADK/DIPA
+            </TabsTrigger>
+            <TabsTrigger value="documents" className="h-full px-4 md:px-5 py-0 text-base flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Dokumen Lainnya
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="profile">
-          <SatkerProfileTab kdsatker={kdsatker} />
-        </TabsContent>
+        <TabsContents>
+          <TabsContent value="profile">
+            <SatkerProfileTab kdsatker={kdsatker} />
+          </TabsContent>
 
-        <TabsContent value="dipa-download">
-          <DipaDownloadTab kdsatker={kdsatker} />
-        </TabsContent>
+          <TabsContent value="dipa-download">
+            <DipaDownloadTab kdsatker={kdsatker} />
+          </TabsContent>
 
-        <TabsContent value="documents">
-          <Card>
-            <CardHeader>
-              <CardTitle>Dokumen Lainnya</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Fitur dokumen lainnya akan segera tersedia.
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+          <TabsContent value="documents">
+            <Card>
+              <CardHeader>
+                <CardTitle>Dokumen Lainnya</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Fitur dokumen lainnya akan segera tersedia.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </TabsContents>
       </Tabs>
     </div>
   );
