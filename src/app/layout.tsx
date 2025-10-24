@@ -20,7 +20,6 @@ import { ClientInit } from "@/components/ClientInit";
 // GlobalSocketInitializer is now integrated into useUnifiedSocket hook
 import { geistSans, geistMono } from "./fonts";
 import { Suspense } from "react";
-import { ComponentLoadingFallback } from "@/components/ui/loading-fallback";
 import { PageProvider } from "@/contexts/page-context";
 
 export const metadata: Metadata = {
@@ -100,9 +99,8 @@ export default async function RootLayout({
                   <SessionMonitor />
                   <PageProvider>
                     <AppShell {...(initialUser ? { initialUser } : {})}>
-                      <Suspense fallback={<ComponentLoadingFallback />}>
-                        {children}
-                      </Suspense>
+                      {/* Use a no-op fallback to avoid global flashing while preserving lazy boundaries */}
+                      <Suspense fallback={null}>{children}</Suspense>
                     </AppShell>
                   </PageProvider>
                 </ComponentErrorBoundary>

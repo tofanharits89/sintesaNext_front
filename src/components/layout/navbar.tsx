@@ -22,11 +22,7 @@ import {
 import { useTheme } from "next-themes";
 import { useMemo, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  useUnifiedAuth,
-  canManageUsers,
-  canAccessSettings,
-} from "@/lib/auth";
+import { useUnifiedAuth, canManageUsers, canAccessSettings } from "@/lib/auth";
 import { useUserProfile } from "@/hooks/use-user-profile";
 import {
   getNotificationsForUser,
@@ -78,7 +74,13 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
   } = useUnifiedAuth();
 
   // Use profile data from React Query if available and valid, otherwise fall back to Zustand store
-  const currentUser: User | null | undefined = (profileData && typeof profileData === 'object' && 'id' in profileData && 'username' in profileData) ? profileData : displayUser;
+  const currentUser: User | null | undefined =
+    profileData &&
+    typeof profileData === "object" &&
+    "id" in profileData &&
+    "username" in profileData
+      ? profileData
+      : displayUser;
   const router = useRouter();
   interface RecentMessage {
     id: string;
@@ -122,7 +124,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
     if (!Array.isArray(conversations) || !currentUser?.id) return [];
 
     const recentConversations = conversations.filter(
-      (conv) => (conv as any).lastMessage && (conv as any).otherParticipant
+      (conv) => (conv as any).lastMessage && (conv as any).otherParticipant,
     );
 
     const sorted = recentConversations
@@ -140,7 +142,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
         if (!otherParticipant) return null;
 
         const convDate = new Date(
-          conv.lastMessage?.created_at || conv.updated_at
+          conv.lastMessage?.created_at || conv.updated_at,
         );
         const timeDiff = isNaN(convDate.getTime())
           ? 0
@@ -190,7 +192,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
       Array.isArray(conversations)
         ? conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0)
         : 0,
-    [conversations]
+    [conversations],
   );
   const [totalUnreadNotificationsCount, setTotalUnreadNotificationsCount] =
     useState(0);
@@ -215,7 +217,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
             unread: true,
           },
           ...prev,
-        ].slice(0, 5)
+        ].slice(0, 5),
       );
     };
     const handleNewV2 = (resp: {
@@ -277,8 +279,6 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
 
   // The old state/effect approach is removed to ensure immediate updates without stale state
 
-  
-
   // Generate initials for avatar fallback
   const initials = useMemo(() => {
     if (!currentUser?.name) return "US";
@@ -295,7 +295,10 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
     <>
       {/* Full-screen overlay during logout to prevent glimpse of protected content */}
       <LoginLoading isVisible={isLoggingOut} message="Mengeluarkan..." />
-      <header data-navbar="true" className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header
+        data-navbar="true"
+        className="sticky top-0 z-40 w-full border-b bg-white dark:bg-card"
+      >
         <div className="container mx-auto flex h-14 items-center gap-3 px-4">
           {/* left: logo */}
           <div className="flex items-center gap-2">
@@ -400,10 +403,10 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                                     n.type === "info"
                                       ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"
                                       : n.type === "warning"
-                                      ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300"
-                                      : n.type === "success"
-                                      ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300"
-                                      : "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300"
+                                        ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300"
+                                        : n.type === "success"
+                                          ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300"
+                                          : "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300"
                                   }`}
                                 >
                                   {n.type}
@@ -581,7 +584,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="relative flex items-center gap-2 h-auto py-1.5 px-2 rounded-full hover:bg-accent"
+                  className="relative flex items-center gap-2 h-auto py-1.5 px-2 rounded-lg hover:bg-accent"
                 >
                   <Avatar className="h-8 w-8">
                     <AvatarImage src="" alt={currentUser?.name || "profil"} />
@@ -636,7 +639,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                   )}
                   {(() => {
                     const roleStr = String(
-                      currentUser?.role || ""
+                      currentUser?.role || "",
                     ).toLowerCase();
                     const isAdminLike =
                       roleStr === "super_admin" ||
@@ -652,7 +655,10 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem asChild>
-                    <Link href="/monitor-performa" className="flex items-center">
+                    <Link
+                      href="/monitor-performa"
+                      className="flex items-center"
+                    >
                       <Monitor className="mr-2 h-4 w-4" />
                       Monitor Performa
                     </Link>

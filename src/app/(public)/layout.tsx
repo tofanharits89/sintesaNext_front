@@ -22,7 +22,7 @@ export default function PublicLayout({
   return (
     <html lang="id" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-zinc-100 dark:bg-black`}
       >
         <ErrorBoundary>
           <QueryProvider>

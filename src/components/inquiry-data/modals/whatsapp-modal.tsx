@@ -308,7 +308,6 @@ export function WhatsappModal({
           <Button
             onClick={handleSendToWhatsApp}
             disabled={!selectedFileType || isLoading}
-            className="bg-green-600 hover:bg-green-700 text-white"
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />

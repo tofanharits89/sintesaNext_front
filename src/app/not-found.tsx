@@ -26,7 +26,7 @@ export default function NotFound() {
     };
   }, [setIsNotFoundPage]);
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-zinc-100 dark:bg-black">
       <div className="max-w-md w-full text-center space-y-6">
         <div className="space-y-2">
           <h1 className="text-6xl font-bold text-gray-900">404</h1>

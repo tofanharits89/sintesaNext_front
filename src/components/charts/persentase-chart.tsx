@@ -1,4 +1,5 @@
-import { BarChart, BarChartSkeleton } from "@/components/lazy";
+import { BarChart } from "@/components/lazy";
+import { BarChartSkeleton } from "@/components/ui/dashboard-skeletons";
 import { transformPersentaseKL } from "@/utils/dashboard";
 
 interface PersentaseChartProps {

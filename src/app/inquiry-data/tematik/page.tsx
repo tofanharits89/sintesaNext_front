@@ -21,8 +21,8 @@ import { CategoryMandatoryFilters } from "@/components/inquiry-data/category-man
 import { QueryLoaderButton } from "@/components/inquiry-data/query-loader-button";
 import { UnsavedChangesModal } from "@/components/inquiry-data/modals/unsaved-changes-modal";
 import { DynamicFiltersCard, QueryManagement } from "@/components/lazy";
-import { ComponentLoadingFallback } from "@/components/ui/loading-fallback";
 import { Suspense } from "react";
+import { FilterCardSkeleton, GenericCardSkeleton } from "@/components/ui/dashboard-skeletons";
 import {
   useQueryLoader,
   type QueryBuilderState,
@@ -474,7 +474,7 @@ export default function TematikPage() {
           <Button
             variant="outline"
             onClick={() => setIsQueryManagementOpen(true)}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 bg-white dark:bg-card hover:bg-zinc-200"
           >
             <Settings className="w-4 h-4" />
             Kelola Query
@@ -531,7 +531,7 @@ export default function TematikPage() {
         />
 
         {/* 4. Dynamic Filters and Actions Card */}
-        <Suspense fallback={<ComponentLoadingFallback />}>
+        <Suspense fallback={<FilterCardSkeleton /> }>
           <DynamicFiltersCard
             activeFilters={activeFilters}
             reportParams={reportParams}
@@ -591,7 +591,7 @@ export default function TematikPage() {
           </DialogHeader>
           <div className="overflow-y-auto max-h-[calc(90vh-160px)]">
             <QueryErrorBoundary>
-              <Suspense fallback={<ComponentLoadingFallback />}>
+              <Suspense fallback={<GenericCardSkeleton showHeader contentLines={10} /> }>
                 <QueryManagement
                   onLoadQuery={(query) => {
                     handleLoadQuery(query);

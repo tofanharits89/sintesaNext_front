@@ -4,8 +4,8 @@ import { useEffect, useRef, useState, useCallback } from "react";
 // Import the new React Query + Zustand messaging system
 import { useMessagingRQ } from "@/hooks/messaging-rq";
 import { ChatWindow, ConversationList } from "@/components/lazy";
-import { ComponentLoadingFallback } from "@/components/ui/loading-fallback";
 import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { NewMessageDialog } from "@/components/messaging/new-message-dialog";
 import { useUnreadBadgesStore } from "@/stores/unread-badges-store";
 import { Button } from "@/components/ui/button";
@@ -214,7 +214,22 @@ export default function MessagesPage() {
               <CardTitle className="text-lg">Percakapan</CardTitle>
             </CardHeader>
             <CardContent className="p-0 flex-1 overflow-hidden">
-              <Suspense fallback={<ComponentLoadingFallback />}>
+              <Suspense
+                fallback={
+                  <div className="p-4 space-y-2 overflow-y-auto h-full">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <div key={i} className="flex items-center gap-3 p-2">
+                        <Skeleton className="h-8 w-8 rounded-full" />
+                        <div className="flex-1">
+                          <Skeleton className="h-4 w-3/5" />
+                          <Skeleton className="h-3 w-4/5 mt-1" />
+                        </div>
+                        <Skeleton className="h-3 w-8" />
+                      </div>
+                    ))}
+                  </div>
+                }
+              >
                 <ConversationList
                   conversations={conversations || []}
                   selectedConversationId={activeConversationId}
@@ -235,7 +250,27 @@ export default function MessagesPage() {
         {/* Chat Window */}
         <div className="lg:col-span-2">
           {activeConversationId ? (
-            <Suspense fallback={<ComponentLoadingFallback />}>
+            <Suspense
+              fallback={
+                <Card className="h-[600px] max-h-[70vh] flex flex-col">
+                  <CardHeader className="pb-3">
+                    <Skeleton className="h-5 w-40" />
+                    <Skeleton className="h-4 w-64 mt-2" />
+                  </CardHeader>
+                  <CardContent className="flex-1 overflow-hidden">
+                    <div className="h-full px-2 space-y-3 overflow-y-auto">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className={`flex ${i % 2 ? 'justify-end' : 'justify-start'}`}>
+                          <div className="max-w-[70%]">
+                            <Skeleton className="h-16 w-full" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              }
+            >
               <ChatWindow conversationId={activeConversationId} />
             </Suspense>
           ) : (

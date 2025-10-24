@@ -49,7 +49,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 export type MenuItem = {
   label: string;
@@ -140,14 +145,14 @@ export function ResponsiveSidebar({
   // Filter menu based on user role - only admins can see Data Supplier
   const filteredMenu = useMemo(() => {
     if (!user) return menu;
-    
+
     const isAdmin = user.role === "super_admin" || user.role === "co_admin";
-    
+
     // If not admin, filter out Data Supplier menu
     if (!isAdmin) {
       return menu.filter((item) => item.label !== "Data Supplier");
     }
-    
+
     return menu;
   }, [menu, user]);
 
@@ -349,7 +354,10 @@ export function ResponsiveSidebar({
   return (
     <>
       {/* Horizontal menu on lg+ */}
-      <nav data-sidebar="true" className="hidden lg:block sticky top-14 z-30 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <nav
+        data-sidebar="true"
+        className="hidden lg:block sticky top-14 z-30 border-b bg-white dark:bg-card"
+      >
         <div ref={containerRef} className="container mx-auto px-4 relative">
           {/* Left pagination button */}
           {canGoLeft && (
@@ -358,7 +366,7 @@ export function ResponsiveSidebar({
               size="icon"
               variant="ghost"
               aria-label="Halaman sebelumnya"
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-background/90 hover:bg-accent"
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-transparent hover:bg-accent"
               onClick={() => goToPage("prev")}
             >
               <ChevronLeft className="h-5 w-5" />
@@ -388,11 +396,13 @@ export function ResponsiveSidebar({
                         c.label === "Dashboard Utama" &&
                         m.label === "Dashboard" ? (
                           <DropdownMenuItem key={c.label} asChild>
-<Link
+                            <Link
                               href="/dashboard/utama"
                               className="flex items-center w-full"
                               onMouseEnter={() => {
-                                import('@/components/dashboard/PerformanceMonitoringDashboard');
+                                import(
+                                  "@/components/dashboard/PerformanceMonitoringDashboard"
+                                );
                               }}
                               onClick={() =>
                                 trackMenuUsage({
@@ -409,11 +419,11 @@ export function ResponsiveSidebar({
                         ) : c.label === "Dashboard Program" &&
                           m.label === "Dashboard" ? (
                           <DropdownMenuItem key={c.label} asChild>
-<Link
+                            <Link
                               href="/dashboard/program"
                               className="flex items-center w-full"
                               onMouseEnter={() => {
-                                import('@/components/dashboard/ProgramCard');
+                                import("@/components/dashboard/ProgramCard");
                               }}
                               onClick={() =>
                                 trackMenuUsage({
@@ -430,11 +440,13 @@ export function ResponsiveSidebar({
                         ) : c.label === "Kontrak" &&
                           m.label === "Inquiry Data" ? (
                           <DropdownMenuItem key={c.label} asChild>
-<Link
+                            <Link
                               href="/inquiry-data/kontrak"
                               className="flex items-center w-full"
                               onMouseEnter={() => {
-                                import('@/components/inquiry-data/enhanced-filter-card');
+                                import(
+                                  "@/components/inquiry-data/enhanced-filter-card"
+                                );
                               }}
                               onClick={() =>
                                 trackMenuUsage({
@@ -451,11 +463,13 @@ export function ResponsiveSidebar({
                         ) : c.label === "UP/TUP" &&
                           m.label === "Inquiry Data" ? (
                           <DropdownMenuItem key={c.label} asChild>
-<Link
+                            <Link
                               href="/inquiry-data/up-tup"
                               className="flex items-center w-full"
                               onMouseEnter={() => {
-                                import('@/components/inquiry-data/enhanced-filter-card');
+                                import(
+                                  "@/components/inquiry-data/enhanced-filter-card"
+                                );
                               }}
                               onClick={() =>
                                 trackMenuUsage({
@@ -472,11 +486,13 @@ export function ResponsiveSidebar({
                         ) : c.label === "Penerimaan PNBP" &&
                           m.label === "Inquiry Data" ? (
                           <DropdownMenuItem key={c.label} asChild>
-<Link
+                            <Link
                               href="/inquiry-data/penerimaan-pnbp"
                               className="flex items-center w-full"
                               onMouseEnter={() => {
-                                import('@/components/inquiry-data/enhanced-filter-card');
+                                import(
+                                  "@/components/inquiry-data/enhanced-filter-card"
+                                );
                               }}
                               onClick={() =>
                                 trackMenuUsage({
@@ -493,11 +509,11 @@ export function ResponsiveSidebar({
                         ) : c.label === "Dashboard MBG" &&
                           m.label === "Makan Bergizi" ? (
                           <DropdownMenuItem key={c.label} asChild>
-<Link
+                            <Link
                               href="/makan-bergizi/dashboard"
                               className="flex items-center w-full"
                               onMouseEnter={() => {
-                                import('@/features/mbg/components/MapView');
+                                import("@/features/mbg/components/MapView");
                               }}
                               onClick={() =>
                                 trackMenuUsage({
@@ -514,11 +530,11 @@ export function ResponsiveSidebar({
                         ) : c.label === "Kertas Kerja" &&
                           m.label === "Makan Bergizi" ? (
                           <DropdownMenuItem key={c.label} asChild>
-<Link
+                            <Link
                               href="/makan-bergizi/kertas-kerja"
                               className="flex items-center w-full"
                               onMouseEnter={() => {
-                                import('@/features/mbg/components/MapView');
+                                import("@/features/mbg/components/MapView");
                               }}
                               onClick={() =>
                                 trackMenuUsage({
@@ -535,7 +551,7 @@ export function ResponsiveSidebar({
                         ) : c.label === "Profil" &&
                           m.label === "Tentang Kita" ? (
                           <DropdownMenuItem key={c.label} asChild>
-<Link
+                            <Link
                               href="/tentang-kita/profil"
                               className="flex items-center w-full"
                               onMouseEnter={() => {}}
@@ -553,11 +569,11 @@ export function ResponsiveSidebar({
                           </DropdownMenuItem>
                         ) : c.label === "Summary" && m.label === "EPA" ? (
                           <DropdownMenuItem key={c.label} asChild>
-<Link
+                            <Link
                               href="/epa/summary"
                               className="flex items-center w-full"
                               onMouseEnter={() => {
-                                import('@/components/epa/filter-card');
+                                import("@/components/epa/filter-card");
                               }}
                               onClick={() =>
                                 trackMenuUsage({
@@ -574,11 +590,13 @@ export function ResponsiveSidebar({
                         ) : c.label === "Proyeksi TKD" &&
                           m.label === "Transfer Daerah" ? (
                           <DropdownMenuItem key={c.label} asChild>
-<Link
+                            <Link
                               href="/transfer-daerah/proyeksi-tkd"
                               className="flex items-center w-full"
                               onMouseEnter={() => {
-                                import('@/components/transfer-daerah/data-kmk-tab');
+                                import(
+                                  "@/components/transfer-daerah/data-kmk-tab"
+                                );
                               }}
                               onClick={() =>
                                 trackMenuUsage({
@@ -595,11 +613,13 @@ export function ResponsiveSidebar({
                         ) : c.label === "Upload Laporan" &&
                           m.label === "Transfer Daerah" ? (
                           <DropdownMenuItem key={c.label} asChild>
-<Link
+                            <Link
                               href="/transfer-daerah/upload-laporan"
                               className="flex items-center w-full"
                               onMouseEnter={() => {
-                                import('@/components/transfer-daerah/data-kmk-tab');
+                                import(
+                                  "@/components/transfer-daerah/data-kmk-tab"
+                                );
                               }}
                               onClick={() =>
                                 trackMenuUsage({
@@ -616,11 +636,13 @@ export function ResponsiveSidebar({
                         ) : c.label === "DAU" &&
                           m.label === "Transfer Daerah" ? (
                           <DropdownMenuItem key={c.label} asChild>
-<Link
+                            <Link
                               href="/transfer-daerah/dau"
                               className="flex items-center w-full"
                               onMouseEnter={() => {
-                                import('@/components/transfer-daerah/data-transaksi-tab');
+                                import(
+                                  "@/components/transfer-daerah/data-transaksi-tab"
+                                );
                               }}
                               onClick={() =>
                                 trackMenuUsage({
@@ -637,12 +659,16 @@ export function ResponsiveSidebar({
                         ) : c.label === "Belanja" &&
                           m.label === "Inquiry Data" ? (
                           <DropdownMenuItem key={c.label} asChild>
-<Link
+                            <Link
                               href="/inquiry-data/belanja"
                               className="flex items-center w-full"
                               onMouseEnter={() => {
-                                import('@/components/inquiry-data/dynamic-filters-card');
-                                import('@/components/inquiry-data/query-management');
+                                import(
+                                  "@/components/inquiry-data/dynamic-filters-card"
+                                );
+                                import(
+                                  "@/components/inquiry-data/query-management"
+                                );
                               }}
                               onClick={() =>
                                 trackMenuUsage({
@@ -659,11 +685,13 @@ export function ResponsiveSidebar({
                         ) : c.label === "Tematik" &&
                           m.label === "Inquiry Data" ? (
                           <DropdownMenuItem key={c.label} asChild>
-<Link
+                            <Link
                               href="/inquiry-data/tematik"
                               className="flex items-center w-full"
                               onMouseEnter={() => {
-                                import('@/components/inquiry-data/category-mandatory-filters');
+                                import(
+                                  "@/components/inquiry-data/category-mandatory-filters"
+                                );
                               }}
                               onClick={() =>
                                 trackMenuUsage({
@@ -680,11 +708,13 @@ export function ResponsiveSidebar({
                         ) : c.label === "RKAKL Detail" &&
                           m.label === "Inquiry Data" ? (
                           <DropdownMenuItem key={c.label} asChild>
-<Link
+                            <Link
                               href="/inquiry-data/rkakl-detail"
                               className="flex items-center w-full"
                               onMouseEnter={() => {
-                                import('@/components/inquiry-data/dynamic-filters-card');
+                                import(
+                                  "@/components/inquiry-data/dynamic-filters-card"
+                                );
                               }}
                               onClick={() =>
                                 trackMenuUsage({
@@ -698,13 +728,16 @@ export function ResponsiveSidebar({
                               <span>{c.label}</span>
                             </Link>
                           </DropdownMenuItem>
-                        ) : c.label === "Dashboard Supplier" && m.label === "Data Supplier" ? (
+                        ) : c.label === "Dashboard Supplier" &&
+                          m.label === "Data Supplier" ? (
                           <DropdownMenuItem key={c.label} asChild>
-<Link
+                            <Link
                               href="/data-supplier/dashboard"
                               className="flex items-center w-full"
                               onMouseEnter={() => {
-                                import('@/components/data-supplier/DashboardSupplierClient');
+                                import(
+                                  "@/components/data-supplier/DashboardSupplierClient"
+                                );
                               }}
                               onClick={() =>
                                 trackMenuUsage({
@@ -718,13 +751,16 @@ export function ResponsiveSidebar({
                               <span>{c.label}</span>
                             </Link>
                           </DropdownMenuItem>
-                        ) : c.label === "Profil Supplier" && m.label === "Data Supplier" ? (
+                        ) : c.label === "Profil Supplier" &&
+                          m.label === "Data Supplier" ? (
                           <DropdownMenuItem key={c.label} asChild>
-<Link
+                            <Link
                               href="/data-supplier/profil"
                               className="flex items-center w-full"
                               onMouseEnter={() => {
-                                import('@/components/data-supplier/DashboardSupplierClient');
+                                import(
+                                  "@/components/data-supplier/DashboardSupplierClient"
+                                );
                               }}
                               onClick={() =>
                                 trackMenuUsage({
@@ -738,13 +774,16 @@ export function ResponsiveSidebar({
                               <span>{c.label}</span>
                             </Link>
                           </DropdownMenuItem>
-                        ) : c.label === "Konsentrasi Supplier" && m.label === "Data Supplier" ? (
+                        ) : c.label === "Konsentrasi Supplier" &&
+                          m.label === "Data Supplier" ? (
                           <DropdownMenuItem key={c.label} asChild>
-<Link
+                            <Link
                               href="/data-supplier/konsentrasi"
                               className="flex items-center w-full"
                               onMouseEnter={() => {
-                                import('@/components/data-supplier/DashboardSupplierClient');
+                                import(
+                                  "@/components/data-supplier/DashboardSupplierClient"
+                                );
                               }}
                               onClick={() =>
                                 trackMenuUsage({
@@ -758,13 +797,16 @@ export function ResponsiveSidebar({
                               <span>{c.label}</span>
                             </Link>
                           </DropdownMenuItem>
-                        ) : c.label === "Deteksi Anomali Supplier" && m.label === "Data Supplier" ? (
+                        ) : c.label === "Deteksi Anomali Supplier" &&
+                          m.label === "Data Supplier" ? (
                           <DropdownMenuItem key={c.label} asChild>
-<Link
+                            <Link
                               href="/data-supplier/anomali"
                               className="flex items-center w-full"
                               onMouseEnter={() => {
-                                import('@/components/data-supplier/DashboardSupplierClient');
+                                import(
+                                  "@/components/data-supplier/DashboardSupplierClient"
+                                );
                               }}
                               onClick={() =>
                                 trackMenuUsage({
@@ -778,13 +820,16 @@ export function ResponsiveSidebar({
                               <span>{c.label}</span>
                             </Link>
                           </DropdownMenuItem>
-                        ) : c.label === "Klaster Supplier" && m.label === "Data Supplier" ? (
+                        ) : c.label === "Klaster Supplier" &&
+                          m.label === "Data Supplier" ? (
                           <DropdownMenuItem key={c.label} asChild>
-<Link
+                            <Link
                               href="/data-supplier/klaster"
                               className="flex items-center w-full"
                               onMouseEnter={() => {
-                                import('@/components/data-supplier/DashboardSupplierClient');
+                                import(
+                                  "@/components/data-supplier/DashboardSupplierClient"
+                                );
                               }}
                               onClick={() =>
                                 trackMenuUsage({
@@ -798,13 +843,16 @@ export function ResponsiveSidebar({
                               <span>{c.label}</span>
                             </Link>
                           </DropdownMenuItem>
-                        ) : c.label === "Jaringan Supplier" && m.label === "Data Supplier" ? (
+                        ) : c.label === "Jaringan Supplier" &&
+                          m.label === "Data Supplier" ? (
                           <DropdownMenuItem key={c.label} asChild>
-<Link
+                            <Link
                               href="/data-supplier/jaringan"
                               className="flex items-center w-full"
                               onMouseEnter={() => {
-                                import('@/components/data-supplier/DashboardSupplierClient');
+                                import(
+                                  "@/components/data-supplier/DashboardSupplierClient"
+                                );
                               }}
                               onClick={() =>
                                 trackMenuUsage({
@@ -826,7 +874,7 @@ export function ResponsiveSidebar({
                             {subIconFor(m.label, c.label)}
                             <span>{c.label}</span>
                           </DropdownMenuItem>
-                        )
+                        ),
                       )}
                     </DropdownMenuContent>
                   ) : null}
@@ -842,7 +890,7 @@ export function ResponsiveSidebar({
               size="icon"
               variant="ghost"
               aria-label="Halaman selanjutnya"
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-background/90 hover:bg-accent"
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-transparent hover:bg-accent"
               onClick={() => goToPage("next")}
             >
               <ChevronRight className="h-5 w-5" />
@@ -854,7 +902,7 @@ export function ResponsiveSidebar({
       {/* Normal sidebar below lg */}
       <div className="lg:hidden">
         <Sheet open={open} onOpenChange={setOpen}>
-          <div className="border-b bg-background">
+          <div className="border-b bg-white dark:bg-card">
             <div className="container mx-auto h-12 flex items-center px-2">
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -875,12 +923,14 @@ export function ResponsiveSidebar({
                   </div>
                   {m.children?.map((c) =>
                     c.label === "Dashboard Utama" && m.label === "Dashboard" ? (
-<Link
+                      <Link
                         key={c.label}
                         href="/dashboard/utama"
                         className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
                         onMouseEnter={() => {
-                          import('@/components/dashboard/PerformanceMonitoringDashboard');
+                          import(
+                            "@/components/dashboard/PerformanceMonitoringDashboard"
+                          );
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -896,13 +946,14 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </Link>
-                    ) : c.label === "Dashboard Program" && m.label === "Dashboard" ? (
-<Link
+                    ) : c.label === "Dashboard Program" &&
+                      m.label === "Dashboard" ? (
+                      <Link
                         key={c.label}
                         href="/dashboard/program"
                         className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
                         onMouseEnter={() => {
-                          import('@/components/dashboard/ProgramCard');
+                          import("@/components/dashboard/ProgramCard");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -920,12 +971,12 @@ export function ResponsiveSidebar({
                       </Link>
                     ) : c.label === "Dashboard MBG" &&
                       m.label === "Makan Bergizi" ? (
-<Link
+                      <Link
                         key={c.label}
                         href="/makan-bergizi/dashboard"
                         className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
                         onMouseEnter={() => {
-                          import('@/features/mbg/components/MapView');
+                          import("@/features/mbg/components/MapView");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -943,12 +994,12 @@ export function ResponsiveSidebar({
                       </Link>
                     ) : c.label === "Kertas Kerja" &&
                       m.label === "Makan Bergizi" ? (
-<Link
+                      <Link
                         key={c.label}
                         href="/makan-bergizi/kertas-kerja"
                         className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
                         onMouseEnter={() => {
-                          import('@/features/mbg/components/MapView');
+                          import("@/features/mbg/components/MapView");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -965,7 +1016,7 @@ export function ResponsiveSidebar({
                         </span>
                       </Link>
                     ) : c.label === "Profil" && m.label === "Tentang Kita" ? (
-<Link
+                      <Link
                         key={c.label}
                         href="/tentang-kita/profil"
                         className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
@@ -985,12 +1036,12 @@ export function ResponsiveSidebar({
                         </span>
                       </Link>
                     ) : c.label === "Summary" && m.label === "EPA" ? (
-<Link
+                      <Link
                         key={c.label}
                         href="/epa/summary"
                         className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
                         onMouseEnter={() => {
-                          import('@/components/epa/filter-card');
+                          import("@/components/epa/filter-card");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1008,12 +1059,12 @@ export function ResponsiveSidebar({
                       </Link>
                     ) : c.label === "Proyeksi TKD" &&
                       m.label === "Transfer Daerah" ? (
-<Link
+                      <Link
                         key={c.label}
                         href="/transfer-daerah/proyeksi-tkd"
                         className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
                         onMouseEnter={() => {
-                          import('@/components/transfer-daerah/data-kmk-tab');
+                          import("@/components/transfer-daerah/data-kmk-tab");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1031,12 +1082,12 @@ export function ResponsiveSidebar({
                       </Link>
                     ) : c.label === "Upload Laporan" &&
                       m.label === "Transfer Daerah" ? (
-<Link
+                      <Link
                         key={c.label}
                         href="/transfer-daerah/upload-laporan"
                         className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
                         onMouseEnter={() => {
-                          import('@/components/transfer-daerah/data-kmk-tab');
+                          import("@/components/transfer-daerah/data-kmk-tab");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1053,12 +1104,14 @@ export function ResponsiveSidebar({
                         </span>
                       </Link>
                     ) : c.label === "DAU" && m.label === "Transfer Daerah" ? (
-<Link
+                      <Link
                         key={c.label}
                         href="/transfer-daerah/dau"
                         className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
                         onMouseEnter={() => {
-                          import('@/components/transfer-daerah/data-transaksi-tab');
+                          import(
+                            "@/components/transfer-daerah/data-transaksi-tab"
+                          );
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1075,13 +1128,15 @@ export function ResponsiveSidebar({
                         </span>
                       </Link>
                     ) : c.label === "Belanja" && m.label === "Inquiry Data" ? (
-<Link
+                      <Link
                         key={c.label}
                         href="/inquiry-data/belanja"
                         className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
                         onMouseEnter={() => {
-                          import('@/components/inquiry-data/dynamic-filters-card');
-                          import('@/components/inquiry-data/query-management');
+                          import(
+                            "@/components/inquiry-data/dynamic-filters-card"
+                          );
+                          import("@/components/inquiry-data/query-management");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1098,12 +1153,14 @@ export function ResponsiveSidebar({
                         </span>
                       </Link>
                     ) : c.label === "Tematik" && m.label === "Inquiry Data" ? (
-<Link
+                      <Link
                         key={c.label}
                         href="/inquiry-data/tematik"
                         className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
                         onMouseEnter={() => {
-                          import('@/components/inquiry-data/category-mandatory-filters');
+                          import(
+                            "@/components/inquiry-data/category-mandatory-filters"
+                          );
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1119,13 +1176,16 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </Link>
-                    ) : c.label === "RKAKL Detail" && m.label === "Inquiry Data" ? (
-<Link
+                    ) : c.label === "RKAKL Detail" &&
+                      m.label === "Inquiry Data" ? (
+                      <Link
                         key={c.label}
                         href="/inquiry-data/rkakl-detail"
                         className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
                         onMouseEnter={() => {
-                          import('@/components/inquiry-data/dynamic-filters-card');
+                          import(
+                            "@/components/inquiry-data/dynamic-filters-card"
+                          );
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1141,13 +1201,16 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </Link>
-                    ) : c.label === "Dashboard Supplier" && m.label === "Data Supplier" ? (
-<Link
+                    ) : c.label === "Dashboard Supplier" &&
+                      m.label === "Data Supplier" ? (
+                      <Link
                         key={c.label}
                         href="/data-supplier/dashboard"
                         className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
                         onMouseEnter={() => {
-                          import('@/components/data-supplier/DashboardSupplierClient');
+                          import(
+                            "@/components/data-supplier/DashboardSupplierClient"
+                          );
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1163,13 +1226,16 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </Link>
-                    ) : c.label === "Profil Supplier" && m.label === "Data Supplier" ? (
-<Link
+                    ) : c.label === "Profil Supplier" &&
+                      m.label === "Data Supplier" ? (
+                      <Link
                         key={c.label}
                         href="/data-supplier/profil"
                         className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
                         onMouseEnter={() => {
-                          import('@/components/data-supplier/DashboardSupplierClient');
+                          import(
+                            "@/components/data-supplier/DashboardSupplierClient"
+                          );
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1185,13 +1251,16 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </Link>
-                    ) : c.label === "Konsentrasi Supplier" && m.label === "Data Supplier" ? (
-<Link
+                    ) : c.label === "Konsentrasi Supplier" &&
+                      m.label === "Data Supplier" ? (
+                      <Link
                         key={c.label}
                         href="/data-supplier/konsentrasi"
                         className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
                         onMouseEnter={() => {
-                          import('@/components/data-supplier/DashboardSupplierClient');
+                          import(
+                            "@/components/data-supplier/DashboardSupplierClient"
+                          );
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1207,13 +1276,16 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </Link>
-                    ) : c.label === "Deteksi Anomali Supplier" && m.label === "Data Supplier" ? (
-<Link
+                    ) : c.label === "Deteksi Anomali Supplier" &&
+                      m.label === "Data Supplier" ? (
+                      <Link
                         key={c.label}
                         href="/data-supplier/anomali"
                         className="block w/full text-left px-6 py-2 text-sm hover:bg-muted"
                         onMouseEnter={() => {
-                          import('@/components/data-supplier/DashboardSupplierClient');
+                          import(
+                            "@/components/data-supplier/DashboardSupplierClient"
+                          );
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1229,13 +1301,16 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </Link>
-                    ) : c.label === "Klaster Supplier" && m.label === "Data Supplier" ? (
-<Link
+                    ) : c.label === "Klaster Supplier" &&
+                      m.label === "Data Supplier" ? (
+                      <Link
                         key={c.label}
                         href="/data-supplier/klaster"
                         className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
                         onMouseEnter={() => {
-                          import('@/components/data-supplier/DashboardSupplierClient');
+                          import(
+                            "@/components/data-supplier/DashboardSupplierClient"
+                          );
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1251,13 +1326,16 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </Link>
-                    ) : c.label === "Jaringan Supplier" && m.label === "Data Supplier" ? (
-<Link
+                    ) : c.label === "Jaringan Supplier" &&
+                      m.label === "Data Supplier" ? (
+                      <Link
                         key={c.label}
                         href="/data-supplier/jaringan"
                         className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
                         onMouseEnter={() => {
-                          import('@/components/data-supplier/DashboardSupplierClient');
+                          import(
+                            "@/components/data-supplier/DashboardSupplierClient"
+                          );
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1284,7 +1362,7 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </button>
-                    )
+                    ),
                   )}
                 </div>
               ))}

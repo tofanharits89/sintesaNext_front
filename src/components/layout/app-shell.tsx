@@ -89,10 +89,10 @@ const AppShell = memo(function AppShell({
   }
 
   return (
-    <div className="min-h-svh">
+    <div className="min-h-svh flex flex-col">
       <Navbar {...(initialUser ? { initialUser } : {})} />
       <ResponsiveSidebar />
-      <div className="bg-slate-100 dark:bg-black">
+      <div className="bg-zinc-100 dark:bg-black flex-1">
         <main className="container mx-auto px-4 py-6 md:py-8">{children}</main>
       </div>
     </div>

@@ -33,7 +33,7 @@ export function MapStatsOverlay({
 
   return (
     <div className="absolute left-3 bottom-3 z-10 w-[min(92vw,360px)] pointer-events-none">
-      <Card className="bg-background/85 backdrop-blur pointer-events-auto">
+      <Card className="bg-background/85 backdrop-blur pointer-events-auto border">
         <CardHeader className="py-3">
           <CardTitle className="text-sm">{title}</CardTitle>
           {error && <CardDescription className="text-red-600">{error}</CardDescription>}

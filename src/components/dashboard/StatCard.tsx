@@ -22,7 +22,7 @@ export function StatCard({
 }: StatCardProps) {
   return (
     <div className={cn(
-      "rounded-lg p-3 bg-white dark:bg-neutral-900 shadow border border-gray-200 dark:border-gray-700 relative",
+      "rounded-lg p-3 bg-card text-card-foreground shadow border relative",
       className
     )}>
       <div className="flex items-center gap-2">

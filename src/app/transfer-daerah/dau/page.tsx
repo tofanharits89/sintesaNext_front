@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataKmkTab, DataTransaksiTab, RekonsiliasiDataTab } from "@/components/lazy";
-import { ComponentLoadingFallback } from "@/components/ui/loading-fallback";
+import { GenericCardSkeleton } from "@/components/ui/dashboard-skeletons";
 import { Suspense } from "react";
 
 export default function DAUPage() {
@@ -49,7 +49,7 @@ export default function DAUPage() {
           value="data-kmk"
           className="animate-in fade-in-50 duration-200"
         >
-          <Suspense fallback={<ComponentLoadingFallback />}>
+          <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} /> }>
             <DataKmkTab />
           </Suspense>
         </TabsContent>
@@ -58,7 +58,7 @@ export default function DAUPage() {
           value="data-transaksi"
           className="animate-in fade-in-50 duration-200"
         >
-          <Suspense fallback={<ComponentLoadingFallback />}>
+          <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} /> }>
             <DataTransaksiTab />
           </Suspense>
         </TabsContent>
@@ -67,7 +67,7 @@ export default function DAUPage() {
           value="rekonsilisasi-data"
           className="animate-in fade-in-50 duration-200"
         >
-          <Suspense fallback={<ComponentLoadingFallback />}>
+          <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} /> }>
             <RekonsiliasiDataTab />
           </Suspense>
         </TabsContent>

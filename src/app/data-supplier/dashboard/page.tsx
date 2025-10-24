@@ -1,6 +1,6 @@
 import YearFilter from "@/components/data-supplier/year-filter";
 import { DashboardSupplierClient } from "@/components/lazy";
-import { ComponentLoadingFallback } from "@/components/ui/loading-fallback";
+import { MultipleBarChartSkeleton, GenericCardSkeleton } from "@/components/ui/dashboard-skeletons";
 import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +31,18 @@ export default async function Page({
         <YearFilter years={years} selectedYear={selectedYear} />
       </div>
 
-      <Suspense fallback={<ComponentLoadingFallback />}>
+      <Suspense
+        fallback={
+          <div className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-3">
+              <MultipleBarChartSkeleton height={250} />
+              <MultipleBarChartSkeleton height={250} />
+              <MultipleBarChartSkeleton height={250} />
+            </div>
+            <GenericCardSkeleton showHeader contentLines={6} />
+          </div>
+        }
+      >
         <DashboardSupplierClient selectedYear={selectedYear} />
       </Suspense>
     </div>

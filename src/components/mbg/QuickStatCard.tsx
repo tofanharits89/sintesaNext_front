@@ -22,7 +22,7 @@ export function QuickStatCard({
       : "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300";
 
   return (
-    <div className="rounded-lg p-3 bg-white dark:bg-neutral-900 shadow border border-gray-200 dark:border-gray-700 relative">
+    <div className="rounded-lg p-3 bg-card text-card-foreground shadow border relative">
       {trend && (
         <Badge variant="secondary" className={cn("absolute top-2 right-2 text-xs", badgeClasses)}>
           {trend}

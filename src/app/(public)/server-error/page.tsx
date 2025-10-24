@@ -14,7 +14,7 @@ import { AlertTriangle } from "lucide-react";
 import { RetryActions } from "@/components/RetryActions";
 import AutoRetry from "@/components/AutoRetry";
 import { apiPath } from "@/lib/base-path";
-import { PageSpinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ServerErrorPage() {
   const router = useRouter();
@@ -94,11 +94,39 @@ export default function ServerErrorPage() {
   }, [router]);
 
   if (isValidating) {
-    return <PageSpinner text="Validating server connection..." />;
+    return (
+      <div className="min-h-[100svh] w-full flex items-center justify-center bg-zinc-100 dark:bg-black p-6">
+        <div className="max-w-xl w-full">
+          <Card className="border-2 shadow-xl">
+            <CardHeader className="space-y-2 text-center">
+              <div className="mx-auto h-14 w-14 rounded-full bg-muted flex items-center justify-center">
+                <Skeleton className="h-7 w-7 rounded" />
+              </div>
+              <Skeleton className="h-6 w-64 mx-auto" />
+              <Skeleton className="h-4 w-72 mx-auto" />
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md bg-muted p-4 text-sm leading-relaxed space-y-2">
+                <Skeleton className="h-4 w-40" />
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <Skeleton className="h-2 w-2 rounded-full" />
+                    <Skeleton className="h-3 w-64" />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+            <CardFooter className="flex items-center justify-end">
+              <Skeleton className="h-9 w-28" />
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-[100svh] w-full flex items-center justify-center bg-gradient-to-b from-background to-muted/40 p-6">
+    <div className="min-h-[100svh] w-full flex items-center justify-center bg-zinc-100 dark:bg-black p-6">
       <div className="max-w-xl w-full">
         <AutoRetry />
         <Card className="border-2 shadow-xl">

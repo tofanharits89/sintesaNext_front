@@ -12,7 +12,51 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShieldAlert, Clock, RefreshCw } from "lucide-react";
-import { PageSpinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
+
+function IPBlockedSkeleton() {
+  return (
+    <div className="min-h-[100svh] w-full flex items-center justify-center bg-zinc-100 dark:bg-black p-6">
+      <div className="max-w-xl w-full">
+        <Card className="border-2 shadow-xl">
+          <CardHeader className="space-y-2 text-center">
+            <div className="mx-auto h-14 w-14 rounded-full bg-muted flex items-center justify-center">
+              <Skeleton className="h-7 w-7 rounded" />
+            </div>
+            <Skeleton className="h-6 w-56 mx-auto" />
+            <Skeleton className="h-4 w-72 mx-auto" />
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md bg-muted p-4 mb-4">
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <Skeleton className="h-5 w-5 rounded" />
+                <Skeleton className="h-4 w-40" />
+              </div>
+              <div className="text-center space-y-2">
+                <Skeleton className="h-8 w-40 mx-auto" />
+                <Skeleton className="h-3 w-28 mx-auto" />
+              </div>
+            </div>
+            <div className="rounded-md bg-muted p-4 space-y-2">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-3 w-64" />
+              <Skeleton className="h-4 w-44 mt-2" />
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Skeleton className="h-2 w-2 rounded-full" />
+                  <Skeleton className="h-3 w-64" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+          <CardFooter className="flex items-center justify-end">
+            <Skeleton className="h-9 w-28" />
+          </CardFooter>
+        </Card>
+      </div>
+    </div>
+  );
+}
 
 function IPBlockedContent() {
   const searchParams = useSearchParams();
@@ -161,11 +205,11 @@ function IPBlockedContent() {
   };
 
   if (isValidating) {
-    return <PageSpinner text="Validating block status..." />;
+    return <IPBlockedSkeleton />;
   }
 
   return (
-    <div className="min-h-[100svh] w-full flex items-center justify-center bg-gradient-to-b from-background to-muted/40 p-6">
+    <div className="min-h-[100svh] w-full flex items-center justify-center bg-zinc-100 dark:bg-black p-6">
       <div className="max-w-xl w-full">
         <Card className="border-2 shadow-xl">
           <CardHeader className="space-y-2 text-center">
@@ -254,7 +298,7 @@ function IPBlockedContent() {
 
 export default function IPBlockedPage() {
   return (
-    <Suspense fallback={<PageSpinner text="Loading..." />}>
+    <Suspense fallback={<IPBlockedSkeleton />}>
       <IPBlockedContent />
     </Suspense>
   );

@@ -110,7 +110,7 @@ export function VirtualizedSelect({
       <div
         style={style}
         className={cn(
-          "flex items-center justify-between px-3 py-2 cursor-pointer text-sm hover:bg-accent hover:text-accent-foreground",
+          "flex items-center justify-between px-3 py-2 cursor-pointer text-sm hover:!bg-zinc-200 dark:hover:!bg-zinc-950 hover:text-accent-foreground",
           isSelected && "bg-accent text-accent-foreground"
         )}
         onClick={() => handleOptionSelect(option.value)}
@@ -133,7 +133,7 @@ export function VirtualizedSelect({
         onClick={toggleDropdown}
         disabled={disabled}
         className={cn(
-          "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-full items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-xs whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 h-8",
+          "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-zinc-100 dark:bg-black hover:!bg-zinc-200 dark:hover:!bg-zinc-950 flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 h-8",
           isOpen &&
             "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
         )}
@@ -153,7 +153,7 @@ export function VirtualizedSelect({
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-md">
+        <div className="absolute top-full left-0 z-50 w-full mt-1 !bg-zinc-100 dark:!bg-black border border-border rounded-md shadow-md">
           {/* Search Input */}
           <div className="p-2 border-b">
             <input
@@ -162,7 +162,7 @@ export function VirtualizedSelect({
               placeholder="Cari..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
+              className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground !bg-zinc-100 dark:!bg-black hover:!bg-zinc-200 dark:hover:!bg-zinc-950 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
             />
           </div>
 
@@ -186,7 +186,7 @@ export function VirtualizedSelect({
                     <div
                       key={option.value}
                       className={cn(
-                        "flex items-center justify-between px-3 py-2 cursor-pointer text-sm hover:bg-accent hover:text-accent-foreground",
+                        "flex items-center justify-between px-3 py-2 cursor-pointer text-sm hover:!bg-zinc-200 dark:hover:!bg-zinc-950 hover:text-accent-foreground",
                         option.value === value &&
                           "bg-accent text-accent-foreground"
                       )}

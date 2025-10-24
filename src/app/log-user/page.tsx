@@ -606,7 +606,7 @@ export default function LogUserPage() {
                         onClick={reconnectSocket}
                         variant="default"
                         size="sm"
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 h-8 px-3"
+                        className="flex items-center gap-2 h-8 px-3"
                       >
                         <Wifi className="h-4 w-4" />
                         <span className="text-xs">Reconnect</span>
@@ -737,7 +737,7 @@ export default function LogUserPage() {
                               <TableCell className="text-center">
                                 <Badge
                                   variant="default"
-                                  className="bg-green-500 hover:bg-green-600 text-xs"
+                                  className="text-xs"
                                 >
                                   <div className="w-2 h-2 bg-white rounded-full mr-1 animate-pulse"></div>
                                   Online
@@ -774,7 +774,7 @@ export default function LogUserPage() {
                                 </Badge>
                                 <Badge
                                   variant="default"
-                                  className="bg-green-500 hover:bg-green-600 text-xs"
+                                  className="text-xs"
                                 >
                                   <div className="w-2 h-2 bg-white rounded-full mr-1 animate-pulse"></div>
                                   Online

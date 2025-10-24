@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, ArrowLeft, Home } from 'lucide-react';
 import { Suspense } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function UnauthorizedContent() {
   const searchParams = useSearchParams();
@@ -77,11 +78,25 @@ function UnauthorizedContent() {
 export default function UnauthorizedPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Memuat...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+              <Skeleton className="h-6 w-6 rounded" />
+            </div>
+            <Skeleton className="h-5 w-48 mx-auto" />
+            <Skeleton className="h-4 w-64 mx-auto mt-2" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="rounded-md bg-muted p-3">
+              <Skeleton className="h-4 w-72" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-9 w-full" />
+              <Skeleton className="h-9 w-full" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     }>
       <UnauthorizedContent />

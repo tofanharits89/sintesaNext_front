@@ -31,14 +31,14 @@ export default function UploadLaporanPage() {
         <div className="flex items-center gap-2">
           <Button
             onClick={() => setIsKppnModalOpen(true)}
-            className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 text-white min-w-[130px] h-10"
+            className="min-w-[130px] h-10"
           >
             <FileText className="h-4 w-4 mr-2" />
             Laporan KPPN
           </Button>
           <Button
             onClick={() => setIsKanwilModalOpen(true)}
-            className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 text-white min-w-[130px] h-10"
+            className="min-w-[130px] h-10"
           >
             <Building2 className="h-4 w-4 mr-2" />
             Laporan Kanwil

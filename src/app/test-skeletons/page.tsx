@@ -11,6 +11,7 @@ import {
   FilterCardSkeleton,
   TabsCardSkeleton,
 } from '@/components/ui/dashboard-skeletons';
+import { PerformanceMonitoringSkeleton } from '@/components/monitoring/skeletons/PerformanceMonitoringSkeleton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -60,13 +61,16 @@ export default function TestSkeletonsPage() {
           {/* MapSearchCardSkeleton Demo */}
           <section>
             <h2 className="text-2xl font-semibold mb-4">MapSearchCardSkeleton</h2>
-            <MapSearchCardSkeleton className="max-w-4xl" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <MapSearchCardSkeleton />
+              <MapSearchCardSkeleton />
+            </div>
           </section>
 
           {/* StatsRankingCardSkeleton Demo */}
           <section>
             <h2 className="text-2xl font-semibold mb-4">StatsRankingCardSkeleton</h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <StatsRankingCardSkeleton />
               <StatsRankingCardSkeleton />
             </div>
@@ -75,7 +79,7 @@ export default function TestSkeletonsPage() {
           {/* ChartCardSkeleton Demo */}
           <section>
             <h2 className="text-2xl font-semibold mb-4">ChartCardSkeleton</h2>
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <ChartCardSkeleton />
               <ChartCardSkeleton />
             </div>
@@ -83,91 +87,36 @@ export default function TestSkeletonsPage() {
 
           {/* GenericCardSkeleton Demo */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">GenericCardSkeleton Variants</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium text-muted-foreground">Basic</h3>
-                <GenericCardSkeleton />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium text-muted-foreground">With Description</h3>
-                <GenericCardSkeleton showDescription={true} />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium text-muted-foreground">With Footer</h3>
-                <GenericCardSkeleton showFooter={true} />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium text-muted-foreground">More Content</h3>
-                <GenericCardSkeleton contentLines={5} />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium text-muted-foreground">Full Featured</h3>
-                <GenericCardSkeleton 
-                  showDescription={true} 
-                  showFooter={true} 
-                  contentLines={4} 
-                />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium text-muted-foreground">No Header</h3>
-                <GenericCardSkeleton showHeader={false} contentLines={3} />
-              </div>
+            <h2 className="text-2xl font-semibold mb-4">GenericCardSkeleton</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <GenericCardSkeleton showDescription />
+              <GenericCardSkeleton showDescription />
             </div>
           </section>
 
           {/* FilterCardSkeleton Demo */}
           <section>
             <h2 className="text-2xl font-semibold mb-4">FilterCardSkeleton</h2>
-            <FilterCardSkeleton />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FilterCardSkeleton />
+              <FilterCardSkeleton />
+            </div>
           </section>
 
           {/* TabsCardSkeleton Demo */}
           <section>
             <h2 className="text-2xl font-semibold mb-4">TabsCardSkeleton</h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <TabsCardSkeleton />
               <TabsCardSkeleton />
             </div>
           </section>
 
-          {/* Complete Dashboard Layout Demo */}
+          {/* PerformanceMonitoringSkeleton Demo */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">Complete Dashboard Layout</h2>
-            <div className="space-y-6">
-              {/* Filter Section */}
-              <FilterCardSkeleton />
-              
-              {/* Quick Stats Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <QuickStatCardSkeleton />
-                <QuickStatCardSkeleton />
-                <QuickStatCardSkeleton />
-                <QuickStatCardSkeleton />
-              </div>
-              
-              {/* Main Content Grid */}
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                {/* Map Card */}
-                <div className="xl:col-span-2">
-                  <MapSearchCardSkeleton className="h-96" />
-                </div>
-                
-                {/* Stats Card */}
-                <div className="xl:col-span-1">
-                  <StatCardSkeleton />
-                </div>
-                
-                {/* Chart Cards */}
-                <div className="xl:col-span-2">
-                  <ChartCardSkeleton />
-                </div>
-                
-                {/* Ranking Card */}
-                <div className="xl:col-span-1">
-                  <StatsRankingCardSkeleton />
-                </div>
-              </div>
+            <h2 className="text-2xl font-semibold mb-4">PerformanceMonitoringSkeleton</h2>
+            <div className="border rounded-lg p-6 bg-white dark:bg-gray-900">
+              <PerformanceMonitoringSkeleton />
             </div>
           </section>
         </div>
@@ -192,6 +141,7 @@ export default function TestSkeletonsPage() {
                 <li>GenericCardSkeleton - Flexible skeleton for any card layout</li>
                 <li>FilterCardSkeleton - For filter cards with form inputs</li>
                 <li>TabsCardSkeleton - For tabbed content cards</li>
+                <li>PerformanceMonitoringSkeleton - For performance monitoring dashboard</li>
               </ul>
             </div>
           </CardContent>

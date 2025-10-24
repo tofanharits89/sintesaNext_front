@@ -1,4 +1,5 @@
-import { MultipleBarChart, MultipleBarChartSkeleton } from "@/components/lazy";
+import { MultipleBarChart } from "@/components/lazy";
+import { MultipleBarChartSkeleton } from "@/components/ui/dashboard-skeletons";
 import { formatChartCurrency } from "@/utils/formatters";
 import { transformRealisasiKLPerFungsi } from "@/utils/dashboard";
 

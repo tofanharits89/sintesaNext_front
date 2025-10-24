@@ -17,7 +17,12 @@ import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field";
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+  FieldError,
+} from "@/components/ui/field";
 import {
   Card,
   CardContent,
@@ -77,7 +82,12 @@ export default function SimplifiedLoginForm() {
 
   const form = useForm<FormInput, any, FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { username: "", password: "", captcha: "", rememberMe: false },
+    defaultValues: {
+      username: "",
+      password: "",
+      captcha: "",
+      rememberMe: false,
+    },
   });
 
   const onSubmit = async (data: FormData) => {
@@ -106,12 +116,18 @@ export default function SimplifiedLoginForm() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.log('[LoginForm] Error response debugging:', {
+        console.log("[LoginForm] Error response debugging:", {
           errorData,
-          errorMessage: errorData.error?.message || errorData.message || "Login gagal",
-          directError: errorData.error
+          errorMessage:
+            errorData.error?.message || errorData.message || "Login gagal",
+          directError: errorData.error,
         });
-        throw new Error(errorData.error || errorData.error?.message || errorData.message || "Login gagal");
+        throw new Error(
+          errorData.error ||
+            errorData.error?.message ||
+            errorData.message ||
+            "Login gagal",
+        );
       }
 
       const result = await response.json();
@@ -123,19 +139,24 @@ export default function SimplifiedLoginForm() {
         if (result.data?.user) {
           // 1. Dispatch auth event for socket connection
           dispatchAuthEvent.login(result.data.user);
-          
+
           // 2. Update React Query cache and Zustand store via dynamic import
           // This ensures global auth state is ready before dashboard loads
           try {
-            const { useAuthSessionStore } = await import("@/stores/session-store");
+            const { useAuthSessionStore } = await import(
+              "@/stores/session-store"
+            );
             const { queryKeyFactories } = await import("@/lib/query-configs");
-            
+
             const authStore = useAuthSessionStore.getState();
             authStore.setAuthenticated(true, result.data.user);
             authStore.updateUser(result.data.user);
-            
-            console.log("[LoginForm] Auth state updated with user:", result.data.user.username);
-            
+
+            console.log(
+              "[LoginForm] Auth state updated with user:",
+              result.data.user.username,
+            );
+
             // 3. Fetch full user profile to populate React Query cache before redirect
             // This prevents 401 errors on the dashboard when it tries to fetch data
             console.log("[LoginForm] Warming up user profile cache...");
@@ -146,7 +167,7 @@ export default function SimplifiedLoginForm() {
                 "Content-Type": "application/json",
               },
             });
-            
+
             if (profileResp.ok) {
               const profileData = await profileResp.json().catch(() => ({}));
               if (profileData.success && profileData.data?.user) {
@@ -155,7 +176,10 @@ export default function SimplifiedLoginForm() {
                 authStore.updateUser(profileData.data.user);
               }
             } else {
-              console.warn("[LoginForm] User profile fetch returned:", profileResp.status);
+              console.warn(
+                "[LoginForm] User profile fetch returned:",
+                profileResp.status,
+              );
             }
           } catch (error) {
             console.warn("[LoginForm] Failed to warm up profile cache:", error);
@@ -193,7 +217,7 @@ export default function SimplifiedLoginForm() {
     <>
       <LoginLoading isVisible={isRedirecting} />
 
-      <div className="flex min-h-svh items-center justify-center p-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <div className="flex min-h-svh items-center justify-center p-6 bg-zinc-100 dark:bg-black">
         <div className="w-full max-w-md">
           <Card>
             <CardHeader className="space-y-1">
@@ -272,7 +296,7 @@ export default function SimplifiedLoginForm() {
 
                   <Field>
                     <FieldLabel htmlFor="captcha">Captcha</FieldLabel>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       <Input
                         id="captcha"
                         placeholder="4 digit"
@@ -280,7 +304,7 @@ export default function SimplifiedLoginForm() {
                         {...form.register("captcha")}
                         disabled={isSubmitting}
                       />
-                      <div className="select-none rounded-md border px-3 py-2 text-base tracking-widest font-mono bg-muted">
+                      <div className="select-none rounded-md border px-6 py-2 text-base tracking-widest font-mono bg-muted">
                         {expectedCaptcha}
                       </div>
                       <Button

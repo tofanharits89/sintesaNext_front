@@ -104,7 +104,7 @@ function extractAccessToken(request: NextRequest): string | null {
 /**
  * Server-side session validation with proper token verification
  */
-async function validateServerSession(accessToken: string, request: NextRequest): Promise<{ valid: boolean; user?: any; error?: string; ipBlocked?: boolean; ipParams?: { duration: string; blockedAt: string; reason: string } }> {
+async function validateServerSession(accessToken: string, request: NextRequest): Promise<{ valid: boolean; user?: any; error?: string; ipBlocked?: boolean; ipParams?: { duration: string; blockedAt: string; reason: string }, setCookies?: string[], status?: number }> {
   try {
     // Prefer internal Next API proxy to avoid cross-origin cookie nuances
     const validateUrl = new URL('/api/auth/validate?include=user', request.url);
@@ -120,12 +120,16 @@ async function validateServerSession(accessToken: string, request: NextRequest):
       cache: "no-store",
     });
 
+    const setCookies: string[] = (response.headers as any).getSetCookie?.() || [];
+
     if (response.ok) {
       const data = await response.json();
       return {
         valid: data.success && data.data?.valid,
         user: data.data?.user,
         error: !data.success ? data.error : undefined,
+        setCookies,
+        status: 200,
       };
     } else if (response.status === 403) {
       // Check for IP block and prepare redirect params
@@ -133,13 +137,13 @@ async function validateServerSession(accessToken: string, request: NextRequest):
         const data = await response.json();
         const res = detectIpBlock(data);
         if (res.ipBlocked && res.params) {
-          return { valid: false, error: "IP_BLOCKED", ipBlocked: true, ipParams: res.params };
+          return { valid: false, error: "IP_BLOCKED", ipBlocked: true, ipParams: res.params, setCookies, status: 403 };
         }
       } catch {}
-      return { valid: false, error: "Forbidden" };
+      return { valid: false, error: "Forbidden", setCookies, status: 403 };
     } else {
       // If validation fails, assume invalid
-      return { valid: false, error: "Server validation failed" };
+      return { valid: false, error: "Server validation failed", setCookies, status: response.status };
     }
   } catch (error) {
     // Network error during validation - fail closed in production
@@ -150,6 +154,18 @@ async function validateServerSession(accessToken: string, request: NextRequest):
     }
 
     return { valid: false, error: "Authentication service unavailable" };
+  }
+}
+
+/**
+ * Forward Set-Cookie headers from a Response to the outgoing NextResponse
+ */
+function forwardSetCookiesToResponse(source: Response, target: NextResponse) {
+  const setCookies: string[] = (source.headers as any).getSetCookie?.() || [];
+  if (setCookies && setCookies.length > 0) {
+    for (const c of setCookies) {
+      target.headers.append('Set-Cookie', c);
+    }
   }
 }
 
@@ -269,7 +285,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
-    // Token exists - server-side validation with fallback to optimistic
+    // Token exists - server-side validation with graceful refresh fallback
     const validation = await validateServerSession(token, request);
     // Store validation result in short-lived cache
     setAuthCache(cacheKey, { valid: validation.valid, user: validation.user });
@@ -281,15 +297,47 @@ export async function middleware(request: NextRequest) {
         for (const [k, v] of Object.entries(validation.ipParams)) {
           ipUrl.searchParams.set(k, v);
         }
-        return NextResponse.redirect(ipUrl);
+        const res = NextResponse.redirect(ipUrl);
+        return res;
       }
 
+      // Silent refresh fallback: if refresh cookie present, try refreshing once
+      const cookieHeader = request.headers.get("cookie") || "";
+      const hasRefresh = cookieHeader.includes("refresh_token=") || cookieHeader.includes("refreshToken=");
+      const wasAuth401 = validation.status === 401 || validation.status === 400 || validation.status === 498;
+
+      if (hasRefresh && wasAuth401) {
+        try {
+          const refreshResp = await fetch(new URL('/api/auth/refresh', request.url), {
+            method: 'POST',
+            headers: {
+              ...(cookieHeader ? { cookie: cookieHeader } : {}),
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            cache: 'no-store',
+          });
+
+          if (refreshResp.ok) {
+            // Forward new cookies and allow request to proceed
+            const res = NextResponse.next();
+            forwardSetCookiesToResponse(refreshResp, res);
+            return res;
+          }
+        } catch {
+          // ignore and fall through to redirect
+        }
+      }
+
+      // If still invalid, redirect to login
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("returnTo", pathname);
       loginUrl.searchParams.set("reason", "session_expired");
-      return NextResponse.redirect(loginUrl);
+      const res = NextResponse.redirect(loginUrl);
+      return res;
     }
 
+    // Valid session
     return NextResponse.next();
   }
 

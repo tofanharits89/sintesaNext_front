@@ -175,7 +175,7 @@ export function DynamicFiltersCard({
             {/* Tayang Button */}
             <Button
               onClick={handleTayang}
-              className="bg-blue-600 hover:bg-blue-700 text-white min-w-[150px] h-10"
+              className="min-w-[150px] h-10"
               disabled={(activeFilters.length + (hiddenFilterKeys?.length || 0)) === 0 || isLoading}
             >
               <Eye className="w-4 h-4 mr-2" />
@@ -185,7 +185,8 @@ export function DynamicFiltersCard({
             {/* Download Excel Button */}
             <Button
               onClick={handleDownloadExcel}
-              className="bg-green-100 hover:bg-green-200 text-green-800 border-green-200 min-w-[150px] h-10"
+              variant="outline"
+              className="min-w-[150px] h-10"
               disabled={(activeFilters.length + (hiddenFilterKeys?.length || 0)) === 0 || isLoading}
             >
               <FileSpreadsheet className="w-4 h-4 mr-2" />
@@ -195,7 +196,8 @@ export function DynamicFiltersCard({
             {/* Download CSV Button */}
             <Button
               onClick={handleDownloadCSV}
-              className="bg-green-100 hover:bg-green-200 text-green-800 border-green-200 min-w-[150px] h-10"
+              variant="outline"
+              className="min-w-[150px] h-10"
               disabled={(activeFilters.length + (hiddenFilterKeys?.length || 0)) === 0 || isLoading}
             >
               <FileText className="w-4 h-4 mr-2" />

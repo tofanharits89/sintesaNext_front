@@ -1,4 +1,5 @@
-import { LineChart, LineChartSkeleton } from "@/components/lazy";
+import { LineChart } from "@/components/lazy";
+import { LineChartSkeleton } from "@/components/ui/dashboard-skeletons";
 import { transformTrenRealisasiBulanan, getTrenRealisasiLines } from "@/utils/dashboard";
 
 interface TrenChartProps {

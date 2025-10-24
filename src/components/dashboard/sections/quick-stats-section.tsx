@@ -1,5 +1,5 @@
 import { useRouter } from "next/navigation";
-import { StatCard } from "@/components/lazy";
+import { StatCard } from "@/components/dashboard/StatCard";
 import {
   FileText,
   Banknote,

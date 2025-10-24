@@ -233,7 +233,7 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
         <Button
           variant="outline"
           disabled={disabled || isLoading}
-          className={`min-w-[180px] justify-between ${className}`}
+          className={`min-w-[180px] justify-between bg-white dark:bg-card hover:bg-zinc-200 ${className}`}
         >
           <div className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
