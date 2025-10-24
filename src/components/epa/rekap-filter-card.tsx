@@ -56,15 +56,39 @@ export function RekapFilterCard({
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filter Rekap EPA
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filter Rekap EPA
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="h-10 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              <div className="h-10 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-            <div className="h-10 bg-gray-200 rounded"></div>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Tahun skeleton */}
+            <div className="space-y-2">
+              <div className="h-4 w-12 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              <div className="h-10 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+            </div>
+            {/* Triwulan skeleton */}
+            <div className="space-y-2">
+              <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              <div className="h-10 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+            </div>
+            {/* Kementerian skeleton */}
+            <div className="space-y-2">
+              <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              <div className="h-10 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+            </div>
+            {/* Jenis Belanja skeleton */}
+            <div className="space-y-2">
+              <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              <div className="h-10 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -137,7 +161,7 @@ export function RekapFilterCard({
           <div className="space-y-2 min-w-0">
             <Label htmlFor="tahun">Tahun</Label>
             <Select
-              value={localFilters.tahun}
+              value={localFilters.tahun || "all"}
               onValueChange={(value) => handleFilterChange("tahun", value)}
               disabled={isApplying}
             >
@@ -159,7 +183,7 @@ export function RekapFilterCard({
           <div className="space-y-2 min-w-0">
             <Label htmlFor="triwulan">Triwulan</Label>
             <Select
-              value={localFilters.triwulan}
+              value={localFilters.triwulan || "all"}
               onValueChange={(value) => handleFilterChange("triwulan", value)}
               disabled={isApplying}
             >
@@ -181,7 +205,7 @@ export function RekapFilterCard({
           <div className="space-y-2 min-w-0">
             <Label htmlFor="kementerian">Kementerian</Label>
             <Select
-              value={localFilters.kddept}
+              value={localFilters.kddept || "all"}
               onValueChange={(value) => handleFilterChange("kddept", value)}
               disabled={isApplying}
             >
@@ -205,7 +229,7 @@ export function RekapFilterCard({
           <div className="space-y-2 min-w-0">
             <Label htmlFor="jenis-belanja">Jenis Belanja</Label>
             <Select
-              value={localFilters.kdgbkpk}
+              value={localFilters.kdgbkpk || "all"}
               onValueChange={(value) => handleFilterChange("kdgbkpk", value)}
               disabled={isApplying}
             >

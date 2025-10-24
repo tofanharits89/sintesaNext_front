@@ -70,17 +70,53 @@ export function RekapDataTable({
           <div className="flex items-center justify-between">
             <CardTitle>Data Rekap EPA</CardTitle>
             <div className="px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-medium">
-              Total Data: {totalRows} Baris Data
+              Total Data: - Baris Data
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse space-y-4">
-            {Array(5)
-              .fill(0)
-              .map((_, i) => (
-                <div key={i} className="h-10 bg-gray-200 rounded"></div>
-              ))}
+          <div className="space-y-4 flex flex-col">
+            {/* Table Header Skeleton */}
+            <div className="border rounded-lg overflow-hidden">
+              <div className="bg-gray-100 dark:bg-gray-900 p-4 grid grid-cols-18 gap-2">
+                {Array(18)
+                  .fill(0)
+                  .map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-4 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"
+                    ></div>
+                  ))}
+              </div>
+
+              {/* Table Rows Skeleton */}
+              <div className="space-y-1">
+                {Array(5)
+                  .fill(0)
+                  .map((_, rowIdx) => (
+                    <div key={rowIdx} className="border-t p-4 grid grid-cols-18 gap-2 hover:bg-gray-50 dark:hover:bg-gray-900/30">
+                      {Array(18)
+                        .fill(0)
+                        .map((_, colIdx) => (
+                          <div
+                            key={colIdx}
+                            className="h-4 bg-gray-200 dark:bg-gray-800 rounded animate-pulse"
+                          ></div>
+                        ))}
+                    </div>
+                  ))}
+              </div>
+            </div>
+
+            {/* Pagination Skeleton */}
+            <div className="flex items-center justify-between mt-4">
+              <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              <div className="flex items-center gap-2">
+                <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
