@@ -47,14 +47,6 @@ export function RekapDataTable({
   totalRows = 0,
   isLoading = false,
 }: RekapDataTableProps) {
-  console.log("[RekapDataTable] Props:", { 
-    dataLength: data?.length, 
-    page, 
-    totalPages, 
-    hasGrandTotal: !!grandTotal,
-    isLoading 
-  });
-
   const displayGrandTotal = useMemo(() => {
     if (!grandTotal) return null;
     return {
@@ -197,10 +189,7 @@ export function RekapDataTable({
             <Button
               variant="outline"
               size="icon"
-              onClick={() => {
-                console.log("[Pagination] Going to page", Math.max(1, page - 1));
-                onPageChange(Math.max(1, page - 1));
-              }}
+              onClick={() => onPageChange(Math.max(1, page - 1))}
               disabled={page === 1}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -211,10 +200,7 @@ export function RekapDataTable({
             <Button
               variant="outline"
               size="icon"
-              onClick={() => {
-                console.log("[Pagination] Going to page", Math.min(totalPages, page + 1));
-                onPageChange(Math.min(totalPages, page + 1));
-              }}
+              onClick={() => onPageChange(Math.min(totalPages, page + 1))}
               disabled={page === totalPages || totalPages === 0}
             >
               <ChevronRight className="h-4 w-4" />

@@ -75,7 +75,6 @@ export default function RekapEpaPage() {
 
   const filteredData = useMemo(() => {
     let result = data?.data || [];
-    console.log("[RekapEpaPage] Raw data:", result.length, "rows");
 
     // Apply client-side filtering ("all" means no filter - show all)
     result = result.filter((row) => {
@@ -86,7 +85,6 @@ export default function RekapEpaPage() {
       return true;
     });
     
-    console.log("[RekapEpaPage] Filtered data:", result.length, "rows");
     return result;
   }, [data?.data, appliedFilters]);
 
@@ -127,18 +125,14 @@ export default function RekapEpaPage() {
       totals.rencana_sisa_realisasi += parseFloat(row.rencana_sisa_realisasi?.toString() || "0") || 0;
     });
 
-    console.log("[RekapEpaPage] Calculated grandTotal:", totals);
     return totals;
   }, [filteredData]);
 
   const totalPages = useMemo(() => {
     const totalRows = filteredData.length;
     const pages = Math.ceil(totalRows / ROWS_PER_PAGE) || 1;
-    console.log("[RekapEpaPage] totalPages:", pages, "from", totalRows, "rows");
     return pages;
   }, [filteredData.length]);
-
-  console.log("[RekapEpaPage] Full data object:", data);
 
   const [currentLocalFilters, setCurrentLocalFilters] = useState<RekapEpaFilters>({
     tahun: "all",
