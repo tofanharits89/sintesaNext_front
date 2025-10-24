@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { RotateCcw, Filter, Loader2, RefreshCw } from "lucide-react";
+import { RotateCcw, Filter, Loader2 } from "lucide-react";
 import type { RekapEpaFilters } from "@/types/epa-rekap";
 
 interface FilterOption {
@@ -25,22 +25,25 @@ interface RekapFilterCardProps {
   filters: RekapEpaFilters;
   onFiltersChange: (filters: RekapEpaFilters) => void;
   onReset: () => void;
-  onRefresh?: () => void;
   filterOptions?: FilterOption;
-  isRefreshing?: boolean;
   isApplying?: boolean;
+  isResetting?: boolean;
 }
 
 export function RekapFilterCard({
   filters,
   onFiltersChange,
   onReset,
-  onRefresh,
   filterOptions,
-  isRefreshing = false,
   isApplying = false,
+  isResetting = false,
 }: RekapFilterCardProps) {
   const [localFilters, setLocalFilters] = useState<RekapEpaFilters>(filters);
+
+  // Sync localFilters with filters prop when filters change (e.g., from Reset or Refresh)
+  useEffect(() => {
+    setLocalFilters(filters);
+  }, [filters]);
 
   if (!filterOptions) {
     return (
@@ -90,15 +93,24 @@ export function RekapFilterCard({
               variant="outline"
               onClick={handleReset}
               className="flex items-center gap-2 px-6 py-2 h-10"
-              disabled={isRefreshing}
+              disabled={isApplying || isResetting}
             >
-              <RotateCcw className="h-4 w-4" />
-              Reset
+              {isResetting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <RotateCcw className="h-4 w-4" />
+                  Reset
+                </>
+              )}
             </Button>
             <Button
               onClick={handleApplyFilters}
               className="flex items-center gap-2 px-6 py-2 h-10"
-              disabled={isRefreshing || isApplying}
+              disabled={isApplying}
             >
               {isApplying ? (
                 <>
@@ -107,24 +119,6 @@ export function RekapFilterCard({
                 </>
               ) : (
                 "Terapkan"
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => onRefresh?.()}
-              disabled={isRefreshing}
-              className="flex items-center gap-2 px-6 py-2 h-10"
-            >
-              {isRefreshing ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="h-4 w-4" />
-                  Refresh
-                </>
               )}
             </Button>
           </div>
@@ -138,7 +132,7 @@ export function RekapFilterCard({
             <Select
               value={localFilters.tahun || ""}
               onValueChange={(value) => handleFilterChange("tahun", value === "" ? null : value)}
-              disabled={isRefreshing || isApplying}
+              disabled={isApplying}
             >
               <SelectTrigger id="tahun" className="w-full">
                 <SelectValue placeholder="Pilih tahun" className="truncate" />
@@ -159,7 +153,7 @@ export function RekapFilterCard({
             <Select
               value={localFilters.triwulan || ""}
               onValueChange={(value) => handleFilterChange("triwulan", value === "" ? null : value)}
-              disabled={isRefreshing || isApplying}
+              disabled={isApplying}
             >
               <SelectTrigger id="triwulan" className="w-full">
                 <SelectValue placeholder="Pilih triwulan" className="truncate" />
@@ -180,7 +174,7 @@ export function RekapFilterCard({
             <Select
               value={localFilters.kddept || ""}
               onValueChange={(value) => handleFilterChange("kddept", value === "" ? null : value)}
-              disabled={isRefreshing || isApplying}
+              disabled={isApplying}
             >
               <SelectTrigger id="kementerian" className="w-full">
                 <SelectValue placeholder="Pilih kementerian" className="truncate" />
@@ -203,7 +197,7 @@ export function RekapFilterCard({
             <Select
               value={localFilters.kdgbkpk || ""}
               onValueChange={(value) => handleFilterChange("kdgbkpk", value === "" ? null : value)}
-              disabled={isRefreshing || isApplying}
+              disabled={isApplying}
             >
               <SelectTrigger id="jenis-belanja" className="w-full">
                 <SelectValue placeholder="Pilih jenis belanja" className="truncate" />
