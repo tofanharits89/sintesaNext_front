@@ -3,25 +3,25 @@ import type { RekapEpaFilters } from "@/types/epa-rekap";
 
 export function useRekapEpaFilterState() {
   const [filters, setFilters] = useState<RekapEpaFilters>({
-    tahun: null,
-    triwulan: null,
-    kddept: null,
-    kdgbkpk: null,
+    tahun: "all",
+    triwulan: "all",
+    kddept: "all",
+    kdgbkpk: "all",
   });
 
   const updateFilter = useCallback((key: keyof RekapEpaFilters, value: string | null) => {
     setFilters((prev) => ({
       ...prev,
-      [key]: value,
+      [key]: value || "all",
     }));
   }, []);
 
   const resetFilters = useCallback(() => {
     setFilters({
-      tahun: null,
-      triwulan: null,
-      kddept: null,
-      kdgbkpk: null,
+      tahun: "all",
+      triwulan: "all",
+      kddept: "all",
+      kdgbkpk: "all",
     });
   }, []);
 

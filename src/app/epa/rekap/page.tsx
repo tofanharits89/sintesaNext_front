@@ -17,10 +17,10 @@ export default function RekapEpaPage() {
   const [isApplying, setIsApplying] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<RekapEpaFilters>({
-    tahun: null,
-    triwulan: null,
-    kddept: null,
-    kdgbkpk: null,
+    tahun: "all",
+    triwulan: "all",
+    kddept: "all",
+    kdgbkpk: "all",
   });
 
   const { filters, updateFilter, resetFilters, setAllFilters } = useRekapEpaFilterState();
@@ -32,11 +32,17 @@ export default function RekapEpaPage() {
     setIsRefreshing(true);
     resetFilters();
     setPage(1);
+    setCurrentLocalFilters({
+      tahun: "all",
+      triwulan: "all",
+      kddept: "all",
+      kdgbkpk: "all",
+    });
     setAppliedFilters({
-      tahun: null,
-      triwulan: null,
-      kddept: null,
-      kdgbkpk: null,
+      tahun: "all",
+      triwulan: "all",
+      kddept: "all",
+      kdgbkpk: "all",
     });
     await refetch();
     setIsRefreshing(false);
@@ -46,11 +52,17 @@ export default function RekapEpaPage() {
     setIsResetting(true);
     resetFilters();
     setPage(1);
+    setCurrentLocalFilters({
+      tahun: "all",
+      triwulan: "all",
+      kddept: "all",
+      kdgbkpk: "all",
+    });
     setAppliedFilters({
-      tahun: null,
-      triwulan: null,
-      kddept: null,
-      kdgbkpk: null,
+      tahun: "all",
+      triwulan: "all",
+      kddept: "all",
+      kdgbkpk: "all",
     });
     setTimeout(() => {
       setIsResetting(false);
@@ -65,12 +77,12 @@ export default function RekapEpaPage() {
     let result = data?.data || [];
     console.log("[RekapEpaPage] Raw data:", result.length, "rows");
 
-    // Apply client-side filtering
+    // Apply client-side filtering ("all" means no filter - show all)
     result = result.filter((row) => {
-      if (appliedFilters.tahun && row.thang?.toString() !== appliedFilters.tahun) return false;
-      if (appliedFilters.triwulan && row.triwulan?.toString() !== appliedFilters.triwulan) return false;
-      if (appliedFilters.kddept && row.kddept !== appliedFilters.kddept) return false;
-      if (appliedFilters.kdgbkpk && row.kdgbkpk !== appliedFilters.kdgbkpk) return false;
+      if (appliedFilters.tahun && appliedFilters.tahun !== "all" && row.thang?.toString() !== appliedFilters.tahun) return false;
+      if (appliedFilters.triwulan && appliedFilters.triwulan !== "all" && row.triwulan?.toString() !== appliedFilters.triwulan) return false;
+      if (appliedFilters.kddept && appliedFilters.kddept !== "all" && row.kddept !== appliedFilters.kddept) return false;
+      if (appliedFilters.kdgbkpk && appliedFilters.kdgbkpk !== "all" && row.kdgbkpk !== appliedFilters.kdgbkpk) return false;
       return true;
     });
     
@@ -128,9 +140,25 @@ export default function RekapEpaPage() {
 
   console.log("[RekapEpaPage] Full data object:", data);
 
-  // Extract filter options from fetched data (client-side)
+  const [currentLocalFilters, setCurrentLocalFilters] = useState<RekapEpaFilters>({
+    tahun: "all",
+    triwulan: "all",
+    kddept: "all",
+    kdgbkpk: "all",
+  });
+
+  // Extract filter options from fetched data with hierarchical filtering (client-side)
   const filterOptions = useMemo(() => {
-    const rawData = data?.data || [];
+    let rawData = data?.data || [];
+    
+    // Filter data based on current local filter selections for hierarchical options
+    rawData = rawData.filter((row) => {
+      if (currentLocalFilters.tahun && currentLocalFilters.tahun !== "all" && row.thang?.toString() !== currentLocalFilters.tahun) return false;
+      if (currentLocalFilters.triwulan && currentLocalFilters.triwulan !== "all" && row.triwulan?.toString() !== currentLocalFilters.triwulan) return false;
+      if (currentLocalFilters.kddept && currentLocalFilters.kddept !== "all" && row.kddept !== currentLocalFilters.kddept) return false;
+      if (currentLocalFilters.kdgbkpk && currentLocalFilters.kdgbkpk !== "all" && row.kdgbkpk !== currentLocalFilters.kdgbkpk) return false;
+      return true;
+    });
     
     const tahunSet = new Set<string>();
     const triwulanSet = new Set<string>();
@@ -152,7 +180,7 @@ export default function RekapEpaPage() {
         jenisBelanjList: Array.from(jenisBelanjMap).map(([kdgbkpk, nmgbkpk]) => ({ kdgbkpk, nmgbkpk })),
       }
     };
-  }, [data?.data]);
+  }, [data?.data, currentLocalFilters]);
 
   return (
     <div className="space-y-6 md:space-y-8">
@@ -216,6 +244,7 @@ export default function RekapEpaPage() {
         filterOptions={filterOptions.data}
         isApplying={isApplying}
         isResetting={isResetting}
+        onFilterChange={setCurrentLocalFilters}
       />
 
       {/* Data Table */}

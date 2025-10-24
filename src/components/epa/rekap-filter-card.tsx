@@ -28,6 +28,7 @@ interface RekapFilterCardProps {
   filterOptions?: FilterOption;
   isApplying?: boolean;
   isResetting?: boolean;
+  onFilterChange?: (filters: RekapEpaFilters) => void;
 }
 
 export function RekapFilterCard({
@@ -37,6 +38,7 @@ export function RekapFilterCard({
   filterOptions,
   isApplying = false,
   isResetting = false,
+  onFilterChange,
 }: RekapFilterCardProps) {
   const [localFilters, setLocalFilters] = useState<RekapEpaFilters>(filters);
 
@@ -44,6 +46,11 @@ export function RekapFilterCard({
   useEffect(() => {
     setLocalFilters(filters);
   }, [filters]);
+
+  // Notify parent of localFilters changes for hierarchical filtering
+  useEffect(() => {
+    onFilterChange?.(localFilters);
+  }, [localFilters, onFilterChange]);
 
   if (!filterOptions) {
     return (
@@ -72,7 +79,7 @@ export function RekapFilterCard({
   const handleFilterChange = (key: keyof RekapEpaFilters, value: string | null) => {
     setLocalFilters({
       ...localFilters,
-      [key]: value,
+      [key]: value || "all",
     });
   };
 
@@ -130,14 +137,15 @@ export function RekapFilterCard({
           <div className="space-y-2 min-w-0">
             <Label htmlFor="tahun">Tahun</Label>
             <Select
-              value={localFilters.tahun || ""}
-              onValueChange={(value) => handleFilterChange("tahun", value === "" ? null : value)}
+              value={localFilters.tahun}
+              onValueChange={(value) => handleFilterChange("tahun", value)}
               disabled={isApplying}
             >
               <SelectTrigger id="tahun" className="w-full">
                 <SelectValue placeholder="Pilih tahun" className="truncate" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="all">Semua</SelectItem>
                 {filterOptions.tahunList?.map((tahun) => (
                   <SelectItem key={tahun} value={tahun.toString()}>
                     {tahun}
@@ -151,14 +159,15 @@ export function RekapFilterCard({
           <div className="space-y-2 min-w-0">
             <Label htmlFor="triwulan">Triwulan</Label>
             <Select
-              value={localFilters.triwulan || ""}
-              onValueChange={(value) => handleFilterChange("triwulan", value === "" ? null : value)}
+              value={localFilters.triwulan}
+              onValueChange={(value) => handleFilterChange("triwulan", value)}
               disabled={isApplying}
             >
               <SelectTrigger id="triwulan" className="w-full">
                 <SelectValue placeholder="Pilih triwulan" className="truncate" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="all">Semua</SelectItem>
                 {filterOptions.triwulanList?.map((triwulan) => (
                   <SelectItem key={triwulan} value={triwulan.toString()}>
                     Triwulan {triwulan}
@@ -172,14 +181,15 @@ export function RekapFilterCard({
           <div className="space-y-2 min-w-0">
             <Label htmlFor="kementerian">Kementerian</Label>
             <Select
-              value={localFilters.kddept || ""}
-              onValueChange={(value) => handleFilterChange("kddept", value === "" ? null : value)}
+              value={localFilters.kddept}
+              onValueChange={(value) => handleFilterChange("kddept", value)}
               disabled={isApplying}
             >
               <SelectTrigger id="kementerian" className="w-full">
                 <SelectValue placeholder="Pilih kementerian" className="truncate" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="all">Semua</SelectItem>
                 {filterOptions.kementerianList?.map((item) => (
                   <SelectItem key={item.kddept} value={item.kddept}>
                     <span className="truncate" title={item.nmdept}>
@@ -195,14 +205,15 @@ export function RekapFilterCard({
           <div className="space-y-2 min-w-0">
             <Label htmlFor="jenis-belanja">Jenis Belanja</Label>
             <Select
-              value={localFilters.kdgbkpk || ""}
-              onValueChange={(value) => handleFilterChange("kdgbkpk", value === "" ? null : value)}
+              value={localFilters.kdgbkpk}
+              onValueChange={(value) => handleFilterChange("kdgbkpk", value)}
               disabled={isApplying}
             >
               <SelectTrigger id="jenis-belanja" className="w-full">
                 <SelectValue placeholder="Pilih jenis belanja" className="truncate" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="all">Semua</SelectItem>
                 {filterOptions.jenisBelanjList?.map((item) => (
                   <SelectItem key={item.kdgbkpk} value={item.kdgbkpk}>
                     <span className="truncate" title={item.nmgbkpk}>
