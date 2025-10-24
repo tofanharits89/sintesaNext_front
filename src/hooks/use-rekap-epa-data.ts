@@ -1,26 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/httpClient";
 import type { RekapEpaResponse, RekapEpaFilters } from "@/types/epa-rekap";
 
 const fetcher = async (url: string): Promise<any> => {
   try {
-    const response = await fetch(url, {
-      credentials: "include",
-      signal: AbortSignal.timeout(20000),
-    });
-
-    const text = await response.text();
-    
-    if (!response.ok) {
-      let msg = `HTTP ${response.status}`;
-      try {
-        const j = JSON.parse(text);
-        msg = j?.message || j?.error || msg;
-      } catch {}
-      throw new Error(msg);
-    }
-
-    if (!text.trim()) throw new Error("Empty response from server");
-    const result = JSON.parse(text);
+    // Use apiClient instead of raw fetch to get automatic token refresh on 401
+    const result = await apiClient.get<any>(url);
     
     // For data endpoints, return the full response object (not just the array)
     // The API returns { success: true, data: [...], total, grandTotal, ... }
@@ -46,7 +31,7 @@ export function useRekapEpaData(
   params.append("page", "1");
   params.append("limit", "9999"); // Request large limit to get all rows
 
-  const url = `/api/epa/rekap/data?${params.toString()}`;
+  const url = `/epa/rekap/data?${params.toString()}`;
 
   const query = useQuery<RekapEpaResponse>({
     queryKey: [
@@ -63,7 +48,7 @@ export function useRekapEpaData(
           const pageParams = new URLSearchParams();
           pageParams.append("page", pageNum.toString());
           pageParams.append("limit", "9999");
-          const pageUrl = `/api/epa/rekap/data?${pageParams.toString()}`;
+          const pageUrl = `/epa/rekap/data?${pageParams.toString()}`;
           
           const pageResponse = await fetcher(pageUrl);
           allData = allData.concat(pageResponse.data || []);
@@ -82,7 +67,7 @@ export function useRekapEpaData(
 }
 
 export function useRekapEpaFilters() {
-  const url = "/api/epa/rekap/filters";
+  const url = "/epa/rekap/filters";
 
   return useQuery({
     queryKey: ["rekap-epa-filters"],
