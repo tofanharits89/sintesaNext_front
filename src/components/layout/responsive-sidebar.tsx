@@ -87,12 +87,7 @@ const defaultMenu: MenuItem[] = [
   },
   {
     label: "EPA",
-    children: [
-      { label: "Summary" },
-      { label: "Proyek" },
-      { label: "Evaluasi" },
-      { label: "Rekap EPA" },
-    ],
+    children: [{ label: "Summary" }, { label: "Rekap EPA" }],
   },
   {
     label: "Spending Review",
@@ -234,10 +229,6 @@ export function ResponsiveSidebar({
         return <Building2 className={cls} />;
       case "EPA__Summary":
         return <LineChart className={cls} />;
-      case "EPA__Proyek":
-        return <Briefcase className={cls} />;
-      case "EPA__Evaluasi":
-        return <CheckCircle className={cls} />;
       case "EPA__Rekap EPA":
         return <Database className={cls} />;
       case "Spending Review__Sektor":
@@ -250,7 +241,6 @@ export function ResponsiveSidebar({
         return <Upload className={cls} />;
       case "Transfer Daerah__DAU":
         return <Coins className={cls} />;
-
       case "Inquiry Data__Permintaan":
         return <Send className={cls} />;
       case "Inquiry Data__Riwayat":
