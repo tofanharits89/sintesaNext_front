@@ -20,6 +20,7 @@ interface RekapDataTableProps {
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  totalRows?: number;
   isLoading?: boolean;
 }
 
@@ -43,6 +44,7 @@ export function RekapDataTable({
   page,
   totalPages,
   onPageChange,
+  totalRows = 0,
   isLoading = false,
 }: RekapDataTableProps) {
   console.log("[RekapDataTable] Props:", { 
@@ -73,7 +75,12 @@ export function RekapDataTable({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Data Rekap EPA</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Data Rekap EPA</CardTitle>
+            <div className="px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-medium">
+              Total Data: {totalRows} Baris Data
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-4">
@@ -91,7 +98,12 @@ export function RekapDataTable({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Data Rekap EPA</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Data Rekap EPA</CardTitle>
+          <div className="px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-medium">
+            Total Data: {totalRows} Baris Data
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4 flex flex-col">
@@ -178,11 +190,6 @@ export function RekapDataTable({
                 </table>
               </div>
             </div>
-          </div>
-
-          {/* Pagination Info */}
-          <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded">
-            Menampilkan {data?.length || 0} baris dari {data?.length > 0 ? 'total data' : '0'} • Halaman {page} dari {totalPages}
           </div>
 
           {/* Pagination Controls */}

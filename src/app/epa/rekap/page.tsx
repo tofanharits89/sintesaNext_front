@@ -59,8 +59,6 @@ export default function RekapEpaPage() {
 
   const handlePageChange = useCallback((newPage: number) => {
     setPage(newPage);
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
   const filteredData = useMemo(() => {
@@ -227,6 +225,7 @@ export default function RekapEpaPage() {
         page={page}
         totalPages={totalPages}
         onPageChange={handlePageChange}
+        totalRows={filteredData.length}
         isLoading={isFetching}
       />
     </div>
