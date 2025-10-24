@@ -91,6 +91,7 @@ const defaultMenu: MenuItem[] = [
       { label: "Summary" },
       { label: "Proyek" },
       { label: "Evaluasi" },
+      { label: "Rekap EPA" },
     ],
   },
   {
@@ -237,6 +238,8 @@ export function ResponsiveSidebar({
         return <Briefcase className={cls} />;
       case "EPA__Evaluasi":
         return <CheckCircle className={cls} />;
+      case "EPA__Rekap EPA":
+        return <Database className={cls} />;
       case "Spending Review__Sektor":
         return <Layers className={cls} />;
       case "Spending Review__Rekomendasi":
@@ -580,6 +583,27 @@ export function ResponsiveSidebar({
                                   menu: m.label,
                                   submenu: c.label,
                                   path: "/epa/summary",
+                                })
+                              }
+                            >
+                              {subIconFor(m.label, c.label)}
+                              <span>{c.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        ) : c.label === "Rekap EPA" && m.label === "EPA" ? (
+                          <DropdownMenuItem key={c.label} asChild>
+                            <Link
+                              href="/epa/rekap"
+                              className="flex items-center w-full"
+                              onMouseEnter={() => {
+                                import("@/components/epa/rekap-filter-card");
+                                import("@/components/epa/rekap-data-table");
+                              }}
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/epa/rekap",
                                 })
                               }
                             >
