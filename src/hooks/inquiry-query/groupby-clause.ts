@@ -72,28 +72,36 @@ export function buildGroupByClause(
     }
   }
 
-  uniqueActiveFilters.forEach((filterKey) => {
-    if (filterKey === "cutOff" || filterKey === "statusSumber") return;
-    const config = FILTER_CONFIG[filterKey];
-    const filterValue = filterValues[filterKey];
-    if (!config || !filterValue) return;
+uniqueActiveFilters.forEach((filterKey) => {
+      if (filterKey === "cutOff" || filterKey === "statusSumber") return;
+      const config = FILTER_CONFIG[filterKey];
+      const filterValue = filterValues[filterKey];
+      
+      // Only return if filterValue is missing, but still process if config is missing
+      if (!filterValue) return;
 
-    const jenisTampilan = filterValue.jenisTampilan || "kode";
-    if (jenisTampilan === "jangan_tampilkan") return;
+      const jenisTampilan = filterValue.jenisTampilan || "kode";
+      if (jenisTampilan === "jangan_tampilkan") return;
 
-    if (filterKey === "akun" && filterValue?.akunType === "kodeBkpk") {
-      addGroupBy(`LEFT(main.${config.columnName}, 4)`);
-    } else if (filterKey === "akun" && filterValue?.akunType === "jenisBelanja") {
-      addGroupBy(`LEFT(main.${config.columnName}, 2)`);
-    } else if (filterKey === "kodeBkpk") {
-      addGroupBy(`LEFT(main.${config.columnName}, 4)`);
-    } else if (filterKey === "jenisBelanja") {
-      addGroupBy(`LEFT(main.${config.columnName}, 2)`);
-    } else if (filterKey === "register") {
-      addGroupBy("main.register_normalized");
-    } else {
-      addGroupBy(`main.${config.columnName}`);
-    }
+      // If config exists, use it for special cases
+      if (config) {
+        if (filterKey === "akun" && filterValue?.akunType === "kodeBkpk") {
+          addGroupBy(`LEFT(main.${config.columnName}, 4)`);
+        } else if (filterKey === "akun" && filterValue?.akunType === "jenisBelanja") {
+          addGroupBy(`LEFT(main.${config.columnName}, 2)`);
+        } else if (filterKey === "kodeBkpk") {
+          addGroupBy(`LEFT(main.${config.columnName}, 4)`);
+        } else if (filterKey === "jenisBelanja") {
+          addGroupBy(`LEFT(main.${config.columnName}, 2)`);
+        } else if (filterKey === "register") {
+          addGroupBy("main.register_normalized");
+        } else {
+          addGroupBy(`main.${config.columnName}`);
+        }
+      } else {
+        // Fallback: if config doesn't exist, use filterKey as column name
+        addGroupBy(`main.${filterKey}`);
+      }
 
     if (filterKey === "jenisProgramStrategis" && (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian")) {
       addGroupBy("main.nmprogis");
