@@ -113,7 +113,7 @@ uniqueActiveFilters.forEach((filterKey) => {
       addGroupBy("main.ket");
     }
 
-    if (config.referenceTable) {
+    if (config?.referenceTable) {
       const alias = `${filterKey}_ref`;
       if (filterKey === "register") {
         addGroupBy(`${alias}.nonpln`);
