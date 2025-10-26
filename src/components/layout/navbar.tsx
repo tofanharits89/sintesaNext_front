@@ -53,6 +53,7 @@ import { apiPath } from "@/lib/config/base-path";
 import { SatkerSearch } from "./satker-search";
 import { dispatchAuthEvent } from "@/lib/utils/cookieManager";
 import { LoginLoading } from "@/components/ui/login-loading";
+import { useAuthSessionStore } from "@/stores/session-store";
 
 import type { User } from "@/stores/session-store";
 
