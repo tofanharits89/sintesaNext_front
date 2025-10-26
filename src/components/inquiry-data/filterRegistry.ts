@@ -28,6 +28,8 @@ export interface FilterDef {
     localFile?: string;
     joinKey?: string;
     nameColumn?: string;
+    referenceDatabase?: string;
+    referenceTable?: string;
   };
 }
 
