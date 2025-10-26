@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Table,
   TableBody,
@@ -11,11 +11,13 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Loader2 } from "lucide-react";
+import * as XLSX from "xlsx";
 import type { RekapEpaRow, RekapEpaGrandTotal } from "@/types/epa-rekap";
 
 interface RekapDataTableProps {
   data: RekapEpaRow[];
+  fullData: RekapEpaRow[];
   grandTotal: RekapEpaGrandTotal | null;
   page: number;
   totalPages: number;
@@ -38,8 +40,77 @@ const formatPercentage = (num: any) => {
   return `${(parsed || 0).toFixed(2)}%`;
 };
 
+const handleExportToExcel = (fullData: RekapEpaRow[], grandTotal: RekapEpaGrandTotal | null) => {
+  // Prepare data for Excel export
+  const excelData = fullData.map((row, index) => ({
+    "No": row.no || index + 1,
+    "Tahun": row.thang,
+    "Triwulan": row.triwulan,
+    "Kode BA": row.kddept,
+    "Nama BA": row.nmdept,
+    "Kode Jenbel": row.kdgbkpk,
+    "Jenis Belanja": row.nmgbkpk,
+    "Pagu DIPA": row.pagu,
+    "Realisasi": row.realisasi,
+    "% Realisasi": formatPercentage(row.persen_realisasi),
+    "Sisa Pagu": row.sisa_pagu,
+    "Blokir": row.blokir,
+    "Sisa Pagu Efektif": row.sisa_pagu_efektif,
+    "Pagu Kontrak": row.pagu_kontrak,
+    "Realisasi Kontrak": row.realisasi_kontrak,
+    "Outstanding Kontrak": row.outstanding_kontrak,
+    "Sisa Pagu Efektif Diluar Outs. Kontrak": row.sisa_kontrak_pagu_bersih,
+    "Rencana Sisa Realisasi": row.rencana_sisa_realisasi,
+  }));
+
+  // Add grand total row if available
+  if (grandTotal) {
+    const grandTotalPercentage =
+      grandTotal.pagu && grandTotal.pagu !== 0
+        ? (grandTotal.realisasi / grandTotal.pagu) * 100
+        : 0;
+
+    excelData.push({
+      "No": "-",
+      "Tahun": "",
+      "Triwulan": "",
+      "Kode BA": "",
+      "Nama BA": "",
+      "Kode Jenbel": "",
+      "Jenis Belanja": "Grand Total",
+      "Pagu DIPA": grandTotal.pagu,
+      "Realisasi": grandTotal.realisasi,
+      "% Realisasi": formatPercentage(grandTotalPercentage),
+      "Sisa Pagu": grandTotal.sisa_pagu,
+      "Blokir": grandTotal.blokir,
+      "Sisa Pagu Efektif": grandTotal.sisa_pagu_efektif,
+      "Pagu Kontrak": grandTotal.pagu_kontrak,
+      "Realisasi Kontrak": grandTotal.realisasi_kontrak,
+      "Outstanding Kontrak": grandTotal.outstanding_kontrak,
+      "Sisa Pagu Efektif Diluar Outs. Kontrak": grandTotal.sisa_kontrak_pagu_bersih,
+      "Rencana Sisa Realisasi": grandTotal.rencana_sisa_realisasi,
+    });
+  }
+
+  // Create worksheet
+  const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+  // Create workbook
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Data Rekap EPA");
+
+  // Generate filename with timestamp
+  const now = new Date();
+  const timestamp = now.toISOString().slice(0, 19).replace(/[-:T]/g, "");
+  const filename = `rekap-epa-${timestamp}.xlsx`;
+
+  // Save file
+  XLSX.writeFile(workbook, filename);
+};
+
 export function RekapDataTable({
   data,
+  fullData,
   grandTotal,
   page,
   totalPages,
@@ -47,11 +118,20 @@ export function RekapDataTable({
   totalRows = 0,
   isLoading = false,
 }: RekapDataTableProps) {
+  const [isExporting, setIsExporting] = useState(false);
   const displayGrandTotal = useMemo(() => {
     if (!grandTotal) return null;
+
+    // Calculate percentage for grand total
+    const grandTotalPercentage =
+      grandTotal.pagu && grandTotal.pagu !== 0
+        ? (grandTotal.realisasi / grandTotal.pagu) * 100
+        : 0;
+
     return {
       pagu: formatNumber(grandTotal.pagu),
       realisasi: formatNumber(grandTotal.realisasi),
+      persentase_realisasi: formatPercentage(grandTotalPercentage),
       sisa_pagu: formatNumber(grandTotal.sisa_pagu),
       blokir: formatNumber(grandTotal.blokir),
       sisa_pagu_efektif: formatNumber(grandTotal.sisa_pagu_efektif),
@@ -69,8 +149,19 @@ export function RekapDataTable({
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Data Rekap EPA</CardTitle>
-            <div className="px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-medium">
-              Total Data: - Baris Data
+            <div className="flex items-center gap-2">
+              <div className="px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-medium">
+                Total Data: - Baris Data
+              </div>
+              <Button
+                disabled
+                variant="default"
+                size="sm"
+                className="flex items-center gap-2 opacity-50"
+              >
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading...
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -123,13 +214,50 @@ export function RekapDataTable({
     );
   }
 
+  const handleExportClick = () => {
+    if (!fullData || fullData.length === 0) return;
+
+    setIsExporting(true);
+    try {
+      handleExportToExcel(fullData, grandTotal);
+    } catch (error) {
+      console.error("Error exporting to Excel:", error);
+    } finally {
+      // Small delay to show the spinner, then reset
+      setTimeout(() => {
+        setIsExporting(false);
+      }, 100);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Data Rekap EPA</CardTitle>
-          <div className="px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-medium">
-            Total Data: {totalRows} Baris Data
+          <div className="flex items-center gap-2">
+            <div className="px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-medium">
+              Total Data: {totalRows} Baris Data
+            </div>
+            <Button
+              onClick={handleExportClick}
+              disabled={isExporting || !fullData || fullData.length === 0}
+              variant="default"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              {isExporting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  Download Excel
+                </>
+              )}
+            </Button>
           </div>
         </div>
       </CardHeader>
@@ -139,27 +267,27 @@ export function RekapDataTable({
           <div className="border rounded-lg h-[600px] flex flex-col overflow-hidden">
             <div className="flex-1 w-full overflow-auto">
               <div className="min-w-full">
-                <table className="w-full min-w-max text-xs">
+                <table className="w-full min-w-max text-sm">
                   <thead className="bg-muted sticky top-0 z-30">
                     <tr>
-                      <th className="p-2 text-center font-medium w-12 min-w-[50px] whitespace-nowrap">No</th>
-                      <th className="p-2 text-center font-medium w-16 min-w-[60px] whitespace-nowrap">Tahun</th>
-                      <th className="p-2 text-center font-medium w-16 min-w-[60px] whitespace-nowrap">Triwulan</th>
-                      <th className="p-2 text-center font-medium w-20 min-w-[80px] whitespace-nowrap">Kode BA</th>
-                      <th className="p-2 text-left font-medium w-48 min-w-[200px] whitespace-nowrap">Nama BA</th>
-                      <th className="p-2 text-center font-medium w-20 min-w-[80px] whitespace-nowrap">Kode Jenbel</th>
-                      <th className="p-2 text-left font-medium w-48 min-w-[200px] whitespace-nowrap">Jenis Belanja</th>
-                      <th className="p-2 text-right font-medium w-32 min-w-[130px] whitespace-nowrap">Pagu DIPA</th>
-                      <th className="p-2 text-right font-medium w-32 min-w-[130px] whitespace-nowrap">Realisasi</th>
-                      <th className="p-2 text-right font-medium w-24 min-w-[100px] whitespace-nowrap">% Real</th>
-                      <th className="p-2 text-right font-medium w-32 min-w-[130px] whitespace-nowrap">Sisa Pagu</th>
-                      <th className="p-2 text-right font-medium w-24 min-w-[100px] whitespace-nowrap">Blokir</th>
-                      <th className="p-2 text-right font-medium w-32 min-w-[130px] whitespace-nowrap">Sisa Pagu Efektif</th>
-                      <th className="p-2 text-right font-medium w-32 min-w-[130px] whitespace-nowrap">Pagu Kontrak</th>
-                      <th className="p-2 text-right font-medium w-32 min-w-[130px] whitespace-nowrap">Realisasi Kontrak</th>
-                      <th className="p-2 text-right font-medium w-32 min-w-[130px] whitespace-nowrap">Outs. Kontrak</th>
-                      <th className="p-2 text-right font-medium w-48 min-w-[200px] whitespace-nowrap">Sis Pagu Efektif Diluar Outs. Kontrak</th>
-                      <th className="p-2 text-right font-medium w-32 min-w-[130px] whitespace-nowrap">Rencana Sisa Realisasi</th>
+                      <th className="p-2 text-center font-medium uppercase w-12 min-w-[50px] whitespace-nowrap">No</th>
+                      <th className="p-2 text-center font-medium uppercase w-16 min-w-[60px] whitespace-nowrap">Tahun</th>
+                      <th className="p-2 text-center font-medium uppercase w-16 min-w-[60px] whitespace-nowrap">Triwulan</th>
+                      <th className="p-2 text-center font-medium uppercase w-20 min-w-[80px] whitespace-nowrap">Kode BA</th>
+                      <th className="p-2 text-center font-medium uppercase w-48 min-w-[200px] whitespace-nowrap">Nama BA</th>
+                      <th className="p-2 text-center font-medium uppercase w-20 min-w-[80px] whitespace-nowrap">Kode Jenbel</th>
+                      <th className="p-2 text-center font-medium uppercase w-48 min-w-[200px] whitespace-nowrap">Jenis Belanja</th>
+                      <th className="p-2 text-center font-medium uppercase w-32 min-w-[130px] whitespace-nowrap">Pagu DIPA</th>
+                      <th className="p-2 text-center font-medium uppercase w-32 min-w-[130px] whitespace-nowrap">Realisasi</th>
+                      <th className="p-2 text-center font-medium uppercase w-24 min-w-[100px] whitespace-nowrap">% Real</th>
+                      <th className="p-2 text-center font-medium uppercase w-32 min-w-[130px] whitespace-nowrap">Sisa Pagu</th>
+                      <th className="p-2 text-center font-medium uppercase w-24 min-w-[100px] whitespace-nowrap">Blokir</th>
+                      <th className="p-2 text-center font-medium uppercase w-32 min-w-[130px] whitespace-nowrap">Sisa Pagu Efektif</th>
+                      <th className="p-2 text-center font-medium uppercase w-32 min-w-[130px] whitespace-nowrap">Pagu Kontrak</th>
+                      <th className="p-2 text-center font-medium uppercase w-32 min-w-[130px] whitespace-nowrap">Realisasi Kontrak</th>
+                      <th className="p-2 text-center font-medium uppercase w-32 min-w-[130px] whitespace-nowrap">Outs. Kontrak</th>
+                      <th className="p-2 text-center font-medium uppercase w-48 min-w-[200px] whitespace-nowrap">Sis Pagu Efektif Diluar Outs. Kontrak</th>
+                      <th className="p-2 text-center font-medium uppercase w-32 min-w-[130px] whitespace-nowrap">Rencana Sisa Realisasi</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -177,9 +305,9 @@ export function RekapDataTable({
                             <td className="p-2 text-center w-16 min-w-[60px] whitespace-nowrap">{row.thang}</td>
                             <td className="p-2 text-center w-16 min-w-[60px] whitespace-nowrap">{row.triwulan}</td>
                             <td className="p-2 text-center w-20 min-w-[80px] whitespace-nowrap">{row.kddept}</td>
-                            <td className="p-2 text-left text-xs w-48 min-w-[200px] whitespace-nowrap">{row.nmdept}</td>
+                            <td className="p-2 text-left w-48 min-w-[200px] whitespace-nowrap">{row.nmdept}</td>
                             <td className="p-2 text-center w-20 min-w-[80px] whitespace-nowrap">{row.kdgbkpk}</td>
-                            <td className="p-2 text-left text-xs w-48 min-w-[200px] whitespace-nowrap">{row.nmgbkpk}</td>
+                            <td className="p-2 text-left w-48 min-w-[200px] whitespace-nowrap">{row.nmgbkpk}</td>
                             <td className="p-2 text-right font-mono w-32 min-w-[130px] whitespace-nowrap">{formatNumber(row.pagu)}</td>
                             <td className="p-2 text-right font-mono w-32 min-w-[130px] whitespace-nowrap">{formatNumber(row.realisasi)}</td>
                             <td className="p-2 text-right font-mono w-24 min-w-[100px] whitespace-nowrap">{formatPercentage(row.persen_realisasi)}</td>
@@ -201,7 +329,7 @@ export function RekapDataTable({
                             <td colSpan={6} className="p-2 text-left font-medium whitespace-nowrap">Grand Total</td>
                             <td className="p-2 text-right font-mono w-32 min-w-[130px] whitespace-nowrap">{displayGrandTotal.pagu}</td>
                             <td className="p-2 text-right font-mono w-32 min-w-[130px] whitespace-nowrap">{displayGrandTotal.realisasi}</td>
-                            <td className="p-2 text-right font-mono w-24 min-w-[100px] whitespace-nowrap">-</td>
+                            <td className="p-2 text-right font-mono w-24 min-w-[100px] whitespace-nowrap">{displayGrandTotal.persentase_realisasi}</td>
                             <td className="p-2 text-right font-mono w-32 min-w-[130px] whitespace-nowrap">{displayGrandTotal.sisa_pagu}</td>
                             <td className="p-2 text-right font-mono w-24 min-w-[100px] whitespace-nowrap">{displayGrandTotal.blokir}</td>
                             <td className="p-2 text-right font-mono w-32 min-w-[130px] whitespace-nowrap">{displayGrandTotal.sisa_pagu_efektif}</td>

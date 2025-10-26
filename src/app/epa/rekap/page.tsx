@@ -244,6 +244,7 @@ export default function RekapEpaPage() {
       {/* Data Table */}
       <RekapDataTable
         data={tableData}
+        fullData={filteredData}
         grandTotal={grandTotal}
         page={page}
         totalPages={totalPages}
