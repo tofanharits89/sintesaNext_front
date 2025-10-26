@@ -54,6 +54,7 @@ import { SatkerSearch } from "./satker-search";
 import { dispatchAuthEvent } from "@/lib/utils/cookieManager";
 import { LoginLoading } from "@/components/ui/login-loading";
 import { useAuthSessionStore } from "@/stores/session-store";
+import { toast } from "sonner";
 
 import type { User } from "@/stores/session-store";
 
@@ -681,11 +682,11 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
+                  <DropdownMenuItem
                   className={`text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950 ${
                     isLoggingOut ? "opacity-60 pointer-events-none" : ""
                   }`}
-                  onClick={async (e) => {
+                  onClick={(e) => {
                     e.preventDefault();
 
                     if (isLoggingOut) {
@@ -701,42 +702,38 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                     }
 
                     try {
-                      // Wait for logout to complete
-                      await logout();
-                    } catch (error) {
-                      console.error("Logout API error:", error);
-                    }
-
-                    // Small delay to ensure all state changes propagate
-                    await new Promise(resolve => setTimeout(resolve, 200));
-
-                    // Clear the logout in progress flag after successful redirect
-                    setTimeout(() => {
+                      // 1) Mark logout-in-progress immediately so middleware short-circuits
                       try {
-                        sessionStorage.removeItem('sintesa_logout_in_progress');
-                        useAuthSessionStore.getState().setLogoutInProgress(false);
-                      } catch (error) {
-                        console.error("Failed to clear logout state:", error);
-                      }
-                    }, 1000);
+                        document.cookie = "logout_in_progress=true; Max-Age=15; Path=/; SameSite=Lax";
+                      } catch {}
 
-                    // Redirect to login page
-                    const redirectUrl = "/login?reason=logout&_t=" + Date.now();
+                      // 2) Clear client state (non-auth cookies we can touch, caches, stores)
+                      try {
+                        // Clear readable CSRF cookie (auth cookies are HttpOnly and cleared by server)
+                        document.cookie = "XSRF-TOKEN=; Max-Age=0; Path=/; SameSite=Lax";
+                      } catch {}
+                      try {
+                        // Best-effort: set store flags and clear session marker
+                        useAuthSessionStore.getState().logout();
+                      } catch {}
 
-                    try {
+                      // 3) Fire backend logout in background (don’t wait)
+                      try {
+                        void fetch(apiPath("/auth/logout"), {
+                          method: "POST",
+                          credentials: "include",
+                          keepalive: true,
+                        });
+                      } catch {}
+
+                      // 4) Hard redirect immediately to login (prevents any flash)
+                      const redirectUrl = "/login?reason=logout&_t=" + Date.now();
                       window.location.replace(redirectUrl);
-                    } catch (error) {
-                      console.error("Replace failed:", error);
-                    }
 
-                    // Fallback
-                    setTimeout(() => {
-                      try {
-                        window.location.href = "/login";
-                      } catch (error) {
-                        console.error("Fallback failed:", error);
-                      }
-                    }, 500);
+                    } catch (error) {
+                      console.error("Logout error:", error);
+                      toast.error("Terjadi kesalahan saat logout");
+                    }
                   }}
                 >
                   {isLoggingOut ? (

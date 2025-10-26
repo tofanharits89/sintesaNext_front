@@ -31,6 +31,7 @@ const PROTECTED_ROUTES = [
   "/data-supplier",
   "/epa",
   "/log-user",
+  "/monitor-performa",
   "/pengaturan",
   "/satker",
   "/transfer-daerah",
@@ -41,7 +42,6 @@ const PUBLIC_ROUTES = [
   "/login",
   "/register",
   "/forgot-password",
-  "/",
   "/server-error",
   "/unauthorized",
   "/ip-blocked",
@@ -63,8 +63,9 @@ const ENV = {
   OPTIMISTIC_AUTH: appConfig.isDevelopment,
 } as const;
 
-// Feature flag: protect-by-default (no behavior change unless enabled)
-const DEFAULT_PROTECT = process.env.NEXT_PUBLIC_DEFAULT_PROTECT === 'true';
+// Feature flag: protect-by-default. Default to true for safety and simplicity.
+// Set NEXT_PUBLIC_DEFAULT_PROTECT="false" to opt out.
+const DEFAULT_PROTECT = process.env.NEXT_PUBLIC_DEFAULT_PROTECT !== 'false';
 
 // Cookie configuration
 const COOKIE_CONFIG = {
@@ -181,6 +182,7 @@ function isProtectedRoute(pathname: string): boolean {
  * Check if route is public (login, register, etc.)
  */
 function isPublicRoute(pathname: string): boolean {
+  if (pathname === "/") return true; // only the exact home path is public
   return PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
 }
 
@@ -242,6 +244,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Simple, early guard: if route needs auth and we have no auth cookies at all,
+  // redirect immediately to login before any further work. Keeps behavior simple
+  // and avoids any chance of a protected page rendering.
+  if (needsAuth(pathname)) {
+    const cookieHeader = request.headers.get("cookie") || "";
+    const hasAuthCookie = /(access_token|accessToken|refresh_token|refreshToken)=/.test(cookieHeader);
+    if (!hasAuthCookie) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("returnTo", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
   // Check if logout is in progress - redirect directly to login
   if (isLogoutInProgress(request)) {
     const loginUrl = new URL("/login", request.url);
@@ -261,12 +276,20 @@ export async function middleware(request: NextRequest) {
     const token = extractAccessToken(request);
 
     // If user has a token and visits login/register, validate first
+    // But skip validation if this is a logout redirect (prevents dashboard flash)
     if (token && (pathname === "/login" || pathname === "/register")) {
-      const validation = await validateServerSession(token, request);
+      // Check if this is a logout redirect
+      const reason = request.nextUrl.searchParams.get('reason');
+      const isLogoutRedirect = reason === 'logout' || reason === 'session_expired';
 
-      if (validation.valid) {
-        return NextResponse.redirect(new URL("/dashboard/utama", request.url));
+      if (!isLogoutRedirect) {
+        const validation = await validateServerSession(token, request);
+
+        if (validation.valid) {
+          return NextResponse.redirect(new URL("/dashboard/utama", request.url));
+        }
       }
+      // If logout redirect, skip validation and show login page
 
       return NextResponse.next();
     }
@@ -317,8 +340,7 @@ export async function middleware(request: NextRequest) {
         for (const [k, v] of Object.entries(validation.ipParams)) {
           ipUrl.searchParams.set(k, v);
         }
-        const res = NextResponse.redirect(ipUrl);
-        return res;
+        return NextResponse.redirect(ipUrl);
       }
 
       // Silent refresh fallback: if refresh cookie present, try refreshing once
@@ -353,8 +375,7 @@ export async function middleware(request: NextRequest) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("returnTo", pathname);
       loginUrl.searchParams.set("reason", "session_expired");
-      const res = NextResponse.redirect(loginUrl);
-      return res;
+      return NextResponse.redirect(loginUrl);
     }
 
     // Valid session

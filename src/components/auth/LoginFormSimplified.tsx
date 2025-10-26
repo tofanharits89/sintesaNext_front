@@ -81,10 +81,24 @@ export default function SimplifiedLoginForm() {
     "flex min-h-svh items-center justify-center p-6 transition-colors duration-500 bg-[radial-gradient(ellipse_at_bottom,_#f4f4f5_0%,_#fafafa_100%)] dark:bg-[radial-gradient(ellipse_at_bottom,_#151515_0%,_#000000_100%)]";
 
   // Client-side redirect if already authenticated
+  // Skip redirect when arriving due to logout/session_expired to prevent dashboard flash
   useEffect(() => {
-    if (!isLoading && user) {
-      setIsRedirecting(true);
-      router.push("/dashboard/utama");
+    try {
+      const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const reason = params?.get('reason');
+      const isLogoutFlow = reason === 'logout' || reason === 'session_expired' ||
+        (typeof window !== 'undefined' && !!sessionStorage.getItem('sintesa_logout_in_progress'));
+
+      if (!isLoading && user && !isLogoutFlow) {
+        setIsRedirecting(true);
+        router.push("/dashboard/utama");
+      }
+    } catch {
+      // fall back to original behavior
+      if (!isLoading && user) {
+        setIsRedirecting(true);
+        router.push("/dashboard/utama");
+      }
     }
   }, [user, isLoading, router]);
 

@@ -10,7 +10,7 @@ import { AdminPresenceListener } from "@/components/AdminPresenceListener";
 
 import { ErrorBoundary, ComponentErrorBoundary } from "@/lib/ui/error-boundary";
 import { withBasePath, apiPath } from "@/lib/config/base-path";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { MessagingAuthListener } from "@/components/messaging/messaging-auth-listener";
 import SessionMonitor from "@/components/SessionMonitor";
 import { performanceMonitor } from "@/utils/performance-monitor";
@@ -35,6 +35,30 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Early, server-side auth check to prevent any protected page from rendering
+  // before redirect. Middleware should already handle this, but this ensures
+  // zero client flash in dev or edge cases.
+  try {
+    const h = await headers();
+    const path = h.get('x-invoke-path') || '/';
+    const isPublic = (
+      path === '/' ||
+      path.startsWith('/login') ||
+      path.startsWith('/register') ||
+      path.startsWith('/forgot-password') ||
+      path.startsWith('/server-error') ||
+      path.startsWith('/ip-blocked')
+    );
+    if (!isPublic) {
+      const c = await cookies();
+      const hasAccess = !!(c.get('access_token')?.value || c.get('accessToken')?.value);
+      const hasRefresh = !!(c.get('refresh_token')?.value || c.get('refreshToken')?.value);
+      if (!hasAccess && !hasRefresh) {
+        // Do not render any content; redirect immediately
+        redirect('/login');
+      }
+    }
+  } catch {}
   // Auth enforcement is handled by:
   // 1. Middleware - redirects unauthenticated users to /login
   // 2. Section layouts (dashboard, profile, users, settings) - optimized server-side JWT verification

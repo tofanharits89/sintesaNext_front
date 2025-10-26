@@ -49,6 +49,26 @@ export async function POST(req: NextRequest) {
   // The backend is responsible for clearing HttpOnly cookies
   forwardSetCookies(resp, res);
 
+  // Signal to middleware that a logout is in progress to avoid any
+  // authenticated redirects or dashboard flashes during the redirect window.
+  // Use a short‑lived, non-HTTP-only cookie so it is included immediately
+  // on the next navigation request.
+  try {
+    // Prefer cookie API when available (Next 15)
+    // Fallback to manual header if needed
+    (res.cookies as any)?.set?.("logout_in_progress", "true", {
+      path: "/",
+      sameSite: "lax",
+      httpOnly: false,
+      maxAge: 15, // seconds
+    });
+  } catch {
+    res.headers.append(
+      "Set-Cookie",
+      "logout_in_progress=true; Max-Age=15; Path=/; SameSite=Lax"
+    );
+  }
+
   // Invalidate Next middleware auth cache immediately
   try {
     // Extract access token from cookies to invalidate specific session (prefer access_token)

@@ -59,7 +59,7 @@ export interface UseAuthReturn {
   isLoading: boolean;
   isLoggingOut: boolean;
   login: (username: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; user?: AuthUser; error?: string }>;
-  logout: (reason?: string) => Promise<void>;
+  logout: (reason?: string) => Promise<{ success: boolean; error?: string }>;
   refetch: () => Promise<{ success: boolean; user?: AuthUser; error?: string }>;
   validateSession: () => Promise<{ success: boolean; user?: AuthUser; error?: string }>;
   canManageUsers: boolean;
@@ -130,7 +130,7 @@ export function useAuth(): UseAuthReturn {
   );
 
   const logout = useCallback(
-    async (reason = "manual_logout"): Promise<void> => {
+    async (reason = "manual_logout"): Promise<{ success: boolean; error?: string }> => {
       try {
         // Set logout in progress first (before clearing state)
         authState.setLogoutInProgress(true);
@@ -139,10 +139,18 @@ export function useAuth(): UseAuthReturn {
         // Clear all caches
         clearCache();
 
-        // Call server logout
-        await authClient.logout();
+        // Call server logout and wait for completion
+        const result = await authClient.logout();
 
-        // Reset auth state (but keep logout in progress for now)
+        // Check if server logout was successful
+        if (!result.success) {
+          // Logout failed - reset state and return error
+          authState.setLogoutInProgress(false);
+          authState.setLoggingOut(false);
+          return { success: false, error: result.error || "Logout gagal" };
+        }
+
+        // Server logout succeeded - reset auth state
         authState.setAuthenticated(false, null);
         authState.updateUser(null);
 
@@ -153,13 +161,21 @@ export function useAuth(): UseAuthReturn {
         // Small delay to ensure all state changes propagate
         await new Promise(resolve => setTimeout(resolve, 100));
 
+        return { success: true };
+
       } catch (error) {
         console.error("Logout error:", error);
-        // Even on error, we should complete the logout flow
+        // On error, complete the logout flow anyway for security
+        authState.setAuthenticated(false, null);
+        authState.updateUser(null);
         authState.setLogoutInProgress(true);
+        return { 
+          success: false, 
+          error: error instanceof Error ? error.message : "Terjadi kesalahan saat logout" 
+        };
       } finally {
         authState.setLoggingOut(false);
-        // Keep logout in progress until after redirect
+        // Keep logout in progress until after redirect to prevent dashboard flash
       }
     },
     [authState, clearCache],
