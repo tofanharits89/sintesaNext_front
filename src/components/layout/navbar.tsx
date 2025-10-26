@@ -654,15 +654,26 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem asChild>
-                    <Link
-                      href="/monitor-performa"
-                      className="flex items-center"
-                    >
-                      <Monitor className="mr-2 h-4 w-4" />
-                      Monitor Performa
-                    </Link>
-                  </DropdownMenuItem>
+                  {(() => {
+                    const roleStr = String(
+                      currentUser?.role || "",
+                    ).toLowerCase();
+                    const isAdminLike =
+                      roleStr === "super_admin" ||
+                      roleStr === "co_admin" ||
+                      roleStr === "admin";
+                    return isAdminLike;
+                  })() && (
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href="/monitor-performa"
+                        className="flex items-center"
+                      >
+                        <Monitor className="mr-2 h-4 w-4" />
+                        Monitor Performa
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem className="flex items-center">
                     <HelpCircle className="mr-2 h-4 w-4" />
                     Bantuan

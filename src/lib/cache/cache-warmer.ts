@@ -253,7 +253,12 @@ export class CacheWarmer {
 
           // On error statuses, throw so React Query does NOT cache the error object as data
           if (!res.ok) {
-            const message = body?.error || body?.message || "Failed to fetch profile";
+            const message =
+              typeof body?.error === 'string' ? body.error :
+              typeof body?.message === 'string' ? body.message :
+              body?.error?.message || body?.message?.message ||
+              JSON.stringify(body?.error || body?.message) ||
+              "Failed to fetch profile";
             throw new Error(message);
           }
 

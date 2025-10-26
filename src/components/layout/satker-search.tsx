@@ -115,7 +115,7 @@ export function SatkerSearch() {
                 {showResults && (
                     <div
                         ref={resultsRef}
-                        className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-md shadow-lg z-50 max-h-80 overflow-y-auto"
+                        className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-card border rounded-md shadow-lg z-50 max-h-80 overflow-y-auto"
                     >
                         {loading && (
                             <div className="px-4 py-3 text-sm text-muted-foreground text-center">

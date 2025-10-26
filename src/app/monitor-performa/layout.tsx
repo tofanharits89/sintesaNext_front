@@ -65,5 +65,12 @@ export default async function MonitorPerformaLayout({
     redirect("/unauthorized?reason=monitor_performa_no_role");
   }
 
+  // Verify admin role - only super_admin, co_admin, and admin can access
+  const roleStr = String(user.role).toLowerCase();
+  const isAdminLike = roleStr === "super_admin" || roleStr === "co_admin" || roleStr === "admin";
+  if (!isAdminLike) {
+    redirect("/unauthorized?reason=monitor_performa_not_admin");
+  }
+
   return children as React.ReactElement;
 }
