@@ -21,20 +21,18 @@ export {
   type AuthResponse,
 } from "./client";
 
-// Hook exports
+// Hook exports - use simplified version
 export {
   useAuth,
   useUnifiedAuth, // Legacy compatibility
   useAuthRedirect,
-  useCacheDebug, // Phase 4: Cache debugging hook
   canManageUsers,
   canAccessSettings,
   getRoleDisplayName,
-  authUtils,
   type UseAuthReturn,
-} from "./hooks";
+} from "./simplified-hooks";
 
-// Utility exports
+// Utility exports - use simplified version
 export {
   // Cache management
   setGlobalQueryClient,
@@ -42,45 +40,22 @@ export {
   clearDataQueries,
   isQueryClientAvailable,
   
-  // Middleware cache
-  getAuthCache,
-  setAuthCache,
-  invalidateAuthCache,
-  hashKey,
-  type AuthCacheEntry,
-  
   // Redirect utilities
   redirectToLoginIfNotAuth,
-  
-  // Event coordination
-  authEventCoordinator,
-  emitTokenRefreshStart,
-  emitTokenRefreshSuccess,
-  emitTokenRefreshError,
-  emitAuthExpired,
-  emitLoginStart,
-  emitLoginSuccess,
-  
-  // Cross-tab sync
-  crossTabSync,
-  sendCrossTabEvent,
-  listenForCrossTabEvents,
-  CrossTabSyncManager,
-} from "./utils";
+} from "./simplified-utils";
 
-// Cache Events (Phase 4: Unified Cache Invalidation)
+
+
+// Cache Events - use simplified version
 export {
   cacheEvents,
-  initializeCacheEvents,
   clearAuthCaches,
   clearUserCaches,
   clearDataCaches,
   clearAllCaches,
-  getCacheStats,
-  debugCacheState,
-  type CacheInvalidationEvent,
-  type CacheInvalidationOptions,
-} from "./cache-events";
+} from "./simplified-cache-events";
 
-// Default export
-export { useAuth as default } from "./hooks";
+
+
+// Default export - use simplified version
+export { useAuth as default } from "./simplified-hooks";

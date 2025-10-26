@@ -61,7 +61,7 @@ export function BarChartComponent({
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={height}>
+        <ResponsiveContainer width="100%" height={height} minWidth={0}>
           <BarChart data={data}>
             <XAxis
               dataKey={nameKey}

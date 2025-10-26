@@ -14,7 +14,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { detectIpBlock } from "@/utils/ipBlock";
-import { getAuthCache, setAuthCache, hashKey } from "@/lib/auth/utils-server";
+// Removed cache functions for simplified middleware (no complex caching)
+// import { getAuthCache, setAuthCache, hashKey } from "@/lib/auth/utils-server";
 
 // Route definitions
 const PROTECTED_ROUTES = [
@@ -216,18 +217,7 @@ export async function middleware(request: NextRequest) {
   
     // If user has a token and visits login/register, validate first
     if (token && (pathname === "/login" || pathname === "/register")) {
-      const cacheKey = hashKey(token);
-      const cached = getAuthCache(cacheKey);
-
-      if (cached) {
-        if (cached.valid) {
-          return NextResponse.redirect(new URL("/dashboard/utama", request.url));
-        }
-        return NextResponse.next();
-      }
-
       const validation = await validateServerSession(token, request);
-      setAuthCache(cacheKey, { valid: validation.valid, user: validation.user });
 
       if (validation.valid) {
         return NextResponse.redirect(new URL("/dashboard/utama", request.url));
@@ -272,23 +262,8 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // Token exists - check short-lived cache first
-    const cacheKey = hashKey(token);
-    const cached = getAuthCache(cacheKey);
-    if (cached) {
-      if (!cached.valid) {
-        const loginUrl = new URL("/login", request.url);
-        loginUrl.searchParams.set("returnTo", pathname);
-        loginUrl.searchParams.set("reason", "session_expired");
-        return NextResponse.redirect(loginUrl);
-      }
-      return NextResponse.next();
-    }
-
     // Token exists - server-side validation with graceful refresh fallback
     const validation = await validateServerSession(token, request);
-    // Store validation result in short-lived cache
-    setAuthCache(cacheKey, { valid: validation.valid, user: validation.user });
     
     if (!validation.valid) {
       // Redirect blocked IPs to /ip-blocked instead of login

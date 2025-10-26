@@ -532,7 +532,7 @@ export default function LogUserPage() {
                 ) : (
                   <>
                     <div className="h-80 w-full">
-                      <ResponsiveContainer width="100%" height="100%">
+                      <ResponsiveContainer width="100%" height={320} minWidth={0}>
                         <BarChart
                           data={weeklyLogins}
                           margin={{ top: 20, right: 30, left: 20, bottom: 60 }}

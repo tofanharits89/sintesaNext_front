@@ -26,7 +26,7 @@ export function DonutChartComponent({
 }: DonutChartProps) {
   return (
     <div className="relative" style={{ width: "100%", height }}>
-      <ResponsiveContainer width="100%" height={height}>
+      <ResponsiveContainer width="100%" height={height} minWidth={0}>
         <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
           <Pie
             data={data}
