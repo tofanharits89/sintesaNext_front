@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { backendPath } from "@/lib/backend";
-import { forwardSetCookies } from "@/lib/cookie-helpers";
+import { backendPath } from "@/lib/api/backend";
+import { forwardSetCookies } from "@/lib/utils/cookie-helpers";
 
 function extractCookie(name: string, cookieHeader: string): string | undefined {
   try {

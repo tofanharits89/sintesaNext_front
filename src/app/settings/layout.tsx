@@ -1,9 +1,9 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 // Fetch via Next API proxy to preserve browser cookies reliably
-import { apiPath } from "@/lib/base-path";
-import { canAccessSettings } from "@/lib/rbac-client";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/config/base-path";
+import { canAccessSettings } from "@/lib/security/rbac-client";
+import { backendPath } from "@/lib/api/backend";
 
 export default async function SettingsLayout({
   children,

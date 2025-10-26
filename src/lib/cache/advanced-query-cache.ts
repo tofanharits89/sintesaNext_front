@@ -6,7 +6,7 @@
 import React from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { QueryClient, QueryKey, Query, QueryState } from '@tanstack/react-query'
-import { queryConfigs, queryKeyFactories } from './query-configs'
+import { queryConfigs, queryKeyFactories } from '../config/query-configs'
 
 // Cache entry metadata
 interface CacheEntry {

@@ -86,6 +86,41 @@ export function redirectToLoginIfNotAuth() {
 }
 
 // ============================================================================
+// Server-Safe Cache Utilities (for utils-server.ts)
+// ============================================================================
+
+/**
+ * Simple in-memory cache for server-side auth operations
+ */
+const serverCache = new Map<string, any>();
+
+export function getAuthCache(key: string): any {
+  return serverCache.get(key);
+}
+
+export function setAuthCache(key: string, value: any): void {
+  serverCache.set(key, value);
+}
+
+export function invalidateAuthCache(key?: string): void {
+  if (key) {
+    serverCache.delete(key);
+  } else {
+    serverCache.clear();
+  }
+}
+
+export function hashKey(key: string): string {
+  return btoa(key).replace(/[^a-zA-Z0-9]/g, '').substring(0, 16);
+}
+
+export interface AuthCacheEntry {
+  data: any;
+  timestamp: number;
+  ttl?: number;
+}
+
+// ============================================================================
 // Export for backward compatibility
 // ============================================================================
 
@@ -93,4 +128,8 @@ export default {
   clearAuthCacheOnFail,
   clearDataQueries,
   redirectToLoginIfNotAuth,
+  getAuthCache,
+  setAuthCache,
+  invalidateAuthCache,
+  hashKey,
 };

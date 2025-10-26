@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { backendPath } from "@/lib/backend";
+import { backendPath } from "@/lib/api/backend";
 
 // GET /api/analytics/cache-metrics -> proxies to backend /analytics/cache-metrics
 export async function GET(request: Request) {
@@ -29,7 +29,7 @@ export async function GET(request: Request) {
 
     console.log("[API /analytics/cache-metrics] Backend status:", resp.status);
 
-    const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+    const { proxyJsonOrNoContent } = await import("@/lib/utils/route-helpers");
     const res = await proxyJsonOrNoContent(resp);
 
     // Forward cache-related headers if present

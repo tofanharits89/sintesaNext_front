@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatRelativeTime } from "@/types/socket-events";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { MessageCircle, Crown, User } from "lucide-react";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 

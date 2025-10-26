@@ -19,8 +19,8 @@ import {
   type QueryFunctionContext,
 } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { apiPath } from "@/lib/base-path";
-import { http } from "@/lib/httpClient";
+import { apiPath } from "@/lib/config/base-path";
+import { http } from "@/lib/api/httpClient";
 import { useSocket } from "./useSocket";
 import { conversationKeys } from "./useConversationsRQ";
 import { useUnifiedAuth } from "@/lib/auth";
@@ -32,7 +32,7 @@ import {
 import {
   createInfiniteQueryOptions,
   queryKeyFactories,
-} from "@/lib/query-configs";
+} from "@/lib/config/query-configs";
 
 // Import new services
 import {

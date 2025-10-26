@@ -12,7 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useUnifiedAuth } from "./useUnifiedAuth";
 import { useMessagingStore, useMessagingConnection } from "@/stores/messaging-store";
 import { SOCKET_EVENTS, SocketMessageData } from "@/types/socket-events";
-import { socketClient } from "@/lib/socket-client";
+import { socketClient } from "@/lib/api/socket-client";
 
 // React Query keys
 const conversationKeys = {

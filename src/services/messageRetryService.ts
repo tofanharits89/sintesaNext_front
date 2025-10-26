@@ -6,7 +6,7 @@
 
 import { getMessageQueueService, type QueuedMessage } from './messageQueueService';
 import { useSyncActions } from '@/stores/messaging-store';
-import { socketClient } from '@/lib/socket-client';
+import { socketClient } from '@/lib/api/socket-client';
 import { SOCKET_EVENTS } from '@/types/socket-events';
 
 export interface RetryConfig {

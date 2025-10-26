@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { backendPath } from "@/lib/backend";
-import { forwardSetCookies, getSetCookieValues, extractCookieMetadata } from "@/lib/cookie-helpers";
+import { backendPath } from "@/lib/api/backend";
+import { forwardSetCookies, getSetCookieValues, extractCookieMetadata } from "@/lib/utils/cookie-helpers";
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));

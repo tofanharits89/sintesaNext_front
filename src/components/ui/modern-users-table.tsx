@@ -12,14 +12,14 @@ import {
   SortingState,
   ColumnFiltersState,
 } from "@tanstack/react-table";
-import { User } from "@/lib/users-store";
+import { User } from "@/lib/stores/users-store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Pencil, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import kanwilData from "@/data/kdkanwil.json";
 import kppnData from "@/data/kdkppn.json";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 
 interface ModernUsersTableProps {
   users: User[];

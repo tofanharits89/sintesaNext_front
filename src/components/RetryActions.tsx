@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
-import { withBasePath, apiPath } from "@/lib/base-path";
+import { withBasePath, apiPath } from "@/lib/config/base-path";
 
 export function RetryActions() {
   return (

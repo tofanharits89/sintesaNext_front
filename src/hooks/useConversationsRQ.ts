@@ -2,8 +2,8 @@
 
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useCallback } from "react";
-import { apiPath } from "@/lib/base-path";
-import { http } from "@/lib/httpClient"; // keep for other callers; not used in fetcher
+import { apiPath } from "@/lib/config/base-path";
+import { http } from "@/lib/api/httpClient"; // keep for other callers; not used in fetcher
 import { useSocket } from "./useSocket";
 import {
   SOCKET_EVENTS,

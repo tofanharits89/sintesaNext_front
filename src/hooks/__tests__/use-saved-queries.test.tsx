@@ -5,7 +5,7 @@ import { useSavedQueries, useSavedQuery } from "../use-saved-queries";
 import type { SavedQuery, CreateSavedQueryRequest } from "@/types/saved-queries";
 
 // Mock dependencies
-jest.mock("@/lib/backend", () => ({
+jest.mock("@/lib/api/backend", () => ({
   backendPath: (path: string) => `http://localhost:88/api/v1${path}`,
 }));
 
@@ -25,7 +25,7 @@ const mockApiClient = {
   delete: jest.fn(),
 };
 
-jest.mock("@/lib/httpClient", () => ({
+jest.mock("@/lib/api/httpClient", () => ({
   http: mockHttp,
   apiClient: mockApiClient,
 }));

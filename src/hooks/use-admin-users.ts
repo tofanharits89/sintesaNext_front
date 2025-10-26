@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { apiPath } from "@/lib/base-path";
+import { apiPath } from "@/lib/config/base-path";
 
 type AdminUser = {
   id: string;

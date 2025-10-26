@@ -32,7 +32,7 @@ export function usePersentaseRealisasiKL(params?: { kanwil?: string; enabled?: b
         }`;
 
         // Use http client which includes auth interceptors and refresh logic
-        const { apiClient } = await import('@/lib/httpClient');
+        const { apiClient } = await import('@/lib/api/httpClient');
         const result: PersentaseRealisasiKLResponse = await apiClient.get(endpoint);
 
         if (!result.success) {

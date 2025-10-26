@@ -1,5 +1,5 @@
 import React from 'react';
-import { logger } from '@/lib/utils';
+import { logger } from '@/lib/utils/utils';
 
 /**
  * Utility for tracking component renders to detect infinite loops

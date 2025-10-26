@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { backendPath } from "@/lib/backend";
-import { apiPath } from "@/lib/base-path";
+import { backendPath } from "@/lib/api/backend";
+import { apiPath } from "@/lib/config/base-path";
 
 export default async function LogUserLayout({
   children,

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { apiPath } from "@/lib/base-path";
+import { apiPath } from "@/lib/config/base-path";
 
 // Chart data format returned by the backend
 interface ChartData {
@@ -43,7 +43,7 @@ export function useRealisasiPerJenisBelanja(
         }`;
 
         // Use http client which includes auth interceptors and refresh logic
-        const { apiClient } = await import("@/lib/httpClient");
+        const { apiClient } = await import("@/lib/api/httpClient");
         const result: RealisasiPerJenisBelanjaResponse = await apiClient.get(
           endpoint,
         );

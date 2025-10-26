@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { backendPath } from "@/lib/backend";
+import { backendPath } from "@/lib/api/backend";
 
 export async function GET(
   request: Request,
@@ -37,7 +37,7 @@ export async function GET(
       headers: { ...(cookie ? { cookie } : {}) },
       cache: "no-store",
     });
-    const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+    const { proxyJsonOrNoContent } = await import("@/lib/utils/route-helpers");
     return proxyJsonOrNoContent(resp);
   } catch (error) {
     return NextResponse.json(

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { backendPath } from "@/lib/backend";
+import { backendPath } from "@/lib/api/backend";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+    const { proxyJsonOrNoContent } = await import("@/lib/utils/route-helpers");
     return proxyJsonOrNoContent(resp);
   } catch (error) {
     return NextResponse.json(

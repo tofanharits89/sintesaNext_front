@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { backendPath } from "@/lib/backend";
+import { backendPath } from "@/lib/api/backend";
 
 export async function PUT(request: Request) {
   try {
@@ -38,7 +38,7 @@ export async function PUT(request: Request) {
       }
     );
 
-    const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+    const { proxyJsonOrNoContent } = await import("@/lib/utils/route-helpers");
     return proxyJsonOrNoContent(resp);
   } catch (error) {
     return NextResponse.json(

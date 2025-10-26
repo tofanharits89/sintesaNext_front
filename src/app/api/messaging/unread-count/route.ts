@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { backendPath } from "@/lib/backend";
-import { forwardSetCookies } from "@/lib/cookie-helpers";
+import { backendPath } from "@/lib/api/backend";
+import { forwardSetCookies } from "@/lib/utils/cookie-helpers";
 
 export async function GET(request: NextRequest) {
   const cookie = request.headers.get("cookie") || "";
@@ -15,6 +15,6 @@ export async function GET(request: NextRequest) {
     headers: { ...(cookie ? { cookie } : {}) },
     cache: "no-store",
   });
-  const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+  const { proxyJsonOrNoContent } = await import("@/lib/utils/route-helpers");
   return proxyJsonOrNoContent(resp, { forwardCookies: true });
 }

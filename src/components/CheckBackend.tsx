@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { apiPath } from "@/lib/base-path";
+import { apiPath } from "@/lib/config/base-path";
 import { usePathname, useRouter } from "next/navigation";
-import { withBasePath } from "@/lib/base-path";
+import { withBasePath } from "@/lib/config/base-path";
 
 interface HealthCheckState {
   attempts: number;

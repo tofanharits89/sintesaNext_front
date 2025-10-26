@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { backendPath } from "@/lib/backend";
+import { backendPath } from "@/lib/api/backend";
 
 /**
  * @DEPRECATED This API route is deprecated and will be removed in a future version.
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+    const { proxyJsonOrNoContent } = await import("@/lib/utils/route-helpers");
     const response = await proxyJsonOrNoContent(resp);
 
     // Add deprecation warning to response headers if possible
@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
       cache: "no-store",
     });
 
-    const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+    const { proxyJsonOrNoContent } = await import("@/lib/utils/route-helpers");
     const response = await proxyJsonOrNoContent(resp);
 
     // Add deprecation warning to response headers if possible

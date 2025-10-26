@@ -15,7 +15,7 @@ import {
   filterDataByRole as rbacFilterDataByRole,
   getRoleDisplayName as rbacGetRoleDisplayName,
   type MinimalUser,
-} from '@/lib/rbac';
+} from '@/lib/security/rbac';
 
 export interface UseUnifiedAuthReturn {
   user: User | null;

@@ -35,7 +35,7 @@ import {
   savedQueryConfirmations,
 } from "@/utils/notifications";
 import type { SavedQuery } from "@/types/saved-queries";
-import { formatCalendarDate } from "@/lib/utils"; // now exported here
+import { formatCalendarDate } from "@/lib/utils/utils"; // now exported here
 
 interface QueryListItemProps {
   query: SavedQuery;

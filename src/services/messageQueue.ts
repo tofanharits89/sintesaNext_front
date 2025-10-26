@@ -3,9 +3,9 @@
  * Implements outbox pattern for reliable message delivery
  */
 
-import { apiPath } from '@/lib/base-path';
-import { getCookie } from '@/lib/httpClient';
-import { logger } from '@/lib/utils';
+import { apiPath } from '@/lib/config/base-path';
+import { getCookie } from '@/lib/api/httpClient';
+import { logger } from '@/lib/utils/logger';
 
 export interface QueuedMessage {
   id: string;

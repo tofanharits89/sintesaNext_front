@@ -4,7 +4,7 @@
  * and error handling scenarios
  */
 
-import { CacheManager } from '../cache-manager';
+import { CacheManager } from '../cache/cache-manager';
 
 // Mock console methods to avoid noise in tests
 const mockConsole = {

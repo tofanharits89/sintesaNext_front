@@ -4,9 +4,9 @@
  */
 
 import { QueryClient } from "@tanstack/react-query";
-import { apiPath } from "@/lib/base-path";
+import { apiPath } from "../config/base-path";
 import { cacheMetrics } from "./cache-metrics";
-import { queryKeyFactories } from "./query-configs";
+import { queryKeyFactories } from "../config/query-configs";
 
 export interface WarmingConfig {
   endpoint: string;

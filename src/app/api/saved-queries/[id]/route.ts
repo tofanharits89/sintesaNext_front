@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { backendPath } from "@/lib/backend";
-import { forwardSetCookies } from "@/lib/cookie-helpers";
+import { backendPath } from "@/lib/api/backend";
+import { forwardSetCookies } from "@/lib/utils/cookie-helpers";
 
 // PUT /v3/next/api/saved-queries/[id] -> proxies to backend PUT /api/v1/saved-queries/:id
 export async function PUT(request: Request, ctx: { params: Promise<{ id: string }> }) {
@@ -25,7 +25,7 @@ export async function PUT(request: Request, ctx: { params: Promise<{ id: string 
     },
     body: JSON.stringify(body),
   });
-  const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+  const { proxyJsonOrNoContent } = await import("@/lib/utils/route-helpers");
   return await proxyJsonOrNoContent(resp, { forwardCookies: true });
 }
 
@@ -65,6 +65,6 @@ export async function DELETE(request: Request, ctx: { params: Promise<{ id: stri
     return res;
   }
 
-  const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+  const { proxyJsonOrNoContent } = await import("@/lib/utils/route-helpers");
   return await proxyJsonOrNoContent(resp, { forwardCookies: true });
 }

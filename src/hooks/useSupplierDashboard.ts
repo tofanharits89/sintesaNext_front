@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { apiClient } from "@/lib/httpClient";
+import { apiClient } from "@/lib/api/httpClient";
 
 interface SupplierDashboardResponse {
   success?: boolean;

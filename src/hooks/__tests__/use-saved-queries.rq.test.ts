@@ -8,7 +8,7 @@ import type { SavedQuery, CreateSavedQueryRequest } from "@/types/saved-queries"
 setLogger({ log: console.log, warn: console.warn, error: () => {} });
 
 // Mock backend path
-vi.mock("@/lib/backend", () => ({
+vi.mock("@/lib/api/backend", () => ({
   backendPath: (path: string) => `http://localhost:88/api/v1${path}`,
 }));
 
@@ -17,7 +17,7 @@ const httpGet = vi.fn();
 const apiPost = vi.fn();
 const apiPut = vi.fn();
 const apiDelete = vi.fn();
-vi.mock("@/lib/httpClient", () => ({
+vi.mock("@/lib/api/httpClient", () => ({
   http: { get: (...args: any[]) => httpGet(...args) },
   apiClient: {
     get: (...args: any[]) => httpGet(...args),
@@ -162,7 +162,7 @@ describe("useSavedQueries (React Query)", () => {
 });
 
 describe("useSavedQuery (React Query)", () => {
-  const httpGet = vi.mocked((vi as any).importedModules?.["@/lib/httpClient"]?.http?.get || vi.fn());
+  const httpGet = vi.mocked((vi as any).importedModules?.["@/lib/api/httpClient"]?.http?.get || vi.fn());
 
   beforeEach(() => {
     vi.clearAllMocks();

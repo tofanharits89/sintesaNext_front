@@ -4,7 +4,7 @@
  */
 
 import { toast } from "sonner";
-import { logger } from "@/lib/utils";
+import { logger } from "@/lib/utils/utils";
 
 // Error types and their user-friendly configurations
 interface ErrorConfig {

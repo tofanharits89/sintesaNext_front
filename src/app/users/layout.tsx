@@ -1,8 +1,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { apiPath } from "@/lib/base-path";
-import { backendPath } from "@/lib/backend";
-import { canAccessUserManagement } from "@/lib/rbac-client";
+import { apiPath } from "@/lib/config/base-path";
+import { backendPath } from "@/lib/api/backend";
+import { canAccessUserManagement } from "@/lib/security/rbac-client";
 
 export default async function UsersLayout({
   children,

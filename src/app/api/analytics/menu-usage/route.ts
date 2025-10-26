@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { backendPath } from "@/lib/backend";
+import { backendPath } from "@/lib/api/backend";
 
 // Helper to extract a cookie value from a Cookie header
 function extractCookie(name: string, cookieHeader: string): string | undefined {
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       keepalive: true,
     });
 
-    const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+    const { proxyJsonOrNoContent } = await import("@/lib/utils/route-helpers");
     return proxyJsonOrNoContent(resp);
   } catch (e: any) {
     return NextResponse.json(

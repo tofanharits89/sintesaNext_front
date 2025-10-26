@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useUnifiedAuth } from "@/lib/auth";
-import { apiClient, prefetchCsrf } from "@/lib/httpClient";
+import { apiClient, prefetchCsrf } from "@/lib/api/httpClient";
 import { User } from "@/stores/session-store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";

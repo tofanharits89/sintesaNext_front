@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "./_shared";
-import { config } from "@/lib/config";
+import { config } from "@/lib/config/config";
 
 export async function GET(request: NextRequest) {
   const cookie = request.headers.get("cookie") || "";

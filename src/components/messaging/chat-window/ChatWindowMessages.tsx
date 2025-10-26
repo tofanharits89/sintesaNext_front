@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { Crown, RefreshCw } from "lucide-react";
 import type { Conversation, FrontendMessage } from "@/types/socket-events";
 import { MessageStatus } from "../MessageStatus";

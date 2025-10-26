@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { forwardSetCookies } from "@/lib/cookie-helpers";
+import { forwardSetCookies } from "../utils/cookie-helpers";
 
 /**
  * Build a Next.js response from a backend fetch Response.

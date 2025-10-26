@@ -5,11 +5,11 @@ import axios, {
   InternalAxiosRequestConfig,
 } from "axios";
 import { BACKEND_BASE_URL, backendPath } from "./backend";
-import { apiPath } from "./base-path";
+import { apiPath } from "../config/base-path";
 import { setupRateLimitInterceptor } from "@/utils/rateLimitHandler";
-import { csrfManager } from "./csrfManager";
+import { csrfManager } from "../security/csrfManager";
 import { detectIpBlock } from "@/utils/ipBlock";
-import { config } from "./config";
+import { config } from "../config/config";
 
 // Utilities to read cookies in browser
 export function getCookie(name: string): string | null {
@@ -94,8 +94,8 @@ let refreshPromise: Promise<void> | null = null;
 let isLoggingOut = false; // Flag to prevent requests during logout/redirect
 
 // Simplified cookie management for HTTP-only only approach
-import { clearNonHttpOnlyCookies } from "./cookieManager";
-import { clearAuthCacheOnFail } from "./auth";
+import { clearNonHttpOnlyCookies } from "../utils/cookieManager";
+import { clearAuthCacheOnFail } from "../auth";
 
 // Expose globally for debugging and coordination
 if (typeof window !== "undefined") {

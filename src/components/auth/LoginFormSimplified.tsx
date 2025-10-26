@@ -33,10 +33,10 @@ import {
 } from "@/components/ui/card";
 import { LoginLoading } from "@/components/ui/login-loading";
 import { StarsBackground } from "@/components/animate-ui/components/backgrounds/stars";
-import { withBasePath } from "@/lib/base-path";
-import { apiPath } from "@/lib/base-path";
-import { prefetchCsrf } from "@/lib/httpClient";
-import { dispatchAuthEvent } from "@/lib/cookieManager";
+import { withBasePath } from "@/lib/config/base-path";
+import { apiPath } from "@/lib/config/base-path";
+import { prefetchCsrf } from "@/lib/api/httpClient";
+import { dispatchAuthEvent } from "@/lib/utils/cookieManager";
 import Image from "next/image";
 
 // Form validation schema
@@ -119,7 +119,7 @@ export default function SimplifiedLoginForm() {
     try {
       // Get CSRF token
       await prefetchCsrf();
-      const { csrfManager } = await import("@/lib/csrfManager");
+      const { csrfManager } = await import("@/lib/security/csrfManager");
       const csrfToken = await csrfManager.getCSRFToken();
 
       // Call backend API with CSRF token
@@ -169,7 +169,7 @@ export default function SimplifiedLoginForm() {
             const { useAuthSessionStore } = await import(
               "@/stores/session-store"
             );
-            const { queryKeyFactories } = await import("@/lib/query-configs");
+            const { queryKeyFactories } = await import("@/lib/config/query-configs");
 
             const authStore = useAuthSessionStore.getState();
             authStore.setAuthenticated(true, result.data.user);

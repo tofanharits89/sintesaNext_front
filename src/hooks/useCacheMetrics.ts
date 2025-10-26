@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { apiPath } from "@/lib/base-path";
+import { apiPath } from "@/lib/config/base-path";
 
 // Cache statistics interface matching backend response
 export interface CacheMetricsResponse {

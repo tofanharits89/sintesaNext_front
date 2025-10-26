@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { apiPath } from "@/lib/base-path";
+import { apiPath } from "@/lib/config/base-path";
 
 export const dynamic = "force-dynamic";
 

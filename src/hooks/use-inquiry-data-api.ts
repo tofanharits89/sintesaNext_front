@@ -2,8 +2,8 @@
 
 import { useState, useCallback } from "react";
 import { useInquiryQueryBuilder } from "./use-inquiry-query-builder";
-import { apiClient, http, directBackendClient } from "@/lib/httpClient";
-import { apiPath } from "@/lib/base-path";
+import { apiClient, http, directBackendClient } from "@/lib/api/httpClient";
+import { apiPath } from "@/lib/config/base-path";
 
 export interface QueryExecutionResult {
   success: boolean;

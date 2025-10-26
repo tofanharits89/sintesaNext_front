@@ -1,5 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { queryKeyFactories } from "@/lib/query-configs";
+import { queryKeyFactories } from "@/lib/config/query-configs";
 import type { FrontendMessage } from "@/types/socket-events";
 
 type PaginationSeed = {

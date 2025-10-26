@@ -32,9 +32,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { useUnifiedAuth } from "@/lib/auth";
-import { listUsers } from "@/lib/users-store";
+import { listUsers } from "@/lib/stores/users-store";
 import {
   markNotificationAsRead,
   createNotification,
@@ -45,7 +45,7 @@ import {
   type NotificationPriority,
   useAdminNotifications,
   useUserNotifications,
-} from "@/lib/notifications-store";
+} from "@/lib/stores/notifications-store";
 
 import {
   AlertCircle,
@@ -72,7 +72,7 @@ export default function NotificationsPage() {
   const { items: userItems, mutate: mutateUser } = useUserNotifications(
     currentUser?.username
   );
-  type ApiEnv = import("@/lib/notifications-store").NotificationsApiResponse;
+  type ApiEnv = import("@/lib/stores/notifications-store").NotificationsApiResponse;
   const [showBroadcast, setShowBroadcast] = useState(false);
   const [viewMode, setViewMode] = useState<"user" | "admin">("user");
   const [selectedNotification, setSelectedNotification] =

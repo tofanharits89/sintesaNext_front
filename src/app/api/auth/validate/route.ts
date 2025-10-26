@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { backendPath } from "@/lib/backend";
-import { forwardSetCookies } from "@/lib/cookie-helpers";
+import { backendPath } from "@/lib/api/backend";
+import { forwardSetCookies } from "@/lib/utils/cookie-helpers";
 
 // GET /api/auth/validate
 // Proxies validation to backend and forwards cookies. Matches /auth/me style.

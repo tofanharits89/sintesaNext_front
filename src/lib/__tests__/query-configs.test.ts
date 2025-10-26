@@ -4,7 +4,7 @@ import {
   createQueryOptions, 
   createInfiniteQueryOptions,
   cacheConfigs 
-} from '../query-configs';
+} from '../config/query-configs';
 
 describe('Query Configurations', () => {
   beforeEach(() => {

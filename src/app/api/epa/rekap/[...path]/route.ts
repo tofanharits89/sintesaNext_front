@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { backendPath } from "@/lib/backend";
+import { backendPath } from "@/lib/api/backend";
 
 export async function GET(
   request: NextRequest,
@@ -26,7 +26,7 @@ export async function GET(
       cache: "no-store",
     });
 
-    const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+    const { proxyJsonOrNoContent } = await import("@/lib/utils/route-helpers");
     return proxyJsonOrNoContent(resp);
   } catch (error) {
     console.error("[EPA Rekap API] Proxy error:", error);

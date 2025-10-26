@@ -57,5 +57,14 @@ export {
 
 
 
+// Server-safe exports (for middleware, API routes, server components)
+export {
+  getAuthCache,
+  setAuthCache,
+  invalidateAuthCache,
+  hashKey,
+  type AuthCacheEntry,
+} from "./utils-server";
+
 // Default export - use simplified version
 export { useAuth as default } from "./simplified-hooks";

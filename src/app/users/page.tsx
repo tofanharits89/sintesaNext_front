@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { apiPath } from "@/lib/base-path";
-import { User } from "@/lib/users-store";
+import { apiPath } from "@/lib/config/base-path";
+import { User } from "@/lib/stores/users-store";
 import { useUnifiedAuth, canManageUsers } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { backendPath } from "@/lib/backend";
-import { forwardSetCookies } from "@/lib/cookie-helpers";
+import { backendPath } from "@/lib/api/backend";
+import { forwardSetCookies } from "@/lib/utils/cookie-helpers";
 
 // GET /v3/next/api/saved-queries -> proxies to backend GET /api/v1/saved-queries
 export async function GET(request: Request) {
@@ -66,7 +66,7 @@ export async function GET(request: Request) {
     return NextResponse.json(data, { status: 401 });
   }
 
-  const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+  const { proxyJsonOrNoContent } = await import("@/lib/utils/route-helpers");
   console.log(
     "[API /saved-queries] About to call proxyJsonOrNoContent with response:",
     resp.status,
@@ -103,6 +103,6 @@ export async function POST(request: Request) {
     body: JSON.stringify(body),
   });
   const data = await resp.json().catch(() => ({}));
-  const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+  const { proxyJsonOrNoContent } = await import("@/lib/utils/route-helpers");
   return await proxyJsonOrNoContent(resp, { forwardCookies: true });
 }

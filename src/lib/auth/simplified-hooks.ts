@@ -61,6 +61,7 @@ export interface UseAuthReturn {
   login: (username: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; user?: AuthUser; error?: string }>;
   logout: (reason?: string) => Promise<void>;
   refetch: () => Promise<{ success: boolean; user?: AuthUser; error?: string }>;
+  validateSession: () => Promise<{ success: boolean; user?: AuthUser; error?: string }>;
   canManageUsers: boolean;
   canAccessSettings: boolean;
   getRoleDisplayName: string;
@@ -254,6 +255,7 @@ export function useAuth(): UseAuthReturn {
     login,
     logout,
     refetch,
+    validateSession,
     
     canManageUsers: canManageUsers(authState.user),
     canAccessSettings: canAccessSettings(authState.user),

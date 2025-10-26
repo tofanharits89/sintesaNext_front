@@ -1,5 +1,5 @@
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
-import { apiClient } from "@/lib/httpClient";
+import { apiClient } from "@/lib/api/httpClient";
 
 export interface SubOutputItem {
   no: number;

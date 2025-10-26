@@ -5,7 +5,7 @@
  * Fixes synchronization issues between frontend and backend
  */
 
-import { apiPath } from './base-path';
+import { apiPath } from '../config/base-path';
 
 interface CSRFCacheEntry {
   token: string;

@@ -13,7 +13,7 @@ import {
 import { AlertTriangle } from "lucide-react";
 import { RetryActions } from "@/components/RetryActions";
 import AutoRetry from "@/components/AutoRetry";
-import { apiPath } from "@/lib/base-path";
+import { apiPath } from "@/lib/config/base-path";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ServerErrorPage() {

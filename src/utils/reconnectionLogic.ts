@@ -5,8 +5,8 @@
  */
 
 import { toast } from "sonner";
-import { getAuthTokenFromCookie } from "@/lib/cookieManager";
-import { logger } from "@/lib/utils";
+import { getAuthTokenFromCookie } from "@/lib/utils/cookieManager";
+import { logger } from "@/lib/utils/utils";
 
 // Helper function to check if we're on login page
 const isLoginPage = (): boolean => {
@@ -286,7 +286,7 @@ export class ReconnectionManager {
    */
   private async refreshAuthToken(): Promise<void> {
     // Use same-origin Next API with base path helper; it proxies to backend and forwards cookies
-    const { apiPath } = await import("@/lib/base-path");
+    const { apiPath } = await import("@/lib/config/base-path");
     const response = await fetch(apiPath("/auth/refresh"), {
       method: "POST",
       credentials: "include",

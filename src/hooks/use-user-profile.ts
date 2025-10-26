@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/httpClient';
+import { apiClient } from '@/lib/api/httpClient';
 import type { User } from '@/stores/session-store';
 
 // Re-export User type for convenience

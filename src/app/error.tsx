@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Link from "next/link";
-import { withBasePath } from "@/lib/base-path";
+import { withBasePath } from "@/lib/config/base-path";
 
 export default function GlobalError({
   error,

@@ -1,4 +1,4 @@
-import { User } from "./users-store";
+import { User } from "../stores/users-store";
 
 // Define a minimal user shape for RBAC checks to improve compatibility with different user sources
 export type MinimalUser = {

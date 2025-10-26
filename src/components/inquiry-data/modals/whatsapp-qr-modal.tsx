@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Loader2, QrCode, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
-import { http } from "@/lib/httpClient";
+import { http } from "@/lib/api/httpClient";
 
 interface WhatsappQrModalProps {
   open: boolean;

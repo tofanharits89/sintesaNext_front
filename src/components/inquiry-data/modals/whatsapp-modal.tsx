@@ -18,7 +18,7 @@ import {
   useInquiryQueryBuilder,
   type FilterValue,
 } from "@/hooks/use-inquiry-query-builder";
-import { http } from "@/lib/httpClient";
+import { http } from "@/lib/api/httpClient";
 import { WhatsappQrModal } from "./whatsapp-qr-modal";
 
 interface WhatsappModalProps {

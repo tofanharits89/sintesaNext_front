@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { backendPath } from "@/lib/backend";
+import { backendPath } from "@/lib/api/backend";
 
 export async function GET(request: NextRequest) {
   const cookie = request.headers.get("cookie") || "";
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     headers: { ...(cookie ? { cookie } : {}) },
     cache: "no-store",
   });
-  const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+  const { proxyJsonOrNoContent } = await import("@/lib/utils/route-helpers");
   return proxyJsonOrNoContent(resp);
 }
 
@@ -42,6 +42,6 @@ export async function POST(request: NextRequest) {
     },
     body: JSON.stringify(body),
   });
-  const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+  const { proxyJsonOrNoContent } = await import("@/lib/utils/route-helpers");
   return proxyJsonOrNoContent(resp);
 }

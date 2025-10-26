@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ConditionalToaster } from "@/components/ui/conditional-toaster";
-import { ErrorBoundary, ComponentErrorBoundary } from "@/lib/error-boundary";
+import { ErrorBoundary, ComponentErrorBoundary } from "@/lib/ui/error-boundary";
 import { ConnectionStatus } from "@/components/ConnectionStatus";
 import { RoutePreloader } from "@/components/ui/route-preloader";
 import { ClientInit } from "@/components/ClientInit";

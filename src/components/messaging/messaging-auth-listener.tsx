@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useMessagingCleanup } from "@/utils/messaging-cleanup";
-import { logger } from "@/lib/logger";
+import { logger } from "@/lib/utils/logger";
 
 /**
  * Component that listens to auth events and cleans up messaging state

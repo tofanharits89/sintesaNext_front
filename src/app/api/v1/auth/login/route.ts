@@ -4,8 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { forwardSetCookies } from "@/lib/cookie-helpers";
-import { apiPath } from "@/lib/config";
+import { forwardSetCookies } from "@/lib/utils/cookie-helpers";
+import { apiPath } from "@/lib/config/config";
 
 export async function POST(request: NextRequest) {
   try {

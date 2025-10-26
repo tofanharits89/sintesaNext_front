@@ -3,7 +3,7 @@
  * Redirects to existing HTTP-only cookie system with unified auth integration
  */
 
-import { getCookie } from './httpClient';
+import { getCookie } from '../api/httpClient';
 
 // Re-export existing cookie utilities
 export { getCookie };

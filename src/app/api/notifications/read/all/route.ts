@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { backendPath } from "@/lib/backend";
+import { backendPath } from "@/lib/api/backend";
 
 export async function PUT(request: NextRequest) {
   const cookie = request.headers.get("cookie") || "";
@@ -14,6 +14,6 @@ export async function PUT(request: NextRequest) {
     method: "PUT",
     headers: { ...(cookie ? { cookie } : {}) },
   });
-  const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+  const { proxyJsonOrNoContent } = await import("@/lib/utils/route-helpers");
   return proxyJsonOrNoContent(resp);
 }

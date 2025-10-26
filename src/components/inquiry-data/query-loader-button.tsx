@@ -27,7 +27,7 @@ import { useSavedQueries } from "@/hooks/use-saved-queries";
 import { ButtonSpinner, InlineSpinner } from "@/components/ui/loading-states";
 import { savedQueryEvents } from "@/utils/saved-query-events";
 import type { SavedQuery } from "@/types/saved-queries";
-import { formatCalendarDate } from "@/lib/utils";
+import { formatCalendarDate } from "@/lib/utils/utils";
 import type { GetSavedQueriesParams } from "@/types/saved-queries";
 
 // Using built-in date formatting instead of date-fns

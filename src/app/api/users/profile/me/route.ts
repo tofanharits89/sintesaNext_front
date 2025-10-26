@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { backendPath } from "@/lib/backend";
-import { forwardSetCookies } from "@/lib/cookie-helpers";
+import { backendPath } from "@/lib/api/backend";
+import { forwardSetCookies } from "@/lib/utils/cookie-helpers";
 
 // Deprecated: cookie-only flow now forwards Cookie header to backend. Keep stub to avoid import errors.
 function getAuthTokenFromCookies(_request: NextRequest): string | null {

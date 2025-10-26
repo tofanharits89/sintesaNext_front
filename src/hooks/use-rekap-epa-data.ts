@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { apiClient } from "@/lib/httpClient";
+import { apiClient } from "@/lib/api/httpClient";
 import type { RekapEpaResponse, RekapEpaFilters } from "@/types/epa-rekap";
 
 const fetcher = async (url: string): Promise<any> => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { CacheMetrics } from '../cache-metrics';
+import { CacheMetrics } from '../cache/cache-metrics';
 
 // Mock performance.now for consistent timing
 const mockPerformanceNow = vi.fn();

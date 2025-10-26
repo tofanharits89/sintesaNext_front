@@ -27,9 +27,9 @@ import { useUserProfile } from "@/hooks/use-user-profile";
 import {
   getNotificationsForUser,
   getUnreadNotificationCount,
-} from "@/lib/notifications-store";
+} from "@/lib/stores/notifications-store";
 import { useMessagingRQ } from "@/hooks/useMessagingRQ";
-import { socketClient } from "@/lib/socket-client";
+import { socketClient } from "@/lib/api/socket-client";
 import { useUnreadActions } from "@/stores/unread-badges-store";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -48,10 +48,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { withBasePath } from "@/lib/base-path";
-import { apiPath } from "@/lib/base-path";
+import { withBasePath } from "@/lib/config/base-path";
+import { apiPath } from "@/lib/config/base-path";
 import { SatkerSearch } from "./satker-search";
-import { dispatchAuthEvent } from "@/lib/cookieManager";
+import { dispatchAuthEvent } from "@/lib/utils/cookieManager";
 import { LoginLoading } from "@/components/ui/login-loading";
 
 import type { User } from "@/stores/session-store";

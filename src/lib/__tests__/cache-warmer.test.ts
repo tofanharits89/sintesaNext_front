@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { QueryClient } from '@tanstack/react-query';
-import { CacheWarmer } from '../cache-warmer';
-import { queryKeyFactories } from '../query-configs';
+import { CacheWarmer } from '../cache/cache-warmer';
+import { queryKeyFactories } from '../config/query-configs';
 
 // Mock fetch
 const mockFetch = vi.fn();

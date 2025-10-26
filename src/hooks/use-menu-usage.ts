@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { http } from "@/lib/httpClient";
-import { apiPath } from "@/lib/base-path";
+import { http } from "@/lib/api/httpClient";
+import { apiPath } from "@/lib/config/base-path";
 
 export type AggregatedMenuItem = {
   menu: string;

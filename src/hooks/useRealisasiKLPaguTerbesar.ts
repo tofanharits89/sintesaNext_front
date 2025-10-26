@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { apiPath } from "@/lib/base-path";
+import { apiPath } from "@/lib/config/base-path";
 
 // Data format for K/L dengan Pagu DIPA Terbesar
 interface KLPaguTerbesarItem {
@@ -41,7 +41,7 @@ export function useRealisasiKLPaguTerbesar(
         }`;
 
         // Use http client which includes auth interceptors and refresh logic
-        const { apiClient } = await import("@/lib/httpClient");
+        const { apiClient } = await import("@/lib/api/httpClient");
         const result: KLPaguTerbesarResponse = await apiClient.get(
           endpoint,
         );

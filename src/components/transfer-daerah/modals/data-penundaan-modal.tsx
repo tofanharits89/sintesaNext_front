@@ -14,8 +14,8 @@ import { Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { PenundaanTable } from "./_penundaan-table";
 import { ConfirmationModals } from "@/components/ui/confirmation-modal";
 import { useKmkPotongan, RawPotonganItem } from "@/hooks/use-kmk-potongan";
-import { apiPath } from "@/lib/base-path";
-import { getAuthTokenFromCookie } from "@/lib/cookieManager";
+import { apiPath } from "@/lib/config/base-path";
+import { getAuthTokenFromCookie } from "@/lib/utils/cookieManager";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
 
 interface DataPenundaanModalProps {

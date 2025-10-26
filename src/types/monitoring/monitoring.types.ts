@@ -8,9 +8,9 @@ export interface RealTimeData {
 import type { CompressionStats } from './compression.types';
 
 export interface PerformanceMetrics {
-  cacheStats: import("@/lib/cache-metrics").CacheStats;
+  cacheStats: import("@/lib/cache/cache-metrics").CacheStats;
   compressionStats: CompressionStats;
-  healthStatus: import("@/lib/cache-metrics").HealthStatus;
+  healthStatus: import("@/lib/cache/cache-metrics").HealthStatus;
   realTimeData: RealTimeData;
 }
 

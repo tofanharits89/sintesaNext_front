@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { CarisatkerData } from "@/types/satker";
-import { apiClient } from "@/lib/httpClient";
+import { apiClient } from "@/lib/api/httpClient";
 
 export function useSatkerData(kdsatker?: string) {
   const [data, setData] = useState<CarisatkerData | null>(null);

@@ -1,7 +1,7 @@
 import React from "react";
 import { Skeleton } from "./skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "./card";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 
 // Base skeleton component props
 interface BaseSkeletonProps {

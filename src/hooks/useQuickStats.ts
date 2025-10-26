@@ -1,5 +1,5 @@
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
-import { apiClient } from "@/lib/httpClient";
+import { apiClient } from "@/lib/api/httpClient";
 
 // Quick stats data format returned by the backend
 export interface QuickStatsData {

@@ -8,12 +8,12 @@ import {
 } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useState, useEffect } from "react";
-import { queryConfigs, createQueryOptions } from "@/lib/query-configs";
-import { cacheInvalidation } from "@/lib/query-configs";
-import { initializeCacheWarming } from "@/lib/cache-warmer";
-import { logger } from "@/lib/utils";
+import { queryConfigs, createQueryOptions } from "@/lib/config/query-configs";
+import { cacheInvalidation } from "@/lib/config/query-configs";
+import { initializeCacheWarming } from "@/lib/cache/cache-warmer";
+import { logger } from "@/lib/utils/utils";
 import { AuthCacheProvider } from "./AuthCacheProvider";
-import { cacheMetrics } from "@/lib/cache-metrics";
+import { cacheMetrics } from "@/lib/cache/cache-metrics";
 
 // Cache analytics for monitoring performance
 // FIXED: Now forwards all metrics to the global cacheMetrics singleton

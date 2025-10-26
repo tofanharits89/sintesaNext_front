@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { backendPath } from "@/lib/backend";
+import { backendPath } from "@/lib/api/backend";
 
 function extractCookie(name: string, cookieHeader: string): string | undefined {
   try {
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     },
     body: JSON.stringify(body),
   });
-  const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+  const { proxyJsonOrNoContent } = await import("@/lib/utils/route-helpers");
   return proxyJsonOrNoContent(resp, { forwardCookies: true });
 }
 
@@ -100,7 +100,7 @@ export async function PUT(request: NextRequest) {
     },
     body: JSON.stringify(body),
   });
-  const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+  const { proxyJsonOrNoContent } = await import("@/lib/utils/route-helpers");
   return proxyJsonOrNoContent(resp);
 }
 

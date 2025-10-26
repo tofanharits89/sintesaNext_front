@@ -4,9 +4,9 @@
  * Secure HTTP-only cookie implementation with automatic token refresh
  */
 
-import { logger } from "@/lib/utils";
-import { http, clearLogoutGuard } from "../httpClient";
-import { apiPath } from "../base-path";
+import { logger } from "../utils/logger";
+import { http, clearLogoutGuard } from "../api/httpClient";
+import { apiPath } from "../config/base-path";
 
 // User interface (matches backend API response)
 export interface User {

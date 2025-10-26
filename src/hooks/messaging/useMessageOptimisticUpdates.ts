@@ -6,7 +6,7 @@ import { conversationKeys } from '../useConversationsRQ';
 import { FrontendMessage } from '@/types/socket-events';
 import { useMessageActions, useMessagingActions } from '@/stores';
 import { useUnreadActions } from '@/stores/unread-badges-store';
-import { queryKeyFactories } from '@/lib/query-configs';
+import { queryKeyFactories } from '@/lib/config/query-configs';
 import { useUnifiedAuth } from '@/lib/auth';
 
 export function useMessageOptimisticUpdates() {

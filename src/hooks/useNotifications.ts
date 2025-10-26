@@ -2,11 +2,11 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useSocket } from "./useSocket";
-import type { Notification } from "@/lib/notifications-store";
+import type { Notification } from "@/lib/stores/notifications-store";
 import {
   getNotificationsForUser,
   getUnreadNotificationCount,
-} from "@/lib/notifications-store";
+} from "@/lib/stores/notifications-store";
 import { useUnifiedAuth } from "@/lib/auth";
 
 export function useNotifications() {

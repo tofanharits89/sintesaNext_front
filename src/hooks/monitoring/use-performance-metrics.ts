@@ -3,7 +3,7 @@ import {
   cacheMetrics,
   type CacheStats,
   type HealthStatus,
-} from "@/lib/cache-metrics";
+} from "@/lib/cache/cache-metrics";
 import type {
   PerformanceMetrics,
   CompressionStats,

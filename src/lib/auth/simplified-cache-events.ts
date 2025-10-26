@@ -101,7 +101,7 @@ export function clearDataCaches() {
     ];
 
     dataQueryKeys.forEach(key => {
-      globalQueryClient.removeQueries({ queryKey: [key] });
+      globalQueryClient?.removeQueries({ queryKey: [key] });
     });
   }
   

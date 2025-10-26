@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { CacheManager } from '@/lib/cache-manager';
+import { CacheManager } from '@/lib/cache/cache-manager';
 
 // Initialize cache manager
 const cacheManager = new CacheManager();

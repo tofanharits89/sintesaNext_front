@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { apiPath } from "@/lib/base-path";
-import { withBasePath } from "@/lib/base-path";
+import { apiPath } from "@/lib/config/base-path";
+import { withBasePath } from "@/lib/config/base-path";
 
 export default function AutoRetry() {
   const intervalRef = useRef<number | null>(null);

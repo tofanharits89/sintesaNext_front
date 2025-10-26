@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { backendPath } from "@/lib/backend";
+import { backendPath } from "@/lib/api/backend";
 
 function extractCookie(name: string, cookieHeader: string): string | undefined {
   try {
@@ -45,7 +45,7 @@ export async function DELETE(
     });
 
     // Forward the backend response (handles 204 automatically)
-    const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+    const { proxyJsonOrNoContent } = await import("@/lib/utils/route-helpers");
     return proxyJsonOrNoContent(resp, { forwardCookies: true });
   } catch (error) {
     console.error("Error deleting user:", error);
@@ -91,7 +91,7 @@ export async function PUT(
     });
 
     // Forward the backend response (handles 204 automatically)
-    const { proxyJsonOrNoContent } = await import("@/lib/route-helpers");
+    const { proxyJsonOrNoContent } = await import("@/lib/utils/route-helpers");
     return proxyJsonOrNoContent(resp, { forwardCookies: true });
   } catch (error) {
     console.error("Error updating user:", error);

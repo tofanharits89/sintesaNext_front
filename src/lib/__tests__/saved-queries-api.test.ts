@@ -1,4 +1,4 @@
-import { SavedQueriesApiService } from "../saved-queries-api";
+import { SavedQueriesApiService } from "../api/saved-queries-api";
 import type { CreateSavedQueryRequest, SavedQuery } from "@/types/saved-queries";
 
 // Mock fetch globally

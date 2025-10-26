@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { apiPath } from "@/lib/base-path";
-import { getAuthTokenFromCookie } from "@/lib/cookieManager";
+import { apiPath } from "@/lib/config/base-path";
+import { getAuthTokenFromCookie } from "@/lib/utils/cookieManager";
 
 export interface OptionItem {
   value: string;

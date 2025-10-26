@@ -9,7 +9,7 @@ import { useTypingIndicatorsStore } from "@/stores/typing-indicators-store";
 import { useUnreadBadgesStore } from "@/stores/unread-badges-store";
 import { clearAllTempMessages } from "@/features/messaging/temp-messages-store";
 import { messageQueue } from "@/services/messageQueue";
-import logger from "@/lib/logger";
+import logger from "@/lib/utils/logger";
 import { useUnifiedAuth } from "@/lib/auth";
 
 /**
@@ -52,7 +52,7 @@ export async function clearAllMessagingState() {
 
     // 5. CRITICAL FIX: Force disconnect any remaining socket connections
     try {
-      const { socketClient } = await import("@/lib/socket-client");
+      const { socketClient } = await import("@/lib/api/socket-client");
       if (socketClient.isConnected()) {
         socketClient.disconnect();
         logger.info("Socket disconnected during messaging cleanup");

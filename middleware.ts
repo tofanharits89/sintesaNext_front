@@ -51,7 +51,7 @@ const PUBLIC_ROUTES = [
 ];
 
 // Import unified configuration
-import { config as appConfig } from "@/lib/config";
+import { config as appConfig } from "@/lib/config/config";
 
 // Environment-based configuration
 const ENV = {

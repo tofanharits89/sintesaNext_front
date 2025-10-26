@@ -8,8 +8,8 @@ import CheckBackend from "@/components/CheckBackend";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { AdminPresenceListener } from "@/components/AdminPresenceListener";
 
-import { ErrorBoundary, ComponentErrorBoundary } from "@/lib/error-boundary";
-import { withBasePath, apiPath } from "@/lib/base-path";
+import { ErrorBoundary, ComponentErrorBoundary } from "@/lib/ui/error-boundary";
+import { withBasePath, apiPath } from "@/lib/config/base-path";
 import { cookies } from "next/headers";
 import { MessagingAuthListener } from "@/components/messaging/messaging-auth-listener";
 import SessionMonitor from "@/components/SessionMonitor";
@@ -41,7 +41,7 @@ export default async function RootLayout({
   // User profile is now fetched efficiently in dashboard layout to avoid duplicate requests
 
   // Skip server-side user fetch - let React Query handle with stale-while-revalidate
-  const initialUser: import("@/lib/users-store").User | undefined = undefined;
+  const initialUser: import("@/lib/stores/users-store").User | undefined = undefined;
 
   return (
     <html lang="id" suppressHydrationWarning>

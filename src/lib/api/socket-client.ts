@@ -9,7 +9,7 @@
 
 import { io, Socket } from "socket.io-client";
 import { SOCKET_EVENTS } from "@/types/socket-events";
-import { config, backendPath } from "@/lib/config";
+import { config, backendPath } from "../config/config";
 
 export type SocketState = "disconnected" | "connecting" | "connected" | "error" | "reconnecting";
 

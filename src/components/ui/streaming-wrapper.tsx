@@ -1,7 +1,7 @@
 "use client";
 
 import React, { Suspense } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { Skeleton } from "./skeleton";
 
 interface StreamingWrapperProps {

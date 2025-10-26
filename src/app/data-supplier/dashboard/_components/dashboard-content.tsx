@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
-import { apiPath } from "@/lib/base-path";
-import { backendPath } from "@/lib/backend";
+import { apiPath } from "@/lib/config/base-path";
+import { backendPath } from "@/lib/api/backend";
 import { Card, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
 import { LineChartComponent } from "@/components/ui/line-chart";
 import { BarChartComponent } from "@/components/ui/bar-chart";
