@@ -1,4 +1,5 @@
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { LogoutGuard } from "@/components/auth/LogoutGuard";
 import { DashboardProvider } from "@/components/providers/dashboard-provider";
 
 export default async function DashboardLayout({
@@ -11,9 +12,11 @@ export default async function DashboardLayout({
 
   return (
     <AuthGuard>
-      <DashboardProvider initialUser={null}>
-        {children}
-      </DashboardProvider>
+      <LogoutGuard>
+        <DashboardProvider initialUser={null}>
+          {children}
+        </DashboardProvider>
+      </LogoutGuard>
     </AuthGuard>
   );
 }

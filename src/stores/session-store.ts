@@ -34,6 +34,7 @@ interface AuthSessionState {
   // Authentication state
   isAuthenticated: boolean;
   isLoggingOut: boolean;
+  isLogoutInProgress: boolean;
   user: User | null;
   isLoading: boolean;
 
@@ -47,6 +48,7 @@ interface AuthSessionState {
   // Actions
   setAuthenticated: (authenticated: boolean, user?: User | null) => void;
   setLoggingOut: (loggingOut: boolean) => void;
+  setLogoutInProgress: (inProgress: boolean) => void;
   setLoading: (loading: boolean) => void;
   setSessionExpiry: (expiry: Date | null) => void;
   setSocketConnected: (connected: boolean) => void;
@@ -62,6 +64,7 @@ export const useAuthSessionStore = create<AuthSessionState>()(
       // Initial state
       isAuthenticated: false,
       isLoggingOut: false,
+      isLogoutInProgress: false,
       user: null,
       isLoading: false,
       sessionExpiry: null,
@@ -78,13 +81,38 @@ export const useAuthSessionStore = create<AuthSessionState>()(
         ) {
           return;
         }
-        set({
-          isAuthenticated: authenticated,
-          user,
-        });
+
+        // If user is logging in (authenticated = true), clear logout in progress
+        if (authenticated && user) {
+          if (typeof window !== 'undefined') {
+            sessionStorage.removeItem('sintesa_logout_in_progress');
+          }
+          set({
+            isAuthenticated: authenticated,
+            user,
+            isLogoutInProgress: false,
+            isLoggingOut: false,
+          });
+        } else {
+          set({
+            isAuthenticated: authenticated,
+            user,
+          });
+        }
       },
 
       setLoggingOut: (loggingOut) => set({ isLoggingOut: loggingOut }),
+
+      setLogoutInProgress: (inProgress) => {
+        if (typeof window !== 'undefined') {
+          if (inProgress) {
+            sessionStorage.setItem('sintesa_logout_in_progress', Date.now().toString());
+          } else {
+            sessionStorage.removeItem('sintesa_logout_in_progress');
+          }
+        }
+        set({ isLogoutInProgress: inProgress });
+      },
 
       setLoading: (loading) => set({ isLoading: loading }),
 
@@ -105,7 +133,16 @@ export const useAuthSessionStore = create<AuthSessionState>()(
             return;
           }
         }
-        set({ user });
+
+        // If we have a user and were in logout state, clear it
+        if (user && currentState.isLogoutInProgress) {
+          if (typeof window !== 'undefined') {
+            sessionStorage.removeItem('sintesa_logout_in_progress');
+          }
+          set({ user, isLogoutInProgress: false, isLoggingOut: false });
+        } else {
+          set({ user });
+        }
       },
 
       updateLastActivity: () => {
@@ -125,24 +162,33 @@ export const useAuthSessionStore = create<AuthSessionState>()(
         set({
           isAuthenticated: false,
           isLoggingOut: true,
+          isLogoutInProgress: true,
           user: null,
           isLoading: false,
           sessionExpiry: null,
           lastActivity: null,
           socketConnected: false,
         });
+        // Also persist to sessionStorage for middleware access
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('sintesa_logout_in_progress', Date.now().toString());
+        }
       },
 
       reset: () => {
         set({
           isAuthenticated: false,
           isLoggingOut: false,
+          isLogoutInProgress: false,
           user: null,
           isLoading: false,
           sessionExpiry: null,
           lastActivity: null,
           socketConnected: false,
         });
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('sintesa_logout_in_progress');
+        }
       },
     }),
     {
@@ -152,7 +198,29 @@ export const useAuthSessionStore = create<AuthSessionState>()(
         lastActivity: state.lastActivity,
         isAuthenticated: state.isAuthenticated,
         user: state.user,
+        // Note: isLogoutInProgress is NOT persisted - it should only be in sessionStorage
+        // This prevents the logout loading from appearing on login or after page reload
       }),
+      onRehydrateStorage: () => {
+        return (state) => {
+          // Check if logout is in progress from sessionStorage
+          // But only set it if we're actually on a logout flow
+          if (typeof window !== 'undefined') {
+            const logoutInProgress = sessionStorage.getItem('sintesa_logout_in_progress');
+            if (logoutInProgress && state) {
+              // Only restore if user is actually logging out (not on login page)
+              const isOnLoginPage = window.location.pathname === '/login';
+              if (!isOnLoginPage) {
+                state.isLogoutInProgress = true;
+              } else {
+                // On login page, clear any stale logout flag
+                sessionStorage.removeItem('sintesa_logout_in_progress');
+                state.isLogoutInProgress = false;
+              }
+            }
+          }
+        };
+      },
     },
   ),
 );

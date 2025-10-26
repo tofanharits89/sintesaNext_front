@@ -689,10 +689,24 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                     }
 
                     try {
+                      // Wait for logout to complete
                       await logout();
                     } catch (error) {
                       console.error("Logout API error:", error);
                     }
+
+                    // Small delay to ensure all state changes propagate
+                    await new Promise(resolve => setTimeout(resolve, 200));
+
+                    // Clear the logout in progress flag after successful redirect
+                    setTimeout(() => {
+                      try {
+                        sessionStorage.removeItem('sintesa_logout_in_progress');
+                        useAuthSessionStore.getState().setLogoutInProgress(false);
+                      } catch (error) {
+                        console.error("Failed to clear logout state:", error);
+                      }
+                    }, 1000);
 
                     // Redirect to login page
                     const redirectUrl = "/login?reason=logout&_t=" + Date.now();
@@ -710,7 +724,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                       } catch (error) {
                         console.error("Fallback failed:", error);
                       }
-                    }, 100);
+                    }, 500);
                   }}
                 >
                   {isLoggingOut ? (

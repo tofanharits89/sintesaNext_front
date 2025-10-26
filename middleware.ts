@@ -190,11 +190,42 @@ function needsAuth(pathname: string): boolean {
 }
 
 /**
+ * Check if logout is in progress
+ */
+function isLogoutInProgress(request: NextRequest): boolean {
+  // Check for explicit logout flag
+  const logoutInProgress = request.cookies.get('logout_in_progress')?.value ||
+    request.headers.get('x-logout-in-progress');
+  
+  // Explicit logout flag set
+  if (logoutInProgress === 'true') {
+    return true;
+  }
+
+  // Check sessionStorage only on client side (for middleware running on client)
+  if (typeof window !== 'undefined') {
+    const sessionLogoutFlag = sessionStorage.getItem('sintesa_logout_in_progress');
+    if (sessionLogoutFlag) {
+      // Check if the flag is recent (within 30 seconds)
+      const timestamp = parseInt(sessionLogoutFlag, 10);
+      const age = Date.now() - timestamp;
+      if (age < 30000) { // 30 seconds
+        return true;
+      } else {
+        // Flag is stale, clear it
+        sessionStorage.removeItem('sintesa_logout_in_progress');
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
  * Main middleware function - simplified and optimized
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
 
   // Skip middleware for API routes, static assets, and Next.js internals
   if (
@@ -211,10 +242,24 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Check if logout is in progress - redirect directly to login
+  if (isLogoutInProgress(request)) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("reason", "logout");
+    return NextResponse.redirect(loginUrl);
+  }
+
   // Handle public routes
   if (isPublicRoute(pathname)) {
+    // If logout is in progress, always redirect to login
+    if (isLogoutInProgress(request)) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("reason", "logout");
+      return NextResponse.redirect(loginUrl);
+    }
+
     const token = extractAccessToken(request);
-  
+
     // If user has a token and visits login/register, validate first
     if (token && (pathname === "/login" || pathname === "/register")) {
       const validation = await validateServerSession(token, request);

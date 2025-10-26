@@ -132,24 +132,34 @@ export function useAuth(): UseAuthReturn {
   const logout = useCallback(
     async (reason = "manual_logout"): Promise<void> => {
       try {
+        // Set logout in progress first (before clearing state)
+        authState.setLogoutInProgress(true);
         authState.setLoggingOut(true);
-        
+
         // Clear all caches
         clearCache();
-        
+
         // Call server logout
         await authClient.logout();
-        
-        // Reset auth state
-        authState.reset();
-        
+
+        // Reset auth state (but keep logout in progress for now)
+        authState.setAuthenticated(false, null);
+        authState.updateUser(null);
+
         if (reason === "manual_logout") {
           toast.success("Anda telah keluar dari sistem");
         }
+
+        // Small delay to ensure all state changes propagate
+        await new Promise(resolve => setTimeout(resolve, 100));
+
       } catch (error) {
         console.error("Logout error:", error);
+        // Even on error, we should complete the logout flow
+        authState.setLogoutInProgress(true);
       } finally {
         authState.setLoggingOut(false);
+        // Keep logout in progress until after redirect
       }
     },
     [authState, clearCache],
