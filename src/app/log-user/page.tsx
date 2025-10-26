@@ -24,6 +24,7 @@ import {
   AlertCircle,
   Clock,
   User,
+  Menu,
 } from "lucide-react";
 import {
   BarChart,
@@ -48,9 +49,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/compon
 
 // Simple tabs using local state
 const TABS = [
-  { key: "online", label: "User Online" },
-  { key: "history", label: "Log User History" },
-  { key: "menu", label: "Log Menu History" },
+  { key: "online", label: "User Online", icon: Users },
+  { key: "history", label: "Log User History", icon: Clock },
+  { key: "menu", label: "Log Menu History", icon: Menu },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -282,13 +283,14 @@ export default function LogUserPage() {
       {/* Tabs header (Animate UI) */}
       <Tabs className="gap-3" value={active} onValueChange={(v) => setActive(v as TabKey)}>
         <div className="border-b border-border/50 pb-3 mb-0">
-          <TabsList className="h-12 md:h-14 p-2 rounded-xl">
+          <TabsList className="w-full h-12 md:h-14 p-2 rounded-xl">
             {TABS.map((t) => (
               <TabsTrigger
                 key={t.key}
                 value={t.key}
-                className="h-full px-4 py-0 md:px-5 md:py-0 text-base md:text-[1rem]"
+                className="h-full px-4 py-0 md:px-5 md:py-0 text-base flex items-center gap-2"
               >
+                <t.icon className="h-4 w-4" />
                 {t.label}
               </TabsTrigger>
             ))}

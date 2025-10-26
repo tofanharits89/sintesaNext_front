@@ -80,7 +80,18 @@ export function useAuth(): UseAuthReturn {
     // Simple cache clearing - React Query handles the rest
     queryClient.clear();
     if (typeof window !== 'undefined') {
-      localStorage.clear();
+      // Preserve theme and language preferences
+      const keysToKeep = ["theme", "language"];
+      const keysToRemove: string[] = [];
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && !keysToKeep.includes(key)) {
+          keysToRemove.push(key);
+        }
+      }
+
+      keysToRemove.forEach(key => localStorage.removeItem(key));
       sessionStorage.clear();
     }
   }, [queryClient]);

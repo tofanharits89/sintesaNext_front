@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/components/animate-ui/components/animate/tabs";
 import {
   Card,
   CardContent,
@@ -63,20 +63,22 @@ export default function SettingsPage() {
         <h1 className="text-xl font-semibold">Pengaturan</h1>
       </div>
 
-      <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="general" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            Umum
-          </TabsTrigger>
-          <TabsTrigger value="system" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            Sistem
-          </TabsTrigger>
-        </TabsList>
-
-        {/* General Settings Tab */}
-        <TabsContent value="general" className="space-y-6">
+      <Tabs defaultValue="general" className="w-full gap-3">
+        <div className="border-b border-border/50 pb-3 mb-0">
+          <TabsList className="w-full h-12 md:h-14 p-2 rounded-xl">
+            <TabsTrigger value="general" className="h-full px-4 md:px-5 py-0 text-base flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Umum
+            </TabsTrigger>
+            <TabsTrigger value="system" className="h-full px-4 md:px-5 py-0 text-base flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Sistem
+            </TabsTrigger>
+          </TabsList>
+        </div>
+        <TabsContents>
+          {/* General Settings Tab */}
+          <TabsContent value="general" className="space-y-6">
           <div className="grid gap-6">
             {/* Theme Settings */}
             <Card>
@@ -220,10 +222,6 @@ export default function SettingsPage() {
           </div>
         </TabsContent>
 
-
-
-
-
         {/* System Settings Tab */}
         <TabsContent value="system" className="space-y-6">
           <div className="grid gap-6">
@@ -268,6 +266,7 @@ export default function SettingsPage() {
             </Card>
           </div>
         </TabsContent>
+        </TabsContents>
       </Tabs>
 
 
