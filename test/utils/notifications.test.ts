@@ -312,7 +312,4 @@ export function runNotificationTests() {
   console.log('\nAll tests completed!');
 }
 
-// Auto-run tests if this file is executed directly
-if (typeof window === 'undefined' && require.main === module) {
-  runNotificationTests();
-}
+
