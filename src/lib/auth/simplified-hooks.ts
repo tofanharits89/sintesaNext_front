@@ -77,21 +77,21 @@ export function useAuth(): UseAuthReturn {
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const clearCache = useCallback(() => {
-    // Simple cache clearing - React Query handles the rest
+    // Enhanced cache clearing - specifically target auth-related queries
     queryClient.clear();
+
+    // Specifically target auth-related queries
+    queryClient.removeQueries({ queryKey: ['auth'] });
+    queryClient.removeQueries({ queryKey: ['user'] });
+
     if (typeof window !== 'undefined') {
-      // Preserve theme and language preferences
+      // Clear localStorage but preserve essential items
       const keysToKeep = ["theme", "language"];
-      const keysToRemove: string[] = [];
-
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && !keysToKeep.includes(key)) {
-          keysToRemove.push(key);
+      Object.keys(localStorage).forEach(key => {
+        if (!keysToKeep.includes(key)) {
+          localStorage.removeItem(key);
         }
-      }
-
-      keysToRemove.forEach(key => localStorage.removeItem(key));
+      });
       sessionStorage.clear();
     }
   }, [queryClient]);

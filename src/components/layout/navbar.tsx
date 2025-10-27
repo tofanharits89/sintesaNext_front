@@ -75,14 +75,17 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
     canAccessSettings,
   } = useUnifiedAuth();
 
-  // Use profile data from React Query if available and valid, otherwise fall back to Zustand store
-  const currentUser: User | null | undefined =
-    profileData &&
-    typeof profileData === "object" &&
-    "id" in profileData &&
-    "username" in profileData
-      ? profileData
-      : displayUser;
+  // Use Zustand data during login/logout transitions, React Query otherwise
+  // This prevents showing stale data from React Query during auth state changes
+  const isAuthTransition = useAuthSessionStore(state => state.isLoading);
+  const currentUser: User | null | undefined = isAuthTransition
+    ? displayUser  // Trust Zustand during transitions
+    : (profileData &&
+        typeof profileData === "object" &&
+        "id" in profileData &&
+        "username" in profileData
+          ? profileData
+          : displayUser);
   const router = useRouter();
   interface RecentMessage {
     id: string;
@@ -717,7 +720,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                         useAuthSessionStore.getState().logout();
                       } catch {}
 
-                      // 3) Fire backend logout in background (don’t wait)
+                      // 3) Fire backend logout in background (don't wait)
                       try {
                         void fetch(apiPath("/auth/logout"), {
                           method: "POST",

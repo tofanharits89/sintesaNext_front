@@ -179,10 +179,24 @@ export default function SimplifiedLoginForm() {
 
         // CRITICAL: Update auth state BEFORE redirecting to prevent 401 race condition
         if (result.data?.user) {
-          // 1. Dispatch auth event for socket connection
+          // 1. Clear stale React Query cache before setting new user data
+          // This prevents showing previous user's data in navbar
+          try {
+            const { clearAuthCacheOnFail, clearDataQueries } = await import("@/lib/auth/simplified-utils");
+            
+            // Clear all cache to prevent stale data from previous user
+            clearAuthCacheOnFail();
+            clearDataQueries();
+            
+            console.log("[LoginForm] Cleared stale auth cache");
+          } catch (error) {
+            console.warn("[LoginForm] Failed to clear auth cache:", error);
+          }
+
+          // 2. Dispatch auth event for socket connection
           dispatchAuthEvent.login(result.data.user);
 
-          // 2. Update React Query cache and Zustand store via dynamic import
+          // 3. Update React Query cache and Zustand store via dynamic import
           // This ensures global auth state is ready before dashboard loads
           try {
             const { useAuthSessionStore } = await import(
@@ -199,7 +213,7 @@ export default function SimplifiedLoginForm() {
               result.data.user.username,
             );
 
-            // 3. Fetch full user profile to populate React Query cache before redirect
+            // 4. Fetch full user profile to populate React Query cache before redirect
             // This prevents 401 errors on the dashboard when it tries to fetch data
             console.log("[LoginForm] Warming up user profile cache...");
             const profileResp = await fetch(apiPath("/users/profile/me"), {
