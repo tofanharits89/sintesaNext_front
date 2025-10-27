@@ -172,6 +172,11 @@ export default function SimplifiedLoginForm() {
       if (result.success) {
         toast.success("Login berhasil");
 
+        // CRITICAL: Clear any stale logout guard flags that might block subsequent requests
+        const { clearLogoutGuard } = await import("@/lib/api/httpClient");
+        clearLogoutGuard();
+        console.log("[LoginForm] Cleared logout guard after successful login");
+
         // CRITICAL: Update auth state BEFORE redirecting to prevent 401 race condition
         if (result.data?.user) {
           // 1. Dispatch auth event for socket connection

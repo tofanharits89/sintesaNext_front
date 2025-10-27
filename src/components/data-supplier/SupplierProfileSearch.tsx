@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Search, X } from "lucide-react";
 import supplierDatasetRaw from "@/data/carisupplier.json";
 
@@ -251,33 +252,35 @@ export function SupplierProfileSearch({ initialQuery = "", placeholder = "Cari N
 
   return (
     <div className="flex w-full items-center gap-2" ref={containerRef}>
-      <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          value={value}
-          onChange={(e) => {
-            const nextVal = e.target.value;
-            setValue(nextVal);
-            setIsDropdownOpen(true);
-          }}
-          onFocus={() => {
-            setIsDropdownOpen(true);
-          }}
-          onKeyDown={onKeyDown}
-          placeholder={placeholder}
-          className="pl-9 pr-9"
-          aria-label="Cari supplier"
-        />
-        {value && (
-          <button
-            type="button"
-            onClick={() => setValue("")}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
-            aria-label="Clear"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
+      <Card className="relative flex-1 p-2">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={value}
+            onChange={(e) => {
+              const nextVal = e.target.value;
+              setValue(nextVal);
+              setIsDropdownOpen(true);
+            }}
+            onFocus={() => {
+              setIsDropdownOpen(true);
+            }}
+            onKeyDown={onKeyDown}
+            placeholder={placeholder}
+            className="pl-9 pr-9"
+            aria-label="Cari supplier"
+          />
+          {value && (
+            <button
+              type="button"
+              onClick={() => setValue("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+              aria-label="Clear"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
 
         {showDropdown && (
           <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-md border border-border bg-popover shadow-lg">
@@ -313,7 +316,7 @@ export function SupplierProfileSearch({ initialQuery = "", placeholder = "Cari N
             )}
           </div>
         )}
-      </div>
+      </Card>
       <Button onClick={submit} variant="secondary" className="shrink-0">
         Cari
       </Button>

@@ -40,6 +40,15 @@ export function buildGroupByClause(
   }
 
   if (reportParams.tipeLaporan === "outstanding_up_tup") {
+    // For UP/TUP, group by all active filter columns
+    const uniqueActiveFilters = Array.from(new Set(activeFilters));
+    if (uniqueActiveFilters.includes("kementerian")) addGroupBy("main.kddept");
+    if (uniqueActiveFilters.includes("eselonI")) addGroupBy("main.kdunit");
+    if (uniqueActiveFilters.includes("kewenangan")) addGroupBy("main.kddekon");
+    if (uniqueActiveFilters.includes("kanwil")) addGroupBy("main.kdkanwil");
+    if (uniqueActiveFilters.includes("kppn")) addGroupBy("main.kdkppn");
+    if (uniqueActiveFilters.includes("satker")) addGroupBy("main.kdsatker");
+    if (uniqueActiveFilters.includes("akun")) addGroupBy("main.kdakun");
     return groupByColumns;
   }
 
@@ -93,9 +102,7 @@ uniqueActiveFilters.forEach((filterKey) => {
           addGroupBy(`LEFT(main.${config.columnName}, 4)`);
         } else if (filterKey === "jenisBelanja") {
           addGroupBy(`LEFT(main.${config.columnName}, 2)`);
-        } else if (filterKey === "register") {
-          addGroupBy("main.register_normalized");
-        } else {
+        } else if (filterKey !== "register") {
           addGroupBy(`main.${config.columnName}`);
         }
       } else {

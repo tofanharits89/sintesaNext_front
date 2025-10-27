@@ -61,13 +61,7 @@ export function useInquiryQueryBuilder() {
         const whereConditions = buildWhereClause(activeFilters, filterValues, reportParams);
         const groupByColumns = buildGroupByClause(activeFilters, filterValues, reportParams);
 
-        const hasRegisterFilter = activeFilters.includes("register");
-        let query: string;
-        if (hasRegisterFilter) {
-          query = `SELECT\n  ${selectColumns.join(",\n  ")}\nFROM (\n  SELECT *,\n    COALESCE(NULLIF(register, ''), '-') AS register_normalized\n  FROM ${mainTable}\n) AS main`;
-        } else {
-          query = `SELECT\n  ${selectColumns.join(",\n  ")}\nFROM ${mainTable} AS main`;
-        }
+        let query = `SELECT\n  ${selectColumns.join(",\n  ")}\nFROM ${mainTable} AS main`;
         if (joinTables.length > 0) query += `\n${joinTables.join("\n")}`;
         if (whereConditions.length > 0) query += `\nWHERE\n  ${whereConditions.join("\n  AND ")}`;
         if (groupByColumns.length > 0) query += `\nGROUP BY\n  ${groupByColumns.join(",\n  ")}`;

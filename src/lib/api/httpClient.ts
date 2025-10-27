@@ -56,8 +56,10 @@ if (typeof window !== "undefined") {
 
 // Request interceptor: attach CSRF header if available and set Content-Type
 http.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
-  // Block all requests if we're logging out (except logout itself)
-  if (isLoggingOut && !config.url?.includes("/auth/logout")) {
+  // Block all requests if we're logging out (except logout and profile requests)
+  if (isLoggingOut &&
+      !config.url?.includes("/auth/logout") &&
+      !config.url?.includes("/users/profile/me")) {
     console.log("[Auth] Request blocked - logout in progress:", config.url);
     throw new Error("Logout in progress");
   }
@@ -92,6 +94,21 @@ http.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
 // ✅ IMPROVED: Simplified token refresh with single-flight pattern
 let refreshPromise: Promise<void> | null = null;
 let isLoggingOut = false; // Flag to prevent requests during logout/redirect
+
+// Debug: Track when logout guard is set
+if (typeof window !== "undefined") {
+  Object.defineProperty(window, "isLoggingOut", {
+    get() {
+      return isLoggingOut;
+    },
+    set(value) {
+      console.trace("[Auth] isLoggingOut set to:", value);
+      isLoggingOut = value;
+      (window as any).__isLoggingOut = value;
+    },
+    configurable: true
+  });
+}
 
 // Simplified cookie management for HTTP-only only approach
 import { clearNonHttpOnlyCookies } from "../utils/cookieManager";

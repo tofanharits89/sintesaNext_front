@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ConditionalToaster } from "@/components/ui/conditional-toaster";

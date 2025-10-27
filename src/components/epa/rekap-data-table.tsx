@@ -71,9 +71,9 @@ const handleExportToExcel = (fullData: RekapEpaRow[], grandTotal: RekapEpaGrandT
         : 0;
 
     excelData.push({
-      "No": "-",
-      "Tahun": "",
-      "Triwulan": "",
+      "No": 0,
+      "Tahun": 0,
+      "Triwulan": 0,
       "Kode BA": "",
       "Nama BA": "",
       "Kode Jenbel": "",

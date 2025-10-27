@@ -437,7 +437,7 @@ export function TayangModal({
   const getPageName = (scope: string): string => {
     const scopeNames: Record<string, string> = {
       belanja: "Belanja",
-      tematik: "Tematik",
+      tematik: "Kategori Tematik",
       rkakl_detail: "RKAKL Detail",
       kontrak: "Kontrak",
       general: "General",
@@ -530,7 +530,9 @@ export function TayangModal({
               <Table className="w-5 h-5 text-blue-600" />
               <span>
                 Hasil Query {pageName} -{" "}
-                {getReportTypeLabel(reportParams.tipeLaporan)}
+                {scope === "tematik"
+                  ? getTematikKategoriLabel(reportParams.tematikKategori)
+                  : getReportTypeLabel(reportParams.tipeLaporan)}
               </span>
             </span>
             <div className="flex gap-2">

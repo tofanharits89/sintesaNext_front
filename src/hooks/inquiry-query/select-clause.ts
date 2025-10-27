@@ -1,5 +1,8 @@
 import { FilterConfig, FilterValue } from "./types";
-import { getCategoryMandatoryColumns, getCategoryQueryConfig } from "@/components/inquiry-data/categoryRegistry";
+import {
+  getCategoryMandatoryColumns,
+  getCategoryQueryConfig,
+} from "@/components/inquiry-data/categoryRegistry";
 import { getReportTypeConfig, MONTH_NAMES } from "./report-config";
 import { getPembulatanDivisor, MONTH_LABELS } from "./utils";
 
@@ -10,7 +13,12 @@ const FILTER_CONFIG: Record<string, FilterConfig> = getFilterConfigMap() as any;
 export function buildSelectClause(
   activeFilters: string[],
   filterValues: Record<string, FilterValue>,
-  reportParams: { pembulatan: string; tahun: string; tipeLaporan: string; jenisAkumulasi?: string }
+  reportParams: {
+    pembulatan: string;
+    tahun: string;
+    tipeLaporan: string;
+    jenisAkumulasi?: string;
+  },
 ) {
   const selectColumns: string[] = [];
   const joinTables: string[] = [];
@@ -23,33 +31,18 @@ export function buildSelectClause(
     refAlias?: string;
   }) => {
     const { jenisTampilan, includeRefColumns, refAlias } = params;
-    selectColumns.push(`main.register_normalized AS register_kode`);
+    selectColumns.push(`main.register AS register_kode`);
 
-    const year = reportParams.tahun || new Date().getFullYear();
-    const detailAlias = "detail_ref";
-    const detailJoinTable = `monev${year}.m_detail_harian_${year}`;
-    if (!joinedTables.has(detailAlias)) {
-      joinTables.push(
-        `LEFT JOIN (\n                    SELECT \n                      COALESCE(NULLIF(register, ''), '-') AS register_normalized,\n                      MAX(kdctarik) AS kdctarik\n                    FROM ${detailJoinTable}\n                    GROUP BY COALESCE(NULLIF(register, ''), '-')\n                  ) AS ${detailAlias} ON main.register_normalized = ${detailAlias}.register_normalized`
-      );
-      joinedTables.add(detailAlias);
-    }
+    // The register filter uses reference table join for filtering
+    // No additional detail table join needed
 
-    if (jenisTampilan !== "uraian") {
-      selectColumns.push(`COALESCE(MAX(${detailAlias}.kdctarik), 0) AS kdctarik`);
+    if (jenisTampilan !== "uraian" && includeRefColumns && refAlias) {
+      selectColumns.push(`COALESCE(MAX(${refAlias}.kddonor), '0') AS kdctarik`);
     }
 
     if (includeRefColumns && refAlias) {
       if (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian") {
-        const ctarikAlias = "ctarik_ref";
-        const ctarikJoinTable = `dbref.t_ctarik_${year}`;
-        if (!joinedTables.has(ctarikAlias)) {
-          joinTables.push(
-            `LEFT JOIN ${ctarikJoinTable} AS ${ctarikAlias} ON COALESCE(${detailAlias}.kdctarik, 0) = ${ctarikAlias}.kdctarik`
-          );
-          joinedTables.add(ctarikAlias);
-        }
-        selectColumns.push(`${ctarikAlias}.nmctarik AS kdctarik_uraian`);
+        selectColumns.push(`${refAlias}.nmdonor AS kdctarik_uraian`);
       }
 
       selectColumns.push(`${refAlias}.nonpln AS nonpln`);
@@ -73,7 +66,7 @@ export function buildSelectClause(
 
     if (filterKey === "jenisKontrak") {
       selectColumns.push(
-        "CASE WHEN SUBSTR(main.can,16,1) = '0' THEN 'SYC' WHEN SUBSTR(main.can,16,1) <> '0' THEN 'MYC' END AS tipe_kontrak"
+        "CASE WHEN SUBSTR(main.can,16,1) = '0' THEN 'SYC' WHEN SUBSTR(main.can,16,1) <> '0' THEN 'MYC' END AS tipe_kontrak",
       );
       return;
     }
@@ -96,7 +89,7 @@ export function buildSelectClause(
     if (filterKey === "statusSumber") {
       const jenisTampilan = filterValue?.jenisTampilan || "kode";
       const alias = "statusSumber_ref";
-      
+
       if (jenisTampilan !== "jangan_tampilkan") {
         switch (jenisTampilan) {
           case "kode":
@@ -106,7 +99,7 @@ export function buildSelectClause(
             const sumberJoinTable = `dbref.t_sumber_pnp`;
             if (!joinedTables.has(alias)) {
               joinTables.push(
-                `LEFT JOIN ${sumberJoinTable} AS ${alias} ON main.JE_SOURCE = ${alias}.JE_SOURCE`
+                `LEFT JOIN ${sumberJoinTable} AS ${alias} ON main.JE_SOURCE = ${alias}.JE_SOURCE`,
               );
               joinedTables.add(alias);
             }
@@ -116,7 +109,7 @@ export function buildSelectClause(
             const sumberJoinTable2 = `dbref.t_sumber_pnp`;
             if (!joinedTables.has(alias)) {
               joinTables.push(
-                `LEFT JOIN ${sumberJoinTable2} AS ${alias} ON main.JE_SOURCE = ${alias}.JE_SOURCE`
+                `LEFT JOIN ${sumberJoinTable2} AS ${alias} ON main.JE_SOURCE = ${alias}.JE_SOURCE`,
               );
               joinedTables.add(alias);
             }
@@ -132,13 +125,17 @@ export function buildSelectClause(
       if (jenisTampilan !== "jangan_tampilkan") {
         switch (jenisTampilan) {
           case "kode":
-            selectColumns.push(`main.${config.columnName} AS ${filterKey}_kode`);
+            selectColumns.push(
+              `main.${config.columnName} AS ${filterKey}_kode`,
+            );
             break;
           case "uraian":
             selectColumns.push(`main.nmprogis AS ${filterKey}_uraian`);
             break;
           case "kode_uraian":
-            selectColumns.push(`main.${config.columnName} AS ${filterKey}_kode`);
+            selectColumns.push(
+              `main.${config.columnName} AS ${filterKey}_kode`,
+            );
             selectColumns.push(`main.nmprogis AS ${filterKey}_uraian`);
             break;
         }
@@ -148,9 +145,14 @@ export function buildSelectClause(
 
     const alias = `${filterKey}_ref`;
     const needsJoinForSelect =
-      config.referenceTable && config.referenceDatabase && (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian");
+      config.referenceTable &&
+      config.referenceDatabase &&
+      (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian");
     const needsJoinForWhere =
-      config.referenceTable && config.referenceDatabase && mengandungKata && mengandungKata.trim();
+      config.referenceTable &&
+      config.referenceDatabase &&
+      mengandungKata &&
+      mengandungKata.trim();
 
     if ((needsJoinForSelect || needsJoinForWhere) && !joinedTables.has(alias)) {
       let referenceTable = config.referenceTable!;
@@ -201,7 +203,30 @@ export function buildSelectClause(
 
     if (jenisTampilan !== "jangan_tampilkan") {
       if (filterKey === "register") {
-        buildRegisterSelectAndJoins({ jenisTampilan, includeRefColumns: Boolean(needsJoinForSelect || needsJoinForWhere), refAlias: `${filterKey}_ref` });
+        // Register filter always needs the reference table for WHERE clause filtering
+        const alias = `${filterKey}_ref`;
+        const registerConfig = FILTER_CONFIG["register"];
+        if (registerConfig) {
+          const year = reportParams.tahun || new Date().getFullYear();
+          const joinTable = `${registerConfig.referenceDatabase}.${registerConfig.referenceTable}_${year}`;
+          const joinCondition = `main.${registerConfig.columnName} = ${alias}.${registerConfig.joinKey}`;
+
+          if (!joinedTables.has(alias)) {
+            joinTables.push(
+              `LEFT JOIN ${joinTable} AS ${alias} ON ${joinCondition}`,
+            );
+            joinedTables.add(alias);
+          }
+
+          buildRegisterSelectAndJoins({
+            jenisTampilan,
+            includeRefColumns: Boolean(needsJoinForSelect || needsJoinForWhere),
+            refAlias: alias,
+          });
+        } else {
+          // Fallback: just select the register column without reference table
+          selectColumns.push(`main.register AS register_kode`);
+        }
         return;
       }
 
@@ -209,20 +234,34 @@ export function buildSelectClause(
         let nameColumn = config.nameColumn!;
         if (filterKey === "akun" && filterValue?.akunType) {
           if (filterValue.akunType === "kodeBkpk") nameColumn = "nmbkpk";
-          else if (filterValue.akunType === "jenisBelanja") nameColumn = "nmgbkpk";
+          else if (filterValue.akunType === "jenisBelanja")
+            nameColumn = "nmgbkpk";
         }
         switch (jenisTampilan) {
           case "kode": {
             if (filterKey === "akun" && filterValue?.akunType === "kodeBkpk") {
-              selectColumns.push(`LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`);
-            } else if (filterKey === "akun" && filterValue?.akunType === "jenisBelanja") {
-              selectColumns.push(`LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`);
+              selectColumns.push(
+                `LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`,
+              );
+            } else if (
+              filterKey === "akun" &&
+              filterValue?.akunType === "jenisBelanja"
+            ) {
+              selectColumns.push(
+                `LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`,
+              );
             } else if (filterKey === "kodeBkpk") {
-              selectColumns.push(`LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`);
+              selectColumns.push(
+                `LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`,
+              );
             } else if (filterKey === "jenisBelanja") {
-              selectColumns.push(`LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`);
+              selectColumns.push(
+                `LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`,
+              );
             } else if (filterKey !== "register") {
-              selectColumns.push(`main.${config.columnName} AS ${filterKey}_kode`);
+              selectColumns.push(
+                `main.${config.columnName} AS ${filterKey}_kode`,
+              );
             }
             break;
           }
@@ -232,15 +271,28 @@ export function buildSelectClause(
           }
           case "kode_uraian": {
             if (filterKey === "akun" && filterValue?.akunType === "kodeBkpk") {
-              selectColumns.push(`LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`);
-            } else if (filterKey === "akun" && filterValue?.akunType === "jenisBelanja") {
-              selectColumns.push(`LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`);
+              selectColumns.push(
+                `LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`,
+              );
+            } else if (
+              filterKey === "akun" &&
+              filterValue?.akunType === "jenisBelanja"
+            ) {
+              selectColumns.push(
+                `LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`,
+              );
             } else if (filterKey === "kodeBkpk") {
-              selectColumns.push(`LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`);
+              selectColumns.push(
+                `LEFT(main.${config.columnName}, 4) AS ${filterKey}_kode`,
+              );
             } else if (filterKey === "jenisBelanja") {
-              selectColumns.push(`LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`);
+              selectColumns.push(
+                `LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`,
+              );
             } else {
-              selectColumns.push(`main.${config.columnName} AS ${filterKey}_kode`);
+              selectColumns.push(
+                `main.${config.columnName} AS ${filterKey}_kode`,
+              );
             }
             selectColumns.push(`${alias}.${nameColumn} AS ${filterKey}_uraian`);
             break;
@@ -252,13 +304,21 @@ export function buildSelectClause(
             selectColumns.push(`main.${config.columnName} AS ${filterKey}`);
             break;
           case "uraian":
-            if (config.nameColumn) selectColumns.push(`${config.nameColumn} AS ${filterKey}_uraian`);
-            else selectColumns.push(`main.${config.columnName} AS ${filterKey}_uraian`);
+            if (config.nameColumn)
+              selectColumns.push(`${config.nameColumn} AS ${filterKey}_uraian`);
+            else
+              selectColumns.push(
+                `main.${config.columnName} AS ${filterKey}_uraian`,
+              );
             break;
           case "kode_uraian":
             selectColumns.push(`main.${config.columnName} AS ${filterKey}`);
-            if (config.nameColumn) selectColumns.push(`${config.nameColumn} AS ${filterKey}_uraian`);
-            else selectColumns.push(`main.${config.columnName} AS ${filterKey}_uraian`);
+            if (config.nameColumn)
+              selectColumns.push(`${config.nameColumn} AS ${filterKey}_uraian`);
+            else
+              selectColumns.push(
+                `main.${config.columnName} AS ${filterKey}_uraian`,
+              );
             break;
         }
       }
@@ -268,12 +328,17 @@ export function buildSelectClause(
   const pembulatan = reportParams.pembulatan || "satuan";
   const divisor = getPembulatanDivisor(pembulatan);
 
-  const tematikKategori = (reportParams as { tematikKategori?: string }).tematikKategori;
+  const tematikKategori = (reportParams as { tematikKategori?: string })
+    .tematikKategori;
   if (tematikKategori) {
     const mandatoryColumns = getCategoryMandatoryColumns(tematikKategori);
     const categoryMandatoryColumns = mandatoryColumns
       .sort((a, b) => a.order - b.order)
-      .map((col) => col.sqlExpression.replace(/\{divisor\}/g, divisor.toString()) + ` AS ${col.key}`);
+      .map(
+        (col) =>
+          col.sqlExpression.replace(/\{divisor\}/g, divisor.toString()) +
+          ` AS ${col.key}`,
+      );
     selectColumns.push(...categoryMandatoryColumns);
   }
 
@@ -281,7 +346,8 @@ export function buildSelectClause(
   const cutOffNum = parseInt(cutOffMonth);
 
   const realizationColumns: string[] = [];
-  for (let month = 1; month <= cutOffNum; month++) realizationColumns.push(`real${month}`);
+  for (let month = 1; month <= cutOffNum; month++)
+    realizationColumns.push(`real${month}`);
   const realizationSum = realizationColumns.join(" + ");
 
   if (reportParams.tipeLaporan === "semua_kontrak") {
@@ -290,11 +356,17 @@ export function buildSelectClause(
     selectColumns.push("CAST(main.tgkontrak AS CHAR) AS tgkontrak");
     selectColumns.push("CAST(main.tgterima AS CHAR) AS tgterima");
     selectColumns.push("main.termin_ke AS termin_ke");
-    selectColumns.push("CAST(main.tgljatuhtempo_termin AS CHAR) AS tgljatuhtempo_termin");
+    selectColumns.push(
+      "CAST(main.tgljatuhtempo_termin AS CHAR) AS tgljatuhtempo_termin",
+    );
     selectColumns.push("CAST(main.tgljatuhtempo AS CHAR) AS tgljatuhtempo");
     selectColumns.push("main.deskripsi AS deskripsi");
-    selectColumns.push(`ROUND(SUM(CONVERT(main.pagu, SIGNED)) / ${divisor}, 0) AS PAGU_KONTRAK`);
-    selectColumns.push(`ROUND(SUM(main.realisasi) / ${divisor}, 0) AS REALISASI_KONTRAK`);
+    selectColumns.push(
+      `ROUND(SUM(CONVERT(main.pagu, SIGNED)) / ${divisor}, 0) AS PAGU_KONTRAK`,
+    );
+    selectColumns.push(
+      `ROUND(SUM(main.realisasi) / ${divisor}, 0) AS REALISASI_KONTRAK`,
+    );
     return { selectColumns, joinTables };
   }
 
@@ -305,11 +377,17 @@ export function buildSelectClause(
     selectColumns.push("CAST(main.tgkontrak AS CHAR) AS tgkontrak");
     selectColumns.push("CAST(main.tgterima AS CHAR) AS tgterima");
     selectColumns.push("main.termin_ke AS termin_ke");
-    selectColumns.push("CAST(main.tgljatuhtempo_termin AS CHAR) AS tgljatuhtempo_termin");
+    selectColumns.push(
+      "CAST(main.tgljatuhtempo_termin AS CHAR) AS tgljatuhtempo_termin",
+    );
     selectColumns.push("CAST(main.tgljatuhtempo AS CHAR) AS tgljatuhtempo");
     selectColumns.push("main.deskripsi AS deskripsi");
-    selectColumns.push(`ROUND(SUM(CONVERT(main.pagu, SIGNED)) / ${divisor}, 0) AS PAGU_KONTRAK`);
-    selectColumns.push(`ROUND(SUM(main.realisasi) / ${divisor}, 0) AS REALISASI_KONTRAK`);
+    selectColumns.push(
+      `ROUND(SUM(CONVERT(main.pagu, SIGNED)) / ${divisor}, 0) AS PAGU_KONTRAK`,
+    );
+    selectColumns.push(
+      `ROUND(SUM(main.realisasi) / ${divisor}, 0) AS REALISASI_KONTRAK`,
+    );
     return { selectColumns, joinTables };
   }
 
@@ -326,8 +404,10 @@ export function buildSelectClause(
   }
 
   if (reportParams.tipeLaporan === "pagu_apbn") {
-    selectColumns.push(`ROUND(SUM(CONVERT(main.pagu_apbn, SIGNED)) / ${divisor}, 0) AS PAGU_APBN`);
-    selectColumns.push(`ROUND(SUM(main.pagu) / ${divisor}, 0) AS PAGU_DIPA`);
+    selectColumns.push(
+      `ROUND(SUM(CONVERT(main.pagu_apbn, SIGNED)) / ${divisor}, 0) AS PAGU_APBN`,
+    );
+    selectColumns.push(`ROUND(SUM(main.pagu_dipa) / ${divisor}, 0) AS PAGU_DIPA`);
   } else if (reportParams.tipeLaporan === "pagu_dan_blokir") {
     selectColumns.push(`ROUND(SUM(main.pagu) / ${divisor}, 0) AS PAGU`);
     selectColumns.push(`ROUND(SUM(main.blokir) / ${divisor}, 0) AS BLOKIR`);
@@ -348,28 +428,40 @@ export function buildSelectClause(
         const cumulativeRealColumns: string[] = [];
         for (let i = 1; i <= month; i++) cumulativeRealColumns.push(`real${i}`);
         const cumulativeSum = cumulativeRealColumns.join(" + ");
-        selectColumns.push(`ROUND(SUM(${cumulativeSum}) / ${divisor}, 0) AS ${monthName}`);
+        selectColumns.push(
+          `ROUND(SUM(${cumulativeSum}) / ${divisor}, 0) AS ${monthName}`,
+        );
       } else {
-        selectColumns.push(`ROUND(SUM(real${month}) / ${divisor}, 0) AS ${monthName}`);
+        selectColumns.push(
+          `ROUND(SUM(real${month}) / ${divisor}, 0) AS ${monthName}`,
+        );
       }
     }
     selectColumns.push(`ROUND(SUM(main.blokir) / ${divisor}, 0) AS BLOKIR`);
   } else if (reportParams.tipeLaporan === "pergerakan_pagu_bulanan") {
     for (let month = 1; month <= cutOffNum; month++) {
       const monthName = MONTH_NAMES[month - 1];
-      selectColumns.push(`ROUND(SUM(pagu${month}) / ${divisor}, 0) AS ${monthName}`);
+      selectColumns.push(
+        `ROUND(SUM(pagu${month}) / ${divisor}, 0) AS ${monthName}`,
+      );
     }
   } else if (reportParams.tipeLaporan === "pergerakan_blokir_bulanan") {
     for (let month = 1; month <= cutOffNum; month++) {
       const monthName = MONTH_NAMES[month - 1];
-      selectColumns.push(`ROUND(SUM(blokir${month}) / ${divisor}, 0) AS ${monthName}`);
+      selectColumns.push(
+        `ROUND(SUM(blokir${month}) / ${divisor}, 0) AS ${monthName}`,
+      );
     }
-  } else if (reportParams.tipeLaporan === "pergerakan_blokir_bulanan_per_jenis") {
+  } else if (
+    reportParams.tipeLaporan === "pergerakan_blokir_bulanan_per_jenis"
+  ) {
     selectColumns.push(`main.kdblokir AS kdblokir_kode`);
     selectColumns.push(`main.nmblokir AS nmblokir_uraian`);
     for (let month = 1; month <= cutOffNum; month++) {
       const monthName = MONTH_NAMES[month - 1];
-      selectColumns.push(`ROUND(SUM(blokir${month}) / ${divisor}, 0) AS ${monthName}`);
+      selectColumns.push(
+        `ROUND(SUM(blokir${month}) / ${divisor}, 0) AS ${monthName}`,
+      );
     }
   } else if (reportParams.tipeLaporan === "pagu_dan_blokir") {
     // nothing extra
@@ -385,7 +477,9 @@ export function buildSelectClause(
     }
     monthly.forEach(([col, alias]) => {
       if (/^r(jan|feb|mar|apr|mei|jun|jul|ags|sep|okt|nov|des)$/i.test(alias)) {
-        selectColumns.push(`ROUND(SUM(main.${col}) / ${divisor}, 0) AS ${alias}`);
+        selectColumns.push(
+          `ROUND(SUM(main.${col}) / ${divisor}, 0) AS ${alias}`,
+        );
       } else {
         selectColumns.push(`SUM(main.${col}) AS ${alias}`);
       }
@@ -393,8 +487,11 @@ export function buildSelectClause(
     selectColumns.push(`main.os AS os`);
     selectColumns.push(`main.ket AS ket`);
   } else {
-    selectColumns.push(`ROUND(SUM(${realizationSum}) / ${divisor}, 0) AS REALISASI`);
-    if (cfg.addBlokirAfterReal) selectColumns.push(`ROUND(SUM(main.blokir) / ${divisor}, 0) AS BLOKIR`);
+    selectColumns.push(
+      `ROUND(SUM(${realizationSum}) / ${divisor}, 0) AS REALISASI`,
+    );
+    if (cfg.addBlokirAfterReal)
+      selectColumns.push(`ROUND(SUM(main.blokir) / ${divisor}, 0) AS BLOKIR`);
   }
 
   return { selectColumns, joinTables };
