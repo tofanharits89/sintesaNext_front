@@ -181,7 +181,7 @@ export function ConversationList({
                       >
                         {otherParticipant?.name ||
                           otherParticipant?.username ||
-                          `User ${otherParticipant?.id?.slice(0, 8) || 'Unknown'}`}
+                          "Unknown User"}
                       </h4>
 
                       {/* Role badge after name */}

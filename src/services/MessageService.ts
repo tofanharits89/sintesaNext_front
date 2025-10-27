@@ -120,7 +120,7 @@ export class MessageService {
     content: string;
     senderId: string;
   }): Promise<any> {
-    const response = await fetch("/api/messages", {
+    const response = await fetch("/api/v1/messaging/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(args),

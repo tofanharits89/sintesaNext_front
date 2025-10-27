@@ -24,10 +24,11 @@ export function useMessageOptimisticUpdates() {
     });
 
     // Update conversation list
-    const conversationKey = queryKeyFactories.messaging.conversations(user?.id);
+    // Use the same key as useConversationsRQ for consistency
+    const conversationKey = ["conversations", user?.id || "anonymous", "list"];
     queryClient.setQueryData(conversationKey, (old: any[] = []) => {
-      return old.map((conv: any) => 
-        conv.id === conversationId 
+      return old.map((conv: any) =>
+        conv.id === conversationId
           ? { ...conv, lastMessage: message, lastMessageAt: message.createdAt }
           : conv
       );

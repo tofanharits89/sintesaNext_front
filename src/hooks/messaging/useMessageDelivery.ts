@@ -87,7 +87,7 @@ export function useMessageDelivery() {
       } catch (error) {
         // Fallback to REST API
         try {
-          const response = await fetchWithTimeout('/api/messages', {
+          const response = await fetchWithTimeout("/api/v1/messaging/send", {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
