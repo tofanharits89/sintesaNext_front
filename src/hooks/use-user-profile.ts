@@ -43,8 +43,24 @@ export function useUserProfile() {
 
 export function useInvalidateUserProfile() {
   const queryClient = useQueryClient();
-  
+
   return () => {
     queryClient.invalidateQueries({ queryKey: ['auth', 'user'] }); // Consistent key
   };
+}
+
+/**
+ * Client-side function to invalidate user profile cache
+ * Use this in client components when auth state changes
+ */
+export async function invalidateUserProfileCacheClient(): Promise<void> {
+  // Dynamic import to get access to queryClient
+  const { useQueryClient } = await import('@tanstack/react-query');
+
+  // This hook can only be used in client components wrapped with QueryClientProvider
+  // For session store, we'll use a different approach
+  const queryClient = (window as any).__REACT_QUERY_CLIENT__;
+  if (queryClient) {
+    queryClient.invalidateQueries({ queryKey: ['auth', 'user'] });
+  }
 }

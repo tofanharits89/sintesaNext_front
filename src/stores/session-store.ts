@@ -87,6 +87,22 @@ export const useAuthSessionStore = create<AuthSessionState>()(
           if (typeof window !== 'undefined') {
             sessionStorage.removeItem('sintesa_logout_in_progress');
           }
+
+          // Invalidate React Query cache to prevent stale user data
+          // This fixes the issue where navbar shows old user after quick logout→login
+          try {
+            // Dynamically import and execute cache invalidation
+            // Use clearAuthCaches to properly invalidate ['auth'] queries
+            import('@/lib/auth/simplified-cache-events').then(({ clearAuthCaches }) => {
+              clearAuthCaches();
+              console.log('[Auth] Cache invalidated after login');
+            }).catch((error) => {
+              console.error('Failed to invalidate auth cache:', error);
+            });
+          } catch (error) {
+            console.error('Failed to invalidate auth cache:', error);
+          }
+
           set({
             isAuthenticated: authenticated,
             user,

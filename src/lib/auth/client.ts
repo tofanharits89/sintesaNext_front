@@ -290,19 +290,6 @@ export class AuthClient {
 // Create singleton instance
 export const authClient = new AuthClient();
 
-// Export convenience functions
-export const login = (
-  username: string,
-  password: string,
-  rememberMe?: boolean,
-) => authClient.login(username, password, rememberMe);
-
-export const logout = () => authClient.logout();
-export const getCurrentUser = () => authClient.getCurrentUser();
-export const validateSession = () => authClient.validateSession();
-export const refreshToken = () => authClient.refreshToken();
-export const getCSRFToken = () => authClient.getCSRFToken();
-
 // Export types
 export type { AuthResponse };
 export type { User as AuthUser };

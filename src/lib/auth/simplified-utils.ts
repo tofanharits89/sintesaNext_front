@@ -60,31 +60,6 @@ export function clearDataQueries() {
   }
 }
 
-export function isQueryClientAvailable(): boolean {
-  return globalQueryClient !== null;
-}
-
-// ============================================================================
-// Auth Redirect Utilities
-// ============================================================================
-
-/**
- * Simple auth redirect utility
- */
-export function redirectToLoginIfNotAuth() {
-  if (typeof window === 'undefined') return;
-  
-  const hasToken = document.cookie.includes('accessToken=');
-  
-  if (!hasToken) {
-    window.location.href = '/login';
-    return;
-  }
-  
-  // For server-side validation, this would be handled by middleware
-  // Client-side we rely on the auth state from useAuth hook
-}
-
 // ============================================================================
 // Server-Safe Cache Utilities (for utils-server.ts)
 // ============================================================================
@@ -119,17 +94,3 @@ export interface AuthCacheEntry {
   timestamp: number;
   ttl?: number;
 }
-
-// ============================================================================
-// Export for backward compatibility
-// ============================================================================
-
-export default {
-  clearAuthCacheOnFail,
-  clearDataQueries,
-  redirectToLoginIfNotAuth,
-  getAuthCache,
-  setAuthCache,
-  invalidateAuthCache,
-  hashKey,
-};

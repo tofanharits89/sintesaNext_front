@@ -108,36 +108,4 @@ export function clearDataCaches() {
   console.log("[Cache] Data caches cleared");
 }
 
-// ============================================================================
-// Export for backward compatibility
-// ============================================================================
 
-// Create cacheEvents object for backward compatibility
-export const cacheEvents = {
-  invalidateAuth: clearAuthCaches,
-  invalidateData: clearDataCaches,
-  clearAllCaches,
-  clearAuthCaches,
-  clearDataCaches,
-  onLogin: clearDataQueries, // Simplified login event
-  onSessionExpired: clearAuthCaches, // Simplified session expiry
-  onTokenRefresh: clearDataCaches, // Simplified token refresh
-};
-
-// Export clearUserCaches for backward compatibility
-export function clearUserCaches() {
-  // Simplified user cache clearing
-  if (globalQueryClient) {
-    globalQueryClient.invalidateQueries({ queryKey: ['user'] });
-    globalQueryClient.removeQueries({ queryKey: ['user'] });
-  }
-  
-  console.log("[Cache] User caches cleared");
-}
-
-export default {
-  clearAllCaches,
-  clearAuthCaches,
-  clearDataCaches,
-  clearUserCaches,
-};
