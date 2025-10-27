@@ -5,7 +5,7 @@
  */
 
 import { logger } from "../utils/logger";
-import { http, clearLogoutGuard } from "../api/httpClient";
+import { http, clearLogoutGuard, setPostLoginGrace } from "../api/httpClient";
 import { apiPath } from "../config/base-path";
 
 // User interface (matches backend API response)
@@ -68,6 +68,8 @@ export class AuthClient {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-Debug-Source": "authClient.login",
+          "X-Debug-Trace": (Date.now().toString(36) + "-" + Math.random().toString(36).slice(2,8)).toUpperCase(),
         },
         credentials: "include",
         body: JSON.stringify({ username, password, rememberMe }),
@@ -87,6 +89,8 @@ export class AuthClient {
         logger.info("[Auth Client] Parsed user data:", data.data.user);
         // Reset any stale logout guard that could block follow-up requests
         try { clearLogoutGuard(); } catch {}
+        // Enter post-login grace window to avoid refresh/401 races
+        try { setPostLoginGrace(1500); } catch {}
         return {
           success: true,
           user: data.data.user,
@@ -132,7 +136,11 @@ export class AuthClient {
 
       const response = await fetch(`${this.baseURL}/auth/logout`, {
         method: "POST",
-        headers,
+        headers: {
+          ...headers,
+          "X-Debug-Source": "authClient.logout",
+          "X-Debug-Trace": (Date.now().toString(36) + "-" + Math.random().toString(36).slice(2,8)).toUpperCase(),
+        },
         credentials: "include",
       });
 

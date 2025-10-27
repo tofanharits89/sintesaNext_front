@@ -54,7 +54,18 @@ if (typeof window !== "undefined") {
   setupRateLimitInterceptor(http);
 }
 
-// Request interceptor: attach CSRF header if available and set Content-Type
+// Simple client trace id for correlation
+function genTraceId() {
+  try {
+    return (
+      Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8)
+    ).toUpperCase();
+  } catch {
+    return String(Date.now());
+  }
+}
+
+// Request interceptor: attach CSRF header if available, set Content-Type, and add debug headers
 http.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   // Block all requests if we're logging out (except logout and profile requests)
   if (isLoggingOut &&
@@ -64,12 +75,16 @@ http.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
     throw new Error("Logout in progress");
   }
 
+  const h = (config.headers ||= {} as any);
+
+  // Correlation headers
+  if (!h["X-Debug-Trace"]) h["X-Debug-Trace"] = genTraceId();
+  if (!h["X-Debug-Source"]) h["X-Debug-Source"] = "httpClient";
+
   const method = (config.method || "get").toLowerCase();
 
   // Set Content-Type to application/json for non-FormData requests
   if (["post", "put", "patch", "delete"].includes(method)) {
-    const h = (config.headers ||= {} as any);
-
     // Only set Content-Type if it's not FormData (let browser set multipart/form-data)
     if (!(config.data instanceof FormData) && !h["Content-Type"]) {
       h["Content-Type"] = "application/json";
@@ -94,6 +109,16 @@ http.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
 // ✅ IMPROVED: Simplified token refresh with single-flight pattern
 let refreshPromise: Promise<void> | null = null;
 let isLoggingOut = false; // Flag to prevent requests during logout/redirect
+
+// Post-login grace window to avoid refresh/401 races during cookie propagation
+let postLoginUntil = 0;
+let lastLoginAt = 0;
+
+export function setPostLoginGrace(ms: number = 1500) {
+  const now = Date.now();
+  lastLoginAt = now;
+  postLoginUntil = now + ms;
+}
 
 // Debug: Track when logout guard is set
 if (typeof window !== "undefined") {
@@ -132,7 +157,7 @@ export function clearLogoutGuard() {
 }
 
 // ✅ IMPROVED: Simplified token refresh with single-flight pattern
-async function refreshTokens(): Promise<void> {
+export async function refreshTokens(): Promise<void> {
   // If refresh already in progress, wait for it
   if (refreshPromise) {
     return refreshPromise;
@@ -153,6 +178,8 @@ async function refreshTokens(): Promise<void> {
         headers: {
           "Content-Type": "application/json",
           "X-CSRF-Token": csrf,
+          "X-Debug-Source": "httpClient.refresh",
+          "X-Debug-Trace": genTraceId(),
         },
         body: JSON.stringify({}),
       });
@@ -170,7 +197,7 @@ async function refreshTokens(): Promise<void> {
       clearCsrfCache();
       clearAuthCacheOnFail();
 
-      // Handle refresh failure (logout and redirect)
+      // Handle refresh failure (redirect; gate server logout separately)
       await handleRefreshFailure(401);
 
       throw err;
@@ -189,18 +216,14 @@ async function refreshTokens(): Promise<void> {
  * Handle refresh token failure by calling logout API and redirecting to login
  */
 async function handleRefreshFailure(status: number): Promise<void> {
-  // Prevent multiple simultaneous logout attempts
+  // Prevent multiple simultaneous flows
   if (isLoggingOut) {
-    console.log("[Auth] Already logging out, skipping duplicate logout");
-    throw new Error("Already logging out");
+    console.log("[Auth] Request blocked - logout in progress");
+    throw new Error("Logout in progress");
   }
 
-  isLoggingOut = true;
-  if (typeof window !== "undefined") {
-    (window as any).__isLoggingOut = true;
-  }
   console.log(
-    `[Auth] ❌ Refresh failed with status ${status} - logging out and redirecting`,
+    `[Auth] ❌ Refresh failed with status ${status} - redirecting`,
   );
 
   // Clear non-HTTP-only cookies and CSRF cache
@@ -216,28 +239,30 @@ async function handleRefreshFailure(status: number): Promise<void> {
     console.warn("[Auth] Failed to clear Zustand store:", e);
   }
 
-  // Call backend logout to clear HTTP-only cookies (only once)
-  try {
-    await fetch(apiPath("/auth/logout"), {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "X-Skip-Auth-Refresh": "true", // Prevent this request from triggering refresh
-      },
-    });
-    console.log("[Auth] Backend logout successful");
-  } catch (logoutError) {
-    console.warn(
-      "[Auth] Backend logout failed (continuing anyway):",
-      logoutError,
-    );
+  // Gate server-side logout to avoid self-sabotage right after login
+  const safeToServerLogout = Date.now() - lastLoginAt >= 2000;
+  if (safeToServerLogout) {
+    isLoggingOut = true;
+    if (typeof window !== "undefined") {
+      (window as any).__isLoggingOut = true;
+    }
+    try {
+      await fetch(apiPath("/auth/logout"), {
+        method: "POST",
+        credentials: "include",
+        headers: { "X-Skip-Auth-Refresh": "true", "X-Debug-Source": "httpClient.handleRefreshFailure", "X-Debug-Trace": genTraceId() },
+      });
+      console.log("[Auth] Backend logout successful");
+    } catch (logoutError) {
+      console.warn("[Auth] Backend logout failed (continuing anyway):", logoutError);
+    }
+  } else {
+    console.log("[Auth] Skipping backend logout during post-login grace window");
   }
 
   // Redirect to login page immediately
   if (typeof window !== "undefined") {
     console.log("[Auth] 🚪 Redirecting to login - session invalidated");
-
-    // Immediate redirect - don't wait
     window.location.href =
       "/login?reason=session_expired&message=" +
       encodeURIComponent("Your session has expired. Please log in again.");
@@ -363,6 +388,23 @@ http.interceptors.response.use(
       !isLogoutOrRefresh &&
       !original._skipAuthRefresh
     ) {
+      // Suppress refresh during short post-login window to avoid race with cookie propagation
+      if (Date.now() < postLoginUntil) {
+        const delay = 400 + Math.floor(Math.random() * 300); // 400–700ms jitter
+        console.log("[Auth] 401 within post-login grace; retrying once after", delay, "ms", {
+          url: original.url,
+        });
+        original._retry = true;
+        return new Promise((resolve, reject) => {
+          setTimeout(() => {
+            http
+              .request(original)
+              .then(resolve)
+              .catch(reject);
+          }, delay);
+        });
+      }
+
       console.log(
         "[Auth] 401 from:",
         original.url,
@@ -439,12 +481,14 @@ backendHttp.interceptors.request.use(
       throw new Error("Logout in progress");
     }
 
+    const h = (config.headers ||= {} as any);
+    if (!h["X-Debug-Trace"]) h["X-Debug-Trace"] = genTraceId();
+    if (!h["X-Debug-Source"]) h["X-Debug-Source"] = "backendHttp";
+
     const method = (config.method || "get").toLowerCase();
 
     // Set Content-Type to application/json for non-FormData requests
     if (["post", "put", "patch", "delete"].includes(method)) {
-      const h = (config.headers ||= {} as any);
-
       // Only set Content-Type if it's not FormData (let browser set multipart/form-data)
       if (!(config.data instanceof FormData) && !h["Content-Type"]) {
         h["Content-Type"] = "application/json";

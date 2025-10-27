@@ -285,18 +285,9 @@ export class ReconnectionManager {
    * Refresh authentication token
    */
   private async refreshAuthToken(): Promise<void> {
-    // Use same-origin Next API with base path helper; it proxies to backend and forwards cookies
-    const { apiPath } = await import("@/lib/config/base-path");
-    const response = await fetch(apiPath("/auth/refresh"), {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    });
-
-    if (!response.ok) {
-      throw new Error("Token refresh failed");
-    }
+    // Delegate to shared single-flight refresh to avoid parallel refreshers
+    const { refreshTokens } = await import("@/lib/api/httpClient");
+    await refreshTokens();
   }
 
   /**
