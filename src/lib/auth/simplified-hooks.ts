@@ -6,7 +6,7 @@
  * Removed: complex cache events, cross-tab sync, redundant timers
  */
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -119,14 +119,19 @@ export function useAuth(): UseAuthReturn {
         authState.setLoading(true);
         clearCache();
 
+        const loginExtras =
+          options.captcha !== undefined || options.expectedCaptcha !== undefined
+            ? {
+                ...(options.captcha !== undefined ? { captcha: options.captcha } : {}),
+                ...(options.expectedCaptcha !== undefined ? { expectedCaptcha: options.expectedCaptcha } : {}),
+              }
+            : undefined;
+
         const result = await authClient.login(
           username,
           password,
           options.rememberMe ?? false,
-          {
-            captcha: options.captcha,
-            expectedCaptcha: options.expectedCaptcha,
-          },
+          loginExtras,
         );
 
         if (result.success && result.user) {
@@ -347,7 +352,7 @@ export function useAuthRedirect(options: UseAuthRedirectOptions = {}) {
 // Export Types and Legacy Compatibility
 // ============================================================================
 
-export type { AuthUser as User, AuthLoginOptions };
+export type { AuthUser as User };
 export { useAuth as useUnifiedAuth };
 export { canManageUsers, canAccessSettings, getRoleDisplayName }; // Export helper functions
 export default useAuth;
