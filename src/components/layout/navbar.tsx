@@ -722,10 +722,25 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
 
                       // 3) Fire backend logout in background (don't wait)
                       try {
+                        // Get CSRF token for logout
+                        const getCsrfToken = (): string | null => {
+                          const value = `; ${document.cookie}`;
+                          const parts = value.split(`; XSRF-TOKEN=`);
+                          if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+                          return null;
+                        };
+                        
+                        const csrfToken = getCsrfToken();
+                        const headers: Record<string, string> = {};
+                        if (csrfToken) {
+                          headers['X-CSRF-Token'] = csrfToken;
+                        }
+                        
                         void fetch(apiPath("/auth/logout"), {
                           method: "POST",
                           credentials: "include",
                           keepalive: true,
+                          headers,
                         });
                       } catch {}
 

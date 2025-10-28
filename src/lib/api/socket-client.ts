@@ -317,10 +317,26 @@ export class SocketClient {
     const reason = data.reason || 'SESSION_EXPIRED';
     const displayMessage = data.displayMessage || 'Your session has expired';
 
+    // Get CSRF token for logout
+    const getCsrfToken = (): string | null => {
+      if (typeof document === 'undefined') return null;
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; XSRF-TOKEN=`);
+      if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+      return null;
+    };
+    
+    const csrfToken = getCsrfToken();
+    const headers: Record<string, string> = {};
+    if (csrfToken) {
+      headers['X-CSRF-Token'] = csrfToken;
+    }
+
     // Call backend logout API (versioned)
     fetch(backendPath('/auth/logout'), {
       method: 'POST',
       credentials: 'include',
+      headers,
     }).catch(() => {
       // Ignore errors during logout
     });

@@ -285,14 +285,30 @@ async function handleRefreshFailure(status: number): Promise<void> {
       (window as any).__isLoggingOut = true;
     }
     try {
+      // Get CSRF token for logout
+      const getCsrfToken = (): string | null => {
+        if (typeof document === 'undefined') return null;
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; XSRF-TOKEN=`);
+        if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+        return null;
+      };
+      
+      const csrfToken = getCsrfToken();
+      const headers: Record<string, string> = {
+        "X-Skip-Auth-Refresh": "true",
+        "X-Debug-Source": "httpClient.handleRefreshFailure",
+        "X-Debug-Trace": genTraceId(),
+      };
+      
+      if (csrfToken) {
+        headers["X-CSRF-Token"] = csrfToken;
+      }
+      
       await fetch(apiPath("/auth/logout"), {
         method: "POST",
         credentials: "include",
-        headers: {
-          "X-Skip-Auth-Refresh": "true",
-          "X-Debug-Source": "httpClient.handleRefreshFailure",
-          "X-Debug-Trace": genTraceId(),
-        },
+        headers,
       });
       console.log("[Auth] Backend logout successful");
     } catch (logoutError) {
