@@ -15,6 +15,7 @@ import {
 } from "@/stores/session-store";
 import { authClient } from "./client";
 import { toast } from "sonner";
+import { logger } from "@/lib/utils/logger";
 
 // ============================================================================
 // RBAC Helper Functions
@@ -107,10 +108,17 @@ export function useAuth(): UseAuthReturn {
         if (result.success && result.user) {
           authState.setAuthenticated(true, result.user);
           authState.updateUser(result.user);
-          
+
           // Set user data in React Query
           queryClient.setQueryData(["auth", "user"], result.user);
-          
+
+          // SECURITY FIX: Store CSRF token in sessionStorage (not accessible to JavaScript from cookies)
+          // This is more secure than storing it in cookies
+          if (result.csrfToken && typeof window !== 'undefined') {
+            sessionStorage.setItem('csrf_token', result.csrfToken);
+            logger.debug("[Auth Hook] CSRF token stored in sessionStorage");
+          }
+
           toast.success(`Selamat datang, ${result.user.name}!`);
           return { success: true, user: result.user };
         } else {

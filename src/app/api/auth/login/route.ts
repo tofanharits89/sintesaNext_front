@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { backendPath } from "@/lib/api/backend";
 import { forwardSetCookies, getSetCookieValues, extractCookieMetadata } from "@/lib/utils/cookie-helpers";
+import { filterCookiesAllowlist, getSafeCookies } from "@/lib/utils/cookie-filter";
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
@@ -15,51 +16,33 @@ export async function POST(request: NextRequest) {
 
   console.log("[Login Route] ========== LOGIN REQUEST START ==========");
   console.log("[Login Route] Username attempting to login:", username);
-  const cookieMetadata = extractCookieMetadata(request.headers.get("cookie") || "");
+
+  // SECURITY FIX: Use allowlist-based cookie filtering
+  // Only explicitly allowed cookies are forwarded to backend
+  // This prevents edge cases where denylist might miss unexpected cookie names
+  const cookieHeader = request.headers.get("cookie") || "";
+  const cookieMetadata = extractCookieMetadata(cookieHeader);
   console.log("[Login Route] Incoming cookies metadata:", cookieMetadata);
 
-  // Call backend login API and forward Set-Cookie headers
-  let cookie = request.headers.get("cookie") || "";
+  // Filter cookies using allowlist approach (more secure and robust)
+  let filteredCookie = filterCookiesAllowlist(cookieHeader);
+  const filteredMetadata = extractCookieMetadata(filteredCookie);
+
+  console.log("[Login Route] Cookie filtering applied:");
+  console.log("[Login Route] Original cookie count:", cookieHeader.split(";").filter(c => c.trim()).length);
+  console.log("[Login Route] Filtered cookie count:", filteredCookie.split(";").filter(c => c.trim()).length);
+  console.log("[Login Route] Filtered cookies metadata:", filteredMetadata);
+
+  // Get CSRF token from request
   let xsrf =
     request.cookies.get("XSRF-TOKEN")?.value ||
     request.cookies.get("_csrf")?.value;
-
-  // CRITICAL: Check if old auth cookies are present (both old and new names)
-  const hasOldAccessToken = cookie.includes("accessToken=") || cookie.includes("access_token=");
-  const hasOldRefreshToken = cookie.includes("refreshToken=") || cookie.includes("refresh_token=");
-
-  if (hasOldAccessToken || hasOldRefreshToken) {
-    console.warn("[Login Route] ⚠️ OLD AUTH COOKIES DETECTED!");
-    console.warn("[Login Route] Old auth cookies detected:", {
-      hasAccessToken: hasOldAccessToken,
-      hasRefreshToken: hasOldRefreshToken,
-      cookieCount: cookie.split(';').filter(c => c.trim()).length
-    });
-    console.warn(
-      "[Login Route] These old cookies will be sent to backend and might cause issues!",
-    );
-
-    // Strip old auth cookies before sending to backend (both old and new names)
-    const cookieParts = cookie.split(";").map((c) => c.trim());
-    const filteredCookies = cookieParts.filter(
-      (c) =>
-        !c.startsWith("accessToken=") &&
-        !c.startsWith("access_token=") &&
-        !c.startsWith("refreshToken=") &&
-        !c.startsWith("refresh_token=") &&
-        !c.startsWith("authToken=") &&
-        !c.startsWith("auth_token="),
-    );
-    cookie = filteredCookies.join("; ");
-    const newMetadata = extractCookieMetadata(cookie);
-    console.log("[Login Route] Stripped old auth cookies. New metadata:", newMetadata);
-  }
 
   // If no XSRF token present, prime it by calling backend /csrf-token and reuse its cookies for login
   if (!xsrf) {
     const csrfResp = await fetch(backendPath("/csrf-token"), {
       method: "GET",
-      headers: { ...(cookie ? { cookie } : {}) },
+      headers: { ...(filteredCookie ? { cookie: filteredCookie } : {}) },
       credentials: "include",
       cache: "no-store",
     });
@@ -77,7 +60,10 @@ export async function POST(request: NextRequest) {
         .map((c) => c.split(";")[0] ?? "")
         .filter(Boolean)
         .join("; ");
-      cookie = [cookie, newCookies].filter(Boolean).join("; ");
+      // Use filtered cookie as base, then merge new cookies
+      const mergedCookies = [filteredCookie, newCookies].filter(Boolean).join("; ");
+      // Re-filter to ensure only allowed cookies are forwarded
+      filteredCookie = filterCookiesAllowlist(mergedCookies);
     }
   }
 
@@ -95,14 +81,14 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  let resp = await doLogin(cookie, xsrf);
+  let resp = await doLogin(filteredCookie, xsrf);
 
   // If CSRF failed with 403, force-refresh token and retry once
   if (resp.status === 403) {
     try {
       const csrfResp2 = await fetch(backendPath("/csrf-token"), {
         method: "GET",
-        headers: { ...(cookie ? { cookie } : {}) },
+        headers: { ...(filteredCookie ? { cookie: filteredCookie } : {}) },
         credentials: "include",
         cache: "no-store",
       });
@@ -119,10 +105,12 @@ export async function POST(request: NextRequest) {
           .map((c) => c.split(";")[0] ?? "")
           .filter(Boolean)
           .join("; ");
-        cookie = [cookie, merged].filter(Boolean).join("; ");
+        // Re-filter after merge to ensure only allowed cookies
+        const reFiltered = filterCookiesAllowlist([filteredCookie, merged].filter(Boolean).join("; "));
+        filteredCookie = reFiltered;
       }
       // retry once
-      resp = await doLogin(cookie, xsrf);
+      resp = await doLogin(filteredCookie, xsrf);
     } catch {
       // ignore and let the original response handling proceed
     }
