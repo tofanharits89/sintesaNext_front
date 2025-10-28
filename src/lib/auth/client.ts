@@ -90,7 +90,8 @@ export class AuthClient {
         // Reset any stale logout guard that could block follow-up requests
         try { clearLogoutGuard(); } catch {}
         // Enter post-login grace window to avoid refresh/401 races
-        try { setPostLoginGrace(1500); } catch {}
+        // Extend post-login grace a bit to avoid premature refresh/logout flapping under slow networks
+        try { setPostLoginGrace(4000); } catch {}
         return {
           success: true,
           user: data.data.user,

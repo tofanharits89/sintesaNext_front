@@ -68,14 +68,16 @@ function genTraceId() {
 // Request interceptor: attach CSRF header if available, set Content-Type, and add debug headers
 http.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   // Block all requests if we're logging out (except logout and profile requests)
-  if (isLoggingOut &&
-      !config.url?.includes("/auth/logout") &&
-      !config.url?.includes("/users/profile/me")) {
+  if (
+    isLoggingOut &&
+    !config.url?.includes("/auth/logout") &&
+    !config.url?.includes("/users/profile/me")
+  ) {
     console.log("[Auth] Request blocked - logout in progress:", config.url);
     throw new Error("Logout in progress");
   }
 
-  const h = (config.headers ||= {} as any);
+  const h = (config.headers ||= ({} as any));
 
   // Correlation headers
   if (!h["X-Debug-Trace"]) h["X-Debug-Trace"] = genTraceId();
@@ -114,6 +116,9 @@ let isLoggingOut = false; // Flag to prevent requests during logout/redirect
 let postLoginUntil = 0;
 let lastLoginAt = 0;
 
+// New: Be more conservative before calling server-side logout right after login
+const MIN_LOGOUT_DELAY_MS = 8000; // was ~2000 via consumer; raise to 8s to avoid flapping
+
 export function setPostLoginGrace(ms: number = 1500) {
   const now = Date.now();
   lastLoginAt = now;
@@ -131,7 +136,7 @@ if (typeof window !== "undefined") {
       isLoggingOut = value;
       (window as any).__isLoggingOut = value;
     },
-    configurable: true
+    configurable: true,
   });
 }
 
@@ -213,7 +218,32 @@ export async function refreshTokens(): Promise<void> {
 }
 
 /**
- * Handle refresh token failure by calling logout API and redirecting to login
+ * Verify with the server whether the session is really invalid before logging out.
+ * Returns true when server confirms invalid, false if still valid or inconclusive.
+ */
+async function confirmInvalidSession(): Promise<boolean> {
+  try {
+    const res = await fetch(apiPath("/auth/validate?include=user"), {
+      method: "GET",
+      credentials: "include",
+      headers: { "X-Skip-Auth-Refresh": "true", "X-Debug-Source": "httpClient.confirmInvalid" },
+      cache: "no-store",
+    });
+    if (!res.ok) return true; // treat 4xx/5xx as invalid
+    const data = await res.json().catch(() => ({}));
+    // Accept both shapes: { success:true, data:{ valid:boolean } } OR minimal boolean
+    const valid = !!(data?.data?.valid ?? data?.valid);
+    return !valid;
+  } catch (e) {
+    // Network errors → do not aggressively logout the server; just redirect client
+    return false;
+  }
+}
+
+/**
+ * Handle refresh token failure by redirecting to login.
+ * Only call server-side logout when we are confident the session is invalid
+ * and we are past a conservative post-login window.
  */
 async function handleRefreshFailure(status: number): Promise<void> {
   // Prevent multiple simultaneous flows
@@ -240,8 +270,16 @@ async function handleRefreshFailure(status: number): Promise<void> {
   }
 
   // Gate server-side logout to avoid self-sabotage right after login
-  const safeToServerLogout = Date.now() - lastLoginAt >= 2000;
-  if (safeToServerLogout) {
+  const elapsedSinceLogin = Date.now() - lastLoginAt;
+  const pastConservativeWindow = elapsedSinceLogin >= MIN_LOGOUT_DELAY_MS;
+
+  let serverThinksInvalid = false;
+  if (pastConservativeWindow) {
+    // Confirm with server once before blacklisting tokens via /logout
+    serverThinksInvalid = await confirmInvalidSession();
+  }
+
+  if (pastConservativeWindow && serverThinksInvalid) {
     isLoggingOut = true;
     if (typeof window !== "undefined") {
       (window as any).__isLoggingOut = true;
@@ -250,19 +288,32 @@ async function handleRefreshFailure(status: number): Promise<void> {
       await fetch(apiPath("/auth/logout"), {
         method: "POST",
         credentials: "include",
-        headers: { "X-Skip-Auth-Refresh": "true", "X-Debug-Source": "httpClient.handleRefreshFailure", "X-Debug-Trace": genTraceId() },
+        headers: {
+          "X-Skip-Auth-Refresh": "true",
+          "X-Debug-Source": "httpClient.handleRefreshFailure",
+          "X-Debug-Trace": genTraceId(),
+        },
       });
       console.log("[Auth] Backend logout successful");
     } catch (logoutError) {
       console.warn("[Auth] Backend logout failed (continuing anyway):", logoutError);
     }
   } else {
-    console.log("[Auth] Skipping backend logout during post-login grace window");
+    if (!pastConservativeWindow) {
+      console.log(
+        "[Auth] Skipping backend logout during extended post-login window (",
+        `${elapsedSinceLogin}ms < ${MIN_LOGOUT_DELAY_MS}ms)`,
+      );
+    } else {
+      console.log(
+        "[Auth] Skipping backend logout: server still considers session valid",
+      );
+    }
   }
 
   // Redirect to login page immediately
   if (typeof window !== "undefined") {
-    console.log("[Auth] 🚪 Redirecting to login - session invalidated");
+    console.log("[Auth] 🚪 Redirecting to login - session invalidated or refresh failed");
     window.location.href =
       "/login?reason=session_expired&message=" +
       encodeURIComponent("Your session has expired. Please log in again.");
@@ -272,12 +323,12 @@ async function handleRefreshFailure(status: number): Promise<void> {
 http.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
-    const original = error.config as (AxiosRequestConfig & {
+    const original = (error.config as (AxiosRequestConfig & {
       _retry?: boolean;
       _skipAuthRefresh?: boolean;
       _graceRetry?: boolean; // retry once within post-login grace
       _didRefreshAfterGrace?: boolean; // attempted refresh after grace retry
-    }) | undefined;
+    })) || undefined;
     const status = error.response?.status;
     const data = error.response?.data as any;
 
@@ -290,7 +341,7 @@ http.interceptors.response.use(
     const isLogoutOrRefresh =
       original.url?.includes("/auth/logout") ||
       original.url?.includes("/auth/refresh") ||
-      original.headers?.["X-Skip-Auth-Refresh"] === "true";
+      (original.headers as any)?.["X-Skip-Auth-Refresh"] === "true";
 
     // (EBADCSRFTOKEN handling consolidated below)
 
@@ -305,11 +356,11 @@ http.interceptors.response.use(
     if (status === 403) {
       const dbgError =
         data && typeof data === "object" && "data" in (data as any)
-          ? ((data as any).data?.error ?? (data as any).error)
+          ? (data as any).data?.error ?? (data as any).error
           : (data as any)?.error;
       const dbgCode =
         data && typeof data === "object" && "data" in (data as any)
-          ? ((data as any).data?.code ?? (data as any).code)
+          ? (data as any).data?.code ?? (data as any).code
           : (data as any)?.code;
       console.log("[httpClient] 403 error detected:", {
         url: original.url,
@@ -364,7 +415,6 @@ http.interceptors.response.use(
     }
 
     // Skip auth refresh for logout and refresh endpoints, or if header says to skip
-    // using isLogoutOrRefresh computed above
 
     // CSRF error handling: if 403 with EBADCSRFTOKEN, fetch new token then retry once
     if (
@@ -393,9 +443,14 @@ http.interceptors.response.use(
       // Suppress refresh during short post-login window to avoid race with cookie propagation
       if (Date.now() < postLoginUntil) {
         const delay = 400 + Math.floor(Math.random() * 300); // 400–700ms jitter
-        console.log("[Auth] 401 within post-login grace; retrying once after", delay, "ms", {
-          url: original.url,
-        });
+        console.log(
+          "[Auth] 401 within post-login grace; retrying once after",
+          delay,
+          "ms",
+          {
+            url: original.url,
+          },
+        );
         original._retry = true;
         (original as any)._graceRetry = true;
         return new Promise((resolve, reject) => {
@@ -449,9 +504,12 @@ http.interceptors.response.use(
       if ((original as any)._graceRetry && !(original as any)._didRefreshAfterGrace) {
         try {
           (original as any)._didRefreshAfterGrace = true;
-          console.log("[Auth] 401 after grace retry; attempting one refresh before logout", {
-            url: original.url,
-          });
+          console.log(
+            "[Auth] 401 after grace retry; attempting one refresh before logout",
+            {
+              url: original.url,
+            },
+          );
           await refreshTokens();
           return http.request(original);
         } catch (e) {
@@ -488,53 +546,51 @@ if (typeof window !== "undefined") {
 }
 
 // Request interceptor for backend HTTP client
-backendHttp.interceptors.request.use(
-  async (config: InternalAxiosRequestConfig) => {
-    // Block all requests if we're logging out (except logout itself)
-    if (isLoggingOut && !config.url?.includes("/auth/logout")) {
-      console.log(
-        "[BackendHttp] Request blocked - logout in progress:",
-        config.url,
-      );
-      throw new Error("Logout in progress");
+backendHttp.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
+  // Block all requests if we're logging out (except logout itself)
+  if (isLoggingOut && !config.url?.includes("/auth/logout")) {
+    console.log(
+      "[BackendHttp] Request blocked - logout in progress:",
+      config.url,
+    );
+    throw new Error("Logout in progress");
+  }
+
+  const h = (config.headers ||= ({} as any));
+  if (!h["X-Debug-Trace"]) h["X-Debug-Trace"] = genTraceId();
+  if (!h["X-Debug-Source"]) h["X-Debug-Source"] = "backendHttp";
+
+  const method = (config.method || "get").toLowerCase();
+
+  // Set Content-Type to application/json for non-FormData requests
+  if (["post", "put", "patch", "delete"].includes(method)) {
+    // Only set Content-Type if it's not FormData (let browser set multipart/form-data)
+    if (!(config.data instanceof FormData) && !h["Content-Type"]) {
+      h["Content-Type"] = "application/json";
     }
 
-    const h = (config.headers ||= {} as any);
-    if (!h["X-Debug-Trace"]) h["X-Debug-Trace"] = genTraceId();
-    if (!h["X-Debug-Source"]) h["X-Debug-Source"] = "backendHttp";
-
-    const method = (config.method || "get").toLowerCase();
-
-    // Set Content-Type to application/json for non-FormData requests
-    if (["post", "put", "patch", "delete"].includes(method)) {
-      // Only set Content-Type if it's not FormData (let browser set multipart/form-data)
-      if (!(config.data instanceof FormData) && !h["Content-Type"]) {
-        h["Content-Type"] = "application/json";
+    // For direct backend calls, we need to handle CSRF differently
+    // Since we're not going through Next.js, we'll rely on cookie-based CSRF
+    try {
+      const cookieCsrf = getCookie("XSRF-TOKEN");
+      if (cookieCsrf) {
+        h["X-CSRF-Token"] = cookieCsrf;
       }
-
-      // For direct backend calls, we need to handle CSRF differently
-      // Since we're not going through Next.js, we'll rely on cookie-based CSRF
-      try {
-        const cookieCsrf = getCookie("XSRF-TOKEN");
-        if (cookieCsrf) {
-          h["X-CSRF-Token"] = cookieCsrf;
-        }
-      } catch (error) {
-        console.warn("[BackendHttp] CSRF token fetch failed:", error);
-      }
+    } catch (error) {
+      console.warn("[BackendHttp] CSRF token fetch failed:", error);
     }
-    return config;
-  },
-);
+  }
+  return config;
+});
 
 // Response interceptor for backend HTTP client (similar to main http client)
 backendHttp.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
-    const original = error.config as AxiosRequestConfig & {
+    const original = (error.config as AxiosRequestConfig & {
       _retry?: boolean;
       _skipAuthRefresh?: boolean;
-    } | undefined;
+    }) || undefined;
     const status = error.response?.status;
     const data = error.response?.data as any;
 
@@ -546,7 +602,7 @@ backendHttp.interceptors.response.use(
     const isLogoutOrRefresh =
       original.url?.includes("/auth/logout") ||
       original.url?.includes("/auth/refresh") ||
-      original.headers?.["X-Skip-Auth-Refresh"] === "true";
+      (original.headers as any)?.["X-Skip-Auth-Refresh"] === "true";
 
     // If we're in the process of logging out, reject all requests immediately
     if (isLoggingOut) {
