@@ -33,6 +33,7 @@ export function useMessageMutationsRQ() {
     
     // Generate temporary message for optimistic updates
     const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const nowIso = new Date().toISOString();
     const tempMessage: FrontendMessage = {
       id: tempId,
       content,
@@ -42,14 +43,20 @@ export function useMessageMutationsRQ() {
       type: 'text',
       is_read: false,
       is_deleted: false,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: nowIso,
+      updated_at: nowIso,
+      timestamp: nowIso,
+      // Include sender object so UI renders as own message
+      sender: currentUser
+        ? { id: currentUser.id, username: currentUser.username || 'you', name: currentUser.name || 'You' }
+        : { id: 'current-user', username: 'you', name: 'You' },
       // CamelCase aliases
       senderId: currentUser?.id || '',
       recipientId: recipientId || '',
       conversationId: conversationId || '',
       isRead: false,
       deliveryStatus: 'sending',
+      isDelivered: false,
       tempId,
     };
 
@@ -67,12 +74,22 @@ export function useMessageMutationsRQ() {
       });
 
       if (result.success && result.data?.message) {
-        // Replace temp message with real message
-        optimisticUpdates.replaceTempMessage(
-          conversationId || '',
-          tempId,
-          result.data.message
-        );
+        const realConvId = (result.data as any).conversationId || (result.data.message as any)?.conversationId || (result.data.message as any)?.conversation_id || '';
+
+        // Replace temp message with real message in the real conversation cache when available
+        if (realConvId) {
+          optimisticUpdates.replaceTempMessage(realConvId, tempId, result.data.message as any);
+        } else if (conversationId) {
+          // Fallback: if we were in a real conversation already
+          optimisticUpdates.replaceTempMessage(conversationId, tempId, result.data.message as any);
+        }
+        
+        // Notify listeners so pages can switch URL/state to the real conversation
+        try {
+          if (realConvId && (typeof window !== 'undefined')) {
+            window.dispatchEvent(new CustomEvent('conversation:created', { detail: { conversationId: realConvId }}));
+          }
+        } catch {}
         
         addNotification({
           type: 'success',
@@ -128,8 +145,9 @@ export function useMessageMutationsRQ() {
     const { messageIds, conversationId } = args;
 
     try {
-      const response = await fetch('/api/messages/read', {
-        method: 'POST',
+      const response = await fetch(`/api/v1/messaging/conversations/${encodeURIComponent(conversationId)}/read`, {
+        method: 'PUT',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },

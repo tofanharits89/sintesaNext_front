@@ -42,11 +42,14 @@ export function ChatWindowSimplified({ conversationId, conversation }: ChatWindo
     
     try {
       // For simplicity, just send text content for now
-      await sendMessage({
+      const payload: any = {
         content: messageInput.content.trim(),
-        recipientId: conversation?.otherParticipant?.id || conversationId, // TODO: Fix this
         conversationId,
-      });
+      };
+      if (conversation?.otherParticipant?.id) {
+        payload.recipientId = conversation.otherParticipant.id;
+      }
+      await sendMessage(payload);
       
       clearMessageInput();
     } catch (error) {

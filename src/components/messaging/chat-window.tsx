@@ -397,6 +397,8 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
     const content = messageInput.content.trim();
     const files = [...attachedFiles];
 
+    // Optimistically clear composer for snappy UX
+    setMessageContent("");
     setAttachedFiles([]);
     stopTypingRQ();
     pinUntilRef.current = Date.now() + 1500;

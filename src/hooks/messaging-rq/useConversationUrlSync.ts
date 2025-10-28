@@ -44,6 +44,8 @@ export function useConversationUrlSync({
   useEffect(() => {
     if (!activeConversationId) return;
     if (!isTempConversation(activeConversationId)) return;
+    // Do not overwrite a real conversation in the URL with a temp one
+    if (urlConversationId && !isTempConversation(urlConversationId)) return;
     if (urlConversationId === activeConversationId) return;
 
     const params = new URLSearchParams(window.location.search);
