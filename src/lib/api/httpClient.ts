@@ -272,10 +272,12 @@ async function handleRefreshFailure(status: number): Promise<void> {
 http.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
-    const original = error.config as AxiosRequestConfig & {
+    const original = error.config as (AxiosRequestConfig & {
       _retry?: boolean;
       _skipAuthRefresh?: boolean;
-    } | undefined;
+      _graceRetry?: boolean; // retry once within post-login grace
+      _didRefreshAfterGrace?: boolean; // attempted refresh after grace retry
+    }) | undefined;
     const status = error.response?.status;
     const data = error.response?.data as any;
 
@@ -395,6 +397,7 @@ http.interceptors.response.use(
           url: original.url,
         });
         original._retry = true;
+        (original as any)._graceRetry = true;
         return new Promise((resolve, reject) => {
           setTimeout(() => {
             http
@@ -439,8 +442,23 @@ http.interceptors.response.use(
       }
     }
 
-    // If this is a 401 and we already tried refresh (_retry = true), session is truly invalid - logout and redirect
+    // If this is a 401 and we already tried once
     if (status === 401 && original._retry && !isLogoutOrRefresh) {
+      // Special case: if the 401 happened right after a post-login grace retry,
+      // attempt ONE refresh before logging out to avoid false logouts from stale caches
+      if ((original as any)._graceRetry && !(original as any)._didRefreshAfterGrace) {
+        try {
+          (original as any)._didRefreshAfterGrace = true;
+          console.log("[Auth] 401 after grace retry; attempting one refresh before logout", {
+            url: original.url,
+          });
+          await refreshTokens();
+          return http.request(original);
+        } catch (e) {
+          // fall through to logout below
+        }
+      }
+
       console.log(
         "[Auth] Received 401 after retry attempt - session invalidated, logging out",
       );

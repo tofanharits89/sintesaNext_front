@@ -150,23 +150,58 @@ export function useMessaging() {
         reject(new Error("Message send timeout"));
       }, 10000);
       
+      const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const messageData = {
         recipientId: data.recipientId,
         content: data.content,
         conversationId: data.conversationId,
-        tempId: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        tempId,
       };
+
+      // Optimistic update for existing conversations
+      if (data.conversationId) {
+        const optimisticMessage = {
+          id: tempId,
+          content: data.content,
+          conversation_id: data.conversationId,
+          conversationId: data.conversationId,
+          sender: currentUser ? { id: currentUser.id, username: currentUser.username, name: currentUser.name, role: currentUser.role } : undefined,
+          sender_id: currentUser?.id,
+          recipient_id: data.recipientId,
+          type: "text",
+          created_at: new Date().toISOString(),
+          timestamp: new Date().toISOString(),
+          is_read: true,
+          senderType: undefined,
+        } as any;
+        updateMessagesCache(queryClient, optimisticMessage);
+        updateConversationsCache(queryClient, optimisticMessage, currentUser);
+      }
       
       socket.emit(SOCKET_EVENTS.MESSAGE_SEND, messageData, (response: any) => {
         clearTimeout(timeout);
         if (response?.success) {
+          try {
+            const norm = normalizeMessage({ message: response.data?.message, conversationId: response.data?.conversationId });
+            if (norm) {
+              updateMessagesCache(queryClient, norm);
+              updateConversationsCache(queryClient, norm, currentUser);
+              if (norm.conversationId) {
+                queryClient.invalidateQueries({ queryKey: messageKeys.messages(norm.conversationId) });
+              }
+            }
+          } catch {}
           resolve(response.data);
         } else {
+          // Mark optimistic message as failed if we added one
+          if (data.conversationId) {
+            queryClient.invalidateQueries({ queryKey: messageKeys.messages(data.conversationId) });
+          }
           reject(new Error(response?.error || "Failed to send message"));
         }
       });
     });
-  }, [socket]);
+  }, [socket, queryClient, currentUser]);
   
   const joinConversation = useCallback((conversationId: string) => {
     if (!socket?.connected) return;
