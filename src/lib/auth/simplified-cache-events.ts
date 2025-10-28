@@ -1,111 +1,71 @@
 /**
  * Simplified Cache Events
- * Basic cache management without complex event coordination
+ * Bridges legacy helpers onto the unified auth cache utilities.
  */
 
-import { QueryClient } from "@tanstack/react-query";
+import {
+  getGlobalQueryClient,
+  setGlobalQueryClient as setGlobalQueryClientUtil,
+  clearAuthCacheOnFail as clearAuthCacheOnFailUtil,
+  clearDataQueries as clearDataQueriesUtil,
+} from "./simplified-utils";
 
-let globalQueryClient: QueryClient | null = null;
-
-export function setGlobalQueryClient(qc: QueryClient) {
-  globalQueryClient = qc;
-}
-
-/**
- * Clear all React Query cache when authentication fails
- */
-export function clearAuthCacheOnFail() {
-  if (!globalQueryClient) {
-    console.warn("[AuthCache] No queryClient available for cache clearing");
-    return;
-  }
-
-  try {
-    globalQueryClient.clear();
-    console.log("[AuthCache] ✅ All React Query cache cleared due to auth failure");
-  } catch (error) {
-    console.error("[AuthCache] Failed to clear cache:", error);
-  }
-}
-
-/**
- * Clear specific data-related queries
- */
-export function clearDataQueries() {
-  if (!globalQueryClient) return;
-
-  try {
-    const authDependentKeys = [
-      "realisasi-per-jenis-belanja",
-      "realisasi-kl-per-fungsi",
-      "quick-stats",
-      "realisasi-kl-pagu-terbesar",
-      "realisasi-kl-pagu-program-terbesar",
-      "tren-realisasi-bulanan",
-      "persentase-realisasi-kl",
-    ];
-
-    for (const key of authDependentKeys) {
-      globalQueryClient.removeQueries({ queryKey: [key] });
-    }
-
-    console.log("[AuthCache] ✅ Auth-dependent queries cleared");
-  } catch (error) {
-    console.error("[AuthCache] Failed to clear specific queries:", error);
-  }
-}
+// Re-export the canonical helpers so older imports keep working.
+export const setGlobalQueryClient = setGlobalQueryClientUtil;
+export const clearAuthCacheOnFail = clearAuthCacheOnFailUtil;
+export const clearDataQueries = clearDataQueriesUtil;
 
 export function isQueryClientAvailable(): boolean {
-  return globalQueryClient !== null;
+  return getGlobalQueryClient() !== null;
 }
 
-// ============================================================================
-// Simplified Cache Management
-// ============================================================================
-
 export function clearAllCaches() {
-  if (globalQueryClient) {
-    globalQueryClient.clear();
+  const queryClient = getGlobalQueryClient();
+  if (queryClient) {
+    queryClient.clear();
   }
-  
-  if (typeof window !== 'undefined') {
+
+  if (typeof window !== "undefined") {
     localStorage.clear();
     sessionStorage.clear();
   }
-  
+
   console.log("[Cache] All caches cleared");
 }
 
 export function clearAuthCaches() {
-  if (globalQueryClient) {
-    globalQueryClient.invalidateQueries({ queryKey: ['auth'] });
-    globalQueryClient.invalidateQueries({ queryKey: ['user'] });
-    globalQueryClient.removeQueries({ queryKey: ['auth', 'user'] });
+  const queryClient = getGlobalQueryClient();
+  if (queryClient) {
+    queryClient.invalidateQueries({ queryKey: ["auth"] });
+    queryClient.invalidateQueries({ queryKey: ["user"] });
+    queryClient.removeQueries({ queryKey: ["auth", "user"] });
   }
-  
+
   console.log("[Cache] Auth caches cleared");
 }
 
 export function clearDataCaches() {
-  if (globalQueryClient) {
-    const dataQueryKeys = [
-      'realisasi-per-jenis-belanja',
-      'realisasi-kl-per-fungsi',
-      'quick-stats',
-      'realisasi-kl-pagu-terbesar',
-      'realisasi-kl-pagu-program-terbesar',
-      'tren-realisasi-bulanan',
-      'persentase-realisasi-kl',
-      'satker',
-      'dashboard',
-    ];
-
-    dataQueryKeys.forEach(key => {
-      globalQueryClient?.removeQueries({ queryKey: [key] });
-    });
+  const queryClient = getGlobalQueryClient();
+  if (!queryClient) {
+    console.log("[Cache] No query client available for data cache clearing");
+    return;
   }
-  
+
+  const dataQueryKeys = [
+    "realisasi-per-jenis-belanja",
+    "realisasi-kl-per-fungsi",
+    "quick-stats",
+    "realisasi-kl-pagu-terbesar",
+    "realisasi-kl-pagu-program-terbesar",
+    "tren-realisasi-bulanan",
+    "persentase-realisasi-kl",
+    "satker",
+    "dashboard",
+  ];
+
+  dataQueryKeys.forEach((key) => {
+    queryClient.removeQueries({ queryKey: [key] });
+  });
+
   console.log("[Cache] Data caches cleared");
 }
-
-

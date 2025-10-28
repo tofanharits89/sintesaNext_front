@@ -16,6 +16,10 @@ export function setGlobalQueryClient(qc: QueryClient) {
   globalQueryClient = qc;
 }
 
+export function getGlobalQueryClient(): QueryClient | null {
+  return globalQueryClient;
+}
+
 /**
  * Clear all React Query cache when authentication fails
  */

@@ -16,6 +16,9 @@ export const ALLOWED_COOKIES = [
   "XSRF-TOKEN",
   "XSRF-TOKEN-SESSION",
 
+  // Server-managed CSRF session identifier
+  "csrf_sid",
+
   // Session cookies (for maintaining session state)
   // Note: Auth tokens (access_token, refresh_token) are NOT forwarded
   // They are set by backend in HTTP-only cookies

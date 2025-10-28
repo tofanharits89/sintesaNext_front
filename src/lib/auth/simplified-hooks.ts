@@ -6,7 +6,7 @@
  * Removed: complex cache events, cross-tab sync, redundant timers
  */
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -54,12 +54,22 @@ const getRoleDisplayName = (user: AuthUser | null): string => {
 // Simplified Auth Hook
 // ============================================================================
 
+export interface AuthLoginOptions {
+  rememberMe?: boolean;
+  captcha?: string;
+  expectedCaptcha?: string;
+}
+
 export interface UseAuthReturn {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   isLoggingOut: boolean;
-  login: (username: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; user?: AuthUser; error?: string }>;
+  login: (
+    username: string,
+    password: string,
+    options?: AuthLoginOptions | boolean
+  ) => Promise<{ success: boolean; user?: AuthUser; error?: string }>;
   logout: (reason?: string) => Promise<{ success: boolean; error?: string }>;
   refetch: () => Promise<{ success: boolean; user?: AuthUser; error?: string }>;
   validateSession: () => Promise<{ success: boolean; user?: AuthUser; error?: string }>;
@@ -73,9 +83,6 @@ export interface UseAuthReturn {
 export function useAuth(): UseAuthReturn {
   const queryClient = useQueryClient();
   const authState = useAuthSessionStore();
-
-  // Simple token refresh timer
-  const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const clearCache = useCallback(() => {
     // Enhanced cache clearing - specifically target auth-related queries
@@ -98,12 +105,29 @@ export function useAuth(): UseAuthReturn {
   }, [queryClient]);
 
   const login = useCallback(
-    async (username: string, password: string, rememberMe = false): Promise<{ success: boolean; user?: AuthUser; error?: string }> => {
+    async (
+      username: string,
+      password: string,
+      optionsOrRemember: AuthLoginOptions | boolean = {},
+    ): Promise<{ success: boolean; user?: AuthUser; error?: string }> => {
+      const options: AuthLoginOptions =
+        typeof optionsOrRemember === "boolean"
+          ? { rememberMe: optionsOrRemember }
+          : optionsOrRemember ?? {};
+
       try {
         authState.setLoading(true);
         clearCache();
 
-        const result = await authClient.login(username, password, rememberMe);
+        const result = await authClient.login(
+          username,
+          password,
+          options.rememberMe ?? false,
+          {
+            captcha: options.captcha,
+            expectedCaptcha: options.expectedCaptcha,
+          },
+        );
 
         if (result.success && result.user) {
           authState.setAuthenticated(true, result.user);
@@ -230,50 +254,6 @@ export function useAuth(): UseAuthReturn {
     [authState.user, authState.updateUser, queryClient],
   );
 
-  // Simple token refresh - refresh every 20 minutes
-  const startTokenRefresh = useCallback(() => {
-    if (refreshTimerRef.current) {
-      clearTimeout(refreshTimerRef.current);
-    }
-
-    refreshTimerRef.current = setTimeout(async () => {
-      if (authState.isAuthenticated && authState.user) {
-        try {
-          const result = await authClient.refreshToken();
-          if (result.success) {
-            // Reschedule next refresh
-            startTokenRefresh();
-          } else {
-            // Refresh failed - validate session
-            await validateSession();
-          }
-        } catch (error) {
-          console.error("Token refresh error:", error);
-          await validateSession();
-        }
-      }
-    }, 20 * 60 * 1000); // 20 minutes
-  }, [authState.isAuthenticated, authState.user, validateSession]);
-
-  // Start/stop refresh timer based on auth state
-  useEffect(() => {
-    if (authState.isAuthenticated && authState.user) {
-      startTokenRefresh();
-    } else {
-      if (refreshTimerRef.current) {
-        clearTimeout(refreshTimerRef.current);
-        refreshTimerRef.current = null;
-      }
-    }
-
-    return () => {
-      if (refreshTimerRef.current) {
-        clearTimeout(refreshTimerRef.current);
-        refreshTimerRef.current = null;
-      }
-    };
-  }, [authState.isAuthenticated, authState.user, startTokenRefresh]);
-
   // Sync Zustand state with React Query cache
   useEffect(() => {
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
@@ -367,7 +347,7 @@ export function useAuthRedirect(options: UseAuthRedirectOptions = {}) {
 // Export Types and Legacy Compatibility
 // ============================================================================
 
-export type { AuthUser as User };
+export type { AuthUser as User, AuthLoginOptions };
 export { useAuth as useUnifiedAuth };
 export { canManageUsers, canAccessSettings, getRoleDisplayName }; // Export helper functions
 export default useAuth;

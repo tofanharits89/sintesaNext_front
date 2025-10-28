@@ -58,6 +58,7 @@ export class AuthClient {
     username: string,
     password: string,
     rememberMe = false,
+    extras?: { captcha?: string; expectedCaptcha?: string },
   ): Promise<{
     success: boolean;
     user?: User;
@@ -65,6 +66,19 @@ export class AuthClient {
     error?: string;
   }> {
     try {
+      const payload: Record<string, unknown> = {
+        username,
+        password,
+        rememberMe,
+      };
+
+      if (extras?.captcha) {
+        payload.captcha = extras.captcha;
+      }
+      if (extras?.expectedCaptcha) {
+        payload.expectedCaptcha = extras.expectedCaptcha;
+      }
+
       const response = await fetch(apiPath(`${this.baseURL}/auth/login`), {
         method: "POST",
         headers: {
@@ -73,7 +87,7 @@ export class AuthClient {
           "X-Debug-Trace": (Date.now().toString(36) + "-" + Math.random().toString(36).slice(2,8)).toUpperCase(),
         },
         credentials: "include",
-        body: JSON.stringify({ username, password, rememberMe }),
+        body: JSON.stringify(payload),
       });
 
       const data: AuthResponse<{ user: User; csrfToken: string }> =
@@ -246,38 +260,6 @@ export class AuthClient {
       }
     } catch (error) {
       logger.error("Session validation error:", error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Network error",
-      };
-    }
-  }
-
-  /**
-   * Refresh access token
-   */
-  async refreshToken(): Promise<{ success: boolean; error?: string }> {
-    try {
-      const response = await fetch(`${this.baseURL}/auth/refresh`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
-
-      const data: AuthResponse = await response.json();
-
-      if (response.ok && data.success) {
-        logger.info("Token refreshed successfully");
-        return { success: true };
-      } else {
-        const error = data.error || data.message || "Token refresh failed";
-        logger.warn("Token refresh failed:", error);
-        return { success: false, error };
-      }
-    } catch (error) {
-      logger.error("Token refresh error:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : "Network error",
