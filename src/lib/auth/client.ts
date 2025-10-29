@@ -150,11 +150,38 @@ export class AuthClient {
       // The backend now sets CSRF token in response headers
       // We send CSRF token in header for logout request
 
-      // Try to get CSRF token from session storage (set by login response)
-      // This is more secure than reading from document.cookie
+      // Resolve CSRF token (prefer refreshed token to avoid mismatches)
       let csrfToken: string | null = null;
       if (typeof window !== 'undefined') {
-        csrfToken = sessionStorage.getItem('csrf_token');
+        try {
+          csrfToken = sessionStorage.getItem('csrf_token');
+        } catch {}
+
+        if (!csrfToken) {
+          try {
+            const { csrfManager } = await import("../security/csrfManager");
+            csrfToken = await csrfManager.refreshToken();
+          } catch (error) {
+            logger.warn("[Auth Client] Failed to refresh CSRF token before logout", error);
+          }
+        }
+
+        if (!csrfToken) {
+          try {
+            const { csrfManager } = await import("../security/csrfManager");
+            csrfToken = await csrfManager.getCSRFToken();
+          } catch (error) {
+            logger.warn("[Auth Client] Failed to fetch CSRF token before logout", error);
+          }
+        }
+
+        if (!csrfToken) {
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; XSRF-TOKEN=`);
+          if (parts.length === 2) {
+            csrfToken = parts.pop()?.split(';').shift() || null;
+          }
+        }
       }
 
       const headers: Record<string, string> = {
@@ -164,7 +191,7 @@ export class AuthClient {
       // Send CSRF token in header (preferred method)
       if (csrfToken) {
         headers["X-CSRF-Token"] = csrfToken;
-        logger.debug("[Auth Client] Using CSRF token from sessionStorage");
+        logger.debug("[Auth Client] Using CSRF token for logout request");
       }
 
       const response = await fetch(`${this.baseURL}/auth/logout`, {

@@ -696,62 +696,84 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                       return;
                     }
 
-                    // Disconnect socket immediately and prevent reconnection
-                    try {
-                      socketClient.disconnect();
-                      socketClient.cleanup();
-                    } catch (error) {
-                      console.error("Socket disconnect failed:", error);
-                    }
+                    void (async () => {
+                      // Disconnect socket immediately and prevent reconnection
+                      try {
+                        socketClient.disconnect();
+                        socketClient.cleanup();
+                      } catch (error) {
+                        console.error("Socket disconnect failed:", error);
+                      }
 
-                    try {
-                      // 1) Mark logout-in-progress immediately so middleware short-circuits
                       try {
-                        document.cookie = "logout_in_progress=true; Max-Age=15; Path=/; SameSite=Lax";
-                      } catch {}
+                        // 1) Mark logout-in-progress immediately so middleware short-circuits
+                        try {
+                          document.cookie = "logout_in_progress=true; Max-Age=15; Path=/; SameSite=Lax";
+                        } catch {}
 
-                      // 2) Clear client state (non-auth cookies we can touch, caches, stores)
-                      try {
-                        // Clear readable CSRF cookie (auth cookies are HttpOnly and cleared by server)
-                        document.cookie = "XSRF-TOKEN=; Max-Age=0; Path=/; SameSite=Lax";
-                      } catch {}
-                      try {
-                        // Best-effort: set store flags and clear session marker
-                        useAuthSessionStore.getState().logout();
-                      } catch {}
+                        // 2) Resolve CSRF token (prefer refreshed token to avoid mismatch)
+                        let csrfToken: string | null = null;
+                        if (typeof document !== "undefined") {
+                          try {
+                            const { csrfManager } = await import("@/lib/security/csrfManager");
+                            csrfToken = await csrfManager.refreshToken();
+                          } catch (err) {
+                            console.warn("[Logout] Failed to refresh CSRF token before logout", err);
+                          }
 
-                      // 3) Fire backend logout in background (don't wait)
-                      try {
-                        // Get CSRF token for logout
-                        const getCsrfToken = (): string | null => {
-                          const value = `; ${document.cookie}`;
-                          const parts = value.split(`; XSRF-TOKEN=`);
-                          if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
-                          return null;
-                        };
-                        
-                        const csrfToken = getCsrfToken();
-                        const headers: Record<string, string> = {};
-                        if (csrfToken) {
-                          headers['X-CSRF-Token'] = csrfToken;
+                          if (!csrfToken) {
+                            try {
+                              csrfToken = sessionStorage.getItem("csrf_token");
+                            } catch {}
+                          }
+
+                          if (!csrfToken) {
+                            const value = `; ${document.cookie}`;
+                            const parts = value.split(`; XSRF-TOKEN=`);
+                            if (parts.length === 2) {
+                              csrfToken = parts.pop()?.split(";").shift() || null;
+                            }
+                          }
                         }
-                        
-                        void fetch("/api/v1/auth/logout", {
-                          method: "POST",
-                          credentials: "include",
-                          keepalive: true,
-                          headers,
-                        });
-                      } catch {}
 
-                      // 4) Hard redirect immediately to login (prevents any flash)
-                      const redirectUrl = "/login?reason=logout&_t=" + Date.now();
-                      window.location.replace(redirectUrl);
+                        // 3) Clear client state (non-auth cookies we can touch, caches, stores)
+                        try {
+                          // Clear readable CSRF cookie (auth cookies are HttpOnly and cleared by server)
+                          document.cookie = "XSRF-TOKEN=; Max-Age=0; Path=/; SameSite=Lax";
+                        } catch {}
+                        try {
+                          // Best-effort: set store flags and clear session marker
+                          useAuthSessionStore.getState().logout();
+                        } catch {}
 
-                    } catch (error) {
-                      console.error("Logout error:", error);
-                      toast.error("Terjadi kesalahan saat logout");
-                    }
+                        // 4) Fire backend logout in background (don't wait)
+                        try {
+                          const headers: Record<string, string> = {};
+                          if (csrfToken) {
+                            headers["X-CSRF-Token"] = csrfToken;
+                          }
+
+                          void fetch("/api/auth/logout", {
+                            method: "POST",
+                            credentials: "include",
+                            keepalive: true,
+                            headers,
+                          }).catch((fetchError) => {
+                            console.warn("[Logout] Background logout request failed", fetchError);
+                          });
+                        } catch (fetchError) {
+                          console.warn("[Logout] Failed to issue logout request", fetchError);
+                        }
+
+                        // 5) Hard redirect immediately to login (prevents any flash)
+                        const redirectUrl = "/login?reason=logout&_t=" + Date.now();
+                        window.location.replace(redirectUrl);
+
+                      } catch (error) {
+                        console.error("Logout error:", error);
+                        toast.error("Terjadi kesalahan saat logout");
+                      }
+                    })();
                   }}
                 >
                   {isLoggingOut ? (

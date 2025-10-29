@@ -317,29 +317,44 @@ export class SocketClient {
     const reason = data.reason || 'SESSION_EXPIRED';
     const displayMessage = data.displayMessage || 'Your session has expired';
 
-    // Get CSRF token for logout
-    const getCsrfToken = (): string | null => {
-      if (typeof document === 'undefined') return null;
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; XSRF-TOKEN=`);
-      if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
-      return null;
-    };
-    
-    const csrfToken = getCsrfToken();
-    const headers: Record<string, string> = {};
-    if (csrfToken) {
-      headers['X-CSRF-Token'] = csrfToken;
-    }
+    void (async () => {
+      const headers: Record<string, string> = {};
+      if (typeof document !== "undefined") {
+        let csrfToken: string | null = null;
+        try {
+          const { csrfManager } = await import("../security/csrfManager");
+          csrfToken = await csrfManager.refreshToken();
+        } catch (err) {
+          console.warn("[SocketClient] Failed to refresh CSRF token before logout", err);
+        }
 
-    // Call backend logout API (versioned)
-    fetch(backendPath('/auth/logout'), {
-      method: 'POST',
-      credentials: 'include',
-      headers,
-    }).catch(() => {
-      // Ignore errors during logout
-    });
+        if (!csrfToken) {
+          try {
+            csrfToken = sessionStorage.getItem("csrf_token");
+          } catch {}
+        }
+
+        if (!csrfToken) {
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; XSRF-TOKEN=`);
+          if (parts.length === 2) csrfToken = parts.pop()?.split(";").shift() || null;
+        }
+
+        if (csrfToken) {
+          headers["X-CSRF-Token"] = csrfToken;
+        }
+      }
+
+      try {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          credentials: "include",
+          headers,
+        });
+      } catch (error) {
+        console.warn("[SocketClient] Background logout failed", error);
+      }
+    })();
 
     // Clear storage and redirect
     this.clearCookiesAndStorage().then(() => {

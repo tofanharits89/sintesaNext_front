@@ -128,13 +128,21 @@ class CSRFManager {
         : 8 * 60 * 60 * 1000;
     const expiresAt = Date.now() + ttlMs;
     this.cache.set('default', { token, expiresAt });
+
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.setItem('csrf_token', token);
+      } catch (error) {
+        console.warn("[CSRF] Failed to persist token to sessionStorage", error);
+      }
+    }
   }
   
   /**
    * Fetch new token from backend
    */
   private async fetchToken(): Promise<{ token: string; expiresIn?: number }> {
-    const response = await fetch(apiPath('/csrf-token'), {
+    const response = await fetch(apiPath('/auth/csrf'), {
       method: 'GET',
       credentials: 'include',
       cache: 'no-store',
@@ -143,23 +151,24 @@ class CSRFManager {
         'Cache-Control': 'no-cache',
       },
     });
-    
+
     if (!response.ok) {
       throw new Error(`CSRF token fetch failed: ${response.status}`);
     }
-    
+
     const data = await response.json();
-    
-    if (!data.success || !data.token) {
+
+    // Backend returns: { success: true, data: { csrfToken: "...", expiresIn: 28800 } }
+    if (!data.success || !data.data?.csrfToken) {
       throw new Error('Invalid CSRF token response');
     }
-    
+
     console.log('[CSRF] Token fetched successfully', {
-      tokenLength: data.token.length,
-      expiresIn: data.expiresIn
+      tokenLength: data.data.csrfToken.length,
+      expiresIn: data.data.expiresIn
     });
-    
-    return { token: data.token, expiresIn: data.expiresIn };
+
+    return { token: data.data.csrfToken, expiresIn: data.data.expiresIn };
   }
   
   /**

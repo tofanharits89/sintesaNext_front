@@ -19,9 +19,25 @@ function getApiUrl(): string {
     return "/api/v1";
   }
 
-  // Server-side: use server env var (Docker internal) or public fallback
+  // Server-side: ensure an ABSOLUTE URL for fetch()
   const serverUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL;
-  if (serverUrl) return serverUrl;
+  if (serverUrl) {
+    if (/^https?:\/\//i.test(serverUrl)) {
+      return serverUrl;
+    }
+    // If relative (e.g. "/api/v1"), resolve against backend origin
+    const origin =
+      process.env.NEXT_PUBLIC_BACKEND_ORIGIN ||
+      (process.env.NODE_ENV === 'production' ? 'http://backend:88' : 'http://localhost:88');
+    try {
+      return new URL(serverUrl, origin).toString();
+    } catch {
+      // Fallback to Docker service name
+      return process.env.NODE_ENV === 'production'
+        ? 'http://backend:88/api/v1'
+        : 'http://localhost:88/api/v1';
+    }
+  }
   
   // Fallback: use Docker service name in production, localhost in dev
   return process.env.NODE_ENV === 'production'

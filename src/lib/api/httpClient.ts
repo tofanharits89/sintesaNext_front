@@ -288,13 +288,29 @@ async function handleRefreshFailure(status: number): Promise<void> {
       // Get CSRF token for logout
       const getCsrfToken = (): string | null => {
         if (typeof document === 'undefined') return null;
+
+        try {
+          const sessionValue = sessionStorage.getItem("csrf_token");
+          if (sessionValue) return sessionValue;
+        } catch {}
+
         const value = `; ${document.cookie}`;
         const parts = value.split(`; XSRF-TOKEN=`);
         if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
         return null;
       };
       
-      const csrfToken = getCsrfToken();
+      let csrfToken = getCsrfToken();
+      if (!csrfToken) {
+        try {
+          // Try to prime CSRF token before attempting server-side logout
+          const { refreshToken: refreshCsrfToken } = await import("../security/csrfManager");
+          await refreshCsrfToken();
+          csrfToken = getCsrfToken();
+        } catch (e) {
+          console.warn("[Auth] Could not refresh CSRF token before logout:", e);
+        }
+      }
       const headers: Record<string, string> = {
         "X-Skip-Auth-Refresh": "true",
         "X-Debug-Source": "httpClient.handleRefreshFailure",
@@ -303,9 +319,14 @@ async function handleRefreshFailure(status: number): Promise<void> {
       
       if (csrfToken) {
         headers["X-CSRF-Token"] = csrfToken;
+      } else {
+        // If we still don't have a CSRF token, skip server-side logout to avoid 403 loop
+        console.warn("[Auth] Skipping backend logout: no CSRF token available");
+        return;
       }
       
-      await fetch("/api/v1/auth/logout", {
+      // Route via Next API so it can assist with CSRF/header forwarding; nginx maps this to frontend
+      await fetch("/api/auth/logout", {
         method: "POST",
         credentials: "include",
         headers,
