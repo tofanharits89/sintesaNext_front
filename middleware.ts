@@ -67,50 +67,22 @@ const ENV = {
 // Set NEXT_PUBLIC_DEFAULT_PROTECT="false" to opt out.
 const DEFAULT_PROTECT = process.env.NEXT_PUBLIC_DEFAULT_PROTECT !== 'false';
 
-// Cookie configuration
+// Cookie configuration (session id)
 const COOKIE_CONFIG = {
-  ACCESS_TOKEN: 'access_token',
-  REFRESH_TOKEN: 'refresh_token',
-  OPTIONS: {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax' as const,
-    path: '/',
-    maxAge: 60 * 60 * 24 * 7, // 7 days
-  },
+  SID: 'sid',
 } as const;
 
-/**
- * Extract access token from HttpOnly cookie
- */
-function extractAccessToken(request: NextRequest): string | null {
-  // Prefer canonical name
-  const primary = request.cookies.get(COOKIE_CONFIG.ACCESS_TOKEN)?.value;
-  if (primary) return primary;
-  // Fallbacks for legacy cookie names to be resilient across envs
-  const candidates = [
-    "accessToken",
-    "auth_token",
-    "authToken",
-    "token",
-    "ACCESS_TOKEN",
-    "AccessToken",
-  ];
-  for (const name of candidates) {
-    const v = request.cookies.get(name)?.value;
-    if (v) return v;
-  }
-  return null;
+function hasSessionCookie(request: NextRequest): boolean {
+  return Boolean(request.cookies.get(COOKIE_CONFIG.SID)?.value);
 }
 
 /**
  * Server-side session validation with proper token verification
  */
-async function validateServerSession(accessToken: string, request: NextRequest): Promise<{ valid: boolean; user?: any; error?: string; ipBlocked?: boolean; ipParams?: { duration: string; blockedAt: string; reason: string }, setCookies?: string[], status?: number }> {
+async function validateServerSession(_ignored: string, request: NextRequest): Promise<{ valid: boolean; user?: any; error?: string; ipBlocked?: boolean; ipParams?: { duration: string; blockedAt: string; reason: string }, setCookies?: string[], status?: number }> {
   try {
-    // Prefer internal Next API proxy to avoid cross-origin cookie nuances
-    const validateUrl = new URL('/api/auth/validate?include=user', request.url);
-    const cookieHeader = request.headers.get("cookie") || `${COOKIE_CONFIG.ACCESS_TOKEN}=${accessToken}`;
+    const validateUrl = new URL('/api/v1/auth/validate?include=user', request.url);
+    const cookieHeader = request.headers.get("cookie") || "";
     const response = await fetch(validateUrl, {
       method: "GET",
       headers: {
@@ -149,11 +121,6 @@ async function validateServerSession(accessToken: string, request: NextRequest):
     }
   } catch (error) {
     // Network error during validation - fail closed in production
-
-    // In production, fail closed. In development, allow optimistic for convenience
-    if (ENV.OPTIMISTIC_AUTH) {
-      return { valid: true, error: "Network error (dev mode)" };
-    }
 
     return { valid: false, error: "Authentication service unavailable" };
   }
@@ -195,32 +162,13 @@ function needsAuth(pathname: string): boolean {
  * Check if logout is in progress
  */
 function isLogoutInProgress(request: NextRequest): boolean {
-  // Check for explicit logout flag
-  const logoutInProgress = request.cookies.get('logout_in_progress')?.value ||
-    request.headers.get('x-logout-in-progress');
-  
-  // Explicit logout flag set
-  if (logoutInProgress === 'true') {
-    return true;
+  try {
+    // Navbar sets this short-lived cookie during logout. Use it as a strong signal.
+    const flag = request.cookies.get('logout_in_progress')?.value;
+    return flag === 'true';
+  } catch {
+    return false;
   }
-
-  // Check sessionStorage only on client side (for middleware running on client)
-  if (typeof window !== 'undefined') {
-    const sessionLogoutFlag = sessionStorage.getItem('sintesa_logout_in_progress');
-    if (sessionLogoutFlag) {
-      // Check if the flag is recent (within 30 seconds)
-      const timestamp = parseInt(sessionLogoutFlag, 10);
-      const age = Date.now() - timestamp;
-      if (age < 30000) { // 30 seconds
-        return true;
-      } else {
-        // Flag is stale, clear it
-        sessionStorage.removeItem('sintesa_logout_in_progress');
-      }
-    }
-  }
-
-  return false;
 }
 
 /**
@@ -248,9 +196,13 @@ export async function middleware(request: NextRequest) {
   // redirect immediately to login before any further work. Keeps behavior simple
   // and avoids any chance of a protected page rendering.
   if (needsAuth(pathname)) {
-    const cookieHeader = request.headers.get("cookie") || "";
-    const hasAuthCookie = /(access_token|accessToken|refresh_token|refreshToken)=/.test(cookieHeader);
-    if (!hasAuthCookie) {
+    // If logout is in progress, always redirect to login to avoid protected flashes
+    if (isLogoutInProgress(request)) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("reason", "logout");
+      return NextResponse.redirect(loginUrl);
+    }
+    if (!hasSessionCookie(request)) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("returnTo", pathname);
       return NextResponse.redirect(loginUrl);
@@ -273,20 +225,28 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    const token = extractAccessToken(request);
-
-    // If user has a token and visits login/register, validate first
+    const hasSid = hasSessionCookie(request);
+    // If user has a session and visits login/register, validate first
     // But skip validation if this is a logout redirect (prevents dashboard flash)
-    if (token && (pathname === "/login" || pathname === "/register")) {
+    if (hasSid && (pathname === "/login" || pathname === "/register")) {
       // Check if this is a logout redirect
       const reason = request.nextUrl.searchParams.get('reason');
       const isLogoutRedirect = reason === 'logout' || reason === 'session_expired';
 
       if (!isLogoutRedirect) {
-        const validation = await validateServerSession(token, request);
+        if (ENV.DEBUG_AUTH) {
+          console.log(`[MW] ${pathname} has sid; validating session...`);
+        }
+        const validation = await validateServerSession('', request);
 
         if (validation.valid) {
+          if (ENV.DEBUG_AUTH) {
+            console.log(`[MW] ${pathname} session valid; redirecting to /dashboard/utama`);
+          }
           return NextResponse.redirect(new URL("/dashboard/utama", request.url));
+        }
+        if (ENV.DEBUG_AUTH) {
+          console.log(`[MW] ${pathname} session invalid; continue to public page`);
         }
       }
       // If logout redirect, skip validation and show login page
@@ -321,17 +281,15 @@ export async function middleware(request: NextRequest) {
 
   // Handle protected routes (default-protect if flag enabled)
   if (needsAuth(pathname)) {
-    const token = extractAccessToken(request);
-
-    // No token - redirect to login with return URL
-    if (!token) {
+    const hasSid = hasSessionCookie(request);
+    if (!hasSid) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("returnTo", pathname);
       return NextResponse.redirect(loginUrl);
     }
 
-    // Token exists - server-side validation with graceful refresh fallback
-    const validation = await validateServerSession(token, request);
+    // Session exists - server-side validation (no refresh fallback)
+    const validation = await validateServerSession('', request);
     
     if (!validation.valid) {
       // Redirect blocked IPs to /ip-blocked instead of login
@@ -341,34 +299,6 @@ export async function middleware(request: NextRequest) {
           ipUrl.searchParams.set(k, v);
         }
         return NextResponse.redirect(ipUrl);
-      }
-
-      // Silent refresh fallback: if refresh cookie present, try refreshing once
-      const cookieHeader = request.headers.get("cookie") || "";
-      const hasRefresh = cookieHeader.includes("refresh_token=") || cookieHeader.includes("refreshToken=");
-      const wasAuth401 = validation.status === 401 || validation.status === 400 || validation.status === 498;
-
-      if (hasRefresh && wasAuth401) {
-        try {
-          const refreshResp = await fetch(new URL('/api/auth/refresh', request.url), {
-            method: 'POST',
-            headers: {
-              ...(cookieHeader ? { cookie: cookieHeader } : {}),
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            cache: 'no-store',
-          });
-
-          if (refreshResp.ok) {
-            // Forward new cookies and allow request to proceed
-            const res = NextResponse.next();
-            forwardSetCookiesToResponse(refreshResp, res);
-            return res;
-          }
-        } catch {
-          // ignore and fall through to redirect
-        }
       }
 
       // If still invalid, redirect to login

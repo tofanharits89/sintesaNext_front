@@ -71,7 +71,8 @@ export const useLoginHistory = (): UseLoginHistoryReturn => {
 
     try {
       const resp = await http.get(apiPath(`/analytics/login-stats/weekly`), {
-        params: { days },
+        params: { days, _ts: Date.now() },
+        headers: { 'X-Bypass-Cache': '1', 'Cache-Control': 'no-cache' },
       });
       const result = resp.data;
 
@@ -108,39 +109,42 @@ export const useLoginHistory = (): UseLoginHistoryReturn => {
 
       try {
         const params: Record<string, string | number> = {
-          limit: limit,
-          offset: offset,
+          limit,
+          offset,
         } as any;
         if (startDate) (params as any).startDate = startDate;
         if (endDate) (params as any).endDate = endDate;
         if (userId) (params as any).userId = userId;
 
         const resp = await http.get(apiPath(`/analytics/login-history`), {
-          params,
+          params: { ...params, _ts: Date.now() },
+          headers: { 'X-Bypass-Cache': '1', 'Cache-Control': 'no-cache' },
         });
-        const result: LoginHistoryResponse = resp.data;
+        const result: any = resp.data;
 
         if (result?.success) {
-          setLoginHistory(result.data || []);
+          const entries: LoginHistoryEntry[] = result.data ?? result.items ?? [];
+          setLoginHistory(entries);
+
+          const pg = result.pagination ?? {
+            total: typeof result.total === 'number' ? result.total : entries.length,
+            limit,
+            offset,
+            hasMore: false,
+          };
           setPagination({
-            currentPage:
-              Math.floor(result.pagination.offset / result.pagination.limit) +
-              1,
-            totalPages: Math.ceil(
-              result.pagination.total / result.pagination.limit
-            ),
-            totalItems: result.pagination.total,
-            itemsPerPage: result.pagination.limit,
+            currentPage: Math.floor(Number(pg.offset) / Number(pg.limit)) + 1,
+            totalPages: Math.max(1, Math.ceil(Number(pg.total) / Number(pg.limit))),
+            totalItems: Number(pg.total) || 0,
+            itemsPerPage: Number(pg.limit) || limit,
           });
         } else {
-          throw new Error("Failed to fetch login history");
+          throw new Error(result?.message || "Failed to fetch login history");
         }
       } catch (err: any) {
         const status = err?.response?.status;
         const message =
-          err?.response?.data?.message ||
-          err?.message ||
-          "Failed to fetch login history";
+          err?.response?.data?.message || err?.message || "Failed to fetch login history";
         if (status === 401) setError("Sesi berakhir. Silakan login kembali.");
         else if (status >= 500) setError("Server bermasalah. Coba lagi nanti.");
         else setError(message);

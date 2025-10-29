@@ -55,6 +55,13 @@ export class CacheWarmer {
    * Warm critical endpoints that are essential for app startup
    */
   async warmCriticalEndpoints(): Promise<void> {
+    // Skip if not authenticated (prevents 401 noise before/after login)
+    try {
+      if (typeof document !== 'undefined') {
+        const hasSid = /(?:^|;\s*)sid=/.test(document.cookie || '');
+        if (!hasSid) return;
+      }
+    } catch {}
     const criticalEndpoints = this.getCriticalEndpoints();
     await this.warmEndpoints(criticalEndpoints);
   }

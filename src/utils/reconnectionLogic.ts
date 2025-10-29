@@ -285,9 +285,7 @@ export class ReconnectionManager {
    * Refresh authentication token
    */
   private async refreshAuthToken(): Promise<void> {
-    // Delegate to shared single-flight refresh to avoid parallel refreshers
-    const { refreshTokens } = await import("@/lib/api/httpClient");
-    await refreshTokens();
+    // Single-session model has no client refresh; rely on sid cookie. No-op.
   }
 
   /**
@@ -295,7 +293,6 @@ export class ReconnectionManager {
    */
   private async checkAndRefreshToken(): Promise<void> {
     const token = getAuthTokenFromCookie();
-
     if (!token) {
       // No token available - user might not be logged in
       // This is not necessarily an error, just log it for debugging
@@ -313,9 +310,7 @@ export class ReconnectionManager {
       const expiryTime = payload.exp * 1000;
       const now = Date.now();
 
-      if (expiryTime - now < RECONNECTION_CONFIG.TOKEN_REFRESH_THRESHOLD) {
-        await this.refreshAuthToken();
-      }
+      // No-op: token expiry logic not used in single-session model
     } catch (error) {
       // Token parsing failed, assume it's valid
       logger.warn("Could not parse token for expiry check");

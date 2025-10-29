@@ -12,8 +12,8 @@ export default async function LogUserLayout({
   const c = await cookies();
   const cookiePairs = c.getAll().map(({ name, value }) => `${name}=${value}`);
   const cookieHeader = cookiePairs.join("; ");
-  const hasAccessToken = Boolean(c.get("access_token")?.value) || Boolean(c.get("accessToken")?.value);
-  if (!cookieHeader) {
+  const hasSid = Boolean(c.get("sid")?.value) || /(?:^|;\s*)sid=/.test(cookieHeader);
+  if (!hasSid) {
     redirect("/login");
   }
 
@@ -43,9 +43,6 @@ export default async function LogUserLayout({
   }
 
   if (resp.status === 401) {
-    if (hasAccessToken) {
-      redirect("/unauthorized?reason=log_user_profile_401");
-    }
     redirect("/login");
   }
 

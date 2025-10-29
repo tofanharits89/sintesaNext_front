@@ -13,8 +13,8 @@ export default async function UsersLayout({
   const c = await cookies();
   const cookiePairs = c.getAll().map(({ name, value }) => `${name}=${value}`);
   const cookieHeader = cookiePairs.join("; ");
-  const hasAccessToken = Boolean(c.get("access_token")?.value) || Boolean(c.get("accessToken")?.value);
-  if (!cookieHeader) {
+  const hasSid = Boolean(c.get("sid")?.value) || /(?:^|;\s*)sid=/.test(cookieHeader);
+  if (!hasSid) {
     redirect("/login");
   }
   try {
@@ -39,9 +39,6 @@ export default async function UsersLayout({
     }
 
     if (resp.status === 401) {
-      if (hasAccessToken) {
-        redirect("/unauthorized?reason=user_management_access_denied");
-      }
       redirect("/login");
     }
 
@@ -56,10 +53,7 @@ export default async function UsersLayout({
     if (!canAccessUserManagement(user.role)) {
       redirect("/unauthorized?reason=user_management_access_denied");
     }
-  } catch (error) {
-    if (hasAccessToken) {
-      redirect("/unauthorized?reason=user_management_access_denied");
-    }
+  } catch (_error) {
     redirect("/login");
   }
   return children as React.ReactElement;

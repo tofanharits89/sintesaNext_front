@@ -1,37 +1,44 @@
-/**
- * Next.js API Route - Login
- * Forwards login requests to backend with cookie forwarding
- */
-
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { backendPath } from "@/lib/api/backend";
 import { forwardSetCookies } from "@/lib/utils/cookie-helpers";
-import { apiPath } from "@/lib/config/config";
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    
-    const response = await fetch(apiPath("/auth/login"), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-      credentials: "include",
-    });
+  const body = await request.json().catch(() => ({}));
+  const { username, password, captcha, expectedCaptcha, rememberMe } = body as {
+    username?: string;
+    password?: string;
+    captcha?: string;
+    expectedCaptcha?: string;
+    rememberMe?: boolean;
+  };
 
-    const data = await response.json();
+  const resp = await fetch(backendPath("/auth/login"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ username, password, captcha, expectedCaptcha, rememberMe: Boolean(rememberMe) }),
+  });
 
-    // Forward Set-Cookie headers
-    const nextResponse = NextResponse.json(data);
-    forwardSetCookies(response, nextResponse);
+  const data = await resp.json().catch(() => ({}));
 
-    return nextResponse;
-  } catch (error) {
-    console.error("Login API error:", error);
-    return NextResponse.json(
-      { success: false, error: "Login failed" },
-      { status: 500 }
+  if (!resp.ok || !data?.success) {
+    const errRes = NextResponse.json(
+      { ok: false, error: data?.error?.message || data?.message || "Login failed" },
+      { status: resp.status || 401 },
     );
+    forwardSetCookies(resp, errRes);
+    return errRes;
   }
+
+  const user = data?.data?.user || null;
+  const res = NextResponse.json(
+    { ok: true, success: true, username: user?.username || username, data: { user } },
+    { status: 200 },
+  );
+
+  forwardSetCookies(resp, res);
+  res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+  return res;
 }
+

@@ -26,7 +26,8 @@ export function useMenuUsageTop(
       setError(null);
       try {
         const resp = await http.get(apiPath(`/analytics/menu-usage/top`), {
-          params: { month: m, limit: l },
+          params: { month: m, limit: l, _ts: Date.now() },
+          headers: { 'X-Bypass-Cache': '1', 'Cache-Control': 'no-cache' },
         });
         const json = resp.data;
         if (!json?.success)

@@ -67,16 +67,6 @@ function genTraceId() {
 
 // Request interceptor: attach CSRF header if available, set Content-Type, and add debug headers
 http.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
-  // Block all requests if we're logging out (except logout and profile requests)
-  if (
-    isLoggingOut &&
-    !config.url?.includes("/auth/logout") &&
-    !config.url?.includes("/users/profile/me")
-  ) {
-    console.log("[Auth] Request blocked - logout in progress:", config.url);
-    throw new Error("Logout in progress");
-  }
-
   const h = (config.headers ||= ({} as any));
 
   // Correlation headers
@@ -108,37 +98,7 @@ http.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   return config;
 });
 
-// ✅ IMPROVED: Simplified token refresh with single-flight pattern
-let refreshPromise: Promise<void> | null = null;
-let isLoggingOut = false; // Flag to prevent requests during logout/redirect
-
-// Post-login grace window to avoid refresh/401 races during cookie propagation
-let postLoginUntil = 0;
-let lastLoginAt = 0;
-
-// New: Be more conservative before calling server-side logout right after login
-const MIN_LOGOUT_DELAY_MS = 8000; // was ~2000 via consumer; raise to 8s to avoid flapping
-
-export function setPostLoginGrace(ms: number = 1500) {
-  const now = Date.now();
-  lastLoginAt = now;
-  postLoginUntil = now + ms;
-}
-
-// Debug: Track when logout guard is set
-if (typeof window !== "undefined") {
-  Object.defineProperty(window, "isLoggingOut", {
-    get() {
-      return isLoggingOut;
-    },
-    set(value) {
-      console.trace("[Auth] isLoggingOut set to:", value);
-      isLoggingOut = value;
-      (window as any).__isLoggingOut = value;
-    },
-    configurable: true,
-  });
-}
+// No client-side refresh/logout guards in single-session model
 
 // Simplified cookie management for HTTP-only only approach
 import { clearNonHttpOnlyCookies } from "../utils/cookieManager";
@@ -147,181 +107,26 @@ import { clearAuthCacheOnFail } from "../auth";
 // Expose globally for debugging and coordination
 if (typeof window !== "undefined") {
   (window as any).__clearNonHttpOnlyCookies = clearNonHttpOnlyCookies;
-  (window as any).__isLoggingOut = false; // Shared flag across all modules
-  console.log(
-    "[Auth] Debug: window.__clearNonHttpOnlyCookies() available for manual cleanup",
-  );
 }
 
 // Expose a safe reset for the logout guard (used after successful login)
-export function clearLogoutGuard() {
-  isLoggingOut = false;
-  if (typeof window !== "undefined") {
-    (window as any).__isLoggingOut = false;
-  }
-}
+export function clearLogoutGuard() { /* no-op */ }
 
 // ✅ IMPROVED: Simplified token refresh with single-flight pattern
-export async function refreshTokens(): Promise<void> {
-  // If refresh already in progress, wait for it
-  if (refreshPromise) {
-    return refreshPromise;
-  }
-
-  // Start new refresh
-  refreshPromise = (async () => {
-    try {
-      console.log("[Auth] 🔄 Starting token refresh...");
-
-      // Get CSRF token
-      const csrf = await getCsrfToken();
-
-      // Call refresh endpoint
-      const resp = await fetch(apiPath("/auth/refresh"), {
-        method: "POST",
-        credentials: "include", // Critical: Include HTTP-only cookies
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": csrf,
-          "X-Debug-Source": "httpClient.refresh",
-          "X-Debug-Trace": genTraceId(),
-        },
-        body: JSON.stringify({}),
-      });
-
-      if (!resp.ok) {
-        throw new Error(`Refresh failed: ${resp.status}`);
-      }
-
-      console.log("[Auth] ✅ Token refresh successful");
-    } catch (err) {
-      console.log("[Auth] ❌ Refresh error:", err);
-
-      // Clear caches on failure
-      clearNonHttpOnlyCookies();
-      clearCsrfCache();
-      clearAuthCacheOnFail();
-
-      // Handle refresh failure (redirect; gate server logout separately)
-      await handleRefreshFailure(401);
-
-      throw err;
-    } finally {
-      // Clear promise after 1 second to allow new refreshes
-      setTimeout(() => {
-        refreshPromise = null;
-      }, 1000);
-    }
-  })();
-
-  return refreshPromise;
-}
+// refreshTokens removed
 
 /**
  * Verify with the server whether the session is really invalid before logging out.
  * Returns true when server confirms invalid, false if still valid or inconclusive.
  */
-async function confirmInvalidSession(): Promise<boolean> {
-  try {
-    const res = await fetch(apiPath("/auth/validate?include=user"), {
-      method: "GET",
-      credentials: "include",
-      headers: { "X-Skip-Auth-Refresh": "true", "X-Debug-Source": "httpClient.confirmInvalid" },
-      cache: "no-store",
-    });
-    if (!res.ok) return true; // treat 4xx/5xx as invalid
-    const data = await res.json().catch(() => ({}));
-    // Accept both shapes: { success:true, data:{ valid:boolean } } OR minimal boolean
-    const valid = !!(data?.data?.valid ?? data?.valid);
-    return !valid;
-  } catch (e) {
-    // Network errors → do not aggressively logout the server; just redirect client
-    return false;
-  }
-}
+// confirmInvalidSession removed
 
 /**
  * Handle refresh token failure by redirecting to login.
  * Only call server-side logout when we are confident the session is invalid
  * and we are past a conservative post-login window.
  */
-async function handleRefreshFailure(status: number): Promise<void> {
-  // Prevent multiple simultaneous flows
-  if (isLoggingOut) {
-    console.log("[Auth] Request blocked - logout in progress");
-    throw new Error("Logout in progress");
-  }
-
-  console.log(
-    `[Auth] ❌ Refresh failed with status ${status} - redirecting`,
-  );
-
-  // Clear non-HTTP-only cookies and CSRF cache
-  clearNonHttpOnlyCookies();
-  clearCsrfCache();
-
-  // Clear Zustand auth store to remove persisted state from localStorage
-  try {
-    const { useAuthSessionStore } = await import("@/stores/session-store");
-    useAuthSessionStore.getState().logout();
-    console.log("[Auth] Zustand auth store cleared");
-  } catch (e) {
-    console.warn("[Auth] Failed to clear Zustand store:", e);
-  }
-
-  // Gate server-side logout to avoid self-sabotage right after login
-  const elapsedSinceLogin = Date.now() - lastLoginAt;
-  const pastConservativeWindow = elapsedSinceLogin >= MIN_LOGOUT_DELAY_MS;
-
-  let serverThinksInvalid = false;
-  if (pastConservativeWindow) {
-    // Confirm with server once before blacklisting tokens via /logout
-    serverThinksInvalid = await confirmInvalidSession();
-  }
-
-  if (pastConservativeWindow && serverThinksInvalid) {
-    isLoggingOut = true;
-    if (typeof window !== "undefined") {
-      (window as any).__isLoggingOut = true;
-    }
-    try {
-      const headers: Record<string, string> = {
-        "X-Skip-Auth-Refresh": "true",
-        "X-Debug-Source": "httpClient.handleRefreshFailure",
-        "X-Debug-Trace": genTraceId(),
-      };
-      
-      // Route via Next API so it can assist with CSRF/header forwarding; nginx maps this to frontend
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-        headers,
-      });
-      console.log("[Auth] Backend logout successful");
-    } catch (logoutError) {
-      console.warn("[Auth] Backend logout failed (continuing anyway):", logoutError);
-    }
-  } else {
-    if (!pastConservativeWindow) {
-      console.log(
-        "[Auth] Skipping backend logout during extended post-login window (",
-        `${elapsedSinceLogin}ms < ${MIN_LOGOUT_DELAY_MS}ms)`,
-      );
-    } else {
-      console.log(
-        "[Auth] Skipping backend logout: server still considers session valid",
-      );
-    }
-  }
-
-  // Redirect to login page immediately
-  if (typeof window !== "undefined") {
-    console.log("[Auth] 🚪 Redirecting to login - session invalidated or refresh failed");
-    window.location.href =
-      "/login?reason=session_expired&message=" +
-      encodeURIComponent("Your session has expired. Please log in again.");
-  }
-}
+// handleRefreshFailure removed
 
 http.interceptors.response.use(
   (res) => res,
@@ -341,18 +146,12 @@ http.interceptors.response.use(
     }
 
     // Precompute logout/refresh detection
-    const isLogoutOrRefresh =
-      original.url?.includes("/auth/logout") ||
-      original.url?.includes("/auth/refresh") ||
-      (original.headers as any)?.["X-Skip-Auth-Refresh"] === "true";
+    const isLogoutOrRefresh = original.url?.includes("/auth/logout");
 
     // (EBADCSRFTOKEN handling consolidated below)
 
     // If we're in the process of logging out, reject all requests immediately
-    if (isLoggingOut) {
-      console.log("[Auth] Request blocked - logout in progress");
-      return Promise.reject(new Error("Logout in progress"));
-    }
+    // no logout guard
 
     // Handle IP blocking - redirect to dedicated page
     // Log 403 errors for debugging
@@ -436,100 +235,17 @@ http.interceptors.response.use(
       }
     }
 
-    // Auth handling: attempt refresh on 401 once (but skip for logout/refresh endpoints)
-    if (
-      status === 401 &&
-      !original._retry &&
-      !isLogoutOrRefresh &&
-      !original._skipAuthRefresh
-    ) {
-      // Suppress refresh during short post-login window to avoid race with cookie propagation
-      if (Date.now() < postLoginUntil) {
-        const delay = 400 + Math.floor(Math.random() * 300); // 400–700ms jitter
-        console.log(
-          "[Auth] 401 within post-login grace; retrying once after",
-          delay,
-          "ms",
-          {
-            url: original.url,
-          },
-        );
-        original._retry = true;
-        (original as any)._graceRetry = true;
-        return new Promise((resolve, reject) => {
-          setTimeout(() => {
-            http
-              .request(original)
-              .then(resolve)
-              .catch(reject);
-          }, delay);
-        });
-      }
-
-      console.log(
-        "[Auth] 401 from:",
-        original.url,
-        "src:",
-        (original.headers as any)?.["X-Debug-Source"],
-      );
-      original._retry = true;
-      console.log("[Auth] Received 401, attempting HTTP-only refresh...", {
-        url: original.url,
-        src: (original.headers as any)?.["X-Debug-Source"],
-      });
-      try {
-        await refreshTokens();
-        console.log(
-          "[Auth] HTTP-only refresh succeeded, retrying original request",
-          {
-            url: original.url,
-            src: (original.headers as any)?.["X-Debug-Source"],
-          },
-        );
-        return http.request(original);
-      } catch (refreshError) {
-        // Refresh failed - non-HTTP-only cookies should already be cleared by refreshTokens()
-        console.log(
-          "[Auth] HTTP-only refresh failed, non-HTTP-only cookies cleared",
-          {
-            url: original.url,
-            src: (original.headers as any)?.["X-Debug-Source"],
-          },
-        );
-        return Promise.reject(refreshError);
-      }
-    }
-
-    // If this is a 401 and we already tried once
-    if (status === 401 && original._retry && !isLogoutOrRefresh) {
-      // Special case: if the 401 happened right after a post-login grace retry,
-      // attempt ONE refresh before logging out to avoid false logouts from stale caches
-      if ((original as any)._graceRetry && !(original as any)._didRefreshAfterGrace) {
-        try {
-          (original as any)._didRefreshAfterGrace = true;
-          console.log(
-            "[Auth] 401 after grace retry; attempting one refresh before logout",
-            {
-              url: original.url,
-            },
-          );
-          await refreshTokens();
-          return http.request(original);
-        } catch (e) {
-          // fall through to logout below
-        }
-      }
-
-      console.log(
-        "[Auth] Received 401 after retry attempt - session invalidated, logging out",
-      );
-      // CRITICAL: Clear React Query cache before logout to prevent stale error states
-      // This prevents old 401 errors from blocking new API calls after re-login
+    if (status === 401 && !isLogoutOrRefresh) {
+      clearNonHttpOnlyCookies();
+      clearCsrfCache();
       clearAuthCacheOnFail();
-      // Call handleRefreshFailure to properly logout and redirect
-      await handleRefreshFailure(status);
-      return Promise.reject(new Error("Session invalidated"));
+      if (typeof window !== 'undefined') {
+        window.location.href = "/login?reason=session_expired";
+      }
+      return Promise.reject(error);
     }
+
+    // no second stage handling
 
     return Promise.reject(error);
   },
@@ -550,15 +266,6 @@ if (typeof window !== "undefined") {
 
 // Request interceptor for backend HTTP client
 backendHttp.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
-  // Block all requests if we're logging out (except logout itself)
-  if (isLoggingOut && !config.url?.includes("/auth/logout")) {
-    console.log(
-      "[BackendHttp] Request blocked - logout in progress:",
-      config.url,
-    );
-    throw new Error("Logout in progress");
-  }
-
   const h = (config.headers ||= ({} as any));
   if (!h["X-Debug-Trace"]) h["X-Debug-Trace"] = genTraceId();
   if (!h["X-Debug-Source"]) h["X-Debug-Source"] = "backendHttp";
@@ -602,16 +309,9 @@ backendHttp.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    const isLogoutOrRefresh =
-      original.url?.includes("/auth/logout") ||
-      original.url?.includes("/auth/refresh") ||
-      (original.headers as any)?.["X-Skip-Auth-Refresh"] === "true";
+    const isLogoutOrRefresh = original.url?.includes("/auth/logout");
 
-    // If we're in the process of logging out, reject all requests immediately
-    if (isLoggingOut) {
-      console.log("[BackendHttp] Request blocked - logout in progress");
-      return Promise.reject(new Error("Logout in progress"));
-    }
+    // no logout guard
 
     // Handle IP blocking
     const body: any =
@@ -651,35 +351,12 @@ backendHttp.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Handle authentication errors
-    if (
-      status === 401 &&
-      !original._retry &&
-      !isLogoutOrRefresh &&
-      !original._skipAuthRefresh
-    ) {
-      console.log("[BackendHttp] 401 from:", original.url);
-      original._retry = true;
-      try {
-        await refreshTokens();
-        console.log(
-          "[BackendHttp] Token refresh succeeded, retrying original request",
-        );
-        return backendHttp.request(original);
-      } catch (refreshError) {
-        console.log("[BackendHttp] Token refresh failed");
-        return Promise.reject(refreshError);
-      }
-    }
-
-    // If this is a 401 and we already tried refresh, session is truly invalid
-    if (status === 401 && original._retry && !isLogoutOrRefresh) {
-      console.log(
-        "[BackendHttp] Received 401 after retry - session invalidated",
-      );
+    if (status === 401 && !isLogoutOrRefresh) {
       clearAuthCacheOnFail();
-      await handleRefreshFailure(status);
-      return Promise.reject(new Error("Session invalidated"));
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login?reason=session_expired';
+      }
+      return Promise.reject(new Error('Session invalidated'));
     }
 
     return Promise.reject(error);

@@ -21,7 +21,7 @@ export function LogoutGuard({ children }: LogoutGuardProps) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname;
-      
+
       // Always clear logout flag on login page
       if (path === '/login') {
         useAuthSessionStore.getState().setLogoutInProgress(false);
@@ -36,13 +36,25 @@ export function LogoutGuard({ children }: LogoutGuardProps) {
         return;
       }
 
-      // If logout flag exists and we're not on login page or authenticated, 
-      // it might be stale - clear it after 5 seconds
+      // Ensure redirect happens quickly during logout flow to avoid content flash
+      if (isLogoutInProgress && path !== '/login') {
+        // Nudge redirect if it's not already in progress
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const reason = params.get('reason');
+          if (!reason) {
+            const url = `/login?reason=logout&_t=${Date.now()}`;
+            window.location.replace(url);
+          }
+        } catch {}
+      }
+
+      // Fallback: if overlay somehow persists too long, clear after 30 seconds
       const logoutInProgress = sessionStorage.getItem('sintesa_logout_in_progress');
       if (logoutInProgress) {
         const timestamp = parseInt(logoutInProgress, 10);
         const age = Date.now() - timestamp;
-        if (age > 5000) { // 5 seconds
+        if (age > 30000) { // 30 seconds
           useAuthSessionStore.getState().setLogoutInProgress(false);
           sessionStorage.removeItem('sintesa_logout_in_progress');
         }

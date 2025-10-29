@@ -204,8 +204,10 @@ export function useAuth(): UseAuthReturn {
           error: error instanceof Error ? error.message : "Terjadi kesalahan saat logout" 
         };
       } finally {
-        authState.setLoggingOut(false);
-        // Keep logout in progress until after redirect to prevent dashboard flash
+        // Do NOT clear isLoggingOut here on success; keep overlay visible until redirect completes.
+        // Clearing occurs on:
+        // - Login page mount (LogoutGuard clears isLogoutInProgress)
+        // - When user becomes authenticated again
       }
     },
     [authState, clearCache],

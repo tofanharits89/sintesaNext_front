@@ -687,9 +687,14 @@ export default function LogUserPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {Array.from({ length: 12 }).map((_, idx) => {
+                        // Anchor to the first day to avoid month rollover (e.g., 31st → next month)
                         const d = new Date();
+                        d.setDate(1);
                         d.setMonth(d.getMonth() - idx);
-                        const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+
+                        const year = d.getFullYear();
+                        const month = String(d.getMonth() + 1).padStart(2, "0");
+                        const val = `${year}-${month}`;
                         const label = d.toLocaleString("id-ID", { month: "long", year: "numeric" });
                         return (
                           <SelectItem key={val} value={val}>

@@ -143,40 +143,7 @@ export async function PUT(request: NextRequest) {
   const res = NextResponse.json(data, { status: resp.ok ? 200 : resp.status });
   forwardSetCookies(resp, res);
 
-  // If profile update succeeded, proactively refresh tokens to keep session mapping in sync
-  if (resp.ok) {
-    try {
-      const xsrfHeader =
-        request.headers.get("x-csrf-token") ||
-        request.headers.get("x-xsrf-token") ||
-        request.cookies.get("XSRF-TOKEN")?.value ||
-        undefined;
-
-      const refreshResp = await fetch(backendPath("/auth/refresh"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(cookie ? { cookie } : {}),
-          ...(xsrfHeader ? { "X-CSRF-Token": xsrfHeader } : {}),
-          "X-Debug-Source": "profile.put.refresh",
-          "X-Debug-Trace": dbgTraceHeader || debugTrace,
-          "X-Debug-Ts": Date.now().toString(),
-        },
-        credentials: "include",
-        cache: "no-store",
-        body: JSON.stringify({}),
-      });
-      const refreshSetCookie = refreshResp.headers.get("set-cookie");
-      console.log(`[Profile PUT] trace=${dbgTraceHeader ?? debugTrace} :: refresh status=${refreshResp.status} setCookiePresent=${!!refreshSetCookie}`);
-      if (refreshResp.ok) {
-        // Forward any rotated cookies (access/refresh/CSRF)
-        forwardSetCookies(refreshResp, res);
-      }
-    } catch (e) {
-      // Non-fatal: if refresh fails, client interceptor will handle a subsequent 401
-      console.warn("[Profile PUT] Token refresh after update failed:", (e as any)?.message || e);
-    }
-  }
+  // In single-session model, no token refresh is needed after profile update
 
   console.log(`[Profile PUT] trace=${dbgTraceHeader ?? debugTrace} :: returning status=${resp.ok ? 200 : resp.status}`);
   return res;

@@ -15,8 +15,8 @@ export default async function SettingsLayout({
   const c = await cookies();
   const cookiePairs = c.getAll().map(({ name, value }) => `${name}=${value}`);
   const cookieHeader = cookiePairs.join("; ");
-  const hasAccessToken = Boolean(c.get("access_token")?.value) || Boolean(c.get("accessToken")?.value);
-  if (!cookieHeader) {
+  const hasSid = Boolean(c.get("sid")?.value) || /(?:^|;\s*)sid=/.test(cookieHeader);
+  if (!hasSid) {
     redirect("/login");
   }
 
@@ -48,10 +48,7 @@ export default async function SettingsLayout({
   }
 
   if (resp.status === 401) {
-    // If a session cookie exists but backend rejects, prefer unauthorized over login
-    if (hasAccessToken) {
-      redirect("/unauthorized?reason=settings_profile_401");
-    }
+    // Session invalid – send to login
     redirect("/login");
   }
 

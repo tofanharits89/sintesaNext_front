@@ -39,33 +39,7 @@ export async function GET(request: NextRequest) {
       cache: "no-store",
     });
     console.log("[API /messaging/conversations] Backend status:", resp.status);
-    if (resp.status === 401) {
-      try {
-        const xsrf = extractCookie("XSRF-TOKEN", cookie);
-        const refresh = await fetch(backendPath("/auth/refresh"), {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(cookie ? { cookie } : {}),
-            ...(xsrf ? { "X-CSRF-Token": xsrf } : {}),
-          },
-          cache: "no-store",
-        });
-        console.log("[API /messaging/conversations] Refresh status:", refresh.status);
-        if (refresh.ok) {
-          const retry = await fetch(url.toString(), {
-            method: "GET",
-            headers: { ...(cookie ? { cookie } : {}) },
-            cache: "no-store",
-          });
-          const retryData = await retry.json().catch(() => ({}));
-          const retryRes = NextResponse.json(retryData, { status: retry.status });
-          forwardSetCookies(refresh, retryRes);
-          forwardSetCookies(retry, retryRes);
-          return retryRes;
-        }
-      } catch {}
-    }
+    // 401: let client handle redirect to login
     const data = await resp.json().catch(() => ({}));
     const res = NextResponse.json(data, { status: resp.status });
     forwardSetCookies(resp, res);

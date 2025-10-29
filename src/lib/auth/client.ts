@@ -5,7 +5,7 @@
  */
 
 import { logger } from "../utils/logger";
-import { http, clearLogoutGuard, setPostLoginGrace } from "../api/httpClient";
+import { http } from "../api/httpClient";
 import { apiPath } from "../config/base-path";
 import { primeCSRFToken, getCSRFToken as fetchCSRFToken } from "../security/csrfManager";
 
@@ -80,7 +80,8 @@ export class AuthClient {
         payload.expectedCaptcha = extras.expectedCaptcha;
       }
 
-      const response = await fetch(apiPath(`${this.baseURL}/auth/login`), {
+      // Use fully-qualified versioned path directly to avoid double-prefixing
+      const response = await fetch(`${this.baseURL}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -115,11 +116,7 @@ export class AuthClient {
           method: csrfTokenFromHeader ? "header" : "body",
         });
 
-        // Reset any stale logout guard that could block follow-up requests
-        try { clearLogoutGuard(); } catch {}
-        // Enter post-login grace window to avoid refresh/401 races
-        // Extend post-login grace a bit to avoid premature refresh/logout flapping under slow networks
-        try { setPostLoginGrace(4000); } catch {}
+        // No client-side refresh; guards not needed in simplified model
 
         // Prime in-memory CSRF cache without exposing to persistent storage
         if (csrfToken) {
