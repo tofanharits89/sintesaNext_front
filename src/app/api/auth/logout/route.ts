@@ -29,17 +29,18 @@ export async function POST(req: NextRequest) {
     const candidates = raw
       .split(",")
       .map((part) => part.trim())
-      .filter((part): part is string => Boolean(part));
+      .filter((part): part is string => typeof part === "string" && part.length > 0);
 
     for (let i = candidates.length - 1; i >= 0; i -= 1) {
-      const candidate = candidates[i];
+      const candidate = candidates[i] ?? "";
       if (/^[a-f0-9]{64}$/i.test(candidate)) {
         return candidate;
       }
     }
 
     // Fallback to last non-empty candidate even if format is unexpected
-    return candidates.at(-1) ?? null;
+    const fallback = candidates.at(-1);
+    return fallback ?? null;
   };
 
   const normalizedHeaderToken = normalizeToken(incomingCsrfHeader);
