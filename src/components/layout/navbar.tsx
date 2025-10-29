@@ -736,7 +736,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                           headers['X-CSRF-Token'] = csrfToken;
                         }
                         
-                        void fetch(apiPath("/auth/logout"), {
+                        void fetch("/api/v1/auth/logout", {
                           method: "POST",
                           credentials: "include",
                           keepalive: true,

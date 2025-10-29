@@ -45,7 +45,7 @@ interface AuthResponse<T = unknown> {
 export class AuthClient {
   private baseURL: string;
 
-  constructor(baseURL: string = "/api") {
+  constructor(baseURL: string = "/api/v1") {
     this.baseURL = baseURL;
   }
 

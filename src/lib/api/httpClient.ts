@@ -305,7 +305,7 @@ async function handleRefreshFailure(status: number): Promise<void> {
         headers["X-CSRF-Token"] = csrfToken;
       }
       
-      await fetch(apiPath("/auth/logout"), {
+      await fetch("/api/v1/auth/logout", {
         method: "POST",
         credentials: "include",
         headers,
