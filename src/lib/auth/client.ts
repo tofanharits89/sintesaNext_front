@@ -7,6 +7,7 @@
 import { logger } from "../utils/logger";
 import { http, clearLogoutGuard, setPostLoginGrace } from "../api/httpClient";
 import { apiPath } from "../config/base-path";
+import { primeCSRFToken, getCSRFToken as fetchCSRFToken } from "../security/csrfManager";
 
 // User interface (matches backend API response)
 export interface User {
@@ -120,6 +121,15 @@ export class AuthClient {
         // Extend post-login grace a bit to avoid premature refresh/logout flapping under slow networks
         try { setPostLoginGrace(4000); } catch {}
 
+        // Prime in-memory CSRF cache without exposing to persistent storage
+        if (csrfToken) {
+          try {
+            primeCSRFToken(csrfToken);
+          } catch (err) {
+            logger.warn("[Auth Client] Failed to prime CSRF cache", err);
+          }
+        }
+
         return {
           success: true,
           user: data.data.user,
@@ -141,65 +151,20 @@ export class AuthClient {
 
   /**
    * Logout user
-   * SECURITY FIX: No longer needs to read CSRF token from cookies (header is preferred)
-   * Cookies are cleared automatically by the server
+   * Delegates CSRF handling to the Next.js proxy so no browser storage is needed.
    */
   async logout(): Promise<{ success: boolean; error?: string }> {
     try {
-      // SECURITY FIX: No longer reading CSRF token from document.cookie
-      // The backend now sets CSRF token in response headers
-      // We send CSRF token in header for logout request
-
-      // Resolve CSRF token (prefer refreshed token to avoid mismatches)
-      let csrfToken: string | null = null;
-      if (typeof window !== 'undefined') {
-        try {
-          csrfToken = sessionStorage.getItem('csrf_token');
-        } catch {}
-
-        if (!csrfToken) {
-          try {
-            const { csrfManager } = await import("../security/csrfManager");
-            csrfToken = await csrfManager.refreshToken();
-          } catch (error) {
-            logger.warn("[Auth Client] Failed to refresh CSRF token before logout", error);
-          }
-        }
-
-        if (!csrfToken) {
-          try {
-            const { csrfManager } = await import("../security/csrfManager");
-            csrfToken = await csrfManager.getCSRFToken();
-          } catch (error) {
-            logger.warn("[Auth Client] Failed to fetch CSRF token before logout", error);
-          }
-        }
-
-        if (!csrfToken) {
-          const value = `; ${document.cookie}`;
-          const parts = value.split(`; XSRF-TOKEN=`);
-          if (parts.length === 2) {
-            csrfToken = parts.pop()?.split(';').shift() || null;
-          }
-        }
-      }
-
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-
-      // Send CSRF token in header (preferred method)
-      if (csrfToken) {
-        headers["X-CSRF-Token"] = csrfToken;
-        logger.debug("[Auth Client] Using CSRF token for logout request");
-      }
-
       const response = await fetch(`${this.baseURL}/auth/logout`, {
         method: "POST",
         headers: {
-          ...headers,
+          "Content-Type": "application/json",
           "X-Debug-Source": "authClient.logout",
-          "X-Debug-Trace": (Date.now().toString(36) + "-" + Math.random().toString(36).slice(2,8)).toUpperCase(),
+          "X-Debug-Trace": (
+            Date.now().toString(36) +
+            "-" +
+            Math.random().toString(36).slice(2, 8)
+          ).toUpperCase(),
         },
         credentials: "include",
       });
@@ -208,10 +173,6 @@ export class AuthClient {
 
       if (response.ok && data.success) {
         logger.info("Logout successful");
-        // Clear CSRF token from session storage on successful logout
-        if (typeof window !== 'undefined') {
-          sessionStorage.removeItem('csrf_token');
-        }
         return { success: true };
       } else {
         const error = data.error || data.message || "Logout failed";
@@ -295,8 +256,7 @@ export class AuthClient {
   }
 
   /**
-   * Get CSRF token
-   * SECURITY FIX: Returns CSRF token from sessionStorage (more secure than cookies)
+   * Get CSRF token (uses in-memory manager, no persistent storage)
    */
   async getCSRFToken(): Promise<{
     success: boolean;
@@ -304,36 +264,8 @@ export class AuthClient {
     error?: string;
   }> {
     try {
-      // SECURITY FIX: First try to get CSRF token from sessionStorage
-      // This is populated from login response headers
-      if (typeof window !== 'undefined') {
-        const csrfToken = sessionStorage.getItem('csrf_token');
-        if (csrfToken) {
-          logger.debug("[Auth Client] CSRF token retrieved from sessionStorage");
-          return { success: true, csrfToken };
-        }
-      }
-
-      // Fallback: Fetch new CSRF token from server
-      logger.debug("[Auth Client] CSRF token not in sessionStorage, fetching from server");
-      const response = await fetch(`${this.baseURL}/auth/csrf`, {
-        method: "GET",
-        credentials: "include",
-      });
-
-      const data: AuthResponse<{ csrfToken: string }> = await response.json();
-
-      if (response.ok && data.success && data.data) {
-        // Store in sessionStorage for future use
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem('csrf_token', data.data.csrfToken);
-        }
-        return { success: true, csrfToken: data.data.csrfToken };
-      } else {
-        const error = data.error || data.message || "Failed to get CSRF token";
-        logger.warn("CSRF token fetch failed:", error);
-        return { success: false, error };
-      }
+      const csrfToken = await fetchCSRFToken();
+      return { success: true, csrfToken };
     } catch (error) {
       logger.error("CSRF token error:", error);
       return {
@@ -341,17 +273,6 @@ export class AuthClient {
         error: error instanceof Error ? error.message : "Network error",
       };
     }
-  }
-
-  /**
-   * Helper to get CSRF token for API calls
-   * SECURITY FIX: Returns token from sessionStorage (secure storage)
-   */
-  getCSRFTokenForRequests(): string | null {
-    if (typeof window === 'undefined') {
-      return null;
-    }
-    return sessionStorage.getItem('csrf_token');
   }
 }
 

@@ -1,4 +1,5 @@
 import { NextResponse, NextRequest } from "next/server";
+import { createHash } from "crypto";
 import { backendPath } from "@/lib/api/backend";
 import { forwardSetCookies } from "@/lib/utils/cookie-helpers";
 
@@ -16,20 +17,17 @@ function extractCookie(cookiesHeader: string, name: string): string | null {
 }
 
 export async function POST(req: NextRequest) {
-  // Forward incoming cookies and CSRF to backend
   const incomingCookie = req.headers.get("cookie") ?? "";
-  const xsrfFromCookie = extractCookie(incomingCookie, "XSRF-TOKEN");
-  // Also honor any explicit CSRF headers from the client
-  const incomingCsrfHeader =
+  const incomingAuth = req.headers.get("authorization") ?? undefined;
+  const headerTokenRaw =
     req.headers.get("x-csrf-token") || req.headers.get("x-xsrf-token");
 
   const normalizeToken = (raw: string | null): string | null => {
     if (!raw) return null;
-    // Some browsers combine duplicate headers as comma-separated list; take the last valid hex token
     const candidates = raw
       .split(",")
       .map((part) => part.trim())
-      .filter((part): part is string => typeof part === "string" && part.length > 0);
+      .filter((part): part is string => part.length > 0);
 
     for (let i = candidates.length - 1; i >= 0; i -= 1) {
       const candidate = candidates[i] ?? "";
@@ -38,51 +36,109 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Fallback to last non-empty candidate even if format is unexpected
-    const fallback = candidates.at(-1);
-    return fallback ?? null;
+    return candidates.at(-1) ?? null;
   };
 
-  const normalizedHeaderToken = normalizeToken(incomingCsrfHeader);
-  const normalizedCookieToken = normalizeToken(xsrfFromCookie);
+  const cookieToken = normalizeToken(extractCookie(incomingCookie, "XSRF-TOKEN"));
+  const headerToken = normalizeToken(headerTokenRaw);
 
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+  const diagnostic = (label: string, payload: Record<string, unknown>) => {
+    if (process.env.NODE_ENV === "production") {
+      try {
+        process.stdout.write(`${label} ${JSON.stringify(payload)}\n`);
+      } catch {
+        // ignore logging failures
+      }
+    } else {
+      console.warn(label, payload);
+    }
   };
-  if (incomingCookie) headers["cookie"] = incomingCookie;
-  const csrf = incomingCsrfHeader || xsrfFromCookie;
-  console.warn("[Logout API] CSRF forwarding diagnostic", {
-    headerLength: incomingCsrfHeader?.length ?? 0,
-    cookieLength: xsrfFromCookie?.length ?? 0,
-    finalLength: csrf?.length ?? 0,
-    normalizedHeaderLength: normalizedHeaderToken?.length ?? 0,
-    normalizedCookieLength: normalizedCookieToken?.length ?? 0,
-    headerPreview: incomingCsrfHeader
-      ? `${incomingCsrfHeader.slice(0, 6)}...${incomingCsrfHeader.slice(-6)}`
-      : null,
-    cookiePreview: xsrfFromCookie
-      ? `${xsrfFromCookie.slice(0, 6)}...${xsrfFromCookie.slice(-6)}`
-      : null,
-    normalizedHeaderPreview: normalizedHeaderToken
-      ? `${normalizedHeaderToken.slice(0, 6)}...${normalizedHeaderToken.slice(-6)}`
-      : null,
-    normalizedCookiePreview: normalizedCookieToken
-      ? `${normalizedCookieToken.slice(0, 6)}...${normalizedCookieToken.slice(-6)}`
+
+  diagnostic("[Logout API] CSRF sources", {
+    headerPresent: !!headerTokenRaw,
+    headerLength: headerTokenRaw?.length ?? 0,
+    cookiePresent: !!cookieToken,
+    cookieLength: cookieToken?.length ?? 0,
+  });
+
+  const baseHeaders: Record<string, string> = {};
+  if (incomingCookie) baseHeaders["cookie"] = incomingCookie;
+  if (incomingAuth) baseHeaders["authorization"] = incomingAuth;
+
+  let csrfToken: string | null = null;
+  let csrfSource: "fresh" | "header" | "cookie" | "none" = "none";
+
+  // Try to mint a fresh CSRF token using the same cookies
+  try {
+    const csrfResp = await fetch(backendPath("/auth/csrf"), {
+      method: "GET",
+      headers: baseHeaders,
+      credentials: "include",
+      cache: "no-store",
+    });
+    const csrfJson: any = await csrfResp.json().catch(() => null);
+    if (
+      csrfResp.ok &&
+      csrfJson &&
+      typeof csrfJson === "object" &&
+      csrfJson.data?.csrfToken
+    ) {
+      csrfToken = String(csrfJson.data.csrfToken);
+      const expiresIn =
+        typeof csrfJson.data.expiresIn === "number" ? csrfJson.data.expiresIn : undefined;
+      csrfSource = "fresh";
+      diagnostic("[Logout API] CSRF minted", {
+        status: csrfResp.status,
+        expiresIn,
+        tokenLength: csrfToken.length,
+      });
+    } else {
+      diagnostic("[Logout API] CSRF mint failed", {
+        status: csrfResp.status,
+        body: csrfJson,
+      });
+    }
+  } catch (error) {
+    diagnostic("[Logout API] CSRF mint error", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  if (!csrfToken && headerToken) {
+    csrfToken = headerToken;
+    csrfSource = "header";
+  }
+
+  if (!csrfToken && cookieToken) {
+    csrfToken = cookieToken;
+    csrfSource = "cookie";
+  }
+
+  diagnostic("[Logout API] CSRF selected", {
+    source: csrfSource,
+    tokenLength: csrfToken?.length ?? 0,
+    tokenHash: csrfToken
+      ? createHash("sha256").update(csrfToken).digest("hex").slice(0, 12)
       : null,
   });
-  const tokenToForward =
-    normalizedHeaderToken ?? normalizedCookieToken ?? csrf ?? null;
-  if (tokenToForward) {
-    headers["X-CSRF-Token"] = tokenToForward;
+
+  const logoutHeaders: Record<string, string> = {
+    ...baseHeaders,
+    "Content-Type": "application/json",
+  };
+  if (csrfToken) {
+    logoutHeaders["X-CSRF-Token"] = csrfToken;
+    logoutHeaders["X-CSRF-Token-Source"] = csrfSource;
+    logoutHeaders["X-CSRF-Token-Hash"] = createHash("sha256")
+      .update(csrfToken)
+      .digest("hex");
+    logoutHeaders["X-CSRF-Token-Len"] = String(csrfToken.length);
   }
-  // Forward Authorization header if present so backend can hash and deactivate that session
-  const incomingAuth = req.headers.get("authorization");
-  if (incomingAuth) headers["authorization"] = incomingAuth;
 
   // Call backend logout to invalidate session; forward any Set-Cookie clears
   const resp = await fetch(backendPath("/auth/logout"), {
     method: "POST",
-    headers,
+    headers: logoutHeaders,
     cache: "no-store",
     // Add credentials to ensure cookies are sent and received properly
     credentials: "include",

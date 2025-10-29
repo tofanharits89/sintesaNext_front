@@ -711,32 +711,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                           document.cookie = "logout_in_progress=true; Max-Age=15; Path=/; SameSite=Lax";
                         } catch {}
 
-                        // 2) Resolve CSRF token (prefer refreshed token to avoid mismatch)
-                        let csrfToken: string | null = null;
-                        if (typeof document !== "undefined") {
-                          try {
-                            const { csrfManager } = await import("@/lib/security/csrfManager");
-                            csrfToken = await csrfManager.refreshToken();
-                          } catch (err) {
-                            console.warn("[Logout] Failed to refresh CSRF token before logout", err);
-                          }
-
-                          if (!csrfToken) {
-                            try {
-                              csrfToken = sessionStorage.getItem("csrf_token");
-                            } catch {}
-                          }
-
-                          if (!csrfToken) {
-                            const value = `; ${document.cookie}`;
-                            const parts = value.split(`; XSRF-TOKEN=`);
-                            if (parts.length === 2) {
-                              csrfToken = parts.pop()?.split(";").shift() || null;
-                            }
-                          }
-                        }
-
-                        // 3) Clear client state (non-auth cookies we can touch, caches, stores)
+                        // 2) Clear client state (non-auth cookies we can touch, caches, stores)
                         try {
                           // Clear readable CSRF cookie (auth cookies are HttpOnly and cleared by server)
                           document.cookie = "XSRF-TOKEN=; Max-Age=0; Path=/; SameSite=Lax";
@@ -746,18 +721,12 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                           useAuthSessionStore.getState().logout();
                         } catch {}
 
-                        // 4) Fire backend logout in background (don't wait)
+                        // 3) Fire backend logout in background (don't wait)
                         try {
-                          const headers: Record<string, string> = {};
-                          if (csrfToken) {
-                            headers["X-CSRF-Token"] = csrfToken;
-                          }
-
                           void fetch("/api/auth/logout", {
                             method: "POST",
                             credentials: "include",
                             keepalive: true,
-                            headers,
                           }).catch((fetchError) => {
                             console.warn("[Logout] Background logout request failed", fetchError);
                           });
@@ -765,7 +734,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                           console.warn("[Logout] Failed to issue logout request", fetchError);
                         }
 
-                        // 5) Hard redirect immediately to login (prevents any flash)
+                        // 4) Hard redirect immediately to login (prevents any flash)
                         const redirectUrl = "/login?reason=logout&_t=" + Date.now();
                         window.location.replace(redirectUrl);
 

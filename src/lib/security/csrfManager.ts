@@ -17,6 +17,11 @@ class CSRFManager {
   private cache: Map<string, CSRFCacheEntry> = new Map();
   private refreshPromise: Promise<string> | null = null;
   
+  // Allow friendly name for prime function without exposing cacheToken as public
+  primeToken(token: string, expiresIn?: number | null): void {
+    this.cacheToken(token, typeof expiresIn === "number" ? expiresIn : undefined);
+  }
+
   private constructor() {}
   
   static getInstance(): CSRFManager {
@@ -128,14 +133,6 @@ class CSRFManager {
         : 8 * 60 * 60 * 1000;
     const expiresAt = Date.now() + ttlMs;
     this.cache.set('default', { token, expiresAt });
-
-    if (typeof window !== 'undefined') {
-      try {
-        sessionStorage.setItem('csrf_token', token);
-      } catch (error) {
-        console.warn("[CSRF] Failed to persist token to sessionStorage", error);
-      }
-    }
   }
   
   /**
@@ -189,3 +186,5 @@ export const refreshToken = () => csrfManager.refreshToken();
 export const attachCSRFToken = (headers: Record<string, string>) => csrfManager.attachCSRFToken(headers);
 export const clearCSRFCache = () => csrfManager.clearCache();
 export const getCSRFTokenFromCookie = () => csrfManager.getTokenFromCookie();
+export const primeCSRFToken = (token: string, expiresIn?: number | null) =>
+  csrfManager.primeToken(token, expiresIn);

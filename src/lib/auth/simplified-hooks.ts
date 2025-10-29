@@ -141,13 +141,6 @@ export function useAuth(): UseAuthReturn {
           // Set user data in React Query
           queryClient.setQueryData(["auth", "user"], result.user);
 
-          // SECURITY FIX: Store CSRF token in sessionStorage (not accessible to JavaScript from cookies)
-          // This is more secure than storing it in cookies
-          if (result.csrfToken && typeof window !== 'undefined') {
-            sessionStorage.setItem('csrf_token', result.csrfToken);
-            logger.debug("[Auth Hook] CSRF token stored in sessionStorage");
-          }
-
           toast.success(`Selamat datang, ${result.user.name}!`);
           return { success: true, user: result.user };
         } else {
