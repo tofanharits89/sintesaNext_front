@@ -5,19 +5,19 @@ import { forwardSetCookies } from "@/lib/utils/cookie-helpers";
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
-  const { username, password, captcha, expectedCaptcha, rememberMe } = body as {
+  const cookie = request.headers.get("cookie") || "";
+  const { username, password, captcha, rememberMe } = body as {
     username?: string;
     password?: string;
     captcha?: string;
-    expectedCaptcha?: string;
     rememberMe?: boolean;
   };
 
   const resp = await fetch(backendPath("/auth/login"), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(cookie ? { cookie } : {}) },
     credentials: "include",
-    body: JSON.stringify({ username, password, captcha, expectedCaptcha, rememberMe: Boolean(rememberMe) }),
+    body: JSON.stringify({ username, password, captcha, rememberMe: Boolean(rememberMe) }),
   });
 
   const data = await resp.json().catch(() => ({}));

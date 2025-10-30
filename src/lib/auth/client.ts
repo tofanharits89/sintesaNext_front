@@ -59,7 +59,7 @@ export class AuthClient {
     username: string,
     password: string,
     rememberMe = false,
-    extras?: { captcha?: string; expectedCaptcha?: string },
+    extras?: { captcha?: string },
   ): Promise<{
     success: boolean;
     user?: User;
@@ -75,9 +75,6 @@ export class AuthClient {
 
       if (extras?.captcha) {
         payload.captcha = extras.captcha;
-      }
-      if (extras?.expectedCaptcha) {
-        payload.expectedCaptcha = extras.expectedCaptcha;
       }
 
       // Use fully-qualified versioned path directly to avoid double-prefixing

@@ -57,7 +57,7 @@ export default function SimplifiedLoginForm() {
   const { user, isLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const [captchaSeed, setCaptchaSeed] = useState("");
+  const [captchaCode, setCaptchaCode] = useState("");
   const { theme, resolvedTheme, setTheme } = useTheme();
   const [isThemeReady, setIsThemeReady] = useState(false);
 
@@ -102,20 +102,22 @@ export default function SimplifiedLoginForm() {
     }
   }, [user, isLoading, router]);
 
-  // Initialize captcha on client side
-  useEffect(() => {
-    setCaptchaSeed(Math.random().toString(36).slice(2));
-  }, []);
-
-  // Simple captcha generation (deterministic based on seed)
-  const generateCaptcha = (seed: string): string => {
-    if (!seed) return "0000";
-    let sum = 0;
-    for (let i = 0; i < seed.length; i++) sum += seed.charCodeAt(i);
-    return ("0000" + (sum % 10000)).slice(-4);
+  // Fetch server-generated captcha
+  const fetchCaptcha = async () => {
+    try {
+      const resp = await fetch("/api/v1/auth/captcha", { credentials: "include", cache: "no-store" });
+      const data = await resp.json().catch(() => ({}));
+      if (resp.ok && data?.success && data?.data?.code) {
+        setCaptchaCode(String(data.data.code));
+      } else {
+        setCaptchaCode("");
+      }
+    } catch {
+      setCaptchaCode("");
+    }
   };
 
-  const expectedCaptcha = generateCaptcha(captchaSeed);
+  useEffect(() => { void fetchCaptcha(); }, []);
 
   const form = useForm<FormInput, any, FormData>({
     resolver: zodResolver(schema),
@@ -138,7 +140,7 @@ export default function SimplifiedLoginForm() {
 
       // Call internal Next API route which securely proxies to backend
       // This ensures robust CSRF priming and cookie forwarding on all envs
-      const response = await fetch("/api/auth/login", {
+      const response = await fetch("/api/v1/auth/login", {
         method: "POST",
         credentials: "include",
         headers: {
@@ -146,10 +148,7 @@ export default function SimplifiedLoginForm() {
           // Optional: include CSRF header; Next API route will also fetch/prime if missing
           "X-CSRF-Token": csrfToken,
         },
-        body: JSON.stringify({
-          ...data,
-          expectedCaptcha,
-        }),
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
@@ -269,7 +268,7 @@ export default function SimplifiedLoginForm() {
       toast.error(error.message || "Terjadi kesalahan saat login");
 
       // Regenerate captcha on error
-      setCaptchaSeed(Math.random().toString(36).slice(2));
+      void fetchCaptcha();
       form.setValue("captcha", "");
     } finally {
       setIsSubmitting(false);
@@ -277,7 +276,7 @@ export default function SimplifiedLoginForm() {
   };
 
   const refreshCaptcha = () => {
-    setCaptchaSeed(Math.random().toString(36).slice(2));
+    void fetchCaptcha();
     form.setValue("captcha", "");
   };
 
@@ -377,7 +376,7 @@ export default function SimplifiedLoginForm() {
                         disabled={isSubmitting}
                       />
                       <div className="select-none rounded-md border px-6 py-2 text-base tracking-widest font-mono bg-muted">
-                        {expectedCaptcha}
+                        {captchaCode || "----"}
                       </div>
                       <Button
                         type="button"

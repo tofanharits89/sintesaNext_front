@@ -57,7 +57,6 @@ const getRoleDisplayName = (user: AuthUser | null): string => {
 export interface AuthLoginOptions {
   rememberMe?: boolean;
   captcha?: string;
-  expectedCaptcha?: string;
 }
 
 export interface UseAuthReturn {
@@ -120,11 +119,8 @@ export function useAuth(): UseAuthReturn {
         clearCache();
 
         const loginExtras =
-          options.captcha !== undefined || options.expectedCaptcha !== undefined
-            ? {
-                ...(options.captcha !== undefined ? { captcha: options.captcha } : {}),
-                ...(options.expectedCaptcha !== undefined ? { expectedCaptcha: options.expectedCaptcha } : {}),
-              }
+          options.captcha !== undefined
+            ? { captcha: options.captcha }
             : undefined;
 
         const result = await authClient.login(

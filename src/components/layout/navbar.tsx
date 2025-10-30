@@ -723,7 +723,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
 
                         // 3) Fire backend logout in background (don't wait)
                         try {
-                          void fetch("/api/auth/logout", {
+                          void fetch("/api/v1/auth/logout", {
                             method: "POST",
                             credentials: "include",
                             keepalive: true,
