@@ -132,18 +132,30 @@ export const useSocket = (): UseSocketReturn => {
       try {
         // Mark that we've attempted connection
         hasAttemptedConnection.current = true;
-        
-        // Connect socket after successful login
+
+        // Force disconnect before connecting to ensure fresh connection
+        // This prevents old socket state from interfering with new login
+        try {
+          socketClient.disconnect();
+        } catch (error) {
+          // Ignore disconnect errors
+        }
+
+        // Small delay to ensure cleanup completes before connecting
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Connect socket with fresh session
         try {
           await socketClient.connect();
+          console.log('[Socket] Fresh connection established after login');
         } catch (error) {
-          // Failed to connect socket after login
+          console.error('[Socket] Failed to connect socket after login:', error);
         }
-        
+
         // Sync state after connection attempt
         syncState();
       } catch (error) {
-        // Error in handleLogin
+        console.error('[Socket] Error in handleLogin:', error);
       }
     };
 

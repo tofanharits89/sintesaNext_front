@@ -44,6 +44,37 @@ export function clearAuthCaches() {
   console.log("[Cache] Auth caches cleared");
 }
 
+/**
+ * Complete auth data clearing for fresh login
+ * Clears all caches, storage, and session data
+ */
+export function clearAllAuthData() {
+  const queryClient = getGlobalQueryClient();
+  if (queryClient) {
+    // Complete cache clear instead of just invalidating
+    queryClient.clear();
+  }
+
+  // Clear browser storage
+  if (typeof window !== "undefined") {
+    // Clear sessionStorage
+    sessionStorage.clear();
+
+    // Clear localStorage (except persistent settings)
+    const keysToKeep = ["theme", "language"];
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && !keysToKeep.includes(key) && !key.startsWith("debug")) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+  }
+
+  console.log("[Cache] Complete auth data cleared - all caches, storage, and session data reset");
+}
+
 export function clearDataCaches() {
   const queryClient = getGlobalQueryClient();
   if (!queryClient) {
