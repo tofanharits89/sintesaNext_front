@@ -22,8 +22,7 @@ import {
 import { useTheme } from "next-themes";
 import { useMemo, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useUnifiedAuth, canManageUsers, canAccessSettings } from "@/lib/auth";
-import { useUserProfile } from "@/hooks/use-user-profile";
+import { useAuth } from "@/hooks/useAuth";
 import {
   getNotificationsForUser,
   getUnreadNotificationCount,
@@ -51,41 +50,24 @@ import {
 import { withBasePath } from "@/lib/config/base-path";
 import { apiPath } from "@/lib/config/base-path";
 import { SatkerSearch } from "./satker-search";
-import { dispatchAuthEvent } from "@/lib/utils/cookieManager";
 import { LoginLoading } from "@/components/ui/login-loading";
-import { useAuthSessionStore } from "@/stores/session-store";
 import { toast } from "sonner";
 
-import type { User } from "@/stores/session-store";
-
-export function Navbar({ initialUser }: { initialUser?: User }) {
+export function Navbar() {
   const { theme, setTheme } = useTheme();
 
-  // Fetch user profile data using React Query
-  const { data: profileData, isLoading: isLoadingProfile } = useUserProfile();
-
-  // TRUE SSOT - Only use unified auth hook
+  // Use unified auth hook - single source of truth
   const {
-    user: displayUser,
+    user: currentUser,
     isAuthenticated,
     isLoggingOut,
+    isLoading: authLoading,
     logout,
     getRoleDisplayName,
     canManageUsers,
     canAccessSettings,
-  } = useUnifiedAuth();
+  } = useAuth();
 
-  // Use Zustand data during login/logout transitions, React Query otherwise
-  // This prevents showing stale data from React Query during auth state changes
-  const isAuthTransition = useAuthSessionStore(state => state.isLoading);
-  const currentUser: User | null | undefined = isAuthTransition
-    ? displayUser  // Trust Zustand during transitions
-    : (profileData &&
-        typeof profileData === "object" &&
-        "id" in profileData &&
-        "username" in profileData
-          ? profileData
-          : displayUser);
   const router = useRouter();
   interface RecentMessage {
     id: string;
@@ -116,7 +98,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [messagesOpen, setMessagesOpen] = useState(false);
   // Use unified auth loading state (SSOT)
-  // const isLoggingOut = isLoggingOut; // Already destructured from useUnifiedAuth
+  // const isLoggingOut = isLoggingOut; // Already destructured from useAuth
 
   // Real-time messaging data via React Query + Zustand (enable globally so badges update even when popover is closed)
   const { conversations } = useMessagingRQ({
@@ -590,19 +572,24 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                 <Button
                   variant="ghost"
                   className="relative flex items-center gap-2 h-auto py-1.5 px-2 rounded-lg hover:bg-accent"
+                  disabled={authLoading}
                 >
                   <Avatar className="h-8 w-8">
                     <AvatarImage src="" alt={currentUser?.name || "profil"} />
                     <AvatarFallback className="text-xs font-medium">
-                      {initials}
+                      {authLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        initials
+                      )}
                     </AvatarFallback>
                   </Avatar>
                   <div className="hidden md:block text-left">
                     <div className="text-sm font-medium">
-                      {currentUser?.name || "User"}
+                      {authLoading ? "Loading..." : currentUser?.name || "User"}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {getRoleDisplayName}
+                      {authLoading ? "Memuat..." : getRoleDisplayName()}
                     </div>
                   </div>
                 </Button>
@@ -611,10 +598,12 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
-                      {currentUser?.name || "User"}
+                      {authLoading ? "Loading..." : currentUser?.name || "User"}
                     </p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      {currentUser?.email || "user@example.com"}
+                      {authLoading
+                        ? "Memuat..."
+                        : currentUser?.email || "user@example.com"}
                     </p>
                   </div>
                 </DropdownMenuLabel>
@@ -626,7 +615,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                       Halaman Profil
                     </Link>
                   </DropdownMenuItem>
-                  {canManageUsers && (
+                  {canManageUsers() && (
                     <DropdownMenuItem asChild>
                       <Link href="/users" className="flex items-center">
                         <Users className="mr-2 h-4 w-4" />
@@ -634,7 +623,7 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  {canAccessSettings && (
+                  {canAccessSettings() && (
                     <DropdownMenuItem asChild>
                       <Link href="/settings" className="flex items-center">
                         <Settings className="mr-2 h-4 w-4" />
@@ -689,60 +678,55 @@ export function Navbar({ initialUser }: { initialUser?: User }) {
                   className={`text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950 ${
                     isLoggingOut ? "opacity-60 pointer-events-none" : ""
                   }`}
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.preventDefault();
 
                     if (isLoggingOut) {
                       return;
                     }
 
-                    void (async () => {
-                      // Disconnect socket immediately and prevent reconnection
-                      try {
-                        socketClient.disconnect();
-                        socketClient.cleanup();
-                      } catch (error) {
-                        console.error("Socket disconnect failed:", error);
-                      }
+                    try {
+                      // Disconnect socket immediately
+                      socketClient.disconnect();
+                      socketClient.cleanup();
+                    } catch (error) {
+                      console.error("Socket disconnect failed:", error);
+                    }
 
-                      try {
-                        // 1) Mark logout-in-progress immediately so middleware short-circuits
-                        try {
-                          document.cookie = "logout_in_progress=true; Max-Age=15; Path=/; SameSite=Lax";
-                        } catch {}
+                    try {
+                      // Use the new simplified logout from useAuth
+                      await logout("user_initiated");
 
-                        // 2) Clear client state (non-auth cookies we can touch, caches, stores)
-                        try {
-                          // Clear readable CSRF cookie (auth cookies are HttpOnly and cleared by server)
-                          document.cookie = "XSRF-TOKEN=; Max-Age=0; Path=/; SameSite=Lax";
-                        } catch {}
-                        try {
-                          // Best-effort: set store flags and clear session marker
-                          useAuthSessionStore.getState().logout();
-                        } catch {}
+                      // Set a timeout to clear loading state if redirect is delayed
+                      // This is a fallback in case the page doesn't redirect for some reason
+                      const redirectTimeout = setTimeout(() => {
+                        // Force clear loading state after 3 seconds
+                        // This handles edge cases where redirect doesn't happen
+                        console.warn("Logout redirect delayed, clearing loading state");
+                        // We can't directly set isLoggingOut here, but the page will reload anyway
+                      }, 3000);
 
-                        // 3) Fire backend logout in background (don't wait)
-                        try {
-                          void fetch("/api/v1/auth/logout", {
-                            method: "POST",
-                            credentials: "include",
-                            keepalive: true,
-                          }).catch((fetchError) => {
-                            console.warn("[Logout] Background logout request failed", fetchError);
-                          });
-                        } catch (fetchError) {
-                          console.warn("[Logout] Failed to issue logout request", fetchError);
-                        }
+                      // Redirect to login page after successful logout
+                      // Use window.location for full page reload to ensure clean state
+                      window.location.href = "/login?reason=logout_success";
 
-                        // 4) Hard redirect immediately to login (prevents any flash)
-                        const redirectUrl = "/login?reason=logout&_t=" + Date.now();
-                        window.location.replace(redirectUrl);
+                      // Clear the timeout if redirect happens
+                      clearTimeout(redirectTimeout);
+                    } catch (error) {
+                      console.error("Logout error:", error);
+                      toast.error("Terjadi kesalahan saat logout");
 
-                      } catch (error) {
-                        console.error("Logout error:", error);
-                        toast.error("Terjadi kesalahan saat logout");
-                      }
-                    })();
+                      // Set a timeout to clear loading state if redirect is delayed
+                      const redirectTimeout = setTimeout(() => {
+                        console.warn("Logout redirect (error case) delayed, clearing loading state");
+                      }, 3000);
+
+                      // Force redirect even if logout fails
+                      window.location.href = "/login?reason=logout_error";
+
+                      // Clear the timeout if redirect happens
+                      clearTimeout(redirectTimeout);
+                    }
                   }}
                 >
                   {isLoggingOut ? (

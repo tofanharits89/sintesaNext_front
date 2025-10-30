@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useMessagingStore } from "@/stores/messaging-store";
 import { useTypingIndicatorsStore } from "@/stores/typing-indicators-store";
 import { useUnreadBadgesStore } from "@/stores/unread-badges-store";
-import { useUnifiedAuth } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 
 export async function clearAllMessagingState() {
   clearMessagingStores();
@@ -54,7 +54,7 @@ export function clearMessagingQueryCache(
 
 export function useMessagingCleanup() {
   const queryClient = useQueryClient();
-  const { user } = useUnifiedAuth();
+  const { user } = useAuth();
 
   const cleanupMessaging = async () => {
     await clearAllMessagingState();

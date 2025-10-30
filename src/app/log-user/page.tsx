@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect, Fragment } from "react";
-import { useUnifiedAuth } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useLoginHistory } from "@/hooks/use-login-history";
 import { Button } from "@/components/ui/button";
@@ -57,7 +57,7 @@ const TABS = [
 type TabKey = (typeof TABS)[number]["key"];
 
 export default function LogUserPage() {
-  const { user: currentUser } = useUnifiedAuth();
+  const { user: currentUser } = useAuth();
   const [active, setActive] = useState<TabKey>("online");
   const {
     onlineUsers,

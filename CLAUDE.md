@@ -2,253 +2,356 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Common Commands
+## Project Overview
 
-### Development
+This is **indo-finance-dashboard**, a Next.js 15.5.6 TypeScript application serving as a comprehensive financial dashboard for Indonesian government financial data. The application features real-time messaging, data analytics, inquiry systems, and multi-module navigation.
+
+## Quick Start
+
 ```bash
-# Start development server with Turbopack (default)
+# Install dependencies
+npm install
+
+# Development server with Turbopack (fast refresh)
 npm run dev
 
-# Start without Turbopack (useful for debugging)
+# Development without Turbopack
 npm run dev:no-turbo
+
+# Build for production
+npm run build
+
+# Start production server
+npm run start
+
+# Run tests
+npm run test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Type checking
+npm run type-check
+
+# Lint and fix
+npm run lint
+npm run lint:fix
 
 # Clean build artifacts
 npm run clean
 ```
 
-### Building & Deployment
+## Key Commands
+
 ```bash
-# Production build (requires 8GB memory)
-npm run build
+# Run a single test file
+npm test -- filename.test.ts
 
-# Build with bundle analyzer
-npm run build:analyze
-
-# Start production server
-npm run start
-```
-
-### Code Quality
-```bash
-# Lint code
-npm run lint
-
-# Auto-fix linting issues
-npm run lint:fix
-
-# Type check
-npm run type-check
-```
-
-### Testing
-```bash
-# Run tests in watch mode
-npm run test
-
-# Run tests in UI mode
+# Run tests with UI
 npm run test:ui
 
-# Run tests once (CI mode)
-npm run test:run
+# Build with bundle analysis
+npm run build:analyze
 
-# Run tests with coverage report
-npm run test:coverage
-```
-
-### Maintenance
-```bash
-# Clean install dependencies
+# Clean install (removes node_modules and reinstalls)
 npm run install:clean
 
-# Analyze bundle size
-npm run analyze:bundle
+# Run tests in CI mode
+npm run test:run
 ```
-
-## Tech Stack
-
-- **Framework:** Next.js 15.5.6 with App Router
-- **Language:** TypeScript (strict mode enabled)
-- **UI:** React 19.2.0 + Tailwind CSS 4.1.15
-- **Components:** Radix UI primitives
-- **State Management:** TanStack Query + Zustand
-- **Testing:** Vitest + Testing Library + jsdom
-- **Real-time:** Socket.io client
-- **PDF Viewing:** react-pdf + pdfjs-dist
-- **Charts:** Recharts
-- **Forms:** React Hook Form + Zod validation
-
-## Project Structure
-
-### Key Directories
-
-- **src/app/** - Next.js App Router pages and API routes
-  - **src/app/api/** - Backend API routes proxying to external services
-  - Feature-based routing: `(public)`, `(routes)`, `dashboard/`, `inquiry-data/`, `epa/`, `transfer-daerah/`, etc.
-
-- **src/components/** - Reusable UI components
-  - **ui/** - Base UI components (buttons, inputs, modals, etc.)
-  - Feature-based directories: `auth/`, `dashboard/`, `charts/`, `messaging/`, `monitoring/`, etc.
-
-- **src/hooks/** - Custom React hooks
-  - Specialized directories: `dashboard/`, `inquiry-data/`, `messaging/`, `monitoring/`, etc.
-
-- **src/lib/** - Core utilities and services
-  - **api/** - HTTP client and API utilities
-  - **auth/** - Authentication logic
-  - **cache/** - Caching layer
-  - **config/** - Configuration management
-  - **security/** - Security utilities (CSRF, RBAC)
-  - **utils/** - General utilities
-
-- **src/utils/** - Business logic utilities
-  - **formatters/** - Data formatting helpers
-  - **dashboard/** - Dashboard-specific utilities
-
-### Configuration Files
-
-- **next.config.ts** - Next.js configuration with security headers, CSP, API proxy, and bundle analysis
-- **tsconfig.json** - TypeScript configuration with strict mode and path aliases
-- **vitest.config.ts** - Vitest configuration for testing with jsdom environment
-- **eslint.config.mjs** - ESLint configuration (Next.js core web vitals + TypeScript)
 
 ## Architecture Overview
 
-This is a financial dashboard application with multiple specialized modules:
+### Technology Stack
+- **Framework**: Next.js 15.5.6 with App Router
+- **Language**: TypeScript 5.9.3
+- **UI**: React 19.2.0, Tailwind CSS 4.1.15, Radix UI components
+- **State Management**: Zustand (stores), TanStack Query (server state)
+- **Real-time**: Socket.IO client for messaging
+- **Testing**: Vitest 3.2.4 with Testing Library
+- **Styling**: Tailwind CSS with shadcn/ui components
 
-### Core Features
+### Directory Structure
 
-1. **Authentication & Authorization**
-   - HTTP-only cookie-based authentication
-   - Server-side JWT validation
-   - Role-based access control (super_admin, co_admin, kantor_pusat, kanwil_djpb, kppn, lainnya)
-   - User role determines access to different modules
-
-2. **Dashboard Module** (`src/app/dashboard/`)
-   - Main dashboard with financial analytics
-   - Program tracking and visualizations
-   - Quick stats and charts
-
-3. **Inquiry Data** (`src/app/inquiry-data/`)
-   - Data query builder with dynamic filters
-   - Multiple report types: belanja, kontrak, penerimaan-pnbp, up-tup, tematik, rkakl-detail
-   - Saved queries functionality
-   - SQL query viewing
-   - Export capabilities
-
-4. **EPA Module** (`src/app/epa/`)
-   - Performance evaluation and achievement tracking
-   - Multiple tabs for different data views
-   - Summary and detailed reporting
-
-5. **Transfer Daerah** (`src/app/transfer-daerah/`)
-   - Regional transfer data management
-   - DAU (Dana Alokasi Umum) tracking
-   - Projection and projection of TKDs
-   - Report management and PDF viewing
-
-6. **Messaging System** (`src/app/messages/`)
-   - Real-time chat using Socket.io
-   - Message persistence
-   - Unread message tracking
-
-7. **Data Supplier** (`src/app/data-supplier/`)
-   - Supplier analytics and dashboards
-   - Anomaly detection
-   - Clustering and concentration analysis
-   - Network visualization
-
-8. **Makan Bergizi** (`src/app/makan-bergizi/`)
-   - Nutrition program tracking
-   - Worksheet management
-   - Commodity price tracking
-
-### Key Architectural Patterns
-
-- **API Proxy Pattern:** All API calls go through `/api/v1/*` which proxies to backend service (default: `http://backend:88`)
-- **Server-Side Auth:** Authentication validation happens on the server; no client-side cookie access
-- **Error Boundaries:** Component-level error boundaries at layout level for graceful error handling
-- **Suspense Boundaries:** Lazy loading and streaming implemented throughout
-- **Query Layer:** TanStack Query for server state management with caching
-- **Performance Optimization:** Font preloading, chunk preloading, route preloading
-
-## Development Notes
-
-### Important Environment Variables
-
-```bash
-# API Configuration
-NEXT_PUBLIC_API_URL                    # API base URL
-NEXT_PUBLIC_USE_ABSOLUTE_API=false     # Use relative paths in client
-NEXT_PUBLIC_BACKEND_ORIGIN             # Backend origin for server-side
-NEXT_PUBLIC_SOCKET_ORIGIN              # Socket.IO server origin
-
-# Backend Configuration
-NEXT_PUBLIC_BACKEND_PORT=88            # Backend port (dev)
-API_URL                                # Server-side API URL
-
-# Security & Debug
-NEXT_PUBLIC_DEBUG_AUTH=false           # Enable auth debugging
-HTTPS=true                             # Enable HTTPS headers
+```
+src/
+├── app/                          # Next.js App Router
+│   ├── (public)/                 # Public routes (login, error pages)
+│   ├── (routes)/                 # Route groups with shared layouts
+│   ├── api/                      # API routes (proxy to backend)
+│   │   ├── auth/                 # Authentication endpoints
+│   │   ├── v1/                   # API v1 endpoints
+│   │   ├── messaging/            # Messaging API
+│   │   ├── notifications/        # Notifications API
+│   │   ├── dashboard/            # Dashboard data API
+│   │   ├── inquiry-data/         # Data inquiry APIs
+│   │   ├── users/                # User management API
+│   │   └── ...
+│   ├── dashboard/                # Main dashboard module
+│   ├── inquiry-data/             # Data inquiry (belanja, kontrak, etc.)
+│   ├── messaging/                # Real-time messaging
+│   ├── notifications/            # Notification center
+│   ├── epa/                      # Environmental/performance monitoring
+│   ├── transfer-daerah/          # Regional transfer data
+│   ├── data-supplier/            # Supplier data module
+│   ├── makan-bergizi/            # Nutrition program module
+│   └── ...
+├── components/                   # Reusable UI components
+│   ├── auth/                     # Authentication components
+│   ├── dashboard/                # Dashboard-specific components
+│   ├── inquiry-data/             # Data inquiry components
+│   ├── messaging/                # Messaging components
+│   ├── ui/                       # Base UI components (shadcn/ui)
+│   └── ...
+├── hooks/                        # Custom React hooks
+│   ├── dashboard/                # Dashboard data hooks
+│   ├── inquiry-data/             # Data fetching hooks
+│   ├── messaging/                # Messaging hooks
+│   └── use-*.ts                  # Feature-specific hooks
+├── lib/                          # Core utilities and config
+│   ├── api/                      # API client utilities
+│   ├── auth/                     # Authentication logic
+│   ├── cache/                    # Query caching
+│   ├── config/                   # App configuration (src/lib/config/config.ts:93)
+│   ├── security/                 # RBAC, CSRF protection
+│   └── utils/                    # Helper functions
+├── features/                     # Feature-specific modules
+│   ├── mbg/                      # Map visualization features
+│   └── messaging/                # Messaging features
+├── stores/                       # Zustand stores
+│   ├── messaging-store.ts        # Chat state
+│   ├── notification-store.ts     # Notifications state
+│   └── ...
+├── types/                        # TypeScript type definitions
+├── utils/                        # Utility functions
+├── patterns/                     # Design patterns
+└── query-builders/               # SQL query builders
 ```
 
-### Backend Integration
+### Configuration
 
-- **API URL Resolution:** Dynamic based on environment
-  - Client: Relative path `/api/v1` (cookies work automatically)
-  - Server: Absolute URL to `backend:88` (Docker) or `localhost:88` (dev)
-- **Socket.io:** Connects to backend on port 88, path `/socket.io`
-- **Proxy Configuration:** `next.config.ts` rewrites `/api/v1/*` to backend
+**Unified Configuration** (`src/lib/config/config.ts:93`)
+- Single source of truth for environment variables
+- Handles API URL detection (client vs server)
+- Socket.IO URL auto-detection
+- Environment-based configuration (dev/prod)
 
-### Security Configuration
+**Environment Variables** (`.env.example`)
+- `NEXT_PUBLIC_API_URL`: Client-side API URL
+- `API_URL`: Server-side API URL (Docker: `http://backend:88/api/v1`)
+- `NEXT_PUBLIC_SOCKET_ORIGIN`: Socket.IO server URL
+- `JWT_SECRET`, `JWT_ISSUER`, `JWT_AUDIENCE`: JWT configuration
 
-The application implements comprehensive security headers:
-- X-Frame-Options, X-Content-Type-Options
-- Referrer-Policy, X-XSS-Protection
-- Permissions Policy (restrict camera, microphone, geolocation, etc.)
-- HSTS (production only with HTTPS)
-- Content Security Policy (CSP) with Google Maps API whitelisting
-- Console.log removal in production (except error/warn)
+### Authentication & Security
 
-### Testing Strategy
+**Middleware** (`middleware.ts:1`)
+- Consolidated Next.js middleware for authentication
+- Cookie-based session validation
+- IP blocking functionality
+- Protected routes: `/dashboard`, `/inquiry-data`, `/users`, `/messages`, etc.
+- Public routes: `/login`, `/unauthorized`, `/ip-blocked`, etc.
 
-- **Test Environment:** jsdom with React Testing Library
-- **Coverage Threshold:** 80% for branches, functions, lines, statements
-- **Test Structure:** Co-located tests in `__tests__/` directories
-- **Setup:** Global test setup in `src/test-setup.ts`
+**Session Management**
+- Session ID cookie (`sid`)
+- Optimistic validation in development
+- Server-side session validation via `/api/v1/auth/session`
 
-### Bundle Optimization
+### API Integration
 
-- **Package Optimization:** Automatic optimization for Radix UI, Lucide, date-fns, Recharts, TanStack Query, Socket.io-client
-- **Bundle Analysis:** `npm run build:analyze` generates static HTML reports
-- **Turbopack:** Enabled by default in dev mode
+**Backend Communication**
+- API routes in `/app/api/` proxy requests to backend service
+- Default backend URL: `http://localhost:88` (dev), `http://backend:88` (Docker)
+- React Query for server state caching and synchronization
+- Socket.IO for real-time features
 
-### Common Development Patterns
+**Key API Endpoints**
+- `/api/v1/auth/*` - Authentication
+- `/api/v1/users/*` - User management
+- `/api/messaging/*` - Chat functionality
+- `/api/notifications/*` - Notifications
+- `/api/dashboard/*` - Dashboard data
+- `/api/inquiry-data/*` - Financial data queries
 
-1. **API Routes:** All in `src/app/api/` with dynamic routing support
-2. **Error Handling:** Use `ErrorBoundary` wrapper components
-3. **State Management:** TanStack Query for server state, Zustand for client state
-4. **Type Safety:** Strict TypeScript with `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`
-5. **Performance:** Use `RoutePreloader` for route prefetching, `chunk-preloader` for idle loading
+### Data Management
+
+**React Query Integration**
+- Server state management
+- Query caching and invalidation
+- Optimistic updates
+- Background refetching
+
+**Zustand Stores**
+- `messaging-store.ts`: Chat state, conversations, messages
+- `notification-store.ts`: Notification state
+- `typing-indicators-store.ts`: Real-time typing indicators
+- `unread-badges-store.ts`: Unread message counts
+
+### Key Modules
+
+**1. Dashboard** (`/app/dashboard/`)
+- Main analytics dashboard
+- Real-time performance monitoring
+- Program overview cards
+- Quick statistics
+
+**2. Inquiry Data** (`/app/inquiry-data/`)
+- Financial data exploration
+- Dynamic filter system
+- Query builder interface
+- Export capabilities
+- Saved queries
+
+**3. Messaging** (`/app/messaging/`)
+- Real-time chat system
+- Socket.IO integration
+- Message status tracking
+- Typing indicators
+
+**4. Transfer Daerah** (`/app/transfer-daerah/`)
+- Regional transfer data
+- DAU (Dana Alokasi Umum) tracking
+- KMK (Kredit Millionaire Kecil) management
+- Report generation
+
+**5. EPA** (`/app/epa/`)
+- Performance monitoring
+- Budget analysis
+- KPI tracking
+
+### Testing
+
+**Test Setup** (`vitest.config.ts`, `src/test-setup.ts`)
+- Vitest with jsdom environment
+- Testing Library for React components
+- Coverage thresholds: 80% for lines, functions, branches, statements
+- Setup file: `src/test-setup.ts`
+
+**Test Locations**
+- `test/` - Integration and E2E tests
+- `src/**/__tests__/` - Component tests
+- `test/**/__tests__/` - Feature tests
+
+### Docker Support
+
+**Multi-stage Dockerfile** (`Dockerfile`)
+- Base: Node.js 20-alpine
+- Dependencies stage
+- Builder stage with build optimization
+- Runner stage with non-root user
+- Healthcheck enabled
+- Port: 3000
+
+**Development Docker**
+- `Dockerfile.dev` for development
+- Internal networking: frontend → backend:88
+
+### Performance Optimizations
+
+**Next.js Configuration** (`next.config.ts`)
+- Image optimization (WebP, AVIF)
+- Console removal in production
+- Security headers (X-Frame-Options, CSP, etc.)
+- Compression enabled
+- Turbopack support
+
+**Bundle Optimization**
+- Tree-shaking enabled
+- Code splitting
+- Dynamic imports for heavy components
+- Bundle analyzer: `npm run build:analyze`
+
+### Development Workflow
+
+1. **Environment Setup**
+   ```bash
+   cp .env.example .env.local
+   # Configure NEXT_PUBLIC_API_URL=http://localhost:88/api/v1
+   ```
+
+2. **Start Development**
+   ```bash
+   npm run dev
+   ```
+
+3. **Backend Requirements**
+   - Backend service on port 88 (localhost) or backend:88 (Docker)
+   - Socket.IO server for messaging
+
+4. **Testing**
+   ```bash
+   npm run test        # Watch mode
+   npm run test:run    # Single run
+   npm run test:coverage # Coverage report
+   ```
+
+### Important Files
+
+- `src/lib/config/config.ts` - Unified configuration
+- `middleware.ts` - Authentication & routing
+- `src/lib/auth/` - Authentication logic
+- `src/hooks/` - Data fetching hooks
+- `src/components/ui/` - Base UI components
+- `package.json` - Scripts and dependencies
+
+### Common Development Tasks
+
+**Adding a New Feature Module**
+1. Create route: `src/app/feature-name/`
+2. Add API routes: `src/app/api/feature-name/`
+3. Create hooks: `src/hooks/use-feature-name.ts`
+4. Add components: `src/components/feature-name/`
+5. Update middleware.ts if new protected routes
+
+**Adding a New API Endpoint**
+1. Create route handler: `src/app/api/v1/endpoint/route.ts`
+2. Use unified config: `import { apiPath } from '@/lib/config/config'`
+3. Implement fetch with proper error handling
+4. Add tests in `test/`
+
+**State Management**
+- Use React Query for server state
+- Use Zustand for client state
+- Follow pattern: `stores/feature-store.ts`
+
+### Troubleshooting
+
+**Build Issues**
+```bash
+npm run clean && npm run install:clean
+npm run type-check
+```
+
+**Type Errors**
+- Enable `noUncheckedIndexedAccess` in tsconfig.json
+- Check strict mode compliance
+- Use proper type assertions
+
+**API Connection Issues**
+- Verify backend is running on port 88
+- Check `NEXT_PUBLIC_API_URL` in `.env.local`
+- Inspect middleware.ts for routing logic
+
+**Socket.IO Connection Issues**
+- Verify `NEXT_PUBLIC_SOCKET_ORIGIN` configuration
+- Check CORS settings on backend
+- Ensure proper authentication cookies
 
 ### Deployment
 
-- **Output:** Standalone mode for Docker deployment
-- **Build Memory:** Requires ~8GB for production build
-- **Deployment Architecture:** Frontend + Backend + Nginx reverse proxy
-
-## Helpful Aliases
-
-```typescript
-@/*              // src/*
-@shared/*        // src/shared/*
+**Production Build**
+```bash
+NODE_ENV=production npm run build
+npm run start
 ```
 
-## Key Files to Know
+**Docker Deployment**
+```bash
+docker build -t indo-finance-dashboard .
+docker run -p 3000:3000 indo-finance-dashboard
+```
 
-- `src/app/layout.tsx` - Root layout with providers and error boundaries
-- `src/lib/config/config.ts` - Centralized configuration and API URL resolution
-- `src/lib/auth/client.ts` - Authentication client with HTTP-only cookies
-- `src/lib/api/httpClient.ts` - HTTP client with interceptors
-- `src/components/providers/query-provider.tsx` - TanStack Query provider
-- `src/hooks/dashboard/use-dashboard-data.ts` - Dashboard data fetching
-- `src/utils/performance-monitor.ts` - Performance monitoring utilities
+**Environment Variables**
+- Set `NODE_ENV=production`
+- Configure `API_URL` for server-side
+- Set `NEXT_PUBLIC_API_URL` for client-side
+- Configure JWT secrets

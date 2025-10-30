@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Building2, ArrowRight, Shield, Info } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useUnifiedAuth } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { getUserAccessDescription } from "@/utils/satker-rbac";
 import { useSatkerSearch } from "@/hooks/use-satker-data";
 import { formatSatkerDisplayName, formatSatkerSubtitle } from "@/utils/satker-data";
@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 export default function SatkerPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
-  const { user: currentUser, isLoading } = useUnifiedAuth();
+  const { user: currentUser, isLoading } = useAuth();
   const { results: apiResults, loading: apiLoading, error: apiError, searchSatker } = useSatkerSearch();
 
   const handleSearch = async () => {

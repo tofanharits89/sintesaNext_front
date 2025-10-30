@@ -8,8 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Building2, FileText, Calendar, User, MapPin, CreditCard, Shield, AlertTriangle } from "lucide-react";
 import { SatkerProfileTab } from "@/components/satker/satker-profile-tab";
 import { DipaDownloadTab } from "@/components/satker/dipa-download-tab";
-import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
-import { canManageUsers } from "@/hooks/useUnifiedAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useSatkerData } from "@/hooks/use-satker-data";
@@ -25,7 +24,7 @@ export default function SatkerDetailPage() {
   const params = useParams();
   const router = useRouter();
   const kdsatker = params?.kdsatker as string;
-  const { user: currentUser, isLoading: userLoading } = useUnifiedAuth();
+  const { user: currentUser, isLoading: userLoading } = useAuth();
   const { data: satkerData, loading, error } = useSatkerData(kdsatker);
 
   // Check if user has access to this satker

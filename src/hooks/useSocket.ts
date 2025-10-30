@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { socketClient, SocketState } from "@/lib/api/socket-client";
 import type { Socket } from "socket.io-client";
-import { useAuthSessionStore } from "@/stores/session-store";
+import { useAuth } from "@/hooks/useAuth";
 
 export interface UseSocketReturn {
   socket: Socket | null;
@@ -33,9 +33,9 @@ export const useSocket = (): UseSocketReturn => {
   
   // Track if we've attempted initial connection
   const hasAttemptedConnection = useRef(false);
-  
+
   // Get authentication state
-  const isAuthenticated = useAuthSessionStore((state) => state.isAuthenticated);
+  const { isAuthenticated } = useAuth();
 
   // Ensure client-side rendering
   useEffect(() => {

@@ -2,7 +2,7 @@
 
 import { useMutation } from '@tanstack/react-query';
 import { useSocket } from '../useSocket';
-import { useUnifiedAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/auth';
 import { SOCKET_EVENTS } from '@/types/socket-events';
 
 interface SendMessageArgs {
@@ -27,7 +27,7 @@ type OfflineError = Error & { isOffline?: boolean };
 
 export function useMessageDelivery() {
   const { socket } = useSocket();
-  const { user } = useUnifiedAuth();
+  const { user } = useAuth();
 
   const fetchWithTimeout = async (
     input: RequestInfo | URL,

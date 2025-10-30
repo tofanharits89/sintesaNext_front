@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:no-turbo": "next dev",
-    "build": "node --max-old-space-size=8192 node_modules/next/dist/bin/next build",
-    "build:analyze": "cross-env NODE_OPTIONS=--max-old-space-size=8192 ANALYZE=true next build",
+    "build": "node --max-old-space-size=12288 node_modules/next/dist/bin/next build",
+    "build:analyze": "cross-env NODE_OPTIONS=--max-old-space-size=12288 ANALYZE=true next build",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
@@ -77,7 +77,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4.1.15",
+    "@tailwindcss/postcss": "^4.1.16",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",

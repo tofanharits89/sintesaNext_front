@@ -2,13 +2,13 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RBACDemo } from "@/components/demo/rbac-demo";
-import { useUnifiedAuth } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { filterSatkerByUserAccess } from "@/utils/satker-rbac";
 import carisatkerData from "@/data/carisatker.json";
 import { Building2, Users, Shield } from "lucide-react";
 
 export default function TestRBACPage() {
-  const { user: currentUser, isLoading } = useUnifiedAuth();
+  const { user: currentUser, isLoading } = useAuth();
 
   // Get accessible satkers for current user
   const accessibleSatkers = currentUser 

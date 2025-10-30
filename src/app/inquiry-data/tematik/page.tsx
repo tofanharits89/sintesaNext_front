@@ -29,7 +29,7 @@ import {
 } from "@/hooks/use-query-loader";
 import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
 import { useSavedQueries } from "@/hooks/use-saved-queries";
-import { useUnifiedAuth } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { useTematikConfig } from "@/hooks/use-tematik-config";
 import type { FilterValue, SavedQuery } from "@/types/saved-queries";
 import { Settings, Keyboard, RefreshCw, Database } from "lucide-react";
@@ -253,7 +253,7 @@ export default function TematikPage() {
   const { createQuery, isCreating } = useSavedQueries();
 
   // Get current user for query management
-  const { user: currentUser } = useUnifiedAuth();
+  const { user: currentUser } = useAuth();
 
   // Function to save current query state
   const saveCurrentQuery = useCallback(async (): Promise<{

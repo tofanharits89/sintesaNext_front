@@ -23,7 +23,7 @@ import { apiPath } from "@/lib/config/base-path";
 import { http } from "@/lib/api/httpClient";
 import { useSocket } from "./useSocket";
 import { conversationKeys } from "./useConversationsRQ";
-import { useUnifiedAuth } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 import {
   SOCKET_EVENTS,
   FrontendMessage,
@@ -96,7 +96,7 @@ const fetchMessages = async (
 
 export function useMessagesRQ(conversationId?: string) {
   const queryClient = useQueryClient();
-  const { user: authUser } = useUnifiedAuth();
+  const { user: authUser } = useAuth();
   const userScopeId = authUser?.id ?? null;
   const duplicationService = getDuplicationService();
 

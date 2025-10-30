@@ -1,9 +1,9 @@
 'use client';
 
-import { useUnifiedAuth, canAccessSettings } from '@/lib/auth';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function DebugUserPage() {
-  const { user: currentUser, isLoading } = useUnifiedAuth();
+  const { user: currentUser, isLoading, canAccessSettings } = useAuth();
 
   if (isLoading) {
     return <div className="p-4">Loading user information...</div>;
@@ -32,19 +32,19 @@ export default function DebugUserPage() {
         ) : (
           <p className="text-red-500">No user data found - User might not be logged in</p>
         )}
-        
+
         <div className="mt-6 pt-4 border-t">
           <h3 className="text-lg font-semibold mb-2">Settings Access Check:</h3>
-          <p><strong>Can Access Settings:</strong> 
+          <p><strong>Can Access Settings:</strong>
             <span className={`ml-2 px-2 py-1 rounded ${
-              canAccessSettings(currentUser) 
-                ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' 
+              canAccessSettings()
+                ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
                 : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
             }`}>
-              {canAccessSettings(currentUser) ? 'YES' : 'NO'}
+              {canAccessSettings() ? 'YES' : 'NO'}
             </span>
           </p>
-          
+
           <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded">
             <h4 className="font-medium mb-2">RBAC Rules for Settings Access:</h4>
             <ul className="text-sm space-y-1">
@@ -53,8 +53,8 @@ export default function DebugUserPage() {
               <li>• <strong>Other roles:</strong> No settings access (settings.view: false)</li>
             </ul>
           </div>
-          
-          {currentUser && !canAccessSettings(currentUser) && (
+
+          {currentUser && !canAccessSettings() && (
             <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded">
               <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">Solutions:</h4>
               <ol className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">

@@ -1,18 +1,19 @@
 "use client";
 
-import { useUnifiedAuth } from '@/lib/auth';
+import { useAuth } from "@/hooks/useAuth";
 
 /**
  * Simplified Session Monitoring Component
- * Uses unified auth hook for all authentication and session management
- * Single source of truth for auth state
+ * Legacy component - no longer needed with new useAuth hook
+ *
+ * The new useAuth hook manages session state automatically,
+ * so this component can be safely removed from your component tree.
  */
 export default function SessionMonitor() {
-  // SSOT auth management handles everything
-  const { validateSession } = useUnifiedAuth();
-  
-  // Optional: Auto-validate session periodically if you want continuous monitoring
-  // validateSession();
+  const { refetch } = useAuth();
+
+  // Optional: Auto-refetch session if needed
+  // refetch();
 
   return null; // No additional components needed
 }

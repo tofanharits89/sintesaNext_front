@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { apiPath } from "@/lib/config/base-path";
 import { User } from "@/lib/stores/users-store";
-import { useUnifiedAuth, canManageUsers } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -85,7 +85,7 @@ type FormState = {
 
 export default function UsersPage() {
   const router = useRouter();
-  const { user: currentUser } = useUnifiedAuth();
+  const { user: currentUser, canManageUsers } = useAuth();
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["users"],
@@ -96,7 +96,7 @@ export default function UsersPage() {
 
   // Check if user has permission to access this page
   useEffect(() => {
-    if (!canManageUsers) {
+    if (!canManageUsers()) {
       router.push("/");
     }
   }, [canManageUsers, router]);

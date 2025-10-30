@@ -41,7 +41,7 @@ import {
 import { useEffect, useRef, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { trackMenuUsage } from "@/hooks/use-menu-usage";
-import { useUnifiedAuth } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 
 import {
   DropdownMenu,
@@ -136,7 +136,7 @@ export function ResponsiveSidebar({
   menu?: MenuItem[];
 }) {
   const [open, setOpen] = useState(false);
-  const { user } = useUnifiedAuth();
+  const { user } = useAuth();
 
   // Filter menu based on user role - only admins can see Data Supplier
   const filteredMenu = useMemo(() => {

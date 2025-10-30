@@ -19,7 +19,7 @@ import {
   useMessagingConnection,
   useTotalUnreadCount,
 } from "@/stores";
-import { useUnifiedAuth } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 
 /**
  * Comprehensive messaging hook that integrates React Query + Zustand + WebSocket
@@ -32,7 +32,7 @@ import { useUnifiedAuth } from "@/lib/auth";
  * - Optimistic updates and mutations
  */
 export function useMessagingRQ(options?: { enabled?: boolean }) {
-  const { user: currentUser } = useUnifiedAuth();
+  const { user: currentUser } = useAuth();
 
   // Global messaging state from simplified Zustand store
   const activeConversationId = useActiveConversationId();

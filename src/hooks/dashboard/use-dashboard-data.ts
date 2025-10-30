@@ -1,4 +1,4 @@
-import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { useQuickStats } from "@/hooks/useQuickStats";
 import { useRealisasiPerJenisBelanja } from "@/hooks/useRealisasiPerJenisBelanja";
 import { useRealisasiKLPaguTerbesar } from "@/hooks/useRealisasiKLPaguTerbesar";
@@ -48,10 +48,11 @@ export interface DashboardDataHooks {
 }
 
 export const useDashboardData = (selectedKanwil: string): DashboardDataHooks => {
-  const { isAuthenticated, isLoading: isAuthLoading, user } = useUnifiedAuth();
+  const { isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
   
-  // Only enable queries when authenticated AND user profile is loaded (not loading)
-  const queriesEnabled = isAuthenticated && !isAuthLoading && !!user;
+  // Only enable queries when authenticated AND auth is not loading
+  // User object can be null initially but will be populated by React Query
+  const queriesEnabled = isAuthenticated && !isAuthLoading;
   
   const kanwilFilter = selectedKanwil !== "semua" ? { kanwil: selectedKanwil } : {};
 

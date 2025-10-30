@@ -1,15 +1,14 @@
 "use client";
 
 /**
- * Simplified Login Form - Clean Architecture
- * Removes complexity while maintaining all functionality
- * Reduced from 327 lines to ~120 lines
+ * Simplified Login Form - Uses new unified useAuth hook
+ * Clean architecture with single source of truth
  */
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -34,9 +33,7 @@ import {
 import { LoginLoading } from "@/components/ui/login-loading";
 import { StarsBackground } from "@/components/animate-ui/components/backgrounds/stars";
 import { withBasePath } from "@/lib/config/base-path";
-import { apiPath } from "@/lib/config/base-path";
 import { prefetchCsrf } from "@/lib/api/httpClient";
-import { dispatchAuthEvent } from "@/lib/utils/cookieManager";
 import Image from "next/image";
 
 // Form validation schema
@@ -54,7 +51,7 @@ type FormData = z.output<typeof schema>;
 
 export default function SimplifiedLoginForm() {
   const router = useRouter();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, login } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [captchaCode, setCaptchaCode] = useState("");
@@ -133,115 +130,11 @@ export default function SimplifiedLoginForm() {
     setIsSubmitting(true);
 
     try {
-      // Get CSRF token
-      await prefetchCsrf();
-      const { csrfManager } = await import("@/lib/security/csrfManager");
-      const csrfToken = await csrfManager.getCSRFToken();
-
-      // Call internal Next API route which securely proxies to backend
-      // This ensures robust CSRF priming and cookie forwarding on all envs
-      const response = await fetch("/api/v1/auth/login", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          // Optional: include CSRF header; Next API route will also fetch/prime if missing
-          "X-CSRF-Token": csrfToken,
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.log("[LoginForm] Error response debugging:", {
-          errorData,
-          errorMessage:
-            errorData.error?.message || errorData.message || "Login gagal",
-          directError: errorData.error,
-        });
-        throw new Error(
-          errorData.error ||
-            errorData.error?.message ||
-            errorData.message ||
-            "Login gagal",
-        );
-      }
-
-      const result = await response.json();
+      // Use the new unified login method from useAuth hook
+      const result = await login(data.username, data.password, data.rememberMe, data.captcha);
 
       if (result.success) {
         toast.success("Login berhasil");
-
-        // CRITICAL: Clear any stale logout guard flags that might block subsequent requests
-        const { clearLogoutGuard } = await import("@/lib/api/httpClient");
-        clearLogoutGuard();
-        console.log("[LoginForm] Cleared logout guard after successful login");
-
-        // CRITICAL: Update auth state BEFORE redirecting to prevent 401 race condition
-        if (result.data?.user) {
-          // 1. Clear stale React Query cache before setting new user data
-          // This prevents showing previous user's data in navbar
-          try {
-            const { clearAuthCacheOnFail, clearDataQueries } = await import("@/lib/auth/simplified-utils");
-            
-            // Clear all cache to prevent stale data from previous user
-            clearAuthCacheOnFail();
-            clearDataQueries();
-            
-            console.log("[LoginForm] Cleared stale auth cache");
-          } catch (error) {
-            console.warn("[LoginForm] Failed to clear auth cache:", error);
-          }
-
-          // 2. Dispatch auth event for socket connection
-          dispatchAuthEvent.login(result.data.user);
-
-          // 3. Update React Query cache and Zustand store via dynamic import
-          // This ensures global auth state is ready before dashboard loads
-          try {
-            const { useAuthSessionStore } = await import(
-              "@/stores/session-store"
-            );
-            const { queryKeyFactories } = await import("@/lib/config/query-configs");
-
-            const authStore = useAuthSessionStore.getState();
-            authStore.setAuthenticated(true, result.data.user);
-            authStore.updateUser(result.data.user);
-
-            console.log(
-              "[LoginForm] Auth state updated with user:",
-              result.data.user.username,
-            );
-
-            // 4. Fetch full user profile to populate React Query cache before redirect
-            // This prevents 401 errors on the dashboard when it tries to fetch data
-            console.log("[LoginForm] Warming up user profile cache...");
-            const profileResp = await fetch(apiPath("/users/profile/me"), {
-              method: "GET",
-              credentials: "include",
-              headers: {
-                "Content-Type": "application/json",
-              },
-            });
-
-            if (profileResp.ok) {
-              const profileData = await profileResp.json().catch(() => ({}));
-              if (profileData.success && profileData.data?.user) {
-                console.log("[LoginForm] User profile cached successfully");
-                // Update Zustand with complete profile if it has more details
-                authStore.updateUser(profileData.data.user);
-              }
-            } else {
-              console.warn(
-                "[LoginForm] User profile fetch returned:",
-                profileResp.status,
-              );
-            }
-          } catch (error) {
-            console.warn("[LoginForm] Failed to warm up profile cache:", error);
-            // Continue anyway - API will retry on 401
-          }
-        }
 
         // Ensure theme from localStorage is applied before navigating
         try {
@@ -261,7 +154,7 @@ export default function SimplifiedLoginForm() {
           router.push("/dashboard/utama");
         }, 1000);
       } else {
-        throw new Error(result.message || "Login gagal");
+        throw new Error(result.error || "Login gagal");
       }
     } catch (error: any) {
       console.error("Login error:", error);

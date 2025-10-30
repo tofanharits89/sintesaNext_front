@@ -102,7 +102,6 @@ http.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
 
 // Simplified cookie management for HTTP-only only approach
 import { clearNonHttpOnlyCookies } from "../utils/cookieManager";
-import { clearAuthCacheOnFail } from "../auth";
 
 // Expose globally for debugging and coordination
 if (typeof window !== "undefined") {
@@ -238,7 +237,7 @@ http.interceptors.response.use(
     if (status === 401 && !isLogoutOrRefresh) {
       clearNonHttpOnlyCookies();
       clearCsrfCache();
-      clearAuthCacheOnFail();
+      // Cache clearing handled by useAuth hook
       if (typeof window !== 'undefined') {
         window.location.href = "/login?reason=session_expired";
       }
@@ -352,7 +351,7 @@ backendHttp.interceptors.response.use(
     }
 
     if (status === 401 && !isLogoutOrRefresh) {
-      clearAuthCacheOnFail();
+      // Cache clearing handled by useAuth hook
       if (typeof window !== 'undefined') {
         window.location.href = '/login?reason=session_expired';
       }

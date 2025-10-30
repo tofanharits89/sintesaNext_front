@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { useMessageDelivery } from './messaging/useMessageDelivery';
 import { useMessageOptimisticUpdates } from './messaging/useMessageOptimisticUpdates';
 import { useMessageRetry } from './messaging/useMessageRetry';
-import { useUnifiedAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/auth';
 import { FrontendMessage } from '@/types/socket-events';
 import { useNotificationStore } from '@/stores/notification-store';
 
@@ -25,7 +25,7 @@ export function useMessageMutationsRQ() {
   const messageDelivery = useMessageDelivery();
   const optimisticUpdates = useMessageOptimisticUpdates();
   const messageRetry = useMessageRetry();
-  const { user: currentUser } = useUnifiedAuth();
+  const { user: currentUser } = useAuth();
   const { addNotification } = useNotificationStore();
 
   const sendMessage = useCallback(async (args: SendMessageArgs) => {

@@ -10,7 +10,7 @@ import {
   Conversation,
   SocketMessageData,
 } from "@/types/socket-events";
-import { useUnifiedAuth } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 
 // Query keys for React Query
 export const conversationKeys = {
@@ -65,7 +65,7 @@ const fetchConversationsPage = async (
 
 export function useConversations(options?: { enabled?: boolean }) {
   const queryClient = useQueryClient();
-  const { user: authUser } = useUnifiedAuth();
+  const { user: authUser } = useAuth();
   const listKey = conversationKeys.lists(authUser?.id);
 
   const {
@@ -346,7 +346,7 @@ export function useConversations(options?: { enabled?: boolean }) {
 
   // Bridge socket events -> in-place cache updates for snappy UI
   const { on, off } = useSocket();
-  const { user: currentUser } = useUnifiedAuth();
+  const { user: currentUser } = useAuth();
 
   useEffect(() => {
     const updateOnNewMessage = (m: SocketMessageData) => {

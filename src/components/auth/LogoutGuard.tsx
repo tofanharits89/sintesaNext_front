@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useAuthSessionStore } from "@/stores/session-store";
+import { useAuth } from "@/hooks/useAuth";
 import { LoginLoading } from "@/components/ui/login-loading";
 
 interface LogoutGuardProps {
@@ -10,60 +10,43 @@ interface LogoutGuardProps {
 
 /**
  * LogoutGuard Component
- * Prevents any content flash during logout by showing loading overlay
- * when logout is in progress
+ * Simplified version - React Query handles cache clearing automatically
+ * This component mainly prevents content flash during logout transitions
  */
 export function LogoutGuard({ children }: LogoutGuardProps) {
-  const isLogoutInProgress = useAuthSessionStore((state) => state.isLogoutInProgress);
-  const isAuthenticated = useAuthSessionStore((state) => state.isAuthenticated);
+  const { isAuthenticated, isLoggingOut } = useAuth();
 
-  // Clear logout in progress flag automatically
+  // Clear logout flags automatically
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname;
 
       // Always clear logout flag on login page
       if (path === '/login') {
-        useAuthSessionStore.getState().setLogoutInProgress(false);
         sessionStorage.removeItem('sintesa_logout_in_progress');
         return;
       }
 
       // Clear logout flag if user is authenticated (logged in successfully)
       if (isAuthenticated) {
-        useAuthSessionStore.getState().setLogoutInProgress(false);
         sessionStorage.removeItem('sintesa_logout_in_progress');
         return;
       }
 
-      // Ensure redirect happens quickly during logout flow to avoid content flash
-      if (isLogoutInProgress && path !== '/login') {
-        // Nudge redirect if it's not already in progress
-        try {
-          const params = new URLSearchParams(window.location.search);
-          const reason = params.get('reason');
-          if (!reason) {
-            const url = `/login?reason=logout&_t=${Date.now()}`;
-            window.location.replace(url);
-          }
-        } catch {}
-      }
-
-      // Fallback: if overlay somehow persists too long, clear after 30 seconds
+      // Fallback: if overlay persists too long, clear after 30 seconds
       const logoutInProgress = sessionStorage.getItem('sintesa_logout_in_progress');
       if (logoutInProgress) {
         const timestamp = parseInt(logoutInProgress, 10);
         const age = Date.now() - timestamp;
         if (age > 30000) { // 30 seconds
-          useAuthSessionStore.getState().setLogoutInProgress(false);
           sessionStorage.removeItem('sintesa_logout_in_progress');
         }
       }
     }
-  }, [isLogoutInProgress, isAuthenticated]);
+  }, [isAuthenticated]);
 
-  // If logout is in progress, only show loading overlay
-  if (isLogoutInProgress) {
+  // Show loading overlay during logout
+  if (isLoggingOut) {
     return <LoginLoading isVisible={true} context="logout" />;
   }
 

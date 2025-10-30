@@ -7,14 +7,14 @@ import { FrontendMessage } from '@/types/socket-events';
 import { useMessageActions, useMessagingActions } from '@/stores';
 import { useUnreadActions } from '@/stores/unread-badges-store';
 import { queryKeyFactories } from '@/lib/config/query-configs';
-import { useUnifiedAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/auth';
 
 export function useMessageOptimisticUpdates() {
   const queryClient = useQueryClient();
   const messageActions = useMessageActions();
   const { unread } = useMessagingActions();
   const { incrementUnreadCount, markConversationAsRead } = useUnreadActions();
-  const { user } = useUnifiedAuth();
+  const { user } = useAuth();
 
   const addOptimisticMessage = (conversationId: string, message: FrontendMessage) => {
     // Align message cache shape with useMessagesRQ (infinite query)

@@ -2,20 +2,20 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { setGlobalQueryClient } from '@/lib/auth';
 
 /**
  * Auth Cache Provider
- * Initializes the global query client for auth interceptors.
- * 
- * Must be placed inside QueryClientProvider but outside any auth-dependent components.
+ * Legacy component - no longer needed with new useAuth hook
+ *
+ * The new useAuth hook manages its own query client internally,
+ * so this provider can be safely removed from your component tree.
  */
 export function AuthCacheProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
 
-  // Initialize global query client for auth error handling
+  // No longer needed - keeping for backwards compatibility
   useEffect(() => {
-    setGlobalQueryClient(queryClient);
+    // This can be safely removed
   }, [queryClient]);
 
   return <>{children}</>;

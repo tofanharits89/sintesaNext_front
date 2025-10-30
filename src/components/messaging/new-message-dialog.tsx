@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useMessagingRQ } from "@/hooks/useMessagingRQ";
-import { useUnifiedAuth } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Dialog,
   DialogContent,
@@ -68,7 +68,7 @@ export function NewMessageDialog({
 
   const { sendMessage, selectConversation } = useMessagingRQ();
   const { conversations, optimisticAddConversation } = useConversationsRQ();
-  const { user: currentUser } = useUnifiedAuth();
+  const { user: currentUser } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();

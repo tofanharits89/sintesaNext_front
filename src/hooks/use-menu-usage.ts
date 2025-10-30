@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
 import { apiPath } from "@/lib/config/base-path";
 
@@ -12,6 +13,7 @@ export function useMenuUsageTop(
   defaultMonth?: string,
   defaultLimit: number = 50
 ) {
+  const { isAuthenticated } = useAuth();
   const [data, setData] = useState<AggregatedMenuItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,13 +23,23 @@ export function useMenuUsageTop(
   const [limit, setLimit] = useState<number>(defaultLimit);
 
   const fetchTop = useCallback(
-    async (m = month, l = limit) => {
+    async (m?: string, l?: number) => {
+      if (!isAuthenticated) return;
+      
+      const monthToFetch = m || month;
+      const limitToFetch = l !== undefined ? l : limit;
+      
       setIsLoading(true);
       setError(null);
       try {
         const resp = await http.get(apiPath(`/analytics/menu-usage/top`), {
-          params: { month: m, limit: l, _ts: Date.now() },
-          headers: { 'X-Bypass-Cache': '1', 'Cache-Control': 'no-cache' },
+          params: { month: monthToFetch, limit: limitToFetch, _ts: Date.now() },
+          headers: { 
+            'X-Bypass-Cache': '1', 
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          },
         });
         const json = resp.data;
         if (!json?.success)
@@ -46,12 +58,14 @@ export function useMenuUsageTop(
         setIsLoading(false);
       }
     },
-    [month, limit]
+    [isAuthenticated, month, limit]
   );
 
   useEffect(() => {
-    fetchTop();
-  }, []);
+    if (isAuthenticated) {
+      fetchTop();
+    }
+  }, [isAuthenticated, fetchTop]);
 
   return { data, isLoading, error, month, setMonth, limit, setLimit, fetchTop };
 }

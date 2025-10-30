@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils/utils";
-import { useUnifiedAuth } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { listUsers } from "@/lib/stores/users-store";
 import {
   markNotificationAsRead,
@@ -64,7 +64,7 @@ import { toast } from "sonner";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 export default function NotificationsPage() {
-  const { user: currentUser } = useUnifiedAuth();
+  const { user: currentUser } = useAuth();
   const [query, setQuery] = useState("");
   const [onlyUnread, setOnlyUnread] = useState(false);
   const [selected, setSelected] = useState<Record<string, boolean>>({});

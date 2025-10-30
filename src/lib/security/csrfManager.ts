@@ -16,13 +16,24 @@ class CSRFManager {
   private static instance: CSRFManager;
   private cache: Map<string, CSRFCacheEntry> = new Map();
   private refreshPromise: Promise<string> | null = null;
-  
+  private lockPromise: Promise<string> | null = null;
+  private refreshTimer: NodeJS.Timeout | null = null;
+
   // Allow friendly name for prime function without exposing cacheToken as public
   primeToken(token: string, expiresIn?: number | null): void {
     this.cacheToken(token, typeof expiresIn === "number" ? expiresIn : undefined);
   }
 
-  private constructor() {}
+  private constructor() {
+    // Cleanup timer on page unload
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', () => {
+        if (this.refreshTimer) {
+          clearTimeout(this.refreshTimer);
+        }
+      });
+    }
+  }
   
   static getInstance(): CSRFManager {
     if (!CSRFManager.instance) {
@@ -33,14 +44,37 @@ class CSRFManager {
   
   /**
    * Get current CSRF token from cache or fetch new one
+   * Implements lock mechanism to prevent race conditions on concurrent requests
    */
   async getCSRFToken(): Promise<string> {
     const cached = this.getCachedToken();
     if (cached) {
       return cached;
     }
-    
-    return this.refreshToken();
+
+    // If lock is already held, wait for it
+    if (this.lockPromise) {
+      return this.lockPromise;
+    }
+
+    // Acquire lock and fetch token
+    this.lockPromise = this.doFetchToken();
+
+    try {
+      const token = await this.lockPromise;
+      return token;
+    } finally {
+      this.lockPromise = null;
+    }
+  }
+
+  /**
+   * Internal method that actually fetches the token (protected by lock)
+   */
+  private async doFetchToken(): Promise<string> {
+    const { token, expiresIn } = await this.fetchToken();
+    this.cacheToken(token, expiresIn);
+    return token;
   }
   
   /**
@@ -103,6 +137,10 @@ class CSRFManager {
    */
   clearCache(): void {
     this.cache.clear();
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+      this.refreshTimer = null;
+    }
   }
   
   /**
@@ -124,7 +162,7 @@ class CSRFManager {
   }
   
   /**
-   * Cache token with expiration
+   * Cache token with expiration and schedule proactive refresh
    */
   private cacheToken(token: string, expiresInSeconds?: number): void {
     const ttlMs =
@@ -133,6 +171,26 @@ class CSRFManager {
         : 8 * 60 * 60 * 1000;
     const expiresAt = Date.now() + ttlMs;
     this.cache.set('default', { token, expiresAt });
+
+    // Schedule proactive refresh 5 minutes before expiration
+    const refreshTime = expiresAt - (5 * 60 * 1000);
+    const timeUntilRefresh = refreshTime - Date.now();
+
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+    }
+
+    if (timeUntilRefresh > 0) {
+      this.refreshTimer = setTimeout(async () => {
+        console.log('[CSRF] Proactively refreshing token before expiration');
+        try {
+          await this.refreshToken();
+        } catch (error) {
+          console.error('[CSRF] Proactive refresh failed:', error);
+          // Don't throw - let the next request trigger a fresh fetch
+        }
+      }, timeUntilRefresh);
+    }
   }
   
   /**

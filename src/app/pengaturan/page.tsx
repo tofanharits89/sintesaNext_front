@@ -2,13 +2,13 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { useUnifiedAuth, canAccessSettings } from '@/lib/auth';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertTriangle, Settings } from 'lucide-react';
 
 export default function PengaturanPage() {
   const router = useRouter();
-  const { user: currentUser, isLoading } = useUnifiedAuth();
+  const { user: currentUser, isLoading, canAccessSettings } = useAuth();
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
@@ -20,12 +20,12 @@ export default function PengaturanPage() {
     }
 
     // Check if user has settings access permission
-    if (canAccessSettings(currentUser)) {
+    if (canAccessSettings()) {
       router.push('/settings');
     } else {
       router.push('/unauthorized?reason=settings_access_denied');
     }
-  }, [currentUser, isLoading, router]);
+  }, [currentUser, isLoading, canAccessSettings, router]);
 
   if (isLoading || checking) {
     return (

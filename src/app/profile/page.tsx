@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useUnifiedAuth } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { apiClient, prefetchCsrf } from "@/lib/api/httpClient";
-import { User } from "@/stores/session-store";
+import type { User } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,11 +20,11 @@ import kdkanwilData from "@/data/kdkanwil.json";
 import kdkppnData from "@/data/kdkppn.json";
 
 export default function ProfilePage() {
-  const { user: current, refetch } = useUnifiedAuth();
-
-  // Check if user can edit role and location fields (only super_admin and co_admin can)
-  const canEditRoleAndLocation =
-    current?.role === "super_admin" || current?.role === "co_admin";
+  const {
+    user: current,
+    refetch,
+    canEditRoleAndLocation,
+  } = useAuth();
 
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
@@ -107,7 +107,7 @@ export default function ProfilePage() {
     };
 
     // Hanya admin yang bisa mengubah role & lokasi
-    if (canEditRoleAndLocation) {
+    if (canEditRoleAndLocation()) {
       payload.role = role;
       // Only include fields when they have non-empty values
       Object.assign(payload, {
@@ -329,7 +329,7 @@ export default function ProfilePage() {
               <Select
                 value={role}
                 onValueChange={(v) => {
-                  if (canEditRoleAndLocation) {
+                  if (canEditRoleAndLocation()) {
                     setRole(v as User["role"]);
                     // Reset Kanwil and KPPN when role changes
                     setKdkanwil("");
@@ -338,11 +338,11 @@ export default function ProfilePage() {
                     setNmkppn("");
                   }
                 }}
-                disabled={!canEditRoleAndLocation}
+                disabled={!canEditRoleAndLocation()}
               >
                 <SelectTrigger
                   className="h-11"
-                  disabled={!canEditRoleAndLocation}
+                  disabled={!canEditRoleAndLocation()}
                 >
                   <SelectValue placeholder="Pilih role" />
                 </SelectTrigger>
@@ -355,7 +355,7 @@ export default function ProfilePage() {
                   <SelectItem value="lainnya">User Lainnya (4)</SelectItem>
                 </SelectContent>
               </Select>
-              {!canEditRoleAndLocation && (
+              {!canEditRoleAndLocation() && (
                 <p className="text-xs text-muted-foreground">
                   Role hanya dapat diubah oleh Administrator
                 </p>
@@ -366,7 +366,7 @@ export default function ProfilePage() {
             {role === "kanwil_djpb" && (
               <div className="grid gap-2">
                 <Label>Kanwil DJPb</Label>
-                {canEditRoleAndLocation ? (
+                {canEditRoleAndLocation() ? (
                   <Select
                     value={kdkanwil}
                     onValueChange={(v) => {
@@ -395,7 +395,7 @@ export default function ProfilePage() {
                     className="bg-muted"
                   />
                 )}
-                {!canEditRoleAndLocation && (
+                {!canEditRoleAndLocation() && (
                   <p className="text-xs text-muted-foreground">
                     Kanwil hanya dapat diubah oleh Administrator
                   </p>
@@ -408,7 +408,7 @@ export default function ProfilePage() {
               <>
                 <div className="grid gap-2">
                   <Label>Kanwil</Label>
-                  {canEditRoleAndLocation ? (
+                  {canEditRoleAndLocation() ? (
                     <Select
                       value={kdkanwil}
                       onValueChange={(v) => {
@@ -439,7 +439,7 @@ export default function ProfilePage() {
                       className="bg-muted"
                     />
                   )}
-                  {!canEditRoleAndLocation && (
+                  {!canEditRoleAndLocation() && (
                     <p className="text-xs text-muted-foreground">
                       Kanwil hanya dapat diubah oleh Administrator
                     </p>
@@ -448,7 +448,7 @@ export default function ProfilePage() {
 
                 <div className="grid gap-2">
                   <Label>KPPN</Label>
-                  {canEditRoleAndLocation ? (
+                  {canEditRoleAndLocation() ? (
                     kdkanwil && (
                       <Select
                         value={kdkppn}
@@ -479,7 +479,7 @@ export default function ProfilePage() {
                       className="bg-muted"
                     />
                   )}
-                  {!canEditRoleAndLocation && (
+                  {!canEditRoleAndLocation() && (
                     <p className="text-xs text-muted-foreground">
                       KPPN hanya dapat diubah oleh Administrator
                     </p>
@@ -494,11 +494,11 @@ export default function ProfilePage() {
                 placeholder="contoh: 015 atau 015,042"
                 value={limitKodeBA}
                 onChange={(e) =>
-                  canEditRoleAndLocation && setLimitKodeBA(e.target.value)
+                  canEditRoleAndLocation() && setLimitKodeBA(e.target.value)
                 }
-                disabled={!canEditRoleAndLocation}
+                disabled={!canEditRoleAndLocation()}
               />
-              {!canEditRoleAndLocation && (
+              {!canEditRoleAndLocation() && (
                 <p className="text-xs text-muted-foreground">
                   Limit Kode BA hanya dapat diubah oleh Administrator
                 </p>

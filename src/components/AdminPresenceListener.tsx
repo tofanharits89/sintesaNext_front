@@ -3,12 +3,12 @@
 import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import useSocket from "@/hooks/useSocket";
-import { useUnifiedAuth } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 
 const ADMIN_ROLES = new Set(["super_admin", "co_admin"]);
 
 export function AdminPresenceListener() {
-  const { user: me } = useUnifiedAuth();
+  const { user: me } = useAuth();
   const { on, off } = useSocket();
 
   const isAdmin = useMemo(() => !!me && ADMIN_ROLES.has(me.role as string), [me]);

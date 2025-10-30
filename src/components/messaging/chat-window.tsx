@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useMemo, useLayoutEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAutoMarkAsRead } from "@/hooks/useAutoMarkAsRead";
 import { Conversation } from "@/types/socket-events";
-import { useUnifiedAuth } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useMessagingRQ } from "@/hooks/messaging-rq";
 import { useSendMessageMutation } from "@/hooks/useMessageMutationsRQ";
@@ -30,7 +30,7 @@ export function ChatWindow({ conversationId, conversation }: ChatWindowProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const pinUntilRef = useRef<number>(0);
 
-  const { user: currentUser } = useUnifiedAuth();
+  const { user: currentUser } = useAuth();
   const { onlineUsers } = useOnlineUsers();
   const queryClient = useQueryClient();
   const resendMutation = useSendMessageMutation();

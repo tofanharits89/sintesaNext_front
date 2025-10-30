@@ -2,7 +2,7 @@
  * Role-Based Access Control utilities for Satker search
  */
 
-import { User } from "@/stores/session-store";
+import type { User } from "@/hooks/useAuth";
 
 interface SatkerItem {
   kdsatker: string;

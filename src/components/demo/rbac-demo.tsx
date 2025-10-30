@@ -2,12 +2,12 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useUnifiedAuth } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { getUserAccessDescription } from "@/utils/satker-rbac";
 import { User, Shield, Building2 } from "lucide-react";
 
 export function RBACDemo() {
-  const { user: currentUser, isLoading } = useUnifiedAuth();
+  const { user: currentUser, isLoading } = useAuth();
 
   if (isLoading) {
     return (

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import useSocket from "@/hooks/useSocket";
+import { useAuth } from "@/hooks/useAuth";
 
 export interface OnlineUser {
   socketId: string;
@@ -26,6 +27,7 @@ export interface UseOnlineUsersReturn {
 }
 
 export function useOnlineUsers(): UseOnlineUsersReturn {
+  const { isAuthenticated } = useAuth();
   const { socket, isConnected, connectionState, emit, on, off, reconnect } =
     useSocket();
 
@@ -126,15 +128,15 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
     }
   }, [emit]);
 
-  // Subscribe to users:online and request initial list when connected
+  // Subscribe to users:online and request initial list when connected and authenticated
   useEffect(() => {
     // Register listeners (support both legacy and v2 events)
     on("users:online", handleUsersOnline);
     on("user:online", handleUserOnlinePush);
     on("users:online:v2", handleUsersOnline);
 
-    // If connected, request initial users
-    if (isConnected) {
+    // If connected and authenticated, request initial users
+    if (isConnected && isAuthenticated) {
       try {
         emit("users:get-online");
         // Also refresh list when we hear any user presence signals
@@ -158,10 +160,10 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
       off("user:logout", refreshOnPresenceEvent);
       off("users:updated", handleUsersOnline);
     };
-  }, [isConnected, on, off, emit, handleUsersOnline, refreshOnPresenceEvent]);
+  }, [isConnected, isAuthenticated, on, off, emit, handleUsersOnline, refreshOnPresenceEvent]);
 
   const refreshUsers = useCallback(() => {
-    if (isConnected) {
+    if (isConnected && isAuthenticated) {
       try {
         emit("users:get-online");
       } catch (err) {
@@ -172,7 +174,7 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
       // Not connected: attempt reconnect which will trigger a users:get-online once connected
       reconnect();
     }
-  }, [isConnected, emit, reconnect]);
+  }, [isConnected, isAuthenticated, emit, reconnect]);
 
   const reconnectSocket = useCallback(() => {
     reconnect();

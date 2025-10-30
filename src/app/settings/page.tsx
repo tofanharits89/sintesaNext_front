@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 
-import { useUnifiedAuth } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Settings,
   User,
@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 
 export default function SettingsPage() {
-  const { user, isLoading } = useUnifiedAuth();
+  const { user, isLoading } = useAuth();
   const u = user as { name?: string; email?: string; role?: string; location?: string } | undefined;
   const [theme, setTheme] = useState("system");
   const [language, setLanguage] = useState("id");

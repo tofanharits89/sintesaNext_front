@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
 import { apiPath } from "@/lib/config/base-path";
 
@@ -54,6 +55,7 @@ interface UseLoginHistoryReturn {
 }
 
 export const useLoginHistory = (): UseLoginHistoryReturn => {
+  const { isAuthenticated } = useAuth();
   const [weeklyStats, setWeeklyStats] = useState<LoginStats[]>([]);
   const [loginHistory, setLoginHistory] = useState<LoginHistoryEntry[]>([]);
   const [pagination, setPagination] = useState<{
@@ -66,6 +68,8 @@ export const useLoginHistory = (): UseLoginHistoryReturn => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchWeeklyStats = async (days: number = 7) => {
+    if (!isAuthenticated) return;
+    
     setIsLoading(true);
     setError(null);
 
@@ -114,13 +118,13 @@ export const useLoginHistory = (): UseLoginHistoryReturn => {
         } as any;
         if (startDate) (params as any).startDate = startDate;
         if (endDate) (params as any).endDate = endDate;
-        if (userId) (params as any).userId = userId;
+        if (userId) (params as any).userId = String(userId);
 
         const resp = await http.get(apiPath(`/analytics/login-history`), {
           params: { ...params, _ts: Date.now() },
           headers: { 'X-Bypass-Cache': '1', 'Cache-Control': 'no-cache' },
         });
-        const result: any = resp.data;
+        const result = resp.data;
 
         if (result?.success) {
           const entries: LoginHistoryEntry[] = result.data ?? result.items ?? [];
@@ -155,10 +159,12 @@ export const useLoginHistory = (): UseLoginHistoryReturn => {
     []
   );
 
-  // Auto-fetch weekly stats on mount
+  // Auto-fetch weekly stats on mount when authenticated
   useEffect(() => {
-    fetchWeeklyStats();
-  }, []);
+    if (isAuthenticated) {
+      fetchWeeklyStats();
+    }
+  }, [isAuthenticated]);
 
   return {
     weeklyStats,

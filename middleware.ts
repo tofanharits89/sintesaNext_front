@@ -77,16 +77,17 @@ function hasSessionCookie(request: NextRequest): boolean {
 }
 
 /**
- * Server-side session validation with proper token verification
+ * Server-side session validation using unified /auth/session endpoint
+ * Simplified: just check if session is valid, don't fetch user data in middleware
  */
 async function validateServerSession(_ignored: string, request: NextRequest): Promise<{ valid: boolean; user?: any; error?: string; ipBlocked?: boolean; ipParams?: { duration: string; blockedAt: string; reason: string }, setCookies?: string[], status?: number }> {
   try {
-    const validateUrl = new URL('/api/v1/auth/validate?include=user', request.url);
+    // Use the new unified /auth/session endpoint
+    const validateUrl = new URL('/api/v1/auth/session', request.url);
     const cookieHeader = request.headers.get("cookie") || "";
     const response = await fetch(validateUrl, {
       method: "GET",
       headers: {
-        // Forward full cookie header to preserve refresh token etc.
         cookie: cookieHeader,
         "Content-Type": "application/json",
       },
@@ -98,8 +99,9 @@ async function validateServerSession(_ignored: string, request: NextRequest): Pr
 
     if (response.ok) {
       const data = await response.json();
+      // New endpoint returns: { success: true, data: { valid, authenticated, user, ... } }
       return {
-        valid: data.success && data.data?.valid,
+        valid: data.success && data.data?.valid && data.data?.authenticated,
         user: data.data?.user,
         error: !data.success ? data.error : undefined,
         setCookies,
@@ -121,7 +123,6 @@ async function validateServerSession(_ignored: string, request: NextRequest): Pr
     }
   } catch (error) {
     // Network error during validation - fail closed in production
-
     return { valid: false, error: "Authentication service unavailable" };
   }
 }
