@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getToken } from "./_shared";
 import { config } from "@/lib/config/config";
 
 export async function GET(request: NextRequest) {
   const cookie = request.headers.get("cookie") || "";
-  const accessToken = request.cookies.get("access_token")?.value || null;
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search");
 
-  if (!cookie && !accessToken) {
+  if (!cookie) {
     return NextResponse.json(
       { success: false, message: "No session" },
       { status: 401 },
@@ -31,7 +29,6 @@ export async function GET(request: NextRequest) {
 
     const headers: Record<string, string> = {};
     if (cookie) headers["cookie"] = cookie;
-    if (accessToken) headers["authorization"] = `Bearer ${accessToken}`;
 
     const resp = await fetch(`${config.apiUrl}${apiPath}`, {
       headers,

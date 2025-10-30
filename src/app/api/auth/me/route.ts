@@ -6,12 +6,10 @@ import { forwardSetCookies } from "@/lib/utils/cookie-helpers";
 export async function GET(request: NextRequest) {
   const cookie = request.headers.get("cookie") || "";
 
-  // CRITICAL: If no auth cookies, return unauthenticated immediately
-  // This prevents returning cached user data after logout
-  if (!cookie.includes("access_token=") && !cookie.includes("refresh_token=") &&
-      !cookie.includes("accessToken=") && !cookie.includes("refreshToken=")) {
+  // If no session cookie, return unauthenticated immediately to avoid stale data
+  if (!/(?:^|;\s*)sid=/.test(cookie)) {
     return NextResponse.json(
-      { success: false, error: "No authentication cookies" },
+      { success: false, error: "No session" },
       {
         status: 401,
         headers: {

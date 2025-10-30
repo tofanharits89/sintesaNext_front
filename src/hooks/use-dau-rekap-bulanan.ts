@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { apiPath } from "@/lib/config/base-path";
-import { getAuthTokenFromCookie } from "@/lib/utils/cookieManager";
 
 export interface DauRekapBulananRow {
   // shape depends on backend query; include common fields
@@ -18,9 +17,7 @@ export interface DauRekapBulananRow {
 }
 
 const fetcher = async (url: string) => {
-  const token = getAuthTokenFromCookie();
   const headers: HeadersInit = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
 
   const resp = await fetch(url, {
     credentials: "include",

@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { apiPath } from "@/lib/config/base-path";
-import { getAuthTokenFromCookie } from "@/lib/utils/cookieManager";
 
 export interface RawDauTransaksiRow {
   ID: number | string;
@@ -31,9 +30,7 @@ export interface DauTransaksiRowUi {
 }
 
 const fetcher = async (url: string) => {
-  const token = getAuthTokenFromCookie();
   const headers: HeadersInit = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
 
   const resp = await fetch(url, { credentials: "include", headers, signal: AbortSignal.timeout(20000) });
   const text = await resp.text();

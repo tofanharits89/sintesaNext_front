@@ -14,23 +14,17 @@ export async function GET(request: NextRequest) {
   console.log("[API /users/profile/me] ========== REQUEST START ==========");
   console.log("[API /users/profile/me] Incoming cookies:", cookie);
   console.log(
-    "[API /users/profile/me] Has access_token:",
-    cookie.includes("access_token=") || cookie.includes("accessToken="),
-  );
-  console.log(
-    "[API /users/profile/me] Has refresh_token:",
-    cookie.includes("refresh_token=") || cookie.includes("refreshToken="),
+    "[API /users/profile/me] Has sid:",
+    /(?:^|;\s*)sid=/.test(cookie),
   );
 
-  // CRITICAL: If no auth cookies, return unauthenticated immediately
-  // This prevents returning cached user data after logout
-  if (!cookie.includes("access_token=") && !cookie.includes("accessToken=") &&
-      !cookie.includes("refresh_token=") && !cookie.includes("refreshToken=")) {
+  // If no session cookie, return unauthenticated immediately
+  if (!/(?:^|;\s*)sid=/.test(cookie)) {
     console.log(
-      "[API /users/profile/me] ❌ No auth cookies found - returning unauthenticated",
+      "[API /users/profile/me] ❌ No sid cookie found - returning unauthenticated",
     );
     return NextResponse.json(
-      { success: false, error: "No authentication cookies" },
+      { success: false, error: "No session" },
       {
         status: 401,
         headers: {

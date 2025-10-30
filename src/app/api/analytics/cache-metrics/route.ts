@@ -8,8 +8,8 @@ export async function GET(request: Request) {
   // Minimal diagnostics (no sensitive values)
   console.log("[API /analytics/cache-metrics] Incoming cookies present:", !!cookie);
   console.log(
-    "[API /analytics/cache-metrics] Has access token:",
-    cookie.includes("access_token=") || cookie.includes("accessToken=")
+    "[API /analytics/cache-metrics] Has sid:",
+    /(?:^|;\s*)sid=/.test(cookie)
   );
 
   if (!cookie) {

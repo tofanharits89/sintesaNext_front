@@ -216,17 +216,10 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataT
         throw new Error(`Data belum lengkap: ${missing.join(", ")}`);
       }
 
-      const token = getAuthTokenFromCookie();
-      
-      const headers: HeadersInit = { "Content-Type": "application/json" };
-      if (token) headers.Authorization = `Bearer ${token}`;
-      
-      // Add CSRF token to headers
-      const headersWithCsrf = addCsrfToHeaders(headers);
-      
+      const headers: HeadersInit = addCsrfToHeaders({ "Content-Type": "application/json" });
       const resp = await fetch(backendPath(`/transfer-daerah/dau/transaksi`), {
         method: "POST",
-        headers: headersWithCsrf,
+        headers,
         credentials: "include",
         body: JSON.stringify(payload),
       });

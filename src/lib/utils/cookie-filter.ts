@@ -20,7 +20,7 @@ export const ALLOWED_COOKIES = [
   "csrf_sid",
 
   // Session cookies (for maintaining session state)
-  // Note: Auth tokens (access_token, refresh_token) are NOT forwarded
+  // Note: Session cookies (sid) are forwarded via Cookie header as needed
   // They are set by backend in HTTP-only cookies
 ] as const;
 

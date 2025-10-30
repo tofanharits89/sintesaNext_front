@@ -17,15 +17,14 @@ export async function GET(request: NextRequest) {
     console.log('[API /auth/validate] Cookie names:', namesOnly);
   }
 
-  // If no auth cookies at all, short-circuit with 401 to avoid stale cache usage
-  const hasAccess = cookie.includes("access_token=") || cookie.includes("accessToken=");
-  const hasRefresh = cookie.includes("refresh_token=") || cookie.includes("refreshToken=");
-  if (!hasAccess && !hasRefresh) {
+  // If no session cookie at all, short-circuit with 401 to avoid stale cache usage
+  const hasSid = /(?:^|;\s*)sid=/.test(cookie);
+  if (!hasSid) {
     if (process.env.NEXT_PUBLIC_DEBUG_AUTH === 'true') {
-      console.log('[API /auth/validate] Short-circuit 401: no auth cookies detected');
+      console.log('[API /auth/validate] Short-circuit 401: no sid cookie detected');
     }
     return NextResponse.json(
-      { success: false, error: "No authentication cookies" },
+      { success: false, error: "No session" },
       {
         status: 401,
         headers: {

@@ -36,7 +36,7 @@ function adjustCookieForDev(cookieValue: string): string {
     // Allow opting into production-like cookie behavior during development
     if (process.env.NEXT_PUBLIC_COOKIE_DEV_SECURE === "true") return cookieValue;
     // Only adjust auth cookies in dev to ensure they stick on http://localhost
-    const isAuthCookie = /^(access_token|refresh_token)=/i.test(cookieValue);
+    const isAuthCookie = /^(sid)=/i.test(cookieValue);
     if (!isAuthCookie) return cookieValue;
 
     let adjusted = cookieValue;
@@ -104,16 +104,12 @@ export function sanitizeCookieLog(cookieString: string | null): string {
   if (!cookieString) return "No cookies present";
 
   const sensitivePatterns = [
-    /access_token=[^;]+/gi,
-    /refresh_token=[^;]+/gi,
-    /accessToken=[^;]+/gi,
-    /refreshToken=[^;]+/gi,
+    /sid=[^;]+/gi,
     /auth_token=[^;]+/gi,
     /authToken=[^;]+/gi,
     /XSRF-TOKEN=[^;]+/gi,
     /_csrf=[^;]+/gi,
     /session=[^;]+/gi,
-    /jwt=[^;]+/gi,
   ];
 
   let sanitized = cookieString;
@@ -143,7 +139,7 @@ export function extractCookieMetadata(cookieString: string | null): {
 
   return {
     count: cookieString.split(";").filter((c) => c.trim()).length,
-    hasAuth: /access_token|refresh_token|auth_token/i.test(cookieString),
+    hasAuth: /(?:^|;\s*)sid=|auth_token/i.test(cookieString),
     hasCsrf: /xsrf-token|_csrf/i.test(cookieString),
     hasSession: /session/i.test(cookieString),
   };

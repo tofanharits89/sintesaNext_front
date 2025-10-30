@@ -183,11 +183,11 @@ export class CacheManager {
     if (!cookieHeader) return null;
     
     const parts = cookieHeader.split(";").map((c) => c.trim());
-    const accessTokenMatch = parts.find((c) => c.startsWith("accessToken="));
+    const sidMatch = parts.find((c) => c.startsWith("sid="));
     
-    if (!accessTokenMatch) return null;
+    if (!sidMatch) return null;
     
-    const tokenValue = accessTokenMatch.split("=")[1];
+    const tokenValue = sidMatch.split("=")[1];
     if (!tokenValue) return null;
     
     try {
@@ -233,8 +233,8 @@ export class CacheManager {
       // Also clear any variations of the session key
       const keysToCheck = [
         sessionKey,
-        `accessToken=${sessionKey}`,
-        `accessToken=${encodeURIComponent(sessionKey)}`
+        `sid=${sessionKey}`,
+        `sid=${encodeURIComponent(sessionKey)}`
       ];
 
       for (const key of keysToCheck) {

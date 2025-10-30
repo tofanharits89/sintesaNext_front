@@ -23,7 +23,7 @@ export async function GET(request: Request) {
   }
   console.log(
     "[API /saved-queries] Has access token:",
-    cookie.includes("access_token=") || cookie.includes("accessToken="),
+    /(?:^|;\s*)sid=/.test(cookie),
   );
   if (!cookie) {
     return NextResponse.json(

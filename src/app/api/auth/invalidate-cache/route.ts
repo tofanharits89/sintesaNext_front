@@ -4,9 +4,9 @@ import { NextResponse, NextRequest } from "next/server";
 import { verifyCacheInvalidationSignature } from "@/utils/cache-signature";
 import { hashKey, invalidateAuthCache } from "@/lib/auth/simplified-utils";
 
-function extractAccessFromCookieStr(s: string): string | null {
-  const m = /(?:^|;\s*)(access_token|accessToken)=([^;]+)/.exec(s || "");
-  const v = m && typeof m[2] === "string" ? m[2] : undefined;
+function extractSidFromCookieStr(s: string): string | null {
+  const m = /(?:^|;\s*)sid=([^;]+)/.exec(s || "");
+  const v = m && typeof m[1] === "string" ? m[1] : undefined;
   return v ? decodeURIComponent(v) : null;
 }
 
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   let keyToInvalidate: string | undefined;
   if (typeof body.sessionKey === "string" && body.sessionKey.length > 0) {
     const token = body.sessionKey.includes("=")
-      ? extractAccessFromCookieStr(body.sessionKey) || body.sessionKey
+      ? extractSidFromCookieStr(body.sessionKey) || body.sessionKey
       : body.sessionKey;
     keyToInvalidate = hashKey(token);
   }

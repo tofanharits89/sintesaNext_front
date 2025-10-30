@@ -15,7 +15,6 @@ import { PenundaanTable } from "./_penundaan-table";
 import { ConfirmationModals } from "@/components/ui/confirmation-modal";
 import { useKmkPotongan, RawPotonganItem } from "@/hooks/use-kmk-potongan";
 import { apiPath } from "@/lib/config/base-path";
-import { getAuthTokenFromCookie } from "@/lib/utils/cookieManager";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
 
 interface DataPenundaanModalProps {
@@ -82,10 +81,7 @@ export function DataPenundaanModal({
       const id = item?.id;
       if (!id) throw new Error("ID penundaan tidak ditemukan");
 
-      const token = getAuthTokenFromCookie();
-      const headers: HeadersInit = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-      const headersWithCsrf = addCsrfToHeaders(headers);
+      const headersWithCsrf: HeadersInit = addCsrfToHeaders({ "Content-Type": "application/json" });
 
       const url = apiPath(`/transfer-daerah/dau/kmk/penundaan/${encodeURIComponent(String(id))}`);
       const resp = await fetch(url, {

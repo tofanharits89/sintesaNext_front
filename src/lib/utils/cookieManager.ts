@@ -10,16 +10,17 @@ export { getCookie };
 
 // Simple auth token access (limited since cookies are HTTP-only)
 export function getAuthTokenFromCookie(): string | null {
-  return getCookie('access_token');
+  // sid is HTTP-only; no readable auth token client-side in sid model
+  return null;
 }
 
 // Unified auth system integration - dispatch events for socket and component coordination
 export const dispatchAuthEvent = {
-  login: (user: any, accessToken?: string) => {
+  login: (user: any, _accessToken?: string) => {
     // Dispatch event for socket system to connect
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('auth:login', {
-        detail: { user, accessToken }
+        detail: { user }
       }));
     }
   },

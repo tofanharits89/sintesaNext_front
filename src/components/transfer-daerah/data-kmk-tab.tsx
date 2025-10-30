@@ -396,13 +396,7 @@ export function DataKmkTab({}: DataKmkTabProps) {
           try {
             const id = selectedItem?.id;
             if (!id) throw new Error("ID tidak ditemukan");
-            const token = getAuthTokenFromCookie();
-            
-            const headers: HeadersInit = { "Content-Type": "application/json" };
-             if (token) headers["Authorization"] = `Bearer ${token}`;
-             
-             // Add CSRF token to headers
-             const headersWithCsrf = addCsrfToHeaders(headers);
+            const headersWithCsrf: HeadersInit = addCsrfToHeaders({ "Content-Type": "application/json" });
             
 const resp = await fetch(apiPath(`/transfer-daerah/dau/kmk/${encodeURIComponent(String(id))}`), {
               method: "DELETE",

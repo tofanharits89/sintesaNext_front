@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   try {
     const cookie = request.headers.get("cookie") || "";
     console.log("[API /messaging/conversations] Incoming cookies present:", !!cookie);
-    console.log("[API /messaging/conversations] Has access token:", cookie.includes("access_token=") || cookie.includes("accessToken="));
+    console.log("[API /messaging/conversations] Has sid:", /(?:^|;\s*)sid=/.test(cookie));
     if (!cookie) {
       return NextResponse.json(
         { success: false, message: "No session" },
