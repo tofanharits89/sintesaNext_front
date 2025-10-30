@@ -7,7 +7,7 @@
 import { logger } from "../utils/logger";
 import { http } from "../api/httpClient";
 import { apiPath } from "../config/base-path";
-import { primeCSRFToken, getCSRFToken as fetchCSRFToken } from "../security/csrfManager";
+import { primeCSRFToken, getCSRFToken as fetchCSRFToken, attachCSRFToken } from "../security/csrfManager";
 
 // User interface (matches backend API response)
 export interface User {
@@ -145,21 +145,27 @@ export class AuthClient {
 
   /**
    * Logout user
-   * Delegates CSRF handling to the Next.js proxy so no browser storage is needed.
+   * SECURITY FIX: Attach CSRF token to prevent CSRF validation failures
    */
   async logout(): Promise<{ success: boolean; error?: string }> {
     try {
+      // Prepare headers and attach CSRF token
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        "X-Debug-Source": "authClient.logout",
+        "X-Debug-Trace": (
+          Date.now().toString(36) +
+          "-" +
+          Math.random().toString(36).slice(2, 8)
+        ).toUpperCase(),
+      };
+
+      // Attach CSRF token to prevent CSRF validation failures
+      await attachCSRFToken(headers);
+
       const response = await fetch(`${this.baseURL}/auth/logout`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Debug-Source": "authClient.logout",
-          "X-Debug-Trace": (
-            Date.now().toString(36) +
-            "-" +
-            Math.random().toString(36).slice(2, 8)
-          ).toUpperCase(),
-        },
+        headers,
         credentials: "include",
       });
 

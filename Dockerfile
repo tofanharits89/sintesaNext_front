@@ -20,7 +20,7 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Build the application with increased memory limit and optimizations
-RUN NODE_OPTIONS="--max-old-space-size=6144" npm run build
+RUN NODE_OPTIONS="--max-old-space-size=8192" npm run build
 
 # Production image, copy all the files and run next
 FROM base AS runner

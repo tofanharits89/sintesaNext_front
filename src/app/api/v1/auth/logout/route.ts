@@ -6,7 +6,7 @@ export async function POST(_request: NextRequest) {
   const cookie = _request.headers.get("cookie") || "";
   let csrfToken: string | undefined;
   try {
-    const t = await fetch(backendPath("/csrf-token"), {
+    const t = await fetch(backendPath("/auth/csrf"), {
       method: "GET",
       headers: { ...(cookie ? { cookie } : {}) },
       credentials: "include",
