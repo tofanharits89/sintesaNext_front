@@ -135,7 +135,7 @@ export function useAuth(): UseAuthReturn {
     captcha?: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      const result = await authClient.login(username, password, rememberMe, { captcha });
+      const result = await authClient.login(username, password, rememberMe, captcha ? { captcha } : {});
 
       if (result.success && result.user) {
         // Invalidate auth query to clear cache
