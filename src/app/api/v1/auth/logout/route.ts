@@ -4,21 +4,18 @@ import { forwardSetCookies } from "@/lib/utils/cookie-helpers";
 
 export async function POST(_request: NextRequest) {
   const cookie = _request.headers.get("cookie") || "";
-  let csrfToken: string | undefined;
-  try {
-    const t = await fetch(backendPath("/auth/csrf"), {
-      method: "GET",
-      headers: { ...(cookie ? { cookie } : {}) },
-      credentials: "include",
-      cache: "no-store",
-    });
-    const tj = await t.json().catch(() => ({} as any));
-    csrfToken = tj?.data?.csrfToken || tj?.csrfToken;
-  } catch {}
+  
+  // Extract CSRF token from request headers (sent by frontend)
+  const csrfToken = _request.headers.get("x-csrf-token") || 
+                    _request.headers.get("X-CSRF-Token") ||
+                    _request.headers.get("X-XSRF-TOKEN");
 
   const resp = await fetch(backendPath("/auth/logout"), {
     method: "POST",
-    headers: { ...(cookie ? { cookie } : {}), ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}) },
+    headers: { 
+      ...(cookie ? { cookie } : {}), 
+      ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}) 
+    },
     credentials: "include",
     cache: "no-store",
   });
