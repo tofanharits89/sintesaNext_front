@@ -28,33 +28,33 @@ export function TabsCard() {
       <CardContent>
         <Tabs defaultValue="isu-spesifik" className="w-full gap-3">
           <div className="border-b border-border/50 pb-3 mb-0">
-            <TabsList className="w-full h-12 md:h-14 p-2 rounded-xl">
-              <TabsTrigger value="isu-spesifik" className="h-full px-4 md:px-5 py-0 text-sm md:text-base">
+            <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-2 md:grid-cols-6 gap-2 md:gap-0">
+              <TabsTrigger value="isu-spesifik" className="h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">
                 <AlertTriangle className="h-4 w-4 mr-2" />
                 <span>Isu Spesifik</span>
               </TabsTrigger>
 
-              <TabsTrigger value="tren-belanja" className="h-full px-4 md:px-5 py-0 text-sm md:text-base">
+              <TabsTrigger value="tren-belanja" className="h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">
                 <TrendingUp className="h-4 w-4 mr-2" />
                 <span>Tren Belanja</span>
               </TabsTrigger>
 
-              <TabsTrigger value="pagu-minus" className="h-full px-4 md:px-5 py-0 text-sm md:text-base">
+              <TabsTrigger value="pagu-minus" className="h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">
                 <Minus className="h-4 w-4 mr-2" />
                 <span>Pagu Minus</span>
               </TabsTrigger>
 
-              <TabsTrigger value="outstanding-up" className="h-full px-4 md:px-5 py-0 text-sm md:text-base">
+              <TabsTrigger value="outstanding-up" className="h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">
                 <Clock className="h-4 w-4 mr-2" />
                 <span>Outstanding UP</span>
               </TabsTrigger>
 
-              <TabsTrigger value="kinerja-utama" className="h-full px-4 md:px-5 py-0 text-sm md:text-base">
+              <TabsTrigger value="kinerja-utama" className="h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">
                 <Star className="h-4 w-4 mr-2" />
                 <span>Kinerja Utama</span>
               </TabsTrigger>
 
-              <TabsTrigger value="target-capaian" className="h-full px-4 md:px-5 py-0 text-sm md:text-base">
+              <TabsTrigger value="target-capaian" className="h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">
                 <Target className="h-4 w-4 mr-2" />
                 <span>Target/Capaian</span>
               </TabsTrigger>

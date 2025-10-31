@@ -26,20 +26,20 @@ export default function KertasKerjaPage() {
       {/* Main Content Tabs */}
       <Tabs defaultValue="makrokesra" className="w-full gap-3">
         <div className="border-b border-border/50 pb-3 mb-0">
-          <TabsList className="w-full h-12 md:h-14 p-2 rounded-xl">
-            <TabsTrigger value="makrokesra" className="h-full px-4 md:px-5 py-0 text-base">
+          <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-0">
+            <TabsTrigger value="makrokesra" className="h-12 md:h-full px-3 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">
               Makrokesra
             </TabsTrigger>
-            <TabsTrigger value="harga-komoditas" className="h-full px-4 md:px-5 py-0 text-base">
+            <TabsTrigger value="harga-komoditas" className="h-12 md:h-full px-3 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">
               Harga Komoditas
             </TabsTrigger>
-            <TabsTrigger value="perkembangan-lainnya" className="h-full px-4 md:px-5 py-0 text-base">
+            <TabsTrigger value="perkembangan-lainnya" className="h-12 md:h-full px-3 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">
               Perkembangan Lainnya
             </TabsTrigger>
-            <TabsTrigger value="permasalahan-isu" className="h-full px-4 md:px-5 py-0 text-base">
+            <TabsTrigger value="permasalahan-isu" className="h-12 md:h-full px-3 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">
               Permasalahan/Isu
             </TabsTrigger>
-            <TabsTrigger value="kesimpulan-rekomendasi" className="h-full px-4 md:px-5 py-0 text-base">
+            <TabsTrigger value="kesimpulan-rekomendasi" className="h-12 md:h-full px-3 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">
               Kesimpulan & Rekomendasi
             </TabsTrigger>
           </TabsList>

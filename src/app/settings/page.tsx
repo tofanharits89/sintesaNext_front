@@ -65,14 +65,14 @@ export default function SettingsPage() {
 
       <Tabs defaultValue="general" className="w-full gap-3">
         <div className="border-b border-border/50 pb-3 mb-0">
-          <TabsList className="w-full h-12 md:h-14 p-2 rounded-xl">
-            <TabsTrigger value="general" className="h-full px-4 md:px-5 py-0 text-base flex items-center gap-2">
+          <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-0">
+            <TabsTrigger value="general" className="h-12 md:h-full px-4 md:px-5 py-0 text-sm md:text-base flex items-center justify-center gap-2">
               <Settings className="h-4 w-4" />
-              Umum
+              <span className="whitespace-nowrap">Umum</span>
             </TabsTrigger>
-            <TabsTrigger value="system" className="h-full px-4 md:px-5 py-0 text-base flex items-center gap-2">
+            <TabsTrigger value="system" className="h-12 md:h-full px-4 md:px-5 py-0 text-sm md:text-base flex items-center justify-center gap-2">
               <Shield className="h-4 w-4" />
-              Sistem
+              <span className="whitespace-nowrap">Sistem</span>
             </TabsTrigger>
           </TabsList>
         </div>

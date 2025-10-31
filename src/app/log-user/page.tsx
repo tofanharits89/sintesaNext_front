@@ -283,12 +283,12 @@ export default function LogUserPage() {
       {/* Tabs header (Animate UI) */}
       <Tabs className="gap-3" value={active} onValueChange={(v) => setActive(v as TabKey)}>
         <div className="border-b border-border/50 pb-3 mb-0">
-          <TabsList className="w-full h-12 md:h-14 p-2 rounded-xl">
+          <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-0">
             {TABS.map((t) => (
               <TabsTrigger
                 key={t.key}
                 value={t.key}
-                className="h-full px-4 py-0 md:px-5 md:py-0 text-base flex items-center gap-2"
+                className="h-12 md:h-full px-4 py-0 md:px-5 md:py-0 text-sm md:text-base flex items-center justify-center gap-2 whitespace-nowrap"
               >
                 <t.icon className="h-4 w-4" />
                 {t.label}

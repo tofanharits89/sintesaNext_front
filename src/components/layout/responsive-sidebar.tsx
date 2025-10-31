@@ -1071,6 +1071,29 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </Link>
+                    ) : c.label === "Rekap EPA" && m.label === "EPA" ? (
+                      <Link
+                        key={c.label}
+                        href="/epa/rekap"
+                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        onMouseEnter={() => {
+                          import("@/components/epa/rekap-filter-card");
+                          import("@/components/epa/rekap-data-table");
+                        }}
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/epa/rekap",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
                     ) : c.label === "Proyeksi TKD" &&
                       m.label === "Transfer Daerah" ? (
                       <Link

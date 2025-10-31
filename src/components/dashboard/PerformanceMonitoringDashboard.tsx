@@ -116,12 +116,12 @@ export function PerformanceMonitoringDashboard() {
         <Tabs defaultValue="cache" className="w-full gap-3">
           <div className="border-b border-border/50 pb-3 mb-0">
             <Suspense fallback={<TabsListSkeleton />}>
-              <TabsList className="w-full h-12 md:h-14 p-2 rounded-xl">
-                <TabsTrigger value="cache" className="h-full px-4 md:px-5 py-0 text-base">Cache Metrics</TabsTrigger>
-                <TabsTrigger value="compression" className="h-full px-4 md:px-5 py-0 text-base">Compression</TabsTrigger>
-                <TabsTrigger value="realtime" className="h-full px-4 md:px-5 py-0 text-base">Real-time</TabsTrigger>
-                <TabsTrigger value="health" className="h-full px-4 md:px-5 py-0 text-base">Health Status</TabsTrigger>
-                <TabsTrigger value="analytics" className="h-full px-4 md:px-5 py-0 text-base">Analytics</TabsTrigger>
+              <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-0">
+                <TabsTrigger value="cache" className="h-12 md:h-full px-3 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">Cache Metrics</TabsTrigger>
+                <TabsTrigger value="compression" className="h-12 md:h-full px-3 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">Compression</TabsTrigger>
+                <TabsTrigger value="realtime" className="h-12 md:h-full px-3 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">Real-time</TabsTrigger>
+                <TabsTrigger value="health" className="h-12 md:h-full px-3 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">Health Status</TabsTrigger>
+                <TabsTrigger value="analytics" className="h-12 md:h-full px-3 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">Analytics</TabsTrigger>
               </TabsList>
             </Suspense>
           </div>

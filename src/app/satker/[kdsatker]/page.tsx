@@ -138,18 +138,18 @@ export default function SatkerDetailPage() {
       {/* Tabs */}
       <Tabs defaultValue="profile" className="w-full gap-3">
         <div className="border-b border-border/50 pb-3 mb-0">
-          <TabsList className="w-full h-12 md:h-14 p-2 rounded-xl">
-            <TabsTrigger value="profile" className="h-full px-4 md:px-5 py-0 text-base flex items-center gap-2">
+          <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-0">
+            <TabsTrigger value="profile" className="h-12 md:h-full px-3 md:px-5 py-0 text-sm md:text-base flex items-center justify-center gap-2 whitespace-nowrap">
               <User className="h-4 w-4" />
-              Profil Satker
+              <span>Profil Satker</span>
             </TabsTrigger>
-            <TabsTrigger value="dipa-download" className="h-full px-4 md:px-5 py-0 text-base flex items-center gap-2">
+            <TabsTrigger value="dipa-download" className="h-12 md:h-full px-3 md:px-5 py-0 text-sm md:text-base flex items-center justify-center gap-2 whitespace-nowrap">
               <FileText className="h-4 w-4" />
-              Unduh ADK/DIPA
+              <span>Unduh ADK/DIPA</span>
             </TabsTrigger>
-            <TabsTrigger value="documents" className="h-full px-4 md:px-5 py-0 text-base flex items-center gap-2">
+            <TabsTrigger value="documents" className="h-12 md:h-full px-3 md:px-5 py-0 text-sm md:text-base flex items-center justify-center gap-2 whitespace-nowrap">
               <CreditCard className="h-4 w-4" />
-              Dokumen Lainnya
+              <span>Dokumen Lainnya</span>
             </TabsTrigger>
           </TabsList>
         </div>

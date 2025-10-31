@@ -25,14 +25,14 @@ export default function DAUPage() {
       {/* Main Content Tabs */}
       <Tabs defaultValue="data-kmk" className="w-full gap-3">
         <div className="border-b border-border/50 pb-3 mb-0">
-          <TabsList className="w-full h-12 md:h-14 p-2 rounded-xl">
-            <TabsTrigger value="data-kmk" className="h-full px-4 md:px-5 py-0 text-base">
+          <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-0">
+            <TabsTrigger value="data-kmk" className="h-12 md:h-full px-4 md:px-5 py-0 text-sm md:text-base flex items-center justify-center whitespace-nowrap">
               Data KMK
             </TabsTrigger>
-            <TabsTrigger value="data-transaksi" className="h-full px-4 md:px-5 py-0 text-base">
+            <TabsTrigger value="data-transaksi" className="h-12 md:h-full px-4 md:px-5 py-0 text-sm md:text-base flex items-center justify-center whitespace-nowrap">
               Data Transaksi
             </TabsTrigger>
-            <TabsTrigger value="rekonsilisasi-data" className="h-full px-4 md:px-5 py-0 text-base">
+            <TabsTrigger value="rekonsilisasi-data" className="h-12 md:h-full px-4 md:px-5 py-0 text-sm md:text-base flex items-center justify-center whitespace-nowrap">
               Rekonsilisasi Data
             </TabsTrigger>
           </TabsList>
