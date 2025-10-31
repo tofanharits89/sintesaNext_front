@@ -123,12 +123,16 @@ class CSRFManager {
   async attachCSRFToken(headers: Record<string, string>): Promise<void> {
     const token = await this.getCSRFToken();
     if (token) {
-      // Use the header name that backend expects
-      headers['X-CSRF-Token'] = token;
+      console.log('[CSRF Manager] Attaching token to headers:', {
+        tokenLength: token.length,
+        tokenPreview: token.substring(0, 8) + '...' + token.substring(token.length - 8),
+      });
       
-      // Also add alternative headers for compatibility
+      // Send ONLY ONE header to avoid nginx concatenation issues
+      // Backend checks for 'x-csrf-token' (lowercase)
       headers['x-csrf-token'] = token;
-      headers['X-XSRF-TOKEN'] = token;
+    } else {
+      console.warn('[CSRF Manager] No token available to attach');
     }
   }
   
