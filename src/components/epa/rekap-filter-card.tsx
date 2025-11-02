@@ -216,8 +216,8 @@ export function RekapFilterCard({
                 <SelectItem value="all">Semua</SelectItem>
                 {filterOptions.kementerianList?.map((item) => (
                   <SelectItem key={item.kddept} value={item.kddept}>
-                    <span className="truncate" title={item.nmdept}>
-                      {item.nmdept}
+                    <span className="truncate" title={`${item.kddept} - ${item.nmdept}`}>
+                      {`${item.kddept} - ${item.nmdept}`}
                     </span>
                   </SelectItem>
                 ))}
@@ -240,8 +240,8 @@ export function RekapFilterCard({
                 <SelectItem value="all">Semua</SelectItem>
                 {filterOptions.jenisBelanjList?.map((item) => (
                   <SelectItem key={item.kdgbkpk} value={item.kdgbkpk}>
-                    <span className="truncate" title={item.nmgbkpk}>
-                      {item.nmgbkpk}
+                    <span className="truncate" title={`${item.kdgbkpk} - ${item.nmgbkpk}`}>
+                      {`${item.kdgbkpk} - ${item.nmgbkpk}`}
                     </span>
                   </SelectItem>
                 ))}

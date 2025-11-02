@@ -16,6 +16,7 @@ export default function RekapEpaPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [isUpdateSubmitting, setIsUpdateSubmitting] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<RekapEpaFilters>({
     tahun: "all",
     triwulan: "all",
@@ -72,6 +73,48 @@ export default function RekapEpaPage() {
   const handlePageChange = useCallback((newPage: number) => {
     setPage(newPage);
   }, []);
+
+  const handleUpdateRencanaRealisasi = useCallback(async (data: {
+    thang: string;
+    triwulan: string;
+    kddept: string;
+    kdgbkpk: string;
+    rencanaSisaRealisasi: number;
+  }) => {
+    setIsUpdateSubmitting(true);
+    try {
+      const response = await fetch("/api/v1/epa/rekap/update", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          thang: data.thang,
+          triwulan: data.triwulan,
+          kddept: data.kddept,
+          kdgbkpk: data.kdgbkpk,
+          rencana_sisa_realisasi: data.rencanaSisaRealisasi,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Gagal memperbarui data");
+      }
+
+      // Refresh data
+      await refetch();
+      alert("Data berhasil diperbarui");
+    } catch (error) {
+      console.error("Error updating rencana realiasi:", error);
+      alert(
+        "Gagal memperbarui data: " +
+          (error instanceof Error ? error.message : "Terjadi kesalahan")
+      );
+    } finally {
+      setIsUpdateSubmitting(false);
+    }
+  }, [refetch]);
 
   const filteredData = useMemo(() => {
     let result = data?.data || [];
@@ -251,6 +294,9 @@ export default function RekapEpaPage() {
         onPageChange={handlePageChange}
         totalRows={filteredData.length}
         isLoading={isFetching}
+        filterOptions={filterOptions.data}
+        onUpdateRencanaRealisasi={handleUpdateRencanaRealisasi}
+        isUpdateSubmitting={isUpdateSubmitting}
       />
     </div>
   );

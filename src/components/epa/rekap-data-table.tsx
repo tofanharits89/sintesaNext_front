@@ -11,9 +11,10 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Download, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Edit, Loader2 } from "lucide-react";
 import * as XLSX from "xlsx";
 import type { RekapEpaRow, RekapEpaGrandTotal } from "@/types/epa-rekap";
+import { UpdateRencanaRealisasiModal } from "@/components/epa/update-rencana-realisasi-modal";
 
 interface RekapDataTableProps {
   data: RekapEpaRow[];
@@ -24,6 +25,20 @@ interface RekapDataTableProps {
   onPageChange: (page: number) => void;
   totalRows?: number;
   isLoading?: boolean;
+  filterOptions?: {
+    tahunList: string[];
+    triwulanList: string[];
+    kementerianList: Array<{ kddept: string; nmdept: string }>;
+    jenisBelanjList: Array<{ kdgbkpk: string; nmgbkpk: string }>;
+  };
+  onUpdateRencanaRealisasi?: (data: {
+    thang: string;
+    triwulan: string;
+    kddept: string;
+    kdgbkpk: string;
+    rencanaSisaRealisasi: number;
+  }) => Promise<void>;
+  isUpdateSubmitting?: boolean;
 }
 
 const formatNumber = (num: any) => {
@@ -117,8 +132,13 @@ export function RekapDataTable({
   onPageChange,
   totalRows = 0,
   isLoading = false,
+  filterOptions,
+  onUpdateRencanaRealisasi,
+  isUpdateSubmitting = false,
 }: RekapDataTableProps) {
   const [isExporting, setIsExporting] = useState(false);
+  const [isUpdatingRencana, setIsUpdatingRencana] = useState(false);
+
   const displayGrandTotal = useMemo(() => {
     if (!grandTotal) return null;
 
@@ -153,6 +173,9 @@ export function RekapDataTable({
               <div className="px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-medium">
                 Total Data: - Baris Data
               </div>
+              {onUpdateRencanaRealisasi && (
+                <div className="h-9 w-[180px] bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              )}
               <Button
                 disabled
                 variant="default"
@@ -239,6 +262,17 @@ export function RekapDataTable({
             <div className="px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-medium">
               Total Data: {totalRows} Baris Data
             </div>
+            {onUpdateRencanaRealisasi && (
+              <Button
+                onClick={() => setIsUpdatingRencana(true)}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Edit className="h-4 w-4" />
+                Update Rencana Realisasi
+              </Button>
+            )}
             <Button
               onClick={handleExportClick}
               disabled={isExporting || !fullData || fullData.length === 0}
@@ -372,6 +406,17 @@ export function RekapDataTable({
           </div>
         </div>
       </CardContent>
+
+      {/* Update Rencana Realisasi Modal */}
+      {onUpdateRencanaRealisasi && (
+        <UpdateRencanaRealisasiModal
+          open={isUpdatingRencana}
+          onOpenChange={setIsUpdatingRencana}
+          filterOptions={filterOptions}
+          onSubmit={onUpdateRencanaRealisasi}
+          isSubmitting={isUpdateSubmitting}
+        />
+      )}
     </Card>
   );
 }

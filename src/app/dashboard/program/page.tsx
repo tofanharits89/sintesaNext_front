@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ProgramCard } from "@/components/dashboard/ProgramCard";
+import { ProgramDashboardSkeleton } from "@/components/dashboard/program-dashboard-skeleton";
 import {
   Select,
   SelectContent,
@@ -10,7 +11,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useProgramData } from "@/hooks/useProgramData";
-import { Loader2 } from "lucide-react";
 
 export default function DashboardProgramPage() {
   const [isClient, setIsClient] = useState(false);
@@ -87,13 +87,8 @@ export default function DashboardProgramPage() {
         </div>
       </div>
 
-      {/* Program Cards */}
-      {isLoading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          <span className="ml-2 text-muted-foreground">Memuat data program...</span>
-        </div>
-      )}
+      {/* Program Cards Skeleton Loading */}
+      {isLoading && <ProgramDashboardSkeleton />}
 
       {error && (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-center">
