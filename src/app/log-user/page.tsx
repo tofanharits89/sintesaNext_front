@@ -431,7 +431,7 @@ export default function LogUserPage() {
                                 <TableCell className="text-sm text-muted-foreground text-center">{userInfo.loginAt ? formatLoginDateTime(userInfo.loginAt) : "Tidak diketahui"}</TableCell>
                                 <TableCell className="text-sm text-muted-foreground text-center">{userInfo.loginAt ? calculateLoginDuration(userInfo.loginAt) : "Tidak diketahui"}</TableCell>
                                 <TableCell className="text-center">
-                                  <Badge variant="default" className="text-xs">
+                                  <Badge variant="default" className="text-xs bg-green-600 hover:bg-green-700 text-white border-green-600">
                                     <div className="w-2 h-2 bg-white rounded-full mr-1 animate-pulse"></div>
                                     Online
                                   </Badge>
@@ -455,7 +455,7 @@ export default function LogUserPage() {
                                 <p className="text-sm text-muted-foreground font-mono">{userInfo.user.username || "Unknown"}</p>
                                 <div className="flex items-center space-x-2">
                                   <Badge variant="outline" className="text-xs">{getRoleDisplayName(userInfo.user.role as any)}</Badge>
-                                  <Badge variant="default" className="text-xs">
+                                  <Badge variant="default" className="text-xs bg-green-600 hover:bg-green-700 text-white border-green-600">
                                     <div className="w-2 h-2 bg-white rounded-full mr-1 animate-pulse"></div>
                                     Online
                                   </Badge>

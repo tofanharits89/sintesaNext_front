@@ -26,9 +26,7 @@ import {
   Coins,
   Send,
   History,
-  Calendar,
   CalendarDays,
-  CalendarClock,
   User,
   Phone,
   Upload,
@@ -87,7 +85,7 @@ const defaultMenu: MenuItem[] = [
   },
   {
     label: "EPA",
-    children: [{ label: "Summary" }, { label: "Rekap EPA" }],
+    children: [{ label: "Summary" }, { label: "Analisa EPA" }, { label: "Rekap EPA" }],
   },
   {
     label: "Spending Review",
@@ -119,9 +117,8 @@ const defaultMenu: MenuItem[] = [
   {
     label: "Laporan",
     children: [
-      { label: "Bulanan" },
-      { label: "Triwulanan" },
-      { label: "Tahunan" },
+      { label: "Weekly Report" },
+      { label: "Monthly Report" },
     ],
   },
   {
@@ -229,6 +226,8 @@ export function ResponsiveSidebar({
         return <Building2 className={cls} />;
       case "EPA__Summary":
         return <LineChart className={cls} />;
+      case "EPA__Analisa EPA":
+        return <PieChart className={cls} />;
       case "EPA__Rekap EPA":
         return <Database className={cls} />;
       case "Spending Review__Sektor":
@@ -257,11 +256,9 @@ export function ResponsiveSidebar({
         return <Database className={cls} />;
       case "Inquiry Data__RKAKL Detail":
         return <Database className={cls} />;
-      case "Laporan__Bulanan":
-        return <Calendar className={cls} />;
-      case "Laporan__Triwulanan":
-        return <CalendarClock className={cls} />;
-      case "Laporan__Tahunan":
+      case "Laporan__Monthly Report":
+        return <CalendarDays className={cls} />;
+      case "Laporan__Weekly Report":
         return <CalendarDays className={cls} />;
       case "Tentang Kita__Profil":
         return <User className={cls} />;
@@ -580,6 +577,26 @@ export function ResponsiveSidebar({
                               <span>{c.label}</span>
                             </Link>
                           </DropdownMenuItem>
+                        ) : c.label === "Analisa EPA" && m.label === "EPA" ? (
+                          <DropdownMenuItem key={c.label} asChild>
+                            <Link
+                              href="/epa/analisa"
+                              className="flex items-center w-full"
+                              onMouseEnter={() => {
+                                import("@/components/epa/filter-card");
+                              }}
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/epa/analisa",
+                                })
+                              }
+                            >
+                              {subIconFor(m.label, c.label)}
+                              <span>{c.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
                         ) : c.label === "Rekap EPA" && m.label === "EPA" ? (
                           <DropdownMenuItem key={c.label} asChild>
                             <Link
@@ -880,6 +897,42 @@ export function ResponsiveSidebar({
                               <span>{c.label}</span>
                             </Link>
                           </DropdownMenuItem>
+                        ) : c.label === "Monthly Report" &&
+                          m.label === "Laporan" ? (
+                          <DropdownMenuItem key={c.label} asChild>
+                            <Link
+                              href="/laporan/monthly-report"
+                              className="flex items-center w-full"
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/laporan/monthly-report",
+                                })
+                              }
+                            >
+                              {subIconFor(m.label, c.label)}
+                              <span>{c.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        ) : c.label === "Weekly Report" &&
+                          m.label === "Laporan" ? (
+                          <DropdownMenuItem key={c.label} asChild>
+                            <Link
+                              href="/laporan/weekly-report"
+                              className="flex items-center w-full"
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/laporan/weekly-report",
+                                })
+                              }
+                            >
+                              {subIconFor(m.label, c.label)}
+                              <span>{c.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem
                             key={c.label}
@@ -1062,6 +1115,28 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/epa/summary",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Analisa EPA" && m.label === "EPA" ? (
+                      <Link
+                        key={c.label}
+                        href="/epa/analisa"
+                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        onMouseEnter={() => {
+                          import("@/components/epa/filter-card");
+                        }}
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/epa/analisa",
                           });
                           setOpen(false);
                         }}
@@ -1379,6 +1454,46 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/data-supplier/jaringan",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Monthly Report" &&
+                      m.label === "Laporan" ? (
+                      <Link
+                        key={c.label}
+                        href="/laporan/monthly-report"
+                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/laporan/monthly-report",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Weekly Report" &&
+                      m.label === "Laporan" ? (
+                      <Link
+                        key={c.label}
+                        href="/laporan/weekly-report"
+                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/laporan/weekly-report",
                           });
                           setOpen(false);
                         }}

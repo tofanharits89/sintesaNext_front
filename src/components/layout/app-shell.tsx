@@ -21,7 +21,7 @@ const AppShell = memo(function AppShell({
   // Define known valid routes
   const knownRoutes = useMemo(() => [
     '/login',
-    '/server-error', 
+    '/server-error',
     '/ip-blocked',
     '/unauthorized',
     '/dashboard',
@@ -37,6 +37,7 @@ const AppShell = memo(function AppShell({
     '/inquiry-data',
     '/epa',
     '/makan-bergizi',
+    '/laporan',
     '/tentang-kita',
     '/debug-cookies',
     '/debug-user',
