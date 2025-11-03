@@ -27,17 +27,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, type SubmitHandler } from "react-hook-form";
 import * as z from "zod";
 
 const formSchema = z.object({
   tahun: z.string().min(1, "Tahun harus dipilih"),
-  tanggalAwal: z.date({
-    required_error: "Tanggal awal harus diisi",
-  }),
-  tanggalAkhir: z.date({
-    required_error: "Tanggal akhir harus diisi",
-  }),
+  tanggalAwal: z.date().optional().refine((date) => !!date, "Tanggal awal harus diisi"),
+  tanggalAkhir: z.date().optional().refine((date) => !!date, "Tanggal akhir harus diisi"),
   keterangan: z.string().min(1, "Keterangan harus diisi"),
   file: z.any().refine((file) => file, "File harus diupload"),
 });
@@ -55,8 +51,6 @@ export function RekamWeeklyReportModal({
     resolver: zodResolver(formSchema),
     defaultValues: {
       tahun: "",
-      tanggalAwal: undefined,
-      tanggalAkhir: undefined,
       keterangan: "",
       file: null,
     },
@@ -68,7 +62,7 @@ export function RekamWeeklyReportModal({
     (currentYear - i).toString()
   );
 
-  const handleSubmit = (values: z.infer<typeof formSchema>) => {
+  const handleSubmit: SubmitHandler<z.infer<typeof formSchema>> = (values) => {
     console.log("Submitting Weekly Report:", values);
     // Handle form submission here
     onOpenChange(false);

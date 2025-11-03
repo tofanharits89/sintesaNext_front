@@ -29,7 +29,7 @@ interface UpdateRencanaRealisasiModalProps {
     triwulanList: string[];
     kementerianList: Array<{ kddept: string; nmdept: string }>;
     jenisBelanjList: Array<{ kdgbkpk: string; nmgbkpk: string }>;
-  };
+  } | undefined;
   onSubmit: (data: {
     thang: string;
     triwulan: string;
