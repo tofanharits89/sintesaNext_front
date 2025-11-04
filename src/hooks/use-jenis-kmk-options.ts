@@ -30,7 +30,7 @@ const fetcher = async (url: string) => {
 };
 
 export function useJenisKmkOptions() {
-const key = apiPath("/transfer-daerah/dau/ref/jenis");
+  const key = apiPath("/transfer-daerah/dau/ref/jenis");
   const { data, error, isLoading, refetch } = useQuery<any[]>({
     queryKey: ["jenis-kmk-options", key],
     queryFn: () => fetcher(key),
@@ -41,12 +41,13 @@ const key = apiPath("/transfer-daerah/dau/ref/jenis");
 
   const options: OptionItem[] = (data || [])
     .map((r) => {
-      const jenis = String(r.jenis ?? r.value ?? "");
+      const jenis = String(r.jenis ?? r.value ?? "").trim();
       if (!jenis) return null;
-      const nm = String(r.nmjenis ?? r.label ?? "");
+      const nm = String(r.nmjenis ?? r.label ?? "").trim();
+      const label = nm ? `${jenis} - ${nm}` : jenis;
       return {
         value: jenis,
-        label: nm ? `${jenis} - ${nm}` : jenis,
+        label,
       } as OptionItem;
     })
     .filter(Boolean) as OptionItem[];

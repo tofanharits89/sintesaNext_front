@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +46,7 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
   const [selectedMonth, setSelectedMonth] = useState(defaultMonthName);
   const [selectedKppn, setSelectedKppn] = useState("");
   const [selectedKabKota, setSelectedKabKota] = useState("");
+  const fallbackStageRef = useRef<"none" | "clearedMonth" | "switchedYear">("none");
   const [isRekamDataModalOpen, setIsRekamDataModalOpen] = useState(false);
   const [isKertasKerjaModalOpen, setIsKertasKerjaModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
@@ -97,6 +98,7 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
   ];
 
   const handleReset = () => {
+    fallbackStageRef.current = "none";
     setSelectedYear(defaultYear);
     setSelectedMonth(defaultMonthName);
     setSelectedKppn("");
@@ -240,6 +242,52 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
   } as const;
   const { rows, isLoading, error } = useDauTransaksi(params as any);
 
+  const handleYearSelect = (value: string) => {
+    fallbackStageRef.current = "none";
+    setSelectedYear(value);
+  };
+
+  const handleMonthSelect = (value: string) => {
+    fallbackStageRef.current = "none";
+    setSelectedMonth(value);
+  };
+
+  const handleKppnSelect = (value: string) => {
+    fallbackStageRef.current = "none";
+    setSelectedKppn(value);
+  };
+
+  const handleKabKotaSelect = (value: string) => {
+    fallbackStageRef.current = "none";
+    setSelectedKabKota(value);
+  };
+
+  useEffect(() => {
+    if (isLoading || rows.length > 0) {
+      return;
+    }
+
+    // First fallback: remove month filter if it is restricting results
+    if (selectedMonth && fallbackStageRef.current === "none") {
+      fallbackStageRef.current = "clearedMonth";
+      setSelectedMonth("");
+      return;
+    }
+
+    // Second fallback: switch to previous year when current year has no rows
+    if (
+      selectedYear === defaultYear &&
+      fallbackStageRef.current !== "switchedYear"
+    ) {
+      const fallbackYear = years.find((year) => year !== selectedYear);
+      if (fallbackYear) {
+        fallbackStageRef.current = "switchedYear";
+        setSelectedYear(fallbackYear);
+        return;
+      }
+    }
+  }, [rows, isLoading, selectedMonth, selectedYear, defaultYear, years]);
+
   return (
     <div className="space-y-6">
       {/* Filter Card */}
@@ -254,7 +302,7 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Tahun</label>
-              <Select value={selectedYear ?? ""} onValueChange={(v) => setSelectedYear(v)}>
+              <Select value={selectedYear ?? ""} onValueChange={handleYearSelect}>
                 <SelectTrigger className="w-full">
                   <SelectValue className="truncate" />
                 </SelectTrigger>
@@ -270,7 +318,7 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Bulan</label>
-              <Select value={selectedMonth ?? ""} onValueChange={(v) => setSelectedMonth(v)}>
+              <Select value={selectedMonth ?? ""} onValueChange={handleMonthSelect}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih bulan" />
                 </SelectTrigger>
@@ -286,7 +334,7 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
 
             <div className="space-y-2">
               <label className="text-sm font-medium">KPPN</label>
-              <Select value={selectedKppn ?? ""} onValueChange={(v) => setSelectedKppn(v)}>
+              <Select value={selectedKppn ?? ""} onValueChange={handleKppnSelect}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih KPPN" />
                 </SelectTrigger>
@@ -308,10 +356,7 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Kab/Kota</label>
-              <Select
-                value={selectedKabKota ?? ""}
-                onValueChange={(v) => setSelectedKabKota(v)}
-              >
+              <Select value={selectedKabKota ?? ""} onValueChange={handleKabKotaSelect}>
                 <SelectTrigger className="w-full" disabled={!selectedKppn}>
                   <SelectValue
                     placeholder={

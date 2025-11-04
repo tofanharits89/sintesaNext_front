@@ -42,7 +42,7 @@ try {
 // Run type check
 console.log('🔍 Running type check...');
 try {
-  execSync('npm run type-check', { stdio: 'inherit' });
+  execSync('npm run typecheck', { stdio: 'inherit' });
   console.log('✅ Type check passed');
 } catch (error) {
   console.warn('⚠️  Type check failed:', error.message);

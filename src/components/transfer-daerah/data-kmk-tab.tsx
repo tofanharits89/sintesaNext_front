@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,6 +52,21 @@ export function DataKmkTab({}: DataKmkTabProps) {
   const years = Array.from({ length: currentYear - 2019 }, (_, i) =>
     (currentYear - i).toString()
   );
+
+  const fallbackAttemptedRef = useRef(false);
+
+  useEffect(() => {
+    if (fallbackAttemptedRef.current) {
+      return;
+    }
+    if (!isLoading && rows.length === 0 && selectedYear === currentYear.toString()) {
+      const fallbackYear = years.find((year) => year !== selectedYear);
+      if (fallbackYear) {
+        fallbackAttemptedRef.current = true;
+        setSelectedYear(fallbackYear);
+      }
+    }
+  }, [rows, isLoading, selectedYear, currentYear, years]);
 
   const handleDataPotongan = (item: any) => {
     setSelectedItem(item);

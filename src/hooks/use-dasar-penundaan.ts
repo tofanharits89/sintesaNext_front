@@ -32,7 +32,26 @@ const fetcher = async (url: string) => {
 
   if (!text.trim()) throw new Error("Empty response from server");
   const result = JSON.parse(text);
-  return (result?.data as DasarPenundaanItem[]) ?? [];
+  const rows = (result?.data as DasarPenundaanItem[]) ?? [];
+
+  return rows.map((item) => {
+    const no_kmk = String(item.no_kmk ?? "").trim();
+    const jenis =
+      item.jenis === null || item.jenis === undefined
+        ? null
+        : String(item.jenis).trim() || null;
+    const kriteria =
+      item.kriteria === null || item.kriteria === undefined
+        ? null
+        : String(item.kriteria).trim() || null;
+    return {
+      ...item,
+      no_kmk,
+      jenis,
+      kriteria,
+      uraian: item.uraian?.trim?.() ?? item.uraian ?? null,
+    };
+  });
 };
 
 export function useDasarPenundaanOptions(enabled: boolean = true) {
@@ -48,10 +67,13 @@ export function useDasarPenundaanOptions(enabled: boolean = true) {
     gcTime: 60 * 60 * 1000, // 60 minutes
   });
 
-  const options = (data || []).map((d) => ({
-    value: d.no_kmk,
-    label: d.no_kmk,
-  }));
+  const options = (data || []).map((d) => {
+    const noKmk = String(d.no_kmk ?? "").trim();
+    return {
+      value: noKmk,
+      label: noKmk,
+    };
+  });
 
   const mutate = refetch; // For backward compatibility
 
