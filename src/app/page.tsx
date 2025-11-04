@@ -11,17 +11,17 @@ export default async function Home() {
     .join("; ");
 
   try {
-    const resp = await fetch(apiPath("/auth/session/validate"), {
+    const resp = await fetch(apiPath("/auth/session"), {
       method: "GET",
       headers: cookieHeader ? { cookie: cookieHeader } : {},
       cache: "no-store",
     });
     const data = await resp.json().catch(() => ({}));
-    if (data?.success) {
+    if (resp.ok && data?.success && data?.data?.authenticated) {
       redirect("/dashboard/utama");
     }
   } catch {
-    // ignore
+    // ignore network failures and fallback to login redirect below
   }
 
   redirect("/login");

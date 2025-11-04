@@ -5,9 +5,7 @@
  */
 
 import { logger } from "../utils/logger";
-import { http } from "../api/httpClient";
-import { apiPath } from "../config/base-path";
-import { primeCSRFToken, getCSRFToken as fetchCSRFToken, attachCSRFToken } from "../security/csrfManager";
+import { primeCSRFToken, attachCSRFToken } from "../security/csrfManager";
 
 // User interface (matches backend API response)
 export interface User {
@@ -188,99 +186,11 @@ export class AuthClient {
     }
   }
 
-  /**
-   * Get current user from server
-   * Uses HTTP-only cookies for authentication with automatic refresh
-   */
-  async getCurrentUser(): Promise<{
-    success: boolean;
-    user?: User;
-    error?: string;
-  }> {
-    try {
-      const response = await http.get(`${this.baseURL}/auth/me`);
-      const data: AuthResponse<User | { user: User }> = response.data;
-
-      if (response.status === 200 && data.success && data.data) {
-        const user = "user" in data.data ? data.data.user : data.data;
-        return { success: true, user };
-      } else {
-        const error = data.error || data.message || "Failed to get user";
-        logger.warn("Get user failed:", error);
-        return { success: false, error };
-      }
-    } catch (error) {
-      logger.error("Get user error:", error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Network error",
-      };
-    }
-  }
-
-  /**
-   * Validate current session
-   */
-  async validateSession(): Promise<{
-    success: boolean;
-    valid?: boolean;
-    user?: User;
-    error?: string;
-  }> {
-    try {
-      const response = await http.get(
-        `${this.baseURL}/auth/validate?include=user`
-      );
-
-      const data: AuthResponse<{ valid: boolean; user: User }> =
-        response.data;
-
-      if (response.status === 200 && data.success && data.data) {
-        return {
-          success: true,
-          valid: data.data.valid,
-          user: data.data.user,
-        };
-      } else {
-        const error = data.error || data.message || "Validation failed";
-        logger.warn("Session validation failed:", error);
-        return { success: false, error };
-      }
-    } catch (error) {
-      logger.error("Session validation error:", error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Network error",
-      };
-    }
-  }
-
-  /**
-   * Get CSRF token (uses in-memory manager, no persistent storage)
-   */
-  async getCSRFToken(): Promise<{
-    success: boolean;
-    csrfToken?: string;
-    error?: string;
-  }> {
-    try {
-      const csrfToken = await fetchCSRFToken();
-      return { success: true, csrfToken };
-    } catch (error) {
-      logger.error("CSRF token error:", error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Network error",
-      };
-    }
-  }
 }
 
 // Create singleton instance
 export const authClient = new AuthClient();
 
-// Export types
-export type { AuthResponse };
 export type { User as AuthUser };
 
 export default authClient;

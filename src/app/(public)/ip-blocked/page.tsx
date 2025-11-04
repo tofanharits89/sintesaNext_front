@@ -79,12 +79,13 @@ function IPBlockedContent() {
     
     const syncWithBackend = async () => {
       try {
-        const response = await fetch('/api/v1/auth/me', {
+        const response = await fetch('/api/v1/auth/session', {
           credentials: 'include',
         });
-        
+
+        const data = await response.json().catch(() => ({}));
+
         if (response.status === 403) {
-          const data = await response.json();
           if (data.code === 'IP_BLOCKED') {
             // Prefer server-provided times if available
             const expiresAt: number | undefined = typeof data.expiresAt === 'number' ? data.expiresAt : undefined;
@@ -116,13 +117,14 @@ function IPBlockedContent() {
             router.replace('/login');
           }
         } else if (response.ok) {
+          const sessionInfo = data?.data;
+          const authenticated = Boolean(sessionInfo?.authenticated);
+
           // Block has been lifted or never existed!
           console.log('[IPBlocked] Not blocked, redirecting to login');
-          if (!hasValidated) {
-            // First validation - redirect to login
+          if (!hasValidated || authenticated) {
             router.replace('/login');
           } else {
-            // Subsequent checks - block has been lifted
             setIsExpired(true);
           }
         } else {

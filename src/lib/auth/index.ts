@@ -10,7 +10,6 @@ export {
   AuthClient,
   authClient,
   type User as AuthUser,
-  type AuthResponse,
 } from "./client";
 
 // Main hook export

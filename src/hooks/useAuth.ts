@@ -38,6 +38,7 @@ interface SessionData {
   lastActivity?: number;
   sessionTimeout?: number;
   absoluteTimeout?: number;
+  rememberMe?: boolean;
   reason?: string;
 }
 
