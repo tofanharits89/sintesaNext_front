@@ -15,7 +15,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { authClient } from '@/lib/auth/client';
 import type { User } from '@/lib/auth/client';
 import {
-  hasPermission as rbacHasPermission,
+  hasPermissionFrontend as rbacHasPermission,
   canAccessUserManagement as rbacCanAccessUserManagement,
   canEditRoleAndLocation as rbacCanEditRoleAndLocation,
   canManageUsers as rbacCanManageUsers,
@@ -62,7 +62,7 @@ export interface UseAuthReturn {
   clearCache: () => void;
 
   // RBAC utilities
-  hasPermission: (module: "users" | "profile" | "dashboard" | "settings", action: string) => boolean;
+  hasPermission: (module: "users" | "profile" | "dashboard" | "settings" | "messages" | "notifications", action: string) => boolean;
   canAccessUserManagement: () => boolean;
   canEditRoleAndLocation: () => boolean;
   canManageUsers: () => boolean;
@@ -205,7 +205,7 @@ export function useAuth(): UseAuthReturn {
   }, [user]);
 
   // RBAC utilities
-  const hasPermission = useCallback((module: "users" | "profile" | "dashboard" | "settings", action: string): boolean => {
+  const hasPermission = useCallback((module: "users" | "profile" | "dashboard" | "settings" | "messages" | "notifications", action: string): boolean => {
     return rbacHasPermission(normalizedUser, module, action);
   }, [normalizedUser]);
 
