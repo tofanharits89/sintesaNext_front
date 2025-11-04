@@ -100,10 +100,10 @@ export class AuthClient {
         logger.info("Login successful");
         logger.info("[Auth Client] Parsed user data:", data.data.user);
 
-        // SECURITY FIX: Extract CSRF token from response headers
-        // This is more secure than cookies because headers are not accessible to JavaScript
+        // Extract CSRF token from response headers (set by backend in login.controller.ts:124)
+        // Also fallback to response body for backward compatibility
         const csrfTokenFromHeader = response.headers.get("X-CSRF-Token");
-        const csrfToken = csrfTokenFromHeader || data.data.csrfToken; // Fallback to body for backwards compatibility
+        const csrfToken = csrfTokenFromHeader || data.data.csrfToken;
 
         logger.info("[Auth Client] CSRF token extracted:", {
           fromHeader: !!csrfTokenFromHeader,
@@ -111,9 +111,7 @@ export class AuthClient {
           method: csrfTokenFromHeader ? "header" : "body",
         });
 
-        // No client-side refresh; guards not needed in simplified model
-
-        // Prime in-memory CSRF cache without exposing to persistent storage
+        // Prime in-memory CSRF cache
         if (csrfToken) {
           try {
             primeCSRFToken(csrfToken);
