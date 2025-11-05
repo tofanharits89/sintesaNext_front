@@ -16,8 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+  FieldDescription,
+} from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
@@ -108,12 +113,12 @@ export function UpdateRencanaRealisasiModal({
           </DialogHeader>
 
           <div className="grid gap-6 py-6">
-            {/* Tahun Anggaran */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="tahun-anggaran" className="text-right">
-                Tahun Anggaran <span className="text-red-500">*</span>
-              </Label>
-              <div className="col-span-3">
+            <FieldGroup>
+              {/* Tahun Anggaran */}
+              <Field>
+                <FieldLabel htmlFor="tahun-anggaran">
+                  Tahun Anggaran <span className="text-red-500">*</span>
+                </FieldLabel>
                 <Select value={thang} onValueChange={setThang} disabled={isSubmitting}>
                   <SelectTrigger id="tahun-anggaran">
                     <SelectValue placeholder="Pilih Tahun Anggaran" />
@@ -126,15 +131,13 @@ export function UpdateRencanaRealisasiModal({
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
+              </Field>
 
-            {/* Triwulan */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="triwulan" className="text-right">
-                Triwulan <span className="text-red-500">*</span>
-              </Label>
-              <div className="col-span-3">
+              {/* Triwulan */}
+              <Field>
+                <FieldLabel htmlFor="triwulan">
+                  Triwulan <span className="text-red-500">*</span>
+                </FieldLabel>
                 <Select value={triwulan} onValueChange={setTriwulan} disabled={isSubmitting}>
                   <SelectTrigger id="triwulan">
                     <SelectValue placeholder="Pilih Triwulan" />
@@ -147,15 +150,13 @@ export function UpdateRencanaRealisasiModal({
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
+              </Field>
 
-            {/* Kementerian */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="kementerian" className="text-right">
-                Kementerian <span className="text-red-500">*</span>
-              </Label>
-              <div className="col-span-3">
+              {/* Kementerian */}
+              <Field>
+                <FieldLabel htmlFor="kementerian">
+                  Kementerian <span className="text-red-500">*</span>
+                </FieldLabel>
                 <Select value={kddept} onValueChange={setKddept} disabled={isSubmitting}>
                   <SelectTrigger id="kementerian">
                     <SelectValue placeholder="Pilih Kementerian" />
@@ -168,15 +169,13 @@ export function UpdateRencanaRealisasiModal({
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
+              </Field>
 
-            {/* Jenis Belanja */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="jenis-belanja" className="text-right">
-                Jenis Belanja <span className="text-red-500">*</span>
-              </Label>
-              <div className="col-span-3">
+              {/* Jenis Belanja */}
+              <Field>
+                <FieldLabel htmlFor="jenis-belanja">
+                  Jenis Belanja <span className="text-red-500">*</span>
+                </FieldLabel>
                 <Select value={kdgbkpk} onValueChange={setKdgbkpk} disabled={isSubmitting}>
                   <SelectTrigger id="jenis-belanja">
                     <SelectValue placeholder="Pilih Jenis Belanja" />
@@ -189,15 +188,13 @@ export function UpdateRencanaRealisasiModal({
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
+              </Field>
 
-            {/* Perkiraan Tidak Terserap */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="perkiraan-tidak-terserap" className="text-right">
-                Perkiraan Tidak Terserap <span className="text-red-500">*</span>
-              </Label>
-              <div className="col-span-3">
+              {/* Perkiraan Tidak Terserap */}
+              <Field>
+                <FieldLabel htmlFor="perkiraan-tidak-terserap">
+                  Perkiraan Tidak Terserap <span className="text-red-500">*</span>
+                </FieldLabel>
                 <Input
                   id="perkiraan-tidak-terserap"
                   type="number"
@@ -208,8 +205,11 @@ export function UpdateRencanaRealisasiModal({
                   disabled={isSubmitting}
                   className="text-right"
                 />
-              </div>
-            </div>
+                <FieldDescription>
+                  Masukkan perkiraan dana yang tidak akan terserap
+                </FieldDescription>
+              </Field>
+            </FieldGroup>
           </div>
 
           <DialogFooter>

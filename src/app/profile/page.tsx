@@ -7,7 +7,6 @@ import type { User } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -15,6 +14,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+  FieldError,
+  FieldDescription,
+} from "@/components/ui/field";
 import { toast } from "sonner";
 import kdkanwilData from "@/data/kdkanwil.json";
 import kdkppnData from "@/data/kdkppn.json";
@@ -304,28 +310,34 @@ export default function ProfilePage() {
 
         {/* Profile form */}
         <div className="rounded-lg p-4 bg-white dark:bg-neutral-900 shadow">
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label>Nama Lengkap</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-            <div className="grid gap-2">
-              <Label>Username</Label>
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="name">Nama Lengkap</FieldLabel>
               <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="username">Username</FieldLabel>
+              <Input
+                id="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
-            </div>
-            <div className="grid gap-2">
-              <Label>Email</Label>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="email">Email</FieldLabel>
               <Input
+                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-            </div>
-            <div className="grid gap-2">
-              <Label>Role</Label>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="role">Role</FieldLabel>
               <Select
                 value={role}
                 onValueChange={(v) => {
@@ -341,6 +353,7 @@ export default function ProfilePage() {
                 disabled={!canEditRoleAndLocation()}
               >
                 <SelectTrigger
+                  id="role"
                   className="h-11"
                   disabled={!canEditRoleAndLocation()}
                 >
@@ -356,16 +369,16 @@ export default function ProfilePage() {
                 </SelectContent>
               </Select>
               {!canEditRoleAndLocation() && (
-                <p className="text-xs text-muted-foreground">
+                <FieldDescription>
                   Role hanya dapat diubah oleh Administrator
-                </p>
+                </FieldDescription>
               )}
-            </div>
+            </Field>
 
             {/* Conditional Kanwil DJPb Selection */}
             {role === "kanwil_djpb" && (
-              <div className="grid gap-2">
-                <Label>Kanwil DJPb</Label>
+              <Field>
+                <FieldLabel htmlFor="kanwil">Kanwil DJPb</FieldLabel>
                 {canEditRoleAndLocation() ? (
                   <Select
                     value={kdkanwil}
@@ -377,7 +390,7 @@ export default function ProfilePage() {
                       setNmkanwil(selectedKanwil?.nmkanwil || "");
                     }}
                   >
-                    <SelectTrigger className="h-11">
+                    <SelectTrigger id="kanwil" className="h-11">
                       <SelectValue placeholder="Pilih Kanwil DJPb" />
                     </SelectTrigger>
                     <SelectContent>
@@ -390,24 +403,25 @@ export default function ProfilePage() {
                   </Select>
                 ) : (
                   <Input
+                    id="kanwil"
                     value={nmkanwil || "Tidak ada data"}
                     disabled
                     className="bg-muted"
                   />
                 )}
                 {!canEditRoleAndLocation() && (
-                  <p className="text-xs text-muted-foreground">
+                  <FieldDescription>
                     Kanwil hanya dapat diubah oleh Administrator
-                  </p>
+                  </FieldDescription>
                 )}
-              </div>
+              </Field>
             )}
 
             {/* Conditional KPPN Selection */}
             {role === "kppn" && (
               <>
-                <div className="grid gap-2">
-                  <Label>Kanwil</Label>
+                <Field>
+                  <FieldLabel htmlFor="kanwil-kppn">Kanwil</FieldLabel>
                   {canEditRoleAndLocation() ? (
                     <Select
                       value={kdkanwil}
@@ -421,7 +435,7 @@ export default function ProfilePage() {
                         setNmkppn("");
                       }}
                     >
-                      <SelectTrigger className="h-11">
+                      <SelectTrigger id="kanwil-kppn" className="h-11">
                         <SelectValue placeholder="Pilih Kanwil" />
                       </SelectTrigger>
                       <SelectContent>
@@ -434,20 +448,21 @@ export default function ProfilePage() {
                     </Select>
                   ) : (
                     <Input
+                      id="kanwil-kppn"
                       value={nmkanwil || "Tidak ada data"}
                       disabled
                       className="bg-muted"
                     />
                   )}
                   {!canEditRoleAndLocation() && (
-                    <p className="text-xs text-muted-foreground">
+                    <FieldDescription>
                       Kanwil hanya dapat diubah oleh Administrator
-                    </p>
+                    </FieldDescription>
                   )}
-                </div>
+                </Field>
 
-                <div className="grid gap-2">
-                  <Label>KPPN</Label>
+                <Field>
+                  <FieldLabel htmlFor="kppn">KPPN</FieldLabel>
                   {canEditRoleAndLocation() ? (
                     kdkanwil && (
                       <Select
@@ -460,7 +475,7 @@ export default function ProfilePage() {
                           setNmkppn(selectedKppn?.nmkppn || "");
                         }}
                       >
-                        <SelectTrigger className="h-11">
+                        <SelectTrigger id="kppn" className="h-11">
                           <SelectValue placeholder="Pilih KPPN" />
                         </SelectTrigger>
                         <SelectContent>
@@ -474,23 +489,25 @@ export default function ProfilePage() {
                     )
                   ) : (
                     <Input
+                      id="kppn"
                       value={nmkppn || "Tidak ada data"}
                       disabled
                       className="bg-muted"
                     />
                   )}
                   {!canEditRoleAndLocation() && (
-                    <p className="text-xs text-muted-foreground">
+                    <FieldDescription>
                       KPPN hanya dapat diubah oleh Administrator
-                    </p>
+                    </FieldDescription>
                   )}
-                </div>
+                </Field>
               </>
             )}
 
-            <div className="grid gap-2">
-              <Label>Limit Kode BA</Label>
+            <Field>
+              <FieldLabel htmlFor="limitKodeBA">Limit Kode BA</FieldLabel>
               <Input
+                id="limitKodeBA"
                 placeholder="contoh: 015 atau 015,042"
                 value={limitKodeBA}
                 onChange={(e) =>
@@ -499,12 +516,12 @@ export default function ProfilePage() {
                 disabled={!canEditRoleAndLocation()}
               />
               {!canEditRoleAndLocation() && (
-                <p className="text-xs text-muted-foreground">
+                <FieldDescription>
                   Limit Kode BA hanya dapat diubah oleh Administrator
-                </p>
+                </FieldDescription>
               )}
-            </div>
-          </div>
+            </Field>
+          </FieldGroup>
         </div>
       </div>
 
@@ -516,26 +533,28 @@ export default function ProfilePage() {
             {changingPassword ? "Menyimpan..." : "Ubah Password"}
           </Button>
         </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="grid gap-2">
-            <Label>Password Baru</Label>
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="newPassword">Password Baru</FieldLabel>
             <Input
+              id="newPassword"
               type="password"
               placeholder="••••••••"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
             />
-          </div>
-          <div className="grid gap-2">
-            <Label>Konfirmasi Password Baru</Label>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="confirmPassword">Konfirmasi Password Baru</FieldLabel>
             <Input
+              id="confirmPassword"
               type="password"
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
-          </div>
-        </div>
+          </Field>
+        </FieldGroup>
       </div>
     </div>
   );
