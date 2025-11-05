@@ -109,7 +109,7 @@ src/
 - Custom hooks in `hooks/` for reusable logic
 
 ### 4. Authentication
-- JWT-based authentication with session cookies (`sid`)
+- Session-based authentication with HTTP-only cookies (`sid`)
 - Middleware at `middleware.ts` for route protection
 - Protected routes: `/dashboard`, `/inquiry-data`, `/admin`, `/profile`, `/users`, `/settings`, `/messages`, `/makan-bergizi`, `/data-supplier`, `/epa`, etc.
 - Public routes: `/login`, `/register`, `/forgot-password`, `/unauthorized`, `/ip-blocked`
@@ -158,7 +158,7 @@ src/
 1. Users redirected from `/` to `/login` if not authenticated
 2. Middleware validates session cookies before protected routes
 3. Server-side session validation via `/api/v1/auth/session`
-4. JWT tokens managed via cookies
+4. Session cookies managed via HTTP-only cookies
 
 ### Error Handling
 - Global error boundary in `lib/ui/error-boundary.ts`

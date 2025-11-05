@@ -38,7 +38,7 @@ export default async function RootLayout({
 }>) {
   // Auth enforcement is handled by:
   // 1. Middleware - redirects unauthenticated users to /login
-  // 2. Section layouts (dashboard, profile, users, settings) - optimized server-side JWT verification
+  // 2. Section layouts (dashboard, profile, users, settings) - server-side session verification
   // User profile is now fetched efficiently in dashboard layout to avoid duplicate requests
 
   // Skip server-side user fetch - let React Query handle with stale-while-revalidate
