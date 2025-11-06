@@ -62,7 +62,7 @@ export type MenuItem = {
 const defaultMenu: MenuItem[] = [
   {
     label: "Dashboard",
-    children: [{ label: "Dashboard Utama" }, { label: "Dashboard Program" }],
+    children: [{ label: "Dashboard Utama" }, { label: "Dashboard Program" }, { label: "Dashboard Efisiensi" }],
   },
   {
     label: "Makan Bergizi",
@@ -214,6 +214,8 @@ export function ResponsiveSidebar({
         return <LineChart className={cls} />;
       case "Dashboard__Dashboard Program":
         return <Layers className={cls} />;
+      case "Dashboard__Dashboard Efisiensi":
+        return <TrendingUp className={cls} />;
       case "Makan Bergizi__Dashboard MBG":
         return <LineChart className={cls} />;
       case "Makan Bergizi__Kertas Kerja":
@@ -420,6 +422,24 @@ export function ResponsiveSidebar({
                                   menu: m.label,
                                   submenu: c.label,
                                   path: "/dashboard/program",
+                                })
+                              }
+                            >
+                              {subIconFor(m.label, c.label)}
+                              <span>{c.label}</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        ) : c.label === "Dashboard Efisiensi" &&
+                          m.label === "Dashboard" ? (
+                          <DropdownMenuItem key={c.label} asChild>
+                            <Link
+                              href="/dashboard/efisiensi"
+                              className="flex items-center w-full"
+                              onClick={() =>
+                                trackMenuUsage({
+                                  menu: m.label,
+                                  submenu: c.label,
+                                  path: "/dashboard/efisiensi",
                                 })
                               }
                             >
@@ -1027,6 +1047,26 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/dashboard/program",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Dashboard Efisiensi" &&
+                      m.label === "Dashboard" ? (
+                      <Link
+                        key={c.label}
+                        href="/dashboard/efisiensi"
+                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/dashboard/efisiensi",
                           });
                           setOpen(false);
                         }}
