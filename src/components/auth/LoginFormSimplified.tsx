@@ -5,7 +5,7 @@
  * Clean architecture with single source of truth
  */
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/hooks/useAuth";
@@ -57,6 +57,7 @@ export default function SimplifiedLoginForm() {
   const [captchaCode, setCaptchaCode] = useState("");
   const { theme, resolvedTheme, setTheme } = useTheme();
   const [isThemeReady, setIsThemeReady] = useState(false);
+  const captchaFetched = useRef(false);
 
   useEffect(() => {
     setIsThemeReady(true);
@@ -114,7 +115,11 @@ export default function SimplifiedLoginForm() {
     }
   };
 
-  useEffect(() => { void fetchCaptcha(); }, []);
+  useEffect(() => {
+    if (captchaFetched.current) return;
+    captchaFetched.current = true;
+    void fetchCaptcha();
+  }, []);
 
   const form = useForm<FormInput, any, FormData>({
     resolver: zodResolver(schema),
