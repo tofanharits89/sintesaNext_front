@@ -215,8 +215,9 @@ export function useAuth(): UseAuthReturn {
 
   const canEditRoleAndLocation = useCallback((): boolean => {
     if (!user) return false;
-    return user.role === 'super_admin' || user.role === 'co_admin';
-  }, [user]);
+    // Use the permission matrix instead of hardcoded role checks
+    return hasPermission("profile", "editRole") && hasPermission("profile", "editLocation");
+  }, [user, hasPermission]);
 
   const canManageUsers = useCallback((): boolean => {
     return rbacCanManageUsers(normalizedUser);
@@ -228,9 +229,9 @@ export function useAuth(): UseAuthReturn {
 
   const canEditProfile = useCallback((): boolean => {
     if (!user) return false;
-    // Users can edit their own profile, admins can edit any profile
-    return true;
-  }, [user]);
+    // Check if user can edit their own profile using the permission matrix
+    return hasPermission("profile", "editOwn");
+  }, [user, hasPermission]);
 
   const filterDataByRole = useCallback(<T extends { kdkanwil?: string; kdkppn?: string }>(
     data: T[]

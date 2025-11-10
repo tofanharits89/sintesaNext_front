@@ -137,6 +137,15 @@ function forwardSetCookiesToResponse(source: Response, target: NextResponse) {
   }
 }
 
+function appendSetCookies(target: NextResponse, cookies?: string[]) {
+  if (!cookies || cookies.length === 0) return;
+  for (const cookie of cookies) {
+    if (cookie) {
+      target.headers.append('Set-Cookie', cookie);
+    }
+  }
+}
+
 /**
  * Check if route requires authentication
  */
@@ -237,16 +246,22 @@ export async function middleware(request: NextRequest) {
           console.log(`[MW] ${pathname} has sid; validating session...`);
         }
         const validation = await validateServerSession('', request);
+        const validationCookies = validation.setCookies;
 
         if (validation.valid) {
           if (ENV.DEBUG_AUTH) {
             console.log(`[MW] ${pathname} session valid; redirecting to /dashboard/utama`);
           }
-          return NextResponse.redirect(new URL("/dashboard/utama", request.url));
+          const redirect = NextResponse.redirect(new URL("/dashboard/utama", request.url));
+          appendSetCookies(redirect, validationCookies);
+          return redirect;
         }
         if (ENV.DEBUG_AUTH) {
           console.log(`[MW] ${pathname} session invalid; continue to public page`);
         }
+        const passThrough = NextResponse.next();
+        appendSetCookies(passThrough, validationCookies);
+        return passThrough;
       }
       // If logout redirect, skip validation and show login page
 
@@ -289,6 +304,7 @@ export async function middleware(request: NextRequest) {
 
     // Session exists - server-side validation (no refresh fallback)
     const validation = await validateServerSession('', request);
+    const validationCookies = validation.setCookies;
     
     if (!validation.valid) {
       // Redirect blocked IPs to /ip-blocked instead of login
@@ -297,18 +313,24 @@ export async function middleware(request: NextRequest) {
         for (const [k, v] of Object.entries(validation.ipParams)) {
           ipUrl.searchParams.set(k, v);
         }
-        return NextResponse.redirect(ipUrl);
+        const redirect = NextResponse.redirect(ipUrl);
+        appendSetCookies(redirect, validationCookies);
+        return redirect;
       }
 
       // If still invalid, redirect to login
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("returnTo", pathname);
       loginUrl.searchParams.set("reason", "session_expired");
-      return NextResponse.redirect(loginUrl);
+      const redirect = NextResponse.redirect(loginUrl);
+      appendSetCookies(redirect, validationCookies);
+      return redirect;
     }
 
     // Valid session
-    return NextResponse.next();
+    const nextResponse = NextResponse.next();
+    appendSetCookies(nextResponse, validationCookies);
+    return nextResponse;
   }
 
   return NextResponse.next();
