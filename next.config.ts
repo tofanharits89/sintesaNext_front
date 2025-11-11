@@ -48,11 +48,6 @@ const nextConfig: NextConfig = {
             key: "Referrer-Policy",
             value: "strict-origin-when-cross-origin",
           },
-          // XSS Protection (legacy browsers)
-          {
-            key: "X-XSS-Protection",
-            value: "1; mode=block",
-          },
           // Permissions Policy - Restrict browser features
           {
             key: "Permissions-Policy",

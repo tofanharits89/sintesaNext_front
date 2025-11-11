@@ -4,221 +4,196 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**sintesaNEXT** is a Next.js 15 + React 19 Indonesian finance dashboard application. It's a complex enterprise application with multiple modules including MBG (Makan Bergizi), EPA, transfer daerah, user management, reporting, and messaging.
+This is the **Indo Finance Dashboard** - a Next.js 15 financial management system for Indonesian government entities. It provides dashboard functionality for monitoring financial data, supplier information, and organizational workflows with role-based access control.
 
-## Technology Stack
+## Development Commands
 
-- **Framework**: Next.js 15 (App Router)
-- **UI**: React 19, Tailwind CSS v4 (style: "new-york"), shadcn/ui
+### Core Development
+- `npm run dev` - Start development server with Turbopack (recommended)
+- `npm run dev:no-turbo` - Start development server without Turbopack
+- `npm run build` - Production build with memory optimization (12GB limit)
+- `npm run build:analyze` - Build with bundle analyzer
+- `npm run start` - Start production server
+
+### Code Quality
+- `npm run lint` - Run ESLint
+- `npm run lint:fix` - Fix ESLint issues automatically
+- `npm run typecheck` - TypeScript type checking
+
+### Testing
+- `npm run test` - Run tests with Vitest
+- `npm run test:ui` - Run tests with UI interface
+- `npm run test:run` - Run tests once
+- `npm run test:coverage` - Generate coverage report (80% thresholds)
+
+### Utilities
+- `npm run clean` - Clean build artifacts (.next, dist, coverage)
+- `npm run install:clean` - Clean install dependencies
+- `npm run analyze:bundle` - Analyze bundle size
+
+## Architecture Overview
+
+### Technology Stack
+- **Framework**: Next.js 15.5.6 with App Router
 - **Language**: TypeScript (strict mode)
-- **Testing**: Vitest with jsdom
-- **State Management**: Zustand, TanStack Query
-- **Real-time**: socket.io
-- **Styling**: Tailwind CSS v4, Framer Motion (motion)
-- **Charts**: Recharts
-- **Forms**: React Hook Form with Zod validation
+- **UI**: React 19.2.0 with Radix UI components
+- **Styling**: Tailwind CSS 4.1.15 with shadcn/ui
+- **State Management**: Zustand + TanStack Query (React Query)
+- **HTTP Client**: Axios with interceptors
+- **Testing**: Vitest with React Testing Library
+- **Real-time**: Socket.IO client
 
-## Common Commands
-
-```bash
-# Development
-npm run dev              # Start dev server with Turbopack
-npm run dev:no-turbo     # Start dev server without Turbopack
-
-# Building
-npm run build            # Production build (with memory optimization)
-npm run build:analyze    # Build with bundle analyzer
-npm start                # Start production server
-
-# Code Quality
-npm run lint             # Run ESLint
-npm run lint:fix         # Run ESLint with auto-fix
-npm run typecheck        # TypeScript type checking
-
-# Testing
-npm test                 # Run tests in watch mode
-npm run test:ui          # Run tests with Vitest UI
-npm run test:run         # Run tests once
-npm run test:coverage    # Run tests with coverage report
-
-# Utilities
-npm run clean            # Clean build artifacts (.next, dist, coverage)
-npm run install:clean    # Clean install dependencies
-npm run analyze:bundle   # Analyze bundle size
-```
-
-## Project Structure
-
-### Directory Organization
-
+### Directory Structure
 ```
 src/
 ├── app/                    # Next.js App Router pages
-│   ├── api/               # API routes (v1, auth, dashboard, etc.)
-│   ├── (public)/          # Public routes
-│   ├── dashboard/         # Dashboard module (utama, program)
-│   ├── makan-bergizi/     # MBG module (dashboard, kertas-kerja)
-│   ├── epa/               # EPA module
-│   ├── laporan/           # Reports (weekly, monthly)
-│   └── ...
-├── components/            # React components
-│   ├── ui/               # shadcn/ui components
-│   ├── layout/           # Layout components (AppShell, etc.)
-│   ├── messaging/        # Messaging system components
-│   ├── dashboard/        # Dashboard-specific components
-│   └── ...
-├── features/             # Feature-based modules
-│   ├── mbg/              # MBG feature (types, hooks, api, components)
-│   └── messaging/        # Messaging feature
-├── lib/                  # Core libraries
-│   ├── auth/             # Authentication logic
-│   ├── config/           # App configuration
-│   ├── stores/           # Zustand stores
-│   ├── utils/            # Utility functions
-│   └── ui/               # UI utilities (error boundaries, etc.)
+│   ├── (public)/          # Public pages (login, server-error, etc.)
+│   ├── (routes)/          # Protected route groups
+│   ├── api/               # API routes (auth, dashboard, notifications, etc.)
+│   └── dashboard/         # Main dashboard pages
+├── components/            # Reusable React components
+│   ├── charts/           # Chart components (Recharts)
+│   ├── data-supplier/    # Supplier-related components
+│   └── ui/               # Base UI components (shadcn/ui)
 ├── hooks/                # Custom React hooks
-├── services/             # Business logic services
-│   ├── FilterDataService.ts
-│   ├── MessageService.ts
-│   └── ...
-├── stores/               # Global state stores
-├── contexts/             # React contexts
-└── utils/                # Helper utilities
+├── lib/                  # Core utilities
+│   ├── api/             # HTTP client and API utilities
+│   ├── auth/            # Authentication logic
+│   ├── config/          # Environment configuration
+│   ├── security/        # Security utilities (CSRF, RBAC)
+│   └── utils/           # Utility functions
+└── shared/              # Shared types and constants
 ```
 
-### Path Aliases
+## Authentication & Security
 
-- `@/*` → `./src/*`
-- `@shared/*` → `./src/shared/*`
+### Session Management
+- HTTP-only session cookies (`sid`) for authentication
+- CSRF protection with XSRF-TOKEN cookies
+- Server-side session validation via `/api/v1/auth/session`
+- Automatic logout on session expiration
 
-## Architecture Patterns
+### Role-Based Access Control (RBAC)
+```typescript
+roles = {
+  super_admin,     // Full access
+  co_admin,        // Most admin functions
+  kantor_pusat,    // Headquarters users
+  kanwil_djpb,     // Regional office users
+  kppn,           // Local office users
+  lainnya         // Other users
+}
+```
 
-### 1. App Router Structure
-- Uses Next.js 15 App Router with `layout.tsx` and `page.tsx` files
-- Server-side components by default with client components marked with `"use client"`
-- Route groups using parentheses: `(public)`, `(routes)`
+### Security Features
+- Comprehensive CSRF protection with automatic token refresh
+- IP blocking detection and dedicated `/ip-blocked` page
+- Content Security Policy headers
+- Rate limiting interceptors
+- Secure cookie configuration
 
-### 2. Feature-Based Organization
-- **Features** directory for major modules (MBG, messaging)
-- Each feature contains: types, hooks, api, components
-- Shared components in `components/` organized by domain
+## API Architecture
 
-### 3. State Management
-- **Zustand** for global client state (users, UI state)
-- **TanStack Query** for server state (data fetching, caching)
-- Custom hooks in `hooks/` for reusable logic
+### Backend Integration
+- **Development**: Proxies `/api/v1/*` to `localhost:88`
+- **Production**: Proxies `/api/v1/*` to `backend:88` (Docker)
+- Direct backend communication via `backendHttp` client for bypassing Next.js proxy
 
-### 4. Authentication
-- Session-based authentication with HTTP-only cookies (`sid`)
-- Middleware at `middleware.ts` for route protection
-- Protected routes: `/dashboard`, `/inquiry-data`, `/admin`, `/profile`, `/users`, `/settings`, `/messages`, `/makan-bergizi`, `/data-supplier`, `/epa`, etc.
-- Public routes: `/login`, `/register`, `/forgot-password`, `/unauthorized`, `/ip-blocked`
+### API Response Format
+```typescript
+{
+  success: boolean,
+  data: any,
+  error?: string
+}
+```
 
-### 5. API Layer
-- API routes under `src/app/api/`
-- Versioned API: `/api/v1/`
-- Unified authentication endpoint: `/api/v1/auth/session`
-- Multiple modules: auth, dashboard, epa, inquiry-data, messaging, notifications, satker, supplier-analytics, transfer-daerah, users, whatsapp
+### Key API Endpoints
+- `/api/v1/auth/*` - Authentication (login, logout, session, captcha)
+- `/api/v1/dashboard/*` - Dashboard data
+- `/api/v1/users/*` - User management
+- `/api/v1/notifications/*` - Notification system
+- `/api/v1/messaging/*` - Internal messaging
 
-### 6. UI Components
-- shadcn/ui component library with "new-york" style
-- Custom components in `components/ui/`
-- Radix UI primitives for accessibility
-- Tailwind CSS v4 for styling
+## HTTP Client Configuration
 
-## Key Modules
+### Main HTTP Client (`http`)
+- Base URL: Empty (same-origin)
+- Includes credentials for cookies
+- Automatic CSRF token attachment
+- Rate limiting interceptors
+- IP block detection and redirect
 
-### Dashboard Module (`/dashboard/`)
-- **utama**: Main dashboard view
-- **program**: Program management
-- Server-side layout in `src/app/dashboard/layout.tsx`
-
-### MBG (Makan Bergizi) Module (`/makan-bergizi/`)
-- **dashboard**: MBG dashboard
-- **kertas-kerja**: Working papers
-- Feature implementation in `src/features/mbg/`
-
-### Reports (`/laporan/`)
-- **weekly-report**: Weekly reports
-- **monthly-report**: Monthly reports
-
-### Other Modules
-- **epa/**: EPA module
-- **inquiry-data/**: Data inquiry
-- **transfer-daerah/**: Regional transfers
-- **satker/**: Work units
-- **notifications/**: Notifications system
-- **messages/**: Messaging system
-- **users/**: User management
-- **settings/pengaturan**: Application settings
-
-## Development Notes
-
-### Authentication Flow
-1. Users redirected from `/` to `/login` if not authenticated
-2. Middleware validates session cookies before protected routes
-3. Server-side session validation via `/api/v1/auth/session`
-4. Session cookies managed via HTTP-only cookies
+### Direct Backend Client (`backendHttp`)
+- Base URL: Direct to backend service
+- Used for bypassing Next.js proxy when needed
+- Same security features as main client
 
 ### Error Handling
-- Global error boundary in `lib/ui/error-boundary.ts`
-- Component-level error boundaries using `ComponentErrorBoundary`
-- Custom error page at `src/app/error.tsx`
+- 401: Automatic redirect to login with session expiration reason
+- 403: Check for IP block, redirect to `/ip-blocked` if detected
+- CSRF errors: Automatic token refresh and retry
 
-### Testing
-- Vitest configured with jsdom environment
-- Test setup in `src/test-setup.ts`
-- Coverage thresholds: 80% for branches, functions, lines, statements
-- Tests exclude: `src/hooks/__tests__/use-saved-queries.test.ts`
+## Development Workflow
 
-### Performance Optimizations
-- Next.js Turbopack for dev builds
-- Bundle analysis support: `npm run analyze:bundle`
-- Memory-optimized builds: `node --max-old-space-size=12288`
-- Image optimization configured (WebP, AVIF)
-- Console removal in production (except error, warn)
-
-### Security
-- Comprehensive security headers in `next.config.ts`
-- IP blocking mechanism at `src/utils/ipBlock.ts`
-- CSRF protection routes at `/api/csrf-token/`
-- XSS protection, clickjacking prevention, MIME sniffing protection
-
-### Configuration
-- TypeScript: Strict mode with `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`
-- Tailwind CSS v4 with CSS variables
-- ESLint with Next.js configuration
-- Environment-based API URLs and configurations
+### Environment Configuration
+- **Development**: `localhost:88` for backend, relative API paths
+- **Production**: Docker service `backend:88`, absolute URLs
+- **Socket.IO**: Automatic URL resolution based on environment
 
 ### Real-time Features
-- Socket.io integration for real-time updates
-- WebSocket connections managed via hooks
-- Real-time messaging system
+- Socket.IO integration for live updates
+- Connection status monitoring
+- Automatic reconnection handling
+- Use `socketUrl` and `socketPath` from config
 
-## Important Files
+### Testing Setup
+- Vitest with jsdom environment
+- Comprehensive mocking setup (Next.js, localStorage, fetch)
+- Coverage thresholds: 80% across all metrics
+- Test utilities in `src/test-setup.ts`
 
-- `src/app/layout.tsx`: Root layout with providers (QueryProvider, ThemeProvider, PageProvider)
-- `middleware.ts`: Authentication and route protection
-- `src/app/page.tsx`: Home page with auth redirect logic
-- `components.json`: shadcn/ui configuration
-- `next.config.ts`: Next.js configuration with security headers
-- `vitest.config.ts`: Testing configuration
-- `tsconfig.json`: TypeScript configuration
+## Important Patterns
 
-## Working with This Codebase
+### Path Aliases
+- `@shared/*` → `./src/shared/*` (configured in webpack and turbopack)
+- `@/*` → `./src/*` (standard Next.js alias)
 
-1. **Adding a new feature**: Create in `src/features/[feature-name]/` and add routes in `src/app/[feature-name]/`
-2. **Creating API endpoints**: Add to `src/app/api/[version]/[module]/`
-3. **Adding UI components**: Use shadcn/ui components from `components/ui/`
-4. **State management**: Use Zustand for client state, TanStack Query for server state
-5. **Testing**: Write tests with Vitest, follow existing test patterns
-6. **Styling**: Use Tailwind CSS v4 classes, components use CSS variables for theming
+### Component Development
+- Use Radix UI primitives with Tailwind styling
+- Follow shadcn/ui patterns for components
+- Implement proper TypeScript types from `@shared/types`
 
-## Development Tips
+### API Calls
+- Use `apiClient` for most API calls (goes through Next.js proxy)
+- Use `directBackendClient` for direct backend communication
+- Handle errors with proper user feedback
+- Implement optimistic updates with React Query where appropriate
 
-- Development mode supports optimistic authentication (configurable)
-- Use `npm run dev:no-turbo` if Turbopack causes issues
-- Run `npm run typecheck` before committing
-- Use `npm run lint:fix` to auto-fix linting issues
-- Check bundle size with `npm run analyze:bundle`
-- Clean build artifacts with `npm run clean` when troubleshooting
+### Security Considerations
+- Never disable CSRF protection
+- Always validate sessions on protected routes
+- Handle IP blocks gracefully
+- Use secure cookie practices
+- Implement proper RBAC checks
+
+## Performance Optimizations
+
+### Build Configuration
+- Turbopack for faster development builds
+- Bundle analyzer for size monitoring
+- Memory-optimized builds (12GB limit)
+- Standalone output for Docker deployment
+
+### Runtime Optimizations
+- React Query for data caching and synchronization
+- Image optimization with Next.js Image component
+- Code splitting with dynamic imports
+- Advanced query caching strategies
+
+## Docker Deployment
+
+- Uses `standalone` output for containerized deployment
+- Multi-stage builds optimized for production
+- Health checks via `/api/health` endpoint
+- Proper environment variable handling for container orchestration
