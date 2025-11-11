@@ -27,23 +27,9 @@ interface DataTransaksiTabProps {
 export function DataTransaksiTab({}: DataTransaksiTabProps) {
   const now = new Date();
   const defaultYear = String(now.getFullYear());
-  const defaultMonthName = [
-    "Januari",
-    "Februari",
-    "Maret",
-    "April",
-    "Mei",
-    "Juni",
-    "Juli",
-    "Agustus",
-    "September",
-    "Oktober",
-    "November",
-    "Desember",
-  ][now.getMonth()];
 
   const [selectedYear, setSelectedYear] = useState(defaultYear);
-  const [selectedMonth, setSelectedMonth] = useState(defaultMonthName);
+  const [selectedMonth, setSelectedMonth] = useState(""); // Default to empty (all months)
   const [selectedKppn, setSelectedKppn] = useState("");
   const [selectedKabKota, setSelectedKabKota] = useState("");
   const fallbackStageRef = useRef<"none" | "clearedMonth" | "switchedYear">("none");
@@ -100,7 +86,7 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
   const handleReset = () => {
     fallbackStageRef.current = "none";
     setSelectedYear(defaultYear);
-    setSelectedMonth(defaultMonthName);
+    setSelectedMonth(""); // Reset to empty (all months)
     setSelectedKppn("");
     setSelectedKabKota("");
   };
@@ -240,6 +226,8 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
     ...(selectedKppn ? { kppn: selectedKppn } : {}),
     ...(selectedKabKota ? { kabkota: selectedKabKota } : {}),
   } as const;
+
+  
   const { rows, isLoading, error } = useDauTransaksi(params as any);
 
   const handleYearSelect = (value: string) => {
@@ -262,31 +250,32 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
     setSelectedKabKota(value);
   };
 
-  useEffect(() => {
-    if (isLoading || rows.length > 0) {
-      return;
-    }
-
-    // First fallback: remove month filter if it is restricting results
-    if (selectedMonth && fallbackStageRef.current === "none") {
-      fallbackStageRef.current = "clearedMonth";
-      setSelectedMonth("");
-      return;
-    }
-
-    // Second fallback: switch to previous year when current year has no rows
-    if (
-      selectedYear === defaultYear &&
-      fallbackStageRef.current !== "switchedYear"
-    ) {
-      const fallbackYear = years.find((year) => year !== selectedYear);
-      if (fallbackYear) {
-        fallbackStageRef.current = "switchedYear";
-        setSelectedYear(fallbackYear);
-        return;
-      }
-    }
-  }, [rows, isLoading, selectedMonth, selectedYear, defaultYear, years]);
+  // Disable fallback logic - respect user's filter selections even if no results
+  // useEffect(() => {
+  //   if (isLoading || rows.length > 0) {
+  //     return;
+  //   }
+  //
+  //   // Only apply fallbacks if this is the initial load and no explicit filters are selected
+  //   if (!selectedMonth && !selectedKppn && !selectedKabKota && fallbackStageRef.current === "none") {
+  //     // First fallback: try without month filter if no results for current month
+  //     if (selectedMonth) {
+  //       fallbackStageRef.current = "clearedMonth";
+  //       setSelectedMonth("");
+  //       return;
+  //     }
+  //
+  //     // Second fallback: switch to previous year when current year has no rows
+  //     if (selectedYear === defaultYear && fallbackStageRef.current !== "switchedYear") {
+  //       const fallbackYear = years.find((year) => year !== selectedYear);
+  //       if (fallbackYear) {
+  //         fallbackStageRef.current = "switchedYear";
+  //         setSelectedYear(fallbackYear);
+  //         return;
+  //       }
+  //     }
+  //   }
+  // }, [rows, isLoading, selectedMonth, selectedKppn, selectedKabKota, selectedYear, defaultYear, years]);
 
   return (
     <div className="space-y-6">

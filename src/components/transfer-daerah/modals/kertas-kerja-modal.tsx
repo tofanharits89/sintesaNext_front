@@ -191,9 +191,12 @@ function RekapByPemdaTable({ rows }: { rows: any[] }) {
 export function KertasKerjaModal({ open, onOpenChange, data }: KertasKerjaModalProps) {
   // Derive parameters robustly from the selected row
   const kdpemda: string | undefined = (data?.kdpemdaCode as string | undefined)
-    || (typeof data?.kabkota === "string" ? String(data.kabkota).split(" - ")[0] : undefined)
-    || (typeof data?.KDPEMDA === "string" ? data.KDPEMDA : undefined);
+    || (typeof data?.kdpemda === "string" ? data.kdpemda.trim() : undefined)
+    || (typeof data?.kabkota === "string" ? String(data.kabkota).split(" - ")[0]?.trim() : undefined)
+    || (typeof data?.KDPEMDA === "string" ? data.KDPEMDA.trim() : undefined)
+    || (typeof data?.ID === "string" ? data.ID.trim() : undefined);
 
+  
   const bulan: number | undefined = (typeof data?.bulanNum === "number" ? data.bulanNum : undefined)
     ?? (typeof data?.BULAN === "number" ? data.BULAN : undefined)
     ?? (typeof data?.bulan === "string"
@@ -203,18 +206,53 @@ export function KertasKerjaModal({ open, onOpenChange, data }: KertasKerjaModalP
         ].indexOf(data.bulan) + 1 || undefined
       : undefined);
 
+  // Only proceed if we have valid kdpemda
+  const isValidKdpemda = kdpemda && kdpemda !== "undefined" && kdpemda.trim() !== "";
+
   // Queries
   // Build params objects conditionally to satisfy exactOptionalPropertyTypes
   const rekapBulananParams: { kdpemda?: string; bulan?: string | number } = {};
-  if (kdpemda !== undefined) rekapBulananParams.kdpemda = kdpemda;
+  if (isValidKdpemda) rekapBulananParams.kdpemda = kdpemda;
   if (bulan !== undefined) rekapBulananParams.bulan = bulan;
 
   const byPemdaParams: { kdpemda?: string } = {};
-  if (kdpemda !== undefined) byPemdaParams.kdpemda = kdpemda;
+  if (isValidKdpemda) byPemdaParams.kdpemda = kdpemda;
 
   const rekapBulanan = useDauRekapBulanan(rekapBulananParams);
   const penundaanCabut = useDauPenundaanCabutByPemda(byPemdaParams);
   const rekapByPemda = useDauRekapByPemda(byPemdaParams);
+
+  // Show error if kdpemda is invalid
+  if (!isValidKdpemda) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Error - Data Tidak Valid
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="text-sm text-red-600 bg-red-50 p-4 rounded-lg border border-red-200">
+              <p className="font-medium">Tidak dapat menampilkan Kertas Kerja</p>
+              <p className="mt-1">Kode Pemda (kdpemda) tidak valid atau tidak ditemukan dalam data yang dipilih.</p>
+              <div className="mt-2 text-xs font-mono bg-red-100 p-2 rounded">
+                Debug info: kdpemda = {String(kdpemda || "undefined")}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Tutup
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

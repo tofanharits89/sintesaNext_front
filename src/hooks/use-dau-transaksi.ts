@@ -4,16 +4,16 @@ import { useQuery } from "@tanstack/react-query";
 import { apiPath } from "@/lib/config/base-path";
 
 export interface RawDauTransaksiRow {
-  ID: number | string;
-  BULAN: number;
-  THANG: number;
-  NMBULAN?: string;
-  KDKPPN: string;
-  NMKPPN?: string;
-  KDPEMDA: string;
-  NMPEMDA?: string;
-  ALOKASI?: number;
-  NILAI?: number;
+  id: number | string;
+  bulan: string;
+  thang: string;
+  nmbulan?: string;
+  kdkppn: string;
+  nmkppn?: string;
+  kdpemda: string;
+  nmpemda?: string;
+  alokasi?: number;
+  nilai?: number;
 }
 
 export interface DauTransaksiRowUi {
@@ -46,7 +46,10 @@ const fetcher = async (url: string) => {
 
   if (!text.trim()) throw new Error("Empty response from server");
   const result = JSON.parse(text);
-  return result?.data ?? result;
+  const data = result?.data ?? result;
+
+  
+  return data;
 };
 
 export function useDauTransaksi(params: { thang?: number | string; bulan?: number | string; kppn?: string; kabkota?: string }) {
@@ -65,18 +68,26 @@ export function useDauTransaksi(params: { thang?: number | string; bulan?: numbe
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  const rows: DauTransaksiRowUi[] = (data || []).map((r, idx) => ({
-    id: String(r.ID ?? `${r.KDKPPN}-${r.KDPEMDA}-${r.BULAN}-${r.THANG}`),
-    no: idx + 1,
-    tahun: String(r.THANG ?? ""),
-    bulan: String(r.NMBULAN ?? r.BULAN ?? ""),
-    bulanNum: Number(r.BULAN ?? 0),
-    kppn: `${r.KDKPPN}${r.NMKPPN ? ` - ${r.NMKPPN}` : ""}`,
-    kabkota: `${r.KDPEMDA}${r.NMPEMDA ? ` - ${r.NMPEMDA}` : ""}`,
-    kdpemdaCode: String(r.KDPEMDA ?? ""),
-    alokasi: Number(r.ALOKASI ?? 0),
-    nilaiPotongan: Number(r.NILAI ?? 0),
-  }));
+  const rows: DauTransaksiRowUi[] = (data || []).map((r, idx) => {
+    const kdpeemda = String(r.kdpemda ?? "").trim();
+
+    // Better fallback for KPPN and PEMDA names
+    const kppnName = r.nmkppn && r.nmkppn.trim() !== "" ? r.nmkppn.trim() : null;
+    const pemdaName = r.nmpemda && r.nmpemda.trim() !== "" ? r.nmpemda.trim() : null;
+
+    return {
+      id: String(r.id ?? `${r.kdkppn}-${r.kdpemda}-${r.bulan}-${r.thang}`),
+      no: idx + 1,
+      tahun: String(r.thang ?? "").trim(),
+      bulan: String(r.nmbulan ?? r.bulan ?? "").trim(),
+      bulanNum: Number(r.bulan ?? 0),
+      kppn: kppnName ? `${r.kdkppn} - ${kppnName}` : r.kdkppn,
+      kabkota: pemdaName ? `${r.kdpemda} - ${pemdaName}` : r.kdpemda,
+      kdpemdaCode: kdpeemda,
+      alokasi: Number(r.alokasi ?? 0),
+      nilaiPotongan: Number(r.nilai ?? 0),
+    };
+  });
 
   const mutate = refetch; // For backward compatibility
 

@@ -42,14 +42,24 @@ export function useDauRekapBulanan(params: {
   kdpemda?: string;
   bulan?: number | string;
 }) {
+  // Enhanced validation to prevent invalid kdpemda values
+  const isValidKdpemda = params?.kdpemda &&
+    params.kdpemda !== "undefined" &&
+    params.kdpemda !== "null" &&
+    params.kdpemda.trim() !== "";
+
+  const isValidBulan = params?.bulan !== undefined &&
+    params.bulan !== "" &&
+    params.bulan !== "undefined" &&
+    params.bulan !== "null";
+
   const q: string[] = [];
-  if (params?.kdpemda) q.push(`kdpemda=${encodeURIComponent(params.kdpemda)}`);
-  if (params?.bulan !== undefined && params?.bulan !== "")
-    q.push(`bulan=${encodeURIComponent(String(params.bulan))}`);
+  if (isValidKdpemda) q.push(`kdpemda=${encodeURIComponent(params.kdpemda!)}`);
+  if (isValidBulan) q.push(`bulan=${encodeURIComponent(String(params.bulan))}`);
   const key =
-    params?.kdpemda && params?.bulan !== undefined
+    isValidKdpemda && isValidBulan
 ? apiPath(`/transfer-daerah/dau/rekap/bulanan?${q.join("&")}`)
-      : null; // only fetch when both provided
+      : null; // only fetch when both provided and valid
 
   const { data, error, isLoading, refetch } = useQuery<
     DauRekapBulananRow[] | DauRekapBulananRow
