@@ -432,41 +432,6 @@ const res = await fetch(apiPath(`/users/${id}`), {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <Input
-          className="h-9 max-w-xl bg-white dark:bg-neutral-900 flex items-center"
-          placeholder="Cari nama, email, atau peran"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <div className="flex gap-2">
-          <Select value={role} onValueChange={(v) => setRole(v)}>
-            <SelectTrigger className="h-11 min-w-40 bg-white dark:bg-neutral-900 flex items-center px-3">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua Role</SelectItem>
-              <SelectItem value="super_admin">Super Admin</SelectItem>
-              <SelectItem value="co_admin">Co-Admin</SelectItem>
-              <SelectItem value="kantor_pusat">Kantor Pusat</SelectItem>
-              <SelectItem value="kanwil_djpb">Kanwil DJPb</SelectItem>
-              <SelectItem value="kppn">KPPN</SelectItem>
-              <SelectItem value="lainnya">User Lainnya</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={status} onValueChange={(v) => setStatus(v)}>
-            <SelectTrigger className="h-11 min-w-40 bg-white dark:bg-neutral-900 flex items-center px-3">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua Status</SelectItem>
-              <SelectItem value="active">Aktif</SelectItem>
-              <SelectItem value="disabled">Nonaktif</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
       <Suspense fallback={<TableLoadingFallback />}>
         <ModernUsersTable
           users={paged}
@@ -477,6 +442,12 @@ const res = await fetch(apiPath(`/users/${id}`), {
           onDelete={handleDeleteClick}
           currentPage={page}
           pageSize={pageSize}
+          searchQuery={query}
+          onSearchChange={setQuery}
+          roleFilter={role}
+          onRoleFilterChange={setRole}
+          statusFilter={status}
+          onStatusFilterChange={setStatus}
         />
       </Suspense>
 
