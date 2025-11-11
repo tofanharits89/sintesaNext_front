@@ -284,9 +284,9 @@ export function Navbar() {
       <LoginLoading isVisible={isLoggingOut} message="Mengeluarkan..." />
       <header
         data-navbar="true"
-        className="sticky top-0 z-40 w-full border-b bg-white dark:bg-card"
+        className="sticky top-4 z-40 mx-4 sm:mx-6 lg:mx-8 border bg-white dark:bg-card shadow-sm rounded-xl"
       >
-        <div className="container mx-auto flex h-14 items-center gap-3 px-4">
+        <div className="flex h-16 items-center gap-3 px-4">
           {/* left: logo */}
           <div className="flex items-center gap-2">
             {/* Brand logo – CSS toggles by theme to avoid SSR mismatch and persist on refresh */}

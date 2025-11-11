@@ -19,61 +19,67 @@ const AppShell = memo(function AppShell({
   const { isNotFoundPage } = usePageContext();
 
   // Define known valid routes
-  const knownRoutes = useMemo(() => [
-    '/login',
-    '/server-error',
-    '/ip-blocked',
-    '/unauthorized',
-    '/dashboard',
-    '/profile',
-    '/users',
-    '/settings',
-    '/pengaturan',
-    '/notifications',
-    '/messages',
-    '/satker',
-    '/transfer-daerah',
-    '/data-supplier',
-    '/inquiry-data',
-    '/epa',
-    '/makan-bergizi',
-    '/laporan',
-    '/tentang-kita',
-    '/debug-cookies',
-    '/debug-user',
-    '/log-user',
-    '/monitor-performa'
-  ], []);
+  const knownRoutes = useMemo(
+    () => [
+      "/login",
+      "/server-error",
+      "/ip-blocked",
+      "/unauthorized",
+      "/dashboard",
+      "/profile",
+      "/users",
+      "/settings",
+      "/pengaturan",
+      "/notifications",
+      "/messages",
+      "/satker",
+      "/transfer-daerah",
+      "/data-supplier",
+      "/inquiry-data",
+      "/epa",
+      "/makan-bergizi",
+      "/laporan",
+      "/tentang-kita",
+      "/debug-cookies",
+      "/debug-user",
+      "/log-user",
+      "/monitor-performa",
+    ],
+    [],
+  );
 
   const isLikely404Page = useMemo(() => {
     if (!pathname) return false;
-    
+
     // Check if pathname starts with any known valid route
-    const isKnownRoute = knownRoutes.some(route => 
-      pathname === route || 
-      pathname.startsWith(route + '/') ||
-      pathname.startsWith('/api/') ||
-      pathname.startsWith('/_next/') ||
-      pathname.startsWith('/fonts/') ||
-      pathname.startsWith('/images/')
+    const isKnownRoute = knownRoutes.some(
+      (route) =>
+        pathname === route ||
+        pathname.startsWith(route + "/") ||
+        pathname.startsWith("/api/") ||
+        pathname.startsWith("/_next/") ||
+        pathname.startsWith("/fonts/") ||
+        pathname.startsWith("/images/"),
     );
-    
+
     // Also check for static files and assets
-    const isStaticAsset = pathname.includes('.') || 
-                          pathname.includes('/favicon.ico') ||
-                          pathname.includes('/robots.txt');
-    
+    const isStaticAsset =
+      pathname.includes(".") ||
+      pathname.includes("/favicon.ico") ||
+      pathname.includes("/robots.txt");
+
     return !isKnownRoute && !isStaticAsset && !isNotFoundPage;
   }, [pathname, knownRoutes, isNotFoundPage]);
 
-  const isSpecialPage = useMemo(() =>
-    pathname?.startsWith("/login") ||
-    pathname?.startsWith("/server-error") ||
-    pathname?.startsWith("/ip-blocked") ||
-    pathname?.startsWith("/unauthorized") ||
-    isNotFoundPage ||
-    isLikely404Page,
-    [pathname, isNotFoundPage, isLikely404Page]
+  const isSpecialPage = useMemo(
+    () =>
+      pathname?.startsWith("/login") ||
+      pathname?.startsWith("/server-error") ||
+      pathname?.startsWith("/ip-blocked") ||
+      pathname?.startsWith("/unauthorized") ||
+      isNotFoundPage ||
+      isLikely404Page,
+    [pathname, isNotFoundPage, isLikely404Page],
   );
 
   // Initialize login notifications for admin users - always call hooks
@@ -88,11 +94,13 @@ const AppShell = memo(function AppShell({
   }
 
   return (
-    <div className="min-h-svh flex flex-col">
+    <div className="min-h-svh flex flex-col bg-zinc-100 dark:bg-black">
       <Navbar />
       <ResponsiveSidebar />
-      <div className="bg-zinc-100 dark:bg-black flex-1">
-        <main className="container mx-auto px-4 py-6 md:py-8">{children}</main>
+      <div className="flex-1">
+        <main className="mx-4 sm:mx-6 lg:mx-8 pt-24 pb-6 md:pt-24 md:pb-8 lg:pt-14 lg:pb-10">
+          {children}
+        </main>
       </div>
     </div>
   );

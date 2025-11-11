@@ -62,7 +62,11 @@ export type MenuItem = {
 const defaultMenu: MenuItem[] = [
   {
     label: "Dashboard",
-    children: [{ label: "Dashboard Utama" }, { label: "Dashboard Program" }, { label: "Dashboard Efisiensi" }],
+    children: [
+      { label: "Dashboard Utama" },
+      { label: "Dashboard Program" },
+      { label: "Dashboard Efisiensi" },
+    ],
   },
   {
     label: "Makan Bergizi",
@@ -85,7 +89,11 @@ const defaultMenu: MenuItem[] = [
   },
   {
     label: "EPA",
-    children: [{ label: "Summary" }, { label: "Analisa EPA" }, { label: "Rekap EPA" }],
+    children: [
+      { label: "Summary" },
+      { label: "Analisa EPA" },
+      { label: "Rekap EPA" },
+    ],
   },
   {
     label: "Spending Review",
@@ -116,10 +124,7 @@ const defaultMenu: MenuItem[] = [
   },
   {
     label: "Laporan",
-    children: [
-      { label: "Weekly Report" },
-      { label: "Monthly Report" },
-    ],
+    children: [{ label: "Weekly Report" }, { label: "Monthly Report" }],
   },
   {
     label: "Tentang Kita",
@@ -348,9 +353,9 @@ export function ResponsiveSidebar({
       {/* Horizontal menu on lg+ */}
       <nav
         data-sidebar="true"
-        className="hidden lg:block sticky top-14 z-30 border-b bg-white dark:bg-card"
+        className="hidden lg:block sticky top-22 z-30 mx-4 sm:mx-6 lg:mx-8 border bg-white dark:bg-card shadow-sm rounded-xl"
       >
-        <div ref={containerRef} className="container mx-auto px-4 relative">
+        <div ref={containerRef} className="relative">
           {/* Left pagination button */}
           {canGoLeft && (
             <Button
@@ -989,8 +994,8 @@ export function ResponsiveSidebar({
       {/* Normal sidebar below lg */}
       <div className="lg:hidden">
         <Sheet open={open} onOpenChange={setOpen}>
-          <div className="border-b bg-white dark:bg-card">
-            <div className="container mx-auto h-12 flex items-center px-2">
+          <div className="border bg-white dark:bg-card shadow-sm mx-4 sm:mx-6 fixed top-22 left-0 right-0 sm:left-0 sm:right-0 z-30 rounded-xl">
+            <div className="h-12 flex items-center px-4">
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
                   <Menu className="h-5 w-5" />
@@ -999,7 +1004,7 @@ export function ResponsiveSidebar({
               <span className="ml-2 text-sm text-muted-foreground">Menu</span>
             </div>
           </div>
-          <SheetContent side="left" className="p-0">
+          <SheetContent side="left" className="p-0 border shadow-sm bg-zinc-100 dark:bg-black">
             <SheetTitle className="sr-only">Menu</SheetTitle>
             <div className="p-2 overflow-y-auto max-h-screen">
               {filteredMenu.map((m) => (
@@ -1013,7 +1018,7 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/dashboard/utama"
-                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
                           import(
                             "@/components/dashboard/PerformanceMonitoringDashboard"
@@ -1038,7 +1043,7 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/dashboard/program"
-                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
                           import("@/components/dashboard/ProgramCard");
                         }}
@@ -1061,7 +1066,7 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/dashboard/efisiensi"
-                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onClick={() => {
                           trackMenuUsage({
                             menu: m.label,
@@ -1081,7 +1086,7 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/makan-bergizi/dashboard"
-                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
                           import("@/features/mbg/components/MapView");
                         }}
@@ -1104,7 +1109,7 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/makan-bergizi/kertas-kerja"
-                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
                           import("@/features/mbg/components/MapView");
                         }}
@@ -1126,7 +1131,7 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/tentang-kita/profil"
-                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {}}
                         onClick={() => {
                           trackMenuUsage({
@@ -1146,7 +1151,7 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/epa/summary"
-                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
                           import("@/components/epa/filter-card");
                         }}
@@ -1168,7 +1173,7 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/epa/analisa"
-                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
                           import("@/components/epa/filter-card");
                         }}
@@ -1190,7 +1195,7 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/epa/rekap"
-                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
                           import("@/components/epa/rekap-filter-card");
                           import("@/components/epa/rekap-data-table");
@@ -1214,7 +1219,7 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/transfer-daerah/proyeksi-tkd"
-                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
                           import("@/components/transfer-daerah/data-kmk-tab");
                         }}
@@ -1237,7 +1242,7 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/transfer-daerah/upload-laporan"
-                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
                           import("@/components/transfer-daerah/data-kmk-tab");
                         }}
@@ -1259,7 +1264,7 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/transfer-daerah/dau"
-                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
                           import(
                             "@/components/transfer-daerah/data-transaksi-tab"
@@ -1283,7 +1288,7 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/inquiry-data/belanja"
-                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
                           import(
                             "@/components/inquiry-data/dynamic-filters-card"
@@ -1308,7 +1313,7 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/inquiry-data/tematik"
-                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
                           import(
                             "@/components/inquiry-data/category-mandatory-filters"
@@ -1333,7 +1338,7 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/inquiry-data/rkakl-detail"
-                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
                           import(
                             "@/components/inquiry-data/dynamic-filters-card"
@@ -1358,7 +1363,7 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/data-supplier/dashboard"
-                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
                           import(
                             "@/components/data-supplier/DashboardSupplierClient"
@@ -1383,7 +1388,7 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/data-supplier/profil"
-                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
                           import(
                             "@/components/data-supplier/DashboardSupplierClient"
@@ -1408,7 +1413,7 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/data-supplier/konsentrasi"
-                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
                           import(
                             "@/components/data-supplier/DashboardSupplierClient"
@@ -1433,7 +1438,7 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/data-supplier/anomali"
-                        className="block w/full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
                           import(
                             "@/components/data-supplier/DashboardSupplierClient"
@@ -1458,7 +1463,7 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/data-supplier/klaster"
-                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
                           import(
                             "@/components/data-supplier/DashboardSupplierClient"
@@ -1483,7 +1488,7 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/data-supplier/jaringan"
-                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
                           import(
                             "@/components/data-supplier/DashboardSupplierClient"
@@ -1508,7 +1513,7 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/laporan/monthly-report"
-                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onClick={() => {
                           trackMenuUsage({
                             menu: m.label,
@@ -1523,12 +1528,11 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </Link>
-                    ) : c.label === "Weekly Report" &&
-                      m.label === "Laporan" ? (
+                    ) : c.label === "Weekly Report" && m.label === "Laporan" ? (
                       <Link
                         key={c.label}
                         href="/laporan/weekly-report"
-                        className="block w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onClick={() => {
                           trackMenuUsage({
                             menu: m.label,
@@ -1546,7 +1550,7 @@ export function ResponsiveSidebar({
                     ) : (
                       <button
                         key={c.label}
-                        className="w-full text-left px-6 py-2 text-sm hover:bg-muted"
+                        className="w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onClick={() => setOpen(false)}
                       >
                         <span className="inline-flex items-center">
