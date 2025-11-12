@@ -135,6 +135,11 @@ const defaultMenu: MenuItem[] = [
     children: [{ label: "Weekly Report" }, { label: "Monthly Report" }],
   },
   {
+    label: "Data Makrokesra",
+    children: [{ label: "Data BPS" }],
+  },
+
+  {
     label: "Tentang Kita",
     children: [{ label: "Profil" }, { label: "Kontak" }],
   },
@@ -399,85 +404,217 @@ export function ResponsiveSidebar({
                             let onMouseEnterFn = () => {};
 
                             // Route mapping
-                            if (c.label === "Dashboard Utama" && m.label === "Dashboard") {
+                            if (
+                              c.label === "Dashboard Utama" &&
+                              m.label === "Dashboard"
+                            ) {
                               href = "/dashboard/utama";
-                              onMouseEnterFn = () => import("@/components/dashboard/PerformanceMonitoringDashboard");
-                            } else if (c.label === "Dashboard Program" && m.label === "Dashboard") {
+                              onMouseEnterFn = () =>
+                                import(
+                                  "@/components/dashboard/PerformanceMonitoringDashboard"
+                                );
+                            } else if (
+                              c.label === "Dashboard Program" &&
+                              m.label === "Dashboard"
+                            ) {
                               href = "/dashboard/program";
-                              onMouseEnterFn = () => import("@/components/dashboard/ProgramCard");
-                            } else if (c.label === "Dashboard Efisiensi" && m.label === "Dashboard") {
+                              onMouseEnterFn = () =>
+                                import("@/components/dashboard/ProgramCard");
+                            } else if (
+                              c.label === "Dashboard Efisiensi" &&
+                              m.label === "Dashboard"
+                            ) {
                               href = "/dashboard/efisiensi";
-                            } else if (c.label === "Kontrak" && m.label === "Inquiry Data") {
+                            } else if (
+                              c.label === "Kontrak" &&
+                              m.label === "Inquiry Data"
+                            ) {
                               href = "/inquiry-data/kontrak";
-                              onMouseEnterFn = () => import("@/components/inquiry-data/enhanced-filter-card");
-                            } else if (c.label === "UP/TUP" && m.label === "Inquiry Data") {
+                              onMouseEnterFn = () =>
+                                import(
+                                  "@/components/inquiry-data/enhanced-filter-card"
+                                );
+                            } else if (
+                              c.label === "UP/TUP" &&
+                              m.label === "Inquiry Data"
+                            ) {
                               href = "/inquiry-data/up-tup";
-                              onMouseEnterFn = () => import("@/components/inquiry-data/enhanced-filter-card");
-                            } else if (c.label === "Penerimaan PNBP" && m.label === "Inquiry Data") {
+                              onMouseEnterFn = () =>
+                                import(
+                                  "@/components/inquiry-data/enhanced-filter-card"
+                                );
+                            } else if (
+                              c.label === "Penerimaan PNBP" &&
+                              m.label === "Inquiry Data"
+                            ) {
                               href = "/inquiry-data/penerimaan-pnbp";
-                              onMouseEnterFn = () => import("@/components/inquiry-data/enhanced-filter-card");
-                            } else if (c.label === "Dashboard MBG" && m.label === "Makan Bergizi") {
+                              onMouseEnterFn = () =>
+                                import(
+                                  "@/components/inquiry-data/enhanced-filter-card"
+                                );
+                            } else if (
+                              c.label === "Dashboard MBG" &&
+                              m.label === "Makan Bergizi"
+                            ) {
                               href = "/makan-bergizi/dashboard";
-                              onMouseEnterFn = () => import("@/features/mbg/components/MapView");
-                            } else if (c.label === "Kertas Kerja" && m.label === "Makan Bergizi") {
+                              onMouseEnterFn = () =>
+                                import("@/features/mbg/components/MapView");
+                            } else if (
+                              c.label === "Kertas Kerja" &&
+                              m.label === "Makan Bergizi"
+                            ) {
                               href = "/makan-bergizi/kertas-kerja";
-                              onMouseEnterFn = () => import("@/features/mbg/components/MapView");
-                            } else if (c.label === "Profil" && m.label === "Tentang Kita") {
+                              onMouseEnterFn = () =>
+                                import("@/features/mbg/components/MapView");
+                            } else if (
+                              c.label === "Profil" &&
+                              m.label === "Tentang Kita"
+                            ) {
                               href = "/tentang-kita/profil";
-                            } else if (c.label === "Summary" && m.label === "EPA") {
+                            } else if (
+                              c.label === "Summary" &&
+                              m.label === "EPA"
+                            ) {
                               href = "/epa/summary";
-                              onMouseEnterFn = () => import("@/components/epa/filter-card");
-                            } else if (c.label === "Analisa EPA" && m.label === "EPA") {
+                              onMouseEnterFn = () =>
+                                import("@/components/epa/filter-card");
+                            } else if (
+                              c.label === "Analisa EPA" &&
+                              m.label === "EPA"
+                            ) {
                               href = "/epa/analisa";
-                              onMouseEnterFn = () => import("@/components/epa/filter-card");
-                            } else if (c.label === "Rekap EPA" && m.label === "EPA") {
+                              onMouseEnterFn = () =>
+                                import("@/components/epa/filter-card");
+                            } else if (
+                              c.label === "Rekap EPA" &&
+                              m.label === "EPA"
+                            ) {
                               href = "/epa/rekap";
                               onMouseEnterFn = () => {
                                 import("@/components/epa/rekap-filter-card");
                                 import("@/components/epa/rekap-data-table");
                               };
-                            } else if (c.label === "Proyeksi TKD" && m.label === "Transfer Daerah") {
+                            } else if (
+                              c.label === "Proyeksi TKD" &&
+                              m.label === "Transfer Daerah"
+                            ) {
                               href = "/transfer-daerah/proyeksi-tkd";
-                              onMouseEnterFn = () => import("@/components/transfer-daerah/data-kmk-tab");
-                            } else if (c.label === "Upload Laporan" && m.label === "Transfer Daerah") {
+                              onMouseEnterFn = () =>
+                                import(
+                                  "@/components/transfer-daerah/data-kmk-tab"
+                                );
+                            } else if (
+                              c.label === "Upload Laporan" &&
+                              m.label === "Transfer Daerah"
+                            ) {
                               href = "/transfer-daerah/upload-laporan";
-                              onMouseEnterFn = () => import("@/components/transfer-daerah/data-kmk-tab");
-                            } else if (c.label === "DAU" && m.label === "Transfer Daerah") {
+                              onMouseEnterFn = () =>
+                                import(
+                                  "@/components/transfer-daerah/data-kmk-tab"
+                                );
+                            } else if (
+                              c.label === "DAU" &&
+                              m.label === "Transfer Daerah"
+                            ) {
                               href = "/transfer-daerah/dau";
-                              onMouseEnterFn = () => import("@/components/transfer-daerah/data-transaksi-tab");
-                            } else if (c.label === "Belanja" && m.label === "Inquiry Data") {
+                              onMouseEnterFn = () =>
+                                import(
+                                  "@/components/transfer-daerah/data-transaksi-tab"
+                                );
+                            } else if (
+                              c.label === "Belanja" &&
+                              m.label === "Inquiry Data"
+                            ) {
                               href = "/inquiry-data/belanja";
                               onMouseEnterFn = () => {
-                                import("@/components/inquiry-data/dynamic-filters-card");
-                                import("@/components/inquiry-data/query-management");
+                                import(
+                                  "@/components/inquiry-data/dynamic-filters-card"
+                                );
+                                import(
+                                  "@/components/inquiry-data/query-management"
+                                );
                               };
-                            } else if (c.label === "Tematik" && m.label === "Inquiry Data") {
+                            } else if (
+                              c.label === "Tematik" &&
+                              m.label === "Inquiry Data"
+                            ) {
                               href = "/inquiry-data/tematik";
-                              onMouseEnterFn = () => import("@/components/inquiry-data/category-mandatory-filters");
-                            } else if (c.label === "RKAKL Detail" && m.label === "Inquiry Data") {
+                              onMouseEnterFn = () =>
+                                import(
+                                  "@/components/inquiry-data/category-mandatory-filters"
+                                );
+                            } else if (
+                              c.label === "RKAKL Detail" &&
+                              m.label === "Inquiry Data"
+                            ) {
                               href = "/inquiry-data/rkakl-detail";
-                              onMouseEnterFn = () => import("@/components/inquiry-data/dynamic-filters-card");
-                            } else if (c.label === "Dashboard Supplier" && m.label === "Data Supplier") {
+                              onMouseEnterFn = () =>
+                                import(
+                                  "@/components/inquiry-data/dynamic-filters-card"
+                                );
+                            } else if (
+                              c.label === "Dashboard Supplier" &&
+                              m.label === "Data Supplier"
+                            ) {
                               href = "/data-supplier/dashboard";
-                              onMouseEnterFn = () => import("@/components/data-supplier/DashboardSupplierClient");
-                            } else if (c.label === "Profil Supplier" && m.label === "Data Supplier") {
+                              onMouseEnterFn = () =>
+                                import(
+                                  "@/components/data-supplier/DashboardSupplierClient"
+                                );
+                            } else if (
+                              c.label === "Profil Supplier" &&
+                              m.label === "Data Supplier"
+                            ) {
                               href = "/data-supplier/profil";
-                              onMouseEnterFn = () => import("@/components/data-supplier/DashboardSupplierClient");
-                            } else if (c.label === "Konsentrasi Supplier" && m.label === "Data Supplier") {
+                              onMouseEnterFn = () =>
+                                import(
+                                  "@/components/data-supplier/DashboardSupplierClient"
+                                );
+                            } else if (
+                              c.label === "Konsentrasi Supplier" &&
+                              m.label === "Data Supplier"
+                            ) {
                               href = "/data-supplier/konsentrasi";
-                              onMouseEnterFn = () => import("@/components/data-supplier/DashboardSupplierClient");
-                            } else if (c.label === "Deteksi Anomali Supplier" && m.label === "Data Supplier") {
+                              onMouseEnterFn = () =>
+                                import(
+                                  "@/components/data-supplier/DashboardSupplierClient"
+                                );
+                            } else if (
+                              c.label === "Deteksi Anomali Supplier" &&
+                              m.label === "Data Supplier"
+                            ) {
                               href = "/data-supplier/anomali";
-                              onMouseEnterFn = () => import("@/components/data-supplier/DashboardSupplierClient");
-                            } else if (c.label === "Klaster Supplier" && m.label === "Data Supplier") {
+                              onMouseEnterFn = () =>
+                                import(
+                                  "@/components/data-supplier/DashboardSupplierClient"
+                                );
+                            } else if (
+                              c.label === "Klaster Supplier" &&
+                              m.label === "Data Supplier"
+                            ) {
                               href = "/data-supplier/klaster";
-                              onMouseEnterFn = () => import("@/components/data-supplier/DashboardSupplierClient");
-                            } else if (c.label === "Jaringan Supplier" && m.label === "Data Supplier") {
+                              onMouseEnterFn = () =>
+                                import(
+                                  "@/components/data-supplier/DashboardSupplierClient"
+                                );
+                            } else if (
+                              c.label === "Jaringan Supplier" &&
+                              m.label === "Data Supplier"
+                            ) {
                               href = "/data-supplier/jaringan";
-                              onMouseEnterFn = () => import("@/components/data-supplier/DashboardSupplierClient");
-                            } else if (c.label === "Monthly Report" && m.label === "Laporan") {
+                              onMouseEnterFn = () =>
+                                import(
+                                  "@/components/data-supplier/DashboardSupplierClient"
+                                );
+                            } else if (
+                              c.label === "Monthly Report" &&
+                              m.label === "Laporan"
+                            ) {
                               href = "/laporan/monthly-report";
-                            } else if (c.label === "Weekly Report" && m.label === "Laporan") {
+                            } else if (
+                              c.label === "Weekly Report" &&
+                              m.label === "Laporan"
+                            ) {
                               href = "/laporan/weekly-report";
                             }
 
@@ -541,7 +678,10 @@ export function ResponsiveSidebar({
               <span className="ml-2 text-sm text-muted-foreground">Menu</span>
             </div>
           </div>
-          <SheetContent side="left" className="p-0 border shadow-sm bg-zinc-100 dark:bg-black">
+          <SheetContent
+            side="left"
+            className="p-0 border shadow-sm bg-zinc-100 dark:bg-black"
+          >
             <SheetTitle className="sr-only">Menu</SheetTitle>
             <div className="p-2 overflow-y-auto max-h-screen">
               {filteredMenu.map((m) => (
@@ -1095,7 +1235,7 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </button>
-                    ),
+                    )
                   )}
                 </div>
               ))}
