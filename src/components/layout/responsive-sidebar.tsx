@@ -53,6 +53,14 @@ import {
   SheetTrigger,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
 
 export type MenuItem = {
   label: string;
@@ -372,607 +380,136 @@ export function ResponsiveSidebar({
 
           {/* Menu items container */}
           <div className="flex justify-center">
-            <div className="flex items-center gap-2 h-12 py-0">
-              {currentPageItems.map((m) => (
-                <DropdownMenu key={m.label}>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="gap-1 w-48 justify-center"
-                    >
+            <NavigationMenu className="h-12" viewport={false}>
+              <NavigationMenuList className="gap-1">
+                {currentPageItems.map((m) => (
+                  <NavigationMenuItem key={m.label}>
+                    <NavigationMenuTrigger className="h-9 w-48 gap-1 bg-white dark:bg-card hover:bg-accent dark:hover:bg-accent">
                       <span className="inline-flex items-center">
                         {iconFor(m.label)}
                         <span>{m.label}</span>
                       </span>
-                      <ChevronDown className="h-4 w-4 ml-1" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  {m.children?.length ? (
-                    <DropdownMenuContent className="w-64">
-                      {m.children.map((c) =>
-                        c.label === "Dashboard Utama" &&
-                        m.label === "Dashboard" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/dashboard/utama"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {
-                                import(
-                                  "@/components/dashboard/PerformanceMonitoringDashboard"
-                                );
-                              }}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/dashboard/utama",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "Dashboard Program" &&
-                          m.label === "Dashboard" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/dashboard/program"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {
-                                import("@/components/dashboard/ProgramCard");
-                              }}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/dashboard/program",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "Dashboard Efisiensi" &&
-                          m.label === "Dashboard" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/dashboard/efisiensi"
-                              className="flex items-center w-full"
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/dashboard/efisiensi",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "Kontrak" &&
-                          m.label === "Inquiry Data" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/inquiry-data/kontrak"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {
-                                import(
-                                  "@/components/inquiry-data/enhanced-filter-card"
-                                );
-                              }}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/inquiry-data/kontrak",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "UP/TUP" &&
-                          m.label === "Inquiry Data" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/inquiry-data/up-tup"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {
-                                import(
-                                  "@/components/inquiry-data/enhanced-filter-card"
-                                );
-                              }}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/inquiry-data/up-tup",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "Penerimaan PNBP" &&
-                          m.label === "Inquiry Data" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/inquiry-data/penerimaan-pnbp"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {
-                                import(
-                                  "@/components/inquiry-data/enhanced-filter-card"
-                                );
-                              }}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/inquiry-data/penerimaan-pnbp",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "Dashboard MBG" &&
-                          m.label === "Makan Bergizi" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/makan-bergizi/dashboard"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {
-                                import("@/features/mbg/components/MapView");
-                              }}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/makan-bergizi/dashboard",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "Kertas Kerja" &&
-                          m.label === "Makan Bergizi" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/makan-bergizi/kertas-kerja"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {
-                                import("@/features/mbg/components/MapView");
-                              }}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/makan-bergizi/kertas-kerja",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "Profil" &&
-                          m.label === "Tentang Kita" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/tentang-kita/profil"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {}}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/tentang-kita/profil",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "Summary" && m.label === "EPA" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/epa/summary"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {
-                                import("@/components/epa/filter-card");
-                              }}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/epa/summary",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "Analisa EPA" && m.label === "EPA" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/epa/analisa"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {
-                                import("@/components/epa/filter-card");
-                              }}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/epa/analisa",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "Rekap EPA" && m.label === "EPA" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/epa/rekap"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {
+                    </NavigationMenuTrigger>
+                    {m.children?.length ? (
+                      <NavigationMenuContent className="left-0 p-1.5">
+                        <ul className="grid w-64 gap-1">
+                          {m.children.map((c) => {
+                            const menuKey = `${m.label}__${c.label}`;
+                            let href = "#";
+                            let onMouseEnterFn = () => {};
+
+                            // Route mapping
+                            if (c.label === "Dashboard Utama" && m.label === "Dashboard") {
+                              href = "/dashboard/utama";
+                              onMouseEnterFn = () => import("@/components/dashboard/PerformanceMonitoringDashboard");
+                            } else if (c.label === "Dashboard Program" && m.label === "Dashboard") {
+                              href = "/dashboard/program";
+                              onMouseEnterFn = () => import("@/components/dashboard/ProgramCard");
+                            } else if (c.label === "Dashboard Efisiensi" && m.label === "Dashboard") {
+                              href = "/dashboard/efisiensi";
+                            } else if (c.label === "Kontrak" && m.label === "Inquiry Data") {
+                              href = "/inquiry-data/kontrak";
+                              onMouseEnterFn = () => import("@/components/inquiry-data/enhanced-filter-card");
+                            } else if (c.label === "UP/TUP" && m.label === "Inquiry Data") {
+                              href = "/inquiry-data/up-tup";
+                              onMouseEnterFn = () => import("@/components/inquiry-data/enhanced-filter-card");
+                            } else if (c.label === "Penerimaan PNBP" && m.label === "Inquiry Data") {
+                              href = "/inquiry-data/penerimaan-pnbp";
+                              onMouseEnterFn = () => import("@/components/inquiry-data/enhanced-filter-card");
+                            } else if (c.label === "Dashboard MBG" && m.label === "Makan Bergizi") {
+                              href = "/makan-bergizi/dashboard";
+                              onMouseEnterFn = () => import("@/features/mbg/components/MapView");
+                            } else if (c.label === "Kertas Kerja" && m.label === "Makan Bergizi") {
+                              href = "/makan-bergizi/kertas-kerja";
+                              onMouseEnterFn = () => import("@/features/mbg/components/MapView");
+                            } else if (c.label === "Profil" && m.label === "Tentang Kita") {
+                              href = "/tentang-kita/profil";
+                            } else if (c.label === "Summary" && m.label === "EPA") {
+                              href = "/epa/summary";
+                              onMouseEnterFn = () => import("@/components/epa/filter-card");
+                            } else if (c.label === "Analisa EPA" && m.label === "EPA") {
+                              href = "/epa/analisa";
+                              onMouseEnterFn = () => import("@/components/epa/filter-card");
+                            } else if (c.label === "Rekap EPA" && m.label === "EPA") {
+                              href = "/epa/rekap";
+                              onMouseEnterFn = () => {
                                 import("@/components/epa/rekap-filter-card");
                                 import("@/components/epa/rekap-data-table");
-                              }}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/epa/rekap",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "Proyeksi TKD" &&
-                          m.label === "Transfer Daerah" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/transfer-daerah/proyeksi-tkd"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {
-                                import(
-                                  "@/components/transfer-daerah/data-kmk-tab"
-                                );
-                              }}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/transfer-daerah/proyeksi-tkd",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "Upload Laporan" &&
-                          m.label === "Transfer Daerah" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/transfer-daerah/upload-laporan"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {
-                                import(
-                                  "@/components/transfer-daerah/data-kmk-tab"
-                                );
-                              }}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/transfer-daerah/upload-laporan",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "DAU" &&
-                          m.label === "Transfer Daerah" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/transfer-daerah/dau"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {
-                                import(
-                                  "@/components/transfer-daerah/data-transaksi-tab"
-                                );
-                              }}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/transfer-daerah/dau",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "Belanja" &&
-                          m.label === "Inquiry Data" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/inquiry-data/belanja"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {
-                                import(
-                                  "@/components/inquiry-data/dynamic-filters-card"
-                                );
-                                import(
-                                  "@/components/inquiry-data/query-management"
-                                );
-                              }}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/inquiry-data/belanja",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "Tematik" &&
-                          m.label === "Inquiry Data" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/inquiry-data/tematik"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {
-                                import(
-                                  "@/components/inquiry-data/category-mandatory-filters"
-                                );
-                              }}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/inquiry-data/tematik",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "RKAKL Detail" &&
-                          m.label === "Inquiry Data" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/inquiry-data/rkakl-detail"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {
-                                import(
-                                  "@/components/inquiry-data/dynamic-filters-card"
-                                );
-                              }}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/inquiry-data/rkakl-detail",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "Dashboard Supplier" &&
-                          m.label === "Data Supplier" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/data-supplier/dashboard"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {
-                                import(
-                                  "@/components/data-supplier/DashboardSupplierClient"
-                                );
-                              }}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/data-supplier/dashboard",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "Profil Supplier" &&
-                          m.label === "Data Supplier" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/data-supplier/profil"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {
-                                import(
-                                  "@/components/data-supplier/DashboardSupplierClient"
-                                );
-                              }}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/data-supplier/profil",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "Konsentrasi Supplier" &&
-                          m.label === "Data Supplier" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/data-supplier/konsentrasi"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {
-                                import(
-                                  "@/components/data-supplier/DashboardSupplierClient"
-                                );
-                              }}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/data-supplier/konsentrasi",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "Deteksi Anomali Supplier" &&
-                          m.label === "Data Supplier" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/data-supplier/anomali"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {
-                                import(
-                                  "@/components/data-supplier/DashboardSupplierClient"
-                                );
-                              }}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/data-supplier/anomali",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "Klaster Supplier" &&
-                          m.label === "Data Supplier" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/data-supplier/klaster"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {
-                                import(
-                                  "@/components/data-supplier/DashboardSupplierClient"
-                                );
-                              }}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/data-supplier/klaster",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "Jaringan Supplier" &&
-                          m.label === "Data Supplier" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/data-supplier/jaringan"
-                              className="flex items-center w-full"
-                              onMouseEnter={() => {
-                                import(
-                                  "@/components/data-supplier/DashboardSupplierClient"
-                                );
-                              }}
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/data-supplier/jaringan",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "Monthly Report" &&
-                          m.label === "Laporan" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/laporan/monthly-report"
-                              className="flex items-center w-full"
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/laporan/monthly-report",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : c.label === "Weekly Report" &&
-                          m.label === "Laporan" ? (
-                          <DropdownMenuItem key={c.label} asChild>
-                            <Link
-                              href="/laporan/weekly-report"
-                              className="flex items-center w-full"
-                              onClick={() =>
-                                trackMenuUsage({
-                                  menu: m.label,
-                                  submenu: c.label,
-                                  path: "/laporan/weekly-report",
-                                })
-                              }
-                            >
-                              {subIconFor(m.label, c.label)}
-                              <span>{c.label}</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem
-                            key={c.label}
-                            className="flex items-center"
-                          >
-                            {subIconFor(m.label, c.label)}
-                            <span>{c.label}</span>
-                          </DropdownMenuItem>
-                        ),
-                      )}
-                    </DropdownMenuContent>
-                  ) : null}
-                </DropdownMenu>
-              ))}
-            </div>
+                              };
+                            } else if (c.label === "Proyeksi TKD" && m.label === "Transfer Daerah") {
+                              href = "/transfer-daerah/proyeksi-tkd";
+                              onMouseEnterFn = () => import("@/components/transfer-daerah/data-kmk-tab");
+                            } else if (c.label === "Upload Laporan" && m.label === "Transfer Daerah") {
+                              href = "/transfer-daerah/upload-laporan";
+                              onMouseEnterFn = () => import("@/components/transfer-daerah/data-kmk-tab");
+                            } else if (c.label === "DAU" && m.label === "Transfer Daerah") {
+                              href = "/transfer-daerah/dau";
+                              onMouseEnterFn = () => import("@/components/transfer-daerah/data-transaksi-tab");
+                            } else if (c.label === "Belanja" && m.label === "Inquiry Data") {
+                              href = "/inquiry-data/belanja";
+                              onMouseEnterFn = () => {
+                                import("@/components/inquiry-data/dynamic-filters-card");
+                                import("@/components/inquiry-data/query-management");
+                              };
+                            } else if (c.label === "Tematik" && m.label === "Inquiry Data") {
+                              href = "/inquiry-data/tematik";
+                              onMouseEnterFn = () => import("@/components/inquiry-data/category-mandatory-filters");
+                            } else if (c.label === "RKAKL Detail" && m.label === "Inquiry Data") {
+                              href = "/inquiry-data/rkakl-detail";
+                              onMouseEnterFn = () => import("@/components/inquiry-data/dynamic-filters-card");
+                            } else if (c.label === "Dashboard Supplier" && m.label === "Data Supplier") {
+                              href = "/data-supplier/dashboard";
+                              onMouseEnterFn = () => import("@/components/data-supplier/DashboardSupplierClient");
+                            } else if (c.label === "Profil Supplier" && m.label === "Data Supplier") {
+                              href = "/data-supplier/profil";
+                              onMouseEnterFn = () => import("@/components/data-supplier/DashboardSupplierClient");
+                            } else if (c.label === "Konsentrasi Supplier" && m.label === "Data Supplier") {
+                              href = "/data-supplier/konsentrasi";
+                              onMouseEnterFn = () => import("@/components/data-supplier/DashboardSupplierClient");
+                            } else if (c.label === "Deteksi Anomali Supplier" && m.label === "Data Supplier") {
+                              href = "/data-supplier/anomali";
+                              onMouseEnterFn = () => import("@/components/data-supplier/DashboardSupplierClient");
+                            } else if (c.label === "Klaster Supplier" && m.label === "Data Supplier") {
+                              href = "/data-supplier/klaster";
+                              onMouseEnterFn = () => import("@/components/data-supplier/DashboardSupplierClient");
+                            } else if (c.label === "Jaringan Supplier" && m.label === "Data Supplier") {
+                              href = "/data-supplier/jaringan";
+                              onMouseEnterFn = () => import("@/components/data-supplier/DashboardSupplierClient");
+                            } else if (c.label === "Monthly Report" && m.label === "Laporan") {
+                              href = "/laporan/monthly-report";
+                            } else if (c.label === "Weekly Report" && m.label === "Laporan") {
+                              href = "/laporan/weekly-report";
+                            }
+
+                            return (
+                              <li key={c.label}>
+                                <NavigationMenuLink asChild>
+                                  <Link
+                                    href={href}
+                                    className="flex flex-row items-center gap-2 w-full"
+                                    onMouseEnter={onMouseEnterFn}
+                                    onClick={() =>
+                                      trackMenuUsage({
+                                        menu: m.label,
+                                        submenu: c.label,
+                                        path: href,
+                                      })
+                                    }
+                                  >
+                                    {subIconFor(m.label, c.label)}
+                                    <span>{c.label}</span>
+                                  </Link>
+                                </NavigationMenuLink>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </NavigationMenuContent>
+                    ) : null}
+                  </NavigationMenuItem>
+                ))}
+              </NavigationMenuList>
+            </NavigationMenu>
           </div>
 
           {/* Right pagination button */}
