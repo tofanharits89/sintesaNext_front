@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Search, FileDown } from "lucide-react";
 import * as XLSX from "xlsx";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Types
 interface SelectOption {
@@ -59,20 +60,12 @@ const Section = ({
   title: string;
   children: React.ReactNode;
 }) => (
-  <div className="row">
-    <div className="col-lg-12">
-      <div className="card bg-secondary text-white custom-card">
-        <div className="card-body py-1 px-2">
-          <div className="bagian-query">
-            <div className="custom-content">
-              <h5 className="text-white mb-1">{title}</h5>
-              {children}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <Card>
+    <CardHeader>
+      <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+    </CardHeader>
+    <CardContent>{children}</CardContent>
+  </Card>
 );
 
 const Field = ({
@@ -82,13 +75,8 @@ const Field = ({
   label: string;
   children: React.ReactNode;
 }) => (
-  <div className="mb-3">
-    <label
-      className="form-label text-white"
-      style={{ display: "block", marginBottom: 6 }}
-    >
-      {label}
-    </label>
+  <div className="mb-4">
+    <label className="text-sm font-medium mb-2 block">{label}</label>
     {children}
   </div>
 );
@@ -104,22 +92,17 @@ const SelectField = ({
   label: string;
   options: SelectOption[];
   defaultValue?: SelectOption;
-  onChange: (value: SelectOption | null) => void;
+  onChange: (value: string | null) => void;
   disabled?: boolean;
   isLoading?: boolean;
 }) => (
   <Field label={label}>
     <select
-      className="form-select"
+      className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
       disabled={disabled || isLoading}
       onChange={(e) => {
-        const selected = options.find((opt) => opt.value === e.target.value);
-        onChange(selected || null);
-      }}
-      defaultValue={defaultValue?.value}
-      style={{
-        backgroundColor: "white",
-        color: "#000",
+        const value = e.target.value;
+        onChange(value || null);
       }}
     >
       <option value="">Pilih {label}</option>
@@ -141,39 +124,24 @@ const ButtonRow = ({
   loadingResults: boolean;
   disabled?: boolean;
 }) => (
-  <div className="button-query">
-    <div className="row">
-      <div className="col-lg-12">
-        <button
-          className="btn btn-success btn-sm button me-2"
-          onClick={onSearch}
-          disabled={loadingResults || disabled}
-        >
-          {loadingResults ? (
-            <>
-              <span
-                className="spinner-border spinner-border-sm me-1"
-                role="status"
-                aria-hidden="true"
-              ></span>
-              Loading...
-            </>
-          ) : (
-            <>
-              <Search
-                className="w-4 h-4 me-1"
-                style={{
-                  display: "inline-block",
-                  width: "1rem",
-                  height: "1rem",
-                }}
-              />
-              Tayang
-            </>
-          )}
-        </button>
-      </div>
-    </div>
+  <div className="flex gap-2">
+    <button
+      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+      onClick={onSearch}
+      disabled={loadingResults || disabled}
+    >
+      {loadingResults ? (
+        <>
+          <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
+          Loading...
+        </>
+      ) : (
+        <>
+          <Search className="mr-2 h-4 w-4" />
+          Tayang
+        </>
+      )}
+    </button>
   </div>
 );
 
@@ -418,68 +386,71 @@ function DataBPSContent() {
   return (
     <>
       <Section title="Pilih Parameter">
-        <div className="row">
-          <div className="col-lg-6">
-            <SelectField
-              label="Domain"
-              options={domainList}
-              onChange={(e) => {
-                setSelectedDomain(e ? e.value : null);
-              }}
-              disabled={domainList.length === 0 || isLoading}
-              isLoading={isLoading}
-            />
-          </div>
-          <div className="col-lg-6">
-            <SelectField
-              label="Variable"
-              options={variableList}
-              onChange={(e) => {
-                setSelectedVariable(e ? e.value : null);
-              }}
-              disabled={variableList.length === 0 || isLoading}
-              isLoading={isLoading}
-            />
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <SelectField
+            label="Domain"
+            options={domainList}
+            onChange={(value) => {
+              setSelectedDomain(value);
+            }}
+            disabled={domainList.length === 0 || isLoading}
+            isLoading={isLoading}
+          />
+          <SelectField
+            label="Variable"
+            options={variableList}
+            onChange={(value) => {
+              setSelectedVariable(value);
+            }}
+            disabled={variableList.length === 0 || isLoading}
+            isLoading={isLoading}
+          />
         </div>
       </Section>
-
-      <ButtonRow
-        onSearch={fetchVariableData}
-        loadingResults={isFetching}
-        disabled={!selectedVariable || !selectedDomain || !BPSKey}
-      />
-
+      <div className="flex justify-center">
+        <ButtonRow
+          onSearch={fetchVariableData}
+          loadingResults={isFetching}
+          disabled={!selectedVariable || !selectedDomain}
+        />
+      </div>
       {!isFetching ? (
         fetchedData ? (
           <Section title="Hasil Data">
-            <div className="mb-3 d-flex justify-content-end">
+            <div className="mb-4 flex justify-end">
               <button
-                className="btn btn-success btn-sm d-flex align-items-center gap-2"
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2"
                 onClick={() => exportToExcel()}
               >
-                <FileDown size={16} />
+                <FileDown className="mr-2 h-4 w-4" />
                 Export Excel
               </button>
             </div>
-            <div className="grid grid-cols-1">
-              <div
-                className="overflow-x-auto bg-white"
-                style={{ maxWidth: "100%" }}
-              >
+            <div className="rounded-md border">
+              <div className="overflow-x-auto">
                 <table
-                  className="table table-sm"
+                  className="w-full text-sm"
                   style={{ width: "100%", tableLayout: "auto" }}
                 >
-                  <thead>
-                    <tr>
-                      <th rowSpan={2}>Komponen</th>
-                      <th rowSpan={2}>Turunan</th>
+                  <thead className="bg-muted/50">
+                    <tr className="border-b">
+                      <th
+                        className="h-12 px-4 text-left align-middle font-medium"
+                        rowSpan={2}
+                      >
+                        Komponen
+                      </th>
+                      <th
+                        className="h-12 px-4 text-left align-middle font-medium"
+                        rowSpan={2}
+                      >
+                        Turunan
+                      </th>
                       {fetchedData.tahun.map((th, index) => {
                         return (
                           <th
                             key={index}
-                            className="text-center"
+                            className="h-12 px-4 text-center align-middle font-medium"
                             colSpan={fetchedData.turtahun.length}
                           >
                             {th.label}
@@ -487,10 +458,14 @@ function DataBPSContent() {
                         );
                       })}
                     </tr>
-                    <tr>
+                    <tr className="border-b">
                       {fetchedData.tahun.map((th, i) => {
                         let elements = fetchedData.turtahun.map((turth, j) => (
-                          <th key={`${i}${j}`} colSpan={1}>
+                          <th
+                            key={`${i}${j}`}
+                            className="h-12 px-4 text-left align-middle font-medium"
+                            colSpan={1}
+                          >
                             {turth.label}
                           </th>
                         ));
@@ -501,17 +476,21 @@ function DataBPSContent() {
                   <tbody>
                     {fetchedData.vervar.map((vervar, i) =>
                       fetchedData.turvar.map((turvar, j) => (
-                        <tr key={`${i}-${j}`}>
-                          <th className="bg-white" rowSpan={1}>
+                        <tr key={`${i}-${j}`} className="border-b">
+                          <th
+                            className="p-4 align-middle font-medium"
+                            rowSpan={1}
+                          >
                             {vervar.label}
                           </th>
-                          <td rowSpan={1}>
+                          <td className="p-4 align-middle" rowSpan={1}>
                             {turvar.val === 0 ? "" : turvar.label}
                           </td>
                           {fetchedData.tahun.map((tahun, k) =>
                             fetchedData.turtahun.map((turtahun, l) => (
                               <td
                                 key={`${vervar.val}${selectedVariable}${turvar.val}${tahun.val}${turtahun.val}`}
+                                className="p-4 align-middle"
                               >
                                 {
                                   fetchedData.datacontent[
@@ -531,8 +510,8 @@ function DataBPSContent() {
           </Section>
         ) : (
           <Section title="Tidak Ada Data">
-            <div className="text-center py-4">
-              <p className="text-white">
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">
                 {!BPSKey
                   ? "BPS API Key tidak ditemukan"
                   : "Silakan pilih Domain dan Variable untuk menampilkan data"}
@@ -542,11 +521,18 @@ function DataBPSContent() {
         )
       ) : (
         <Section title="Memuat Data">
-          <div className="text-center py-4">
-            <div className="spinner-border text-light mb-2" role="status">
-              <span className="visually-hidden">Loading...</span>
+          <div className="text-center py-8">
+            <div
+              className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite] mb-4"
+              role="status"
+            >
+              <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
+                Loading...
+              </span>
             </div>
-            <div className="text-white">Memuat data, mohon tunggu...</div>
+            <div className="text-muted-foreground">
+              Memuat data, mohon tunggu...
+            </div>
           </div>
 
           <div style={{ overflowX: "auto", maxWidth: "100%", marginTop: 12 }}>
@@ -601,24 +587,21 @@ function DataBPSContent() {
   );
 }
 
-export default function DataMakrokesraPage() {
+export default function DataBPSPage() {
   return (
-    <main id="main" className="main">
-      <div className="flex-1 overflow-y-auto p-4 md:p-8 mt-16 md:mt-12">
-        <div className="pagetitle">
-          <h1>Data Makrokesra</h1>
-          <nav>
-            <ol className="breadcrumb">
-              <li className="breadcrumb-item">
-                <a href="#">Data</a>
-              </li>
-              <li className="breadcrumb-item active">Makrokesra</li>
-            </ol>
-          </nav>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Data BPS</h1>
+          <p className="text-sm text-muted-foreground">
+            Data berasal dari WebAPI Badan Pusat Statistik (BPS) Republik
+            Indonesia
+          </p>
         </div>
-
-        <DataBPSContent />
       </div>
-    </main>
+
+      <DataBPSContent />
+    </div>
   );
 }
