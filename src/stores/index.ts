@@ -13,6 +13,7 @@ import {
 import { useTypingIndicatorsStore } from "./typing-indicators-store";
 import { useUnreadBadgesStore } from "./unread-badges-store";
 import { useNotificationStore } from "./notification-store";
+import { useBPSDataStore } from "./bps-data-store";
 
 export {
   useMessagingStore,
@@ -29,7 +30,31 @@ export {
   useTypingIndicatorsStore,
   useUnreadBadgesStore,
   useNotificationStore,
+  useBPSDataStore,
 };
+
+// Re-export BPS store selectors and actions
+export {
+  useBPSDomainList,
+  useBPSSelectedDomain,
+  useBPSVariableList,
+  useBPSSelectedVariable,
+  useBPSFetchedData,
+  useBPSIsLoading,
+  useBPSIsFetching,
+  useBPSPulse,
+  useBPSVariableLoadingProgress,
+  useBPSActions,
+  useBPSSetSelectedDomain,
+  useBPSSetSelectedVariable,
+  useBPSFetchAllDomains,
+  useBPSFetchInitialVariables,
+  useBPSFetchVariableData,
+  useBPSSearchDomains,
+  useBPSSearchVariables,
+  useBPSExportToExcel,
+  useBPSResetVariableData,
+} from "./bps-data-store";
 
 // Compatibility exports for legacy code
 export const useMessagingUIStore = useMessagingStore;

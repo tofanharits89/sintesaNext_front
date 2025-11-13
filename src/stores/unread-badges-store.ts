@@ -457,10 +457,8 @@ export const useHasUnreadMessages = (conversationId: string) =>
   useUnreadBadgesStore((state) => state.hasUnreadMessages(conversationId));
 
 export const useConversationsWithUnread = () => {
-  const setRef = useUnreadBadgesStore((state) => state.conversationsWithUnread);
-  // Memoize the derived array so getServerSnapshot returns a stable value
-  // across multiple reads within the same render.
-  return useMemo(() => Array.from(setRef), [setRef]);
+  // Direct selector that returns a stable array
+  return useUnreadBadgesStore((state) => Array.from(state.conversationsWithUnread));
 };
 
 export const useUnreadActions = () => {
