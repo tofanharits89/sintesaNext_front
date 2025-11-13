@@ -87,7 +87,7 @@ export function DateTimePicker({
               variant="outline"
               id="date-picker"
               className={cn(
-                "w-[200px] justify-between font-normal",
+                "w-[200px] justify-between font-normal bg-zinc-100 dark:bg-black",
                 !selectedDate && "text-muted-foreground"
               )}
               disabled={disabled}
@@ -115,7 +115,7 @@ export function DateTimePicker({
           value={time}
           onChange={handleTimeChange}
           disabled={disabled}
-          className="w-[120px] bg-background"
+          className="w-[120px] bg-zinc-100 dark:bg-black"
         />
       </div>
     </div>

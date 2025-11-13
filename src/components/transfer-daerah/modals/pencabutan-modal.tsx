@@ -248,7 +248,7 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full justify-start text-left font-normal",
+                        "w-full justify-start text-left font-normal bg-zinc-100 dark:bg-black",
                         !formData.tanggalKmk && "text-muted-foreground"
                       )}
                     >
