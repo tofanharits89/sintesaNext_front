@@ -9,7 +9,7 @@ setLogger({ log: console.log, warn: console.warn, error: () => {} });
 
 // Mock backend path
 vi.mock("@/lib/api/backend", () => ({
-  backendPath: (path: string) => `http://localhost:88/api/v1${path}`,
+  backendPath: (path: string) => `http://localhost:${process.env.NEXT_PUBLIC_BACKEND_PORT || "88"}/api/v1${path}`,
 }));
 
 // Mock http and apiClient
@@ -108,7 +108,7 @@ describe("useSavedQueries (React Query)", () => {
     httpGet.mockResolvedValue({ data: { success: true, data: mockResponse } });
     const { result } = renderHook(() => useSavedQueries({ page: 2, limit: 10, search: "test" }), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(httpGet).toHaveBeenCalledWith("http://localhost:88/api/v1/saved-queries?page=2&limit=10&search=test", expect.any(Object));
+    expect(httpGet).toHaveBeenCalledWith(`http://localhost:${process.env.NEXT_PUBLIC_BACKEND_PORT || "88"}/api/v1/saved-queries?page=2&limit=10&search=test`, expect.any(Object));
   });
 
   it("should provide getQueryById and loadQuery", async () => {

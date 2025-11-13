@@ -166,7 +166,7 @@ const nextConfig: NextConfig = {
           reportFilename: isServer
             ? "../analyze/server.html"
             : "./analyze/client.html",
-        }),
+        })
       );
     }
 
@@ -194,12 +194,13 @@ const nextConfig: NextConfig = {
   async rewrites() {
     const backendHost =
       process.env.NODE_ENV === "production" ? "backend" : "localhost";
+    const backendPort = process.env.BACKEND_PORT || "8080";
 
     return [
       // Proxy API requests to backend
       {
         source: "/api/v1/:path*",
-        destination: `http://${backendHost}:88/api/v1/:path*`,
+        destination: `http://${backendHost}:${backendPort}/api/v1/:path*`,
       },
     ];
   },

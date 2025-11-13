@@ -14,7 +14,8 @@ function getApiUrl(): string {
   if (typeof window !== "undefined") {
     // Allow opting out via env if needed
     if (process.env.NEXT_PUBLIC_USE_ABSOLUTE_API === "false") {
-      return process.env.NEXT_PUBLIC_API_URL || "http://localhost:88/api/v1";
+      const backendPort = process.env.NEXT_PUBLIC_BACKEND_PORT || "88";
+      return process.env.NEXT_PUBLIC_API_URL || `http://localhost:${backendPort}/api/v1`;
     }
     return "/api/v1";
   }
@@ -26,23 +27,25 @@ function getApiUrl(): string {
       return serverUrl;
     }
     // If relative (e.g. "/api/v1"), resolve against backend origin
+    const backendPort = process.env.BACKEND_PORT || process.env.NEXT_PUBLIC_BACKEND_PORT || "88";
+    const backendHost = process.env.NODE_ENV === 'production' ? 'backend' : 'localhost';
     const origin =
       process.env.NEXT_PUBLIC_BACKEND_ORIGIN ||
-      (process.env.NODE_ENV === 'production' ? 'http://backend:88' : 'http://localhost:88');
+      `http://${backendHost}:${backendPort}`;
     try {
       return new URL(serverUrl, origin).toString();
     } catch {
       // Fallback to Docker service name
-      return process.env.NODE_ENV === 'production'
-        ? 'http://backend:88/api/v1'
-        : 'http://localhost:88/api/v1';
+      const backendPort = process.env.BACKEND_PORT || process.env.NEXT_PUBLIC_BACKEND_PORT || "88";
+      const backendHost = process.env.NODE_ENV === 'production' ? 'backend' : 'localhost';
+      return `http://${backendHost}:${backendPort}/api/v1`;
     }
   }
   
   // Fallback: use Docker service name in production, localhost in dev
   return process.env.NODE_ENV === 'production'
-    ? "http://backend:88/api/v1"
-    : "http://localhost:88/api/v1";
+    ? `http://backend:${process.env.BACKEND_PORT || process.env.NEXT_PUBLIC_BACKEND_PORT || "88"}/api/v1`
+    : `http://localhost:${process.env.BACKEND_PORT || process.env.NEXT_PUBLIC_BACKEND_PORT || "88"}/api/v1`;
 }
 
 /**
@@ -82,9 +85,9 @@ function getSocketUrl(): string {
     }
   }
   // Server-side fallback - use backend service name in Docker
-  return process.env.NODE_ENV === 'production' 
-    ? 'http://backend:88' 
-    : 'http://localhost:88';
+  const backendPort = process.env.BACKEND_PORT || process.env.NEXT_PUBLIC_BACKEND_PORT || "88";
+  const backendHost = process.env.NODE_ENV === 'production' ? 'backend' : 'localhost';
+  return `http://${backendHost}:${backendPort}`;
 }
 
 /**

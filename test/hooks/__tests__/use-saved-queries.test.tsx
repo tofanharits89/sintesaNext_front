@@ -6,7 +6,7 @@ import type { SavedQuery, CreateSavedQueryRequest } from "@/types/saved-queries"
 
 // Mock dependencies
 jest.mock("@/lib/api/backend", () => ({
-  backendPath: (path: string) => `http://localhost:88/api/v1${path}`,
+  backendPath: (path: string) => `http://localhost:${process.env.NEXT_PUBLIC_BACKEND_PORT || "88"}/api/v1${path}`,
 }));
 
 jest.mock("@/utils/auth-utils", () => ({
@@ -182,7 +182,7 @@ describe("useSavedQueries", () => {
       }, { timeout: 5000 });
 
       expect(mockHttp.get).toHaveBeenCalledWith(
-        "http://localhost:88/api/v1/saved-queries?page=2&limit=10&search=test",
+        `http://localhost:${process.env.NEXT_PUBLIC_BACKEND_PORT || "88"}/api/v1/saved-queries?page=2&limit=10&search=test`,
         expect.any(Object)
       );
     });
