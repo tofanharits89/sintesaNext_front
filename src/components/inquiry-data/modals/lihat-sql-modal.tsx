@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger, TabsContents } from "@/components/animate-ui/components/animate/tabs";
 import {
   Code,
   Copy,
@@ -197,32 +197,35 @@ export function LihatSqlModal({
             <Tabs
               value={activeTab}
               onValueChange={setActiveTab}
-              className="w-full"
+              className="w-full gap-3"
             >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger
-                  value="converted"
-                  className="flex items-center gap-2"
-                >
-                  <Database className="w-4 h-4" />
-                  PostgreSQL (Converted)
-                  {previewData?.conversions &&
-                    Object.values(previewData.conversions).some((v) => v) && (
-                      <Badge variant="secondary" className="text-xs ml-1">
-                        Converted
-                      </Badge>
-                    )}
-                </TabsTrigger>
-                <TabsTrigger
-                  value="original"
-                  className="flex items-center gap-2"
-                >
-                  <Code className="w-4 h-4" />
-                  MySQL (Original)
-                </TabsTrigger>
-              </TabsList>
+              <div className="border-b border-border/50 pb-3 mb-0">
+                <TabsList className="w-full h-auto md:h-12 p-2 rounded-xl grid grid-cols-2 gap-2">
+                  <TabsTrigger
+                    value="converted"
+                    className="h-12 md:h-full px-2 md:px-4 py-0 text-xs md:text-sm whitespace-nowrap"
+                  >
+                    <Database className="w-4 h-4" />
+                    <span>PostgreSQL (Converted)</span>
+                    {previewData?.conversions &&
+                      Object.values(previewData.conversions).some((v) => v) && (
+                        <Badge variant="secondary" className="text-xs ml-1">
+                          Converted
+                        </Badge>
+                      )}
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="original"
+                    className="h-12 md:h-full px-2 md:px-4 py-0 text-xs md:text-sm whitespace-nowrap"
+                  >
+                    <Code className="w-4 h-4" />
+                    <span>MySQL (Original)</span>
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
-              <TabsContent value="converted" className="space-y-2">
+              <TabsContents>
+                <TabsContent value="converted" className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-slate-600 dark:text-slate-400">
                     Query yang dieksekusi di PostgreSQL (dengan konversi
@@ -339,6 +342,7 @@ export function LihatSqlModal({
                   </div>
                 </ScrollArea>
               </TabsContent>
+              </TabsContents>
             </Tabs>
           </div>
 
