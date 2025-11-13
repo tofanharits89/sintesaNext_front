@@ -215,6 +215,11 @@ export function ResponsiveSidebar({
         return (
           <FileText className={`${cls} text-cyan-600 dark:text-cyan-400`} />
         );
+      case "Data Makrokesra":
+        return (
+          <PieChart className={`${cls} text-violet-600 dark:text-violet-400`} />
+        );
+
       case "Tentang Kita":
         return (
           <Info className={`${cls} text-neutral-600 dark:text-neutral-300`} />
@@ -296,6 +301,9 @@ export function ResponsiveSidebar({
         return <Layers className={cls} />;
       case "Data Supplier__Jaringan Supplier":
         return <Share2 className={cls} />;
+      case "Data Makrokesra__Data BPS":
+        return <Database className={cls} />;
+
       default:
         return null;
     }
@@ -616,6 +624,11 @@ export function ResponsiveSidebar({
                               m.label === "Laporan"
                             ) {
                               href = "/laporan/weekly-report";
+                            } else if (
+                              c.label === "Data BPS" &&
+                              m.label === "Data Makrokesra"
+                            ) {
+                              href = "/data_makrokesra";
                             }
 
                             return (
@@ -1215,6 +1228,26 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/laporan/weekly-report",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Data BPS" &&
+                      m.label === "Data Makrokesra" ? (
+                      <Link
+                        key={c.label}
+                        href="/data_makrokesra"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/data_makrokesra",
                           });
                           setOpen(false);
                         }}

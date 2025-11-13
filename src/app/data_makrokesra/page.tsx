@@ -177,7 +177,7 @@ const ButtonRow = ({
   </div>
 );
 
-export default function DataMakrokesraPage() {
+function DataBPSContent() {
   const BPSKey = "3405ac46a7c9419e06ebc7a9894b79fd";
   const [domainList, setDomainList] = useState<SelectOption[]>([]);
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
@@ -416,209 +416,208 @@ export default function DataMakrokesraPage() {
   }, [isFetching]);
 
   return (
+    <>
+      <Section title="Pilih Parameter">
+        <div className="row">
+          <div className="col-lg-6">
+            <SelectField
+              label="Domain"
+              options={domainList}
+              onChange={(e) => {
+                setSelectedDomain(e ? e.value : null);
+              }}
+              disabled={domainList.length === 0 || isLoading}
+              isLoading={isLoading}
+            />
+          </div>
+          <div className="col-lg-6">
+            <SelectField
+              label="Variable"
+              options={variableList}
+              onChange={(e) => {
+                setSelectedVariable(e ? e.value : null);
+              }}
+              disabled={variableList.length === 0 || isLoading}
+              isLoading={isLoading}
+            />
+          </div>
+        </div>
+      </Section>
+
+      <ButtonRow
+        onSearch={fetchVariableData}
+        loadingResults={isFetching}
+        disabled={!selectedVariable || !selectedDomain || !BPSKey}
+      />
+
+      {!isFetching ? (
+        fetchedData ? (
+          <Section title="Hasil Data">
+            <div className="mb-3 d-flex justify-content-end">
+              <button
+                className="btn btn-success btn-sm d-flex align-items-center gap-2"
+                onClick={() => exportToExcel()}
+              >
+                <FileDown size={16} />
+                Export Excel
+              </button>
+            </div>
+            <div className="grid grid-cols-1">
+              <div
+                className="overflow-x-auto bg-white"
+                style={{ maxWidth: "100%" }}
+              >
+                <table
+                  className="table table-sm"
+                  style={{ width: "100%", tableLayout: "auto" }}
+                >
+                  <thead>
+                    <tr>
+                      <th rowSpan={2}>Komponen</th>
+                      <th rowSpan={2}>Turunan</th>
+                      {fetchedData.tahun.map((th, index) => {
+                        return (
+                          <th
+                            key={index}
+                            className="text-center"
+                            colSpan={fetchedData.turtahun.length}
+                          >
+                            {th.label}
+                          </th>
+                        );
+                      })}
+                    </tr>
+                    <tr>
+                      {fetchedData.tahun.map((th, i) => {
+                        let elements = fetchedData.turtahun.map((turth, j) => (
+                          <th key={`${i}${j}`} colSpan={1}>
+                            {turth.label}
+                          </th>
+                        ));
+                        return elements;
+                      })}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fetchedData.vervar.map((vervar, i) =>
+                      fetchedData.turvar.map((turvar, j) => (
+                        <tr key={`${i}-${j}`}>
+                          <th className="bg-white" rowSpan={1}>
+                            {vervar.label}
+                          </th>
+                          <td rowSpan={1}>
+                            {turvar.val === 0 ? "" : turvar.label}
+                          </td>
+                          {fetchedData.tahun.map((tahun, k) =>
+                            fetchedData.turtahun.map((turtahun, l) => (
+                              <td
+                                key={`${vervar.val}${selectedVariable}${turvar.val}${tahun.val}${turtahun.val}`}
+                              >
+                                {
+                                  fetchedData.datacontent[
+                                    `${vervar.val}${selectedVariable}${turvar.val}${tahun.val}${turtahun.val}`
+                                  ]
+                                }
+                              </td>
+                            ))
+                          )}
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </Section>
+        ) : (
+          <Section title="Tidak Ada Data">
+            <div className="text-center py-4">
+              <p className="text-white">
+                {!BPSKey
+                  ? "BPS API Key tidak ditemukan"
+                  : "Silakan pilih Domain dan Variable untuk menampilkan data"}
+              </p>
+            </div>
+          </Section>
+        )
+      ) : (
+        <Section title="Memuat Data">
+          <div className="text-center py-4">
+            <div className="spinner-border text-light mb-2" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <div className="text-white">Memuat data, mohon tunggu...</div>
+          </div>
+
+          <div style={{ overflowX: "auto", maxWidth: "100%", marginTop: 12 }}>
+            <div
+              style={{
+                display: "table",
+                width: "100%",
+                borderCollapse: "collapse",
+              }}
+            >
+              <div style={{ display: "table-header-group" }}>
+                <div style={{ display: "table-row" }}>
+                  {Array.from({ length: 6 }).map((_, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: "table-cell",
+                        padding: "10px",
+                        background: pulse ? "#e9ecef" : "#f8f9fa",
+                        transition: "background-color 300ms",
+                        height: 20,
+                        borderBottom: "1px solid #dee2e6",
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: "table-row-group" }}>
+                {Array.from({ length: 5 }).map((_, r) => (
+                  <div key={r} style={{ display: "table-row" }}>
+                    {Array.from({ length: 6 }).map((__, c) => (
+                      <div
+                        key={c}
+                        style={{
+                          display: "table-cell",
+                          padding: "8px",
+                          background: pulse ? "#f1f3f5" : "#f8f9fa",
+                          transition: "background-color 300ms",
+                          height: 28,
+                          borderBottom: "1px solid #eee",
+                        }}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Section>
+      )}
+    </>
+  );
+}
+
+export default function DataMakrokesraPage() {
+  return (
     <main id="main" className="main">
       <div className="flex-1 overflow-y-auto p-4 md:p-8 mt-16 md:mt-12">
         <div className="pagetitle">
-          <h1>Data BPS</h1>
+          <h1>Data Makrokesra</h1>
           <nav>
             <ol className="breadcrumb">
               <li className="breadcrumb-item">
                 <a href="#">Data</a>
               </li>
-              <li className="breadcrumb-item active">Makro Kesra</li>
+              <li className="breadcrumb-item active">Makrokesra</li>
             </ol>
           </nav>
-          <p className="text-muted mt-3" style={{ fontSize: "0.9em" }}>
-            <i className="bi bi-info-circle me-1"></i>
-            Note: Data berasal dari WebAPI Badan Pusat Statistik (BPS) Republik
-            Indonesia. Informasi yang Anda lihat merupakan data resmi yang
-            dipublikasikan oleh BPS, baik dalam bentuk publikasi, siaran pers,
-            acara, maupun tabel data statis dan dinamis.
-          </p>
         </div>
 
-        <Section title="Pilih Parameter">
-          <div className="row">
-            <div className="col-lg-6">
-              <SelectField
-                label="Domain"
-                options={domainList}
-                onChange={(e) => {
-                  setSelectedDomain(e ? e.value : null);
-                }}
-                disabled={domainList.length === 0 || isLoading}
-                isLoading={isLoading}
-              />
-            </div>
-            <div className="col-lg-6">
-              <SelectField
-                label="Variable"
-                options={variableList}
-                onChange={(e) => {
-                  setSelectedVariable(e ? e.value : null);
-                }}
-                disabled={variableList.length === 0 || isLoading}
-                isLoading={isLoading}
-              />
-            </div>
-          </div>
-        </Section>
-
-        <ButtonRow
-          onSearch={fetchVariableData}
-          loadingResults={isFetching}
-          disabled={!selectedVariable || !selectedDomain || !BPSKey}
-        />
-
-        {!isFetching ? (
-          fetchedData ? (
-            <Section title="Hasil Data">
-              <div className="mb-3 d-flex justify-content-end">
-                <button
-                  className="btn btn-success btn-sm d-flex align-items-center gap-2"
-                  onClick={() => exportToExcel()}
-                >
-                  <FileDown size={16} />
-                  Export Excel
-                </button>
-              </div>
-              <div className="grid grid-cols-1">
-                <div
-                  className="overflow-x-auto bg-white"
-                  style={{ maxWidth: "100%" }}
-                >
-                  <table
-                    className="table table-sm"
-                    style={{ width: "100%", tableLayout: "auto" }}
-                  >
-                    <thead>
-                      <tr>
-                        <th rowSpan={2}>Komponen</th>
-                        <th rowSpan={2}>Turunan</th>
-                        {fetchedData.tahun.map((th, index) => {
-                          return (
-                            <th
-                              key={index}
-                              className="text-center"
-                              colSpan={fetchedData.turtahun.length}
-                            >
-                              {th.label}
-                            </th>
-                          );
-                        })}
-                      </tr>
-                      <tr>
-                        {fetchedData.tahun.map((th, i) => {
-                          let elements = fetchedData.turtahun.map(
-                            (turth, j) => (
-                              <th key={`${i}${j}`} colSpan={1}>
-                                {turth.label}
-                              </th>
-                            )
-                          );
-                          return elements;
-                        })}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {fetchedData.vervar.map((vervar, i) =>
-                        fetchedData.turvar.map((turvar, j) => (
-                          <tr key={`${i}-${j}`}>
-                            <th className="bg-white" rowSpan={1}>
-                              {vervar.label}
-                            </th>
-                            <td rowSpan={1}>
-                              {turvar.val === 0 ? "" : turvar.label}
-                            </td>
-                            {fetchedData.tahun.map((tahun, k) =>
-                              fetchedData.turtahun.map((turtahun, l) => (
-                                <td
-                                  key={`${vervar.val}${selectedVariable}${turvar.val}${tahun.val}${turtahun.val}`}
-                                >
-                                  {
-                                    fetchedData.datacontent[
-                                      `${vervar.val}${selectedVariable}${turvar.val}${tahun.val}${turtahun.val}`
-                                    ]
-                                  }
-                                </td>
-                              ))
-                            )}
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </Section>
-          ) : (
-            <Section title="Tidak Ada Data">
-              <div className="text-center py-4">
-                <p className="text-white">
-                  {!BPSKey
-                    ? "BPS API Key tidak ditemukan"
-                    : "Silakan pilih Domain dan Variable untuk menampilkan data"}
-                </p>
-              </div>
-            </Section>
-          )
-        ) : (
-          <Section title="Memuat Data">
-            <div className="text-center py-4">
-              <div className="spinner-border text-light mb-2" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
-              <div className="text-white">Memuat data, mohon tunggu...</div>
-            </div>
-
-            <div style={{ overflowX: "auto", maxWidth: "100%", marginTop: 12 }}>
-              <div
-                style={{
-                  display: "table",
-                  width: "100%",
-                  borderCollapse: "collapse",
-                }}
-              >
-                <div style={{ display: "table-header-group" }}>
-                  <div style={{ display: "table-row" }}>
-                    {Array.from({ length: 6 }).map((_, idx) => (
-                      <div
-                        key={idx}
-                        style={{
-                          display: "table-cell",
-                          padding: "10px",
-                          background: pulse ? "#e9ecef" : "#f8f9fa",
-                          transition: "background-color 300ms",
-                          height: 20,
-                          borderBottom: "1px solid #dee2e6",
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <div style={{ display: "table-row-group" }}>
-                  {Array.from({ length: 5 }).map((_, r) => (
-                    <div key={r} style={{ display: "table-row" }}>
-                      {Array.from({ length: 6 }).map((__, c) => (
-                        <div
-                          key={c}
-                          style={{
-                            display: "table-cell",
-                            padding: "8px",
-                            background: pulse ? "#f1f3f5" : "#f8f9fa",
-                            transition: "background-color 300ms",
-                            height: 28,
-                            borderBottom: "1px solid #eee",
-                          }}
-                        />
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </Section>
-        )}
+        <DataBPSContent />
       </div>
     </main>
   );
