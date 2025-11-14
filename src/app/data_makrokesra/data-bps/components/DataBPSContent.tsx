@@ -53,7 +53,7 @@ export function DataBPSContent() {
 
       {isFetching ? (
         <LoadingState />
-      ) : fetchedData ? (
+      ) : fetchedData && selectedVariable ? (
         <DataTable
           data={fetchedData}
           selectedVariable={selectedVariable}
