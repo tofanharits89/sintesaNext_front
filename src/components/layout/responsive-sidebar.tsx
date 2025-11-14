@@ -628,7 +628,7 @@ export function ResponsiveSidebar({
                               c.label === "Data BPS" &&
                               m.label === "Data Makrokesra"
                             ) {
-                              href = "/data_makrokesra/data-bps";
+                              href = "/data-makrokesra/data-bps";
                             }
 
                             return (
@@ -1241,13 +1241,13 @@ export function ResponsiveSidebar({
                       m.label === "Data Makrokesra" ? (
                       <Link
                         key={c.label}
-                        href="/data_makrokesra/data-bps"
+                        href="/data-makrokesra/data-bps"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onClick={() => {
                           trackMenuUsage({
                             menu: m.label,
                             submenu: c.label,
-                            path: "/data_makrokesra/data-bps",
+                            path: "/data-makrokesra/data-bps",
                           });
                           setOpen(false);
                         }}

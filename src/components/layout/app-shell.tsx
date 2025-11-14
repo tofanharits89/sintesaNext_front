@@ -38,7 +38,7 @@ const AppShell = memo(function AppShell({
       "/inquiry-data",
       "/epa",
       "/makan-bergizi",
-      "/data_makrokesra",
+      "/data-makrokesra",
       "/laporan",
       "/tentang-kita",
       "/debug-cookies",
