@@ -24,7 +24,7 @@ import {
   getRoleDisplayName as rbacGetRoleDisplayName,
   type MinimalUser,
 } from '@/lib/security/rbac';
-import { clearCSRFCache } from '@/lib/security/csrfManager';
+import { clearCSRFCache, primeCSRFToken } from '@/lib/security/csrfManager';
 
 // Re-export User type for convenience (already defined in auth/client)
 export type { User } from '@/lib/auth/client';
@@ -114,12 +114,13 @@ export function useAuth(): UseAuthReturn {
 
       return result.data;
     },
-    staleTime: 0, // Don't cache auth data - always fetch fresh
-    gcTime: 30 * 60 * 1000, // 30 minutes
-    refetchOnWindowFocus: false, // Disable excessive refetching
-    refetchOnMount: true, // Refetch on mount if needed
-    retry: false, // Don't retry auth failures
-    enabled: true, // Ensure query is enabled
+    staleTime: 0, // Always consider stale, rely on cache time
+    gcTime: 5 * 60 * 1000, // 5 minutes cache
+    refetchOnWindowFocus: true, // Refetch when user returns to tab
+    refetchOnMount: true,
+    refetchInterval: 60 * 1000, // Poll every minute to detect session expiry
+    retry: false,
+    enabled: true,
   });
 
   const user = data?.user || null;
@@ -139,13 +140,26 @@ export function useAuth(): UseAuthReturn {
       const result = await authClient.login(username, password, rememberMe, captcha ? { captcha } : {});
 
       if (result.success && result.user) {
-        // Invalidate auth query to clear cache
-        await queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
-
-        // Then refetch to get fresh data
-        await queryRefetch();
-
-        return { success: true };
+        // Prime CSRF cache immediately to prevent race conditions
+        if (result.csrfToken) {
+          primeCSRFToken(result.csrfToken);
+        }
+        
+        // Clear cache first to ensure fresh fetch
+        await queryClient.removeQueries({ queryKey: AUTH_QUERY_KEY });
+        
+        // Wait for refetch to complete before returning
+        // This ensures auth data is loaded before redirect
+        const refetchResult = await queryRefetch();
+        
+        // Verify data was actually fetched
+        if (refetchResult.data) {
+          return { success: true };
+        } else {
+          // If refetch failed, still return success since login API succeeded
+          // The page will refetch on mount
+          return { success: true };
+        }
       } else {
         return { success: false, error: result.error || 'Login failed' };
       }
@@ -169,12 +183,9 @@ export function useAuth(): UseAuthReturn {
       console.error('Logout error:', error);
       // Continue with cleanup even if API call fails
     } finally {
-      // Clear all auth-related caches and state
-      queryClient.clear();
-      clearCSRFCache();
-
-      // Remove query from cache
+      // Remove auth query from cache (forces refetch on next access)
       queryClient.removeQueries({ queryKey: AUTH_QUERY_KEY });
+      clearCSRFCache();
 
       // NOTE: Do NOT set isLoggingOut to false here
       // The loading state should persist until the page redirects

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, ReactNode } from "react";
+import React, { createContext, useContext, ReactNode, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface User {
   id: string;
@@ -24,9 +25,16 @@ interface DashboardProviderProps {
 }
 
 export function DashboardProvider({ children, initialUser }: DashboardProviderProps) {
+  const { user, refetch } = useAuth();
+
+  // Ensure auth is refetched on mount to catch fresh session after login
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
   const contextValue: DashboardContextType = {
-    user: initialUser,
-    isAuthenticated: !!initialUser,
+    user: user || initialUser,
+    isAuthenticated: !!(user || initialUser),
   };
 
   return (
