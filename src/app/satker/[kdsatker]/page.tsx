@@ -34,7 +34,7 @@ export default function SatkerDetailPage() {
 
   if (loading || userLoading) {
     return (
-      <div className="container mx-auto p-6">
+      <div>
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
           <div className="h-4 bg-gray-200 rounded w-1/4 mb-8"></div>
@@ -49,7 +49,7 @@ export default function SatkerDetailPage() {
 
   if (!satkerData) {
     return (
-      <div className="container mx-auto p-6">
+      <div>
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
@@ -57,8 +57,8 @@ export default function SatkerDetailPage() {
             <p className="text-muted-foreground text-center">
               Satuan kerja dengan kode {kdsatker} tidak ditemukan dalam database.
             </p>
-            <Button 
-              onClick={() => router.push('/satker')} 
+            <Button
+              onClick={() => router.push('/satker')}
               className="mt-4"
               variant="outline"
             >
@@ -73,12 +73,12 @@ export default function SatkerDetailPage() {
   // Check access control
   if (!hasAccess) {
     return (
-      <div className="container mx-auto p-6 space-y-6">
+      <div className="space-y-6">
         <Alert className="border-red-200 bg-red-50">
           <AlertTriangle className="h-4 w-4 text-red-600" />
           <AlertDescription className="text-red-800">
-            <strong>Akses Ditolak:</strong> Anda tidak memiliki akses untuk melihat detail satker ini. 
-            {currentUser?.role === "kanwil_djpb" 
+            <strong>Akses Ditolak:</strong> Anda tidak memiliki akses untuk melihat detail satker ini.
+            {currentUser?.role === "kanwil_djpb"
               ? ` Satker ini berada di luar area Kanwil ${currentUser.kdkanwil} Anda.`
               : currentUser?.role === "kppn"
               ? ` Satker ini berada di luar area KPPN ${currentUser.kdkppn} Anda.`
@@ -86,7 +86,7 @@ export default function SatkerDetailPage() {
             }
           </AlertDescription>
         </Alert>
-        
+
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Shield className="h-12 w-12 text-muted-foreground mb-4" />
@@ -95,14 +95,14 @@ export default function SatkerDetailPage() {
               Anda tidak memiliki izin untuk mengakses informasi satker dengan kode {kdsatker}.
             </p>
             <div className="flex gap-2">
-              <Button 
-                onClick={() => router.push('/satker')} 
+              <Button
+                onClick={() => router.push('/satker')}
                 variant="outline"
               >
                 Kembali ke Pencarian
               </Button>
-              <Button 
-                onClick={() => router.push('/')} 
+              <Button
+                onClick={() => router.push('/')}
                 variant="default"
               >
                 Ke Beranda
@@ -115,7 +115,7 @@ export default function SatkerDetailPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
