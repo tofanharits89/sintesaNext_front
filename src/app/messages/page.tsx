@@ -164,13 +164,13 @@ export default function MessagesPage() {
   }, []);
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
+    <div className="space-y-6 md:space-y-8 -mb-6 md:-mb-8 lg:-mb-10 pb-4 md:pb-6 lg:pb-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <Users className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">Kelola Pesan</h1>
+            <Users className="h-5 w-5 text-primary" />
+            <h1 className="text-xl font-semibold">Kelola Pesan</h1>
           </div>
 
           {/* Connection Status */}
@@ -206,7 +206,7 @@ export default function MessagesPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-[calc(100vh-200px)]">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Conversation List */}
         <div className="lg:col-span-1">
           <Card className="h-[600px] max-h-[70vh] flex flex-col">

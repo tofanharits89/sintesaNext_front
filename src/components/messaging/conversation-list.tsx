@@ -171,8 +171,8 @@ export function ConversationList({
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-2 gap-2">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center mb-2 gap-2 w-full min-w-0">
+                    <div className="flex items-center gap-2 min-w-0 overflow-hidden">
                       <h4
                         className={cn(
                           "text-sm font-medium truncate",
@@ -184,21 +184,30 @@ export function ConversationList({
                           `User ${otherParticipant?.id?.slice(0, 8) || 'Unknown'}`}
                       </h4>
 
-                      {/* Role badge after name */}
-                      <Badge variant="secondary" className="text-[10px] py-0.5">
-                        {otherParticipant?.role === "super_admin" ||
-                        otherParticipant?.role === "co_admin" ? (
-                          <>
-                            <Crown className="h-3 w-3 mr-1" />
-                            Administrator
-                          </>
-                        ) : (
-                          <>
-                            <User className="h-3 w-3 mr-1" />
-                            {otherParticipant?.username || "User"}
-                          </>
-                        )}
-                      </Badge>
+                      {/* Role badge after name with fade + truncation */}
+                      <div className="relative min-w-0 max-w-[180px] shrink">
+                        <Badge
+                          variant="secondary"
+                          className="relative text-[10px] py-0.5 pl-2 pr-6 w-full justify-start gap-1 shrink min-w-0"
+                        >
+                          {otherParticipant?.role === "super_admin" ||
+                          otherParticipant?.role === "co_admin" ? (
+                            <Crown className="h-3 w-3 flex-shrink-0" />
+                          ) : (
+                            <User className="h-3 w-3 flex-shrink-0" />
+                          )}
+                          <span className="truncate">
+                            {otherParticipant?.role === "super_admin" ||
+                            otherParticipant?.role === "co_admin"
+                              ? "Administrator"
+                              : otherParticipant?.username || "User"}
+                          </span>
+                          <span
+                            aria-hidden="true"
+                            className="pointer-events-none absolute inset-y-0 right-0 w-6 rounded-md bg-gradient-to-l from-secondary to-transparent"
+                          />
+                        </Badge>
+                      </div>
 
                       {/* Unread badge next to name */}
                       {unreadCount > 0 && (
@@ -213,7 +222,7 @@ export function ConversationList({
 
                     {/* Timestamp (fallback to lastMessageAt/updatedAt when lastMessage missing) */}
                     {timestamp && (
-                      <span className="text-xs text-muted-foreground flex-shrink-0 whitespace-nowrap">
+                      <span className="text-xs text-muted-foreground whitespace-nowrap text-right">
                         {formattedTime}
                       </span>
                     )}

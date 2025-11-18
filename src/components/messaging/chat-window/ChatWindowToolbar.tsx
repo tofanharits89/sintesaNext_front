@@ -1,7 +1,7 @@
 "use client";
 
 import { memo } from "react";
-import { CardHeader } from "@/components/ui/card";
+import { CardAction, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -73,11 +73,11 @@ export const ChatWindowToolbar = memo(({ participant, isOnline }: ChatWindowTool
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <CardAction className="flex items-center gap-2">
         <Button variant="ghost" size="icon" className="h-8 w-8">
           <MoreVertical className="h-4 w-4" />
         </Button>
-      </div>
+      </CardAction>
     </CardHeader>
   );
 });
