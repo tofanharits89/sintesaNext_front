@@ -240,9 +240,9 @@ export function ModernUsersTable({
         header: "Status",
         cell: ({ getValue }) => (
           <Badge
-            variant={getValue() === "active" ? "default" : "destructive"}
+            variant={getValue() === "active" ? "success" : "destructive"}
           >
-            {getValue() === "active" ? "Aktif" : "Nonaktif"}
+            {getValue() === "active" ? <span className="font-bold">Aktif</span> : "Nonaktif"}
           </Badge>
         ),
         enableSorting: false,
@@ -261,7 +261,7 @@ export function ModernUsersTable({
                 e.stopPropagation();
                 onEdit(row.original);
               }}
-              className="h-8 w-8"
+              className="h-8 w-8 hover:bg-blue-100 hover:text-blue-600"
               aria-label="Edit pengguna"
             >
               <Pencil className="h-4 w-4" />
@@ -273,7 +273,7 @@ export function ModernUsersTable({
                 e.stopPropagation();
                 onDelete(row.original.id, row.original.name);
               }}
-              className="h-8 w-8"
+              className="h-8 w-8 hover:bg-red-100 hover:text-red-600"
               aria-label="Hapus pengguna"
             >
               <Trash2 className="h-4 w-4" />
