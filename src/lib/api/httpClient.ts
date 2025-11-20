@@ -177,9 +177,9 @@ http.interceptors.response.use(
     // Unwrap nested shapes: { success:false, data:{...} }
     const body: any =
       data &&
-      typeof data === "object" &&
-      "data" in data &&
-      typeof (data as any).data === "object"
+        typeof data === "object" &&
+        "data" in data &&
+        typeof (data as any).data === "object"
         ? (data as any).data
         : data;
 
@@ -218,6 +218,8 @@ http.interceptors.response.use(
     // Skip auth refresh for logout and refresh endpoints, or if header says to skip
 
     // CSRF error handling: if 403 with EBADCSRFTOKEN, fetch new token then retry once
+    // CSRF error handling: if 403 with EBADCSRFTOKEN, fetch new token then retry once
+    // Simplified: Just clear cache and retry. The getCsrfToken() call in the retry will handle fetching.
     if (
       status === 403 &&
       (error.response?.data as any)?.error?.code === "EBADCSRFTOKEN" &&
@@ -225,13 +227,10 @@ http.interceptors.response.use(
       !isLogoutOrRefresh
     ) {
       original._retry = true;
-      try {
-        clearCsrfCache();
-        await getCsrfToken();
-        return http.request(original);
-      } catch (e) {
-        return Promise.reject(e);
-      }
+      clearCsrfCache();
+      // We don't need to explicitly await getCsrfToken() here because the request interceptor
+      // will call it when we retry the request.
+      return http.request(original);
     }
 
     if (status === 401 && !isLogoutOrRefresh) {
@@ -315,9 +314,9 @@ backendHttp.interceptors.response.use(
     // Handle IP blocking
     const body: any =
       data &&
-      typeof data === "object" &&
-      "data" in data &&
-      typeof (data as any).data === "object"
+        typeof data === "object" &&
+        "data" in data &&
+        typeof (data as any).data === "object"
         ? (data as any).data
         : data;
     const resIp =

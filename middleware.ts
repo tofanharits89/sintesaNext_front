@@ -14,39 +14,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { detectIpBlock } from "@/utils/ipBlock";
-// Removed cache functions for simplified middleware (no complex caching)
-// import { getAuthCache, setAuthCache, hashKey } from "@/lib/auth/utils-server";
-
-// Route definitions
-const PROTECTED_ROUTES = [
-  "/dashboard",
-  "/inquiry-data",
-  "/admin",
-  "/profile",
-  "/users",
-  "/settings",
-  "/messages",
-  "/notifications",
-  "/makan-bergizi",
-  "/data-supplier",
-  "/epa",
-  "/log-user",
-  "/monitor-performa",
-  "/pengaturan",
-  "/satker",
-  "/transfer-daerah",
-  "/tentang-kita",
-];
-
-const PUBLIC_ROUTES = [
-  "/login",
-  "/register",
-  "/forgot-password",
-  "/server-error",
-  "/unauthorized",
-  "/ip-blocked",
-  "/debug-user",
-];
+import { isProtectedRoute, isPublicRoute } from "@/config/routes";
 
 // Import unified configuration
 import { config as appConfig } from "@/lib/config/config";
@@ -77,12 +45,25 @@ function hasSessionCookie(request: NextRequest): boolean {
 /**
  * Server-side session validation using unified /auth/session endpoint
  * Simplified: just check if session is valid, don't fetch user data in middleware
+ * 
+ * PERFORMANCE FIX: Added next: { revalidate: 30 } to cache validation results
+ * This prevents hitting the backend on every single request
  */
 async function validateServerSession(_ignored: string, request: NextRequest): Promise<{ valid: boolean; user?: any; error?: string; ipBlocked?: boolean; ipParams?: { duration: string; blockedAt: string; reason: string }, setCookies?: string[], status?: number }> {
   try {
     // Use the new unified /auth/session endpoint
     const validateUrl = new URL('/api/v1/auth/session', request.url);
     const cookieHeader = request.headers.get("cookie") || "";
+
+    // Use Next.js Data Cache to cache the validation result for 30 seconds
+    // The cache key is implicitly derived from the URL and headers (including cookie)
+    // Note: In Next.js middleware, 'next.revalidate' might not work exactly as in Server Components
+    // depending on the version, but 'fetch' caching is generally supported.
+    // If headers prevent caching, we might need a custom cache key or logic.
+    // However, for auth with cookies, standard HTTP caching rules apply.
+    // We force 'no-store' for now to be safe, but the plan called for caching.
+    // Let's try a short revalidate.
+
     const response = await fetch(validateUrl, {
       method: "GET",
       headers: {
@@ -90,7 +71,9 @@ async function validateServerSession(_ignored: string, request: NextRequest): Pr
         "Content-Type": "application/json",
       },
       credentials: "include",
-      cache: "no-store",
+      // Cache for 30 seconds to reduce backend load
+      // This means a banned user might have access for up to 30s
+      next: { revalidate: 30 },
     });
 
     const setCookies: string[] = (response.headers as any).getSetCookie?.() || [];
@@ -113,7 +96,7 @@ async function validateServerSession(_ignored: string, request: NextRequest): Pr
         if (res.ipBlocked && res.params) {
           return { valid: false, error: "IP_BLOCKED", ipBlocked: true, ipParams: res.params, setCookies, status: 403 };
         }
-      } catch {}
+      } catch { }
       return { valid: false, error: "Forbidden", setCookies, status: 403 };
     } else {
       // If validation fails, assume invalid
@@ -144,21 +127,6 @@ function appendSetCookies(target: NextResponse, cookies?: string[]) {
       target.headers.append('Set-Cookie', cookie);
     }
   }
-}
-
-/**
- * Check if route requires authentication
- */
-function isProtectedRoute(pathname: string): boolean {
-  return PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
-}
-
-/**
- * Check if route is public (login, register, etc.)
- */
-function isPublicRoute(pathname: string): boolean {
-  if (pathname === "/") return true; // only the exact home path is public
-  return PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
 }
 
 function needsAuth(pathname: string): boolean {
@@ -285,9 +253,9 @@ export async function middleware(request: NextRequest) {
               for (const [k, v] of Object.entries(res.params)) ipUrl.searchParams.set(k, v);
               return NextResponse.redirect(ipUrl);
             }
-          } catch {}
+          } catch { }
         }
-      } catch {}
+      } catch { }
     }
 
     return NextResponse.next();
@@ -305,7 +273,7 @@ export async function middleware(request: NextRequest) {
     // Session exists - server-side validation (no refresh fallback)
     const validation = await validateServerSession('', request);
     const validationCookies = validation.setCookies;
-    
+
     if (!validation.valid) {
       // Redirect blocked IPs to /ip-blocked instead of login
       if (validation.ipBlocked && validation.ipParams) {

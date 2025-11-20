@@ -13,8 +13,8 @@ const nextConfig: NextConfig = {
     removeConsole:
       process.env.NODE_ENV === "production"
         ? {
-            exclude: ["error", "warn"], // Keep console.error and console.warn
-          }
+          exclude: ["error", "warn"], // Keep console.error and console.warn
+        }
         : false,
   },
 
@@ -66,11 +66,11 @@ const nextConfig: NextConfig = {
           // HSTS - Force HTTPS (only in production with HTTPS enabled)
           ...(isProduction && process.env.HTTPS === "true"
             ? [
-                {
-                  key: "Strict-Transport-Security",
-                  value: "max-age=31536000; includeSubDomains; preload",
-                },
-              ]
+              {
+                key: "Strict-Transport-Security",
+                value: "max-age=31536000; includeSubDomains; preload",
+              },
+            ]
             : []),
           // Content Security Policy
           {
@@ -149,10 +149,10 @@ const nextConfig: NextConfig = {
       // This affects only the server bundle when isServer === true
       ...(isServer
         ? {
-            "pdfjs-dist/build/pdf": "pdfjs-dist/legacy/build/pdf",
-            "pdfjs-dist/build/pdf.worker": "pdfjs-dist/legacy/build/pdf.worker",
-            "pdfjs-dist/build/pdf.min": "pdfjs-dist/legacy/build/pdf",
-          }
+          "pdfjs-dist/build/pdf": "pdfjs-dist/legacy/build/pdf",
+          "pdfjs-dist/build/pdf.worker": "pdfjs-dist/legacy/build/pdf.worker",
+          "pdfjs-dist/build/pdf.min": "pdfjs-dist/legacy/build/pdf",
+        }
         : {}),
     };
 
@@ -194,7 +194,7 @@ const nextConfig: NextConfig = {
   async rewrites() {
     const backendHost =
       process.env.NODE_ENV === "production" ? "backend" : "localhost";
-    const backendPort = process.env.BACKEND_PORT || "8080";
+    const backendPort = process.env.BACKEND_PORT || process.env.NEXT_PUBLIC_BACKEND_PORT || "8080";
 
     return [
       // Proxy API requests to backend
