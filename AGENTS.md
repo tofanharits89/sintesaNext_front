@@ -1,21 +1,43 @@
 # Repository Guidelines
 
-## Project Structure & Module Organization
-`src/app/` holds the Next 15 routes/layouts while `src/components/`, `src/contexts/`, and `src/features/` group reusable UI, context providers, and domain bundles. Helpers live under `src/lib/`, shared styles and tokens under `src/styles/`, and `src/hooks/` follows the `useX` naming pattern. Persistent data builders/extensions appear in `src/query-builders/`, `src/services/`, and `src/stores/`. The `test/` directory mirrors important flows (e.g., `test/auth-*.test.tsx`) while `public/` holds static assets and `scripts/` automates installs or bundle analysis.
+## Project Structure
+- `src/app`: Next.js App Router routes (folders stay kebab-case to match URLs), global layout in `layout.tsx`, shared styles in `globals.css`.
+- `src/components`: Reusable UI building blocks (largely shadcn/Radix based).
+- `src/features`, `src/services`, `src/stores`: Feature logic, API clients, and Zustand state.
+- `src/utils`, `src/hooks`, `src/shared`: Cross-cutting helpers and hooks.
+- `test`: Vitest + Testing Library suites mirroring app areas; setup in `src/test-setup.ts`.
+- `public`: Static assets (favicons, images); `scripts/` holds maintenance utilities (e.g., install-clean).
 
-## Build, Test, and Development Commands
-- `npm run dev` — starts Next with Turbopack for local hacking. Use `npm run dev:no-turbo` when Turbopack contentions arise.
-- `npm run build` / `npm run start` — run the optimized production build and serve it with `next start`.
-- `npm run lint` / `npm run lint:fix` — enforce the `next/core-web-vitals` + `next/typescript` ESLint rules and auto-fix.
-- `npm run test` / `npm run test:run` / `npm run test:coverage` — Vitest runs in jsdom; coverage obeys the 80% global threshold defined in `vitest.config.ts`.
-- `npm run typecheck` — ensures `tsc --noEmit` passes before merges.
-- `npm run clean` / `npm run install:clean` / `npm run analyze:bundle` — housekeeping commands in `package.json`.
+## Build, Run, and Tooling
+- Start dev (Turbopack): `npm run dev`  | non-Turbopack: `npm run dev:no-turbo`
+- Type-check: `npm run typecheck`
+- Lint: `npm run lint`  | auto-fix: `npm run lint:fix`
+- Test: `npm run test` (watch UI: `npm run test:ui`; coverage: `npm run test:coverage`)
+- Production build: `npm run build`; preview server: `npm start`
+- Clean artifacts: `npm run clean`
+Use Node 18+ and npm (package-lock is authoritative).
 
-## Coding Style & Naming Conventions
-Adhere to Next/TypeScript defaults (2-space indentation, semicolon-optional, ESM modules) since ESLint extends `next/core-web-vitals` + `next/typescript`. React components stay PascalCase, hooks stay `useCamelCase`, and utility files favor camelCase exports. Tailwind (v4) classes live in component markup; keep styling atomic and use `styles/` tokens to share them. Keep data/feature folders descriptive (e.g., `features/watchlist`), and `test` artifacts always use the `.test.tsx`/`.test.ts` suffix.
+## Coding Style
+- Language: TypeScript + React 19, Next.js 15 App Router.
+- Formatting: follow ESLint (extends `eslint-config-next`); run lint before pushing. Tailwind v4 utilities go in JSX class lists; avoid inline styles unless necessary.
+- Components/hook patterns: prefer function components; extract state to Zustand stores when shared; keep side effects inside `useEffect`/`useQuery`.
+- Keep import order logical: react/next -> external libs -> aliases -> relative paths.
 
-## Testing Guidelines
-Vitest is the single framework. Run `npm run test` locally, and re-run with `npm run test:coverage` to inspect the `coverage/html` report. Tests reference `src/test-setup.ts` for global helpers and rely on the `test/` directory for flow coverage. Files should be named after the behavior they cover (`logout-loading-on-login.test.tsx`, etc.) so reviewers can align failures with user journeys.
+## Naming & Files
+- Components are `PascalCase.tsx`; hooks use `useName.ts`; utilities `camelCase.ts`.
+- Route folders are kebab-case to align with URLs (e.g., `data-makrokesra`).
+- Tests colocate in `test/` with `*.test.ts|tsx` suffix; snapshots discouraged.
 
-## Commit & Pull Request Guidelines
-Commit messages follow short, descriptive phrases (e.g., `fix the data-bps page`, `perbaikan`). Keep them present-tense/imperative and reference the area you touched. PRs lack a template, so always include a concise summary, a list of tests run, linked issues or tickets, and screenshots for UI changes. Run lint/test commands and mention their results in the PR body before requesting reviews.
+## Testing Expectations
+- Use Vitest + @testing-library for UI interactions; prefer user-centric queries (`getByRole`, `findByText`).
+- Cover key flows: auth, dashboard widgets, messaging, downloads. Aim for meaningful assertions over snapshot counts; add regression tests for every bug fix.
+- Keep test data minimal; share fixtures via `test/utils` when reused.
+
+## Commit & PR Guidelines
+- Commit messages: short, imperative phrases (pattern seen in history: “fix messaging page UI”, “move whatsapp modal…”). Keep scope-focused.
+- PRs should include: goal/summary, linked issue or ticket, testing notes (commands run), and screenshots/GIFs for UI changes.
+- Ensure lint, typecheck, and `npm run test` pass before requesting review.
+
+## Security & Config
+- Do not commit secrets; `.env*` stays local. If new env keys are needed, document them in `README` or the PR description.
+- Middleware-based auth lives in `middleware.ts`; avoid bypassing it in new routes.

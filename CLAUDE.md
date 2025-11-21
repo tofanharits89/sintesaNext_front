@@ -4,196 +4,249 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is the **Indo Finance Dashboard** - a Next.js 15 financial management system for Indonesian government entities. It provides dashboard functionality for monitoring financial data, supplier information, and organizational workflows with role-based access control.
+**SintesaNEx Frontend** - Indonesian government finance dashboard built for the Ministry of Finance. This is a Next.js 15 application providing a modern web interface for financial data monitoring, reporting, and messaging within Indonesia's government financial management system.
 
 ## Development Commands
 
 ### Core Development
-- `npm run dev` - Start development server with Turbopack (recommended)
-- `npm run dev:no-turbo` - Start development server without Turbopack
-- `npm run build` - Production build with memory optimization (12GB limit)
-- `npm run build:analyze` - Build with bundle analyzer
-- `npm run start` - Start production server
+```bash
+npm run dev              # Start development server with Turbopack (default)
+npm run dev:no-turbo     # Development without Turbopack
+npm run build            # Production build with increased memory allocation
+npm run start            # Start production server
+npm run typecheck        # TypeScript checking without emitting files
+```
 
 ### Code Quality
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Fix ESLint issues automatically
-- `npm run typecheck` - TypeScript type checking
+```bash
+npm run lint             # Run ESLint
+npm run lint:fix         # ESLint with auto-fix
+```
 
 ### Testing
-- `npm run test` - Run tests with Vitest
-- `npm run test:ui` - Run tests with UI interface
-- `npm run test:run` - Run tests once
-- `npm run test:coverage` - Generate coverage report (80% thresholds)
+```bash
+npm run test             # Run tests with Vitest
+npm run test:ui          # Tests with Vitest UI
+npm run test:run         # Run tests once
+npm run test:coverage    # Run tests with coverage (80% thresholds)
+```
 
-### Utilities
-- `npm run clean` - Clean build artifacts (.next, dist, coverage)
-- `npm run install:clean` - Clean install dependencies
-- `npm run analyze:bundle` - Analyze bundle size
+### Build Analysis & Utilities
+```bash
+npm run build:analyze    # Build with bundle analyzer
+npm run analyze:bundle   # Analyze existing bundle
+npm run clean            # Clean .next, dist, and coverage directories
+npm run install:clean    # Clean node_modules and reinstall
+```
 
-## Architecture Overview
+## Technology Stack
 
-### Technology Stack
-- **Framework**: Next.js 15.5.6 with App Router
-- **Language**: TypeScript (strict mode)
-- **UI**: React 19.2.0 with Radix UI components
-- **Styling**: Tailwind CSS 4.1.15 with shadcn/ui
-- **State Management**: Zustand + TanStack Query (React Query)
-- **HTTP Client**: Axios with interceptors
-- **Testing**: Vitest with React Testing Library
-- **Real-time**: Socket.IO client
+### Framework & Core
+- **Next.js 15** with App Router and React 19
+- **TypeScript** with strict configuration (ES2017 target)
+- **Node.js 18+** runtime requirement
+
+### UI & Styling
+- **Tailwind CSS v4** with custom theme configuration
+- **shadcn/ui** components built on Radix UI primitives
+- **Lucide React** icons (configurable via components.json)
+- **Framer Motion** for animations via the `motion` package
+
+### Data Management
+- **TanStack Query (React Query)** for server state management and caching
+- **Zustand** for client-side state management
+- **React Hook Form** with Zod validation for forms
+- **Axios** for HTTP client with interceptors
+
+### Real-time Features
+- **Socket.IO Client** for WebSocket connections
+- Custom WebSocket integration with React Query cache invalidation
+
+### Development & Testing
+- **Vitest** with jsdom environment for unit testing
+- **Testing Library** for component testing
+- **ESLint** with Next.js configuration
+- **TypeScript** compiler with strict type checking
+
+### Additional Features
+- **Recharts** for data visualization
+- **React Query DevTools** for debugging API state
+- **date-fns** for date manipulation
+- **PDF.js** and **react-pdf** for document viewing
+- **XLSX** for Excel file handling
+
+## Architecture Patterns
 
 ### Directory Structure
 ```
 src/
-├── app/                    # Next.js App Router pages
-│   ├── (public)/          # Public pages (login, server-error, etc.)
-│   ├── (routes)/          # Protected route groups
-│   ├── api/               # API routes (auth, dashboard, notifications, etc.)
-│   └── dashboard/         # Main dashboard pages
-├── components/            # Reusable React components
-│   ├── charts/           # Chart components (Recharts)
-│   ├── data-supplier/    # Supplier-related components
-│   └── ui/               # Base UI components (shadcn/ui)
-├── hooks/                # Custom React hooks
-├── lib/                  # Core utilities
-│   ├── api/             # HTTP client and API utilities
-│   ├── auth/            # Authentication logic
-│   ├── config/          # Environment configuration
-│   ├── security/        # Security utilities (CSRF, RBAC)
-│   └── utils/           # Utility functions
-└── shared/              # Shared types and constants
+├── app/                    # Next.js App Router (kebab-case URLs)
+├── components/             # Reusable UI components
+│   ├── ui/                # shadcn/ui base components
+│   ├── auth/              # Authentication components
+│   ├── dashboard/         # Dashboard-specific components
+│   ├── messaging/         # Real-time messaging components
+│   └── ...
+├── features/              # Feature-specific modules
+│   ├── mbg/               # MBG (Budget Implementation) feature
+│   └── messaging/         # Messaging system feature
+├── hooks/                 # Custom React hooks
+│   └── messaging-rq/      # React Query + Zustand messaging hooks
+├── services/              # API services and business logic
+├── stores/                # Zustand state management
+├── lib/                   # Utility libraries and configurations
+├── shared/                # Shared utilities and types
+├── types/                 # TypeScript type definitions
+└── utils/                 # Helper functions
 ```
 
-## Authentication & Security
+### Key Architectural Decisions
 
-### Session Management
-- HTTP-only session cookies (`sid`) for authentication
-- CSRF protection with XSRF-TOKEN cookies
-- Server-side session validation via `/api/v1/auth/session`
-- Automatic logout on session expiration
+#### State Management Pattern
+- **React Query** for server state (API calls, caching, background refetch)
+- **Zustand** for UI state (active conversations, form state, UI preferences)
+- WebSocket events automatically invalidate React Query caches
+- Optimistic updates for real-time user experience
 
-### Role-Based Access Control (RBAC)
+#### Component Architecture
+- Feature-based organization with clear separation of concerns
+- shadcn/ui components as the base UI layer
+- Compound component patterns for complex features
+- Server Components for static content, Client Components for interactivity
+
+#### API Integration
+- Centralized API configuration with interceptors
+- React Query hooks with TypeScript query keys
+- Background refetch and cache invalidation strategies
+- Error boundaries and retry mechanisms
+
+#### Authentication & Security
+- Session-based authentication via middleware
+- Server-side session validation with caching
+- IP blocking detection and handling
+- Comprehensive security headers (CSP, HSTS, etc.)
+
+## Configuration Files
+
+### Next.js Configuration (next.config.ts)
+- **Security**: Comprehensive headers, CSP, HSTS in production
+- **Performance**: Image optimization, package imports, compression
+- **Deployment**: Standalone output for Docker, proxy rewrites to backend
+- **Development**: Turbopack with path aliases, bundle analyzer support
+
+### TypeScript Configuration
+- **Strict Mode**: Enabled with `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`
+- **Path Aliases**: `@/*` for src, `@shared/*` for shared utilities
+- **Next.js Integration**: Proper plugin configuration and type checking
+
+### Vitest Configuration
+- **Environment**: jsdom for component testing
+- **Coverage**: 80% thresholds with v8 provider
+- **Setup Files**: Custom test setup with Testing Library
+- **Path Aliases**: Consistent with TypeScript configuration
+
+## Development Guidelines
+
+### Code Standards
+- Import order: React/Next → external libraries → aliases → relative paths
+- Component naming: `PascalCase.tsx`, hooks: `useName.ts`, utilities: `camelCase.ts`
+- Use TypeScript strict mode features for better type safety
+- Follow ESLint configuration (extends `eslint-config-next`)
+
+### Testing Strategy
+- **80% Coverage Thresholds** enforced across all metrics
+- **User-centric testing** focused on behavior, not implementation
+- **Vitest + Testing Library** for component testing
+- Test files use `*.test.ts|tsx` suffix in `test/` directory or alongside source
+
+### Performance Considerations
+- **React Query Caching**: 30-second stale time, 5-minute garbage collection
+- **Bundle Optimization**: Package imports analyzed, webpack configuration tuned
+- **Memory Management**: Increased Node.js memory for builds (12GB)
+- **Image Optimization**: WebP/AVIF formats with minimum cache TTL
+
+### Security Implementation
+- **Session-based authentication** with server-side validation
+- **Content Security Policy** with restrictive defaults
+- **IP-based blocking** with automatic detection and handling
+- **Optimistic auth** only in development, strict validation in production
+
+## Real-time Features
+
+### Messaging System Architecture
+The messaging system uses a sophisticated **React Query + Zustand + WebSocket** pattern:
+
+1. **React Query Layer**: Server state management with caching and optimistic updates
+2. **Zustand Layer**: UI state management for active conversations, typing indicators
+3. **WebSocket Integration**: Real-time updates with automatic cache invalidation
+4. **Error Resilience**: Fallback to REST API, connection retry mechanisms
+
+### WebSocket Integration
+- Automatic cache invalidation on new messages
+- Typing indicators and read receipts
+- Connection state management with reconnection logic
+- Event deduplication and cleanup
+
+## Environment Variables
+
+### Required for Development
+- `NEXT_PUBLIC_BACKEND_PORT` or `BACKEND_PORT`: Backend API port
+- Session and authentication configuration
+- Google Maps API key (if using map features)
+
+### Production Considerations
+- HTTPS configuration for security headers
+- Backend host configuration for Docker environments
+- Session secret and Redis configuration
+
+## Common Development Patterns
+
+### Custom Hooks
 ```typescript
-roles = {
-  super_admin,     // Full access
-  co_admin,        // Most admin functions
-  kantor_pusat,    // Headquarters users
-  kanwil_djpb,     // Regional office users
-  kppn,           // Local office users
-  lainnya         // Other users
+// React Query pattern with TypeScript
+export function useQuickStats() {
+  return useQuery<QuickStatView[], Error>({
+    queryKey: queryKeyFactories.financial.mbg.quickStats(),
+    queryFn: getQuickStats,
+    ...createQueryOptions('financial'),
+    gcTime: 5 * 60_000,
+  });
 }
 ```
 
-### Security Features
-- Comprehensive CSRF protection with automatic token refresh
-- IP blocking detection and dedicated `/ip-blocked` page
-- Content Security Policy headers
-- Rate limiting interceptors
-- Secure cookie configuration
-
-## API Architecture
-
-### Backend Integration
-- **Development**: Proxies `/api/v1/*` to `localhost:88`
-- **Production**: Proxies `/api/v1/*` to `backend:88` (Docker)
-- Direct backend communication via `backendHttp` client for bypassing Next.js proxy
-
-### API Response Format
+### Component Patterns
 ```typescript
-{
-  success: boolean,
-  data: any,
-  error?: string
+// shadcn/ui based components with proper TypeScript
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'default' | 'destructive' | 'outline';
+  size?: 'default' | 'sm' | 'lg';
 }
 ```
 
-### Key API Endpoints
-- `/api/v1/auth/*` - Authentication (login, logout, session, captcha)
-- `/api/v1/dashboard/*` - Dashboard data
-- `/api/v1/users/*` - User management
-- `/api/v1/notifications/*` - Notification system
-- `/api/v1/messaging/*` - Internal messaging
+### State Management
+```typescript
+// Zustand store with TypeScript selectors
+interface MessagingState {
+  activeConversationId: string | null;
+  setActiveConversationId: (id: string | null) => void;
+}
 
-## HTTP Client Configuration
+export const useMessagingStore = create<MessagingState>((set) => ({
+  activeConversationId: null,
+  setActiveConversationId: (id) => set({ activeConversationId: id }),
+}));
+```
 
-### Main HTTP Client (`http`)
-- Base URL: Empty (same-origin)
-- Includes credentials for cookies
-- Automatic CSRF token attachment
-- Rate limiting interceptors
-- IP block detection and redirect
+## Deployment Notes
 
-### Direct Backend Client (`backendHttp`)
-- Base URL: Direct to backend service
-- Used for bypassing Next.js proxy when needed
-- Same security features as main client
+### Docker Configuration
+- **Standalone Output**: Configured for containerized deployment
+- **Backend Proxy**: API routes proxied to backend service
+- **Static Assets**: Optimized for CDN distribution
+- **Security Headers**: Production-ready CSP and HSTS
 
-### Error Handling
-- 401: Automatic redirect to login with session expiration reason
-- 403: Check for IP block, redirect to `/ip-blocked` if detected
-- CSRF errors: Automatic token refresh and retry
-
-## Development Workflow
-
-### Environment Configuration
-- **Development**: `localhost:88` for backend, relative API paths
-- **Production**: Docker service `backend:88`, absolute URLs
-- **Socket.IO**: Automatic URL resolution based on environment
-
-### Real-time Features
-- Socket.IO integration for live updates
-- Connection status monitoring
-- Automatic reconnection handling
-- Use `socketUrl` and `socketPath` from config
-
-### Testing Setup
-- Vitest with jsdom environment
-- Comprehensive mocking setup (Next.js, localStorage, fetch)
-- Coverage thresholds: 80% across all metrics
-- Test utilities in `src/test-setup.ts`
-
-## Important Patterns
-
-### Path Aliases
-- `@shared/*` → `./src/shared/*` (configured in webpack and turbopack)
-- `@/*` → `./src/*` (standard Next.js alias)
-
-### Component Development
-- Use Radix UI primitives with Tailwind styling
-- Follow shadcn/ui patterns for components
-- Implement proper TypeScript types from `@shared/types`
-
-### API Calls
-- Use `apiClient` for most API calls (goes through Next.js proxy)
-- Use `directBackendClient` for direct backend communication
-- Handle errors with proper user feedback
-- Implement optimistic updates with React Query where appropriate
-
-### Security Considerations
-- Never disable CSRF protection
-- Always validate sessions on protected routes
-- Handle IP blocks gracefully
-- Use secure cookie practices
-- Implement proper RBAC checks
-
-## Performance Optimizations
-
-### Build Configuration
-- Turbopack for faster development builds
-- Bundle analyzer for size monitoring
-- Memory-optimized builds (12GB limit)
-- Standalone output for Docker deployment
-
-### Runtime Optimizations
-- React Query for data caching and synchronization
-- Image optimization with Next.js Image component
-- Code splitting with dynamic imports
-- Advanced query caching strategies
-
-## Docker Deployment
-
-- Uses `standalone` output for containerized deployment
-- Multi-stage builds optimized for production
-- Health checks via `/api/health` endpoint
-- Proper environment variable handling for container orchestration
+### Performance Monitoring
+- **Bundle Analysis**: Available via `npm run build:analyze`
+- **React Query DevTools**: Available in development
+- **WebSocket Debugging**: Event logging and connection monitoring
+- **Error Tracking**: Comprehensive error boundaries and reporting
