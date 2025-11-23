@@ -46,23 +46,13 @@ function hasSessionCookie(request: NextRequest): boolean {
  * Server-side session validation using unified /auth/session endpoint
  * Simplified: just check if session is valid, don't fetch user data in middleware
  * 
- * PERFORMANCE FIX: Added next: { revalidate: 30 } to cache validation results
- * This prevents hitting the backend on every single request
+ * Lightweight validation: no response caching to avoid cross-user bleed
  */
 async function validateServerSession(_ignored: string, request: NextRequest): Promise<{ valid: boolean; user?: any; error?: string; ipBlocked?: boolean; ipParams?: { duration: string; blockedAt: string; reason: string }, setCookies?: string[], status?: number }> {
   try {
     // Use the new unified /auth/session endpoint
     const validateUrl = new URL('/api/v1/auth/session', request.url);
     const cookieHeader = request.headers.get("cookie") || "";
-
-    // Use Next.js Data Cache to cache the validation result for 30 seconds
-    // The cache key is implicitly derived from the URL and headers (including cookie)
-    // Note: In Next.js middleware, 'next.revalidate' might not work exactly as in Server Components
-    // depending on the version, but 'fetch' caching is generally supported.
-    // If headers prevent caching, we might need a custom cache key or logic.
-    // However, for auth with cookies, standard HTTP caching rules apply.
-    // We force 'no-store' for now to be safe, but the plan called for caching.
-    // Let's try a short revalidate.
 
     const response = await fetch(validateUrl, {
       method: "GET",
@@ -71,9 +61,7 @@ async function validateServerSession(_ignored: string, request: NextRequest): Pr
         "Content-Type": "application/json",
       },
       credentials: "include",
-      // Cache for 30 seconds to reduce backend load
-      // This means a banned user might have access for up to 30s
-      next: { revalidate: 30 },
+      cache: "no-store",
     });
 
     const setCookies: string[] = (response.headers as any).getSetCookie?.() || [];

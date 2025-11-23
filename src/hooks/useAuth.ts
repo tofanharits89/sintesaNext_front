@@ -114,11 +114,11 @@ export function useAuth(): UseAuthReturn {
 
       return result.data;
     },
-    staleTime: 0, // Always consider stale, rely on cache time
+    staleTime: 30 * 1000, // keep data hot for 30s to cut redundant calls
     gcTime: 5 * 60 * 1000, // 5 minutes cache
     refetchOnWindowFocus: true, // Refetch when user returns to tab
     refetchOnMount: true,
-    refetchInterval: 60 * 1000, // Poll every minute to detect session expiry
+    refetchInterval: false, // avoid constant polling (session touch handled server-side)
     retry: false,
     enabled: true,
   });
@@ -187,10 +187,7 @@ export function useAuth(): UseAuthReturn {
       queryClient.removeQueries({ queryKey: AUTH_QUERY_KEY });
       clearCSRFCache();
 
-      // NOTE: Do NOT set isLoggingOut to false here
-      // The loading state should persist until the page redirects
-      // The navbar component will handle setting isLoggingOut to false
-      // after the redirect is initiated to prevent page flashing
+      setIsLoggingOut(false);
     }
   }, [queryClient]);
 
