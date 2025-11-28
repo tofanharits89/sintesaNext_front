@@ -23,7 +23,7 @@ import {
   filterDataByRole as rbacFilterDataByRole,
   getRoleDisplayName as rbacGetRoleDisplayName,
   type MinimalUser,
-} from '@/lib/security/rbac';
+} from '@/shared/rbac';
 import { clearCSRFCache, primeCSRFToken } from '@/lib/security/csrfManager';
 
 // Re-export User type for convenience (already defined in auth/client)

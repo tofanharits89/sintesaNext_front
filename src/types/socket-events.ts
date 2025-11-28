@@ -291,10 +291,10 @@ export interface User {
     | "kanwil_djpb"
     | "kppn"
     | "lainnya";
-  kd_kanwil?: string;
-  nm_kanwil?: string;
-  kd_kppn?: string;
-  nm_kppn?: string;
+  kdkanwil?: string;
+  nmkanwil?: string;
+  kdkppn?: string;
+  nmkppn?: string;
   status?: string;
 }
 

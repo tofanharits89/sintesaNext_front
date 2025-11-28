@@ -9,7 +9,7 @@ export type Role =
   | "kppn"
   | "lainnya";
 
-export type ModuleName = "users" | "profile" | "dashboard" | "settings" | "messages" | "notifications";
+export type ModuleName = "users" | "profile" | "dashboard" | "settings" | "messages" | "notifications" | "analytics";
 export type PermissionMap = Record<string, boolean>;
 export type RolePermissions = Record<ModuleName, PermissionMap>;
 
@@ -22,6 +22,7 @@ export const PERMISSIONS: Record<Role, RolePermissions> = {
     settings: { view: true, edit: true },
     messages: { viewAll: true, send: true, delete: true },
     notifications: { viewAll: true, create: true, delete: true },
+    analytics: { viewStats: true, viewHistory: true, recordUsage: true },
   },
   co_admin: {
     users: { view: true, create: true, edit: true, delete: true, editRole: true, editLocation: true },
@@ -30,6 +31,7 @@ export const PERMISSIONS: Record<Role, RolePermissions> = {
     settings: { view: true, edit: false },
     messages: { viewAll: false, send: true, delete: false },
     notifications: { viewAll: true, create: true, delete: false },
+    analytics: { viewStats: true, viewHistory: true, recordUsage: true },
   },
   kantor_pusat: {
     users: { view: false, create: false, edit: false, delete: false, editRole: false, editLocation: false },
@@ -38,6 +40,7 @@ export const PERMISSIONS: Record<Role, RolePermissions> = {
     settings: { view: false, edit: false },
     messages: { viewAll: false, send: false, delete: false },
     notifications: { viewAll: false, create: false, delete: false },
+    analytics: { viewStats: false, viewHistory: false, recordUsage: true },
   },
   kanwil_djpb: {
     users: { view: false, create: false, edit: false, delete: false, editRole: false, editLocation: false },
@@ -46,6 +49,7 @@ export const PERMISSIONS: Record<Role, RolePermissions> = {
     settings: { view: false, edit: false },
     messages: { viewAll: false, send: false, delete: false },
     notifications: { viewAll: false, create: false, delete: false },
+    analytics: { viewStats: false, viewHistory: false, recordUsage: true },
   },
   kppn: {
     users: { view: false, create: false, edit: false, delete: false, editRole: false, editLocation: false },
@@ -54,6 +58,7 @@ export const PERMISSIONS: Record<Role, RolePermissions> = {
     settings: { view: false, edit: false },
     messages: { viewAll: false, send: false, delete: false },
     notifications: { viewAll: false, create: false, delete: false },
+    analytics: { viewStats: false, viewHistory: false, recordUsage: true },
   },
   lainnya: {
     users: { view: false, create: false, edit: false, delete: false, editRole: false, editLocation: false },
@@ -62,16 +67,26 @@ export const PERMISSIONS: Record<Role, RolePermissions> = {
     settings: { view: false, edit: false },
     messages: { viewAll: false, send: true, delete: false },
     notifications: { viewAll: false, create: false, delete: false },
+    analytics: { viewStats: false, viewHistory: false, recordUsage: true },
   },
 };
 
 // Normalize potential legacy role strings coming from backend
 // e.g., map "admin" -> "super_admin"
-const normalizeRole = (role: Role | string): Role | string => {
-  if (!role) return role;
+const normalizeRole = (role: Role | string | undefined): Role | undefined => {
+  if (!role) return undefined;
   const r = String(role).toLowerCase();
   if (r === "admin") return "super_admin";
-  return role;
+  // If role matches our known union, keep it; otherwise return undefined to fail closed
+  const known = [
+    "super_admin",
+    "co_admin",
+    "kantor_pusat",
+    "kanwil_djpb",
+    "kppn",
+    "lainnya",
+  ] as const;
+  return (known as readonly string[]).includes(r) ? (r as Role) : undefined;
 };
 
 /**
@@ -79,7 +94,8 @@ const normalizeRole = (role: Role | string): Role | string => {
  */
 export const hasPermission = (userRole: Role | string, module: ModuleName | string, action: string): boolean => {
   if (!userRole || !module || !action) return false;
-  const effectiveRole = normalizeRole(userRole) as Role | string;
+  const effectiveRole = normalizeRole(userRole);
+  if (!effectiveRole) return false;
   const roleKey = effectiveRole as keyof typeof PERMISSIONS;
   const rolePermissions = PERMISSIONS[roleKey];
   if (!rolePermissions) return false;
@@ -129,6 +145,6 @@ export const getRoleDisplayName = (role: Role | string): string => {
     kppn: "KPPN (3)",
     lainnya: "User Lainnya (4)",
   };
-  const effectiveRole = normalizeRole(role) as string;
-  return roleNames[effectiveRole] || effectiveRole;
+  const effectiveRole = normalizeRole(role);
+  return roleNames[effectiveRole || ""] || role;
 };
