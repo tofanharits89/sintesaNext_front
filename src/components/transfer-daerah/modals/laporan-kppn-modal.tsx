@@ -158,7 +158,7 @@ export function LaporanKppnModal({
                     <FormLabel>Tahun</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value || ""}
                     >
                       <FormControl>
                         <SelectTrigger className="w-full">
@@ -190,7 +190,7 @@ export function LaporanKppnModal({
                     <FormLabel>KPPN sebagai Satker</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value || ""}
                     >
                       <FormControl>
                         <SelectTrigger className="w-full">
@@ -231,7 +231,7 @@ export function LaporanKppnModal({
                         form.setValue("subPeriodeLaporan", "");
                         setSelectedPeriode("");
                       }}
-                      value={field.value}
+                      value={field.value || ""}
                     >
                       <FormControl>
                         <SelectTrigger className="w-full">
@@ -272,7 +272,7 @@ export function LaporanKppnModal({
                           subPeriodeOptions[0]?.value ?? "";
                         form.setValue("subPeriodeLaporan", defaultSubPeriode);
                       }}
-                      value={field.value}
+                      value={field.value || ""}
                     >
                       <FormControl>
                         <SelectTrigger className="w-full">
