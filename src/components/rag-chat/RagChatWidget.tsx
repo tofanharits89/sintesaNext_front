@@ -3,7 +3,25 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Info, MessageCircle, RotateCcw, Send, Sparkles } from "lucide-react";
+
 import { sendRagMessage, RagChatResponse } from "@/lib/api/rag-chat";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type ChatRole = "user" | "assistant";
 
@@ -26,15 +44,18 @@ const WAITING_MESSAGES = [
 ];
 
 /**
- * Floating RAG chatbot widget.
- *
- * - Fixed to bottom-right of the screen
- * - Minimal state handling and styling so it can be extended later
+ * Floating RAG chatbot widget using shadcn UI.
  */
 export function RagChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [sessionId, setSessionId] = useState<string>(() => {
+    if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+      return crypto.randomUUID();
+    }
+    return `session-${Date.now()}`;
+  });
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastResponse, setLastResponse] = useState<RagChatResponse | null>(
@@ -52,7 +73,6 @@ export function RagChatWidget() {
 
     setError(null);
     setIsSending(true);
-    // Pick a fresh starting waiting message for this request
     setWaitingIndex(Math.floor(Math.random() * WAITING_MESSAGES.length));
 
     const nextMessages: ChatMessage[] = [
@@ -63,13 +83,12 @@ export function RagChatWidget() {
     setInput("");
 
     try {
-      const response = await sendRagMessage({ message: trimmed });
+      const response = await sendRagMessage({ message: trimmed, sessionId });
       setLastResponse(response);
 
       const fullAnswer =
         response.answer || "(Asisten tidak memberikan jawaban)";
 
-      // Append an empty assistant message, then stream characters into it
       const assistantIndex = nextMessages.length;
       setMessages([
         ...nextMessages,
@@ -83,6 +102,17 @@ export function RagChatWidget() {
         index: 0,
         messageIndex: assistantIndex,
       });
+
+      if (response.nearingLimit) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              "⚠️ Konteks percakapan hampir penuh. Sebaiknya mulai sesi baru agar jawaban tetap akurat.",
+          },
+        ]);
+      }
     } catch (err: any) {
       setError(
         err?.message ||
@@ -111,7 +141,7 @@ export function RagChatWidget() {
         }
         const updated = [...prev];
         const msg = updated[messageIndex];
-        const nextIndex = Math.min(index + 3, target.length); // stream 3 chars per tick
+        const nextIndex = Math.min(index + 3, target.length);
         updated[messageIndex] = {
           ...msg,
           content: target.slice(0, nextIndex),
@@ -120,15 +150,15 @@ export function RagChatWidget() {
       });
 
       setStreamState((prev) =>
-        prev ? { ...prev, index: Math.min(prev.index + 3, prev.target.length) } : null,
+        prev
+          ? { ...prev, index: Math.min(prev.index + 3, prev.target.length) }
+          : null,
       );
-    }, 8); // faster typing (lower = faster)
+    }, 8);
 
     return () => window.clearTimeout(timeoutId);
   }, [streamState]);
 
-  // Rotate waiting text while we are waiting for the first answer byte
-  // (hide it once streaming of the assistant message has started)
   const isWaiting = isSending;
 
   useEffect(() => {
@@ -136,12 +166,11 @@ export function RagChatWidget() {
 
     const intervalId = window.setInterval(() => {
       setWaitingIndex((prev) => (prev + 1) % WAITING_MESSAGES.length);
-    }, 5000); // change message every 5s
+    }, 5000);
 
     return () => window.clearInterval(intervalId);
   }, [isWaiting]);
 
-  // Auto-scroll when messages change or streaming progresses
   useEffect(() => {
     if (!messagesEndRef.current) return;
     try {
@@ -155,130 +184,203 @@ export function RagChatWidget() {
   }, [messages, streamState]);
 
   return (
-    <>
-      {/* Floating toggle button */}
-      <div className="fixed bottom-4 right-4 z-50">
-        <button
-          type="button"
-          onClick={() => setIsOpen((v) => !v)}
-          className="rounded-full bg-blue-600 text-white shadow-lg px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-        >
-          {isOpen ? "Tutup Asisten" : "Tanya Asisten"}
-        </button>
-      </div>
-
-      {/* Chat panel */}
+    <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3">
       {isOpen && (
-        <div className="fixed bottom-16 right-4 z-50 w-80 max-w-full bg-background border border-border rounded-lg shadow-xl flex flex-col">
-          <div className="px-3 py-2 border-b border-border text-sm font-semibold">
-            Asisten Pintar (RAG)
-          </div>
-
-          <div className="flex-1 max-h-72 overflow-y-auto px-3 py-2 text-sm space-y-2">
-            {messages.length === 0 && (
-              <p className="text-muted-foreground">
-                Mulai percakapan dengan mengetik pertanyaan Anda.
-              </p>
-            )}
-            {messages.map((m, idx) => (
-              <div
-                key={idx}
-                className={m.role === "user" ? "text-right" : "text-left"}
+        <Card className="w-[420px] max-w-[calc(100vw-2rem)] border-border/70 shadow-xl bg-white dark:bg-background gap-3">
+          <CardHeader className="flex flex-row items-start justify-between gap-2 border-b">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Sparkles className="h-4 w-4" />
+              </span>
+              <div className="flex flex-col">
+                <CardTitle className="text-sm">Sintesa Asisten</CardTitle>
+                <CardDescription className="text-xs">
+                  Tanya apa saja tentang SintesaNEx.
+                </CardDescription>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="text-xs"
+                title="Mulai sesi baru"
+                onClick={() => {
+                  const newId =
+                    typeof crypto !== "undefined" && "randomUUID" in crypto
+                      ? crypto.randomUUID()
+                      : `session-${Date.now()}`;
+                  setSessionId(newId);
+                  setMessages([]);
+                  setLastResponse(null);
+                  setError(null);
+                }}
               >
-                <div
-                  className={
-                    m.role === "user"
-                      ? "inline-block rounded-lg bg-blue-600 text-white px-2 py-1 text-left"
-                      : "inline-block rounded-lg bg-muted text-foreground px-2 py-1 text-left"
-                  }
-                >
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      p: ({ node, ...props }) => (
-                        <p className="mb-1 last:mb-0" {...props} />
-                      ),
-                      ul: ({ node, ...props }) => (
-                        <ul
-                          className="list-disc list-inside space-y-1"
-                          {...props}
-                        />
-                      ),
-                      ol: ({ node, ...props }) => (
-                        <ol
-                          className="list-decimal list-inside space-y-1"
-                          {...props}
-                        />
-                      ),
-                      li: ({ node, ...props }) => (
-                        <li className="mb-0" {...props} />
-                      ),
-                      strong: ({ node, ...props }) => (
-                        <strong className="font-semibold" {...props} />
-                      ),
-                    }}
-                  >
-                    {m.content}
-                  </ReactMarkdown>
-                </div>
+                <RotateCcw className="h-3 w-3" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="text-xs"
+                onClick={() => setIsOpen(false)}
+              >
+                ✕
+              </Button>
+            </div>
+          </CardHeader>
+
+          <CardContent className="px-0 pt-0 pb-0">
+            <ScrollArea className="h-96 px-4 pb-0">
+              <div className="flex flex-col gap-2 text-sm">
+                {messages.length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Mulai percakapan dengan mengetik pertanyaan Anda di bawah.
+                  </p>
+                )}
+
+                {messages.map((m, idx) => {
+                  const isUser = m.role === "user";
+                  return (
+                    <div
+                      key={idx}
+                      className={`flex ${
+                        isUser ? "justify-end" : "justify-start"
+                      }`}
+                    >
+                      <div
+                        className={`max-w-[80%] rounded-2xl px-3 py-2 text-xs md:text-sm ${
+                          isUser
+                            ? "bg-primary text-primary-foreground rounded-br-sm"
+                            : "bg-muted text-foreground rounded-bl-sm"
+                        }`}
+                      >
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            p: ({ node, ...props }) => (
+                              <p className="mb-1 last:mb-0" {...props} />
+                            ),
+                            ul: ({ node, ...props }) => (
+                              <ul
+                                className="list-disc list-inside space-y-1"
+                                {...props}
+                              />
+                            ),
+                            ol: ({ node, ...props }) => (
+                              <ol
+                                className="list-decimal list-inside space-y-1"
+                                {...props}
+                              />
+                            ),
+                            li: ({ node, ...props }) => (
+                              <li className="mb-0" {...props} />
+                            ),
+                            strong: ({ node, ...props }) => (
+                              <strong className="font-semibold" {...props} />
+                            ),
+                          }}
+                        >
+                          {m.content}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {isWaiting && (
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>{WAITING_MESSAGES[waitingIndex]}</span>
+                  </div>
+                )}
+
+                <div ref={messagesEndRef} />
               </div>
-            ))}
-            {isWaiting && (
-              <div className="text-left">
-                <div className="inline-block rounded-lg bg-muted text-foreground px-2 py-1 text-xs animate-pulse">
-                  {WAITING_MESSAGES[waitingIndex]}
+            </ScrollArea>
+
+            {lastResponse?.sources && lastResponse.sources.length > 0 && (
+              <div className="border-t border-border/50 px-4 pt-3">
+                <div className="flex items-center justify-end gap-2">
+                  <span className="text-[11px] text-muted-foreground">
+                    Sumber terkait
+                  </span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground text-[10px]"
+                      >
+                        <Info className="h-3 w-3" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs text-left">
+                      <div className="space-y-1">
+                        {lastResponse.sources
+                          .slice(0, 3)
+                          .map((source, index) => (
+                            <div
+                              key={index}
+                              className="text-[11px] leading-snug"
+                            >
+                              •{" "}
+                              {source.title ||
+                                source.id ||
+                                "Sumber tanpa judul"}
+                            </div>
+                          ))}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
             )}
-            <div ref={messagesEndRef} />
-          </div>
 
-          {error && (
-            <div className="px-3 py-1 text-xs text-red-600 border-t border-border">
-              {error}
-            </div>
-          )}
+            {error && (
+              <div className="px-4 pb-1 text-[11px] text-destructive">
+                {error}
+              </div>
+            )}
+          </CardContent>
 
-          {/* Basic sources preview for the last answer (optional, can be enhanced later) */}
-          {lastResponse?.sources && lastResponse.sources.length > 0 && (
-            <div className="px-3 py-2 border-t border-border max-h-24 overflow-y-auto">
-              <p className="text-[11px] font-semibold mb-1 text-muted-foreground">
-                Sumber terkait:
-              </p>
-              <ul className="space-y-1">
-                {lastResponse.sources.slice(0, 3).map((source, index) => (
-                  <li key={index} className="text-[11px] text-muted-foreground">
-                    • {source.title || source.id || "Sumber tanpa judul"}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <form
-            className="flex items-center gap-1 px-2 py-2 border-t border-border"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void handleSend();
-            }}
-          >
-            <input
-              className="flex-1 bg-transparent border border-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="Tulis pertanyaan..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              disabled={isSending}
-            />
-            <button
-              type="submit"
-              disabled={isSending}
-              className="text-sm px-2 py-1 rounded bg-blue-600 text-white disabled:opacity-50"
+          <CardFooter className="border-t px-4 flex flex-col gap-1">
+            <form
+              className="flex w-full items-center gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void handleSend();
+              }}
             >
-              Kirim
-            </button>
-          </form>
-        </div>
+              <Input
+                className="h-9 text-sm"
+                placeholder="Tulis pertanyaan..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                disabled={isSending}
+              />
+              <Button
+                type="submit"
+                size="icon"
+                disabled={isSending || input.trim().length === 0}
+                className="shrink-0"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </form>
+          </CardFooter>
+        </Card>
       )}
-    </>
+
+      <Button
+        type="button"
+        size="icon-lg"
+        className="rounded-full shadow-xl"
+        onClick={() => setIsOpen((v) => !v)}
+        aria-label={isOpen ? "Tutup asisten" : "Buka asisten"}
+      >
+        <MessageCircle className="h-5 w-5" />
+      </Button>
+    </div>
   );
 }

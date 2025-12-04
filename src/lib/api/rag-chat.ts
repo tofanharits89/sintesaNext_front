@@ -12,6 +12,8 @@ export interface RagChatResponse {
   answer: string;
   sources: RagChatSource[];
   traceId?: string;
+  nearingLimit?: boolean;
+  approxPromptTokens?: number;
 }
 
 export interface SendRagMessageInput {
@@ -33,4 +35,3 @@ export async function sendRagMessage(
     sessionId: input.sessionId,
   });
 }
-
