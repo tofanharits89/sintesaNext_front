@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { sendRagMessage, RagChatResponse } from "@/lib/api/rag-chat";
@@ -11,6 +11,19 @@ interface ChatMessage {
   role: ChatRole;
   content: string;
 }
+
+interface StreamState {
+  target: string;
+  index: number;
+  messageIndex: number;
+}
+
+const WAITING_MESSAGES = [
+  "menanti sebuah jawaban..",
+  "tatkala letih menunggu..",
+  "menunggu pagi..",
+  "sabarlah menanti..",
+];
 
 /**
  * Floating RAG chatbot widget.
@@ -27,6 +40,11 @@ export function RagChatWidget() {
   const [lastResponse, setLastResponse] = useState<RagChatResponse | null>(
     null,
   );
+  const [streamState, setStreamState] = useState<StreamState | null>(null);
+  const [waitingIndex, setWaitingIndex] = useState<number>(() =>
+    Math.floor(Math.random() * WAITING_MESSAGES.length),
+  );
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   async function handleSend() {
     const trimmed = input.trim();
@@ -34,6 +52,8 @@ export function RagChatWidget() {
 
     setError(null);
     setIsSending(true);
+    // Pick a fresh starting waiting message for this request
+    setWaitingIndex(Math.floor(Math.random() * WAITING_MESSAGES.length));
 
     const nextMessages: ChatMessage[] = [
       ...messages,
@@ -45,13 +65,24 @@ export function RagChatWidget() {
     try {
       const response = await sendRagMessage({ message: trimmed });
       setLastResponse(response);
+
+      const fullAnswer =
+        response.answer || "(Asisten tidak memberikan jawaban)";
+
+      // Append an empty assistant message, then stream characters into it
+      const assistantIndex = nextMessages.length;
       setMessages([
         ...nextMessages,
         {
           role: "assistant",
-          content: response.answer || "(Asisten tidak memberikan jawaban)",
+          content: "",
         },
       ]);
+      setStreamState({
+        target: fullAnswer,
+        index: 0,
+        messageIndex: assistantIndex,
+      });
     } catch (err: any) {
       setError(
         err?.message ||
@@ -61,6 +92,67 @@ export function RagChatWidget() {
       setIsSending(false);
     }
   }
+
+  // Typewriter-style streaming for the latest assistant message
+  useEffect(() => {
+    if (!streamState) return;
+
+    const { target, index, messageIndex } = streamState;
+
+    if (index >= target.length) {
+      setStreamState(null);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setMessages((prev) => {
+        if (messageIndex < 0 || messageIndex >= prev.length) {
+          return prev;
+        }
+        const updated = [...prev];
+        const msg = updated[messageIndex];
+        const nextIndex = Math.min(index + 3, target.length); // stream 3 chars per tick
+        updated[messageIndex] = {
+          ...msg,
+          content: target.slice(0, nextIndex),
+        };
+        return updated;
+      });
+
+      setStreamState((prev) =>
+        prev ? { ...prev, index: Math.min(prev.index + 3, prev.target.length) } : null,
+      );
+    }, 8); // faster typing (lower = faster)
+
+    return () => window.clearTimeout(timeoutId);
+  }, [streamState]);
+
+  // Rotate waiting text while we are waiting for the first answer byte
+  // (hide it once streaming of the assistant message has started)
+  const isWaiting = isSending;
+
+  useEffect(() => {
+    if (!isWaiting) return;
+
+    const intervalId = window.setInterval(() => {
+      setWaitingIndex((prev) => (prev + 1) % WAITING_MESSAGES.length);
+    }, 5000); // change message every 5s
+
+    return () => window.clearInterval(intervalId);
+  }, [isWaiting]);
+
+  // Auto-scroll when messages change or streaming progresses
+  useEffect(() => {
+    if (!messagesEndRef.current) return;
+    try {
+      messagesEndRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    } catch {
+      // ignore scroll errors
+    }
+  }, [messages, streamState]);
 
   return (
     <>
@@ -131,6 +223,14 @@ export function RagChatWidget() {
                 </div>
               </div>
             ))}
+            {isWaiting && (
+              <div className="text-left">
+                <div className="inline-block rounded-lg bg-muted text-foreground px-2 py-1 text-xs animate-pulse">
+                  {WAITING_MESSAGES[waitingIndex]}
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
           </div>
 
           {error && (
