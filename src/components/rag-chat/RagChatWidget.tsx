@@ -159,6 +159,40 @@ export function RagChatWidget() {
     return () => window.clearTimeout(timeoutId);
   }, [streamState]);
 
+  // Jika tab berpindah (offscreen), selesaikan pengetikan di belakang layar
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.visibilityState !== "hidden") return;
+
+      setStreamState((current) => {
+        if (!current) return current;
+        const { target, messageIndex } = current;
+
+        setMessages((prev) => {
+          if (messageIndex < 0 || messageIndex >= prev.length) {
+            return prev;
+          }
+          const updated = [...prev];
+          const msg = updated[messageIndex];
+          updated[messageIndex] = {
+            ...msg,
+            content: target,
+          };
+          return updated;
+        });
+
+        // Hentikan efek typewriter; ketika pengguna kembali,
+        // jawaban sudah muncul penuh.
+        return null;
+      });
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
   const isWaiting = isSending;
 
   useEffect(() => {
