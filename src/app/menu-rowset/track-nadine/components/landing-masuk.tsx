@@ -4,10 +4,13 @@ import moment from "moment";
 import { useAuth } from "@/hooks/useAuth";
 import SaveUserData from "@/components/SaveUserData";
 import Detail from "./detail-masuk";
+import DetailKeluar from "./detail-keluar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -23,7 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, ExternalLink, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 
 interface NadineItemAny {
   ID?: string;
@@ -34,6 +37,7 @@ interface NadineItemAny {
     Pengirim?: string;
     Perihal?: string;
     NoNd?: string;
+    TanggalKirim?: string;
   };
   tujuanDispo?: string[];
 }
@@ -42,6 +46,7 @@ export default function TrackNadineMasuk() {
   const { user } = useAuth();
   const username = user?.username as string | undefined;
 
+  const [isMasuk, setIsMasuk] = useState(true);
   const [documentId, setDocumentId] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -86,6 +91,7 @@ export default function TrackNadineMasuk() {
   }, []);
 
   const NADINE_BASE = (process.env.NEXT_PUBLIC_NADINE as string) || "";
+  const NADINE_KONSEP = (process.env.NEXT_PUBLIC_NADINE_KONSEP as string) || "";
   const NADINE_UPDATE_TOKEN =
     (process.env.NEXT_PUBLIC_NADINE_UPDATE_TOKEN as string) || "";
 
@@ -107,7 +113,10 @@ export default function TrackNadineMasuk() {
     setShowResult(false);
 
     try {
-      const response = await fetch(`${NADINE_BASE}${documentId}`);
+      const url = isMasuk
+        ? `${NADINE_BASE}${documentId}`
+        : `${NADINE_KONSEP}${documentId}`;
+      const response = await fetch(url);
       const data = await response.json();
 
       if (response.ok) {
@@ -166,6 +175,15 @@ export default function TrackNadineMasuk() {
     }
   }, [filterYear, searchQuery, status]);
 
+  // Reset state when switching modes
+  useEffect(() => {
+    setDocumentId("");
+    setStatus(null);
+    setShowResult(false);
+    setError(null);
+    setFilteredData([]);
+  }, [isMasuk]);
+
   const handleDetailClick = (detail: string) => {
     setSelectedDetail(detail);
     setShowModal(true);
@@ -204,23 +222,37 @@ export default function TrackNadineMasuk() {
                     : `${status.data.result.length} data ditemukan`}
                 </p>
               )}
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={() =>
-                  (window.location.href = "/v3/track/nadine/keluar")
-                }
-              >
-                <ExternalLink className="h-4 w-4" />
-                Nadine Keluar
-              </Button>
+              <div className="flex items-center space-x-2 bg-white/50 p-2 rounded-lg">
+                <Label
+                  htmlFor="mode-switch"
+                  className={`cursor-pointer ${
+                    isMasuk ? "font-bold text-primary" : "text-muted-foreground"
+                  }`}
+                >
+                  Masuk
+                </Label>
+                <Switch
+                  id="mode-switch"
+                  checked={!isMasuk}
+                  onCheckedChange={(checked) => setIsMasuk(!checked)}
+                />
+                <Label
+                  htmlFor="mode-switch"
+                  className={`cursor-pointer ${
+                    !isMasuk
+                      ? "font-bold text-primary"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  Keluar
+                </Label>
+              </div>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <CardTitle className="text-center mb-6 text-secondary-foreground">
-            Track Disposisi Nadine - Surat Masuk
+            Track Disposisi Nadine - Surat {isMasuk ? "Masuk" : "Keluar"}
           </CardTitle>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex gap-3">
@@ -315,9 +347,15 @@ export default function TrackNadineMasuk() {
                       <TableHead>Pengirim</TableHead>
                       <TableHead>Perihal</TableHead>
                       <TableHead>No ND</TableHead>
-                      <TableHead>Tgl ND</TableHead>
-                      <TableHead>Tujuan Disposisi</TableHead>
-                      <TableHead>Tgl Kirim ND</TableHead>
+                      {isMasuk ? (
+                        <>
+                          <TableHead>Tgl ND</TableHead>
+                          <TableHead>Tujuan Disposisi</TableHead>
+                          <TableHead>Tgl Kirim ND</TableHead>
+                        </>
+                      ) : (
+                        <TableHead>Tgl Kirim</TableHead>
+                      )}
                       <TableHead className="w-[80px]">Detail</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -344,23 +382,31 @@ export default function TrackNadineMasuk() {
                           </TableCell>
                           <TableCell>{nota.Perihal}</TableCell>
                           <TableCell>{nota.NoNd}</TableCell>
-                          <TableCell>
-                            {moment(nota.TglNd).format("DD-MM-YYYY HH:mm:ss")}
-                          </TableCell>
-                          <TableCell>
-                            <ul className="list-disc pl-5 space-y-1">
-                              {(item.tujuanDispo || []).map((tujuan, i) => (
-                                <li key={i} className="text-sm">
-                                  {tujuan}
-                                </li>
-                              ))}
-                            </ul>
-                          </TableCell>
-                          <TableCell>
-                            {moment(item.updatedAt).format(
-                              "DD-MM-YYYY HH:mm:ss"
-                            )}
-                          </TableCell>
+                          {isMasuk ? (
+                            <>
+                              <TableCell>
+                                {moment(nota.TglNd).format(
+                                  "DD-MM-YYYY HH:mm:ss"
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <ul className="list-disc pl-5 space-y-1">
+                                  {(item.tujuanDispo || []).map((tujuan, i) => (
+                                    <li key={i} className="text-sm">
+                                      {tujuan}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </TableCell>
+                              <TableCell>
+                                {moment(item.updatedAt).format(
+                                  "DD-MM-YYYY HH:mm:ss"
+                                )}
+                              </TableCell>
+                            </>
+                          ) : (
+                            <TableCell>{nota.TanggalKirim}</TableCell>
+                          )}
                           <TableCell>
                             {item.ID ? (
                               <Button
@@ -392,14 +438,25 @@ export default function TrackNadineMasuk() {
 
       <SaveUserData userData={username || ""} menu="track-nadine" />
 
-      <Detail
-        showModal={showModal}
-        handleCloseModal={handleCloseModal}
-        selectedDetail={selectedDetail}
-        token={token}
-        id={status && selectedDetail}
-        bgcolor={bgColor}
-      />
+      {isMasuk ? (
+        <Detail
+          showModal={showModal}
+          handleCloseModal={handleCloseModal}
+          selectedDetail={selectedDetail}
+          token={token || ""}
+          id={status && selectedDetail}
+          bgcolor={bgColor}
+        />
+      ) : (
+        <DetailKeluar
+          showModal={showModal}
+          handleCloseModal={handleCloseModal}
+          selectedDetail={selectedDetail}
+          token={token || ""}
+          id={status && selectedDetail ? selectedDetail : ""}
+          bgcolor={bgColor}
+        />
+      )}
     </div>
   );
 }

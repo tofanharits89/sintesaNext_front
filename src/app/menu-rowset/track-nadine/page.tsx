@@ -12,7 +12,7 @@ export default function TrackNadinePage() {
             Track Nadine
           </h1>
           <p className="text-sm text-muted-foreground">
-            Track disposisi surat Nadine (Surat Masuk)
+            Track disposisi surat Nadine
           </p>
         </div>
       </div>
