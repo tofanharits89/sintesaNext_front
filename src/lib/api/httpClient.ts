@@ -47,6 +47,8 @@ export const http: AxiosInstance = axios.create({
   withCredentials: true, // send cookies for auth and CSRF
   xsrfCookieName: "XSRF-TOKEN",
   xsrfHeaderName: "X-CSRF-Token",
+  // Keep browser-side requests open long enough to match the Python RAG backend (180s)
+  timeout: Number(process.env.NEXT_PUBLIC_HTTP_TIMEOUT_MS || 180_000),
 });
 
 // Setup rate limit interceptor for user-friendly notifications
@@ -255,6 +257,8 @@ export const backendHttp: AxiosInstance = axios.create({
   withCredentials: true, // send cookies for auth
   xsrfCookieName: "XSRF-TOKEN",
   xsrfHeaderName: "X-CSRF-Token",
+  // Allow long-running RAG responses (align with backend/Python 180s)
+  timeout: Number(process.env.NEXT_PUBLIC_BACKEND_HTTP_TIMEOUT_MS || 180_000),
 });
 
 // Setup rate limit interceptor for backend HTTP client
