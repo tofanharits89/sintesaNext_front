@@ -141,6 +141,8 @@ export function RagChatWidget() {
         }
         const updated = [...prev];
         const msg = updated[messageIndex];
+        if (!msg) return prev;
+
         const nextIndex = Math.min(index + 3, target.length);
         updated[messageIndex] = {
           ...msg,
@@ -174,6 +176,8 @@ export function RagChatWidget() {
           }
           const updated = [...prev];
           const msg = updated[messageIndex];
+          if (!msg) return prev;
+
           updated[messageIndex] = {
             ...msg,
             content: target,
