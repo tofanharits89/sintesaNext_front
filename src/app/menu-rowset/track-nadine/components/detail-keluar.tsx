@@ -83,8 +83,12 @@ export default function DetailKeluar({
       const response = await fetch(
         `https://service.kemenkeu.go.id/nadine-web/gateway/grid/konsepnaskah/DetailKonsepByNdId/${id}?tipedata=Konsep`,
         {
+          method: "GET",
+          credentials: "include",
+          mode: "cors",
           headers: {
             Authorization: `Bearer ${token}`,
+            Accept: "application/json",
           },
         }
       );

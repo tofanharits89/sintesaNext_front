@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import moment from "moment";
 import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
 import SaveUserData from "@/components/SaveUserData";
 import Detail from "./detail-masuk";
 import DetailKeluar from "./detail-keluar";
@@ -42,8 +43,17 @@ interface NadineItemAny {
   tujuanDispo?: string[];
 }
 
-export default function TrackNadineMasuk() {
-  const { user } = useAuth();
+interface TrackNadineMasukProps {
+  initialId?: string;
+  autoSearch?: boolean;
+}
+
+export default function TrackNadineMasuk({
+  initialId = "",
+  autoSearch = true,
+}: TrackNadineMasukProps) {
+  const { user, refetch } = useAuth();
+  const router = useRouter();
   const username = user?.username as string | undefined;
 
   const [isMasuk, setIsMasuk] = useState(true);
@@ -97,7 +107,18 @@ export default function TrackNadineMasuk() {
 
   const getUpdate = async () => {
     try {
-      const response = await fetch(NADINE_UPDATE_TOKEN);
+      const response = await fetch(NADINE_UPDATE_TOKEN, {
+        method: "GET",
+        credentials: "include",
+        mode: "cors",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+      if (response.status === 401) {
+        setDataupdate(null);
+        return;
+      }
       const dataup = await response.json();
       setDataupdate(dataup);
     } catch (err) {
@@ -105,7 +126,10 @@ export default function TrackNadineMasuk() {
     }
   };
 
-  const handleSubmit = async (e?: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    e?: React.FormEvent<HTMLFormElement>,
+    overrideId?: string
+  ) => {
     if (e) e.preventDefault();
     setLoading(true);
     setError(null);
@@ -113,10 +137,39 @@ export default function TrackNadineMasuk() {
     setShowResult(false);
 
     try {
+      // Guard: ensure the API base URLs are configured. If not, show a clear error
+      if (isMasuk && !NADINE_BASE) {
+        setError(
+          "NADINE API belum dikonfigurasi. Pastikan env NEXT_PUBLIC_NADINE diset ke alamat backend (mis. http://localhost:88/api/v1/track-nadine/disposisi?limit=...&offset=0&search=)"
+        );
+        setShowResult(false);
+        setLoading(false);
+        return;
+      }
+      if (!isMasuk && !NADINE_KONSEP) {
+        setError(
+          "NADINE KONSEP API belum dikonfigurasi. Pastikan env NEXT_PUBLIC_NADINE_KONSEP diset ke alamat backend (mis. http://localhost:88/api/v1/track-nadine/keluar?limit=...&offset=0&general=)"
+        );
+        setShowResult(false);
+        setLoading(false);
+        return;
+      }
+      const idToUse = overrideId ?? documentId;
+      const encodedId = encodeURIComponent(String(idToUse));
       const url = isMasuk
-        ? `${NADINE_BASE}${documentId}`
-        : `${NADINE_KONSEP}${documentId}`;
-      const response = await fetch(url);
+        ? `${NADINE_BASE}${encodedId}`
+        : `${NADINE_KONSEP}${encodedId}`;
+      // Debug log so developers can inspect actual URL being requested
+      // eslint-disable-next-line no-console
+      console.debug("TrackNadine - fetching:", url);
+      const response = await fetch(url, {
+        method: "GET",
+        credentials: "include",
+        mode: "cors",
+        headers: {
+          Accept: "application/json",
+        },
+      });
       const data = await response.json();
 
       if (response.ok) {
@@ -126,12 +179,23 @@ export default function TrackNadineMasuk() {
         setToken(data.data.token);
         setShowResult(true);
       } else {
-        setError(data.message || "Terjadi kesalahan");
+        if (response.status === 401) {
+          setError(
+            "Unauthorized — silakan login terlebih dahulu untuk mengakses fitur ini"
+          );
+        } else {
+          setError(data.message || "Terjadi kesalahan");
+        }
         setShowResult(false);
       }
       getUpdate();
     } catch (err) {
-      setError("Gagal menghubungi server");
+      // If parsing JSON fails or fetch failed, provide helpful message
+      // eslint-disable-next-line no-console
+      console.error("TrackNadine fetch error", err);
+      setError(
+        "Gagal menghubungi server — periksa konfigurasi NEXT_PUBLIC_NADINE/NEXT_PUBLIC_NADINE_KONSEP dan jalankan backend"
+      );
       setShowResult(false);
     } finally {
       setLoading(false);
@@ -183,6 +247,16 @@ export default function TrackNadineMasuk() {
     setError(null);
     setFilteredData([]);
   }, [isMasuk]);
+
+  // Handle initialId prop: pre-fill and optionally auto-search
+  useEffect(() => {
+    if (initialId && initialId.length > 0) {
+      setDocumentId(initialId);
+      if (autoSearch) {
+        void handleSubmit(undefined, initialId);
+      }
+    }
+  }, [initialId, autoSearch]);
 
   const handleDetailClick = (detail: string) => {
     setSelectedDetail(detail);
@@ -284,7 +358,28 @@ export default function TrackNadineMasuk() {
       {/* Error Alert */}
       {error && (
         <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+          <div className="flex items-center justify-between w-full">
+            <AlertDescription>{error}</AlertDescription>
+            {!user && error.toLowerCase().includes("unauthorized") && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => router.push("/login")}
+              >
+                Login
+              </Button>
+            )}
+            {user && error.toLowerCase().includes("unauthorized") && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => void refetch()}
+                className="ml-2"
+              >
+                Refresh Session
+              </Button>
+            )}
+          </div>
         </Alert>
       )}
 

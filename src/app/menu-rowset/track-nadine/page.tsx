@@ -1,8 +1,12 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import TrackNadineMasuk from "./components/landing-masuk";
 
 export default function TrackNadinePage() {
+  const searchParams = useSearchParams();
+  const idParam = searchParams.get("id") || "";
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -17,7 +21,7 @@ export default function TrackNadinePage() {
         </div>
       </div>
 
-      <TrackNadineMasuk />
+      <TrackNadineMasuk initialId={idParam} autoSearch={true} />
     </div>
   );
 }

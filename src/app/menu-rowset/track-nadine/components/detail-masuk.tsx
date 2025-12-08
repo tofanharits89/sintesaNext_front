@@ -1,5 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
 import { Modal, Button, Spinner, Card, Table } from "react-bootstrap";
 import { OverlayTrigger, Tooltip } from "react-bootstrap";
 // import { io } from "socket.io-client"; // optional: keep commented until needed
@@ -58,6 +60,8 @@ export default function Detail({
   const [data, setData] = useState<Dispo[] | null | []>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string>("");
+  const { user } = useAuth();
+  const router = useRouter();
   const [loadingKonseptor, setLoadingKonseptor] = useState(false);
   const [konseptorData, setKonseptorData] = useState<KonseptorData | null>(
     null
@@ -92,8 +96,30 @@ export default function Detail({
     if (!selectedDetail) return;
     setLoading(true);
     try {
+      if (!NADINE_DETAIL) {
+        console.error(
+          "NADINE_DETAIL env not configured. Please set NEXT_PUBLIC_NADINE_DETAIL to the backend detail endpoint."
+        );
+        setData([]);
+        setLoading(false);
+        return;
+      }
       const url = `${NADINE_DETAIL}/${selectedDetail}/${token}`;
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        method: "GET",
+        credentials: "include",
+        mode: "cors",
+        headers: { Accept: "application/json" },
+      });
+      if (response.status === 401) {
+        console.warn(
+          "Unauthorized request to NADINE detail endpoint; user should login or refresh session."
+        );
+        setMessage("Unauthorized — silakan login untuk melihat detail");
+        setData([]);
+        setLoading(false);
+        return;
+      }
       const result = await response.json();
 
       if (
@@ -179,6 +205,21 @@ export default function Detail({
             background: bgcolor,
           }}
         >
+          {message && (
+            <div className="p-3 rounded mb-3 bg-red-50 border border-red-200 text-red-700 flex items-center justify-between">
+              <div>{message}</div>
+              {!user && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push("/login")}
+                >
+                  Login
+                </Button>
+              )}
+            </div>
+          )}
+
           {loading ? (
             <>
               {message && (
