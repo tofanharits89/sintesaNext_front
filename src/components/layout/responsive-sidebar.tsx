@@ -659,7 +659,7 @@ export function ResponsiveSidebar({
                               c.label === "Generate Dataset" &&
                               m.label === "Rowset Data"
                             ) {
-                              href = "/menu-rowset/generate-dataset";
+                              href = "/menu-rowset/dataset";
                             }
 
                             return (
@@ -1331,13 +1331,13 @@ export function ResponsiveSidebar({
                       m.label === "Rowset Data" ? (
                       <Link
                         key={c.label}
-                        href="/menu-rowset/generate-dataset"
+                        href="/menu-rowset/dataset"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onClick={() => {
                           trackMenuUsage({
                             menu: m.label,
                             submenu: c.label,
-                            path: "/menu-rowset/generate-dataset",
+                            path: "/menu-rowset/dataset",
                           });
                           setOpen(false);
                         }}
