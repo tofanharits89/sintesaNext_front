@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Info, MessageCircle, RotateCcw, Send, Sparkles } from "lucide-react";
+import { Info, MessageCircle, RotateCcw, Send, Sparkles, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { sendRagMessage, RagChatResponse } from "@/lib/api/rag-chat";
 import { Button } from "@/components/ui/button";
@@ -66,6 +67,31 @@ export function RagChatWidget() {
     Math.floor(Math.random() * WAITING_MESSAGES.length),
   );
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const chatRef = useRef<HTMLDivElement | null>(null);
+  const toggleButtonRef = useRef<HTMLDivElement | null>(null);
+
+  // Close chat when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Node;
+
+      // Don't close if click is on the toggle button or inside the chat
+      const isToggleButton = toggleButtonRef.current?.contains(target);
+      const isChatCard = chatRef.current?.contains(target);
+
+      if (!isChatCard && !isToggleButton) {
+        setIsOpen(false);
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
 
   async function handleSend() {
     const trimmed = input.trim();
@@ -223,8 +249,21 @@ export function RagChatWidget() {
 
   return (
     <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3">
-      {isOpen && (
-        <Card className="w-[420px] max-w-[calc(100vw-2rem)] border-border/70 shadow-xl bg-white dark:bg-background gap-3">
+      <AnimatePresence mode="wait">
+        {isOpen && (
+          <motion.div
+            ref={chatRef}
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 25,
+              opacity: { duration: 0.2 },
+            }}
+          >
+            <Card className="w-[420px] max-w-[calc(100vw-2rem)] border-border/70 shadow-xl bg-white dark:bg-background gap-3">
           <CardHeader className="flex flex-row items-start justify-between gap-2 border-b">
             <div className="flex items-center gap-2">
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -257,15 +296,6 @@ export function RagChatWidget() {
               >
                 <RotateCcw className="h-3 w-3" />
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                className="text-xs"
-                onClick={() => setIsOpen(false)}
-              >
-                ✕
-              </Button>
             </div>
           </CardHeader>
 
@@ -280,50 +310,60 @@ export function RagChatWidget() {
 
                 {messages.map((m, idx) => {
                   const isUser = m.role === "user";
+                  const isWarning = m.content.startsWith("⚠️ Konteks percakapan hampir penuh");
                   return (
-                    <div
+                    <motion.div
                       key={idx}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2 }}
                       className={`flex ${
                         isUser ? "justify-end" : "justify-start"
                       }`}
                     >
                       <div
-                        className={`max-w-[80%] rounded-2xl px-3 py-2 text-xs md:text-sm ${
+                        className={`max-w-[80%] rounded-2xl px-3 py-2 ${
                           isUser
-                            ? "bg-primary text-primary-foreground rounded-br-sm"
-                            : "bg-muted text-foreground rounded-bl-sm"
+                            ? "bg-primary text-primary-foreground rounded-br-sm text-xs md:text-sm"
+                            : isWarning
+                            ? "bg-transparent text-muted-foreground italic text-[10px]"
+                            : "bg-muted text-foreground rounded-bl-sm text-xs md:text-sm"
                         }`}
                       >
-                        <ReactMarkdown
-                          remarkPlugins={[remarkGfm]}
-                          components={{
-                            p: ({ node, ...props }) => (
-                              <p className="mb-1 last:mb-0" {...props} />
-                            ),
-                            ul: ({ node, ...props }) => (
-                              <ul
-                                className="list-disc list-inside space-y-1"
-                                {...props}
-                              />
-                            ),
-                            ol: ({ node, ...props }) => (
-                              <ol
-                                className="list-decimal list-inside space-y-1"
-                                {...props}
-                              />
-                            ),
-                            li: ({ node, ...props }) => (
-                              <li className="mb-0" {...props} />
-                            ),
-                            strong: ({ node, ...props }) => (
-                              <strong className="font-semibold" {...props} />
-                            ),
-                          }}
-                        >
-                          {m.content}
-                        </ReactMarkdown>
+                        {isWarning ? (
+                          <p className="mb-1 last:mb-0">{m.content}</p>
+                        ) : (
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              p: ({ node, ...props }) => (
+                                <p className="mb-1 last:mb-0" {...props} />
+                              ),
+                              ul: ({ node, ...props }) => (
+                                <ul
+                                  className="list-disc list-inside space-y-1"
+                                  {...props}
+                                />
+                              ),
+                              ol: ({ node, ...props }) => (
+                                <ol
+                                  className="list-decimal list-inside space-y-1"
+                                  {...props}
+                                />
+                              ),
+                              li: ({ node, ...props }) => (
+                                <li className="mb-0" {...props} />
+                              ),
+                              strong: ({ node, ...props }) => (
+                                <strong className="font-semibold" {...props} />
+                              ),
+                            }}
+                          >
+                            {m.content}
+                          </ReactMarkdown>
+                        )}
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })}
 
@@ -408,17 +448,36 @@ export function RagChatWidget() {
             </form>
           </CardFooter>
         </Card>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <Button
-        type="button"
-        size="icon-lg"
-        className="rounded-full shadow-xl"
-        onClick={() => setIsOpen((v) => !v)}
-        aria-label={isOpen ? "Tutup asisten" : "Buka asisten"}
+      <motion.div
+        ref={toggleButtonRef}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        transition={{ type: "spring", stiffness: 400, damping: 17 }}
       >
-        <MessageCircle className="h-5 w-5" />
-      </Button>
+        <Button
+          type="button"
+          size="icon-lg"
+          className="rounded-full shadow-xl"
+          onClick={() => setIsOpen((v) => !v)}
+          aria-label={isOpen ? "Tutup asisten" : "Buka asisten"}
+        >
+          <motion.div
+            initial={false}
+            animate={{ rotate: isOpen ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {isOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <MessageCircle className="h-5 w-5" />
+            )}
+          </motion.div>
+        </Button>
+      </motion.div>
     </div>
   );
 }

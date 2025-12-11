@@ -6,6 +6,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { ResponsiveSidebar } from "@/components/layout/responsive-sidebar";
 import { useLoginNotifications } from "@/hooks/use-login-notifications";
 import { usePageContext } from "@/contexts/page-context";
+import { RagChatWidget } from "@/components/rag-chat/RagChatWidget";
 import type { User } from "@/lib/stores/users-store";
 
 const AppShell = memo(function AppShell({
@@ -103,6 +104,7 @@ const AppShell = memo(function AppShell({
           {children}
         </main>
       </div>
+      <RagChatWidget />
     </div>
   );
 });

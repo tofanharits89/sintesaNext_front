@@ -22,7 +22,6 @@ import { ClientInit } from "@/components/ClientInit";
 import { geistSans, geistMono } from "./fonts";
 import { Suspense } from "react";
 import { PageProvider } from "@/contexts/page-context";
-import { RagChatWidget } from "@/components/rag-chat/RagChatWidget";
 
 export const metadata: Metadata = {
   title: "sintesaNEXT",
@@ -112,9 +111,6 @@ export default async function RootLayout({
                 <ClientInit />
                 <RoutePreloader />
                 <ConditionalToaster />
-                <ComponentErrorBoundary>
-                  <RagChatWidget />
-                </ComponentErrorBoundary>
                 {/* Optionally show a top-of-page banner when server down via client routes */}
                 {/* <ServerDownBanner /> */}
               </ThemeProvider>
