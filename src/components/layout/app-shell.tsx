@@ -46,6 +46,7 @@ const AppShell = memo(function AppShell({
       "/debug-user",
       "/log-user",
       "/monitor-performa",
+      "/sp2d",
     ],
     []
   );

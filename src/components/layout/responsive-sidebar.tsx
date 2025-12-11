@@ -650,6 +650,16 @@ export function ResponsiveSidebar({
                               m.label === "Rowset Data"
                             ) {
                               href = "/menu-rowset/track-nadine";
+                            } else if (
+                              c.label === "SP2D" &&
+                              m.label === "Rowset Data"
+                            ) {
+                              href = "/menu-rowset/sp2d";
+                            } else if (
+                              c.label === "Generate Dataset" &&
+                              m.label === "Rowset Data"
+                            ) {
+                              href = "/menu-rowset/generate-dataset";
                             }
 
                             return (
@@ -1288,7 +1298,46 @@ export function ResponsiveSidebar({
                           trackMenuUsage({
                             menu: m.label,
                             submenu: c.label,
-                            path: "/rowset-data/track-nadine",
+                            path: "/menu-rowset/track-nadine",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "SP2D" && m.label === "Rowset Data" ? (
+                      <Link
+                        key={c.label}
+                        href="/menu-rowset/sp2d"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/menu-rowset/sp2d",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Generate Dataset" &&
+                      m.label === "Rowset Data" ? (
+                      <Link
+                        key={c.label}
+                        href="/menu-rowset/generate-dataset"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/menu-rowset/generate-dataset",
                           });
                           setOpen(false);
                         }}
