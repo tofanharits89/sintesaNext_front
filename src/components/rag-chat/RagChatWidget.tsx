@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Info, MessageCircle, RotateCcw, Send, Sparkles, X } from "lucide-react";
+import { Info, Loader2, MessageCircle, RotateCcw, Send, Sparkles, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { sendRagMessage, RagChatResponse } from "@/lib/api/rag-chat";
@@ -265,14 +265,14 @@ export function RagChatWidget() {
           >
             <Card className="w-[420px] max-w-[calc(100vw-2rem)] border-border/70 shadow-xl bg-white dark:bg-background gap-3">
           <CardHeader className="flex flex-row items-start justify-between gap-2 border-b">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <Sparkles className="h-4 w-4" />
               </span>
               <div className="flex flex-col">
-                <CardTitle className="text-sm">Sintesa Asisten</CardTitle>
+                <CardTitle className="text-sm">Shinta</CardTitle>
                 <CardDescription className="text-xs">
-                  Tanya apa saja tentang SintesaNEx.
+                  SINTESA Hi-Quality Information Trusted Assistant
                 </CardDescription>
               </div>
             </div>
@@ -300,15 +300,17 @@ export function RagChatWidget() {
           </CardHeader>
 
           <CardContent className="px-0 pt-0 pb-0">
-            <ScrollArea className="h-96 px-4 pb-0">
-              <div className="flex flex-col gap-2 text-sm">
-                {messages.length === 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    Mulai percakapan dengan mengetik pertanyaan Anda di bawah.
-                  </p>
-                )}
-
-                {messages.map((m, idx) => {
+            {messages.length === 0 ? (
+              <div className="flex h-96 flex-col items-center justify-center gap-2 px-4 text-center">
+                <Sparkles className="h-12 w-12 text-muted-foreground/50" />
+                <p className="text-xs font-semibold text-muted-foreground/50">
+                  Mulai percakapan dengan mengetik pertanyaan di bawah.
+                </p>
+              </div>
+            ) : (
+              <ScrollArea className="h-96 px-4 pb-0">
+                <div className="flex flex-col gap-2 text-sm">
+                  {messages.map((m, idx) => {
                   const isUser = m.role === "user";
                   const isWarning = m.content.startsWith("⚠️ Konteks percakapan hampir penuh");
                   return (
@@ -365,52 +367,60 @@ export function RagChatWidget() {
                       </div>
                     </motion.div>
                   );
-                })}
+                  })}
 
                 {isWaiting && (
                   <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span>{WAITING_MESSAGES[waitingIndex]}</span>
+                    <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                    <span className="animate-shimmer-text">
+                      {WAITING_MESSAGES[waitingIndex]}
+                    </span>
                   </div>
                 )}
 
-                <div ref={messagesEndRef} />
-              </div>
-            </ScrollArea>
+                  <div ref={messagesEndRef} />
+                </div>
+              </ScrollArea>
+            )}
 
             {lastResponse?.sources && lastResponse.sources.length > 0 && (
               <div className="border-t border-border/50 px-4 pt-3">
-                <div className="flex items-center justify-end gap-2">
-                  <span className="text-[11px] text-muted-foreground">
-                    Sumber terkait
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] text-muted-foreground/80 italic">
+                    cek ulang, shinta bisa salah
                   </span>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground text-[10px]"
-                      >
-                        <Info className="h-3 w-3" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-xs text-left">
-                      <div className="space-y-1">
-                        {lastResponse.sources
-                          .slice(0, 3)
-                          .map((source, index) => (
-                            <div
-                              key={index}
-                              className="text-[11px] leading-snug"
-                            >
-                              •{" "}
-                              {source.title ||
-                                source.id ||
-                                "Sumber tanpa judul"}
-                            </div>
-                          ))}
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-muted-foreground">
+                      Sumber terkait
+                    </span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground text-[10px]"
+                        >
+                          <Info className="h-3 w-3" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs text-left">
+                        <div className="space-y-1">
+                          {lastResponse.sources
+                            .slice(0, 3)
+                            .map((source, index) => (
+                              <div
+                                key={index}
+                                className="text-[11px] leading-snug"
+                              >
+                                •{" "}
+                                {source.title ||
+                                  source.id ||
+                                  "Sumber tanpa judul"}
+                              </div>
+                            ))}
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                 </div>
               </div>
             )}
