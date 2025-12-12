@@ -40,12 +40,14 @@ const AppShell = memo(function AppShell({
       "/epa",
       "/makan-bergizi",
       "/data-makrokesra",
+      "/menu-rowset",
       "/laporan",
       "/tentang-kita",
       "/debug-cookies",
       "/debug-user",
       "/log-user",
       "/monitor-performa",
+      "/sp2d",
     ],
     []
   );
