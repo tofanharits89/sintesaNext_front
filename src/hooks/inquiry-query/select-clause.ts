@@ -159,7 +159,9 @@ export function buildSelectClause(
       let joinKey = config.joinKey!;
       let joinCondition = `main.${config.columnName} = ${alias}.${joinKey}`;
 
-      if (filterKey === "programPrioritas") {
+      if (filterKey === "eselonI") {
+        joinCondition = `main.kddept = ${alias}.kddept AND main.${config.columnName} = ${alias}.${joinKey}`;
+      } else if (filterKey === "programPrioritas") {
         joinCondition = `main.kdpn = ${alias}.kdpn AND main.${config.columnName} = ${alias}.${joinKey}`;
       } else if (filterKey === "kegiatanPrioritas") {
         joinCondition = `main.kdpn = ${alias}.kdpn AND main.kdpp = ${alias}.kdpp AND main.${config.columnName} = ${alias}.${joinKey}`;
