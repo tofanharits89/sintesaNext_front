@@ -44,7 +44,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { getRoleDisplayName } from "@/lib/security/rbac";
+import { getRoleDisplayName } from "@/shared/rbac";
 import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/components/animate-ui/components/animate/tabs";
 
 // Simple tabs using local state

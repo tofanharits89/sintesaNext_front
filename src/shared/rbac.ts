@@ -11,7 +11,7 @@ export type Role =
   | "kppn"
   | "lainnya";
 
-export type ModuleName = "users" | "profile" | "dashboard" | "settings" | "messages" | "notifications";
+export type ModuleName = "users" | "profile" | "dashboard" | "settings" | "messages" | "notifications" | "analytics";
 export type PermissionMap = Record<string, boolean>;
 export type RolePermissions = Record<ModuleName, PermissionMap>;
 
@@ -24,6 +24,7 @@ export const PERMISSIONS: Record<Role, RolePermissions> = {
     settings: { view: true, edit: true },
     messages: { viewAll: true, send: true, delete: true },
     notifications: { viewAll: true, create: true, delete: true },
+    analytics: { view: true, export: true },
   },
   co_admin: {
     users: { view: true, create: true, edit: true, delete: true, editRole: true, editLocation: true },
@@ -32,6 +33,7 @@ export const PERMISSIONS: Record<Role, RolePermissions> = {
     settings: { view: true, edit: false },
     messages: { viewAll: false, send: true, delete: false },
     notifications: { viewAll: true, create: true, delete: false },
+    analytics: { view: true, export: true },
   },
   kantor_pusat: {
     users: { view: false, create: false, edit: false, delete: false, editRole: false, editLocation: false },
@@ -40,6 +42,7 @@ export const PERMISSIONS: Record<Role, RolePermissions> = {
     settings: { view: false, edit: false },
     messages: { viewAll: false, send: false, delete: false },
     notifications: { viewAll: false, create: false, delete: false },
+    analytics: { view: true, export: true },
   },
   kanwil_djpb: {
     users: { view: false, create: false, edit: false, delete: false, editRole: false, editLocation: false },
@@ -48,6 +51,7 @@ export const PERMISSIONS: Record<Role, RolePermissions> = {
     settings: { view: false, edit: false },
     messages: { viewAll: false, send: false, delete: false },
     notifications: { viewAll: false, create: false, delete: false },
+    analytics: { view: true, export: true },
   },
   kppn: {
     users: { view: false, create: false, edit: false, delete: false, editRole: false, editLocation: false },
@@ -56,6 +60,7 @@ export const PERMISSIONS: Record<Role, RolePermissions> = {
     settings: { view: false, edit: false },
     messages: { viewAll: false, send: false, delete: false },
     notifications: { viewAll: false, create: false, delete: false },
+    analytics: { view: true, export: false },
   },
   lainnya: {
     users: { view: false, create: false, edit: false, delete: false, editRole: false, editLocation: false },
@@ -64,6 +69,7 @@ export const PERMISSIONS: Record<Role, RolePermissions> = {
     settings: { view: false, edit: false },
     messages: { viewAll: false, send: true, delete: false },
     notifications: { viewAll: false, create: false, delete: false },
+    analytics: { view: false, export: false },
   },
 };
 

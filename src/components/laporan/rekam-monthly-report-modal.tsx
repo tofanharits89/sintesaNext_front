@@ -105,7 +105,7 @@ export function RekamMonthlyReportModal({
                   <FormLabel>Tahun</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    value={field.value || ""}
                   >
                     <FormControl>
                       <SelectTrigger className="w-full">
@@ -136,7 +136,7 @@ export function RekamMonthlyReportModal({
                   <FormLabel>Bulan</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    value={field.value || ""}
                   >
                     <FormControl>
                       <SelectTrigger className="w-full">

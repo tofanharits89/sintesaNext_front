@@ -108,14 +108,6 @@ const defaultMenu: MenuItem[] = [
     children: [{ label: "Sektor" }, { label: "Rekomendasi" }],
   },
   {
-    label: "Transfer Daerah",
-    children: [
-      { label: "DAU" },
-      { label: "Upload Laporan" },
-      { label: "Proyeksi TKD" },
-    ],
-  },
-  {
     label: "Inquiry Data",
     children: [
       { label: "Belanja" },
@@ -124,6 +116,14 @@ const defaultMenu: MenuItem[] = [
       { label: "UP/TUP" },
       { label: "Penerimaan PNBP" },
       { label: "RKAKL Detail" },
+    ],
+  },
+  {
+    label: "Transfer Daerah",
+    children: [
+      { label: "DAU" },
+      { label: "Upload Laporan" },
+      { label: "Proyeksi TKD" },
     ],
   },
   {

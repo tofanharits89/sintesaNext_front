@@ -101,7 +101,7 @@ export function LaporanKanwilModal({
                     <FormLabel>Tahun</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value || ""}
                     >
                       <FormControl>
                         <SelectTrigger className="w-full">
@@ -133,7 +133,7 @@ export function LaporanKanwilModal({
                     <FormLabel>Kanwil</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value || ""}
                     >
                       <FormControl>
                         <SelectTrigger className="w-full">
@@ -184,7 +184,7 @@ export function LaporanKanwilModal({
                     <FormLabel>Jenis Laporan</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value || ""}
                     >
                       <FormControl>
                         <SelectTrigger className="w-full">
@@ -214,7 +214,7 @@ export function LaporanKanwilModal({
                     <FormLabel>Periode Laporan</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value || ""}
                     >
                       <FormControl>
                         <SelectTrigger className="w-full">
