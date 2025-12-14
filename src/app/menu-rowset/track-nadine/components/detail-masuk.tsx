@@ -2,8 +2,25 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
-import { Modal, Button, Spinner, Card, Table } from "react-bootstrap";
-import { OverlayTrigger, Tooltip } from "react-bootstrap";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, Mail, User } from "lucide-react";
 // import { io } from "socket.io-client"; // optional: keep commented until needed
 
 interface DetailProps {
@@ -182,240 +199,227 @@ export default function Detail({
 
   return (
     <>
-      <Modal
-        show={showModal}
-        onHide={handleCloseModal}
-        backdrop="static"
-        keyboard={false}
-        size="xl"
-        animation={false}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>
-            <i className="bi bi-envelope-fill mx-2 text-success"></i>
-            Detail Nota ID : {id}
-          </Modal.Title>
-        </Modal.Header>
+      <Dialog open={showModal} onOpenChange={handleCloseModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-green-600" />
+              Detail Nota ID : {id}
+            </DialogTitle>
+          </DialogHeader>
 
-        <Modal.Body
-          style={{
-            minHeight: "500px",
-            overflow: "auto",
-            maxHeight: "500px",
-            background: bgcolor,
-          }}
-        >
-          {message && (
-            <div className="p-3 rounded mb-3 bg-red-50 border border-red-200 text-red-700 flex items-center justify-between">
-              <div>{message}</div>
-              {!user && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => router.push("/login")}
-                >
-                  Login
-                </Button>
-              )}
-            </div>
-          )}
-
-          {loading ? (
-            <>
-              {message && (
-                <p
-                  className="p-3 rounded text-center"
-                  style={{
-                    backgroundColor: "#f8f9fa",
-                    border: "1px solid #dee2e6",
-                    color: "#495057",
-                    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-                    marginBottom: "1rem",
-                  }}
-                >
-                  {message}
-                </p>
-              )}
-
-              <div
-                className="d-flex justify-content-center align-items-center"
-                style={{ height: 300 }}
+          <div
+            className="space-y-4 p-4 rounded-lg"
+            style={{ background: bgcolor || "white" }}
+          >
+            {message && (
+              <Alert
+                variant="destructive"
+                className="flex items-center justify-between bg-red-50 border-red-200"
               >
-                <div className="d-flex gap-2">
-                  <Spinner animation="grow" variant="primary" />
-                  <Spinner animation="grow" variant="success" />
-                  <Spinner animation="grow" variant="danger" />
-                  <Spinner animation="grow" variant="warning" />
-                  <Spinner animation="grow" variant="info" />
-                  <Spinner animation="grow" variant="dark" />
-                </div>
-              </div>
-            </>
-          ) : data && Array.isArray(data) && data.length > 0 ? (
-            <div className="fade-in">
-              {data.map((dispo: Dispo, index: number) => (
-                <Card
-                  key={index}
-                  className="mb-3"
-                  style={{ boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)" }}
-                >
-                  <Card.Header
-                    className="bg-primary text-white my-2"
-                    style={{ padding: 10 }}
+                <AlertDescription className="text-red-700">
+                  {message}
+                </AlertDescription>
+                {!user && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.push("/login")}
+                    className="ml-2"
                   >
-                    <h5>
-                      {dispo?.dispoEs4 &&
-                      dispo.dispoEs4.length > 0 &&
-                      dispo.dispoEs4[0]?.UnitPenerima
-                        ? dispo.dispoEs4[0].UnitPenerima?.NamaEselon3
-                        : "Data Eselon 3 Tidak Tersedia"}
-                    </h5>
-                  </Card.Header>
-                  <Card.Body>
-                    <div
-                      style={{
-                        backgroundColor: "#f0f0f0",
-                        padding: 5,
-                        borderRadius: 5,
-                        textAlign: "center",
-                        margin: 10,
-                      }}
-                    >
-                      <h6>Eselon 4</h6>
-                    </div>
-                    <ul>
-                      {dispo.dispoEs4.map((es4, es4Index) => (
-                        <li key={es4Index}>
-                          <strong>Unit : </strong>{" "}
-                          {es4.UnitPenerima?.NamaOrganisasi || "Tidak tersedia"}
-                          <br />
-                          <strong>Nama : </strong>{" "}
-                          {es4.UnitPenerima?.NamaPejabat || "Tidak tersedia"}
-                          <br />
-                          <strong>NIP : </strong>{" "}
-                          {es4.UnitPenerima?.NipPejabat || "Tidak tersedia"}
-                          <br />
-                          -----------------------------------------------------
-                        </li>
-                      ))}
-                    </ul>
-
-                    <div
-                      style={{
-                        backgroundColor: "#f0f0f0",
-                        padding: 5,
-                        borderRadius: 5,
-                        textAlign: "center",
-                        margin: 10,
-                      }}
-                    >
-                      <h6>Pelaksana</h6>
-                    </div>
-
-                    <ul>
-                      {dispo.dispoStaf.map((staf, stafIndex) => (
-                        <li key={stafIndex}>
-                          <strong>Nama : </strong> {staf.UserPenerima?.Nama}
-                          <br />
-                          <strong>NIP : </strong> {staf.UserPenerima?.Nip18}
-                          <br />
-                          <strong>Jabatan : </strong>{" "}
-                          {staf.UserPenerima?.NamaJabatan}
-                          <br />
-                          -----------------------------------------------------
-                        </li>
-                      ))}
-                    </ul>
-                  </Card.Body>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <p
-              className="text-center text-danger fw-bold"
-              style={{ verticalAlign: "middle" }}
-            >
-              data nota detail Nadine gagal didapatkan...
-            </p>
-          )}
-        </Modal.Body>
-
-        <Modal.Footer>
-          <Button variant="primary" onClick={handleShowKonseptor}>
-            Lihat Konseptor
-          </Button>
-          <Button variant="secondary" onClick={handleCloseModal}>
-            Tutup
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      <Modal
-        show={showKonseptorModal}
-        onHide={handleCloseKonseptor}
-        backdrop="static"
-        keyboard={false}
-        size="lg"
-        animation={false}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>
-            <i className="bi bi-person-fill mx-2 text-info"></i>Data Konseptor
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {loadingKonseptor ? (
-            <div
-              className="d-flex justify-content-center align-items-center"
-              style={{ height: "200px" }}
-            >
-              <Spinner animation="border" />
-            </div>
-          ) : konseptorData ? (
-            <Table striped bordered hover>
-              <thead>
-                <tr>
-                  <th>Unit</th>
-                  <th>Perihal</th>
-                  <th>Tanggal ND</th>
-                  <th>Nomor ND</th>
-                </tr>
-              </thead>
-              <tbody>
-                {konseptorData && (
-                  <tr>
-                    <td>
-                      {namaKonseptorDanKasi
-                        ? namaKonseptorDanKasi.map((item, idx) => (
-                            <div key={idx}>{item}</div>
-                          ))
-                        : "Tidak tersedia"}
-                    </td>
-                    <td>
-                      {konseptorData?.Data?.DataNd?.Perihal || "Tidak tersedia"}
-                    </td>
-                    <td>
-                      {konseptorData?.Data?.DataNd?.TglNd || "Tidak tersedia"}
-                    </td>
-                    <td>
-                      {konseptorData?.Data?.DataNd?.NoNd || "Tidak tersedia"}
-                    </td>
-                  </tr>
+                    Login
+                  </Button>
                 )}
-              </tbody>
-            </Table>
-          ) : (
-            <p className="text-center text-danger fw-bold">
-              Data konseptor tidak tersedia
-            </p>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseKonseptor}>
-            Tutup
-          </Button>
-        </Modal.Footer>
-      </Modal>
+              </Alert>
+            )}
+
+            {loading ? (
+              <div className="flex justify-center items-center h-[300px]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : data && Array.isArray(data) && data.length > 0 ? (
+              <div className="space-y-4">
+                {data.map((dispo: Dispo, index: number) => (
+                  <Card
+                    key={index}
+                    className="shadow-sm border-0 bg-white/80 backdrop-blur-sm"
+                  >
+                    <CardHeader className="bg-primary/10 py-3 px-4 rounded-t-lg">
+                      <h5 className="font-semibold text-primary m-0 text-lg">
+                        {dispo?.dispoEs4 &&
+                        dispo.dispoEs4.length > 0 &&
+                        dispo.dispoEs4[0]?.UnitPenerima
+                          ? dispo.dispoEs4[0].UnitPenerima?.NamaEselon3
+                          : "Data Eselon 3 Tidak Tersedia"}
+                      </h5>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <div className="bg-muted/50 p-2 rounded text-center mb-3 font-medium text-sm uppercase tracking-wide">
+                        Eselon 4
+                      </div>
+                      <ul className="space-y-3 mb-6">
+                        {dispo.dispoEs4.map((es4, es4Index) => (
+                          <li
+                            key={es4Index}
+                            className="text-sm border-b border-border/50 pb-3 last:border-0 last:pb-0"
+                          >
+                            <div className="grid grid-cols-[60px_1fr] gap-1">
+                              <span className="font-semibold text-gray-900">
+                                Unit:
+                              </span>
+                              <span className="text-gray-900">
+                                {es4.UnitPenerima?.NamaOrganisasi || "-"}
+                              </span>
+
+                              <span className="font-semibold text-gray-900">
+                                Nama:
+                              </span>
+                              <span className="text-gray-900">
+                                {es4.UnitPenerima?.NamaPejabat || "-"}
+                              </span>
+
+                              <span className="font-semibold text-gray-900">
+                                NIP:
+                              </span>
+                              <span className="text-gray-900">
+                                {es4.UnitPenerima?.NipPejabat || "-"}
+                              </span>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <div className="bg-muted/50 p-2 rounded text-center mb-3 font-medium text-sm uppercase tracking-wide">
+                        Pelaksana
+                      </div>
+                      <ul className="space-y-3">
+                        {dispo.dispoStaf.map((staf, stafIndex) => (
+                          <li
+                            key={stafIndex}
+                            className="text-sm border-b border-border/50 pb-3 last:border-0 last:pb-0"
+                          >
+                            <div className="grid grid-cols-[60px_1fr] gap-1">
+                              <span className="font-semibold text-gray-900">
+                                Nama:
+                              </span>
+                              <span className="text-gray-900">
+                                {staf.UserPenerima?.Nama}
+                              </span>
+
+                              <span className="font-semibold text-gray-900">
+                                NIP:
+                              </span>
+                              <span className="text-gray-900">
+                                {staf.UserPenerima?.Nip18}
+                              </span>
+
+                              <span className="font-semibold text-gray-900">
+                                Jabatan:
+                              </span>
+                              <span className="text-gray-900">
+                                {staf.UserPenerima?.NamaJabatan}
+                              </span>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-destructive font-bold py-10 bg-red-50/50 rounded-lg">
+                Data nota detail Nadine gagal didapatkan...
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              onClick={handleShowKonseptor}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Lihat Konseptor
+            </Button>
+            <Button variant="outline" onClick={handleCloseModal}>
+              Tutup
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showKonseptorModal} onOpenChange={handleCloseKonseptor}>
+        <DialogContent className="max-w-3xl fixed z-[60] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User className="h-5 w-5 text-blue-500" />
+              Data Konseptor
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="py-4">
+            {loadingKonseptor ? (
+              <div className="flex justify-center items-center h-[200px]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : konseptorData ? (
+              <div className="border rounded-md overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-gray-200">
+                    <TableRow>
+                      <TableHead className="text-gray-900 font-semibold">
+                        Unit
+                      </TableHead>
+                      <TableHead className="text-gray-900 font-semibold">
+                        Perihal
+                      </TableHead>
+                      <TableHead className="text-gray-900 font-semibold">
+                        Tanggal ND
+                      </TableHead>
+                      <TableHead className="text-gray-900 font-semibold">
+                        Nomor ND
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell className="align-top text-gray-900">
+                        {namaKonseptorDanKasi && namaKonseptorDanKasi.length > 0
+                          ? namaKonseptorDanKasi.map((item, idx) => (
+                              <div key={idx} className="mb-1">
+                                {item}
+                              </div>
+                            ))
+                          : "Tidak tersedia"}
+                      </TableCell>
+                      <TableCell className="align-top text-gray-900">
+                        {konseptorData?.Data?.DataNd?.Perihal ||
+                          "Tidak tersedia"}
+                      </TableCell>
+                      <TableCell className="align-top text-gray-900">
+                        {konseptorData?.Data?.DataNd?.TglNd || "Tidak tersedia"}
+                      </TableCell>
+                      <TableCell className="align-top text-gray-900">
+                        {konseptorData?.Data?.DataNd?.NoNd || "Tidak tersedia"}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <p className="text-center text-destructive font-bold py-8">
+                Data konseptor tidak tersedia
+              </p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="secondary" onClick={handleCloseKonseptor}>
+              Tutup
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

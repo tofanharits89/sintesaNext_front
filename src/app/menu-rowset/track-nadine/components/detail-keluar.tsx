@@ -126,7 +126,7 @@ export default function DetailKeluar({
 
   return (
     <Dialog open={showModal} onOpenChange={handleCloseModal}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Mail className="h-5 w-5 text-green-600" />
@@ -150,7 +150,7 @@ export default function DetailKeluar({
               <div className="flex justify-center items-center py-12">
                 <div className="flex gap-2">
                   <Spinner />
-                  <span className="text-gray-600">Loading...</span>
+                  <span className="text-gray-900">Loading...</span>
                 </div>
               </div>
             </>
@@ -158,30 +158,40 @@ export default function DetailKeluar({
             <div className="space-y-6">
               <div className="overflow-x-auto">
                 <Table className="border">
-                  <TableHeader className="bg-gray-100">
+                  <TableHeader className="bg-gray-200">
                     <TableRow>
-                      <TableHead className="border">Nomor ND</TableHead>
-                      <TableHead className="border">Perihal</TableHead>
-                      <TableHead className="border">Tgl ND</TableHead>
-                      <TableHead className="border">Tgl Kirim</TableHead>
+                      <TableHead className="border text-gray-900 font-semibold">
+                        Nomor ND
+                      </TableHead>
+                      <TableHead className="border text-gray-900 font-semibold">
+                        Perihal
+                      </TableHead>
+                      <TableHead className="border text-gray-900 font-semibold">
+                        Tgl ND
+                      </TableHead>
+                      <TableHead className="border text-gray-900 font-semibold">
+                        Tgl Kirim
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     <TableRow>
-                      <TableCell className="border">
+                      <TableCell className="border text-gray-900">
                         {data?.DataNd?.NoNd || "Tidak tersedia"}
                       </TableCell>
-                      <TableCell className="border">
+                      <TableCell className="border text-gray-900">
                         {data?.DataNd?.Perihal || "Tidak tersedia"}
                       </TableCell>
-                      <TableCell className="border">
+                      <TableCell className="border text-gray-900">
                         {data?.DataNd?.TglNd
                           ? moment(data.DataNd.TglNd).format(
                               "DD-MM-YYYY HH:mm:ss"
                             )
                           : "Tidak tersedia"}
                       </TableCell>
-                      <TableCell className="border">{getTglKirim()}</TableCell>
+                      <TableCell className="border text-gray-900">
+                        {getTglKirim()}
+                      </TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
@@ -189,17 +199,28 @@ export default function DetailKeluar({
 
               <div className="overflow-x-auto">
                 <Table className="border">
-                  <TableHeader className="bg-gray-100">
+                  <TableHeader className="bg-gray-200">
                     <TableRow>
-                      <TableHead colSpan={4} className="border text-center">
+                      <TableHead
+                        colSpan={4}
+                        className="border text-center text-gray-900 font-semibold"
+                      >
                         Detail Konsep
                       </TableHead>
                     </TableRow>
                     <TableRow>
-                      <TableHead className="border">Jabatan</TableHead>
-                      <TableHead className="border">Unit</TableHead>
-                      <TableHead className="border">Tujuan</TableHead>
-                      <TableHead className="border">Waktu</TableHead>
+                      <TableHead className="border text-gray-900 font-semibold">
+                        Jabatan
+                      </TableHead>
+                      <TableHead className="border text-gray-900 font-semibold">
+                        Unit
+                      </TableHead>
+                      <TableHead className="border text-gray-900 font-semibold">
+                        Tujuan
+                      </TableHead>
+                      <TableHead className="border text-gray-900 font-semibold">
+                        Waktu
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -208,18 +229,18 @@ export default function DetailKeluar({
                         if (item.UnitTo) {
                           return (
                             <TableRow key={idx}>
-                              <TableCell className="border">
+                              <TableCell className="border text-gray-900">
                                 {item.UnitFrom?.NamaJabatan || "Tidak tersedia"}
                               </TableCell>
-                              <TableCell className="border">
+                              <TableCell className="border text-gray-900">
                                 {item.UnitFrom?.NamaOrganisasi ||
                                   "Tidak tersedia"}
                               </TableCell>
-                              <TableCell className="border">
+                              <TableCell className="border text-gray-900">
                                 {item.UnitTo?.NamaOrganisasi ||
                                   "Tidak tersedia"}
                               </TableCell>
-                              <TableCell className="border">
+                              <TableCell className="border text-gray-900">
                                 {item.CreatedDate
                                   ? moment(item.CreatedDate).format(
                                       "DD-MM-YYYY HH:mm:ss"
@@ -235,7 +256,7 @@ export default function DetailKeluar({
                       <TableRow>
                         <TableCell
                           colSpan={4}
-                          className="border text-center text-gray-500"
+                          className="border text-center text-gray-900"
                         >
                           Tidak ada data teruskan
                         </TableCell>
