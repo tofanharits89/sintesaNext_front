@@ -1,10 +1,11 @@
 import TrackNadineMasuk from "../track-nadine/components/landing-masuk";
 
-export default function MenuRowsetIdPage({
+export default async function MenuRowsetIdPage({
   params,
 }: {
-  params: { id: string };
+  params?: Promise<{ id?: string }>;
 }) {
-  const id = params?.id || "";
+  const resolvedParams = await params;
+  const id = resolvedParams?.id ?? "";
   return <TrackNadineMasuk initialId={id} autoSearch={true} />;
 }
