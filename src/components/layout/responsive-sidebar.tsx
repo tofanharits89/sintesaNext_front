@@ -108,6 +108,14 @@ const defaultMenu: MenuItem[] = [
     children: [{ label: "Sektor" }, { label: "Rekomendasi" }],
   },
   {
+    label: "Transfer Daerah",
+    children: [
+      { label: "DAU" },
+      { label: "Upload Laporan" },
+      { label: "Proyeksi TKD" },
+    ],
+  },
+  {
     label: "Inquiry Data",
     children: [
       { label: "Belanja" },
@@ -116,14 +124,6 @@ const defaultMenu: MenuItem[] = [
       { label: "UP/TUP" },
       { label: "Penerimaan PNBP" },
       { label: "RKAKL Detail" },
-    ],
-  },
-  {
-    label: "Transfer Daerah",
-    children: [
-      { label: "DAU" },
-      { label: "Upload Laporan" },
-      { label: "Proyeksi TKD" },
     ],
   },
   {
@@ -146,7 +146,10 @@ const defaultMenu: MenuItem[] = [
       { label: "Track Nadine" },
     ],
   },
-
+  {
+    label: "Dispensasi",
+    children: [{ label: "LLAT" }, { label: "Kontrak KPPN" }],
+  },
   {
     label: "Tentang Kita",
     children: [{ label: "Profil" }, { label: "Kontak" }],
@@ -231,6 +234,8 @@ export function ResponsiveSidebar({
         return (
           <Inbox className={`${cls} text-green-600 dark:text-green-400`} />
         );
+      case "Dispensasi":
+        return <Inbox className={`${cls} text-red-600 dark:text-red-400`} />;
       case "Tentang Kita":
         return (
           <Info className={`${cls} text-neutral-600 dark:text-neutral-300`} />
@@ -320,6 +325,10 @@ export function ResponsiveSidebar({
         return <Banknote className={cls} />;
       case "Rowset Data__Track Nadine":
         return <Search className={cls} />;
+      case "Dispensasi__LLAT":
+        return <CheckCircle className={cls} />;
+      case "Dispensasi__Kontrak KPPN":
+        return <Banknote className={cls} />;
       default:
         return null;
     }
@@ -660,6 +669,16 @@ export function ResponsiveSidebar({
                               m.label === "Rowset Data"
                             ) {
                               href = "/menu-rowset/dataset";
+                            } else if (
+                              c.label === "LLAT" &&
+                              m.label === "Dispensasi"
+                            ) {
+                              href = "/dispensasi/llat";
+                            } else if (
+                              c.label === "Kontrak KPPN" &&
+                              m.label === "Dispensasi"
+                            ) {
+                              href = "/dispensasi/kontrak-kppn";
                             }
 
                             return (
@@ -1338,6 +1357,45 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/menu-rowset/dataset",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "LLAT" && m.label === "Dispensasi" ? (
+                      <Link
+                        key={c.label}
+                        href="/dispensasi/llat"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/dispensasi/llat",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Kontrak KPPN" &&
+                      m.label === "Dispensasi" ? (
+                      <Link
+                        key={c.label}
+                        href="/dispensasi/kontrak-kppn"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/dispensasi/kontrak-kppn",
                           });
                           setOpen(false);
                         }}

@@ -48,6 +48,7 @@ const AppShell = memo(function AppShell({
       "/log-user",
       "/monitor-performa",
       "/sp2d",
+      "/dispensasi",
     ],
     []
   );
