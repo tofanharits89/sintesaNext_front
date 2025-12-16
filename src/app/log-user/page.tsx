@@ -116,7 +116,7 @@ export default function LogUserPage() {
       for (let i = 6; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
-        const dayName = date.toLocaleDateString("id-ID", { weekday: "short" });
+        const dayName = date.toLocaleDateString("id-ID", { weekday: "long" });
         const dateStr = date.toLocaleDateString("id-ID", {
           day: "2-digit",
           month: "2-digit",
@@ -135,7 +135,7 @@ export default function LogUserPage() {
     return weeklyStats
       .map((stat) => {
         const date = new Date(stat.date);
-        const dayName = date.toLocaleDateString("id-ID", { weekday: "short" });
+        const dayName = date.toLocaleDateString("id-ID", { weekday: "long" });
         const dateStr = date.toLocaleDateString("id-ID", {
           day: "2-digit",
           month: "2-digit",
@@ -146,8 +146,7 @@ export default function LogUserPage() {
           count: stat.distinctUsers,
           fullDate: stat.date,
         };
-      })
-      .reverse(); // Reverse to show oldest to newest
+      }); // Keep API order (oldest → newest) so chart reads left → right
   }, [weeklyStats]);
 
   const maxCount = Math.max(...weeklyLogins.map((d) => d.count), 1);
