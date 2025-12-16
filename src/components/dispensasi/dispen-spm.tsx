@@ -1,15 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  Button,
-  Card,
-  Container,
-  Spinner,
-  Table,
-  Tab,
-  Nav,
-} from "react-bootstrap";
+import { Card, Container, Spinner, Table, Tab, Nav } from "react-bootstrap";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Loading2, TableSkeleton } from "../../layout/LoadingTable";
@@ -122,37 +114,34 @@ export default function DispenSpm({ cek, id, where }: DispenSpmProps) {
     const encryptedQuery = btoa(cleanedQuery);
 
     try {
-      const response = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_LOCAL_TAYANGDISPENSASI
-        }${encryptedQuery}&limit=${limit}&page=${page}&user=${
-          user?.username || ""
-        }`,
-        {
-          headers: {
-            // Authorization: `Bearer ${user?.token}`,
-          },
-        }
-      );
+      // API endpoint: /api/v1/dispensasi/:query?limit=15&page=0&user=username
+      const apiUrl = `${
+        process.env.NEXT_PUBLIC_API_URL || "/api/v1"
+      }/dispensasi/${encryptedQuery}?limit=${limit}&page=${page}&user=${
+        user?.username || ""
+      }`;
+
+      const response = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
-      setData(result.result);
-      setPages(result.totalPages);
-      setRows(result.totalRows);
+      setData(result.result || []);
+      setPages(result.totalPages || 0);
+      setRows(result.totalRows || 0);
       setLoading(false);
     } catch (error) {
+      console.error("Data fetch error:", error);
       toast.error("Terjadi Permasalahan Koneksi atau Server Backend");
       setLoading(false);
     }
-  };
-
-  const handleRekam = () => {
-    // Modal functionality removed - implement as needed
-    toast.info("Rekam Dispensasi functionality to be implemented");
   };
 
   const handleRekamSPM = (
@@ -244,20 +233,6 @@ export default function DispenSpm({ cek, id, where }: DispenSpmProps) {
     setPage(selected);
   };
 
-  const handleFilter = () => {
-    // Filter functionality removed - implement as needed
-    toast.info("Filter functionality to be implemented");
-  };
-
-  const handleFilterResult = (filterData: any) => {
-    // Filter result handling removed - implement as needed
-    console.log("Filter result:", filterData);
-  };
-
-  const handleCek = () => {
-    // Check functionality - implement as needed
-  };
-
   const handleStatus = (status: boolean, total: number) => {
     // Export status handling removed - implement as needed
     console.log("Export status:", status, total);
@@ -265,179 +240,128 @@ export default function DispenSpm({ cek, id, where }: DispenSpmProps) {
 
   return (
     <div>
-      <main id="main" className="main">
-        <div className="pagetitle">
-          <h1>Data Dispensasi SPM</h1>
-          <nav>
-            <ol className="breadcrumb">
-              <li className="breadcrumb-item">
-                <a href="#">Data</a>
-              </li>
-              <li className="breadcrumb-item active">Dispensasi SPM</li>
-            </ol>
-          </nav>
-        </div>
+      {loading ? (
+        <>
+          <Loading2 />
+          <br />
+          <Loading2 />
+          <br />
+          <Loading2 />
+        </>
+      ) : (
+        <>
+          <Card className="mt-3" bg="light">
+            <Card.Body className="data-user fade-in">
+              <Table striped bordered hover responsive>
+                <thead>
+                  <tr>
+                    <th className="text-header text-center">No.</th>
+                    <th className="text-header text-center">TA</th>
+                    <th className="text-header text-center">Satker</th>
+                    <th className="text-header text-center">Tgl Permohonan</th>
+                    <th className="text-header text-center">
+                      Nomor Permohonan
+                    </th>
+                    <th className="text-header text-center">Jumlah SPM</th>
+                    <th className="text-header text-center">Opsi</th>
+                  </tr>
+                </thead>
+                <tbody className="text-center">
+                  {data.map((row, index) => (
+                    <tr key={index}>
+                      <td className="align-middle text-center">
+                        {index + 1 + page * limit}
+                      </td>
+                      <td className="align-middle text-center">{row.thang}</td>
+                      <td className="align-middle text-center">
+                        {row.nmsatker} ({row.kdsatker})
+                      </td>
+                      <td className="align-middle text-center">
+                        {row.tgpermohonan}
+                      </td>
+                      <td className="align-middle text-center">
+                        {row.nopermohonan}
+                      </td>
+                      <td className="align-middle text-center">{row.jmlspm}</td>
+                      <td className="align-middle text-center">
+                        {user?.role !== "kppn" && (
+                          <i
+                            className="bi bi-plus-square-fill text-success mx-3"
+                            onClick={() =>
+                              handleRekamSPM(
+                                row.id,
+                                row.nopermohonan,
+                                row.nmsatker,
+                                row.kdsatker,
+                                row.thang
+                              )
+                            }
+                            style={{
+                              fontSize: "17px",
+                              cursor: "pointer",
+                            }}
+                          ></i>
+                        )}
+                        {user?.role !== "kppn" && (
+                          <i
+                            className="bi bi-trash-fill text-danger"
+                            onClick={() =>
+                              handleHapusDispSPM(row.id, row.jmlspm)
+                            }
+                            style={{
+                              fontSize: "20px",
+                              cursor: "pointer",
+                            }}
+                          ></i>
+                        )}
+                        <i
+                          className="bi bi-arrow-down-circle-fill text-primary mx-2"
+                          onClick={() => handledownload(row.id)}
+                          style={{
+                            fontSize: "20px",
+                            cursor: "pointer",
+                          }}
+                        ></i>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </Card.Body>
+          </Card>
 
-        <section className="section">
-          <div className="d-flex justify-content-end text-danger">
-            {user?.role !== "kppn" && (
-              <Button
-                variant="primary"
-                size="sm"
-                className="button my-0"
-                style={{
-                  padding: "5px 5px",
-                  marginTop: "1px",
-                  width: "150px",
-                }}
-                onClick={handleRekam}
-              >
-                Rekam Dispensasi
-              </Button>
-            )}
-          </div>
-
-          <div className="d-flex justify-content-end align-item-center my-2">
-            <span
-              className="d-flex"
-              style={{ cursor: "pointer" }}
-              onClick={handleFilter}
-            >
-              <i className="bi bi-grid-3x3-gap-fill text-primary fw-bold mx-2"></i>
-              Filter Data
+          {data.length > 0 && (
+            <span className="pagination justify-content-between mt-2 mx-4 text-dark">
+              Total : {rows.toLocaleString()}, &nbsp; Hal : &nbsp;
+              {rows ? page + 1 : 0} dari {pages}
+              <nav>
+                <ReactPaginate
+                  previousLabel={"← Previous"}
+                  nextLabel={"Next →"}
+                  breakLabel="..."
+                  pageRangeDisplayed={3}
+                  marginPagesDisplayed={1}
+                  pageCount={pages}
+                  renderOnZeroPageCount={null}
+                  containerClassName="justify-content-center pagination"
+                  previousClassName="page-item"
+                  previousLinkClassName="page-link"
+                  nextClassName="page-item"
+                  nextLinkClassName="page-link"
+                  pageClassName="page-item"
+                  pageLinkClassName="page-link"
+                  breakClassName="page-item"
+                  breakLinkClassName="page-link"
+                  activeClassName="active"
+                  disabledClassName="disabled"
+                  onPageChange={halaman}
+                  initialPage={page}
+                />
+              </nav>
             </span>
-          </div>
-
-          {loading ? (
-            <>
-              <Loading2 />
-              <br />
-              <Loading2 />
-              <br />
-              <Loading2 />
-            </>
-          ) : (
-            <>
-              <Card className="mt-3" bg="light">
-                <Card.Body className="data-user fade-in">
-                  <Table striped bordered hover responsive>
-                    <thead>
-                      <tr>
-                        <th className="text-header text-center">No.</th>
-                        <th className="text-header text-center">TA</th>
-                        <th className="text-header text-center">Satker</th>
-                        <th className="text-header text-center">
-                          Tgl Permohonan
-                        </th>
-                        <th className="text-header text-center">
-                          Nomor Permohonan
-                        </th>
-                        <th className="text-header text-center">Jumlah SPM</th>
-                        <th className="text-header text-center">Opsi</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-center">
-                      {data.map((row, index) => (
-                        <tr key={index}>
-                          <td className="align-middle text-center">
-                            {index + 1 + page * limit}
-                          </td>
-                          <td className="align-middle text-center">
-                            {row.thang}
-                          </td>
-                          <td className="align-middle text-center">
-                            {row.nmsatker} ({row.kdsatker})
-                          </td>
-                          <td className="align-middle text-center">
-                            {row.tgpermohonan}
-                          </td>
-                          <td className="align-middle text-center">
-                            {row.nopermohonan}
-                          </td>
-                          <td className="align-middle text-center">
-                            {row.jmlspm}
-                          </td>
-                          <td className="align-middle text-center">
-                            {user?.role !== "kppn" && (
-                              <i
-                                className="bi bi-plus-square-fill text-success mx-3"
-                                onClick={() =>
-                                  handleRekamSPM(
-                                    row.id,
-                                    row.nopermohonan,
-                                    row.nmsatker,
-                                    row.kdsatker,
-                                    row.thang
-                                  )
-                                }
-                                style={{
-                                  fontSize: "17px",
-                                  cursor: "pointer",
-                                }}
-                              ></i>
-                            )}
-                            {user?.role !== "kppn" && (
-                              <i
-                                className="bi bi-trash-fill text-danger"
-                                onClick={() =>
-                                  handleHapusDispSPM(row.id, row.jmlspm)
-                                }
-                                style={{
-                                  fontSize: "20px",
-                                  cursor: "pointer",
-                                }}
-                              ></i>
-                            )}
-                            <i
-                              className="bi bi-arrow-down-circle-fill text-primary mx-2"
-                              onClick={() => handledownload(row.id)}
-                              style={{
-                                fontSize: "20px",
-                                cursor: "pointer",
-                              }}
-                            ></i>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                </Card.Body>
-              </Card>
-
-              {data.length > 0 && (
-                <span className="pagination justify-content-between mt-2 mx-4 text-dark">
-                  Total : {rows.toLocaleString()}, &nbsp; Hal : &nbsp;
-                  {rows ? page + 1 : 0} dari {pages}
-                  <nav>
-                    <ReactPaginate
-                      previousLabel={"← Previous"}
-                      nextLabel={"Next →"}
-                      breakLabel="..."
-                      pageRangeDisplayed={3}
-                      marginPagesDisplayed={1}
-                      pageCount={pages}
-                      renderOnZeroPageCount={null}
-                      containerClassName="justify-content-center pagination"
-                      previousClassName="page-item"
-                      previousLinkClassName="page-link"
-                      nextClassName="page-item"
-                      nextLinkClassName="page-link"
-                      pageClassName="page-item"
-                      pageLinkClassName="page-link"
-                      breakClassName="page-item"
-                      breakLinkClassName="page-link"
-                      activeClassName="active"
-                      disabledClassName="disabled"
-                      onPageChange={halaman}
-                      initialPage={page}
-                    />
-                  </nav>
-                </span>
-              )}
-            </>
           )}
-        </section>
-      </main>
+        </>
+      )}
     </div>
   );
 }

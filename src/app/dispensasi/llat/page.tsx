@@ -98,7 +98,7 @@ const DispensasiPage: React.FC = () => {
             )}
           </div>
 
-          <Tab.Container defaultActiveKey="dispensasi-spm">
+          <Tab.Container id="dispensasi-tabs" defaultActiveKey="dispensasi-spm">
             <Nav
               variant="tabs"
               className="nav-tabs-bordered sticky-user is-sticky-user mb-1 bg-white"

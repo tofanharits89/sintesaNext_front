@@ -84,28 +84,34 @@ export default function Monitoring({ cek, id, where }: MonitoringProps) {
     const encryptedQuery = btoa(cleanedQuery);
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_MONITORINGDISPENSASI}${encryptedQuery}&limit=${limit}&page=${page}&user=${user?.username}`,
-        {
-          headers: {
-            // Authorization: `Bearer ${user?.token}`,
-          },
-        }
-      );
+      // API endpoint: /api/v1/dispensasi/:query?limit=100&page=0&user=username
+      const apiUrl = `${
+        process.env.NEXT_PUBLIC_API_URL || "/api/v1"
+      }/dispensasi/${encryptedQuery}?limit=${limit}&page=${page}&user=${
+        user?.username
+      }`;
+
+      const response = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
-      setData(result.result);
-      setPages(result.totalPages);
-      setRows(result.totalRows);
-      setTotalSPM(result.totalSPM);
-      setTotalNilaiSPM(result.totalNilaiSPM);
+      setData(result.result || []);
+      setPages(result.totalPages || 0);
+      setRows(result.totalRows || 0);
+      setTotalSPM(result.totalSPM || 0);
+      setTotalNilaiSPM(result.totalNilaiSPM || 0);
       setLoading(false);
       setIsDataFetched(true);
     } catch (error) {
+      console.error("Data fetch error:", error);
       toast.error("Terjadi Permasalahan Koneksi atau Server Backend");
       setLoading(false);
     }

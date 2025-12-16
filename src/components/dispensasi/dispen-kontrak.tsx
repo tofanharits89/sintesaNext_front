@@ -113,28 +113,34 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
       .trim();
 
     setSql(cleanedQuery2);
-    const encryptedQuery = btoa(cleanedQuery); // Using btoa as replacement for Encrypt
+    const encryptedQuery = btoa(cleanedQuery); // Using btoa for base64 encoding
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_INQUIRY_GETDATA}${encryptedQuery}&limit=${limit}&page=${page}&user=${user?.username}`,
-        {
-          headers: {
-            // Authorization: `Bearer ${user?.token}`,
-          },
-        }
-      );
+      // API endpoint: /api/v1/dispensasi/:query?limit=10&page=0&user=username
+      const apiUrl = `${
+        process.env.NEXT_PUBLIC_API_URL || "/api/v1"
+      }/dispensasi/${encryptedQuery}?limit=${limit}&page=${page}&user=${
+        user?.username
+      }`;
+
+      const response = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
-      setData(result.result);
-      setPages(result.totalPages);
-      setRows(result.totalRows);
+      setData(result.result || []);
+      setPages(result.totalPages || 0);
+      setRows(result.totalRows || 0);
       setLoading(false);
     } catch (error) {
+      console.error("Data fetch error:", error);
       toast.error("Terjadi Permasalahan Koneksi atau Server Backend");
       setLoading(false);
     }
