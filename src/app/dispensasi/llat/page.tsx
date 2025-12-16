@@ -1,23 +1,46 @@
 "use client";
 
-import React, { useState } from "react";
-import { Tab, Nav, Card } from "react-bootstrap";
-import DispenKontrak from "@/components/dispensasi/dispen-kontrak";
-import DispenSPM from "@/components/dispensasi/dispen-spm";
-import DispenTUP from "@/components/dispensasi/dispen-tup";
-import Monitoring from "@/components/dispensasi/monitoring-dispen";
+import React from "react";
+import { Card, Button, Row, Col } from "react-bootstrap";
+import Link from "next/link";
 
-const DispensasiPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState("monitoring");
-  const [cek, setCek] = useState(false);
-  const [id, setId] = useState("");
-  const [where, setWhere] = useState("");
+const DispensasiLandingPage: React.FC = () => {
+  const menuItems = [
+    {
+      title: "Monitoring Dispensasi",
+      description: "Lihat overview dan monitoring semua dispensasi",
+      href: "/dispensasi/llat/monitoring",
+      icon: "📊",
+      color: "primary",
+    },
+    {
+      title: "Dispensasi SPM",
+      description: "Kelola dispensasi SPM",
+      href: "/dispensasi/llat/spm",
+      icon: "📄",
+      color: "info",
+    },
+    {
+      title: "Dispensasi Kontrak",
+      description: "Kelola dispensasi Kontrak",
+      href: "/dispensasi/llat/kontrak",
+      icon: "📋",
+      color: "warning",
+    },
+    {
+      title: "Dispensasi TUP",
+      description: "Kelola dispensasi TUP",
+      href: "/dispensasi/llat/tup",
+      icon: "📑",
+      color: "success",
+    },
+  ];
 
   return (
     <>
       <main id="main" className="main">
         <div className="pagetitle">
-          <h1>Dispensasi</h1>
+          <h1>Dispensasi - LLAT</h1>
           <nav>
             <ol className="breadcrumb">
               <li className="breadcrumb-item">
@@ -29,56 +52,47 @@ const DispensasiPage: React.FC = () => {
         </div>
 
         <section className="section">
-          <Card className="mt-1 p-2 card-container">
-            <Card.Body className="data-user fade-in">
-              <Tab.Container
-                activeKey={activeTab}
-                onSelect={(k) => setActiveTab(k || "monitoring")}
-              >
-                <Nav variant="tabs" className="nav-tabs mb-0">
-                  <Nav.Item>
-                    <Nav.Link eventKey="monitoring" className="nav-link">
-                      Monitoring Dispensasi
-                    </Nav.Link>
-                  </Nav.Item>
-                  <Nav.Item>
-                    <Nav.Link eventKey="kontrak" className="nav-link">
-                      Dispensasi Kontrak
-                    </Nav.Link>
-                  </Nav.Item>
-                  <Nav.Item>
-                    <Nav.Link eventKey="spm" className="nav-link">
-                      Dispensasi SPM
-                    </Nav.Link>
-                  </Nav.Item>
-                  <Nav.Item>
-                    <Nav.Link eventKey="tup" className="nav-link">
-                      Dispensasi TUP
-                    </Nav.Link>
-                  </Nav.Item>
-                </Nav>
-
-                <Tab.Content className="tab-content mt-0">
-                  <Tab.Pane eventKey="monitoring" className="tab-pane">
-                    <Monitoring cek={cek} id={id} where={where} />
-                  </Tab.Pane>
-                  <Tab.Pane eventKey="kontrak" className="tab-pane">
-                    <DispenKontrak cek={cek} id={id} where={where} />
-                  </Tab.Pane>
-                  <Tab.Pane eventKey="spm" className="tab-pane">
-                    <DispenSPM cek={cek} id={id} where={where} />
-                  </Tab.Pane>
-                  <Tab.Pane eventKey="tup" className="tab-pane">
-                    <DispenTUP cek={cek} id={id} where={where} />
-                  </Tab.Pane>
-                </Tab.Content>
-              </Tab.Container>
-            </Card.Body>
-          </Card>
+          <Row className="g-3">
+            {menuItems.map((item, index) => (
+              <Col lg={6} xl={6} key={index}>
+                <Card
+                  className="card-container h-100 cursor-pointer"
+                  style={{ cursor: "pointer" }}
+                >
+                  <Card.Body className="data-user fade-in d-flex flex-column">
+                    <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>
+                      {item.icon}
+                    </div>
+                    <h5
+                      className="card-title"
+                      style={{ fontWeight: 600, marginBottom: "0.5rem" }}
+                    >
+                      {item.title}
+                    </h5>
+                    <p
+                      className="card-text"
+                      style={{
+                        color: "var(--muted-foreground)",
+                        marginBottom: "1rem",
+                        flex: 1,
+                      }}
+                    >
+                      {item.description}
+                    </p>
+                    <Link href={item.href} className="text-decoration-none">
+                      <Button variant={item.color} size="sm" className="w-100">
+                        Buka →
+                      </Button>
+                    </Link>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </Row>
         </section>
       </main>
     </>
   );
 };
 
-export default DispensasiPage;
+export default DispensasiLandingPage;
