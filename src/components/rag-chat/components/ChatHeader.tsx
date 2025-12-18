@@ -17,7 +17,7 @@ interface ChatHeaderProps {
  */
 export function ChatHeader({ onReset }: ChatHeaderProps) {
     return (
-        <CardHeader className="flex flex-row items-start justify-between gap-2 border-b">
+        <CardHeader className="flex flex-row items-start justify-between gap-2 !p-3 m-4 bg-zinc-100 dark:bg-background rounded-lg">
             <div className="flex items-center gap-4">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <Sparkles className="h-4 w-4" />

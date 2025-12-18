@@ -63,17 +63,11 @@ export function RagChatWidget() {
     typewriter.updateMessages(setMessages);
 
     await sendMessage(inputValue, (content, assistantIndex) => {
-      typewriter.setTargetContent(content);
+      // Must set index BEFORE content so typewriter knows which message to update
       typewriter.setAssistantMsgIndex(assistantIndex);
+      typewriter.setTargetContent(content);
     });
   }, [input, isSending, sendMessage, typewriter, setMessages]);
-
-  // Reset typewriter state when starting new message
-  useEffect(() => {
-    if (isSending) {
-      typewriter.reset();
-    }
-  }, [isSending, typewriter]);
 
   // Auto-scroll to latest message
   useEffect(() => {
@@ -104,15 +98,15 @@ export function RagChatWidget() {
               opacity: { duration: 0.2 },
             }}
           >
-            <Card className="w-[420px] max-w-[calc(100vw-2rem)] border-border/70 shadow-xl bg-white dark:bg-background gap-3">
+            <Card className="w-[430px] max-w-[calc(100vw-2rem)] border-border/70 shadow-xl bg-white dark:bg-card gap-0 !p-0">
               <ChatHeader onReset={resetSession} />
 
-              <CardContent className="px-0 pt-0 pb-0">
+              <CardContent className="p-0">
                 {messages.length === 0 ? (
                   <EmptyState />
                 ) : (
                   <ScrollArea className="h-96 px-4 pb-0">
-                    <div className="flex flex-col gap-2 text-sm">
+                    <div className="flex flex-col gap-2 text-[13px]">
                       {messages
                         .filter((m) => m.role === "user" || m.content.length > 0)
                         .map((m, idx) => (

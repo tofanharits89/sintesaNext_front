@@ -45,7 +45,8 @@ export function useChatSession(): UseChatSessionReturn {
         setError(null);
         setIsSending(true);
         setSources([]);
-        setStreamProgress(null);
+        // Show initial thinking state while waiting for first SSE event
+        setStreamProgress({ step: 0, action: "thinking" });
         setNearingLimit(false);
         currentAnswerRef.current = "";
 
@@ -80,23 +81,17 @@ export function useChatSession(): UseChatSessionReturn {
                     },
                     onContent: (content) => {
                         currentAnswerRef.current += content;
+                        // Hide progress indicator once content starts streaming
+                        setStreamProgress(null);
                         // Call the callback with accumulated content
                         onContentCallback?.(currentAnswerRef.current, assistantIndex);
                     },
                     onDone: (fullContent, totalSteps, toolCallsCount) => {
                         setStreamProgress(null);
-                        // Ensure final content is set
+                        // Signal completion to typewriter - it will handle the final content reveal
+                        // Pass the final content so typewriter knows the complete target
                         if (fullContent) {
-                            setMessages((prev) => {
-                                const updated = [...prev];
-                                if (updated[assistantIndex]) {
-                                    updated[assistantIndex] = {
-                                        ...updated[assistantIndex],
-                                        content: fullContent,
-                                    };
-                                }
-                                return updated;
-                            });
+                            onContentCallback?.(fullContent, assistantIndex);
                         }
                     },
                     onError: (errorType, message) => {

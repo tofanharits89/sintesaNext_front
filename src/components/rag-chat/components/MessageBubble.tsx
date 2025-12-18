@@ -26,10 +26,10 @@ export function MessageBubble({ message, index }: MessageBubbleProps) {
         >
             <div
                 className={`max-w-[80%] rounded-2xl px-3 py-2 ${isUser
-                        ? "bg-primary text-primary-foreground rounded-br-sm text-xs md:text-sm"
-                        : isWarning
-                            ? "bg-transparent text-muted-foreground italic text-[10px]"
-                            : "bg-muted text-foreground rounded-bl-sm text-xs md:text-sm"
+                    ? "bg-primary text-primary-foreground rounded-br-sm text-xs md:text-[13px]"
+                    : isWarning
+                        ? "bg-transparent text-muted-foreground italic text-[10px]"
+                        : "bg-muted text-foreground rounded-bl-sm text-xs md:text-[13px]"
                     }`}
             >
                 {isWarning ? (

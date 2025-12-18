@@ -19,7 +19,7 @@ export function SourcesSection({ sources }: SourcesSectionProps) {
     if (!sources || sources.length === 0) return null;
 
     return (
-        <div className="border-t border-border/50 px-4 pt-3">
+        <div className="px-6 pt-3">
             <div className="flex items-center justify-between gap-2">
                 <span className="text-[11px] text-muted-foreground/80 italic">
                     cek ulang, shinta bisa salah
