@@ -84,18 +84,21 @@ export default function Monitoring({ cek, id, where }: MonitoringProps) {
     const encryptedQuery = btoa(cleanedQuery);
 
     try {
-      // API endpoint: /api/v1/dispensasi/:query?limit=100&page=0&user=username
+      // API endpoint: POST /api/v1/dispensasi/query with JSON body
       const apiUrl = `${
         process.env.NEXT_PUBLIC_API_URL || "/api/v1"
-      }/dispensasi/${encryptedQuery}?limit=${limit}&page=${page}&user=${
-        user?.username
-      }`;
+      }/dispensasi/query`;
 
       const response = await fetch(apiUrl, {
-        method: "GET",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          query: encryptedQuery,
+          limit,
+          page,
+        }),
       });
 
       if (!response.ok) {

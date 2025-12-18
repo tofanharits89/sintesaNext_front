@@ -86,10 +86,14 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
       combinedFilter = `${filterKanwil} AND ${filterKppn}`; // Jika dua filter ada, gabungkan keduanya
     }
 
+    // Ensure combinedFilter is not just an empty string if it's used in WHERE
+    const finalFilter =
+      combinedFilter && combinedFilter.trim() !== "" ? combinedFilter : null;
+
     const encodedQuery = encodeURIComponent(
       `SELECT a.id,a.thang,a.kddept,a.kdunit,a.kdsatker,c.nmsatker,a.kdlokasi,a.kdkppn,a.tgpermohonan,a.nopermohonan,a.uraian,a.username,a.kdkanwil_upload,a.jmltup jumlah,SUM(b.niltup) nilaitup FROM laporan_2023.dispensasi_tup a LEFT JOIN laporan_2023.dispensasi_tup_lampiran b ON a.id=b.id_dispensasi  LEFT JOIN dbref.t_satker_2025 c ON a.kdsatker=c.kdsatker  ${
-        combinedFilter ? `WHERE ${combinedFilter}` : "  "
-      }GROUP BY a.id order by id desc`
+        finalFilter ? `WHERE ${finalFilter}` : "  "
+      }GROUP BY a.id,a.thang,a.kddept,a.kdunit,a.kdsatker,c.nmsatker,a.kdlokasi,a.kdkppn,a.tgpermohonan,a.nopermohonan,a.uraian,a.username,a.kdkanwil_upload,a.jmltup ORDER BY a.id DESC`
     );
 
     const cleanedQuery = decodeURIComponent(encodedQuery)
@@ -108,7 +112,7 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
                 LEFT JOIN dbref.t_kanwil_2025 g ON a.kdkanwil=g.kdkanwil
                 LEFT JOIN dbref.t_kppn_2025 h ON a.kdkppn=h.kdkppn
                 LEFT JOIN dbref.t_satker_2025 i ON a.kdsatker=i.kdsatker  ${
-                  combinedFilter ? `WHERE ${combinedFilter}` : " "
+                  finalFilter ? `WHERE ${finalFilter}` : " "
                 } ORDER BY a.kddept,a.kdsatker,a.id`
     );
 
@@ -122,9 +126,8 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
 
     try {
       // API endpoint: /api/v1/dispensasi/:query?limit=10&page=0&user=username
-      const apiUrl = `${
-        process.env.NEXT_PUBLIC_API_URL || "/api/v1"
-      }/dispensasi/${encryptedQuery}?limit=${limit}&page=${page}&user=${
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
+      const apiUrl = `${baseUrl}/dispensasi/${encryptedQuery}?limit=${limit}&page=${page}&user=${
         user?.username || ""
       }`;
 

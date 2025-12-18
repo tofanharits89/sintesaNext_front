@@ -74,13 +74,17 @@ export default function DispenSpm({ cek, id, where }: DispenSpmProps) {
       combinedFilter = `${filterKanwil} AND ${filterKppn}`; // Jika dua filter ada, gabungkan keduanya
     }
 
+    // Ensure combinedFilter is not just an empty string if it's used in WHERE
+    const finalFilter =
+      combinedFilter && combinedFilter.trim() !== "" ? combinedFilter : null;
+
     const encodedQuery = encodeURIComponent(
       `SELECT a.id, a.thang, a.jmlspm, a.kddept, a.kdunit, a.kdsatker, c.nmsatker, a.kdlokasi, a.kdkppn, a.tgpermohonan, a.nopermohonan, a.uraian,
   a.kd_dispensasi
   FROM laporan_2023.dispensasi_spm a
   LEFT JOIN dbref.t_satker_2025 c ON a.kdsatker = c.kdsatker
-  ${combinedFilter ? `WHERE ${combinedFilter}` : ""}
-  GROUP BY a.id ORDER BY a.id DESC`
+  ${finalFilter ? `WHERE ${finalFilter}` : ""}
+  ORDER BY a.id DESC`
     );
 
     const cleanedQuery = decodeURIComponent(encodedQuery)
@@ -101,7 +105,7 @@ export default function DispenSpm({ cek, id, where }: DispenSpmProps) {
   LEFT JOIN dbref.t_kppn_2025 h ON a.kdkppn = h.kdkppn
   LEFT JOIN dbref.t_satker_2025 i ON a.kdsatker = i.kdsatker
   LEFT JOIN laporan_2023.ref_dispensasi zz ON a.kd_dispensasi = zz.kd_dispensasi
-  ${combinedFilter ? `WHERE ${combinedFilter}` : ""}
+  ${finalFilter ? `WHERE ${finalFilter}` : ""}
   ORDER BY a.kddept, a.kdsatker, a.id`
     );
 
@@ -115,9 +119,8 @@ export default function DispenSpm({ cek, id, where }: DispenSpmProps) {
 
     try {
       // API endpoint: /api/v1/dispensasi/:query?limit=15&page=0&user=username
-      const apiUrl = `${
-        process.env.NEXT_PUBLIC_API_URL || "/api/v1"
-      }/dispensasi/${encryptedQuery}?limit=${limit}&page=${page}&user=${
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
+      const apiUrl = `${baseUrl}/dispensasi/${encryptedQuery}?limit=${limit}&page=${page}&user=${
         user?.username || ""
       }`;
 
@@ -274,22 +277,24 @@ export default function DispenSpm({ cek, id, where }: DispenSpmProps) {
                       </td>
                       <td className="align-middle text-center">{row.thang}</td>
                       <td className="align-middle text-center">
-                        {row.nmsatker} ({row.kdsatker})
+                        {row.nmsatker?.trim()} ({row.kdsatker})
                       </td>
                       <td className="align-middle text-center">
                         {row.tgpermohonan}
                       </td>
                       <td className="align-middle text-center">
-                        {row.nopermohonan}
+                        {row.nopermohonan?.trim()}
                       </td>
-                      <td className="align-middle text-center">{row.jmlspm}</td>
+                      <td className="align-middle text-center">
+                        {row.jmlspm ?? "-"}
+                      </td>
                       <td className="align-middle text-center">
                         {user?.role !== "kppn" && (
                           <i
                             className="bi bi-plus-square-fill text-success mx-3"
                             onClick={() =>
                               handleRekamSPM(
-                                row.id,
+                                String(row.id),
                                 row.nopermohonan,
                                 row.nmsatker,
                                 row.kdsatker,
@@ -306,7 +311,10 @@ export default function DispenSpm({ cek, id, where }: DispenSpmProps) {
                           <i
                             className="bi bi-trash-fill text-danger"
                             onClick={() =>
-                              handleHapusDispSPM(row.id, row.jmlspm)
+                              handleHapusDispSPM(
+                                String(row.id),
+                                row.jmlspm ?? 0
+                              )
                             }
                             style={{
                               fontSize: "20px",
@@ -316,7 +324,7 @@ export default function DispenSpm({ cek, id, where }: DispenSpmProps) {
                         )}
                         <i
                           className="bi bi-arrow-down-circle-fill text-primary mx-2"
-                          onClick={() => handledownload(row.id)}
+                          onClick={() => handledownload(String(row.id))}
                           style={{
                             fontSize: "20px",
                             cursor: "pointer",
