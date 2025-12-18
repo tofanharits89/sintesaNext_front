@@ -42,7 +42,8 @@ export default async function RootLayout({
   // User profile is now fetched efficiently in dashboard layout to avoid duplicate requests
 
   // Skip server-side user fetch - let React Query handle with stale-while-revalidate
-  const initialUser: import("@/lib/stores/users-store").User | undefined = undefined;
+  const initialUser: import("@/lib/stores/users-store").User | undefined =
+    undefined;
 
   return (
     <html lang="id" suppressHydrationWarning>
@@ -82,38 +83,34 @@ export default async function RootLayout({
       >
         <ErrorBoundary>
           <QueryProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-            >
-                <ComponentErrorBoundary>
-                  <AdminPresenceListener />
-                </ComponentErrorBoundary>
-                <ComponentErrorBoundary>
-                  <MessagingAuthListener />
-                </ComponentErrorBoundary>
-                <ComponentErrorBoundary>
-                  <CheckBackend />
-                </ComponentErrorBoundary>
-                <ComponentErrorBoundary>
-                  <SessionMonitor />
-                  <PageProvider>
-                    <AppShell {...(initialUser ? { initialUser } : {})}>
-                      {/* Use a no-op fallback to avoid global flashing while preserving lazy boundaries */}
-                      <Suspense fallback={null}>{children}</Suspense>
-                    </AppShell>
-                  </PageProvider>
-                </ComponentErrorBoundary>
-                <ComponentErrorBoundary>
-                  <ConnectionStatus />
-                </ComponentErrorBoundary>
-                <ClientInit />
-                <RoutePreloader />
-                <ConditionalToaster />
-                {/* Optionally show a top-of-page banner when server down via client routes */}
-                {/* <ServerDownBanner /> */}
-              </ThemeProvider>
+            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+              <ComponentErrorBoundary>
+                <AdminPresenceListener />
+              </ComponentErrorBoundary>
+              <ComponentErrorBoundary>
+                <MessagingAuthListener />
+              </ComponentErrorBoundary>
+              <ComponentErrorBoundary>
+                <CheckBackend />
+              </ComponentErrorBoundary>
+              <ComponentErrorBoundary>
+                <SessionMonitor />
+                <PageProvider>
+                  <AppShell {...(initialUser ? { initialUser } : {})}>
+                    {/* Use a no-op fallback to avoid global flashing while preserving lazy boundaries */}
+                    <Suspense fallback={null}>{children}</Suspense>
+                  </AppShell>
+                </PageProvider>
+              </ComponentErrorBoundary>
+              <ComponentErrorBoundary>
+                <ConnectionStatus />
+              </ComponentErrorBoundary>
+              <ClientInit />
+              <RoutePreloader />
+              <ConditionalToaster />
+              {/* Optionally show a top-of-page banner when server down via client routes */}
+              {/* <ServerDownBanner /> */}
+            </ThemeProvider>
           </QueryProvider>
         </ErrorBoundary>
       </body>

@@ -5,10 +5,53 @@ import { Button, Card, Container, Spinner, Table } from "react-bootstrap";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
+import { PlusSquare, Trash2, Download } from "lucide-react";
 import RekamKontrak from "./rekam-kontrak";
 import ReactPaginate from "react-paginate";
 // import GenerateCSV from "../CSV/generateCSV";
 import moment from "moment";
+
+// Table styling dengan fixed column widths
+const tableStyles = {
+  container: {
+    overflowX: "auto" as const,
+    width: "100%",
+  },
+  table: {
+    width: "100%",
+    minWidth: "1300px",
+    tableLayout: "fixed" as const,
+    marginBottom: "0",
+  },
+  headerCell: {
+    padding: "12px 8px",
+    fontWeight: "600",
+    fontSize: "13px",
+    backgroundColor: "#343a40", // dark grey
+    color: "#fff", // white text for contrast
+    whiteSpace: "nowrap" as const,
+    textAlign: "center" as const,
+    verticalAlign: "middle",
+    borderColor: "#dee2e6",
+  },
+  bodyCell: {
+    padding: "10px 8px",
+    fontSize: "12px",
+    textAlign: "center" as const,
+    verticalAlign: "middle",
+    whiteSpace: "nowrap" as const,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  },
+  // Column widths
+  noColumn: { width: "50px", minWidth: "50px", maxWidth: "50px" },
+  taColumn: { width: "60px", minWidth: "60px", maxWidth: "60px" },
+  satkerColumn: { width: "220px", minWidth: "220px", maxWidth: "220px" },
+  tglColumn: { width: "110px", minWidth: "110px", maxWidth: "110px" },
+  nomorColumn: { width: "240px", minWidth: "240px", maxWidth: "240px" },
+  jumlahColumn: { width: "100px", minWidth: "100px", maxWidth: "100px" },
+  opsiColumn: { width: "130px", minWidth: "130px", maxWidth: "130px" },
+};
 
 interface DataKontrakProps {
   cek: boolean;
@@ -278,82 +321,196 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
             {/* Download button commented out - GenerateCSV not available */}
           </div>
           <Card className="mt-3" bg="light">
-            <Card.Body className="data-user fade-in">
-              <Table striped bordered hover responsive>
+            <Card.Body
+              className="data-user fade-in"
+              style={tableStyles.container}
+            >
+              <Table
+                striped
+                bordered
+                hover
+                responsive
+                style={tableStyles.table}
+              >
                 <thead>
                   <tr>
-                    <th className="text-header text-center">No.</th>
-                    <th className="text-header text-center">TA</th>
-                    <th className="text-header text-center">Satker</th>
-                    <th className="text-header text-center">Tgl Permohonan</th>
-                    <th className="text-header text-center">
+                    <th
+                      style={{
+                        ...tableStyles.headerCell,
+                        ...tableStyles.noColumn,
+                      }}
+                    >
+                      No.
+                    </th>
+                    <th
+                      style={{
+                        ...tableStyles.headerCell,
+                        ...tableStyles.taColumn,
+                      }}
+                    >
+                      TA
+                    </th>
+                    <th
+                      style={{
+                        ...tableStyles.headerCell,
+                        ...tableStyles.satkerColumn,
+                      }}
+                    >
+                      Satker
+                    </th>
+                    <th
+                      style={{
+                        ...tableStyles.headerCell,
+                        ...tableStyles.tglColumn,
+                      }}
+                    >
+                      Tgl Permohonan
+                    </th>
+                    <th
+                      style={{
+                        ...tableStyles.headerCell,
+                        ...tableStyles.nomorColumn,
+                      }}
+                    >
                       Nomor Permohonan
                     </th>
-                    <th className="text-header text-center">Jumlah Kontrak</th>
-                    <th className="text-header text-center">Opsi</th>
+                    <th
+                      style={{
+                        ...tableStyles.headerCell,
+                        ...tableStyles.jumlahColumn,
+                      }}
+                    >
+                      Jumlah Kontrak
+                    </th>
+                    <th
+                      style={{
+                        ...tableStyles.headerCell,
+                        ...tableStyles.opsiColumn,
+                      }}
+                    >
+                      Opsi
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="text-center">
                   {data.map((row, index) => (
                     <tr key={index}>
-                      <td className="align-middle text-center">
+                      <td
+                        style={{
+                          ...tableStyles.bodyCell,
+                          ...tableStyles.noColumn,
+                        }}
+                      >
                         {index + 1 + page * limit}
                       </td>
-                      <td className="align-middle text-center">{row.thang}</td>
-                      <td className="align-middle text-center">
-                        {row.nmsatker?.trim()} ({row.kdsatker})
+                      <td
+                        style={{
+                          ...tableStyles.bodyCell,
+                          ...tableStyles.taColumn,
+                        }}
+                      >
+                        {row.thang}
                       </td>
-                      <td className="align-middle text-center">
+                      <td
+                        style={{
+                          ...tableStyles.bodyCell,
+                          ...tableStyles.satkerColumn,
+                        }}
+                      >
+                        <div
+                          style={{
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {row.nmsatker?.trim()} ({row.kdsatker})
+                        </div>
+                      </td>
+                      <td
+                        style={{
+                          ...tableStyles.bodyCell,
+                          ...tableStyles.tglColumn,
+                        }}
+                      >
                         {row.tgpermohonan}
                       </td>
-                      <td className="align-middle text-center">
-                        {row.nopermohonan?.trim()}
+                      <td
+                        style={{
+                          ...tableStyles.bodyCell,
+                          ...tableStyles.nomorColumn,
+                        }}
+                      >
+                        <div
+                          style={{
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {row.nopermohonan?.trim()}
+                        </div>
                       </td>
-                      <td className="align-middle text-center">
+                      <td
+                        style={{
+                          ...tableStyles.bodyCell,
+                          ...tableStyles.jumlahColumn,
+                        }}
+                      >
                         {row.jumlah ?? "-"}
                       </td>
-                      <td className="align-middle text-center">
+                      <td
+                        style={{
+                          ...tableStyles.bodyCell,
+                          ...tableStyles.opsiColumn,
+                        }}
+                      >
+                        {/* Rekam Kontrak - hanya untuk non-KPPN */}
                         {user?.role !== "kppn" && (
-                          <i
-                            className="bi bi-plus-square-fill text-success mx-3"
-                            onClick={() =>
-                              handleRekamKontrak(
-                                String(row.id),
-                                row.nopermohonan,
-                                row.nmsatker,
-                                row.kdsatker,
-                                row.thang
-                              )
-                            }
-                            style={{
-                              fontSize: "17px",
-                              cursor: "pointer",
-                            }}
-                          ></i>
+                          <span title="Rekam Kontrak" className="inline-block">
+                            <PlusSquare
+                              className="text-success mx-2 cursor-pointer hover:scale-110 transition-transform"
+                              size={20}
+                              onClick={() =>
+                                handleRekamKontrak(
+                                  String(row.id),
+                                  row.nopermohonan?.trim() || "",
+                                  row.nmsatker?.trim() || "",
+                                  row.kdsatker,
+                                  row.thang
+                                )
+                              }
+                            />
+                          </span>
                         )}
+
+                        {/* Hapus Dispensasi - hanya untuk non-KPPN */}
                         {user?.role !== "kppn" && (
-                          <i
-                            className="bi bi-trash-fill text-danger"
-                            onClick={() =>
-                              handleHapusDispKontrak(
-                                String(row.id),
-                                row.jumlah ?? 0
-                              )
-                            }
-                            style={{
-                              fontSize: "20px",
-                              cursor: "pointer",
-                            }}
-                          ></i>
+                          <span
+                            title="Hapus Dispensasi"
+                            className="inline-block"
+                          >
+                            <Trash2
+                              className="text-danger mx-2 cursor-pointer hover:scale-110 transition-transform"
+                              size={20}
+                              onClick={() =>
+                                handleHapusDispKontrak(
+                                  String(row.id),
+                                  row.jumlah ?? 0
+                                )
+                              }
+                            />
+                          </span>
                         )}
-                        <i
-                          className="bi bi-arrow-down-circle-fill text-primary mx-2"
-                          onClick={() => handledownloadKontrak(String(row.id))}
-                          style={{
-                            fontSize: "20px",
-                            cursor: "pointer",
-                          }}
-                        ></i>
+
+                        {/* Download - untuk semua role */}
+                        <span title="Download Dokumen" className="inline-block">
+                          <Download
+                            className="text-primary mx-2 cursor-pointer hover:scale-110 transition-transform"
+                            size={20}
+                            onClick={() =>
+                              handledownloadKontrak(String(row.id))
+                            }
+                          />
+                        </span>
                       </td>
                     </tr>
                   ))}
