@@ -91,7 +91,7 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
       combinedFilter && combinedFilter.trim() !== "" ? combinedFilter : null;
 
     const encodedQuery = encodeURIComponent(
-      `SELECT a.id,a.thang,a.kddept,a.kdunit,a.kdsatker,c.nmsatker,a.kdlokasi,a.kdkppn,a.tgpermohonan,a.nopermohonan,a.uraian,a.username,a.kdkanwil_upload,a.jmltup jumlah,SUM(b.niltup) nilaitup FROM laporan_2023.dispensasi_tup a LEFT JOIN laporan_2023.dispensasi_tup_lampiran b ON a.id=b.id_dispensasi  LEFT JOIN dbref.t_satker_2025 c ON a.kdsatker=c.kdsatker  ${
+      `SELECT a.id,a.thang,a.kddept,a.kdunit,a.kdsatker,c.nmsatker,a.kdlokasi,a.kdkppn,a.tgpermohonan,a.nopermohonan,a.uraian,a.username,a.kdkanwil_upload,a.jmltup jumlah,SUM(b.niltup) nilaitup FROM laporan_2023.dispensasi_tup a LEFT JOIN laporan_2023.dispensasi_tup_lampiran b ON a.id=b.id_dispensasi::integer  LEFT JOIN dbref.t_satker_2025 c ON a.kdsatker=c.kdsatker  ${
         finalFilter ? `WHERE ${finalFilter}` : "  "
       }GROUP BY a.id,a.thang,a.kddept,a.kdunit,a.kdsatker,c.nmsatker,a.kdlokasi,a.kdkppn,a.tgpermohonan,a.nopermohonan,a.uraian,a.username,a.kdkanwil_upload,a.jmltup ORDER BY a.id DESC`
     );
@@ -105,7 +105,7 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
       `SELECT a.id,a.kddept,b.nmdept,a.thang,a.kdunit,c.nmunit,a.kdsatker,i.nmsatker,a.kdlokasi,e.nmlokasi,a.kdkanwil,g.nmkanwil,a.kdkppn,h.nmkppn,a.uraian,a.tgpermohonan,
                 a.nopermohonan,a.tgpersetujuan,a.nopersetujuan,z.notup,z.tgtup,z.niltup,z.status,a.username,a.kdkanwil_upload
                 FROM laporan_2023.dispensasi_tup a
-                LEFT JOIN laporan_2023.dispensasi_tup_lampiran z ON a.id=z.id_dispensasi
+                LEFT JOIN laporan_2023.dispensasi_tup_lampiran z ON a.id=z.id_dispensasi::integer
                 LEFT JOIN dbref.t_dept_2025 b ON a.kddept=b.kddept
                 LEFT JOIN dbref.t_unit_2025 c ON a.kddept=c.kddept AND a.kdunit=c.kdunit
                 LEFT JOIN dbref.t_lokasi_2025 e ON a.kdlokasi=e.kdlokasi
@@ -336,22 +336,24 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
                       </td>
                       <td className="align-middle text-center">{row.thang}</td>
                       <td className="align-middle text-center">
-                        {row.nmsatker} ({row.kdsatker})
+                        {row.nmsatker?.trim()} ({row.kdsatker})
                       </td>
                       <td className="align-middle text-center">
                         {row.tgpermohonan}
                       </td>
                       <td className="align-middle text-center">
-                        {row.nopermohonan}
+                        {row.nopermohonan?.trim()}
                       </td>
-                      <td className="align-middle text-center">{row.jumlah}</td>
+                      <td className="align-middle text-center">
+                        {row.jumlah ?? "-"}
+                      </td>
                       <td className="align-middle text-center">
                         {user?.role !== "kppn" && (
                           <i
                             className="bi bi-plus-square-fill text-success mx-3"
                             onClick={() =>
                               handleRekamTup(
-                                row.id,
+                                String(row.id),
                                 row.nopermohonan,
                                 row.nmsatker,
                                 row.kdsatker,
@@ -368,7 +370,10 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
                           <i
                             className="bi bi-trash-fill text-danger"
                             onClick={() =>
-                              handleHapusDispTup(row.id, row.jumlah)
+                              handleHapusDispTup(
+                                String(row.id),
+                                row.jumlah ?? 0
+                              )
                             }
                             style={{
                               fontSize: "20px",
@@ -378,7 +383,7 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
                         )}
                         <i
                           className="bi bi-arrow-down-circle-fill text-primary mx-2"
-                          onClick={() => handledownloadTup(row.id)}
+                          onClick={() => handledownloadTup(String(row.id))}
                           style={{
                             fontSize: "20px",
                             cursor: "pointer",
