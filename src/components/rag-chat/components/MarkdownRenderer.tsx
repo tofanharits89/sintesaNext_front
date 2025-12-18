@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import { Code as CodeIcon } from "lucide-react";
 import { Code, CodeBlock, CodeHeader } from "@/components/animate-ui/components/animate/code";
 
@@ -82,7 +83,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
 
     return (
         <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
+            remarkPlugins={[remarkGfm, remarkBreaks]}
             components={components}
         >
             {content}

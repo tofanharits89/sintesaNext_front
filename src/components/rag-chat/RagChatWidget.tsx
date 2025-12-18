@@ -105,7 +105,7 @@ export function RagChatWidget() {
                 {messages.length === 0 ? (
                   <EmptyState />
                 ) : (
-                  <ScrollArea className="h-96 px-4 pb-0">
+                  <ScrollArea className="h-96 p-4 pb-0 rounded-lg">
                     <div className="flex flex-col gap-2 text-[13px]">
                       {messages
                         .filter((m) => m.role === "user" || m.content.length > 0)
