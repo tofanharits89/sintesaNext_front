@@ -31,10 +31,11 @@ const CekKppn: React.FC<CekKppnProps> = ({ value, className, onChange }) => {
       user?.role === "kppn" ? `WHERE kdkppn = '${user.kdkppn}'` : "";
     const query = `SELECT a.nmkppn, a.kdkppn FROM dbref.t_kppn_2025 a ${filterKppn} ORDER BY a.kdkppn`;
     const encryptedQuery = btoa(query);
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_LOCAL_TKD_REFERENSI_TKD}${encryptedQuery}`,
+        `${baseUrl}/dispensasi/${encryptedQuery}?limit=999999&page=0`,
         {
           headers: {
             // Authorization: `Bearer ${user?.token}`,
