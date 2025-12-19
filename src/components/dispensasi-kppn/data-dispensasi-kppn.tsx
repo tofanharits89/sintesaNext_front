@@ -7,8 +7,52 @@ import { toast } from "sonner";
 import { Button, Table, Spinner, Card } from "react-bootstrap";
 import ReactPaginate from "react-paginate";
 import moment from "moment";
+import { PlusSquare, Trash2, Download } from "lucide-react";
 import Rekam from "./modal-rekam";
 import RekamKontrak from "./modal-rekam-kontrak";
+import GenerateCSV from "@/components/GenerateCSV";
+
+// Table styling dengan fixed column widths
+const tableStyles = {
+  container: {
+    overflowX: "auto" as const,
+    width: "100%",
+  },
+  table: {
+    width: "100%",
+    minWidth: "1300px",
+    tableLayout: "fixed" as const,
+    marginBottom: "0",
+  },
+  headerCell: {
+    padding: "12px 8px",
+    fontWeight: "600",
+    fontSize: "13px",
+    backgroundColor: "#343a40", // dark grey
+    color: "#fff", // white text for contrast
+    whiteSpace: "nowrap" as const,
+    textAlign: "center" as const,
+    verticalAlign: "middle",
+    borderColor: "#dee2e6",
+  },
+  bodyCell: {
+    padding: "10px 8px",
+    fontSize: "12px",
+    textAlign: "center" as const,
+    verticalAlign: "middle",
+    whiteSpace: "nowrap" as const,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  },
+  // Column widths
+  noColumn: { width: "50px", minWidth: "50px", maxWidth: "50px" },
+  kppnColumn: { width: "180px", minWidth: "180px", maxWidth: "180px" },
+  satkerColumn: { width: "200px", minWidth: "200px", maxWidth: "200px" },
+  tglColumn: { width: "120px", minWidth: "120px", maxWidth: "120px" },
+  nomorColumn: { width: "200px", minWidth: "200px", maxWidth: "200px" },
+  jumlahColumn: { width: "140px", minWidth: "140px", maxWidth: "140px" },
+  opsiColumn: { width: "140px", minWidth: "140px", maxWidth: "140px" },
+};
 
 interface DispensasiData {
   id: string;
@@ -55,8 +99,10 @@ const DataDispensasiKPPN: React.FC = () => {
   };
 
   useEffect(() => {
-    getData();
-  }, [page, where]);
+    if (user) {
+      getData();
+    }
+  }, [page, where, user]);
 
   const getData = async () => {
     setLoading(true);
@@ -79,7 +125,8 @@ const DataDispensasiKPPN: React.FC = () => {
       LEFT JOIN dbref.t_satker_2025 c ON a.kdsatker=c.kdsatker  ${
         filterKppn ? `WHERE ${filterKppn}` : "  "
       }
-        GROUP BY a.id ORDER BY id DESC`
+        GROUP BY a.id,a.thang,a.kddept,a.kdunit,a.kdsatker,c.nmsatker,a.kdlokasi,a.kdkppn,a.tgpermohonan, a.nopermohonan,
+      a.kd_dispensasi,a.uraian,b.nmkppn,a.jmlkontrak ORDER BY id DESC`
     );
 
     const cleanedQuery = decodeURIComponent(encodedQuery)
@@ -133,10 +180,13 @@ const DataDispensasiKPPN: React.FC = () => {
         dbref.t_unit_2025 e ON a.kddept = e.kddept AND a.kdunit = e.kdunit
     LEFT JOIN 
         dbref.t_lokasi_2025 f ON a.kdlokasi = f.kdlokasi 
-    LEFT JOIN laporan_2023.dispensasi_kppn_lampiran g ON a.id=g.id_dispensasi
+    LEFT JOIN laporan_2023.dispensasi_kppn_lampiran g ON a.id::text=g.id_dispensasi::text
          ${filterKppn ? `WHERE ${filterKppn}` : "  "}
     GROUP BY 
-          g.id
+          a.id,a.thang,a.kddept,a.kdunit,a.kdsatker,c.nmsatker,a.kdlokasi,a.kdkppn,a.tgpermohonan,a.nopermohonan,
+          a.kd_dispensasi,a.uraian,b.nmkppn,a.jmlkontrak,
+          a.jenis,d.nmdept,e.nmunit,f.nmlokasi,a.tgpersetujuan,a.nopersetujuan,
+          g.nokontrak,g.tgkontrak,g.nilkontrak
     ORDER BY 
     a.id DESC`
     );
@@ -148,26 +198,31 @@ const DataDispensasiKPPN: React.FC = () => {
 
     setSql(cleanedQuery2);
 
+    const baseUrl =
+      process.env.NEXT_PUBLIC_LOCAL_TAYANGDISPENSASIKPPN ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      "/api/v1";
+
+    // Backend route expects: /api/v1/dispensasi/:query?limit=10&page=0&user=username
+    // where :query is the base64-encoded SQL
+    const requestUrl = `${baseUrl}/dispensasi/${encryptedQuery}?limit=${limit}&page=${page}&user=${
+      user?.username || ""
+    }`;
+    console.debug("dispensasi-kppn request url", requestUrl);
+
     try {
-      const response = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_LOCAL_TAYANGDISPENSASIKPPN
-        }${encryptedQuery}&limit=${limit}&page=${page}&user=${
-          user?.username || ""
-        }`,
-        {
-          headers: {},
-        }
-      );
+      const response = await fetch(requestUrl, {
+        headers: {},
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
-      setData(result.result);
-      setPages(result.totalPages);
-      setRows(result.totalRows);
+      setData(result.result || []);
+      setPages(result.totalPages || 0);
+      setRows(result.totalRows || 0);
       setLoading(false);
     } catch (error) {
       setLoading(false);
@@ -320,91 +375,204 @@ const DataDispensasiKPPN: React.FC = () => {
           ) : (
             <>
               <Card className="mt-1 p-2" bg="light">
-                <Card.Body className="data-user fade-in ">
-                  <Table striped bordered hover responsive>
+                <Card.Body
+                  className="data-user fade-in"
+                  style={tableStyles.container}
+                >
+                  <Table
+                    striped
+                    bordered
+                    hover
+                    responsive
+                    style={tableStyles.table}
+                  >
                     <thead>
                       <tr>
-                        <th className="text-header text-center">No</th>
-                        <th className="text-header text-center">KPPN</th>
-                        <th className="text-header text-center">Satker</th>
-                        <th className="text-header text-center">
+                        <th
+                          style={{
+                            ...tableStyles.headerCell,
+                            ...tableStyles.noColumn,
+                          }}
+                        >
+                          No
+                        </th>
+                        <th
+                          style={{
+                            ...tableStyles.headerCell,
+                            ...tableStyles.kppnColumn,
+                          }}
+                        >
+                          KPPN
+                        </th>
+                        <th
+                          style={{
+                            ...tableStyles.headerCell,
+                            ...tableStyles.satkerColumn,
+                          }}
+                        >
+                          Satker
+                        </th>
+                        <th
+                          style={{
+                            ...tableStyles.headerCell,
+                            ...tableStyles.tglColumn,
+                          }}
+                        >
                           Tgl Permohonan
                         </th>
-                        <th className="text-header text-center">
+                        <th
+                          style={{
+                            ...tableStyles.headerCell,
+                            ...tableStyles.nomorColumn,
+                          }}
+                        >
                           Nomor Permohonan
                         </th>
-                        <th className="text-header text-center">
+                        <th
+                          style={{
+                            ...tableStyles.headerCell,
+                            ...tableStyles.jumlahColumn,
+                          }}
+                        >
                           Jumlah Kontrak
                         </th>
-                        <th className="text-header text-center"> Opsi</th>
+                        <th
+                          style={{
+                            ...tableStyles.headerCell,
+                            ...tableStyles.opsiColumn,
+                          }}
+                        >
+                          Opsi
+                        </th>
                       </tr>
                     </thead>
 
                     <tbody className="text-center">
                       {data.map((row, index) => (
                         <tr key={index}>
-                          <td className="align-middle text-center">
-                            {" "}
+                          <td
+                            style={{
+                              ...tableStyles.bodyCell,
+                              ...tableStyles.noColumn,
+                            }}
+                          >
                             {index + 1 + page * limit}
                           </td>
-                          <td className="align-middle text-center">
+                          <td
+                            style={{
+                              ...tableStyles.bodyCell,
+                              ...tableStyles.kppnColumn,
+                            }}
+                          >
                             {row.nmkppn} ({row.kdkppn})
                           </td>
-                          <td className="align-middle text-center">
-                            {row.nmsatker} ({row.kdsatker})
+                          <td
+                            style={{
+                              ...tableStyles.bodyCell,
+                              ...tableStyles.satkerColumn,
+                            }}
+                          >
+                            <div
+                              style={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}
+                            >
+                              {row.nmsatker} ({row.kdsatker})
+                            </div>
                           </td>
-                          <td className="align-middle text-center">
+                          <td
+                            style={{
+                              ...tableStyles.bodyCell,
+                              ...tableStyles.tglColumn,
+                            }}
+                          >
                             {row.tgpermohonan}
                           </td>
-                          <td className="align-middle text-center">
-                            {row.nopermohonan}
-                          </td>{" "}
-                          <td className="align-middle text-center">
+                          <td
+                            style={{
+                              ...tableStyles.bodyCell,
+                              ...tableStyles.nomorColumn,
+                            }}
+                          >
+                            <div
+                              style={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}
+                            >
+                              {row.nopermohonan}
+                            </div>
+                          </td>
+                          <td
+                            style={{
+                              ...tableStyles.bodyCell,
+                              ...tableStyles.jumlahColumn,
+                            }}
+                          >
                             {row.jmlkontrak > 0 ? (
                               row.jmlkontrak
                             ) : (
                               <span className="text-danger fw-bold">
-                                kontrak belum direkam
+                                belum direkam
                               </span>
                             )}
                           </td>
                           {user?.role !== "kanwil_djpb" ? (
-                            <td className="align-middle text-center">
-                              <i
-                                className="bi bi-plus-square-fill text-success mx-3"
-                                onClick={() =>
-                                  handleRekamKontrak(
-                                    row.id,
-                                    row.nopermohonan,
-                                    row.nmsatker,
-                                    row.kdsatker,
-                                    row.kdkppn
-                                  )
-                                }
-                                style={{
-                                  fontSize: "17px",
-                                  cursor: "pointer",
-                                }}
-                              ></i>
+                            <td
+                              style={{
+                                ...tableStyles.bodyCell,
+                                ...tableStyles.opsiColumn,
+                              }}
+                            >
+                              {/* Rekam Kontrak */}
+                              <span
+                                title="Rekam Kontrak"
+                                className="inline-block"
+                              >
+                                <PlusSquare
+                                  className="text-success mx-2 cursor-pointer hover:scale-110 transition-transform"
+                                  size={20}
+                                  onClick={() =>
+                                    handleRekamKontrak(
+                                      row.id,
+                                      row.nopermohonan,
+                                      row.nmsatker,
+                                      row.kdsatker,
+                                      row.kdkppn
+                                    )
+                                  }
+                                />
+                              </span>
 
-                              <i
-                                className="bi bi-trash-fill text-danger"
-                                onClick={() =>
-                                  handleHapusDispSPM(
-                                    row.id,
-                                    row.jmlkontrak,
-                                    row.kdsatker,
-                                    row.kdkppn
-                                  )
-                                }
-                                style={{
-                                  fontSize: "20px",
-                                  cursor: "pointer",
-                                }}
-                              ></i>
+                              {/* Hapus Dispensasi */}
+                              <span
+                                title="Hapus Dispensasi"
+                                className="inline-block"
+                              >
+                                <Trash2
+                                  className="text-danger mx-2 cursor-pointer hover:scale-110 transition-transform"
+                                  size={20}
+                                  onClick={() =>
+                                    handleHapusDispSPM(
+                                      row.id,
+                                      row.jmlkontrak,
+                                      row.kdsatker,
+                                      row.kdkppn
+                                    )
+                                  }
+                                />
+                              </span>
                             </td>
                           ) : (
-                            <td className="align-middle text-center">-</td>
+                            <td
+                              style={{
+                                ...tableStyles.bodyCell,
+                                ...tableStyles.opsiColumn,
+                              }}
+                            >
+                              -
+                            </td>
                           )}
                         </tr>
                       ))}
@@ -413,16 +581,13 @@ const DataDispensasiKPPN: React.FC = () => {
                 </Card.Body>
               </Card>
               {export2 && (
-                // <GenerateCSV
-                //   query3={sql}
-                //   status={handleStatus}
-                //   namafile={`v3_CSV_DISPENSASI_KONTRAK_KPPN_${moment().format(
-                //     "DDMMYY-HHmmss"
-                //   )}`}
-                // />
-                <div>
-                  Export functionality commented out - GenerateCSV not available
-                </div>
+                <GenerateCSV
+                  query3={sql}
+                  status={handleStatus}
+                  namafile={`v3_CSV_DISPENSASI_KONTRAK_KPPN_${moment().format(
+                    "DDMMYY-HHmmss"
+                  )}`}
+                />
               )}
               {data.length > 0 && (
                 <>
