@@ -35,7 +35,7 @@ export function ChatInput({ value, onChange, onSend, disabled }: ChatInputProps)
     };
 
     return (
-        <CardFooter className="!p-4 flex flex-col gap-1">
+        <CardFooter className="!p-4 !pt-0 flex flex-col gap-1">
             <form
                 className="w-full relative"
                 onSubmit={(e) => {

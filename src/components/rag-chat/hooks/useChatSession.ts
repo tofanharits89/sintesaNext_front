@@ -11,6 +11,7 @@ interface UseChatSessionReturn {
     sources: RagChatSource[];
     streamProgress: StreamProgress | null;
     nearingLimit: boolean;
+    agentName: string | null;
 
     // Actions
     setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
@@ -33,6 +34,7 @@ export function useChatSession(): UseChatSessionReturn {
     const [sources, setSources] = useState<RagChatSource[]>([]);
     const [streamProgress, setStreamProgress] = useState<StreamProgress | null>(null);
     const [nearingLimit, setNearingLimit] = useState(false);
+    const [agentName, setAgentName] = useState<string | null>(null);
     const currentAnswerRef = useRef<string>("");
 
     const handleSend = useCallback(async (
@@ -45,8 +47,9 @@ export function useChatSession(): UseChatSessionReturn {
         setError(null);
         setIsSending(true);
         setSources([]);
+        setAgentName(null);
         // Show initial thinking state while waiting for first SSE event
-        setStreamProgress({ step: 0, action: "thinking" });
+        setStreamProgress({ step: 0, action: "connecting" });
         setNearingLimit(false);
         currentAnswerRef.current = "";
 
@@ -75,6 +78,9 @@ export function useChatSession(): UseChatSessionReturn {
                     },
                     onToolResult: (step, success, documentsFound) => {
                         // Progress will be updated when sources arrive
+                    },
+                    onAgentSelected: (name) => {
+                        setAgentName(name);
                     },
                     onSources: (newSources) => {
                         setSources(newSources);
@@ -118,6 +124,7 @@ export function useChatSession(): UseChatSessionReturn {
         setError(null);
         setStreamProgress(null);
         setNearingLimit(false);
+        setAgentName(null);
     }, []);
 
     const clearError = useCallback(() => {
@@ -132,6 +139,7 @@ export function useChatSession(): UseChatSessionReturn {
         sources,
         streamProgress,
         nearingLimit,
+        agentName,
         setMessages,
         handleSend,
         resetSession,

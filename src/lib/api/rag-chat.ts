@@ -25,7 +25,7 @@ export interface SendRagMessageInput {
  * SSE Event types from the streaming agent endpoint
  */
 export interface StreamEvent {
-  type: 'step_start' | 'tool_call' | 'tool_result' | 'sources' | 'content' | 'done' | 'error';
+  type: 'step_start' | 'tool_call' | 'tool_result' | 'sources' | 'content' | 'done' | 'error' | 'agent_selected';
   step?: number;
   action?: string;
   tool?: string;
@@ -41,6 +41,7 @@ export interface StreamEvent {
   error_type?: string;
   message?: string;
   recoverable?: boolean;
+  agent_name?: string;
 }
 
 /**
@@ -54,6 +55,7 @@ export interface StreamCallbacks {
   onContent?: (content: string) => void;
   onDone?: (fullContent: string, totalSteps: number, toolCallsCount: number) => void;
   onError?: (errorType: string, message: string) => void;
+  onAgentSelected?: (agentName: string) => void;
 }
 
 /**
@@ -191,6 +193,9 @@ function processStreamEvent(event: StreamEvent, callbacks: StreamCallbacks) {
       break;
     case "error":
       callbacks.onError?.(event.error_type ?? "unknown", event.message ?? "Unknown error");
+      break;
+    case "agent_selected":
+      callbacks.onAgentSelected?.(event.agent_name ?? "general");
       break;
   }
 }

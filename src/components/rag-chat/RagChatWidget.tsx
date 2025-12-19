@@ -38,6 +38,7 @@ export function RagChatWidget() {
     error,
     sources,
     streamProgress,
+    agentName,
     setMessages,
     handleSend: sendMessage,
     resetSession,
@@ -106,21 +107,25 @@ export function RagChatWidget() {
                   <EmptyState />
                 ) : (
                   <ScrollArea className="h-[calc(55vh-2rem)] px-4 py-0 rounded-lg">
-                    <div className="flex flex-col gap-2 text-[13px]">
+                    <div className="flex flex-col gap-4 text-[13px]">
                       {messages
                         .filter((m) => m.role === "user" || m.content.length > 0)
                         .map((m, idx) => (
                           <MessageBubble key={idx} message={m} index={idx} />
                         ))}
 
-                      <StreamProgress progress={streamProgress} isSending={isSending} />
+                      <StreamProgress
+                        progress={streamProgress}
+                        isSending={isSending}
+                        agentName={agentName}
+                      />
 
                       <div ref={messagesEndRef} />
                     </div>
                   </ScrollArea>
                 )}
 
-                <SourcesSection sources={sources} />
+                <SourcesSection sources={sources} hasMessages={messages.length > 0} />
 
                 {error && (
                   <div className="px-4 pb-1 text-[11px] text-destructive">

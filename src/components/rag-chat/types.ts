@@ -19,9 +19,10 @@ export interface StreamProgress {
 // ----- Constants -----
 
 export const ACTION_LABELS: Record<string, string> = {
-    thinking: "sedang berpikir...",
-    searching: "sedang mencari...",
-    answering: "sedang menjawab...",
+    connecting: "mencari agent yang tersedia...",
+    thinking: "menelaah pertanyaan yang diberikan...",
+    searching: "mencari data yang relevan...",
+    answering: "mengirim jawaban...",
 };
 
 // ----- Utilities -----
