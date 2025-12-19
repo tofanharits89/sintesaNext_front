@@ -19,9 +19,10 @@ export function MessageBubble({ message, index }: MessageBubbleProps) {
     return (
         <motion.div
             key={index}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, transform: "translateY(10px)" }}
+            animate={{ opacity: 1, transform: "translateY(0px)" }}
             transition={{ duration: 0.2 }}
+            style={{ willChange: "transform, opacity" }}
             className={`flex ${isUser ? "justify-end" : "justify-start"}`}
         >
             <div

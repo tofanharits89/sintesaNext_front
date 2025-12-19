@@ -100,13 +100,13 @@ export function RagChatWidget() {
             }}
           >
             <Card className="w-[430px] max-w-[calc(100vw-2rem)] border-border/70 shadow-xl bg-white dark:bg-card gap-0 !p-0">
-              <ChatHeader onReset={resetSession} />
+              <ChatHeader onReset={resetSession} disabled={isSending} />
 
               <CardContent className="p-0">
                 {messages.length === 0 ? (
                   <EmptyState />
                 ) : (
-                  <ScrollArea className="h-[calc(55vh-2rem)] px-4 py-0 rounded-lg">
+                  <ScrollArea className="h-[calc(50vh-2rem)] px-4 py-0 rounded-lg">
                     <div className="flex flex-col gap-4 text-[13px]">
                       {messages
                         .filter((m) => m.role === "user" || m.content.length > 0)
@@ -125,7 +125,7 @@ export function RagChatWidget() {
                   </ScrollArea>
                 )}
 
-                <SourcesSection sources={sources} hasMessages={messages.length > 0} />
+                <SourcesSection sources={sources} />
 
                 {error && (
                   <div className="px-4 pb-1 text-[11px] text-destructive">

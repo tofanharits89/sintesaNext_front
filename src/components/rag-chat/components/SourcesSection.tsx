@@ -10,18 +10,14 @@ import { RagChatSource } from "../types";
 
 interface SourcesSectionProps {
     sources: RagChatSource[];
-    hasMessages?: boolean;
 }
 
 /**
  * AI disclaimer and sources display section.
- * Always shows the AI disclaimer when there are messages.
+ * Always visible to maintain consistent chat height.
  * Shows sources tooltip only when sources are available.
  */
-export function SourcesSection({ sources, hasMessages = false }: SourcesSectionProps) {
-    // Don't show anything if there are no messages yet
-    if (!hasMessages) return null;
-
+export function SourcesSection({ sources }: SourcesSectionProps) {
     const hasSources = sources && sources.length > 0;
 
     return (
