@@ -20,8 +20,13 @@ type RippleButtonContextType = {
 const [RippleButtonProvider, useRippleButton] =
   getStrictContext<RippleButtonContextType>('RippleButtonContext');
 
+type StrictHTMLMotionProps<Tag extends keyof HTMLElementTagNameMap> = Omit<
+  HTMLMotionProps<Tag>,
+  'ref'
+> & { ref?: React.Ref<HTMLElementTagNameMap[Tag]> };
+
 type RippleButtonProps = WithAsChild<
-  HTMLMotionProps<'button'> & {
+  StrictHTMLMotionProps<'button'> & {
     hoverScale?: number;
     tapScale?: number;
   }
@@ -96,7 +101,7 @@ function RippleButton({
 }
 
 type RippleButtonRipplesProps = WithAsChild<
-  HTMLMotionProps<'span'> & {
+  StrictHTMLMotionProps<'span'> & {
     color?: string;
     scale?: number;
   }

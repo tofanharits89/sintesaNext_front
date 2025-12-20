@@ -5,8 +5,13 @@ import { motion, type HTMLMotionProps } from 'motion/react';
 
 import { Slot, type WithAsChild } from '@/components/animate-ui/primitives/animate/slot';
 
+type StrictHTMLMotionProps<Tag extends keyof HTMLElementTagNameMap> = Omit<
+  HTMLMotionProps<Tag>,
+  'ref'
+> & { ref?: React.Ref<HTMLElementTagNameMap[Tag]> };
+
 type ButtonProps = WithAsChild<
-  HTMLMotionProps<'button'> & {
+  StrictHTMLMotionProps<'button'> & {
     hoverScale?: number;
     tapScale?: number;
   }

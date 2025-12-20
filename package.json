@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:no-turbo": "next dev",
-    "build": "node --max-old-space-size=12288 node_modules/next/dist/bin/next build",
-    "build:analyze": "cross-env NODE_OPTIONS=--max-old-space-size=12288 ANALYZE=true next build",
+    "build": "node --max-old-space-size=8192 node_modules/next/dist/bin/next build",
+    "build:analyze": "cross-env NODE_OPTIONS=--max-old-space-size=8192 ANALYZE=true next build",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
