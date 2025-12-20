@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useSocket } from '../useSocket';
 import { useAuth } from '@/lib/auth';
 import { SOCKET_EVENTS } from '@/types/socket-events';
+import { addCsrfToHeaders } from '@/utils/csrf-utils';
 
 interface SendMessageArgs {
   recipientId?: string | undefined;
@@ -52,7 +53,7 @@ export function useMessageDelivery() {
       ) {
         return navigator.onLine === false;
       }
-    } catch {}
+    } catch { }
     return false;
   };
 
@@ -106,7 +107,7 @@ export function useMessageDelivery() {
           if (!conversationId && payload?.conversationId && typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('conversation:created', { detail: { conversationId: payload.conversationId } }));
           }
-        } catch {}
+        } catch { }
 
         return {
           success: true,
@@ -118,9 +119,10 @@ export function useMessageDelivery() {
         try {
           const response = await fetchWithTimeout("/api/v1/messaging/send", {
             method: 'POST',
-            headers: {
+            headers: addCsrfToHeaders({
               'Content-Type': 'application/json',
-            },
+            }),
+            credentials: 'include',
             body: JSON.stringify({
               recipientId,
               conversationId,

@@ -1,5 +1,7 @@
 "use client";
 
+import { addCsrfToHeaders } from "@/utils/csrf-utils";
+
 interface SendMessageArgs {
   conversationId: string;
   content: string;
@@ -122,7 +124,8 @@ export class MessageService {
   }): Promise<any> {
     const response = await fetch("/api/v1/messaging/send", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: addCsrfToHeaders({ "Content-Type": "application/json" }),
+      credentials: "include",
       body: JSON.stringify(args),
     });
 
