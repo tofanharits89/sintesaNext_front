@@ -29,9 +29,7 @@ const ENV = {
   OPTIMISTIC_AUTH: appConfig.isDevelopment,
 } as const;
 
-// Feature flag: protect-by-default. Default to true for safety and simplicity.
-// Set NEXT_PUBLIC_DEFAULT_PROTECT="false" to opt out.
-const DEFAULT_PROTECT = process.env.NEXT_PUBLIC_DEFAULT_PROTECT !== 'false';
+// Always protect-by-default (fail-secure). Routes must be explicitly added to PUBLIC_ROUTES to be public.
 
 // Cookie configuration (session id)
 const COOKIE_CONFIG = {
@@ -118,8 +116,8 @@ function appendSetCookies(target: NextResponse, cookies?: string[]) {
 }
 
 function needsAuth(pathname: string): boolean {
-  if (isPublicRoute(pathname)) return false;
-  return DEFAULT_PROTECT ? true : isProtectedRoute(pathname);
+  // Fail-secure: everything needs auth unless explicitly public
+  return !isPublicRoute(pathname);
 }
 
 /**
