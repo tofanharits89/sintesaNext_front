@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { backendPath } from "@/lib/api/backend";
+import { backendPath } from "@/lib/config/config";
 
 // Helper to extract a cookie value from a Cookie header
 function extractCookie(name: string, cookieHeader: string): string | undefined {
@@ -9,7 +9,7 @@ function extractCookie(name: string, cookieHeader: string): string | undefined {
       const [k, ...rest] = part.trim().split("=");
       if (k === name) return decodeURIComponent(rest.join("="));
     }
-  } catch {}
+  } catch { }
   return undefined;
 }
 

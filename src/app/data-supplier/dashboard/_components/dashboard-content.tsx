@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { apiPath } from "@/lib/config/base-path";
-import { backendPath } from "@/lib/api/backend";
+import { backendPath } from "@/lib/config/config";
 import { Card, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
 import { LineChartComponent } from "@/components/ui/line-chart";
 import { BarChartComponent } from "@/components/ui/bar-chart";
@@ -26,7 +26,7 @@ export default async function DashboardContent({ selectedYear }: Props) {
         next: { revalidate: 0 },
       });
       payload = await resp.json().catch(() => null);
-    } catch {}
+    } catch { }
     // Fallback to backend with cookies if proxy failed
     if (!payload) {
       const resp2 = await fetch(backendPath(`/supplier-analytics/dashboard${qs}`), {
@@ -36,7 +36,7 @@ export default async function DashboardContent({ selectedYear }: Props) {
       });
       payload = await resp2.json().catch(() => null);
     }
-  } catch {}
+  } catch { }
 
   const data = payload?.data || {};
   const totals = data?.totals || {};
@@ -49,29 +49,29 @@ export default async function DashboardContent({ selectedYear }: Props) {
 
   const trendData: Array<{ name: string; total_kontrak: number; total_spm: number }> = Array.isArray(data?.trend)
     ? data.trend.map((t: any) => {
-        const y = t.tahun ?? "";
-        const m = t.bulan == null ? "" : String(t.bulan).padStart(2, "0");
-        const label = m ? `${y}-${m}` : `${y}`;
-        return {
-          name: label,
-          total_kontrak: Number(t.total_kontrak || 0),
-          total_spm: Number(t.total_spm || 0),
-        };
-      })
+      const y = t.tahun ?? "";
+      const m = t.bulan == null ? "" : String(t.bulan).padStart(2, "0");
+      const label = m ? `${y}-${m}` : `${y}`;
+      return {
+        name: label,
+        total_kontrak: Number(t.total_kontrak || 0),
+        total_spm: Number(t.total_spm || 0),
+      };
+    })
     : [];
 
   const topKontrakData: Array<{ name: string; value: number }> = Array.isArray(data?.top_vendors_by_kontrak)
     ? data.top_vendors_by_kontrak.map((v: any) => ({
-        name: cleanVendorName(v.nama_vendor || v.NPWP_SUPPLIER || "-"),
-        value: Number(v.total_kontrak || 0),
-      }))
+      name: cleanVendorName(v.nama_vendor || v.NPWP_SUPPLIER || "-"),
+      value: Number(v.total_kontrak || 0),
+    }))
     : [];
 
   const topSpmData: Array<{ name: string; value: number }> = Array.isArray(data?.top_vendors_by_spm)
     ? data.top_vendors_by_spm.map((v: any) => ({
-        name: cleanVendorName(v.nama_vendor || v.NPWP_SUPPLIER || "-"),
-        value: Number(v.total_spm || 0),
-      }))
+      name: cleanVendorName(v.nama_vendor || v.NPWP_SUPPLIER || "-"),
+      value: Number(v.total_spm || 0),
+    }))
     : [];
 
   return (

@@ -79,22 +79,25 @@ export class MessageService {
   /**
    * Mark message as read
    */
-  async markAsRead(messageId: string, userId: string): Promise<void> {
-    // Implementation for marking message as read
-    await fetch(`/api/v1/messages/${messageId}/read`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId }),
+  async markAsRead(conversationId: string, messageIds: string[]): Promise<void> {
+    // Implementation for marking messages as read
+    await fetch(`/api/v1/messaging/conversations/${encodeURIComponent(conversationId)}/read`, {
+      method: "PUT",
+      headers: addCsrfToHeaders({ "Content-Type": "application/json" }),
+      credentials: "include",
+      body: JSON.stringify({ messageIds }),
     });
   }
 
   /**
    * Delete a message
+   * Note: Backend does not currently expose a delete endpoint.
+   * This is a placeholder for future implementation.
    */
-  async deleteMessage(messageId: string): Promise<void> {
-    await fetch(`/api/v1/messages/${messageId}`, {
-      method: "DELETE",
-    });
+  async deleteMessage(messageId: string, conversationId: string): Promise<void> {
+    // TODO: Implement when backend exposes DELETE /api/v1/messaging/conversations/:conversationId/messages/:messageId
+    console.warn("deleteMessage: Backend endpoint not yet implemented");
+    throw new Error("Message deletion is not yet supported");
   }
 
   /**

@@ -26,7 +26,7 @@ import { useJenisKmkOptions } from "@/hooks/use-jenis-kmk-options";
 import { useKriteriaOptions } from "@/hooks/use-kriteria-options";
 import { useDasarPemotonganOptions } from "@/hooks/use-dasar-pemotongan-options";
 import { useKodeAkunOptions } from "@/hooks/use-kode-akun-options";
-import { backendPath } from "@/lib/api/backend";
+import { backendPath } from "@/lib/config/config";
 import { getAuthTokenFromCookie } from "@/lib/utils/cookieManager";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
 
@@ -229,7 +229,7 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataT
         try {
           const j = JSON.parse(text);
           msg = j?.message || j?.error || msg;
-        } catch {}
+        } catch { }
         throw new Error(msg);
       }
 
@@ -292,10 +292,10 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataT
                   {(jenisOptions || [])
                     .filter((j) => j.value !== "2" && j.value !== "3")
                     .map((j) => (
-                    <SelectItem key={j.value} value={j.value} title={j.label}>
-                      <span className="truncate">{j.label}</span>
-                    </SelectItem>
-                  ))}
+                      <SelectItem key={j.value} value={j.value} title={j.label}>
+                        <span className="truncate">{j.label}</span>
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>

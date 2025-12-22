@@ -173,34 +173,15 @@ export function useMessageMutationsRQ() {
   }, [messageRetry]);
 
   const deleteMessage = useCallback(async (messageId: string, conversationId: string) => {
-    try {
-      const response = await fetch(`/api/v1/messages/${messageId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      // Remove from optimistic cache
-      optimisticUpdates.removeOptimisticMessage(conversationId, messageId);
-
-      addNotification({
-        type: 'success',
-        title: 'Message deleted',
-        message: 'Message was deleted successfully',
-      });
-
-      return await response.json();
-    } catch (error) {
-      addNotification({
-        type: 'error',
-        title: 'Delete failed',
-        message: 'Failed to delete message',
-      });
-      throw error;
-    }
-  }, [optimisticUpdates, addNotification]);
+    // TODO: Backend does not currently expose a DELETE endpoint for messages
+    // When implemented, use: DELETE /api/v1/messaging/conversations/:conversationId/messages/:messageId
+    addNotification({
+      type: 'error',
+      title: 'Not supported',
+      message: 'Message deletion is not yet supported by the backend',
+    });
+    throw new Error('Message deletion is not yet supported');
+  }, [addNotification]);
 
   return {
     sendMessage,

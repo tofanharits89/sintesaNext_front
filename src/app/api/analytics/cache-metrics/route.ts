@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { backendPath } from "@/lib/api/backend";
+import { backendPath } from "@/lib/config/config";
 
 // GET /api/analytics/cache-metrics -> proxies to backend /analytics/cache-metrics
 export async function GET(request: Request) {
