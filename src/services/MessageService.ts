@@ -81,7 +81,7 @@ export class MessageService {
    */
   async markAsRead(messageId: string, userId: string): Promise<void> {
     // Implementation for marking message as read
-    await fetch(`/api/messages/${messageId}/read`, {
+    await fetch(`/api/v1/messages/${messageId}/read`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId }),
@@ -92,7 +92,7 @@ export class MessageService {
    * Delete a message
    */
   async deleteMessage(messageId: string): Promise<void> {
-    await fetch(`/api/messages/${messageId}`, {
+    await fetch(`/api/v1/messages/${messageId}`, {
       method: "DELETE",
     });
   }
