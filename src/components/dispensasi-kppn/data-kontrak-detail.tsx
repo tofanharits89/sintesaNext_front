@@ -38,18 +38,15 @@ export default function DataKontrakDetail({ cek, id }: DataKontrakDetailProps) {
 
   const getData = async () => {
     setLoading(true);
-    const encodedQuery = encodeURIComponent(
-      `SELECT a.id,a.id_dispensasi,a.thang,a.kdsatker,a.kdkppn,a.tgpermohonan, a.nopermohonan,a.nokontrak,a.tgkontrak,a.nilkontrak FROM  laporan_2023.dispensasi_kppn_lampiran a WHERE a.id_dispensasi='${id}' GROUP BY a.id ORDER BY id DESC`
-    );
-    const encryptedQuery = btoa(encodedQuery);
+    const query = `SELECT a.id,a.id_dispensasi,a.thang,a.kdsatker,a.kdkppn,a.tgpermohonan, a.nopermohonan,a.nokontrak,a.tgkontrak,a.nilkontrak FROM  laporan_2023.dispensasi_kppn_lampiran a WHERE a.id_dispensasi='${id}' GROUP BY a.id ORDER BY id DESC`;
+    const encryptedQuery = btoa(query);
 
     try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_INQUIRY_GETDATA}${encryptedQuery}`,
+        `${baseUrl}/dispensasi/${encryptedQuery}?limit=999999&page=0`,
         {
-          headers: {
-            // Authorization: `Bearer ${user?.token}`,
-          },
+          headers: {},
         }
       );
 
@@ -58,7 +55,7 @@ export default function DataKontrakDetail({ cek, id }: DataKontrakDetailProps) {
       }
 
       const result = await response.json();
-      setData(result);
+      setData(result.result);
       setLoading(false);
     } catch (error) {
       toast.error("Terjadi Permasalahan Koneksi atau Server Backend");

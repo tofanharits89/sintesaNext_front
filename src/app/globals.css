@@ -812,6 +812,16 @@
   min-height: calc(100% - 1rem) !important;
 }
 
+.modal-rekam-wide {
+  max-width: 1400px !important; /* Lebar maksimal khusus modal ini */
+  width: 100% !important; /* Lebar responsif */
+  margin: 1.75rem auto; /* Posisi tengah */
+}
+
+.modal-rekam-wide .modal-content {
+  border-radius: 15px;
+}
+
 .modal-content {
   border-radius: 20px !important;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;

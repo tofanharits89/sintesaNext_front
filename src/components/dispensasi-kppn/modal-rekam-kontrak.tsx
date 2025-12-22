@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Swal from "sweetalert2";
 import { toast } from "sonner";
 import { BsFillPlusSquareFill } from "react-icons/bs";
+import { AiOutlineClose } from "react-icons/ai";
 import { Tab } from "react-bootstrap";
 import DataKontrakDetail from "./data-kontrak-detail";
 import moment from "moment";
@@ -174,11 +175,31 @@ export default function ModalRekamKontrak({
       size="xl"
       animation={false}
     >
-      <Modal.Header closeButton>
-        <Modal.Title style={{ fontSize: "20px" }}>
+      <Modal.Header style={{ position: "relative" }}>
+        <Modal.Title style={{ fontSize: "20px", flex: 1 }}>
           <i className="bi bi-box-arrow-in-right text-success mx-3"></i>
           Data Dispensasi Kontrak
         </Modal.Title>
+
+        <button
+          type="button"
+          className="bg-transparent border-0 p-0 text-muted"
+          aria-label="Tutup"
+          title="Tutup"
+          onClick={handleModalClose}
+          style={{
+            position: "absolute",
+            fontSize: 24,
+            top: "50%",
+            right: 12,
+            transform: "translateY(-50%)",
+            cursor: "pointer",
+            zIndex: 10,
+            lineHeight: 1,
+          }}
+        >
+          <AiOutlineClose />
+        </button>
       </Modal.Header>
       <Modal.Body style={{ overflow: "auto", height: "600px" }}>
         <Tab.Container defaultActiveKey="dispensasi-overview">
