@@ -47,7 +47,7 @@ export function DonutChartComponent({
           </Pie>
           {showLegend && <Legend />}
           <Tooltip
-            formatter={(value) => value.toLocaleString("id-ID")}
+            formatter={(value) => value?.toLocaleString("id-ID") ?? "0"}
             contentStyle={{
               backgroundColor: "rgba(0, 0, 0, 0.75)",
               border: "none",

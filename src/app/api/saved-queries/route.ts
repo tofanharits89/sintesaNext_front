@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { backendPath } from "@/lib/api/backend";
+import { backendPath } from "@/lib/config/config";
 import { forwardSetCookies } from "@/lib/utils/cookie-helpers";
 
 // GET /v3/next/api/saved-queries -> proxies to backend GET /api/v1/saved-queries

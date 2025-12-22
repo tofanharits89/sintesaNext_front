@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useEffect as ReactUseEffect } from "react";
 import { apiPath } from "@/lib/config/base-path";
-import { backendPath } from "@/lib/api/backend";
+import { backendPath } from "@/lib/config/config";
 import { apiClient, http } from "@/lib/api/httpClient";
 import {
   retrySavedQueryOperation,
@@ -471,9 +471,9 @@ export function useSavedQueries(
               existing && typeof existing === "object"
                 ? existing
                 : {
-                    queries: [],
-                    pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
-                  };
+                  queries: [],
+                  pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+                };
             const queries = Array.isArray(base.queries) ? base.queries : [];
             const exists = queries.some((q: any) => q?.id === newQuery.id);
             const merged = exists ? queries : [newQuery, ...queries];

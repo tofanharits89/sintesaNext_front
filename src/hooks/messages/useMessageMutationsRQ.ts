@@ -104,8 +104,8 @@ export function useMessageMutationsRQ({ conversationId, currentUserId }: UseMess
    * Mark message as read
    */
   const markAsReadMutation = useMutation({
-    mutationFn: async ({ messageId }: { messageId: string }) => {
-      await messageService.markAsRead(messageId, currentUserId);
+    mutationFn: async ({ messageIds }: { messageIds: string[] }) => {
+      await messageService.markAsRead(conversationId, messageIds);
     },
 
     onSuccess: () => {
@@ -118,7 +118,7 @@ export function useMessageMutationsRQ({ conversationId, currentUserId }: UseMess
    */
   const deleteMessageMutation = useMutation({
     mutationFn: async ({ messageId }: { messageId: string }) => {
-      await messageService.deleteMessage(messageId);
+      await messageService.deleteMessage(messageId, conversationId);
     },
 
     onSuccess: () => {

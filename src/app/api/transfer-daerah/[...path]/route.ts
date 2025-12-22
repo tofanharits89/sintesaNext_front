@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { backendPath } from "@/lib/api/backend";
+import { backendPath } from "@/lib/config/config";
 
 export async function GET(
   request: NextRequest,
@@ -49,12 +49,12 @@ export async function POST(
     const { path } = await ctx.params;
     const segments = (path || []).join("/");
     const url = new URL(backendPath(`/transfer-daerah/${segments}`));
-    
+
     // Handle both JSON and FormData
     const contentType = request.headers.get("content-type") || "";
     let body;
     let headers: HeadersInit = { ...(cookie ? { cookie } : {}) };
-    
+
     if (contentType.includes("multipart/form-data")) {
       // For FormData (file uploads)
       body = await request.formData();
@@ -63,7 +63,7 @@ export async function POST(
       body = JSON.stringify(await request.json().catch(() => ({})));
       headers["Content-Type"] = "application/json";
     }
-    
+
     // Extract CSRF token from cookies
     const xsrfMatch = cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
     const csrfToken = decodeURIComponent(xsrfMatch?.[1] ?? "");

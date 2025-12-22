@@ -4,12 +4,11 @@ import axios, {
   AxiosRequestConfig,
   InternalAxiosRequestConfig,
 } from "axios";
-import { BACKEND_BASE_URL, backendPath } from "./backend";
+import { config, backendPath } from "../config/config";
 import { apiPath } from "../config/base-path";
 import { setupRateLimitInterceptor } from "@/utils/rateLimitHandler";
 import { csrfManager } from "../security/csrfManager";
 import { detectIpBlock } from "@/utils/ipBlock";
-import { config } from "../config/config";
 
 // Utilities to read cookies in browser
 export function getCookie(name: string): string | null {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { backendPath } from "@/lib/api/backend";
+import { backendPath } from "@/lib/config/config";
 import { forwardSetCookies, createCookieHeader } from "@/lib/utils/cookie-helpers";
 
 /**
@@ -10,10 +10,10 @@ import { forwardSetCookies, createCookieHeader } from "@/lib/utils/cookie-helper
 export async function GET(request: NextRequest) {
   const cookieHeader = createCookieHeader(request);
   const hasSid = request.cookies.get('sid')?.value || /(?:^|;\s*)sid=/.test(cookieHeader);
-  
+
   if (!hasSid) {
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       data: {
         valid: false,
         authenticated: false,
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
   try {
     const resp = await fetch(backendPath("/auth/session"), {
       method: "GET",
-      headers: { 
+      headers: {
         ...(cookieHeader ? { cookie: cookieHeader } : {}),
         'Accept': 'application/json',
       },

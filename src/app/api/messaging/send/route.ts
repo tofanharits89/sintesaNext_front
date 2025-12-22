@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { backendPath } from "@/lib/api/backend";
+import { backendPath } from "@/lib/config/config";
 
 
 export async function POST(request: NextRequest) {
@@ -14,11 +14,11 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    
+
     // Extract CSRF token from incoming cookies (set by backend as XSRF-TOKEN)
     const xsrfMatch = cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
     const csrfToken = decodeURIComponent(xsrfMatch?.[1] ?? "");
-    
+
     const resp = await fetch(backendPath("/messaging/send"), {
       method: "POST",
       headers: {

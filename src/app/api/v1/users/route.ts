@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { backendPath } from "@/lib/api/backend";
+import { backendPath } from "@/lib/config/config";
 
 // Proxy: /api/v1/users -> backend /users
 export async function GET(request: NextRequest) {
@@ -21,10 +21,10 @@ export async function GET(request: NextRequest) {
       resp.ok
         ? data
         : {
-            success: false,
-            message: (data as any).message || "Failed to fetch users",
-            error: (data as any).error,
-          },
+          success: false,
+          message: (data as any).message || "Failed to fetch users",
+          error: (data as any).error,
+        },
       { status: resp.ok ? 200 : resp.status },
     );
   } catch (error) {

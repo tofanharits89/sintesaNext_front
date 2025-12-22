@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { backendPath } from "@/lib/api/backend";
+import { backendPath } from "@/lib/config/config";
 
 // Proxy backend auth health to a stable frontend route
 // HEAD for fast probes; GET returns JSON status

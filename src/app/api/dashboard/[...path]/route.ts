@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { backendPath } from "@/lib/api/backend";
+import { backendPath } from "@/lib/config/config";
 
 // Catch-all proxy for dashboard endpoints
 // Forwards cookies and query string to backend so httpOnly auth cookies are used

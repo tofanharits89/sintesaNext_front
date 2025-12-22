@@ -30,7 +30,7 @@ export function useMessageMutationsRQ() {
 
   const sendMessage = useCallback(async (args: SendMessageArgs) => {
     const { recipientId, conversationId, content, isRetry = false } = args;
-    
+
     // Generate temporary message for optimistic updates
     const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const nowIso = new Date().toISOString();
@@ -83,20 +83,20 @@ export function useMessageMutationsRQ() {
           // Fallback: if we were in a real conversation already
           optimisticUpdates.replaceTempMessage(conversationId, tempId, result.data.message as any);
         }
-        
+
         // Notify listeners so pages can switch URL/state to the real conversation
         try {
           if (realConvId && (typeof window !== 'undefined')) {
-            window.dispatchEvent(new CustomEvent('conversation:created', { detail: { conversationId: realConvId }}));
+            window.dispatchEvent(new CustomEvent('conversation:created', { detail: { conversationId: realConvId } }));
           }
-        } catch {}
-        
+        } catch { }
+
         addNotification({
           type: 'success',
           title: 'Message sent',
           message: 'Your message was sent successfully',
         });
-        
+
         return result.data;
       } else {
         // Handle failure
@@ -173,34 +173,15 @@ export function useMessageMutationsRQ() {
   }, [messageRetry]);
 
   const deleteMessage = useCallback(async (messageId: string, conversationId: string) => {
-    try {
-      const response = await fetch(`/api/messages/${messageId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      // Remove from optimistic cache
-      optimisticUpdates.removeOptimisticMessage(conversationId, messageId);
-
-      addNotification({
-        type: 'success',
-        title: 'Message deleted',
-        message: 'Message was deleted successfully',
-      });
-
-      return await response.json();
-    } catch (error) {
-      addNotification({
-        type: 'error',
-        title: 'Delete failed',
-        message: 'Failed to delete message',
-      });
-      throw error;
-    }
-  }, [optimisticUpdates, addNotification]);
+    // TODO: Backend does not currently expose a DELETE endpoint for messages
+    // When implemented, use: DELETE /api/v1/messaging/conversations/:conversationId/messages/:messageId
+    addNotification({
+      type: 'error',
+      title: 'Not supported',
+      message: 'Message deletion is not yet supported by the backend',
+    });
+    throw new Error('Message deletion is not yet supported');
+  }, [addNotification]);
 
   return {
     sendMessage,
@@ -215,7 +196,7 @@ export function useMessageMutationsRQ() {
 // Individual hooks for compatibility with existing imports
 export function useSendMessageMutation() {
   const { sendMessage } = useMessageMutationsRQ();
-  
+
   return {
     mutateAsync: sendMessage,
     isPending: false, // TODO: Add proper loading state tracking
@@ -225,7 +206,7 @@ export function useSendMessageMutation() {
 
 export function useMarkAsReadMutation(conversationId?: string) {
   const { markAsRead } = useMessageMutationsRQ();
-  
+
   return {
     mutate: ({ messageIds }: { messageIds: string[] }) => {
       if (!conversationId) {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { backendPath } from "@/lib/api/backend";
+import { backendPath } from "@/lib/config/config";
 
 export async function PUT(request: Request) {
   try {
