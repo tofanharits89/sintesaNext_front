@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { PlusSquare, Trash2, Download } from "lucide-react";
 import { Loading2, TableSkeleton } from "../../layout/LoadingTable";
 import ReactPaginate from "react-paginate";
+import Rekam from "./rekam";
 import moment from "moment";
 
 // Styling untuk table dan kolom
@@ -84,6 +85,12 @@ export default function DispenSpm({ cek, id, where }: DispenSpmProps) {
   const [rows, setRows] = useState(0);
   const [sql, setSql] = useState("");
   const [error2, setError2] = useState<string | null>(null);
+  const [showModalRekam, setShowModalRekam] = useState(false);
+  const [tahun, setTahun] = useState("");
+  const [idRekam, setIdRekam] = useState("");
+  const [nomor, setNomor] = useState("");
+  const [kdsatker, setKdsatker] = useState("");
+  const [nmsatker, setNmsatker] = useState("");
 
   useEffect(() => {
     if (cek) {
@@ -198,8 +205,12 @@ export default function DispenSpm({ cek, id, where }: DispenSpmProps) {
     kdsatker: string,
     tahun: string
   ) => {
-    // SPM recording functionality removed - implement as needed
-    toast.info(`Rekam SPM untuk ${nmsatker} (${kdsatker}) - ${tahun}`);
+    setIdRekam(id);
+    setNomor(nopermohonan);
+    setNmsatker(nmsatker);
+    setKdsatker(kdsatker);
+    setTahun(tahun);
+    setShowModalRekam(true);
   };
 
   const handleHapusDispSPM = async (id: string, jumlah: number) => {
@@ -283,6 +294,10 @@ export default function DispenSpm({ cek, id, where }: DispenSpmProps) {
   const handleStatus = (status: boolean, total: number) => {
     // Export status handling removed - implement as needed
     console.log("Export status:", status, total);
+  };
+
+  const handleCloseModalSPM = () => {
+    setShowModalRekam(false);
   };
 
   return (
@@ -526,6 +541,16 @@ export default function DispenSpm({ cek, id, where }: DispenSpmProps) {
           )}
         </>
       )}
+
+      <Rekam
+        show={showModalRekam}
+        onHide={handleCloseModalSPM}
+        tahun={tahun}
+        id={idRekam}
+        nomor={nomor}
+        kdsatker={kdsatker}
+        nmsatker={nmsatker}
+      />
     </div>
   );
 }

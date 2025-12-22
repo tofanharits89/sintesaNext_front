@@ -41,27 +41,23 @@ export default function DispenKontrakDetail(props: DispenKontrakDetailProps) {
   const getData = async () => {
     setLoading(true);
     try {
-      const encodedQuery = encodeURIComponent(
-        `SELECT a.id,a.thang,a.kdsatker,a.tgpermohonan, a.nopermohonan,a.nokontrak,a.tgkontrak,a.nilkontrak,a.status FROM laporan_2023.dispensasi_kontrak_lampiran a WHERE a.id_dispensasi='${props.id}' GROUP BY a.id ORDER BY id DESC`
-      );
-      const encryptedQuery = Encrypt(encodedQuery);
-      const url = process.env.NEXT_PUBLIC_INQUIRY_GETDATA
-        ? `${process.env.NEXT_PUBLIC_INQUIRY_GETDATA}${encryptedQuery}`
-        : "";
+      const query = `SELECT a.id,a.thang,a.kdsatker,a.tgpermohonan, a.nopermohonan,a.nokontrak,a.tgkontrak,a.nilkontrak,a.status FROM laporan_2023.dispensasi_kontrak_lampiran a WHERE a.id_dispensasi='${props.id}' GROUP BY a.id ORDER BY id DESC`;
+      const encryptedQuery = btoa(query);
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
 
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        `${baseUrl}/dispensasi/${encryptedQuery}?limit=999999&page=0`,
+        {
+          headers: {},
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
 
       const result = await response.json();
-      setData(result);
+      setData(result.result);
     } catch (error: any) {
       const message =
         error?.message || "Terjadi Permasalahan Koneksi atau Server Backend";

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Button, Form, Col, Row } from "react-bootstrap";
 import { useAuth } from "@/hooks/useAuth";
+import { AiOutlineClose } from "react-icons/ai";
 import Kddept from "@/data/kddept.json";
 import Kdkanwil from "@/data/kdkanwil.json";
 import Kdkppn from "@/data/kdkppn.json";
@@ -100,11 +101,31 @@ const Filter = ({ show, onHide, onFilter }: FilterProps) => {
         backdrop="static"
         keyboard={false}
       >
-        <Modal.Header closeButton>
-          <Modal.Title style={{ fontSize: "17px" }}>
+        <Modal.Header style={{ position: "relative" }}>
+          <Modal.Title style={{ fontSize: "17px", flex: 1 }}>
             <i className="bi bi-grid-3x3-gap-fill text-primary fw-bold mx-2 "></i>
             Filter Data
           </Modal.Title>
+
+          <button
+            type="button"
+            className="bg-transparent border-0 p-0 text-muted"
+            aria-label="Tutup"
+            title="Tutup"
+            onClick={handleClose}
+            style={{
+              position: "absolute",
+              fontSize: 24,
+              top: "50%",
+              right: 12,
+              transform: "translateY(-50%)",
+              cursor: "pointer",
+              zIndex: 10,
+              lineHeight: 1,
+            }}
+          >
+            <AiOutlineClose />
+          </button>
         </Modal.Header>
         <Modal.Body>
           <Form>

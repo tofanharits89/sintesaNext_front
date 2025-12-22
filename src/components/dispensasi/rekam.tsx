@@ -24,10 +24,16 @@ import "react-datepicker/dist/react-datepicker.css";
 import Select from "react-select";
 import Swal from "sweetalert2";
 import moment from "moment";
+import { AiOutlineClose } from "react-icons/ai";
 
 interface RekamProps {
   show: boolean;
   onHide: () => void;
+  tahun?: string;
+  id?: string;
+  nomor?: string;
+  kdsatker?: string;
+  nmsatker?: string;
 }
 
 interface OptionType {
@@ -57,7 +63,15 @@ const MyContext = React.createContext<any>(null);
 const Encrypt = (str: string) => str;
 const handleHttpError = (status: any, msg: string) => console.error(msg);
 
-export default function Rekam({ show, onHide }: RekamProps) {
+export default function Rekam({
+  show,
+  onHide,
+  tahun: propTahun,
+  id,
+  nomor,
+  kdsatker,
+  nmsatker,
+}: RekamProps) {
   // Get context values - replace with actual context usage
   const contextValue = React.useContext(MyContext);
   const axiosJWT = contextValue?.axiosJWT || {};
@@ -75,8 +89,8 @@ export default function Rekam({ show, onHide }: RekamProps) {
   const [data, setData] = useState<OptionType[]>([]);
   const [sql, setSql] = useState("");
   const [jenisspm, setJenisspm] = useState("");
-  const [tahun, setTahun] = useState<string>(() =>
-    String(new Date().getFullYear())
+  const [tahun, setTahun] = useState<string>(
+    propTahun || String(new Date().getFullYear())
   );
   const [jenisdispensasi, setjenisdispensasi] = useState(false);
   const [uraian, setUraian] = useState(false);
@@ -323,11 +337,31 @@ export default function Rekam({ show, onHide }: RekamProps) {
       size="xl"
       animation={false}
     >
-      <Modal.Header closeButton>
-        <Modal.Title style={{ fontSize: 20 }}>
+      <Modal.Header style={{ position: "relative" }}>
+        <Modal.Title style={{ fontSize: 20, flex: 1 }}>
           <i className="bi bi-back text-success mx-3"></i>
           Rekam Data Dispensasi TA. {tahun}
         </Modal.Title>
+
+        <button
+          type="button"
+          className="bg-transparent border-0 p-0 text-muted"
+          aria-label="Tutup"
+          title="Tutup"
+          onClick={handleModalClose}
+          style={{
+            position: "absolute",
+            fontSize: 24,
+            top: "50%",
+            right: 12,
+            transform: "translateY(-50%)",
+            cursor: "pointer",
+            zIndex: 10,
+            lineHeight: 1,
+          }}
+        >
+          <AiOutlineClose />
+        </button>
       </Modal.Header>
       <Modal.Body
         style={{ overflow: "auto", height: "auto" }}
