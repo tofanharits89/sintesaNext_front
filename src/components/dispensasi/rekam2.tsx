@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   Form,
@@ -11,6 +11,7 @@ import {
   Spinner,
   Nav,
   Tab,
+  Table,
 } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import {
@@ -25,6 +26,7 @@ import Swal from "sweetalert2";
 import { BsFillPlusSquareFill, BsTrash } from "react-icons/bs";
 import moment from "moment";
 import "react-datepicker/dist/react-datepicker.css";
+import { AiOutlineClose } from "react-icons/ai";
 
 interface FormRow {
   nilaispm: string | number;
@@ -56,11 +58,90 @@ const axiosJWT = { post: async (url: string, data: any, config?: any) => {} };
 const token = "";
 const kdlokasi = "";
 const handleHttpError = (status: any, msg: string) => console.error(msg);
-const DataSPM = ({ cek, id }: any) => (
-  <div>
-    Data SPM Component (cek: {cek ? "true" : "false"}, id: {id})
-  </div>
-);
+
+const DataSPM = ({ cek, id }: { cek: boolean; id: string }) => {
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (cek && id) {
+      console.log("DataSPM useEffect triggered, cek:", cek, "id:", id);
+      fetchData();
+    }
+  }, [cek, id]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const query = `SELECT nospm, nilspm, status, tgspm, tgbast, nobast FROM laporan_2023.dispensasi_spm_lampiran WHERE id_dispensasi = '${id}' ORDER BY id DESC`;
+      console.log("DataSPM query:", query);
+      const encryptedQuery = btoa(query);
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
+      const response = await fetch(
+        `${baseUrl}/dispensasi/${encryptedQuery}?limit=999&page=0`,
+        {
+          headers: {},
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("DataSPM response:", result);
+      setData(result.result || []);
+    } catch (error) {
+      console.error("Terjadi Permasalahan Koneksi atau Server Backend");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center">
+        <Spinner animation="border" />
+      </div>
+    );
+  }
+
+  return (
+    <Table striped bordered hover responsive>
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Tgl SPM</th>
+          <th>No SPM</th>
+          <th>Nilai SPM</th>
+          <th>Tgl BAST</th>
+          <th>No BAST</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {data.map((item, index) => (
+          <tr key={index}>
+            <td>{index + 1}</td>
+            <td>{item.tgspm}</td>
+            <td>{item.nospm}</td>
+            <td>{new Intl.NumberFormat("id-ID").format(item.nilspm || 0)}</td>
+            <td>{item.tgbast}</td>
+            <td>{item.nobast}</td>
+            <td>
+              {item.status === "Setuju" ? (
+                <span className="text-success">Disetujui</span>
+              ) : (
+                <span className="text-danger">Ditolak</span>
+              )}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </Table>
+  );
+};
+
 const UploadSPM = ({ cekupload, id }: any) => (
   <div>
     Upload SPM Component (cekupload: {cekupload ? "true" : "false"}, id: {id})
@@ -212,11 +293,31 @@ export default function Rekam2({
         size="xl"
         animation={false}
       >
-        <Modal.Header closeButton>
+        <Modal.Header style={{ position: "relative" }}>
           <Modal.Title style={{ fontSize: 20 }}>
             <i className="bi bi-box-arrow-in-right text-success mx-3"></i>
             Data SPM Dispensasi
           </Modal.Title>
+
+          <button
+            type="button"
+            className="bg-transparent border-0 p-0 text-muted"
+            aria-label="Tutup"
+            title="Tutup"
+            onClick={handleModalClose}
+            style={{
+              position: "absolute",
+              fontSize: 24,
+              top: "50%",
+              right: 12,
+              transform: "translateY(-50%)",
+              cursor: "pointer",
+              zIndex: 10,
+              lineHeight: 1,
+            }}
+          >
+            <AiOutlineClose />
+          </button>
         </Modal.Header>
         <Modal.Body style={{ overflow: "auto", height: 600 }}>
           <Tab.Container defaultActiveKey="dispensasi-overview">

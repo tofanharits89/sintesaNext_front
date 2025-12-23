@@ -212,7 +212,10 @@ const DataDispensasiKPPN: React.FC = () => {
 
     try {
       const response = await fetch(requestUrl, {
-        headers: {},
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+        },
       });
 
       if (!response.ok) {

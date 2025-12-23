@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { PlusSquare, Trash2, Download } from "lucide-react";
 import { Loading2, TableSkeleton } from "../../layout/LoadingTable";
 import ReactPaginate from "react-paginate";
-import Rekam from "./rekam";
+import Rekam2 from "./rekam2";
 import moment from "moment";
 
 // Styling untuk table dan kolom
@@ -542,7 +542,7 @@ export default function DispenSpm({ cek, id, where }: DispenSpmProps) {
         </>
       )}
 
-      <Rekam
+      <Rekam2
         show={showModalRekam}
         onHide={handleCloseModalSPM}
         tahun={tahun}

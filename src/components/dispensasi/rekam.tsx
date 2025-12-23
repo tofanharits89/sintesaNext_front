@@ -210,32 +210,90 @@ export default function Rekam({
     { setSubmitting }: FormikHelpers<FormValues>
   ) => {
     setLoading(true);
+    console.log(
+      "NEXT_PUBLIC_SIMPANDISPENSASI:",
+      process.env.NEXT_PUBLIC_SIMPANDISPENSASI
+    );
+    console.log(
+      "NEXT_PUBLIC_SIMPANKONTRAK:",
+      process.env.NEXT_PUBLIC_SIMPANKONTRAK
+    );
+    console.log("NEXT_PUBLIC_SIMPANTUP:", process.env.NEXT_PUBLIC_SIMPANTUP);
     try {
       const form = new FormData();
-      Object.entries(values).forEach(([k, v]) => {
-        if (k === "file" && v) form.append(k, v as File);
-        else form.append(k, v === null ? "" : String(v));
+
+      // Append textual fields first (ensure 'jenis' exists before file upload)
+      const fieldOrder = [
+        "tahun",
+        "jenis",
+        "tanggalPermohonan",
+        "nomorPermohonan",
+        "satker",
+        "dispen",
+        "alasan2",
+        "tanggalPersetujuan",
+        "nomorPersetujuan",
+        "cara_upload",
+        "username",
+        "kdkanwil",
+      ];
+
+      fieldOrder.forEach((k) => {
+        const v = (values as any)[k];
+        form.append(k, v === null || typeof v === "undefined" ? "" : String(v));
       });
 
-      const headers = {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
-      } as any;
-
-      if (values.jenis === "01" || values.jenis === "03") {
-        await axiosJWT.post(process.env.NEXT_PUBLIC_SIMPANDISPENSASI, form, {
-          headers,
-        });
-      } else if (values.jenis === "02") {
-        await axiosJWT.post(process.env.NEXT_PUBLIC_SIMPANKONTRAK, form, {
-          headers,
-        });
-      } else if (values.jenis === "04") {
-        await axiosJWT.post(process.env.NEXT_PUBLIC_SIMPANTUP, form, {
-          headers,
-        });
+      // Append file last
+      if (values.file) {
+        form.append("file", values.file as File);
       }
 
+      // Log FormData contents in order (for debugging)
+      console.log("=== FormData Contents (ordered) ===");
+      let bodyData = {};
+      form.forEach((value, key) => {
+        bodyData = { ...bodyData, [key]: value };
+        if (key === "file") {
+          console.log(
+            `${key}:`,
+            value instanceof File
+              ? `File(${(value as File).name}, ${(value as File).size} bytes)`
+              : value
+          );
+        } else {
+          console.log(`${key}:`, value);
+        }
+      });
+
+      let endpoint = "";
+      if (values.jenis === "01" || values.jenis === "03") {
+        endpoint = process.env.NEXT_PUBLIC_SIMPANDISPENSASI || "";
+      } else if (values.jenis === "02") {
+        endpoint = process.env.NEXT_PUBLIC_SIMPANKONTRAK || "";
+      } else if (values.jenis === "04") {
+        endpoint = process.env.NEXT_PUBLIC_SIMPANTUP || "";
+      }
+
+      console.log("Sending POST to:", endpoint);
+      console.log("Jenis value:", values.jenis);
+      console.log(bodyData);
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        credentials: "include",
+        body: form,
+      });
+
+      console.log("Response status:", response.status);
+      const result = await response.json();
+      console.log("Response data:", result);
+      console.log("Response error details:", result.error || result.details);
+
+      if (!response.ok) {
+        throw new Error(result.error || `HTTP ${response.status}`);
+      }
+
+      console.log("Data submitted successfully");
       Swal.fire({
         html: `<div class='text-success mt-4'>Data Berhasil Disimpan</div>`,
         icon: "success",
@@ -245,6 +303,7 @@ export default function Rekam({
       });
       setLoading(false);
     } catch (error: any) {
+      console.error("Submit error details:", error);
       const { status, data: errData } = error.response || {};
       handleHttpError(
         status,
@@ -261,30 +320,46 @@ export default function Rekam({
     getData();
   }, [tahun]);
 
+  useEffect(() => {
+    if (data.length > 0) {
+      setSearchResults(data.slice(0, 100));
+    }
+  }, [data]);
+
   const getData = async () => {
-    const encodedQuery = encodeURIComponent(
-      `SELECT kdsatker,nmsatker,kdkanwil FROM dbref.t_satker_kppn_${tahun}`
-    );
-    const cleanedQuery = decodeURIComponent(encodedQuery)
-      .replace(/\n/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-    setSql(cleanedQuery);
-    const encryptedQuery = Encrypt(cleanedQuery);
+    let query = `SELECT kdsatker,nmsatker,kdkanwil FROM dbref.t_satker_kppn_${tahun}`;
+
+    if (role === "2" && kdkanwil) {
+      query += ` WHERE kdkanwil='${kdkanwil}'`;
+    }
+
+    const encryptedQuery = btoa(query);
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
     try {
-      const carisatkerUrl = process.env.NEXT_PUBLIC_CARISATKER;
-      const response = await axiosJWT.get(
-        carisatkerUrl ? `${carisatkerUrl}${encryptedQuery}` : "",
-        { headers: { Authorization: `Bearer ${token}` } }
+      console.log(
+        "Fetching satker from:",
+        `${baseUrl}/dispensasi/${encryptedQuery}?limit=999999&page=0`
       );
-      setData(response.data.result || []);
+      const response = await fetch(
+        `${baseUrl}/dispensasi/${encryptedQuery}?limit=999999&page=0`,
+        {
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+          },
+        }
+      );
+
+      console.log("Satker response status:", response.status);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("Satker data received:", result);
+      setData(result.result || []);
     } catch (error: any) {
-      const { status, data: errData } = error.response || {};
-      handleHttpError(
-        status,
-        (errData && errData.error) ||
-          "Terjadi Permasalahan Koneksi atau Server Backend"
-      );
+      console.error("Gagal fetch satker:", error.message);
     }
   };
 
