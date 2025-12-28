@@ -70,11 +70,11 @@ export default function DatasetPage() {
   };
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+    <div className="flex-1 space-y-4">
       <div className="flex items-center justify-between space-y-2">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Generate Data</h2>
-          <p className="text-muted-foreground">DB → Tabel</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Generate Data</h1>
+          <p className="text-sm text-muted-foreground">DB → Tabel</p>
         </div>
       </div>
 
@@ -88,7 +88,7 @@ export default function DatasetPage() {
                 Sumber
               </Label>
               <Select value={sumber} onValueChange={setSumber}>
-                <SelectTrigger className="bg-background border-input text-foreground">
+                <SelectTrigger className="w-full bg-background border-input text-foreground">
                   <SelectValue placeholder="--- Pilih Sumber Data ---" />
                 </SelectTrigger>
                 <SelectContent>
@@ -108,7 +108,7 @@ export default function DatasetPage() {
                 onValueChange={setSelectedDatabase}
                 disabled={!sumber}
               >
-                <SelectTrigger className="bg-background border-input text-foreground">
+                <SelectTrigger className="w-full bg-background border-input text-foreground">
                   <SelectValue placeholder="Pilih Database" />
                 </SelectTrigger>
                 <SelectContent>
@@ -131,7 +131,7 @@ export default function DatasetPage() {
                 onValueChange={setSelectedTable}
                 disabled={!selectedDatabase || sumber === "SITP"}
               >
-                <SelectTrigger className="bg-background border-input text-foreground">
+                <SelectTrigger className="w-full bg-background border-input text-foreground">
                   <SelectValue placeholder="Pilih Tabel" />
                 </SelectTrigger>
                 <SelectContent>
@@ -281,16 +281,18 @@ export default function DatasetPage() {
                             <span className="text-sm text-muted-foreground">
                               {total} data ditemukan
                             </span>
-                            <button
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={handleCopy}
-                              className="text-red-600 hover:text-red-700 transition-colors"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
                             >
                               {isCopied ? (
                                 <CheckCircle className="w-5 h-5" />
                               ) : (
                                 <Copy className="w-5 h-5" />
                               )}
-                            </button>
+                            </Button>
                             {isCopied && (
                               <span className="text-green-600 text-sm">
                                 Copied!

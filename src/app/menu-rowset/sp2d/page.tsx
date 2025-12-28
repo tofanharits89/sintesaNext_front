@@ -3,6 +3,26 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Eye,
   FileSpreadsheet,
   FileText,
@@ -98,53 +118,54 @@ export default function Sp2dPage() {
       {/* Main Content - Cards Layout */}
       <div className="space-y-6">
         {/* Card 1: Parameter Dasar */}
-        <div className="bg-white dark:bg-card rounded-xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Parameter Dasar</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Tahun Anggaran */}
             <div>
-              <label className="block text-sm font-medium mb-2 text-foreground">
-                Tahun Anggaran
-              </label>
-              <select
-                value={thang}
-                onChange={(e) => setThang(Number(e.target.value))}
-                className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value={2024}>2024</option>
-                <option value={2025}>2025</option>
-                <option value={2026}>2026</option>
-              </select>
+              <Label htmlFor="thang">Tahun Anggaran</Label>
+              <Select value={thang.toString()} onValueChange={(val) => setThang(Number(val))}>
+                <SelectTrigger id="thang" className="w-full mt-1.5">
+                  <SelectValue placeholder="Pilih tahun" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2024">2024</SelectItem>
+                  <SelectItem value="2025">2025</SelectItem>
+                  <SelectItem value="2026">2026</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Jenis Laporan */}
             <div>
-              <label className="block text-sm font-medium mb-2 text-foreground">
-                Jenis Laporan
-              </label>
-              <select
-                value={jenlap}
-                onChange={(e) => setJenlap(e.target.value)}
-                className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="1">Rowset SP2D</option>
-                <option value="2">Rowset SP2D Detail</option>
-              </select>
+              <Label htmlFor="jenlap">Jenis Laporan</Label>
+              <Select value={jenlap} onValueChange={setJenlap}>
+                <SelectTrigger id="jenlap" className="w-full mt-1.5">
+                  <SelectValue placeholder="Pilih jenis laporan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Rowset SP2D</SelectItem>
+                  <SelectItem value="2">Rowset SP2D Detail</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Pembulatan */}
             <div>
-              <label className="block text-sm font-medium mb-2 text-foreground">
-                Pembulatan
-              </label>
-              <select
-                value={pembulatan}
-                onChange={(e) => setPembulatan(e.target.value)}
-                className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="1">Tanpa Pembulatan</option>
-                <option value="1000">Ribuan</option>
-                <option value="1000000">Jutaan</option>
-              </select>
+              <Label htmlFor="pembulatan">Pembulatan</Label>
+              <Select value={pembulatan} onValueChange={setPembulatan}>
+                <SelectTrigger id="pembulatan" className="w-full mt-1.5">
+                  <SelectValue placeholder="Pilih pembulatan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Tanpa Pembulatan</SelectItem>
+                  <SelectItem value="1000">Ribuan</SelectItem>
+                  <SelectItem value="1000000">Jutaan</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -152,115 +173,135 @@ export default function Sp2dPage() {
             TA: {thang}, TIPE LAPORAN: {jenlap}, AKUMULATIF:{" "}
             {akumulatif ? "TRUE" : "FALSE"}, PEMBULATAN: {pembulatan}
           </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Card 2: Switch Pilihan Data */}
-        <div className="bg-white dark:bg-card rounded-xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Pilih Data</CardTitle>
+          </CardHeader>
+          <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="kddept"
                 checked={kddept}
-                onChange={(e) => setKddept(e.target.checked)}
-                className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring"
+                onCheckedChange={(checked) => setKddept(checked === true)}
               />
-              <span className="text-sm text-foreground">Kementerian</span>
-            </label>
+              <Label htmlFor="kddept" className="text-sm cursor-pointer">
+                Kementerian
+              </Label>
+            </div>
 
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="unit"
                 checked={unit}
-                onChange={(e) => setUnit(e.target.checked)}
-                className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring"
+                onCheckedChange={(checked) => setUnit(checked === true)}
               />
-              <span className="text-sm text-foreground">Eselon I</span>
-            </label>
+              <Label htmlFor="unit" className="text-sm cursor-pointer">
+                Eselon I
+              </Label>
+            </div>
 
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="kddekon"
                 checked={kddekon}
-                onChange={(e) => setKddekon(e.target.checked)}
-                className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring"
+                onCheckedChange={(checked) => setKddekon(checked === true)}
               />
-              <span className="text-sm text-foreground">Kewenangan</span>
-            </label>
+              <Label htmlFor="kddekon" className="text-sm cursor-pointer">
+                Kewenangan
+              </Label>
+            </div>
 
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="kdkppn"
                 checked={kdkppn}
-                onChange={(e) => setKdkppn(e.target.checked)}
-                className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring"
+                onCheckedChange={(checked) => setKdkppn(checked === true)}
               />
-              <span className="text-sm text-foreground">KPPN</span>
-            </label>
+              <Label htmlFor="kdkppn" className="text-sm cursor-pointer">
+                KPPN
+              </Label>
+            </div>
 
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="kdsatker"
                 checked={kdsatker}
-                onChange={(e) => setKdsatker(e.target.checked)}
-                className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring"
+                onCheckedChange={(checked) => setKdsatker(checked === true)}
               />
-              <span className="text-sm text-foreground">Satker</span>
-            </label>
+              <Label htmlFor="kdsatker" className="text-sm cursor-pointer">
+                Satker
+              </Label>
+            </div>
 
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="kdprogram"
                 checked={kdprogram}
-                onChange={(e) => setKdprogram(e.target.checked)}
-                className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring"
+                onCheckedChange={(checked) => setKdprogram(checked === true)}
               />
-              <span className="text-sm text-foreground">Program</span>
-            </label>
+              <Label htmlFor="kdprogram" className="text-sm cursor-pointer">
+                Program
+              </Label>
+            </div>
 
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="kdgiat"
                 checked={kdgiat}
-                onChange={(e) => setKdgiat(e.target.checked)}
-                className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring"
+                onCheckedChange={(checked) => setKdgiat(checked === true)}
               />
-              <span className="text-sm text-foreground">Kegiatan</span>
-            </label>
+              <Label htmlFor="kdgiat" className="text-sm cursor-pointer">
+                Kegiatan
+              </Label>
+            </div>
 
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="kdsdana"
                 checked={kdsdana}
-                onChange={(e) => setKdsdana(e.target.checked)}
-                className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring"
+                onCheckedChange={(checked) => setKdsdana(checked === true)}
               />
-              <span className="text-sm text-foreground">Sumber Dana</span>
-            </label>
+              <Label htmlFor="kdsdana" className="text-sm cursor-pointer">
+                Sumber Dana
+              </Label>
+            </div>
 
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="kdoutput"
                 checked={kdoutput}
-                onChange={(e) => setKdoutput(e.target.checked)}
-                className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring"
+                onCheckedChange={(checked) => setKdoutput(checked === true)}
               />
-              <span className="text-sm text-foreground">Output</span>
-            </label>
+              <Label htmlFor="kdoutput" className="text-sm cursor-pointer">
+                Output
+              </Label>
+            </div>
 
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="kdakun"
                 checked={kdakun}
-                onChange={(e) => setKdakun(e.target.checked)}
-                className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring"
+                onCheckedChange={(checked) => setKdakun(checked === true)}
               />
-              <span className="text-sm text-foreground">Akun</span>
-            </label>
+              <Label htmlFor="kdakun" className="text-sm cursor-pointer">
+                Akun
+              </Label>
+            </div>
           </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Card 3: Detail Pilihan (Conditional) */}
-        <div className="bg-white dark:bg-card rounded-xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Detail Pilihan</CardTitle>
+          </CardHeader>
+          <CardContent>
           {/* Kementerian */}
           {kddept && (
             <div className="mb-6 pb-6 border-b border-border">
@@ -271,61 +312,72 @@ export default function Sp2dPage() {
                   </span>
                 </div>
                 <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="dept-option"
-                      value="pilihdept"
-                      checked={opsidept === "pilihdept"}
-                      onChange={(e) => setopsiDept(e.target.value)}
-                      className="w-4 h-4 text-primary"
-                    />
-                    <span className="text-sm text-foreground">Pilih K/L</span>
-                  </label>
-                </div>
-                <div className="col-span-4">
-                  <select
-                    value={dept}
-                    onChange={(e) => setDept(e.target.value)}
-                    disabled={opsidept !== "pilihdept"}
-                    className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring"
+                  <RadioGroup
+                    value={opsidept}
+                    onValueChange={setopsiDept}
+                    className="flex flex-col gap-2"
                   >
-                    <option value="000">000 - Semua Kementerian</option>
-                    <option value="015">015 - Kementerian Keuangan</option>
-                    <option value="XXX">XXX - Custom</option>
-                  </select>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="pilihdept" id="dept-pilih" />
+                      <Label htmlFor="dept-pilih" className="text-sm">
+                        Pilih K/L
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </div>
                 <div className="col-span-4">
-                  <select className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
-                    <option value="1">Rincian</option>
-                    <option value="2">Group</option>
-                  </select>
+                  <Select
+                    value={dept}
+                    onValueChange={setDept}
+                    disabled={opsidept !== "pilihdept"}
+                  >
+                    <SelectTrigger className="w-full mt-1.5">
+                      <SelectValue placeholder="Pilih Kementerian" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="000">000 - Semua Kementerian</SelectItem>
+                      <SelectItem value="015">015 - Kementerian Keuangan</SelectItem>
+                      <SelectItem value="XXX">XXX - Custom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-4">
+                  <Select defaultValue="1">
+                    <SelectTrigger className="w-full mt-1.5">
+                      <SelectValue placeholder="Pilih jenis" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Rincian</SelectItem>
+                      <SelectItem value="2">Group</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
               <div className="grid grid-cols-12 gap-4 items-center mb-3">
                 <div className="col-span-2"></div>
                 <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="dept-option"
-                      value="kondisidept"
-                      checked={opsidept === "kondisidept"}
-                      onChange={(e) => setopsiDept(e.target.value)}
-                      className="w-4 h-4 text-primary"
-                    />
-                    <span className="text-sm text-foreground">Kondisi</span>
-                  </label>
+                  <RadioGroup
+                    value={opsidept}
+                    onValueChange={setopsiDept}
+                    className="flex flex-col gap-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="kondisidept" id="dept-kondisi" />
+                      <Label htmlFor="dept-kondisi" className="text-sm">
+                        Kondisi
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </div>
                 <div className="col-span-4">
-                  <input
+                  <Input
                     type="text"
                     value={deptkondisi}
                     onChange={(e) => setDeptkondisi(e.target.value)}
                     disabled={opsidept !== "kondisidept"}
                     placeholder="015,020,023"
-                    className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full mt-1.5"
                   />
                 </div>
                 <div className="col-span-4 text-xs text-muted-foreground">
@@ -336,28 +388,27 @@ export default function Sp2dPage() {
               <div className="grid grid-cols-12 gap-4 items-center">
                 <div className="col-span-2"></div>
                 <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="dept-option"
-                      value="katadept"
-                      checked={opsidept === "katadept"}
-                      onChange={(e) => setopsiDept(e.target.value)}
-                      className="w-4 h-4 text-primary"
-                    />
-                    <span className="text-sm text-foreground">
-                      Mengandung Kata
-                    </span>
-                  </label>
+                  <RadioGroup
+                    value={opsidept}
+                    onValueChange={setopsiDept}
+                    className="flex flex-col gap-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="katadept" id="dept-kata" />
+                      <Label htmlFor="dept-kata" className="text-sm">
+                        Mengandung Kata
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </div>
                 <div className="col-span-4">
-                  <input
+                  <Input
                     type="text"
                     value={opsikatadept}
                     onChange={(e) => setopsiKataDept(e.target.value)}
                     disabled={opsidept !== "katadept"}
                     placeholder="KEUANGAN"
-                    className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full mt-1.5"
                   />
                 </div>
               </div>
@@ -372,61 +423,72 @@ export default function Sp2dPage() {
                   <span className="font-medium text-foreground">Eselon I</span>
                 </div>
                 <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="unit-option"
-                      value="pilihunit"
-                      checked={opsiunit === "pilihunit"}
-                      onChange={(e) => setopsiUnit(e.target.value)}
-                      className="w-4 h-4 text-primary"
-                    />
-                    <span className="text-sm text-foreground">Pilih Unit</span>
-                  </label>
-                </div>
-                <div className="col-span-4">
-                  <select
-                    value={kdunit}
-                    onChange={(e) => setKdunit(e.target.value)}
-                    disabled={opsiunit !== "pilihunit"}
-                    className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring"
+                  <RadioGroup
+                    value={opsiunit}
+                    onValueChange={setopsiUnit}
+                    className="flex flex-col gap-2"
                   >
-                    <option value="XX">XX - Semua Unit</option>
-                    <option value="01">01 - Sekretariat Jenderal</option>
-                    <option value="02">02 - Direktorat Jenderal</option>
-                  </select>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="pilihunit" id="unit-pilih" />
+                      <Label htmlFor="unit-pilih" className="text-sm">
+                        Pilih Unit
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </div>
                 <div className="col-span-4">
-                  <select className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
-                    <option value="1">Rincian</option>
-                    <option value="2">Group</option>
-                  </select>
+                  <Select
+                    value={kdunit}
+                    onValueChange={setKdunit}
+                    disabled={opsiunit !== "pilihunit"}
+                  >
+                    <SelectTrigger className="w-full mt-1.5">
+                      <SelectValue placeholder="Pilih Unit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="XX">XX - Semua Unit</SelectItem>
+                      <SelectItem value="01">01 - Sekretariat Jenderal</SelectItem>
+                      <SelectItem value="02">02 - Direktorat Jenderal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-4">
+                  <Select defaultValue="1">
+                    <SelectTrigger className="w-full mt-1.5">
+                      <SelectValue placeholder="Pilih jenis" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Rincian</SelectItem>
+                      <SelectItem value="2">Group</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
               <div className="grid grid-cols-12 gap-4 items-center">
                 <div className="col-span-2"></div>
                 <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="unit-option"
-                      value="kondisiunit"
-                      checked={opsiunit === "kondisiunit"}
-                      onChange={(e) => setopsiUnit(e.target.value)}
-                      className="w-4 h-4 text-primary"
-                    />
-                    <span className="text-sm text-foreground">Kondisi</span>
-                  </label>
+                  <RadioGroup
+                    value={opsiunit}
+                    onValueChange={setopsiUnit}
+                    className="flex flex-col gap-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="kondisiunit" id="unit-kondisi" />
+                      <Label htmlFor="unit-kondisi" className="text-sm">
+                        Kondisi
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </div>
                 <div className="col-span-4">
-                  <input
+                  <Input
                     type="text"
                     value={unitkondisi}
                     onChange={(e) => setUnitkondisi(e.target.value)}
                     disabled={opsiunit !== "kondisiunit"}
                     placeholder="01,02,03"
-                    className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full mt-1.5"
                   />
                 </div>
                 <div className="col-span-4 text-xs text-muted-foreground">
@@ -446,64 +508,73 @@ export default function Sp2dPage() {
                   </span>
                 </div>
                 <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="dekon-option"
-                      value="pilihdekon"
-                      checked={opsidekon === "pilihdekon"}
-                      onChange={(e) => setopsiDekon(e.target.value)}
-                      className="w-4 h-4 text-primary"
-                    />
-                    <span className="text-sm text-foreground">
-                      Pilih Kewenangan
-                    </span>
-                  </label>
-                </div>
-                <div className="col-span-4">
-                  <select
-                    value={dekon}
-                    onChange={(e) => setDekon(e.target.value)}
-                    disabled={opsidekon !== "pilihdekon"}
-                    className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring"
+                  <RadioGroup
+                    value={opsidekon}
+                    onValueChange={setopsiDekon}
+                    className="flex flex-col gap-2"
                   >
-                    <option value="XX">XX - Semua</option>
-                    <option value="1">1 - Pusat</option>
-                    <option value="2">2 - Dekonsentrasi</option>
-                    <option value="3">3 - Tugas Pembantuan</option>
-                  </select>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="pilihdekon" id="dekon-pilih" />
+                      <Label htmlFor="dekon-pilih" className="text-sm">
+                        Pilih Kewenangan
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </div>
                 <div className="col-span-4">
-                  <select className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
-                    <option value="1">Rincian</option>
-                    <option value="2">Group</option>
-                  </select>
+                  <Select
+                    value={dekon}
+                    onValueChange={setDekon}
+                    disabled={opsidekon !== "pilihdekon"}
+                  >
+                    <SelectTrigger className="w-full mt-1.5">
+                      <SelectValue placeholder="Pilih Kewenangan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="XX">XX - Semua</SelectItem>
+                      <SelectItem value="1">1 - Pusat</SelectItem>
+                      <SelectItem value="2">2 - Dekonsentrasi</SelectItem>
+                      <SelectItem value="3">3 - Tugas Pembantuan</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-4">
+                  <Select defaultValue="1">
+                    <SelectTrigger className="w-full mt-1.5">
+                      <SelectValue placeholder="Pilih jenis" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Rincian</SelectItem>
+                      <SelectItem value="2">Group</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
               <div className="grid grid-cols-12 gap-4 items-center">
                 <div className="col-span-2"></div>
                 <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="dekon-option"
-                      value="kondisidekon"
-                      checked={opsidekon === "kondisidekon"}
-                      onChange={(e) => setopsiDekon(e.target.value)}
-                      className="w-4 h-4 text-primary"
-                    />
-                    <span className="text-sm text-foreground">Kondisi</span>
-                  </label>
+                  <RadioGroup
+                    value={opsidekon}
+                    onValueChange={setopsiDekon}
+                    className="flex flex-col gap-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="kondisidekon" id="dekon-kondisi" />
+                      <Label htmlFor="dekon-kondisi" className="text-sm">
+                        Kondisi
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </div>
                 <div className="col-span-4">
-                  <input
+                  <Input
                     type="text"
                     value={dekonkondisi}
                     onChange={(e) => setDekonkondisi(e.target.value)}
                     disabled={opsidekon !== "kondisidekon"}
                     placeholder="1,2"
-                    className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full mt-1.5"
                   />
                 </div>
                 <div className="col-span-4 text-xs text-muted-foreground">
@@ -515,70 +586,81 @@ export default function Sp2dPage() {
 
           {/* KPPN */}
           {kdkppn && (
-            <div className="mb-6 pb-6 border-b border-zinc-500">
+            <div className="mb-6 pb-6 border-b border-border">
               <div className="grid grid-cols-12 gap-4 items-center mb-3">
                 <div className="col-span-2">
-                  <span className="font-medium">KPPN</span>
+                  <span className="font-medium text-foreground">KPPN</span>
                 </div>
                 <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="kppn-option"
-                      value="pilihkppn"
-                      checked={opsikppn === "pilihkppn"}
-                      onChange={(e) => setopsikppn(e.target.value)}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <span className="text-sm">Pilih KPPN</span>
-                  </label>
-                </div>
-                <div className="col-span-4">
-                  <select
-                    value={kppn}
-                    onChange={(e) => setKppn(e.target.value)}
-                    disabled={opsikppn !== "pilihkppn"}
-                    className="w-full bg-zinc-700 border border-zinc-500 rounded px-3 py-2 text-white disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  <RadioGroup
+                    value={opsikppn}
+                    onValueChange={setopsikppn}
+                    className="flex flex-col gap-2"
                   >
-                    <option value="XX">XX - Semua KPPN</option>
-                    <option value="001">001 - KPPN Jakarta I</option>
-                    <option value="002">002 - KPPN Jakarta II</option>
-                  </select>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="pilihkppn" id="kppn-pilih" />
+                      <Label htmlFor="kppn-pilih" className="text-sm">
+                        Pilih KPPN
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </div>
                 <div className="col-span-4">
-                  <select className="w-full bg-zinc-700 border border-zinc-500 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="1">Rincian</option>
-                    <option value="2">Group</option>
-                  </select>
+                  <Select
+                    value={kppn}
+                    onValueChange={setKppn}
+                    disabled={opsikppn !== "pilihkppn"}
+                  >
+                    <SelectTrigger className="w-full mt-1.5">
+                      <SelectValue placeholder="Pilih KPPN" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="XX">XX - Semua KPPN</SelectItem>
+                      <SelectItem value="001">001 - KPPN Jakarta I</SelectItem>
+                      <SelectItem value="002">002 - KPPN Jakarta II</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-4">
+                  <Select defaultValue="1">
+                    <SelectTrigger className="w-full mt-1.5">
+                      <SelectValue placeholder="Pilih jenis" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Rincian</SelectItem>
+                      <SelectItem value="2">Group</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
               <div className="grid grid-cols-12 gap-4 items-center mb-3">
                 <div className="col-span-2"></div>
                 <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="kppn-option"
-                      value="kondisikppn"
-                      checked={opsikppn === "kondisikppn"}
-                      onChange={(e) => setopsikppn(e.target.value)}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <span className="text-sm">Kondisi</span>
-                  </label>
+                  <RadioGroup
+                    value={opsikppn}
+                    onValueChange={setopsikppn}
+                    className="flex flex-col gap-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="kondisikppn" id="kppn-kondisi" />
+                      <Label htmlFor="kppn-kondisi" className="text-sm">
+                        Kondisi
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </div>
                 <div className="col-span-4">
-                  <input
+                  <Input
                     type="text"
                     value={kppnkondisi}
                     onChange={(e) => setkppnkondisi(e.target.value)}
                     disabled={opsikppn !== "kondisikppn"}
                     placeholder="001,002,003"
-                    className="w-full bg-zinc-700 border border-zinc-500 rounded px-3 py-2 text-white placeholder-zinc-400 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full mt-1.5"
                   />
                 </div>
-                <div className="col-span-4 text-xs opacity-70">
+                <div className="col-span-4 text-xs text-muted-foreground">
                   *) banyak KPPN gunakan koma, exclude gunakan tanda !
                 </div>
               </div>
@@ -586,26 +668,27 @@ export default function Sp2dPage() {
               <div className="grid grid-cols-12 gap-4 items-center">
                 <div className="col-span-2"></div>
                 <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="kppn-option"
-                      value="katakppn"
-                      checked={opsikppn === "katakppn"}
-                      onChange={(e) => setopsikppn(e.target.value)}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <span className="text-sm">Mengandung Kata</span>
-                  </label>
+                  <RadioGroup
+                    value={opsikppn}
+                    onValueChange={setopsikppn}
+                    className="flex flex-col gap-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="katakppn" id="kppn-kata" />
+                      <Label htmlFor="kppn-kata" className="text-sm">
+                        Mengandung Kata
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </div>
                 <div className="col-span-4">
-                  <input
+                  <Input
                     type="text"
                     value={opsikatakppn}
                     onChange={(e) => setopsiKatakppn(e.target.value)}
                     disabled={opsikppn !== "katakppn"}
                     placeholder="JAKARTA"
-                    className="w-full bg-zinc-700 border border-zinc-500 rounded px-3 py-2 text-white placeholder-zinc-400 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full mt-1.5"
                   />
                 </div>
               </div>
@@ -614,68 +697,75 @@ export default function Sp2dPage() {
 
           {/* Satker */}
           {kdsatker && (
-            <div className="mb-6 pb-6 border-b border-zinc-500">
+            <div className="mb-6 pb-6 border-b border-border">
               <div className="grid grid-cols-12 gap-4 items-center mb-3">
                 <div className="col-span-2">
-                  <span className="font-medium">Satker</span>
+                  <span className="font-medium text-foreground">Satker</span>
                 </div>
                 <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="satker-option"
-                      value="pilihsatker"
-                      checked={opsisatker === "pilihsatker"}
-                      onChange={(e) => setopsisatker(e.target.value)}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <span className="text-sm">Pilih Satker</span>
-                  </label>
+                  <RadioGroup
+                    value={opsisatker}
+                    onValueChange={setopsisatker}
+                    className="flex flex-col gap-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="pilihsatker" id="satker-pilih" />
+                      <Label htmlFor="satker-pilih" className="text-sm">
+                        Pilih Satker
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </div>
                 <div className="col-span-4">
-                  <input
+                  <Input
                     type="text"
                     value={satker}
                     onChange={(e) => setSatker(e.target.value)}
                     disabled={opsisatker !== "pilihsatker"}
                     placeholder="Kode Satker"
-                    className="w-full bg-zinc-700 border border-zinc-500 rounded px-3 py-2 text-white placeholder-zinc-400 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full mt-1.5"
                   />
                 </div>
                 <div className="col-span-4">
-                  <select className="w-full bg-zinc-700 border border-zinc-500 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="1">Rincian</option>
-                    <option value="2">Group</option>
-                  </select>
+                  <Select defaultValue="1">
+                    <SelectTrigger className="w-full mt-1.5">
+                      <SelectValue placeholder="Pilih jenis" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Rincian</SelectItem>
+                      <SelectItem value="2">Group</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
               <div className="grid grid-cols-12 gap-4 items-center mb-3">
                 <div className="col-span-2"></div>
                 <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="satker-option"
-                      value="kondisisatker"
-                      checked={opsisatker === "kondisisatker"}
-                      onChange={(e) => setopsisatker(e.target.value)}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <span className="text-sm">Kondisi</span>
-                  </label>
+                  <RadioGroup
+                    value={opsisatker}
+                    onValueChange={setopsisatker}
+                    className="flex flex-col gap-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="kondisisatker" id="satker-kondisi" />
+                      <Label htmlFor="satker-kondisi" className="text-sm">
+                        Kondisi
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </div>
                 <div className="col-span-4">
-                  <input
+                  <Input
                     type="text"
                     value={satkerkondisi}
                     onChange={(e) => setsatkerkondisi(e.target.value)}
                     disabled={opsisatker !== "kondisisatker"}
                     placeholder="123456,234567"
-                    className="w-full bg-zinc-700 border border-zinc-500 rounded px-3 py-2 text-white placeholder-zinc-400 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full mt-1.5"
                   />
                 </div>
-                <div className="col-span-4 text-xs opacity-70">
+                <div className="col-span-4 text-xs text-muted-foreground">
                   *) banyak Satker gunakan koma, exclude gunakan tanda !
                 </div>
               </div>
@@ -683,26 +773,27 @@ export default function Sp2dPage() {
               <div className="grid grid-cols-12 gap-4 items-center">
                 <div className="col-span-2"></div>
                 <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="satker-option"
-                      value="katasatker"
-                      checked={opsisatker === "katasatker"}
-                      onChange={(e) => setopsisatker(e.target.value)}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <span className="text-sm">Mengandung Kata</span>
-                  </label>
+                  <RadioGroup
+                    value={opsisatker}
+                    onValueChange={setopsisatker}
+                    className="flex flex-col gap-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="katasatker" id="satker-kata" />
+                      <Label htmlFor="satker-kata" className="text-sm">
+                        Mengandung Kata
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </div>
                 <div className="col-span-4">
-                  <input
+                  <Input
                     type="text"
                     value={opsikatasatker}
                     onChange={(e) => setopsiKatasatker(e.target.value)}
                     disabled={opsisatker !== "katasatker"}
                     placeholder="KANTOR PUSAT"
-                    className="w-full bg-zinc-700 border border-zinc-500 rounded px-3 py-2 text-white placeholder-zinc-400 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full mt-1.5"
                   />
                 </div>
               </div>
@@ -775,7 +866,8 @@ export default function Sp2dPage() {
               </Button>
             </div>
           </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Results Area Placeholder */}
         <div className="bg-white dark:bg-card rounded-xl p-6 min-h-[200px] border border-zinc-200 dark:border-zinc-800 shadow-sm">
