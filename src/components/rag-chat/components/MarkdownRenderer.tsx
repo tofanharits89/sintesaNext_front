@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import remarkBreaks from "remark-breaks";
 import { Code as CodeIcon } from "lucide-react";
 import { Code, CodeBlock, CodeHeader } from "@/components/animate-ui/components/animate/code";
 
@@ -22,18 +21,18 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         ),
         ul: ({ node, ...props }: any) => (
             <ul
-                className="list-disc list-inside space-y-1"
+                className="list-disc list-outside pl-5 space-y-1"
                 {...props}
             />
         ),
         ol: ({ node, ...props }: any) => (
             <ol
-                className="list-decimal list-inside space-y-1"
+                className="list-decimal list-outside pl-5 space-y-1"
                 {...props}
             />
         ),
         li: ({ node, ...props }: any) => (
-            <li className="mb-0" {...props} />
+            <li className="mb-0 pl-1" {...props} />
         ),
         strong: ({ node, ...props }: any) => (
             <strong className="font-semibold" {...props} />
@@ -83,7 +82,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
 
     return (
         <ReactMarkdown
-            remarkPlugins={[remarkGfm, remarkBreaks]}
+            remarkPlugins={[remarkGfm]}
             components={components}
         >
             {content}
