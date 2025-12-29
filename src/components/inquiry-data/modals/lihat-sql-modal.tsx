@@ -32,7 +32,7 @@ interface LihatSqlModalProps {
     tipeLaporan: string;
     pembulatan: string;
     jenisAkumulasi?: string;
-    scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp";
+    scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d";
     tematikKategori?: string;
   };
   filterValues?: Record<

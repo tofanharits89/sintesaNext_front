@@ -13,6 +13,7 @@ export const TABLE_MAPPING = {
   kontrak_valas: "pa_kontrak",
   outstanding_up_tup: "pa_up",
   detil_penerimaan_pnbp: "pa_pnbp",
+  spm_sp2d: "pa_realisasi",
 } as const;
 
 const REPORTS_EXCLUDE_PAGU_DIPA = new Set([
@@ -90,6 +91,10 @@ const REPORT_TYPE_REGISTRY: Record<string, ReportTypeConfig> = {
     includePaguDipa: false,
     addBlokirAfterReal: false,
     tableNameBuilder: (thang) => `monev${thang}.PA_PNBP_${thang}`,
+  },
+  spm_sp2d: {
+    includePaguDipa: false,
+    addBlokirAfterReal: false,
   },
 };
 

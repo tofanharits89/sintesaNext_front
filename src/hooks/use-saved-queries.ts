@@ -185,7 +185,7 @@ const fetcher = async (url: string) => {
  */
 export function useSavedQueries(
   params: GetSavedQueriesParams & {
-    scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp";
+    scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d";
   } = {},
 ) {
   const queryClient = useQueryClient();
@@ -200,6 +200,7 @@ export function useSavedQueries(
       "kontrak",
       "up_tup",
       "penerimaan_pnbp",
+      "sp2d",
     ] as const;
     const rawPage = typeof params.page === "number" ? params.page : undefined;
     const rawLimit =

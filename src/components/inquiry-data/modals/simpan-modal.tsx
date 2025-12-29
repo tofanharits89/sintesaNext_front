@@ -42,7 +42,7 @@ interface SimpanModalProps {
     tematikKategori?: string;
   };
   filterValues: Record<string, FilterValue>;
-  scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp"; // Add scope for query differentiation
+  scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d"; // Add scope for query differentiation
   onSaveSuccess?: (savedQuery: SavedQuery) => void;
 }
 

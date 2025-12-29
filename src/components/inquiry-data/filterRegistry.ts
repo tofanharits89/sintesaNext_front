@@ -748,7 +748,7 @@ export const normalizeActiveFilters = (activeFilters: string[]): string[] => {
  * @returns Array of available filter keys for the scope
  */
 export const getAvailableFiltersForScope = (
-  scope: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" = "general",
+  scope: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d" = "general",
   excludeFilters: string[] = [],
   options?: { tipeLaporan?: string }
 ): string[] => {
@@ -781,7 +781,7 @@ export const getAvailableFiltersForScope = (
  */
 export const isFilterAvailableInScope = (
   filterKey: string,
-  scope: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" = "general"
+  scope: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d" = "general"
 ): boolean => {
   const availableFilters = getAvailableFiltersForScope(scope);
   return availableFilters.includes(filterKey);
@@ -795,7 +795,7 @@ export const isFilterAvailableInScope = (
  */
 export const validateFiltersForScope = (
   activeFilters: string[],
-  scope: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp"
+  scope: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d"
 ): { isValid: boolean; incompatibleFilters: string[] } => {
   const availableFilters = getAvailableFiltersForScope(scope);
   const incompatibleFilters = activeFilters.filter(
