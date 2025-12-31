@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 interface UploadKontrakProps {
@@ -167,7 +167,7 @@ export default function UploadKontrak({ id, cekupload }: UploadKontrakProps) {
       const apiBase =
         process.env.NEXT_PUBLIC_API_URL ||
         `http://localhost:${process.env.NEXT_PUBLIC_BACKEND_PORT || "88"}`;
-      const url = `${apiBase.replace(/\/$/, "")}/dispensasi/uploadkontrak/`;
+      const url = `${apiBase.replace(/\/$/, "")}/dispensasi/upload-kontrak/`;
 
       const body = { formData, data };
 
@@ -204,16 +204,15 @@ export default function UploadKontrak({ id, cekupload }: UploadKontrakProps) {
 
       <div className="flex gap-3 items-center">
         <a
-          className="btn btn-danger"
-          href={`${
-            process.env.NEXT_PUBLIC_FORMAT_DISPEN ||
+          className={buttonVariants({ variant: "destructive" })}
+          href={`${process.env.NEXT_PUBLIC_FORMAT_DISPEN ||
             "/format_dispen/format_dispen_kontrak.xlsx"
-          }`}
+            }`}
         >
           {formatDispenName}
         </a>
 
-        <label className="btn btn-primary cursor-pointer">
+        <label className={buttonVariants({ variant: "default", className: "cursor-pointer" })}>
           {fileName}
           <input
             type="file"

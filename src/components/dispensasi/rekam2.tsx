@@ -27,6 +27,7 @@ import { BsFillPlusSquareFill, BsTrash } from "react-icons/bs";
 import moment from "moment";
 import "react-datepicker/dist/react-datepicker.css";
 import { AiOutlineClose } from "react-icons/ai";
+import UploadSPM from "./upload-spm";
 
 interface FormRow {
   nilaispm: string | number;
@@ -54,7 +55,7 @@ interface Rekam2Props {
 }
 
 // Mock dependencies (replace with real implementations from your project)
-const axiosJWT = { post: async (url: string, data: any, config?: any) => {} };
+const axiosJWT = { post: async (url: string, data: any, config?: any) => { } };
 const token = "";
 const kdlokasi = "";
 const handleHttpError = (status: any, msg: string) => console.error(msg);
@@ -142,11 +143,7 @@ const DataSPM = ({ cek, id }: { cek: boolean; id: string }) => {
   );
 };
 
-const UploadSPM = ({ cekupload, id }: any) => (
-  <div>
-    Upload SPM Component (cekupload: {cekupload ? "true" : "false"}, id: {id})
-  </div>
-);
+
 
 export default function Rekam2({
   show,
@@ -238,7 +235,7 @@ export default function Rekam2({
       handleHttpError(
         status,
         (errData && errData.error) ||
-          "Terjadi Permasalahan Koneksi atau Server Backend"
+        "Terjadi Permasalahan Koneksi atau Server Backend"
       );
     } finally {
       setLoading(false);
@@ -419,10 +416,10 @@ export default function Rekam2({
                                     className="form-control"
                                     selected={
                                       values.formRows[index] &&
-                                      values.formRows[index].tgspm
+                                        values.formRows[index].tgspm
                                         ? moment(
-                                            values.formRows[index].tgspm
-                                          ).toDate()
+                                          values.formRows[index].tgspm
+                                        ).toDate()
                                         : null
                                     }
                                     onChange={(date: Date | null) => {
@@ -488,10 +485,10 @@ export default function Rekam2({
                                     className="form-control"
                                     selected={
                                       values.formRows[index] &&
-                                      values.formRows[index].tglbast
+                                        values.formRows[index].tglbast
                                         ? moment(
-                                            values.formRows[index].tglbast
-                                          ).toDate()
+                                          values.formRows[index].tglbast
+                                        ).toDate()
                                         : null
                                     }
                                     onChange={(date: Date | null) => {

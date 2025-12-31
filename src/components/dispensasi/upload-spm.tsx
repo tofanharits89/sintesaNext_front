@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 
 interface UploadSpmProps {
   id?: string;
@@ -21,7 +21,7 @@ export default function UploadSPM({ id, cekupload }: UploadSpmProps) {
   const [processError, setProcessError] = useState<string | null>(null);
   const [processSuccess, setProcessSuccess] = useState<string | null>(null);
   const [formData, setFormData] = useState<any[]>([]);
-  const [fileName, setFileName] = useState("Pilih File Excell");
+  const [fileName, setFileName] = useState("Pilih File Excel");
   const [formatDispen, setFormatDispen] = useState("Template Excel");
 
   useEffect(() => {
@@ -175,7 +175,7 @@ export default function UploadSPM({ id, cekupload }: UploadSpmProps) {
       const apiBase =
         process.env.NEXT_PUBLIC_API_URL ||
         `http://localhost:${process.env.NEXT_PUBLIC_BACKEND_PORT || "88"}`;
-      const url = `${apiBase.replace(/\/$/, "")}/dispensasi/uploadspm/`;
+      const url = `${apiBase.replace(/\/$/, "")}/dispensasi/upload-spm/`;
 
       const body = { formData, data };
 
@@ -213,16 +213,15 @@ export default function UploadSPM({ id, cekupload }: UploadSpmProps) {
 
       <div className="flex gap-3 items-center">
         <a
-          className="btn btn-danger"
-          href={`${
-            process.env.NEXT_PUBLIC_FORMAT_DISPEN ||
+          className={buttonVariants({ variant: "destructive" })}
+          href={`${process.env.NEXT_PUBLIC_FORMAT_DISPEN ||
             "/format_dispen/format_dispen_spm.xlsx"
-          }`}
+            }`}
         >
           {formatDispen}
         </a>
 
-        <label className="btn btn-primary cursor-pointer">
+        <label className={buttonVariants({ variant: "default", className: "cursor-pointer" })}>
           {fileName}
           <input
             type="file"
@@ -275,7 +274,7 @@ export default function UploadSPM({ id, cekupload }: UploadSpmProps) {
               variant="ghost"
               onClick={() => {
                 setData([]);
-                setFileName("Pilih File Excell");
+                setFileName("Pilih File Excel");
               }}
             >
               Reset
