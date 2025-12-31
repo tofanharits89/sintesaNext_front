@@ -204,6 +204,12 @@ const Rekam: React.FC<Props> = ({ show, onHide }) => {
     getData();
   }, [kppn]);
 
+  useEffect(() => {
+    if (data.length > 0) {
+      setSearchResults(data.slice(0, 100));
+    }
+  }, [data]);
+
   const handleModalClose = () => {
     setSelectedSatker(null);
     setSearchResults([]);
@@ -319,9 +325,8 @@ const Rekam: React.FC<Props> = ({ show, onHide }) => {
                         <Field
                           name="tahun"
                           as="select"
-                          className={`form-select form-select-md text-select ${
-                            touched.tahun && errors.tahun ? "is-invalid" : ""
-                          }`}
+                          className={`form-select form-select-md text-select ${touched.tahun && errors.tahun ? "is-invalid" : ""
+                            }`}
                           onChange={(
                             e: React.ChangeEvent<HTMLSelectElement>
                           ) => {
@@ -343,11 +348,10 @@ const Rekam: React.FC<Props> = ({ show, onHide }) => {
                         <Field
                           name="jeniskontrak"
                           as="select"
-                          className={`form-select form-select-md text-select ${
-                            touched.jeniskontrak && errors.jeniskontrak
+                          className={`form-select form-select-md text-select ${touched.jeniskontrak && errors.jeniskontrak
                               ? "is-invalid"
                               : ""
-                          }`}
+                            }`}
                           onChange={(
                             e: React.ChangeEvent<HTMLSelectElement>
                           ) => {
@@ -367,9 +371,8 @@ const Rekam: React.FC<Props> = ({ show, onHide }) => {
 
                         <CekKppn
                           value={values.kppn}
-                          className={`form-control ${
-                            touched.kppn && errors.kppn ? "is-invalid" : ""
-                          }`}
+                          className={`form-control ${touched.kppn && errors.kppn ? "is-invalid" : ""
+                            }`}
                           onChange={(e: string) => {
                             handleChange({
                               target: { name: "kppn", value: e },
@@ -405,12 +408,11 @@ const Rekam: React.FC<Props> = ({ show, onHide }) => {
                           placeholderText="Tgl Permohonan"
                           autoComplete="off"
                           timeZone="UTC"
-                          className={`form-control ${
-                            touched.tanggalPermohonan &&
-                            errors.tanggalPermohonan
+                          className={`form-control ${touched.tanggalPermohonan &&
+                              errors.tanggalPermohonan
                               ? "is-invalid"
                               : ""
-                          }`}
+                            }`}
                         />
                       </Form.Group>
                     </Col>
@@ -424,11 +426,10 @@ const Rekam: React.FC<Props> = ({ show, onHide }) => {
                           type="text"
                           placeholder="Nomor Permohonan"
                           as={Form.Control}
-                          className={`${
-                            touched.nomorPermohonan && errors.nomorPermohonan
+                          className={`${touched.nomorPermohonan && errors.nomorPermohonan
                               ? "is-invalid"
                               : ""
-                          }`}
+                            }`}
                           onChange={handleChange}
                         />
                       </Form.Group>
@@ -492,12 +493,11 @@ const Rekam: React.FC<Props> = ({ show, onHide }) => {
                           placeholderText="Tgl Persetujuan "
                           autoComplete="off"
                           timeZone="UTC"
-                          className={`form-control ${
-                            touched.tanggalPersetujuan &&
-                            errors.tanggalPersetujuan
+                          className={`form-control ${touched.tanggalPersetujuan &&
+                              errors.tanggalPersetujuan
                               ? "is-invalid"
                               : ""
-                          }`}
+                            }`}
                         />
                       </Form.Group>
                     </Col>
@@ -513,11 +513,10 @@ const Rekam: React.FC<Props> = ({ show, onHide }) => {
                           type="text"
                           placeholder="Nomor Persetujuan Dispensasi"
                           as={Form.Control}
-                          className={`${
-                            touched.nomorPersetujuan && errors.nomorPersetujuan
+                          className={`${touched.nomorPersetujuan && errors.nomorPersetujuan
                               ? "is-invalid"
                               : ""
-                          }`}
+                            }`}
                         />
                       </Form.Group>
                     </Col>
@@ -532,11 +531,10 @@ const Rekam: React.FC<Props> = ({ show, onHide }) => {
                           <Field
                             name="alasan"
                             as="select"
-                            className={`form-select form-select-md text-select ${
-                              touched.alasan && errors.alasan
+                            className={`form-select form-select-md text-select ${touched.alasan && errors.alasan
                                 ? "is-invalid"
                                 : ""
-                            }`}
+                              }`}
                             onChange={(
                               e: React.ChangeEvent<HTMLSelectElement>
                             ) => {
@@ -583,11 +581,10 @@ const Rekam: React.FC<Props> = ({ show, onHide }) => {
                             name="alasanLainnya"
                             placeholder="Harus diisi ketika dipilih alasan dispensasi lainnya"
                             rows="3"
-                            className={`form-control  ${
-                              touched.alasanLainnya && errors.alasanLainnya
+                            className={`form-control  ${touched.alasanLainnya && errors.alasanLainnya
                                 ? "is-invalid"
                                 : ""
-                            }`}
+                              }`}
                           />
                         </Form.Group>
                       </Col>
