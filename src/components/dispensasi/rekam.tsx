@@ -245,7 +245,8 @@ export default function Rekam({
 
       // Append file last
       if (values.file) {
-        form.append("file", values.file as File);
+        const fileObj = values.file as File;
+        form.append("file", fileObj, fileObj.name);
       }
 
       // Log FormData contents in order (for debugging)
@@ -305,11 +306,18 @@ export default function Rekam({
     } catch (error: any) {
       console.error("Submit error details:", error);
       const { status, data: errData } = error.response || {};
-      handleHttpError(
-        status,
-        (errData && errData.error) ||
-          "Terjadi Permasalahan Koneksi atau Server Backend"
-      );
+      const errorMsg =
+        (errData && (errData.error || errData.msg || errData.detail)) ||
+        "Terjadi Permasalahan Koneksi atau Server Backend";
+
+      handleHttpError(status, errorMsg);
+
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal Menyimpan',
+        text: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg),
+        confirmButtonText: 'Tutup'
+      });
     } finally {
       setLoading(false);
       setSubmitting(false);
@@ -467,11 +475,10 @@ export default function Rekam({
                       <Field
                         name="tahun"
                         as="select"
-                        className={`form-select form-select-md text-select ${
-                          touched.tahun && (errors.tahun as any)
-                            ? "is-invalid"
-                            : ""
-                        }`}
+                        className={`form-select form-select-md text-select ${touched.tahun && (errors.tahun as any)
+                          ? "is-invalid"
+                          : ""
+                          }`}
                         onChange={(e: any) => {
                           handleChange(e);
                           handleTahunChange(e);
@@ -496,11 +503,10 @@ export default function Rekam({
                           handleChange(e);
                           handleJenisChange(e, setFieldValue);
                         }}
-                        className={`form-control  ${
-                          touched.jenis && (errors.jenis as any)
-                            ? "is-invalid"
-                            : ""
-                        }`}
+                        className={`form-control  ${touched.jenis && (errors.jenis as any)
+                          ? "is-invalid"
+                          : ""
+                          }`}
                       >
                         <option value="">--- Pilih Jenis Dispensasi ---</option>
                         <option value="01">SPM BIASA</option>
@@ -673,11 +679,10 @@ export default function Rekam({
                             name="dispen"
                             value={dispen}
                             as="select"
-                            className={`form-select form-select-md text-select ${
-                              touched.dispen && (errors.dispen as any)
-                                ? "is-invalid"
-                                : ""
-                            }`}
+                            className={`form-select form-select-md text-select ${touched.dispen && (errors.dispen as any)
+                              ? "is-invalid"
+                              : ""
+                              }`}
                             onChange={(e: any) => {
                               handleChange(e);
                               handleAlasanChange(e, setFieldValue);
@@ -728,11 +733,10 @@ export default function Rekam({
                           name="dispen"
                           value={dispen}
                           as="select"
-                          className={`form-select form-select-md text-select ${
-                            touched.dispen && (errors.dispen as any)
-                              ? "is-invalid"
-                              : ""
-                          }`}
+                          className={`form-select form-select-md text-select ${touched.dispen && (errors.dispen as any)
+                            ? "is-invalid"
+                            : ""
+                            }`}
                           onChange={(e: any) => {
                             handleChange(e);
                             handleAlasanChange(e, setFieldValue);
@@ -772,11 +776,10 @@ export default function Rekam({
                           name="dispen"
                           value={values.jenis === "04" ? "07" : values.dispen}
                           as="select"
-                          className={`form-select form-select-md text-select ${
-                            touched.dispen && (errors.dispen as any)
-                              ? "is-invalid"
-                              : ""
-                          }`}
+                          className={`form-select form-select-md text-select ${touched.dispen && (errors.dispen as any)
+                            ? "is-invalid"
+                            : ""
+                            }`}
                           onChange={(e: any) => {
                             handleChange(e);
                             handleAlasanChange(e, setFieldValue);
@@ -807,11 +810,10 @@ export default function Rekam({
                           onChange={(e: any) => {
                             setFieldValue("alasan2", e.target.value);
                           }}
-                          className={`form-control  ${
-                            touched.alasan2 && (errors.alasan2 as any)
-                              ? "is-invalid"
-                              : ""
-                          }`}
+                          className={`form-control  ${touched.alasan2 && (errors.alasan2 as any)
+                            ? "is-invalid"
+                            : ""
+                            }`}
                         />
                       </FloatingLabel>
                     </Col>
@@ -825,11 +827,10 @@ export default function Rekam({
                         File Surat Persetujuan (File PDF Maks. 2MB)
                       </Form.Label>
                       <input
-                        className={`form-control ${
-                          touched.file && (errors.file as any)
-                            ? "is-invalid"
-                            : ""
-                        }`}
+                        className={`form-control ${touched.file && (errors.file as any)
+                          ? "is-invalid"
+                          : ""
+                          }`}
                         type="file"
                         name="file"
                         accept=".pdf"
