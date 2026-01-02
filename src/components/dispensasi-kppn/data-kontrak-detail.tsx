@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Container, Table } from "react-bootstrap";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { Loading2 } from "../../layout/LoadingTable";
+import { Trash2 } from "lucide-react";
 
 interface DataKontrakDetailProps {
   cek: boolean;
@@ -106,56 +106,70 @@ export default function DataKontrakDetail({ cek, id }: DataKontrakDetailProps) {
   };
 
   return (
-    <Container className="my-2">
+    <div className="my-2 px-1">
       {loading ? (
-        <>
+        <div className="space-y-4">
           <Loading2 />
-          <br />
           <Loading2 />
-          <br />
           <Loading2 />
-        </>
+        </div>
       ) : (
-        <Table striped bordered hover responsive>
-          <thead>
-            <tr>
-              <th className="text-header text-center">No</th>
-              <th className="text-header text-center">Tgl Kontrak</th>
-              <th className="text-header text-center">No Kontrak/ Adendum</th>
-              <th className="text-header text-center">Nilai Kontrak</th>
-              <th className="text-header text-center">Hapus</th>
-            </tr>
-          </thead>
-          <tbody className="text-center">
-            {data.map((row, index) => (
-              <tr key={index}>
-                <td className="align-middle text-center">{index + 1}</td>
-                <td className="align-middle text-center">{row.tgkontrak}</td>
-                <td className="align-middle text-center">{row.nokontrak}</td>
-                <td className="align-middle baris-total text-end">
-                  {row.nilkontrak.toLocaleString()}
-                </td>
+        <div className="relative w-full overflow-auto rounded-md border">
+          <table className="w-full text-sm text-center">
+            <thead className="bg-[#343a40] text-white">
+              <tr>
+                <th className="h-10 px-4 align-middle font-semibold">No</th>
+                <th className="h-10 px-4 align-middle font-semibold">
+                  Tgl Kontrak
+                </th>
+                <th className="h-10 px-4 align-middle font-semibold">
+                  No Kontrak/ Adendum
+                </th>
+                <th className="h-10 px-4 align-middle font-semibold">
+                  Nilai Kontrak
+                </th>
                 {user?.role !== "kanwil_djpb" && (
-                  <td className="align-middle text-center">
-                    <i
-                      className="bi bi-dash-circle text-danger text-center fw-bold"
-                      style={{ cursor: "pointer" }}
-                      onClick={() =>
-                        handleHapus(
-                          row.id,
-                          row.kdsatker,
-                          row.kdkppn,
-                          row.id_dispensasi
-                        )
-                      }
-                    ></i>
-                  </td>
+                  <th className="h-10 px-4 align-middle font-semibold">
+                    Hapus
+                  </th>
                 )}
               </tr>
-            ))}
-          </tbody>
-        </Table>
+            </thead>
+            <tbody className="divide-y">
+              {data.map((row, index) => (
+                <tr
+                  key={index}
+                  className="hover:bg-muted/50 transition-colors"
+                >
+                  <td className="p-3 align-middle">{index + 1}</td>
+                  <td className="p-3 align-middle">{row.tgkontrak}</td>
+                  <td className="p-3 align-middle">{row.nokontrak}</td>
+                  <td className="p-3 align-middle text-end font-mono">
+                    {row.nilkontrak.toLocaleString()}
+                  </td>
+                  {user?.role !== "kanwil_djpb" && (
+                    <td className="p-3 align-middle">
+                      <div className="flex justify-center">
+                        <Trash2
+                          className="h-5 w-5 text-red-600 hover:text-red-800 cursor-pointer transition-colors"
+                          onClick={() =>
+                            handleHapus(
+                              row.id,
+                              row.kdsatker,
+                              row.kdkppn,
+                              row.id_dispensasi
+                            )
+                          }
+                        />
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
-    </Container>
+    </div>
   );
 }

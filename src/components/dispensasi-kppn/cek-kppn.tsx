@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Form } from "react-bootstrap";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
@@ -57,11 +56,11 @@ const CekKppn: React.FC<CekKppnProps> = ({ value, className, onChange }) => {
   };
 
   return (
-    <Form.Control
-      as="select"
+    <select
       value={value}
       className={className}
       onChange={(e) => onChange(e.target.value)}
+      disabled={loading}
     >
       <option value="">-- Pilih KPPN --</option>
       {data.map((dau, index) => (
@@ -69,7 +68,7 @@ const CekKppn: React.FC<CekKppnProps> = ({ value, className, onChange }) => {
           {dau.kdkppn} - {dau.nmkppn}
         </option>
       ))}
-    </Form.Control>
+    </select>
   );
 };
 

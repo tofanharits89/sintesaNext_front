@@ -4,10 +4,10 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Loading2 } from "@/layout/LoadingTable";
 import { toast } from "sonner";
-import { Button, Table, Spinner, Card } from "react-bootstrap";
+import { Button } from "@/components/ui/button";
 import ReactPaginate from "react-paginate";
 import moment from "moment";
-import { PlusSquare, Trash2, Download } from "lucide-react";
+import { PlusSquare, Trash2, FileSpreadsheet, Loader2 } from "lucide-react";
 import Rekam from "./modal-rekam";
 import RekamKontrak from "./modal-rekam-kontrak";
 import GenerateCSV from "@/components/GenerateCSV";
@@ -22,27 +22,6 @@ const tableStyles = {
     width: "100%",
     minWidth: "1300px",
     tableLayout: "fixed" as const,
-    marginBottom: "0",
-  },
-  headerCell: {
-    padding: "12px 8px",
-    fontWeight: "600",
-    fontSize: "13px",
-    backgroundColor: "#343a40", // dark grey
-    color: "#fff", // white text for contrast
-    whiteSpace: "nowrap" as const,
-    textAlign: "center" as const,
-    verticalAlign: "middle",
-    borderColor: "#dee2e6",
-  },
-  bodyCell: {
-    padding: "10px 8px",
-    fontSize: "12px",
-    textAlign: "center" as const,
-    verticalAlign: "middle",
-    whiteSpace: "nowrap" as const,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
   },
   // Column widths
   noColumn: { width: "50px", minWidth: "50px", maxWidth: "50px" },
@@ -88,11 +67,12 @@ const DataDispensasiKPPN: React.FC = () => {
   const [nmsatker, setNmsatker] = useState("");
   const [kdkppn, setKdkppn] = useState("");
   const [cek, setCek] = useState(false);
-  const [showModalFilter, setShowModalFilter] = useState(false);
   const [where, setWhere] = useState("");
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [export2, setExport2] = useState(false);
   const [open, setOpen] = useState(false);
+
+  // Unused state removed: showModalFilter
 
   const handleCek = () => {
     setCek(true);
@@ -202,8 +182,6 @@ const DataDispensasiKPPN: React.FC = () => {
       process.env.NEXT_PUBLIC_API_URL ||
       "/api/v1";
 
-    // Backend route expects: /api/v1/dispensasi/:query?limit=10&page=0&user=username
-    // where :query is the base64-encoded SQL
     const requestUrl = `${baseUrl}/dispensasi/${encryptedQuery}?limit=${limit}&page=${page}&user=${user?.username || ""
       }`;
     console.debug("dispensasi-kppn request url", requestUrl);
@@ -311,254 +289,192 @@ const DataDispensasiKPPN: React.FC = () => {
   };
 
   return (
-    <div>
-      {/* Layout handled by parent */}
-      <>
-        <div className="d-flex justify-content-end text-danger">
-          {user?.role !== "kanwil_djpb" && (
-            <Button
-              variant="success"
-              size="sm"
-              className="button  my-2"
-              style={{ padding: "5px 5px", marginTop: "10px" }}
-              onClick={() => handleRekam()}
-            >
-              Rekam Dispensasi
-            </Button>
-          )}
+    <div className="space-y-4">
+      <div className="flex justify-end gap-2 text-red-500">
+        {user?.role !== "kanwil_djpb" && (
           <Button
-            variant="danger"
+            variant="default"
             size="sm"
-            className="button  my-2"
-            style={{ padding: "5px 5px", marginTop: "10px" }}
-            onClick={() => {
-              setLoadingStatus(true);
-              setExport2(true);
-            }}
-            disabled={loadingStatus}
+            className="my-2 bg-green-600 hover:bg-green-700 text-white"
+            onClick={() => handleRekam()}
           >
-            {loadingStatus && (
-              <Spinner
-                as="span"
-                animation="border"
-                size="sm"
-                role="status"
-                aria-hidden="true"
-              />
-            )}
-            {!loadingStatus && (
-              <i className="bi bi-file-earmark-excel-fill mx-2"></i>
-            )}
-            {loadingStatus ? " Loading..." : "Download"}
+            Rekam Dispensasi
           </Button>
-        </div>
-      </>
+        )}
+        <Button
+          variant="destructive"
+          size="sm"
+          className="my-2"
+          onClick={() => {
+            setLoadingStatus(true);
+            setExport2(true);
+          }}
+          disabled={loadingStatus}
+        >
+          {loadingStatus ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+          )}
+          {loadingStatus ? "Loading..." : "Download"}
+        </Button>
+      </div>
+
       {loading ? (
-        <>
+        <div className="space-y-4">
           <Loading2 />
-          <br />
           <Loading2 />
-          <br />
           <Loading2 />
-        </>
+        </div>
       ) : (
         <>
-          <Card className="mt-1 p-2" bg="light">
-            <Card.Body
-              className="data-user fade-in"
-              style={tableStyles.container}
-            >
-              <Table
-                striped
-                bordered
-                hover
-                responsive
+          <div className="mt-3 p-0 rounded-md border text-card-foreground shadow-sm bg-dark">
+            <div className="data-user fade-in" style={tableStyles.container}>
+              <table
+                className="w-full text-sm text-center border-collapse"
                 style={tableStyles.table}
               >
-                <thead>
+                <thead className="bg-[#343a40] text-white">
                   <tr>
                     <th
-                      style={{
-                        ...tableStyles.headerCell,
-                        ...tableStyles.noColumn,
-                      }}
+                      className="p-3 font-semibold border border-[#dee2e6]"
+                      style={tableStyles.noColumn}
                     >
                       No
                     </th>
                     <th
-                      style={{
-                        ...tableStyles.headerCell,
-                        ...tableStyles.kppnColumn,
-                      }}
+                      className="p-3 font-semibold border border-[#dee2e6]"
+                      style={tableStyles.kppnColumn}
                     >
                       KPPN
                     </th>
                     <th
-                      style={{
-                        ...tableStyles.headerCell,
-                        ...tableStyles.satkerColumn,
-                      }}
+                      className="p-3 font-semibold border border-[#dee2e6]"
+                      style={tableStyles.satkerColumn}
                     >
                       Satker
                     </th>
                     <th
-                      style={{
-                        ...tableStyles.headerCell,
-                        ...tableStyles.tglColumn,
-                      }}
+                      className="p-3 font-semibold border border-[#dee2e6]"
+                      style={tableStyles.tglColumn}
                     >
                       Tgl Permohonan
                     </th>
                     <th
-                      style={{
-                        ...tableStyles.headerCell,
-                        ...tableStyles.nomorColumn,
-                      }}
+                      className="p-3 font-semibold border border-[#dee2e6]"
+                      style={tableStyles.nomorColumn}
                     >
                       Nomor Permohonan
                     </th>
                     <th
-                      style={{
-                        ...tableStyles.headerCell,
-                        ...tableStyles.jumlahColumn,
-                      }}
+                      className="p-3 font-semibold border border-[#dee2e6]"
+                      style={tableStyles.jumlahColumn}
                     >
                       Jumlah Kontrak
                     </th>
                     <th
-                      style={{
-                        ...tableStyles.headerCell,
-                        ...tableStyles.opsiColumn,
-                      }}
+                      className="p-3 font-semibold border border-[#dee2e6]"
+                      style={tableStyles.opsiColumn}
                     >
                       Opsi
                     </th>
                   </tr>
                 </thead>
 
-                <tbody className="text-center">
+                <tbody className="divide-y divide-[#dee2e6]">
                   {data.map((row, index) => (
-                    <tr key={index}>
+                    <tr
+                      key={index}
+                      className="hover:bg-slate-100 transition-colors odd:bg-[rgba(0,0,0,0.05)] even:bg-white"
+                    >
                       <td
-                        style={{
-                          ...tableStyles.bodyCell,
-                          ...tableStyles.noColumn,
-                        }}
+                        className="p-2 border border-[#dee2e6]"
+                        style={tableStyles.noColumn}
                       >
                         {index + 1 + page * limit}
                       </td>
                       <td
-                        style={{
-                          ...tableStyles.bodyCell,
-                          ...tableStyles.kppnColumn,
-                        }}
+                        className="p-2 border border-[#dee2e6]"
+                        style={tableStyles.kppnColumn}
                       >
                         {row.nmkppn} ({row.kdkppn})
                       </td>
                       <td
-                        style={{
-                          ...tableStyles.bodyCell,
-                          ...tableStyles.satkerColumn,
-                        }}
+                        className="p-2 border border-[#dee2e6]"
+                        style={tableStyles.satkerColumn}
                       >
-                        <div
-                          style={{
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
+                        <div className="truncate" title={row.nmsatker}>
                           {row.nmsatker} ({row.kdsatker})
                         </div>
                       </td>
                       <td
-                        style={{
-                          ...tableStyles.bodyCell,
-                          ...tableStyles.tglColumn,
-                        }}
+                        className="p-2 border border-[#dee2e6]"
+                        style={tableStyles.tglColumn}
                       >
                         {row.tgpermohonan}
                       </td>
                       <td
-                        style={{
-                          ...tableStyles.bodyCell,
-                          ...tableStyles.nomorColumn,
-                        }}
+                        className="p-2 border border-[#dee2e6]"
+                        style={tableStyles.nomorColumn}
                       >
-                        <div
-                          style={{
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
+                        <div className="truncate" title={row.nopermohonan}>
                           {row.nopermohonan}
                         </div>
                       </td>
                       <td
-                        style={{
-                          ...tableStyles.bodyCell,
-                          ...tableStyles.jumlahColumn,
-                        }}
+                        className="p-2 border border-[#dee2e6]"
+                        style={tableStyles.jumlahColumn}
                       >
                         {row.jmlkontrak > 0 ? (
                           row.jmlkontrak
                         ) : (
-                          <span className="text-danger fw-bold">
+                          <span className="text-red-600 font-bold">
                             belum direkam
                           </span>
                         )}
                       </td>
                       {user?.role !== "kanwil_djpb" ? (
                         <td
-                          style={{
-                            ...tableStyles.bodyCell,
-                            ...tableStyles.opsiColumn,
-                          }}
+                          className="p-2 border border-[#dee2e6]"
+                          style={tableStyles.opsiColumn}
                         >
-                          {/* Rekam Kontrak */}
-                          <span
-                            title="Rekam Kontrak"
-                            className="inline-block"
-                          >
-                            <PlusSquare
-                              className="text-success mx-2 cursor-pointer hover:scale-110 transition-transform"
-                              size={20}
-                              onClick={() =>
-                                handleRekamKontrak(
-                                  row.id,
-                                  row.nopermohonan,
-                                  row.nmsatker,
-                                  row.kdsatker,
-                                  row.kdkppn
-                                )
-                              }
-                            />
-                          </span>
+                          <div className="flex items-center justify-center gap-2">
+                            <span title="Rekam Kontrak">
+                              <PlusSquare
+                                className="text-green-600 cursor-pointer hover:scale-110 transition-transform"
+                                size={20}
+                                onClick={() =>
+                                  handleRekamKontrak(
+                                    row.id,
+                                    row.nopermohonan,
+                                    row.nmsatker,
+                                    row.kdsatker,
+                                    row.kdkppn
+                                  )
+                                }
+                              />
+                            </span>
 
-                          {/* Hapus Dispensasi */}
-                          <span
-                            title="Hapus Dispensasi"
-                            className="inline-block"
-                          >
-                            <Trash2
-                              className="text-danger mx-2 cursor-pointer hover:scale-110 transition-transform"
-                              size={20}
-                              onClick={() =>
-                                handleHapusDispSPM(
-                                  row.id,
-                                  row.jmlkontrak,
-                                  row.kdsatker,
-                                  row.kdkppn
-                                )
-                              }
-                            />
-                          </span>
+                            <span title="Hapus Dispensasi">
+                              <Trash2
+                                className="text-red-600 cursor-pointer hover:scale-110 transition-transform"
+                                size={20}
+                                onClick={() =>
+                                  handleHapusDispSPM(
+                                    row.id,
+                                    row.jmlkontrak,
+                                    row.kdsatker,
+                                    row.kdkppn
+                                  )
+                                }
+                              />
+                            </span>
+                          </div>
                         </td>
                       ) : (
                         <td
-                          style={{
-                            ...tableStyles.bodyCell,
-                            ...tableStyles.opsiColumn,
-                          }}
+                          className="p-2 border border-[#dee2e6]"
+                          style={tableStyles.opsiColumn}
                         >
                           -
                         </td>
@@ -566,9 +482,9 @@ const DataDispensasiKPPN: React.FC = () => {
                     </tr>
                   ))}
                 </tbody>
-              </Table>
-            </Card.Body>
-          </Card>
+              </table>
+            </div>
+          </div>
           {export2 && (
             <GenerateCSV
               query3={sql}
@@ -579,40 +495,40 @@ const DataDispensasiKPPN: React.FC = () => {
             />
           )}
           {data.length > 0 && (
-            <>
-              <span className="pagination justify-content-between mt-2 mx-4 text-dark">
+            <div className="flex items-center justify-between mt-4 px-4 text-sm text-gray-600">
+              <div>
                 Total : {rows.toLocaleString()}, &nbsp; Hal : &nbsp;
                 {rows ? page + 1 : 0} dari {pages}
-                <nav>
-                  <ReactPaginate
-                    previousLabel={"← Previous"}
-                    nextLabel={"Next →"}
-                    breakLabel="..."
-                    pageRangeDisplayed={3}
-                    marginPagesDisplayed={1}
-                    pageCount={pages}
-                    renderOnZeroPageCount={null}
-                    containerClassName="justify-content-center pagination"
-                    previousClassName="page-item"
-                    previousLinkClassName="page-link"
-                    nextClassName="page-item"
-                    nextLinkClassName="page-link"
-                    pageClassName="page-item"
-                    pageLinkClassName="page-link"
-                    breakClassName="page-item"
-                    breakLinkClassName="page-link"
-                    activeClassName="active"
-                    disabledClassName="disabled"
-                    onPageChange={halaman}
-                    initialPage={page}
-                  />
-                </nav>
-              </span>
-            </>
+              </div>
+              <nav>
+                <ReactPaginate
+                  previousLabel={"← Previous"}
+                  nextLabel={"Next →"}
+                  breakLabel="..."
+                  pageRangeDisplayed={3}
+                  marginPagesDisplayed={1}
+                  pageCount={pages}
+                  renderOnZeroPageCount={null}
+                  containerClassName="flex gap-2 list-none p-0 m-0"
+                  pageClassName="rounded-md border border-gray-300 hover:bg-gray-100"
+                  pageLinkClassName="block px-3 py-2 text-decoration-none text-gray-700"
+                  previousClassName="rounded-md border border-gray-300 hover:bg-gray-100"
+                  previousLinkClassName="block px-3 py-2 text-decoration-none text-gray-700"
+                  nextClassName="rounded-md border border-gray-300 hover:bg-gray-100"
+                  nextLinkClassName="block px-3 py-2 text-decoration-none text-gray-700"
+                  breakClassName="rounded-md border border-gray-300"
+                  breakLinkClassName="block px-3 py-2 text-decoration-none text-gray-700"
+                  activeClassName="bg-blue-600 text-white border-blue-600"
+                  activeLinkClassName="text-white hover:text-white"
+                  disabledClassName="opacity-50 pointer-events-none"
+                  onPageChange={halaman}
+                  initialPage={page}
+                />
+              </nav>
+            </div>
           )}
         </>
-      )}{" "}
-
+      )}
 
       {open && <Rekam show={showModal} onHide={handleCloseModal} />}
       <RekamKontrak
