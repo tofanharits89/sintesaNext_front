@@ -22,7 +22,7 @@ interface PilihLaporanCardProps {
   };
   setReportParams: React.Dispatch<React.SetStateAction<any>>;
   // Optional overrides for tematik and rkakl_detail context
-  mode?: "general" | "tematik" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp";
+  mode?: "general" | "tematik" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d";
   customTipeLaporanOptions?: { value: string; label: string }[];
   hideJenisAkumulasi?: boolean;
 }
@@ -75,6 +75,10 @@ export function PilihLaporanCard({
     { value: "detil_penerimaan_pnbp", label: "Detil Penerimaan PNBP" },
   ];
 
+  const sp2dTipeLaporanOptions = [
+    { value: "spm_sp2d", label: "SPM/SP2D" },
+  ];
+
   // Use appropriate options based on mode
   const tipeLaporanOptions =
     mode === "tematik"
@@ -87,6 +91,8 @@ export function PilihLaporanCard({
       ? customTipeLaporanOptions || upTupTipeLaporanOptions
       : mode === "penerimaan_pnbp"
       ? customTipeLaporanOptions || penerimaaanPnbpTipeLaporanOptions
+      : mode === "sp2d"
+      ? customTipeLaporanOptions || sp2dTipeLaporanOptions
       : customTipeLaporanOptions || defaultTipeLaporanOptions;
 
   const pembulatanOptions = [
@@ -150,6 +156,8 @@ export function PilihLaporanCard({
                   ? "Tipe Laporan UP/TUP"
                   : mode === "penerimaan_pnbp"
                   ? "Tipe Laporan Penerimaan PNBP"
+                  : mode === "sp2d"
+                  ? "Tipe Laporan SPM/SP2D"
                   : "Tipe Laporan"}
               </label>
               <Select
@@ -178,6 +186,8 @@ export function PilihLaporanCard({
                         ? "Pilih tipe laporan UP/TUP"
                         : mode === "penerimaan_pnbp"
                         ? "Pilih tipe laporan Penerimaan PNBP"
+                        : mode === "sp2d"
+                        ? "Pilih tipe laporan SPM/SP2D"
                         : "Pilih tipe laporan"
                     }
                   />

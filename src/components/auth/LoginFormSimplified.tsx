@@ -5,7 +5,7 @@
  * Clean architecture with single source of truth
  */
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/hooks/useAuth";
@@ -43,6 +43,8 @@ const schema = z.object({
   captcha: z.string().min(4, "Captcha 4 digit").max(4, "Captcha 4 digit"),
   rememberMe: z.boolean().optional().default(false),
 });
+const CAPTCHA_REFRESH_SECONDS = 30;
+const CAPTCHA_REFRESH_MS = CAPTCHA_REFRESH_SECONDS * 1000;
 // Important: with exactOptionalPropertyTypes enabled, zod input/output differ
 // - input type (before parsing) allows optional fields
 // - output type (after parsing) applies defaults and makes fields required
@@ -55,9 +57,14 @@ export default function SimplifiedLoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [captchaCode, setCaptchaCode] = useState("");
+  const [captchaTtlSeconds, setCaptchaTtlSeconds] = useState<number | null>(null);
+  const [captchaFetchedAt, setCaptchaFetchedAt] = useState<number | null>(null);
+  const [captchaNextRefreshAt, setCaptchaNextRefreshAt] = useState<number | null>(null);
+  const [captchaCountdown, setCaptchaCountdown] = useState<number>(CAPTCHA_REFRESH_SECONDS);
   const { theme, resolvedTheme, setTheme } = useTheme();
   const [isThemeReady, setIsThemeReady] = useState(false);
   const captchaFetched = useRef(false);
+  const captchaFetchInFlight = useRef(false);
 
   useEffect(() => {
     setIsThemeReady(true);
@@ -100,27 +107,6 @@ export default function SimplifiedLoginForm() {
     }
   }, [user, isLoading, router]);
 
-  // Fetch server-generated captcha
-  const fetchCaptcha = async () => {
-    try {
-      const resp = await fetch("/api/v1/auth/captcha", { credentials: "include", cache: "no-store" });
-      const data = await resp.json().catch(() => ({}));
-      if (resp.ok && data?.success && data?.data?.code) {
-        setCaptchaCode(String(data.data.code));
-      } else {
-        setCaptchaCode("");
-      }
-    } catch {
-      setCaptchaCode("");
-    }
-  };
-
-  useEffect(() => {
-    if (captchaFetched.current) return;
-    captchaFetched.current = true;
-    void fetchCaptcha();
-  }, []);
-
   const form = useForm<FormInput, any, FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -131,10 +117,85 @@ export default function SimplifiedLoginForm() {
     },
   });
 
+  // Fetch server-generated captcha
+  const fetchCaptcha = useCallback(async (reason: "auto" | "manual" | "error" = "manual") => {
+    if (captchaFetchInFlight.current) return;
+    captchaFetchInFlight.current = true;
+
+    try {
+      const fetchedAt = Date.now();
+      const resp = await fetch("/api/v1/auth/captcha", { credentials: "include", cache: "no-store" });
+      const data = await resp.json().catch(() => ({}));
+      if (resp.ok && data?.success && data?.data?.code) {
+        setCaptchaCode(String(data.data.code));
+        const ttl = Number(data?.data?.ttl);
+        setCaptchaTtlSeconds(Number.isFinite(ttl) ? ttl : null);
+        setCaptchaFetchedAt(fetchedAt);
+
+        if (reason === "auto") {
+          form.setValue("captcha", "");
+        }
+      } else {
+        setCaptchaCode("");
+        setCaptchaTtlSeconds(null);
+        setCaptchaFetchedAt(null);
+      }
+    } catch {
+      setCaptchaCode("");
+      setCaptchaTtlSeconds(null);
+      setCaptchaFetchedAt(null);
+    } finally {
+      captchaFetchInFlight.current = false;
+      const nextAt = Date.now() + CAPTCHA_REFRESH_MS;
+      setCaptchaNextRefreshAt(nextAt);
+      setCaptchaCountdown(CAPTCHA_REFRESH_SECONDS);
+    }
+  }, [form]);
+
+  useEffect(() => {
+    if (captchaFetched.current) return;
+    captchaFetched.current = true;
+    void fetchCaptcha("manual");
+  }, [fetchCaptcha]);
+
+  // Auto-refresh captcha every 30 seconds with countdown indicator
+  useEffect(() => {
+    if (!captchaNextRefreshAt) return;
+
+    const intervalId = setInterval(() => {
+      const now = Date.now();
+      const remainingMs = captchaNextRefreshAt - now;
+      const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
+      setCaptchaCountdown(remainingSec);
+
+      if (
+        remainingMs <= 0 &&
+        !captchaFetchInFlight.current &&
+        !isSubmitting &&
+        !isRedirecting
+      ) {
+        void fetchCaptcha("auto");
+      }
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [captchaNextRefreshAt, fetchCaptcha, isSubmitting, isRedirecting]);
+
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
 
     try {
+      // Prevent submitting expired captcha (common after idle)
+      if (captchaFetchedAt && captchaTtlSeconds) {
+        const ageMs = Date.now() - captchaFetchedAt;
+        if (ageMs >= captchaTtlSeconds * 1000) {
+          toast.error("Captcha sudah kedaluwarsa, silakan coba lagi");
+          void fetchCaptcha("manual");
+          form.setValue("captcha", "");
+          return;
+        }
+      }
+
       // Use the new unified login method from useAuth hook
       const result = await login(data.username, data.password, data.rememberMe, data.captcha);
 
@@ -181,7 +242,7 @@ export default function SimplifiedLoginForm() {
       toast.error(error.message || "Terjadi kesalahan saat login");
 
       // Regenerate captcha on error
-      void fetchCaptcha();
+      void fetchCaptcha("error");
       form.setValue("captcha", "");
     } finally {
       setIsSubmitting(false);
@@ -189,7 +250,7 @@ export default function SimplifiedLoginForm() {
   };
 
   const refreshCaptcha = () => {
-    void fetchCaptcha();
+    void fetchCaptcha("manual");
     form.setValue("captcha", "");
   };
 
@@ -300,6 +361,9 @@ export default function SimplifiedLoginForm() {
                       >
                         ↻
                       </Button>
+                    </div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      Auto refresh in {captchaCountdown}s
                     </div>
                     <FieldError errors={[form.formState.errors.captcha]} />
                   </Field>

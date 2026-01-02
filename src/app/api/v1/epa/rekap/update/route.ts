@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { backendPath } from "@/lib/api/backend";
+import { backendPath } from "@/lib/config/config";
 
 // Proxy: /api/v1/epa/rekap/update -> backend /epa/rekap/update
 export async function POST(request: NextRequest) {
@@ -30,10 +30,10 @@ export async function POST(request: NextRequest) {
       resp.ok
         ? data
         : {
-            success: false,
-            message: (data as any).message || "Failed to update rekap EPA",
-            error: (data as any).error,
-          },
+          success: false,
+          message: (data as any).message || "Failed to update rekap EPA",
+          error: (data as any).error,
+        },
       { status: resp.ok ? 200 : resp.status },
     );
   } catch (error) {

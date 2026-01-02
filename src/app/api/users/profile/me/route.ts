@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { backendPath } from "@/lib/api/backend";
+import { backendPath } from "@/lib/config/config";
 import { forwardSetCookies } from "@/lib/utils/cookie-helpers";
 
 // Deprecated: cookie-only flow now forwards Cookie header to backend. Keep stub to avoid import errors.
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   const debugSource = request.headers.get("x-debug-source") || "profile.put.next";
-  const debugTrace = request.headers.get("x-debug-trace") || `prof_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+  const debugTrace = request.headers.get("x-debug-trace") || `prof_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   console.log(`[Profile PUT] trace=${debugTrace} source=${debugSource} :: request received`);
   const cookie = request.headers.get("cookie") || "";
 
@@ -114,7 +114,7 @@ export async function PUT(request: NextRequest) {
   const dbgTraceHeader = request.headers.get("x-debug-trace") || undefined;
   const dbgTsHeader = Date.now().toString();
 
-  console.log(`[Profile PUT] trace=${dbgTraceHeader ?? 'n/a'} :: outbound to backend with cookies=${!!cookie}, bodyKeys=${Object.keys(body||{}).join(',')}`);
+  console.log(`[Profile PUT] trace=${dbgTraceHeader ?? 'n/a'} :: outbound to backend with cookies=${!!cookie}, bodyKeys=${Object.keys(body || {}).join(',')}`);
 
   // Call backend /users/profile/me endpoint
   const resp = await fetch(backendPath("/users/profile/me"), {

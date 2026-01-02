@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { backendPath } from "@/lib/api/backend";
+import { backendPath } from "@/lib/config/config";
 import { forwardSetCookies } from "@/lib/utils/cookie-helpers";
 
 export async function GET(request: NextRequest) {

@@ -43,8 +43,6 @@ const AppShell = memo(function AppShell({
       "/menu-rowset",
       "/laporan",
       "/tentang-kita",
-      "/debug-cookies",
-      "/debug-user",
       "/log-user",
       "/monitor-performa",
       "/sp2d",

@@ -2,251 +2,183 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
+## Commands
 
-**SintesaNEx Frontend** - Indonesian government finance dashboard built for the Ministry of Finance. This is a Next.js 15 application providing a modern web interface for financial data monitoring, reporting, and messaging within Indonesia's government financial management system.
-
-## Development Commands
-
-### Core Development
-```bash
-npm run dev              # Start development server with Turbopack (default)
-npm run dev:no-turbo     # Development without Turbopack
-npm run build            # Production build with increased memory allocation
-npm run start            # Start production server
-npm run typecheck        # TypeScript checking without emitting files
-```
-
-### Code Quality
-```bash
-npm run lint             # Run ESLint
-npm run lint:fix         # ESLint with auto-fix
-```
+### Development
+- `npm run dev` - Start dev server with Turbopack
+- `npm run dev:no-turbo` - Dev server without Turbopack
+- `npm run typecheck` - TypeScript type checking
+- `npm run lint` / `npm run lint:fix` - ESLint
 
 ### Testing
-```bash
-npm run test             # Run tests with Vitest
-npm run test:ui          # Tests with Vitest UI
-npm run test:run         # Run tests once
-npm run test:coverage    # Run tests with coverage (80% thresholds)
-```
+- `npm run test` - Run Vitest in watch mode
+- `npm run test:ui` - Vitest with UI
+- `npm run test:run` - Run tests once
+- `npm run test:coverage` - Run tests with coverage (80% threshold enforced)
 
-### Build Analysis & Utilities
-```bash
-npm run build:analyze    # Build with bundle analyzer
-npm run analyze:bundle   # Analyze existing bundle
-npm run clean            # Clean .next, dist, and coverage directories
-npm run install:clean    # Clean node_modules and reinstall
-```
+### Build & Deploy
+- `npm run build` - Production build (uses 8GB memory allocation)
+- `npm run build:analyze` - Build with bundle analyzer
+- `npm start` - Start production server
+- `npm run clean` - Clean .next, dist, and coverage directories
 
-## Technology Stack
+## Architecture Overview
 
-### Framework & Core
-- **Next.js 15** with App Router and React 19
-- **TypeScript** with strict configuration (ES2017 target)
-- **Node.js 18+** runtime requirement
+### Tech Stack
+- **Next.js 15** with App Router (React Server Components, React 19, TypeScript 5.9)
+- **State Management**: TanStack React Query (server state) + Zustand (UI state)
+- **UI**: Tailwind CSS v4 + shadcn/ui components (Radix UI primitives)
+- **Real-time**: Socket.IO Client 4.8 with automatic React Query cache invalidation
+- **Testing**: Vitest + @testing-library (80% coverage threshold)
 
-### UI & Styling
-- **Tailwind CSS v4** with custom theme configuration
-- **shadcn/ui** components built on Radix UI primitives
-- **Lucide React** icons (configurable via components.json)
-- **Framer Motion** for animations via the `motion` package
-
-### Data Management
-- **TanStack Query (React Query)** for server state management and caching
-- **Zustand** for client-side state management
-- **React Hook Form** with Zod validation for forms
-- **Axios** for HTTP client with interceptors
-
-### Real-time Features
-- **Socket.IO Client** for WebSocket connections
-- Custom WebSocket integration with React Query cache invalidation
-
-### Development & Testing
-- **Vitest** with jsdom environment for unit testing
-- **Testing Library** for component testing
-- **ESLint** with Next.js configuration
-- **TypeScript** compiler with strict type checking
-
-### Additional Features
-- **Recharts** for data visualization
-- **React Query DevTools** for debugging API state
-- **date-fns** for date manipulation
-- **PDF.js** and **react-pdf** for document viewing
-- **XLSX** for Excel file handling
-
-## Architecture Patterns
-
-### Directory Structure
+### Project Structure
 ```
 src/
-├── app/                    # Next.js App Router (kebab-case URLs)
-├── components/             # Reusable UI components
-│   ├── ui/                # shadcn/ui base components
-│   ├── auth/              # Authentication components
-│   ├── dashboard/         # Dashboard-specific components
-│   ├── messaging/         # Real-time messaging components
-│   └── ...
-├── features/              # Feature-specific modules
-│   ├── mbg/               # MBG (Budget Implementation) feature
-│   └── messaging/         # Messaging system feature
-├── hooks/                 # Custom React hooks
-│   └── messaging-rq/      # React Query + Zustand messaging hooks
-├── services/              # API services and business logic
-├── stores/                # Zustand state management
-├── lib/                   # Utility libraries and configurations
-├── shared/                # Shared utilities and types
-├── types/                 # TypeScript type definitions
-└── utils/                 # Helper functions
+├── app/                    # Next.js App Router routes (kebab-case folders)
+│   ├── (public)/          # Public routes: login, server-error, ip-blocked
+│   ├── (routes)/          # Protected routes (default: require auth)
+│   ├── api/               # API routes (proxied to backend service)
+│   ├── dashboard/         # Dashboard pages: utama, program, efisiensi
+│   ├── messages/          # Real-time messaging
+│   ├── users/             # User management
+│   └── settings/          # Settings pages
+├── components/            # Reusable UI components
+│   ├── ui/               # 60+ shadcn/ui base components
+│   ├── auth/             # Authentication components
+│   ├── dashboard/        # Dashboard-specific components
+│   ├── messaging/        # Real-time messaging components
+│   ├── charts/           # Recharts data visualizations
+│   ├── layout/           # App shell, sidebar, navigation
+│   └── providers/        # React Query, Theme providers
+├── features/             # Feature-specific modules (mbg, messaging, sp2d)
+├── hooks/                # 70+ custom React hooks
+├── services/             # API services (MessageService, etc.)
+├── stores/               # Zustand state (messaging, notification, bps-data)
+├── lib/                  # Utilities and configurations
+│   ├── api/              # httpClient, backendHttp (Axios instances)
+│   ├── config/           # Unified app config (config.ts, query-configs.ts)
+│   ├── security/         # CSRF manager, cookie managers
+│   └── cache/            # Cache warming, metrics
+├── shared/               # Shared utilities and types
+│   ├── socket-events.ts  # Unified socket event definitions (SSOT)
+│   └── rbac.ts           # Role-based access control
+├── query-builders/       # SQL query builders (Where, Select, GroupBy)
+└── types/                # TypeScript type definitions
 ```
 
-### Key Architectural Decisions
+### HTTP Client Architecture
 
-#### State Management Pattern
-- **React Query** for server state (API calls, caching, background refetch)
-- **Zustand** for UI state (active conversations, form state, UI preferences)
-- WebSocket events automatically invalidate React Query caches
-- Optimistic updates for real-time user experience
+**Two Axios instances** in `src/lib/api/httpClient.ts`:
 
-#### Component Architecture
-- Feature-based organization with clear separation of concerns
-- shadcn/ui components as the base UI layer
-- Compound component patterns for complex features
-- Server Components for static content, Client Components for interactivity
+1. **`http`** - Goes through Next.js API proxy (same-origin)
+   - Base URL: `""` (empty, resolves to current origin)
+   - Auto-attaches CSRF token from `csrfManager.getCSRFToken()`
+   - Handles 401 with redirect to login
+   - Handles 403 IP blocking with redirect to `/ip-blocked`
 
-#### API Integration
-- Centralized API configuration with interceptors
-- React Query hooks with TypeScript query keys
-- Background refetch and cache invalidation strategies
-- Error boundaries and retry mechanisms
+2. **`backendHttp`** - Direct backend communication
+   - Base URL: `config.apiUrl` (absolute backend URL)
+   - CSRF via cookie fallback (`XSRF-TOKEN` cookie)
+   - Same error handling as `http`
 
-#### Authentication & Security
-- Session-based authentication via middleware
-- Server-side session validation with caching
-- IP blocking detection and handling
-- Comprehensive security headers (CSP, HSTS, etc.)
+**CSRF Token Management** (`src/lib/security/csrfManager.ts`):
+- `getCSRFToken()` - Fetch token with cache
+- `refreshToken()` - Force refresh
+- `clearCache()` - Clear cached token
 
-## Configuration Files
+**API Configuration** (`src/lib/config/config.ts`):
+- Client-side: Uses relative path `/api/v1` (cookies set for app origin)
+- Server-side: Uses absolute URL (Docker: `http://backend:8080/api/v1`, Dev: `http://localhost:8080/api/v1`)
+- Socket URL derived by removing `/api/v1` suffix
 
-### Next.js Configuration (next.config.ts)
-- **Security**: Comprehensive headers, CSP, HSTS in production
-- **Performance**: Image optimization, package imports, compression
-- **Deployment**: Standalone output for Docker, proxy rewrites to backend
-- **Development**: Turbopack with path aliases, bundle analyzer support
+### React Query Configuration
 
-### TypeScript Configuration
-- **Strict Mode**: Enabled with `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`
-- **Path Aliases**: `@/*` for src, `@shared/*` for shared utilities
-- **Next.js Integration**: Proper plugin configuration and type checking
+**Query configs** in `src/lib/config/query-configs.ts`:
+- `static` - 30min stale, 1hr GC (rarely changes)
+- `user` - 5min stale, 15min GC (auth/user data)
+- `dashboard` - 2min stale, 10min GC (analytics)
+- `realtime` - 30s stale, 5min GC (messaging, live updates)
+- `critical` - 1min stale, 5min GC (auth, permissions)
+- `financial` - 3min stale, 15min GC (high accuracy needed)
+- `search` - 1min stale, 3min GC (short-lived results)
 
-### Vitest Configuration
-- **Environment**: jsdom for component testing
-- **Coverage**: 80% thresholds with v8 provider
-- **Setup Files**: Custom test setup with Testing Library
-- **Path Aliases**: Consistent with TypeScript configuration
+**Query key factories** (for consistent cache invalidation):
+```typescript
+import { queryKeyFactories } from '@/lib/config/query-configs'
 
-## Development Guidelines
+// Usage examples
+queryKeyFactories.financial.mbg.quickStats()
+queryKeyFactories.messaging.messages(userId, conversationId)
+queryKeyFactories.user.profile()
+```
+
+### WebSocket & Real-time Integration
+
+**Socket events** defined in `src/shared/socket-events.ts` (SSOT):
+- All socket event names and types exported from `SOCKET_EVENTS`
+- `MessageSendPayload`, `MessageNewPayload`, `TypingStartPayload`, etc.
+- `Message`, `Conversation`, `User` data models
+- `FrontendMessage` interface for optimistic updates
+
+**Pattern**: Socket events automatically invalidate React Query caches via `queryKeyFactories`. When receiving a `message:new` event, invalidate `queryKeyFactories.messaging.messages()`.
+
+### Authentication & Middleware
+
+**Middleware** (`middleware.ts`) - fail-secure (protect-by-default):
+- Protected routes require session validation via `/api/v1/auth/session`
+- Public routes: `/login`, `/server-error`, `/ip-blocked`
+- IP blocking: redirect to `/ip-blocked` with duration/reason params
+- Session cookie: `sid` (HTTP-only)
+
+**Route protection** (`src/config/routes.ts`):
+- `isPublicRoute(pathname)` - Returns true for public routes
+- `isProtectedRoute(pathname)` - Returns true for protected routes
+- Everything is protected unless explicitly public
+
+### State Management Pattern
+
+**React Query** (Server State):
+- Use `createQueryOptions(configType)` for consistent caching
+- Example: `createQueryOptions('financial')` for financial data
+- Query keys via `queryKeyFactories` for invalidation
+
+**Zustand** (Client State):
+- Active conversations (`src/stores/messaging-store.ts`)
+- Typing indicators (`src/stores/typing-indicators-store.ts`)
+- Notifications (`src/stores/notification-store.ts`)
+- Unread badges (`src/stores/unread-badges-store.ts`)
 
 ### Code Standards
-- Import order: React/Next → external libraries → aliases → relative paths
-- Component naming: `PascalCase.tsx`, hooks: `useName.ts`, utilities: `camelCase.ts`
-- Use TypeScript strict mode features for better type safety
-- Follow ESLint configuration (extends `eslint-config-next`)
 
-### Testing Strategy
-- **80% Coverage Thresholds** enforced across all metrics
-- **User-centric testing** focused on behavior, not implementation
-- **Vitest + Testing Library** for component testing
-- Test files use `*.test.ts|tsx` suffix in `test/` directory or alongside source
+- **Components**: `PascalCase.tsx`
+- **Hooks**: `useName.ts`
+- **Utilities**: `camelCase.ts`
+- **Route folders**: kebab-case (match URLs, e.g., `data-makrokesra`)
+- **Import order**: React/Next → external libs → aliases → relative paths
+- Use TypeScript strict mode
+- Run `npm run lint` and `npm run typecheck` before pushing
 
-### Performance Considerations
-- **React Query Caching**: 30-second stale time, 5-minute garbage collection
-- **Bundle Optimization**: Package imports analyzed, webpack configuration tuned
-- **Memory Management**: Increased Node.js memory for builds (12GB)
-- **Image Optimization**: WebP/AVIF formats with minimum cache TTL
+### Testing
 
-### Security Implementation
-- **Session-based authentication** with server-side validation
-- **Content Security Policy** with restrictive defaults
-- **IP-based blocking** with automatic detection and handling
-- **Optimistic auth** only in development, strict validation in production
+- Test files in `test/` with `*.test.ts|tsx` suffix
+- Use user-centric queries: `getByRole`, `findByText`
+- 80% coverage threshold enforced
+- Add regression tests for every bug fix
 
-## Real-time Features
+### Environment Variables
 
-### Messaging System Architecture
-The messaging system uses a sophisticated **React Query + Zustand + WebSocket** pattern:
+```env
+# Backend (defaults: localhost:8080 or backend:8080 in Docker)
+NEXT_PUBLIC_BACKEND_PORT=8080
+BACKEND_PORT=8080
+API_URL=...
+NEXT_PUBLIC_API_URL=...
 
-1. **React Query Layer**: Server state management with caching and optimistic updates
-2. **Zustand Layer**: UI state management for active conversations, typing indicators
-3. **WebSocket Integration**: Real-time updates with automatic cache invalidation
-4. **Error Resilience**: Fallback to REST API, connection retry mechanisms
+# Socket
+NEXT_PUBLIC_SOCKET_ORIGIN=...
+NEXT_PUBLIC_SOCKET_PATH=/socket.io
 
-### WebSocket Integration
-- Automatic cache invalidation on new messages
-- Typing indicators and read receipts
-- Connection state management with reconnection logic
-- Event deduplication and cleanup
-
-## Environment Variables
-
-### Required for Development
-- `NEXT_PUBLIC_BACKEND_PORT` or `BACKEND_PORT`: Backend API port
-- Session and authentication configuration
-- Google Maps API key (if using map features)
-
-### Production Considerations
-- HTTPS configuration for security headers
-- Backend host configuration for Docker environments
-- Session secret and Redis configuration
-
-## Common Development Patterns
-
-### Custom Hooks
-```typescript
-// React Query pattern with TypeScript
-export function useQuickStats() {
-  return useQuery<QuickStatView[], Error>({
-    queryKey: queryKeyFactories.financial.mbg.quickStats(),
-    queryFn: getQuickStats,
-    ...createQueryOptions('financial'),
-    gcTime: 5 * 60_000,
-  });
-}
+# Debug
+NEXT_PUBLIC_DEBUG_AUTH=true|false
+NEXT_PUBLIC_DEBUG_SOCKET=true|false
 ```
-
-### Component Patterns
-```typescript
-// shadcn/ui based components with proper TypeScript
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'default' | 'destructive' | 'outline';
-  size?: 'default' | 'sm' | 'lg';
-}
-```
-
-### State Management
-```typescript
-// Zustand store with TypeScript selectors
-interface MessagingState {
-  activeConversationId: string | null;
-  setActiveConversationId: (id: string | null) => void;
-}
-
-export const useMessagingStore = create<MessagingState>((set) => ({
-  activeConversationId: null,
-  setActiveConversationId: (id) => set({ activeConversationId: id }),
-}));
-```
-
-## Deployment Notes
-
-### Docker Configuration
-- **Standalone Output**: Configured for containerized deployment
-- **Backend Proxy**: API routes proxied to backend service
-- **Static Assets**: Optimized for CDN distribution
-- **Security Headers**: Production-ready CSP and HSTS
-
-### Performance Monitoring
-- **Bundle Analysis**: Available via `npm run build:analyze`
-- **React Query DevTools**: Available in development
-- **WebSocket Debugging**: Event logging and connection monitoring
-- **Error Tracking**: Comprehensive error boundaries and reporting

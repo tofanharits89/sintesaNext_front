@@ -32,7 +32,7 @@ export class FilterDataService {
 
   async getFilterOptions(type: string, dependencies?: Record<string, string>): Promise<Option[]> {
     const cacheKey = `${type}-${JSON.stringify(dependencies || {})}`;
-    
+
     if (this.cache.has(cacheKey)) {
       return this.cache.get(cacheKey)!;
     }
@@ -44,98 +44,98 @@ export class FilterDataService {
 
     const rawData = await loader();
     const options = this.transformDataToOptions(rawData, type, dependencies);
-    
+
     this.cache.set(cacheKey, options);
     return options;
   }
 
   private async loadKddept(): Promise<any[]> {
-    const data = await import('@/components/inquiry-data/filters/data/kddept.json');
+    const data = await import('@/components/inquiry-data/data/kddept.json');
     return data.default;
   }
 
   private async loadKdunit(): Promise<any[]> {
-    const data = await import('@/components/inquiry-data/filters/data/kdunit.json');
+    const data = await import('@/components/inquiry-data/data/kdunit.json');
     return data.default;
   }
 
   private async loadKdkanwil(): Promise<any[]> {
-    const data = await import('@/components/inquiry-data/filters/data/kdkanwil.json');
+    const data = await import('@/components/inquiry-data/data/kdkanwil.json');
     return data.default;
   }
 
   private async loadKdkppn(): Promise<any[]> {
-    const data = await import('@/components/inquiry-data/filters/data/kdkppn.json');
+    const data = await import('@/components/inquiry-data/data/kdkppn.json');
     return data.default;
   }
 
   private async loadKdlokasi(): Promise<any[]> {
-    const data = await import('@/components/inquiry-data/filters/data/kdlokasi.json');
+    const data = await import('@/components/inquiry-data/data/kdlokasi.json');
     return data.default;
   }
 
   private async loadKddekon(): Promise<any[]> {
-    const data = await import('@/components/inquiry-data/filters/data/kddekon.json');
+    const data = await import('@/components/inquiry-data/data/kddekon.json');
     return data.default;
   }
 
   private async loadKdkabkota(): Promise<any[]> {
-    const data = await import('@/components/inquiry-data/filters/data/kdkabkota.json');
+    const data = await import('@/components/inquiry-data/data/kdkabkota.json');
     return data.default;
   }
 
   private async loadKdsatker(): Promise<any[]> {
-    const data = await import('@/components/inquiry-data/filters/data/kdsatker.json');
-    return data.default;
+    const data = await import('@/components/inquiry-data/data/kdsatker.json');
+    return data.default as any[];
   }
 
   private async loadKdfungsi(): Promise<any[]> {
-    const data = await import('@/components/inquiry-data/filters/data/kdfungsi.json');
+    const data = await import('@/components/inquiry-data/data/kdfungsi.json');
     return data.default;
   }
 
   private async loadKdsfung(): Promise<any[]> {
-    const data = await import('@/components/inquiry-data/filters/data/kdsfung.json');
+    const data = await import('@/components/inquiry-data/data/kdsfung.json');
     return data.default;
   }
 
   private async loadKdprogram(): Promise<any[]> {
-    const data = await import('@/components/inquiry-data/filters/data/kdprogram.json');
+    const data = await import('@/components/inquiry-data/data/kdprogram.json');
     return data.default;
   }
 
   private async loadKdgiat(): Promise<any[]> {
-    const data = await import('@/components/inquiry-data/filters/data/kdgiat.json');
+    const data = await import('@/components/inquiry-data/data/kdgiat.json');
     return data.default;
   }
 
   private async loadKdoutput(): Promise<any[]> {
-    const data = await import('@/components/inquiry-data/filters/data/kdoutput.json');
-    return data.default;
+    const data = await import('@/components/inquiry-data/data/kdoutput.json');
+    return data.default as any[];
   }
 
   private async loadKdsoutput(): Promise<any[]> {
-    const data = await import('@/components/inquiry-data/filters/data/kdsoutput.json');
-    return data.default;
+    const data = await import('@/components/inquiry-data/data/kdsoutput.json');
+    return data.default as any[];
   }
 
   private async loadKdakun(): Promise<any[]> {
-    const data = await import('@/components/inquiry-data/filters/data/kdakun.json');
+    const data = await import('@/components/inquiry-data/data/kdakun.json');
     return data.default;
   }
 
   private async loadKdbkpk(): Promise<any[]> {
-    const data = await import('@/components/inquiry-data/filters/data/kdbkpk.json');
+    const data = await import('@/components/inquiry-data/data/kdbkpk.json');
     return data.default;
   }
 
   private async loadKdgbkpk(): Promise<any[]> {
-    const data = await import('@/components/inquiry-data/filters/data/kdgbkpk.json');
+    const data = await import('@/components/inquiry-data/data/kdgbkpk.json');
     return data.default;
   }
 
   private async loadKdsdana(): Promise<any[]> {
-    const data = await import('@/components/inquiry-data/filters/data/kdsdana.json');
+    const data = await import('@/components/inquiry-data/data/kdsdana.json');
     return data.default;
   }
 

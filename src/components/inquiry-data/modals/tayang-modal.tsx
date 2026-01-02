@@ -44,7 +44,7 @@ interface TayangModalProps {
     tematikKategori?: string;
   };
   filterValues?: Record<string, FilterValue>;
-  scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp";
+  scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d";
 }
 
 export function TayangModal({
@@ -164,6 +164,7 @@ export function TayangModal({
       "PAGU_KONTRAK",
       "REALISASI_KONTRAK",
       "BLOKIR",
+      "NILAI_SP2D", // Add NILAI_SP2D for SP2D
       "JAN",
       "FEB",
       "MAR",
@@ -281,6 +282,7 @@ export function TayangModal({
       lower.includes("blokir") ||
       lower.includes("anggaran") ||
       lower === "jmlpnrk" || // Format jmlpnrk like monetary columns
+      lower === "nilai_sp2d" || // Format nilai_sp2d like monetary columns
       rMonthly.includes(lower) ||
       baseMonthly.includes(lower)
     );

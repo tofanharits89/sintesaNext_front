@@ -57,6 +57,23 @@ export function buildGroupByClause(
     addGroupBy("main.NODOK");
   }
 
+  if (reportParams.tipeLaporan === "spm_sp2d") {
+    // SP2D: Add base query columns only
+    // Filter columns will be handled by the main loop below (same as belanja)
+    addGroupBy("main.RUPIAH");
+    addGroupBy("main.NOSP2D");
+    addGroupBy("main.TGSP2D");
+    addGroupBy("main.NOSPM");
+    addGroupBy("main.TGSPM");
+    addGroupBy("main.URAIAN");
+    addGroupBy("main.JENSP2D");
+    addGroupBy("main.JENSPM");
+    addGroupBy("main.TGPOS");
+
+    // Don't return early - let the main loop handle ALL filter columns
+    // This ensures akun and other filters are handled consistently with belanja
+  }
+
   if (reportParams.tipeLaporan === "pergerakan_blokir_bulanan_per_jenis") {
     addGroupBy("main.kdblokir");
     addGroupBy("main.nmblokir");

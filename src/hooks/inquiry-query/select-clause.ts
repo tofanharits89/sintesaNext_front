@@ -159,7 +159,9 @@ export function buildSelectClause(
       let joinKey = config.joinKey!;
       let joinCondition = `main.${config.columnName} = ${alias}.${joinKey}`;
 
-      if (filterKey === "programPrioritas") {
+      if (filterKey === "eselonI") {
+        joinCondition = `main.kddept = ${alias}.kddept AND main.${config.columnName} = ${alias}.${joinKey}`;
+      } else if (filterKey === "programPrioritas") {
         joinCondition = `main.kdpn = ${alias}.kdpn AND main.${config.columnName} = ${alias}.${joinKey}`;
       } else if (filterKey === "kegiatanPrioritas") {
         joinCondition = `main.kdpn = ${alias}.kdpn AND main.kdpp = ${alias}.kdpp AND main.${config.columnName} = ${alias}.${joinKey}`;
@@ -400,6 +402,20 @@ export function buildSelectClause(
     selectColumns.push(`main.TGPOS AS TGPOS`);
     selectColumns.push(`main.NODOK AS NODOK`);
     selectColumns.push(`ROUND(SUM(main.RUPIAH) / ${divisor}, 0) AS RUPIAH`);
+    return { selectColumns, joinTables };
+  }
+
+  if (reportParams.tipeLaporan === "spm_sp2d") {
+    // SP2D: Select base columns with pembulatan
+    selectColumns.push(`ROUND(main.RUPIAH / ${divisor}, 0) AS nilai_sp2d`);
+    selectColumns.push(`main.NOSP2D AS nomor_sp2d`);
+    selectColumns.push(`main.TGSP2D AS tanggal_sp2d`);
+    selectColumns.push(`main.NOSPM AS nomor_spm`);
+    selectColumns.push(`main.TGSPM AS tanggal_spm`);
+    selectColumns.push(`main.URAIAN AS uraian_sp2d`);
+    selectColumns.push(`main.JENSP2D AS jenis_sp2d`);
+    selectColumns.push(`main.JENSPM AS jenis_spm`);
+    selectColumns.push(`main.TGPOS AS tanggal_posting`);
     return { selectColumns, joinTables };
   }
 

@@ -5,7 +5,7 @@ import { getAllMandatoryFilterKeys } from "./categoryRegistry";
  * Do not modify behavior when moving from filterRegistry.ts.
  */
 export const SCOPE_EXCLUSIONS_BASE: Record<
-  "belanja" | "tematik" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "general",
+  "belanja" | "tematik" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d" | "general",
   string[]
 > = {
   belanja: [
@@ -198,6 +198,50 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "sumberDana",
   ],
   general: [
+    // Status Sumber only on Penerimaan PNBP
+    "statusSumber",
+  ],
+  sp2d: [
+    // Allowed filters on SP2D page:
+    // - kementerian, eselonI, kewenangan, kppn, satker, program, kegiatan, sumberDana, outputKro, akun
+    // Everything else should be excluded
+    "cutOff", // No cutOff needed for SP2D
+    "provinsi",
+    "kabkota",
+    "kanwil",
+    "fungsi",
+    "subFungsi",
+    // Tematik & special switches not used on SP2D
+    "jenisPn",
+    "programPrioritas",
+    "kegiatanPrioritas",
+    "proyekPrioritas",
+    "jenisMajorProject",
+    "jenisInflasiIntervensi",
+    "jenisInflasiPengeluaran",
+    "stuntingIntervensi",
+    "mbgIntervensi",
+    "jenisProgramStrategis",
+    "jenisTemaAnggaran",
+    "kemiskinanEkstrim",
+    "belanjaPemilu",
+    "ibuKotaNusantara",
+    "ketahananPangan",
+    "swasembadaPangan",
+    "belanjaPemerintah",
+    // RKAKL Detail specific hierarchy not needed on SP2D
+    "subOutputRo",
+    "komponen",
+    "subKomponen",
+    "item",
+    // Internal akun variants not shown on UI
+    "kodeBkpk",
+    "jenisBelanja",
+    // Other UI filters not required on SP2D
+    "register",
+    "jenisBlokir",
+    // Kontrak-specific filters not needed on SP2D
+    "jenisKontrak",
     // Status Sumber only on Penerimaan PNBP
     "statusSumber",
   ],

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { backendPath } from "@/lib/api/backend";
+import { backendPath } from "@/lib/config/config";
 
 function extractCookie(name: string, cookieHeader: string): string | undefined {
   try {
@@ -9,7 +9,7 @@ function extractCookie(name: string, cookieHeader: string): string | undefined {
       const [k, ...rest] = part.trim().split("=");
       if (k === name) return decodeURIComponent(rest.join("="));
     }
-  } catch {}
+  } catch { }
   return undefined;
 }
 
@@ -34,10 +34,10 @@ export async function GET(request: NextRequest) {
       resp.ok
         ? data
         : {
-            success: false,
-            message: data.message || "Failed to fetch users",
-            error: data.error,
-          },
+          success: false,
+          message: data.message || "Failed to fetch users",
+          error: data.error,
+        },
       { status: resp.ok ? 200 : resp.status }
     );
     const setCookie = resp.headers.get("set-cookie");

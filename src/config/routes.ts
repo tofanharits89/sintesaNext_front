@@ -30,7 +30,6 @@ export const PUBLIC_ROUTES = [
   "/server-error",
   "/unauthorized",
   "/ip-blocked",
-  "/debug-user",
 ] as const;
 
 /**

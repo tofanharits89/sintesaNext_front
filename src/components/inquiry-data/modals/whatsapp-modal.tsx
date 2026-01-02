@@ -31,7 +31,7 @@ interface WhatsappModalProps {
     tipeLaporan: string;
     pembulatan: string;
     tematikKategori?: string;
-    scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp";
+    scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d";
   };
   // pass values so we can build the same query server-side
   filterValues?: Record<string, FilterValue>;

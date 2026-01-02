@@ -33,8 +33,46 @@ export interface User {
 interface AuthResponse<T = unknown> {
   success: boolean;
   data?: T;
-  message?: string;
-  error?: string;
+  message?: string | Record<string, unknown>;
+  error?: string | Record<string, unknown>;
+}
+
+function normalizeErrorMessage(error: unknown, fallback: string): string {
+  if (typeof error === "string" && error.trim()) return error;
+  if (error && typeof error === "object") {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim()) return message;
+    const nestedError = (error as { error?: unknown }).error;
+    if (typeof nestedError === "string" && nestedError.trim()) return nestedError;
+    if (nestedError && typeof nestedError === "object") {
+      const nestedMessage = (nestedError as { message?: unknown }).message;
+      if (typeof nestedMessage === "string" && nestedMessage.trim()) {
+        return nestedMessage;
+      }
+    }
+  }
+  return fallback;
+}
+
+function localizeAuthErrorMessage(message: string): string {
+  const normalized = message.toLowerCase().trim();
+  if (!normalized) return message;
+
+  const mappings: Array<[RegExp, string]> = [
+    [/invalid credentials|invalid username|invalid password|wrong password/i, "Username atau password salah"],
+    [/captcha/i, "Captcha tidak valid"],
+    [/too many attempts|rate limit|too many requests/i, "Terlalu banyak percobaan login. Silakan coba lagi nanti"],
+    [/account disabled|user disabled|inactive/i, "Akun dinonaktifkan"],
+    [/unauthorized|authentication failed|auth failed/i, "Autentikasi gagal"],
+  ];
+
+  for (const [pattern, localized] of mappings) {
+    if (pattern.test(message)) {
+      return localized;
+    }
+  }
+
+  return message;
 }
 
 /**
@@ -126,7 +164,9 @@ export class AuthClient {
           csrfToken,
         };
       } else {
-        const error = data.error || data.message || "Login failed";
+        const error = localizeAuthErrorMessage(
+          normalizeErrorMessage(data.error || data.message, "Login failed")
+        );
         logger.warn("Login failed:", error);
         return { success: false, error };
       }
@@ -171,7 +211,9 @@ export class AuthClient {
         logger.info("Logout successful");
         return { success: true };
       } else {
-        const error = data.error || data.message || "Logout failed";
+        const error = localizeAuthErrorMessage(
+          normalizeErrorMessage(data.error || data.message, "Logout failed")
+        );
         logger.warn("Logout failed:", error);
         return { success: false, error };
       }

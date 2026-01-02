@@ -1,789 +1,444 @@
 "use client";
 
-import React, { useState } from "react";
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  useMemo,
+} from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Eye,
-  FileSpreadsheet,
-  FileText,
-  MessageCircle,
-  Save,
-  FileCode,
-} from "lucide-react";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { PilihLaporanCard } from "@/components/inquiry-data/pilih-laporan-card";
+import { FilterParametersCard } from "@/components/inquiry-data/filter-parameters-card";
+import { QueryLoaderButton } from "@/components/inquiry-data/query-loader-button";
+import { UnsavedChangesModal } from "@/components/inquiry-data/modals/unsaved-changes-modal";
+import { DynamicFiltersCard, QueryManagement } from "@/components/lazy";
+import { Suspense } from "react";
+import { FilterCardSkeleton, GenericCardSkeleton } from "@/components/ui/dashboard-skeletons";
+import {
+  useQueryLoader,
+  type QueryBuilderState,
+} from "@/hooks/use-query-loader";
+import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
+import { useSavedQueries } from "@/hooks/use-saved-queries";
+import { useAuth } from "@/hooks/useAuth";
+import type { FilterValue, SavedQuery } from "@/types/saved-queries";
+import { Settings, Keyboard, RefreshCw, Database } from "lucide-react";
+import { QueryErrorBoundary } from "@/components/ui/query-error-boundary";
 
 export default function Sp2dPage() {
-  // State untuk jenis laporan dan tahun
-  const [thang, setThang] = useState(new Date().getFullYear());
-  const [jenlap, setJenlap] = useState("1");
-  const [pembulatan, setPembulatan] = useState("1");
-  const [akumulatif, setAkumulatif] = useState(false);
+  // State for query management modal
+  const [isQueryManagementOpen, setIsQueryManagementOpen] = useState(false);
 
-  // State untuk switches
-  const [kddept, setKddept] = useState(true);
-  const [unit, setUnit] = useState(false);
-  const [kddekon, setKddekon] = useState(false);
-  const [kdkppn, setKdkppn] = useState(false);
-  const [kdsatker, setKdsatker] = useState(false);
-  const [kdprogram, setKdprogram] = useState(false);
-  const [kdgiat, setKdgiat] = useState(false);
-  const [kdsdana, setKdsdana] = useState(false);
-  const [kdoutput, setKdoutput] = useState(false);
-  const [kdakun, setKdakun] = useState(false);
+  // Ref for query management refresh function
+  const queryManagementRefreshRef = useRef<(() => void) | null>(null);
 
-  // State untuk pilihan dropdown
-  const [dept, setDept] = useState("000");
-  const [kdunit, setKdunit] = useState("XX");
-  const [dekon, setDekon] = useState("XX");
-  const [kppn, setKppn] = useState("XX");
-  const [satker, setSatker] = useState("XX");
-  const [program, setProgram] = useState("XX");
-  const [giat, setGiat] = useState("XX");
-  const [sdana, setSdana] = useState("XX");
-  const [output, setOutput] = useState("XX");
-  const [akun, setAkun] = useState("XX");
+  // State for managing which filters are active
+  const [activeFilters, setActiveFilters] = useState<string[]>(["kementerian"]);
 
-  // State untuk radio buttons
-  const [opsidept, setopsiDept] = useState("pilihdept");
-  const [opsiunit, setopsiUnit] = useState("pilihunit");
-  const [opsidekon, setopsiDekon] = useState("pilihdekon");
-  const [opsikppn, setopsikppn] = useState("pilihkppn");
-  const [opsisatker, setopsisatker] = useState("pilihsatker");
-  const [opsiprogram, setopsiprogram] = useState("pilihprogram");
-  const [opsigiat, setopsigiat] = useState("pilihgiat");
-  const [opsisdana, setopsisdana] = useState("pilihsdana");
-  const [opsioutput, setopsioutput] = useState("pilihoutput");
-  const [opsiakun, setopsiakun] = useState("pilihakun");
+  // State for filter values
+  const [filterValues, setFilterValues] = useState<Record<string, FilterValue>>(
+    {}
+  );
 
-  // State untuk input kondisi
-  const [deptkondisi, setDeptkondisi] = useState("");
-  const [opsikatadept, setopsiKataDept] = useState("");
-  const [unitkondisi, setUnitkondisi] = useState("");
-  const [dekonkondisi, setDekonkondisi] = useState("");
-  const [kppnkondisi, setkppnkondisi] = useState("");
-  const [opsikatakppn, setopsiKatakppn] = useState("");
-  const [satkerkondisi, setsatkerkondisi] = useState("");
-  const [opsikatasatker, setopsiKatasatker] = useState("");
-  const [programkondisi, setprogramkondisi] = useState("");
-  const [opsikataprogram, setopsiKataprogram] = useState("");
-  const [giatkondisi, setgiatkondisi] = useState("");
-  const [opsikatagiat, setopsiKatagiat] = useState("");
-  const [sdanakondisi, setsdanakondisi] = useState("");
-  const [opsikatasdana, setopsiKatasdana] = useState("");
-  const [outputkondisi, setoutputkondisi] = useState("");
-  const [opsikataoutput, setopsiKataoutput] = useState("");
-  const [akunkondisi, setakunkondisi] = useState("");
-  const [opsikataakun, setopsiKataakun] = useState("");
+  // State for report selection with defaults
+  const currentYear = new Date().getFullYear();
+  const [reportParams, setReportParams] = useState({
+    tahun: currentYear.toString(), // Default to current year
+    tipeLaporan: "spm_sp2d", // Default to SPM/SP2D
+    pembulatan: "satuan", // Default to Satuan
+    jenisAkumulasi: "non_akumulatif", // Default to Non-Akumulatif
+  });
 
-  const [loadingStatus, setLoadingStatus] = useState(false);
+  // Query loader hook for managing query loading functionality
+  const queryLoader = useQueryLoader({
+    onStateChange: useCallback((newState: QueryBuilderState) => {
+      console.log("[Sp2dPage] onStateChange called with:", {
+        activeFilters: newState.activeFilters,
+        filterValues: Object.entries(newState.filterValues).map(
+          ([key, value]) => ({
+            [key]: { selection: value.selection },
+          })
+        ),
+      });
 
-  const handleGetQuery = () => {
-    setLoadingStatus(true);
-    // Logic untuk generate query
-    setTimeout(() => setLoadingStatus(false), 1000);
+      // Update states simultaneously - React will batch these updates
+      setActiveFilters(newState.activeFilters);
+      setFilterValues(newState.filterValues);
+      setReportParams({
+        tahun: newState.reportParams.tahun,
+        tipeLaporan: newState.reportParams.tipeLaporan,
+        pembulatan: newState.reportParams.pembulatan,
+        jenisAkumulasi: newState.reportParams.jenisAkumulasi || "non_akumulatif",
+      });
+    }, []),
+    getCurrentState: useCallback(
+      (): QueryBuilderState => ({
+        activeFilters,
+        filterValues,
+        reportParams,
+      }),
+      [activeFilters, filterValues, reportParams]
+    ),
+    scope: "sp2d", // Set scope for sp2d page
+  });
+
+  // Create stable references for queryLoader functions to prevent unnecessary re-renders
+  const stableLoadQuery = useCallback(
+    async (query: any) => {
+      return queryLoader.loadQuery(query);
+    },
+    [queryLoader.loadQuery]
+  );
+
+  // Update change detection when state changes
+  const updateChangeDetectionRef = useRef(queryLoader.updateChangeDetection);
+  updateChangeDetectionRef.current = queryLoader.updateChangeDetection;
+
+  useEffect(() => {
+    updateChangeDetectionRef.current();
+  }, [activeFilters, filterValues, reportParams]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Ctrl+M or Cmd+M to open query management
+      if ((event.ctrlKey || event.metaKey) && event.key === "m") {
+        event.preventDefault();
+        setIsQueryManagementOpen(true);
+      }
+
+      // Escape to close query management
+      if (event.key === "Escape" && isQueryManagementOpen) {
+        event.preventDefault();
+        setIsQueryManagementOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isQueryManagementOpen]);
+
+  // Saved queries hook for creating new queries
+  const { createQuery, isCreating } = useSavedQueries();
+
+  // Get current user for query management
+  const { user: currentUser } = useAuth();
+
+  // Function to save current query state
+  const saveCurrentQuery = useCallback(async (): Promise<{
+    success: boolean;
+    error?: string;
+  }> => {
+    try {
+      // Generate a default name based on current timestamp
+      const timestamp = new Date().toLocaleString("id-ID", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      const defaultName = `Query ${timestamp}`;
+
+      const queryData = {
+        name: defaultName,
+        description: "Query disimpan otomatis sebelum memuat query lain",
+        reportParams,
+        activeFilters,
+        filterValues,
+        scope: "sp2d" as const, // Mark this as a sp2d query
+      };
+
+      await createQuery(queryData);
+      return { success: true };
+    } catch (error) {
+      console.error("Error saving current query:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Gagal menyimpan query",
+      };
+    }
+  }, [reportParams, activeFilters, filterValues, createQuery]);
+
+  // Function to discard current changes
+  const discardCurrentChanges = useCallback(() => {
+    // Reset to original state if available
+    if (queryLoader.originalState) {
+      setActiveFilters(queryLoader.originalState.activeFilters);
+      setFilterValues(queryLoader.originalState.filterValues);
+      setReportParams({
+        tahun: queryLoader.originalState.reportParams.tahun,
+        tipeLaporan: queryLoader.originalState.reportParams.tipeLaporan,
+        pembulatan: queryLoader.originalState.reportParams.pembulatan,
+        jenisAkumulasi: queryLoader.originalState.reportParams.jenisAkumulasi || "non_akumulatif",
+      });
+    } else {
+      // Reset to default state
+      setActiveFilters([]);
+      setFilterValues({});
+      setReportParams({
+        tahun: currentYear.toString(),
+        tipeLaporan: "spm_sp2d",
+        pembulatan: "satuan",
+        jenisAkumulasi: "non_akumulatif",
+      });
+    }
+
+    // Reset change detection
+    queryLoader.resetChangeDetection();
+  }, [queryLoader, currentYear]);
+
+  // Unsaved changes warning system
+  const unsavedChangesWarning = useUnsavedChangesWarning({
+    hasUnsavedChanges: queryLoader.hasUnsavedChanges,
+    onSaveCurrentQuery: saveCurrentQuery,
+    onLoadQuery: stableLoadQuery,
+    onDiscardChanges: discardCurrentChanges,
+  });
+
+  // Function to handle query loading with unsaved changes check
+  const handleLoadQuery = useCallback(
+    async (query: SavedQuery) => {
+      try {
+        await unsavedChangesWarning.attemptLoadQuery(query);
+      } catch (error) {
+        console.error("Error in handleLoadQuery:", error);
+        // Ensure UI is not left in a blocked state
+        setTimeout(() => {
+          // Force close any open modals if there's an error
+          if (unsavedChangesWarning.isWarningOpen) {
+            unsavedChangesWarning.closeWarningModal();
+          }
+        }, 100);
+      }
+    },
+    [unsavedChangesWarning]
+  );
+
+  // Note: Avoid manual DOM cleanup of Radix overlays/backdrops here.
+  // React/Radix manage their own lifecycles; manual removal can conflict
+  // with Next.js/React error boundaries and cause NotFoundError.
+
+  // Create stable queryLoader object for DynamicFiltersCard
+  const stableQueryLoader = useMemo(
+    () => ({
+      hasUnsavedChanges: queryLoader.hasUnsavedChanges,
+      loadQuery: handleLoadQuery,
+      validateQueryCompatibility: queryLoader.validateQueryCompatibility,
+    }),
+    [
+      queryLoader.hasUnsavedChanges,
+      handleLoadQuery,
+      queryLoader.validateQueryCompatibility,
+    ]
+  );
+
+  // Function to remove a specific filter
+  const removeFilter = (filterKey: string) => {
+    setActiveFilters((prev) => prev.filter((key) => key !== filterKey));
+    // Clear the filter value when removing the filter
+    setFilterValues((prev) => {
+      const newValues = { ...prev };
+      delete newValues[filterKey];
+      return newValues;
+    });
   };
+
+  // Function to clear all filters
+  const clearAllFilters = () => {
+    setActiveFilters([]);
+    setFilterValues({});
+  };
+
+  // Function to handle filter value changes
+  const handleFilterChange = (
+    filterKey: string,
+    field: string,
+    value: string
+  ) => {
+    setFilterValues((prev) => ({
+      ...prev,
+      [filterKey]: {
+        ...prev[filterKey],
+        [field]: value,
+      },
+    }));
+  };
+
+  // Convert filterValues to the stricter type expected by DynamicFiltersCard
+  const normalizedFilterValues = useMemo(() => {
+    const normalized: Record<
+      string,
+      import("@/hooks/use-inquiry-data-api").FilterValue
+    > = {};
+
+    Object.entries(filterValues).forEach(([key, value]) => {
+      normalized[key] = {
+        selection: value.selection || "",
+        kondisiCode: value.kondisiCode || "",
+        mengandungKata: value.mengandungKata || "",
+        jenisTampilan: value.jenisTampilan || "kode",
+        akunType: (value as any).akunType,
+      } as any;
+    });
+
+    return normalized;
+  }, [filterValues]);
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Rowset SP2D</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Rowset SP2D
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Query builder untuk data SP2D dengan filter parameter yang dapat
+            Query builder untuk data SPM/SP2D dengan filter parameter yang dapat
             disesuaikan
           </p>
         </div>
+
+        {/* Query Management Access */}
+        <div className="flex items-center gap-2">
+          {/* Muat Query dropdown placed before Kelola Query */}
+          <QueryLoaderButton
+            onLoadQuery={handleLoadQuery}
+            onOpenQueryManagement={() => setIsQueryManagementOpen(true)}
+            hasUnsavedChanges={queryLoader.hasUnsavedChanges}
+            scope="sp2d"
+          />
+
+          <Button
+            variant="outline"
+            onClick={() => setIsQueryManagementOpen(true)}
+            className="flex items-center gap-2 bg-white dark:bg-card hover:bg-zinc-200"
+          >
+            <Settings className="w-4 h-4" />
+            Kelola Query
+          </Button>
+
+          {/* Keyboard shortcut hint */}
+          <div className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+            <Keyboard className="w-3 h-3" />
+            <span>Ctrl+M</span>
+          </div>
+        </div>
       </div>
 
-      {/* Main Content - Cards Layout */}
+      {/* Main Content - Three Cards Layout */}
       <div className="space-y-6">
-        {/* Card 1: Parameter Dasar */}
-        <div className="bg-white dark:bg-card rounded-xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Tahun Anggaran */}
-            <div>
-              <label className="block text-sm font-medium mb-2 text-foreground">
-                Tahun Anggaran
-              </label>
-              <select
-                value={thang}
-                onChange={(e) => setThang(Number(e.target.value))}
-                className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value={2024}>2024</option>
-                <option value={2025}>2025</option>
-                <option value={2026}>2026</option>
-              </select>
-            </div>
+        {/* 1. Pilih Laporan Card */}
+        <PilihLaporanCard
+          reportParams={reportParams}
+          setReportParams={setReportParams}
+          mode="sp2d"
+        />
 
-            {/* Jenis Laporan */}
-            <div>
-              <label className="block text-sm font-medium mb-2 text-foreground">
-                Jenis Laporan
-              </label>
-              <select
-                value={jenlap}
-                onChange={(e) => setJenlap(e.target.value)}
-                className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="1">Rowset SP2D</option>
-                <option value="2">Rowset SP2D Detail</option>
-              </select>
-            </div>
+        {/* 2. Filter Parameters Card */}
+        <FilterParametersCard
+          activeFilters={activeFilters}
+          setActiveFilters={setActiveFilters}
+          scope="sp2d"
+        />
 
-            {/* Pembulatan */}
-            <div>
-              <label className="block text-sm font-medium mb-2 text-foreground">
-                Pembulatan
-              </label>
-              <select
-                value={pembulatan}
-                onChange={(e) => setPembulatan(e.target.value)}
-                className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="1">Tanpa Pembulatan</option>
-                <option value="1000">Ribuan</option>
-                <option value="1000000">Jutaan</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="mt-4 text-sm text-muted-foreground">
-            TA: {thang}, TIPE LAPORAN: {jenlap}, AKUMULATIF:{" "}
-            {akumulatif ? "TRUE" : "FALSE"}, PEMBULATAN: {pembulatan}
-          </div>
-        </div>
-
-        {/* Card 2: Switch Pilihan Data */}
-        <div className="bg-white dark:bg-card rounded-xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={kddept}
-                onChange={(e) => setKddept(e.target.checked)}
-                className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring"
-              />
-              <span className="text-sm text-foreground">Kementerian</span>
-            </label>
-
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={unit}
-                onChange={(e) => setUnit(e.target.checked)}
-                className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring"
-              />
-              <span className="text-sm text-foreground">Eselon I</span>
-            </label>
-
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={kddekon}
-                onChange={(e) => setKddekon(e.target.checked)}
-                className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring"
-              />
-              <span className="text-sm text-foreground">Kewenangan</span>
-            </label>
-
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={kdkppn}
-                onChange={(e) => setKdkppn(e.target.checked)}
-                className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring"
-              />
-              <span className="text-sm text-foreground">KPPN</span>
-            </label>
-
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={kdsatker}
-                onChange={(e) => setKdsatker(e.target.checked)}
-                className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring"
-              />
-              <span className="text-sm text-foreground">Satker</span>
-            </label>
-
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={kdprogram}
-                onChange={(e) => setKdprogram(e.target.checked)}
-                className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring"
-              />
-              <span className="text-sm text-foreground">Program</span>
-            </label>
-
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={kdgiat}
-                onChange={(e) => setKdgiat(e.target.checked)}
-                className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring"
-              />
-              <span className="text-sm text-foreground">Kegiatan</span>
-            </label>
-
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={kdsdana}
-                onChange={(e) => setKdsdana(e.target.checked)}
-                className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring"
-              />
-              <span className="text-sm text-foreground">Sumber Dana</span>
-            </label>
-
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={kdoutput}
-                onChange={(e) => setKdoutput(e.target.checked)}
-                className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring"
-              />
-              <span className="text-sm text-foreground">Output</span>
-            </label>
-
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={kdakun}
-                onChange={(e) => setKdakun(e.target.checked)}
-                className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-ring"
-              />
-              <span className="text-sm text-foreground">Akun</span>
-            </label>
-          </div>
-        </div>
-
-        {/* Card 3: Detail Pilihan (Conditional) */}
-        <div className="bg-white dark:bg-card rounded-xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm">
-          {/* Kementerian */}
-          {kddept && (
-            <div className="mb-6 pb-6 border-b border-border">
-              <div className="grid grid-cols-12 gap-4 items-center mb-3">
-                <div className="col-span-2">
-                  <span className="font-medium text-foreground">
-                    Kementerian
-                  </span>
-                </div>
-                <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="dept-option"
-                      value="pilihdept"
-                      checked={opsidept === "pilihdept"}
-                      onChange={(e) => setopsiDept(e.target.value)}
-                      className="w-4 h-4 text-primary"
-                    />
-                    <span className="text-sm text-foreground">Pilih K/L</span>
-                  </label>
-                </div>
-                <div className="col-span-4">
-                  <select
-                    value={dept}
-                    onChange={(e) => setDept(e.target.value)}
-                    disabled={opsidept !== "pilihdept"}
-                    className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring"
-                  >
-                    <option value="000">000 - Semua Kementerian</option>
-                    <option value="015">015 - Kementerian Keuangan</option>
-                    <option value="XXX">XXX - Custom</option>
-                  </select>
-                </div>
-                <div className="col-span-4">
-                  <select className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
-                    <option value="1">Rincian</option>
-                    <option value="2">Group</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-12 gap-4 items-center mb-3">
-                <div className="col-span-2"></div>
-                <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="dept-option"
-                      value="kondisidept"
-                      checked={opsidept === "kondisidept"}
-                      onChange={(e) => setopsiDept(e.target.value)}
-                      className="w-4 h-4 text-primary"
-                    />
-                    <span className="text-sm text-foreground">Kondisi</span>
-                  </label>
-                </div>
-                <div className="col-span-4">
-                  <input
-                    type="text"
-                    value={deptkondisi}
-                    onChange={(e) => setDeptkondisi(e.target.value)}
-                    disabled={opsidept !== "kondisidept"}
-                    placeholder="015,020,023"
-                    className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-                <div className="col-span-4 text-xs text-muted-foreground">
-                  *) banyak KL gunakan koma, exclude gunakan tanda !
-                </div>
-              </div>
-
-              <div className="grid grid-cols-12 gap-4 items-center">
-                <div className="col-span-2"></div>
-                <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="dept-option"
-                      value="katadept"
-                      checked={opsidept === "katadept"}
-                      onChange={(e) => setopsiDept(e.target.value)}
-                      className="w-4 h-4 text-primary"
-                    />
-                    <span className="text-sm text-foreground">
-                      Mengandung Kata
-                    </span>
-                  </label>
-                </div>
-                <div className="col-span-4">
-                  <input
-                    type="text"
-                    value={opsikatadept}
-                    onChange={(e) => setopsiKataDept(e.target.value)}
-                    disabled={opsidept !== "katadept"}
-                    placeholder="KEUANGAN"
-                    className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Eselon I */}
-          {unit && (
-            <div className="mb-6 pb-6 border-b border-border">
-              <div className="grid grid-cols-12 gap-4 items-center mb-3">
-                <div className="col-span-2">
-                  <span className="font-medium text-foreground">Eselon I</span>
-                </div>
-                <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="unit-option"
-                      value="pilihunit"
-                      checked={opsiunit === "pilihunit"}
-                      onChange={(e) => setopsiUnit(e.target.value)}
-                      className="w-4 h-4 text-primary"
-                    />
-                    <span className="text-sm text-foreground">Pilih Unit</span>
-                  </label>
-                </div>
-                <div className="col-span-4">
-                  <select
-                    value={kdunit}
-                    onChange={(e) => setKdunit(e.target.value)}
-                    disabled={opsiunit !== "pilihunit"}
-                    className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring"
-                  >
-                    <option value="XX">XX - Semua Unit</option>
-                    <option value="01">01 - Sekretariat Jenderal</option>
-                    <option value="02">02 - Direktorat Jenderal</option>
-                  </select>
-                </div>
-                <div className="col-span-4">
-                  <select className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
-                    <option value="1">Rincian</option>
-                    <option value="2">Group</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-12 gap-4 items-center">
-                <div className="col-span-2"></div>
-                <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="unit-option"
-                      value="kondisiunit"
-                      checked={opsiunit === "kondisiunit"}
-                      onChange={(e) => setopsiUnit(e.target.value)}
-                      className="w-4 h-4 text-primary"
-                    />
-                    <span className="text-sm text-foreground">Kondisi</span>
-                  </label>
-                </div>
-                <div className="col-span-4">
-                  <input
-                    type="text"
-                    value={unitkondisi}
-                    onChange={(e) => setUnitkondisi(e.target.value)}
-                    disabled={opsiunit !== "kondisiunit"}
-                    placeholder="01,02,03"
-                    className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-                <div className="col-span-4 text-xs text-muted-foreground">
-                  *) banyak Unit gunakan koma, exclude gunakan tanda !
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Kewenangan */}
-          {kddekon && (
-            <div className="mb-6 pb-6 border-b border-border">
-              <div className="grid grid-cols-12 gap-4 items-center mb-3">
-                <div className="col-span-2">
-                  <span className="font-medium text-foreground">
-                    Kewenangan
-                  </span>
-                </div>
-                <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="dekon-option"
-                      value="pilihdekon"
-                      checked={opsidekon === "pilihdekon"}
-                      onChange={(e) => setopsiDekon(e.target.value)}
-                      className="w-4 h-4 text-primary"
-                    />
-                    <span className="text-sm text-foreground">
-                      Pilih Kewenangan
-                    </span>
-                  </label>
-                </div>
-                <div className="col-span-4">
-                  <select
-                    value={dekon}
-                    onChange={(e) => setDekon(e.target.value)}
-                    disabled={opsidekon !== "pilihdekon"}
-                    className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring"
-                  >
-                    <option value="XX">XX - Semua</option>
-                    <option value="1">1 - Pusat</option>
-                    <option value="2">2 - Dekonsentrasi</option>
-                    <option value="3">3 - Tugas Pembantuan</option>
-                  </select>
-                </div>
-                <div className="col-span-4">
-                  <select className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
-                    <option value="1">Rincian</option>
-                    <option value="2">Group</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-12 gap-4 items-center">
-                <div className="col-span-2"></div>
-                <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="dekon-option"
-                      value="kondisidekon"
-                      checked={opsidekon === "kondisidekon"}
-                      onChange={(e) => setopsiDekon(e.target.value)}
-                      className="w-4 h-4 text-primary"
-                    />
-                    <span className="text-sm text-foreground">Kondisi</span>
-                  </label>
-                </div>
-                <div className="col-span-4">
-                  <input
-                    type="text"
-                    value={dekonkondisi}
-                    onChange={(e) => setDekonkondisi(e.target.value)}
-                    disabled={opsidekon !== "kondisidekon"}
-                    placeholder="1,2"
-                    className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-                <div className="col-span-4 text-xs text-muted-foreground">
-                  *) banyak Kewenangan gunakan koma, exclude gunakan tanda !
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* KPPN */}
-          {kdkppn && (
-            <div className="mb-6 pb-6 border-b border-zinc-500">
-              <div className="grid grid-cols-12 gap-4 items-center mb-3">
-                <div className="col-span-2">
-                  <span className="font-medium">KPPN</span>
-                </div>
-                <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="kppn-option"
-                      value="pilihkppn"
-                      checked={opsikppn === "pilihkppn"}
-                      onChange={(e) => setopsikppn(e.target.value)}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <span className="text-sm">Pilih KPPN</span>
-                  </label>
-                </div>
-                <div className="col-span-4">
-                  <select
-                    value={kppn}
-                    onChange={(e) => setKppn(e.target.value)}
-                    disabled={opsikppn !== "pilihkppn"}
-                    className="w-full bg-zinc-700 border border-zinc-500 rounded px-3 py-2 text-white disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="XX">XX - Semua KPPN</option>
-                    <option value="001">001 - KPPN Jakarta I</option>
-                    <option value="002">002 - KPPN Jakarta II</option>
-                  </select>
-                </div>
-                <div className="col-span-4">
-                  <select className="w-full bg-zinc-700 border border-zinc-500 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="1">Rincian</option>
-                    <option value="2">Group</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-12 gap-4 items-center mb-3">
-                <div className="col-span-2"></div>
-                <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="kppn-option"
-                      value="kondisikppn"
-                      checked={opsikppn === "kondisikppn"}
-                      onChange={(e) => setopsikppn(e.target.value)}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <span className="text-sm">Kondisi</span>
-                  </label>
-                </div>
-                <div className="col-span-4">
-                  <input
-                    type="text"
-                    value={kppnkondisi}
-                    onChange={(e) => setkppnkondisi(e.target.value)}
-                    disabled={opsikppn !== "kondisikppn"}
-                    placeholder="001,002,003"
-                    className="w-full bg-zinc-700 border border-zinc-500 rounded px-3 py-2 text-white placeholder-zinc-400 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div className="col-span-4 text-xs opacity-70">
-                  *) banyak KPPN gunakan koma, exclude gunakan tanda !
-                </div>
-              </div>
-
-              <div className="grid grid-cols-12 gap-4 items-center">
-                <div className="col-span-2"></div>
-                <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="kppn-option"
-                      value="katakppn"
-                      checked={opsikppn === "katakppn"}
-                      onChange={(e) => setopsikppn(e.target.value)}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <span className="text-sm">Mengandung Kata</span>
-                  </label>
-                </div>
-                <div className="col-span-4">
-                  <input
-                    type="text"
-                    value={opsikatakppn}
-                    onChange={(e) => setopsiKatakppn(e.target.value)}
-                    disabled={opsikppn !== "katakppn"}
-                    placeholder="JAKARTA"
-                    className="w-full bg-zinc-700 border border-zinc-500 rounded px-3 py-2 text-white placeholder-zinc-400 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Satker */}
-          {kdsatker && (
-            <div className="mb-6 pb-6 border-b border-zinc-500">
-              <div className="grid grid-cols-12 gap-4 items-center mb-3">
-                <div className="col-span-2">
-                  <span className="font-medium">Satker</span>
-                </div>
-                <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="satker-option"
-                      value="pilihsatker"
-                      checked={opsisatker === "pilihsatker"}
-                      onChange={(e) => setopsisatker(e.target.value)}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <span className="text-sm">Pilih Satker</span>
-                  </label>
-                </div>
-                <div className="col-span-4">
-                  <input
-                    type="text"
-                    value={satker}
-                    onChange={(e) => setSatker(e.target.value)}
-                    disabled={opsisatker !== "pilihsatker"}
-                    placeholder="Kode Satker"
-                    className="w-full bg-zinc-700 border border-zinc-500 rounded px-3 py-2 text-white placeholder-zinc-400 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div className="col-span-4">
-                  <select className="w-full bg-zinc-700 border border-zinc-500 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="1">Rincian</option>
-                    <option value="2">Group</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-12 gap-4 items-center mb-3">
-                <div className="col-span-2"></div>
-                <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="satker-option"
-                      value="kondisisatker"
-                      checked={opsisatker === "kondisisatker"}
-                      onChange={(e) => setopsisatker(e.target.value)}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <span className="text-sm">Kondisi</span>
-                  </label>
-                </div>
-                <div className="col-span-4">
-                  <input
-                    type="text"
-                    value={satkerkondisi}
-                    onChange={(e) => setsatkerkondisi(e.target.value)}
-                    disabled={opsisatker !== "kondisisatker"}
-                    placeholder="123456,234567"
-                    className="w-full bg-zinc-700 border border-zinc-500 rounded px-3 py-2 text-white placeholder-zinc-400 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div className="col-span-4 text-xs opacity-70">
-                  *) banyak Satker gunakan koma, exclude gunakan tanda !
-                </div>
-              </div>
-
-              <div className="grid grid-cols-12 gap-4 items-center">
-                <div className="col-span-2"></div>
-                <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="satker-option"
-                      value="katasatker"
-                      checked={opsisatker === "katasatker"}
-                      onChange={(e) => setopsisatker(e.target.value)}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <span className="text-sm">Mengandung Kata</span>
-                  </label>
-                </div>
-                <div className="col-span-4">
-                  <input
-                    type="text"
-                    value={opsikatasatker}
-                    onChange={(e) => setopsiKatasatker(e.target.value)}
-                    disabled={opsisatker !== "katasatker"}
-                    placeholder="KANTOR PUSAT"
-                    className="w-full bg-zinc-700 border border-zinc-500 rounded px-3 py-2 text-white placeholder-zinc-400 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Program, Kegiatan, Sumber Dana, Output, Akun - Similar structure */}
-          {/* Untuk menghemat space, saya hanya menampilkan beberapa contoh di atas */}
-          {/* Anda bisa menambahkan section serupa untuk field lainnya */}
-
-          {/* Action Buttons - positioned at bottom of card with border-top */}
-          <div className="border-t pt-6 mt-6">
-            <div className="flex flex-wrap justify-center gap-3">
-              {/* Tayang Button */}
-              <Button
-                onClick={handleGetQuery}
-                className="min-w-[150px] h-10"
-                disabled={loadingStatus}
-              >
-                <Eye className="w-4 h-4 mr-2" />
-                {loadingStatus ? "Loading..." : "Tayang"}
-              </Button>
-
-              {/* Download Excel Button */}
-              <Button
-                variant="outline"
-                className="min-w-[150px] h-10"
-                disabled={loadingStatus}
-              >
-                <FileSpreadsheet className="w-4 h-4 mr-2" />
-                Download Excel
-              </Button>
-
-              {/* Download CSV Button */}
-              <Button
-                variant="outline"
-                className="min-w-[150px] h-10"
-                disabled={loadingStatus}
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Download CSV
-              </Button>
-
-              {/* WhatsApp Button */}
-              <Button
-                className="bg-green-600 hover:bg-green-700 text-white min-w-[150px] h-10"
-                disabled={loadingStatus}
-              >
-                <MessageCircle className="w-4 h-4 mr-2" />
-                WhatsApp
-              </Button>
-
-              {/* Simpan Button */}
-              <Button
-                className="bg-amber-600 hover:bg-amber-700 text-white min-w-[150px] h-10"
-                disabled={loadingStatus}
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Simpan
-              </Button>
-
-              {/* Lihat SQL Button */}
-              <Button
-                variant="outline"
-                className="min-w-[150px] h-10"
-                disabled={loadingStatus}
-              >
-                <FileCode className="w-4 h-4 mr-2" />
-                Lihat SQL
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Results Area Placeholder */}
-        <div className="bg-white dark:bg-card rounded-xl p-6 min-h-[200px] border border-zinc-200 dark:border-zinc-800 shadow-sm">
-          <p className="text-muted-foreground text-center">
-            Hasil query akan ditampilkan di sini
-          </p>
-        </div>
+        {/* 3. Dynamic Filters and Actions Card */}
+        <Suspense fallback={<FilterCardSkeleton /> }>
+          <DynamicFiltersCard
+            activeFilters={activeFilters}
+            reportParams={reportParams}
+            onRemoveFilter={removeFilter}
+            onClearAllFilters={clearAllFilters}
+            filterValues={normalizedFilterValues}
+            onFilterChange={handleFilterChange}
+            scope="sp2d" // Pass scope for query differentiation
+            queryLoader={stableQueryLoader}
+          />
+        </Suspense>
       </div>
+
+      {/* Unsaved Changes Warning Modal */}
+      <UnsavedChangesModal
+        open={unsavedChangesWarning.isWarningOpen}
+        onOpenChange={unsavedChangesWarning.closeWarningModal}
+        onAction={unsavedChangesWarning.handleWarningAction}
+        queryToLoad={unsavedChangesWarning.queryToLoad}
+        isLoading={unsavedChangesWarning.isProcessing || isCreating}
+      />
+
+      {/* Query Management Modal */}
+      <Dialog
+        open={isQueryManagementOpen}
+        onOpenChange={setIsQueryManagementOpen}
+      >
+        <DialogContent
+          className="max-w-7xl w-full max-h-[90vh] overflow-hidden sm:max-w-7xl"
+          showCloseButton={false}
+        >
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Database className="w-6 h-6 text-amber-600" />
+                <div>
+                  <DialogTitle>Kelola Query Tersimpan</DialogTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Kelola dan gunakan kembali query yang telah Anda simpan
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={() => {
+                  if (queryManagementRefreshRef.current) {
+                    queryManagementRefreshRef.current();
+                  }
+                }}
+                variant="outline"
+                size="sm"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </Button>
+            </div>
+          </DialogHeader>
+          <div className="overflow-y-auto max-h-[calc(90vh-160px)]">
+            <QueryErrorBoundary>
+              <Suspense fallback={<GenericCardSkeleton showHeader contentLines={10} /> }>
+                <QueryManagement
+                  onLoadQuery={(query) => {
+                    handleLoadQuery(query);
+                    setIsQueryManagementOpen(false); // Close modal after loading
+                  }}
+                  currentUserId={currentUser?.id || ""}
+                  scope="sp2d" // Pass scope to filter queries
+                  onRefreshReady={(refreshFn) => {
+                    queryManagementRefreshRef.current = refreshFn;
+                  }}
+                />
+              </Suspense>
+            </QueryErrorBoundary>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="destructive"
+              className="w-24"
+              onClick={() => setIsQueryManagementOpen(false)}
+            >
+              Tutup
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
+// Force dynamic rendering to prevent SSR issues
+export const dynamic = 'force-dynamic';
