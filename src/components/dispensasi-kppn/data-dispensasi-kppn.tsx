@@ -122,8 +122,7 @@ const DataDispensasiKPPN: React.FC = () => {
       a.kd_dispensasi,a.uraian,b.nmkppn,a.jmlkontrak 
       FROM laporan_2023.dispensasi_kppn a 
       left join dbref.t_kppn_2025 b on a.kdkppn=b.kdkppn
-      LEFT JOIN dbref.t_satker_2025 c ON a.kdsatker=c.kdsatker  ${
-        filterKppn ? `WHERE ${filterKppn}` : "  "
+      LEFT JOIN dbref.t_satker_2025 c ON a.kdsatker=c.kdsatker  ${filterKppn ? `WHERE ${filterKppn}` : "  "
       }
         GROUP BY a.id,a.thang,a.kddept,a.kdunit,a.kdsatker,c.nmsatker,a.kdlokasi,a.kdkppn,a.tgpermohonan, a.nopermohonan,
       a.kd_dispensasi,a.uraian,b.nmkppn,a.jmlkontrak ORDER BY id DESC`
@@ -205,9 +204,8 @@ const DataDispensasiKPPN: React.FC = () => {
 
     // Backend route expects: /api/v1/dispensasi/:query?limit=10&page=0&user=username
     // where :query is the base64-encoded SQL
-    const requestUrl = `${baseUrl}/dispensasi/${encryptedQuery}?limit=${limit}&page=${page}&user=${
-      user?.username || ""
-    }`;
+    const requestUrl = `${baseUrl}/dispensasi/${encryptedQuery}?limit=${limit}&page=${page}&user=${user?.username || ""
+      }`;
     console.debug("dispensasi-kppn request url", requestUrl);
 
     try {
@@ -314,320 +312,307 @@ const DataDispensasiKPPN: React.FC = () => {
 
   return (
     <div>
-      <main id="main" className="main">
-        <div className="pagetitle">
-          <h1>Dispensasi Kontrak KPPN</h1>
-          <nav>
-            <ol className="breadcrumb">
-              <li className="breadcrumb-item">
-                <a href="#">Data</a>
-              </li>
-              <li className="breadcrumb-item active">Rekam Dispensasi</li>
-            </ol>
-          </nav>
-        </div>
-        <section className="section">
-          <>
-            <div className="d-flex justify-content-end text-danger">
-              {user?.role !== "kanwil_djpb" && (
-                <Button
-                  variant="success"
-                  size="sm"
-                  className="button  my-2"
-                  style={{ padding: "5px 5px", marginTop: "10px" }}
-                  onClick={() => handleRekam()}
-                >
-                  Rekam Dispensasi
-                </Button>
-              )}
-              <Button
-                variant="danger"
+      {/* Layout handled by parent */}
+      <>
+        <div className="d-flex justify-content-end text-danger">
+          {user?.role !== "kanwil_djpb" && (
+            <Button
+              variant="success"
+              size="sm"
+              className="button  my-2"
+              style={{ padding: "5px 5px", marginTop: "10px" }}
+              onClick={() => handleRekam()}
+            >
+              Rekam Dispensasi
+            </Button>
+          )}
+          <Button
+            variant="danger"
+            size="sm"
+            className="button  my-2"
+            style={{ padding: "5px 5px", marginTop: "10px" }}
+            onClick={() => {
+              setLoadingStatus(true);
+              setExport2(true);
+            }}
+            disabled={loadingStatus}
+          >
+            {loadingStatus && (
+              <Spinner
+                as="span"
+                animation="border"
                 size="sm"
-                className="button  my-2"
-                style={{ padding: "5px 5px", marginTop: "10px" }}
-                onClick={() => {
-                  setLoadingStatus(true);
-                  setExport2(true);
-                }}
-                disabled={loadingStatus}
+                role="status"
+                aria-hidden="true"
+              />
+            )}
+            {!loadingStatus && (
+              <i className="bi bi-file-earmark-excel-fill mx-2"></i>
+            )}
+            {loadingStatus ? " Loading..." : "Download"}
+          </Button>
+        </div>
+      </>
+      {loading ? (
+        <>
+          <Loading2 />
+          <br />
+          <Loading2 />
+          <br />
+          <Loading2 />
+        </>
+      ) : (
+        <>
+          <Card className="mt-1 p-2" bg="light">
+            <Card.Body
+              className="data-user fade-in"
+              style={tableStyles.container}
+            >
+              <Table
+                striped
+                bordered
+                hover
+                responsive
+                style={tableStyles.table}
               >
-                {loadingStatus && (
-                  <Spinner
-                    as="span"
-                    animation="border"
-                    size="sm"
-                    role="status"
-                    aria-hidden="true"
-                  />
-                )}
-                {!loadingStatus && (
-                  <i className="bi bi-file-earmark-excel-fill mx-2"></i>
-                )}
-                {loadingStatus ? " Loading..." : "Download"}
-              </Button>
-            </div>
-          </>
-          {loading ? (
-            <>
-              <Loading2 />
-              <br />
-              <Loading2 />
-              <br />
-              <Loading2 />
-            </>
-          ) : (
-            <>
-              <Card className="mt-1 p-2" bg="light">
-                <Card.Body
-                  className="data-user fade-in"
-                  style={tableStyles.container}
-                >
-                  <Table
-                    striped
-                    bordered
-                    hover
-                    responsive
-                    style={tableStyles.table}
-                  >
-                    <thead>
-                      <tr>
-                        <th
+                <thead>
+                  <tr>
+                    <th
+                      style={{
+                        ...tableStyles.headerCell,
+                        ...tableStyles.noColumn,
+                      }}
+                    >
+                      No
+                    </th>
+                    <th
+                      style={{
+                        ...tableStyles.headerCell,
+                        ...tableStyles.kppnColumn,
+                      }}
+                    >
+                      KPPN
+                    </th>
+                    <th
+                      style={{
+                        ...tableStyles.headerCell,
+                        ...tableStyles.satkerColumn,
+                      }}
+                    >
+                      Satker
+                    </th>
+                    <th
+                      style={{
+                        ...tableStyles.headerCell,
+                        ...tableStyles.tglColumn,
+                      }}
+                    >
+                      Tgl Permohonan
+                    </th>
+                    <th
+                      style={{
+                        ...tableStyles.headerCell,
+                        ...tableStyles.nomorColumn,
+                      }}
+                    >
+                      Nomor Permohonan
+                    </th>
+                    <th
+                      style={{
+                        ...tableStyles.headerCell,
+                        ...tableStyles.jumlahColumn,
+                      }}
+                    >
+                      Jumlah Kontrak
+                    </th>
+                    <th
+                      style={{
+                        ...tableStyles.headerCell,
+                        ...tableStyles.opsiColumn,
+                      }}
+                    >
+                      Opsi
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody className="text-center">
+                  {data.map((row, index) => (
+                    <tr key={index}>
+                      <td
+                        style={{
+                          ...tableStyles.bodyCell,
+                          ...tableStyles.noColumn,
+                        }}
+                      >
+                        {index + 1 + page * limit}
+                      </td>
+                      <td
+                        style={{
+                          ...tableStyles.bodyCell,
+                          ...tableStyles.kppnColumn,
+                        }}
+                      >
+                        {row.nmkppn} ({row.kdkppn})
+                      </td>
+                      <td
+                        style={{
+                          ...tableStyles.bodyCell,
+                          ...tableStyles.satkerColumn,
+                        }}
+                      >
+                        <div
                           style={{
-                            ...tableStyles.headerCell,
-                            ...tableStyles.noColumn,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
                           }}
                         >
-                          No
-                        </th>
-                        <th
+                          {row.nmsatker} ({row.kdsatker})
+                        </div>
+                      </td>
+                      <td
+                        style={{
+                          ...tableStyles.bodyCell,
+                          ...tableStyles.tglColumn,
+                        }}
+                      >
+                        {row.tgpermohonan}
+                      </td>
+                      <td
+                        style={{
+                          ...tableStyles.bodyCell,
+                          ...tableStyles.nomorColumn,
+                        }}
+                      >
+                        <div
                           style={{
-                            ...tableStyles.headerCell,
-                            ...tableStyles.kppnColumn,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
                           }}
                         >
-                          KPPN
-                        </th>
-                        <th
+                          {row.nopermohonan}
+                        </div>
+                      </td>
+                      <td
+                        style={{
+                          ...tableStyles.bodyCell,
+                          ...tableStyles.jumlahColumn,
+                        }}
+                      >
+                        {row.jmlkontrak > 0 ? (
+                          row.jmlkontrak
+                        ) : (
+                          <span className="text-danger fw-bold">
+                            belum direkam
+                          </span>
+                        )}
+                      </td>
+                      {user?.role !== "kanwil_djpb" ? (
+                        <td
                           style={{
-                            ...tableStyles.headerCell,
-                            ...tableStyles.satkerColumn,
-                          }}
-                        >
-                          Satker
-                        </th>
-                        <th
-                          style={{
-                            ...tableStyles.headerCell,
-                            ...tableStyles.tglColumn,
-                          }}
-                        >
-                          Tgl Permohonan
-                        </th>
-                        <th
-                          style={{
-                            ...tableStyles.headerCell,
-                            ...tableStyles.nomorColumn,
-                          }}
-                        >
-                          Nomor Permohonan
-                        </th>
-                        <th
-                          style={{
-                            ...tableStyles.headerCell,
-                            ...tableStyles.jumlahColumn,
-                          }}
-                        >
-                          Jumlah Kontrak
-                        </th>
-                        <th
-                          style={{
-                            ...tableStyles.headerCell,
+                            ...tableStyles.bodyCell,
                             ...tableStyles.opsiColumn,
                           }}
                         >
-                          Opsi
-                        </th>
-                      </tr>
-                    </thead>
+                          {/* Rekam Kontrak */}
+                          <span
+                            title="Rekam Kontrak"
+                            className="inline-block"
+                          >
+                            <PlusSquare
+                              className="text-success mx-2 cursor-pointer hover:scale-110 transition-transform"
+                              size={20}
+                              onClick={() =>
+                                handleRekamKontrak(
+                                  row.id,
+                                  row.nopermohonan,
+                                  row.nmsatker,
+                                  row.kdsatker,
+                                  row.kdkppn
+                                )
+                              }
+                            />
+                          </span>
 
-                    <tbody className="text-center">
-                      {data.map((row, index) => (
-                        <tr key={index}>
-                          <td
-                            style={{
-                              ...tableStyles.bodyCell,
-                              ...tableStyles.noColumn,
-                            }}
+                          {/* Hapus Dispensasi */}
+                          <span
+                            title="Hapus Dispensasi"
+                            className="inline-block"
                           >
-                            {index + 1 + page * limit}
-                          </td>
-                          <td
-                            style={{
-                              ...tableStyles.bodyCell,
-                              ...tableStyles.kppnColumn,
-                            }}
-                          >
-                            {row.nmkppn} ({row.kdkppn})
-                          </td>
-                          <td
-                            style={{
-                              ...tableStyles.bodyCell,
-                              ...tableStyles.satkerColumn,
-                            }}
-                          >
-                            <div
-                              style={{
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                              }}
-                            >
-                              {row.nmsatker} ({row.kdsatker})
-                            </div>
-                          </td>
-                          <td
-                            style={{
-                              ...tableStyles.bodyCell,
-                              ...tableStyles.tglColumn,
-                            }}
-                          >
-                            {row.tgpermohonan}
-                          </td>
-                          <td
-                            style={{
-                              ...tableStyles.bodyCell,
-                              ...tableStyles.nomorColumn,
-                            }}
-                          >
-                            <div
-                              style={{
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                              }}
-                            >
-                              {row.nopermohonan}
-                            </div>
-                          </td>
-                          <td
-                            style={{
-                              ...tableStyles.bodyCell,
-                              ...tableStyles.jumlahColumn,
-                            }}
-                          >
-                            {row.jmlkontrak > 0 ? (
-                              row.jmlkontrak
-                            ) : (
-                              <span className="text-danger fw-bold">
-                                belum direkam
-                              </span>
-                            )}
-                          </td>
-                          {user?.role !== "kanwil_djpb" ? (
-                            <td
-                              style={{
-                                ...tableStyles.bodyCell,
-                                ...tableStyles.opsiColumn,
-                              }}
-                            >
-                              {/* Rekam Kontrak */}
-                              <span
-                                title="Rekam Kontrak"
-                                className="inline-block"
-                              >
-                                <PlusSquare
-                                  className="text-success mx-2 cursor-pointer hover:scale-110 transition-transform"
-                                  size={20}
-                                  onClick={() =>
-                                    handleRekamKontrak(
-                                      row.id,
-                                      row.nopermohonan,
-                                      row.nmsatker,
-                                      row.kdsatker,
-                                      row.kdkppn
-                                    )
-                                  }
-                                />
-                              </span>
-
-                              {/* Hapus Dispensasi */}
-                              <span
-                                title="Hapus Dispensasi"
-                                className="inline-block"
-                              >
-                                <Trash2
-                                  className="text-danger mx-2 cursor-pointer hover:scale-110 transition-transform"
-                                  size={20}
-                                  onClick={() =>
-                                    handleHapusDispSPM(
-                                      row.id,
-                                      row.jmlkontrak,
-                                      row.kdsatker,
-                                      row.kdkppn
-                                    )
-                                  }
-                                />
-                              </span>
-                            </td>
-                          ) : (
-                            <td
-                              style={{
-                                ...tableStyles.bodyCell,
-                                ...tableStyles.opsiColumn,
-                              }}
-                            >
-                              -
-                            </td>
-                          )}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                </Card.Body>
-              </Card>
-              {export2 && (
-                <GenerateCSV
-                  query3={sql}
-                  status={handleStatus}
-                  namafile={`v3_CSV_DISPENSASI_KONTRAK_KPPN_${moment().format(
-                    "DDMMYY-HHmmss"
-                  )}`}
-                />
-              )}
-              {data.length > 0 && (
-                <>
-                  <span className="pagination justify-content-between mt-2 mx-4 text-dark">
-                    Total : {rows.toLocaleString()}, &nbsp; Hal : &nbsp;
-                    {rows ? page + 1 : 0} dari {pages}
-                    <nav>
-                      <ReactPaginate
-                        previousLabel={"← Previous"}
-                        nextLabel={"Next →"}
-                        breakLabel="..."
-                        pageRangeDisplayed={3}
-                        marginPagesDisplayed={1}
-                        pageCount={pages}
-                        renderOnZeroPageCount={null}
-                        containerClassName="justify-content-center pagination"
-                        previousClassName="page-item"
-                        previousLinkClassName="page-link"
-                        nextClassName="page-item"
-                        nextLinkClassName="page-link"
-                        pageClassName="page-item"
-                        pageLinkClassName="page-link"
-                        breakClassName="page-item"
-                        breakLinkClassName="page-link"
-                        activeClassName="active"
-                        disabledClassName="disabled"
-                        onPageChange={halaman}
-                        initialPage={page}
-                      />
-                    </nav>
-                  </span>
-                </>
-              )}
+                            <Trash2
+                              className="text-danger mx-2 cursor-pointer hover:scale-110 transition-transform"
+                              size={20}
+                              onClick={() =>
+                                handleHapusDispSPM(
+                                  row.id,
+                                  row.jmlkontrak,
+                                  row.kdsatker,
+                                  row.kdkppn
+                                )
+                              }
+                            />
+                          </span>
+                        </td>
+                      ) : (
+                        <td
+                          style={{
+                            ...tableStyles.bodyCell,
+                            ...tableStyles.opsiColumn,
+                          }}
+                        >
+                          -
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </Card.Body>
+          </Card>
+          {export2 && (
+            <GenerateCSV
+              query3={sql}
+              status={handleStatus}
+              namafile={`v3_CSV_DISPENSASI_KONTRAK_KPPN_${moment().format(
+                "DDMMYY-HHmmss"
+              )}`}
+            />
+          )}
+          {data.length > 0 && (
+            <>
+              <span className="pagination justify-content-between mt-2 mx-4 text-dark">
+                Total : {rows.toLocaleString()}, &nbsp; Hal : &nbsp;
+                {rows ? page + 1 : 0} dari {pages}
+                <nav>
+                  <ReactPaginate
+                    previousLabel={"← Previous"}
+                    nextLabel={"Next →"}
+                    breakLabel="..."
+                    pageRangeDisplayed={3}
+                    marginPagesDisplayed={1}
+                    pageCount={pages}
+                    renderOnZeroPageCount={null}
+                    containerClassName="justify-content-center pagination"
+                    previousClassName="page-item"
+                    previousLinkClassName="page-link"
+                    nextClassName="page-item"
+                    nextLinkClassName="page-link"
+                    pageClassName="page-item"
+                    pageLinkClassName="page-link"
+                    breakClassName="page-item"
+                    breakLinkClassName="page-link"
+                    activeClassName="active"
+                    disabledClassName="disabled"
+                    onPageChange={halaman}
+                    initialPage={page}
+                  />
+                </nav>
+              </span>
             </>
-          )}{" "}
-        </section>
-      </main>
+          )}
+        </>
+      )}{" "}
+
 
       {open && <Rekam show={showModal} onHide={handleCloseModal} />}
       <RekamKontrak

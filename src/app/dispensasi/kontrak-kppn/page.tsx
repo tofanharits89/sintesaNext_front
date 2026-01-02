@@ -6,20 +6,17 @@ import DataDispensasiKPPN from "@/components/dispensasi-kppn/data-dispensasi-kpp
 const DispensasiKPPNPage: React.FC = () => {
   return (
     <>
-      <main id="main" className="main">
-        <div className="pagetitle">
-          <h1>Dispensasi Kontrak KPPN</h1>
-          <nav>
-            <ol className="breadcrumb">
-              <li className="breadcrumb-item">
-                <a href="/">Home</a>
-              </li>
-              <li className="breadcrumb-item active">Rekam Dispensasi</li>
-            </ol>
+      <main className="container mx-auto p-4 space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dispensasi Kontrak KPPN</h1>
+          <nav className="flex items-center text-sm text-muted-foreground mt-1">
+            <a href="/" className="hover:text-primary transition-colors">Home</a>
+            <span className="mx-2">/</span>
+            <span className="font-medium text-foreground">Rekam Dispensasi</span>
           </nav>
         </div>
 
-        <section className="section">
+        <section>
           <DataDispensasiKPPN />
         </section>
       </main>

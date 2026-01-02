@@ -1,7 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { Card, Button, Tab, Nav } from "react-bootstrap";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import DispenSPM from "@/components/dispensasi/dispen-spm";
 import DispenKontrak from "@/components/dispensasi/dispen-kontrak";
 import DispenTUP from "@/components/dispensasi/dispen-tup";
@@ -9,6 +12,7 @@ import Monitoring from "@/components/dispensasi/monitoring-dispen";
 import FilterData from "@/components/dispensasi/filter";
 import Rekam from "@/components/dispensasi/rekam";
 import { useAuth } from "@/hooks/useAuth";
+import { Grid, FileText, Layers, LayoutDashboard, Filter } from "lucide-react";
 
 const DispensasiPage: React.FC = () => {
   const { user } = useAuth();
@@ -66,188 +70,139 @@ const DispensasiPage: React.FC = () => {
 
   return (
     <>
-      <main id="main" className="main">
-        <div className="pagetitle">
-          <h1>Data Dispensasi LLAT</h1>
-          <nav>
-            <ol className="breadcrumb">
-              <li className="breadcrumb-item">
-                <a href="/">Home</a>
-              </li>
-              <li className="breadcrumb-item active">Dispensasi</li>
-            </ol>
-          </nav>
-        </div>
+      <main className="container mx-auto p-4 space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Data Dispensasi LLAT</h1>
+            <nav className="flex items-center text-sm text-muted-foreground mt-1">
+              <a href="/" className="hover:text-primary transition-colors">Home</a>
+              <span className="mx-2">/</span>
+              <span className="font-medium text-foreground">Dispensasi</span>
+            </nav>
+          </div>
 
-        <section className="section">
-          <div className="d-flex justify-content-end text-danger mb-2">
+          <div className="flex items-center gap-2">
             {role !== "lainnya" && (
-              <Button
-                variant="primary"
-                size="sm"
-                className="button my-0"
-                style={{
-                  padding: "5px 5px",
-                  marginTop: "1px",
-                  width: "150px",
-                }}
-                onClick={handleRekam}
-              >
+              <Button onClick={handleRekam}>
                 Rekam Dispensasi
               </Button>
             )}
           </div>
+        </div>
 
-          <Tab.Container id="dispensasi-tabs" defaultActiveKey="dispensasi-spm">
-            <Nav
-              variant="tabs"
-              className="nav-tabs-bordered sticky-user is-sticky-user mb-1 bg-white"
-              role="tablist"
-            >
-              <Nav.Item className="dispensasi-tab">
-                <Nav.Link
-                  eventKey="dispensasi-spm"
-                  role="tab"
-                  onClick={handleCek}
+        <section>
+          <Tabs defaultValue="dispensasi-spm" className="w-full space-y-4" onValueChange={handleCek}>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-2">
+              <TabsList className="bg-transparent p-0 h-auto flex flex-wrap gap-2 justify-start">
+                <TabsTrigger
+                  value="dispensasi-spm"
+                  className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-md px-3 py-2 h-auto"
                 >
-                  <i className="bi bi-grid-1x2-fill text-warning fw-bold me-2"></i>
+                  <Grid className="w-4 h-4 mr-2" />
                   Dispensasi SPM
-                </Nav.Link>
-              </Nav.Item>
-              <Nav.Item>
-                <Nav.Link
-                  eventKey="dispensasi-kontrak"
-                  role="tab"
-                  onClick={handleCek}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="dispensasi-kontrak"
+                  className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-md px-3 py-2 h-auto"
                 >
-                  <i className="bi bi-grid-fill text-success fw-bold me-2"></i>
+                  <FileText className="w-4 h-4 mr-2" />
                   Dispensasi Kontrak
-                </Nav.Link>
-              </Nav.Item>
-              <Nav.Item>
-                <Nav.Link
-                  eventKey="dispensasi-tup"
-                  role="tab"
-                  onClick={handleCek}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="dispensasi-tup"
+                  className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-md px-3 py-2 h-auto"
                 >
-                  <i className="bi bi-grid-3x3-gap-fill text-indigo fw-bold mx-2 me-2"></i>
+                  <Layers className="w-4 h-4 mr-2" />
                   Dispensasi TUP
-                </Nav.Link>
-              </Nav.Item>
-              {(role === "super_admin" ||
-                role === "kanwil_djpb" ||
-                role === "kppn") && (
-                <Nav.Item>
-                  <Nav.Link
-                    eventKey="monitoring-spm"
-                    role="tab"
-                    onClick={handleCek}
-                  >
-                    <i className="bi bi-layout-wtf text-success fw-bold me-2"></i>
-                    Monitoring
-                  </Nav.Link>
-                </Nav.Item>
-              )}
-              <Nav.Item>
-                <span
-                  className="d-flex mt-2 nav-link border-0"
-                  style={{ cursor: "pointer" }}
+                </TabsTrigger>
+                {(role === "super_admin" ||
+                  role === "kanwil_djpb" ||
+                  role === "kppn") && (
+                    <TabsTrigger
+                      value="monitoring-spm"
+                      className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-md px-3 py-2 h-auto"
+                    >
+                      <LayoutDashboard className="w-4 h-4 mr-2" />
+                      Monitoring
+                    </TabsTrigger>
+                  )}
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto py-2 px-3 text-muted-foreground hover:text-primary"
                   onClick={() => setShowModalFilter(true)}
                 >
-                  <i className="bi bi-grid-3x3-gap-fill text-primary fw-bold mx-2 "></i>{" "}
+                  <Filter className="w-4 h-4 mr-2" />
                   Filter Data
-                </span>
-              </Nav.Item>
+                </Button>
+              </TabsList>
+            </div>
 
-              <span
-                style={{
-                  marginLeft: "auto",
-                  display: "flex",
-                  alignItems: "center",
-                }}
-              >
-                {(filter.selectedKanwil !== "00" ||
-                  filter.selectedKementerian !== "00" ||
-                  filter.selectedKppn !== "00" ||
-                  filter.tahun !== "") && (
-                  <Button
-                    variant="success"
-                    size="sm"
-                    className="my-1 mx-1 fade-in"
-                  >
+            {/* Active Filters Display */}
+            <div className="flex flex-wrap items-center gap-2 empty:hidden">
+              {(filter.selectedKanwil !== "00" ||
+                filter.selectedKementerian !== "00" ||
+                filter.selectedKppn !== "00" ||
+                filter.tahun !== "") && (
+                  <Badge variant="default" className="bg-green-600 hover:bg-green-700">
                     Filter Aktif
-                  </Button>
+                  </Badge>
                 )}
-                {filter.tahun !== "" && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="my-1 mx-1 fade-in"
-                  >
-                    Tahun {filter.tahun}
-                  </Button>
-                )}
-                {filter.selectedKementerian !== "00" && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="my-1 mx-1 fade-in"
-                  >
-                    Kementerian {filter.selectedKementerian}
-                  </Button>
-                )}
-                {filter.selectedKanwil !== "00" && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="my-1 mx-1 fade-in"
-                  >
-                    Kanwil {filter.selectedKanwil}
-                  </Button>
-                )}
-                {filter.selectedKppn !== "00" && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="my-1 mx-1 fade-in"
-                  >
-                    Kppn {filter.selectedKppn}
-                  </Button>
-                )}
-              </span>
-            </Nav>
+              {filter.tahun !== "" && (
+                <Badge variant="secondary">
+                  Tahun {filter.tahun}
+                </Badge>
+              )}
+              {filter.selectedKementerian !== "00" && (
+                <Badge variant="secondary">
+                  Kementerian {filter.selectedKementerian}
+                </Badge>
+              )}
+              {filter.selectedKanwil !== "00" && (
+                <Badge variant="secondary">
+                  Kanwil {filter.selectedKanwil}
+                </Badge>
+              )}
+              {filter.selectedKppn !== "00" && (
+                <Badge variant="secondary">
+                  KPPN {filter.selectedKppn}
+                </Badge>
+              )}
+            </div>
 
-            <Tab.Content>
-              <Tab.Pane eventKey="dispensasi-spm">
-                <Card className="mt-1 p-2 card-container">
-                  <Card.Body className="data-user fade-in">
-                    <DispenSPM cek={cek} id={id} where={where} />
-                  </Card.Body>
-                </Card>
-              </Tab.Pane>
-              <Tab.Pane eventKey="dispensasi-kontrak">
-                <Card className="mt-1 p-2 card-container">
-                  <Card.Body className="data-user fade-in">
-                    <DispenKontrak cek={cek} id={id} where={where} />
-                  </Card.Body>
-                </Card>
-              </Tab.Pane>
-              <Tab.Pane eventKey="dispensasi-tup">
-                <Card className="mt-1 p-2 card-container">
-                  <Card.Body className="data-user fade-in">
-                    <DispenTUP cek={cek} id={id} where={where} />
-                  </Card.Body>
-                </Card>
-              </Tab.Pane>
-              <Tab.Pane eventKey="monitoring-spm">
-                <Card className="mt-1 p-2 card-container">
-                  <Card.Body className="data-user fade-in">
-                    <Monitoring cek={cek} id={id} where={where} />
-                  </Card.Body>
-                </Card>
-              </Tab.Pane>
-            </Tab.Content>
-          </Tab.Container>
+            <TabsContent value="dispensasi-spm" className="mt-0">
+              <Card>
+                <CardContent className="p-4">
+                  <DispenSPM cek={cek} id={id} where={where} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="dispensasi-kontrak" className="mt-0">
+              <Card>
+                <CardContent className="p-4">
+                  <DispenKontrak cek={cek} id={id} where={where} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="dispensasi-tup" className="mt-0">
+              <Card>
+                <CardContent className="p-4">
+                  <DispenTUP cek={cek} id={id} where={where} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="monitoring-spm" className="mt-0">
+              <Card>
+                <CardContent className="p-4">
+                  <Monitoring cek={cek} id={id} where={where} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </section>
       </main>
 
