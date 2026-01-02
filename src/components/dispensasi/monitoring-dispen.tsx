@@ -2,23 +2,20 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  Button,
-  Card,
-  Container,
-  Spinner,
   Table,
-  Form,
-  Row,
-  Col,
-} from "react-bootstrap";
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { Skeleton } from "@/components/ui/skeleton";
-import ReactPaginate from "react-paginate";
 import moment from "moment";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { Calendar, Loader2 } from "lucide-react";
 
 interface MonitoringProps {
   cek: boolean;
@@ -85,9 +82,8 @@ export default function Monitoring({ cek, id, where }: MonitoringProps) {
 
     try {
       // API endpoint: POST /api/v1/dispensasi/query with JSON body
-      const apiUrl = `${
-        process.env.NEXT_PUBLIC_API_URL || "/api/v1"
-      }/dispensasi/query`;
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "/api/v1"
+        }/dispensasi/query`;
 
       const response = await fetch(apiUrl, {
         method: "POST",
@@ -125,104 +121,106 @@ export default function Monitoring({ cek, id, where }: MonitoringProps) {
     setIsDataFetched(false);
   };
 
-  const handlePageChange = ({ selected }: { selected: number }) => {
-    setPage(selected);
-  };
+  const inputClass = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
   return (
-    <Card className="p-3 mt-3" bg="light" style={{ minHeight: "700px" }}>
-      {/* Filter Tanggal */}
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <Form>
-          <Form.Group controlId="tanggalPersetujuan">
-            <Form.Label className="fw-bold">Tanggal Persetujuan</Form.Label>
-            <div className="d-flex align-items-center">
-              <DatePicker
-                name="tanggalPersetujuan"
-                selected={selectedDate}
-                onChange={(date) => handleFilterByDate(date)}
-                dateFormat="dd/MM/yyyy"
-                placeholderText="Pilih Tanggal"
-                autoComplete="off"
-                className="form-control"
-              />
-              <i
-                className="bi bi-calendar-date text-success fw-bold ms-2"
-                style={{
-                  fontSize: "25px",
-                  color: "#6c757d",
-                }}
-              />
+    <>
+      <style>
+        {`
+          .react-datepicker-wrapper {
+            width: 100%;
+          }
+        `}
+      </style>
+      <div className="bg-background border rounded-lg shadow-sm p-4 mt-3 min-h-[700px]">
+        {/* Filter Tanggal */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="w-full max-w-sm">
+            <label className="text-sm font-semibold mb-2 block">Tanggal Persetujuan</label>
+            <div className="flex items-center gap-2">
+              <div className="relative w-full">
+                <DatePicker
+                  name="tanggalPersetujuan"
+                  selected={selectedDate}
+                  onChange={(date) => handleFilterByDate(date)}
+                  dateFormat="dd/MM/yyyy"
+                  placeholderText="Pilih Tanggal"
+                  autoComplete="off"
+                  className={inputClass}
+                />
+              </div>
+              <Calendar className="text-muted-foreground h-6 w-6" />
             </div>
-          </Form.Group>
-        </Form>
-      </div>
-
-      {/* Konten Utama: Loading atau Table */}
-      {loading ? (
-        <div className="text-center">
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
-          </div>{" "}
-          <br />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
           </div>
         </div>
-      ) : (
-        <div className="fade-in">
-          {isDataFetched ? (
-            <Table striped bordered hover responsive>
-              <thead>
-                <tr>
-                  <th style={{ fontSize: "14px" }}>No.</th>
-                  <th style={{ fontSize: "14px" }}>Kementerian/Lembaga</th>
-                  <th style={{ fontSize: "14px" }}>Jumlah SPM</th>
-                  <th style={{ fontSize: "14px" }}>Nilai Dispensasi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((row, index) => (
-                  <tr key={index}>
-                    <td>{index + 1 + page * limit}</td>
-                    <td>
-                      {row.nmdept} ({row.kddept})
-                    </td>
-                    <td className="text-end">
-                      {row.jumlah_spm.toLocaleString()}
-                    </td>
-                    <td className="text-end">
-                      {row.nilai_spm.toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
-                {/* Total SPM dan Nilai SPM */}
-                <tr>
-                  <td
-                    colSpan={2}
-                    className="fw-bold text-end"
-                    style={{ fontSize: "14px" }}
-                  >
-                    Total
-                  </td>
-                  <td className="fw-bold text-end" style={{ fontSize: "14px" }}>
-                    {totalSPM.toLocaleString()}
-                  </td>
-                  <td className="fw-bold text-end" style={{ fontSize: "14px" }}>
-                    {totalNilaiSPM.toLocaleString()}
-                  </td>
-                </tr>
-              </tbody>
-            </Table>
-          ) : (
-            <div className="text-center">
-              <p className="text-muted">Tidak ada data yang tersedia.</p>
+
+        {/* Konten Utama: Loading atau Table */}
+        {loading ? (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
             </div>
-          )}
-        </div>
-      )}
-    </Card>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+            </div>
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          </div>
+        ) : (
+          <div className="animate-in fade-in duration-500">
+            {isDataFetched ? (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[50px] text-center font-bold">No.</TableHead>
+                      <TableHead className="font-bold">Kementerian/Lembaga</TableHead>
+                      <TableHead className="text-right font-bold">Jumlah SPM</TableHead>
+                      <TableHead className="text-right font-bold">Nilai Dispensasi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data.map((row, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="text-center">{index + 1 + page * limit}</TableCell>
+                        <TableCell>
+                          {row.nmdept} ({row.kddept})
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {row.jumlah_spm.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {row.nilai_spm.toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {/* Total SPM dan Nilai SPM */}
+                    <TableRow className="bg-muted/50 font-bold">
+                      <TableCell colSpan={2} className="text-right">
+                        Total
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {totalSPM.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {totalNilaiSPM.toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+                <p>Tidak ada data yang tersedia.</p>
+                <p className="text-sm">Silakan pilih tanggal persetujuan untuk melihat data.</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </>
   );
 }

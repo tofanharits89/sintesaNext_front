@@ -5,6 +5,14 @@ import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface UploadKontrakProps {
   id?: string;
@@ -228,32 +236,27 @@ export default function UploadKontrak({ id, cekupload }: UploadKontrakProps) {
       {error && <div className="text-sm text-red-600">{error}</div>}
 
       {data.length > 0 && (
-        <div className="overflow-y-auto max-h-60 border rounded p-2">
-          <table className="w-full table-auto text-sm">
-            <thead>
-              <tr>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
                 {Object.keys(data[0]).map((k) => (
-                  <th
-                    key={k}
-                    className="text-left px-2 py-1 font-semibold text-gray-900"
-                  >
+                  <TableHead key={k} className="font-semibold text-gray-900">
                     {k}
-                  </th>
+                  </TableHead>
                 ))}
-              </tr>
-            </thead>
-            <tbody>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {data.map((row, idx) => (
-                <tr key={idx} className="even:bg-muted/50">
+                <TableRow key={idx}>
                   {Object.values(row).map((cell, i) => (
-                    <td key={i} className="px-2 py-1">
-                      {String(cell)}
-                    </td>
+                    <TableCell key={i}>{String(cell)}</TableCell>
                   ))}
-                </tr>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
 

@@ -1,10 +1,19 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Container, Table, Spinner } from "react-bootstrap";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/useAuth";
 import Swal from "sweetalert2";
 import { toast } from "sonner";
+import { MinusCircle } from "lucide-react";
 
 interface DataRow {
   id: string;
@@ -23,7 +32,7 @@ interface DispenKontrakDetailProps {
   id: string;
 }
 
-// Placeholder for Encrypt function - replace with actual implementation
+// Placeholder for Encrypt function
 const Encrypt = (data: string) => data;
 
 export default function DispenKontrakDetail(props: DispenKontrakDetailProps) {
@@ -78,6 +87,11 @@ export default function DispenKontrakDetail(props: DispenKontrakDetailProps) {
       confirmButtonText: "Ya, Hapus",
       cancelButtonText: "Batal",
       position: "top",
+      customClass: {
+        confirmButton: "bg-blue-600 text-white px-4 py-2 rounded mr-2",
+        cancelButton: "bg-red-600 text-white px-4 py-2 rounded",
+      },
+      buttonsStyling: false,
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
@@ -109,57 +123,61 @@ export default function DispenKontrakDetail(props: DispenKontrakDetailProps) {
   };
 
   return (
-    <Container className="my-2">
+    <div className="my-2">
       {loading ? (
         <div className="flex justify-center items-center py-8">
-          <Spinner animation="border" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </Spinner>
+          <Spinner size="lg" />
         </div>
       ) : (
-        <>
-          <Table striped bordered hover responsive>
-            <thead>
-              <tr>
-                <th className="text-header text-center">No.</th>
-                <th className="text-header text-center">Tgl Kontrak</th>
-                <th className="text-header text-center">No Kontrak/ Adendum</th>
-                <th className="text-header text-center">Nilai Kontrak</th>
-                <th className="text-header text-center">Status</th>
-                <th className="text-header text-center">Hapus</th>
-              </tr>
-            </thead>
-            <tbody className="text-center">
+        <div className="border rounded-md">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-center font-bold">No.</TableHead>
+                <TableHead className="text-center font-bold">Tgl Kontrak</TableHead>
+                <TableHead className="text-center font-bold">No Kontrak/ Adendum</TableHead>
+                <TableHead className="text-center font-bold">Nilai Kontrak</TableHead>
+                <TableHead className="text-center font-bold">Status</TableHead>
+                <TableHead className="text-center font-bold">Hapus</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="text-center">
               {data.map((row: DataRow, index: number) => (
-                <tr key={index}>
-                  <td className="align-middle text-center">{index + 1}</td>
-                  <td className="align-middle text-center">{row.tgkontrak}</td>
-                  <td className="align-middle text-center">{row.nokontrak}</td>
-                  <td className="align-middle baris-total text-end">
+                <TableRow key={index}>
+                  <TableCell className="text-center">{index + 1}</TableCell>
+                  <TableCell className="text-center">{row.tgkontrak}</TableCell>
+                  <TableCell className="text-center">{row.nokontrak}</TableCell>
+                  <TableCell className="text-right">
                     {new Intl.NumberFormat("id-ID").format(
                       Number(row.nilkontrak)
                     )}
-                  </td>
-                  <td className="align-middle text-center">
+                  </TableCell>
+                  <TableCell className="text-center">
                     {row.status === "Tolak" ? (
-                      <span className="text-danger fw-bold">{row.status}</span>
+                      <span className="text-red-500 font-bold">{row.status}</span>
                     ) : (
-                      <span className="text-success fw-bold">{row.status}</span>
+                      <span className="text-green-500 font-bold">{row.status}</span>
                     )}
-                  </td>
-                  <td className="align-middle text-center">
-                    <i
-                      className="bi bi-dash-circle text-danger text-center fw-bold"
-                      style={{ cursor: "pointer" }}
+                  </TableCell>
+                  <TableCell className="text-center flex justify-center">
+                    <MinusCircle
+                      className="text-red-500 cursor-pointer hover:text-red-700"
                       onClick={() => handleHapus(row.id, props.id)}
-                    ></i>
-                  </td>
-                </tr>
+                    />
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
+              {data.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground h-24">
+                    Tidak ada data
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
           </Table>
-        </>
+        </div>
       )}
-    </Container>
+    </div>
   );
 }

@@ -2,26 +2,39 @@
 
 import React, { useState } from "react";
 import {
-  Modal,
-  Form,
-  Button,
-  Container,
-  Row,
-  Col,
-  Spinner,
-  Nav,
-} from "react-bootstrap";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 import DatePicker from "react-datepicker";
-import { Formik, Field, ErrorMessage } from "formik";
+import { Formik, Field, ErrorMessage, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { useAuth } from "@/hooks/useAuth";
+import Swal from "sweetalert2";
 import { toast } from "sonner";
-import { BsFillPlusSquareFill, BsTrash } from "react-icons/bs";
-import { AiOutlineClose } from "react-icons/ai";
-import { Tab } from "react-bootstrap";
-import moment from "moment";
+import { PlusSquare, Trash2, Save } from "lucide-react";
 import DispenKontrakDetail from "./dispen-kontrak-detail";
 import UploadKontrak from "./upload-kontrak";
+import moment from "moment";
+
+interface FormRow {
+  nilaikontrak: string | number;
+  nokontrak: string;
+  tgkontrak: string | null;
+  status: string;
+}
+
+interface FormValues {
+  id: string;
+  tahun: string;
+  formRows: FormRow[];
+}
 
 interface RekamKontrakProps {
   show: boolean;
@@ -31,13 +44,6 @@ interface RekamKontrakProps {
   kdsatker: string;
   nmsatker: string;
   tahun: string;
-}
-
-interface FormRow {
-  nilaikontrak: string;
-  nokontrak: string;
-  tgkontrak: string | null;
-  status: string;
 }
 
 export default function RekamKontrak({
@@ -50,6 +56,7 @@ export default function RekamKontrak({
   tahun,
 }: RekamKontrakProps) {
   const { user } = useAuth();
+
   const [loading, setLoading] = useState(false);
   const [cek, setCek] = useState(false);
   const [formRows, setFormRows] = useState<FormRow[]>([
@@ -79,29 +86,13 @@ export default function RekamKontrak({
     ]);
   };
 
-  const removeRow = (index: number, values: any, setValues: any) => {
-    if (formRows.length > 1) {
-      const updatedRows = [...formRows];
-      updatedRows.splice(index, 1);
-      setFormRows(updatedRows);
-
-      const resetRow = {
-        nilaikontrak: "",
-        nokontrak: "",
-        tgkontrak: null,
-        status: "Setuju",
-      };
-
-      setValues({
-        ...values,
-        formRows: values.formRows.map((row: any, rowIndex: number) =>
-          rowIndex === index ? resetRow : row
-        ),
-      });
-    }
+  const removeRow = (index: number) => {
+    const updatedRows = [...formRows];
+    updatedRows.splice(index, 1);
+    setFormRows(updatedRows);
   };
 
-  const initialValues = {
+  const initialValues: FormValues = {
     id,
     tahun: tahun,
     formRows,
@@ -118,34 +109,47 @@ export default function RekamKontrak({
     ),
   });
 
-  const handleSubmitdata = async (values: any, { setSubmitting }: any) => {
+  const handleSubmitdata = async (
+    values: FormValues,
+    { setSubmitting }: FormikHelpers<FormValues>
+  ) => {
     setCek(false);
     setLoading(true);
-
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SIMPANLAMPIRANKONTRAK}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            // Authorization: `Bearer ${user?.token}`,
-          },
-          body: JSON.stringify(values.formRows),
-        }
-      );
+      const url =
+        process.env.NEXT_PUBLIC_SIMPANLAMPIRANKONTRAK ||
+        "/api/simpan-lampiran-kontrak";
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values.formRows),
+      });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP ${response.status}`);
       }
 
-      toast.success("Data Kontrak Berhasil Disimpan");
+      Swal.fire({
+        html: `<div class='text-success mt-4'>Data Kontrak Berhasil Disimpan</div>`,
+        icon: "success",
+        position: "top",
+        buttonsStyling: false,
+        customClass: {
+          confirmButton: "bg-primary text-white px-4 py-2 rounded",
+        },
+        confirmButtonText: "Tutup",
+      });
       setCek(true);
-      setLoading(false);
-    } catch (error) {
-      toast.error("Terjadi Permasalahan Koneksi atau Server Backend");
-      setLoading(false);
+      toast.success("Data Kontrak Berhasil Disimpan");
+    } catch (error: any) {
+      const message =
+        error?.message || "Terjadi Permasalahan Koneksi atau Server Backend";
+      toast.error(message);
       setSubmitting(false);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -165,6 +169,8 @@ export default function RekamKontrak({
     setCek(true);
   };
 
+  const inputClass = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+
   return (
     <>
       <style>
@@ -173,291 +179,241 @@ export default function RekamKontrak({
             z-index: 9999 !important;
             position: fixed !important;
           }
-          .react-datepicker {
+           .react-datepicker {
             border: 1px solid #ced4da;
             border-radius: 0.375rem;
             box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
           }
         `}
       </style>
-      <Modal
-        show={show}
-        onHide={handleModalClose}
-        backdrop="static"
-        keyboard={false}
-        size="xl"
-        animation={false}
-      >
-        <Modal.Header style={{ position: "relative" }}>
-          <Modal.Title style={{ fontSize: "20px", flex: 1 }}>
-            <i className="bi bi-box-arrow-in-right text-success mx-3"></i>
-            Data Dispensasi Kontrak
-          </Modal.Title>
+      <Dialog open={show} onOpenChange={handleModalClose}>
+        <DialogContent className="max-w-4xl h-[80vh] flex flex-col p-0">
+          <DialogHeader className="px-6 py-4 border-b">
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold">
+              <span className="text-green-600">Data Dispensasi Kontrak</span>
+            </DialogTitle>
+          </DialogHeader>
 
-          <button
-            type="button"
-            className="bg-transparent border-0 p-0 text-muted"
-            aria-label="Tutup"
-            title="Tutup"
-            onClick={handleModalClose}
-            style={{
-              position: "absolute",
-              fontSize: 24,
-              top: "50%",
-              right: 12,
-              transform: "translateY(-50%)",
-              cursor: "pointer",
-              zIndex: 10,
-              lineHeight: 1,
-            }}
-          >
-            <AiOutlineClose />
-          </button>
-        </Modal.Header>
-        <Modal.Body style={{ overflow: "auto", height: "600px" }}>
-          <Tab.Container defaultActiveKey="dispensasi-overview">
-            <Nav
-              variant="tabs"
-              className="nav-tabs-bordered sticky-user is-sticky-user mb-0 mt-2"
-              role="tablist"
-            >
-              <Nav.Item className="dispensasi-tab">
-                <Nav.Link eventKey="dispensasi-overview" role="tab">
-                  Rekam Kontrak
-                </Nav.Link>
-              </Nav.Item>
-              <Nav.Item>
-                <Nav.Link
-                  eventKey="dispensasi-upload"
-                  role="tab"
-                  onClick={handleCekUpload}
-                >
-                  Upload Excell
-                </Nav.Link>
-              </Nav.Item>
-              <Nav.Item>
-                <Nav.Link
-                  eventKey="dispensasi-edit"
-                  role="tab"
-                  onClick={handleCek}
-                >
-                  Data Kontrak
-                </Nav.Link>
-              </Nav.Item>
-            </Nav>
-            <Tab.Content className="pt-2">
-              <Tab.Pane eventKey="dispensasi-overview" role="tabpanel">
-                <Formik
-                  validationSchema={validationSchema}
-                  onSubmit={handleSubmitdata}
-                  initialValues={initialValues}
-                >
-                  {({
-                    handleSubmit,
-                    setFieldValue,
-                    values,
-                    setValues,
-                    touched,
-                    errors,
-                  }) => (
-                    <Container className="mt-2">
-                      <Form noValidate onSubmit={handleSubmit}>
-                        <div className="d-flex justify-content-between align-bottom">
-                          <span className="fw-bold text-success">
-                            SATKER : {nmsatker} ({kdsatker}) <br />
-                            Nomor Permohonan : {nomor}
-                          </span>
-                          <span>
-                            <Button
-                              type="submit"
-                              size="sm"
-                              variant="danger"
-                              className="mt-1 mb-0"
-                              disabled={loading}
-                            >
-                              {loading ? (
-                                <>
-                                  <Spinner
-                                    as="span"
-                                    animation="border"
-                                    size="sm"
-                                    role="status"
-                                    aria-hidden="true"
-                                  />
-                                  Loading...
-                                </>
-                              ) : (
-                                "Simpan Data"
-                              )}
-                            </Button>
-                          </span>
-                        </div>
+          <div className="flex-1 overflow-hidden">
+            <Tabs defaultValue="dispensasi-overview" className="h-full flex flex-col">
+              <div className="px-6 border-b">
+                <TabsList className="w-full justify-start h-auto p-0 bg-transparent gap-6">
+                  <TabsTrigger
+                    value="dispensasi-overview"
+                    className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none border-b-2 border-transparent px-0 py-3"
+                  >
+                    Rekam Kontrak
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="dispensasi-upload"
+                    className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none border-b-2 border-transparent px-0 py-3"
+                    onClick={handleCekUpload}
+                  >
+                    Upload Excel
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="dispensasi-edit"
+                    className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none border-b-2 border-transparent px-0 py-3"
+                    onClick={handleCek}
+                  >
+                    Data Kontrak
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
-                        <hr />
-                        <div className="text-end">
-                          <BsFillPlusSquareFill
-                            onClick={addRow}
-                            className="my-1 text-primary"
-                            style={{
-                              fontSize: "20px",
-                              cursor: "pointer",
-                            }}
-                          />
-                        </div>
-                        {formRows.map((row, index) => (
-                          <React.Fragment key={index}>
-                            <Row>
-                              <Col sm={6} md={6} lg={5} xl={5}>
-                                <Form.Group className="fw-normal my-1">
-                                  <Field
-                                    name={`formRows[${index}].nokontrak`}
-                                    type="text"
-                                    placeholder="Nomor Kontrak/ Adendum"
-                                    as={Form.Control}
-                                  />
-                                  <ErrorMessage
-                                    name={`formRows[${index}].nokontrak`}
-                                    component="div"
-                                    className="text-danger"
-                                  />
-                                </Form.Group>
-                              </Col>
-
-                              <Col sm={6} md={6} lg={3} xl={3}>
-                                <Form.Group className="fw-normal my-1">
-                                  <DatePicker
-                                    name={`formRows[${index}].tgkontrak`}
-                                    className="form-control"
-                                    selected={
-                                      values.formRows &&
-                                      values.formRows[index] &&
-                                      values.formRows[index].tgkontrak
-                                        ? moment(
-                                            values.formRows[index].tgkontrak
-                                          ).toDate()
-                                        : null
-                                    }
-                                    onChange={(date) => {
-                                      setFieldValue(
-                                        `formRows[${index}].tgkontrak`,
-                                        moment(date).format("YYYY-MM-DD")
-                                      );
-                                    }}
-                                    dateFormat="dd/MM/yyyy"
-                                    placeholderText="Tgl Kontrak"
-                                    autoComplete="off"
-                                    popperClassName="datepicker-popper"
-                                    popperPlacement="bottom-start"
-                                    shouldCloseOnSelect={true}
-                                    fixedHeight
-                                  />
-
-                                  <ErrorMessage
-                                    name={`formRows[${index}].tgkontrak`}
-                                    component="div"
-                                    className="text-danger"
-                                  />
-                                </Form.Group>
-                              </Col>
-
-                              <Col sm={6} md={6} lg={4} xl={4}>
-                                <Form.Group className="fw-normal my-1">
-                                  <Field
-                                    name={`formRows[${index}].nilaikontrak`}
-                                    type="number"
-                                    placeholder="Nilai Kontrak"
-                                    as={Form.Control}
-                                  />
-                                  <ErrorMessage
-                                    name={`formRows[${index}].nilaikontrak`}
-                                    component="div"
-                                    className="text-danger"
-                                  />
-                                </Form.Group>
-                              </Col>
-                            </Row>
-                            <Row>
-                              <Col sm={6} md={6} lg={12} xl={12}>
-                                <Form.Group className="fw-normal my-1">
-                                  <Form.Check
-                                    inline
-                                    type="radio"
-                                    name={`formRows[${index}].status`}
-                                    value="Setuju"
-                                    label="Disetujui"
-                                    checked={
-                                      values.formRows &&
-                                      values.formRows[index] &&
-                                      values.formRows[index].status === "Setuju"
-                                    }
-                                    onChange={() => {
-                                      setFieldValue(
-                                        `formRows[${index}].status`,
-                                        "Setuju"
-                                      );
-                                    }}
-                                  />
-                                  <Form.Check
-                                    inline
-                                    type="radio"
-                                    name={`formRows[${index}].status`}
-                                    value="Tolak"
-                                    label="Ditolak"
-                                    checked={
-                                      values.formRows &&
-                                      values.formRows[index] &&
-                                      values.formRows[index].status === "Tolak"
-                                    }
-                                    onChange={() => {
-                                      setFieldValue(
-                                        `formRows[${index}].status`,
-                                        "Tolak"
-                                      );
-                                    }}
-                                  />
-                                  <ErrorMessage
-                                    name={`formRows[${index}].status`}
-                                    component="div"
-                                    className="text-danger"
-                                  />
-                                </Form.Group>
-                              </Col>
-                            </Row>
-                            {formRows.length > 1 && (
-                              <div className="text-end mb-2">
-                                <BsTrash
-                                  onClick={() =>
-                                    removeRow(index, values, setValues)
-                                  }
-                                  className="text-danger"
-                                  style={{
-                                    fontSize: "18px",
-                                    cursor: "pointer",
-                                  }}
-                                />
-                              </div>
+              <div className="flex-1 overflow-y-auto bg-muted/10 p-6">
+                <TabsContent value="dispensasi-overview" className="mt-0 h-full">
+                  <Formik
+                    validationSchema={validationSchema}
+                    onSubmit={handleSubmitdata}
+                    initialValues={initialValues}
+                  >
+                    {({
+                      handleSubmit,
+                      setFieldValue,
+                      values,
+                      touched,
+                      errors,
+                    }) => (
+                      <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 p-4 bg-background border rounded-lg shadow-sm">
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">SATKER</p>
+                            <p className="font-bold text-lg">{nmsatker} ({kdsatker})</p>
+                            <p className="text-sm text-muted-foreground mt-1">Nomor Permohonan : <span className="font-medium text-foreground">{nomor}</span></p>
+                          </div>
+                          <Button
+                            type="submit"
+                            variant="destructive"
+                            disabled={loading}
+                          >
+                            {loading ? (
+                              <>
+                                <Spinner className="mr-2 h-4 w-4" />
+                                Loading...
+                              </>
+                            ) : (
+                              <>
+                                <Save className="mr-2 h-4 w-4" />
+                                Simpan Data
+                              </>
                             )}
-                            <hr className="text-danger" />
-                          </React.Fragment>
-                        ))}
-                      </Form>
-                    </Container>
-                  )}
-                </Formik>
-              </Tab.Pane>
-              <Tab.Pane eventKey="dispensasi-edit" role="tabpanel">
-                {/* <DataKontrakDetail cek={cek} id={id} /> */}
-                <div className="text-center p-4">
-                  <DispenKontrakDetail cek={cek} id={id} />
-                </div>
-              </Tab.Pane>
-              <Tab.Pane eventKey="dispensasi-upload" role="tabpanel">
-                <UploadKontrak cekupload={cekupload} id={id} />
-              </Tab.Pane>
-            </Tab.Content>
-          </Tab.Container>
-        </Modal.Body>
-      </Modal>
+                          </Button>
+                        </div>
+
+                        <div className="bg-background border rounded-lg p-4 shadow-sm">
+                          <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-semibold text-lg">Detail Kontrak</h3>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="text-primary hover:text-primary/80 hover:bg-primary/10"
+                              onClick={addRow}
+                            >
+                              <PlusSquare className="mr-2 h-5 w-5" />
+                              Tambah Baris
+                            </Button>
+                          </div>
+
+                          <div className="space-y-4">
+                            {formRows.map((row, index) => (
+                              <div key={index} className="p-4 border rounded-md bg-muted/5 space-y-4 relative group">
+                                <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    onClick={() => removeRow(index)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                  <div className="md:col-span-5 space-y-2">
+                                    <Label>Nomor Kontrak</Label>
+                                    <Field
+                                      name={`formRows[${index}].nokontrak`}
+                                      type="text"
+                                      placeholder="Nomor Kontrak/ Adendum"
+                                      as={Input}
+                                      className={touched.formRows?.[index]?.nokontrak && (errors.formRows as any)?.[index]?.nokontrak ? "border-red-500" : ""}
+                                    />
+                                    <ErrorMessage
+                                      name={`formRows[${index}].nokontrak`}
+                                      component="div"
+                                      className="text-red-500 text-xs"
+                                    />
+                                  </div>
+
+                                  <div className="md:col-span-3 space-y-2">
+                                    <Label>Tgl Kontrak</Label>
+                                    <div className="relative">
+                                      <DatePicker
+                                        name={`formRows[${index}].tgkontrak`}
+                                        selected={
+                                          values.formRows[index] &&
+                                            values.formRows[index].tgkontrak
+                                            ? moment(
+                                              values.formRows[index].tgkontrak
+                                            ).toDate()
+                                            : null
+                                        }
+                                        className={inputClass}
+                                        wrapperClassName="w-full"
+                                        onChange={(date: Date | null) => {
+                                          if (date) {
+                                            setFieldValue(
+                                              `formRows[${index}].tgkontrak`,
+                                              moment(date).format("YYYY-MM-DD")
+                                            );
+                                          }
+                                        }}
+                                        dateFormat="dd/MM/yyyy"
+                                        placeholderText="Tgl Kontrak"
+                                        autoComplete="off"
+                                        popperClassName="datepicker-popper"
+                                        popperPlacement="bottom-start"
+                                        fixedHeight
+                                      />
+                                    </div>
+                                    <ErrorMessage
+                                      name={`formRows[${index}].tgkontrak`}
+                                      component="div"
+                                      className="text-red-500 text-xs"
+                                    />
+                                  </div>
+
+                                  <div className="md:col-span-4 space-y-2">
+                                    <Label>Nilai Kontrak</Label>
+                                    <Field
+                                      name={`formRows[${index}].nilaikontrak`}
+                                      type="number"
+                                      placeholder="Nilai Kontrak"
+                                      as={Input}
+                                      className={touched.formRows?.[index]?.nilaikontrak && (errors.formRows as any)?.[index]?.nilaikontrak ? "border-red-500" : ""}
+                                    />
+                                    <ErrorMessage
+                                      name={`formRows[${index}].nilaikontrak`}
+                                      component="div"
+                                      className="text-red-500 text-xs"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label>Status</Label>
+                                  <div className="flex gap-4">
+                                    <label className="flex items-center space-x-2 cursor-pointer">
+                                      <Field
+                                        type="radio"
+                                        name={`formRows[${index}].status`}
+                                        value="Setuju"
+                                        className="h-4 w-4 rounded-full border-primary text-primary focus:ring-primary"
+                                      />
+                                      <span>Disetujui</span>
+                                    </label>
+                                    <label className="flex items-center space-x-2 cursor-pointer">
+                                      <Field
+                                        type="radio"
+                                        name={`formRows[${index}].status`}
+                                        value="Tolak"
+                                        className="h-4 w-4 rounded-full border-primary text-primary focus:ring-primary"
+                                      />
+                                      <span>Ditolak</span>
+                                    </label>
+                                  </div>
+                                  <ErrorMessage
+                                    name={`formRows[${index}].status`}
+                                    component="div"
+                                    className="text-red-500 text-xs"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </form>
+                    )}
+                  </Formik>
+                </TabsContent>
+                <TabsContent value="dispensasi-edit" className="mt-0 h-full">
+                  <div className="bg-background rounded-lg p-4 shadow-sm min-h-full">
+                    <DispenKontrakDetail cek={cek} id={id} />
+                  </div>
+                </TabsContent>
+                <TabsContent value="dispensasi-upload" className="mt-0 h-full">
+                  <div className="bg-background rounded-lg p-4 shadow-sm min-h-full">
+                    <UploadKontrak cekupload={cekupload} id={id} />
+                  </div>
+                </TabsContent>
+              </div>
+            </Tabs>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
