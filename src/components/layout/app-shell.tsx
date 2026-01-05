@@ -47,6 +47,7 @@ const AppShell = memo(function AppShell({
       "/monitor-performa",
       "/sp2d",
       "/dispensasi",
+      "/ikpa",
     ],
     []
   );

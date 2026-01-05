@@ -35,6 +35,10 @@ import {
   PieChart,
   TriangleAlert,
   Share2,
+  Gauge,
+  BookOpen,
+  Archive,
+  Gavel,
 } from "lucide-react";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -151,6 +155,10 @@ const defaultMenu: MenuItem[] = [
     children: [{ label: "LLAT" }, { label: "Kontrak KPPN" }],
   },
   {
+    label: "Monev IKPA",
+    children: [{ label: "Monev Dispensasi IKPA" }],
+  },
+  {
     label: "Tentang Kita",
     children: [{ label: "Profil" }, { label: "Kontak" }],
   },
@@ -235,7 +243,9 @@ export function ResponsiveSidebar({
           <Inbox className={`${cls} text-green-600 dark:text-green-400`} />
         );
       case "Dispensasi":
-        return <Inbox className={`${cls} text-red-600 dark:text-red-400`} />;
+        return <BookOpen className={`${cls} text-red-600 dark:text-red-400`} />;
+      case "Monev IKPA":
+        return <Gauge className={`${cls} text-red-600 dark:text-red-400`} />;
       case "Tentang Kita":
         return (
           <Info className={`${cls} text-neutral-600 dark:text-neutral-300`} />
@@ -329,6 +339,8 @@ export function ResponsiveSidebar({
         return <CheckCircle className={cls} />;
       case "Dispensasi__Kontrak KPPN":
         return <Banknote className={cls} />;
+      case "Monev IKPA__Monev Dispensasi IKPA":
+        return <Gavel className={cls} />;
       default:
         return null;
     }
@@ -434,7 +446,7 @@ export function ResponsiveSidebar({
                           {m.children.map((c) => {
                             const menuKey = `${m.label}__${c.label}`;
                             let href = "#";
-                            let onMouseEnterFn = () => {};
+                            let onMouseEnterFn = () => { };
 
                             // Route mapping
                             if (
@@ -679,6 +691,11 @@ export function ResponsiveSidebar({
                               m.label === "Dispensasi"
                             ) {
                               href = "/dispensasi/kontrak-kppn";
+                            } else if (
+                              c.label === "Monev Dispensasi IKPA" &&
+                              m.label === "Monev IKPA"
+                            ) {
+                              href = "/ikpa";
                             }
 
                             return (
@@ -872,7 +889,7 @@ export function ResponsiveSidebar({
                         key={c.label}
                         href="/tentang-kita/profil"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
-                        onMouseEnter={() => {}}
+                        onMouseEnter={() => { }}
                         onClick={() => {
                           trackMenuUsage({
                             menu: m.label,
@@ -1396,6 +1413,26 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/dispensasi/kontrak-kppn",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Monev Dispensasi IKPA" &&
+                      m.label === "Monev IKPA" ? (
+                      <Link
+                        key={c.label}
+                        href="/ikpa"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/ikpa",
                           });
                           setOpen(false);
                         }}
