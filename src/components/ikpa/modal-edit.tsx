@@ -32,7 +32,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { apiClient } from "@/lib/api/httpClient";
-import { FilePlus, Loader2, Save, X } from "lucide-react";
+import { Loader2, Save, X, Edit, FilePlus } from "lucide-react";
 import satkerData from "@/data/carisatker.json";
 
 // Schema based on the SQL provided
@@ -43,17 +43,19 @@ const formSchema = z.object({
     kdsatker: z.string().min(1, "Satker wajib dipilih"),
     nm_indikator: z.string().min(1, "Indikator wajib dipilih"),
     no_doc: z.string().min(1, "Nomor dokumen wajib diisi"),
-    keterangan: z.string().optional(),
-    kronologis: z.string().optional(),
-    perbaikan: z.string().optional(),
+    keterangan: z.string().optional().nullable(),
+    kronologis: z.string().optional().nullable(),
+    perbaikan: z.string().optional().nullable(),
+    approval: z.string().min(1, "Status wajib dipilih"),
     file: z.any().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface ModalRekamProps {
+interface ModalEditProps {
     isOpen: boolean;
     onClose: () => void;
+    data: any | null;
 }
 
 const INDIKATOR_OPTIONS = [
@@ -67,15 +69,21 @@ const INDIKATOR_OPTIONS = [
     { label: "Capaian Output", value: "Capaian Output", code: "08" },
 ];
 
-export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
+const STATUS_OPTIONS = [
+    { label: "Pending", value: "Pending" },
+    { label: "Disetujui", value: "Disetujui" },
+    { label: "Ditolak", value: "Ditolak" },
+];
+
+export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
     const queryClient = useQueryClient();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            thang: new Date().getFullYear().toString(),
-            tg_nd: new Date().toISOString().split('T')[0] as string,
+            thang: "",
+            tg_nd: "",
             no_nd: "",
             kdsatker: "",
             nm_indikator: "",
@@ -83,22 +91,41 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
             keterangan: "",
             kronologis: "",
             perbaikan: "",
+            approval: "Pending",
             file: undefined,
         },
     });
 
+    // Update form values when data changes
+    useEffect(() => {
+        if (data && isOpen) {
+            form.reset({
+                thang: data.thang || "",
+                tg_nd: (data.tg_nd ? new Date(data.tg_nd).toISOString().split('T')[0] : "") as string,
+                no_nd: data.no_nd || "",
+                kdsatker: data.kdsatker || "",
+                nm_indikator: data.nm_indikator || "",
+                no_doc: data.no_doc || "",
+                keterangan: data.keterangan || "",
+                kronologis: data.kronologis || "",
+                perbaikan: data.perbaikan || "",
+                approval: data.approval || "Pending",
+                file: undefined,
+            });
+        }
+    }, [data, isOpen, form]);
+
     const mutation = useMutation({
-        mutationFn: (newRecord: any) => apiClient.post("/ikpa", newRecord),
+        mutationFn: (updatedRecord: any) => apiClient.put(`/ikpa/${data?.id}`, updatedRecord),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["ikpa-data"] });
             queryClient.invalidateQueries({ queryKey: ["ikpa-stats"] });
-            toast.success("Data IKPA berhasil direkam");
-            form.reset();
+            toast.success("Data IKPA berhasil diperbarui");
             onClose();
         },
         onError: (error: any) => {
-            console.error("Error saving IKPA:", error);
-            toast.error("Gagal merekam data IKPA: " + (error.response?.data?.error || error.message));
+            console.error("Error updating IKPA:", error);
+            toast.error("Gagal memperbarui data IKPA: " + (error.response?.data?.error || error.message));
         },
         onSettled: () => {
             setIsSubmitting(false);
@@ -115,15 +142,13 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
 
         const payload = {
             ...values,
-            date_input: new Date().toISOString().split('T')[0],
             kdkanwil: satker?.kdkanwil || "",
             nmkanwil: satker?.nmkanwil || "",
             kdkppn: satker?.kdkppn || "",
             nmkppn: satker?.nmkppn || "",
             nmsatker: satker?.nmsatker || "",
             kd_indikator: indicator?.code || "",
-            approval: "Pending",
-            id_approval: "0"
+            id_approval: values.approval === "Disetujui" ? "1" : values.approval === "Ditolak" ? "2" : "0"
         };
 
         const formData = new FormData();
@@ -143,8 +168,8 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
             <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-bold flex items-center gap-2">
-                        <Save className="h-5 w-5 text-primary" />
-                        Rekam Data IKPA
+                        <Edit className="h-5 w-5 text-primary" />
+                        Edit Data IKPA
                     </DialogTitle>
                 </DialogHeader>
 
@@ -158,7 +183,7 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Tahun Anggaran</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Pilih Tahun" />
@@ -212,14 +237,14 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                                 render={({ field }) => (
                                     <FormItem className="md:col-span-2">
                                         <FormLabel>Satuan Kerja</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Pilih Satker" />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent className="max-h-[300px]">
-                                                {(satkerData as any[]).slice(0, 200).map((s) => (
+                                                {(satkerData as any[]).slice(0, 500).map((s) => (
                                                     <SelectItem key={s.kdsatker} value={s.kdsatker}>
                                                         {s.kdsatker} - {s.nmsatker}
                                                     </SelectItem>
@@ -238,7 +263,7 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Indikator IKPA</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Pilih Indikator" />
@@ -272,14 +297,40 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                                 )}
                             />
 
-                            {/* File Upload */}
+                            {/* Approval Status */}
+                            <FormField
+                                control={form.control}
+                                name="approval"
+                                render={({ field }) => (
+                                    <FormItem className="md:col-span-2">
+                                        <FormLabel>Status Approval</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Pilih Status" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {STATUS_OPTIONS.map((opt) => (
+                                                    <SelectItem key={opt.value} value={opt.value}>
+                                                        {opt.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* File Upload (Edit Mode) */}
                             <div className="md:col-span-2 p-4 border-2 border-dashed rounded-lg bg-muted/20 flex flex-col items-center justify-center gap-2">
-                                <FormLabel className="flex items-center gap-2 text-primary cursor-pointer hover:underline" htmlFor="file-upload">
+                                <FormLabel className="flex items-center gap-2 text-primary cursor-pointer hover:underline" htmlFor="file-upload-edit">
                                     <FilePlus className="h-5 w-5" />
-                                    {form.watch("file") ? (form.watch("file") as File).name : "Upload PDF Nota Dinas / Dokumen (Maks 5MB)"}
+                                    {form.watch("file") ? (form.watch("file") as File).name : data?.file ? `Ganti File (${data.file})` : "Upload PDF Nota Dinas / Dokumen (Maks 5MB)"}
                                 </FormLabel>
                                 <Input
-                                    id="file-upload"
+                                    id="file-upload-edit"
                                     type="file"
                                     accept=".pdf"
                                     className="hidden"
@@ -298,7 +349,7 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                                         className="text-destructive h-7 text-[10px]"
                                         onClick={() => form.setValue("file", undefined)}
                                     >
-                                        Hapus File
+                                        Batal Ganti
                                     </Button>
                                 )}
                                 <p className="text-[10px] text-muted-foreground italic">* Format: PDF, Maksimal 5MB</p>
@@ -314,7 +365,7 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                                     <FormItem>
                                         <FormLabel>Keterangan</FormLabel>
                                         <FormControl>
-                                            <Textarea placeholder="Input keterangan tambahan..." className="min-h-[80px]" {...field} />
+                                            <Textarea placeholder="Input keterangan tambahan..." className="min-h-[80px]" {...field} value={field.value || ""} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -328,7 +379,7 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                                     <FormItem>
                                         <FormLabel>Kronologis</FormLabel>
                                         <FormControl>
-                                            <Textarea placeholder="Input kronologis kejadian..." className="min-h-[80px]" {...field} />
+                                            <Textarea placeholder="Input kronologis kejadian..." className="min-h-[80px]" {...field} value={field.value || ""} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -342,7 +393,7 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                                     <FormItem>
                                         <FormLabel>Langkah Perbaikan</FormLabel>
                                         <FormControl>
-                                            <Textarea placeholder="Input langkah perbaikan yang diambil..." className="min-h-[80px]" {...field} />
+                                            <Textarea placeholder="Input langkah perbaikan yang diambil..." className="min-h-[80px]" {...field} value={field.value || ""} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -361,7 +412,7 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                                 ) : (
                                     <Save className="h-4 w-4 mr-2" />
                                 )}
-                                Simpan Record
+                                Simpan Perubahan
                             </Button>
                         </DialogFooter>
                     </form>

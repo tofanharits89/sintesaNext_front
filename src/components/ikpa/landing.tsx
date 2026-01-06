@@ -16,9 +16,11 @@ import {
     FileCheck,
     Loader2,
     Plus,
-    FilePlus
+    FilePlus,
+    Edit
 } from "lucide-react";
 import { ModalRekamIkpa } from "./modal-rekam";
+import { ModalEditIkpa } from "./modal-edit";
 import { cn } from "@/lib/utils/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -106,6 +108,8 @@ export function IkpaLanding() {
     const [selectedKppn, setSelectedKppn] = useState("all");
     const [selectedSatker, setSelectedSatker] = useState("all");
     const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingItem, setEditingItem] = useState<IkpaRequest | null>(null);
 
     // Fetch Global Stats
     const { data: statsData, isLoading: isStatsLoading } = useQuery<IkpaStats>({
@@ -220,6 +224,15 @@ export function IkpaLanding() {
                 onClose={() => setIsRecordModalOpen(false)}
             />
 
+            <ModalEditIkpa
+                isOpen={isEditModalOpen}
+                onClose={() => {
+                    setIsEditModalOpen(false);
+                    setEditingItem(null);
+                }}
+                data={editingItem}
+            />
+
             {/* Top Dashboard Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
                 {/* Metrics */}
@@ -274,11 +287,12 @@ export function IkpaLanding() {
                                         <TableHead>Satker / KPPN</TableHead>
                                         <TableHead>Indikator</TableHead>
                                         <TableHead>Status</TableHead>
+                                        <TableHead className="text-right">Aksi</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {isLoading ? (
-                                        <TableRow><TableCell colSpan={4} className="h-32 text-center"><Loader2 className="animate-spin mx-auto h-8 w-8 text-primary" /></TableCell></TableRow>
+                                        <TableRow><TableCell colSpan={5} className="h-32 text-center"><Loader2 className="animate-spin mx-auto h-8 w-8 text-primary" /></TableCell></TableRow>
                                     ) : (
                                         filteredData.length > 0 ? (
                                             filteredData.map((item: IkpaRequest) => (
@@ -297,10 +311,23 @@ export function IkpaLanding() {
                                                     </TableCell>
                                                     <TableCell className="text-xs text-muted-foreground max-w-[150px] truncate">{item.nm_indikator}</TableCell>
                                                     <TableCell><StatusBadge status={item.approval} /></TableCell>
+                                                    <TableCell className="text-right">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-muted-foreground hover:text-primary"
+                                                            onClick={() => {
+                                                                setEditingItem(item);
+                                                                setIsEditModalOpen(true);
+                                                            }}
+                                                        >
+                                                            <Edit className="h-4 w-4" />
+                                                        </Button>
+                                                    </TableCell>
                                                 </TableRow>
                                             ))
                                         ) : (
-                                            <TableRow><TableCell colSpan={4} className="h-32 text-center text-muted-foreground">Tidak ada data ditemukan.</TableCell></TableRow>
+                                            <TableRow><TableCell colSpan={5} className="h-32 text-center text-muted-foreground">Tidak ada data ditemukan.</TableCell></TableRow>
                                         )
                                     )}
                                 </TableBody>
