@@ -14,8 +14,11 @@ import {
     Building2,
     Landmark,
     FileCheck,
-    Loader2
+    Loader2,
+    Plus,
+    FilePlus
 } from "lucide-react";
+import { ModalRekamIkpa } from "./modal-rekam";
 import { cn } from "@/lib/utils/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -82,7 +85,7 @@ type IkpaStats = {
         rejected: number;
         pending: number;
     };
-    sharePerKppn: { kdkppn: string; count: string }[];
+    sharePerKppn: { kdkppn: string; nmkppn: string; count: string }[];
     sharePerIndikator: { indikator: string; count: string }[];
     monthlyTrend: { name: string; count: number }[];
 };
@@ -102,6 +105,7 @@ export function IkpaLanding() {
     const [currentPage, setCurrentPage] = useState(0);
     const [selectedKppn, setSelectedKppn] = useState("all");
     const [selectedSatker, setSelectedSatker] = useState("all");
+    const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
 
     // Fetch Global Stats
     const { data: statsData, isLoading: isStatsLoading } = useQuery<IkpaStats>({
@@ -203,7 +207,18 @@ export function IkpaLanding() {
                 <Button variant="outline" size="icon" title="Export Excel">
                     <Download className="h-4 w-4" />
                 </Button>
+                <div className="ml-auto">
+                    <Button onClick={() => setIsRecordModalOpen(true)} className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        Rekam Data
+                    </Button>
+                </div>
             </div>
+
+            <ModalRekamIkpa
+                isOpen={isRecordModalOpen}
+                onClose={() => setIsRecordModalOpen(false)}
+            />
 
             {/* Top Dashboard Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
@@ -312,7 +327,10 @@ export function IkpaLanding() {
                 <div className="xl:col-span-4 space-y-6">
                     <ShareChartCard
                         title="Share Permohonan Per KPPN"
-                        data={statsData?.sharePerKppn.map(item => ({ name: item.kdkppn, value: parseInt(item.count) })) || []}
+                        data={statsData?.sharePerKppn.map(item => ({
+                            name: `${item.nmkppn} (${item.kdkppn})`,
+                            value: parseInt(item.count)
+                        })) || []}
                     />
                     <ShareChartCard
                         title="Share Permohonan Per Indikator"
