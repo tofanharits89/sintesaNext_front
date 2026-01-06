@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import satkerData from "@/data/carisatker.json";
+import kppnData from "@/data/kdkppn.json";
 import {
-    Search,
-    Filter,
     FileText,
     CheckCircle2,
     XCircle,
@@ -19,7 +19,6 @@ import {
 import { cn } from "@/lib/utils/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
     Select,
     SelectContent,
@@ -40,22 +39,55 @@ import { Badge } from "@/components/ui/badge";
 import { apiClient } from "@/lib/api/httpClient";
 import { useQuery } from "@tanstack/react-query";
 
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip as RechartsTooltip,
+    ResponsiveContainer,
+    BarChart,
+    Bar,
+    Cell
+} from "recharts";
+
 // Types
 type IkpaRequest = {
     id: number;
-    kanwil: string;
-    nota_dinas: string;
-    kppn: string;
-    satker: string;
-    indikator: string;
-    dokumen: string;
-    status: string;
-    tanggal: string;
+    kdkanwil: string;
+    nmkanwil: string;
+    no_nd: string;
+    tg_nd: string;
+    kdkppn: string;
+    nmkppn: string;
+    kdsatker: string;
+    nmsatker: string;
+    nm_indikator: string;
+    no_doc: string;
+    approval: string;
+    id_approval: string;
     keterangan?: string;
-    created_at?: string;
+    alasan_penolakan?: string;
+    kronologis?: string;
+    perbaikan?: string;
+    thang: string;
+    date_input: string;
 };
 
-type IkpaApiResponse = {
+type IkpaStats = {
+    summary: {
+        total: number;
+        approved: number;
+        rejected: number;
+        pending: number;
+    };
+    sharePerKppn: { kdkppn: string; count: string }[];
+    sharePerIndikator: { indikator: string; count: string }[];
+    monthlyTrend: { name: string; count: number }[];
+};
+
+type IkpaResponse = {
     result: IkpaRequest[];
     page: number;
     limit: number;
@@ -68,49 +100,60 @@ export function IkpaLanding() {
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [currentPage, setCurrentPage] = useState(0);
+    const [selectedKppn, setSelectedKppn] = useState("all");
+    const [selectedSatker, setSelectedSatker] = useState("all");
+
+    // Fetch Global Stats
+    const { data: statsData, isLoading: isStatsLoading } = useQuery<IkpaStats>({
+        queryKey: ['ikpa-stats', selectedKppn, selectedSatker, selectedYear],
+        queryFn: async () => apiClient.get(`/ikpa/stats?kdkppn=${selectedKppn === 'all' ? '' : selectedKppn}&kdsatker=${selectedSatker === 'all' ? '' : selectedSatker}&thang=${selectedYear}`)
+    });
+
+    // Memoize unique KPPN list from data
+    const uniqueKppnList = useMemo(() => {
+        const seen = new Set<string>();
+        return (kppnData as { kdkppn: string; nmkppn: string }[]).filter(item => {
+            if (seen.has(item.kdkppn)) return false;
+            seen.add(item.kdkppn);
+            return true;
+        }).sort((a, b) => a.kdkppn.localeCompare(b.kdkppn));
+    }, []);
+
+    // Filter satker based on selected KPPN
+    const filteredSatkerList = useMemo(() => {
+        if (selectedKppn === "all") {
+            return (satkerData as { kdsatker: string; nmsatker: string; kdkppn: string }[]).slice(0, 100);
+        }
+        return (satkerData as { kdsatker: string; nmsatker: string; kdkppn: string }[])
+            .filter(s => s.kdkppn === selectedKppn);
+    }, [selectedKppn]);
 
     // Fetch Data from Backend
-    const { data, isLoading, isError } = useQuery<IkpaApiResponse>({
-        queryKey: ['ikpa', currentPage, searchQuery],
-        queryFn: async () => {
-            return apiClient.get(`/ikpa?page=${currentPage}&limit=10&search=${searchQuery}`);
-        },
+    const { data, isLoading } = useQuery<IkpaResponse>({
+        queryKey: ['ikpa-data', currentPage, searchQuery, selectedKppn, selectedSatker, selectedYear], // Add filters to queryKey
+        queryFn: async () => apiClient.get(`/ikpa?page=${currentPage}&limit=10&search=${searchQuery}&kdkppn=${selectedKppn === 'all' ? '' : selectedKppn}&kdsatker=${selectedSatker === 'all' ? '' : selectedSatker}&thang=${selectedYear}`),
         keepPreviousData: true
-    } as any); // Type assertion needed for keepPreviousData in newer tanstack versions if not using placeholderData
+    } as any);
 
     const ikpaData = data?.result || [];
     const totalRows = data?.totalRows || 0;
     const totalPages = data?.totalPages || 0;
 
-    // Client-side filtering for status (since backend only does search text currently)
-    // Ideally backend should handle status filtering too, but for now we do it here or update backend
-    const filteredData = ikpaData.filter(item => {
+    const filteredData = ikpaData.filter((item: IkpaRequest) => {
         if (statusFilter === "all") return true;
-        // Case insensitive comparison
-        return item.status?.toLowerCase() === statusFilter.toLowerCase();
+        return item.approval?.toLowerCase() === statusFilter.toLowerCase();
     });
 
-    // Calculate Summary Stats (from current page/fetched data - ideally should be a separate API call for accurate global stats)
-    // For now we will just show stats based on the current view or mock if we want global stats
-    // Let's rely on the filteredData for displayed stats or simple counts for now
-    const stats = {
-        total: totalRows, // Total from API
-        // Estimations based on loaded data is inaccurate for paginated tables. 
-        // We really need a stats API endpoint. For now, placeholders or simple counts from current page.
-        approved: ikpaData.filter(d => d.status?.toLowerCase() === "disetujui").length,
-        rejected: ikpaData.filter(d => d.status?.toLowerCase() === "ditolak").length,
-        pending: ikpaData.filter(d => d.status?.toLowerCase() === "pending").length,
-    };
+    const summary = statsData?.summary || { total: 0, approved: 0, rejected: 0, pending: 0 };
 
     return (
-        <div className="flex flex-col gap-6 p-1">
-            {/* Header Filters Section */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-card p-6 rounded-xl border shadow-sm">
-                <div className="md:col-span-3 space-y-2">
-                    <label className="text-sm font-medium">Periode Tahun</label>
+        <div className="section">
+            {/* Context Filters - Inline with the dashboard style */}
+            <div className="flex flex-wrap items-center gap-3 mb-6 bg-card p-3 rounded-lg border shadow-sm">
+                <div className="w-32">
                     <Select value={selectedYear} onValueChange={setSelectedYear}>
-                        <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Pilih Tahun" />
+                        <SelectTrigger className="bg-background">
+                            <SelectValue placeholder="Tahun" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="2025">2025</SelectItem>
@@ -119,306 +162,264 @@ export function IkpaLanding() {
                         </SelectContent>
                     </Select>
                 </div>
-                <div className="md:col-span-3 space-y-2">
-                    <label className="text-sm font-medium">Nama Instansi / Satker</label>
-                    <div className="relative">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Cari satker, kanwil..."
-                            className="pl-9"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                    </div>
-                </div>
-                <div className="md:col-span-3 space-y-2">
-                    <label className="text-sm font-medium">Kode KPPN</label>
-                    <Select>
-                        <SelectTrigger>
+                <div className="w-48">
+                    <Select value={selectedKppn} onValueChange={(val) => {
+                        setSelectedKppn(val);
+                        setSelectedSatker("all");
+                        setSearchQuery("");
+                    }}>
+                        <SelectTrigger className="bg-background">
                             <SelectValue placeholder="Semua KPPN" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="max-h-[300px]">
                             <SelectItem value="all">Semua KPPN</SelectItem>
-                            <SelectItem value="018">018 - Jakarta III</SelectItem>
-                            <SelectItem value="019">019 - Bandung I</SelectItem>
+                            {uniqueKppnList.map((kppn) => (
+                                <SelectItem key={kppn.kdkppn} value={kppn.kdkppn}>
+                                    {kppn.kdkppn} - {kppn.nmkppn}
+                                </SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                 </div>
-                <div className="md:col-span-3 flex justify-end pb-0.5">
-                    <Button variant="outline" className="w-full md:w-auto">
-                        <Download className="mr-2 h-4 w-4" />
-                        Export Data
-                    </Button>
+                <div className="w-64">
+                    <Select value={selectedSatker} onValueChange={(val) => {
+                        setSelectedSatker(val);
+                        const satker = (satkerData as { kdsatker: string; nmsatker: string }[]).find(s => s.kdsatker === val);
+                        setSearchQuery(satker ? satker.nmsatker : "");
+                    }}>
+                        <SelectTrigger className="bg-background">
+                            <SelectValue placeholder="Pilih Satker" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[300px]">
+                            <SelectItem value="all">Semua Satker</SelectItem>
+                            {filteredSatkerList.map((satker) => (
+                                <SelectItem key={satker.kdsatker} value={satker.kdsatker}>
+                                    {satker.kdsatker} - {satker.nmsatker}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
+                <Button variant="outline" size="icon" title="Export Excel">
+                    <Download className="h-4 w-4" />
+                </Button>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <SummaryCard
-                    title="Total Permohonan (All)"
-                    value={stats.total}
-                    icon={FileText}
-                    className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300"
-                />
-                <SummaryCard
-                    title="Disetujui (Page)"
-                    value={stats.approved}
-                    icon={CheckCircle2}
-                    className="bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300"
-                />
-                <SummaryCard
-                    title="Ditolak (Page)"
-                    value={stats.rejected}
-                    icon={XCircle}
-                    className="bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300"
-                />
-                <SummaryCard
-                    title="Pending (Page)"
-                    value={stats.pending}
-                    icon={Clock}
-                    className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300"
-                />
-            </div>
-
-            {/* Main Content Tabs */}
-            <Tabs defaultValue="all" className="w-full" onValueChange={(val) => setStatusFilter(val === "all" ? "all" : val === "disetujui" ? "Disetujui" : val === "ditolak" ? "Ditolak" : "all")}>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
-                    <TabsList className="grid w-full sm:w-auto grid-cols-3">
-                        <TabsTrigger value="all">Semua Data</TabsTrigger>
-                        <TabsTrigger value="disetujui">Disetujui</TabsTrigger>
-                        <TabsTrigger value="ditolak">Ditolak</TabsTrigger>
-                    </TabsList>
+            {/* Top Dashboard Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
+                {/* Metrics */}
+                <div className="lg:col-span-12 xl:col-span-5 grid grid-cols-2 gap-4">
+                    <MetricCard title="Total Permohonan" value={summary.total.toLocaleString()} icon={FileText} color="blue" />
+                    <MetricCard title="Disetujui" value={summary.approved.toLocaleString()} icon={CheckCircle2} color="emerald" />
+                    <MetricCard title="Ditolak" value={summary.rejected.toLocaleString()} icon={XCircle} color="rose" />
+                    <MetricCard title="Pending" value={summary.pending.toLocaleString()} icon={Clock} color="amber" />
                 </div>
 
-                <Card>
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-lg font-medium flex items-center gap-2">
-                            <FileCheck className="h-5 w-5 text-primary" />
-                            Daftar Permohonan Dispensasi
-                        </CardTitle>
+                {/* Main Trend Chart */}
+                <Card className="lg:col-span-12 xl:col-span-7">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-lg">Trend Permohonan Bulanan</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div className="rounded-md border">
+                    <CardContent className="h-[250px] p-4">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={statsData?.monthlyTrend || []}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }} />
+                                <RechartsTooltip
+                                    contentStyle={{ backgroundColor: 'var(--card)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
+                                />
+                                <Line type="monotone" dataKey="count" stroke="var(--primary)" strokeWidth={3} dot={{ fill: 'var(--primary)', r: 4 }} activeDot={{ r: 6 }} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Middle Section: Table & Analytics */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                {/* Table Section */}
+                <div className="xl:col-span-8 space-y-6">
+                    <div className="card-container overflow-hidden">
+                        <div className="p-4 border-b flex items-center justify-between bg-muted/30">
+                            <Tabs defaultValue="all" onValueChange={(val) => setStatusFilter(val)}>
+                                <TabsList className="bg-background/50 border">
+                                    <TabsTrigger value="all">Semua</TabsTrigger>
+                                    <TabsTrigger value="Disetujui">Disetujui</TabsTrigger>
+                                    <TabsTrigger value="Ditolak">Ditolak</TabsTrigger>
+                                </TabsList>
+                            </Tabs>
+                            <h3 className="font-semibold text-sm">Daftar Permohonan</h3>
+                        </div>
+                        <div className="p-0">
                             <Table>
                                 <TableHeader>
-                                    <TableRow className="bg-muted/50">
-                                        <TableHead className="w-[200px]">Kanwil / Eselon I</TableHead>
-                                        <TableHead>No. Nota Dinas</TableHead>
-                                        <TableHead>KPPN / Satker</TableHead>
+                                    <TableRow>
+                                        <TableHead>No. ND</TableHead>
+                                        <TableHead>Satker / KPPN</TableHead>
                                         <TableHead>Indikator</TableHead>
-                                        <TableHead>Dokumen</TableHead>
                                         <TableHead>Status</TableHead>
-                                        <TableHead className="text-right">Aksi</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {isLoading ? (
-                                        <TableRow>
-                                            <TableCell colSpan={7} className="h-24 text-center">
-                                                <div className="flex justify-center items-center gap-2">
-                                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                                    <span>Memuat data...</span>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : filteredData.length > 0 ? (
-                                        filteredData.map((item) => (
-                                            <TableRow key={item.id} className="hover:bg-muted/50">
-                                                <TableCell className="font-medium align-top">
-                                                    <div className="flex flex-col">
-                                                        <span>{item.kanwil}</span>
-                                                        <span className="text-xs text-muted-foreground mt-1">ID: {item.id}</span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="align-top">
-                                                    <div className="flex flex-col gap-1">
-                                                        <span className="text-sm font-medium">{item.nota_dinas}</span>
-                                                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                                            <Calendar className="h-3 w-3" /> {new Date(item.tanggal).toLocaleDateString("id-ID")}
-                                                        </span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="align-top">
-                                                    <div className="flex flex-col gap-1">
-                                                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                                            <Landmark className="h-3 w-3" /> {item.kppn}
-                                                        </div>
-                                                        <div className="flex items-center gap-1 text-sm">
-                                                            <Building2 className="h-3 w-3 text-muted-foreground" /> {item.satker}
-                                                        </div>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="align-top">
-                                                    <Badge variant="outline" className="font-normal">
-                                                        {item.indikator}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell className="align-top text-sm font-mono text-muted-foreground">
-                                                    {item.dokumen}
-                                                </TableCell>
-                                                <TableCell className="align-top">
-                                                    <StatusBadge status={item.status} />
-                                                </TableCell>
-                                                <TableCell className="text-right align-top">
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
+                                        <TableRow><TableCell colSpan={4} className="h-32 text-center"><Loader2 className="animate-spin mx-auto h-8 w-8 text-primary" /></TableCell></TableRow>
                                     ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={7} className="h-24 text-center">
-                                                Tidak ada data yang ditemukan.
-                                            </TableCell>
-                                        </TableRow>
+                                        filteredData.length > 0 ? (
+                                            filteredData.map((item: IkpaRequest) => (
+                                                <TableRow key={item.id} className="hover:bg-muted transition-colors">
+                                                    <TableCell>
+                                                        <div className="flex flex-col">
+                                                            <span className="font-medium">{item.no_nd}</span>
+                                                            <span className="text-[10px] text-muted-foreground">{new Date(item.tg_nd).toLocaleDateString()}</span>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-sm">{item.nmsatker}</span>
+                                                            <span className="text-[10px] text-muted-foreground uppercase">{item.nmkppn?.toLowerCase()} ({item.kdkppn})</span>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-xs text-muted-foreground max-w-[150px] truncate">{item.nm_indikator}</TableCell>
+                                                    <TableCell><StatusBadge status={item.approval} /></TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow><TableCell colSpan={4} className="h-32 text-center text-muted-foreground">Tidak ada data ditemukan.</TableCell></TableRow>
+                                        )
                                     )}
                                 </TableBody>
                             </Table>
-                        </div>
-                        <div className="mt-4 flex items-center justify-between px-2">
-                            <div className="text-sm text-muted-foreground">
-                                Menampilkan {filteredData.length} dari {totalRows} data
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
-                                    disabled={currentPage === 0 || isLoading}
-                                >
-                                    Sebelumnya
-                                </Button>
-                                <span className="text-sm">Page {currentPage + 1} of {totalPages || 1}</span>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setCurrentPage(p => p + 1)}
-                                    disabled={currentPage >= totalPages - 1 || isLoading}
-                                >
-                                    Selanjutnya
-                                </Button>
+                            <div className="p-4 border-t flex items-center justify-between text-xs text-muted-foreground">
+                                <span>Total {totalRows} data</span>
+                                <div className="flex items-center gap-2">
+                                    <Button variant="ghost" size="sm" onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0 || isLoading}>Prev</Button>
+                                    <span>Hal. {currentPage + 1} / {totalPages || 1}</span>
+                                    <Button variant="ghost" size="sm" onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage >= totalPages - 1 || isLoading}>Next</Button>
+                                </div>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
 
-                {/* Detailed Breakdown Sections */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-                    {/* Approved Details */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-base text-emerald-700 flex items-center gap-2">
-                                <CheckCircle2 className="h-4 w-4" />
-                                Rincian Permohonan Disetujui
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                {ikpaData.filter(i => i.status?.toLowerCase() === "disetujui").slice(0, 3).map(item => (
-                                    <div key={item.id} className="flex items-start justify-between border-b pb-3 last:border-0 last:pb-0">
-                                        <div>
-                                            <p className="text-sm font-medium">{item.satker}</p>
-                                            <p className="text-xs text-muted-foreground">{item.indikator}</p>
-                                        </div>
-                                        <span className="text-xs text-emerald-600 font-medium bg-emerald-50 px-2 py-1 rounded-full">
-                                            {item.keterangan || "Disetujui"}
-                                        </span>
-                                    </div>
-                                ))}
-                                {ikpaData.filter(i => i.status?.toLowerCase() === "disetujui").length === 0 && (
-                                    <p className="text-sm text-muted-foreground text-center py-4">Tidak ada data disetujui</p>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Rejected Details */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-base text-rose-700 flex items-center gap-2">
-                                <XCircle className="h-4 w-4" />
-                                Rincian Permohonan Ditolak
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                {ikpaData.filter(i => i.status?.toLowerCase() === "ditolak").slice(0, 3).map(item => (
-                                    <div key={item.id} className="flex items-start justify-between border-b pb-3 last:border-0 last:pb-0">
-                                        <div>
-                                            <p className="text-sm font-medium">{item.satker}</p>
-                                            <p className="text-xs text-muted-foreground">{item.indikator}</p>
-                                        </div>
-                                        <span className="text-xs text-rose-600 font-medium bg-rose-50 px-2 py-1 rounded-full">
-                                            {item.keterangan || "Ditolak"}
-                                        </span>
-                                    </div>
-                                ))}
-                                {ikpaData.filter(i => i.status?.toLowerCase() === "ditolak").length === 0 && (
-                                    <p className="text-sm text-muted-foreground text-center py-4">Tidak ada data ditolak</p>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
+                    {/* Footer Detail Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <SmallDetailCard title="Rincian Disetujui" icon={CheckCircle2} color="emerald" data={ikpaData.filter((i: IkpaRequest) => i.approval === 'Disetujui').slice(0, 5)} />
+                        <SmallDetailCard title="Rincian Ditolak" icon={XCircle} color="rose" data={ikpaData.filter((i: IkpaRequest) => i.approval === 'Ditolak').slice(0, 5)} />
+                    </div>
                 </div>
 
-            </Tabs>
+                {/* Right Analytics Section */}
+                <div className="xl:col-span-4 space-y-6">
+                    <ShareChartCard
+                        title="Share Permohonan Per KPPN"
+                        data={statsData?.sharePerKppn.map(item => ({ name: item.kdkppn, value: parseInt(item.count) })) || []}
+                    />
+                    <ShareChartCard
+                        title="Share Permohonan Per Indikator"
+                        data={statsData?.sharePerIndikator.map(item => ({ name: item.indikator, value: parseInt(item.count) })) || []}
+                        horizontal={true}
+                    />
+                </div>
+            </div>
         </div>
     );
 }
 
-function SummaryCard({
-    title,
-    value,
-    icon: Icon,
-    className
-}: {
-    title: string;
-    value: number;
-    icon: any;
-    className?: string;
-}) {
+function MetricCard({ title, value, icon: Icon, color }: { title: string; value: string; icon: any; color: string }) {
+    const colorMap: Record<string, string> = {
+        blue: "text-blue-600 bg-blue-50 border-blue-100 dark:bg-blue-900/20 dark:border-blue-800",
+        emerald: "text-emerald-600 bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800",
+        rose: "text-rose-600 bg-rose-50 border-rose-100 dark:bg-rose-900/20 dark:border-rose-800",
+        amber: "text-amber-600 bg-amber-50 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800"
+    };
+
     return (
-        <Card className={cn("border-l-4 shadow-sm hover:shadow-md transition-shadow", className)}>
-            <CardContent className="p-6">
-                <div className="flex items-center justify-between space-y-0 pb-2">
-                    <p className="text-sm font-medium opacity-80">{title}</p>
-                    <Icon className="h-4 w-4 opacity-70" />
+        <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-5 flex flex-col gap-3">
+                <div className={cn("w-10 h-10 flex items-center justify-center rounded-lg border", colorMap[color])}>
+                    <Icon className="h-5 w-5" />
                 </div>
-                <div className="flex items-center pt-2">
-                    <div className="text-2xl font-bold">{value}</div>
+                <div className="space-y-0.5">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{title}</p>
+                    <h3 className="text-2xl font-bold">{value}</h3>
                 </div>
             </CardContent>
         </Card>
     );
 }
 
+function ShareChartCard({ title, data, horizontal = false }: { title: string; data: any[]; horizontal?: boolean }) {
+    return (
+        <Card className="overflow-hidden">
+            <CardHeader className="pb-0 pt-4 px-4">
+                <CardTitle className="text-xs font-bold uppercase text-muted-foreground">{title}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+                <div className="h-[250px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart layout={horizontal ? "vertical" : "horizontal"} data={data} margin={{ left: horizontal ? 20 : 0 }}>
+                            <XAxis type={horizontal ? "number" : "category"} dataKey={horizontal ? "value" : "name"} hide />
+                            <YAxis type={horizontal ? "category" : "number"} dataKey={horizontal ? "name" : "value"} hide />
+                            <RechartsTooltip cursor={{ fill: 'var(--muted)', opacity: 0.3 }} contentStyle={{ borderRadius: 'var(--radius)', border: '1px solid var(--border)', backgroundColor: 'var(--card)' }} />
+                            <Bar dataKey="value" radius={horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0]} barSize={20}>
+                                {data.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={`var(--chart-${(index % 5) + 1})`} />
+                                ))}
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+                <div className="mt-4 space-y-1.5 max-h-[120px] overflow-y-auto no-scrollbar">
+                    {data.map((item, i) => (
+                        <div key={i} className="flex items-center justify-between text-[11px] border-b border-muted pb-1 last:border-0">
+                            <span className="truncate max-w-[180px] text-muted-foreground">{item.name}</span>
+                            <span className="font-bold">{item.value}</span>
+                        </div>
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function SmallDetailCard({ title, icon: Icon, color, data }: { title: string; icon: any; color: string; data: IkpaRequest[] }) {
+    return (
+        <Card className="overflow-hidden">
+            <CardHeader className={cn("py-2 px-4 border-b", color === 'emerald' ? 'bg-emerald-50/30' : 'bg-rose-50/30')}>
+                <div className="flex items-center gap-2">
+                    <Icon className={cn("h-4 w-4", color === 'emerald' ? 'text-emerald-500' : 'text-rose-500')} />
+                    <span className="text-[10px] font-bold uppercase">{title}</span>
+                </div>
+            </CardHeader>
+            <CardContent className="p-3 space-y-2">
+                {data.map((item, i) => (
+                    <div key={i} className="flex justify-between items-center text-[10px] pb-1.5 border-b border-muted last:border-0 last:pb-0">
+                        <div className="flex flex-col truncate pr-2">
+                            <span className="font-semibold truncate">{item.nmsatker}</span>
+                            <span className="text-muted-foreground truncate">{item.no_nd}</span>
+                        </div>
+                        <Badge variant="outline" className="text-[9px] font-normal border-muted">{item.kdkppn}</Badge>
+                    </div>
+                ))}
+                {data.length === 0 && <p className="text-center text-muted-foreground py-4 text-[10px]">Tidak ada data</p>}
+            </CardContent>
+        </Card>
+    );
+}
+
 function StatusBadge({ status }: { status: string }) {
-    // Normalize status to lowercase for matching
     const s = (status || "").toLowerCase();
-
-    let style = "bg-gray-100 text-gray-700 hover:bg-gray-100/80 border-gray-200";
-    let Icon = Clock;
-    let label = status;
-
-    if (s === "disetujui") {
-        style = "bg-emerald-100 text-emerald-700 hover:bg-emerald-100/80 border-emerald-200";
-        Icon = CheckCircle2;
-        label = "Disetujui";
-    } else if (s === "ditolak") {
-        style = "bg-rose-100 text-rose-700 hover:bg-rose-100/80 border-rose-200";
-        Icon = XCircle;
-        label = "Ditolak";
-    } else if (s === "pending") {
-        style = "bg-amber-100 text-amber-700 hover:bg-amber-100/80 border-amber-200";
-        Icon = Clock;
-        label = "Pending";
-    }
+    const isApproved = s === "disetujui";
+    const isRejected = s === "ditolak";
 
     return (
-        <Badge variant="outline" className={cn("pl-1 pr-2.5 py-0.5 gap-1", style)}>
-            <Icon className="h-3 w-3" />
-            {label}
+        <Badge variant="outline" className={cn(
+            "text-[10px] font-medium py-0 px-2",
+            isApproved ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30" :
+                isRejected ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/30" :
+                    "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30"
+        )}>
+            {status || "Pending"}
         </Badge>
     );
 }
