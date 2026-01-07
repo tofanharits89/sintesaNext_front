@@ -56,10 +56,10 @@ export default function PrognosisPage() {
         const fetchOptions = async () => {
             try {
                 setLoading(true);
-                const depts = await apiClient.get("prognosis/getKementerian");
+                const depts = await apiClient.get("/prognosis/getKementerian");
                 setKementerianOptions(depts || []);
 
-                const belanjas = await apiClient.get("prognosis/getJenisBelanja");
+                const belanjas = await apiClient.get("/prognosis/getJenisBelanja");
                 setJenisBelanjaOptions(belanjas || []);
 
                 const baselines = [];
@@ -133,18 +133,18 @@ export default function PrognosisPage() {
             `;
 
             const actualJenbel = selectedJenisBelanja === "all" ? "" : selectedJenisBelanja;
-            query = `SELECT kddept, nmdept, '${actualJenbel || "Semua Jenis Belanja"}' as jenbel, tahun, ROUND(SUM(pagu)/${pembulatan}, 0) as pagu ${realbulananakumulatif} FROM prognosis.mapping_ba_long WHERE kddept = '${selectedKddept}' AND tahun >= ${selectedBaseline} AND tahun <= ${currentYear}`;
+            query = `SELECT kddept, nmdept, '${actualJenbel || "Semua Jenis Belanja"}' as jenbel, tahun, ROUND(SUM(pagu)/${pembulatan}, 0) as pagu ${realbulananakumulatif} FROM prognosis.mapping_ba_long WHERE kddept = '${selectedKddept}' AND tahun >= '${selectedBaseline}' AND tahun <= '${currentYear}'`;
             if (actualJenbel) query += ` AND jenbel = '${actualJenbel}'`;
             query += ` GROUP BY kddept, nmdept, tahun ORDER BY tahun`;
         } else {
             const actualJenbel = selectedJenisBelanja === "all" ? "" : selectedJenisBelanja;
-            query = `SELECT kddept, nmdept, '${actualJenbel || "Semua Jenis Belanja"}' as jenbel, tahun, ROUND(SUM(pagu)/${pembulatan}, 0) as pagu, ROUND(SUM(real1 + real2 + real3 + real4 + real5 + real6 + real7 + real8 + real9 + real10 + real11 + real12)/${pembulatan}, 0) as total_realisasi FROM prognosis.mapping_ba_long WHERE kddept = '${selectedKddept}' AND tahun >= ${selectedBaseline} AND tahun <= ${currentYear}`;
+            query = `SELECT kddept, nmdept, '${actualJenbel || "Semua Jenis Belanja"}' as jenbel, tahun, ROUND(SUM(pagu)/${pembulatan}, 0) as pagu, ROUND(SUM(real1 + real2 + real3 + real4 + real5 + real6 + real7 + real8 + real9 + real10 + real11 + real12)/${pembulatan}, 0) as total_realisasi FROM prognosis.mapping_ba_long WHERE kddept = '${selectedKddept}' AND tahun >= '${selectedBaseline}' AND tahun <= '${currentYear}'`;
             if (actualJenbel) query += ` AND jenbel = '${actualJenbel}'`;
             query += ` GROUP BY kddept, nmdept, tahun ORDER BY tahun`;
         }
 
         setSqlQuery(query);
-        const data = await apiClient.get(`prognosis/getDataKinerja?queryParams=${encodeURIComponent(query)}`);
+        const data = await apiClient.get(`/prognosis/getDataKinerja?queryParams=${encodeURIComponent(query)}`);
         setTableData(data || []);
         return data;
     };
@@ -193,7 +193,7 @@ export default function PrognosisPage() {
             },
         };
 
-        const res = await apiClient.post("prognosis/predict", predictionRequest);
+        const res = await apiClient.post("/prognosis/predict", predictionRequest);
         if (res?.prediction) {
             setPredictionData(res);
             prepareChartData(historical, res.prediction);
