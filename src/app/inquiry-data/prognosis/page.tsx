@@ -16,108 +16,143 @@ import { PrognosisTableDetail } from "@/components/prognosis/table-detail";
 import { PrognosisSQLModal } from "@/components/prognosis/sql-modal";
 
 export default function PrognosisPage() {
-    const { user } = useAuth();
-    const role = user?.role;
-    const currentYear = new Date().getFullYear();
+  const { user } = useAuth();
+  const role = user?.role;
+  const currentYear = new Date().getFullYear();
 
-    // --- State Management ---
+  // --- State Management ---
 
-    // Filter States
-    const [jenisLaporan, setJenisLaporan] = useState("1");
-    const [selectedKddept, setSelectedKddept] = useState("");
-    const [selectedJenisBelanja, setSelectedJenisBelanja] = useState("all");
-    const [selectedBaseline, setSelectedBaseline] = useState("");
-    const [selectedMetode, setSelectedMetode] = useState("arima");
-    const [selectedTargetProyeksi, setSelectedTargetProyeksi] = useState("3");
+  // Filter States
+  const [jenisLaporan, setJenisLaporan] = useState("1");
+  const [selectedKddept, setSelectedKddept] = useState("");
+  const [selectedJenisBelanja, setSelectedJenisBelanja] = useState("all");
+  const [selectedBaseline, setSelectedBaseline] = useState("");
+  const [selectedMetode, setSelectedMetode] = useState("arima");
+  const [selectedTargetProyeksi, setSelectedTargetProyeksi] = useState("12");
 
-    // Options States
-    const [kementerianOptions, setKementerianOptions] = useState<any[]>([]);
-    const [jenisBelanjaOptions, setJenisBelanjaOptions] = useState<any[]>([]);
-    const [baselineOptions, setBaselineOptions] = useState<any[]>([]);
+  // Options States
+  const [kementerianOptions, setKementerianOptions] = useState<any[]>([]);
+  const [jenisBelanjaOptions, setJenisBelanjaOptions] = useState<any[]>([]);
+  const [baselineOptions, setBaselineOptions] = useState<any[]>([]);
 
-    // UI States
-    const [loading, setLoading] = useState(false);
-    const [loadingResults, setLoadingResults] = useState(false);
-    const [showResults, setShowResults] = useState(false);
-    const [showModalSQL, setShowModalSQL] = useState(false);
-    const [sqlQuery, setSqlQuery] = useState("");
+  // UI States
+  const [loading, setLoading] = useState(false);
+  const [loadingResults, setLoadingResults] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [showModalSQL, setShowModalSQL] = useState(false);
+  const [sqlQuery, setSqlQuery] = useState("");
 
-    // Data States
-    const [tableData, setTableData] = useState<any[]>([]);
-    const [chartData, setChartData] = useState<any[]>([]);
-    const [predictionData, setPredictionData] = useState<any>(null);
+  // Data States
+  const [tableData, setTableData] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [predictionData, setPredictionData] = useState<any>(null);
+  const [dynamicStartMonth, setDynamicStartMonth] = useState<number>(1);
+  const [dynamicStartYear, setDynamicStartYear] = useState<number>(currentYear);
 
-    // Chart zoom state
-    const [selectedZoomYear, setSelectedZoomYear] = useState<number | null>(null);
+  // Chart zoom state
+  const [selectedZoomYear, setSelectedZoomYear] = useState<number | null>(null);
 
-    // --- Effects ---
+  // --- Effects ---
 
-    useEffect(() => {
-        const fetchOptions = async () => {
-            try {
-                setLoading(true);
-                const depts = await apiClient.get("/prognosis/getKementerian");
-                setKementerianOptions(depts || []);
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        setLoading(true);
+        const depts = await apiClient.get("/prognosis/getKementerian");
+        setKementerianOptions(depts || []);
 
-                const belanjas = await apiClient.get("/prognosis/getJenisBelanja");
-                setJenisBelanjaOptions(belanjas || []);
+        const belanjas = await apiClient.get("/prognosis/getJenisBelanja");
+        setJenisBelanjaOptions(belanjas || []);
 
-                const baselines = [];
-                for (let y = currentYear - 5; y <= currentYear; y++) {
-                    baselines.push({ label: y.toString(), value: y.toString() });
-                }
-                setBaselineOptions(baselines);
-
-                if (depts?.length > 0) setSelectedKddept(depts[0].value);
-                setSelectedBaseline((currentYear - 3).toString());
-            } catch (error) {
-                console.error("Failed to fetch options", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchOptions();
-    }, [currentYear]);
-
-    // --- Handlers ---
-
-    const handleTayang = async () => {
-        if (!selectedKddept || !selectedBaseline) {
-            Swal.fire({
-                icon: "warning",
-                title: "Parameter Tidak Lengkap",
-                text: "Silakan pilih Kementerian dan Baseline terlebih dahulu",
-            });
-            return;
+        const baselines = [];
+        // Tahun dimulai dari 2009 hingga tahun berjalan
+        for (let y = 2009; y <= currentYear; y++) {
+          baselines.push({ label: y.toString(), value: y.toString() });
         }
+        setBaselineOptions(baselines);
 
-        try {
-            setLoadingResults(true);
-            setShowResults(false);
-
-            const historical = await fetchHistoricalData();
-            if (historical && historical.length > 0) {
-                await fetchPredictionData(historical);
-                setShowResults(true);
-            }
-        } catch (error) {
-            console.error("Error in handleTayang:", error);
-            Swal.fire({
-                icon: "error",
-                title: "Kesalahan",
-                text: "Gagal memproses data prognosis",
-            });
-        } finally {
-            setLoadingResults(false);
-        }
+        if (depts?.length > 0) setSelectedKddept(depts[0].value);
+        setSelectedBaseline((currentYear - 3).toString());
+      } catch (error) {
+        console.error("Failed to fetch options", error);
+      } finally {
+        setLoading(false);
+      }
     };
+    fetchOptions();
+  }, [currentYear]);
 
-    const fetchHistoricalData = async () => {
-        const pembulatan = 1;
-        let query = "";
+  // Fetch jenis belanja ketika kementerian berubah
+  useEffect(() => {
+    const fetchJenisBelanjaByKddept = async () => {
+      if (selectedKddept) {
+        try {
+          const belanjas = await apiClient.get(
+            `/prognosis/getJenisBelanja?kddept=${selectedKddept}`
+          );
+          setJenisBelanjaOptions(belanjas || []);
+          // Reset pilihan jenis belanja ke "all" ketika kementerian berubah
+          setSelectedJenisBelanja("all");
+        } catch (error) {
+          console.error("Failed to fetch jenis belanja for kddept", error);
+        }
+      }
+    };
+    fetchJenisBelanjaByKddept();
+  }, [selectedKddept]);
 
-        if (jenisLaporan === "1") {
-            const realbulananakumulatif = `
+  // --- Handlers ---
+
+  const handleTayang = async () => {
+    if (!selectedKddept || !selectedBaseline) {
+      Swal.fire({
+        icon: "warning",
+        title: "Parameter Tidak Lengkap",
+        text: "Silakan pilih Kementerian dan Baseline terlebih dahulu",
+      });
+      return;
+    }
+
+    try {
+      setLoadingResults(true);
+      setShowResults(false);
+
+      const historical = await fetchHistoricalData();
+      console.log("[handleTayang] Historical data fetched:", historical);
+
+      if (historical && historical.length > 0) {
+        await fetchPredictionData(historical);
+        setShowResults(true);
+      } else {
+        console.warn("[handleTayang] No historical data returned");
+        Swal.fire({
+          icon: "warning",
+          title: "Data Historis Kosong",
+          text: "Tidak ada data historis untuk parameter yang dipilih",
+        });
+      }
+    } catch (error) {
+      console.error("[handleTayang] Error:", error);
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : "Gagal memproses data prognosis";
+      Swal.fire({
+        icon: "error",
+        title: "Kesalahan",
+        text: errorMsg,
+      });
+    } finally {
+      setLoadingResults(false);
+    }
+  };
+
+  const fetchHistoricalData = async () => {
+    const pembulatan = 1;
+    let query = "";
+
+    if (jenisLaporan === "1") {
+      const realbulananakumulatif = `
                 , ROUND(SUM(real1)/${pembulatan}, 0) AS JAN
                 , ROUND(SUM(real1 + real2)/${pembulatan}, 0) AS FEB
                 , ROUND(SUM(real1 + real2 + real3)/${pembulatan}, 0) AS MAR
@@ -132,247 +167,376 @@ export default function PrognosisPage() {
                 , ROUND(SUM(real1 + real2 + real3 + real4 + real5 + real6 + real7 + real8 + real9 + real10 + real11 + real12)/${pembulatan}, 0) AS DES
             `;
 
-            const actualJenbel = selectedJenisBelanja === "all" ? "" : selectedJenisBelanja;
-            query = `SELECT kddept, nmdept, '${actualJenbel || "Semua Jenis Belanja"}' as jenbel, tahun, ROUND(SUM(pagu)/${pembulatan}, 0) as pagu ${realbulananakumulatif} FROM prognosis.mapping_ba_long WHERE kddept = '${selectedKddept}' AND tahun >= '${selectedBaseline}' AND tahun <= '${currentYear}'`;
-            if (actualJenbel) query += ` AND jenbel = '${actualJenbel}'`;
-            query += ` GROUP BY kddept, nmdept, tahun ORDER BY tahun`;
-        } else {
-            const actualJenbel = selectedJenisBelanja === "all" ? "" : selectedJenisBelanja;
-            query = `SELECT kddept, nmdept, '${actualJenbel || "Semua Jenis Belanja"}' as jenbel, tahun, ROUND(SUM(pagu)/${pembulatan}, 0) as pagu, ROUND(SUM(real1 + real2 + real3 + real4 + real5 + real6 + real7 + real8 + real9 + real10 + real11 + real12)/${pembulatan}, 0) as total_realisasi FROM prognosis.mapping_ba_long WHERE kddept = '${selectedKddept}' AND tahun >= '${selectedBaseline}' AND tahun <= '${currentYear}'`;
-            if (actualJenbel) query += ` AND jenbel = '${actualJenbel}'`;
-            query += ` GROUP BY kddept, nmdept, tahun ORDER BY tahun`;
-        }
+      const actualJenbel =
+        selectedJenisBelanja === "all" ? "" : selectedJenisBelanja;
+      query = `SELECT kddept, nmdept, '${
+        actualJenbel || "Semua Jenis Belanja"
+      }' as jenbel, tahun, ROUND(SUM(pagu)/${pembulatan}, 0) as pagu ${realbulananakumulatif} FROM prognosis.mapping_ba_long WHERE kddept = '${selectedKddept}' AND tahun >= '${selectedBaseline}' AND tahun <= '${currentYear}'`;
+      if (actualJenbel) query += ` AND jenbel = '${actualJenbel}'`;
+      query += ` GROUP BY kddept, nmdept, tahun ORDER BY tahun`;
+    } else {
+      const actualJenbel =
+        selectedJenisBelanja === "all" ? "" : selectedJenisBelanja;
+      query = `SELECT kddept, nmdept, '${
+        actualJenbel || "Semua Jenis Belanja"
+      }' as jenbel, tahun, ROUND(SUM(pagu)/${pembulatan}, 0) as pagu, ROUND(SUM(real1 + real2 + real3 + real4 + real5 + real6 + real7 + real8 + real9 + real10 + real11 + real12)/${pembulatan}, 0) as total_realisasi FROM prognosis.mapping_ba_long WHERE kddept = '${selectedKddept}' AND tahun >= '${selectedBaseline}' AND tahun <= '${currentYear}'`;
+      if (actualJenbel) query += ` AND jenbel = '${actualJenbel}'`;
+      query += ` GROUP BY kddept, nmdept, tahun ORDER BY tahun`;
+    }
 
-        setSqlQuery(query);
-        const data = await apiClient.get(`/prognosis/getDataKinerja?queryParams=${encodeURIComponent(query)}`);
-        setTableData(data || []);
-        return data;
+    setSqlQuery(query);
+    try {
+      const response = await apiClient.post(`/prognosis/getDataKinerja`, {
+        queryParams: query,
+      });
+      console.log("[fetchHistoricalData] Raw Response:", response);
+
+      // Handle different response formats
+      let data = response;
+      if (response && typeof response === "object") {
+        // If response is wrapped in a data property, unwrap it
+        if ("data" in response && Array.isArray(response.data)) {
+          data = response.data;
+        }
+        // If response is directly an array, use it
+        else if (Array.isArray(response)) {
+          data = response;
+        }
+      }
+
+      console.log("[fetchHistoricalData] Processed Data:", data);
+
+      if (!Array.isArray(data)) {
+        console.error("[fetchHistoricalData] Response is not an array:", data);
+        throw new Error("Invalid response format from server");
+      }
+
+      setTableData(data);
+      return data;
+    } catch (error) {
+      console.error("[fetchHistoricalData] Error:", error);
+      throw error;
+    }
+  };
+
+  const fetchPredictionData = async (historical: any[]) => {
+    let mlData: any[] = [];
+    if (jenisLaporan === "1") {
+      historical.forEach((item) => {
+        const months = [
+          "JAN",
+          "FEB",
+          "MAR",
+          "APR",
+          "MEI",
+          "JUN",
+          "JUL",
+          "AGS",
+          "SEP",
+          "OKT",
+          "NOV",
+          "DES",
+        ];
+        months.forEach((month, index) => {
+          // Check for both uppercase (SQL AS 'JAN') and lowercase (Postgres default) keys
+          const val = item[month] ?? item[month.toLowerCase()];
+
+          // Keep 0 values; dropping them can produce empty payloads and 400 from backend
+          if (val !== null && val !== undefined) {
+            mlData.push({
+              tahun: parseInt(item.tahun),
+              bulan: index + 1,
+              pagu: parseFloat(item.pagu || 0),
+              realisasi: parseFloat(val || 0),
+              kddept: parseInt(selectedKddept),
+              jenbel: item.jenbel,
+            });
+          }
+        });
+      });
+    } else {
+      mlData = historical.map((item) => ({
+        tahun: parseInt(item.tahun),
+        bulan: 12,
+        pagu: parseFloat(item.pagu || 0),
+        realisasi: parseFloat(item.total_realisasi || 0),
+        kddept: parseInt(selectedKddept),
+        jenbel: item.jenbel,
+      }));
+    }
+
+    // Defensive: backend returns 400 if data is empty
+    if (!mlData || mlData.length === 0) {
+      await Swal.fire({
+        icon: "warning",
+        title: "Data Tidak Tersedia",
+        text: "Data realisasi untuk parameter yang dipilih masih kosong. Silakan ubah baseline / kementerian / jenis belanja, lalu coba lagi.",
+      });
+      return;
+    }
+
+    // Proyeksi untuk tahun berjalan (2026) dari Januari sampai Desember
+    let predictionStartMonth = 1;
+    let predictionStartYear = currentYear;
+
+    if (jenisLaporan === "1") {
+      // Untuk laporan bulanan, proyeksi dimulai dari Januari tahun berjalan
+      predictionStartMonth = 1;
+      predictionStartYear = currentYear;
+    } else {
+      // Untuk laporan tahunan, proyeksi dimulai dari tahun berjalan
+      predictionStartMonth = 1;
+      predictionStartYear = currentYear;
+    }
+
+    // Simpan ke state untuk digunakan di chart
+    setDynamicStartMonth(predictionStartMonth);
+    setDynamicStartYear(predictionStartYear);
+
+    const predictionRequest = {
+      method: selectedMetode,
+      data: mlData,
+      parameters: {
+        targetPeriods: parseInt(selectedTargetProyeksi),
+        baseline_year: parseInt(selectedBaseline),
+        training_end_year: currentYear,
+        prediction_start_year: predictionStartYear,
+        prediction_start_month: predictionStartMonth,
+        kddept: selectedKddept,
+        jenis_belanja:
+          selectedJenisBelanja === "all" ? "" : selectedJenisBelanja,
+      },
     };
 
-    const fetchPredictionData = async (historical: any[]) => {
-        let mlData: any[] = [];
+    try {
+      console.log(
+        "[fetchPredictionData] Sending prediction request:",
+        predictionRequest
+      );
+      const res = await apiClient.post("/prognosis/predict", predictionRequest);
+      console.log("[fetchPredictionData] Raw Response:", res);
+
+      // Handle wrapped response
+      let prediction = res;
+      if (res && typeof res === "object") {
+        if ("prediction" in res) {
+          prediction = res.prediction;
+        }
+      }
+
+      if (prediction) {
+        setPredictionData(res);
+        prepareChartData(
+          historical,
+          prediction,
+          predictionStartMonth,
+          predictionStartYear
+        );
+      } else {
+        console.warn("[fetchPredictionData] No prediction data in response");
+      }
+    } catch (error) {
+      console.error("[fetchPredictionData] Error:", error);
+      throw error;
+    }
+  };
+
+  const prepareChartData = (
+    historical: any[],
+    prediction: any,
+    startMonth: number,
+    startYear: number
+  ) => {
+    const data: any[] = [];
+    historical.forEach((item) => {
+      if (jenisLaporan === "1") {
+        const months = [
+          "JAN",
+          "FEB",
+          "MAR",
+          "APR",
+          "MEI",
+          "JUN",
+          "JUL",
+          "AGS",
+          "SEP",
+          "OKT",
+          "NOV",
+          "DES",
+        ];
+        months.forEach((m, i) => {
+          const val = item[m];
+          if (val) {
+            data.push({
+              name: `${item.tahun}-${(i + 1).toString().padStart(2, "0")}`,
+              realisasi: (val / item.pagu) * 100,
+              type: "Historical",
+            });
+          }
+        });
+      } else {
+        data.push({
+          name: item.tahun.toString(),
+          realisasi: (item.total_realisasi / item.pagu) * 100,
+          type: "Historical",
+        });
+      }
+    });
+
+    if (prediction.predictions) {
+      prediction.predictions.forEach((pred: any, i: number) => {
+        const percentage = pred.cumulative_percentage || pred.percentage || 0;
+        let pName = "";
         if (jenisLaporan === "1") {
-            historical.forEach((item) => {
-                const months = ["JAN", "FEB", "MAR", "APR", "MEI", "JUN", "JUL", "AGS", "SEP", "OKT", "NOV", "DES"];
-                months.forEach((month, index) => {
-                    const val = item[month];
-                    if (val !== null && val !== undefined && val !== 0) {
-                        mlData.push({
-                            tahun: parseInt(item.tahun),
-                            bulan: index + 1,
-                            pagu: parseFloat(item.pagu || 0),
-                            realisasi: parseFloat(val || 0),
-                            kddept: parseInt(selectedKddept),
-                            jenbel: item.jenbel,
-                        });
-                    }
-                });
-            });
+          // Gunakan parameter startMonth langsung, bukan state
+          const monthIndex = (startMonth - 1 + i) % 12; // 0-11
+          const month = monthIndex + 1; // 1-12
+          const year = startYear + Math.floor((startMonth - 1 + i) / 12);
+          pName = `${year}-${month.toString().padStart(2, "0")}`;
         } else {
-            mlData = historical.map((item) => ({
-                tahun: parseInt(item.tahun),
-                bulan: 12,
-                pagu: parseFloat(item.pagu || 0),
-                realisasi: parseFloat(item.total_realisasi || 0),
-                kddept: parseInt(selectedKddept),
-                jenbel: item.jenbel,
-            }));
+          // Untuk laporan tahunan, mulai dari tahun berikutnya
+          pName = (startYear + i).toString();
         }
+        data.push({ name: pName, prediksi: percentage, type: "Prediction" });
+      });
+    }
+    setChartData(data);
+  };
 
-        const predictionRequest = {
-            method: selectedMetode,
-            data: mlData,
-            parameters: {
-                targetPeriods: parseInt(selectedTargetProyeksi),
-                baseline_year: parseInt(selectedBaseline),
-                training_end_year: currentYear,
-                prediction_start_year: currentYear,
-                prediction_start_month: 10,
-                kddept: selectedKddept,
-                jenis_belanja: selectedJenisBelanja === "all" ? "" : selectedJenisBelanja,
-            },
-        };
+  const handleRefresh = () => {
+    Swal.fire({
+      title: "Refresh Halaman?",
+      text: "Data yang belum disimpan akan hilang.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Ya",
+      cancelButtonText: "Batal",
+    }).then((result) => {
+      if (result.isConfirmed) window.location.reload();
+    });
+  };
 
-        const res = await apiClient.post("/prognosis/predict", predictionRequest);
-        if (res?.prediction) {
-            setPredictionData(res);
-            prepareChartData(historical, res.prediction);
-        }
-    };
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(val);
+  };
 
-    const prepareChartData = (historical: any[], prediction: any) => {
-        const data: any[] = [];
-        historical.forEach((item) => {
-            if (jenisLaporan === "1") {
-                const months = ["JAN", "FEB", "MAR", "APR", "MEI", "JUN", "JUL", "AGS", "SEP", "OKT", "NOV", "DES"];
-                months.forEach((m, i) => {
-                    const val = item[m];
-                    if (val) {
-                        data.push({
-                            name: `${item.tahun}-${(i + 1).toString().padStart(2, '0')}`,
-                            realisasi: (val / item.pagu) * 100,
-                            type: 'Historical'
-                        });
-                    }
-                });
-            } else {
-                data.push({
-                    name: item.tahun.toString(),
-                    realisasi: (item.total_realisasi / item.pagu) * 100,
-                    type: 'Historical'
-                });
-            }
-        });
+  // --- Render ---
 
-        if (prediction.predictions) {
-            prediction.predictions.forEach((pred: any, i: number) => {
-                const percentage = pred.cumulative_percentage || pred.percentage || 0;
-                let pName = "";
-                if (jenisLaporan === "1") {
-                    const startMonth = 10;
-                    const month = ((startMonth + i - 1) % 12) + 1;
-                    const year = currentYear + Math.floor((startMonth + i - 1) / 12);
-                    pName = `${year}-${month.toString().padStart(2, '0')}`;
-                } else {
-                    pName = (currentYear + i + 1).toString();
-                }
-                data.push({ name: pName, prediksi: percentage, type: 'Prediction' });
-            });
-        }
-        setChartData(data);
-    };
-
-    const handleRefresh = () => {
-        Swal.fire({
-            title: "Refresh Halaman?",
-            text: "Data yang belum disimpan akan hilang.",
-            icon: "question",
-            showCancelButton: true,
-            confirmButtonText: "Ya",
-            cancelButtonText: "Batal"
-        }).then((result) => {
-            if (result.isConfirmed) window.location.reload();
-        });
-    };
-
-    const formatCurrency = (val: number) => {
-        return new Intl.NumberFormat("id-ID", {
-            style: "currency",
-            currency: "IDR",
-            minimumFractionDigits: 0,
-        }).format(val);
-    };
-
-    // --- Render ---
-
-    return (
-        <div className="space-y-6">
-            {/* Page Header - Matched with Belanja Page style */}
-            <div className="flex items-start justify-between">
-                <div>
-                    <h1 className="text-2xl font-semibold tracking-tight">
-                        Prognosis
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Sistem Prediksi Realisasi Anggaran Berbasis Machine Learning dengan parameter yang dapat disesuaikan
-                    </p>
-                </div>
-
-                {/* Header Action area */}
-                <div className="flex items-center gap-2">
-                    <Button
-                        variant="outline"
-                        className="flex items-center gap-2 bg-white dark:bg-card hover:bg-zinc-200"
-                    >
-                        <Settings className="w-4 h-4" />
-                        Pengaturan
-                    </Button>
-
-                    {/* Keyboard shortcut hint */}
-                    <div className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-                        <Keyboard className="w-3 h-3" />
-                        <span>Ctrl+P</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Main Content Area */}
-            <div className="space-y-6">
-
-                {/* 1. Filters Card */}
-                <PrognosisFilters
-                    jenisLaporan={jenisLaporan}
-                    setJenisLaporan={setJenisLaporan}
-                    selectedKddept={selectedKddept}
-                    setSelectedKddept={setSelectedKddept}
-                    selectedJenisBelanja={selectedJenisBelanja}
-                    setSelectedJenisBelanja={setSelectedJenisBelanja}
-                    selectedBaseline={selectedBaseline}
-                    setSelectedBaseline={setSelectedBaseline}
-                    selectedMetode={selectedMetode}
-                    setSelectedMetode={setSelectedMetode}
-                    selectedTargetProyeksi={selectedTargetProyeksi}
-                    setSelectedTargetProyeksi={setSelectedTargetProyeksi}
-                    kementerianOptions={kementerianOptions}
-                    jenisBelanjaOptions={jenisBelanjaOptions}
-                    baselineOptions={baselineOptions}
-                />
-
-                {/* 2. Action Bar */}
-                <PrognosisActionBar
-                    loadingResults={loadingResults}
-                    handleTayang={handleTayang}
-                    handleRefresh={handleRefresh}
-                    setShowModalSQL={setShowModalSQL}
-                    role={role}
-                />
-
-                {/* 3. Results Area */}
-                {!showResults && !loadingResults && (
-                    <div className="flex flex-col items-center justify-center py-20 bg-muted/40 rounded-3xl border-2 border-dashed space-y-4">
-                        <div className="p-4 bg-muted/50 rounded-full">
-                            <Info className="h-10 w-10 text-muted-foreground" />
-                        </div>
-                        <div className="text-center">
-                            <h3 className="font-semibold text-lg">Belum Ada Data Ditampilkan</h3>
-                            <p className="text-muted-foreground text-sm max-w-xs mx-auto">Klik tombol <strong>Tayang</strong> setelah mengatur parameter filter untuk memproses data prognosis.</p>
-                        </div>
-                    </div>
-                )}
-
-                {showResults && (
-                    <div className="space-y-6">
-                        <PrognosisChart
-                            chartData={chartData}
-                            selectedMetode={selectedMetode}
-                            selectedBaseline={selectedBaseline}
-                            selectedZoomYear={selectedZoomYear}
-                            currentYear={currentYear}
-                        />
-
-                        <PrognosisAIAnalysis
-                            selectedMetode={selectedMetode}
-                            predictionData={predictionData}
-                        />
-
-                        <PrognosisTableDetail
-                            predictionData={predictionData}
-                            tableData={tableData}
-                            jenisLaporan={jenisLaporan}
-                            currentYear={currentYear}
-                            formatCurrency={formatCurrency}
-                        />
-                    </div>
-                )}
-            </div>
-
-            <PrognosisSQLModal
-                showModalSQL={showModalSQL}
-                setShowModalSQL={setShowModalSQL}
-                sqlQuery={sqlQuery}
-            />
+  return (
+    <div className="space-y-6">
+      {/* Page Header - Matched with Belanja Page style */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Prognosis</h1>
+          <p className="text-sm text-muted-foreground">
+            Sistem Prediksi Realisasi Anggaran Berbasis Machine Learning dengan
+            parameter yang dapat disesuaikan
+          </p>
         </div>
-    );
+
+        {/* Header Action area */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            className="flex items-center gap-2 bg-white dark:bg-card hover:bg-zinc-200"
+          >
+            <Settings className="w-4 h-4" />
+            Pengaturan
+          </Button>
+
+          {/* Keyboard shortcut hint */}
+          <div className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+            <Keyboard className="w-3 h-3" />
+            <span>Ctrl+P</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="space-y-6">
+        {/* 1. Filters Card */}
+        <PrognosisFilters
+          jenisLaporan={jenisLaporan}
+          setJenisLaporan={setJenisLaporan}
+          selectedKddept={selectedKddept}
+          setSelectedKddept={setSelectedKddept}
+          selectedJenisBelanja={selectedJenisBelanja}
+          setSelectedJenisBelanja={setSelectedJenisBelanja}
+          selectedBaseline={selectedBaseline}
+          setSelectedBaseline={setSelectedBaseline}
+          selectedMetode={selectedMetode}
+          setSelectedMetode={setSelectedMetode}
+          selectedTargetProyeksi={selectedTargetProyeksi}
+          setSelectedTargetProyeksi={setSelectedTargetProyeksi}
+          kementerianOptions={kementerianOptions}
+          jenisBelanjaOptions={jenisBelanjaOptions}
+          baselineOptions={baselineOptions}
+        />
+
+        {/* 2. Action Bar */}
+        <PrognosisActionBar
+          loadingResults={loadingResults}
+          handleTayang={handleTayang}
+          handleRefresh={handleRefresh}
+          setShowModalSQL={setShowModalSQL}
+          role={role}
+        />
+
+        {/* 3. Results Area */}
+        {!showResults && !loadingResults && (
+          <div className="flex flex-col items-center justify-center py-20 bg-muted/40 rounded-3xl border-2 border-dashed space-y-4">
+            <div className="p-4 bg-muted/50 rounded-full">
+              <Info className="h-10 w-10 text-muted-foreground" />
+            </div>
+            <div className="text-center">
+              <h3 className="font-semibold text-lg">
+                Belum Ada Data Ditampilkan
+              </h3>
+              <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+                Klik tombol <strong>Tayang</strong> setelah mengatur parameter
+                filter untuk memproses data prognosis.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {showResults && (
+          <div className="space-y-6">
+            <PrognosisChart
+              chartData={chartData}
+              selectedMetode={selectedMetode}
+              selectedBaseline={selectedBaseline}
+              selectedZoomYear={selectedZoomYear}
+              currentYear={currentYear}
+            />
+
+            <PrognosisAIAnalysis
+              selectedMetode={selectedMetode}
+              predictionData={predictionData}
+            />
+
+            <PrognosisTableDetail
+              predictionData={predictionData}
+              tableData={tableData}
+              jenisLaporan={jenisLaporan}
+              currentYear={currentYear}
+              formatCurrency={formatCurrency}
+            />
+          </div>
+        )}
+      </div>
+
+      <PrognosisSQLModal
+        showModalSQL={showModalSQL}
+        setShowModalSQL={setShowModalSQL}
+        sqlQuery={sqlQuery}
+      />
+    </div>
+  );
 }
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
