@@ -19,6 +19,7 @@ export default function PrognosisPage() {
   const { user } = useAuth();
   const role = user?.role;
   const currentYear = new Date().getFullYear();
+  const tahunProyeksi = 2026;
 
   // --- State Management ---
 
@@ -27,7 +28,7 @@ export default function PrognosisPage() {
   const [selectedKddept, setSelectedKddept] = useState("");
   const [selectedJenisBelanja, setSelectedJenisBelanja] = useState("all");
   const [selectedBaseline, setSelectedBaseline] = useState("");
-  const [selectedMetode, setSelectedMetode] = useState("arima");
+  const [selectedMetode, setSelectedMetode] = useState("xgboost");
   const [selectedTargetProyeksi, setSelectedTargetProyeksi] = useState("12");
 
   // Options States
@@ -46,6 +47,7 @@ export default function PrognosisPage() {
   const [tableData, setTableData] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
   const [predictionData, setPredictionData] = useState<any>(null);
+  const [pagu2026, setPagu2026] = useState<number>(0);
   const [dynamicStartMonth, setDynamicStartMonth] = useState<number>(1);
   const [dynamicStartYear, setDynamicStartYear] = useState<number>(currentYear);
 
@@ -101,6 +103,29 @@ export default function PrognosisPage() {
     fetchJenisBelanjaByKddept();
   }, [selectedKddept]);
 
+  // Ambil pagu tahun proyeksi (2026) untuk pengali nominal proyeksi
+  useEffect(() => {
+    const fetchPagu2026 = async () => {
+      if (!selectedKddept) return;
+      try {
+        const params = new URLSearchParams({
+          kddept: selectedKddept,
+          tahun: String(tahunProyeksi),
+          jenbel: selectedJenisBelanja || "all",
+        });
+        const res = await apiClient.get(
+          `/prognosis/getPagu?${params.toString()}`
+        );
+        const pagu = Number((res as any)?.pagu ?? 0);
+        setPagu2026(Number.isFinite(pagu) ? pagu : 0);
+      } catch (error) {
+        console.error("Failed to fetch pagu 2026", error);
+        setPagu2026(0);
+      }
+    };
+    fetchPagu2026();
+  }, [selectedKddept, selectedJenisBelanja, tahunProyeksi]);
+
   // --- Handlers ---
 
   const handleTayang = async () => {
@@ -118,7 +143,7 @@ export default function PrognosisPage() {
       setShowResults(false);
 
       const historical = await fetchHistoricalData();
-      console.log("[handleTayang] Historical data fetched:", historical);
+      // console.log("[handleTayang] Historical data fetched:", historical);
 
       if (historical && historical.length > 0) {
         await fetchPredictionData(historical);
@@ -189,7 +214,7 @@ export default function PrognosisPage() {
       const response = await apiClient.post(`/prognosis/getDataKinerja`, {
         queryParams: query,
       });
-      console.log("[fetchHistoricalData] Raw Response:", response);
+      // console.log("[fetchHistoricalData] Raw Response:", response);
 
       // Handle different response formats
       let data = response;
@@ -204,7 +229,7 @@ export default function PrognosisPage() {
         }
       }
 
-      console.log("[fetchHistoricalData] Processed Data:", data);
+      // console.log("[fetchHistoricalData] Processed Data:", data);
 
       if (!Array.isArray(data)) {
         console.error("[fetchHistoricalData] Response is not an array:", data);
@@ -309,12 +334,12 @@ export default function PrognosisPage() {
     };
 
     try {
-      console.log(
-        "[fetchPredictionData] Sending prediction request:",
-        predictionRequest
-      );
+      // console.log(
+      //   "[fetchPredictionData] Sending prediction request:",
+      //   predictionRequest
+      // );
       const res = await apiClient.post("/prognosis/predict", predictionRequest);
-      console.log("[fetchPredictionData] Raw Response:", res);
+      // console.log("[fetchPredictionData] Raw Response:", res);
 
       // Handle wrapped response
       let prediction = res;
@@ -385,7 +410,9 @@ export default function PrognosisPage() {
 
     if (prediction.predictions) {
       prediction.predictions.forEach((pred: any, i: number) => {
-        const percentage = pred.cumulative_percentage || pred.percentage || 0;
+        const percentage = Number(
+          pred?.cumulative_percentage ?? pred?.percentage ?? 0
+        );
         let pName = "";
         if (jenisLaporan === "1") {
           // Gunakan parameter startMonth langsung, bukan state
@@ -522,8 +549,11 @@ export default function PrognosisPage() {
             <PrognosisTableDetail
               predictionData={predictionData}
               tableData={tableData}
+              pagu2026={pagu2026}
               jenisLaporan={jenisLaporan}
               currentYear={currentYear}
+              startMonth={1}
+              startYear={currentYear}
               formatCurrency={formatCurrency}
             />
           </div>
