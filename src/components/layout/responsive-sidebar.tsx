@@ -137,7 +137,12 @@ const defaultMenu: MenuItem[] = [
   },
   {
     label: "Laporan",
-    children: [{ label: "Weekly Report" }, { label: "Monthly Report" }],
+    children: [
+      { label: "Weekly Report" },
+      { label: "Monthly Report" },
+      { label: "Harmonisasi" },
+      { label: "Tantangan TPID" },
+    ],
   },
   {
     label: "Data Makrokesra",
@@ -314,6 +319,10 @@ export function ResponsiveSidebar({
         return <CalendarDays className={cls} />;
       case "Laporan__Weekly Report":
         return <CalendarDays className={cls} />;
+      case "Laporan__Harmonisasi":
+        return <CalendarDays className={cls} />;
+      case "Laporan__Tantangan TPID":
+        return <CalendarDays className={cls} />;
       case "Tentang Kita__Profil":
         return <User className={cls} />;
       case "Tentang Kita__Kontak":
@@ -449,7 +458,7 @@ export function ResponsiveSidebar({
                           {m.children.map((c) => {
                             const menuKey = `${m.label}__${c.label}`;
                             let href = "#";
-                            let onMouseEnterFn = () => { };
+                            let onMouseEnterFn = () => {};
 
                             // Route mapping
                             if (
@@ -673,6 +682,16 @@ export function ResponsiveSidebar({
                               m.label === "Laporan"
                             ) {
                               href = "/laporan/weekly-report";
+                            } else if (
+                              c.label === "Harmonisasi" &&
+                              m.label === "Laporan"
+                            ) {
+                              href = "/laporan/harmonisasi";
+                            } else if (
+                              c.label === "Tantangan TPID" &&
+                              m.label === "Laporan"
+                            ) {
+                              href = "/laporan/tantangan-tpid";
                             } else if (
                               c.label === "Data BPS" &&
                               m.label === "Data Makrokesra"
@@ -901,7 +920,7 @@ export function ResponsiveSidebar({
                         key={c.label}
                         href="/tentang-kita/profil"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
-                        onMouseEnter={() => { }}
+                        onMouseEnter={() => {}}
                         onClick={() => {
                           trackMenuUsage({
                             menu: m.label,
@@ -1332,6 +1351,45 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/laporan/weekly-report",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Harmonisasi" && m.label === "Laporan" ? (
+                      <Link
+                        key={c.label}
+                        href="/laporan/harmonisasi"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/laporan/harmonisasi",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Tantangan TPID" &&
+                      m.label === "Laporan" ? (
+                      <Link
+                        key={c.label}
+                        href="/laporan/tantangan-tpid"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/laporan/tantangan-tpid",
                           });
                           setOpen(false);
                         }}
