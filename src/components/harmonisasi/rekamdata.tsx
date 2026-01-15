@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
-import { useAuth } from "@/hooks/useAuth"; // Adjust path if needed
+import { useState, useEffect, useMemo } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
+import { cn } from "@/lib/utils";
+import "./harmonisasi.css";
 import {
   Loader2,
   CheckSquare,
@@ -24,7 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import numeral from "numeral";
 import RekamUpaya from "./modalrekamUpaya";
-// import Rekam from "./modalRekam"; // TODO: Implement/Import modalRekam
+import Rekam from "./modalrekam";
 import kdkanwilJson from "@/data/kdkanwil.json";
 // import GenerateCSV from "@/components/GenerateCSV"; // TODO: Implement GenerateCSV
 import moment from "moment";
@@ -222,16 +224,14 @@ export default function Harmonisasi() {
     const encryptedQuery = Encrypt(cleanedQuery);
 
     try {
-      const tayangHarmonisasiUrl =
-        process.env.NEXT_PUBLIC_TAYANG_HARMONISASI ||
-        process.env.VITE_REACT_APP_LOCAL_TAYANG_HARMONISASI;
+      const tayangHarmonisasiUrl = process.env.NEXT_PUBLIC_TAYANG_HARMONISASI;
 
       const url = tayangHarmonisasiUrl
         ? `${tayangHarmonisasiUrl}${encryptedQuery}&limit=${limit}&page=${page}&user=${username}`
         : "";
 
       if (!url) {
-        console.error("VITE_REACT_APP_LOCAL_TAYANG_HARMONISASI not defined");
+        console.error("URL API Harmonisasi tidak ditemukan");
         setLoading(false);
         return;
       }
@@ -339,7 +339,6 @@ export default function Harmonisasi() {
     }
   };
 
-  // Helper for status icon
   const StatusIcon = ({
     active,
     onClick,
@@ -349,50 +348,39 @@ export default function Harmonisasi() {
   }) => (
     <div
       onClick={onClick}
-      className={`cursor-pointer text-xl flex justify-center ${
-        active ? "text-green-600" : "text-yellow-500"
-      }`}
+      className={cn(
+        "harmonisasi-status-icon",
+        active ? "harmonisasi-status-active" : "harmonisasi-status-inactive"
+      )}
     >
       <CheckSquare className="h-6 w-6" />
     </div>
   );
 
   return (
-    <main className="container mx-auto p-4 space-y-4">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold">Harmonisasi Belanja K/L & TKD</h1>
-        <nav className="flex text-sm text-muted-foreground">
-          <ol className="flex gap-2">
+    <main className="harmonisasi-container">
+      <div className="harmonisasi-header">
+        <h1 className="harmonisasi-title">Harmonisasi Belanja K/L & TKD</h1>
+        <nav className="harmonisasi-breadcrumb">
+          <ol className="harmonisasi-breadcrumb-list">
             <li>Data</li>
             <li>/</li>
-            <li className="font-semibold text-foreground">Rekam</li>
+            <li className="harmonisasi-breadcrumb-active">Rekam</li>
           </ol>
         </nav>
       </div>
 
-      <section className="space-y-4">
-        <h5 className="text-center text-lg font-bold">
-          Harmonisasi Perencanaan dan Penganggaran Belanja K/L dan TKD (data per{" "}
-          {namaThang === "2024" && namaSemester === "1"
-            ? "Semester I 2024"
-            : namaThang === "2024" && namaSemester === "2"
-            ? "Semester II 2024"
-            : namaThang === "2025" && namaSemester === "1"
-            ? "Semester I 2025"
-            : namaThang === "2025" && namaSemester === "2"
-            ? "Semester II 2025"
-            : namaThang === "2026"
-            ? "Tahun 2026"
-            : ""}
-          )
+      <section className="harmonisasi-section">
+        <h5 className="harmonisasi-section-title">
+          Harmonisasi Perencanaan dan Penganggaran Belanja K/L dan TKD
         </h5>
 
         {/* Filters */}
         <Card>
           <CardContent className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Tahun</label>
+            <div className="harmonisasi-filters">
+              <div className="harmonisasi-filter-field">
+                <label className="harmonisasi-filter-label">Tahun</label>
                 <Select value={namaThang} onValueChange={setNamaThang}>
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih Tahun" />
@@ -404,8 +392,8 @@ export default function Harmonisasi() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Semester</label>
+              <div className="harmonisasi-filter-field">
+                <label className="harmonisasi-filter-label">Semester</label>
                 <Select value={namaSemester} onValueChange={setNamaSemester}>
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih Semester" />
@@ -417,8 +405,8 @@ export default function Harmonisasi() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Kode Kanwil</label>
+              <div className="harmonisasi-filter-field">
+                <label className="harmonisasi-filter-label">Kode Kanwil</label>
                 <Select
                   value={kanwil}
                   onValueChange={setKanwil}
@@ -438,8 +426,8 @@ export default function Harmonisasi() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Nama Bidang</label>
+              <div className="harmonisasi-filter-field">
+                <label className="harmonisasi-filter-label">Nama Bidang</label>
                 <Select value={namaBidang} onValueChange={setNamaBidang}>
                   <SelectTrigger>
                     <SelectValue placeholder="Semua Bidang" />
@@ -464,8 +452,8 @@ export default function Harmonisasi() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Pencarian</label>
+              <div className="harmonisasi-filter-field">
+                <label className="harmonisasi-filter-label">Pencarian</label>
                 <Input
                   type="text"
                   placeholder="Cari..."
@@ -474,11 +462,11 @@ export default function Harmonisasi() {
                 />
               </div>
 
-              <div className="flex gap-2">
+              <div className="harmonisasi-action-buttons">
                 <Button
                   variant="default"
                   size="sm"
-                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-white"
+                  className="harmonisasi-btn-upaya"
                   onClick={() => handleRekamUpaya()}
                 >
                   <Pencil className="h-4 w-4 mr-2" />
@@ -506,224 +494,172 @@ export default function Harmonisasi() {
         </Card>
 
         {loading ? (
-          <div className="flex justify-center p-8">
+          <div className="harmonisasi-loading">
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         ) : (
-          <div className="rounded-md border overflow-x-auto">
-            <table className="w-full caption-bottom text-sm text-left">
-              <thead className="bg-secondary text-secondary-foreground text-center align-middle [&_tr]:border-b">
-                <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                  <th
-                    rowSpan={2}
-                    className="h-12 px-4 text-center align-middle font-medium text-muted-foreground"
-                  >
+          <div className="harmonisasi-table-wrapper">
+            <table className="harmonisasi-table">
+              <thead className="harmonisasi-thead">
+                <tr className="harmonisasi-tr">
+                  <th rowSpan={2} className="harmonisasi-th">
                     No
                   </th>
                   <th
                     rowSpan={2}
-                    className="h-12 px-4 text-center align-middle font-medium text-muted-foreground w-40"
+                    className="harmonisasi-th harmonisasi-th-wide"
                   >
                     Nama Satker
                   </th>
-                  <th
-                    rowSpan={2}
-                    className="h-12 px-4 text-center align-middle font-medium text-muted-foreground"
-                  >
+                  <th rowSpan={2} className="harmonisasi-th">
                     Bidang
                   </th>
-                  <th
-                    rowSpan={2}
-                    className="h-12 px-4 text-center align-middle font-medium text-muted-foreground"
-                  >
+                  <th rowSpan={2} className="harmonisasi-th">
                     Jenis TKD
                   </th>
-                  <th
-                    rowSpan={2}
-                    className="h-12 px-4 text-center align-middle font-medium text-muted-foreground"
-                  >
+                  <th rowSpan={2} className="harmonisasi-th">
                     Lokasi/Kabkota
                   </th>
                   <th
                     rowSpan={2}
-                    className="h-12 px-4 text-center align-middle font-medium text-muted-foreground w-32"
+                    className="harmonisasi-th harmonisasi-th-narrow"
                   >
                     COA
                   </th>
-                  <th
-                    rowSpan={2}
-                    className="h-12 px-4 text-center align-middle font-medium text-muted-foreground"
-                  >
+                  <th rowSpan={2} className="harmonisasi-th">
                     Nama RO
                   </th>
-                  <th
-                    rowSpan={2}
-                    className="h-12 px-4 text-center align-middle font-medium text-muted-foreground"
-                  >
+                  <th rowSpan={2} className="harmonisasi-th">
                     Satuan/Vol
                   </th>
-                  <th
-                    rowSpan={2}
-                    className="h-12 px-4 text-center align-middle font-medium text-muted-foreground"
-                  >
+                  <th rowSpan={2} className="harmonisasi-th">
                     Pagu
                   </th>
-                  <th
-                    colSpan={6}
-                    className="h-12 px-4 text-center align-middle font-medium text-muted-foreground"
-                  >
+                  <th colSpan={6} className="harmonisasi-th">
                     Realisasi (Rupiah)
                   </th>
-                  <th
-                    colSpan={6}
-                    className="h-12 px-4 text-center align-middle font-medium text-muted-foreground"
-                  >
+                  <th colSpan={6} className="harmonisasi-th">
                     RVRO (Volume)
                   </th>
-                  <th
-                    colSpan={5}
-                    className="h-12 px-4 text-center align-middle font-medium text-muted-foreground"
-                  >
+                  <th colSpan={5} className="harmonisasi-th">
                     Cluster Tantangan/Hambatan
                   </th>
                 </tr>
-                <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                  {/* Month headers dynamic based on semester */}
+                <tr className="harmonisasi-tr">
                   {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <th
-                      key={`real-${i}`}
-                      className="h-12 px-2 text-center align-middle font-medium text-muted-foreground text-xs"
-                    >
+                    <th key={`real-${i}`} className="harmonisasi-th-small">
                       {namaSemester === "1"
                         ? ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun"][i]
                         : ["Jul", "Ags", "Sep", "Okt", "Nov", "Des"][i]}
                     </th>
                   ))}
                   {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <th
-                      key={`phy-${i}`}
-                      className="h-12 px-2 text-center align-middle font-medium text-muted-foreground text-xs"
-                    >
+                    <th key={`phy-${i}`} className="harmonisasi-th-small">
                       {namaSemester === "1"
                         ? ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun"][i]
                         : ["Jul", "Ags", "Sep", "Okt", "Nov", "Des"][i]}
                     </th>
                   ))}
-                  <th className="h-12 px-2 text-center align-middle font-medium text-muted-foreground">
-                    Penganggaran
-                  </th>
-                  <th className="h-12 px-2 text-center align-middle font-medium text-muted-foreground">
-                    PBJ
-                  </th>
-                  <th className="h-12 px-2 text-center align-middle font-medium text-muted-foreground">
-                    Eksekusi
-                  </th>
-                  <th className="h-12 px-2 text-center align-middle font-medium text-muted-foreground">
-                    Regulasi
-                  </th>
-                  <th className="h-12 px-2 text-center align-middle font-medium text-muted-foreground">
-                    SDM
-                  </th>
+                  <th className="harmonisasi-th-small">Penganggaran</th>
+                  <th className="harmonisasi-th-small">PBJ</th>
+                  <th className="harmonisasi-th-small">Eksekusi</th>
+                  <th className="harmonisasi-th-small">Regulasi</th>
+                  <th className="harmonisasi-th-small">SDM</th>
                 </tr>
               </thead>
-              <tbody className="[&_tr:last-child]:border-0 text-xs">
+              <tbody className="harmonisasi-tbody">
                 {data.map((row: any, index: number) => (
-                  <tr
-                    key={row.id}
-                    className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
-                  >
-                    <td className="p-2 text-center">
+                  <tr key={row.id} className="harmonisasi-tr">
+                    <td className="harmonisasi-td-center">
                       {index + 1 + page * limit}
                     </td>
-                    <td className="p-2">
+                    <td className="harmonisasi-td">
                       {row.nmsatker} ({row.kddept}.{row.kdsatker})
                     </td>
-                    <td className="p-2 text-center">{row.bidang_dak}</td>
-                    <td className="p-2 text-center">{row.jenis_tkd}</td>
-                    <td className="p-2 text-center">
+                    <td className="harmonisasi-td-center">{row.bidang_dak}</td>
+                    <td className="harmonisasi-td-center">{row.jenis_tkd}</td>
+                    <td className="harmonisasi-td-center">
                       {row.kdlokasi}
                       <br />
                       {row.nmkabkota}
                     </td>
-                    <td className="p-2 text-center unselectable text-[10px]">
-                      {row.coa}
-                    </td>
-                    <td className="p-2">{row.ursoutput}</td>
-                    <td className="p-2 text-center">
+                    <td className="harmonisasi-td-coa">{row.coa}</td>
+                    <td className="harmonisasi-td">{row.ursoutput}</td>
+                    <td className="harmonisasi-td-center">
                       {row.sat}
                       <br />
                       {numeral(row.vol).format("0,0")}
                     </td>
-                    <td className="p-2 text-right">
+                    <td className="harmonisasi-td-right">
                       {numeral(row.pagu).format("0,0")}
                     </td>
 
                     {/* Realisation Rupiah */}
-                    <td className="p-2 text-right">
+                    <td className="harmonisasi-td-right">
                       {numeral(
                         namaSemester === "1" ? row.real1 : row.real7
                       ).format("0,0")}
                     </td>
-                    <td className="p-2 text-right">
+                    <td className="harmonisasi-td-right">
                       {numeral(
                         namaSemester === "1" ? row.real2 : row.real8
                       ).format("0,0")}
                     </td>
-                    <td className="p-2 text-right">
+                    <td className="harmonisasi-td-right">
                       {numeral(
                         namaSemester === "1" ? row.real3 : row.real9
                       ).format("0,0")}
                     </td>
-                    <td className="p-2 text-right">
+                    <td className="harmonisasi-td-right">
                       {numeral(
                         namaSemester === "1" ? row.real4 : row.real10
                       ).format("0,0")}
                     </td>
-                    <td className="p-2 text-right">
+                    <td className="harmonisasi-td-right">
                       {numeral(
                         namaSemester === "1" ? row.real5 : row.real11
                       ).format("0,0")}
                     </td>
-                    <td className="p-2 text-right">
+                    <td className="harmonisasi-td-right">
                       {numeral(
                         namaSemester === "1" ? row.real6 : row.real12
                       ).format("0,0")}
                     </td>
 
                     {/* Realisation Fisik */}
-                    <td className="p-2 text-right">
+                    <td className="harmonisasi-td-right">
                       {numeral(
                         namaSemester === "1" ? row.realfisik1 : row.realfisik7
                       ).format("0,0")}
                     </td>
-                    <td className="p-2 text-right">
+                    <td className="harmonisasi-td-right">
                       {numeral(
                         namaSemester === "1" ? row.realfisik2 : row.realfisik8
                       ).format("0,0")}
                     </td>
-                    <td className="p-2 text-right">
+                    <td className="harmonisasi-td-right">
                       {numeral(
                         namaSemester === "1" ? row.realfisik3 : row.realfisik9
                       ).format("0,0")}
                     </td>
-                    <td className="p-2 text-right">
+                    <td className="harmonisasi-td-right">
                       {numeral(
                         namaSemester === "1" ? row.realfisik4 : row.realfisik10
                       ).format("0,0")}
                     </td>
-                    <td className="p-2 text-right">
+                    <td className="harmonisasi-td-right">
                       {numeral(
                         namaSemester === "1" ? row.realfisik5 : row.realfisik11
                       ).format("0,0")}
                     </td>
-                    <td className="p-2 text-right">
+                    <td className="harmonisasi-td-right">
                       {numeral(
                         namaSemester === "1" ? row.realfisik6 : row.realfisik12
                       ).format("0,0")}
                     </td>
 
                     {/* Clusters */}
-                    <td className="p-2">
+                    <td className="harmonisasi-td">
                       <StatusIcon
                         active={
                           !!(
@@ -806,12 +742,12 @@ export default function Harmonisasi() {
 
         {/* Pagination Controls */}
         {data.length > 0 && (
-          <div className="flex justify-between items-center py-4">
-            <div className="text-sm text-muted-foreground">
+          <div className="harmonisasi-pagination">
+            <div className="harmonisasi-pagination-info">
               Total: {numeral(rows).format("0,0")} | Hal: {page + 1} dari{" "}
               {pages}
             </div>
-            <div className="flex gap-2">
+            <div className="harmonisasi-pagination-buttons">
               <Button
                 variant="outline"
                 size="sm"
@@ -836,45 +772,42 @@ export default function Harmonisasi() {
       {/* Modals */}
       <RekamUpaya show={showModalUpaya} onHide={handleCloseModalUpaya} />
 
-      {/* 
-      // Undo comment when modalRekam is converted
       <Rekam
-          show={showModal}
-          onHide={handleCloseModal}
-          id={idCluster}
-          jenis={jenisCluster}
-          revisi_anggaran_isi={revisi_anggaran}
-          blokir_anggaran_isi={blokir_anggaran}
-          automatic_adjustment_isi={automatic_adjustment}
-          halaman_3_dipa_isi={halaman_3_dipa}
-          sdana_sbsn_isi={sdana_sbsn}
-          lainnya_anggaran_isi={lainnya_anggaran}
-          proses_lelang_isi={proses_lelang}
-          lelang_dini_isi={lelang_dini}
-          gagal_lelang_isi={gagal_lelang}
-          keterbatasan_penyedia_isi={keterbatasan_penyedia}
-          tkdn_isi={tkdn}
-          ecatalog_isi={ecatalog}
-          lainnya_pbj_isi={lainnya_pbj}
-          kekurangan_prasyarat_isi={kekurangan_prasyarat}
-          prasyarat_lahan_isi={prasyarat_lahan}
-          faktor_cuaca_isi={faktor_cuaca}
-          kesiapan_pedum_isi={kesiapan_pedum}
-          penerimaan_bantuan_isi={penerimaan_bantuan}
-          pembagian_bantuan_isi={pembagian_bantuan}
-          kenaikan_harga_isi={kenaikan_harga}
-          lainnya_eksekusi_isi={lainnya_eksekusi}
-          regulasi_kemenkeu_isi={regulasi_kemenkeu}
-          regulasi_kl_isi={regulasi_kl}
-          regulasi_pemda_isi={regulasi_pemda}
-          lainnya_regulasi_isi={lainnya_regulasi}
-          pergantian_pejabat_isi={pergantian_pejabat}
-          kekurangan_sdm_isi={kekurangan_sdm}
-          pemahaman_aplikasi_isi={pemahaman_aplikasi}
-          lainnya_sdm_isi={lainnya_sdm}
-          onSaveSuccess={handleSaveSuccess}
+        show={showModal}
+        onHide={handleCloseModal}
+        id={idCluster}
+        jenis={jenisCluster}
+        revisi_anggaran_isi={revisi_anggaran}
+        blokir_anggaran_isi={blokir_anggaran}
+        automatic_adjustment_isi={automatic_adjustment}
+        halaman_3_dipa_isi={halaman_3_dipa}
+        sdana_sbsn_isi={sdana_sbsn}
+        lainnya_anggaran_isi={lainnya_anggaran}
+        proses_lelang_isi={proses_lelang}
+        lelang_dini_isi={lelang_dini}
+        gagal_lelang_isi={gagal_lelang}
+        keterbatasan_penyedia_isi={keterbatasan_penyedia}
+        tkdn_isi={tkdn}
+        ecatalog_isi={ecatalog}
+        lainnya_pbj_isi={lainnya_pbj}
+        kekurangan_prasyarat_isi={kekurangan_prasyarat}
+        prasyarat_lahan_isi={prasyarat_lahan}
+        faktor_cuaca_isi={faktor_cuaca}
+        kesiapan_pedum_isi={kesiapan_pedum}
+        penerimaan_bantuan_isi={penerimaan_bantuan}
+        pembagian_bantuan_isi={pembagian_bantuan}
+        kenaikan_harga_isi={kenaikan_harga}
+        lainnya_eksekusi_isi={lainnya_eksekusi}
+        regulasi_kemenkeu_isi={regulasi_kemenkeu}
+        regulasi_kl_isi={regulasi_kl}
+        regulasi_pemda_isi={regulasi_pemda}
+        lainnya_regulasi_isi={lainnya_regulasi}
+        pergantian_pejabat_isi={pergantian_pejabat}
+        kekurangan_sdm_isi={kekurangan_sdm}
+        pemahaman_aplikasi_isi={pemahaman_aplikasi}
+        lainnya_sdm_isi={lainnya_sdm}
+        onSaveSuccess={handleSaveSuccess}
       />
-      */}
     </main>
   );
 }
