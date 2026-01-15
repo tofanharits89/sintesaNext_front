@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
 import { cn } from "@/lib/utils";
-import "./harmonisasi.css";
 import {
   Loader2,
   CheckSquare,
@@ -155,13 +154,13 @@ export default function Harmonisasi() {
       .concat(
         searchQuery
           ? [
-              `(a.kdsatker LIKE '%${searchQuery}%'
+            `(a.kdsatker LIKE '%${searchQuery}%'
           or a.nmsatker LIKE '%${searchQuery}%'
           or a.kdkabkota LIKE '%${searchQuery}%'
           or c.nmkabkota LIKE '%${searchQuery}%'
           or a.ursoutput LIKE '%${searchQuery}%'
           or a.jenis_tkd LIKE '%${searchQuery}%')`,
-            ]
+          ]
           : []
       )
       // Check role permissions - assuming '2' or 'kanwil_djpb' matches source
@@ -349,8 +348,8 @@ export default function Harmonisasi() {
     <div
       onClick={onClick}
       className={cn(
-        "harmonisasi-status-icon",
-        active ? "harmonisasi-status-active" : "harmonisasi-status-inactive"
+        "cursor-pointer text-xl flex justify-center transition-colors duration-150",
+        active ? "text-green-600" : "text-yellow-500"
       )}
     >
       <CheckSquare className="h-6 w-6" />
@@ -358,29 +357,29 @@ export default function Harmonisasi() {
   );
 
   return (
-    <main className="harmonisasi-container">
-      <div className="harmonisasi-header">
-        <h1 className="harmonisasi-title">Harmonisasi Belanja K/L & TKD</h1>
-        <nav className="harmonisasi-breadcrumb">
-          <ol className="harmonisasi-breadcrumb-list">
+    <main className="max-w-screen-2xl mx-auto p-4 flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-2xl font-bold leading-8">Harmonisasi Belanja K/L & TKD</h1>
+        <nav className="flex text-sm text-muted-foreground">
+          <ol className="flex gap-2">
             <li>Data</li>
             <li>/</li>
-            <li className="harmonisasi-breadcrumb-active">Rekam</li>
+            <li className="font-semibold text-foreground">Rekam</li>
           </ol>
         </nav>
       </div>
 
-      <section className="harmonisasi-section">
-        <h5 className="harmonisasi-section-title">
+      <section className="flex flex-col gap-4">
+        <h5 className="text-center text-lg font-bold">
           Harmonisasi Perencanaan dan Penganggaran Belanja K/L dan TKD
         </h5>
 
         {/* Filters */}
         <Card>
           <CardContent className="p-4">
-            <div className="harmonisasi-filters">
-              <div className="harmonisasi-filter-field">
-                <label className="harmonisasi-filter-label">Tahun</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 xl:grid-cols-6 gap-4 items-end">
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium">Tahun</label>
                 <Select value={namaThang} onValueChange={setNamaThang}>
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih Tahun" />
@@ -392,8 +391,8 @@ export default function Harmonisasi() {
                 </Select>
               </div>
 
-              <div className="harmonisasi-filter-field">
-                <label className="harmonisasi-filter-label">Semester</label>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium">Semester</label>
                 <Select value={namaSemester} onValueChange={setNamaSemester}>
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih Semester" />
@@ -405,8 +404,8 @@ export default function Harmonisasi() {
                 </Select>
               </div>
 
-              <div className="harmonisasi-filter-field">
-                <label className="harmonisasi-filter-label">Kode Kanwil</label>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium">Kode Kanwil</label>
                 <Select
                   value={kanwil}
                   onValueChange={setKanwil}
@@ -426,8 +425,8 @@ export default function Harmonisasi() {
                 </Select>
               </div>
 
-              <div className="harmonisasi-filter-field">
-                <label className="harmonisasi-filter-label">Nama Bidang</label>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium">Nama Bidang</label>
                 <Select value={namaBidang} onValueChange={setNamaBidang}>
                   <SelectTrigger>
                     <SelectValue placeholder="Semua Bidang" />
@@ -452,8 +451,8 @@ export default function Harmonisasi() {
                 </Select>
               </div>
 
-              <div className="harmonisasi-filter-field">
-                <label className="harmonisasi-filter-label">Pencarian</label>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium">Pencarian</label>
                 <Input
                   type="text"
                   placeholder="Cari..."
@@ -462,11 +461,11 @@ export default function Harmonisasi() {
                 />
               </div>
 
-              <div className="harmonisasi-action-buttons">
+              <div className="flex gap-2 md:col-span-2 lg:col-span-5 xl:col-span-1">
                 <Button
                   variant="default"
                   size="sm"
-                  className="harmonisasi-btn-upaya"
+                  className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white"
                   onClick={() => handleRekamUpaya()}
                 >
                   <Pencil className="h-4 w-4 mr-2" />
@@ -476,7 +475,7 @@ export default function Harmonisasi() {
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="w-full"
+                  className="flex-1"
                   disabled={loadingStatus}
                   onClick={() => {
                     // Export logic here
@@ -494,172 +493,172 @@ export default function Harmonisasi() {
         </Card>
 
         {loading ? (
-          <div className="harmonisasi-loading">
+          <div className="flex justify-center p-8">
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         ) : (
-          <div className="harmonisasi-table-wrapper">
-            <table className="harmonisasi-table">
-              <thead className="harmonisasi-thead">
-                <tr className="harmonisasi-tr">
-                  <th rowSpan={2} className="harmonisasi-th">
+          <div className="rounded-md border border-border overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-secondary text-secondary-foreground text-center align-middle">
+                <tr className="border-b border-border">
+                  <th rowSpan={2} className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
                     No
                   </th>
                   <th
                     rowSpan={2}
-                    className="harmonisasi-th harmonisasi-th-wide"
+                    className="h-12 px-4 text-center align-middle font-medium text-muted-foreground w-40"
                   >
                     Nama Satker
                   </th>
-                  <th rowSpan={2} className="harmonisasi-th">
+                  <th rowSpan={2} className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
                     Bidang
                   </th>
-                  <th rowSpan={2} className="harmonisasi-th">
+                  <th rowSpan={2} className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
                     Jenis TKD
                   </th>
-                  <th rowSpan={2} className="harmonisasi-th">
+                  <th rowSpan={2} className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
                     Lokasi/Kabkota
                   </th>
                   <th
                     rowSpan={2}
-                    className="harmonisasi-th harmonisasi-th-narrow"
+                    className="h-12 px-4 text-center align-middle font-medium text-muted-foreground w-32"
                   >
                     COA
                   </th>
-                  <th rowSpan={2} className="harmonisasi-th">
+                  <th rowSpan={2} className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
                     Nama RO
                   </th>
-                  <th rowSpan={2} className="harmonisasi-th">
+                  <th rowSpan={2} className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
                     Satuan/Vol
                   </th>
-                  <th rowSpan={2} className="harmonisasi-th">
+                  <th rowSpan={2} className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
                     Pagu
                   </th>
-                  <th colSpan={6} className="harmonisasi-th">
+                  <th colSpan={6} className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
                     Realisasi (Rupiah)
                   </th>
-                  <th colSpan={6} className="harmonisasi-th">
+                  <th colSpan={6} className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
                     RVRO (Volume)
                   </th>
-                  <th colSpan={5} className="harmonisasi-th">
+                  <th colSpan={5} className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
                     Cluster Tantangan/Hambatan
                   </th>
                 </tr>
-                <tr className="harmonisasi-tr">
+                <tr className="border-b border-border">
                   {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <th key={`real-${i}`} className="harmonisasi-th-small">
+                    <th key={`real-${i}`} className="h-12 px-2 text-center align-middle font-medium text-muted-foreground text-xs">
                       {namaSemester === "1"
                         ? ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun"][i]
                         : ["Jul", "Ags", "Sep", "Okt", "Nov", "Des"][i]}
                     </th>
                   ))}
                   {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <th key={`phy-${i}`} className="harmonisasi-th-small">
+                    <th key={`phy-${i}`} className="h-12 px-2 text-center align-middle font-medium text-muted-foreground text-xs">
                       {namaSemester === "1"
                         ? ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun"][i]
                         : ["Jul", "Ags", "Sep", "Okt", "Nov", "Des"][i]}
                     </th>
                   ))}
-                  <th className="harmonisasi-th-small">Penganggaran</th>
-                  <th className="harmonisasi-th-small">PBJ</th>
-                  <th className="harmonisasi-th-small">Eksekusi</th>
-                  <th className="harmonisasi-th-small">Regulasi</th>
-                  <th className="harmonisasi-th-small">SDM</th>
+                  <th className="h-12 px-2 text-center align-middle font-medium text-muted-foreground text-xs">Penganggaran</th>
+                  <th className="h-12 px-2 text-center align-middle font-medium text-muted-foreground text-xs">PBJ</th>
+                  <th className="h-12 px-2 text-center align-middle font-medium text-muted-foreground text-xs">Eksekusi</th>
+                  <th className="h-12 px-2 text-center align-middle font-medium text-muted-foreground text-xs">Regulasi</th>
+                  <th className="h-12 px-2 text-center align-middle font-medium text-muted-foreground text-xs">SDM</th>
                 </tr>
               </thead>
-              <tbody className="harmonisasi-tbody">
+              <tbody className="text-xs">
                 {data.map((row: any, index: number) => (
-                  <tr key={row.id} className="harmonisasi-tr">
-                    <td className="harmonisasi-td-center">
+                  <tr key={row.id} className="border-b border-border transition-colors hover:bg-muted/50">
+                    <td className="p-2 text-center">
                       {index + 1 + page * limit}
                     </td>
-                    <td className="harmonisasi-td">
+                    <td className="p-2">
                       {row.nmsatker} ({row.kddept}.{row.kdsatker})
                     </td>
-                    <td className="harmonisasi-td-center">{row.bidang_dak}</td>
-                    <td className="harmonisasi-td-center">{row.jenis_tkd}</td>
-                    <td className="harmonisasi-td-center">
+                    <td className="p-2 text-center">{row.bidang_dak}</td>
+                    <td className="p-2 text-center">{row.jenis_tkd}</td>
+                    <td className="p-2 text-center">
                       {row.kdlokasi}
                       <br />
                       {row.nmkabkota}
                     </td>
-                    <td className="harmonisasi-td-coa">{row.coa}</td>
-                    <td className="harmonisasi-td">{row.ursoutput}</td>
-                    <td className="harmonisasi-td-center">
+                    <td className="p-2 text-center text-[10px] select-none">{row.coa}</td>
+                    <td className="p-2">{row.ursoutput}</td>
+                    <td className="p-2 text-center">
                       {row.sat}
                       <br />
                       {numeral(row.vol).format("0,0")}
                     </td>
-                    <td className="harmonisasi-td-right">
+                    <td className="p-2 text-right">
                       {numeral(row.pagu).format("0,0")}
                     </td>
 
                     {/* Realisation Rupiah */}
-                    <td className="harmonisasi-td-right">
+                    <td className="p-2 text-right">
                       {numeral(
                         namaSemester === "1" ? row.real1 : row.real7
                       ).format("0,0")}
                     </td>
-                    <td className="harmonisasi-td-right">
+                    <td className="p-2 text-right">
                       {numeral(
                         namaSemester === "1" ? row.real2 : row.real8
                       ).format("0,0")}
                     </td>
-                    <td className="harmonisasi-td-right">
+                    <td className="p-2 text-right">
                       {numeral(
                         namaSemester === "1" ? row.real3 : row.real9
                       ).format("0,0")}
                     </td>
-                    <td className="harmonisasi-td-right">
+                    <td className="p-2 text-right">
                       {numeral(
                         namaSemester === "1" ? row.real4 : row.real10
                       ).format("0,0")}
                     </td>
-                    <td className="harmonisasi-td-right">
+                    <td className="p-2 text-right">
                       {numeral(
                         namaSemester === "1" ? row.real5 : row.real11
                       ).format("0,0")}
                     </td>
-                    <td className="harmonisasi-td-right">
+                    <td className="p-2 text-right">
                       {numeral(
                         namaSemester === "1" ? row.real6 : row.real12
                       ).format("0,0")}
                     </td>
 
                     {/* Realisation Fisik */}
-                    <td className="harmonisasi-td-right">
+                    <td className="p-2 text-right">
                       {numeral(
                         namaSemester === "1" ? row.realfisik1 : row.realfisik7
                       ).format("0,0")}
                     </td>
-                    <td className="harmonisasi-td-right">
+                    <td className="p-2 text-right">
                       {numeral(
                         namaSemester === "1" ? row.realfisik2 : row.realfisik8
                       ).format("0,0")}
                     </td>
-                    <td className="harmonisasi-td-right">
+                    <td className="p-2 text-right">
                       {numeral(
                         namaSemester === "1" ? row.realfisik3 : row.realfisik9
                       ).format("0,0")}
                     </td>
-                    <td className="harmonisasi-td-right">
+                    <td className="p-2 text-right">
                       {numeral(
                         namaSemester === "1" ? row.realfisik4 : row.realfisik10
                       ).format("0,0")}
                     </td>
-                    <td className="harmonisasi-td-right">
+                    <td className="p-2 text-right">
                       {numeral(
                         namaSemester === "1" ? row.realfisik5 : row.realfisik11
                       ).format("0,0")}
                     </td>
-                    <td className="harmonisasi-td-right">
+                    <td className="p-2 text-right">
                       {numeral(
                         namaSemester === "1" ? row.realfisik6 : row.realfisik12
                       ).format("0,0")}
                     </td>
 
                     {/* Clusters */}
-                    <td className="harmonisasi-td">
+                    <td className="p-2">
                       <StatusIcon
                         active={
                           !!(
@@ -742,12 +741,12 @@ export default function Harmonisasi() {
 
         {/* Pagination Controls */}
         {data.length > 0 && (
-          <div className="harmonisasi-pagination">
-            <div className="harmonisasi-pagination-info">
+          <div className="flex justify-between items-center py-4">
+            <div className="text-sm text-muted-foreground">
               Total: {numeral(rows).format("0,0")} | Hal: {page + 1} dari{" "}
               {pages}
             </div>
-            <div className="harmonisasi-pagination-buttons">
+            <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"

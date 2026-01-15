@@ -368,14 +368,14 @@ export default function Rekam({
       <DialogContent className="max-w-4xl p-0 overflow-hidden flex flex-col max-h-[90vh]">
         <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle className="flex items-center gap-2 text-xl">
-            <MessageSquareText className="w-5 h-5 text-green-600" />
+            <MessageSquareText className="w-5 h-5 text-primary" />
             <span>Clustering Tantangan {clusterTitle[jenis]}</span>
           </DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-1 overflow-hidden">
           {/* Sidebar (Navigation) */}
-          <div className="w-1/4 border-r bg-gray-50/50 p-4 overflow-y-auto flex flex-col gap-2">
+          <div className="w-1/4 border-r bg-muted/30 p-4 overflow-y-auto flex flex-col gap-2">
             {clusterMapping[jenis].map(({ key, label }) => (
               <Button
                 key={key}
@@ -383,7 +383,7 @@ export default function Rekam({
                 className={cn(
                   "justify-start text-left h-auto py-2 px-3 whitespace-normal",
                   activeKey === key &&
-                    "bg-white shadow-sm border font-medium text-primary"
+                  "bg-white shadow-sm border font-medium text-primary"
                 )}
                 onClick={() => setActiveKey(key)}
               >
@@ -421,7 +421,7 @@ export default function Rekam({
                     activeKey === key ? "flex" : "hidden"
                   )}
                 >
-                  <div className="bg-green-600 text-white p-3 rounded-md flex items-center justify-between shadow-sm">
+                  <div className="bg-primary text-primary-foreground p-3 rounded-md flex items-center justify-between shadow-sm">
                     <span className="font-semibold">{label}</span>
                     <TooltipProvider>
                       <Tooltip delayDuration={300}>
@@ -447,14 +447,14 @@ export default function Rekam({
           </div>
         </div>
 
-        <div className="p-4 border-t bg-gray-50 flex justify-end gap-2">
+        <div className="p-4 border-t bg-muted/50 flex justify-end gap-2">
           <Button variant="outline" onClick={onHide}>
             Tutup
           </Button>
           <Button
             type="submit"
             form="rekam-form"
-            className="bg-green-600 hover:bg-green-700 text-white"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             Simpan
           </Button>

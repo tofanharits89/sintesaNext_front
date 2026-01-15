@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MessageSquareText, FileSpreadsheet, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
@@ -116,10 +117,9 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
 
     try {
       setLoading(true);
-      // Replace with actual endpoint from env or config
-      const endpoint =
-        process.env.NEXT_PUBLIC_SIMPANUPAYAHARMONISASI ||
-        "/simpan-upaya-harmonisasi";
+      // Use backend URL directly
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+      const endpoint = `${baseUrl}/api/v1/harmonisasi/upaya`;
 
       await http.patch(endpoint, payload);
 
@@ -159,14 +159,13 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
     const encryptedQuery = Encrypt(cleanedQuery);
 
     try {
-      const endpoint =
-        process.env.NEXT_PUBLIC_TAYANG_UPAYAHARMONISASI ||
-        "/tayang-upaya-harmonisasi";
-      // Construct URL carefully. Original used import.meta.env which might include query param prefix?
-      // Assuming endpoint is just base URL
-      const response = await http.get(
-        `${endpoint}${encryptedQuery}&limit=${limit}&page=${page}&user=${username}`
-      );
+      // Use backend URL directly
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+      const endpoint = `${baseUrl}/api/v1/harmonisasi/upaya/view`;
+
+      const url = `${endpoint}?queryParams=${encryptedQuery}&limit=${limit}&page=${page}&user=${username}`;
+
+      const response = await http.get(url);
 
       setRekamanUpaya(response.data.result || []);
     } catch (error: any) {
@@ -193,13 +192,13 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <i className="bi bi-chat-text-fill text-green-500"></i>
+            <MessageSquareText className="w-5 h-5 text-primary" />
             Rekam Upaya Harmonisasi satker K/L dan Pemda
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          <Card className="p-4 shadow-sm border-0 bg-white">
+          <Card className="p-4 shadow-sm border bg-card">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="text-sm font-medium mb-1 block">Tahun</label>
@@ -265,7 +264,7 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
             </TabsList>
 
             <TabsContent value="form">
-              <Card className="p-4 shadow-sm border-0 mt-2">
+              <Card className="p-4 shadow-sm border bg-card mt-2">
                 <form onSubmit={handleSubmit}>
                   <div className="mb-4">
                     <Textarea
@@ -279,12 +278,12 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
                   <div className="flex justify-end gap-2">
                     <Button
                       variant="default"
-                      className="bg-green-600 hover:bg-green-700 text-white"
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground"
                       type="submit"
                       disabled={loading}
                     >
                       {loading ? (
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
                         "Simpan"
                       )}
@@ -298,22 +297,22 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
             </TabsContent>
 
             <TabsContent value="rekaman">
-              <Card className="p-4 shadow-sm border-0 mt-2">
+              <Card className="p-4 shadow-sm border bg-card mt-2">
                 <div className="overflow-x-auto">
                   {loadingRekaman ? (
                     <div className="flex justify-center p-4">
-                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     </div>
                   ) : (
-                    <table className="w-full border-collapse border border-gray-200 text-sm">
-                      <thead className="bg-gray-800 text-white text-center">
+                    <table className="w-full text-sm">
+                      <thead className="bg-secondary text-secondary-foreground text-center">
                         <tr>
-                          <th className="p-2 border border-gray-600">No</th>
-                          <th className="p-2 border border-gray-600">
+                          <th className="p-2 border border-border">No</th>
+                          <th className="p-2 border border-border">
                             Tahun/Semester
                           </th>
-                          <th className="p-2 border border-gray-600">Kanwil</th>
-                          <th className="p-2 border border-gray-600">Upaya</th>
+                          <th className="p-2 border border-border">Kanwil</th>
+                          <th className="p-2 border border-border">Upaya</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -321,18 +320,18 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
                           rekamanUpaya.map((item, index) => (
                             <tr
                               key={item.id}
-                              className="odd:bg-white even:bg-gray-50 hover:bg-gray-100"
+                              className="hover:bg-muted/50"
                             >
-                              <td className="p-2 border border-gray-200 text-center">
+                              <td className="p-2 border border-border text-center">
                                 {index + 1 + page * limit}
                               </td>
-                              <td className="p-2 border border-gray-200 text-center">
+                              <td className="p-2 border border-border text-center">
                                 {item.thang}/{item.semester}
                               </td>
-                              <td className="p-2 border border-gray-200 text-center">
+                              <td className="p-2 border border-border text-center">
                                 ({item.kdkanwil}) - {item.nmkanwil}
                               </td>
-                              <td className="p-2 border border-gray-200 text-justify">
+                              <td className="p-2 border border-border text-justify">
                                 {item.upaya}
                               </td>
                             </tr>
@@ -341,7 +340,7 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
                           <tr>
                             <td
                               colSpan={4}
-                              className="p-4 text-center text-gray-500 border border-gray-200"
+                              className="p-4 text-center text-muted-foreground border border-border"
                             >
                               Belum ada data
                             </td>
@@ -355,7 +354,7 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex items-center gap-2 bg-gray-500 text-white hover:bg-gray-600 border-none"
+                    className="flex items-center gap-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground"
                     onClick={() => {
                       setLoadingStatus(true);
                       setExport2(true);
@@ -363,10 +362,10 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
                     disabled={loadingStatus}
                   >
                     {loadingStatus && (
-                      <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      <Loader2 className="h-3 w-3 animate-spin" />
                     )}
                     {!loadingStatus && (
-                      <i className="bi bi-file-earmark-excel-fill"></i>
+                      <FileSpreadsheet className="h-4 w-4" />
                     )}
                     {loadingStatus ? "Loading..." : "Download"}
                   </Button>
