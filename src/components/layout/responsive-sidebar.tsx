@@ -467,9 +467,7 @@ export function ResponsiveSidebar({
                             ) {
                               href = "/dashboard/utama";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/dashboard/PerformanceMonitoringDashboard"
-                                );
+                                import("@/components/dashboard/PerformanceMonitoringDashboard");
                             } else if (
                               c.label === "Dashboard Program" &&
                               m.label === "Dashboard"
@@ -488,36 +486,28 @@ export function ResponsiveSidebar({
                             ) {
                               href = "/inquiry-data/kontrak";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/inquiry-data/enhanced-filter-card"
-                                );
+                                import("@/components/inquiry-data/enhanced-filter-card");
                             } else if (
                               c.label === "UP/TUP" &&
                               m.label === "Inquiry Data"
                             ) {
                               href = "/inquiry-data/up-tup";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/inquiry-data/enhanced-filter-card"
-                                );
+                                import("@/components/inquiry-data/enhanced-filter-card");
                             } else if (
                               c.label === "Penerimaan PNBP" &&
                               m.label === "Inquiry Data"
                             ) {
                               href = "/inquiry-data/penerimaan-pnbp";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/inquiry-data/enhanced-filter-card"
-                                );
+                                import("@/components/inquiry-data/enhanced-filter-card");
                             } else if (
                               c.label === "Prognosis" &&
                               m.label === "Inquiry Data"
                             ) {
                               href = "/inquiry-data/prognosis";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/inquiry-data/enhanced-filter-card"
-                                );
+                                import("@/components/inquiry-data/enhanced-filter-card");
                             } else if (
                               c.label === "Dashboard MBG" &&
                               m.label === "Makan Bergizi"
@@ -566,39 +556,29 @@ export function ResponsiveSidebar({
                             ) {
                               href = "/transfer-daerah/proyeksi-tkd";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/transfer-daerah/data-kmk-tab"
-                                );
+                                import("@/components/transfer-daerah/data-kmk-tab");
                             } else if (
                               c.label === "Upload Laporan" &&
                               m.label === "Transfer Daerah"
                             ) {
                               href = "/transfer-daerah/upload-laporan";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/transfer-daerah/data-kmk-tab"
-                                );
+                                import("@/components/transfer-daerah/data-kmk-tab");
                             } else if (
                               c.label === "DAU" &&
                               m.label === "Transfer Daerah"
                             ) {
                               href = "/transfer-daerah/dau";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/transfer-daerah/data-transaksi-tab"
-                                );
+                                import("@/components/transfer-daerah/data-transaksi-tab");
                             } else if (
                               c.label === "Belanja" &&
                               m.label === "Inquiry Data"
                             ) {
                               href = "/inquiry-data/belanja";
                               onMouseEnterFn = () => {
-                                import(
-                                  "@/components/inquiry-data/dynamic-filters-card"
-                                );
-                                import(
-                                  "@/components/inquiry-data/query-management"
-                                );
+                                import("@/components/inquiry-data/dynamic-filters-card");
+                                import("@/components/inquiry-data/query-management");
                               };
                             } else if (
                               c.label === "Tematik" &&
@@ -606,72 +586,56 @@ export function ResponsiveSidebar({
                             ) {
                               href = "/inquiry-data/tematik";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/inquiry-data/category-mandatory-filters"
-                                );
+                                import("@/components/inquiry-data/category-mandatory-filters");
                             } else if (
                               c.label === "RKAKL Detail" &&
                               m.label === "Inquiry Data"
                             ) {
                               href = "/inquiry-data/rkakl-detail";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/inquiry-data/dynamic-filters-card"
-                                );
+                                import("@/components/inquiry-data/dynamic-filters-card");
                             } else if (
                               c.label === "Dashboard Supplier" &&
                               m.label === "Data Supplier"
                             ) {
                               href = "/data-supplier/dashboard";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/data-supplier/DashboardSupplierClient"
-                                );
+                                import("@/components/data-supplier/DashboardSupplierClient");
                             } else if (
                               c.label === "Profil Supplier" &&
                               m.label === "Data Supplier"
                             ) {
                               href = "/data-supplier/profil";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/data-supplier/DashboardSupplierClient"
-                                );
+                                import("@/components/data-supplier/DashboardSupplierClient");
                             } else if (
                               c.label === "Konsentrasi Supplier" &&
                               m.label === "Data Supplier"
                             ) {
                               href = "/data-supplier/konsentrasi";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/data-supplier/DashboardSupplierClient"
-                                );
+                                import("@/components/data-supplier/DashboardSupplierClient");
                             } else if (
                               c.label === "Deteksi Anomali Supplier" &&
                               m.label === "Data Supplier"
                             ) {
                               href = "/data-supplier/anomali";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/data-supplier/DashboardSupplierClient"
-                                );
+                                import("@/components/data-supplier/DashboardSupplierClient");
                             } else if (
                               c.label === "Klaster Supplier" &&
                               m.label === "Data Supplier"
                             ) {
                               href = "/data-supplier/klaster";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/data-supplier/DashboardSupplierClient"
-                                );
+                                import("@/components/data-supplier/DashboardSupplierClient");
                             } else if (
                               c.label === "Jaringan Supplier" &&
                               m.label === "Data Supplier"
                             ) {
                               href = "/data-supplier/jaringan";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/data-supplier/DashboardSupplierClient"
-                                );
+                                import("@/components/data-supplier/DashboardSupplierClient");
                             } else if (
                               c.label === "Monthly Report" &&
                               m.label === "Laporan"
@@ -691,7 +655,7 @@ export function ResponsiveSidebar({
                               c.label === "Tantangan TPID" &&
                               m.label === "Laporan"
                             ) {
-                              href = "/laporan/tantangan-tpid";
+                              href = "/laporan/tpid";
                             } else if (
                               c.label === "Data BPS" &&
                               m.label === "Data Makrokesra"
@@ -808,9 +772,7 @@ export function ResponsiveSidebar({
                         href="/dashboard/utama"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/dashboard/PerformanceMonitoringDashboard"
-                          );
+                          import("@/components/dashboard/PerformanceMonitoringDashboard");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1054,9 +1016,7 @@ export function ResponsiveSidebar({
                         href="/transfer-daerah/dau"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/transfer-daerah/data-transaksi-tab"
-                          );
+                          import("@/components/transfer-daerah/data-transaksi-tab");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1078,9 +1038,7 @@ export function ResponsiveSidebar({
                         href="/inquiry-data/belanja"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/inquiry-data/dynamic-filters-card"
-                          );
+                          import("@/components/inquiry-data/dynamic-filters-card");
                           import("@/components/inquiry-data/query-management");
                         }}
                         onClick={() => {
@@ -1103,9 +1061,7 @@ export function ResponsiveSidebar({
                         href="/inquiry-data/tematik"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/inquiry-data/category-mandatory-filters"
-                          );
+                          import("@/components/inquiry-data/category-mandatory-filters");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1128,9 +1084,7 @@ export function ResponsiveSidebar({
                         href="/inquiry-data/rkakl-detail"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/inquiry-data/dynamic-filters-card"
-                          );
+                          import("@/components/inquiry-data/dynamic-filters-card");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1153,9 +1107,7 @@ export function ResponsiveSidebar({
                         href="/inquiry-data/prognosis"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/inquiry-data/dynamic-filters-card"
-                          );
+                          import("@/components/inquiry-data/dynamic-filters-card");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1178,9 +1130,7 @@ export function ResponsiveSidebar({
                         href="/data-supplier/dashboard"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/data-supplier/DashboardSupplierClient"
-                          );
+                          import("@/components/data-supplier/DashboardSupplierClient");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1203,9 +1153,7 @@ export function ResponsiveSidebar({
                         href="/data-supplier/profil"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/data-supplier/DashboardSupplierClient"
-                          );
+                          import("@/components/data-supplier/DashboardSupplierClient");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1228,9 +1176,7 @@ export function ResponsiveSidebar({
                         href="/data-supplier/konsentrasi"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/data-supplier/DashboardSupplierClient"
-                          );
+                          import("@/components/data-supplier/DashboardSupplierClient");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1253,9 +1199,7 @@ export function ResponsiveSidebar({
                         href="/data-supplier/anomali"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/data-supplier/DashboardSupplierClient"
-                          );
+                          import("@/components/data-supplier/DashboardSupplierClient");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1278,9 +1222,7 @@ export function ResponsiveSidebar({
                         href="/data-supplier/klaster"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/data-supplier/DashboardSupplierClient"
-                          );
+                          import("@/components/data-supplier/DashboardSupplierClient");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1303,9 +1245,7 @@ export function ResponsiveSidebar({
                         href="/data-supplier/jaringan"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/data-supplier/DashboardSupplierClient"
-                          );
+                          import("@/components/data-supplier/DashboardSupplierClient");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1383,13 +1323,13 @@ export function ResponsiveSidebar({
                       m.label === "Laporan" ? (
                       <Link
                         key={c.label}
-                        href="/laporan/tantangan-tpid"
+                        href="/laporan/tpid"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onClick={() => {
                           trackMenuUsage({
                             menu: m.label,
                             submenu: c.label,
-                            path: "/laporan/tantangan-tpid",
+                            path: "/laporan/tpid",
                           });
                           setOpen(false);
                         }}
