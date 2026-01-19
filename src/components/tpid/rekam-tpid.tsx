@@ -8,8 +8,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Loader2, FileSpreadsheet, CheckSquare } from "lucide-react";
+import { Loader2, FileSpreadsheet, CheckSquare, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
@@ -112,10 +120,10 @@ export default function RekamTpid() {
       .concat(
         searchQuery
           ? [
-              `(a.kdkanwil LIKE '%${searchQuery}%' or
+            `(a.kdkanwil LIKE '%${searchQuery}%' or
             b.nmkanwil LIKE '%${searchQuery}%' or
             a.proker LIKE '%${searchQuery}%')`,
-            ]
+          ]
           : []
       )
       .concat(
@@ -250,13 +258,12 @@ export default function RekamTpid() {
     onClick?: () => void;
   }) => (
     <CheckSquare
-      className={`w-5 h-5 cursor-pointer mx-auto ${
-        active
-          ? "text-blue-500" // Special blue for certain prokers
-          : filled
-            ? "text-green-500"
-            : "text-red-500"
-      }`}
+      className={`w-5 h-5 cursor-pointer mx-auto ${active
+        ? "text-blue-500" // Special blue for certain prokers
+        : filled
+          ? "text-green-500"
+          : "text-red-500"
+        }`}
       onClick={onClick}
     />
   );
@@ -399,299 +406,319 @@ export default function RekamTpid() {
           </div>
         ) : (
           <Card className="overflow-hidden border shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-secondary text-secondary-foreground">
-                  <tr>
-                    <th
-                      rowSpan={2}
-                      className="p-2 border text-center align-middle"
-                    >
-                      No
-                    </th>
-                    <th
-                      rowSpan={2}
-                      className="p-2 border text-center align-middle min-w-[200px]"
-                    >
-                      Proker TPID
-                    </th>
-                    <th colSpan={6} className="p-2 border text-center">
-                      Tantangan/Kendala dan Rekomendasi Belanja K/L
-                    </th>
-                    <th colSpan={6} className="p-2 border text-center">
-                      Tantangan/Kendala dan Rekomendasi Belanja TKD
-                    </th>
-                  </tr>
-                  <tr>
-                    {/* K/L Columns */}
-                    <th className="p-2 border text-center text-xs">
-                      Penganggaran
-                    </th>
-                    <th className="p-2 border text-center text-xs">
-                      PBJ (K1 & K4 Tidak Diisi)
-                    </th>
-                    <th className="p-2 border text-center text-xs">
-                      Eksekusi Kegiatan
-                    </th>
-                    <th className="p-2 border text-center text-xs">Regulasi</th>
-                    <th className="p-2 border text-center text-xs">SDM</th>
-                    <th className="p-2 border text-center text-xs">
-                      Tantangan Lainnya
-                    </th>
-                    {/* TKD Columns */}
-                    <th className="p-2 border text-center text-xs">
-                      Penganggaran
-                    </th>
-                    <th className="p-2 border text-center text-xs">
-                      PBJ (K1 & K4 Tidak Diisi)
-                    </th>
-                    <th className="p-2 border text-center text-xs">
-                      Eksekusi Kegiatan
-                    </th>
-                    <th className="p-2 border text-center text-xs">Regulasi</th>
-                    <th className="p-2 border text-center text-xs">SDM</th>
-                    <th className="p-2 border text-center text-xs">
-                      Tantangan Lainnya
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.length > 0 ? (
-                    data.map((row, index) => {
-                      const isK1OrK4 =
-                        row.proker === "K1-Keterjangkauan Harga" ||
-                        row.proker === "K4-Komunikasi Efektif";
-                      return (
-                        <tr key={row.id} className="hover:bg-muted/50 border-b">
-                          <td className="p-2 border text-center">
-                            {index + 1 + page * limit}
-                          </td>
-                          <td className="p-2 border">
-                            <div className="font-medium text-xs">
-                              {row.nmkanwil}
-                            </div>
-                            <div className="font-bold text-xs mt-1">
-                              {row.proker}
-                            </div>
-                          </td>
-
-                          {/* K/L Cells */}
-                          <td className="p-2 border text-center">
-                            <StatusIcon
-                              filled={!!row.ket1_kl && !!row.rekom1_kl}
-                              onClick={() =>
-                                handleRekam(
-                                  row.id,
-                                  "1",
-                                  row.ket1_kl,
-                                  row.rekom1_kl
-                                )
-                              }
-                            />
-                          </td>
-                          <td className="p-2 border text-center">
-                            <div
-                              onClick={() =>
-                                !isK1OrK4 &&
-                                handleRekam(
-                                  row.id,
-                                  "2",
-                                  row.ket2_kl,
-                                  row.rekom2_kl
-                                )
-                              }
-                            >
-                              <StatusIcon
-                                active={isK1OrK4}
-                                filled={!!row.ket2_kl && !!row.rekom2_kl}
-                              />
-                            </div>
-                          </td>
-                          <td className="p-2 border text-center">
-                            <StatusIcon
-                              filled={!!row.ket3_kl && !!row.rekom3_kl}
-                              onClick={() =>
-                                handleRekam(
-                                  row.id,
-                                  "3",
-                                  row.ket3_kl,
-                                  row.rekom3_kl
-                                )
-                              }
-                            />
-                          </td>
-                          <td className="p-2 border text-center">
-                            <StatusIcon
-                              filled={!!row.ket4_kl && !!row.rekom4_kl}
-                              onClick={() =>
-                                handleRekam(
-                                  row.id,
-                                  "4",
-                                  row.ket4_kl,
-                                  row.rekom4_kl
-                                )
-                              }
-                            />
-                          </td>
-                          <td className="p-2 border text-center">
-                            <StatusIcon
-                              filled={!!row.ket5_kl && !!row.rekom5_kl}
-                              onClick={() =>
-                                handleRekam(
-                                  row.id,
-                                  "5",
-                                  row.ket5_kl,
-                                  row.rekom5_kl
-                                )
-                              }
-                            />
-                          </td>
-                          <td className="p-2 border text-center">
-                            <StatusIcon
-                              filled={!!row.ket6_kl && !!row.rekom6_kl}
-                              onClick={() =>
-                                handleRekam(
-                                  row.id,
-                                  "6",
-                                  row.ket6_kl,
-                                  row.rekom6_kl
-                                )
-                              }
-                            />
-                          </td>
-
-                          {/* TKD Cells */}
-                          <td className="p-2 border text-center">
-                            <StatusIcon
-                              filled={!!row.ket7_tkd && !!row.rekom7_tkd}
-                              onClick={() =>
-                                handleRekam(
-                                  row.id,
-                                  "7",
-                                  row.ket7_tkd,
-                                  row.rekom7_tkd
-                                )
-                              }
-                            />
-                          </td>
-                          <td className="p-2 border text-center">
-                            <div
-                              onClick={() =>
-                                !isK1OrK4 &&
-                                handleRekam(
-                                  row.id,
-                                  "8",
-                                  row.ket8_tkd,
-                                  row.rekom8_tkd
-                                )
-                              }
-                            >
-                              <StatusIcon
-                                active={isK1OrK4}
-                                filled={!!row.ket8_tkd && !!row.rekom8_tkd}
-                              />
-                            </div>
-                          </td>
-                          <td className="p-2 border text-center">
-                            <StatusIcon
-                              filled={!!row.ket9_tkd && !!row.rekom9_tkd}
-                              onClick={() =>
-                                handleRekam(
-                                  row.id,
-                                  "9",
-                                  row.ket9_tkd,
-                                  row.rekom9_tkd
-                                )
-                              }
-                            />
-                          </td>
-                          <td className="p-2 border text-center">
-                            <StatusIcon
-                              filled={!!row.ket10_tkd && !!row.rekom10_tkd}
-                              onClick={() =>
-                                handleRekam(
-                                  row.id,
-                                  "10",
-                                  row.ket10_tkd,
-                                  row.rekom10_tkd
-                                )
-                              }
-                            />
-                          </td>
-                          <td className="p-2 border text-center">
-                            <StatusIcon
-                              filled={!!row.ket11_tkd && !!row.rekom11_tkd}
-                              onClick={() =>
-                                handleRekam(
-                                  row.id,
-                                  "11",
-                                  row.ket11_tkd,
-                                  row.rekom11_tkd
-                                )
-                              }
-                            />
-                          </td>
-                          <td className="p-2 border text-center">
-                            <StatusIcon
-                              filled={!!row.ket12_tkd && !!row.rekom12_tkd}
-                              onClick={() =>
-                                handleRekam(
-                                  row.id,
-                                  "12",
-                                  row.ket12_tkd,
-                                  row.rekom12_tkd
-                                )
-                              }
-                            />
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={14}
-                        className="p-8 text-center text-muted-foreground border"
+            <Table>
+              <TableHeader className="bg-secondary/50">
+                <TableRow>
+                  <TableHead
+                    rowSpan={2}
+                    className="text-center align-middle font-semibold border-r"
+                  >
+                    No
+                  </TableHead>
+                  <TableHead
+                    rowSpan={2}
+                    className="text-center align-middle font-semibold min-w-[200px] border-r"
+                  >
+                    Proker TPID
+                  </TableHead>
+                  <TableHead
+                    colSpan={6}
+                    className="text-center font-semibold border-b border-r"
+                  >
+                    Tantangan/Kendala dan Rekomendasi Belanja K/L
+                  </TableHead>
+                  <TableHead colSpan={6} className="text-center font-semibold text-foreground">
+                    Tantangan/Kendala dan Rekomendasi Belanja TKD
+                  </TableHead>
+                </TableRow>
+                <TableRow className="bg-secondary/20">
+                  {/* K/L Columns */}
+                  <TableHead className="text-center text-xs border-r h-auto py-2">
+                    Penganggaran
+                  </TableHead>
+                  <TableHead className="text-center text-xs border-r h-auto py-2">
+                    PBJ (K1 & K4 Tidak Diisi)
+                  </TableHead>
+                  <TableHead className="text-center text-xs border-r h-auto py-2">
+                    Eksekusi Kegiatan
+                  </TableHead>
+                  <TableHead className="text-center text-xs border-r h-auto py-2">
+                    Regulasi
+                  </TableHead>
+                  <TableHead className="text-center text-xs border-r h-auto py-2">
+                    SDM
+                  </TableHead>
+                  <TableHead className="text-center text-xs border-r h-auto py-2">
+                    Tantangan Lainnya
+                  </TableHead>
+                  {/* TKD Columns */}
+                  <TableHead className="text-center text-xs border-r h-auto py-2">
+                    Penganggaran
+                  </TableHead>
+                  <TableHead className="text-center text-xs border-r h-auto py-2">
+                    PBJ (K1 & K4 Tidak Diisi)
+                  </TableHead>
+                  <TableHead className="text-center text-xs border-r h-auto py-2">
+                    Eksekusi Kegiatan
+                  </TableHead>
+                  <TableHead className="text-center text-xs border-r h-auto py-2">
+                    Regulasi
+                  </TableHead>
+                  <TableHead className="text-center text-xs border-r h-auto py-2">
+                    SDM
+                  </TableHead>
+                  <TableHead className="text-center text-xs h-auto py-2">
+                    Tantangan Lainnya
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.length > 0 ? (
+                  data.map((row, index) => {
+                    const isK1OrK4 =
+                      row.proker === "K1-Keterjangkauan Harga" ||
+                      row.proker === "K4-Komunikasi Efektif";
+                    return (
+                      <TableRow
+                        key={row.id}
+                        className="hover:bg-muted/50 transition-colors"
                       >
-                        Data tidak ditemukan
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                        <TableCell className="text-center border-r font-medium">
+                          {index + 1 + page * limit}
+                        </TableCell>
+                        <TableCell className="border-r">
+                          <div className="font-medium text-xs text-muted-foreground">
+                            {row.nmkanwil}
+                          </div>
+                          <div className="font-bold text-xs mt-1 text-foreground">
+                            {row.proker}
+                          </div>
+                        </TableCell>
+
+                        {/* K/L Cells */}
+                        <TableCell className="text-center border-r p-2">
+                          <StatusIcon
+                            filled={!!row.ket1_kl && !!row.rekom1_kl}
+                            onClick={() =>
+                              handleRekam(
+                                row.id,
+                                "1",
+                                row.ket1_kl,
+                                row.rekom1_kl
+                              )
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="text-center border-r p-2">
+                          <div
+                            className={!isK1OrK4 ? "cursor-pointer" : ""}
+                            onClick={() =>
+                              !isK1OrK4 &&
+                              handleRekam(
+                                row.id,
+                                "2",
+                                row.ket2_kl,
+                                row.rekom2_kl
+                              )
+                            }
+                          >
+                            <StatusIcon
+                              active={isK1OrK4}
+                              filled={!!row.ket2_kl && !!row.rekom2_kl}
+                            />
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center border-r p-2">
+                          <StatusIcon
+                            filled={!!row.ket3_kl && !!row.rekom3_kl}
+                            onClick={() =>
+                              handleRekam(
+                                row.id,
+                                "3",
+                                row.ket3_kl,
+                                row.rekom3_kl
+                              )
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="text-center border-r p-2">
+                          <StatusIcon
+                            filled={!!row.ket4_kl && !!row.rekom4_kl}
+                            onClick={() =>
+                              handleRekam(
+                                row.id,
+                                "4",
+                                row.ket4_kl,
+                                row.rekom4_kl
+                              )
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="text-center border-r p-2">
+                          <StatusIcon
+                            filled={!!row.ket5_kl && !!row.rekom5_kl}
+                            onClick={() =>
+                              handleRekam(
+                                row.id,
+                                "5",
+                                row.ket5_kl,
+                                row.rekom5_kl
+                              )
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="text-center border-r p-2">
+                          <StatusIcon
+                            filled={!!row.ket6_kl && !!row.rekom6_kl}
+                            onClick={() =>
+                              handleRekam(
+                                row.id,
+                                "6",
+                                row.ket6_kl,
+                                row.rekom6_kl
+                              )
+                            }
+                          />
+                        </TableCell>
+
+                        {/* TKD Cells */}
+                        <TableCell className="text-center border-r p-2">
+                          <StatusIcon
+                            filled={!!row.ket7_tkd && !!row.rekom7_tkd}
+                            onClick={() =>
+                              handleRekam(
+                                row.id,
+                                "7",
+                                row.ket7_tkd,
+                                row.rekom7_tkd
+                              )
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="text-center border-r p-2">
+                          <div
+                            className={!isK1OrK4 ? "cursor-pointer" : ""}
+                            onClick={() =>
+                              !isK1OrK4 &&
+                              handleRekam(
+                                row.id,
+                                "8",
+                                row.ket8_tkd,
+                                row.rekom8_tkd
+                              )
+                            }
+                          >
+                            <StatusIcon
+                              active={isK1OrK4}
+                              filled={!!row.ket8_tkd && !!row.rekom8_tkd}
+                            />
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center border-r p-2">
+                          <StatusIcon
+                            filled={!!row.ket9_tkd && !!row.rekom9_tkd}
+                            onClick={() =>
+                              handleRekam(
+                                row.id,
+                                "9",
+                                row.ket9_tkd,
+                                row.rekom9_tkd
+                              )
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="text-center border-r p-2">
+                          <StatusIcon
+                            filled={!!row.ket10_tkd && !!row.rekom10_tkd}
+                            onClick={() =>
+                              handleRekam(
+                                row.id,
+                                "10",
+                                row.ket10_tkd,
+                                row.rekom10_tkd
+                              )
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="text-center border-r p-2">
+                          <StatusIcon
+                            filled={!!row.ket11_tkd && !!row.rekom11_tkd}
+                            onClick={() =>
+                              handleRekam(
+                                row.id,
+                                "11",
+                                row.ket11_tkd,
+                                row.rekom11_tkd
+                              )
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="text-center p-2">
+                          <StatusIcon
+                            filled={!!row.ket12_tkd && !!row.rekom12_tkd}
+                            onClick={() =>
+                              handleRekam(
+                                row.id,
+                                "12",
+                                row.ket12_tkd,
+                                row.rekom12_tkd
+                              )
+                            }
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={14}
+                      className="h-24 text-center text-muted-foreground"
+                    >
+                      Data tidak ditemukan
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </Card>
         )}
 
         {/* Pagination */}
         <div className="flex flex-col md:flex-row justify-between items-center py-4 gap-4">
           <div className="text-sm text-muted-foreground">
-            Total: {numeral(rows).format("0,0")} | Halaman {rows ? page + 1 : 0}{" "}
-            dari {pages}
+            Menampilkan <span className="font-medium text-foreground">{numeral(rows).format("0,0")}</span> data.
+            Halaman <span className="font-medium text-foreground">{rows ? page + 1 : 0}</span> dari <span className="font-medium text-foreground">{pages}</span>
           </div>
           <div className="flex justify-center">
             <ReactPaginate
-              previousLabel={"← Prev"}
-              nextLabel={"Next →"}
-              breakLabel={"..."}
+              previousLabel={
+                <div className="flex items-center gap-1 pl-2.5 pr-4">
+                  <ChevronLeft className="h-4 w-4" />
+                  <span>Previous</span>
+                </div>
+              }
+              nextLabel={
+                <div className="flex items-center gap-1 pl-4 pr-2.5">
+                  <span>Next</span>
+                  <ChevronRight className="h-4 w-4" />
+                </div>
+              }
+              breakLabel={<span className="px-4">...</span>}
               pageCount={pages}
               marginPagesDisplayed={1}
               pageRangeDisplayed={3}
               onPageChange={handlePageClick}
-              containerClassName={"flex items-center gap-1"}
-              pageClassName={
-                "px-3 py-1 border rounded hover:bg-muted cursor-pointer text-sm"
-              }
-              activeClassName={
-                "bg-primary text-primary-foreground border-primary"
-              }
-              previousClassName={
-                "px-3 py-1 border rounded hover:bg-muted cursor-pointer text-sm"
-              }
-              nextClassName={
-                "px-3 py-1 border rounded hover:bg-muted cursor-pointer text-sm"
-              }
-              disabledClassName={"opacity-50 cursor-not-allowed"}
+              containerClassName="flex items-center gap-1 select-none"
+              pageClassName="block"
+              pageLinkClassName="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 w-9"
+              activeClassName=""
+              activeLinkClassName="border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground font-bold pointer-events-none"
+              previousClassName="block"
+              previousLinkClassName="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9"
+              nextClassName="block"
+              nextLinkClassName="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9"
+              disabledClassName="opacity-50 pointer-events-none"
               forcePage={page}
             />
           </div>
