@@ -176,9 +176,15 @@ export function buildSelectClause(
       } else if (filterKey === "subOutputRo") {
         joinCondition = `main.kddept = ${alias}.kddept AND main.kdunit = ${alias}.kdunit AND main.kdprogram = ${alias}.kdprogram AND main.kdgiat = ${alias}.kdgiat AND main.kdoutput = ${alias}.kdoutput AND main.${config.columnName} = ${alias}.${joinKey}`;
       } else if (filterKey === "komponen") {
-        joinCondition = `main.kddept = ${alias}.kddept AND main.kdunit = ${alias}.kdunit AND main.kdsatker = ${alias}.kdsatker AND main.kdprogram = ${alias}.kdprogram AND main.kdgiat = ${alias}.kdgiat AND main.kdoutput = ${alias}.kdoutput AND main.kdsoutput = ${alias}.kdsoutput AND main.${config.columnName} = ${alias}.${joinKey}`;
+        joinCondition = `main.kddept = ${alias}.kddept AND main.kdunit = ${alias}.kdunit AND main.kdsatker = ${alias}.kdsatker AND main.kdprogram = ${alias}.kdprogram AND main.kdgiat = ${alias}.kdgiat AND main.kdoutput = ${alias}.kdoutput AND main.kdsoutput = ${alias}.kdsoutput AND TRIM(main.${config.columnName}) = ${alias}.${joinKey}`;
       } else if (filterKey === "subKomponen") {
-        joinCondition = `main.kddept = ${alias}.kddept AND main.kdunit = ${alias}.kdunit AND main.kdsatker = ${alias}.kdsatker AND main.kdprogram = ${alias}.kdprogram AND main.kdgiat = ${alias}.kdgiat AND main.kdoutput = ${alias}.kdoutput AND main.kdsoutput = ${alias}.kdsoutput AND main.kdkmpnen = ${alias}.kdkmpnen AND main.${config.columnName} = ${alias}.${joinKey}`;
+        joinCondition = `TRIM(main.kddept) = ${alias}.kddept AND TRIM(main.kdunit) = ${alias}.kdunit AND TRIM(main.kdsatker) = ${alias}.kdsatker AND TRIM(main.kdprogram) = ${alias}.kdprogram AND TRIM(main.kdgiat) = ${alias}.kdgiat AND TRIM(main.kdoutput) = ${alias}.kdoutput AND TRIM(main.kdsoutput) = ${alias}.kdsoutput AND TRIM(main.kdkmpnen) = ${alias}.kdkmpnen AND TRIM(main.${config.columnName}) = TRIM(${alias}.${joinKey})`;
+      } else if (filterKey === "subFungsi") {
+        // Trim both sides for subFungsi to handle trailing spaces
+        joinCondition = `TRIM(main.kdfungsi) = TRIM(${alias}.kdfungsi) AND TRIM(main.${config.columnName}) = TRIM(${alias}.${joinKey})`;
+      } else if (filterKey === "kabkota") {
+        // Hierarchical join via kdlokasi + kdkabkota for correct reference
+        joinCondition = `main.kdlokasi = ${alias}.kdlokasi AND main.${config.columnName} = ${alias}.${joinKey}`;
       }
 
       if (filterKey === "akun" && filterValue?.akunType) {
@@ -260,6 +266,11 @@ export function buildSelectClause(
               selectColumns.push(
                 `LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`,
               );
+            } else if (filterKey === "komponen" || filterKey === "subKomponen" || filterKey === "subFungsi") {
+              // Trim kode for columns with trailing spaces
+              selectColumns.push(
+                `TRIM(main.${config.columnName}) AS ${filterKey}_kode`,
+              );
             } else if (filterKey !== "register") {
               selectColumns.push(
                 `main.${config.columnName} AS ${filterKey}_kode`,
@@ -290,6 +301,11 @@ export function buildSelectClause(
             } else if (filterKey === "jenisBelanja") {
               selectColumns.push(
                 `LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`,
+              );
+            } else if (filterKey === "komponen" || filterKey === "subKomponen" || filterKey === "subFungsi") {
+              // Trim kode for columns with trailing spaces
+              selectColumns.push(
+                `TRIM(main.${config.columnName}) AS ${filterKey}_kode`,
               );
             } else {
               selectColumns.push(

@@ -23,10 +23,9 @@ import {
 } from "formik";
 import * as Yup from "yup";
 import Swal from "sweetalert2";
-import { BsFillPlusSquareFill, BsTrash } from "react-icons/bs";
+import { X, PlusSquare, Trash2 } from "lucide-react";
 import moment from "moment";
 import "react-datepicker/dist/react-datepicker.css";
-import { AiOutlineClose } from "react-icons/ai";
 import UploadSPM from "./upload-spm";
 
 interface FormRow {
@@ -313,7 +312,7 @@ export default function Rekam2({
               lineHeight: 1,
             }}
           >
-            <AiOutlineClose />
+            <X />
           </button>
         </Modal.Header>
         <Modal.Body style={{ overflow: "auto", height: 600 }}>
@@ -396,13 +395,13 @@ export default function Rekam2({
                         </div>
                         <hr />
                         <div className="text-end">
-                          <BsFillPlusSquareFill
+                          <PlusSquare
                             onClick={addRow}
                             className="my-2 text-primary"
                             style={{
-                              fontSize: 20,
                               cursor: "pointer",
                             }}
+                            size={20}
                           />
                         </div>
 
@@ -576,13 +575,13 @@ export default function Rekam2({
                               </Col>
                             </Row>
                             <div className="text-end mb-2">
-                              <BsTrash
+                              <Trash2
                                 onClick={() => removeRow(index)}
                                 className="text-danger"
                                 style={{
-                                  fontSize: 16,
                                   cursor: "pointer",
                                 }}
+                                size={16}
                               />
                             </div>
                             <hr />

@@ -612,7 +612,7 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
     query: {
       columnName: "noitem",
       nameColumn:
-        "CONCAT(CONVERT(main.nmitem USING utf8), ' ( VOL : ', main.volkeg, ' ', CONVERT(main.satkeg USING utf8), ' x ', FORMAT(main.hargasat, 0), ')' )",
+        "COALESCE(main.nmitem, '') || ' ( VOL : ' || COALESCE(main.volkeg::text, '') || ' ' || COALESCE(main.satkeg, '') || ' x ' || COALESCE(TO_CHAR(main.hargasat, 'FM999,999,999,999'), '0') || ')'",
     },
   },
   {

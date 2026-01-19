@@ -1,6 +1,8 @@
 "use client";
 
 import { IkpaLanding } from "@/components/ikpa/landing";
+import { Button } from "@/components/ui/button";
+import { Download, Plus } from "lucide-react";
 
 export default function IkpaPage() {
     return (
@@ -12,6 +14,15 @@ export default function IkpaPage() {
                     <p className="text-sm text-muted-foreground">
                         Monitoring dan Evaluasi Dispensasi IKPA
                     </p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        Rekam Data
+                    </Button>
+                    <Button variant="outline" size="icon">
+                        <Download className="h-4 w-4" />
+                    </Button>
                 </div>
             </div>
 

@@ -1,57 +1,26 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Button, Card, Container, Spinner, Table } from "react-bootstrap";
+import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
-import { PlusSquare, Trash2, Download } from "lucide-react";
+import { PlusSquare, Trash2, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import RekamTup from "./rekam-tup";
-import { Loading2, TableSkeleton } from "../../layout/LoadingTable";
-import ReactPaginate from "react-paginate";
-// import GenerateCSV from "../CSV/generateCSV";
-import moment from "moment";
+import { Loading2 } from "../../layout/LoadingTable";
 
 // Table styling dengan fixed column widths
 const tableStyles = {
-  container: {
-    overflowX: "auto" as const,
-    width: "100%",
-  },
-  table: {
-    width: "100%",
-    minWidth: "1300px",
-    tableLayout: "fixed" as const,
-    marginBottom: "0",
-  },
-  headerCell: {
-    padding: "12px 8px",
-    fontWeight: "600",
-    fontSize: "13px",
-    backgroundColor: "#343a40", // dark grey
-    color: "#fff", // white text for contrast
-    whiteSpace: "nowrap" as const,
-    textAlign: "center" as const,
-    verticalAlign: "middle",
-    borderColor: "#dee2e6",
-  },
-  bodyCell: {
-    padding: "10px 8px",
-    fontSize: "12px",
-    textAlign: "center" as const,
-    verticalAlign: "middle",
-    whiteSpace: "nowrap" as const,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-  },
-  // Column widths
-  noColumn: { width: "50px", minWidth: "50px", maxWidth: "50px" },
-  taColumn: { width: "60px", minWidth: "60px", maxWidth: "60px" },
-  satkerColumn: { width: "220px", minWidth: "220px", maxWidth: "220px" },
-  tglColumn: { width: "110px", minWidth: "110px", maxWidth: "110px" },
-  nomorColumn: { width: "240px", minWidth: "240px", maxWidth: "240px" },
-  jumlahColumn: { width: "100px", minWidth: "100px", maxWidth: "100px" },
-  opsiColumn: { width: "130px", minWidth: "130px", maxWidth: "130px" },
+  headerCell: "bg-zinc-800 text-white px-2 py-3 font-semibold text-xs text-center align-middle border-zinc-200 whitespace-nowrap",
+  bodyCell: "px-2 py-[10px] text-xs text-center align-middle border-zinc-200 whitespace-nowrap overflow-hidden text-ellipsis",
+  noColumn: "w-[50px] min-w-[50px] max-w-[50px]",
+  taColumn: "w-[60px] min-w-[60px] max-w-[60px]",
+  satkerColumn: "w-[220px] min-w-[220px] max-w-[220px]",
+  tglColumn: "w-[110px] min-w-[110px] max-w-[110px]",
+  nomorColumn: "w-[240px] min-w-[240px] max-w-[240px]",
+  jumlahColumn: "w-[100px] min-w-[100px] max-w-[100px]",
+  opsiColumn: "w-[130px] min-w-[130px] max-w-[130px]",
 };
 
 interface DataTupProps {
@@ -310,10 +279,6 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
     }
   };
 
-  const halaman = ({ selected }: { selected: number }) => {
-    setPage(selected);
-  };
-
   return (
     <>
       {loading ? (
@@ -326,182 +291,65 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
         </>
       ) : (
         <>
-          <div className="d-flex justify-content-end align-item-center">
-            {/* Download functionality temporarily disabled - GenerateCSV component not available */}
-            {/* <Button
-              variant="danger"
-              size="sm"
-              className="my-2 mx-1"
-              style={{ marginTop: "1px", width: "150px" }}
-              onClick={() => {
-                setLoadingStatus(true);
-                setExport2(true);
-              }}
-              disabled={loadingStatus}
-            >
-              {loadingStatus && (
-                <Spinner
-                  as="span"
-                  animation="border"
-                  size="sm"
-                  role="status"
-                  aria-hidden="true"
-                />
-              )}
-              {!loadingStatus && (
-                <i className="bi bi-file-earmark-excel-fill mx-2"></i>
-              )}
-              {loadingStatus ? " Loading..." : "Download"}
-            </Button> */}
-          </div>
-          <Card className="mt-3" bg="light">
-            <Card.Body
-              className="data-user fade-in"
-              style={tableStyles.container}
-            >
-              <Table
-                striped
-                bordered
-                hover
-                responsive
-                style={tableStyles.table}
-              >
-                <thead>
-                  <tr>
-                    <th
-                      style={{
-                        ...tableStyles.headerCell,
-                        ...tableStyles.noColumn,
-                      }}
-                    >
+          <Card className="mt-3">
+            <CardContent className="p-0 overflow-x-auto">
+              <Table className="w-full min-w-[1300px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className={tableStyles.headerCell + " " + tableStyles.noColumn}>
                       No.
-                    </th>
-                    <th
-                      style={{
-                        ...tableStyles.headerCell,
-                        ...tableStyles.taColumn,
-                      }}
-                    >
+                    </TableHead>
+                    <TableHead className={tableStyles.headerCell + " " + tableStyles.taColumn}>
                       TA
-                    </th>
-                    <th
-                      style={{
-                        ...tableStyles.headerCell,
-                        ...tableStyles.satkerColumn,
-                      }}
-                    >
+                    </TableHead>
+                    <TableHead className={tableStyles.headerCell + " " + tableStyles.satkerColumn}>
                       Satker
-                    </th>
-                    <th
-                      style={{
-                        ...tableStyles.headerCell,
-                        ...tableStyles.tglColumn,
-                      }}
-                    >
+                    </TableHead>
+                    <TableHead className={tableStyles.headerCell + " " + tableStyles.tglColumn}>
                       Tgl Permohonan
-                    </th>
-                    <th
-                      style={{
-                        ...tableStyles.headerCell,
-                        ...tableStyles.nomorColumn,
-                      }}
-                    >
+                    </TableHead>
+                    <TableHead className={tableStyles.headerCell + " " + tableStyles.nomorColumn}>
                       Nomor Permohonan
-                    </th>
-                    <th
-                      style={{
-                        ...tableStyles.headerCell,
-                        ...tableStyles.jumlahColumn,
-                      }}
-                    >
+                    </TableHead>
+                    <TableHead className={tableStyles.headerCell + " " + tableStyles.jumlahColumn}>
                       Jumlah TUP
-                    </th>
-                    <th
-                      style={{
-                        ...tableStyles.headerCell,
-                        ...tableStyles.opsiColumn,
-                      }}
-                    >
+                    </TableHead>
+                    <TableHead className={tableStyles.headerCell + " " + tableStyles.opsiColumn}>
                       Opsi
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="text-center">
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="text-center">
                   {data.map((row, index) => (
-                    <tr key={index}>
-                      <td
-                        style={{
-                          ...tableStyles.bodyCell,
-                          ...tableStyles.noColumn,
-                        }}
-                      >
+                    <TableRow key={index}>
+                      <TableCell className={tableStyles.bodyCell + " " + tableStyles.noColumn}>
                         {index + 1 + page * limit}
-                      </td>
-                      <td
-                        style={{
-                          ...tableStyles.bodyCell,
-                          ...tableStyles.taColumn,
-                        }}
-                      >
+                      </TableCell>
+                      <TableCell className={tableStyles.bodyCell + " " + tableStyles.taColumn}>
                         {row.thang}
-                      </td>
-                      <td
-                        style={{
-                          ...tableStyles.bodyCell,
-                          ...tableStyles.satkerColumn,
-                        }}
-                      >
-                        <div
-                          style={{
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
+                      </TableCell>
+                      <TableCell className={tableStyles.bodyCell + " " + tableStyles.satkerColumn}>
+                        <div className="overflow-hidden text-ellipsis">
                           {row.nmsatker?.trim()} ({row.kdsatker})
                         </div>
-                      </td>
-                      <td
-                        style={{
-                          ...tableStyles.bodyCell,
-                          ...tableStyles.tglColumn,
-                        }}
-                      >
+                      </TableCell>
+                      <TableCell className={tableStyles.bodyCell + " " + tableStyles.tglColumn}>
                         {row.tgpermohonan}
-                      </td>
-                      <td
-                        style={{
-                          ...tableStyles.bodyCell,
-                          ...tableStyles.nomorColumn,
-                        }}
-                      >
-                        <div
-                          style={{
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
+                      </TableCell>
+                      <TableCell className={tableStyles.bodyCell + " " + tableStyles.nomorColumn}>
+                        <div className="overflow-hidden text-ellipsis">
                           {row.nopermohonan?.trim()}
                         </div>
-                      </td>
-                      <td
-                        style={{
-                          ...tableStyles.bodyCell,
-                          ...tableStyles.jumlahColumn,
-                        }}
-                      >
+                      </TableCell>
+                      <TableCell className={tableStyles.bodyCell + " " + tableStyles.jumlahColumn}>
                         {row.jumlah ?? "-"}
-                      </td>
-                      <td
-                        style={{
-                          ...tableStyles.bodyCell,
-                          ...tableStyles.opsiColumn,
-                        }}
-                      >
+                      </TableCell>
+                      <TableCell className={tableStyles.bodyCell + " " + tableStyles.opsiColumn}>
                         {/* Rekam TUP - hanya untuk non-KPPN */}
                         {user?.role !== "kppn" && (
                           <span title="Rekam TUP" className="inline-block">
                             <PlusSquare
-                              className="text-success mx-2 cursor-pointer hover:scale-110 transition-transform"
+                              className="text-green-600 mx-2 cursor-pointer hover:scale-110 transition-transform"
                               size={20}
                               onClick={() =>
                                 handleRekamTup(
@@ -523,7 +371,7 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
                             className="inline-block"
                           >
                             <Trash2
-                              className="text-danger mx-2 cursor-pointer hover:scale-110 transition-transform"
+                              className="text-red-600 mx-2 cursor-pointer hover:scale-110 transition-transform"
                               size={20}
                               onClick={() =>
                                 handleHapusDispTup(
@@ -538,55 +386,69 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
                         {/* Download - untuk semua role */}
                         <span title="Download Dokumen" className="inline-block">
                           <Download
-                            className="text-primary mx-2 cursor-pointer hover:scale-110 transition-transform"
+                            className="text-blue-600 mx-2 cursor-pointer hover:scale-110 transition-transform"
                             size={20}
                             onClick={() => handledownloadTup(String(row.id))}
                           />
                         </span>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
+                </TableBody>
               </Table>
-            </Card.Body>
+            </CardContent>
           </Card>
-          {/* Export functionality temporarily disabled */}
-          {/* {export2 && (
-            <div className="alert alert-info">
-              Export functionality temporarily disabled - GenerateCSV component not available
-            </div>
-          )} */}
+
           {data.length > 0 && (
-            <>
-              <span className="pagination justify-content-between mt-2  mx-4 text-dark">
-                Total : {rows.toLocaleString()}, &nbsp; Hal : &nbsp;
-                {rows ? page + 1 : 0} dari {pages}
-                <nav>
-                  <ReactPaginate
-                    breakLabel="..."
-                    previousLabel={"← Previous"}
-                    nextLabel={"Next →"}
-                    pageRangeDisplayed={3}
-                    marginPagesDisplayed={1}
-                    pageCount={pages}
-                    renderOnZeroPageCount={null}
-                    containerClassName="justify-content-center pagination"
-                    previousClassName="page-item"
-                    previousLinkClassName="page-link"
-                    nextClassName="page-item"
-                    nextLinkClassName="page-link"
-                    pageClassName="page-item"
-                    pageLinkClassName="page-link"
-                    breakClassName="page-item"
-                    breakLinkClassName="page-link"
-                    activeClassName="active"
-                    disabledClassName="disabled"
-                    onPageChange={halaman}
-                    initialPage={page}
-                  />
-                </nav>
+            <div className="flex items-center justify-content-between mt-4 mx-4 text-zinc-800">
+              <span>
+                Total : {rows.toLocaleString()}, Hal : {rows ? page + 1 : 0} dari {pages}
               </span>
-            </>
+              <nav>
+                <ul className="flex items-center justify-center gap-1 mb-0">
+                  <li className={`inline-flex ${page === 0 ? "opacity-50 pointer-events-none" : ""}`}>
+                    <button
+                      className="px-3 py-1 border rounded-l hover:bg-zinc-100"
+                      onClick={() => setPage(page - 1)}
+                      disabled={page === 0}
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                  </li>
+                  {Array.from({ length: Math.min(pages, 5) }, (_, i) => {
+                    let pageNum;
+                    if (pages <= 5) {
+                      pageNum = i;
+                    } else if (page < 3) {
+                      pageNum = i;
+                    } else if (page > pages - 3) {
+                      pageNum = pages - 5 + i;
+                    } else {
+                      pageNum = page - 2 + i;
+                    }
+                    return (
+                      <li key={pageNum} className="inline-flex">
+                        <button
+                          className={`px-3 py-1 border ${page === pageNum ? "bg-zinc-800 text-white" : "hover:bg-zinc-100"}`}
+                          onClick={() => setPage(pageNum)}
+                        >
+                          {pageNum + 1}
+                        </button>
+                      </li>
+                    );
+                  })}
+                  <li className={`inline-flex ${page === pages - 1 ? "opacity-50 pointer-events-none" : ""}`}>
+                    <button
+                      className="px-3 py-1 border rounded-r hover:bg-zinc-100"
+                      onClick={() => setPage(page + 1)}
+                      disabled={page === pages - 1}
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
           )}
         </>
       )}

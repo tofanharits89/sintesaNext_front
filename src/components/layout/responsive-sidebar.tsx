@@ -85,7 +85,6 @@ const defaultMenu: MenuItem[] = [
     children: [
       { label: "Dashboard MBG" },
       { label: "Kertas Kerja" },
-      { label: "Outcome" },
     ],
   },
   {
@@ -269,8 +268,6 @@ export function ResponsiveSidebar({
         return <LineChart className={cls} />;
       case "Makan Bergizi__Kertas Kerja":
         return <ClipboardList className={cls} />;
-      case "Makan Bergizi__Outcome":
-        return <CheckCircle className={cls} />;
       case "Profil K/L__Kementerian":
         return <Users className={cls} />;
       case "Profil K/L__Lembaga":

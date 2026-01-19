@@ -13,9 +13,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import moment from "moment";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import { Calendar, Loader2 } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Loader2 } from "lucide-react";
 
 interface MonitoringProps {
   cek: boolean;
@@ -121,42 +120,23 @@ export default function Monitoring({ cek, id, where }: MonitoringProps) {
     setIsDataFetched(false);
   };
 
-  const inputClass = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
-
   return (
-    <>
-      <style>
-        {`
-          .react-datepicker-wrapper {
-            width: 100%;
-          }
-        `}
-      </style>
-      <div className="bg-background border rounded-lg shadow-sm p-4 mt-3 min-h-[700px]">
-        {/* Filter Tanggal */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="w-full max-w-sm">
-            <label className="text-sm font-semibold mb-2 block">Tanggal Persetujuan</label>
-            <div className="flex items-center gap-2">
-              <div className="relative w-full">
-                <DatePicker
-                  name="tanggalPersetujuan"
-                  selected={selectedDate}
-                  onChange={(date) => handleFilterByDate(date)}
-                  dateFormat="dd/MM/yyyy"
-                  placeholderText="Pilih Tanggal"
-                  autoComplete="off"
-                  className={inputClass}
-                />
-              </div>
-              <Calendar className="text-muted-foreground h-6 w-6" />
-            </div>
-          </div>
+    <div className="bg-background border rounded-lg shadow-sm p-4 mt-3 min-h-[700px]">
+      {/* Filter Tanggal */}
+      <div className="flex justify-between items-center mb-6">
+        <div className="w-full max-w-sm">
+          <label className="text-sm font-semibold mb-2 block">Tanggal Persetujuan</label>
+          <DatePicker
+            date={selectedDate || undefined}
+            onDateChange={(date) => handleFilterByDate(date)}
+            placeholder="Pilih Tanggal"
+          />
         </div>
+      </div>
 
-        {/* Konten Utama: Loading atau Table */}
-        {loading ? (
-          <div className="space-y-4">
+      {/* Konten Utama: Loading atau Table */}
+      {loading ? (
+        <div className="space-y-4">
             <div className="space-y-2">
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-3/4" />
@@ -221,6 +201,5 @@ export default function Monitoring({ cek, id, where }: MonitoringProps) {
           </div>
         )}
       </div>
-    </>
   );
 }

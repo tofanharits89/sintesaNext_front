@@ -119,6 +119,9 @@ uniqueActiveFilters.forEach((filterKey) => {
           addGroupBy(`LEFT(main.${config.columnName}, 4)`);
         } else if (filterKey === "jenisBelanja") {
           addGroupBy(`LEFT(main.${config.columnName}, 2)`);
+        } else if (filterKey === "komponen" || filterKey === "subKomponen" || filterKey === "subFungsi") {
+          // Trim kode for columns with trailing spaces
+          addGroupBy(`TRIM(main.${config.columnName})`);
         } else if (filterKey !== "register") {
           addGroupBy(`main.${config.columnName}`);
         }
@@ -129,6 +132,14 @@ uniqueActiveFilters.forEach((filterKey) => {
 
     if (filterKey === "jenisProgramStrategis" && (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian")) {
       addGroupBy("main.nmprogis");
+    }
+
+    if (filterKey === "item" && (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian")) {
+      // Add columns used in nameColumn expression to GROUP BY
+      addGroupBy("main.nmitem");
+      addGroupBy("main.volkeg");
+      addGroupBy("main.satkeg");
+      addGroupBy("main.hargasat");
     }
 
     if (getReportTypeConfig(reportParams.tipeLaporan).isVolumeOutput) {

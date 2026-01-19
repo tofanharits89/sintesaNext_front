@@ -41,6 +41,15 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationPrevious,
+    PaginationNext,
+    PaginationLink,
+} from "@/components/ui/pagination";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { apiClient } from "@/lib/api/httpClient";
 import { useQuery } from "@tanstack/react-query";
 
@@ -157,67 +166,68 @@ export function IkpaLanding() {
     return (
         <div className="section">
             {/* Context Filters - Inline with the dashboard style */}
-            <div className="flex flex-wrap items-center gap-3 mb-6 bg-card p-3 rounded-lg border shadow-sm">
-                <div className="w-32">
-                    <Select value={selectedYear} onValueChange={setSelectedYear}>
-                        <SelectTrigger className="bg-background">
-                            <SelectValue placeholder="Tahun" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="2025">2025</SelectItem>
-                            <SelectItem value="2024">2024</SelectItem>
-                            <SelectItem value="2023">2023</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="w-48">
-                    <Select value={selectedKppn} onValueChange={(val) => {
-                        setSelectedKppn(val);
-                        setSelectedSatker("all");
-                        setSearchQuery("");
-                    }}>
-                        <SelectTrigger className="bg-background">
-                            <SelectValue placeholder="Semua KPPN" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[300px]">
-                            <SelectItem value="all">Semua KPPN</SelectItem>
-                            {uniqueKppnList.map((kppn) => (
-                                <SelectItem key={kppn.kdkppn} value={kppn.kdkppn}>
-                                    {kppn.kdkppn} - {kppn.nmkppn}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="w-64">
-                    <Select value={selectedSatker} onValueChange={(val) => {
-                        setSelectedSatker(val);
-                        const satker = (satkerData as { kdsatker: string; nmsatker: string }[]).find(s => s.kdsatker === val);
-                        setSearchQuery(satker ? satker.nmsatker : "");
-                    }}>
-                        <SelectTrigger className="bg-background">
-                            <SelectValue placeholder="Pilih Satker" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[300px]">
-                            <SelectItem value="all">Semua Satker</SelectItem>
-                            {filteredSatkerList.map((satker) => (
-                                <SelectItem key={satker.kdsatker} value={satker.kdsatker}>
-                                    {satker.kdsatker} - {satker.nmsatker}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <Button variant="outline" size="icon" title="Export Excel">
-                    <Download className="h-4 w-4" />
-                </Button>
-                <div className="ml-auto">
-                    <Button onClick={() => setIsRecordModalOpen(true)} className="gap-2">
-                        <Plus className="h-4 w-4" />
-                        Rekam Data
-                    </Button>
-                </div>
-            </div>
+            <Card className="mb-6">
+                <CardHeader>
+                    <CardTitle>Filter Data</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Pilih Tahun</label>
+                            <Select value={selectedYear} onValueChange={setSelectedYear}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Tahun" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="2025">2025</SelectItem>
+                                    <SelectItem value="2024">2024</SelectItem>
+                                    <SelectItem value="2023">2023</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Pilih KPPN</label>
+                            <Select value={selectedKppn} onValueChange={(val) => {
+                                setSelectedKppn(val);
+                                setSelectedSatker("all");
+                                setSearchQuery("");
+                            }}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Semua KPPN" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[300px]">
+                                    <SelectItem value="all">Semua KPPN</SelectItem>
+                                    {uniqueKppnList.map((kppn) => (
+                                        <SelectItem key={kppn.kdkppn} value={kppn.kdkppn}>
+                                            {kppn.kdkppn} - {kppn.nmkppn}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Pilih Satker</label>
+                            <Select value={selectedSatker} onValueChange={(val) => {
+                                setSelectedSatker(val);
+                                const satker = (satkerData as { kdsatker: string; nmsatker: string }[]).find(s => s.kdsatker === val);
+                                setSearchQuery(satker ? satker.nmsatker : "");
+                            }}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Pilih Satker" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[300px]">
+                                    <SelectItem value="all">Semua Satker</SelectItem>
+                                    {filteredSatkerList.map((satker) => (
+                                        <SelectItem key={satker.kdsatker} value={satker.kdsatker}>
+                                            {satker.kdsatker} - {satker.nmsatker}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
 
             <ModalRekamIkpa
                 isOpen={isRecordModalOpen}
@@ -268,80 +278,100 @@ export function IkpaLanding() {
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
                 {/* Table Section */}
                 <div className="xl:col-span-8 space-y-6">
-                    <div className="card-container overflow-hidden">
-                        <div className="p-4 border-b flex items-center justify-between bg-muted/30">
-                            <Tabs defaultValue="all" onValueChange={(val) => setStatusFilter(val)}>
-                                <TabsList className="bg-background/50 border">
-                                    <TabsTrigger value="all">Semua</TabsTrigger>
-                                    <TabsTrigger value="Disetujui">Disetujui</TabsTrigger>
-                                    <TabsTrigger value="Ditolak">Ditolak</TabsTrigger>
-                                </TabsList>
-                            </Tabs>
-                            <h3 className="font-semibold text-sm">Daftar Permohonan</h3>
-                        </div>
-                        <div className="p-0">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>No. ND</TableHead>
-                                        <TableHead>Satker / KPPN</TableHead>
-                                        <TableHead>Indikator</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead className="text-right">Aksi</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {isLoading ? (
-                                        <TableRow><TableCell colSpan={5} className="h-32 text-center"><Loader2 className="animate-spin mx-auto h-8 w-8 text-primary" /></TableCell></TableRow>
-                                    ) : (
-                                        filteredData.length > 0 ? (
-                                            filteredData.map((item: IkpaRequest) => (
-                                                <TableRow key={item.id} className="hover:bg-muted transition-colors">
-                                                    <TableCell>
-                                                        <div className="flex flex-col">
-                                                            <span className="font-medium">{item.no_nd}</span>
-                                                            <span className="text-[10px] text-muted-foreground">{new Date(item.tg_nd).toLocaleDateString()}</span>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div className="flex flex-col">
-                                                            <span className="text-sm">{item.nmsatker}</span>
-                                                            <span className="text-[10px] text-muted-foreground uppercase">{item.nmkppn?.toLowerCase()} ({item.kdkppn})</span>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="text-xs text-muted-foreground max-w-[150px] truncate">{item.nm_indikator}</TableCell>
-                                                    <TableCell><StatusBadge status={item.approval} /></TableCell>
-                                                    <TableCell className="text-right">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-8 w-8 text-muted-foreground hover:text-primary"
-                                                            onClick={() => {
-                                                                setEditingItem(item);
-                                                                setIsEditModalOpen(true);
-                                                            }}
-                                                        >
-                                                            <Edit className="h-4 w-4" />
-                                                        </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))
-                                        ) : (
-                                            <TableRow><TableCell colSpan={5} className="h-32 text-center text-muted-foreground">Tidak ada data ditemukan.</TableCell></TableRow>
-                                        )
-                                    )}
-                                </TableBody>
-                            </Table>
-                            <div className="p-4 border-t flex items-center justify-between text-xs text-muted-foreground">
-                                <span>Total {totalRows} data</span>
-                                <div className="flex items-center gap-2">
-                                    <Button variant="ghost" size="sm" onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0 || isLoading}>Prev</Button>
-                                    <span>Hal. {currentPage + 1} / {totalPages || 1}</span>
-                                    <Button variant="ghost" size="sm" onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage >= totalPages - 1 || isLoading}>Next</Button>
+                    <Card>
+                        <CardHeader className="pb-2 border-b">
+                            <div className="flex items-center justify-between">
+                                <Tabs defaultValue="all" onValueChange={(val) => setStatusFilter(val)}>
+                                    <TabsList className="bg-background/50 border">
+                                        <TabsTrigger value="all">Semua</TabsTrigger>
+                                        <TabsTrigger value="Disetujui">Disetujui</TabsTrigger>
+                                        <TabsTrigger value="Ditolak">Ditolak</TabsTrigger>
+                                    </TabsList>
+                                </Tabs>
+                                <h3 className="font-semibold text-sm">Daftar Permohonan</h3>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="px-6">
+                            <div className="rounded-md border">
+                                <div className="overflow-x-auto">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead className="text-center">No. ND</TableHead>
+                                                <TableHead className="text-center">Satker / KPPN</TableHead>
+                                                <TableHead className="text-center">Indikator</TableHead>
+                                                <TableHead className="text-center">Status</TableHead>
+                                                <TableHead className="text-center">Aksi</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {isLoading ? (
+                                                <TableRow><TableCell colSpan={5} className="h-32 text-center"><Loader2 className="animate-spin mx-auto h-8 w-8 text-primary" /></TableCell></TableRow>
+                                            ) : (
+                                                filteredData.length > 0 ? (
+                                                    filteredData.map((item: IkpaRequest) => (
+                                                        <TableRow key={item.id}>
+                                                            <TableCell>
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-medium">{item.no_nd}</span>
+                                                                    <span className="text-[10px] text-muted-foreground">{new Date(item.tg_nd).toLocaleDateString()}</span>
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-sm">{item.nmsatker}</span>
+                                                                    <span className="text-[10px] text-muted-foreground uppercase">{item.nmkppn?.toLowerCase()} ({item.kdkppn})</span>
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className="text-xs text-muted-foreground max-w-[150px] truncate">{item.nm_indikator}</TableCell>
+                                                            <TableCell><StatusBadge status={item.approval} /></TableCell>
+                                                            <TableCell className="text-center">
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-8 w-8 text-muted-foreground hover:text-primary"
+                                                                    onClick={() => {
+                                                                        setEditingItem(item);
+                                                                        setIsEditModalOpen(true);
+                                                                    }}
+                                                                >
+                                                                    <Edit className="h-4 w-4" />
+                                                                </Button>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))
+                                                ) : (
+                                                    <TableRow><TableCell colSpan={5} className="h-32 text-center text-muted-foreground">Tidak ada data ditemukan.</TableCell></TableRow>
+                                                )
+                                            )}
+                                        </TableBody>
+                                    </Table>
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                            <div className="p-4 border-t flex items-center justify-between text-xs text-muted-foreground">
+                                <span>Total {totalRows} data</span>
+                                <Pagination>
+                                    <PaginationContent>
+                                        <PaginationItem>
+                                            <PaginationPrevious
+                                                onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                                                className={currentPage === 0 || isLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                            />
+                                        </PaginationItem>
+                                        <PaginationItem>
+                                            <span className="text-xs">Hal. {currentPage + 1} / {totalPages || 1}</span>
+                                        </PaginationItem>
+                                        <PaginationItem>
+                                            <PaginationNext
+                                                onClick={() => setCurrentPage(p => p + 1)}
+                                                className={currentPage >= totalPages - 1 || isLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                            />
+                                        </PaginationItem>
+                                    </PaginationContent>
+                                </Pagination>
+                            </div>
+                        </CardContent>
+                    </Card>
 
                     {/* Footer Detail Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -414,14 +444,18 @@ function ShareChartCard({ title, data, horizontal = false }: { title: string; da
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
-                <div className="mt-4 space-y-1.5 max-h-[120px] overflow-y-auto no-scrollbar">
-                    {data.map((item, i) => (
-                        <div key={i} className="flex items-center justify-between text-[11px] border-b border-muted pb-1 last:border-0">
-                            <span className="truncate max-w-[180px] text-muted-foreground">{item.name}</span>
-                            <span className="font-bold">{item.value}</span>
+                <Card className="mt-4">
+                    <ScrollArea className="h-[120px]">
+                        <div className="p-3 space-y-1.5">
+                            {data.map((item, i) => (
+                                <div key={i} className="flex items-center justify-between text-[11px] border-b border-muted pb-1 last:border-0">
+                                    <span className="truncate max-w-[180px] text-muted-foreground">{item.name}</span>
+                                    <span className="font-bold">{item.value}</span>
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
+                    </ScrollArea>
+                </Card>
             </CardContent>
         </Card>
     );
