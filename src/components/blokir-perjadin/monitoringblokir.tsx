@@ -5,10 +5,30 @@ import numeral from "numeral";
 import moment from "moment";
 import { toast } from "sonner";
 import ReactPaginate from "react-paginate";
+import { Download, Filter, ChevronLeft, ChevronRight } from "lucide-react";
+
 import GenerateCSV from "../GenerateCSV";
 import FilterData from "./filterdata";
 import DetailSatkerBlokir from "./detail-satker";
 import EditDispen from "./edit-dispen";
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface MonitoringBlokirProps {
   role?: string;
@@ -50,7 +70,6 @@ export default function MonitoringBlokir({
   const [pages, setPages] = useState(0);
   const [rows, setRows] = useState(0);
   const [sql, setSql] = useState("");
-  // const [cek, setCek] = useState(false); // Unused in target component
   const [showModalFilter, setShowModalFilter] = useState(false);
   const [where, setWhere] = useState("");
   const [loadingStatus, setLoadingStatus] = useState(false);
@@ -63,7 +82,7 @@ export default function MonitoringBlokir({
   const [filter, setFilter] = useState({
     selectedKementerian: "00",
   });
-  const [activeTab, setActiveTab] = useState("monitoring-blokir");
+  // Removed activeTab since it was only handling one view
 
   const handleFilterResult = (filterData: any) => {
     const { selectedKementerian } = filterData;
@@ -86,7 +105,6 @@ export default function MonitoringBlokir({
     }
 
     setWhere(newFilterWhere);
-    // setCek(true);
   };
 
   useEffect(() => {
@@ -117,9 +135,6 @@ export default function MonitoringBlokir({
     } else if (filterKanwil && filterKppn) {
       combinedFilter = `${filterKanwil} AND ${filterKppn}`;
     }
-
-    // Checking if combinedFilter already has WHERE clause logic handled by backend or if we need to prepend checks
-    // The query string construction implies we inject `combinedFilter` into `WHERE ...`
 
     const queryBase = `SELECT a.id, a.kddept, c.nmdept, a.kdunit, d.nmunit, SUM(a.target) as target_blokir, sum(a.dispensasi_blokir) as dispensasi_blokir, SUM(a.blokir_7 + a.blokir_A) as sudah_blokir, SUM(a.target) - SUM(a.dispensasi_blokir) - SUM(a.blokir_7 + a.blokir_A) AS sisa
     FROM laporan_2023.target_blokir_perjadin a 
@@ -203,302 +218,292 @@ export default function MonitoringBlokir({
   const handleEditdata = (id: string | number) => {
     setShowModaledit(true);
     setId(id);
-    // setCek(false);
     setOpen("2");
   };
 
   const handleCloseedit = () => {
     setShowModaledit(false);
-    // setCek(true);
     setOpen("");
     setRefresh(!refresh);
   };
 
   return (
-    <div>
-      <main id="main" className="main">
-        <div className="mb-5">
-          <h1 className="text-3xl font-bold">Monitoring Blokir Perjadin</h1>
-          <nav>
-            <ol className="flex gap-2 text-sm mt-2">
-              <li>
-                <a href="#" className="text-blue-600 hover:underline">
-                  Data
-                </a>
-              </li>
-              <li className="text-gray-600">
-                <span>/</span>
-              </li>
-              <li className="text-gray-800 font-medium">Blokir Perjadin</li>
-            </ol>
-          </nav>
-        </div>
+    <div className="flex flex-col gap-6 p-1 md:p-6 animate-in fade-in duration-500">
+      {/* Page Header */}
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">
+          Monitoring Blokir Perjadin
+        </h1>
+        <nav className="flex items-center text-sm text-muted-foreground">
+          <span className="hover:text-foreground cursor-pointer transition-colors">
+            Data
+          </span>
+          <ChevronRight className="h-4 w-4 mx-1" />
+          <span className="font-medium text-foreground">Blokir Perjadin</span>
+        </nav>
+      </div>
 
-        <section className="py-6">
-          {/* Custom Tab Navigation */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <ul
-              className="flex border-b border-gray-200 bg-white"
-              role="tablist"
+      <Card className="border shadow-sm">
+        <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6">
+          <div className="space-y-1">
+            <CardTitle className="text-xl">Data Monitoring</CardTitle>
+            <CardDescription>
+              Daftar monitoring target blokir dan realisasi per satuan kerja.
+            </CardDescription>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Active Filters */}
+            {filter.selectedKementerian !== "00" && (
+              <Badge
+                variant="secondary"
+                className="h-9 px-3 gap-1 bg-green-100 text-green-700 hover:bg-green-100/80 border-green-200"
+              >
+                <div className="w-2 h-2 rounded-full bg-green-500" />
+                Kementerian {filter.selectedKementerian}
+              </Badge>
+            )}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleFilter}
+              className="h-9"
             >
-              {(role === "X" || role === "1" || role === "0") && (
-                <li className="nav-item">
-                  <button
-                    className={`px-4 py-3 font-medium text-sm transition-colors flex items-center gap-2 ${
-                      activeTab === "monitoring-blokir"
-                        ? "text-amber-500 border-b-2 border-amber-500"
-                        : "text-gray-600 hover:text-gray-900"
-                    }`}
-                    onClick={() => setActiveTab("monitoring-blokir")}
-                    type="button"
-                    role="tab"
-                  >
-                    <i className="bi bi-grid-1x2-fill"></i>
-                    Monitoring
-                  </button>
-                </li>
+              <Filter className="mr-2 h-4 w-4" />
+              Filter Data
+            </Button>
+
+            <Button
+              variant={loadingStatus ? "secondary" : "destructive"}
+              size="sm"
+              onClick={() => {
+                setLoadingStatus(true);
+                setExport2(true);
+              }}
+              disabled={loadingStatus}
+              className="h-9"
+            >
+              {loadingStatus ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download CSV
+                </>
               )}
-              <li className="nav-item">
-                <button
-                  className="px-4 py-3 font-medium text-sm text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-2 border-b-2 border-transparent hover:border-blue-200"
-                  onClick={handleFilter}
-                  type="button"
-                >
-                  <i className="bi bi-grid-3x3-gap-fill"></i>
-                  Filter Data
-                </button>
-              </li>
-              <li className="ml-auto flex items-center gap-2 px-4">
-                {filter.selectedKementerian !== "00" && (
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border overflow-hidden">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead className="w-[60px] font-semibold">No.</TableHead>
+                  <TableHead className="font-semibold">
+                    Kementerian/Lembaga
+                  </TableHead>
+                  <TableHead className="font-semibold">Unit Eselon I</TableHead>
+                  <TableHead className="text-right font-semibold">
+                    Target Blokir
+                  </TableHead>
+                  <TableHead className="text-right font-semibold">
+                    Dispensasi
+                  </TableHead>
+                  <TableHead className="text-right font-semibold">
+                    Sudah Blokir
+                  </TableHead>
+                  <TableHead className="text-right font-semibold">
+                    Sisa
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-32 text-center">
+                      <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                        <p>Memuat data...</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : data.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      className="h-32 text-center text-muted-foreground"
+                    >
+                      Tidak ada data ditemukan.
+                    </TableCell>
+                  </TableRow>
+                ) : (
                   <>
-                    <button
-                      className="px-3 py-1 text-xs font-medium bg-green-500 text-white rounded hover:bg-green-600"
-                      disabled
-                    >
-                      Filter Aktif
-                    </button>
-                    <button
-                      className="px-3 py-1 text-xs font-medium bg-gray-500 text-white rounded hover:bg-gray-600"
-                      disabled
-                    >
-                      Kementerian {filter.selectedKementerian}
-                    </button>
+                    {data.map((row, index) => (
+                      <TableRow
+                        key={index}
+                        className="hover:bg-muted/50 transition-colors"
+                      >
+                        <TableCell className="font-medium text-muted-foreground">
+                          {index + 1 + page * limit}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-sm">
+                              {row.nmdept}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              Code: {row.kddept}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="text-sm">{row.nmunit}</span>
+                            <span className="text-xs text-muted-foreground">
+                              Code: {row.kdunit}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-sm">
+                          {numeral(row.target_blokir).format("0,0")}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span
+                            onClick={() => handleEditdata(row.id)}
+                            className="font-mono text-sm text-blue-600 dark:text-blue-400 cursor-pointer hover:underline font-medium"
+                          >
+                            {numeral(row.dispensasi_blokir).format("0,0")}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span
+                            onClick={() =>
+                              handleModalOpen(row.kddept, row.kdunit)
+                            }
+                            className="font-mono text-sm text-blue-600 dark:text-blue-400 cursor-pointer hover:underline font-medium"
+                          >
+                            {numeral(row.sudah_blokir).format("0,0")}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-sm font-medium">
+                          {numeral(row.sisa).format("0,0")}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {/* Summary Row */}
+                    <TableRow className="bg-muted/70 hover:bg-muted/80 font-bold border-t-2">
+                      <TableCell colSpan={3} className="text-right text-sm">
+                        TOTAL
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-sm">
+                        {numeral(totalTargetBlokir).format("0,0")}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-sm">
+                        {numeral(totalDispenBlokir).format("0,0")}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-sm">
+                        {numeral(totalNilaiBlokir).format("0,0")}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-sm">
+                        {numeral(totalSisaBlokir).format("0,0")}
+                      </TableCell>
+                    </TableRow>
                   </>
                 )}
-              </li>
-            </ul>
-
-            <div className="p-4">
-              {activeTab === "monitoring-blokir" && (
-                <div>
-                  {loading ? (
-                    <div className="flex flex-col items-center justify-center py-12">
-                      <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                      <p className="mt-2 text-gray-500 text-sm">
-                        Memuat data...
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex justify-end mb-4">
-                        <button
-                          className={`px-4 py-2 text-sm font-medium text-white rounded transition-colors flex items-center gap-2 ${
-                            loadingStatus
-                              ? "bg-red-400 cursor-not-allowed opacity-60"
-                              : "bg-red-600 hover:bg-red-700"
-                          }`}
-                          onClick={() => {
-                            setLoadingStatus(true);
-                            setExport2(true);
-                          }}
-                          disabled={loadingStatus}
-                        >
-                          {loadingStatus ? (
-                            <>
-                              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                              Loading...
-                            </>
-                          ) : (
-                            <>
-                              <i className="bi bi-file-earmark-excel-fill"></i>
-                              Download
-                            </>
-                          )}
-                        </button>
-                      </div>
-
-                      <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
-                        <div className="overflow-x-auto">
-                          <table className="w-full">
-                            <thead>
-                              <tr className="bg-gray-100 border-b border-gray-200">
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
-                                  No.
-                                </th>
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
-                                  Kementerian/Lembaga
-                                </th>
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
-                                  Unit Eselon I
-                                </th>
-                                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">
-                                  Target Blokir
-                                </th>
-                                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">
-                                  Dispensasi
-                                </th>
-                                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">
-                                  Sudah Blokir
-                                </th>
-                                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">
-                                  Sisa
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {data.map((row, index) => (
-                                <tr
-                                  key={index}
-                                  className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
-                                >
-                                  <td className="px-4 py-3 text-sm text-gray-900">
-                                    {index + 1 + page * limit}
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-900">
-                                    {row.nmdept} ({row.kddept})
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-gray-900">
-                                    {row.nmunit} ({row.kdunit})
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-right text-gray-900">
-                                    {numeral(row.target_blokir).format("0,0")}
-                                  </td>
-                                  <td
-                                    onClick={() => handleEditdata(row.id)}
-                                    className="px-4 py-3 text-sm text-right text-blue-600 cursor-pointer hover:text-blue-700 font-medium bg-gray-50 hover:bg-gray-100 transition-colors"
-                                  >
-                                    {numeral(row.dispensasi_blokir).format(
-                                      "0,0",
-                                    )}
-                                  </td>
-                                  <td
-                                    onClick={() =>
-                                      handleModalOpen(row.kddept, row.kdunit)
-                                    }
-                                    className="px-4 py-3 text-sm text-right text-blue-600 cursor-pointer hover:text-blue-700 font-medium bg-gray-50 hover:bg-gray-100 transition-colors"
-                                  >
-                                    {numeral(row.sudah_blokir).format("0,0")}
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-right text-gray-900">
-                                    {numeral(row.sisa).format("0,0")}
-                                  </td>
-                                </tr>
-                              ))}
-                              <tr className="bg-gray-100 border-t-2 border-gray-300">
-                                <td
-                                  colSpan={3}
-                                  className="px-4 py-3 text-sm font-bold text-right text-gray-900"
-                                >
-                                  Total
-                                </td>
-                                <td className="px-4 py-3 text-sm font-bold text-right text-gray-900">
-                                  {numeral(totalTargetBlokir).format("0,0")}
-                                </td>
-                                <td className="px-4 py-3 text-sm font-bold text-right text-gray-900">
-                                  {numeral(totalDispenBlokir).format("0,0")}
-                                </td>
-                                <td className="px-4 py-3 text-sm font-bold text-right text-gray-900">
-                                  {numeral(totalNilaiBlokir).format("0,0")}
-                                </td>
-                                <td className="px-4 py-3 text-sm font-bold text-right text-gray-900">
-                                  {numeral(totalSisaBlokir).format("0,0")}
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-
-                      {export2 && (
-                        <GenerateCSV
-                          query3={sql}
-                          status={handleStatus}
-                          namafile={`v3_CSV_MONITORING_BLOKIR_${moment().format("DDMMYY-HHmmss")}`}
-                        />
-                      )}
-
-                      {data.length > 0 && (
-                        <div className="mt-4 flex flex-col gap-4 px-4 text-gray-800">
-                          <div className="text-sm">
-                            Total : {numeral(rows).format("0,0")}, &nbsp; Hal :
-                            &nbsp; {rows ? page + 1 : 0} dari {pages}
-                          </div>
-                          <nav>
-                            <ReactPaginate
-                              previousLabel={"← Previous"}
-                              nextLabel={"Next →"}
-                              breakLabel="..."
-                              pageRangeDisplayed={3}
-                              marginPagesDisplayed={1}
-                              pageCount={pages}
-                              renderOnZeroPageCount={null}
-                              containerClassName="flex justify-center gap-1 flex-wrap"
-                              previousClassName="page-item"
-                              previousLinkClassName="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100 transition-colors"
-                              nextClassName="page-item"
-                              nextLinkClassName="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100 transition-colors"
-                              pageClassName="page-item"
-                              pageLinkClassName="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-100 transition-colors"
-                              breakClassName="page-item"
-                              breakLinkClassName="px-3 py-1 text-sm text-gray-500"
-                              activeClassName="active"
-                              disabledClassName="disabled"
-                              onPageChange={halaman}
-                              initialPage={page}
-                            />
-                          </nav>
-                          <style>{`
-                            .page-item.active .page-link {
-                              @apply bg-blue-600 text-white border-blue-600;
-                            }
-                            .page-item.disabled .page-link {
-                              @apply text-gray-400 cursor-not-allowed opacity-50;
-                            }
-                          `}</style>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
+              </TableBody>
+            </Table>
           </div>
-        </section>
 
-        {isModalOpen && (
-          <DetailSatkerBlokir
-            isModalOpen={isModalOpen}
-            handleModalClose={handleModalClose}
-            kddept={selectedKddept}
-            kdunit={selectedKdunit}
-            role={role}
-            kdkanwil={kdkanwil}
-            token={token}
-            jenis="blokir"
-          />
-        )}
+          {/* Pagination */}
+          {data.length > 0 && (
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-5">
+              <div className="text-sm text-muted-foreground">
+                Menampilkan{" "}
+                <span className="font-medium text-foreground">
+                  {numeral(rows).format("0,0")}
+                </span>{" "}
+                data. Halaman{" "}
+                <span className="font-medium text-foreground">
+                  {rows ? page + 1 : 0}
+                </span>{" "}
+                dari{" "}
+                <span className="font-medium text-foreground">{pages}</span>
+              </div>
 
-        {open === "2" && showModaledit && (
-          <EditDispen
-            show={showModaledit}
-            onHide={handleCloseedit}
-            setRefresh={setRefresh}
-            id={id}
-            token={token}
-            username={username}
-          />
-        )}
-      </main>
+              {/* Styled ReactPaginate to match ShadCN Pagination */}
+              <ReactPaginate
+                previousLabel={
+                  <div className="flex items-center gap-1 pl-2.5 pr-4">
+                    <ChevronLeft className="h-4 w-4" />
+                    <span>Previous</span>
+                  </div>
+                }
+                nextLabel={
+                  <div className="flex items-center gap-1 pl-4 pr-2.5">
+                    <span>Next</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </div>
+                }
+                breakLabel={<span className="px-4">...</span>}
+                pageCount={pages}
+                onPageChange={halaman}
+                containerClassName="flex items-center gap-1 select-none"
+                pageClassName="block"
+                pageLinkClassName="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 w-9"
+                activeClassName=""
+                activeLinkClassName="border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground font-bold pointer-events-none"
+                previousClassName="block"
+                previousLinkClassName="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9"
+                nextClassName="block"
+                nextLinkClassName="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9"
+                disabledClassName="opacity-50 pointer-events-none"
+                initialPage={page}
+                renderOnZeroPageCount={null}
+                pageRangeDisplayed={3}
+                marginPagesDisplayed={1}
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* CSV Generator (Hidden/Function only) */}
+      {export2 && (
+        <GenerateCSV
+          query3={sql}
+          status={handleStatus}
+          namafile={`v3_CSV_MONITORING_BLOKIR_${moment().format("DDMMYY-HHmmss")}`}
+        />
+      )}
+
+      {/* Modals */}
+      {isModalOpen && (
+        <DetailSatkerBlokir
+          isModalOpen={isModalOpen}
+          handleModalClose={handleModalClose}
+          kddept={selectedKddept}
+          kdunit={selectedKdunit}
+          role={role}
+          kdkanwil={kdkanwil}
+          token={token}
+          jenis="blokir"
+        />
+      )}
+
+      {open === "2" && showModaledit && (
+        <EditDispen
+          show={showModaledit}
+          onHide={handleCloseedit}
+          setRefresh={setRefresh}
+          id={id}
+          token={token}
+          username={username}
+        />
+      )}
 
       <FilterData
         show={showModalFilter}
