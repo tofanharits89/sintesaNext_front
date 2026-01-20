@@ -143,6 +143,7 @@ const defaultMenu: MenuItem[] = [
       { label: "Harmonisasi" },
       { label: "Tantangan TPID" },
       { label: "Monitoring Blokir" },
+      { label: "Monev PNBP" },
     ],
   },
   {
@@ -325,6 +326,8 @@ export function ResponsiveSidebar({
       case "Laporan__Tantangan TPID":
         return <CalendarDays className={cls} />;
       case "Laporan__Monitoring Blokir":
+        return <CalendarDays className={cls} />;
+      case "Laporan__Monev PNBP":
         return <CalendarDays className={cls} />;
       case "Tentang Kita__Profil":
         return <User className={cls} />;
@@ -664,6 +667,11 @@ export function ResponsiveSidebar({
                               m.label === "Laporan"
                             ) {
                               href = "/laporan/blokir-perjadin";
+                            } else if (
+                              c.label === "Monev PNBP" &&
+                              m.label === "Laporan"
+                            ) {
+                              href = "/laporan/monev-pnbp";
                             } else if (
                               c.label === "Data BPS" &&
                               m.label === "Data Makrokesra"
@@ -1358,6 +1366,25 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/laporan/blokir-perjadin",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Monev PNBP" && m.label === "Laporan" ? (
+                      <Link
+                        key={c.label}
+                        href="/laporan/monev-pnbp"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/laporan/monev-pnbp",
                           });
                           setOpen(false);
                         }}
