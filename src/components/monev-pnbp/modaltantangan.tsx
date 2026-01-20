@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { MessageSquareText } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -353,7 +354,7 @@ export default function RekamanTantangan({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <i className="bi bi-chat-text-fill text-success"></i>
+            <MessageSquareText className="text-green-600" />
             Aspek {clusterTitle[jenis as number]}
           </DialogTitle>
         </DialogHeader>
@@ -404,29 +405,29 @@ export default function RekamanTantangan({
                   {clusterMapping[jenis as number]?.find(
                     (item) => item.key === activeKey,
                   ) && (
-                    <div className="space-y-3">
-                      {clusterMapping[jenis as number]
-                        ?.filter((item) => item.key === activeKey)
-                        .map(({ key, label, contoh }) => (
-                          <div
-                            key={key}
-                            className="p-3 border rounded bg-slate-50 shadow-sm"
-                          >
-                            <h5 className="bg-green-600 text-white p-2 rounded mb-3">
-                              {label}
-                            </h5>
-                            <Textarea
-                              className="w-full min-h-[350px]"
-                              value={formState[key] || ""}
-                              onChange={(e) =>
-                                handleInputChange(key, e.target.value)
-                              }
-                              placeholder={`Uraian ${contoh}`}
-                            />
-                          </div>
-                        ))}
-                    </div>
-                  )}
+                      <div className="space-y-3">
+                        {clusterMapping[jenis as number]
+                          ?.filter((item) => item.key === activeKey)
+                          .map(({ key, label, contoh }) => (
+                            <div
+                              key={key}
+                              className="p-3 border rounded bg-slate-50 shadow-sm"
+                            >
+                              <h5 className="bg-green-600 text-white p-2 rounded mb-3">
+                                {label}
+                              </h5>
+                              <Textarea
+                                className="w-full min-h-[350px]"
+                                value={formState[key] || ""}
+                                onChange={(e) =>
+                                  handleInputChange(key, e.target.value)
+                                }
+                                placeholder={`Uraian ${contoh}`}
+                              />
+                            </div>
+                          ))}
+                      </div>
+                    )}
                 </TabsContent>
               </Tabs>
 

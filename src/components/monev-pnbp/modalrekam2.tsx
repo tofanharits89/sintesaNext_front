@@ -1,4 +1,5 @@
 import React, { useState, useContext, useEffect, ChangeEvent } from "react";
+import { ArrowRightToLine, FileText } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -29,8 +30,6 @@ import { Formik, Field, ErrorMessage, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
-// import { BsFillPlusSquareFill, BsTrash } from "react-icons/bs"; // Import plus and trash icons
-// import moment from "moment"; // original had moment imported
 import moment from "moment";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
@@ -287,7 +286,7 @@ export default function Rekam2({
       );
       setLoading(false);
       Swal.fire({
-        html: `<div className='text-success mt-4'>Hasil Monev Berhasil Disimpan</div>`,
+        html: `<div class='text-green-600 mt-4'>Hasil Monev Berhasil Disimpan</div>`,
         icon: "success",
         confirmButtonText: "Tutup",
       })
@@ -327,7 +326,7 @@ export default function Rekam2({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
-            <i className="bi bi-box-arrow-in-right text-green-600 mx-3"></i>
+            <ArrowRightToLine className="w-5 h-5 text-green-600 mx-3" />
             Hasil Koordinasi dengan Satker
           </DialogTitle>
         </DialogHeader>
@@ -424,7 +423,7 @@ export default function Rekam2({
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 gap-2"
                                   >
-                                    <i className="bi bi-file-earmark-text"></i>{" "}
+                                    <FileText className="w-4 h-4" />
                                     Surat
                                   </a>
                                 )}
@@ -500,7 +499,7 @@ export default function Rekam2({
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 gap-2"
                                   >
-                                    <i className="bi bi-file-earmark-text"></i>{" "}
+                                    <FileText className="w-4 h-4" />
                                     Laporan
                                   </a>
                                 )}

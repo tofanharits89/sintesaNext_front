@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { MessageSquareText } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -244,7 +245,7 @@ export default function RekamKesimpulan({
       <DialogContent className="max-w-4xl h-[80vh] flex flex-col p-0">
         <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle className="flex items-center gap-2 text-xl font-bold">
-            <i className="bi bi-chat-text-fill text-success"></i>
+            <MessageSquareText className="text-green-600" />
             Rekam Gambaran Umum, Kesimpulan, dan Rekomendasi Pelaksanaan Monev
             PNBP
           </DialogTitle>

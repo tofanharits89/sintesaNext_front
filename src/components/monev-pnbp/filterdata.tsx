@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 // import { Modal, Button, Form, Col, Row } from "react-bootstrap";
+import { Grid3x3 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -144,7 +145,7 @@ const FilterData: React.FC<FilterDataProps> = ({ show, onHide, onFilter }) => {
       <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle className="flex items-center text-lg gap-2">
-            <i className="bi bi-grid-3x3-gap-fill text-primary font-bold"></i>
+            <Grid3x3 className="w-5 h-5 text-primary font-bold" />
             Filter Data
           </DialogTitle>
         </DialogHeader>
@@ -152,7 +153,7 @@ const FilterData: React.FC<FilterDataProps> = ({ show, onHide, onFilter }) => {
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-12 gap-4 items-center">
             <div className="col-span-12 md:col-span-4">
-              <Label className="text-dark">Tahun</Label>
+              <Label className="text-foreground">Tahun</Label>
             </div>
             <div className="col-span-12 md:col-span-8">
               <Select
@@ -174,7 +175,7 @@ const FilterData: React.FC<FilterDataProps> = ({ show, onHide, onFilter }) => {
 
           <div className="grid grid-cols-12 gap-4 items-center">
             <div className="col-span-12 md:col-span-4">
-              <Label className="text-dark">Triwulan</Label>
+              <Label className="text-foreground">Triwulan</Label>
             </div>
             <div className="col-span-12 md:col-span-8">
               <Select
@@ -197,7 +198,7 @@ const FilterData: React.FC<FilterDataProps> = ({ show, onHide, onFilter }) => {
 
           <div className="grid grid-cols-12 gap-4 items-center">
             <div className="col-span-12 md:col-span-4">
-              <Label className="text-dark">Kementerian</Label>
+              <Label className="text-foreground">Kementerian</Label>
             </div>
             <div className="col-span-12 md:col-span-8">
               <Select
@@ -222,7 +223,7 @@ const FilterData: React.FC<FilterDataProps> = ({ show, onHide, onFilter }) => {
           {!isKppnOrOther && (
             <div className="grid grid-cols-12 gap-4 items-center">
               <div className="col-span-12 md:col-span-4">
-                <Label className="text-dark">Kanwil</Label>
+                <Label className="text-foreground">Kanwil</Label>
               </div>
               <div className="col-span-12 md:col-span-8">
                 <Select
@@ -245,7 +246,7 @@ const FilterData: React.FC<FilterDataProps> = ({ show, onHide, onFilter }) => {
 
           <div className="grid grid-cols-12 gap-4 items-center">
             <div className="col-span-12 md:col-span-4">
-              <Label className="text-dark">Jenis PNBP</Label>
+              <Label className="text-foreground">Jenis PNBP</Label>
             </div>
             <div className="col-span-12 md:col-span-8">
               <Select
