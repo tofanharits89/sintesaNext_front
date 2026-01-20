@@ -6,11 +6,22 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils/utils";
 // import "./modalTantangan.css";
 
 interface ClusterItem {
@@ -399,15 +410,13 @@ export default function RekamanTantangan({
                         .map(({ key, label, contoh }) => (
                           <div
                             key={key}
-                            className="p-3 border rounded bg-light shadow-sm"
+                            className="p-3 border rounded bg-slate-50 shadow-sm"
                           >
-                            <h5 className="bg-success text-white p-2 rounded mb-3">
+                            <h5 className="bg-green-600 text-white p-2 rounded mb-3">
                               {label}
                             </h5>
-                            <textarea
-                              className="w-full p-2 border rounded"
-                              rows={10}
-                              style={{ resize: "vertical", minHeight: "350px" }}
+                            <Textarea
+                              className="w-full min-h-[350px]"
                               value={formState[key] || ""}
                               onChange={(e) =>
                                 handleInputChange(key, e.target.value)

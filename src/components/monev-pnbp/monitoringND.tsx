@@ -18,6 +18,13 @@ import {
 } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
@@ -94,33 +101,43 @@ export default function RekamanNotaDinas({ show, onHide }: any) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="space-y-2">
               <Label>Pilih Tahun</Label>
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                value={tahunFilter}
-                onChange={(e) => setTahunFilter(e.target.value)}
+              <Select
+                value={tahunFilter || "00"}
+                onValueChange={(val) => setTahunFilter(val === "00" ? "" : val)}
               >
-                <option value="">Semua Tahun</option>
-                {tahunOptions.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Semua Tahun" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="00">Semua Tahun</SelectItem>
+                  {tahunOptions.map((year) => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Pilih Triwulan</Label>
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                value={triwulanFilter}
-                onChange={(e) => setTriwulanFilter(e.target.value)}
+              <Select
+                value={triwulanFilter || "00"}
+                onValueChange={(val) =>
+                  setTriwulanFilter(val === "00" ? "" : val)
+                }
               >
-                <option value="">Semua Triwulan</option>
-                {triwulanOptions.map((tri) => (
-                  <option key={tri} value={tri}>
-                    Triwulan {tri}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Semua Triwulan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="00">Semua Triwulan</SelectItem>
+                  {triwulanOptions.map((tri) => (
+                    <SelectItem key={tri} value={tri.toString()}>
+                      Triwulan {tri}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

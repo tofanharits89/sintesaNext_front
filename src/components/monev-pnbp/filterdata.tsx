@@ -10,6 +10,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils/utils"; // Assuming utils exists
 
 import Kddept from "@/data/kddept.json";
@@ -127,9 +134,9 @@ const FilterData: React.FC<FilterDataProps> = ({ show, onHide, onFilter }) => {
   const kanwilOptions = Kdkanwil.filter((kanwil) =>
     isKanwil ? kanwil.kdkanwil === user?.kdkanwil : true,
   ).map((kdkanwil, index) => (
-    <option key={index} value={kdkanwil.kdkanwil}>
+    <SelectItem key={index} value={kdkanwil.kdkanwil}>
       {kdkanwil.kdkanwil} - {kdkanwil.nmkanwil}
-    </option>
+    </SelectItem>
   ));
 
   return (
@@ -148,16 +155,20 @@ const FilterData: React.FC<FilterDataProps> = ({ show, onHide, onFilter }) => {
               <Label className="text-dark">Tahun</Label>
             </div>
             <div className="col-span-12 md:col-span-8">
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                value={tahun}
-                onChange={handleTahunChange}
+              <Select
+                value={tahun || "00"}
+                onValueChange={(val) => setTahun(val === "00" ? "" : val)}
               >
-                <option value="">Semua Tahun</option>
-                {/* <option value="2023">TA 2023</option>
-                    <option value="2024">TA 2024</option> */}
-                <option value="2025">TA 2025</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Semua Tahun" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="00">Semua Tahun</SelectItem>
+                  {/* <SelectItem value="2023">TA 2023</SelectItem>
+                    <SelectItem value="2024">TA 2024</SelectItem> */}
+                  <SelectItem value="2025">TA 2025</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -166,17 +177,21 @@ const FilterData: React.FC<FilterDataProps> = ({ show, onHide, onFilter }) => {
               <Label className="text-dark">Triwulan</Label>
             </div>
             <div className="col-span-12 md:col-span-8">
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                value={triwulan}
-                onChange={handleTriwulanChange}
+              <Select
+                value={triwulan || "00"}
+                onValueChange={(val) => setTriwulan(val === "00" ? "" : val)}
               >
-                <option value="">Semua Triwulan</option>
-                <option value="1">Triwulan I</option>
-                <option value="2">Triwulan II</option>
-                <option value="3">Triwulan III</option>
-                <option value="4">Triwulan IV</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Semua Triwulan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="00">Semua Triwulan</SelectItem>
+                  <SelectItem value="1">Triwulan I</SelectItem>
+                  <SelectItem value="2">Triwulan II</SelectItem>
+                  <SelectItem value="3">Triwulan III</SelectItem>
+                  <SelectItem value="4">Triwulan IV</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -185,18 +200,22 @@ const FilterData: React.FC<FilterDataProps> = ({ show, onHide, onFilter }) => {
               <Label className="text-dark">Kementerian</Label>
             </div>
             <div className="col-span-12 md:col-span-8">
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              <Select
                 value={selectedKementerian}
-                onChange={(e) => setSelectedKementerian(e.target.value)}
+                onValueChange={setSelectedKementerian}
               >
-                <option value="00">Semua Kementerian</option>
-                {Kddept.map((dept, index) => (
-                  <option key={index} value={dept.kddept}>
-                    {dept.kddept} - {dept.nmdept}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Semua Kementerian" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="00">Semua Kementerian</SelectItem>
+                  {Kddept.map((dept, index) => (
+                    <SelectItem key={index} value={dept.kddept}>
+                      {dept.kddept} - {dept.nmdept}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -206,14 +225,20 @@ const FilterData: React.FC<FilterDataProps> = ({ show, onHide, onFilter }) => {
                 <Label className="text-dark">Kanwil</Label>
               </div>
               <div className="col-span-12 md:col-span-8">
-                <select
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                <Select
                   value={selectedKanwil}
-                  onChange={(e) => setSelectedKanwil(e.target.value)}
+                  onValueChange={setSelectedKanwil}
                 >
-                  {!isKanwil && <option value="00">Semua Kanwil</option>}
-                  {kanwilOptions}
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Semua Kanwil" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {!isKanwil && (
+                      <SelectItem value="00">Semua Kanwil</SelectItem>
+                    )}
+                    {kanwilOptions}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           )}
@@ -223,18 +248,22 @@ const FilterData: React.FC<FilterDataProps> = ({ show, onHide, onFilter }) => {
               <Label className="text-dark">Jenis PNBP</Label>
             </div>
             <div className="col-span-12 md:col-span-8">
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              <Select
                 value={selectedJenisMp}
-                onChange={(e) => setSelectedJenisMp(e.target.value)}
+                onValueChange={setSelectedJenisMp}
               >
-                <option value="00">Semua Jenis MP</option>
-                {Kdmppnbp.map((mp, index) => (
-                  <option key={index} value={mp.kdmppnbp}>
-                    {mp.nmmppnbp}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Semua Jenis MP" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="00">Semua Jenis MP</SelectItem>
+                  {Kdmppnbp.map((mp, index) => (
+                    <SelectItem key={index} value={mp.kdmppnbp}>
+                      {mp.nmmppnbp}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>

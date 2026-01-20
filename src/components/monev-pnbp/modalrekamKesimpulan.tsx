@@ -6,12 +6,30 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import moment from "moment";
 
@@ -268,45 +286,52 @@ export default function RekamKesimpulan({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>Pilih Tahun</Label>
-                    <select
+                    <Select
                       value={thang}
-                      onChange={(e) => setThang(e.target.value)}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      onValueChange={(val) => setThang(val)}
                     >
-                      <option value="">Pilih Tahun</option>
-                      {Array.from({ length: 3 }, (_, i) => 2025 + i).map(
-                        (year) => (
-                          <option key={year} value={year}>
-                            {year}
-                          </option>
-                        ),
-                      )}
-                    </select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih Tahun" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 3 }, (_, i) => 2025 + i).map(
+                          (year) => (
+                            <SelectItem key={year} value={year.toString()}>
+                              {year}
+                            </SelectItem>
+                          ),
+                        )}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label>Pilih Triwulan</Label>
-                    <select
+                    <Select
                       value={triwulan}
-                      onChange={(e) => setTriwulan(e.target.value)}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      onValueChange={(val) => setTriwulan(val)}
                     >
-                      <option value="">Pilih Triwulan</option>
-                      {[2, 4].map((tw) => (
-                        <option key={tw} value={tw}>
-                          Triwulan {tw}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih Triwulan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[2, 4].map((tw) => (
+                          <SelectItem key={tw} value={tw.toString()}>
+                            Triwulan {tw}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label>Pilih Kanwil</Label>
-                    <select
-                      value={kanwil}
-                      onChange={(e) => setKanwil(e.target.value)}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    >
-                      <option value="00">Semua Kanwil</option>
-                    </select>
+                    <Select value={kanwil} onValueChange={setKanwil}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih Kanwil" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="00">Semua Kanwil</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
@@ -314,12 +339,12 @@ export default function RekamKesimpulan({
               <TabsContent value="form-gambaran" className="mt-0 space-y-4">
                 <div className="bg-background border rounded-lg p-4 space-y-4">
                   <Label>Gambaran Umum</Label>
-                  <textarea
+                  <Textarea
                     rows={10}
                     value={gambaran_umum}
                     onChange={(e) => setGambaran_umum(e.target.value)}
                     placeholder="Tuliskan gambaran umum pelaksanaan penerimaan dan belanja PNBP..."
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="min-h-[200px]"
                   />
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" onClick={onHide}>
@@ -346,12 +371,12 @@ export default function RekamKesimpulan({
               <TabsContent value="form-kesimpulan" className="mt-0 space-y-4">
                 <div className="bg-background border rounded-lg p-4 space-y-4">
                   <Label>Kesimpulan</Label>
-                  <textarea
+                  <Textarea
                     rows={10}
                     value={kesimpulan}
                     onChange={(e) => setKesimpulan(e.target.value)}
                     placeholder="Tuliskan kesimpulan monev PNBP yang sudah dilakukan..."
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="min-h-[200px]"
                   />
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" onClick={onHide}>
@@ -378,12 +403,12 @@ export default function RekamKesimpulan({
               <TabsContent value="form-rekomendasi" className="mt-0 space-y-4">
                 <div className="bg-background border rounded-lg p-4 space-y-4">
                   <Label>Rekomendasi</Label>
-                  <textarea
+                  <Textarea
                     rows={10}
                     value={rekomendasi}
                     onChange={(e) => setRekomendasi(e.target.value)}
                     placeholder="Tuliskan rekomendasi bagi KPPN/Kanwil DJPb..."
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="min-h-[200px]"
                   />
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" onClick={onHide}>
@@ -415,67 +440,67 @@ export default function RekamKesimpulan({
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
-                      <table className="w-full border-collapse border border-input text-sm">
-                        <thead className="bg-muted">
-                          <tr>
-                            <th className="border border-input px-3 py-2">
+                      <Table>
+                        <TableHeader className="bg-muted">
+                          <TableRow>
+                            <TableHead className="border border-input px-3 py-2 text-black font-bold">
                               No
-                            </th>
-                            <th className="border border-input px-3 py-2">
+                            </TableHead>
+                            <TableHead className="border border-input px-3 py-2 text-black font-bold">
                               Tahun/Triwulan
-                            </th>
-                            <th className="border border-input px-3 py-2">
+                            </TableHead>
+                            <TableHead className="border border-input px-3 py-2 text-black font-bold">
                               Kanwil
-                            </th>
-                            <th className="border border-input px-3 py-2">
+                            </TableHead>
+                            <TableHead className="border border-input px-3 py-2 text-black font-bold">
                               Gambaran Umum
-                            </th>
-                            <th className="border border-input px-3 py-2">
+                            </TableHead>
+                            <TableHead className="border border-input px-3 py-2 text-black font-bold">
                               Kesimpulan
-                            </th>
-                            <th className="border border-input px-3 py-2">
+                            </TableHead>
+                            <TableHead className="border border-input px-3 py-2 text-black font-bold">
                               Rekomendasi
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
                           {rekamanKesimpulan.length > 0 ? (
                             rekamanKesimpulan.map(
                               (item: any, index: number) => (
-                                <tr key={item.id}>
-                                  <td className="border border-input px-3 py-2 text-center">
+                                <TableRow key={item.id}>
+                                  <TableCell className="border border-input px-3 py-2 text-center">
                                     {index + 1 + page * limit}
-                                  </td>
-                                  <td className="border border-input px-3 py-2 text-center">
+                                  </TableCell>
+                                  <TableCell className="border border-input px-3 py-2 text-center">
                                     {item.thang}/{item.triwulan}
-                                  </td>
-                                  <td className="border border-input px-3 py-2 text-center">
+                                  </TableCell>
+                                  <TableCell className="border border-input px-3 py-2 text-center">
                                     ({item.kdkanwil}) - {item.nmkanwil}
-                                  </td>
-                                  <td className="border border-input px-3 py-2 text-justify text-xs">
+                                  </TableCell>
+                                  <TableCell className="border border-input px-3 py-2 text-justify text-xs">
                                     {item.gambaran_umum}
-                                  </td>
-                                  <td className="border border-input px-3 py-2 text-justify text-xs">
+                                  </TableCell>
+                                  <TableCell className="border border-input px-3 py-2 text-justify text-xs">
                                     {item.kesimpulan}
-                                  </td>
-                                  <td className="border border-input px-3 py-2 text-justify text-xs">
+                                  </TableCell>
+                                  <TableCell className="border border-input px-3 py-2 text-justify text-xs">
                                     {item.rekomendasi}
-                                  </td>
-                                </tr>
+                                  </TableCell>
+                                </TableRow>
                               ),
                             )
                           ) : (
-                            <tr>
-                              <td
+                            <TableRow>
+                              <TableCell
                                 colSpan={6}
                                 className="border border-input px-3 py-2 text-center"
                               >
                                 Belum ada data
-                              </td>
-                            </tr>
+                              </TableCell>
+                            </TableRow>
                           )}
-                        </tbody>
-                      </table>
+                        </TableBody>
+                      </Table>
                     </div>
                   )}
                 </div>

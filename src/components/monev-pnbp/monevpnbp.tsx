@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import numeral from "numeral";
-import { Loading2 } from "../../layout/LoadingTable";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -16,8 +16,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import ReactPaginate from "react-paginate";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { Badge } from "@/components/ui/badge";
 import Rekam2 from "./modalrekam2";
+
 import Swal from "sweetalert2";
 import FilterData from "./filterdata";
 import moment from "moment";
@@ -397,8 +407,8 @@ export default function MonevPnbp() {
     }
   };
 
-  const halaman = ({ selected }: any) => {
-    setPage(selected);
+  const halaman = (newPage: number) => {
+    setPage(newPage);
   };
 
   const handleFilter = () => {
@@ -424,14 +434,14 @@ export default function MonevPnbp() {
         <div className="pagetitle mb-4">
           <h1 className="text-2xl font-bold">Monitoring dan Evaluasi PNBP </h1>
           <nav>
-            <ol className="breadcrumb flex gap-2 text-sm text-gray-500">
-              <li className="breadcrumb-item">
-                <a href="#">Data</a>
+            <ol className="flex gap-2 text-sm text-gray-500">
+              <li>
+                <a href="#" className="hover:text-gray-800 transition-colors">
+                  Data
+                </a>
               </li>
               <li>/</li>
-              <li className="breadcrumb-item active text-gray-800 font-semibold">
-                Monev PNBP
-              </li>
+              <li className="active text-gray-800 font-semibold">Monev PNBP</li>
             </ol>
           </nav>
         </div>
@@ -462,38 +472,33 @@ export default function MonevPnbp() {
                   filter.tahun !== "" ||
                   filter.triwulan !== "" ||
                   filter.selectedJenisMp !== "00") && (
-                  <Button
+                  <Badge
                     variant="default"
-                    size="sm"
                     className="bg-green-600 hover:bg-green-700"
                   >
                     Filter Aktif
-                  </Button>
+                  </Badge>
                 )}
                 {filter.tahun !== "" && (
-                  <Button variant="secondary" size="sm">
-                    Tahun {filter.tahun}
-                  </Button>
+                  <Badge variant="secondary">Tahun {filter.tahun}</Badge>
                 )}
                 {filter.triwulan !== "" && (
-                  <Button variant="secondary" size="sm">
-                    Triwulan {filter.triwulan}
-                  </Button>
+                  <Badge variant="secondary">Triwulan {filter.triwulan}</Badge>
                 )}
                 {filter.selectedKementerian !== "00" && (
-                  <Button variant="secondary" size="sm">
+                  <Badge variant="secondary">
                     Kementerian {filter.selectedKementerian}
-                  </Button>
+                  </Badge>
                 )}{" "}
                 {filter.selectedKanwil !== "00" && (
-                  <Button variant="secondary" size="sm">
+                  <Badge variant="secondary">
                     Kanwil {filter.selectedKanwil}
-                  </Button>
+                  </Badge>
                 )}
                 {filter.selectedJenisMp !== "00" && (
-                  <Button variant="secondary" size="sm">
+                  <Badge variant="secondary">
                     Jenis PNBP {filter.selectedJenisMp}
-                  </Button>
+                  </Badge>
                 )}{" "}
               </div>
             </div>
@@ -501,9 +506,11 @@ export default function MonevPnbp() {
             <TabsContent value="monev-pnbp">
               {loading ? (
                 <div className="space-y-4">
-                  <Loading2 />
-                  <Loading2 />
-                  <Loading2 />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
                 </div>
               ) : (
                 <>
@@ -936,30 +943,94 @@ export default function MonevPnbp() {
                           &nbsp;
                           {rows ? page + 1 : 0} dari {pages}
                         </span>
-                        <nav>
-                          <ReactPaginate
-                            previousLabel={"← Previous"}
-                            nextLabel={"Next →"}
-                            breakLabel="..."
-                            pageRangeDisplayed={3}
-                            marginPagesDisplayed={1}
-                            pageCount={pages}
-                            renderOnZeroPageCount={null}
-                            containerClassName="flex gap-2 list-none p-0 m-0"
-                            previousClassName="px-3 py-1 border rounded hover:bg-gray-100 cursor-pointer"
-                            previousLinkClassName="w-full h-full flex items-center justify-center"
-                            nextClassName="px-3 py-1 border rounded hover:bg-gray-100 cursor-pointer"
-                            nextLinkClassName="w-full h-full flex items-center justify-center"
-                            pageClassName="px-3 py-1 border rounded hover:bg-gray-100 cursor-pointer"
-                            pageLinkClassName="w-full h-full flex items-center justify-center"
-                            breakClassName="px-3 py-1"
-                            breakLinkClassName=""
-                            activeClassName="bg-blue-500 text-white border-blue-500 hover:bg-blue-600"
-                            disabledClassName="opacity-50 cursor-not-allowed"
-                            onPageChange={halaman}
-                            initialPage={page}
-                          />
-                        </nav>
+                        <div className="flex items-center space-x-2">
+                          <Pagination>
+                            <PaginationContent>
+                              <PaginationItem>
+                                <PaginationPrevious
+                                  onClick={() => halaman(Math.max(0, page - 1))}
+                                  className={
+                                    page === 0
+                                      ? "pointer-events-none opacity-50"
+                                      : "cursor-pointer"
+                                  }
+                                />
+                              </PaginationItem>
+
+                              {/* Show first page if we are far ahead */}
+                              {page > 2 && (
+                                <PaginationItem>
+                                  <PaginationLink onClick={() => halaman(0)}>
+                                    1
+                                  </PaginationLink>
+                                </PaginationItem>
+                              )}
+
+                              {/* Ellipsis if needed */}
+                              {page > 2 && (
+                                <PaginationItem>
+                                  <PaginationEllipsis />
+                                </PaginationItem>
+                              )}
+
+                              {/* Show current, prev and next pages logic simplified */}
+                              {Array.from(
+                                { length: Math.min(5, pages) },
+                                (_, i) => {
+                                  let p = page;
+                                  if (page < 2) p = 2;
+                                  if (page > pages - 3) p = pages - 3;
+                                  const pageNum = p - 2 + i;
+
+                                  if (pageNum >= 0 && pageNum < pages) {
+                                    return (
+                                      <PaginationItem key={pageNum}>
+                                        <PaginationLink
+                                          isActive={page === pageNum}
+                                          onClick={() => halaman(pageNum)}
+                                        >
+                                          {pageNum + 1}
+                                        </PaginationLink>
+                                      </PaginationItem>
+                                    );
+                                  }
+                                  return null;
+                                },
+                              )}
+
+                              {/* Ellipsis if needed */}
+                              {page < pages - 3 && (
+                                <PaginationItem>
+                                  <PaginationEllipsis />
+                                </PaginationItem>
+                              )}
+
+                              {/* Show last page if we are far behind */}
+                              {page < pages - 3 && (
+                                <PaginationItem>
+                                  <PaginationLink
+                                    onClick={() => halaman(pages - 1)}
+                                  >
+                                    {pages}
+                                  </PaginationLink>
+                                </PaginationItem>
+                              )}
+
+                              <PaginationItem>
+                                <PaginationNext
+                                  onClick={() =>
+                                    halaman(Math.min(pages - 1, page + 1))
+                                  }
+                                  className={
+                                    page === pages - 1
+                                      ? "pointer-events-none opacity-50"
+                                      : "cursor-pointer"
+                                  }
+                                />
+                              </PaginationItem>
+                            </PaginationContent>
+                          </Pagination>
+                        </div>
                       </div>
                     </>
                   )}

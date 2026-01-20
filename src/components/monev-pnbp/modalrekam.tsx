@@ -18,6 +18,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { Formik, FormikHelpers } from "formik";
 import * as Yup from "yup";
@@ -203,43 +210,49 @@ const Rekam: React.FC<RekamProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="col-span-1 space-y-2">
                   <Label>Tahun</Label>
-                  <select
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={values.tahun}
-                    onChange={(e) => setFieldValue("tahun", e.target.value)}
+                  <Select
+                    value={values.tahun?.toString()}
+                    onValueChange={(val) => setFieldValue("tahun", val)}
                   >
-                    <option value="">Pilih Tahun</option>
-                    {tahunOptions.map((year) => (
-                      <option
-                        key={year}
-                        value={year}
-                        disabled={triwulanOptions.some((tri) =>
-                          isDisabled(year, tri),
-                        )}
-                      >
-                        {year}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih Tahun" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {tahunOptions.map((year) => (
+                        <SelectItem
+                          key={year}
+                          value={year.toString()}
+                          disabled={triwulanOptions.some((tri) =>
+                            isDisabled(year, tri),
+                          )}
+                        >
+                          {year}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="col-span-1 space-y-2">
                   <Label>Triwulan</Label>
-                  <select
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={values.triwulan}
-                    onChange={(e) => setFieldValue("triwulan", e.target.value)}
+                  <Select
+                    value={values.triwulan?.toString()}
+                    onValueChange={(val) => setFieldValue("triwulan", val)}
                   >
-                    <option value="">Pilih Triwulan</option>
-                    {triwulanOptions.map((tri) => (
-                      <option
-                        key={tri}
-                        value={tri}
-                        disabled={isDisabled(values.tahun, tri)}
-                      >
-                        Triwulan {tri}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih Triwulan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {triwulanOptions.map((tri) => (
+                        <SelectItem
+                          key={tri}
+                          value={tri.toString()}
+                          disabled={isDisabled(values.tahun, tri)}
+                        >
+                          Triwulan {tri}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div className="grid grid-cols-1 mt-3 space-y-2">
