@@ -59,7 +59,9 @@ if (typeof window !== "undefined") {
 function genTraceId() {
   try {
     return (
-      Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8)
+      Date.now().toString(36) +
+      "-" +
+      Math.random().toString(36).slice(2, 8)
     ).toUpperCase();
   } catch {
     return String(Date.now());
@@ -68,7 +70,7 @@ function genTraceId() {
 
 // Request interceptor: attach CSRF header if available, set Content-Type, and add debug headers
 http.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
-  const h = (config.headers ||= ({} as any));
+  const h = (config.headers ||= {} as any);
 
   // Correlation headers
   if (!h["X-Debug-Trace"]) h["X-Debug-Trace"] = genTraceId();
@@ -110,7 +112,9 @@ if (typeof window !== "undefined") {
 }
 
 // Expose a safe reset for the logout guard (used after successful login)
-export function clearLogoutGuard() { /* no-op */ }
+export function clearLogoutGuard() {
+  /* no-op */
+}
 
 // ✅ IMPROVED: Simplified token refresh with single-flight pattern
 // refreshTokens removed
@@ -131,12 +135,13 @@ export function clearLogoutGuard() { /* no-op */ }
 http.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
-    const original = (error.config as (AxiosRequestConfig & {
-      _retry?: boolean;
-      _skipAuthRefresh?: boolean;
-      _graceRetry?: boolean; // retry once within post-login grace
-      _didRefreshAfterGrace?: boolean; // attempted refresh after grace retry
-    })) || undefined;
+    const original =
+      (error.config as AxiosRequestConfig & {
+        _retry?: boolean;
+        _skipAuthRefresh?: boolean;
+        _graceRetry?: boolean; // retry once within post-login grace
+        _didRefreshAfterGrace?: boolean; // attempted refresh after grace retry
+      }) || undefined;
     const status = error.response?.status;
     const data = error.response?.data as any;
 
@@ -178,9 +183,9 @@ http.interceptors.response.use(
     // Unwrap nested shapes: { success:false, data:{...} }
     const body: any =
       data &&
-        typeof data === "object" &&
-        "data" in data &&
-        typeof (data as any).data === "object"
+      typeof data === "object" &&
+      "data" in data &&
+      typeof (data as any).data === "object"
         ? (data as any).data
         : data;
 
@@ -192,13 +197,13 @@ http.interceptors.response.use(
       if (typeof window !== "undefined") {
         if (window.location.pathname.includes("/ip-blocked")) {
           console.log(
-            "[httpClient] Already on IP blocked page, not redirecting",
+            "[httpClient] Already on IP blocked page, not redirecting"
           );
           return Promise.reject(error);
         }
         if ((window as any).__redirectingToIPBlocked) {
           console.log(
-            "[httpClient] Already redirecting to IP blocked page, skipping",
+            "[httpClient] Already redirecting to IP blocked page, skipping"
           );
           return Promise.reject(error);
         }
@@ -207,7 +212,7 @@ http.interceptors.response.use(
         const params = new URLSearchParams(resIp.params!);
         console.log(
           "[httpClient] Redirecting to /ip-blocked with params:",
-          params.toString(),
+          params.toString()
         );
         setTimeout(() => {
           window.location.href = `/ip-blocked?${params.toString()}`;
@@ -238,7 +243,7 @@ http.interceptors.response.use(
       clearNonHttpOnlyCookies();
       clearCsrfCache();
       // Cache clearing handled by useAuth hook
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         window.location.href = "/login?reason=session_expired";
       }
       return Promise.reject(error);
@@ -247,7 +252,7 @@ http.interceptors.response.use(
     // no second stage handling
 
     return Promise.reject(error);
-  },
+  }
 );
 
 // Create a dedicated axios instance for direct backend communication
@@ -266,42 +271,45 @@ if (typeof window !== "undefined") {
 }
 
 // Request interceptor for backend HTTP client
-backendHttp.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
-  const h = (config.headers ||= ({} as any));
-  if (!h["X-Debug-Trace"]) h["X-Debug-Trace"] = genTraceId();
-  if (!h["X-Debug-Source"]) h["X-Debug-Source"] = "backendHttp";
+backendHttp.interceptors.request.use(
+  async (config: InternalAxiosRequestConfig) => {
+    const h = (config.headers ||= {} as any);
+    if (!h["X-Debug-Trace"]) h["X-Debug-Trace"] = genTraceId();
+    if (!h["X-Debug-Source"]) h["X-Debug-Source"] = "backendHttp";
 
-  const method = (config.method || "get").toLowerCase();
+    const method = (config.method || "get").toLowerCase();
 
-  // Set Content-Type to application/json for non-FormData requests
-  if (["post", "put", "patch", "delete"].includes(method)) {
-    // Only set Content-Type if it's not FormData (let browser set multipart/form-data)
-    if (!(config.data instanceof FormData) && !h["Content-Type"]) {
-      h["Content-Type"] = "application/json";
-    }
-
-    // For direct backend calls, we need to handle CSRF differently
-    // Since we're not going through Next.js, we'll rely on cookie-based CSRF
-    try {
-      const cookieCsrf = getCookie("XSRF-TOKEN");
-      if (cookieCsrf) {
-        h["X-CSRF-Token"] = cookieCsrf;
+    // Set Content-Type to application/json for non-FormData requests
+    if (["post", "put", "patch", "delete"].includes(method)) {
+      // Only set Content-Type if it's not FormData (let browser set multipart/form-data)
+      if (!(config.data instanceof FormData) && !h["Content-Type"]) {
+        h["Content-Type"] = "application/json";
       }
-    } catch (error) {
-      console.warn("[BackendHttp] CSRF token fetch failed:", error);
+
+      // For direct backend calls, we need to handle CSRF differently
+      // Since we're not going through Next.js, we'll rely on cookie-based CSRF
+      try {
+        const cookieCsrf = getCookie("XSRF-TOKEN");
+        if (cookieCsrf) {
+          h["X-CSRF-Token"] = cookieCsrf;
+        }
+      } catch (error) {
+        console.warn("[BackendHttp] CSRF token fetch failed:", error);
+      }
     }
+    return config;
   }
-  return config;
-});
+);
 
 // Response interceptor for backend HTTP client (similar to main http client)
 backendHttp.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
-    const original = (error.config as AxiosRequestConfig & {
-      _retry?: boolean;
-      _skipAuthRefresh?: boolean;
-    }) || undefined;
+    const original =
+      (error.config as AxiosRequestConfig & {
+        _retry?: boolean;
+        _skipAuthRefresh?: boolean;
+      }) || undefined;
     const status = error.response?.status;
     const data = error.response?.data as any;
 
@@ -317,9 +325,9 @@ backendHttp.interceptors.response.use(
     // Handle IP blocking
     const body: any =
       data &&
-        typeof data === "object" &&
-        "data" in data &&
-        typeof (data as any).data === "object"
+      typeof data === "object" &&
+      "data" in data &&
+      typeof (data as any).data === "object"
         ? (data as any).data
         : data;
     const resIp =
@@ -329,13 +337,13 @@ backendHttp.interceptors.response.use(
       if (typeof window !== "undefined") {
         if (window.location.pathname.includes("/ip-blocked")) {
           console.log(
-            "[BackendHttp] Already on IP blocked page, not redirecting",
+            "[BackendHttp] Already on IP blocked page, not redirecting"
           );
           return Promise.reject(error);
         }
         if ((window as any).__redirectingToIPBlocked) {
           console.log(
-            "[BackendHttp] Already redirecting to IP blocked page, skipping",
+            "[BackendHttp] Already redirecting to IP blocked page, skipping"
           );
           return Promise.reject(error);
         }
@@ -343,7 +351,7 @@ backendHttp.interceptors.response.use(
         const params = new URLSearchParams(resIp.params!);
         console.log(
           "[BackendHttp] Redirecting to /ip-blocked with params:",
-          params.toString(),
+          params.toString()
         );
         setTimeout(() => {
           window.location.href = `/ip-blocked?${params.toString()}`;
@@ -354,14 +362,14 @@ backendHttp.interceptors.response.use(
 
     if (status === 401 && !isLogoutOrRefresh) {
       // Cache clearing handled by useAuth hook
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login?reason=session_expired';
+      if (typeof window !== "undefined") {
+        window.location.href = "/login?reason=session_expired";
       }
-      return Promise.reject(new Error('Session invalidated'));
+      return Promise.reject(new Error("Session invalidated"));
     }
 
     return Promise.reject(error);
-  },
+  }
 );
 
 // Convenience helpers mirroring fetch-like API

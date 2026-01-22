@@ -1,0 +1,236 @@
+/* Harmonisasi Component Styles */
+
+.harmonisasi-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.harmonisasi-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.harmonisasi-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 2rem;
+}
+
+.harmonisasi-breadcrumb {
+  display: flex;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.harmonisasi-breadcrumb-list {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.harmonisasi-breadcrumb-active {
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.harmonisasi-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.harmonisasi-section-title {
+  text-align: center;
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 700;
+}
+
+.harmonisasi-filters {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: end;
+}
+
+@media (min-width: 768px) {
+  .harmonisasi-filters {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .harmonisasi-filters {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+.harmonisasi-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.harmonisasi-filter-label {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+}
+
+.harmonisasi-action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.harmonisasi-btn-upaya {
+  width: 100%;
+  background-color: rgb(234 179 8);
+  color: white;
+}
+
+.harmonisasi-btn-upaya:hover {
+  background-color: rgb(202 138 4);
+}
+
+.harmonisasi-loading {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.harmonisasi-table-wrapper {
+  border-radius: 0.375rem;
+  border: 1px solid hsl(var(--border));
+  overflow-x: auto;
+}
+
+.harmonisasi-table {
+  width: 100%;
+  caption-side: bottom;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  text-align: left;
+}
+
+.harmonisasi-thead {
+  background-color: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  text-align: center;
+  vertical-align: middle;
+}
+
+.harmonisasi-thead tr {
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.harmonisasi-tr {
+  border-bottom: 1px solid hsl(var(--border));
+  transition-property: color, background-color, border-color,
+    text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.harmonisasi-tr:hover {
+  background-color: hsl(var(--muted) / 0.5);
+}
+
+.harmonisasi-th {
+  height: 3rem;
+  padding: 0 1rem;
+  text-align: center;
+  vertical-align: middle;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+}
+
+.harmonisasi-th-wide {
+  width: 10rem;
+}
+
+.harmonisasi-th-narrow {
+  width: 8rem;
+}
+
+.harmonisasi-th-small {
+  height: 3rem;
+  padding: 0 0.5rem;
+  text-align: center;
+  vertical-align: middle;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.harmonisasi-tbody {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.harmonisasi-tbody tr:last-child {
+  border-bottom: none;
+}
+
+.harmonisasi-td {
+  padding: 0.5rem;
+}
+
+.harmonisasi-td-center {
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.harmonisasi-td-right {
+  padding: 0.5rem;
+  text-align: right;
+}
+
+.harmonisasi-td-coa {
+  padding: 0.5rem;
+  text-align: center;
+  font-size: 0.625rem;
+  user-select: none;
+}
+
+.harmonisasi-status-icon {
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  display: flex;
+  justify-content: center;
+  transition-property: color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.harmonisasi-status-active {
+  color: rgb(22 163 74);
+}
+
+.harmonisasi-status-inactive {
+  color: rgb(234 179 8);
+}
+
+.harmonisasi-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+}
+
+.harmonisasi-pagination-info {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.harmonisasi-pagination-buttons {
+  display: flex;
+  gap: 0.5rem;
+}

@@ -127,6 +127,7 @@ const defaultMenu: MenuItem[] = [
       { label: "UP/TUP" },
       { label: "Penerimaan PNBP" },
       { label: "RKAKL Detail" },
+      { label: "Prognosis" },
     ],
   },
   {
@@ -135,7 +136,14 @@ const defaultMenu: MenuItem[] = [
   },
   {
     label: "Laporan",
-    children: [{ label: "Weekly Report" }, { label: "Monthly Report" }],
+    children: [
+      { label: "Weekly Report" },
+      { label: "Monthly Report" },
+      { label: "Harmonisasi" },
+      { label: "Tantangan TPID" },
+      { label: "Monitoring Blokir" },
+      { label: "Monev PNBP" },
+    ],
   },
   {
     label: "Data Makrokesra",
@@ -304,9 +312,19 @@ export function ResponsiveSidebar({
         return <Database className={cls} />;
       case "Inquiry Data__RKAKL Detail":
         return <Database className={cls} />;
+      case "Inquiry Data__Prognosis":
+        return <Database className={cls} />;
       case "Laporan__Monthly Report":
         return <CalendarDays className={cls} />;
       case "Laporan__Weekly Report":
+        return <CalendarDays className={cls} />;
+      case "Laporan__Harmonisasi":
+        return <CalendarDays className={cls} />;
+      case "Laporan__Tantangan TPID":
+        return <CalendarDays className={cls} />;
+      case "Laporan__Monitoring Blokir":
+        return <CalendarDays className={cls} />;
+      case "Laporan__Monev PNBP":
         return <CalendarDays className={cls} />;
       case "Tentang Kita__Profil":
         return <User className={cls} />;
@@ -443,7 +461,7 @@ export function ResponsiveSidebar({
                           {m.children.map((c) => {
                             const menuKey = `${m.label}__${c.label}`;
                             let href = "#";
-                            let onMouseEnterFn = () => { };
+                            let onMouseEnterFn = () => {};
 
                             // Route mapping
                             if (
@@ -452,9 +470,7 @@ export function ResponsiveSidebar({
                             ) {
                               href = "/dashboard/utama";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/dashboard/PerformanceMonitoringDashboard"
-                                );
+                                import("@/components/dashboard/PerformanceMonitoringDashboard");
                             } else if (
                               c.label === "Dashboard Program" &&
                               m.label === "Dashboard"
@@ -473,27 +489,28 @@ export function ResponsiveSidebar({
                             ) {
                               href = "/inquiry-data/kontrak";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/inquiry-data/enhanced-filter-card"
-                                );
+                                import("@/components/inquiry-data/enhanced-filter-card");
                             } else if (
                               c.label === "UP/TUP" &&
                               m.label === "Inquiry Data"
                             ) {
                               href = "/inquiry-data/up-tup";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/inquiry-data/enhanced-filter-card"
-                                );
+                                import("@/components/inquiry-data/enhanced-filter-card");
                             } else if (
                               c.label === "Penerimaan PNBP" &&
                               m.label === "Inquiry Data"
                             ) {
                               href = "/inquiry-data/penerimaan-pnbp";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/inquiry-data/enhanced-filter-card"
-                                );
+                                import("@/components/inquiry-data/enhanced-filter-card");
+                            } else if (
+                              c.label === "Prognosis" &&
+                              m.label === "Inquiry Data"
+                            ) {
+                              href = "/inquiry-data/prognosis";
+                              onMouseEnterFn = () =>
+                                import("@/components/inquiry-data/enhanced-filter-card");
                             } else if (
                               c.label === "Dashboard MBG" &&
                               m.label === "Makan Bergizi"
@@ -542,39 +559,29 @@ export function ResponsiveSidebar({
                             ) {
                               href = "/transfer-daerah/proyeksi-tkd";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/transfer-daerah/data-kmk-tab"
-                                );
+                                import("@/components/transfer-daerah/data-kmk-tab");
                             } else if (
                               c.label === "Upload Laporan" &&
                               m.label === "Transfer Daerah"
                             ) {
                               href = "/transfer-daerah/upload-laporan";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/transfer-daerah/data-kmk-tab"
-                                );
+                                import("@/components/transfer-daerah/data-kmk-tab");
                             } else if (
                               c.label === "DAU" &&
                               m.label === "Transfer Daerah"
                             ) {
                               href = "/transfer-daerah/dau";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/transfer-daerah/data-transaksi-tab"
-                                );
+                                import("@/components/transfer-daerah/data-transaksi-tab");
                             } else if (
                               c.label === "Belanja" &&
                               m.label === "Inquiry Data"
                             ) {
                               href = "/inquiry-data/belanja";
                               onMouseEnterFn = () => {
-                                import(
-                                  "@/components/inquiry-data/dynamic-filters-card"
-                                );
-                                import(
-                                  "@/components/inquiry-data/query-management"
-                                );
+                                import("@/components/inquiry-data/dynamic-filters-card");
+                                import("@/components/inquiry-data/query-management");
                               };
                             } else if (
                               c.label === "Tematik" &&
@@ -582,72 +589,56 @@ export function ResponsiveSidebar({
                             ) {
                               href = "/inquiry-data/tematik";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/inquiry-data/category-mandatory-filters"
-                                );
+                                import("@/components/inquiry-data/category-mandatory-filters");
                             } else if (
                               c.label === "RKAKL Detail" &&
                               m.label === "Inquiry Data"
                             ) {
                               href = "/inquiry-data/rkakl-detail";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/inquiry-data/dynamic-filters-card"
-                                );
+                                import("@/components/inquiry-data/dynamic-filters-card");
                             } else if (
                               c.label === "Dashboard Supplier" &&
                               m.label === "Data Supplier"
                             ) {
                               href = "/data-supplier/dashboard";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/data-supplier/DashboardSupplierClient"
-                                );
+                                import("@/components/data-supplier/DashboardSupplierClient");
                             } else if (
                               c.label === "Profil Supplier" &&
                               m.label === "Data Supplier"
                             ) {
                               href = "/data-supplier/profil";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/data-supplier/DashboardSupplierClient"
-                                );
+                                import("@/components/data-supplier/DashboardSupplierClient");
                             } else if (
                               c.label === "Konsentrasi Supplier" &&
                               m.label === "Data Supplier"
                             ) {
                               href = "/data-supplier/konsentrasi";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/data-supplier/DashboardSupplierClient"
-                                );
+                                import("@/components/data-supplier/DashboardSupplierClient");
                             } else if (
                               c.label === "Deteksi Anomali Supplier" &&
                               m.label === "Data Supplier"
                             ) {
                               href = "/data-supplier/anomali";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/data-supplier/DashboardSupplierClient"
-                                );
+                                import("@/components/data-supplier/DashboardSupplierClient");
                             } else if (
                               c.label === "Klaster Supplier" &&
                               m.label === "Data Supplier"
                             ) {
                               href = "/data-supplier/klaster";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/data-supplier/DashboardSupplierClient"
-                                );
+                                import("@/components/data-supplier/DashboardSupplierClient");
                             } else if (
                               c.label === "Jaringan Supplier" &&
                               m.label === "Data Supplier"
                             ) {
                               href = "/data-supplier/jaringan";
                               onMouseEnterFn = () =>
-                                import(
-                                  "@/components/data-supplier/DashboardSupplierClient"
-                                );
+                                import("@/components/data-supplier/DashboardSupplierClient");
                             } else if (
                               c.label === "Monthly Report" &&
                               m.label === "Laporan"
@@ -658,6 +649,26 @@ export function ResponsiveSidebar({
                               m.label === "Laporan"
                             ) {
                               href = "/laporan/weekly-report";
+                            } else if (
+                              c.label === "Harmonisasi" &&
+                              m.label === "Laporan"
+                            ) {
+                              href = "/laporan/harmonisasi";
+                            } else if (
+                              c.label === "Tantangan TPID" &&
+                              m.label === "Laporan"
+                            ) {
+                              href = "/laporan/tpid";
+                            } else if (
+                              c.label === "Monitoring Blokir" &&
+                              m.label === "Laporan"
+                            ) {
+                              href = "/laporan/blokir-perjadin";
+                            } else if (
+                              c.label === "Monev PNBP" &&
+                              m.label === "Laporan"
+                            ) {
+                              href = "/laporan/monev-pnbp";
                             } else if (
                               c.label === "Data BPS" &&
                               m.label === "Data Makrokesra"
@@ -774,9 +785,7 @@ export function ResponsiveSidebar({
                         href="/dashboard/utama"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/dashboard/PerformanceMonitoringDashboard"
-                          );
+                          import("@/components/dashboard/PerformanceMonitoringDashboard");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -886,7 +895,7 @@ export function ResponsiveSidebar({
                         key={c.label}
                         href="/tentang-kita/profil"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
-                        onMouseEnter={() => { }}
+                        onMouseEnter={() => {}}
                         onClick={() => {
                           trackMenuUsage({
                             menu: m.label,
@@ -1020,9 +1029,7 @@ export function ResponsiveSidebar({
                         href="/transfer-daerah/dau"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/transfer-daerah/data-transaksi-tab"
-                          );
+                          import("@/components/transfer-daerah/data-transaksi-tab");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1044,9 +1051,7 @@ export function ResponsiveSidebar({
                         href="/inquiry-data/belanja"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/inquiry-data/dynamic-filters-card"
-                          );
+                          import("@/components/inquiry-data/dynamic-filters-card");
                           import("@/components/inquiry-data/query-management");
                         }}
                         onClick={() => {
@@ -1069,9 +1074,7 @@ export function ResponsiveSidebar({
                         href="/inquiry-data/tematik"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/inquiry-data/category-mandatory-filters"
-                          );
+                          import("@/components/inquiry-data/category-mandatory-filters");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1094,15 +1097,36 @@ export function ResponsiveSidebar({
                         href="/inquiry-data/rkakl-detail"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/inquiry-data/dynamic-filters-card"
-                          );
+                          import("@/components/inquiry-data/dynamic-filters-card");
                         }}
                         onClick={() => {
                           trackMenuUsage({
                             menu: m.label,
                             submenu: c.label,
                             path: "/inquiry-data/rkakl-detail",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Prognosis" &&
+                      m.label === "Inquiry Data" ? (
+                      <Link
+                        key={c.label}
+                        href="/inquiry-data/prognosis"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onMouseEnter={() => {
+                          import("@/components/inquiry-data/dynamic-filters-card");
+                        }}
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/inquiry-data/prognosis",
                           });
                           setOpen(false);
                         }}
@@ -1119,9 +1143,7 @@ export function ResponsiveSidebar({
                         href="/data-supplier/dashboard"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/data-supplier/DashboardSupplierClient"
-                          );
+                          import("@/components/data-supplier/DashboardSupplierClient");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1144,9 +1166,7 @@ export function ResponsiveSidebar({
                         href="/data-supplier/profil"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/data-supplier/DashboardSupplierClient"
-                          );
+                          import("@/components/data-supplier/DashboardSupplierClient");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1169,9 +1189,7 @@ export function ResponsiveSidebar({
                         href="/data-supplier/konsentrasi"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/data-supplier/DashboardSupplierClient"
-                          );
+                          import("@/components/data-supplier/DashboardSupplierClient");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1194,9 +1212,7 @@ export function ResponsiveSidebar({
                         href="/data-supplier/anomali"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/data-supplier/DashboardSupplierClient"
-                          );
+                          import("@/components/data-supplier/DashboardSupplierClient");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1219,9 +1235,7 @@ export function ResponsiveSidebar({
                         href="/data-supplier/klaster"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/data-supplier/DashboardSupplierClient"
-                          );
+                          import("@/components/data-supplier/DashboardSupplierClient");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1244,9 +1258,7 @@ export function ResponsiveSidebar({
                         href="/data-supplier/jaringan"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
-                          import(
-                            "@/components/data-supplier/DashboardSupplierClient"
-                          );
+                          import("@/components/data-supplier/DashboardSupplierClient");
                         }}
                         onClick={() => {
                           trackMenuUsage({
@@ -1292,6 +1304,84 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/laporan/weekly-report",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Harmonisasi" && m.label === "Laporan" ? (
+                      <Link
+                        key={c.label}
+                        href="/laporan/harmonisasi"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/laporan/harmonisasi",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Tantangan TPID" &&
+                      m.label === "Laporan" ? (
+                      <Link
+                        key={c.label}
+                        href="/laporan/tpid"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/laporan/tpid",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Monitoring Blokir" &&
+                      m.label === "Laporan" ? (
+                      <Link
+                        key={c.label}
+                        href="/laporan/blokir-perjadin"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/laporan/blokir-perjadin",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Monev PNBP" && m.label === "Laporan" ? (
+                      <Link
+                        key={c.label}
+                        href="/laporan/monev-pnbp"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/laporan/monev-pnbp",
                           });
                           setOpen(false);
                         }}
@@ -1450,7 +1540,7 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </button>
-                    )
+                    ),
                   )}
                 </div>
               ))}
