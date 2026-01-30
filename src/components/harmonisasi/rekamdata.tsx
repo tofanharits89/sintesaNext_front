@@ -52,7 +52,7 @@ export default function Harmonisasi() {
   const [showModal, setShowModal] = useState(false);
   const [showModalUpaya, setShowModalUpaya] = useState(false);
   const [page, setPage] = useState(0);
-  const [limit, setLimit] = useState(50);
+  const [limit, setLimit] = useState(25);
   const [pages, setPages] = useState(0);
   const [rows, setRows] = useState(0);
 
