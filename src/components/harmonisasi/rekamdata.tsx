@@ -27,7 +27,7 @@ import numeral from "numeral";
 import RekamUpaya from "./modalrekamUpaya";
 import Rekam from "./modalrekam";
 import kdkanwilJson from "@/data/kdkanwil.json";
-// import GenerateCSV from "@/components/GenerateCSV"; // TODO: Implement GenerateCSV
+import Papa from "papaparse";
 import moment from "moment";
 import { toast } from "sonner";
 
@@ -134,8 +134,7 @@ export default function Harmonisasi() {
 
   // Debounced search could be implemented here, but keeping it simple for now as requested
 
-  const getData = async () => {
-    setLoading(true);
+  const getSqlQuery = () => {
     const kanwilFilter = kanwil === "00" ? "" : `a.kdkanwil = '${kanwil}'`;
     const bidangFilter =
       namaBidang === "00" ? "" : `a.bidang_dak = '${namaBidang}'`;
@@ -163,7 +162,6 @@ export default function Harmonisasi() {
           ]
           : []
       )
-      // Check role permissions - assuming '2' or 'kanwil_djpb' matches source
       .concat(role === "kanwil_djpb" ? [`a.kdkanwil = '${userKdkanwil}'`] : [])
       .join(" AND ");
 
@@ -195,7 +193,6 @@ export default function Harmonisasi() {
       ${whereClause ? `WHERE ${whereClause}` : ""}
       ORDER BY bidang_dak, kdlokasi ASC, pagu DESC, persen_real9 ASC`;
     } else if (namaThang === "2026") {
-      // Placeholder for 2026 logic if needed, adapting similar structure
       query = `SELECT a.id,a.thang,a.semester,a.kddept, a.kdsatker, a.nmsatker, a.bidang_dak, a.jenis_tkd, a.kdkabkota,
       a.kdlokasi, c.nmkabkota, a.kdprogram, a.kdgiat, a.kdoutput, a.kdsoutput, a.ursoutput, a.sat,
       a.vol, a.pagu, a.real1, a.real2, a.real3, a.real4, a.real5, a.real6, a.realfisik1, a.realfisik2, a.realfisik3, a.realfisik4, a.realfisik5, a.realfisik6,
@@ -209,8 +206,16 @@ export default function Harmonisasi() {
       ${whereClause ? `WHERE ${whereClause}` : ""}
       ORDER BY bidang_dak, kdlokasi ASC, pagu DESC, persen_real6 ASC`;
     }
+    return query;
+  };
 
-    if (!query) return;
+  const getData = async () => {
+    setLoading(true);
+    const query = getSqlQuery();
+    if (!query) {
+      setLoading(false);
+      return;
+    }
 
     const encodedQuery = encodeURIComponent(query);
     const cleanedQuery = decodeURIComponent(encodedQuery)
@@ -219,14 +224,14 @@ export default function Harmonisasi() {
       .trim();
     setSql(cleanedQuery);
 
-    // Encrypt query if possible
     const encryptedQuery = Encrypt(cleanedQuery);
 
     try {
       const tayangHarmonisasiUrl = process.env.NEXT_PUBLIC_TAYANG_HARMONISASI;
-
+      // Fetch all data for client-side pagination
+      const fetchLimit = 100000;
       const url = tayangHarmonisasiUrl
-        ? `${tayangHarmonisasiUrl}${encryptedQuery}&limit=${limit}&page=${page}&user=${username}`
+        ? `${tayangHarmonisasiUrl}${encodeURIComponent(encryptedQuery)}&limit=${fetchLimit}&page=0&user=${username}`
         : "";
 
       if (!url) {
@@ -236,9 +241,15 @@ export default function Harmonisasi() {
       }
 
       const response: any = await http.get(url);
-      setData(response.data.result);
-      setPages(response.data.totalPages);
-      setRows(response.data.totalRows);
+      const resultData = response.data.result || [];
+
+      // Client-side pagination logic
+      const totalCount = resultData.length;
+      const totalPages = Math.ceil(totalCount / limit);
+
+      setData(resultData);
+      setPages(totalPages);
+      setRows(totalCount);
       setLoading(false);
     } catch (error: any) {
       setLoading(false);
@@ -246,6 +257,66 @@ export default function Harmonisasi() {
         error.response?.data?.error ||
         "Terjadi Permasalahan Koneksi atau Server Backend";
       toast.error(message);
+    }
+  };
+
+  const handleExport = async () => {
+    setLoadingStatus(true);
+    const query = getSqlQuery();
+    if (!query) {
+      toast.warning("Query tidak valid");
+      setLoadingStatus(false);
+      return;
+    }
+
+    const encodedQuery = encodeURIComponent(query);
+    const cleanedQuery = decodeURIComponent(encodedQuery)
+      .replace(/\n/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    const encryptedQuery = Encrypt(cleanedQuery);
+
+    try {
+      const tayangHarmonisasiUrl = process.env.NEXT_PUBLIC_TAYANG_HARMONISASI;
+      // High limit to fetch all
+      const url = tayangHarmonisasiUrl
+        ? `${tayangHarmonisasiUrl}${encodeURIComponent(encryptedQuery)}&limit=1000000&page=0&user=${username}`
+        : "";
+
+      if (!url) {
+        toast.error("URL API Harmonisasi tidak ditemukan");
+        setLoadingStatus(false);
+        return;
+      }
+
+      const response: any = await http.get(url);
+      const resultData = response.data.result;
+
+      if (!resultData || resultData.length === 0) {
+        toast.warning("Tidak ada data untuk diekspor");
+        setLoadingStatus(false);
+        return;
+      }
+
+      // Convert to CSV
+      const csv = Papa.unparse(resultData, { delimiter: ";" });
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const downloadUrl = URL.createObjectURL(blob);
+      link.href = downloadUrl;
+      link.download = `harmonisasi_${namaThang}_${moment().format("YYYYMMDD_HHmmss")}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+    } catch (error: any) {
+      console.error(error);
+      const message =
+        error.response?.data?.error || "Gagal mengunduh data";
+      toast.error(message);
+    } finally {
+      setLoadingStatus(false);
     }
   };
 
@@ -359,11 +430,38 @@ export default function Harmonisasi() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Harmonisasi Belanja K/L & TKD</h1>
-        <p className="text-sm text-muted-foreground">
-          Harmonisasi Perencanaan dan Penganggaran Belanja K/L dan TKD
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Harmonisasi Belanja K/L & TKD</h1>
+          <p className="text-sm text-muted-foreground">
+            Harmonisasi Perencanaan dan Penganggaran Belanja K/L dan TKD
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="default"
+            className="w-32 gap-2"
+            onClick={() => handleRekamUpaya()}
+          >
+            <Pencil className="h-4 w-4" />
+            Upaya
+          </Button>
+
+          <Button
+            variant="outline"
+            size="icon"
+            disabled={loadingStatus}
+            onClick={() => {
+              handleExport();
+            }}
+          >
+            {loadingStatus ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
       </div>
 
       <section className="flex flex-col gap-4">
@@ -371,7 +469,7 @@ export default function Harmonisasi() {
         {/* Filters */}
         <Card>
           <CardContent className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 xl:grid-cols-6 gap-4 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-medium">Tahun</label>
                 <Select value={namaThang} onValueChange={setNamaThang}>
@@ -455,33 +553,7 @@ export default function Harmonisasi() {
                 />
               </div>
 
-              <div className="flex gap-2 md:col-span-2 lg:col-span-5 xl:col-span-1">
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white"
-                  onClick={() => handleRekamUpaya()}
-                >
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Upaya
-                </Button>
 
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="flex-1"
-                  disabled={loadingStatus}
-                  onClick={() => {
-                    // Export logic here
-                  }}
-                >
-                  {loadingStatus ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -561,7 +633,7 @@ export default function Harmonisasi() {
                 </tr>
               </thead>
               <tbody className="text-xs">
-                {data.map((row: any, index: number) => (
+                {data.slice(page * limit, (page + 1) * limit).map((row: any, index: number) => (
                   <tr key={row.id} className="border-b border-border transition-colors hover:bg-muted/50">
                     <td className="p-2 text-center">
                       {index + 1 + page * limit}
