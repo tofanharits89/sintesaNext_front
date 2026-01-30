@@ -3,6 +3,15 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/api/httpClient";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CekKppnProps {
   value: string;
@@ -30,23 +39,12 @@ const CekKppn: React.FC<CekKppnProps> = ({ value, className, onChange }) => {
       user?.role === "kppn" ? `WHERE kdkppn = '${user.kdkppn}'` : "";
     const query = `SELECT a.nmkppn, a.kdkppn FROM dbref.t_kppn_2025 a ${filterKppn} ORDER BY a.kdkppn`;
     const encryptedQuery = btoa(query);
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
 
     try {
-      const response = await fetch(
-        `${baseUrl}/dispensasi/${encryptedQuery}?limit=999999&page=0`,
-        {
-          headers: {
-            // Authorization: `Bearer ${user?.token}`,
-          },
-        }
+      const result = await apiClient.get(
+        `/dispensasi/${encryptedQuery}?limit=999999&page=0`
       );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
       setData(result.result);
       setLoading(false);
     } catch (error) {
@@ -56,19 +54,18 @@ const CekKppn: React.FC<CekKppnProps> = ({ value, className, onChange }) => {
   };
 
   return (
-    <select
-      value={value}
-      className={className}
-      onChange={(e) => onChange(e.target.value)}
-      disabled={loading}
-    >
-      <option value="">-- Pilih KPPN --</option>
-      {data.map((dau, index) => (
-        <option key={index} value={dau.kdkppn}>
-          {dau.kdkppn} - {dau.nmkppn}
-        </option>
-      ))}
-    </select>
+    <Select value={value} onValueChange={onChange} disabled={loading}>
+      <SelectTrigger className={className}>
+        <SelectValue placeholder="-- Pilih KPPN --" />
+      </SelectTrigger>
+      <SelectContent>
+        {data.map((dau, index) => (
+          <SelectItem key={index} value={dau.kdkppn}>
+            {dau.kdkppn} - {dau.nmkppn}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 };
 

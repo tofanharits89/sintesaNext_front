@@ -5,32 +5,29 @@ import { useAuth } from "@/hooks/useAuth";
 import { Loading2 } from "@/layout/LoadingTable";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import ReactPaginate from "react-paginate";
+import { Card, CardContent } from "@/components/ui/card";
 import moment from "moment";
-import { PlusSquare, Trash2, FileSpreadsheet, Loader2 } from "lucide-react";
+import { PlusSquare, Trash2, FileSpreadsheet, Loader2, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import Rekam from "./modal-rekam";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import RekamKontrak from "./modal-rekam-kontrak";
 import GenerateCSV from "@/components/GenerateCSV";
 
-// Table styling dengan fixed column widths
+// Table styling - matching dispensasi/llat pattern
 const tableStyles = {
-  container: {
-    overflowX: "auto" as const,
-    width: "100%",
-  },
-  table: {
-    width: "100%",
-    minWidth: "1300px",
-    tableLayout: "fixed" as const,
-  },
-  // Column widths
-  noColumn: { width: "50px", minWidth: "50px", maxWidth: "50px" },
-  kppnColumn: { width: "180px", minWidth: "180px", maxWidth: "180px" },
-  satkerColumn: { width: "200px", minWidth: "200px", maxWidth: "200px" },
-  tglColumn: { width: "120px", minWidth: "120px", maxWidth: "120px" },
-  nomorColumn: { width: "200px", minWidth: "200px", maxWidth: "200px" },
-  jumlahColumn: { width: "140px", minWidth: "140px", maxWidth: "140px" },
-  opsiColumn: { width: "140px", minWidth: "140px", maxWidth: "140px" },
+  headerCell: "h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap",
+  headerCellCenter: "h-10 px-4 text-center align-middle font-medium text-muted-foreground whitespace-nowrap",
+  bodyCell: "px-4 py-3 text-sm align-middle border-b whitespace-nowrap",
+  bodyCellCenter: "px-4 py-3 text-sm text-center align-middle border-b whitespace-nowrap",
 };
 
 interface DispensasiData {
@@ -55,9 +52,10 @@ interface DataDispensasiKPPNProps {
   onRekamClose?: () => void;
   onDownload?: () => void;
   isExporting?: boolean;
+  onExportComplete?: () => void;
 }
 
-const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = false, onRekamClose, onDownload, isExporting = false }) => {
+const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = false, onRekamClose, onDownload, isExporting = false, onExportComplete }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [id, setId] = useState("");
@@ -76,6 +74,13 @@ const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = f
   const [where, setWhere] = useState("");
   const [export2, setExport2] = useState(false);
   const [open, setOpen] = useState(false);
+
+  // States for Delete Dialog
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState("");
+  const [deleteTargetCount, setDeleteTargetCount] = useState(0);
+  const [deleteTargetKdsatker, setDeleteTargetKdsatker] = useState("");
+  const [deleteTargetKppn, setDeleteTargetKppn] = useState("");
 
   // Unused state removed: showModalFilter
 
@@ -248,45 +253,53 @@ const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = f
     getData();
   };
 
-  const handleHapusDispSPM = async (
+  const handleHapusDispSPM = (
     id: string,
     jumlah: number,
     kdsatker: string,
     kppn: string
   ) => {
-    const confirmText =
-      jumlah > 0
-        ? `Ada ${jumlah} Kontrak yang sudah direkam.<br/> Anda yakin ingin menghapus data ini ? `
-        : "Anda yakin ingin menghapus data ini ?";
-
-    if (window.confirm(confirmText.replace(/<br\/>/g, "\n"))) {
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_LOCAL_BASIC}dispkontrakkppn/delete/${id}/${kdsatker}/${kppn}`,
-          {
-            method: "DELETE",
-            headers: {},
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        toast.success("Data telah dihapus.");
-        getData();
-      } catch (error) {
-        toast.error("Terjadi Permasalahan Koneksi atau Server Backend");
-      }
-    }
+    setDeleteTargetId(id);
+    setDeleteTargetCount(jumlah);
+    setDeleteTargetKdsatker(kdsatker);
+    setDeleteTargetKppn(kppn);
+    setShowDeleteDialog(true);
   };
 
-  const halaman = ({ selected }: { selected: number }) => {
-    setPage(selected);
+  const confirmDelete = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_LOCAL_BASIC}dispkontrakkppn/delete/${deleteTargetId}/${deleteTargetKdsatker}/${deleteTargetKppn}`,
+        {
+          method: "DELETE",
+          headers: {},
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      toast.success("Data telah dihapus.");
+      getData();
+    } catch (error) {
+      toast.error("Terjadi Permasalahan Koneksi atau Server Backend");
+    } finally {
+      setLoading(false);
+      setShowDeleteDialog(false);
+      setDeleteTargetId("");
+      setDeleteTargetCount(0);
+      setDeleteTargetKdsatker("");
+      setDeleteTargetKppn("");
+    }
   };
 
   const handleStatus = (status: boolean) => {
     setExport2(status);
+    if (!status && onExportComplete) {
+      onExportComplete();
+    }
   };
 
   // Sync export2 with parent's isExporting
@@ -308,163 +321,159 @@ const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = f
         </div>
       ) : (
         <>
-          <div className="mt-3 p-0 rounded-md border text-card-foreground shadow-sm bg-dark">
-            <div className="data-user fade-in" style={tableStyles.container}>
-              <table
-                className="w-full text-sm text-center border-collapse"
-                style={tableStyles.table}
-              >
-                <thead className="bg-[#343a40] text-white">
-                  <tr>
-                    <th
-                      className="p-3 font-semibold border border-[#dee2e6]"
-                      style={tableStyles.noColumn}
-                    >
-                      No
-                    </th>
-                    <th
-                      className="p-3 font-semibold border border-[#dee2e6]"
-                      style={tableStyles.kppnColumn}
-                    >
-                      KPPN
-                    </th>
-                    <th
-                      className="p-3 font-semibold border border-[#dee2e6]"
-                      style={tableStyles.satkerColumn}
-                    >
-                      Satker
-                    </th>
-                    <th
-                      className="p-3 font-semibold border border-[#dee2e6]"
-                      style={tableStyles.tglColumn}
-                    >
-                      Tgl Permohonan
-                    </th>
-                    <th
-                      className="p-3 font-semibold border border-[#dee2e6]"
-                      style={tableStyles.nomorColumn}
-                    >
-                      Nomor Permohonan
-                    </th>
-                    <th
-                      className="p-3 font-semibold border border-[#dee2e6]"
-                      style={tableStyles.jumlahColumn}
-                    >
-                      Jumlah Kontrak
-                    </th>
-                    <th
-                      className="p-3 font-semibold border border-[#dee2e6]"
-                      style={tableStyles.opsiColumn}
-                    >
-                      Opsi
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody className="divide-y divide-[#dee2e6]">
-                  {data.map((row, index) => (
-                    <tr
-                      key={index}
-                      className="hover:bg-slate-100 transition-colors odd:bg-[rgba(0,0,0,0.05)] even:bg-white"
-                    >
-                      <td
-                        className="p-2 border border-[#dee2e6]"
-                        style={tableStyles.noColumn}
-                      >
-                        {index + 1 + page * limit}
-                      </td>
-                      <td
-                        className="p-2 border border-[#dee2e6]"
-                        style={tableStyles.kppnColumn}
-                      >
-                        {row.nmkppn} ({row.kdkppn})
-                      </td>
-                      <td
-                        className="p-2 border border-[#dee2e6]"
-                        style={tableStyles.satkerColumn}
-                      >
-                        <div className="truncate" title={row.nmsatker}>
-                          {row.nmsatker} ({row.kdsatker})
-                        </div>
-                      </td>
-                      <td
-                        className="p-2 border border-[#dee2e6]"
-                        style={tableStyles.tglColumn}
-                      >
-                        {row.tgpermohonan}
-                      </td>
-                      <td
-                        className="p-2 border border-[#dee2e6]"
-                        style={tableStyles.nomorColumn}
-                      >
-                        <div className="truncate" title={row.nopermohonan}>
-                          {row.nopermohonan}
-                        </div>
-                      </td>
-                      <td
-                        className="p-2 border border-[#dee2e6]"
-                        style={tableStyles.jumlahColumn}
-                      >
-                        {row.jmlkontrak > 0 ? (
-                          row.jmlkontrak
-                        ) : (
-                          <span className="text-red-600 font-bold">
-                            belum direkam
-                          </span>
-                        )}
-                      </td>
-                      {user?.role !== "kanwil_djpb" ? (
-                        <td
-                          className="p-2 border border-[#dee2e6]"
-                          style={tableStyles.opsiColumn}
-                        >
-                          <div className="flex items-center justify-center gap-2">
-                            <span title="Rekam Kontrak">
-                              <PlusSquare
-                                className="text-green-600 cursor-pointer hover:scale-110 transition-transform"
-                                size={20}
-                                onClick={() =>
-                                  handleRekamKontrak(
-                                    row.id,
-                                    row.nopermohonan,
-                                    row.nmsatker,
-                                    row.kdsatker,
-                                    row.kdkppn
-                                  )
-                                }
-                              />
-                            </span>
-
-                            <span title="Hapus Dispensasi">
-                              <Trash2
-                                className="text-red-600 cursor-pointer hover:scale-110 transition-transform"
-                                size={20}
-                                onClick={() =>
-                                  handleHapusDispSPM(
-                                    row.id,
-                                    row.jmlkontrak,
-                                    row.kdsatker,
-                                    row.kdkppn
-                                  )
-                                }
-                              />
-                            </span>
-                          </div>
-                        </td>
+          <Card>
+            <CardContent className="p-4">
+              <div className="rounded-md border">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b bg-muted/50">
+                        <th className={tableStyles.headerCellCenter}>No.</th>
+                        <th className={tableStyles.headerCell}>KPPN</th>
+                        <th className={tableStyles.headerCell}>Satker</th>
+                        <th className={tableStyles.headerCell}>Tgl Permohonan</th>
+                        <th className={tableStyles.headerCell}>Nomor Permohonan</th>
+                        <th className={tableStyles.headerCellCenter}>Jumlah Kontrak</th>
+                        <th className={tableStyles.headerCellCenter}>Opsi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="h-24 text-center text-muted-foreground">
+                            Belum ada data dispensasi kontrak KPPN
+                          </td>
+                        </tr>
                       ) : (
-                        <td
-                          className="p-2 border border-[#dee2e6]"
-                          style={tableStyles.opsiColumn}
-                        >
-                          -
-                        </td>
+                        data.map((row, index) => (
+                          <tr key={index} className="hover:bg-muted/50 transition-colors">
+                            <td className={tableStyles.bodyCellCenter}>
+                              {index + 1 + page * limit}
+                            </td>
+                            <td className={tableStyles.bodyCell}>
+                              <div className="max-w-[180px] truncate" title={`${row.nmkppn} (${row.kdkppn})`}>
+                                {row.nmkppn} ({row.kdkppn})
+                              </div>
+                            </td>
+                            <td className={tableStyles.bodyCell}>
+                              <div className="max-w-[200px] truncate" title={`${row.nmsatker?.trim()} (${row.kdsatker})`}>
+                                {row.nmsatker?.trim()} ({row.kdsatker})
+                              </div>
+                            </td>
+                            <td className={tableStyles.bodyCell}>
+                              {row.tgpermohonan}
+                            </td>
+                            <td className={tableStyles.bodyCell}>
+                              <div className="max-w-[200px] truncate" title={row.nopermohonan?.trim()}>
+                                {row.nopermohonan?.trim()}
+                              </div>
+                            </td>
+                            <td className={tableStyles.bodyCellCenter}>
+                              {row.jmlkontrak > 0 ? (
+                                row.jmlkontrak
+                              ) : (
+                                <span className="text-red-600 font-bold">
+                                  belum direkam
+                                </span>
+                              )}
+                            </td>
+                            <td className={tableStyles.bodyCellCenter}>
+                              {user?.role !== "kanwil_djpb" ? (
+                                <div className="flex items-center justify-center gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-green-600 hover:text-green-800"
+                                    title="Rekam Kontrak"
+                                    onClick={() =>
+                                      handleRekamKontrak(
+                                        row.id,
+                                        row.nopermohonan,
+                                        row.nmsatker,
+                                        row.kdsatker,
+                                        row.kdkppn
+                                      )
+                                    }
+                                  >
+                                    <PlusSquare className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
+                                    title="Hapus Dispensasi"
+                                    onClick={() =>
+                                      handleHapusDispSPM(
+                                        row.id,
+                                        row.jmlkontrak,
+                                        row.kdsatker,
+                                        row.kdkppn
+                                      )
+                                    }
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                "-"
+                              )}
+                            </td>
+                          </tr>
+                        ))
                       )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {data.length > 0 && (
+                <div className="flex items-center justify-between mt-4">
+                  <span className="text-sm text-muted-foreground">
+                    Total: {rows.toLocaleString()}, Halaman {rows ? page + 1 : 0} dari {pages}
+                  </span>
+                  {pages > 1 && (
+                    <div className="flex items-center justify-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage(Math.max(0, page - 1))}
+                        disabled={page === 0}
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        Sebelumnya
+                      </Button>
+                      <div className="flex items-center gap-1 text-sm">
+                        <input
+                          type="number"
+                          min={1}
+                          max={pages}
+                          value={page + 1}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value);
+                            if (!isNaN(val) && val >= 1 && val <= pages) {
+                              setPage(val - 1);
+                            }
+                          }}
+                          className="w-14 h-8 text-center border rounded-md text-sm bg-zinc-100 dark:bg-black"
+                        />
+                        <span>/ {pages}</span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage(Math.min(pages - 1, page + 1))}
+                        disabled={page === pages - 1}
+                      >
+                        Selanjutnya
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
+                  )}
+                  <div className="w-48"></div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
           {export2 && (
             <GenerateCSV
               query3={sql}
@@ -473,38 +482,6 @@ const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = f
                 "DDMMYY-HHmmss"
               )}`}
             />
-          )}
-          {data.length > 0 && (
-            <div className="flex items-center justify-between mt-4 px-4 text-sm text-gray-600">
-              <div>
-                Total : {rows.toLocaleString()}, &nbsp; Hal : &nbsp;
-                {rows ? page + 1 : 0} dari {pages}
-              </div>
-              <nav>
-                <ReactPaginate
-                  previousLabel={"← Previous"}
-                  nextLabel={"Next →"}
-                  breakLabel="..."
-                  pageRangeDisplayed={3}
-                  marginPagesDisplayed={1}
-                  pageCount={pages}
-                  containerClassName="flex gap-2 list-none p-0 m-0"
-                  pageClassName="rounded-md border border-gray-300 hover:bg-gray-100"
-                  pageLinkClassName="block px-3 py-2 text-decoration-none text-gray-700"
-                  previousClassName="rounded-md border border-gray-300 hover:bg-gray-100"
-                  previousLinkClassName="block px-3 py-2 text-decoration-none text-gray-700"
-                  nextClassName="rounded-md border border-gray-300 hover:bg-gray-100"
-                  nextLinkClassName="block px-3 py-2 text-decoration-none text-gray-700"
-                  breakClassName="rounded-md border border-gray-300"
-                  breakLinkClassName="block px-3 py-2 text-decoration-none text-gray-700"
-                  activeClassName="bg-blue-600 text-white border-blue-600"
-                  activeLinkClassName="text-white hover:text-white"
-                  disabledClassName="opacity-50 pointer-events-none"
-                  onPageChange={halaman}
-                  initialPage={page}
-                />
-              </nav>
-            </div>
           )}
         </>
       )}
@@ -519,6 +496,36 @@ const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = f
         nmsatker={nmsatker}
         kdkppn={kdkppn}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Konfirmasi Hapus
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTargetCount > 0
+                ? `Ada ${deleteTargetCount} Kontrak yang sudah direkam. Apakah Anda yakin ingin menghapus data ini?`
+                : "Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600 text-white"
+              onClick={(e) => {
+                e.preventDefault();
+                confirmDelete();
+              }}
+              disabled={loading}
+            >
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

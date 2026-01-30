@@ -49,6 +49,7 @@ const DispensasiKPPNPage: React.FC = () => {
         onRekamClose={() => setIsRekamOpen(false)}
         onDownload={() => setIsExporting(true)}
         isExporting={isExporting}
+        onExportComplete={() => setIsExporting(false)}
       />
 
       <Rekam show={isRekamOpen} onHide={() => setIsRekamOpen(false)} />

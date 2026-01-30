@@ -46,7 +46,10 @@ export default function DataKontrakDetail({ cek, id }: DataKontrakDetailProps) {
       const response = await fetch(
         `${baseUrl}/dispensasi/${encryptedQuery}?limit=999999&page=0`,
         {
-          headers: {},
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+          },
         }
       );
 

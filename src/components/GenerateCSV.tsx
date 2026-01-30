@@ -5,6 +5,8 @@ import Papa from "papaparse";
 import { toast } from "sonner";
 import numeral from "numeral";
 
+import { apiClient } from "@/lib/api/httpClient";
+
 interface GenerateCSVProps {
   query3: string;
   status: (loading: boolean, total: number) => void;
@@ -39,21 +41,11 @@ const GenerateCSV: React.FC<GenerateCSVProps> = ({
         .replace(/\s+/g, " ")
         .trim();
       const encryptedQuery = btoa(cleanedQuery);
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
-      const apiUrl = `${baseUrl}/dispensasi/${encryptedQuery}?limit=999999&page=0`;
 
-      const response = await fetch(apiUrl, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const result = await apiClient.get(
+        `/dispensasi/${encryptedQuery}?limit=999999&page=0`
+      );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
       const csvData = Array.isArray(result) ? result : result.result || [];
 
       console.log("[GenerateCSV] API Response:", result);
@@ -62,7 +54,11 @@ const GenerateCSV: React.FC<GenerateCSVProps> = ({
 
       setData(csvData);
       setLoading(false);
-      // Don't call status(true) here - let it proceed directly to download
+
+      if (csvData.length === 0) {
+        status(false, 0);
+        toast.warning("Tidak ada data untuk diekspor");
+      }
     } catch (error) {
       console.error("CSV fetch error:", error);
       toast.error(

@@ -8,6 +8,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { apiClient } from "@/lib/api/httpClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger, TabsContents } from "@/components/animate-ui/components/animate/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,9 +62,7 @@ interface Rekam2Props {
   tahun?: string;
 }
 
-// Mock dependencies
-const axiosJWT = { post: async (url: string, data: any, config?: any) => { } };
-const token = "";
+// Helper for HTTP errors
 const handleHttpError = (status: any, msg: string) => console.error(msg);
 
 const DataSPM = ({ cek, id }: { cek: boolean; id: string }) => {
@@ -83,23 +82,16 @@ const DataSPM = ({ cek, id }: { cek: boolean; id: string }) => {
       const query = `SELECT nospm, nilspm, status, tgspm, tgbast, nobast FROM laporan_2023.dispensasi_spm_lampiran WHERE id_dispensasi = '${id}' ORDER BY id DESC`;
       console.log("DataSPM query:", query);
       const encryptedQuery = btoa(query);
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
-      const response = await fetch(
-        `${baseUrl}/dispensasi/${encryptedQuery}?limit=999&page=0`,
-        {
-          headers: {},
-        }
+
+      const result = await apiClient.get(
+        `/dispensasi/${encryptedQuery}?limit=999&page=0`
       );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
       console.log("DataSPM response:", result);
       setData(result.result || []);
     } catch (error) {
       console.error("Terjadi Permasalahan Koneksi atau Server Backend");
+      toast.error("Gagal memuat data SPM");
     } finally {
       setLoading(false);
     }
@@ -235,13 +227,15 @@ export default function Rekam2({
     setCek(false);
     setLoading(true);
     try {
-      const url = process.env.NEXT_PUBLIC_SIMPANSPM || "/api/simpan-spm";
-      await axiosJWT.post(url, values, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      // NOTE: apiClient forces /api/v1 prefix handling, so check if NEXT_PUBLIC_SIMPANSPM includes it or not.
+      // Assuming straightforward path like "/simpan-spm" or full URL.
+      // If full URL, apiClient might be tricky, but let's assume relative path works best.
+      // If process.env.NEXT_PUBLIC_SIMPANSPM contains a full URL, we might need to handle it.
+      // But for now, we pass it as is, and apiClient handles apiPath.
+      // If the original was "/api/simpan-spm", apiPath transforms it to "/api/v1/simpan-spm".
+      const url = process.env.NEXT_PUBLIC_SIMPANSPM || "/simpan-spm";
+
+      await apiClient.post(url, values);
 
       Swal.fire({
         html: `<div class='text-success mt-4'>Data SPM Berhasil Disimpan</div>`,
@@ -256,7 +250,11 @@ export default function Rekam2({
       setCek(true);
       toast.success("Data SPM Berhasil Disimpan");
     } catch (error: any) {
-      const { status, data: errData } = error.response || {};
+      console.error("Submit Error:", error);
+      // Error is likely an AxiosError
+      const status = error.response?.status;
+      const errData = error.response?.data;
+
       handleHttpError(
         status,
         (errData && errData.error) ||
@@ -556,7 +554,7 @@ export default function Rekam2({
             </Button>
             <Button
               type="button"
-              variant="destructive"
+              variant="default"
               disabled={loading}
               onClick={() => {
                 const form = document.querySelector('form');
