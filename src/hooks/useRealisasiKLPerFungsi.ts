@@ -19,23 +19,27 @@ interface RealisasiKLPerFungsiResponse {
 
 interface UseRealisasiKLPerFungsiOptions {
   kanwil?: string;
+  year?: string;
   enabled?: boolean;
 }
 
 export function useRealisasiKLPerFungsi(
   options: UseRealisasiKLPerFungsiOptions = {},
 ) {
-  const { kanwil, enabled } = options;
+  const { kanwil, year, enabled } = options;
   const isClient = typeof window !== "undefined";
 
   return useQuery<ChartData, Error>({
-    queryKey: ["realisasi-kl-per-fungsi", kanwil],
+    queryKey: ["realisasi-kl-per-fungsi", kanwil, year],
     queryFn: async () => {
       try {
         // Build query parameters
         const params = new URLSearchParams();
         if (kanwil) {
           params.append("kanwil", kanwil);
+        }
+        if (year) {
+          params.append("year", year);
         }
 
         const endpoint = `/dashboard/realisasi-kl-per-fungsi${

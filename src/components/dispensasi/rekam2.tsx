@@ -2,18 +2,26 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  Modal,
-  Form,
-  Button,
-  Container,
-  Row,
-  Col,
-  Spinner,
-  Nav,
-  Tab,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger, TabsContents } from "@/components/animate-ui/components/animate/tabs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import {
   Table,
-} from "react-bootstrap";
-import DatePicker from "react-datepicker";
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Formik,
   Field,
@@ -23,10 +31,10 @@ import {
 } from "formik";
 import * as Yup from "yup";
 import Swal from "sweetalert2";
-import { X, PlusSquare, Trash2 } from "lucide-react";
-import moment from "moment";
-import "react-datepicker/dist/react-datepicker.css";
+import { X, PlusSquare, Trash2, Save } from "lucide-react";
+import { format, parse } from "date-fns";
 import UploadSPM from "./upload-spm";
+import { toast } from "sonner";
 
 interface FormRow {
   nilaispm: string | number;
@@ -53,10 +61,9 @@ interface Rekam2Props {
   tahun?: string;
 }
 
-// Mock dependencies (replace with real implementations from your project)
+// Mock dependencies
 const axiosJWT = { post: async (url: string, data: any, config?: any) => { } };
 const token = "";
-const kdlokasi = "";
 const handleHttpError = (status: any, msg: string) => console.error(msg);
 
 const DataSPM = ({ cek, id }: { cek: boolean; id: string }) => {
@@ -100,49 +107,63 @@ const DataSPM = ({ cek, id }: { cek: boolean; id: string }) => {
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center">
-        <Spinner animation="border" />
+      <div className="flex justify-center p-8">
+        <Spinner className="h-8 w-8" />
       </div>
     );
   }
 
   return (
-    <Table striped bordered hover responsive>
-      <thead>
-        <tr>
-          <th>No.</th>
-          <th>Tgl SPM</th>
-          <th>No SPM</th>
-          <th>Nilai SPM</th>
-          <th>Tgl BAST</th>
-          <th>No BAST</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {data.map((item, index) => (
-          <tr key={index}>
-            <td>{index + 1}</td>
-            <td>{item.tgspm}</td>
-            <td>{item.nospm}</td>
-            <td>{new Intl.NumberFormat("id-ID").format(item.nilspm || 0)}</td>
-            <td>{item.tgbast}</td>
-            <td>{item.nobast}</td>
-            <td>
-              {item.status === "Setuju" ? (
-                <span className="text-success">Disetujui</span>
-              ) : (
-                <span className="text-danger">Ditolak</span>
-              )}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </Table>
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[50px] text-center">No.</TableHead>
+            <TableHead>Tgl SPM</TableHead>
+            <TableHead>No SPM</TableHead>
+            <TableHead className="text-right">Nilai SPM</TableHead>
+            <TableHead>Tgl BAST</TableHead>
+            <TableHead>No BAST</TableHead>
+            <TableHead className="text-center">Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {data.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                Belum ada data SPM
+              </TableCell>
+            </TableRow>
+          ) : (
+            data.map((item, index) => (
+              <TableRow key={index}>
+                <TableCell className="text-center font-medium">{index + 1}</TableCell>
+                <TableCell>{item.tgspm}</TableCell>
+                <TableCell>{item.nospm}</TableCell>
+                <TableCell className="text-right">
+                  {new Intl.NumberFormat("id-ID").format(item.nilspm || 0)}
+                </TableCell>
+                <TableCell>{item.tgbast}</TableCell>
+                <TableCell>{item.nobast}</TableCell>
+                <TableCell className="text-center">
+                  {item.status === "Setuju" ? (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                      Disetujui
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                      Ditolak
+                    </span>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
-
-
 
 export default function Rekam2({
   show,
@@ -156,6 +177,7 @@ export default function Rekam2({
   const [loading, setLoading] = useState(false);
   const [cek, setCek] = useState(false);
   const [cekupload, setCekupload] = useState(false);
+  const [activeTab, setActiveTab] = useState("dispensasi-overview");
   const [formRows, setFormRows] = useState<FormRow[]>([
     {
       nilaispm: "",
@@ -226,9 +248,13 @@ export default function Rekam2({
         icon: "success",
         position: "top",
         buttonsStyling: false,
+        customClass: {
+          confirmButton: "bg-primary text-white px-4 py-2 rounded",
+        },
         confirmButtonText: "Tutup",
       });
       setCek(true);
+      toast.success("Data SPM Berhasil Disimpan");
     } catch (error: any) {
       const { status, data: errData } = error.response || {};
       handleHttpError(
@@ -236,6 +262,7 @@ export default function Rekam2({
         (errData && errData.error) ||
         "Terjadi Permasalahan Koneksi atau Server Backend"
       );
+      toast.error("Gagal menyimpan data SPM");
     } finally {
       setLoading(false);
       setSubmitting(false);
@@ -266,342 +293,293 @@ export default function Rekam2({
     setCek(false);
   };
 
+  const inputClass = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+
   return (
     <>
-      <style>
-        {`
-          .datepicker-popper {
-            z-index: 9999 !important;
-            position: fixed !important;
-          }
-          .react-datepicker {
-            border: 1px solid #ced4da;
-            border-radius: 0.375rem;
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-          }
-        `}
-      </style>
-      <Modal
-        show={show}
-        onHide={handleModalClose}
-        backdrop="static"
-        keyboard={false}
-        size="xl"
-        animation={false}
-      >
-        <Modal.Header style={{ position: "relative" }}>
-          <Modal.Title style={{ fontSize: 20 }}>
-            <i className="bi bi-box-arrow-in-right text-success mx-3"></i>
-            Data SPM Dispensasi
-          </Modal.Title>
+      <Dialog open={show} onOpenChange={handleModalClose}>
+        <DialogContent className="w-full max-w-5xl sm:max-w-6xl max-h-[90vh] flex flex-col overflow-hidden" showCloseButton={false}>
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold">
+              <span className="text-green-600">Data SPM Dispensasi</span>
+            </DialogTitle>
+          </DialogHeader>
 
-          <button
-            type="button"
-            className="bg-transparent border-0 p-0 text-muted"
-            aria-label="Tutup"
-            title="Tutup"
-            onClick={handleModalClose}
-            style={{
-              position: "absolute",
-              fontSize: 24,
-              top: "50%",
-              right: 12,
-              transform: "translateY(-50%)",
-              cursor: "pointer",
-              zIndex: 10,
-              lineHeight: 1,
-            }}
-          >
-            <X />
-          </button>
-        </Modal.Header>
-        <Modal.Body style={{ overflow: "auto", height: 600 }}>
-          <Tab.Container defaultActiveKey="dispensasi-overview">
-            <Nav
-              variant="tabs"
-              className="nav-tabs-bordered sticky-user is-sticky-user mb-0 mt-2"
-              role="tablist"
+          <div className="w-full flex-1 overflow-hidden space-y-4">
+            <Tabs
+              value={activeTab}
+              onValueChange={(value: string) => {
+                setActiveTab(value);
+                if (value === "dispensasi-edit") {
+                  handleCek();
+                } else if (value === "dispensasi-upload") {
+                  handleCekUpload();
+                }
+              }}
+              className="w-full gap-3"
             >
-              <Nav.Item className="dispensasi-tab">
-                <Nav.Link eventKey="dispensasi-overview" role="tab">
-                  Rekam SPM
-                </Nav.Link>
-              </Nav.Item>
-              <Nav.Item>
-                <Nav.Link
-                  eventKey="dispensasi-upload"
-                  role="tab"
-                  onClick={handleCekUpload}
-                >
-                  Upload Excell
-                </Nav.Link>
-              </Nav.Item>
-              <Nav.Item>
-                <Nav.Link
-                  eventKey="dispensasi-edit"
-                  role="tab"
-                  onClick={handleCek}
-                >
-                  Data SPM
-                </Nav.Link>
-              </Nav.Item>
-            </Nav>
-            <Tab.Content className="pt-2">
-              <Tab.Pane eventKey="dispensasi-overview" role="tabpanel">
-                <Formik
-                  validationSchema={validationSchema}
-                  onSubmit={handleSubmitdata}
-                  initialValues={initialValues}
-                >
-                  {({
-                    handleSubmit,
-                    setFieldValue,
-                    values,
-                    setValues,
-                    touched,
-                    errors,
-                  }: FormikProps<FormValues>) => (
-                    <Container className="mt-2">
-                      <Form noValidate onSubmit={handleSubmit as any}>
-                        <div className="d-flex justify-content-between align-bottom">
-                          <span className="fw-bold text-success">
-                            SATKER : {nmsatker} ({kdsatker}) <br />
-                            Nomor Permohonan : {nomor}
-                          </span>
-                          <span>
-                            <Button
-                              type="submit"
-                              size="sm"
-                              variant="danger"
-                              className="mt-1 mb-0"
-                              disabled={loading}
-                            >
-                              {loading ? (
-                                <>
-                                  <Spinner
-                                    as="span"
-                                    animation="border"
-                                    size="sm"
-                                    role="status"
-                                    aria-hidden="true"
-                                  />
-                                  Loading...
-                                </>
-                              ) : (
-                                "Simpan Data"
-                              )}
-                            </Button>
-                          </span>
-                        </div>
-                        <hr />
-                        <div className="text-end">
-                          <PlusSquare
-                            onClick={addRow}
-                            className="my-2 text-primary"
-                            style={{
-                              cursor: "pointer",
-                            }}
-                            size={20}
-                          />
-                        </div>
+              <div className="border-b border-border/50 pb-3 mb-0">
+                <TabsList className="relative w-full h-auto p-2 rounded-xl grid grid-cols-3 gap-2">
+                  <TabsTrigger
+                    value="dispensasi-overview"
+                    className="h-auto px-4 py-2 text-sm flex items-center justify-center gap-2 whitespace-normal text-center"
+                  >
+                    Rekam SPM
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="dispensasi-upload"
+                    className="h-auto px-4 py-2 text-sm flex items-center justify-center gap-2 whitespace-normal text-center"
+                  >
+                    Upload Excel
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="dispensasi-edit"
+                    className="h-auto px-4 py-2 text-sm flex items-center justify-center gap-2 whitespace-normal text-center"
+                  >
+                    Data SPM
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
-                        {formRows.map((row, index) => (
-                          <div key={index}>
-                            <Row>
-                              <Col sm={6} md={6} lg={3} xl={3}>
-                                <Form.Group className="fw-normal my-1">
-                                  <DatePicker
-                                    name={`formRows[${index}].tgspm`}
-                                    className="form-control"
-                                    selected={
-                                      values.formRows[index] &&
-                                        values.formRows[index].tgspm
-                                        ? moment(
-                                          values.formRows[index].tgspm
-                                        ).toDate()
-                                        : null
-                                    }
-                                    onChange={(date: Date | null) => {
-                                      if (date) {
-                                        setFieldValue(
-                                          `formRows[${index}].tgspm`,
-                                          moment(date).format("YYYY-MM-DD")
-                                        );
-                                      }
-                                    }}
-                                    dateFormat="dd/MM/yyyy"
-                                    placeholderText="Tgl SPM"
-                                    autoComplete="off"
-                                    popperClassName="datepicker-popper"
-                                    popperPlacement="bottom-start"
-                                    shouldCloseOnSelect
-                                    fixedHeight
-                                  />
-                                  <ErrorMessage
-                                    name={`formRows[${index}].tgspm`}
-                                    component="div"
-                                    className="text-danger"
-                                  />
-                                </Form.Group>
-                              </Col>
-                              <Col sm={6} md={6} lg={5} xl={5}>
-                                <Form.Group className="fw-normal my-1">
-                                  <Field
-                                    name={`formRows[${index}].nospm`}
-                                    type="text"
-                                    placeholder="Nomor SPM"
-                                    as={Form.Control}
-                                  />
-                                  <ErrorMessage
-                                    name={`formRows[${index}].nospm`}
-                                    component="div"
-                                    className="text-danger"
-                                  />
-                                </Form.Group>
-                              </Col>
-
-                              <Col sm={6} md={6} lg={4} xl={4}>
-                                <Form.Group className="fw-normal my-1">
-                                  <Field
-                                    name={`formRows[${index}].nilaispm`}
-                                    type="number"
-                                    placeholder="Nilai SPM"
-                                    as={Form.Control}
-                                  />
-                                  <ErrorMessage
-                                    name={`formRows[${index}].nilaispm`}
-                                    component="div"
-                                    className="text-danger"
-                                  />
-                                </Form.Group>
-                              </Col>
-                            </Row>
-                            <Row>
-                              <Col sm={6} md={6} lg={3} xl={3}>
-                                <Form.Group className="fw-normal my-1">
-                                  <DatePicker
-                                    name={`formRows[${index}].tglbast`}
-                                    className="form-control"
-                                    selected={
-                                      values.formRows[index] &&
-                                        values.formRows[index].tglbast
-                                        ? moment(
-                                          values.formRows[index].tglbast
-                                        ).toDate()
-                                        : null
-                                    }
-                                    onChange={(date: Date | null) => {
-                                      if (date) {
-                                        setFieldValue(
-                                          `formRows[${index}].tglbast`,
-                                          moment(date).format("YYYY-MM-DD")
-                                        );
-                                      }
-                                    }}
-                                    dateFormat="dd/MM/yyyy"
-                                    placeholderText="Tgl BAST"
-                                    autoComplete="off"
-                                    popperClassName="datepicker-popper"
-                                    popperPlacement="bottom-start"
-                                    shouldCloseOnSelect
-                                    fixedHeight
-                                  />
-                                  <ErrorMessage
-                                    name={`formRows[${index}].tglbast`}
-                                    component="div"
-                                    className="text-danger"
-                                  />
-                                </Form.Group>
-                              </Col>
-                              <Col sm={6} md={6} lg={9} xl={9}>
-                                <Form.Group className="fw-normal my-1">
-                                  <Field
-                                    name={`formRows[${index}].nobast`}
-                                    type="text"
-                                    placeholder="Nomor BAST"
-                                    as={Form.Control}
-                                  />
-                                  <ErrorMessage
-                                    name={`formRows[${index}].nobast`}
-                                    component="div"
-                                    className="text-danger"
-                                  />
-                                </Form.Group>
-                              </Col>
-                            </Row>
-                            <Row>
-                              <Col sm={6} md={6} lg={12} xl={12}>
-                                <Form.Group className="mb-0 fw-normal">
-                                  <Form.Check
-                                    inline
-                                    type="radio"
-                                    name={`formRows[${index}].status`}
-                                    value="Setuju"
-                                    label="Disetujui"
-                                    checked={
-                                      values.formRows[index] &&
-                                      values.formRows[index].status === "Setuju"
-                                    }
-                                    onChange={() => {
-                                      setFieldValue(
-                                        `formRows[${index}].status`,
-                                        "Setuju"
-                                      );
-                                    }}
-                                  />
-                                  <Form.Check
-                                    inline
-                                    type="radio"
-                                    name={`formRows[${index}].status`}
-                                    value="Tolak"
-                                    label="Ditolak"
-                                    checked={
-                                      values.formRows[index] &&
-                                      values.formRows[index].status === "Tolak"
-                                    }
-                                    onChange={() => {
-                                      setFieldValue(
-                                        `formRows[${index}].status`,
-                                        "Tolak"
-                                      );
-                                    }}
-                                  />
-                                  <ErrorMessage
-                                    name={`formRows[${index}].status`}
-                                    component="div"
-                                    className="text-danger"
-                                  />
-                                </Form.Group>
-                              </Col>
-                            </Row>
-                            <div className="text-end mb-2">
-                              <Trash2
-                                onClick={() => removeRow(index)}
-                                className="text-danger"
-                                style={{
-                                  cursor: "pointer",
-                                }}
-                                size={16}
-                              />
-                            </div>
-                            <hr />
+              <TabsContents className="mt-4 space-y-4">
+                <TabsContent value="dispensasi-overview" className="mt-0 space-y-4">
+                  <Formik
+                    validationSchema={validationSchema}
+                    onSubmit={handleSubmitdata}
+                    initialValues={initialValues}
+                  >
+                    {({
+                      handleSubmit,
+                      setFieldValue,
+                      values,
+                      touched,
+                      errors,
+                    }) => (
+                      <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="p-4 bg-background border rounded-lg shadow-sm">
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">SATKER</p>
+                            <p className="font-bold text-lg">{nmsatker} ({kdsatker})</p>
+                            <p className="text-sm text-muted-foreground mt-1">Nomor Permohonan : <span className="font-medium text-foreground">{nomor}</span></p>
                           </div>
-                        ))}
-                      </Form>
-                    </Container>
-                  )}
-                </Formik>
-              </Tab.Pane>
-              <Tab.Pane eventKey="dispensasi-edit" role="tabpanel">
-                <DataSPM cek={cek} id={id} />
-              </Tab.Pane>
-              <Tab.Pane eventKey="dispensasi-upload" role="tabpanel">
-                <UploadSPM cekupload={cekupload} id={id} />
-              </Tab.Pane>
-            </Tab.Content>
-          </Tab.Container>
-        </Modal.Body>
-      </Modal>
+                        </div>
+
+                        <div className="bg-transparent border rounded-lg p-4 shadow-sm">
+                          <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-semibold text-lg">Detail SPM</h3>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="text-primary hover:text-primary/80 hover:bg-primary/10"
+                              onClick={addRow}
+                            >
+                              <PlusSquare className="mr-2 h-5 w-5" />
+                              Tambah Baris
+                            </Button>
+                          </div>
+
+                          <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2">
+                            {formRows.map((row, index) => (
+                              <div key={index} className="p-4 pr-16 border rounded-md bg-muted/5 space-y-4 relative group">
+                                <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    onClick={() => removeRow(index)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                  {/* Row 1: Tgl SPM, No SPM, Nilai SPM */}
+                                  <div className="md:col-span-3 space-y-2">
+                                    <Label>Tgl SPM</Label>
+                                    <DatePicker
+                                      date={
+                                        values.formRows[index]?.tgspm
+                                          ? parse(values.formRows[index].tgspm, "yyyy-MM-dd", new Date())
+                                          : undefined
+                                      }
+                                      onDateChange={(date: Date | undefined) => {
+                                        if (date) {
+                                          setFieldValue(
+                                            `formRows[${index}].tgspm`,
+                                            format(date, "yyyy-MM-dd")
+                                          );
+                                        } else {
+                                          setFieldValue(`formRows[${index}].tgspm`, null);
+                                        }
+                                      }}
+                                      placeholder="Tgl SPM"
+                                    />
+                                    <ErrorMessage
+                                      name={`formRows[${index}].tgspm`}
+                                      component="div"
+                                      className="text-red-500 text-xs"
+                                    />
+                                  </div>
+
+                                  <div className="md:col-span-5 space-y-2">
+                                    <Label>Nomor SPM</Label>
+                                    <Field
+                                      name={`formRows[${index}].nospm`}
+                                      type="text"
+                                      placeholder="Nomor SPM"
+                                      as={Input}
+                                      className={touched.formRows?.[index]?.nospm && (errors.formRows as any)?.[index]?.nospm ? "border-red-500" : ""}
+                                    />
+                                    <ErrorMessage
+                                      name={`formRows[${index}].nospm`}
+                                      component="div"
+                                      className="text-red-500 text-xs"
+                                    />
+                                  </div>
+
+                                  <div className="md:col-span-4 space-y-2">
+                                    <Label>Nilai SPM</Label>
+                                    <Field
+                                      name={`formRows[${index}].nilaispm`}
+                                      type="number"
+                                      placeholder="Nilai SPM"
+                                      as={Input}
+                                      className={touched.formRows?.[index]?.nilaispm && (errors.formRows as any)?.[index]?.nilaispm ? "border-red-500" : ""}
+                                    />
+                                    <ErrorMessage
+                                      name={`formRows[${index}].nilaispm`}
+                                      component="div"
+                                      className="text-red-500 text-xs"
+                                    />
+                                  </div>
+
+                                  {/* Row 2: Tgl BAST, No BAST, Status */}
+                                  <div className="md:col-span-3 space-y-2">
+                                    <Label>Tgl BAST</Label>
+                                    <DatePicker
+                                      date={
+                                        values.formRows[index]?.tglbast
+                                          ? parse(values.formRows[index].tglbast, "yyyy-MM-dd", new Date())
+                                          : undefined
+                                      }
+                                      onDateChange={(date: Date | undefined) => {
+                                        if (date) {
+                                          setFieldValue(
+                                            `formRows[${index}].tglbast`,
+                                            format(date, "yyyy-MM-dd")
+                                          );
+                                        } else {
+                                          setFieldValue(`formRows[${index}].tglbast`, null);
+                                        }
+                                      }}
+                                      placeholder="Tgl BAST"
+                                    />
+                                    <ErrorMessage
+                                      name={`formRows[${index}].tglbast`}
+                                      component="div"
+                                      className="text-red-500 text-xs"
+                                    />
+                                  </div>
+
+                                  <div className="md:col-span-5 space-y-2">
+                                    <Label>Nomor BAST</Label>
+                                    <Field
+                                      name={`formRows[${index}].nobast`}
+                                      type="text"
+                                      placeholder="Nomor BAST"
+                                      as={Input}
+                                      className={touched.formRows?.[index]?.nobast && (errors.formRows as any)?.[index]?.nobast ? "border-red-500" : ""}
+                                    />
+                                    <ErrorMessage
+                                      name={`formRows[${index}].nobast`}
+                                      component="div"
+                                      className="text-red-500 text-xs"
+                                    />
+                                  </div>
+
+                                  <div className="md:col-span-4 space-y-2">
+                                    <Label>Status</Label>
+                                    <div className="flex gap-4 pt-1">
+                                      <label className="flex items-center space-x-2 cursor-pointer">
+                                        <Field
+                                          type="radio"
+                                          name={`formRows[${index}].status`}
+                                          value="Setuju"
+                                          className="h-4 w-4 rounded-full border-primary text-primary focus:ring-primary"
+                                        />
+                                        <span>Disetujui</span>
+                                      </label>
+                                      <label className="flex items-center space-x-2 cursor-pointer">
+                                        <Field
+                                          type="radio"
+                                          name={`formRows[${index}].status`}
+                                          value="Tolak"
+                                          className="h-4 w-4 rounded-full border-primary text-primary focus:ring-primary"
+                                        />
+                                        <span>Ditolak</span>
+                                      </label>
+                                    </div>
+                                    <ErrorMessage
+                                      name={`formRows[${index}].status`}
+                                      component="div"
+                                      className="text-red-500 text-xs"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </form>
+                    )}
+                  </Formik>
+                </TabsContent>
+                <TabsContent value="dispensasi-edit" className="mt-0 space-y-4">
+                  <div className="bg-background rounded-lg p-4 shadow-sm">
+                    <DataSPM cek={cek} id={id} />
+                  </div>
+                </TabsContent>
+                <TabsContent value="dispensasi-upload" className="mt-0 space-y-4">
+                  <div className="bg-background rounded-lg p-4 shadow-sm">
+                    <UploadSPM cekupload={cekupload} id={id} />
+                  </div>
+                </TabsContent>
+              </TabsContents>
+            </Tabs>
+          </div>
+
+          <DialogFooter className="flex-shrink-0 border-t pt-4">
+            <Button variant="outline" onClick={handleModalClose}>
+              Tutup
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={loading}
+              onClick={() => {
+                const form = document.querySelector('form');
+                if (form) {
+                  form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                }
+              }}
+            >
+              {loading ? (
+                <>
+                  <Spinner className="mr-2 h-4 w-4" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Simpan Data
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -139,11 +139,18 @@ export default function SimplifiedLoginForm() {
         setCaptchaCode("");
         setCaptchaTtlSeconds(null);
         setCaptchaFetchedAt(null);
+        // Show user-friendly message when captcha service is unavailable
+        if (reason === "manual" && data?.error) {
+          toast.error("Layanan captcha tidak tersedia. Silakan coba lagi sebentar.");
+        }
       }
     } catch {
       setCaptchaCode("");
       setCaptchaTtlSeconds(null);
       setCaptchaFetchedAt(null);
+      if (reason === "manual") {
+        toast.error("Gagal memuat captcha. Silakan coba lagi.");
+      }
     } finally {
       captchaFetchInFlight.current = false;
       const nextAt = Date.now() + CAPTCHA_REFRESH_MS;

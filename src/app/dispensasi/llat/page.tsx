@@ -18,7 +18,7 @@ const DispensasiPage: React.FC = () => {
   const { user } = useAuth();
   const role = user?.role;
 
-  const [cek, setCek] = useState(false);
+  const [cek, setCek] = useState(0);
   const [id, setId] = useState("");
   const [where, setWhere] = useState("");
   const [showModalFilter, setShowModalFilter] = useState(false);
@@ -31,7 +31,7 @@ const DispensasiPage: React.FC = () => {
   });
 
   const handleCek = () => {
-    setCek(!cek);
+    setCek((prev) => prev + 1);
   };
 
   const handleFilterResult = (filterData: any) => {
@@ -71,122 +71,125 @@ const DispensasiPage: React.FC = () => {
   return (
     <>
       <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Data Dispensasi LLAT</h1>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setShowModalFilter(true)}
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filter Data
-          </Button>
-          {role !== "lainnya" && (
-            <Button onClick={handleRekam}>
-              Rekam Dispensasi
-            </Button>
-          )}
-        </div>
-      </div>
-
-      <section>
-        <Tabs defaultValue="dispensasi-spm" className="w-full gap-3" onValueChange={handleCek}>
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <TabsList className="w-full h-auto p-2 rounded-xl grid grid-cols-2 lg:flex lg:flex-wrap gap-2">
-              <TabsTrigger value="dispensasi-spm" className="px-4 py-2 h-auto">
-                <Grid className="w-4 h-4 mr-2" />
-                Dispensasi SPM
-              </TabsTrigger>
-              <TabsTrigger value="dispensasi-kontrak" className="px-4 py-2 h-auto">
-                <FileText className="w-4 h-4 mr-2" />
-                Dispensasi Kontrak
-              </TabsTrigger>
-              <TabsTrigger value="dispensasi-tup" className="px-4 py-2 h-auto">
-                <Layers className="w-4 h-4 mr-2" />
-                Dispensasi TUP
-              </TabsTrigger>
-              {(role === "super_admin" ||
-                role === "kanwil_djpb" ||
-                role === "kppn") && (
-                  <TabsTrigger value="monitoring-spm" className="px-4 py-2 h-auto">
-                    <LayoutDashboard className="w-4 h-4 mr-2" />
-                    Monitoring
-                  </TabsTrigger>
-                )}
-            </TabsList>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Data Dispensasi LLAT</h1>
+            <p className="text-sm text-muted-foreground">
+              Kelola data dispensasi SPM, Kontrak, dan TUP
+            </p>
           </div>
 
-          {/* Active Filters Display */}
-          <div className="flex flex-wrap items-center gap-2 empty:hidden">
-            {(filter.selectedKanwil !== "00" ||
-              filter.selectedKementerian !== "00" ||
-              filter.selectedKppn !== "00" ||
-              filter.tahun !== "") && (
-                <Badge variant="default" className="bg-green-600 hover:bg-green-700">
-                  Filter Aktif
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowModalFilter(true)}
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Filter Data
+            </Button>
+            {role !== "lainnya" && (
+              <Button onClick={handleRekam}>
+                Rekam Dispensasi
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <section>
+          <Tabs defaultValue="dispensasi-spm" className="w-full gap-3">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <TabsList className="w-full h-auto p-2 rounded-xl grid grid-cols-2 lg:flex lg:flex-wrap gap-2">
+                <TabsTrigger value="dispensasi-spm" className="px-4 py-2 h-auto">
+                  <Grid className="w-4 h-4 mr-2" />
+                  Dispensasi SPM
+                </TabsTrigger>
+                <TabsTrigger value="dispensasi-kontrak" className="px-4 py-2 h-auto">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Dispensasi Kontrak
+                </TabsTrigger>
+                <TabsTrigger value="dispensasi-tup" className="px-4 py-2 h-auto">
+                  <Layers className="w-4 h-4 mr-2" />
+                  Dispensasi TUP
+                </TabsTrigger>
+                {(role === "super_admin" ||
+                  role === "kanwil_djpb" ||
+                  role === "kppn") && (
+                    <TabsTrigger value="monitoring-spm" className="px-4 py-2 h-auto">
+                      <LayoutDashboard className="w-4 h-4 mr-2" />
+                      Monitoring
+                    </TabsTrigger>
+                  )}
+              </TabsList>
+            </div>
+
+            {/* Active Filters Display */}
+            <div className="flex flex-wrap items-center gap-2 empty:hidden">
+              {(filter.selectedKanwil !== "00" ||
+                filter.selectedKementerian !== "00" ||
+                filter.selectedKppn !== "00" ||
+                filter.tahun !== "") && (
+                  <Badge variant="default" className="bg-green-600 hover:bg-green-700">
+                    Filter Aktif
+                  </Badge>
+                )}
+              {filter.tahun !== "" && (
+                <Badge variant="secondary">
+                  Tahun {filter.tahun}
                 </Badge>
               )}
-            {filter.tahun !== "" && (
-              <Badge variant="secondary">
-                Tahun {filter.tahun}
-              </Badge>
-            )}
-            {filter.selectedKementerian !== "00" && (
-              <Badge variant="secondary">
-                Kementerian {filter.selectedKementerian}
-              </Badge>
-            )}
-            {filter.selectedKanwil !== "00" && (
-              <Badge variant="secondary">
-                Kanwil {filter.selectedKanwil}
-              </Badge>
-            )}
-            {filter.selectedKppn !== "00" && (
-              <Badge variant="secondary">
-                KPPN {filter.selectedKppn}
-              </Badge>
-            )}
-          </div>
+              {filter.selectedKementerian !== "00" && (
+                <Badge variant="secondary">
+                  Kementerian {filter.selectedKementerian}
+                </Badge>
+              )}
+              {filter.selectedKanwil !== "00" && (
+                <Badge variant="secondary">
+                  Kanwil {filter.selectedKanwil}
+                </Badge>
+              )}
+              {filter.selectedKppn !== "00" && (
+                <Badge variant="secondary">
+                  KPPN {filter.selectedKppn}
+                </Badge>
+              )}
+            </div>
 
-          <TabsContents>
-            <TabsContent value="dispensasi-spm">
-              <Card>
-                <CardContent className="p-4">
-                  <DispenSPM cek={cek} id={id} where={where} />
-                </CardContent>
-              </Card>
-            </TabsContent>
+            <TabsContents>
+              <TabsContent value="dispensasi-spm">
+                <Card>
+                  <CardContent className="p-4">
+                    <DispenSPM cek={cek} id={id} where={where} />
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-            <TabsContent value="dispensasi-kontrak">
-              <Card>
-                <CardContent className="p-4">
-                  <DispenKontrak cek={cek} id={id} where={where} />
-                </CardContent>
-              </Card>
-            </TabsContent>
+              <TabsContent value="dispensasi-kontrak">
+                <Card>
+                  <CardContent className="p-4">
+                    <DispenKontrak cek={cek} id={id} where={where} />
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-            <TabsContent value="dispensasi-tup">
-              <Card>
-                <CardContent className="p-4">
-                  <DispenTUP cek={cek} id={id} where={where} />
-                </CardContent>
-              </Card>
-            </TabsContent>
+              <TabsContent value="dispensasi-tup">
+                <Card>
+                  <CardContent className="p-4">
+                    <DispenTUP cek={cek} id={id} where={where} />
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-            <TabsContent value="monitoring-spm">
-              <Card>
-                <CardContent className="p-4">
-                  <Monitoring cek={cek} id={id} where={where} />
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </TabsContents>
-        </Tabs>
-      </section>
-    </div>
+              <TabsContent value="monitoring-spm">
+                <Card>
+                  <CardContent className="p-4">
+                    <Monitoring cek={cek} id={id} where={where} />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </TabsContents>
+          </Tabs>
+        </section>
+      </div>
 
       <Rekam show={showModalRekam} onHide={() => setShowModalRekam(false)} />
 

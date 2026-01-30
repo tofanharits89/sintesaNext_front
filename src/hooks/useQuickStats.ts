@@ -28,21 +28,25 @@ export type QSReturn = QuickStatsData & { _meta?: DashboardMeta };
 
 export interface UseQuickStatsOptions {
   kanwil?: string;
+  year?: string;
   enabled?: boolean;
 }
 
 export function useQuickStats(options: UseQuickStatsOptions = {}): UseQueryResult<QSReturn, Error> {
-  const { kanwil, enabled } = options;
+  const { kanwil, year, enabled } = options;
   const isClient = typeof window !== "undefined";
 
   return useQuery<QSReturn, Error>({
-    queryKey: ["quick-stats", kanwil],
+    queryKey: ["quick-stats", kanwil, year],
     queryFn: async () => {
       try {
         // Build URL with same pattern as other dashboard endpoints
         const params = new URLSearchParams();
         if (kanwil) {
           params.append("kanwil", kanwil);
+        }
+        if (year) {
+          params.append("year", year);
         }
 
         const endpoint = `/dashboard/quick-stats${

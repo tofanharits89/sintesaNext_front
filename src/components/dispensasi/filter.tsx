@@ -203,7 +203,7 @@ const Filter = ({ show, onHide, onFilter }: FilterProps) => {
           )}
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="gap-2 sm:gap-3">
           <Button variant="outline" onClick={resetFilter}>
             Reset Filter
           </Button>

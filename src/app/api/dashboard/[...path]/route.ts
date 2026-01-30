@@ -78,9 +78,12 @@ export async function GET(
     if (etag) nextResponse.headers.set("ETag", etag);
 
     return nextResponse;
-  } catch {
+  } catch (error: any) {
+    console.error(`[Dashboard Proxy Error] Failed to proxy request:`, error?.message || error);
+    console.error(`[Dashboard Proxy Error] Stack:`, error?.stack);
+    console.error(`[Dashboard Proxy Error] Cause:`, error?.cause);
     return NextResponse.json(
-      { success: false, error: "Proxy error" },
+      { success: false, error: "Proxy error", details: error?.message || "Unknown error" },
       { status: 500 }
     );
   }

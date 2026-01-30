@@ -37,15 +37,13 @@ export default function Page() {
   // But just in case, we can handle it or let the component handle empty props.
 
   return (
-    <div className="container-fluid p-0">
-      <MonitoringBlokir
-        role={getLegacyRole(user?.role)}
-        kdkanwil={user?.kdkanwil || ""}
-        kdkppn={user?.kdkppn || ""}
-        username={user?.username || ""}
-        // Token is handled by HttpOnly cookies in this architecture
-        token=""
-      />
-    </div>
+    <MonitoringBlokir
+      role={getLegacyRole(user?.role)}
+      kdkanwil={user?.kdkanwil || ""}
+      kdkppn={user?.kdkppn || ""}
+      username={user?.username || ""}
+      // Token is handled by HttpOnly cookies in this architecture
+      token=""
+    />
   );
 }

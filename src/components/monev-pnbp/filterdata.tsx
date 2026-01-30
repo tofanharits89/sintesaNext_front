@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 // import { Modal, Button, Form, Col, Row } from "react-bootstrap";
-import { Grid3x3 } from "lucide-react";
+import { Grid3X3 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -145,7 +145,7 @@ const FilterData: React.FC<FilterDataProps> = ({ show, onHide, onFilter }) => {
       <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle className="flex items-center text-lg gap-2">
-            <Grid3x3 className="w-5 h-5 text-primary font-bold" />
+            <Grid3X3 className="w-5 h-5 text-primary font-bold" />
             Filter Data
           </DialogTitle>
         </DialogHeader>

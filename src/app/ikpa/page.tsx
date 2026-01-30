@@ -1,10 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { IkpaLanding } from "@/components/ikpa/landing";
+import { ModalRekamIkpa } from "@/components/ikpa/modal-rekam";
 import { Button } from "@/components/ui/button";
 import { Download, Plus } from "lucide-react";
 
 export default function IkpaPage() {
+    const [isRekamOpen, setIsRekamOpen] = useState(false);
+
     return (
         <div className="space-y-6">
             {/* Page Header */}
@@ -16,7 +20,7 @@ export default function IkpaPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button className="gap-2">
+                    <Button className="gap-2" onClick={() => setIsRekamOpen(true)}>
                         <Plus className="h-4 w-4" />
                         Rekam Data
                     </Button>
@@ -27,6 +31,8 @@ export default function IkpaPage() {
             </div>
 
             <IkpaLanding />
+
+            <ModalRekamIkpa isOpen={isRekamOpen} onClose={() => setIsRekamOpen(false)} />
         </div>
     );
 }

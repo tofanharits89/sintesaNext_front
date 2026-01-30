@@ -4,12 +4,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Loader2, MessageSquareText } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { http } from "@/lib/api/httpClient";
 
@@ -148,16 +149,12 @@ export default function ModalTpid({
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && onHide()}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-3xl sm:max-w-4xl max-h-[90vh] overflow-y-auto" showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <MessageSquareText className="w-5 h-5 text-success" />{" "}
-            {/* text-success from global or tailwind */}
-            Clustering {tema}
-          </DialogTitle>
+          <DialogTitle>Clustering {tema}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {clusterOptions && clusterOptions.length > 0 && (
             <div className="space-y-2">
               {clusterOptions.map((option, index) => (
@@ -179,41 +176,41 @@ export default function ModalTpid({
           )}
 
           <div className="space-y-2">
-            <Label className="text-lg font-semibold">Keterangan:</Label>
+            <Label className="text-sm font-medium">Keterangan</Label>
             <Textarea
               placeholder="Isikan keterangan tantangan/kendala tpid"
               value={keterangan}
               onChange={(e) => setKeterangan(e.target.value)}
-              className="min-h-[100px]"
+              className="min-h-[100px] w-full"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-lg font-semibold">Rekomendasi:</Label>
+            <Label className="text-sm font-medium">Rekomendasi</Label>
             <Textarea
               placeholder="Isikan rekomendasi tantangan/kendala tpid"
               value={rekomendasi}
               onChange={(e) => setRekomendasi(e.target.value)}
-              className="min-h-[100px]"
+              className="min-h-[100px] w-full"
               required
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
+          <DialogFooter>
+            <Button variant="outline" onClick={onHide} type="button">
+              Batal
+            </Button>
             <Button
               type="submit"
-              variant="destructive"
+              variant="default"
               disabled={loading}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-primary hover:bg-primary/90"
             >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Simpan
             </Button>
-            <Button variant="secondary" onClick={onHide} type="button">
-              Tutup
-            </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

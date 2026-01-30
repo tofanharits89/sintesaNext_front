@@ -169,7 +169,9 @@ export default function RekamTpid() {
       // Adjust endpoint to match new backend structure
       const baseUrl =
         process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-      const endpoint = `${baseUrl}/api/v1/tpid/permasalahan/view`; // Example endpoint
+      // Remove trailing slash and /api/v1 if present to avoid duplication
+      const cleanBaseUrl = baseUrl.replace(/\/$/, "").replace(/\/api\/v1$/, "");
+      const endpoint = `${cleanBaseUrl}/api/v1/tpid/permasalahan/view`;
 
       const response = await http.get(
         `${endpoint}?queryParams=${encryptedQuery}&limit=${limit}&page=${page}&user=${username}`
@@ -269,17 +271,12 @@ export default function RekamTpid() {
   );
 
   return (
-    <div className="w-full p-4 space-y-6">
-      <div className="flex flex-col space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight">
-          Tantangan/ Kendala TPID
-        </h1>
-        <div className="text-sm text-muted-foreground">
-          <span className="text-primary hover:underline cursor-pointer">
-            Data
-          </span>{" "}
-          / <span className="text-foreground">Rekam</span>
-        </div>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-2xl font-semibold tracking-tight">Tantangan/ Kendala TPID</h1>
+        <p className="text-sm text-muted-foreground">
+          Rekam data tantangan dan kendala TPID serta rekomendasi belanja K/L dan TKD.
+        </p>
       </div>
 
       <div className="space-y-4">
@@ -293,7 +290,7 @@ export default function RekamTpid() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Tahun</label>
               <Select value={namaThang} onValueChange={setNamaThang}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -306,7 +303,7 @@ export default function RekamTpid() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Triwulan</label>
               <Select value={namaTriwulan} onValueChange={setNamaTriwulan}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -324,7 +321,7 @@ export default function RekamTpid() {
                 onValueChange={setKanwil}
                 disabled={role === "kanwil_djpb" || (role as string) === "2"}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih Kanwil" />
                 </SelectTrigger>
                 <SelectContent>
@@ -340,7 +337,7 @@ export default function RekamTpid() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Nama Proker</label>
               <Select value={namaProker} onValueChange={setNamaProker}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

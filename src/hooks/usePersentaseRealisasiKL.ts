@@ -15,16 +15,19 @@ interface PersentaseRealisasiKLResponse {
   message?: string;
 }
 
-// Allow optional filtering by kanwil (to match usage in dashboard page)
-export function usePersentaseRealisasiKL(params?: { kanwil?: string; enabled?: boolean }) {
+// Allow optional filtering by kanwil and year (to match usage in dashboard page)
+export function usePersentaseRealisasiKL(params?: { kanwil?: string; year?: string; enabled?: boolean }) {
   return useQuery<PersentaseRealisasiKL[]>({
-    queryKey: ['persentase-realisasi-kl', params?.kanwil],
+    queryKey: ['persentase-realisasi-kl', params?.kanwil, params?.year],
     queryFn: async () => {
       try {
         // Build query parameters
         const urlParams = new URLSearchParams();
         if (params?.kanwil) {
           urlParams.append('kanwil', params.kanwil);
+        }
+        if (params?.year) {
+          urlParams.append('year', params.year);
         }
 
         const endpoint = `/dashboard/persentase-realisasi-kl${

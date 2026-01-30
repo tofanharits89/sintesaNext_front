@@ -357,22 +357,16 @@ export default function Harmonisasi() {
   );
 
   return (
-    <main className="max-w-screen-2xl mx-auto p-4 flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold leading-8">Harmonisasi Belanja K/L & TKD</h1>
-        <nav className="flex text-sm text-muted-foreground">
-          <ol className="flex gap-2">
-            <li>Data</li>
-            <li>/</li>
-            <li className="font-semibold text-foreground">Rekam</li>
-          </ol>
-        </nav>
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Harmonisasi Belanja K/L & TKD</h1>
+        <p className="text-sm text-muted-foreground">
+          Harmonisasi Perencanaan dan Penganggaran Belanja K/L dan TKD
+        </p>
       </div>
 
       <section className="flex flex-col gap-4">
-        <h5 className="text-center text-lg font-bold">
-          Harmonisasi Perencanaan dan Penganggaran Belanja K/L dan TKD
-        </h5>
 
         {/* Filters */}
         <Card>
@@ -381,7 +375,7 @@ export default function Harmonisasi() {
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-medium">Tahun</label>
                 <Select value={namaThang} onValueChange={setNamaThang}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Pilih Tahun" />
                   </SelectTrigger>
                   <SelectContent>
@@ -394,7 +388,7 @@ export default function Harmonisasi() {
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-medium">Semester</label>
                 <Select value={namaSemester} onValueChange={setNamaSemester}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Pilih Semester" />
                   </SelectTrigger>
                   <SelectContent>
@@ -411,7 +405,7 @@ export default function Harmonisasi() {
                   onValueChange={setKanwil}
                   disabled={role === "kanwil_djpb"}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Semua Kanwil" />
                   </SelectTrigger>
                   <SelectContent>
@@ -428,7 +422,7 @@ export default function Harmonisasi() {
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-medium">Nama Bidang</label>
                 <Select value={namaBidang} onValueChange={setNamaBidang}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Semua Bidang" />
                   </SelectTrigger>
                   <SelectContent>
@@ -807,6 +801,6 @@ export default function Harmonisasi() {
         lainnya_sdm_isi={lainnya_sdm}
         onSaveSuccess={handleSaveSuccess}
       />
-    </main>
+    </div>
   );
 }

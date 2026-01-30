@@ -47,47 +47,49 @@ export interface DashboardDataHooks {
   };
 }
 
-export const useDashboardData = (selectedKanwil: string): DashboardDataHooks => {
+export const useDashboardData = (selectedKanwil: string, selectedYear: string): DashboardDataHooks => {
   const { isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
-  
+
   // Only enable queries when authenticated AND auth is not loading
   // User object can be null initially but will be populated by React Query
   const queriesEnabled = isAuthenticated && !isAuthLoading;
-  
-  const kanwilFilter = selectedKanwil !== "semua" ? { kanwil: selectedKanwil } : {};
+
+  const filters = selectedKanwil !== "semua"
+    ? { kanwil: selectedKanwil, year: selectedYear }
+    : { year: selectedYear };
 
   const quickStats = useQuickStats({
-    ...kanwilFilter,
+    ...filters,
     enabled: queriesEnabled,
   });
 
   const realisasiJenisBelanjaData = useRealisasiPerJenisBelanja({
-    ...kanwilFilter,
+    ...filters,
     enabled: queriesEnabled,
   });
 
   const klPaguTerbesarData = useRealisasiKLPaguTerbesar({
-    ...kanwilFilter,
+    ...filters,
     enabled: queriesEnabled,
   });
 
   const realisasiKLPaguProgramTerbesarData = useRealisasiKLPaguProgramTerbesar({
-    ...kanwilFilter,
+    ...filters,
     enabled: queriesEnabled,
   });
 
   const trenRealisasiBulananData = useTrenRealisasiBulananPerJenisBelanja({
-    ...kanwilFilter,
+    ...filters,
     enabled: queriesEnabled,
   });
 
   const persentaseKLData = usePersentaseRealisasiKL({
-    ...kanwilFilter,
+    ...filters,
     enabled: queriesEnabled,
   });
 
   const realisasiKLPerFungsi = useRealisasiKLPerFungsi({
-    ...kanwilFilter,
+    ...filters,
     enabled: queriesEnabled,
   });
 

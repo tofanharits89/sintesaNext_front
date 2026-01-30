@@ -133,9 +133,9 @@ export function VirtualizedSelect({
         onClick={toggleDropdown}
         disabled={disabled}
         className={cn(
-          "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-zinc-100 dark:bg-black hover:!bg-zinc-200 dark:hover:!bg-zinc-950 flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 h-8",
+          "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-zinc-100 dark:bg-black hover:!bg-zinc-200 dark:hover:!bg-zinc-950 flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 h-9",
           isOpen &&
-            "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+          "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
         )}
       >
         <span
@@ -188,7 +188,7 @@ export function VirtualizedSelect({
                       className={cn(
                         "flex items-center justify-between px-3 py-2 cursor-pointer text-sm hover:!bg-zinc-200 dark:hover:!bg-zinc-950 hover:text-accent-foreground",
                         option.value === value &&
-                          "bg-accent text-accent-foreground"
+                        "bg-accent text-accent-foreground"
                       )}
                       onClick={() => handleOptionSelect(option.value)}
                       style={{ height: itemHeight }}

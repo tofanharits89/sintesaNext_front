@@ -6,22 +6,30 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { VirtualizedSelect } from "@/components/ui/virtualized-select";
 import DatePicker from "react-datepicker";
 import {
   Formik,
-  Field,
   ErrorMessage,
   FormikHelpers,
   FormikProps,
 } from "formik";
 import * as Yup from "yup";
 import "react-datepicker/dist/react-datepicker.css";
-import Select from "react-select";
 import Swal from "sweetalert2";
 import moment from "moment";
 import { X, Save } from "lucide-react";
@@ -371,374 +379,400 @@ export default function Rekam({
     onHide();
   };
 
-  const inputClass = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+  const inputClass = "flex h-9 w-full rounded-md border border-input bg-zinc-100 dark:bg-black px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50";
 
   return (
     <Dialog open={show} onOpenChange={handleModalClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="flex flex-row items-center justify-between">
-          <DialogTitle className="text-xl flex items-center gap-2">
-            <span className="text-green-600 font-bold text-xl">
-              Rekam Data Dispensasi TA. {tahun}
-            </span>
-          </DialogTitle>
+      <DialogContent className="max-w-4xl sm:max-w-4xl">
+        <DialogHeader>
+          <DialogTitle>Rekam Data Dispensasi TA. {tahun}</DialogTitle>
         </DialogHeader>
 
-        <Formik
-          validationSchema={validationSchema}
-          onSubmit={handleSubmitdata}
-          initialValues={initialValues}
-          enableReinitialize={false}
-        >
-          {({
-            handleSubmit,
-            handleChange,
-            setFieldValue,
-            values,
-            touched,
-            errors,
-          }: FormikProps<FormValues>) => (
-            <form onSubmit={handleSubmit as any} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                <div className="md:col-span-4">
-                  <div className="space-y-2">
-                    <Label className="font-bold">Tahun Anggaran</Label>
-                    <Field
-                      name="tahun"
-                      as="select"
-                      className={`${inputClass} ${touched.tahun && errors.tahun ? "border-red-500" : ""}`}
-                      onChange={(e: any) => {
-                        handleChange(e);
-                        handleTahunChange(e);
-                      }}
-                    >
-                      <option value="">--- Pilih Tahun ---</option>
-                      <option value="2024">TA 2024</option>
-                      <option value="2025">TA 2025</option>
-                    </Field>
-                  </div>
-                </div>
-
-                <div className="md:col-span-8">
-                  <div className="space-y-2">
-                    <Label className="font-bold">Jenis Dispensasi</Label>
-                    <Field
-                      name="jenis"
-                      as="select"
-                      onChange={(e: any) => {
-                        handleChange(e);
-                        handleJenisChange(e, setFieldValue);
-                      }}
-                      className={`${inputClass} ${touched.jenis && errors.jenis ? "border-red-500" : ""}`}
-                    >
-                      <option value="">--- Pilih Jenis Dispensasi ---</option>
-                      <option value="01">SPM BIASA</option>
-                      <option value="03">SPM RPATA</option>
-                      <option value="02">Kontrak</option>
-                      <option value="04">TUP Tunai</option>
-                    </Field>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                <div className="md:col-span-4">
-                  <div className="space-y-2">
-                    <Label className="font-bold">Tanggal Permohonan</Label>
-                    <div className="relative">
-                      <DatePicker
-                        name="tanggalPermohonan"
-                        selected={
-                          values.tanggalPermohonan
-                            ? moment(values.tanggalPermohonan).toDate()
-                            : null
-                        }
-                        className={inputClass}
-                        wrapperClassName="w-full"
-                        onChange={(date: any) =>
-                          setFieldValue(
-                            "tanggalPermohonan",
-                            moment(date).format("YYYY-MM-DD"),
-                            true
-                          )
-                        }
-                        dateFormat="dd/MM/yyyy"
-                        placeholderText="Tgl Permohonan"
-                        autoComplete="off"
-                      />
-                    </div>
-                    <ErrorMessage
-                      name="tanggalPermohonan"
-                      component="div"
-                      className="text-red-500 text-sm mt-1"
-                    />
-                  </div>
-                </div>
-
-                <div className="md:col-span-8">
-                  <div className="space-y-2">
-                    <Label className="font-bold">Nomor Permohonan</Label>
-                    <Field
-                      name="nomorPermohonan"
-                      type="text"
-                      placeholder="Nomor Permohonan"
-                      as={Input}
-                    />
-                    <ErrorMessage
-                      name="nomorPermohonan"
-                      component="div"
-                      className="text-red-500 text-sm mt-1"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="font-bold">Satker</Label>
-                <Select
-                  name="satker"
-                  styles={{
-                    control: (base: any) => ({
-                      ...base,
-                      cursor: "pointer",
-                      borderColor: touched.satker && errors.satker ? "red" : base.borderColor,
-                    }),
-                    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                  }}
-                  menuPortalTarget={typeof document !== "undefined" ? document.body : null}
-                  value={selectedSatker as any}
-                  onChange={(selectedOption: any) => {
-                    setFieldValue(
-                      "satker",
-                      selectedOption ? selectedOption.kdsatker : ""
-                    );
-                    setSelectedSatker(selectedOption);
-                  }}
-                  options={isSearching ? [] : (searchResults as any)}
-                  onInputChange={(value: string) => handleSearch(value)}
-                  isSearchable
-                  getOptionValue={(option: any) => option.kdsatker}
-                  getOptionLabel={(option: any) =>
-                    `${option.kdsatker} - ${option.nmsatker}`
-                  }
-                  placeholder="Ketik Kode atau Nama Satker..."
-                />
-                <ErrorMessage
-                  name="satker"
-                  component="div"
-                  className="text-red-500 text-sm mt-1"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                <div className="md:col-span-4">
-                  <div className="space-y-2">
-                    <Label className="font-bold">Tanggal Persetujuan</Label>
-                    <div className="relative">
-                      <DatePicker
-                        name="tanggalPersetujuan"
-                        selected={
-                          values.tanggalPersetujuan
-                            ? moment(values.tanggalPersetujuan).toDate()
-                            : null
-                        }
-                        className={inputClass}
-                        wrapperClassName="w-full"
-                        onChange={(date: any) =>
-                          setFieldValue(
-                            "tanggalPersetujuan",
-                            moment(date).format("YYYY-MM-DD"),
-                            true
-                          )
-                        }
-                        dateFormat="dd/MM/yyyy"
-                        placeholderText="Tgl Persetujuan"
-                        autoComplete="off"
-                      />
-                    </div>
-                    <ErrorMessage
-                      name="tanggalPersetujuan"
-                      component="div"
-                      className="text-red-500 text-sm mt-1"
-                    />
-                  </div>
-                </div>
-
-                <div className="md:col-span-8">
-                  <div className="space-y-2">
-                    <Label className="font-bold">Nomor Persetujuan</Label>
-                    <Field
-                      name="nomorPersetujuan"
-                      onChange={handleChange as any}
-                      type="text"
-                      placeholder="Nomor Persetujuan Dispensasi"
-                      as={Input}
-                    />
-                    <ErrorMessage
-                      name="nomorPersetujuan"
-                      component="div"
-                      className="text-red-500 text-sm mt-1"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {jenisdispensasi && (jenisspm === "01" || jenisspm === "03") && (
-                <div className="animate-in fade-in zoom-in duration-300">
-                  <div className="space-y-2">
-                    <Label className="font-bold">Alasan Dispensasi SPM</Label>
-                    <Field
-                      name="dispen"
-                      value={dispen}
-                      as="select"
-                      className={`${inputClass} ${touched.dispen && errors.dispen ? "border-red-500" : ""}`}
-                      onChange={(e: any) => {
-                        handleChange(e);
-                        handleAlasanChange(e, setFieldValue);
-                      }}
-                    >
-                      <option value="">--- Pilih Alasan Dispensasi ---</option>
-                      <option value="01">
-                        01 - Pekerjaan dalam Rangka Penanganan Bencana Alam
-                      </option>
-                      <option value="02">02 - Kondisi Kahar/Force Majeure</option>
-                      <option value="03">03 - Pemilu/Pilkada Serentak</option>
-                      <option value="04">
-                        04 - Kondisi Lain dibuktikan Surat Pernyatan KPA
-                      </option>
-                      <option value="05">
-                        05 - Keterlambatan Pengajuan Tagihan atau Kurang Lengkap
-                        Dokumen Tagihan oleh Penyedia
-                      </option>
-                      <option value="06">
-                        06 - Permasalahan Pengelolaan Perbendaharaan
-                      </option>
-                      <option value="07">07 - Lainnya</option>
-                      <option value="08">
-                        08 - Proses Revisi Penghematan Belanja Perjalanan Dinas
-                      </option>
-                    </Field>
-                  </div>
-                </div>
-              )}
-
-              {jenisdispensasi && jenisspm === "02" && (
-                <div className="animate-in fade-in zoom-in duration-300">
-                  <div className="space-y-2">
-                    <Label className="font-bold">Alasan Dispensasi Kontrak</Label>
-                    <Field
-                      name="dispen"
-                      value={dispen}
-                      as="select"
-                      className={`${inputClass} ${touched.dispen && errors.dispen ? "border-red-500" : ""}`}
-                      onChange={(e: any) => {
-                        handleChange(e);
-                        handleAlasanChange(e, setFieldValue);
-                      }}
-                    >
-                      <option value="">--- Pilih Alasan Dispensasi ---</option>
-                      <option value="01">01 - Kendala pada aplikasi</option>
-                      <option value="02">
-                        02 - Kendala pada pejabat perbendaharaan
-                      </option>
-                      <option value="03">
-                        03 - Kendala pada penyedia barang/jasa
-                      </option>
-                      <option value="04">
-                        04 - Kendala administrasi (dokumen kurang lengkap)
-                      </option>
-                      <option value="05">
-                        05 - Kendala pada revisi DIPA/MP PNBP
-                      </option>
-                      <option value="06">06 - Kendala jaringan dan listrik</option>
-                      <option value="07">07 - Lainnya</option>
-                    </Field>
-                  </div>
-                </div>
-              )}
-
-              {jenisdispensasi && jenisspm === "04" && (
-                <div className="animate-in fade-in zoom-in duration-300">
-                  <div className="space-y-2">
-                    <Field
-                      name="dispen"
-                      value={values.jenis === "04" ? "07" : values.dispen}
-                      as="select"
-                      className={`${inputClass} ${touched.dispen && errors.dispen ? "border-red-500" : ""}`}
-                      onChange={(e: any) => {
-                        handleChange(e);
-                        handleAlasanChange(e, setFieldValue);
-                      }}
-                    >
-                      <option value="07">Isikan Alasan Dispensasi TUP</option>
-                    </Field>
-                  </div>
-                </div>
-              )}
-
-              {dispen === "07" && jenisdispensasi && (
-                <div className="animate-in fade-in zoom-in duration-300">
-                  <div className="space-y-2">
-                    <Label>Uraian Alasan (Lainnya)</Label>
-                    <Field
-                      as="textarea"
-                      name="alasan2"
-                      placeholder="Uraian Alasan"
-                      className={`flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${touched.alasan2 && errors.alasan2 ? "border-red-500" : ""}`}
-                    />
-                    <ErrorMessage
-                      name="alasan2"
-                      component="div"
-                      className="text-red-500 text-sm mt-1"
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label className="font-bold">
-                  Upload File Surat Persetujuan (PDF)
-                </Label>
-                <div className="flex gap-4 items-center">
-                  <div className="flex-1">
+        <div className="grid gap-6 py-4">
+          <Formik
+            validationSchema={validationSchema}
+            onSubmit={handleSubmitdata}
+            initialValues={initialValues}
+            enableReinitialize={false}
+          >
+            {({
+              handleSubmit,
+              handleChange,
+              setFieldValue,
+              values,
+              touched,
+              errors,
+            }: FormikProps<FormValues>) => (
+              <form onSubmit={handleSubmit as any} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                  <div className="md:col-span-4">
                     <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">Normal Upload</Label>
-                      <Input
-                        type="file"
-                        accept="application/pdf"
-                        onChange={(event) => {
-                          if (
-                            event.currentTarget.files &&
-                            event.currentTarget.files[0]
-                          ) {
-                            setFieldValue("file", event.currentTarget.files[0]);
+                      <Label className="font-bold">Tahun Anggaran</Label>
+                      <Select
+                        value={values.tahun}
+                        onValueChange={(value) => {
+                          setFieldValue("tahun", value);
+                          setTahun(value);
+                        }}
+                      >
+                        <SelectTrigger className={`w-full ${touched.tahun && errors.tahun ? "border-red-500" : ""}`}>
+                          <SelectValue placeholder="--- Pilih Tahun ---" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="2024">TA 2024</SelectItem>
+                          <SelectItem value="2025">TA 2025</SelectItem>
+                          <SelectItem value="2026">TA 2026</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <ErrorMessage
+                        name="tahun"
+                        component="div"
+                        className="text-red-500 text-sm mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-8">
+                    <div className="space-y-2">
+                      <Label className="font-bold">Jenis Dispensasi</Label>
+                      <Select
+                        value={values.jenis}
+                        onValueChange={(value) => {
+                          setFieldValue("jenis", value);
+                          setjenisdispensasi(value === "" ? false : true);
+                          setJenisspm(value);
+                          if (value === "04") {
+                            setFieldValue("dispen", "07");
+                            setjenisdispensasi(true);
+                          } else {
+                            setFieldValue("dispen", "");
                           }
                         }}
+                      >
+                        <SelectTrigger className={`w-full ${touched.jenis && errors.jenis ? "border-red-500" : ""}`}>
+                          <SelectValue placeholder="--- Pilih Jenis Dispensasi ---" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="01">SPM BIASA</SelectItem>
+                          <SelectItem value="03">SPM RPATA</SelectItem>
+                          <SelectItem value="02">Kontrak</SelectItem>
+                          <SelectItem value="04">TUP Tunai</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <ErrorMessage
+                        name="jenis"
+                        component="div"
+                        className="text-red-500 text-sm mt-1"
                       />
                     </div>
                   </div>
                 </div>
-                <ErrorMessage
-                  name="file"
-                  component="div"
-                  className="text-red-500 text-sm mt-1"
-                />
-              </div>
 
-              <div className="flex justify-end pt-4 border-t">
-                {loading ? (
-                  <Button disabled variant="destructive">
-                    <Spinner className="mr-2 h-4 w-4" /> Simpan
-                  </Button>
-                ) : (
-                  <Button type="submit" variant="destructive">
-                    <Save className="mr-2 h-4 w-4" /> Simpan
-                  </Button>
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                  <div className="md:col-span-4">
+                    <div className="space-y-2">
+                      <Label className="font-bold">Tanggal Permohonan</Label>
+                      <div className="relative">
+                        <DatePicker
+                          name="tanggalPermohonan"
+                          selected={
+                            values.tanggalPermohonan
+                              ? moment(values.tanggalPermohonan).toDate()
+                              : null
+                          }
+                          className={inputClass}
+                          wrapperClassName="w-full"
+                          onChange={(date: any) =>
+                            setFieldValue(
+                              "tanggalPermohonan",
+                              moment(date).format("YYYY-MM-DD"),
+                              true
+                            )
+                          }
+                          dateFormat="dd/MM/yyyy"
+                          placeholderText="Tgl Permohonan"
+                          autoComplete="off"
+                        />
+                      </div>
+                      <ErrorMessage
+                        name="tanggalPermohonan"
+                        component="div"
+                        className="text-red-500 text-sm mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-8">
+                    <div className="space-y-2">
+                      <Label className="font-bold">Nomor Permohonan</Label>
+                      <Input
+                        name="nomorPermohonan"
+                        type="text"
+                        value={values.nomorPermohonan}
+                        onChange={handleChange}
+                        placeholder="Nomor Permohonan"
+                      />
+                      <ErrorMessage
+                        name="nomorPermohonan"
+                        component="div"
+                        className="text-red-500 text-sm mt-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="font-bold">Satker</Label>
+                  <VirtualizedSelect
+                    options={searchResults.map((item) => ({
+                      value: item.kdsatker,
+                      label: `${item.kdsatker} - ${item.nmsatker}`,
+                    }))}
+                    value={selectedSatker ? selectedSatker.kdsatker : ""}
+                    onValueChange={(value) => {
+                      const selected = searchResults.find((item) => item.kdsatker === value);
+                      setFieldValue("satker", value);
+                      setSelectedSatker(selected || null);
+                    }}
+                    placeholder="Ketik Kode atau Nama Satker..."
+                    className={touched.satker && errors.satker ? "border-red-500" : ""}
+                  />
+                  <ErrorMessage
+                    name="satker"
+                    component="div"
+                    className="text-red-500 text-sm mt-1"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                  <div className="md:col-span-4">
+                    <div className="space-y-2">
+                      <Label className="font-bold">Tanggal Persetujuan</Label>
+                      <div className="relative">
+                        <DatePicker
+                          name="tanggalPersetujuan"
+                          selected={
+                            values.tanggalPersetujuan
+                              ? moment(values.tanggalPersetujuan).toDate()
+                              : null
+                          }
+                          className={inputClass}
+                          wrapperClassName="w-full"
+                          onChange={(date: any) =>
+                            setFieldValue(
+                              "tanggalPersetujuan",
+                              moment(date).format("YYYY-MM-DD"),
+                              true
+                            )
+                          }
+                          dateFormat="dd/MM/yyyy"
+                          placeholderText="Tgl Persetujuan"
+                          autoComplete="off"
+                        />
+                      </div>
+                      <ErrorMessage
+                        name="tanggalPersetujuan"
+                        component="div"
+                        className="text-red-500 text-sm mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-8">
+                    <div className="space-y-2">
+                      <Label className="font-bold">Nomor Persetujuan</Label>
+                      <Input
+                        name="nomorPersetujuan"
+                        value={values.nomorPersetujuan}
+                        onChange={handleChange}
+                        type="text"
+                        placeholder="Nomor Persetujuan Dispensasi"
+                      />
+                      <ErrorMessage
+                        name="nomorPersetujuan"
+                        component="div"
+                        className="text-red-500 text-sm mt-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {jenisdispensasi && (jenisspm === "01" || jenisspm === "03") && (
+                  <div className="animate-in fade-in zoom-in duration-300">
+                    <div className="space-y-2">
+                      <Label className="font-bold">Alasan Dispensasi SPM</Label>
+                      <Select
+                        value={dispen}
+                        onValueChange={(value) => {
+                          setDispen(value);
+                          setFieldValue("dispen", value);
+                          if (value !== "07") {
+                            setFieldValue("alasan2", "");
+                          }
+                        }}
+                      >
+                        <SelectTrigger className={`w-full ${touched.dispen && errors.dispen ? "border-red-500" : ""}`}>
+                          <SelectValue placeholder="--- Pilih Alasan Dispensasi ---" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="01">01 - Pekerjaan dalam Rangka Penanganan Bencana Alam</SelectItem>
+                          <SelectItem value="02">02 - Kondisi Kahar/Force Majeure</SelectItem>
+                          <SelectItem value="03">03 - Pemilu/Pilkada Serentak</SelectItem>
+                          <SelectItem value="04">04 - Kondisi Lain dibuktikan Surat Pernyatan KPA</SelectItem>
+                          <SelectItem value="05">05 - Keterlambatan Pengajuan Tagihan atau Kurang Lengkap Dokumen Tagihan oleh Penyedia</SelectItem>
+                          <SelectItem value="06">06 - Permasalahan Pengelolaan Perbendaharaan</SelectItem>
+                          <SelectItem value="07">07 - Lainnya</SelectItem>
+                          <SelectItem value="08">08 - Proses Revisi Penghematan Belanja Perjalanan Dinas</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <ErrorMessage
+                        name="dispen"
+                        component="div"
+                        className="text-red-500 text-sm mt-1"
+                      />
+                    </div>
+                  </div>
                 )}
-              </div>
-            </form>
-          )}
-        </Formik>
+
+                {jenisdispensasi && jenisspm === "02" && (
+                  <div className="animate-in fade-in zoom-in duration-300">
+                    <div className="space-y-2">
+                      <Label className="font-bold">Alasan Dispensasi Kontrak</Label>
+                      <Select
+                        value={dispen}
+                        onValueChange={(value) => {
+                          setDispen(value);
+                          setFieldValue("dispen", value);
+                          if (value !== "07") {
+                            setFieldValue("alasan2", "");
+                          }
+                        }}
+                      >
+                        <SelectTrigger className={`w-full ${touched.dispen && errors.dispen ? "border-red-500" : ""}`}>
+                          <SelectValue placeholder="--- Pilih Alasan Dispensasi ---" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="01">01 - Kendala pada aplikasi</SelectItem>
+                          <SelectItem value="02">02 - Kendala pada pejabat perbendaharaan</SelectItem>
+                          <SelectItem value="03">03 - Kendala pada penyedia barang/jasa</SelectItem>
+                          <SelectItem value="04">04 - Kendala administrasi (dokumen kurang lengkap)</SelectItem>
+                          <SelectItem value="05">05 - Kendala pada revisi DIPA/MP PNBP</SelectItem>
+                          <SelectItem value="06">06 - Kendala jaringan dan listrik</SelectItem>
+                          <SelectItem value="07">07 - Lainnya</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <ErrorMessage
+                        name="dispen"
+                        component="div"
+                        className="text-red-500 text-sm mt-1"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {jenisdispensasi && jenisspm === "04" && (
+                  <div className="animate-in fade-in zoom-in duration-300">
+                    <div className="space-y-2">
+                      <Label className="font-bold">Alasan Dispensasi TUP</Label>
+                      <Select
+                        value="07"
+                        onValueChange={(value) => {
+                          setDispen(value);
+                          setFieldValue("dispen", value);
+                        }}
+                        disabled
+                      >
+                        <SelectTrigger className={`w-full ${touched.dispen && errors.dispen ? "border-red-500" : ""}`}>
+                          <SelectValue placeholder="Isikan Alasan Dispensasi TUP" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="07">07 - Lainnya</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+
+                {dispen === "07" && jenisdispensasi && (
+                  <div className="animate-in fade-in zoom-in duration-300">
+                    <div className="space-y-2">
+                      <Label>Uraian Alasan (Lainnya)</Label>
+                      <Textarea
+                        name="alasan2"
+                        value={values.alasan2}
+                        onChange={(e) => setFieldValue("alasan2", e.target.value)}
+                        placeholder="Uraian Alasan"
+                        rows={4}
+                        className={`w-full ${touched.alasan2 && errors.alasan2 ? "border-red-500" : ""}`}
+                      />
+                      <ErrorMessage
+                        name="alasan2"
+                        component="div"
+                        className="text-red-500 text-sm mt-1"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label className="font-bold">
+                    Upload File Surat Persetujuan (PDF)
+                  </Label>
+                  <div className="flex gap-4 items-center">
+                    <div className="flex-1">
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">Normal Upload</Label>
+                        <Input
+                          type="file"
+                          accept="application/pdf"
+                          onChange={(event) => {
+                            if (
+                              event.currentTarget.files &&
+                              event.currentTarget.files[0]
+                            ) {
+                              setFieldValue("file", event.currentTarget.files[0]);
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <ErrorMessage
+                    name="file"
+                    component="div"
+                    className="text-red-500 text-sm mt-1"
+                  />
+                </div>
+
+              </form>
+            )}
+          </Formik>
+        </div>
+
+        <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-3">
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleModalClose}>
+              <X className="mr-2 h-4 w-4" /> Batal
+            </Button>
+            {loading ? (
+              <Button disabled>
+                <Spinner className="mr-2 h-4 w-4" /> Simpan
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                onClick={() => {
+                  const form = document.querySelector('form');
+                  if (form) {
+                    form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                  }
+                }}
+              >
+                <Save className="mr-2 h-4 w-4" /> Simpan
+              </Button>
+            )}
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

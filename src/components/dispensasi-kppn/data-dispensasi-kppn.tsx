@@ -50,13 +50,19 @@ interface DispensasiData {
   jmlkontrak: number;
 }
 
-const DataDispensasiKPPN: React.FC = () => {
+interface DataDispensasiKPPNProps {
+  isRekamOpen?: boolean;
+  onRekamClose?: () => void;
+  onDownload?: () => void;
+  isExporting?: boolean;
+}
+
+const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = false, onRekamClose, onDownload, isExporting = false }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [id, setId] = useState("");
   const [nomor, setNomor] = useState("");
   const [data, setData] = useState<DispensasiData[]>([]);
-  const [showModal, setShowModal] = useState(false);
   const [showModalRekam, setShowModalRekam] = useState(false);
   const [page, setPage] = useState(0);
   const [limit, setLimit] = useState(10);
@@ -68,7 +74,6 @@ const DataDispensasiKPPN: React.FC = () => {
   const [kdkppn, setKdkppn] = useState("");
   const [cek, setCek] = useState(false);
   const [where, setWhere] = useState("");
-  const [loadingStatus, setLoadingStatus] = useState(false);
   const [export2, setExport2] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -210,15 +215,16 @@ const DataDispensasiKPPN: React.FC = () => {
   };
 
   const handleRekam = async () => {
-    setShowModal(true);
+    setShowModalRekam(true);
     setCek(false);
     setOpen(true);
   };
 
   const handleCloseModal = () => {
-    setShowModal(false);
+    setShowModalRekam(false);
     getData();
     setCek(true);
+    onRekamClose?.();
   };
 
   const handleRekamKontrak = async (
@@ -279,47 +285,21 @@ const DataDispensasiKPPN: React.FC = () => {
     setPage(selected);
   };
 
-  const handleStatus = (status: boolean, total: number) => {
-    setLoadingStatus(status);
+  const handleStatus = (status: boolean) => {
     setExport2(status);
-
-    if (total === 0) {
-      setLoadingStatus(false);
-    }
   };
+
+  // Sync export2 with parent's isExporting
+  useEffect(() => {
+    if (isExporting) {
+      setExport2(true);
+    } else {
+      setExport2(false);
+    }
+  }, [isExporting]);
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end gap-2 text-red-500">
-        {user?.role !== "kanwil_djpb" && (
-          <Button
-            variant="default"
-            size="sm"
-            className="my-2 bg-green-600 hover:bg-green-700 text-white"
-            onClick={() => handleRekam()}
-          >
-            Rekam Dispensasi
-          </Button>
-        )}
-        <Button
-          variant="destructive"
-          size="sm"
-          className="my-2"
-          onClick={() => {
-            setLoadingStatus(true);
-            setExport2(true);
-          }}
-          disabled={loadingStatus}
-        >
-          {loadingStatus ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <FileSpreadsheet className="mr-2 h-4 w-4" />
-          )}
-          {loadingStatus ? "Loading..." : "Download"}
-        </Button>
-      </div>
-
       {loading ? (
         <div className="space-y-4">
           <Loading2 />
@@ -508,7 +488,6 @@ const DataDispensasiKPPN: React.FC = () => {
                   pageRangeDisplayed={3}
                   marginPagesDisplayed={1}
                   pageCount={pages}
-                  renderOnZeroPageCount={null}
                   containerClassName="flex gap-2 list-none p-0 m-0"
                   pageClassName="rounded-md border border-gray-300 hover:bg-gray-100"
                   pageLinkClassName="block px-3 py-2 text-decoration-none text-gray-700"
@@ -530,7 +509,7 @@ const DataDispensasiKPPN: React.FC = () => {
         </>
       )}
 
-      {open && <Rekam show={showModal} onHide={handleCloseModal} />}
+      {open && <Rekam show={open} onHide={handleCloseModal} />}
       <RekamKontrak
         show={showModalRekam}
         onHide={handleCloseModalSPM}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
     Select,
     SelectContent,
@@ -32,7 +33,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { apiClient } from "@/lib/api/httpClient";
-import { FilePlus, Loader2, Save, X } from "lucide-react";
+import { FilePlus, Loader2, Save } from "lucide-react";
 import satkerData from "@/data/carisatker.json";
 
 // Schema based on the SQL provided
@@ -139,145 +140,117 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
     }
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent className="max-w-4xl sm:max-w-4xl max-h-[85vh] flex flex-col">
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-bold flex items-center gap-2">
-                        <Save className="h-5 w-5 text-primary" />
-                        Rekam Data IKPA
-                    </DialogTitle>
+                    <DialogTitle>Rekam Data IKPA</DialogTitle>
                 </DialogHeader>
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Tahun Anggaran */}
-                            <FormField
-                                control={form.control}
-                                name="thang"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Tahun Anggaran</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Pilih Tahun" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="2025">2025</SelectItem>
-                                                <SelectItem value="2024">2024</SelectItem>
-                                                <SelectItem value="2023">2023</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                    <form id="ikpa-form" onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6 py-4 overflow-y-auto flex-1 pr-2">
+                        {/* First Row - Year, Date, ND Number */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="w-full space-y-2">
+                                <Label htmlFor="thang">Tahun Anggaran</Label>
+                                <Select
+                                    value={form.watch("thang")}
+                                    onValueChange={(value) => form.setValue("thang", value)}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Pilih Tahun" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="2025">2025</SelectItem>
+                                        <SelectItem value="2024">2024</SelectItem>
+                                        <SelectItem value="2023">2023</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                            {/* Tanggal ND */}
-                            <FormField
-                                control={form.control}
-                                name="tg_nd"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Tanggal Nota Dinas</FormLabel>
-                                        <FormControl>
-                                            <Input type="date" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            <div className="w-full space-y-2">
+                                <Label htmlFor="tg_nd">Tanggal Nota Dinas</Label>
+                                <Input
+                                    id="tg_nd"
+                                    type="date"
+                                    value={form.watch("tg_nd")}
+                                    onChange={(e) => form.setValue("tg_nd", e.target.value)}
+                                    className="w-full"
+                                />
+                            </div>
 
-                            {/* Nomor ND */}
-                            <FormField
-                                control={form.control}
-                                name="no_nd"
-                                render={({ field }) => (
-                                    <FormItem className="md:col-span-2">
-                                        <FormLabel>Nomor Nota Dinas</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Input nomor ND..." {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            <div className="w-full space-y-2 lg:col-span-1">
+                                <Label htmlFor="no_nd">Nomor Nota Dinas</Label>
+                                <Input
+                                    id="no_nd"
+                                    value={form.watch("no_nd")}
+                                    onChange={(e) => form.setValue("no_nd", e.target.value)}
+                                    placeholder="Input nomor ND"
+                                    className="w-full"
+                                />
+                            </div>
+                        </div>
 
-                            {/* Satker */}
-                            <FormField
-                                control={form.control}
-                                name="kdsatker"
-                                render={({ field }) => (
-                                    <FormItem className="md:col-span-2">
-                                        <FormLabel>Satuan Kerja</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Pilih Satker" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent className="max-h-[300px]">
-                                                {(satkerData as any[]).slice(0, 200).map((s) => (
-                                                    <SelectItem key={s.kdsatker} value={s.kdsatker}>
-                                                        {s.kdsatker} - {s.nmsatker}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                        {/* Satker - Full Width */}
+                        <div className="w-full space-y-2">
+                            <Label htmlFor="kdsatker">Satuan Kerja</Label>
+                            <Select
+                                value={form.watch("kdsatker")}
+                                onValueChange={(value) => form.setValue("kdsatker", value)}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Pilih Satker" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[300px]">
+                                    {(satkerData as any[]).slice(0, 200).map((s) => (
+                                        <SelectItem key={s.kdsatker} value={s.kdsatker}>
+                                            {s.kdsatker} - {s.nmsatker}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                            {/* Indikator */}
-                            <FormField
-                                control={form.control}
-                                name="nm_indikator"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Indikator IKPA</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Pilih Indikator" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {INDIKATOR_OPTIONS.map((opt) => (
-                                                    <SelectItem key={opt.code} value={opt.value}>
-                                                        {opt.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                        {/* Second Row - Indikator, No Doc */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="w-full space-y-2">
+                                <Label htmlFor="nm_indikator">Indikator IKPA</Label>
+                                <Select
+                                    value={form.watch("nm_indikator")}
+                                    onValueChange={(value) => form.setValue("nm_indikator", value)}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Pilih Indikator" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {INDIKATOR_OPTIONS.map((opt) => (
+                                            <SelectItem key={opt.code} value={opt.value}>
+                                                {opt.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                            {/* No Doc */}
-                            <FormField
-                                control={form.control}
-                                name="no_doc"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Nomor Dokumen</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Input nomor dokumen..." {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            <div className="w-full space-y-2">
+                                <Label htmlFor="no_doc">Nomor Dokumen</Label>
+                                <Input
+                                    id="no_doc"
+                                    value={form.watch("no_doc")}
+                                    onChange={(e) => form.setValue("no_doc", e.target.value)}
+                                    placeholder="Input nomor dokumen"
+                                    className="w-full"
+                                />
+                            </div>
+                        </div>
 
-                            {/* File Upload */}
-                            <div className="md:col-span-2 p-4 border-2 border-dashed rounded-lg bg-muted/20 flex flex-col items-center justify-center gap-2">
-                                <FormLabel className="flex items-center gap-2 text-primary cursor-pointer hover:underline" htmlFor="file-upload">
+                        {/* File Upload */}
+                        <div className="w-full space-y-2">
+                            <Label>File Nota Dinas (PDF)</Label>
+                            <div className="w-full p-4 border-2 border-dashed rounded-lg bg-muted/20 flex flex-col items-center justify-center gap-2">
+                                <Label htmlFor="file-upload" className="flex items-center gap-2 text-primary cursor-pointer hover:underline">
                                     <FilePlus className="h-5 w-5" />
                                     {form.watch("file") ? (form.watch("file") as File).name : "Upload PDF Nota Dinas / Dokumen (Maks 5MB)"}
-                                </FormLabel>
+                                </Label>
                                 <Input
                                     id="file-upload"
                                     type="file"
@@ -295,7 +268,7 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                                         type="button"
                                         variant="ghost"
                                         size="sm"
-                                        className="text-destructive h-7 text-[10px]"
+                                        className="text-destructive h-7 text-xs"
                                         onClick={() => form.setValue("file", undefined)}
                                     >
                                         Hapus File
@@ -306,66 +279,66 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                         </div>
 
                         {/* Textareas */}
-                        <div className="space-y-4 pt-2 border-t">
-                            <FormField
-                                control={form.control}
-                                name="keterangan"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Keterangan</FormLabel>
-                                        <FormControl>
-                                            <Textarea placeholder="Input keterangan tambahan..." className="min-h-[80px]" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                        <div className="w-full space-y-4">
+                            <div className="w-full space-y-2">
+                                <Label htmlFor="keterangan">Keterangan</Label>
+                                <Textarea
+                                    id="keterangan"
+                                    value={form.watch("keterangan") || ""}
+                                    onChange={(e) => form.setValue("keterangan", e.target.value)}
+                                    placeholder="Input keterangan tambahan"
+                                    rows={3}
+                                    className="w-full"
+                                />
+                            </div>
 
-                            <FormField
-                                control={form.control}
-                                name="kronologis"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Kronologis</FormLabel>
-                                        <FormControl>
-                                            <Textarea placeholder="Input kronologis kejadian..." className="min-h-[80px]" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            <div className="w-full space-y-2">
+                                <Label htmlFor="kronologis">Kronologis</Label>
+                                <Textarea
+                                    id="kronologis"
+                                    value={form.watch("kronologis") || ""}
+                                    onChange={(e) => form.setValue("kronologis", e.target.value)}
+                                    placeholder="Input kronologis kejadian"
+                                    rows={3}
+                                    className="w-full"
+                                />
+                            </div>
 
-                            <FormField
-                                control={form.control}
-                                name="perbaikan"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Langkah Perbaikan</FormLabel>
-                                        <FormControl>
-                                            <Textarea placeholder="Input langkah perbaikan yang diambil..." className="min-h-[80px]" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            <div className="w-full space-y-2">
+                                <Label htmlFor="perbaikan">Langkah Perbaikan</Label>
+                                <Textarea
+                                    id="perbaikan"
+                                    value={form.watch("perbaikan") || ""}
+                                    onChange={(e) => form.setValue("perbaikan", e.target.value)}
+                                    placeholder="Input langkah perbaikan yang diambil"
+                                    rows={3}
+                                    className="w-full"
+                                />
+                            </div>
                         </div>
-
-                        <DialogFooter className="gap-2">
-                            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
-                                <X className="h-4 w-4 mr-2" />
-                                Batal
-                            </Button>
-                            <Button type="submit" disabled={isSubmitting}>
-                                {isSubmitting ? (
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                ) : (
-                                    <Save className="h-4 w-4 mr-2" />
-                                )}
-                                Simpan Record
-                            </Button>
-                        </DialogFooter>
                     </form>
                 </Form>
+
+                <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-3 shrink-0">
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+                            Close
+                        </Button>
+                        <Button onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting} className="bg-slate-800 hover:bg-slate-900">
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="h-4 w-4 mr-2" />
+                                    Save
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );

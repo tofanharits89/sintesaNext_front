@@ -3,27 +3,33 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import Swal from "sweetalert2";
-import { PlusSquare, Trash2, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { apiClient } from "@/lib/api/httpClient";
+import { PlusSquare, Trash2, Download, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import RekamKontrak from "./rekam-kontrak";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-// Table styling dengan fixed column widths
+// Table styling - matching weekly-report pattern
 const tableStyles = {
-  headerCell: "bg-zinc-800 text-white px-2 py-3 font-semibold text-xs text-center align-middle border-zinc-200 whitespace-nowrap",
-  bodyCell: "px-2 py-[10px] text-xs text-center align-middle border-zinc-200 whitespace-nowrap overflow-hidden text-ellipsis",
-  noColumn: "w-[50px] min-w-[50px] max-w-[50px]",
-  taColumn: "w-[60px] min-w-[60px] max-w-[60px]",
-  satkerColumn: "w-[220px] min-w-[220px] max-w-[220px]",
-  tglColumn: "w-[110px] min-w-[110px] max-w-[110px]",
-  nomorColumn: "w-[240px] min-w-[240px] max-w-[240px]",
-  jumlahColumn: "w-[100px] min-w-[100px] max-w-[100px]",
-  opsiColumn: "w-[130px] min-w-[130px] max-w-[130px]",
+  headerCell: "h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap",
+  headerCellCenter: "h-10 px-4 text-center align-middle font-medium text-muted-foreground whitespace-nowrap",
+  bodyCell: "px-4 py-3 text-sm align-middle border-b whitespace-nowrap",
+  bodyCellCenter: "px-4 py-3 text-sm text-center align-middle border-b whitespace-nowrap",
 };
 
 interface DataKontrakProps {
-  cek: boolean;
+  cek: number;
   id: string;
   where: string;
 }
@@ -61,11 +67,24 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
   // const [loadingStatus, setLoadingStatus] = useState(false);
   // const [export2, setExport2] = useState(false);
 
+  // States for Delete Dialog
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState("");
+  const [deleteTargetCount, setDeleteTargetCount] = useState(0);
+
+  // Load data on initial mount (only when user is available)
   useEffect(() => {
-    if (cek) {
+    if (user) {
       getData();
     }
-  }, [cek, id, where, page]);
+  }, [user]);
+
+  // Reload data when filter changes (cek is now a counter)
+  useEffect(() => {
+    if (cek > 0 && user) {
+      getData();
+    }
+  }, [cek, id, where, page, user]);
 
   const getData = async () => {
     setLoading(true);
@@ -98,8 +117,7 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
       combinedFilter && combinedFilter.trim() !== "" ? combinedFilter : null;
 
     const encodedQuery = encodeURIComponent(
-      `SELECT a.id,a.thang,a.kddept,a.kdunit,a.kdsatker,c.nmsatker,a.kdlokasi,a.kdkppn,a.tgpermohonan,a.nopermohonan,a.uraian,a.jmlkontrak jumlah,SUM(b.nilkontrak) nilaikontrak FROM laporan_2023.dispensasi_kontrak a LEFT JOIN laporan_2023.dispensasi_kontrak_lampiran b ON a.id=b.id_dispensasi::integer  LEFT JOIN dbref.t_satker_2025 c ON a.kdsatker=c.kdsatker  ${
-        finalFilter ? `WHERE ${finalFilter}` : "  "
+      `SELECT a.id,a.thang,a.kddept,a.kdunit,a.kdsatker,c.nmsatker,a.kdlokasi,a.kdkppn,a.tgpermohonan,a.nopermohonan,a.uraian,a.jmlkontrak jumlah,SUM(b.nilkontrak) nilaikontrak FROM laporan_2023.dispensasi_kontrak a LEFT JOIN laporan_2023.dispensasi_kontrak_lampiran b ON a.id=b.id_dispensasi::integer  LEFT JOIN dbref.t_satker_2025 c ON a.kdsatker=c.kdsatker  ${finalFilter ? `WHERE ${finalFilter}` : "  "
       }GROUP BY a.id,a.thang,a.kddept,a.kdunit,a.kdsatker,c.nmsatker,a.kdlokasi,a.kdkppn,a.tgpermohonan,a.nopermohonan,a.uraian,a.jmlkontrak ORDER BY a.id DESC`
     );
 
@@ -118,9 +136,8 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
                 LEFT JOIN dbref.t_lokasi_2025 e ON a.kdlokasi=e.kdlokasi 
                 LEFT JOIN dbref.t_kanwil_2025 g ON a.kdkanwil=g.kdkanwil 
                 LEFT JOIN dbref.t_kppn_2025 h ON a.kdkppn=h.kdkppn 
-                LEFT JOIN dbref.t_satker_2025 i ON a.kdsatker=i.kdsatker  ${
-                  finalFilter ? `WHERE ${finalFilter}` : " "
-                } ORDER BY a.kddept,a.kdsatker,a.id`
+                LEFT JOIN dbref.t_satker_2025 i ON a.kdsatker=i.kdsatker  ${finalFilter ? `WHERE ${finalFilter}` : " "
+      } ORDER BY a.kddept,a.kdsatker,a.id`
     );
 
     const cleanedQuery2 = decodeURIComponent(encodedQuery2)
@@ -132,24 +149,10 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
     const encryptedQuery = btoa(cleanedQuery);
 
     try {
-      // API endpoint: /api/v1/dispensasi/:query?limit=15&page=0&user=username
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
-      const apiUrl = `${baseUrl}/dispensasi/${encryptedQuery}?limit=${limit}&page=${page}&user=${
-        user?.username || ""
-      }`;
-
-      const response = await fetch(apiUrl, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
+      // API endpoint: /dispensasi/:query?limit=10&page=0&user=username
+      const result = await apiClient.get<any>(
+        `/dispensasi/${encryptedQuery}?limit=${limit}&page=${page}&user=${user?.username || ""}`
+      );
       setData(result.result || []);
       setPages(result.totalPages || 0);
       setRows(result.totalRows || 0);
@@ -181,45 +184,36 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
     getData();
   };
 
-  const handleHapusDispKontrak = async (id: string, jumlah: number) => {
-    const confirmText =
-      jumlah > 0
-        ? `Ada ${jumlah} Kontrak yang sudah direkam.<br/> Anda yakin ingin menghapus data ini ? `
-        : "Anda yakin ingin menghapus data ini ?";
+  const handleHapusDispKontrak = (id: string, jumlah: number) => {
+    setDeleteTargetId(id);
+    setDeleteTargetCount(jumlah);
+    setShowDeleteDialog(true);
+  };
 
-    const result = await Swal.fire({
-      title: "Konfirmasi Hapus",
-      html: confirmText,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Ya, Hapus",
-      cancelButtonText: "Batal",
-      position: "top",
-    });
-
-    if (result.isConfirmed) {
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BASIC_URL}dispkontrak/delete/${id}`,
-          {
-            method: "DELETE",
-            headers: {
-              // Authorization: `Bearer ${user?.token}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+  const confirmDelete = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASIC_URL}dispkontrak/delete/${deleteTargetId}`,
+        {
+          method: "DELETE",
+          headers: {
+            // Authorization: `Bearer ${user?.token}`,
+          },
         }
+      );
 
-        toast.success("Data telah dihapus.");
-        getData();
-      } catch (error) {
-        toast.error("Terjadi Permasalahan Koneksi atau Server Backend");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      toast.success("Data telah dihapus.");
+      getData();
+    } catch (error) {
+      toast.error("Terjadi Permasalahan Koneksi atau Server Backend");
+    } finally {
+      setShowDeleteDialog(false);
+      setDeleteTargetId("");
+      setDeleteTargetCount(0);
     }
   };
 
@@ -273,115 +267,114 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
         </>
       ) : (
         <>
-          <Card className="mt-3">
-            <CardContent className="p-0 overflow-x-auto">
-              <Table className="w-full min-w-[1300px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className={tableStyles.headerCell + " " + tableStyles.noColumn}>
-                      No.
-                    </TableHead>
-                    <TableHead className={tableStyles.headerCell + " " + tableStyles.taColumn}>
-                      TA
-                    </TableHead>
-                    <TableHead className={tableStyles.headerCell + " " + tableStyles.satkerColumn}>
-                      Satker
-                    </TableHead>
-                    <TableHead className={tableStyles.headerCell + " " + tableStyles.tglColumn}>
-                      Tgl Permohonan
-                    </TableHead>
-                    <TableHead className={tableStyles.headerCell + " " + tableStyles.nomorColumn}>
-                      Nomor Permohonan
-                    </TableHead>
-                    <TableHead className={tableStyles.headerCell + " " + tableStyles.jumlahColumn}>
-                      Jumlah Kontrak
-                    </TableHead>
-                    <TableHead className={tableStyles.headerCell + " " + tableStyles.opsiColumn}>
-                      Opsi
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody className="text-center">
-                  {data.map((row, index) => (
-                    <TableRow key={index}>
-                      <TableCell className={tableStyles.bodyCell + " " + tableStyles.noColumn}>
-                        {index + 1 + page * limit}
-                      </TableCell>
-                      <TableCell className={tableStyles.bodyCell + " " + tableStyles.taColumn}>
-                        {row.thang}
-                      </TableCell>
-                      <TableCell className={tableStyles.bodyCell + " " + tableStyles.satkerColumn}>
-                        <div className="overflow-hidden text-ellipsis">
-                          {row.nmsatker?.trim()} ({row.kdsatker})
-                        </div>
-                      </TableCell>
-                      <TableCell className={tableStyles.bodyCell + " " + tableStyles.tglColumn}>
-                        {row.tgpermohonan}
-                      </TableCell>
-                      <TableCell className={tableStyles.bodyCell + " " + tableStyles.nomorColumn}>
-                        <div className="overflow-hidden text-ellipsis">
-                          {row.nopermohonan?.trim()}
-                        </div>
-                      </TableCell>
-                      <TableCell className={tableStyles.bodyCell + " " + tableStyles.jumlahColumn}>
-                        {row.jumlah ?? "-"}
-                      </TableCell>
-                      <TableCell className={tableStyles.bodyCell + " " + tableStyles.opsiColumn}>
-                        {/* Rekam Kontrak - hanya untuk non-KPPN */}
-                        {user?.role !== "kppn" && (
-                          <span title="Rekam Kontrak" className="inline-block">
-                            <PlusSquare
-                              className="text-green-600 mx-2 cursor-pointer hover:scale-110 transition-transform"
-                              size={20}
-                              onClick={() =>
-                                handleRekamKontrak(
-                                  String(row.id),
-                                  row.nopermohonan?.trim() || "",
-                                  row.nmsatker?.trim() || "",
-                                  row.kdsatker,
-                                  row.thang
-                                )
-                              }
-                            />
-                          </span>
-                        )}
+          <div className="rounded-md border">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className={tableStyles.headerCellCenter}>No.</th>
+                    <th className={tableStyles.headerCellCenter}>TA</th>
+                    <th className={tableStyles.headerCell}>Satker</th>
+                    <th className={tableStyles.headerCell}>Tgl Permohonan</th>
+                    <th className={tableStyles.headerCell}>Nomor Permohonan</th>
+                    <th className={tableStyles.headerCellCenter}>Jumlah Kontrak</th>
+                    <th className={tableStyles.headerCellCenter}>Opsi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="h-24 text-center text-muted-foreground">
+                        Belum ada data dispensasi Kontrak
+                      </td>
+                    </tr>
+                  ) : (
+                    data.map((row, index) => (
+                      <tr key={index} className="hover:bg-muted/50 transition-colors">
+                        <td className={tableStyles.bodyCellCenter}>
+                          {index + 1 + page * limit}
+                        </td>
+                        <td className={tableStyles.bodyCellCenter}>
+                          {row.thang}
+                        </td>
+                        <td className={tableStyles.bodyCell}>
+                          <div className="max-w-[300px] truncate" title={`${row.nmsatker?.trim()} (${row.kdsatker})`}>
+                            {row.nmsatker?.trim()} ({row.kdsatker})
+                          </div>
+                        </td>
+                        <td className={tableStyles.bodyCell}>
+                          {row.tgpermohonan}
+                        </td>
+                        <td className={tableStyles.bodyCell}>
+                          <div className="max-w-[280px] truncate" title={row.nopermohonan?.trim()}>
+                            {row.nopermohonan?.trim()}
+                          </div>
+                        </td>
+                        <td className={tableStyles.bodyCellCenter}>
+                          {row.jumlah ?? "-"}
+                        </td>
+                        <td className={tableStyles.bodyCellCenter}>
+                          <td className={tableStyles.bodyCellCenter}>
+                            <div className="flex items-center justify-center gap-1">
+                              {/* Rekam Kontrak - hanya untuk non-KPPN */}
+                              {user?.role !== "kppn" && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-green-600 hover:text-green-800"
+                                  title="Rekam Kontrak"
+                                  onClick={() =>
+                                    handleRekamKontrak(
+                                      String(row.id),
+                                      row.nopermohonan?.trim() || "",
+                                      row.nmsatker?.trim() || "",
+                                      row.kdsatker,
+                                      row.thang
+                                    )
+                                  }
+                                >
+                                  <PlusSquare className="h-4 w-4" />
+                                </Button>
+                              )}
 
-                        {/* Hapus Dispensasi - hanya untuk non-KPPN */}
-                        {user?.role !== "kppn" && (
-                          <span
-                            title="Hapus Dispensasi"
-                            className="inline-block"
-                          >
-                            <Trash2
-                              className="text-red-600 mx-2 cursor-pointer hover:scale-110 transition-transform"
-                              size={20}
-                              onClick={() =>
-                                handleHapusDispKontrak(
-                                  String(row.id),
-                                  row.jumlah ?? 0
-                                )
-                              }
-                            />
-                          </span>
-                        )}
+                              {/* Hapus Dispensasi - hanya untuk non-KPPN */}
+                              {user?.role !== "kppn" && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
+                                  title="Hapus Dispensasi"
+                                  onClick={() =>
+                                    handleHapusDispKontrak(
+                                      String(row.id),
+                                      row.jumlah ?? 0
+                                    )
+                                  }
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
 
-                        {/* Download - untuk semua role */}
-                        <span title="Download Dokumen" className="inline-block">
-                          <Download
-                            className="text-blue-600 mx-2 cursor-pointer hover:scale-110 transition-transform"
-                            size={20}
-                            onClick={() =>
-                              handledownloadKontrak(String(row.id))
-                            }
-                          />
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                              {/* Download - untuk semua role */}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800"
+                                title="Download Dokumen"
+                                onClick={() => handledownloadKontrak(String(row.id))}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
           {data.length > 0 && (
             <div className="flex items-center justify-content-between mt-4 mx-4 text-zinc-800">
@@ -445,6 +438,36 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
         kdsatker={kdsatker}
         nmsatker={nmsatker}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Konfirmasi Hapus
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTargetCount > 0
+                ? `Ada ${deleteTargetCount} Kontrak yang sudah direkam. Apakah Anda yakin ingin menghapus data ini?`
+                : "Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600 text-white"
+              onClick={(e) => {
+                e.preventDefault();
+                confirmDelete();
+              }}
+              disabled={loading}
+            >
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

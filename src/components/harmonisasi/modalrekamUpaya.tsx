@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+
 import {
   Select,
   SelectContent,
@@ -15,8 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageSquareText, FileSpreadsheet, Loader2 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/components/animate-ui/components/animate/tabs";
+import { FileSpreadsheet, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
@@ -119,7 +119,8 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
       setLoading(true);
       // Use backend URL directly
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-      const endpoint = `${baseUrl}/api/v1/harmonisasi/upaya`;
+      const cleanBaseUrl = baseUrl.replace(/\/$/, "").replace(/\/api\/v1$/, "");
+      const endpoint = `${cleanBaseUrl}/api/v1/harmonisasi/upaya`;
 
       await http.patch(endpoint, payload);
 
@@ -161,7 +162,8 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
     try {
       // Use backend URL directly
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-      const endpoint = `${baseUrl}/api/v1/harmonisasi/upaya/view`;
+      const cleanBaseUrl = baseUrl.replace(/\/$/, "").replace(/\/api\/v1$/, "");
+      const endpoint = `${cleanBaseUrl}/api/v1/harmonisasi/upaya/view`;
 
       const url = `${endpoint}?queryParams=${encryptedQuery}&limit=${limit}&page=${page}&user=${username}`;
 
@@ -169,10 +171,14 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
 
       setRekamanUpaya(response.data.result || []);
     } catch (error: any) {
-      const msg =
+      let msg =
         error.response?.data?.error ||
         "Terjadi Permasalahan Koneksi atau Server Backend";
-      toast.error(msg);
+
+      if (typeof msg === 'object') {
+        msg = msg.message || JSON.stringify(msg);
+      }
+      toast.error(String(msg));
     } finally {
       setLoadingRekaman(false);
     }
@@ -189,189 +195,186 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && onHide()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl sm:max-w-4xl max-h-[90vh] overflow-y-auto" showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <MessageSquareText className="w-5 h-5 text-primary" />
-            Rekam Upaya Harmonisasi satker K/L dan Pemda
-          </DialogTitle>
+          <DialogTitle>Rekam Upaya Harmonisasi</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <Card className="p-4 shadow-sm border bg-card">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="text-sm font-medium mb-1 block">Tahun</label>
-                <Select value={thang} onValueChange={setThang}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih Tahun" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {thangOptions.map((year) => (
-                      <SelectItem key={year} value={String(year)}>
-                        {year}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-1 block">
-                  Semester
-                </label>
-                <Select value={semester} onValueChange={setSemester}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih Semester" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {semesterOptions.map((smt) => (
-                      <SelectItem key={smt} value={String(smt)}>
-                        Semester {smt}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-1 block">Kanwil</label>
-                <Select
-                  value={kanwil}
-                  onValueChange={setKanwil}
-                  disabled={role === "kanwil_djpb"}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih Kanwil" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="00">Semua Kanwil</SelectItem>
-                    {kanwilOptions.map((opt) => (
-                      <SelectItem key={opt.kdkanwil} value={opt.kdkanwil}>
-                        {opt.kdkanwil} - {opt.nmkanwil}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+        <div className="space-y-6">
+          <Tabs defaultValue="form" className="w-full gap-3">
+            <div className="border-b border-border/50 pb-3 mb-0">
+              <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-2 gap-2 md:gap-0">
+                <TabsTrigger value="form" className="h-12 md:h-full px-4 md:px-5 py-0 text-sm md:text-base flex items-center justify-center gap-2">
+                  Rekam
+                </TabsTrigger>
+                <TabsTrigger value="rekaman" className="h-12 md:h-full px-4 md:px-5 py-0 text-sm md:text-base flex items-center justify-center gap-2">
+                  Riwayat
+                </TabsTrigger>
+              </TabsList>
             </div>
-          </Card>
 
-          <Tabs defaultValue="form" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="form">Rekam</TabsTrigger>
-              <TabsTrigger value="rekaman">Hasil</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="form">
-              <Card className="p-4 shadow-sm border bg-card mt-2">
-                <form onSubmit={handleSubmit}>
-                  <div className="mb-4">
-                    <Textarea
-                      rows={10}
-                      className="min-h-[200px]"
-                      value={upaya}
-                      onChange={(e) => setUpaya(e.target.value)}
-                      placeholder="Tuliskan upaya harmonisasi yang sudah dilakukan..."
-                    />
+            <TabsContents>
+              <TabsContent value="form" className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Tahun</label>
+                    <Select value={thang} onValueChange={setThang}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Pilih Tahun" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {thangOptions.map((year) => (
+                          <SelectItem key={year} value={String(year)}>
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="default"
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                      type="submit"
-                      disabled={loading}
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Semester</label>
+                    <Select value={semester} onValueChange={setSemester}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Pilih Semester" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {semesterOptions.map((smt) => (
+                          <SelectItem key={smt} value={String(smt)}>
+                            Semester {smt}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Kanwil</label>
+                    <Select
+                      value={kanwil}
+                      onValueChange={setKanwil}
+                      disabled={role === "kanwil_djpb"}
                     >
-                      {loading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        "Simpan"
-                      )}
-                    </Button>
-                    <Button variant="secondary" onClick={onHide} type="button">
-                      Tutup
-                    </Button>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Pilih Kanwil" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="00">Semua Kanwil</SelectItem>
+                        {kanwilOptions.map((opt) => (
+                          <SelectItem key={opt.kdkanwil} value={opt.kdkanwil}>
+                            {opt.kdkanwil} - {opt.nmkanwil}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                </form>
-              </Card>
-            </TabsContent>
+                </div>
 
-            <TabsContent value="rekaman">
-              <Card className="p-4 shadow-sm border bg-card mt-2">
-                <div className="overflow-x-auto">
-                  {loadingRekaman ? (
-                    <div className="flex justify-center p-4">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    </div>
-                  ) : (
-                    <table className="w-full text-sm">
-                      <thead className="bg-secondary text-secondary-foreground text-center">
-                        <tr>
-                          <th className="p-2 border border-border">No</th>
-                          <th className="p-2 border border-border">
-                            Tahun/Semester
-                          </th>
-                          <th className="p-2 border border-border">Kanwil</th>
-                          <th className="p-2 border border-border">Upaya</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rekamanUpaya.length > 0 ? (
-                          rekamanUpaya.map((item, index) => (
-                            <tr
-                              key={item.id}
-                              className="hover:bg-muted/50"
-                            >
-                              <td className="p-2 border border-border text-center">
-                                {index + 1 + page * limit}
-                              </td>
-                              <td className="p-2 border border-border text-center">
-                                {item.thang}/{item.semester}
-                              </td>
-                              <td className="p-2 border border-border text-center">
-                                ({item.kdkanwil}) - {item.nmkanwil}
-                              </td>
-                              <td className="p-2 border border-border text-justify">
-                                {item.upaya}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Upaya</label>
+                  <Textarea
+                    rows={10}
+                    className="min-h-[200px] w-full"
+                    value={upaya}
+                    onChange={(e) => setUpaya(e.target.value)}
+                    placeholder="Tuliskan upaya harmonisasi yang sudah dilakukan..."
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button variant="outline" onClick={onHide} type="button">
+                    Batal
+                  </Button>
+                  <Button
+                    variant="default"
+                    className="bg-primary hover:bg-primary/90"
+                    onClick={(e) => handleSubmit(e as any)}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : null}
+                    Simpan
+                  </Button>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="rekaman" className="mt-0">
+                <div className="rounded-md border">
+                  <div className="overflow-x-auto">
+                    {loadingRekaman ? (
+                      <div className="flex justify-center p-8">
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : (
+                      <table className="w-full text-sm">
+                        <thead className="bg-muted/50 border-b">
+                          <tr>
+                            <th className="h-10 px-4 text-center align-middle font-medium text-muted-foreground w-12">No</th>
+                            <th className="h-10 px-4 text-center align-middle font-medium text-muted-foreground w-32">
+                              Periode
+                            </th>
+                            <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground w-48">Kanwil</th>
+                            <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Upaya</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {rekamanUpaya.length > 0 ? (
+                            rekamanUpaya.map((item, index) => (
+                              <tr
+                                key={item.id}
+                                className="border-b transition-colors hover:bg-muted/50 last:border-0"
+                              >
+                                <td className="p-4 text-center align-top">
+                                  {index + 1 + page * limit}
+                                </td>
+                                <td className="p-4 text-center align-top whitespace-nowrap">
+                                  {item.thang} / Sem {item.semester}
+                                </td>
+                                <td className="p-4 align-top">
+                                  {item.kdkanwil} - {item.nmkanwil}
+                                </td>
+                                <td className="p-4 align-top whitespace-pre-wrap text-justify">
+                                  {item.upaya}
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td
+                                colSpan={4}
+                                className="p-8 text-center text-muted-foreground"
+                              >
+                                Belum ada data riwayat upaya
                               </td>
                             </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td
-                              colSpan={4}
-                              className="p-4 text-center text-muted-foreground border border-border"
-                            >
-                              Belum ada data
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  )}
+                          )}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
                 </div>
+
                 <div className="flex justify-end mt-4">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex items-center gap-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground"
                     onClick={() => {
                       setLoadingStatus(true);
                       setExport2(true);
                     }}
                     disabled={loadingStatus}
                   >
-                    {loadingStatus && (
-                      <Loader2 className="h-3 w-3 animate-spin" />
+                    {loadingStatus ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <FileSpreadsheet className="h-4 w-4 mr-2" />
                     )}
-                    {!loadingStatus && (
-                      <FileSpreadsheet className="h-4 w-4" />
-                    )}
-                    {loadingStatus ? "Loading..." : "Download"}
+                    {loadingStatus ? "Mengunduh..." : "Unduh Excel"}
                   </Button>
                 </div>
-              </Card>
-            </TabsContent>
+              </TabsContent>
+            </TabsContents>
           </Tabs>
 
           {export2 && (

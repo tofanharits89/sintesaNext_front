@@ -1,18 +1,22 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { MessageSquareText } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContents,
+  TabsContent,
+} from "@/components/animate-ui/components/animate/tabs";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -242,270 +246,266 @@ export default function RekamKesimpulan({
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && onHide()}>
-      <DialogContent className="max-w-4xl h-[80vh] flex flex-col p-0">
-        <DialogHeader className="px-6 py-4 border-b">
-          <DialogTitle className="flex items-center gap-2 text-xl font-bold">
-            <MessageSquareText className="text-green-600" />
-            Rekam Gambaran Umum, Kesimpulan, dan Rekomendasi Pelaksanaan Monev
-            PNBP
-          </DialogTitle>
+      <DialogContent className="w-full max-w-5xl sm:max-w-6xl max-h-[90vh] overflow-y-auto" showCloseButton={false}>
+        <DialogHeader>
+          <DialogTitle className="break-words text-wrap">Rekam Gambaran Umum, Kesimpulan, dan Rekomendasi Pelaksanaan Monev PNBP</DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden">
-          <Tabs defaultValue="form-gambaran" className="h-full flex flex-col">
-            <div className="px-6 border-b">
-              <TabsList className="w-full justify-start h-auto p-0 bg-transparent gap-6">
+        <div className="w-full space-y-4 overflow-hidden">
+          <Tabs defaultValue="form-gambaran" className="w-full gap-3">
+            <div className="border-b border-border/50 pb-3 mb-0">
+              <TabsList className="relative w-full h-auto p-2 rounded-xl grid grid-cols-2 md:grid-cols-4 gap-2">
                 <TabsTrigger
                   value="form-gambaran"
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none border-b-2 border-transparent px-0 py-3"
+                  className="h-auto px-2 py-2 text-xs md:text-sm flex items-center justify-center gap-2 whitespace-normal text-center"
                 >
                   Gambaran Umum
                 </TabsTrigger>
                 <TabsTrigger
                   value="form-kesimpulan"
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none border-b-2 border-transparent px-0 py-3"
+                  className="h-auto px-2 py-2 text-xs md:text-sm flex items-center justify-center gap-2 whitespace-normal text-center"
                 >
                   Kesimpulan
                 </TabsTrigger>
                 <TabsTrigger
                   value="form-rekomendasi"
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none border-b-2 border-transparent px-0 py-3"
+                  className="h-auto px-2 py-2 text-xs md:text-sm flex items-center justify-center gap-2 whitespace-normal text-center"
                 >
                   Rekomendasi
                 </TabsTrigger>
                 <TabsTrigger
                   value="hasil"
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none border-b-2 border-transparent px-0 py-3"
+                  className="h-auto px-2 py-2 text-xs md:text-sm flex items-center justify-center gap-2 whitespace-normal text-center"
                 >
                   Hasil
                 </TabsTrigger>
               </TabsList>
             </div>
 
-            <div className="flex-1 overflow-y-auto bg-muted/10 p-6">
-              <div className="space-y-4 mb-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label>Pilih Tahun</Label>
-                    <Select
-                      value={thang}
-                      onValueChange={(val) => setThang(val)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih Tahun" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Array.from({ length: 3 }, (_, i) => 2025 + i).map(
-                          (year) => (
-                            <SelectItem key={year} value={year.toString()}>
-                              {year}
-                            </SelectItem>
-                          ),
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Pilih Triwulan</Label>
-                    <Select
-                      value={triwulan}
-                      onValueChange={(val) => setTriwulan(val)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih Triwulan" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[2, 4].map((tw) => (
-                          <SelectItem key={tw} value={tw.toString()}>
-                            Triwulan {tw}
+            <div className="mt-4 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Pilih Tahun</Label>
+                  <Select
+                    value={thang}
+                    onValueChange={(val) => setThang(val)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Pilih Tahun" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 3 }, (_, i) => 2025 + i).map(
+                        (year) => (
+                          <SelectItem key={year} value={year.toString()}>
+                            {year}
                           </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Pilih Kanwil</Label>
-                    <Select value={kanwil} onValueChange={setKanwil}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih Kanwil" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="00">Semua Kanwil</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                        ),
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Pilih Triwulan</Label>
+                  <Select
+                    value={triwulan}
+                    onValueChange={(val) => setTriwulan(val)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Pilih Triwulan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[2, 4].map((tw) => (
+                        <SelectItem key={tw} value={tw.toString()}>
+                          Triwulan {tw}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Pilih Kanwil</Label>
+                  <Select value={kanwil} onValueChange={setKanwil}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Pilih Kanwil" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="00">Semua Kanwil</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
-              <TabsContent value="form-gambaran" className="mt-0 space-y-4">
-                <div className="bg-background border rounded-lg p-4 space-y-4">
-                  <Label>Gambaran Umum</Label>
-                  <Textarea
-                    rows={10}
-                    value={gambaran_umum}
-                    onChange={(e) => setGambaran_umum(e.target.value)}
-                    placeholder="Tuliskan gambaran umum pelaksanaan penerimaan dan belanja PNBP..."
-                    className="min-h-[200px]"
-                  />
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={onHide}>
-                      Tutup
-                    </Button>
-                    <Button
-                      variant="default"
-                      disabled={loading}
-                      onClick={handleSubmitGambaran}
-                    >
-                      {loading ? (
-                        <>
-                          <Spinner className="mr-2 h-4 w-4" />
-                          Simpan...
-                        </>
-                      ) : (
-                        "Simpan"
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="form-kesimpulan" className="mt-0 space-y-4">
-                <div className="bg-background border rounded-lg p-4 space-y-4">
-                  <Label>Kesimpulan</Label>
-                  <Textarea
-                    rows={10}
-                    value={kesimpulan}
-                    onChange={(e) => setKesimpulan(e.target.value)}
-                    placeholder="Tuliskan kesimpulan monev PNBP yang sudah dilakukan..."
-                    className="min-h-[200px]"
-                  />
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={onHide}>
-                      Tutup
-                    </Button>
-                    <Button
-                      variant="default"
-                      disabled={loading}
-                      onClick={handleSubmit}
-                    >
-                      {loading ? (
-                        <>
-                          <Spinner className="mr-2 h-4 w-4" />
-                          Simpan...
-                        </>
-                      ) : (
-                        "Simpan"
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="form-rekomendasi" className="mt-0 space-y-4">
-                <div className="bg-background border rounded-lg p-4 space-y-4">
-                  <Label>Rekomendasi</Label>
-                  <Textarea
-                    rows={10}
-                    value={rekomendasi}
-                    onChange={(e) => setRekomendasi(e.target.value)}
-                    placeholder="Tuliskan rekomendasi bagi KPPN/Kanwil DJPb..."
-                    className="min-h-[200px]"
-                  />
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={onHide}>
-                      Tutup
-                    </Button>
-                    <Button
-                      variant="default"
-                      disabled={loading}
-                      onClick={handleSubmitRekom}
-                    >
-                      {loading ? (
-                        <>
-                          <Spinner className="mr-2 h-4 w-4" />
-                          Simpan...
-                        </>
-                      ) : (
-                        "Simpan"
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="hasil" className="mt-0 space-y-4">
-                <div className="bg-background border rounded-lg p-4 space-y-4 max-h-full overflow-auto">
-                  {loadingRekaman ? (
-                    <div className="flex justify-center py-8">
-                      <Spinner className="h-6 w-6" />
+              <TabsContents>
+                <TabsContent value="form-gambaran" className="mt-0 space-y-4">
+                  <div className="bg-background border rounded-lg p-4 space-y-4">
+                    <Label>Gambaran Umum</Label>
+                    <Textarea
+                      rows={10}
+                      value={gambaran_umum}
+                      onChange={(e) => setGambaran_umum(e.target.value)}
+                      placeholder="Tuliskan gambaran umum pelaksanaan penerimaan dan belanja PNBP..."
+                      className="min-h-[200px]"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={onHide}>
+                        Tutup
+                      </Button>
+                      <Button
+                        variant="default"
+                        disabled={loading}
+                        onClick={handleSubmitGambaran}
+                      >
+                        {loading ? (
+                          <>
+                            <Spinner className="mr-2 h-4 w-4" />
+                            Simpan...
+                          </>
+                        ) : (
+                          "Simpan"
+                        )}
+                      </Button>
                     </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader className="bg-muted">
-                          <TableRow>
-                            <TableHead className="border border-input px-3 py-2 text-black font-bold">
-                              No
-                            </TableHead>
-                            <TableHead className="border border-input px-3 py-2 text-black font-bold">
-                              Tahun/Triwulan
-                            </TableHead>
-                            <TableHead className="border border-input px-3 py-2 text-black font-bold">
-                              Kanwil
-                            </TableHead>
-                            <TableHead className="border border-input px-3 py-2 text-black font-bold">
-                              Gambaran Umum
-                            </TableHead>
-                            <TableHead className="border border-input px-3 py-2 text-black font-bold">
-                              Kesimpulan
-                            </TableHead>
-                            <TableHead className="border border-input px-3 py-2 text-black font-bold">
-                              Rekomendasi
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {rekamanKesimpulan.length > 0 ? (
-                            rekamanKesimpulan.map(
-                              (item: any, index: number) => (
-                                <TableRow key={item.id}>
-                                  <TableCell className="border border-input px-3 py-2 text-center">
-                                    {index + 1 + page * limit}
-                                  </TableCell>
-                                  <TableCell className="border border-input px-3 py-2 text-center">
-                                    {item.thang}/{item.triwulan}
-                                  </TableCell>
-                                  <TableCell className="border border-input px-3 py-2 text-center">
-                                    ({item.kdkanwil}) - {item.nmkanwil}
-                                  </TableCell>
-                                  <TableCell className="border border-input px-3 py-2 text-justify text-xs">
-                                    {item.gambaran_umum}
-                                  </TableCell>
-                                  <TableCell className="border border-input px-3 py-2 text-justify text-xs">
-                                    {item.kesimpulan}
-                                  </TableCell>
-                                  <TableCell className="border border-input px-3 py-2 text-justify text-xs">
-                                    {item.rekomendasi}
-                                  </TableCell>
-                                </TableRow>
-                              ),
-                            )
-                          ) : (
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="form-kesimpulan" className="mt-0 space-y-4">
+                  <div className="bg-background border rounded-lg p-4 space-y-4">
+                    <Label>Kesimpulan</Label>
+                    <Textarea
+                      rows={10}
+                      value={kesimpulan}
+                      onChange={(e) => setKesimpulan(e.target.value)}
+                      placeholder="Tuliskan kesimpulan monev PNBP yang sudah dilakukan..."
+                      className="min-h-[200px]"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={onHide}>
+                        Tutup
+                      </Button>
+                      <Button
+                        variant="default"
+                        disabled={loading}
+                        onClick={handleSubmit}
+                      >
+                        {loading ? (
+                          <>
+                            <Spinner className="mr-2 h-4 w-4" />
+                            Simpan...
+                          </>
+                        ) : (
+                          "Simpan"
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="form-rekomendasi" className="mt-0 space-y-4">
+                  <div className="bg-background border rounded-lg p-4 space-y-4">
+                    <Label>Rekomendasi</Label>
+                    <Textarea
+                      rows={10}
+                      value={rekomendasi}
+                      onChange={(e) => setRekomendasi(e.target.value)}
+                      placeholder="Tuliskan rekomendasi bagi KPPN/Kanwil DJPb..."
+                      className="min-h-[200px]"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={onHide}>
+                        Tutup
+                      </Button>
+                      <Button
+                        variant="default"
+                        disabled={loading}
+                        onClick={handleSubmitRekom}
+                      >
+                        {loading ? (
+                          <>
+                            <Spinner className="mr-2 h-4 w-4" />
+                            Simpan...
+                          </>
+                        ) : (
+                          "Simpan"
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="hasil" className="mt-0 space-y-4">
+                  <div className="bg-background border rounded-lg p-4 space-y-4 max-h-full overflow-auto">
+                    {loadingRekaman ? (
+                      <div className="flex justify-center py-8">
+                        <Spinner className="h-6 w-6" />
+                      </div>
+                    ) : (
+                      <div className="w-full overflow-x-auto">
+                        <Table className="w-full table-fixed">
+                          <TableHeader className="bg-muted">
                             <TableRow>
-                              <TableCell
-                                colSpan={6}
-                                className="border border-input px-3 py-2 text-center"
-                              >
-                                Belum ada data
-                              </TableCell>
+                              <TableHead className="border border-input px-3 py-2 text-black font-bold w-[5%]">
+                                No
+                              </TableHead>
+                              <TableHead className="border border-input px-3 py-2 text-black font-bold w-[10%]">
+                                Tahun/Triwulan
+                              </TableHead>
+                              <TableHead className="border border-input px-3 py-2 text-black font-bold w-[15%]">
+                                Kanwil
+                              </TableHead>
+                              <TableHead className="border border-input px-3 py-2 text-black font-bold w-[23%]">
+                                Gambaran Umum
+                              </TableHead>
+                              <TableHead className="border border-input px-3 py-2 text-black font-bold w-[23%]">
+                                Kesimpulan
+                              </TableHead>
+                              <TableHead className="border border-input px-3 py-2 text-black font-bold w-[24%]">
+                                Rekomendasi
+                              </TableHead>
                             </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
+                          </TableHeader>
+                          <TableBody>
+                            {rekamanKesimpulan.length > 0 ? (
+                              rekamanKesimpulan.map(
+                                (item: any, index: number) => (
+                                  <TableRow key={item.id}>
+                                    <TableCell className="border border-input px-3 py-2 text-center align-top">
+                                      {index + 1 + page * limit}
+                                    </TableCell>
+                                    <TableCell className="border border-input px-3 py-2 text-center align-top">
+                                      {item.thang}/{item.triwulan}
+                                    </TableCell>
+                                    <TableCell className="border border-input px-3 py-2 text-center align-top break-words">
+                                      ({item.kdkanwil}) - {item.nmkanwil}
+                                    </TableCell>
+                                    <TableCell className="border border-input px-3 py-2 text-justify text-xs align-top break-words whitespace-pre-wrap">
+                                      {item.gambaran_umum}
+                                    </TableCell>
+                                    <TableCell className="border border-input px-3 py-2 text-justify text-xs align-top break-words whitespace-pre-wrap">
+                                      {item.kesimpulan}
+                                    </TableCell>
+                                    <TableCell className="border border-input px-3 py-2 text-justify text-xs align-top break-words whitespace-pre-wrap">
+                                      {item.rekomendasi}
+                                    </TableCell>
+                                  </TableRow>
+                                ),
+                              )
+                            ) : (
+                              <TableRow>
+                                <TableCell
+                                  colSpan={6}
+                                  className="border border-input px-3 py-2 text-center"
+                                >
+                                  Belum ada data
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+              </TabsContents>
             </div>
           </Tabs>
         </div>

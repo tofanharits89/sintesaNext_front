@@ -19,23 +19,27 @@ interface TrenRealisasiBulananPerJenisBelanjaResponse {
 
 interface UseTrenRealisasiBulananPerJenisBelanjaOptions {
   kanwil?: string;
+  year?: string;
   enabled?: boolean;
 }
 
 export function useTrenRealisasiBulananPerJenisBelanja(
   options: UseTrenRealisasiBulananPerJenisBelanjaOptions = {},
 ) {
-  const { kanwil, enabled } = options;
+  const { kanwil, year, enabled } = options;
   const isClient = typeof window !== "undefined";
 
   return useQuery<ChartData, Error>({
-    queryKey: ["tren-realisasi-bulanan-per-jenis-belanja", kanwil],
+    queryKey: ["tren-realisasi-bulanan-per-jenis-belanja", kanwil, year],
     queryFn: async () => {
       try {
         // Build query parameters if provided
         const params = new URLSearchParams();
         if (kanwil) {
           params.append("kanwil", kanwil);
+        }
+        if (year) {
+          params.append("year", year);
         }
 
         const endpoint = `/dashboard/tren-realisasi-bulanan-per-jenis-belanja${

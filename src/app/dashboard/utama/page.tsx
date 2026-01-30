@@ -6,9 +6,9 @@ import { useDashboardData, useDashboardFilters } from "@/hooks/dashboard";
 import { formatJakartaDateTime } from "@/utils/formatters";
 
 export default function DashboardUtamaPage() {
-  const { selectedKanwil, lastRefreshText, setLastRefreshText, handleKanwilChange } = useDashboardFilters();
-  const dashboardData = useDashboardData(selectedKanwil);
-  
+  const { selectedKanwil, lastRefreshText, setLastRefreshText, handleKanwilChange, selectedYear, handleYearChange } = useDashboardFilters();
+  const dashboardData = useDashboardData(selectedKanwil, selectedYear);
+
   const lastRefreshJakarta = (dashboardData.quickStats.data as any)?._meta?.asOfJakarta as string | undefined;
 
   useEffect(() => {
@@ -21,13 +21,15 @@ export default function DashboardUtamaPage() {
       <DashboardHeader
         selectedKanwil={selectedKanwil}
         onKanwilChange={handleKanwilChange}
+        selectedYear={selectedYear}
+        onYearChange={handleYearChange}
         lastRefreshText={lastRefreshText}
       />
-      
+
       <QuickStatsSection
         quickStats={dashboardData.quickStats}
       />
-      
+
       <ChartsSection data={dashboardData} />
     </div>
   );

@@ -17,23 +17,27 @@ interface KLPaguProgramTerbesarResponse {
 
 interface UseRealisasiKLPaguProgramTerbesarOptions {
   kanwil?: string;
+  year?: string;
   enabled?: boolean;
 }
 
 export function useRealisasiKLPaguProgramTerbesar(
   options: UseRealisasiKLPaguProgramTerbesarOptions = {},
 ) {
-  const { kanwil, enabled } = options;
+  const { kanwil, year, enabled } = options;
   const isClient = typeof window !== "undefined";
 
   return useQuery<KLPaguProgramTerbesarItem[], Error>({
-    queryKey: ["realisasi-kl-pagu-program-terbesar", kanwil],
+    queryKey: ["realisasi-kl-pagu-program-terbesar", kanwil, year],
     queryFn: async () => {
       try {
         // Build query parameters
         const params = new URLSearchParams();
         if (kanwil) {
           params.append("kanwil", kanwil);
+        }
+        if (year) {
+          params.append("year", year);
         }
 
         const endpoint = `/dashboard/realisasi-kl-pagu-program-terbesar${

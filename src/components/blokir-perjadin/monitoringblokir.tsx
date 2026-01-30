@@ -228,19 +228,15 @@ export default function MonitoringBlokir({
   };
 
   return (
-    <div className="flex flex-col gap-6 p-1 md:p-6 animate-in fade-in duration-500">
+    <div className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
+        <h1 className="text-2xl font-semibold tracking-tight">
           Monitoring Blokir Perjadin
         </h1>
-        <nav className="flex items-center text-sm text-muted-foreground">
-          <span className="hover:text-foreground cursor-pointer transition-colors">
-            Data
-          </span>
-          <ChevronRight className="h-4 w-4 mx-1" />
-          <span className="font-medium text-foreground">Blokir Perjadin</span>
-        </nav>
+        <p className="text-sm text-muted-foreground">
+          Monitoring target blokir dan realisasi per satuan kerja.
+        </p>
       </div>
 
       <Card className="border shadow-sm">
@@ -462,7 +458,6 @@ export default function MonitoringBlokir({
                 nextLinkClassName="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9"
                 disabledClassName="opacity-50 pointer-events-none"
                 initialPage={page}
-                renderOnZeroPageCount={null}
                 pageRangeDisplayed={3}
                 marginPagesDisplayed={1}
               />

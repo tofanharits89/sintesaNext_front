@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -93,19 +94,20 @@ export default function RekamanNotaDinas({ show, onHide }: any) {
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && onHide()}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl sm:max-w-4xl max-h-[90vh] overflow-y-auto" showCloseButton={false}>
         <DialogHeader>
           <DialogTitle>Monitoring Kiriman ND Kanwil</DialogTitle>
         </DialogHeader>
-        <div className="p-1">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* ... (leaving content logic, just updating wrapper if needed) ... matches original logic */}
             <div className="space-y-2">
               <Label>Pilih Tahun</Label>
               <Select
                 value={tahunFilter || "00"}
                 onValueChange={(val) => setTahunFilter(val === "00" ? "" : val)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Semua Tahun" />
                 </SelectTrigger>
                 <SelectContent>
@@ -126,7 +128,7 @@ export default function RekamanNotaDinas({ show, onHide }: any) {
                   setTriwulanFilter(val === "00" ? "" : val)
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Semua Triwulan" />
                 </SelectTrigger>
                 <SelectContent>
@@ -182,14 +184,14 @@ export default function RekamanNotaDinas({ show, onHide }: any) {
                           >
                             <Button
                               size="sm"
-                              variant="default"
-                              className="bg-blue-600 hover:bg-blue-700"
+                              variant="outline"
+                              className="h-8"
                             >
                               Download
                             </Button>
                           </a>
                         ) : (
-                          <span className="text-red-500 font-medium text-sm">
+                          <span className="text-destructive font-medium text-xs">
                             Belum ada file
                           </span>
                         )}
@@ -197,9 +199,9 @@ export default function RekamanNotaDinas({ show, onHide }: any) {
                       <TableCell>
                         {data.tgl_kirim
                           ? new Date(data.tgl_kirim)
-                              .toISOString()
-                              .replace("T", " ")
-                              .slice(0, 19)
+                            .toISOString()
+                            .replace("T", " ")
+                            .slice(0, 19)
                           : "-"}
                       </TableCell>
                     </TableRow>
@@ -208,16 +210,16 @@ export default function RekamanNotaDinas({ show, onHide }: any) {
               </Table>
             </div>
           ) : (
-            <p className="text-center text-muted-foreground py-4">
-              Tidak ada kiriman Nota Dinas untuk filter ini.
-            </p>
+            <div className="flex flex-col items-center justify-center p-8 text-muted-foreground border rounded-md border-dashed">
+              <p>Tidak ada kiriman Nota Dinas untuk filter ini.</p>
+            </div>
           )}
         </div>
-        <div className="flex justify-end mt-4">
-          <Button variant="secondary" onClick={onHide}>
+        <DialogFooter>
+          <Button variant="outline" onClick={onHide}>
             Tutup
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
