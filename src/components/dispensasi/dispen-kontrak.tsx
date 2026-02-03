@@ -314,59 +314,57 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
                           {row.jumlah ?? "-"}
                         </td>
                         <td className={tableStyles.bodyCellCenter}>
-                          <td className={tableStyles.bodyCellCenter}>
-                            <div className="flex items-center justify-center gap-1">
-                              {/* Rekam Kontrak - hanya untuk non-KPPN */}
-                              {user?.role !== "kppn" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 text-green-600 hover:text-green-800"
-                                  title="Rekam Kontrak"
-                                  onClick={() =>
-                                    handleRekamKontrak(
-                                      String(row.id),
-                                      row.nopermohonan?.trim() || "",
-                                      row.nmsatker?.trim() || "",
-                                      row.kdsatker,
-                                      row.thang
-                                    )
-                                  }
-                                >
-                                  <PlusSquare className="h-4 w-4" />
-                                </Button>
-                              )}
-
-                              {/* Hapus Dispensasi - hanya untuk non-KPPN */}
-                              {user?.role !== "kppn" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
-                                  title="Hapus Dispensasi"
-                                  onClick={() =>
-                                    handleHapusDispKontrak(
-                                      String(row.id),
-                                      row.jumlah ?? 0
-                                    )
-                                  }
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              )}
-
-                              {/* Download - untuk semua role */}
+                          <div className="flex items-center justify-center gap-1">
+                            {/* Rekam Kontrak - hanya untuk non-KPPN */}
+                            {user?.role !== "kppn" && (
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800"
-                                title="Download Dokumen"
-                                onClick={() => handledownloadKontrak(String(row.id))}
+                                className="h-8 w-8 p-0 text-green-600 hover:text-green-800"
+                                title="Rekam Kontrak"
+                                onClick={() =>
+                                  handleRekamKontrak(
+                                    String(row.id),
+                                    row.nopermohonan?.trim() || "",
+                                    row.nmsatker?.trim() || "",
+                                    row.kdsatker,
+                                    row.thang
+                                  )
+                                }
                               >
-                                <Download className="h-4 w-4" />
+                                <PlusSquare className="h-4 w-4" />
                               </Button>
-                            </div>
-                          </td>
+                            )}
+
+                            {/* Hapus Dispensasi - hanya untuk non-KPPN */}
+                            {user?.role !== "kppn" && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
+                                title="Hapus Dispensasi"
+                                onClick={() =>
+                                  handleHapusDispKontrak(
+                                    String(row.id),
+                                    row.jumlah ?? 0
+                                  )
+                                }
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+
+                            {/* Download - untuk semua role */}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800"
+                              title="Download Dokumen"
+                              onClick={() => handledownloadKontrak(String(row.id))}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -377,54 +375,49 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
           </div>
 
           {data.length > 0 && (
-            <div className="flex items-center justify-content-between mt-4 mx-4 text-zinc-800">
-              <span>
-                Total : {rows.toLocaleString()}, Hal : {rows ? page + 1 : 0} dari {pages}
+            <div className="flex items-center justify-between mt-4 mx-4">
+              <span className="text-sm text-muted-foreground">
+                Total: {rows.toLocaleString()}, Halaman {rows ? page + 1 : 0} dari {pages}
               </span>
-              <nav>
-                <ul className="flex items-center justify-center gap-1 mb-0">
-                  <li className={`inline-flex ${page === 0 ? "opacity-50 pointer-events-none" : ""}`}>
-                    <button
-                      className="px-3 py-1 border rounded-l hover:bg-zinc-100"
-                      onClick={() => setPage(page - 1)}
-                      disabled={page === 0}
-                    >
-                      <ChevronLeft size={16} />
-                    </button>
-                  </li>
-                  {Array.from({ length: Math.min(pages, 5) }, (_, i) => {
-                    let pageNum;
-                    if (pages <= 5) {
-                      pageNum = i;
-                    } else if (page < 3) {
-                      pageNum = i;
-                    } else if (page > pages - 3) {
-                      pageNum = pages - 5 + i;
-                    } else {
-                      pageNum = page - 2 + i;
-                    }
-                    return (
-                      <li key={pageNum} className="inline-flex">
-                        <button
-                          className={`px-3 py-1 border ${page === pageNum ? "bg-zinc-800 text-white" : "hover:bg-zinc-100"}`}
-                          onClick={() => setPage(pageNum)}
-                        >
-                          {pageNum + 1}
-                        </button>
-                      </li>
-                    );
-                  })}
-                  <li className={`inline-flex ${page === pages - 1 ? "opacity-50 pointer-events-none" : ""}`}>
-                    <button
-                      className="px-3 py-1 border rounded-r hover:bg-zinc-100"
-                      onClick={() => setPage(page + 1)}
-                      disabled={page === pages - 1}
-                    >
-                      <ChevronRight size={16} />
-                    </button>
-                  </li>
-                </ul>
-              </nav>
+              {pages > 1 && (
+                <div className="flex items-center justify-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(Math.max(0, page - 1))}
+                    disabled={page === 0}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Sebelumnya
+                  </Button>
+                  <div className="flex items-center gap-1 text-sm">
+                    <input
+                      type="number"
+                      min={1}
+                      max={pages}
+                      value={page + 1}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        if (!isNaN(val) && val >= 1 && val <= pages) {
+                          setPage(val - 1);
+                        }
+                      }}
+                      className="w-14 h-8 text-center border rounded-md text-sm bg-zinc-100 dark:bg-black"
+                    />
+                    <span>/ {pages}</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(Math.min(pages - 1, page + 1))}
+                    disabled={page === pages - 1}
+                  >
+                    Selanjutnya
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+              )}
+              <div className="w-48"></div>
             </div>
           )}
         </>

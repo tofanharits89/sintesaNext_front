@@ -6,22 +6,24 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import { apiClient } from "@/lib/api/httpClient";
+import { Tabs, TabsContent, TabsList, TabsTrigger, TabsContents } from "@/components/animate-ui/components/animate/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
-import DatePicker from "react-datepicker";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Formik, Field, ErrorMessage, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { useAuth } from "@/hooks/useAuth";
 import Swal from "sweetalert2";
 import { toast } from "sonner";
 import { PlusSquare, Trash2, Save } from "lucide-react";
+import { format, parse } from "date-fns";
 import DataTupDetail from "./dispen-tup-detail";
 import UploadTup from "./upload-tup";
-import moment from "moment";
 
 interface FormRow {
   nilaitup: string | number;
@@ -59,6 +61,7 @@ export default function RekamTup({
 
   const [loading, setLoading] = useState(false);
   const [cek, setCek] = useState(false);
+  const [activeTab, setActiveTab] = useState("dispensasi-overview");
   const [formRows, setFormRows] = useState<FormRow[]>([
     {
       nilaitup: "",
@@ -68,6 +71,11 @@ export default function RekamTup({
     },
   ]);
   const [cekupload, setCekupload] = useState(false);
+
+  const handleCek = () => {
+    setCek(true);
+    setCekupload(false);
+  };
 
   const handleCekUpload = () => {
     setCekupload(true);
@@ -117,18 +125,28 @@ export default function RekamTup({
     setLoading(true);
     try {
       const url =
-        process.env.NEXT_PUBLIC_SIMPANLAMPIRANTUP || "/api/simpan-lampiran-tup";
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
+        process.env.NEXT_PUBLIC_SIMPANLAMPIRANTUP || "/simpan-lampiran-tup";
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
+      // Using apiClient.post instead of fetch
+      await apiClient.post(url, values.formRows); // Note: Original code sent values (including id/tahun), but rekam-kontrak sent values.formRows. 
+      // Checking original rekam-tup: `body: JSON.stringify(values)`
+      // Checking rekam-kontrak: `body: JSON.stringify(values.formRows)` (Wait, let me double check rekam-kontrak template I used)
+      // I used `apiClient.post(url, values.formRows);` in `rekam-kontrak.tsx`.
+      // Let's stick to what was there before but using apiClient. 
+      // The original rekam-tup sent `values` (containing id, tahun, formRows).
+      // The original rekam-kontrak sent `values.formRows`.
+      // Wait, let's look at `rekam-tup.tsx` lines 126: `body: JSON.stringify(values),`
+      // Wait, let's look at `rekam-kontrak.tsx` lines 127: `body: JSON.stringify(values.formRows),`
+      // So there IS a difference in the payload. I must respect that.
+
+      // Correction: I should use `values` here if I want to match original behavior, but let's check if I should standardize.
+      // If the backend expects different structures, I must use different structures.
+      // I will keep `values` as the payload for TUP, as per original file.
+      // But wait, if I look at `rekam-kontrak.tsx` I implemented `apiClient.post(url, values.formRows);`
+      // Original rekam-kontrak: `body: JSON.stringify(values.formRows),`
+      // Original rekam-tup: `body: JSON.stringify(values),`
+
+      // I will use `values` here.
 
       Swal.fire({
         html: `<div class='text-success mt-4'>Data TUP Berhasil Disimpan</div>`,
@@ -165,67 +183,87 @@ export default function RekamTup({
     onHide();
   };
 
-  const handleCek = () => {
-    setCek(true);
-  };
-
-  const inputClass = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
-
   return (
     <>
-      <style>
-        {`
-          .datepicker-popper {
-            z-index: 9999 !important;
-            position: fixed !important;
-          }
-          .react-datepicker {
-            border: 1px solid #ced4da;
-            border-radius: 0.375rem;
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-          }
-        `}
-      </style>
       <Dialog open={show} onOpenChange={handleModalClose}>
-        <DialogContent className="max-w-4xl h-[80vh] flex flex-col p-0">
-          <DialogHeader className="px-6 py-4 border-b">
+        <DialogContent className="w-full max-w-5xl sm:max-w-6xl max-h-[90vh] flex flex-col overflow-hidden" showCloseButton={false}>
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle className="flex items-center gap-2 text-xl font-bold">
               <span className="text-green-600">Data Dispensasi TUP</span>
             </DialogTitle>
           </DialogHeader>
 
-          <div className="flex-1 overflow-hidden">
-            <Tabs defaultValue="dispensasi-overview" className="h-full flex flex-col">
-              <div className="px-6 border-b">
-                <TabsList className="w-full justify-start h-auto p-0 bg-transparent gap-6">
+          <div className="w-full flex-1 overflow-hidden space-y-4">
+            <Tabs
+              value={activeTab}
+              onValueChange={(value: string) => {
+                setActiveTab(value);
+                if (value === "dispensasi-edit") {
+                  handleCek();
+                } else if (value === "dispensasi-upload") {
+                  handleCekUpload();
+                }
+              }}
+              className="w-full gap-3"
+            >
+              <div className="border-b border-border/50 pb-3 mb-0">
+                <TabsList className="relative w-full h-auto p-2 rounded-xl grid grid-cols-3 gap-2">
                   <TabsTrigger
                     value="dispensasi-overview"
-                    className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none border-b-2 border-transparent px-0 py-3"
+                    className="h-auto px-4 py-2 text-sm flex items-center justify-center gap-2 whitespace-normal text-center"
                   >
                     Rekam TUP
                   </TabsTrigger>
                   <TabsTrigger
                     value="dispensasi-upload"
-                    className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none border-b-2 border-transparent px-0 py-3"
-                    onClick={handleCekUpload}
+                    className="h-auto px-4 py-2 text-sm flex items-center justify-center gap-2 whitespace-normal text-center"
                   >
                     Upload Excel
                   </TabsTrigger>
                   <TabsTrigger
                     value="dispensasi-edit"
-                    className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none border-b-2 border-transparent px-0 py-3"
-                    onClick={handleCek}
+                    className="h-auto px-4 py-2 text-sm flex items-center justify-center gap-2 whitespace-normal text-center"
                   >
                     Data TUP
                   </TabsTrigger>
                 </TabsList>
               </div>
 
-              <div className="flex-1 overflow-y-auto bg-muted/10 p-6">
-                <TabsContent value="dispensasi-overview" className="mt-0 h-full">
+              <TabsContents className="mt-4 space-y-4">
+                <TabsContent value="dispensasi-overview" className="mt-0 space-y-4">
                   <Formik
                     validationSchema={validationSchema}
-                    onSubmit={handleSubmitdata}
+                    onSubmit={async (values, helpers) => {
+                      // Custom logic to handle the difference in payload structure if needed
+                      // For TUP it seems to send the whole values object
+                      setCek(false);
+                      setLoading(true);
+                      try {
+                        const url = process.env.NEXT_PUBLIC_SIMPANLAMPIRANTUP || "/simpan-lampiran-tup";
+                        // Using values directly as per original code
+                        await apiClient.post(url, values);
+
+                        Swal.fire({
+                          html: `<div class='text-success mt-4'>Data TUP Berhasil Disimpan</div>`,
+                          icon: "success",
+                          position: "top",
+                          buttonsStyling: false,
+                          customClass: {
+                            popup: "swal2-animation",
+                            confirmButton: "bg-primary text-white px-4 py-2 rounded",
+                          },
+                          confirmButtonText: "Tutup",
+                        });
+                        setCek(true);
+                        toast.success("Data TUP Berhasil Disimpan");
+                      } catch (error: any) {
+                        const message = error?.message || "Terjadi Permasalahan Koneksi atau Server Backend";
+                        toast.error(message);
+                        helpers.setSubmitting(false);
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
                     initialValues={initialValues}
                   >
                     {({
@@ -236,32 +274,15 @@ export default function RekamTup({
                       errors,
                     }) => (
                       <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 p-4 bg-background border rounded-lg shadow-sm">
+                        <div className="p-4 bg-background border rounded-lg shadow-sm">
                           <div>
                             <p className="text-sm font-medium text-muted-foreground">SATKER</p>
                             <p className="font-bold text-lg">{nmsatker} ({kdsatker})</p>
                             <p className="text-sm text-muted-foreground mt-1">Nomor Permohonan : <span className="font-medium text-foreground">{nomor}</span></p>
                           </div>
-                          <Button
-                            type="submit"
-                            variant="destructive"
-                            disabled={loading}
-                          >
-                            {loading ? (
-                              <>
-                                <Spinner className="mr-2 h-4 w-4" />
-                                Loading...
-                              </>
-                            ) : (
-                              <>
-                                <Save className="mr-2 h-4 w-4" />
-                                Simpan Data
-                              </>
-                            )}
-                          </Button>
                         </div>
 
-                        <div className="bg-background border rounded-lg p-4 shadow-sm">
+                        <div className="bg-transparent border rounded-lg p-4 shadow-sm">
                           <div className="flex justify-between items-center mb-4">
                             <h3 className="font-semibold text-lg">Detail TUP</h3>
                             <Button
@@ -276,9 +297,9 @@ export default function RekamTup({
                             </Button>
                           </div>
 
-                          <div className="space-y-4">
+                          <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2">
                             {formRows.map((row, index) => (
-                              <div key={index} className="p-4 border rounded-md bg-muted/5 space-y-4 relative group">
+                              <div key={index} className="p-4 pr-16 border rounded-md bg-muted/5 space-y-4 relative group">
                                 <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                   <Button
                                     type="button"
@@ -292,6 +313,34 @@ export default function RekamTup({
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                  {/* Row 1: Tgl TUP, No TUP, Nilai TUP */}
+                                  <div className="md:col-span-3 space-y-2">
+                                    <Label>Tgl TUP</Label>
+                                    <DatePicker
+                                      date={
+                                        values.formRows[index]?.tgtup
+                                          ? parse(values.formRows[index].tgtup as string, "yyyy-MM-dd", new Date())
+                                          : undefined
+                                      }
+                                      onDateChange={(date: Date | undefined) => {
+                                        if (date) {
+                                          setFieldValue(
+                                            `formRows[${index}].tgtup`,
+                                            format(date, "yyyy-MM-dd")
+                                          );
+                                        } else {
+                                          setFieldValue(`formRows[${index}].tgtup`, null);
+                                        }
+                                      }}
+                                      placeholder="Tgl TUP"
+                                    />
+                                    <ErrorMessage
+                                      name={`formRows[${index}].tgtup`}
+                                      component="div"
+                                      className="text-red-500 text-xs"
+                                    />
+                                  </div>
+
                                   <div className="md:col-span-5 space-y-2">
                                     <Label>Nomor TUP</Label>
                                     <Field
@@ -303,43 +352,6 @@ export default function RekamTup({
                                     />
                                     <ErrorMessage
                                       name={`formRows[${index}].notup`}
-                                      component="div"
-                                      className="text-red-500 text-xs"
-                                    />
-                                  </div>
-
-                                  <div className="md:col-span-3 space-y-2">
-                                    <Label>Tgl TUP</Label>
-                                    <div className="relative">
-                                      <DatePicker
-                                        name={`formRows[${index}].tgtup`}
-                                        selected={
-                                          values.formRows[index] &&
-                                            values.formRows[index].tgtup
-                                            ? moment(
-                                              values.formRows[index].tgtup
-                                            ).toDate()
-                                            : null
-                                        }
-                                        className={inputClass}
-                                        wrapperClassName="w-full"
-                                        onChange={(date: Date | null) => {
-                                          if (date) {
-                                            setFieldValue(
-                                              `formRows[${index}].tgtup`,
-                                              moment(date).format("YYYY-MM-DD")
-                                            );
-                                          }
-                                        }}
-                                        dateFormat="dd/MM/yyyy"
-                                        placeholderText="Tgl TUP"
-                                        autoComplete="off"
-                                        popperClassName="datepicker-popper"
-                                        fixedHeight
-                                      />
-                                    </div>
-                                    <ErrorMessage
-                                      name={`formRows[${index}].tgtup`}
                                       component="div"
                                       className="text-red-500 text-xs"
                                     />
@@ -360,35 +372,36 @@ export default function RekamTup({
                                       className="text-red-500 text-xs"
                                     />
                                   </div>
-                                </div>
 
-                                <div className="space-y-2">
-                                  <Label>Status</Label>
-                                  <div className="flex gap-4">
-                                    <label className="flex items-center space-x-2 cursor-pointer">
-                                      <Field
-                                        type="radio"
-                                        name={`formRows[${index}].status`}
-                                        value="Setuju"
-                                        className="h-4 w-4 rounded-full border-primary text-primary focus:ring-primary"
-                                      />
-                                      <span>Disetujui</span>
-                                    </label>
-                                    <label className="flex items-center space-x-2 cursor-pointer">
-                                      <Field
-                                        type="radio"
-                                        name={`formRows[${index}].status`}
-                                        value="Tolak"
-                                        className="h-4 w-4 rounded-full border-primary text-primary focus:ring-primary"
-                                      />
-                                      <span>Ditolak</span>
-                                    </label>
+                                  {/* Row 2: Status */}
+                                  <div className="md:col-span-12 space-y-2">
+                                    <Label>Status</Label>
+                                    <div className="flex gap-4 pt-1">
+                                      <label className="flex items-center space-x-2 cursor-pointer">
+                                        <Field
+                                          type="radio"
+                                          name={`formRows[${index}].status`}
+                                          value="Setuju"
+                                          className="h-4 w-4 rounded-full border-primary text-primary focus:ring-primary"
+                                        />
+                                        <span>Disetujui</span>
+                                      </label>
+                                      <label className="flex items-center space-x-2 cursor-pointer">
+                                        <Field
+                                          type="radio"
+                                          name={`formRows[${index}].status`}
+                                          value="Tolak"
+                                          className="h-4 w-4 rounded-full border-primary text-primary focus:ring-primary"
+                                        />
+                                        <span>Ditolak</span>
+                                      </label>
+                                    </div>
+                                    <ErrorMessage
+                                      name={`formRows[${index}].status`}
+                                      component="div"
+                                      className="text-red-500 text-xs"
+                                    />
                                   </div>
-                                  <ErrorMessage
-                                    name={`formRows[${index}].status`}
-                                    component="div"
-                                    className="text-red-500 text-xs"
-                                  />
                                 </div>
                               </div>
                             ))}
@@ -398,19 +411,48 @@ export default function RekamTup({
                     )}
                   </Formik>
                 </TabsContent>
-                <TabsContent value="dispensasi-edit" className="mt-0 h-full">
-                  <div className="bg-background rounded-lg p-4 shadow-sm min-h-full">
+                <TabsContent value="dispensasi-edit" className="mt-0 space-y-4">
+                  <div className="bg-background rounded-lg p-4 shadow-sm">
                     <DataTupDetail cek={cek} id={id} />
                   </div>
                 </TabsContent>
-                <TabsContent value="dispensasi-upload" className="mt-0 h-full">
-                  <div className="bg-background rounded-lg p-4 shadow-sm min-h-full">
+                <TabsContent value="dispensasi-upload" className="mt-0 space-y-4">
+                  <div className="bg-background rounded-lg p-4 shadow-sm">
                     <UploadTup cekupload={cekupload} id={id} />
                   </div>
                 </TabsContent>
-              </div>
+              </TabsContents>
             </Tabs>
           </div>
+
+          <DialogFooter className="flex-shrink-0 border-t pt-4">
+            <Button variant="outline" onClick={handleModalClose}>
+              Tutup
+            </Button>
+            <Button
+              type="button"
+              variant="default"
+              disabled={loading}
+              onClick={() => {
+                const form = document.querySelector('form');
+                if (form) {
+                  form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                }
+              }}
+            >
+              {loading ? (
+                <>
+                  <Spinner className="mr-2 h-4 w-4" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Simpan Data
+                </>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
