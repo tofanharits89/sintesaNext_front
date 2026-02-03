@@ -53,6 +53,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { apiClient } from "@/lib/api/httpClient";
 import { useQuery } from "@tanstack/react-query";
 import { StatCard } from "@/components/dashboard/StatCard";
+import { ResetButton } from "@/components/ui/reset-button";
 
 import {
     LineChart,
@@ -168,12 +169,24 @@ export function IkpaLanding() {
 
     const summary = statsData?.summary || { total: 0, approved: 0, rejected: 0, pending: 0 };
 
+    // Reset filter handler
+    const handleReset = () => {
+        setSelectedYear(new Date().getFullYear().toString());
+        setSelectedKppn("all");
+        setSelectedSatker("all");
+        setSearchQuery("");
+        setCurrentPage(0);
+    };
+
     return (
         <div className="section">
             {/* Context Filters - Inline with the dashboard style */}
             <Card className="mb-6">
                 <CardHeader>
-                    <CardTitle>Filter Data</CardTitle>
+                    <div className="flex items-center justify-between">
+                        <CardTitle>Filter Data</CardTitle>
+                        <ResetButton onReset={handleReset} />
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -426,9 +439,9 @@ export function IkpaLanding() {
 
 function ShareChartCard({ title, data, horizontal = false }: { title: string; data: any[]; horizontal?: boolean }) {
     return (
-        <Card className="overflow-hidden">
-            <CardHeader className="pb-0 pt-4 px-4">
-                <CardTitle className="text-xs font-bold uppercase text-muted-foreground">{title}</CardTitle>
+        <Card>
+            <CardHeader className="pb-2">
+                <CardTitle className="text-sm">{title}</CardTitle>
             </CardHeader>
             <CardContent className="p-4">
                 <div className="h-[250px]">
@@ -445,7 +458,7 @@ function ShareChartCard({ title, data, horizontal = false }: { title: string; da
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
-                <Card className="mt-4">
+                <div className="mt-4 rounded-md border">
                     <ScrollArea className="h-[120px]">
                         <div className="p-3 space-y-1.5">
                             {data.map((item, i) => (
@@ -456,7 +469,7 @@ function ShareChartCard({ title, data, horizontal = false }: { title: string; da
                             ))}
                         </div>
                     </ScrollArea>
-                </Card>
+                </div>
             </CardContent>
         </Card>
     );
@@ -464,24 +477,26 @@ function ShareChartCard({ title, data, horizontal = false }: { title: string; da
 
 function SmallDetailCard({ title, icon: Icon, color, data }: { title: string; icon: any; color: string; data: IkpaRequest[] }) {
     return (
-        <Card className="overflow-hidden">
-            <CardHeader className={cn("py-2 px-4 border-b", color === 'emerald' ? 'bg-emerald-50/30' : 'bg-rose-50/30')}>
+        <Card>
+            <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
                     <Icon className={cn("h-4 w-4", color === 'emerald' ? 'text-emerald-500' : 'text-rose-500')} />
-                    <span className="text-[10px] font-bold uppercase">{title}</span>
+                    <CardTitle className="text-sm">{title}</CardTitle>
                 </div>
             </CardHeader>
-            <CardContent className="p-3 space-y-2">
-                {data.map((item, i) => (
-                    <div key={i} className="flex justify-between items-center text-[10px] pb-1.5 border-b border-muted last:border-0 last:pb-0">
-                        <div className="flex flex-col truncate pr-2">
-                            <span className="font-semibold truncate">{item.nmsatker}</span>
-                            <span className="text-muted-foreground truncate">{item.no_nd}</span>
+            <CardContent className="pt-0">
+                <div className="space-y-2">
+                    {data.map((item, i) => (
+                        <div key={i} className="flex justify-between items-center text-xs pb-2 border-b border-muted last:border-0 last:pb-0">
+                            <div className="flex flex-col truncate pr-2">
+                                <span className="font-medium truncate">{item.nmsatker}</span>
+                                <span className="text-muted-foreground text-[11px] truncate">{item.no_nd}</span>
+                            </div>
+                            <Badge variant="outline" className="text-[10px] font-normal">{item.kdkppn}</Badge>
                         </div>
-                        <Badge variant="outline" className="text-[9px] font-normal border-muted">{item.kdkppn}</Badge>
-                    </div>
-                ))}
-                {data.length === 0 && <p className="text-center text-muted-foreground py-4 text-[10px]">Tidak ada data</p>}
+                    ))}
+                    {data.length === 0 && <p className="text-center text-muted-foreground py-4 text-sm">Tidak ada data</p>}
+                </div>
             </CardContent>
         </Card>
     );

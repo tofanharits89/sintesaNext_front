@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import numeral from "numeral";
 import moment from "moment";
 import { toast } from "sonner";
-import ReactPaginate from "react-paginate";
-import { Download, Filter, ChevronLeft, ChevronRight } from "lucide-react";
+import { Download, Filter } from "lucide-react";
 
 import GenerateCSV from "../GenerateCSV";
 import FilterData from "./filterdata";
@@ -29,6 +28,14 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface MonitoringBlokirProps {
   role?: string;
@@ -67,22 +74,32 @@ export default function MonitoringBlokir({
   const [refresh, setRefresh] = useState(false);
   const [page, setPage] = useState(0);
   const [limit, setLimit] = useState(15);
-  const [pages, setPages] = useState(0);
-  const [rows, setRows] = useState(0);
   const [sql, setSql] = useState("");
   const [showModalFilter, setShowModalFilter] = useState(false);
   const [where, setWhere] = useState("");
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [export2, setExport2] = useState(false);
   const [open, setOpen] = useState("");
-  const [totalTargetBlokir, setTotalTargetBlokir] = useState(0);
-  const [totalDispenBlokir, setTotalDispenBlokir] = useState(0);
-  const [totalNilaiBlokir, setTotalNilaiBlokir] = useState(0);
-  const [totalSisaBlokir, setTotalSisaBlokir] = useState(0);
+
   const [filter, setFilter] = useState({
     selectedKementerian: "00",
   });
-  // Removed activeTab since it was only handling one view
+
+  // Calculate totals and paginated data client-side
+  const totals = useMemo(() => {
+    return data.reduce(
+      (acc, curr) => ({
+        target: acc.target + Number(curr.target_blokir || 0),
+        dispen: acc.dispen + Number(curr.dispensasi_blokir || 0),
+        sudah: acc.sudah + Number(curr.sudah_blokir || 0),
+        sisa: acc.sisa + Number(curr.sisa || 0),
+      }),
+      { target: 0, dispen: 0, sudah: 0, sisa: 0 }
+    );
+  }, [data]);
+
+  const totalPages = Math.ceil(data.length / limit);
+  const paginatedData = data.slice(page * limit, (page + 1) * limit);
 
   const handleFilterResult = (filterData: any) => {
     const { selectedKementerian } = filterData;
@@ -105,11 +122,12 @@ export default function MonitoringBlokir({
     }
 
     setWhere(newFilterWhere);
+    setPage(0); // Reset to first page on filter
   };
 
   useEffect(() => {
     getData();
-  }, [page, where, refresh]);
+  }, [where, refresh]); // Removed 'page' dependency
 
   const getData = async () => {
     setLoading(true);
@@ -141,7 +159,7 @@ export default function MonitoringBlokir({
     LEFT JOIN dbref.t_dept_2024 c ON a.kddept = c.kddept
     LEFT JOIN dbref.t_unit_2024 d ON a.kddept = d.kddept and a.kdunit = d.kdunit
     ${combinedFilter ? `WHERE ${combinedFilter}` : ""}
-    GROUP BY a.kddept, a.kdunit ORDER BY a.kddept, a.kdunit`;
+    GROUP BY a.id, a.kddept, a.kdunit ORDER BY a.kddept, a.kdunit`;
 
     const encodedQuery = encodeURIComponent(queryBase);
     const cleanedQuery = decodeURIComponent(encodedQuery)
@@ -153,7 +171,8 @@ export default function MonitoringBlokir({
     const encryptedQuery = btoa(cleanedQuery);
 
     try {
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_BLOKIR_MONITORING}/${encryptedQuery}?limit=${limit}&page=${page}${username ? `&user=${username}` : ""}`;
+      // Fetch ALL data (limit=10000)
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_BLOKIR_MONITORING}/${encryptedQuery}?limit=10000${username ? `&user=${username}` : ""}`;
 
       const response = await fetch(apiUrl, {
         method: "GET",
@@ -170,12 +189,6 @@ export default function MonitoringBlokir({
       const result = await response.json();
 
       setData(result.result || []);
-      setPages(result.totalPages || 0);
-      setRows(result.totalRows || 0);
-      setTotalTargetBlokir(result.totalTargetBlokir || 0);
-      setTotalDispenBlokir(result.totalDispenBlokir || 0);
-      setTotalNilaiBlokir(result.totalNilaiBlokir || 0);
-      setTotalSisaBlokir(result.totalSisaBlokir || 0);
     } catch (error) {
       console.error(error);
       toast.error("Terjadi Permasalahan Koneksi atau Server Backend");
@@ -184,9 +197,11 @@ export default function MonitoringBlokir({
     }
   };
 
-  const halaman = ({ selected }: { selected: number }) => {
-    setPage(selected);
-  };
+  const handleError = (error: any) => {
+    console.error(error);
+    toast.error("Terjadi Permasalahan Koneksi atau Server Backend");
+    setLoading(false);
+  }
 
   const handleFilter = () => {
     setShowModalFilter(true);
@@ -270,7 +285,7 @@ export default function MonitoringBlokir({
             </Button>
 
             <Button
-              variant={loadingStatus ? "secondary" : "destructive"}
+              variant={loadingStatus ? "secondary" : "default"}
               size="sm"
               onClick={() => {
                 setLoadingStatus(true);
@@ -338,7 +353,7 @@ export default function MonitoringBlokir({
                   </TableRow>
                 ) : (
                   <>
-                    {data.map((row, index) => (
+                    {paginatedData.map((row, index) => (
                       <TableRow
                         key={index}
                         className="hover:bg-muted/50 transition-colors"
@@ -396,16 +411,16 @@ export default function MonitoringBlokir({
                         TOTAL
                       </TableCell>
                       <TableCell className="text-right font-mono text-sm">
-                        {numeral(totalTargetBlokir).format("0,0")}
+                        {numeral(totals.target).format("0,0")}
                       </TableCell>
                       <TableCell className="text-right font-mono text-sm">
-                        {numeral(totalDispenBlokir).format("0,0")}
+                        {numeral(totals.dispen).format("0,0")}
                       </TableCell>
                       <TableCell className="text-right font-mono text-sm">
-                        {numeral(totalNilaiBlokir).format("0,0")}
+                        {numeral(totals.sudah).format("0,0")}
                       </TableCell>
                       <TableCell className="text-right font-mono text-sm">
-                        {numeral(totalSisaBlokir).format("0,0")}
+                        {numeral(totals.sisa).format("0,0")}
                       </TableCell>
                     </TableRow>
                   </>
@@ -420,47 +435,41 @@ export default function MonitoringBlokir({
               <div className="text-sm text-muted-foreground">
                 Menampilkan{" "}
                 <span className="font-medium text-foreground">
-                  {numeral(rows).format("0,0")}
+                  {numeral(paginatedData.length).format("0,0")}
+                </span>{" "}
+                dari{" "}
+                <span className="font-medium text-foreground">
+                  {numeral(data.length).format("0,0")}
                 </span>{" "}
                 data. Halaman{" "}
                 <span className="font-medium text-foreground">
-                  {rows ? page + 1 : 0}
+                  {page + 1}
                 </span>{" "}
                 dari{" "}
-                <span className="font-medium text-foreground">{pages}</span>
+                <span className="font-medium text-foreground">{totalPages}</span>
               </div>
 
-              {/* Styled ReactPaginate to match ShadCN Pagination */}
-              <ReactPaginate
-                previousLabel={
-                  <div className="flex items-center gap-1 pl-2.5 pr-4">
-                    <ChevronLeft className="h-4 w-4" />
-                    <span>Previous</span>
-                  </div>
-                }
-                nextLabel={
-                  <div className="flex items-center gap-1 pl-4 pr-2.5">
-                    <span>Next</span>
-                    <ChevronRight className="h-4 w-4" />
-                  </div>
-                }
-                breakLabel={<span className="px-4">...</span>}
-                pageCount={pages}
-                onPageChange={halaman}
-                containerClassName="flex items-center gap-1 select-none"
-                pageClassName="block"
-                pageLinkClassName="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 w-9"
-                activeClassName=""
-                activeLinkClassName="border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground font-bold pointer-events-none"
-                previousClassName="block"
-                previousLinkClassName="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9"
-                nextClassName="block"
-                nextLinkClassName="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9"
-                disabledClassName="opacity-50 pointer-events-none"
-                initialPage={page}
-                pageRangeDisplayed={3}
-                marginPagesDisplayed={1}
-              />
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setPage(Math.max(0, page - 1))}
+                      aria-disabled={page === 0}
+                      className={page === 0 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+
+                  {/* Simple Prev/Next for now, can implement complex logic if needed */}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+                      aria-disabled={page === totalPages - 1}
+                      className={page === totalPages - 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
             </div>
           )}
         </CardContent>
@@ -472,6 +481,8 @@ export default function MonitoringBlokir({
           query3={sql}
           status={handleStatus}
           namafile={`v3_CSV_MONITORING_BLOKIR_${moment().format("DDMMYY-HHmmss")}`}
+          url={process.env.NEXT_PUBLIC_API_BLOKIR_MONITORING || ""}
+          token={token}
         />
       )}
 

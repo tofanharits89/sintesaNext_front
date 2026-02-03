@@ -11,6 +11,8 @@ interface GenerateCSVProps {
   query3: string;
   status: (loading: boolean, total: number) => void;
   namafile: string;
+  url?: string;
+  token?: string;
 }
 
 interface CSVData {
@@ -21,6 +23,8 @@ const GenerateCSV: React.FC<GenerateCSVProps> = ({
   query3,
   status,
   namafile,
+  url,
+  token,
 }) => {
   const [data, setData] = useState<CSVData[]>([]);
   const [loading, setLoading] = useState(false);
@@ -42,9 +46,13 @@ const GenerateCSV: React.FC<GenerateCSVProps> = ({
         .trim();
       const encryptedQuery = btoa(cleanedQuery);
 
-      const result = await apiClient.get(
-        `/dispensasi/${encryptedQuery}?limit=999999&page=0`
-      );
+      const endpoint = url
+        ? `${url}/${encryptedQuery}?limit=999999&page=0`
+        : `/dispensasi/${encryptedQuery}?limit=999999&page=0`;
+
+      const result = await apiClient.get(endpoint, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
 
       const csvData = Array.isArray(result) ? result : result.result || [];
 

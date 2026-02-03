@@ -8,6 +8,9 @@ export function withBasePath(path: string) {
 }
 
 export function apiPath(path: string) {
+  // If path is a full URL, return it as-is
+  if (path.startsWith("http")) return path;
+
   // ensure it starts with /api/v1
   let p = path;
   if (!p.startsWith("/api")) {
