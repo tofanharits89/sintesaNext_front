@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
@@ -32,14 +32,16 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 import { apiClient } from "@/lib/api/httpClient";
 import { FilePlus, Loader2, Save } from "lucide-react";
 import satkerData from "@/data/carisatker.json";
+import { format } from "date-fns";
 
 // Schema based on the SQL provided
 const formSchema = z.object({
     thang: z.string().min(4).max(4),
-    tg_nd: z.string().min(1, "Tanggal ND wajib diisi"),
+    tg_nd: z.date({ error: "Tanggal ND wajib diisi" }),
     no_nd: z.string().min(1, "Nomor ND wajib diisi"),
     kdsatker: z.string().min(1, "Satker wajib dipilih"),
     nm_indikator: z.string().min(1, "Indikator wajib dipilih"),
@@ -76,7 +78,7 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
         resolver: zodResolver(formSchema),
         defaultValues: {
             thang: new Date().getFullYear().toString(),
-            tg_nd: new Date().toISOString().split('T')[0] as string,
+            tg_nd: new Date(),
             no_nd: "",
             kdsatker: "",
             nm_indikator: "",
@@ -160,6 +162,7 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                                         <SelectValue placeholder="Pilih Tahun" />
                                     </SelectTrigger>
                                     <SelectContent>
+                                        <SelectItem value="2026">2026</SelectItem>
                                         <SelectItem value="2025">2025</SelectItem>
                                         <SelectItem value="2024">2024</SelectItem>
                                         <SelectItem value="2023">2023</SelectItem>
@@ -169,11 +172,10 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
 
                             <div className="w-full space-y-2">
                                 <Label htmlFor="tg_nd">Tanggal Nota Dinas</Label>
-                                <Input
-                                    id="tg_nd"
-                                    type="date"
-                                    value={form.watch("tg_nd")}
-                                    onChange={(e) => form.setValue("tg_nd", e.target.value)}
+                                <DatePicker
+                                    date={form.watch("tg_nd")}
+                                    onDateChange={(date) => form.setValue("tg_nd", date || new Date())}
+                                    placeholder="Pilih tanggal ND"
                                     className="w-full"
                                 />
                             </div>
@@ -322,7 +324,7 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                 <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-3 shrink-0">
                     <div className="flex gap-2">
                         <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-                            Close
+                            Tutup
                         </Button>
                         <Button onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting} className="bg-slate-800 hover:bg-slate-900">
                             {isSubmitting ? (

@@ -52,6 +52,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { apiClient } from "@/lib/api/httpClient";
 import { useQuery } from "@tanstack/react-query";
+import { StatCard } from "@/components/dashboard/StatCard";
 
 import {
     LineChart,
@@ -63,7 +64,8 @@ import {
     ResponsiveContainer,
     BarChart,
     Bar,
-    Cell
+    Cell,
+    LabelList
 } from "recharts";
 
 // Types
@@ -110,7 +112,7 @@ type IkpaResponse = {
 };
 
 export function IkpaLanding() {
-    const [selectedYear, setSelectedYear] = useState("2025");
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [currentPage, setCurrentPage] = useState(0);
@@ -123,7 +125,10 @@ export function IkpaLanding() {
     // Fetch Global Stats
     const { data: statsData, isLoading: isStatsLoading } = useQuery<IkpaStats>({
         queryKey: ['ikpa-stats', selectedKppn, selectedSatker, selectedYear],
-        queryFn: async () => apiClient.get(`/ikpa/stats?kdkppn=${selectedKppn === 'all' ? '' : selectedKppn}&kdsatker=${selectedSatker === 'all' ? '' : selectedSatker}&thang=${selectedYear}`)
+        queryFn: async () => apiClient.get(`/ikpa/stats?kdkppn=${selectedKppn === 'all' ? '' : selectedKppn}&kdsatker=${selectedSatker === 'all' ? '' : selectedSatker}&thang=${selectedYear}`),
+        staleTime: 0,
+        gcTime: 0,
+        refetchOnWindowFocus: false
     });
 
     // Memoize unique KPPN list from data
@@ -179,6 +184,7 @@ export function IkpaLanding() {
                                     <SelectValue placeholder="Tahun" />
                                 </SelectTrigger>
                                 <SelectContent>
+                                    <SelectItem value="2026">2026</SelectItem>
                                     <SelectItem value="2025">2025</SelectItem>
                                     <SelectItem value="2024">2024</SelectItem>
                                     <SelectItem value="2023">2023</SelectItem>
@@ -244,30 +250,48 @@ export function IkpaLanding() {
             />
 
             {/* Top Dashboard Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-                {/* Metrics */}
-                <div className="lg:col-span-12 xl:col-span-5 grid grid-cols-2 gap-4">
-                    <MetricCard title="Total Permohonan" value={summary.total.toLocaleString()} icon={FileText} color="blue" />
-                    <MetricCard title="Disetujui" value={summary.approved.toLocaleString()} icon={CheckCircle2} color="emerald" />
-                    <MetricCard title="Ditolak" value={summary.rejected.toLocaleString()} icon={XCircle} color="rose" />
-                    <MetricCard title="Pending" value={summary.pending.toLocaleString()} icon={Clock} color="amber" />
+            <div className="space-y-6 mb-8">
+                {/* Quick Stats Row */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <StatCard
+                        label="Total Permohonan"
+                        icon={<FileText className="h-4 w-4 text-blue-500" />}
+                        value={summary.total.toLocaleString()}
+                    />
+                    <StatCard
+                        label="Disetujui"
+                        icon={<CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+                        value={summary.approved.toLocaleString()}
+                    />
+                    <StatCard
+                        label="Ditolak"
+                        icon={<XCircle className="h-4 w-4 text-rose-500" />}
+                        value={summary.rejected.toLocaleString()}
+                    />
+                    <StatCard
+                        label="Pending"
+                        icon={<Clock className="h-4 w-4 text-amber-500" />}
+                        value={summary.pending.toLocaleString()}
+                    />
                 </div>
 
                 {/* Main Trend Chart */}
-                <Card className="lg:col-span-12 xl:col-span-7">
+                <Card>
                     <CardHeader className="pb-2">
                         <CardTitle className="text-lg">Trend Permohonan Bulanan</CardTitle>
                     </CardHeader>
                     <CardContent className="h-[250px] p-4">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={statsData?.monthlyTrend || []}>
+                            <LineChart data={statsData?.monthlyTrend || []} margin={{ top: 20, right: 30, left: 20, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }} />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }} padding={{ left: 20, right: 20 }} />
                                 <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }} />
                                 <RechartsTooltip
                                     contentStyle={{ backgroundColor: 'var(--card)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
                                 />
-                                <Line type="monotone" dataKey="count" stroke="var(--primary)" strokeWidth={3} dot={{ fill: 'var(--primary)', r: 4 }} activeDot={{ r: 6 }} />
+                                <Line type="monotone" dataKey="count" stroke="var(--primary)" strokeWidth={3} dot={{ fill: 'var(--primary)', r: 4 }} activeDot={{ r: 6 }}>
+                                    <LabelList dataKey="count" position="top" offset={10} style={{ fill: 'var(--foreground)', fontSize: 11, fontWeight: 600 }} />
+                                </Line>
                             </LineChart>
                         </ResponsiveContainer>
                     </CardContent>
@@ -397,29 +421,6 @@ export function IkpaLanding() {
                 </div>
             </div>
         </div>
-    );
-}
-
-function MetricCard({ title, value, icon: Icon, color }: { title: string; value: string; icon: any; color: string }) {
-    const colorMap: Record<string, string> = {
-        blue: "text-blue-600 bg-blue-50 border-blue-100 dark:bg-blue-900/20 dark:border-blue-800",
-        emerald: "text-emerald-600 bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800",
-        rose: "text-rose-600 bg-rose-50 border-rose-100 dark:bg-rose-900/20 dark:border-rose-800",
-        amber: "text-amber-600 bg-amber-50 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800"
-    };
-
-    return (
-        <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-5 flex flex-col gap-3">
-                <div className={cn("w-10 h-10 flex items-center justify-center rounded-lg border", colorMap[color])}>
-                    <Icon className="h-5 w-5" />
-                </div>
-                <div className="space-y-0.5">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{title}</p>
-                    <h3 className="text-2xl font-bold">{value}</h3>
-                </div>
-            </CardContent>
-        </Card>
     );
 }
 
