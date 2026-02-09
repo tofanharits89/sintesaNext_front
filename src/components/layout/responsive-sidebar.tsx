@@ -39,6 +39,7 @@ import {
   BookOpen,
   Archive,
   Gavel,
+  CreditCard,
 } from "lucide-react";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -105,6 +106,10 @@ const defaultMenu: MenuItem[] = [
       { label: "Analisa EPA" },
       { label: "Rekap EPA" },
     ],
+  },
+  {
+    label: "Monev KKP",
+    children: [{ label: "KPPN" }, { label: "Kanwil" }],
   },
   {
     label: "Spending Review",
@@ -253,6 +258,8 @@ export function ResponsiveSidebar({
         return <BookOpen className={`${cls} text-red-600 dark:text-red-400`} />;
       case "Monev IKPA":
         return <Gauge className={`${cls} text-red-600 dark:text-red-400`} />;
+      case "Monev KKP":
+        return <CreditCard className={`${cls} text-orange-600 dark:text-orange-400`} />;
       case "Tentang Kita":
         return (
           <Info className={`${cls} text-neutral-600 dark:text-neutral-300`} />
@@ -356,6 +363,10 @@ export function ResponsiveSidebar({
         return <Banknote className={cls} />;
       case "Monev IKPA__Monev Dispensasi IKPA":
         return <Gavel className={cls} />;
+      case "Monev KKP__KPPN":
+        return <Building2 className={cls} />;
+      case "Monev KKP__Kanwil":
+        return <Building2 className={cls} />;
       default:
         return null;
     }
@@ -461,7 +472,7 @@ export function ResponsiveSidebar({
                           {m.children.map((c) => {
                             const menuKey = `${m.label}__${c.label}`;
                             let href = "#";
-                            let onMouseEnterFn = () => {};
+                            let onMouseEnterFn = () => { };
 
                             // Route mapping
                             if (
@@ -704,6 +715,20 @@ export function ResponsiveSidebar({
                               m.label === "Monev IKPA"
                             ) {
                               href = "/ikpa";
+                            } else if (
+                              c.label === "KPPN" &&
+                              m.label === "Monev KKP"
+                            ) {
+                              href = "/monev-kkp/kppn";
+                              onMouseEnterFn = () =>
+                                import("@/components/monev-kkp/kppn-content");
+                            } else if (
+                              c.label === "Kanwil" &&
+                              m.label === "Monev KKP"
+                            ) {
+                              href = "/monev-kkp/kanwil";
+                              onMouseEnterFn = () =>
+                                import("@/components/monev-kkp/kanwil-content");
                             }
 
                             return (
@@ -895,7 +920,7 @@ export function ResponsiveSidebar({
                         key={c.label}
                         href="/tentang-kita/profil"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
-                        onMouseEnter={() => {}}
+                        onMouseEnter={() => { }}
                         onClick={() => {
                           trackMenuUsage({
                             menu: m.label,

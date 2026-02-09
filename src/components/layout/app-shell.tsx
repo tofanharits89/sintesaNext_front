@@ -48,6 +48,7 @@ const AppShell = memo(function AppShell({
       "/sp2d",
       "/dispensasi",
       "/ikpa",
+      "/monev-kkp",
     ],
     []
   );

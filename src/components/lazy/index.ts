@@ -67,3 +67,7 @@ export const EpaTabsCard = lazy(() => import('@/components/epa/tabs-card').then(
 // MBG Components (Map heavy)
 export const MapView = lazy(() => import('@/features/mbg/components/MapView').then(m => ({ default: m.MapView })));
 export const MapStatsOverlay = lazy(() => import('@/components/mbg/MapStatsOverlay').then(m => ({ default: m.MapStatsOverlay })));
+
+// Monev KKP Components
+export const KppnContent = lazy(() => import('@/components/monev-kkp/kppn-content').then(m => ({ default: m.KppnContent })));
+export const KanwilContent = lazy(() => import('@/components/monev-kkp/kanwil-content').then(m => ({ default: m.KanwilContent })));
