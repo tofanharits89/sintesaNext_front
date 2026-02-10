@@ -58,7 +58,7 @@ const FilterData: React.FC<FilterDataProps> = ({ show, onHide, onFilter }) => {
   // Others (1, etc.) were Pusat (full access)
 
   const isKanwil = user?.role === "kanwil_djpb";
-  const isPusat = ["super_admin", "co_admin", "kantor_pusat"].includes(
+  const isPusat = ["super_admin", "co_admin", "kantor_pusat", "ditpa"].includes(
     user?.role || "",
   );
   const isKppnOrOther = !isKanwil && !isPusat; // Equivalent to role "3"

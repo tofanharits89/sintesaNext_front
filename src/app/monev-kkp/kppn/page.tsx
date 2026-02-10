@@ -1,6 +1,7 @@
 "use client";
 
-import { Suspense, useState, useRef } from "react";
+import { Suspense, useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { GenericCardSkeleton } from "@/components/ui/dashboard-skeletons";
 import { KppnContent, KppnContentRef, KkpData } from "@/components/monev-kkp/kppn-content";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,10 @@ import {
 import { Download, FileSpreadsheet, FileText, Send } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import { useAuth } from "@/hooks/useAuth";
+
+// Allowed roles for KPPN page
+const ALLOWED_ROLES = ["kppn", "super_admin", "co_admin"];
 
 // Helper function to format Rupiah
 
@@ -31,10 +36,28 @@ const formatPercent = (value: number) => {
 };
 
 export default function MonevKkpKppnPage() {
+    const router = useRouter();
+    const { user, isLoading } = useAuth();
     const [isExporting, setIsExporting] = useState(false);
     const [isSending, setIsSending] = useState(false);
     const [statusLaporan, setStatusLaporan] = useState<"sent" | "not_sent">("not_sent");
     const kppnContentRef = useRef<KppnContentRef>(null);
+
+    // Role-based access control
+    useEffect(() => {
+        if (isLoading) return;
+        if (!user) {
+            router.push("/login");
+            return;
+        }
+        if (!ALLOWED_ROLES.includes(user.role as string)) {
+            router.push("/unauthorized?reason=monev_kkp_kppn_access_denied");
+        }
+    }, [user, isLoading, router]);
+
+    if (isLoading || !user || !ALLOWED_ROLES.includes(user.role as string)) {
+        return <GenericCardSkeleton showHeader contentLines={8} />;
+    }
 
     const handleExportExcel = async () => {
         setIsExporting(true);

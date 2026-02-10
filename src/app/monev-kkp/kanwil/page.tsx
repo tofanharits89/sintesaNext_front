@@ -1,6 +1,7 @@
 "use client";
 
-import { Suspense, useState, useRef } from "react";
+import { Suspense, useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { GenericCardSkeleton } from "@/components/ui/dashboard-skeletons";
 import { KanwilContent, KanwilContentRef, RingkasanKanwilData } from "@/components/monev-kkp/kanwil-content";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,10 @@ import {
 import { Download, FileSpreadsheet, FileText, LayoutList, Building2, Send } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import { useAuth } from "@/hooks/useAuth";
+
+// Allowed roles for Kanwil page
+const ALLOWED_ROLES = ["kanwil_djpb", "super_admin", "co_admin"];
 
 // Helper function to format Rupiah
 const formatRupiah = (value: number) => {
@@ -32,10 +37,28 @@ const formatPercent = (value: number) => {
 };
 
 export default function MonevKkpKanwilPage() {
+    const router = useRouter();
+    const { user, isLoading } = useAuth();
     const [isExporting, setIsExporting] = useState(false);
     const [isSending, setIsSending] = useState(false);
     const [statusLaporan, setStatusLaporan] = useState<"sent" | "not_sent">("not_sent");
     const kanwilContentRef = useRef<KanwilContentRef>(null);
+
+    // Role-based access control
+    useEffect(() => {
+        if (isLoading) return;
+        if (!user) {
+            router.push("/login");
+            return;
+        }
+        if (!ALLOWED_ROLES.includes(user.role as string)) {
+            router.push("/unauthorized?reason=monev_kkp_kanwil_access_denied");
+        }
+    }, [user, isLoading, router]);
+
+    if (isLoading || !user || !ALLOWED_ROLES.includes(user.role as string)) {
+        return <GenericCardSkeleton showHeader contentLines={8} />;
+    }
 
     const handleExportExcel = async () => {
         setIsExporting(true);

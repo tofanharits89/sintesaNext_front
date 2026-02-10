@@ -1,6 +1,7 @@
 "use client";
 
-import { Suspense, useState, useRef } from "react";
+import { Suspense, useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { GenericCardSkeleton } from "@/components/ui/dashboard-skeletons";
 import { DirektoratPaContent, DirektoratPaContentRef, RingkasanData } from "@/components/monev-kkp/direktorat-pa-content";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,10 @@ import {
 import { Download, FileSpreadsheet, FileText, LayoutList, Building2, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import { useAuth } from "@/hooks/useAuth";
+
+// Allowed roles for Direktorat PA page
+const ALLOWED_ROLES = ["ditpa", "super_admin", "co_admin"];
 
 // Helper function to format Rupiah
 const formatRupiah = (value: number) => {
@@ -32,8 +37,26 @@ const formatPercent = (value: number) => {
 };
 
 export default function MonevKkpDirektoratPaPage() {
+    const router = useRouter();
+    const { user, isLoading } = useAuth();
     const [isExporting, setIsExporting] = useState(false);
     const direktoratPaContentRef = useRef<DirektoratPaContentRef>(null);
+
+    // Role-based access control
+    useEffect(() => {
+        if (isLoading) return;
+        if (!user) {
+            router.push("/login");
+            return;
+        }
+        if (!ALLOWED_ROLES.includes(user.role as string)) {
+            router.push("/unauthorized?reason=monev_kkp_direktorat_pa_access_denied");
+        }
+    }, [user, isLoading, router]);
+
+    if (isLoading || !user || !ALLOWED_ROLES.includes(user.role as string)) {
+        return <GenericCardSkeleton showHeader contentLines={8} />;
+    }
 
     const handleExportExcel = async () => {
         setIsExporting(true);

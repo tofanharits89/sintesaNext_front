@@ -279,12 +279,13 @@ export interface User {
   email?: string;
   is_active?: boolean;
   role?:
-    | "super_admin"
-    | "co_admin"
-    | "kantor_pusat"
-    | "kanwil_djpb"
-    | "kppn"
-    | "lainnya";
+  | "super_admin"
+  | "co_admin"
+  | "kantor_pusat"
+  | "ditpa"
+  | "kanwil_djpb"
+  | "kppn"
+  | "lainnya";
   kdkanwil?: string;
   nmkanwil?: string;
   kdkppn?: string;

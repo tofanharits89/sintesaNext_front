@@ -128,7 +128,7 @@ export default function ProfilePage() {
     try {
       // Ensure CSRF token is present (interceptor also fetches if missing)
       await prefetchCsrf();
-      const trace = `prof_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+      const trace = `prof_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
       console.log(`[Profile Page] onSave trace=${trace}`);
       const data = await apiClient.put<any>("/users/profile/me", payload, {
         headers: {
@@ -172,7 +172,7 @@ export default function ProfilePage() {
     try {
       setChangingPassword(true);
       await prefetchCsrf();
-      const trace = `prof_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+      const trace = `prof_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
       console.log(`[Profile Page] changePassword trace=${trace}`);
       const data = await apiClient.put<any>("/users/profile/me", {
         password: newPassword,
@@ -363,6 +363,7 @@ export default function ProfilePage() {
                   <SelectItem value="super_admin">Super Admin (X)</SelectItem>
                   <SelectItem value="co_admin">Co-Admin (0)</SelectItem>
                   <SelectItem value="kantor_pusat">Kantor Pusat (1)</SelectItem>
+                  <SelectItem value="ditpa">DIT PA (1)</SelectItem>
                   <SelectItem value="kanwil_djpb">Kanwil DJPb (2)</SelectItem>
                   <SelectItem value="kppn">KPPN (3)</SelectItem>
                   <SelectItem value="lainnya">User Lainnya (4)</SelectItem>

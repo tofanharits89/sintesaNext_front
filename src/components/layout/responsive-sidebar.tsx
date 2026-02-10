@@ -184,18 +184,36 @@ export function ResponsiveSidebar({
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
 
-  // Filter menu based on user role - only admins can see Data Supplier
+  // Filter menu based on user role
   const filteredMenu = useMemo(() => {
     if (!user) return menu;
 
     const isAdmin = user.role === "super_admin" || user.role === "co_admin";
 
-    // If not admin, filter out Data Supplier menu
-    if (!isAdmin) {
-      return menu.filter((item) => item.label !== "Data Supplier");
-    }
+    return menu
+      .filter((item) => {
+        // Only admins can see Data Supplier
+        if (item.label === "Data Supplier" && !isAdmin) return false;
+        return true;
+      })
+      .map((item) => {
+        // Filter Monev KKP children based on role
+        if (item.label === "Monev KKP") {
+          if (isAdmin) return item; // Admins see all submenus
 
-    return menu;
+          const allowedChildren = (item.children || []).filter((child) => {
+            if (child.label === "KPPN" && user.role === "kppn") return true;
+            if (child.label === "Kanwil" && user.role === "kanwil_djpb") return true;
+            if (child.label === "Direktorat PA" && user.role === "ditpa") return true;
+            return false;
+          });
+
+          if (allowedChildren.length === 0) return null; // Hide menu entirely
+          return { ...item, children: allowedChildren };
+        }
+        return item;
+      })
+      .filter(Boolean) as MenuItem[];
   }, [menu, user]);
 
   // icon resolver for menu labels

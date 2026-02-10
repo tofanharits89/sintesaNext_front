@@ -324,6 +324,7 @@ export function ModernUsersTable({
                   <SelectItem value="super_admin">Super Admin</SelectItem>
                   <SelectItem value="co_admin">Co-Admin</SelectItem>
                   <SelectItem value="kantor_pusat">Kantor Pusat</SelectItem>
+                  <SelectItem value="ditpa">DIT PA</SelectItem>
                   <SelectItem value="kanwil_djpb">Kanwil DJPb</SelectItem>
                   <SelectItem value="kppn">KPPN</SelectItem>
                   <SelectItem value="lainnya">User Lainnya</SelectItem>

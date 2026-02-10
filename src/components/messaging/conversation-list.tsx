@@ -18,6 +18,7 @@ const getRoleDisplayName = (role?: string): string => {
     super_admin: "Super Admin",
     co_admin: "Co-Admin",
     kantor_pusat: "Kantor Pusat",
+    ditpa: "DIT PA",
     kanwil_djpb: "Kanwil DJPb",
     kppn: "KPPN",
     lainnya: "User Lainnya",
@@ -110,15 +111,15 @@ export function ConversationList({
           const isSelected = conversation.id === selectedConversationId;
           const unreadCount = getUnreadCount(conversation.id);
           const otherParticipant = conversation.otherParticipant;
-          
+
           // Extract online status check
           const isOnline = !!(otherParticipant && onlineUsers?.some((u) =>
             (otherParticipant as any)?.id && u.user.id === (otherParticipant as any).id
               ? true
               : (otherParticipant as any)?.username &&
-                u.user.username === (otherParticipant as any).username
+              u.user.username === (otherParticipant as any).username
           ));
-          
+
           // Extract timestamp calculation
           const getTimestamp = () => {
             return conversation.lastMessage?.timestamp ||
@@ -129,7 +130,7 @@ export function ConversationList({
               (conversation as any)?.updatedAt ||
               null;
           };
-          
+
           const timestamp = getTimestamp();
           const formattedTime = timestamp ? formatRelativeTime(timestamp) : null;
 
@@ -191,14 +192,14 @@ export function ConversationList({
                           className="relative text-[10px] py-0.5 pl-2 pr-6 w-full justify-start gap-1 shrink min-w-0"
                         >
                           {otherParticipant?.role === "super_admin" ||
-                          otherParticipant?.role === "co_admin" ? (
+                            otherParticipant?.role === "co_admin" ? (
                             <Crown className="h-3 w-3 flex-shrink-0" />
                           ) : (
                             <User className="h-3 w-3 flex-shrink-0" />
                           )}
                           <span className="truncate">
                             {otherParticipant?.role === "super_admin" ||
-                            otherParticipant?.role === "co_admin"
+                              otherParticipant?.role === "co_admin"
                               ? "Administrator"
                               : otherParticipant?.username || "User"}
                           </span>
@@ -228,7 +229,7 @@ export function ConversationList({
                     )}
                   </div>
 
-                  
+
 
                   {/* Last message preview (moved below role, reduced font size) */}
                   {conversation.lastMessage ? (
@@ -237,8 +238,8 @@ export function ConversationList({
                         (conversation.lastMessage as any).sender_type === "admin" ||
                         conversation.lastMessage.sender?.role === "super_admin" ||
                         conversation.lastMessage.sender?.role === "co_admin") && (
-                        <Crown className="h-3 w-3 text-yellow-500 flex-shrink-0" />
-                      )}
+                          <Crown className="h-3 w-3 text-yellow-500 flex-shrink-0" />
+                        )}
                       <span
                         className={cn(
                           // Allow wrapping so preview doesn't cut off; keep layout stable

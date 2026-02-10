@@ -5,6 +5,7 @@ export type Role =
   | "super_admin"
   | "co_admin"
   | "kantor_pusat"
+  | "ditpa"
   | "kanwil_djpb"
   | "kppn"
   | "lainnya";
@@ -34,6 +35,15 @@ export const PERMISSIONS: Record<Role, RolePermissions> = {
     analytics: { viewStats: true, viewHistory: true, recordUsage: true },
   },
   kantor_pusat: {
+    users: { view: false, create: false, edit: false, delete: false, editRole: false, editLocation: false },
+    profile: { editOwn: true, editOthers: false, editRole: false, editLocation: false },
+    dashboard: { viewAll: true, viewKanwil: true, viewKPPN: true, exportData: true },
+    settings: { view: false, edit: false },
+    messages: { viewAll: false, send: false, delete: false },
+    notifications: { viewAll: false, create: false, delete: false },
+    analytics: { viewStats: false, viewHistory: false, recordUsage: true },
+  },
+  ditpa: {
     users: { view: false, create: false, edit: false, delete: false, editRole: false, editLocation: false },
     profile: { editOwn: true, editOthers: false, editRole: false, editLocation: false },
     dashboard: { viewAll: true, viewKanwil: true, viewKPPN: true, exportData: true },
@@ -82,6 +92,7 @@ const normalizeRole = (role: Role | string | undefined): Role | undefined => {
     "super_admin",
     "co_admin",
     "kantor_pusat",
+    "ditpa",
     "kanwil_djpb",
     "kppn",
     "lainnya",
@@ -141,6 +152,7 @@ export const getRoleDisplayName = (role: Role | string): string => {
     super_admin: "Super Admin (X)",
     co_admin: "Co-Admin (0)",
     kantor_pusat: "Kantor Pusat (1)",
+    ditpa: "DIT PA (1)",
     kanwil_djpb: "Kanwil DJPb (2)",
     kppn: "KPPN (3)",
     lainnya: "User Lainnya (4)",

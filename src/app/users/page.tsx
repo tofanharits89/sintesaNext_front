@@ -52,7 +52,7 @@ let __cachedCsrfToken: string | null = null;
 async function ensureCsrfToken(): Promise<string | null> {
   if (__cachedCsrfToken) return __cachedCsrfToken;
   try {
-const resp = await fetch(apiPath("/csrf-token"), { credentials: "include" });
+    const resp = await fetch(apiPath("/csrf-token"), { credentials: "include" });
     if (!resp.ok) return null;
     const data = await resp.json().catch(() => ({} as any));
     const token = typeof data?.token === "string" && data.token.length ? data.token : null;
@@ -64,7 +64,7 @@ const resp = await fetch(apiPath("/csrf-token"), { credentials: "include" });
 }
 
 const fetchUsers = async () => {
-const res = await fetch(apiPath("/users"), {
+  const res = await fetch(apiPath("/users"), {
     credentials: "include",
     cache: "no-store",
   });
@@ -227,7 +227,7 @@ export default function UsersPage() {
     const method = form.id ? "PUT" : "POST";
     const bodyPayload = method === "POST" ? { ...payload, password } : payload;
     const xsrf = await ensureCsrfToken();
-const url = form.id ? apiPath(`/users/${form.id}`) : apiPath("/users");
+    const url = form.id ? apiPath(`/users/${form.id}`) : apiPath("/users");
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json", ...(xsrf ? { "x-csrf-token": xsrf } : {}) },
@@ -317,7 +317,7 @@ const url = form.id ? apiPath(`/users/${form.id}`) : apiPath("/users");
 
   async function remove(id: string): Promise<void> {
     const xsrf = await ensureCsrfToken();
-const res = await fetch(apiPath(`/users/${id}`), {
+    const res = await fetch(apiPath(`/users/${id}`), {
       method: "DELETE",
       credentials: "include",
       headers: { ...(xsrf ? { "x-csrf-token": xsrf } : {}) },
@@ -336,7 +336,7 @@ const res = await fetch(apiPath(`/users/${id}`), {
     const ids = Array.from(selected);
     const results = await Promise.all(
       ids.map(async (id) => {
-const res = await fetch(apiPath(`/users/${id}`), {
+        const res = await fetch(apiPath(`/users/${id}`), {
           method: "DELETE",
           credentials: "include",
           headers: { ...(xsrf ? { "x-csrf-token": xsrf } : {}) },
@@ -483,171 +483,140 @@ const res = await fetch(apiPath(`/users/${id}`), {
           <div className="max-h-[70vh] overflow-y-auto">
             <div className="grid gap-4 py-4 px-4">
               <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="nama-lengkap">Nama Lengkap</FieldLabel>
-                <Input
-                  id="nama-lengkap"
-                  value={form.name}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, name: e.target.value }))
-                  }
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="username">Username</FieldLabel>
-                <Input
-                  id="username"
-                  value={form.username}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, username: e.target.value }))
-                  }
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
-                <Input
-                  id="email"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, email: e.target.value }))
-                  }
-                />
-              </Field>
-              {!form.id && (
-                <>
-                  <Field>
-                    <FieldLabel htmlFor="password">Password</FieldLabel>
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        autoComplete="new-password"
-                        value={form.password}
-                        onChange={(e) =>
-                          setForm((f) => ({ ...f, password: e.target.value }))
-                        }
-                        className="pr-10"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
-                        tabIndex={-1}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                        <span className="sr-only">
-                          {showPassword ? "Hide password" : "Show password"}
-                        </span>
-                      </Button>
-                    </div>
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="confirm-password">Konfirmasi Password</FieldLabel>
-                    <div className="relative">
-                      <Input
-                        id="confirm-password"
-                        type={showConfirmPassword ? "text" : "password"}
-                        autoComplete="new-password"
-                        value={form.confirmPassword}
-                        onChange={(e) =>
-                          setForm((f) => ({
-                            ...f,
-                            confirmPassword: e.target.value,
-                          }))
-                        }
-                        className="pr-10"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        tabIndex={-1}
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                        <span className="sr-only">
-                          {showConfirmPassword ? "Hide password" : "Show password"}
-                        </span>
-                      </Button>
-                    </div>
-                  </Field>
-                </>
-              )}
-              <Field>
-                <FieldLabel htmlFor="role">Role</FieldLabel>
-                <Select
-                  value={form.role}
-                  onValueChange={(v) =>
-                    setForm((f) => ({
-                      ...f,
-                      role: v as any,
-                      kdkanwil: "",
-                      kdkppn: "",
-                    }))
-                  }
-                >
-                  <SelectTrigger id="role" className="h-11">
-                    <SelectValue placeholder="Pilih role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="super_admin">Super Admin (X)</SelectItem>
-                    <SelectItem value="co_admin">Co-Admin (0)</SelectItem>
-                    <SelectItem value="kantor_pusat">Kantor Pusat (1)</SelectItem>
-                    <SelectItem value="kanwil_djpb">Kanwil DJPb (2)</SelectItem>
-                    <SelectItem value="kppn">KPPN (3)</SelectItem>
-                    <SelectItem value="lainnya">User Lainnya (4)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </Field>
-
-              {/* Conditional Kanwil DJPb Selection */}
-              {form.role === "kanwil_djpb" && (
                 <Field>
-                  <FieldLabel htmlFor="pilih-kanwil-djpb">Pilih Kanwil DJPb</FieldLabel>
+                  <FieldLabel htmlFor="nama-lengkap">Nama Lengkap</FieldLabel>
+                  <Input
+                    id="nama-lengkap"
+                    value={form.name}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, name: e.target.value }))
+                    }
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="username">Username</FieldLabel>
+                  <Input
+                    id="username"
+                    value={form.username}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, username: e.target.value }))
+                    }
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="email">Email</FieldLabel>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={form.email}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, email: e.target.value }))
+                    }
+                  />
+                </Field>
+                {!form.id && (
+                  <>
+                    <Field>
+                      <FieldLabel htmlFor="password">Password</FieldLabel>
+                      <div className="relative">
+                        <Input
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          autoComplete="new-password"
+                          value={form.password}
+                          onChange={(e) =>
+                            setForm((f) => ({ ...f, password: e.target.value }))
+                          }
+                          className="pr-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                          tabIndex={-1}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                          <span className="sr-only">
+                            {showPassword ? "Hide password" : "Show password"}
+                          </span>
+                        </Button>
+                      </div>
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="confirm-password">Konfirmasi Password</FieldLabel>
+                      <div className="relative">
+                        <Input
+                          id="confirm-password"
+                          type={showConfirmPassword ? "text" : "password"}
+                          autoComplete="new-password"
+                          value={form.confirmPassword}
+                          onChange={(e) =>
+                            setForm((f) => ({
+                              ...f,
+                              confirmPassword: e.target.value,
+                            }))
+                          }
+                          className="pr-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          tabIndex={-1}
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                          <span className="sr-only">
+                            {showConfirmPassword ? "Hide password" : "Show password"}
+                          </span>
+                        </Button>
+                      </div>
+                    </Field>
+                  </>
+                )}
+                <Field>
+                  <FieldLabel htmlFor="role">Role</FieldLabel>
                   <Select
-                    value={form.kdkanwil ?? ""}
-                    onValueChange={(v) => {
-                      const selectedKanwil = kdkanwilData.find(
-                        (k) => k.kdkanwil === v
-                      );
+                    value={form.role}
+                    onValueChange={(v) =>
                       setForm((f) => ({
                         ...f,
-                        kdkanwil: v,
-                        nmkanwil: selectedKanwil?.nmkanwil || "",
-                      }));
-                    }}
+                        role: v as any,
+                        kdkanwil: "",
+                        kdkppn: "",
+                      }))
+                    }
                   >
-                    <SelectTrigger id="pilih-kanwil-djpb" className="h-11">
-                      <SelectValue placeholder="Pilih Provinsi" />
+                    <SelectTrigger id="role" className="h-11">
+                      <SelectValue placeholder="Pilih role" />
                     </SelectTrigger>
                     <SelectContent>
-                      {kdkanwilData.map((kanwil) => (
-                        <SelectItem key={kanwil.kdkanwil} value={kanwil.kdkanwil}>
-                          {kanwil.nmkanwil}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="super_admin">Super Admin (X)</SelectItem>
+                      <SelectItem value="co_admin">Co-Admin (0)</SelectItem>
+                      <SelectItem value="kantor_pusat">Kantor Pusat (1)</SelectItem>
+                      <SelectItem value="ditpa">DIT PA (1)</SelectItem>
+                      <SelectItem value="kanwil_djpb">Kanwil DJPb (2)</SelectItem>
+                      <SelectItem value="kppn">KPPN (3)</SelectItem>
+                      <SelectItem value="lainnya">User Lainnya (4)</SelectItem>
                     </SelectContent>
                   </Select>
                 </Field>
-              )}
 
-              {/* Conditional KPPN Selection */}
-              {form.role === "kppn" && (
-                <>
+                {/* Conditional Kanwil DJPb Selection */}
+                {form.role === "kanwil_djpb" && (
                   <Field>
-                    <FieldLabel htmlFor="pilih-kanwil-kppn">Pilih Kanwil</FieldLabel>
+                    <FieldLabel htmlFor="pilih-kanwil-djpb">Pilih Kanwil DJPb</FieldLabel>
                     <Select
                       value={form.kdkanwil ?? ""}
                       onValueChange={(v) => {
@@ -658,13 +627,11 @@ const res = await fetch(apiPath(`/users/${id}`), {
                           ...f,
                           kdkanwil: v,
                           nmkanwil: selectedKanwil?.nmkanwil || "",
-                          kdkppn: "",
-                          nmkppn: "",
                         }));
                       }}
                     >
-                      <SelectTrigger id="pilih-kanwil-kppn" className="h-11">
-                        <SelectValue placeholder="Pilih Kanwil" />
+                      <SelectTrigger id="pilih-kanwil-djpb" className="h-11">
+                        <SelectValue placeholder="Pilih Provinsi" />
                       </SelectTrigger>
                       <SelectContent>
                         {kdkanwilData.map((kanwil) => (
@@ -675,67 +642,101 @@ const res = await fetch(apiPath(`/users/${id}`), {
                       </SelectContent>
                     </Select>
                   </Field>
+                )}
 
-                  {form.kdkanwil && (
+                {/* Conditional KPPN Selection */}
+                {form.role === "kppn" && (
+                  <>
                     <Field>
-                      <FieldLabel htmlFor="pilih-kppn">Pilih KPPN</FieldLabel>
+                      <FieldLabel htmlFor="pilih-kanwil-kppn">Pilih Kanwil</FieldLabel>
                       <Select
-                        value={form.kdkppn ?? ""}
+                        value={form.kdkanwil ?? ""}
                         onValueChange={(v) => {
-                          const selectedKppn = filteredKppn.find(
-                            (k) => k.kdkppn === v
+                          const selectedKanwil = kdkanwilData.find(
+                            (k) => k.kdkanwil === v
                           );
                           setForm((f) => ({
                             ...f,
-                            kdkppn: v,
-                            nmkppn: selectedKppn?.nmkppn || "",
+                            kdkanwil: v,
+                            nmkanwil: selectedKanwil?.nmkanwil || "",
+                            kdkppn: "",
+                            nmkppn: "",
                           }));
                         }}
                       >
-                        <SelectTrigger id="pilih-kppn" className="h-11">
-                          <SelectValue placeholder="Pilih KPPN" />
+                        <SelectTrigger id="pilih-kanwil-kppn" className="h-11">
+                          <SelectValue placeholder="Pilih Kanwil" />
                         </SelectTrigger>
                         <SelectContent>
-                          {filteredKppn.map((kppn) => (
-                            <SelectItem key={kppn.kdkppn} value={kppn.kdkppn}>
-                              {kppn.nmkppn}
+                          {kdkanwilData.map((kanwil) => (
+                            <SelectItem key={kanwil.kdkanwil} value={kanwil.kdkanwil}>
+                              {kanwil.nmkanwil}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </Field>
-                  )}
-                </>
-              )}
-              <Field>
-                <FieldLabel htmlFor="limit-kode-ba">Limit Kode BA</FieldLabel>
-                <Input
-                  id="limit-kode-ba"
-                  placeholder="contoh: 015 atau 015,042"
-                  value={form.limitKodeBA}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, limitKodeBA: e.target.value }))
-                  }
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="status">Status</FieldLabel>
-                <Select
-                  value={form.status}
-                  onValueChange={(v) =>
-                    setForm((f) => ({ ...f, status: v as any }))
-                  }
-                >
-                  <SelectTrigger id="status" className="h-11">
-                    <SelectValue placeholder="Pilih status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Aktif</SelectItem>
-                    <SelectItem value="disabled">Nonaktif</SelectItem>
-                  </SelectContent>
-                </Select>
-              </Field>
-            </FieldGroup>
+
+                    {form.kdkanwil && (
+                      <Field>
+                        <FieldLabel htmlFor="pilih-kppn">Pilih KPPN</FieldLabel>
+                        <Select
+                          value={form.kdkppn ?? ""}
+                          onValueChange={(v) => {
+                            const selectedKppn = filteredKppn.find(
+                              (k) => k.kdkppn === v
+                            );
+                            setForm((f) => ({
+                              ...f,
+                              kdkppn: v,
+                              nmkppn: selectedKppn?.nmkppn || "",
+                            }));
+                          }}
+                        >
+                          <SelectTrigger id="pilih-kppn" className="h-11">
+                            <SelectValue placeholder="Pilih KPPN" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {filteredKppn.map((kppn) => (
+                              <SelectItem key={kppn.kdkppn} value={kppn.kdkppn}>
+                                {kppn.nmkppn}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </Field>
+                    )}
+                  </>
+                )}
+                <Field>
+                  <FieldLabel htmlFor="limit-kode-ba">Limit Kode BA</FieldLabel>
+                  <Input
+                    id="limit-kode-ba"
+                    placeholder="contoh: 015 atau 015,042"
+                    value={form.limitKodeBA}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, limitKodeBA: e.target.value }))
+                    }
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="status">Status</FieldLabel>
+                  <Select
+                    value={form.status}
+                    onValueChange={(v) =>
+                      setForm((f) => ({ ...f, status: v as any }))
+                    }
+                  >
+                    <SelectTrigger id="status" className="h-11">
+                      <SelectValue placeholder="Pilih status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Aktif</SelectItem>
+                      <SelectItem value="disabled">Nonaktif</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </FieldGroup>
             </div>
           </div>
           <DialogFooter>

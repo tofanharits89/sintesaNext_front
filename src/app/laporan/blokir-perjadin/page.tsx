@@ -17,6 +17,7 @@ export default function Page() {
       case "super_admin":
       case "co_admin":
       case "kantor_pusat":
+      case "ditpa":
         return "0";
       default:
         return "0";

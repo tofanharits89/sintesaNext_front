@@ -27,6 +27,7 @@ const getRoleDisplayName = (role: string): string => {
     super_admin: "Super Admin",
     co_admin: "Co-Admin",
     kantor_pusat: "Kantor Pusat",
+    ditpa: "DIT PA",
     kanwil: "Kanwil DJPb",
     kppn: "KPPN",
     lainnya: "User Lainnya",
@@ -37,10 +38,10 @@ const getRoleDisplayName = (role: string): string => {
 export const useLoginNotifications = () => {
   const { user: currentUser } = useAuth();
   const { socket, isConnected, isReady } = useSocket();
-  
+
   // Check if user is admin - prevents unnecessary socket operations
   const isAdmin = currentUser && ["super_admin", "co_admin"].includes(currentUser.role);
-  
+
   // Don't show notifications on login page
   const isLoginPage = typeof window !== 'undefined' && window.location.pathname.startsWith('/login');
 

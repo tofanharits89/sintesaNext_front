@@ -14,12 +14,13 @@ export interface User {
   name: string;
   email: string;
   role:
-    | "super_admin"
-    | "co_admin"
-    | "kantor_pusat"
-    | "kanwil_djpb"
-    | "kppn"
-    | "lainnya";
+  | "super_admin"
+  | "co_admin"
+  | "kantor_pusat"
+  | "ditpa"
+  | "kanwil_djpb"
+  | "kppn"
+  | "lainnya";
   limitKodeBA?: string | null;
   kdkanwil?: string | null;
   kdkppn?: string | null;
@@ -119,7 +120,7 @@ export class AuthClient {
         headers: {
           "Content-Type": "application/json",
           "X-Debug-Source": "authClient.login",
-          "X-Debug-Trace": (Date.now().toString(36) + "-" + Math.random().toString(36).slice(2,8)).toUpperCase(),
+          "X-Debug-Trace": (Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8)).toUpperCase(),
         },
         credentials: "include",
         body: JSON.stringify(payload),

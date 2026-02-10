@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import satkerData from "@/data/carisatker.json";
 import kppnData from "@/data/kdkppn.json";
 import {
@@ -17,7 +17,10 @@ import {
     Loader2,
     Plus,
     FilePlus,
-    Edit
+    Edit,
+    ChevronsUpDown,
+    Check,
+    Search
 } from "lucide-react";
 import { ModalRekamIkpa } from "./modal-rekam";
 import { ModalEditIkpa } from "./modal-edit";
@@ -31,6 +34,15 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command";
 import {
     Table,
     TableBody,
@@ -122,6 +134,7 @@ export function IkpaLanding() {
     const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<IkpaRequest | null>(null);
+    const [satkerComboboxOpen, setSatkerComboboxOpen] = useState(false);
 
     // Fetch Global Stats
     const { data: statsData, isLoading: isStatsLoading } = useQuery<IkpaStats>({
@@ -226,23 +239,61 @@ export function IkpaLanding() {
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Pilih Satker</label>
-                            <Select value={selectedSatker} onValueChange={(val) => {
-                                setSelectedSatker(val);
-                                const satker = (satkerData as { kdsatker: string; nmsatker: string }[]).find(s => s.kdsatker === val);
-                                setSearchQuery(satker ? satker.nmsatker : "");
-                            }}>
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Pilih Satker" />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-[300px]">
-                                    <SelectItem value="all">Semua Satker</SelectItem>
-                                    {filteredSatkerList.map((satker) => (
-                                        <SelectItem key={satker.kdsatker} value={satker.kdsatker}>
-                                            {satker.kdsatker} - {satker.nmsatker}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <Popover open={satkerComboboxOpen} onOpenChange={setSatkerComboboxOpen}>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        role="combobox"
+                                        aria-expanded={satkerComboboxOpen}
+                                        className="w-full justify-between font-normal h-10 px-3"
+                                    >
+                                        <span className="truncate">
+                                            {selectedSatker === "all"
+                                                ? "Semua Satker"
+                                                : (() => {
+                                                    const satker = filteredSatkerList.find(s => s.kdsatker === selectedSatker);
+                                                    return satker ? `${satker.kdsatker} - ${satker.nmsatker}` : "Pilih Satker";
+                                                })()}
+                                        </span>
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                                    <Command>
+                                        <CommandInput placeholder="Cari satker..." />
+                                        <CommandList>
+                                            <CommandEmpty>Satker tidak ditemukan.</CommandEmpty>
+                                            <CommandGroup>
+                                                <CommandItem
+                                                    value="Semua Satker"
+                                                    onSelect={() => {
+                                                        setSelectedSatker("all");
+                                                        setSearchQuery("");
+                                                        setSatkerComboboxOpen(false);
+                                                    }}
+                                                >
+                                                    <Check className={cn("mr-2 h-4 w-4", selectedSatker === "all" ? "opacity-100" : "opacity-0")} />
+                                                    Semua Satker
+                                                </CommandItem>
+                                                {filteredSatkerList.map((satker) => (
+                                                    <CommandItem
+                                                        key={satker.kdsatker}
+                                                        value={`${satker.kdsatker} - ${satker.nmsatker}`}
+                                                        onSelect={() => {
+                                                            setSelectedSatker(satker.kdsatker);
+                                                            setSearchQuery(satker.nmsatker);
+                                                            setSatkerComboboxOpen(false);
+                                                        }}
+                                                    >
+                                                        <Check className={cn("mr-2 h-4 w-4", selectedSatker === satker.kdsatker ? "opacity-100" : "opacity-0")} />
+                                                        {satker.kdsatker} - {satker.nmsatker}
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
                         </div>
                     </div>
                 </CardContent>

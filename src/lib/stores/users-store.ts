@@ -6,12 +6,13 @@ export type User = {
   username: string;
   email: string;
   role:
-    | "super_admin"  // X = Super Admin
-    | "co_admin"     // 0 = Co-Admin
-    | "kantor_pusat" // 1 = Kantor Pusat
-    | "kanwil_djpb"  // 2 = Kanwil DJPb
-    | "kppn"         // 3 = KPPN
-    | "lainnya";     // 4 = User Lainnya
+  | "super_admin"  // X = Super Admin
+  | "co_admin"     // 0 = Co-Admin
+  | "kantor_pusat" // 1 = Kantor Pusat
+  | "ditpa"        // 1 = DIT PA
+  | "kanwil_djpb"  // 2 = Kanwil DJPb
+  | "kppn"         // 3 = KPPN
+  | "lainnya";     // 4 = User Lainnya
   limitKodeBA?: string; // optional string to allow codes like "015" or multiple codes
   kdkanwil?: string; // Kode Kanwil (previously kanwilId)
   kdkppn?: string;   // Kode KPPN (previously kppnId)

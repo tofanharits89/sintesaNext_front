@@ -521,6 +521,7 @@ export default function MonevPnbp() {
               </div>
               <div className="flex flex-wrap gap-2 w-full md:w-auto justify-end">
                 {(role === "kantor_pusat" ||
+                  role === "ditpa" ||
                   role === "co_admin" ||
                   role === "super_admin") && (
                     <Button

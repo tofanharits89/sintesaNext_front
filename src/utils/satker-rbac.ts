@@ -31,8 +31,8 @@ export function filterSatkerByUserAccess(
     return satkerData;
   }
 
-  // Kantor pusat can see all satkers
-  if (user.role === "kantor_pusat") {
+  // Kantor pusat and DIT PA can see all satkers
+  if (user.role === "kantor_pusat" || user.role === "ditpa") {
     return satkerData;
   }
 
@@ -69,8 +69,8 @@ export function hasAccessToSatker(
     return true;
   }
 
-  // Kantor pusat can access all satkers
-  if (user.role === "kantor_pusat") {
+  // Kantor pusat and DIT PA can access all satkers
+  if (user.role === "kantor_pusat" || user.role === "ditpa") {
     return true;
   }
 
@@ -105,11 +105,11 @@ export function getUserAccessDescription(user: User | null | undefined): string 
     case "kantor_pusat":
       return "Akses ke semua satker";
     case "kanwil_djpb":
-      return user.kdkanwil 
+      return user.kdkanwil
         ? `Akses terbatas pada Kanwil ${user.kdkanwil} (${user.nmkanwil || 'Tidak diketahui'})`
         : "Akses terbatas (Kanwil tidak terdefinisi)";
     case "kppn":
-      return user.kdkppn 
+      return user.kdkppn
         ? `Akses terbatas pada KPPN ${user.kdkppn} (${user.nmkppn || 'Tidak diketahui'})`
         : "Akses terbatas (KPPN tidak terdefinisi)";
     case "lainnya":

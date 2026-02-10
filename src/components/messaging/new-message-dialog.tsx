@@ -34,6 +34,7 @@ const getRoleDisplayName = (role?: string): string => {
     super_admin: "Super Admin",
     co_admin: "Co-Admin",
     kantor_pusat: "Kantor Pusat",
+    ditpa: "DIT PA",
     kanwil_djpb: "Kanwil DJPb",
     kppn: "KPPN",
     lainnya: "User Lainnya",
@@ -162,7 +163,7 @@ export function NewMessageDialog({
         // Use existing conversation: select it, notify parent, close dialog, then send
         try {
           await selectConversation(existingConv.id);
-        } catch {}
+        } catch { }
         // Wait briefly to ensure the global activeConversationId store updates
         await new Promise((resolve) => setTimeout(resolve, 60));
         // Push URL param immediately to aid URL->state sync
@@ -170,7 +171,7 @@ export function NewMessageDialog({
           const params = new URLSearchParams(searchParams?.toString?.() || "");
           params.set("conversation", existingConv.id);
           router.push(`${pathname}?${params.toString()}`);
-        } catch {}
+        } catch { }
         // Emit a synchronous selection event for any listeners (e.g., Messages page)
         try {
           if (typeof window !== "undefined") {
@@ -180,11 +181,11 @@ export function NewMessageDialog({
               })
             );
           }
-        } catch {}
+        } catch { }
         if (onConversationCreated) {
           try {
             onConversationCreated(existingConv.id);
-          } catch {}
+          } catch { }
         }
         onOpenChange(false);
         await sendMessage(message.trim());
@@ -211,7 +212,7 @@ export function NewMessageDialog({
           },
           updated_at: new Date().toISOString(),
         });
-      } catch {}
+      } catch { }
 
       // Pre-seed an optimistic message directly into the temp store so it shows immediately
       try {
@@ -231,7 +232,7 @@ export function NewMessageDialog({
           is_deleted: false,
           created_at: nowIso,
           updated_at: nowIso,
-          
+
           // Frontend-specific properties
           conversationId: tempId,
           timestamp: nowIso,
@@ -246,17 +247,17 @@ export function NewMessageDialog({
           isDelivered: false,
         };
         pushTempMessage(tempId, optimistic);
-      } catch {}
+      } catch { }
 
       // Set window context BEFORE selecting conversation to ensure immediate display
       try {
         (window as any).__selectedRecipient__ = selectedUser;
-      } catch {}
+      } catch { }
 
       // Select the temp conversation so the chat binds immediately
       try {
         await selectConversation(tempId);
-      } catch {}
+      } catch { }
       // Ensure the global activeConversationId updates before sending
       await new Promise((resolve) => setTimeout(resolve, 60));
 
@@ -265,7 +266,7 @@ export function NewMessageDialog({
         const params = new URLSearchParams(searchParams?.toString?.() || "");
         params.set("conversation", tempId);
         router.push(`${pathname}?${params.toString()}`);
-      } catch {}
+      } catch { }
       // Emit a synchronous selection event for any listeners (e.g., Messages page)
       try {
         if (typeof window !== "undefined") {
@@ -275,18 +276,18 @@ export function NewMessageDialog({
             })
           );
         }
-      } catch {}
+      } catch { }
 
       // Let parent navigate to the temp conversation before actually sending
       if (onConversationCreated) {
         try {
           onConversationCreated(tempId);
-        } catch {}
+        } catch { }
       }
 
       // Close dialog to reveal chat window
       onOpenChange(false);
-      
+
       await sendMessage(message.trim(), selectedUser.id, tempId, true);
 
       toast.success("Message sent successfully");

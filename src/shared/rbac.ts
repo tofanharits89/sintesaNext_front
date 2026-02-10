@@ -7,6 +7,7 @@ export type Role =
   | "super_admin"
   | "co_admin"
   | "kantor_pusat"
+  | "ditpa"
   | "kanwil_djpb"
   | "kppn"
   | "lainnya";
@@ -36,6 +37,15 @@ export const PERMISSIONS: Record<Role, RolePermissions> = {
     analytics: { view: true, export: true },
   },
   kantor_pusat: {
+    users: { view: false, create: false, edit: false, delete: false, editRole: false, editLocation: false },
+    profile: { editOwn: true, editOthers: false, editRole: false, editLocation: false },
+    dashboard: { viewAll: true, viewKanwil: true, viewKPPN: true, exportData: true },
+    settings: { view: false, edit: false },
+    messages: { viewAll: false, send: false, delete: false },
+    notifications: { viewAll: false, create: false, delete: false },
+    analytics: { view: true, export: true },
+  },
+  ditpa: {
     users: { view: false, create: false, edit: false, delete: false, editRole: false, editLocation: false },
     profile: { editOwn: true, editOthers: false, editRole: false, editLocation: false },
     dashboard: { viewAll: true, viewKanwil: true, viewKPPN: true, exportData: true },
@@ -100,6 +110,7 @@ export const getRoleDisplayName = (role: Role | string): string => {
     super_admin: "Super Admin",
     co_admin: "Co-Admin",
     kantor_pusat: "Kantor Pusat",
+    ditpa: "DIT PA",
     kanwil_djpb: "Kanwil DJPb",
     kppn: "KPPN",
     lainnya: "User Lainnya",
@@ -115,6 +126,7 @@ export const getAllRoles = (): Array<{ value: Role; label: string }> => {
     { value: "super_admin", label: "Super Admin" },
     { value: "co_admin", label: "Co-Admin" },
     { value: "kantor_pusat", label: "Kantor Pusat" },
+    { value: "ditpa", label: "DIT PA" },
     { value: "kanwil_djpb", label: "Kanwil DJPb" },
     { value: "kppn", label: "KPPN" },
     { value: "lainnya", label: "User Lainnya" },
@@ -133,6 +145,7 @@ export const normalizeRole = (role: MinimalUser["role"]): Role | undefined => {
     "super_admin",
     "co_admin",
     "kantor_pusat",
+    "ditpa",
     "kanwil_djpb",
     "kppn",
     "lainnya",
@@ -172,9 +185,9 @@ export function canEditRoleAndLocation(user: MinimalUser | null | undefined): bo
  * Check if user can manage other users
  */
 export function canManageUsers(user: MinimalUser | null | undefined): boolean {
-  return hasPermissionFrontend(user, "users", "create") || 
-         hasPermissionFrontend(user, "users", "edit") || 
-         hasPermissionFrontend(user, "users", "delete");
+  return hasPermissionFrontend(user, "users", "create") ||
+    hasPermissionFrontend(user, "users", "edit") ||
+    hasPermissionFrontend(user, "users", "delete");
 }
 
 /**
@@ -192,22 +205,22 @@ export function filterDataByRole<T extends { kdkanwil?: string; kdkppn?: string 
   data: T[]
 ): T[] {
   if (!user) return [];
-  
+
   // Super Admin, Co-Admin, and Kantor Pusat can see all data
-  if (user.role === "super_admin" || user.role === "co_admin" || user.role === "kantor_pusat") {
+  if (user.role === "super_admin" || user.role === "co_admin" || user.role === "kantor_pusat" || user.role === "ditpa") {
     return data;
   }
-  
+
   // Kanwil DJPb can only see data from their kanwil
   if (user.role === "kanwil_djpb" && user.kdkanwil) {
     return data.filter(item => item.kdkanwil === user.kdkanwil);
   }
-  
+
   // KPPN can only see data from their KPPN
   if (user.role === "kppn" && user.kdkppn) {
     return data.filter(item => item.kdkppn === user.kdkppn);
   }
-  
+
   // Others see no location-specific data
   return [];
 }
@@ -220,11 +233,12 @@ export function getRoleDisplayNameFrontend(role: MinimalUser["role"]): string {
     super_admin: "Super Admin (X)",
     co_admin: "Co-Admin (0)",
     kantor_pusat: "Kantor Pusat (1)",
+    ditpa: "DIT PA (1)",
     kanwil_djpb: "Kanwil DJPb (2)",
     kppn: "KPPN (3)",
     lainnya: "User Lainnya (4)",
   } as const;
-  
+
   if (!role || typeof role !== "string") return "";
   const effectiveRole = normalizeRole(role);
   if (!effectiveRole) return role;
