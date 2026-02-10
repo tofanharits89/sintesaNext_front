@@ -109,7 +109,7 @@ const defaultMenu: MenuItem[] = [
   },
   {
     label: "Monev KKP",
-    children: [{ label: "KPPN" }, { label: "Kanwil" }],
+    children: [{ label: "KPPN" }, { label: "Kanwil" }, { label: "Direktorat PA" }],
   },
   {
     label: "Spending Review",
@@ -366,6 +366,8 @@ export function ResponsiveSidebar({
       case "Monev KKP__KPPN":
         return <Building2 className={cls} />;
       case "Monev KKP__Kanwil":
+        return <Building2 className={cls} />;
+      case "Monev KKP__Direktorat PA":
         return <Building2 className={cls} />;
       default:
         return null;
@@ -729,6 +731,13 @@ export function ResponsiveSidebar({
                               href = "/monev-kkp/kanwil";
                               onMouseEnterFn = () =>
                                 import("@/components/monev-kkp/kanwil-content");
+                            } else if (
+                              c.label === "Direktorat PA" &&
+                              m.label === "Monev KKP"
+                            ) {
+                              href = "/monev-kkp/direktorat-pa";
+                              onMouseEnterFn = () =>
+                                import("@/components/monev-kkp/direktorat-pa-content");
                             }
 
                             return (
