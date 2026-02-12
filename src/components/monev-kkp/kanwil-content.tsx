@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, forwardRef, useImperativeHandle } from "react";
+import { useState, forwardRef, useImperativeHandle, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,15 +13,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { ResetButton } from "@/components/ui/reset-button";
-import { Eye, Building2, Pencil } from "lucide-react";
+import { Eye, Building2, Pencil, Loader2 } from "lucide-react";
 import { RingkasanLaporanModal } from "./modals/ringkasan-laporan-modal";
 import { KendalaHambatanModal } from "./modals/kendala-hambatan-modal";
 import { LihatKendalaModal } from "./modals/lihat-kendala-modal";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 // Type for the Ringkasan Kanwil data
 export interface RingkasanKanwilData {
-    id: number;
+    id: string | number;
     kodeKppn: string;
     namaKppn: string;
     kodeBA: string;
@@ -36,146 +37,22 @@ export interface RingkasanKanwilData {
     kendala: string;
 }
 
+// Type for Monitoring KPPN data
+export interface MonitoringKppnData {
+    id: string | number;
+    kdkppn: string;
+    nmkppn: string;
+    jumlah_satker_up_kkp: number;
+    jumlah_satker_transaksi: number;
+    nilai_transaksi: number;
+    status?: string;
+    tanggalKirim?: string | null;
+}
+
 // Ref interface for parent component access
 export interface KanwilContentRef {
     getData: () => RingkasanKanwilData[];
 }
-
-// Mock data for Ringkasan Kanwil
-const mockRingkasanData: RingkasanKanwilData[] = [
-    {
-        id: 1,
-        kodeKppn: "001",
-        namaKppn: "KPPN Jakarta I",
-        kodeBA: "015",
-        kodeSatker: "654321",
-        namaSatker: "Satker Contoh A",
-        upKkpPerBulan: 50000000,
-        porsiUpKkp: 25.5,
-        bankPenerbit: "Bank Mandiri",
-        jumlahKartu: 10,
-        nilaiTagihan: 45000000,
-        nilaiTransaksi: 42000000,
-        kendala: "Proses pengajuan masih dalam tahap verifikasi dokumen.",
-    },
-    {
-        id: 2,
-        kodeKppn: "001",
-        namaKppn: "KPPN Jakarta I",
-        kodeBA: "015",
-        kodeSatker: "654322",
-        namaSatker: "Satker Contoh B",
-        upKkpPerBulan: 75000000,
-        porsiUpKkp: 35.2,
-        bankPenerbit: "BNI",
-        jumlahKartu: 15,
-        nilaiTagihan: 70000000,
-        nilaiTransaksi: 68500000,
-        kendala: "",
-    },
-    {
-        id: 3,
-        kodeKppn: "002",
-        namaKppn: "KPPN Jakarta II",
-        kodeBA: "020",
-        kodeSatker: "789012",
-        namaSatker: "Satker Contoh C",
-        upKkpPerBulan: 100000000,
-        porsiUpKkp: 45.0,
-        bankPenerbit: "BRI",
-        jumlahKartu: 20,
-        nilaiTagihan: 95000000,
-        nilaiTransaksi: 92000000,
-        kendala: "Kendala teknis pada sistem pembayaran.",
-    },
-    {
-        id: 4,
-        kodeKppn: "003",
-        namaKppn: "KPPN Bandung",
-        kodeBA: "025",
-        kodeSatker: "789013",
-        namaSatker: "Satker Contoh D",
-        upKkpPerBulan: 60000000,
-        porsiUpKkp: 30.0,
-        bankPenerbit: "Bank Mandiri",
-        jumlahKartu: 12,
-        nilaiTagihan: 55000000,
-        nilaiTransaksi: 52000000,
-        kendala: "",
-    },
-];
-
-// Mock data for demonstration - to be replaced with API integration
-const mockKppnList = [
-    { value: "all", label: "Semua KPPN" },
-    { value: "001", label: "KPPN Jakarta I" },
-    { value: "002", label: "KPPN Jakarta II" },
-    { value: "003", label: "KPPN Bandung" },
-];
-
-const mockMonitoringData = [
-    {
-        id: 1,
-        kodeKppn: "001",
-        namaKppn: "KPPN Jakarta I",
-        jumlahSatkerUpKkp: 45,
-        jumlahSatkerTransaksi: 38,
-        nilaiTransaksi: 1250000000,
-        status: "sent",
-        tanggalKirim: "2025-01-15",
-        // Nested data for ringkasan modal
-        satkerData: [
-            {
-                id: 1,
-                kodeBA: "015",
-                kodeSatker: "654321",
-                namaSatker: "Satker Contoh A",
-                upKkpPerBulan: 50000000,
-                porsiUpKkp: 25.5,
-                bankPenerbit: "Bank Mandiri",
-                jumlahKartu: 10,
-                nilaiTagihan: 45000000,
-                nilaiTransaksi: 42000000,
-                kendala: "Proses pengajuan masih dalam tahap verifikasi.",
-            },
-            {
-                id: 2,
-                kodeBA: "015",
-                kodeSatker: "654322",
-                namaSatker: "Satker Contoh B",
-                upKkpPerBulan: 75000000,
-                porsiUpKkp: 35.2,
-                bankPenerbit: "BNI",
-                jumlahKartu: 15,
-                nilaiTagihan: 70000000,
-                nilaiTransaksi: 68500000,
-                kendala: "",
-            },
-        ],
-    },
-    {
-        id: 2,
-        kodeKppn: "002",
-        namaKppn: "KPPN Jakarta II",
-        jumlahSatkerUpKkp: 52,
-        jumlahSatkerTransaksi: 48,
-        nilaiTransaksi: 1580000000,
-        status: "sent",
-        tanggalKirim: "2025-01-14",
-        satkerData: [],
-    },
-    {
-        id: 3,
-        kodeKppn: "003",
-        namaKppn: "KPPN Bandung",
-        jumlahSatkerUpKkp: 35,
-        jumlahSatkerTransaksi: 0,
-        nilaiTransaksi: 0,
-        status: "not_sent",
-        tanggalKirim: null,
-        satkerData: [],
-    },
-];
 
 interface KanwilContentProps {
     contentType?: "ringkasan" | "monitoring";
@@ -187,28 +64,144 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
     const { user, isLoading: isAuthLoading } = useAuth();
 
     const now = new Date();
-    const defaultYear = String(now.getFullYear());
+    const defaultYear = "2026";
     const defaultPeriode = `Q${Math.ceil((now.getMonth() + 1) / 3)}`;
 
-    // Expose getData method to parent component via ref
-    useImperativeHandle(ref, () => ({
-        getData: () => mockRingkasanData,
-    }));
-
+    const [ringkasanData, setRingkasanData] = useState<RingkasanKanwilData[]>([]);
+    const [monitoringData, setMonitoringData] = useState<MonitoringKppnData[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
     const [selectedYear, setSelectedYear] = useState(defaultYear);
     const [selectedKppn, setSelectedKppn] = useState("all");
     const [selectedPeriode, setSelectedPeriode] = useState(defaultPeriode);
+
+    // Expose getData method to parent component via ref
+    useImperativeHandle(ref, () => ({
+        getData: () => ringkasanData,
+    }));
+
+    const fetchRingkasanData = async () => {
+        setIsLoading(true);
+        try {
+            const triwulan = selectedPeriode.replace("Q", "");
+            // Only add kdkppn parameter if explicitly selected from dropdown (not 'all')
+            // For Kanwil users, backend will automatically filter by kdkanwil
+            const kppnParam = selectedKppn !== "all" ? `&kdkppn=${selectedKppn}` : "";
+            const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}${kppnParam}`;
+
+            console.log("[Kanwil Ringkasan] Fetching data:", {
+                url: apiUrl,
+                tahun: selectedYear,
+                triwulan,
+                selectedKppn,
+                userRole: user?.role,
+                userKdkanwil: user?.kdkanwil,
+            });
+
+            const response = await fetch(apiUrl, { credentials: "include" });
+
+            if (!response.ok) throw new Error("Gagal mengambil data ringkasan");
+            const result = await response.json();
+
+            console.log("[Kanwil Ringkasan] Response:", {
+                dataCount: result.data?.length || 0,
+                firstItem: result.data?.[0]
+            });
+
+            const mappedData = result.data.map((item: any, index: number) => ({
+                id: `${item.kdsatker}-${index}`,
+                kodeKppn: item.kdkppn,
+                namaKppn: item.nmkppn || item.kdkppn || "-",
+                kodeBA: item.kddept,
+                kodeSatker: item.kdsatker,
+                namaSatker: item.nmsatker,
+                upKkpPerBulan: Number(item.nilai_up_kkp || 0),
+                porsiUpKkp: Number(item.porsi_up_kkp_dari_total_up || 0),
+                bankPenerbit: item.bank_penerbit,
+                jumlahKartu: Number(item.jumlah_kartu || 0),
+                nilaiTagihan: Number(item.total_trans || 0),
+                nilaiTransaksi: Number(item.nilai_trans_sp2d || 0),
+                kendala: "",
+            }));
+            setRingkasanData(mappedData);
+        } catch (error) {
+            console.error(error);
+            toast.error("Gagal mengambil data ringkasan");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const fetchMonitoringData = async () => {
+        setIsLoading(true);
+        try {
+            const triwulan = selectedPeriode.replace("Q", "");
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/monev-kkp/kanwil/monitoring-kppn?tahun=${selectedYear}&triwulan=${triwulan}`,
+                { credentials: "include" }
+            );
+
+            if (!response.ok) throw new Error("Gagal mengambil data monitoring");
+            const result = await response.json();
+
+            const mappedData = result.data.map((item: any) => ({
+                id: item.kdkppn,
+                kdkppn: item.kdkppn,
+                nmkppn: item.nmkppn,
+                jumlah_satker_up_kkp: Number(item.jumlah_satker_up_kkp || 0),
+                jumlah_satker_transaksi: Number(item.jumlah_satker_transaksi || 0),
+                nilai_transaksi: Number(item.nilai_transaksi || 0),
+                status: "sent", // Default for now
+                tanggalKirim: null,
+            }));
+            setMonitoringData(mappedData);
+        } catch (error) {
+            console.error(error);
+            toast.error("Gagal mengambil data monitoring");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!user) return;
+        if (contentType === "ringkasan") {
+            fetchRingkasanData();
+        } else {
+            fetchMonitoringData();
+        }
+    }, [user, contentType, selectedYear, selectedPeriode, selectedKppn]);
+
+
+    // Reset KPPN filter when user changes to prevent stale data from previous sessions
+    useEffect(() => {
+        if (user?.id) {
+            setSelectedKppn("all");
+            console.log("[Kanwil] User session detected, resetting KPPN filter", { userId: user.id, role: user.role });
+        }
+    }, [user?.id]);
 
     const [isRingkasanModalOpen, setIsRingkasanModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState<any>(null);
 
-    // Generate years from current year back to 2020
-    const currentYear = new Date().getFullYear();
-    const years = Array.from({ length: currentYear - 2019 }, (_, i) =>
-        (currentYear - i).toString()
-    );
+    // Filter list of KPPNs
+    const kppnList = [
+        { value: "all", label: "Semua KPPN" },
+    ];
+
+    // Dynamically build KPPN list from ringkasan data
+    const uniqueKppnsMap = new Map();
+    ringkasanData.forEach(d => {
+        if (d.kodeKppn && !uniqueKppnsMap.has(d.kodeKppn)) {
+            uniqueKppnsMap.set(d.kodeKppn, d.namaKppn || d.kodeKppn);
+        }
+    });
+    uniqueKppnsMap.forEach((label, value) => {
+        kppnList.push({ value, label });
+    });
+
+    const years = ["2026", "2025", "2024", "2023"];
 
     const periodes = [
         { value: "Q1", label: "Triwulan 1 (Jan - Mar)" },
@@ -260,17 +253,15 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
         });
     };
 
-    // Filter data based on selected KPPN
-    const filteredMonitoringData = selectedKppn === "all"
-        ? mockMonitoringData
-        : mockMonitoringData.filter((item) => item.kodeKppn === selectedKppn);
-
-    const filteredRingkasanData = selectedKppn === "all"
-        ? mockRingkasanData
-        : mockRingkasanData.filter((item) => item.kodeKppn === selectedKppn);
-
     // Columns for Ringkasan Laporan Kanwil
     const ringkasanColumns = [
+        {
+            id: "no",
+            header: () => <div className="text-center font-medium">No</div>,
+            cell: ({ row }: any) => (
+                <div className="text-center">{row.index + 1}</div>
+            ),
+        },
         {
             accessorKey: "kodeKppn",
             header: () => <div className="text-center font-medium">Kode KPPN</div>,
@@ -397,44 +388,51 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
     // Columns for Monitoring KPPN
     const monitoringColumns = [
         {
-            accessorKey: "kodeKppn",
-            header: () => <div className="text-center font-medium">Kode KPPN</div>,
+            id: "no",
+            header: () => <div className="text-center font-medium">No</div>,
             cell: ({ row }: any) => (
-                <div className="text-center">{row.getValue("kodeKppn")}</div>
+                <div className="text-center">{row.index + 1}</div>
             ),
         },
         {
-            accessorKey: "namaKppn",
+            accessorKey: "kdkppn",
+            header: () => <div className="text-center font-medium">Kode KPPN</div>,
+            cell: ({ row }: any) => (
+                <div className="text-center">{row.getValue("kdkppn")}</div>
+            ),
+        },
+        {
+            accessorKey: "nmkppn",
             header: () => <div className="text-center font-medium">Nama KPPN</div>,
             cell: ({ row }: any) => (
                 <div
                     className="text-left max-w-[200px] truncate"
-                    title={row.getValue("namaKppn")}
+                    title={row.getValue("nmkppn")}
                 >
-                    {row.getValue("namaKppn")}
+                    {row.getValue("nmkppn")}
                 </div>
             ),
         },
         {
-            accessorKey: "jumlahSatkerUpKkp",
+            accessorKey: "jumlah_satker_up_kkp",
             header: () => <div className="text-center font-medium">Jumlah Satker dengan UP KKP</div>,
             cell: ({ row }: any) => (
-                <div className="text-center">{row.getValue("jumlahSatkerUpKkp")}</div>
+                <div className="text-center">{row.getValue("jumlah_satker_up_kkp")}</div>
             ),
         },
         {
-            accessorKey: "jumlahSatkerTransaksi",
+            accessorKey: "jumlah_satker_transaksi",
             header: () => <div className="text-center font-medium">Jumlah Satker (Transaksi)</div>,
             cell: ({ row }: any) => (
-                <div className="text-center">{row.getValue("jumlahSatkerTransaksi")}</div>
+                <div className="text-center">{row.getValue("jumlah_satker_transaksi")}</div>
             ),
         },
         {
-            accessorKey: "nilaiTransaksi",
+            accessorKey: "nilai_transaksi",
             header: () => <div className="text-center font-medium">Nilai Transaksi</div>,
             cell: ({ row }: any) => (
                 <div className="text-right font-mono tabular-nums pr-2">
-                    {formatRupiah(row.getValue("nilaiTransaksi"))}
+                    {formatRupiah(row.getValue("nilai_transaksi"))}
                 </div>
             ),
         },
@@ -537,7 +535,7 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {mockKppnList.map((kppn) => (
+                                    {kppnList.map((kppn) => (
                                         <SelectItem key={kppn.value} value={kppn.value}>
                                             {kppn.label}
                                         </SelectItem>
@@ -582,10 +580,17 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
                     </div>
                 </CardHeader>
                 <CardContent>
-                    {contentType === "ringkasan" ? (
-                        <DataTable columns={ringkasanColumns} data={filteredRingkasanData} />
+                    {isLoading ? (
+                        <div className="flex flex-col items-center justify-center py-20 gap-4">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            <p className="text-sm text-muted-foreground italic">Memuat data...</p>
+                        </div>
                     ) : (
-                        <DataTable columns={monitoringColumns} data={filteredMonitoringData} />
+                        contentType === "ringkasan" ? (
+                            <DataTable columns={ringkasanColumns} data={ringkasanData} />
+                        ) : (
+                            <DataTable columns={monitoringColumns} data={monitoringData} />
+                        )
                     )}
                 </CardContent>
             </Card>
