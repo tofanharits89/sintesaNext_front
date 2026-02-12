@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, forwardRef, useImperativeHandle } from "react";
+import { useState, forwardRef, useImperativeHandle, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,17 +13,20 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { ResetButton } from "@/components/ui/reset-button";
-import { Pencil, Eye, Building2 } from "lucide-react";
+import { Pencil, Eye, Building2, Loader2 } from "lucide-react";
 import { KendalaHambatanModal } from "./modals/kendala-hambatan-modal";
 import { LihatKendalaModal } from "./modals/lihat-kendala-modal";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 // Type for the KKP data
 export interface KkpData {
-    id: number;
+    id: string | number;
     kodeBA: string;
     kodeSatker: string;
     namaSatker: string;
+    kdkppn?: string;
+    kdkanwil?: string;
     upKkpPerBulan: number;
     porsiUpKkp: number;
     bankPenerbit: string;
@@ -31,6 +34,8 @@ export interface KkpData {
     nilaiTagihan: number;
     nilaiTransaksi: number;
     kendala: string;
+    bulan?: string;
+    triwulan?: string;
 }
 
 // Ref interface for parent component access
@@ -43,73 +48,84 @@ interface KppnContentProps {
     statusLaporan?: "sent" | "not_sent";
 }
 
-// Mock data for demonstration - to be replaced with API integration
-const mockData: KkpData[] = [
-    {
-        id: 1,
-        kodeBA: "015",
-        kodeSatker: "654321",
-        namaSatker: "Satker Contoh A",
-        upKkpPerBulan: 50000000,
-        porsiUpKkp: 25.5,
-        bankPenerbit: "Bank Mandiri",
-        jumlahKartu: 10,
-        nilaiTagihan: 45000000,
-        nilaiTransaksi: 42000000,
-        kendala: "Proses pengajuan masih dalam tahap verifikasi dokumen.",
-    },
-    {
-        id: 2,
-        kodeBA: "015",
-        kodeSatker: "654322",
-        namaSatker: "Satker Contoh B",
-        upKkpPerBulan: 75000000,
-        porsiUpKkp: 35.2,
-        bankPenerbit: "BNI",
-        jumlahKartu: 15,
-        nilaiTagihan: 70000000,
-        nilaiTransaksi: 68500000,
-        kendala: "",
-    },
-    {
-        id: 3,
-        kodeBA: "020",
-        kodeSatker: "789012",
-        namaSatker: "Satker Contoh C",
-        upKkpPerBulan: 100000000,
-        porsiUpKkp: 45.0,
-        bankPenerbit: "BRI",
-        jumlahKartu: 20,
-        nilaiTagihan: 95000000,
-        nilaiTransaksi: 92000000,
-        kendala: "Kendala teknis pada sistem pembayaran.",
-    },
-];
-
 export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(function KppnContent({ statusLaporan = "not_sent" }, ref) {
     // Get authenticated user info
     const { user, isLoading: isAuthLoading } = useAuth();
     const now = new Date();
-    const defaultYear = String(now.getFullYear());
+    const defaultYear = "2026"; // Set to 2026 as per user requirement
     const defaultPeriode = `Q${Math.ceil((now.getMonth() + 1) / 3)}`;
+
+    const [data, setData] = useState<KkpData[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [selectedYear, setSelectedYear] = useState(defaultYear);
+    const [selectedPeriode, setSelectedPeriode] = useState(defaultPeriode);
 
     // Expose getData method to parent component via ref
     useImperativeHandle(ref, () => ({
-        getData: () => mockData,
+        getData: () => data,
     }));
 
-    const [selectedYear, setSelectedYear] = useState(defaultYear);
-    const [selectedPeriode, setSelectedPeriode] = useState(defaultPeriode);
+    const fetchData = async () => {
+        setIsLoading(true);
+        try {
+            const triwulan = selectedPeriode.replace("Q", "");
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}`,
+                {
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Gagal mengambil data");
+            }
+
+            const result = await response.json();
+            
+            // Map backend data to frontend KkpData structure
+            const mappedData = result.data.map((item: any, index: number) => ({
+                id: `${item.kdsatker}-${index}`,
+                kodeBA: item.kddept,
+                kodeSatker: item.kdsatker,
+                namaSatker: item.nmsatker,
+                kdkppn: item.kdkppn,
+                kdkanwil: item.kdkanwil,
+                upKkpPerBulan: Number(item.nilai_up_kkp || 0),
+                porsiUpKkp: Number(item.porsi_up_kkp_dari_total_up || 0),
+                bankPenerbit: item.bank_penerbit,
+                jumlahKartu: Number(item.jumlah_kartu || 0),
+                nilaiTagihan: Number(item.total_trans || 0),
+                nilaiTransaksi: Number(item.nilai_trans_sp2d || 0),
+                kendala: "", // Kendala seems not to be in the main query
+                bulan: item.bulan,
+                triwulan: item.triwulan,
+            }));
+
+            setData(mappedData);
+        } catch (error) {
+            console.error("Error fetching KKP data:", error);
+            toast.error("Gagal mengambil data dari server");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (user) {
+            fetchData();
+        }
+    }, [user, selectedYear, selectedPeriode]);
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState<any>(null);
 
-    // Generate years from current year back to 2020
-    const currentYear = new Date().getFullYear();
-    const years = Array.from({ length: currentYear - 2019 }, (_, i) =>
-        (currentYear - i).toString()
-    );
+    // Generate years from 2026 back to 2023
+    const years = ["2026", "2025", "2024", "2023"];
+
 
     const periodes = [
         { value: "Q1", label: "Triwulan 1 (Jan - Mar)" },
@@ -147,6 +163,13 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(function
     };
 
     const columns = [
+        {
+            id: "no",
+            header: () => <div className="text-center font-medium">No</div>,
+            cell: ({ row }: any) => (
+                <div className="text-center">{row.index + 1}</div>
+            ),
+        },
         {
             accessorKey: "kodeBA",
             header: () => <div className="text-center font-medium">Kode BA</div>,
@@ -334,7 +357,14 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(function
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <DataTable columns={columns} data={mockData} />
+                    {isLoading ? (
+                        <div className="flex flex-col items-center justify-center py-20 gap-4">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            <p className="text-sm text-muted-foreground italic">Memuat data...</p>
+                        </div>
+                    ) : (
+                        <DataTable columns={columns} data={data} />
+                    )}
                 </CardContent>
             </Card>
 
