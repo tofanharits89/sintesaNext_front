@@ -486,16 +486,7 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <CardTitle>Filter Data</CardTitle>
-                        <div className="flex items-center gap-4">
-                            {contentType === "ringkasan" && (
-                                <Badge
-                                    variant={statusLaporan === "sent" ? "success" : "destructive"}
-                                >
-                                    {statusLaporan === "sent" ? "Sudah Dikirim" : "Belum Dikirim"}
-                                </Badge>
-                            )}
-                            <ResetButton onReset={handleReset} />
-                        </div>
+                        <ResetButton onReset={handleReset} />
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -577,9 +568,18 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
             {/* Data Table Card */}
             <Card>
                 <CardHeader>
-                    <CardTitle>
-                        {contentType === "ringkasan" ? "Ringkasan Laporan Kanwil" : "Monitoring Laporan KPPN"}
-                    </CardTitle>
+                    <div className="flex items-center justify-between">
+                        <CardTitle>
+                            {contentType === "ringkasan" ? "Ringkasan Laporan Kanwil" : "Monitoring Laporan KPPN"}
+                        </CardTitle>
+                        {contentType === "ringkasan" && (
+                            <Badge
+                                variant={statusLaporan === "sent" ? "success" : "destructive"}
+                            >
+                                {statusLaporan === "sent" ? "Sudah Dikirim" : "Belum Dikirim"}
+                            </Badge>
+                        )}
+                    </div>
                 </CardHeader>
                 <CardContent>
                     {contentType === "ringkasan" ? (

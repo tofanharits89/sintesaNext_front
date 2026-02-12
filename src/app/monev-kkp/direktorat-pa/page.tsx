@@ -39,6 +39,7 @@ const formatPercent = (value: number) => {
 export default function MonevKkpDirektoratPaPage() {
     const router = useRouter();
     const { user, isLoading } = useAuth();
+    const [activeTab, setActiveTab] = useState("ringkasan-kanwil");
     const [isExporting, setIsExporting] = useState(false);
     const direktoratPaContentRef = useRef<DirektoratPaContentRef>(null);
 
@@ -258,113 +259,86 @@ export default function MonevKkpDirektoratPaPage() {
                         Monitoring dan Evaluasi Kartu Kredit Pemerintah - Direktorat PA
                     </p>
                 </div>
+                {(activeTab === "ringkasan-kanwil" || activeTab === "ringkasan-kppn") && (
+                    <div className="flex items-center gap-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" disabled={isExporting}>
+                                    <Download className="mr-2 h-4 w-4" />
+                                    {isExporting ? "Mengekspor..." : "Export"}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={handleExportExcel}>
+                                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                                    Export ke Excel
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={handleExportPdf}>
+                                    <FileText className="mr-2 h-4 w-4" />
+                                    Export ke PDF
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                )}
             </div>
 
             {/* Main Tabs Content */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Laporan Monev KKP Direktorat PA</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <Tabs defaultValue="ringkasan-kanwil" className="w-full gap-3">
-                        <div className="border-b border-border/50 pb-3 mb-0">
-                            <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-0">
-                                <TabsTrigger value="ringkasan-kanwil" className="h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">
-                                    <LayoutList className="h-4 w-4 mr-2" />
-                                    <span>Ringkasan Laporan per Kanwil</span>
-                                </TabsTrigger>
+            <Tabs 
+                value={activeTab} 
+                onValueChange={setActiveTab} 
+                className="w-full gap-3"
+            >
+                <div className="border-b border-border/50 pb-3 mb-0">
+                    <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-0">
+                        <TabsTrigger value="ringkasan-kanwil" className="h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">
+                            <LayoutList className="h-4 w-4 mr-2" />
+                            <span>Ringkasan Laporan per Kanwil</span>
+                        </TabsTrigger>
 
-                                <TabsTrigger value="ringkasan-kppn" className="h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">
-                                    <LayoutList className="h-4 w-4 mr-2" />
-                                    <span>Ringkasan Laporan per KPPN</span>
-                                </TabsTrigger>
+                        <TabsTrigger value="ringkasan-kppn" className="h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">
+                            <LayoutList className="h-4 w-4 mr-2" />
+                            <span>Ringkasan Laporan per KPPN</span>
+                        </TabsTrigger>
 
-                                <TabsTrigger value="monitoring-kanwil" className="h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">
-                                    <MapPin className="h-4 w-4 mr-2" />
-                                    <span>Monitoring Laporan Kanwil</span>
-                                </TabsTrigger>
+                        <TabsTrigger value="monitoring-kanwil" className="h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">
+                            <MapPin className="h-4 w-4 mr-2" />
+                            <span>Monitoring Laporan Kanwil</span>
+                        </TabsTrigger>
 
-                                <TabsTrigger value="monitoring-kppn" className="h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">
-                                    <Building2 className="h-4 w-4 mr-2" />
-                                    <span>Monitoring Laporan KPPN</span>
-                                </TabsTrigger>
-                            </TabsList>
-                        </div>
+                        <TabsTrigger value="monitoring-kppn" className="h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap">
+                            <Building2 className="h-4 w-4 mr-2" />
+                            <span>Monitoring Laporan KPPN</span>
+                        </TabsTrigger>
+                    </TabsList>
+                </div>
 
-                        <TabsContents>
-                            <TabsContent value="ringkasan-kanwil" className="space-y-4">
-                                {/* Action Buttons for Ringkasan */}
-                                <div className="flex items-center justify-end">
-                                    <div className="flex items-center gap-2">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="outline" disabled={isExporting}>
-                                                    <Download className="mr-2 h-4 w-4" />
-                                                    {isExporting ? "Mengekspor..." : "Export"}
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={handleExportExcel}>
-                                                    <FileSpreadsheet className="mr-2 h-4 w-4" />
-                                                    Export ke Excel
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={handleExportPdf}>
-                                                    <FileText className="mr-2 h-4 w-4" />
-                                                    Export ke PDF
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
-                                </div>
-                                <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} />}>
-                                    <DirektoratPaContent ref={direktoratPaContentRef} contentType="ringkasan-kanwil" />
-                                </Suspense>
-                            </TabsContent>
+                <TabsContents>
+                    <TabsContent value="ringkasan-kanwil" className="space-y-4">
+                        <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} />}>
+                            <DirektoratPaContent ref={direktoratPaContentRef} contentType="ringkasan-kanwil" />
+                        </Suspense>
+                    </TabsContent>
 
-                            <TabsContent value="ringkasan-kppn" className="space-y-4">
-                                {/* Action Buttons for Ringkasan */}
-                                <div className="flex items-center justify-end">
-                                    <div className="flex items-center gap-2">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="outline" disabled={isExporting}>
-                                                    <Download className="mr-2 h-4 w-4" />
-                                                    {isExporting ? "Mengekspor..." : "Export"}
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={handleExportExcel}>
-                                                    <FileSpreadsheet className="mr-2 h-4 w-4" />
-                                                    Export ke Excel
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={handleExportPdf}>
-                                                    <FileText className="mr-2 h-4 w-4" />
-                                                    Export ke PDF
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
-                                </div>
-                                <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} />}>
-                                    <DirektoratPaContent ref={direktoratPaContentRef} contentType="ringkasan-kppn" />
-                                </Suspense>
-                            </TabsContent>
+                    <TabsContent value="ringkasan-kppn" className="space-y-4">
+                        <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} />}>
+                            <DirektoratPaContent ref={direktoratPaContentRef} contentType="ringkasan-kppn" />
+                        </Suspense>
+                    </TabsContent>
 
-                            <TabsContent value="monitoring-kanwil" className="space-y-4">
-                                <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} />}>
-                                    <DirektoratPaContent contentType="monitoring-kanwil" />
-                                </Suspense>
-                            </TabsContent>
+                    <TabsContent value="monitoring-kanwil" className="space-y-4">
+                        <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} />}>
+                            <DirektoratPaContent contentType="monitoring-kanwil" />
+                        </Suspense>
+                    </TabsContent>
 
-                            <TabsContent value="monitoring-kppn" className="space-y-4">
-                                <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} />}>
-                                    <DirektoratPaContent contentType="monitoring-kppn" />
-                                </Suspense>
-                            </TabsContent>
-                        </TabsContents>
-                    </Tabs>
-                </CardContent>
-            </Card>
+                    <TabsContent value="monitoring-kppn" className="space-y-4">
+                        <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} />}>
+                            <DirektoratPaContent contentType="monitoring-kppn" />
+                        </Suspense>
+                    </TabsContent>
+                </TabsContents>
+            </Tabs>
         </div>
     );
 }

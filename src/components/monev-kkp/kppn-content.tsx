@@ -258,14 +258,7 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(function
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <CardTitle>Filter Data</CardTitle>
-                        <div className="flex items-center gap-4">
-                            <Badge
-                                variant={statusLaporan === "sent" ? "success" : "destructive"}
-                            >
-                                {statusLaporan === "sent" ? "Sudah Dikirim" : "Belum Dikirim"}
-                            </Badge>
-                            <ResetButton onReset={handleReset} />
-                        </div>
+                        <ResetButton onReset={handleReset} />
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -331,7 +324,14 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(function
             {/* Data Table Card */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Ringkasan Laporan KPPN</CardTitle>
+                    <div className="flex items-center justify-between">
+                        <CardTitle>Ringkasan Laporan KPPN</CardTitle>
+                        <Badge
+                            variant={statusLaporan === "sent" ? "success" : "destructive"}
+                        >
+                            {statusLaporan === "sent" ? "Sudah Dikirim" : "Belum Dikirim"}
+                        </Badge>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <DataTable columns={columns} data={mockData} />
