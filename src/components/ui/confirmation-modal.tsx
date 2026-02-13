@@ -11,7 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from "@/components/animate-ui/components/radix/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertTriangle, Trash2, Info, CheckCircle } from "lucide-react";
@@ -59,30 +59,30 @@ export function ConfirmationModal({
       case "destructive":
         return {
           icon: Trash2,
-          iconColor: "text-red-600",
-          buttonClass: "bg-red-600 hover:bg-red-700 text-white",
-          titleColor: "text-red-600",
+          iconColor: "text-destructive",
+          buttonClass: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+          titleColor: "text-destructive",
         };
       case "warning":
         return {
           icon: AlertTriangle,
-          iconColor: "text-yellow-600",
-          buttonClass: "bg-yellow-600 hover:bg-yellow-700 text-white",
-          titleColor: "text-yellow-600",
+          iconColor: "text-foreground",
+          buttonClass: "bg-primary text-primary-foreground hover:bg-primary/90",
+          titleColor: "text-foreground",
         };
       case "info":
         return {
           icon: Info,
-          iconColor: "text-blue-600",
-          buttonClass: "bg-blue-600 hover:bg-blue-700 text-white",
-          titleColor: "text-blue-600",
+          iconColor: "text-primary",
+          buttonClass: "bg-primary text-primary-foreground hover:bg-primary/90",
+          titleColor: "text-primary",
         };
       default:
         return {
           icon: CheckCircle,
-          iconColor: "text-green-600",
-          buttonClass: "bg-green-600 hover:bg-green-700 text-white",
-          titleColor: "text-green-600",
+          iconColor: "text-primary",
+          buttonClass: "bg-primary text-primary-foreground hover:bg-primary/90",
+          titleColor: "text-primary",
         };
     }
   };

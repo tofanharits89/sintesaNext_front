@@ -28,7 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from "@/components/animate-ui/components/radix/alert-dialog";
 import { ButtonSpinner, LoadingOverlay } from "@/components/ui/loading-states";
 import {
   savedQueryNotifications,
@@ -216,9 +216,8 @@ export function QueryListItem({
 
   return (
     <div
-      className={`relative p-6 hover:bg-muted/30 transition-colors ${
-        isOperationInProgress ? "opacity-60" : ""
-      }`}
+      className={`relative p-6 hover:bg-muted/30 transition-colors ${isOperationInProgress ? "opacity-60" : ""
+        }`}
     >
       <LoadingOverlay
         isVisible={
@@ -228,8 +227,8 @@ export function QueryListItem({
           isLocalUpdating
             ? "Memperbarui..."
             : isLocalDeleting
-            ? "Menghapus..."
-            : "Memproses..."
+              ? "Menghapus..."
+              : "Memproses..."
         }
         className="rounded-md"
       />
@@ -398,11 +397,11 @@ export function QueryListItem({
               </Badge>
               <Badge variant="outline" className="text-xs">
                 <Filter className="w-3 h-3 mr-1" />
-                {Array.isArray(query.activeFilters) 
-                  ? query.activeFilters.length 
+                {Array.isArray(query.activeFilters)
+                  ? query.activeFilters.length
                   : typeof query.activeFilters === 'string'
-                  ? JSON.parse(query.activeFilters).length
-                  : 0} Filter
+                    ? JSON.parse(query.activeFilters).length
+                    : 0} Filter
               </Badge>
               {query.reportParams.pembulatan && (
                 <Badge variant="outline" className="text-xs">
@@ -417,9 +416,9 @@ export function QueryListItem({
               const activeFiltersArray: string[] = Array.isArray(query.activeFilters)
                 ? query.activeFilters
                 : typeof query.activeFilters === 'string'
-                ? JSON.parse(query.activeFilters)
-                : [];
-              
+                  ? JSON.parse(query.activeFilters)
+                  : [];
+
               return activeFiltersArray.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground font-medium">

@@ -587,9 +587,9 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
                         </div>
                     ) : (
                         contentType === "ringkasan" ? (
-                            <DataTable columns={ringkasanColumns} data={ringkasanData} />
+                            <DataTable columns={ringkasanColumns} data={ringkasanData} initialPageSize={25} />
                         ) : (
-                            <DataTable columns={monitoringColumns} data={monitoringData} />
+                            <DataTable columns={monitoringColumns} data={monitoringData} initialPageSize={25} />
                         )
                     )}
                 </CardContent>

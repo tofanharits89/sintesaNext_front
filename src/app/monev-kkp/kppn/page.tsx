@@ -5,13 +5,8 @@ import { useRouter } from "next/navigation";
 import { GenericCardSkeleton } from "@/components/ui/dashboard-skeletons";
 import { KppnContent, KppnContentRef, KkpData } from "@/components/monev-kkp/kppn-content";
 import { Button } from "@/components/ui/button";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Download, FileSpreadsheet, FileText, Send } from "lucide-react";
+import { FileSpreadsheet, FileText, Send } from "lucide-react";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { useAuth } from "@/hooks/useAuth";
@@ -253,31 +248,42 @@ export default function MonevKkpKppnPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    {/* Export Dropdown */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" disabled={isExporting}>
-                                <Download className="mr-2 h-4 w-4" />
-                                {isExporting ? "Mengekspor..." : "Export"}
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={handleExportExcel}>
-                                <FileSpreadsheet className="mr-2 h-4 w-4" />
-                                Export ke Excel
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={handleExportPdf}>
-                                <FileText className="mr-2 h-4 w-4" />
-                                Export ke PDF
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    {/* Export Buttons */}
+                    <Button
+                        variant="outline"
+                        disabled={isExporting}
+                        onClick={handleExportExcel}
+                        className="border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-950 dark:hover:text-green-300"
+                    >
+                        <FileSpreadsheet className="mr-2 h-4 w-4" />
+                        Export Excel
+                    </Button>
+                    <Button
+                        variant="outline"
+                        disabled={isExporting}
+                        onClick={handleExportPdf}
+                        className="border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-500 dark:text-red-400 dark:hover:bg-red-950 dark:hover:text-red-300"
+                    >
+                        <FileText className="mr-2 h-4 w-4" />
+                        Export PDF
+                    </Button>
 
                     {/* Kirim Laporan Button */}
-                    <Button onClick={handleKirimLaporan} disabled={isSending}>
-                        <Send className="mr-2 h-4 w-4" />
-                        {isSending ? "Mengirim..." : "Kirim Laporan"}
-                    </Button>
+                    <ConfirmationModal
+                        trigger={
+                            <Button disabled={isSending}>
+                                <Send className="mr-2 h-4 w-4" />
+                                {isSending ? "Mengirim..." : "Kirim Laporan"}
+                            </Button>
+                        }
+                        title="Kirim Laporan ke Kanwil?"
+                        description="Apakah Anda yakin ingin mengirim laporan ini ke Kanwil? Pastikan semua data sudah benar sebelum mengirim."
+                        confirmText="Ya, Kirim Laporan"
+                        cancelText="Batal"
+                        variant="info"
+                        onConfirm={handleKirimLaporan}
+                        disabled={isSending}
+                    />
                 </div>
             </div>
 

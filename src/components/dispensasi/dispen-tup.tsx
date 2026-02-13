@@ -18,7 +18,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/components/animate-ui/components/radix/alert-dialog";
 import { Loading2 } from "../../layout/LoadingTable";
 
 // Table styling - matching weekly-report pattern

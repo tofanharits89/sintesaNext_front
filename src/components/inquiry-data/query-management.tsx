@@ -32,7 +32,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from "@/components/animate-ui/components/radix/alert-dialog";
 import { useSavedQueries } from "@/hooks/use-saved-queries";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useNetworkStatus } from "@/hooks/use-network-status";
@@ -136,7 +136,7 @@ export const QueryManagement = React.memo(function QueryManagement({
     isDeleting,
   } = useSavedQueries(queryParams);
 
-  
+
   // Filter and sort queries client-side for additional filtering
   const filteredAndSortedQueries = useMemo(() => {
     let filtered = [...queries];
@@ -453,33 +453,33 @@ export const QueryManagement = React.memo(function QueryManagement({
               {(filters.search ||
                 filters.dateRange !== "all" ||
                 filters.sortBy !== "newest") && (
-                <div className="flex flex-wrap gap-2 pt-2 border-t">
-                  <span className="text-sm text-muted-foreground">
-                    Filter aktif:
-                  </span>
-                  {filters.search && (
-                    <Badge variant="secondary">
-                      Pencarian: "{filters.search}"
-                    </Badge>
-                  )}
-                  {filters.dateRange !== "all" && (
-                    <Badge variant="secondary">
-                      Tanggal:{" "}
-                      {filters.dateRange === "today"
-                        ? "Hari Ini"
-                        : filters.dateRange === "week"
-                        ? "7 Hari"
-                        : "30 Hari"}
-                    </Badge>
-                  )}
-                  {filters.sortBy !== "newest" && (
-                    <Badge variant="secondary">
-                      Urutan:{" "}
-                      {filters.sortBy === "oldest" ? "Terlama" : "Nama A-Z"}
-                    </Badge>
-                  )}
-                </div>
-              )}
+                  <div className="flex flex-wrap gap-2 pt-2 border-t">
+                    <span className="text-sm text-muted-foreground">
+                      Filter aktif:
+                    </span>
+                    {filters.search && (
+                      <Badge variant="secondary">
+                        Pencarian: "{filters.search}"
+                      </Badge>
+                    )}
+                    {filters.dateRange !== "all" && (
+                      <Badge variant="secondary">
+                        Tanggal:{" "}
+                        {filters.dateRange === "today"
+                          ? "Hari Ini"
+                          : filters.dateRange === "week"
+                            ? "7 Hari"
+                            : "30 Hari"}
+                      </Badge>
+                    )}
+                    {filters.sortBy !== "newest" && (
+                      <Badge variant="secondary">
+                        Urutan:{" "}
+                        {filters.sortBy === "oldest" ? "Terlama" : "Nama A-Z"}
+                      </Badge>
+                    )}
+                  </div>
+                )}
             </div>
           </CardContent>
         </Card>
@@ -614,12 +614,12 @@ export const QueryManagement = React.memo(function QueryManagement({
                   description="Terjadi kesalahan saat memuat daftar query tersimpan."
                   variant={
                     error.message?.includes("network") ||
-                    error.message?.includes("connection")
+                      error.message?.includes("connection")
                       ? "network"
                       : error.message?.includes("server") ||
                         error.message?.includes("5")
-                      ? "server"
-                      : "generic"
+                        ? "server"
+                        : "generic"
                   }
                 />
               </div>

@@ -18,7 +18,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/components/animate-ui/components/radix/alert-dialog";
 import RekamKontrak from "./modal-rekam-kontrak";
 import GenerateCSV from "@/components/GenerateCSV";
 

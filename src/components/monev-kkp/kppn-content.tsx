@@ -84,7 +84,7 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(function
             }
 
             const result = await response.json();
-            
+
             // Map backend data to frontend KkpData structure
             const mappedData = result.data.map((item: any, index: number) => ({
                 id: `${item.kdsatker}-${index}`,
@@ -363,7 +363,7 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(function
                             <p className="text-sm text-muted-foreground italic">Memuat data...</p>
                         </div>
                     ) : (
-                        <DataTable columns={columns} data={data} />
+                        <DataTable columns={columns} data={data} initialPageSize={25} />
                     )}
                 </CardContent>
             </Card>

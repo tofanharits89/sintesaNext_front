@@ -7,13 +7,8 @@ import { KanwilContent, KanwilContentRef, RingkasanKanwilData } from "@/componen
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/components/animate-ui/components/animate/tabs";
 import { Button } from "@/components/ui/button";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Download, FileSpreadsheet, FileText, LayoutList, Building2, Send } from "lucide-react";
+import { FileSpreadsheet, FileText, LayoutList, Building2, Send } from "lucide-react";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { useAuth } from "@/hooks/useAuth";
@@ -266,35 +261,46 @@ export default function MonevKkpKanwilPage() {
                 </div>
                 {activeTab === "ringkasan-kanwil" && (
                     <div className="flex items-center gap-2">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline" disabled={isExporting}>
-                                    <Download className="mr-2 h-4 w-4" />
-                                    {isExporting ? "Mengekspor..." : "Export"}
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={handleExportExcel}>
-                                    <FileSpreadsheet className="mr-2 h-4 w-4" />
-                                    Export ke Excel
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={handleExportPdf}>
-                                    <FileText className="mr-2 h-4 w-4" />
-                                    Export ke PDF
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                        <Button onClick={handleKirimLaporan} disabled={isSending}>
-                            <Send className="mr-2 h-4 w-4" />
-                            {isSending ? "Mengirim..." : "Kirim Laporan"}
+                        <Button
+                            variant="outline"
+                            disabled={isExporting}
+                            onClick={handleExportExcel}
+                            className="border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-950 dark:hover:text-green-300"
+                        >
+                            <FileSpreadsheet className="mr-2 h-4 w-4" />
+                            Export Excel
                         </Button>
+                        <Button
+                            variant="outline"
+                            disabled={isExporting}
+                            onClick={handleExportPdf}
+                            className="border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-500 dark:text-red-400 dark:hover:bg-red-950 dark:hover:text-red-300"
+                        >
+                            <FileText className="mr-2 h-4 w-4" />
+                            Export PDF
+                        </Button>
+                        <ConfirmationModal
+                            trigger={
+                                <Button disabled={isSending}>
+                                    <Send className="mr-2 h-4 w-4" />
+                                    {isSending ? "Mengirim..." : "Kirim Laporan"}
+                                </Button>
+                            }
+                            title="Kirim Laporan ke Direktorat PA?"
+                            description="Apakah Anda yakin ingin mengirim laporan ini ke Direktorat PA/Kantor Pusat? Pastikan semua data sudah benar sebelum mengirim."
+                            confirmText="Ya, Kirim Laporan"
+                            cancelText="Batal"
+                            variant="info"
+                            onConfirm={handleKirimLaporan}
+                            disabled={isSending}
+                        />
                     </div>
                 )}
             </div>
 
             {/* Main Tabs Content */}
-            <Tabs 
-                value={activeTab} 
+            <Tabs
+                value={activeTab}
                 className="w-full gap-3"
                 onValueChange={setActiveTab}
             >
