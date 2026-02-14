@@ -6,8 +6,6 @@ import Image from "next/image";
 import {
   Bell,
   Mail,
-  Moon,
-  Sun,
   Search,
   LogOut,
   Settings,
@@ -19,7 +17,6 @@ import {
   Loader2,
   Monitor,
 } from "lucide-react";
-import { useTheme } from "next-themes";
 import { useMemo, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
@@ -52,9 +49,10 @@ import { apiPath } from "@/lib/config/base-path";
 import { SatkerSearch } from "./satker-search";
 import { LoginLoading } from "@/components/ui/login-loading";
 import { toast } from "sonner";
+import { ThemeTogglerButton } from "@/components/animate-ui/components/buttons/theme-toggler";
 
 export function Navbar() {
-  const { theme, setTheme } = useTheme();
+  // ThemeTogglerButton handles theme switching internally
 
   // Use unified auth hook - single source of truth
   const {
@@ -555,16 +553,11 @@ export function Navbar() {
             </Popover>
 
             {/* Theme toggle switch */}
-            <Button
+            <ThemeTogglerButton
               variant="ghost"
-              size="icon"
+              size="default"
               aria-label="Tema"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            >
-              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
-            </Button>
+            />
 
             {/* profile dropdown */}
             <DropdownMenu>
