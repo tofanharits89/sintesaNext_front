@@ -102,6 +102,7 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(function
                 kendala: "", // Kendala seems not to be in the main query
                 bulan: item.bulan,
                 triwulan: item.triwulan,
+                tahun: selectedYear,
             }));
 
             setData(mappedData);
@@ -373,11 +374,16 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(function
                 open={isEditModalOpen}
                 onOpenChange={setIsEditModalOpen}
                 data={selectedItem}
+                onSaved={fetchData}
+                tahun={selectedYear}
+                triwulan={selectedPeriode.replace("Q", "")}
             />
             <LihatKendalaModal
                 open={isViewModalOpen}
                 onOpenChange={setIsViewModalOpen}
                 data={selectedItem}
+                tahun={selectedYear}
+                triwulan={selectedPeriode.replace("Q", "")}
             />
         </div>
     );

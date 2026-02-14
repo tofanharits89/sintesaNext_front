@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
     Dialog,
     DialogContent,
@@ -13,20 +14,70 @@ interface LihatKendalaModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     data: any;
+    tahun?: string;
+    triwulan?: string;
 }
 
 export function LihatKendalaModal({
     open,
     onOpenChange,
     data,
+    tahun,
+    triwulan,
 }: LihatKendalaModalProps) {
+    const [kendalaData, setKendalaData] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        if (data && open) {
+            const fetchKendala = async () => {
+                setIsLoading(true);
+                try {
+                    // Use props triwulan/tahun, fallback to data, then to defaults
+                    const selectedTriwulan = triwulan || data?.triwulan || "1";
+                    const selectedTahun = tahun || data?.tahun || "2026";
+                    
+                    console.log("Fetching kendala with:", { selectedTahun, selectedTriwulan, kodeSatker: data.kodeSatker });
+                    
+                    const response = await fetch(
+                        `${process.env.NEXT_PUBLIC_API_URL}/monev-kkp/kendala?tahun=${selectedTahun}&triwulan=${selectedTriwulan}&kdsatker=${data.kodeSatker}`,
+                        {
+                            credentials: "include",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                        }
+                    );
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        setKendalaData(result.data);
+                    }
+                } catch (error) {
+                    console.error("Error fetching kendala data:", error);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            fetchKendala();
+        } else if (!open) {
+            setKendalaData(null);
+        }
+    }, [data, open]);
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
+            <DialogContent className="sm:max-w-7xl h-[90vh] flex flex-col overflow-hidden p-6">
+                <DialogHeader className="flex-shrink-0">
                     <DialogTitle>Lihat Kendala/Hambatan</DialogTitle>
                 </DialogHeader>
-                <div className="py-4 space-y-4">
+                {isLoading ? (
+                    <div className="flex items-center justify-center py-8 flex-1">
+                        <div className="text-sm text-muted-foreground">Memuat data...</div>
+                    </div>
+                ) : (
+                <div className="py-4 space-y-4 flex-1 overflow-auto">
                     {data && (
                         <>
                             <div className="p-3 bg-muted rounded-lg space-y-1.5">
@@ -42,13 +93,34 @@ export function LihatKendalaModal({
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <p className="text-sm font-medium">Kendala dan Hambatan:</p>
-                                <div className="p-3 bg-muted/50 rounded-lg min-h-[100px]">
-                                    {data.kendala ? (
-                                        <p className="text-sm">{data.kendala}</p>
+                                <p className="text-sm font-medium">Kategori Kendala:</p>
+                                <div className="p-3 bg-muted/50 rounded-lg">
+                                    {kendalaData?.kategori_kendala ? (
+                                        <div className="flex flex-wrap gap-2">
+                                            {kendalaData.kategori_kendala.split(",").map((cat: string, idx: number) => (
+                                                <span
+                                                    key={idx}
+                                                    className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-primary/10 text-primary"
+                                                >
+                                                    {cat.trim()}
+                                                </span>
+                                            ))}
+                                        </div>
                                     ) : (
                                         <p className="text-sm text-muted-foreground italic">
-                                            Tidak ada kendala/hambatan yang tercatat.
+                                            Tidak ada kategori kendala yang tercatat.
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <p className="text-sm font-medium">Detil/Masukan:</p>
+                                <div className="p-3 bg-muted/50 rounded-lg min-h-[100px]">
+                                    {kendalaData?.detil_masukan_kendala ? (
+                                        <p className="text-sm">{kendalaData.detil_masukan_kendala}</p>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground italic">
+                                            Tidak ada detail/masukan yang tercatat.
                                         </p>
                                     )}
                                 </div>
@@ -56,7 +128,8 @@ export function LihatKendalaModal({
                         </>
                     )}
                 </div>
-                <DialogFooter>
+                )}
+                <DialogFooter className="flex-shrink-0 mt-4">
                     <Button onClick={() => onOpenChange(false)}>Tutup</Button>
                 </DialogFooter>
             </DialogContent>
