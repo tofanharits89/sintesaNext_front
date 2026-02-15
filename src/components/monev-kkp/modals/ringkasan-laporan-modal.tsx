@@ -11,12 +11,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
 
 interface RingkasanLaporanModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     data: any | null;
     periode: string;
+    isLoading?: boolean;
 }
 
 export function RingkasanLaporanModal({
@@ -24,6 +26,7 @@ export function RingkasanLaporanModal({
     onOpenChange,
     data,
     periode,
+    isLoading = false,
 }: RingkasanLaporanModalProps) {
     const [searchTerm, setSearchTerm] = useState("");
 
@@ -90,6 +93,12 @@ export function RingkasanLaporanModal({
 
                     {/* Table */}
                     <div className="border rounded-lg h-full flex flex-col overflow-hidden">
+                        {isLoading ? (
+                            <div className="flex-1 flex items-center justify-center py-20">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                <p className="ml-2 text-muted-foreground">Memuat data...</p>
+                            </div>
+                        ) : (
                         <div className="flex-1 w-full overflow-auto">
                             <div className="min-w-full">
                                 <table className="w-full min-w-max text-xs">
@@ -148,6 +157,7 @@ export function RingkasanLaporanModal({
                                 </table>
                             </div>
                         </div>
+                        )}
                     </div>
                 </div>
                 <DialogFooter className="flex items-center justify-end">

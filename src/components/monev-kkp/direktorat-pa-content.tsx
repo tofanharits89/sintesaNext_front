@@ -95,6 +95,7 @@ export const DirektoratPaContent = forwardRef<DirektoratPaContentRef, Direktorat
     const [isRingkasanModalOpen, setIsRingkasanModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState<any>(null);
+    const [isModalLoading, setIsModalLoading] = useState(false);
 
     // Expose getData method to parent component via ref
     useImperativeHandle(ref, () => ({
@@ -284,9 +285,97 @@ export const DirektoratPaContent = forwardRef<DirektoratPaContentRef, Direktorat
         setSelectedPeriode(defaultPeriode);
     };
 
-    const handleViewRingkasan = (item: any) => {
-        setSelectedItem(item);
-        setIsRingkasanModalOpen(true);
+    const handleViewRingkasan = async (item: any) => {
+        // If item already has satkerData (from ringkasan tab), use it directly
+        if (item.satkerData) {
+            setSelectedItem(item);
+            setIsRingkasanModalOpen(true);
+            return;
+        }
+
+        // For monitoring tabs, fetch satker data
+        setIsModalLoading(true);
+        try {
+            const triwulan = selectedPeriode.replace("Q", "");
+            
+            let apiUrl = "";
+            let combinedItem: any = {};
+
+            // Check if it's monitoring-kppn (has kdkppn)
+            if (item.kdkppn) {
+                apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}&kdkppn=${item.kdkppn}`;
+                
+                const response = await fetch(apiUrl, { credentials: "include" });
+                if (!response.ok) throw new Error("Gagal mengambil data satker");
+                const result = await response.json();
+
+                const satkerData = result.data.map((satker: any, index: number) => ({
+                    id: `${satker.kdsatker}-${index}`,
+                    kodeBA: satker.kddept,
+                    kodeSatker: satker.kdsatker,
+                    namaSatker: satker.nmsatker,
+                    upKkpPerBulan: Number(satker.nilai_up_kkp || 0),
+                    porsiUpKkp: Number(satker.porsi_up_kkp_dari_total_up || 0),
+                    bankPenerbit: satker.bank_penerbit,
+                    jumlahKartu: Number(satker.jumlah_kartu || 0),
+                    nilaiTagihan: Number(satker.total_trans || 0),
+                    nilaiTransaksi: Number(satker.nilai_trans_sp2d || 0),
+                    kendala: satker.kendala || "",
+                }));
+
+                combinedItem = {
+                    kodeKppn: item.kdkppn,
+                    namaKppn: item.nmkppn,
+                    satkerData: satkerData,
+                };
+            }
+            // Check if it's monitoring-kanwil (has kdkanwil)
+            else if (item.kdkanwil) {
+                // For kanwil, fetch all satkers for that kanwil
+                apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}&kdkanwil=${item.kdkanwil}`;
+                
+                const response = await fetch(apiUrl, { credentials: "include" });
+                if (!response.ok) throw new Error("Gagal mengambil data satker");
+                const result = await response.json();
+
+                const satkerData = result.data.map((satker: any, index: number) => ({
+                    id: `${satker.kdsatker}-${index}`,
+                    kodeBA: satker.kddept,
+                    kodeSatker: satker.kdsatker,
+                    namaSatker: satker.nmsatker,
+                    upKkpPerBulan: Number(satker.nilai_up_kkp || 0),
+                    porsiUpKkp: Number(satker.porsi_up_kkp_dari_total_up || 0),
+                    bankPenerbit: satker.bank_penerbit,
+                    jumlahKartu: Number(satker.jumlah_kartu || 0),
+                    nilaiTagihan: Number(satker.total_trans || 0),
+                    nilaiTransaksi: Number(satker.nilai_trans_sp2d || 0),
+                    kendala: satker.kendala || "",
+                }));
+
+                combinedItem = {
+                    kodeKppn: item.kdkanwil,
+                    namaKppn: item.nmkanwil,
+                    satkerData: satkerData,
+                };
+            }
+            // For ringkasan data (already has satker-level detail), transform it
+            else if (item.kodeSatker) {
+                // Transform single satker item to satkerData array format
+                combinedItem = {
+                    kodeKppn: item.kodeKppn,
+                    namaKppn: item.namaKppn,
+                    satkerData: [item],
+                };
+            }
+
+            setSelectedItem(combinedItem);
+            setIsRingkasanModalOpen(true);
+        } catch (error) {
+            console.error("Error fetching satker data:", error);
+            toast.error("Gagal mengambil data detail satker");
+        } finally {
+            setIsModalLoading(false);
+        }
     };
 
     const handleViewKendala = (item: any) => {
@@ -910,6 +999,7 @@ export const DirektoratPaContent = forwardRef<DirektoratPaContentRef, Direktorat
                 onOpenChange={setIsRingkasanModalOpen}
                 data={selectedItem}
                 periode={selectedPeriode}
+                isLoading={isModalLoading}
             />
 
             {/* Kendala Modal */}
