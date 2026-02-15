@@ -13,11 +13,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { ResetButton } from "@/components/ui/reset-button";
-import { Pencil, Eye, Building2, Loader2 } from "lucide-react";
+import { Pencil, Eye, Building2 } from "lucide-react";
 import { KendalaHambatanModal } from "./modals/kendala-hambatan-modal";
 import { LihatKendalaModal } from "./modals/lihat-kendala-modal";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
 
 // Type for the KKP data
 export interface KkpData {
@@ -359,10 +360,7 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(function
                 </CardHeader>
                 <CardContent>
                     {isLoading ? (
-                        <div className="flex flex-col items-center justify-center py-20 gap-4">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                            <p className="text-sm text-muted-foreground italic">Memuat data...</p>
-                        </div>
+                        <TableSkeleton rows={10} />
                     ) : (
                         <DataTable columns={columns} data={data} initialPageSize={25} />
                     )}

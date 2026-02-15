@@ -256,15 +256,15 @@ export function KertasKerjaModal({ open, onOpenChange, data }: KertasKerjaModalP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-7xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
             Kertas Kerja - {data?.kppn} • {data?.kabkota} • {data?.bulan} {data?.tahun}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="flex-1 overflow-y-auto space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Rekap Bulanan (Pemda & Bulan)</CardTitle>
@@ -319,7 +319,7 @@ export function KertasKerjaModal({ open, onOpenChange, data }: KertasKerjaModalP
           </Card>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Tutup
           </Button>

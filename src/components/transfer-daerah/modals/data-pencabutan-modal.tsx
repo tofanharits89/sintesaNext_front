@@ -15,8 +15,8 @@ export function DataPencabutanModal({ open, onOpenChange, noKmk }: DataPencabuta
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] md:max-w-[1200px] h-[85vh] flex flex-col overflow-hidden">
-        <DialogHeader>
+      <DialogContent className="max-w-7xl h-[85vh] sm:max-w-7xl h-[85vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Data Pencabutan - {noKmk || "-"}</DialogTitle>
         </DialogHeader>
         <div className="flex-1 overflow-hidden flex flex-col min-h-0 px-3 py-3">
@@ -65,7 +65,7 @@ export function DataPencabutanModal({ open, onOpenChange, noKmk }: DataPencabuta
             </div>
           )}
         </div>
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0">
           <Button variant="destructive" className="w-24" onClick={() => onOpenChange(false)}>
             Tutup
           </Button>

@@ -13,11 +13,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { ResetButton } from "@/components/ui/reset-button";
-import { Eye, Building2, MapPin, Loader2 } from "lucide-react";
+import { Eye, Building2, MapPin } from "lucide-react";
 import { RingkasanLaporanModal } from "./modals/ringkasan-laporan-modal";
 import { LihatKendalaModal } from "./modals/lihat-kendala-modal";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
 
 // Type for the Ringkasan data (for both Kanwil and KPPN aggregation)
 export interface RingkasanData {
@@ -983,10 +984,7 @@ export const DirektoratPaContent = forwardRef<DirektoratPaContentRef, Direktorat
                 </CardHeader>
                 <CardContent>
                     {isLoading ? (
-                        <div className="flex flex-col items-center justify-center py-20 gap-4">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                            <p className="text-sm text-muted-foreground italic">Memuat data...</p>
-                        </div>
+                        <TableSkeleton rows={10} />
                     ) : (
                         <DataTable columns={columns} data={data} initialPageSize={25} />
                     )}

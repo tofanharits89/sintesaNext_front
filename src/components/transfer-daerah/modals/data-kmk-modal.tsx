@@ -162,7 +162,7 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
     }
   };
 
-  const handleClose = () => {
+  const handleTutup = () => {
     onOpenChange(false);
     // Reset form when closing
     resetForm();
@@ -228,13 +228,13 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl sm:max-w-4xl">
-        <DialogHeader>
+      <DialogContent className="max-w-7xl sm:max-w-7xl flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Tambah Data KMK</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-6 py-4">
+        <div className="flex-1 overflow-y-auto grid gap-3 py-4">
           {/* Form Fields */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {/* Jenis KMK */}
             <div className="space-y-2">
               <Label htmlFor="jenis">Jenis KMK</Label>
@@ -316,7 +316,7 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
 
           {/* Conditional second row based on jenis */}
           {formData.jenis === "3" ? (
-            <div className="grid gap-6">
+            <div className="grid gap-3">
               {/* Dasar Penundaan - full row */}
               <div className="space-y-2">
                 <Label htmlFor="dasarPenundaan">Dasar Penundaan</Label>
@@ -393,7 +393,7 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
 
               {/* Disabled trio under dasar pencabutan */}
               {formData.dasarPencabutan ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="space-y-2">
                     <Label>Tahun</Label>
                     <Input value={formData.tahun || ""} disabled placeholder="Tahun" />
@@ -414,7 +414,7 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
               ) : null}
 
               {/* KPPN & Kab/Kota at the bottom */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label htmlFor="kppn">Pilih KPPN</Label>
                   {kppnLoading ? (
@@ -452,7 +452,7 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {/* Tahun */}
               <div className="space-y-2">
                 <Label htmlFor="tahun">Tahun</Label>
@@ -564,17 +564,17 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
           </div>
         </div>
 
-        <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-3">
+        <DialogFooter className="flex-shrink-0 flex flex-col sm:flex-row sm:justify-end gap-3">
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleClose}>
-              Close
+            <Button variant="outline" onClick={handleTutup}>
+              Tutup
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={submitting}
               className="bg-slate-800 hover:bg-slate-900"
             >
-              {submitting ? "Saving..." : "Save"}
+              {submitting ? "Saving..." : "Simpan"}
             </Button>
           </div>
         </DialogFooter>

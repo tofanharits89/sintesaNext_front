@@ -25,14 +25,14 @@ export function DeleteProyeksiTkdModal({
 }: DeleteProyeksiTkdModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[500px] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-red-500" />
             Konfirmasi Hapus
           </DialogTitle>
         </DialogHeader>
-        <div className="py-4">
+        <div className="flex-1 overflow-y-auto py-4">
           <p className="text-sm text-muted-foreground mb-4">
             Apakah Anda yakin ingin menghapus data proyeksi TKD ini? Tindakan
             ini tidak dapat dibatalkan.
@@ -73,7 +73,7 @@ export function DeleteProyeksiTkdModal({
             </div>
           )}
         </div>
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Batal
           </Button>

@@ -244,12 +244,12 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataT
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[720px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-7xl sm:max-w-7xl flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Rekam Data Transaksi</DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-5 py-2">
+        <div className="flex-1 overflow-y-auto grid gap-4 py-2">
           {/* Top disabled trio */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1.5">
@@ -407,7 +407,7 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataT
         {errorMsg ? (
           <div className="text-sm text-red-600">{errorMsg}</div>
         ) : null}
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0">
           <Button variant="outline" onClick={handleClose} disabled={saving}>Tutup</Button>
           <Button onClick={handleSubmit} disabled={saving}>{saving ? "Menyimpan..." : "Simpan"}</Button>
         </DialogFooter>

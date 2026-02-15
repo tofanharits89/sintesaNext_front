@@ -94,7 +94,7 @@ export function ProyeksiTkdModal({
     resetForm();
   };
 
-  const handleClose = () => {
+  const handleTutup = () => {
     onOpenChange(false);
     // Reset form when closing
     resetForm();
@@ -162,15 +162,15 @@ export function ProyeksiTkdModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl sm:max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-7xl sm:max-w-7xl flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>
             {editData ? "Edit Proyeksi TKD" : "Rekam Proyeksi TKD"}
           </DialogTitle>
         </DialogHeader>
-        <div className="grid gap-6 py-4">
+        <div className="flex-1 overflow-y-auto grid gap-4 py-4">
           {/* Selection Fields */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Tahun */}
             <div className="space-y-2">
               <Label htmlFor="tahun">Tahun</Label>
@@ -287,7 +287,7 @@ export function ProyeksiTkdModal({
           </div>
 
           {/* Second row of selections */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Jenis Keperluan */}
             <div className="space-y-2">
               <Label htmlFor="jenisKeperluan">Jenis Keperluan</Label>
@@ -355,7 +355,7 @@ export function ProyeksiTkdModal({
             <Label className="text-base font-medium">
               Proyeksi Bulanan (dalam juta rupiah)
             </Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4">
               {months.map((month) => (
                 <div key={month.key} className="space-y-2">
                   <Label htmlFor={month.key}>{month.label}</Label>
@@ -398,16 +398,16 @@ export function ProyeksiTkdModal({
           </div>
         </div>
 
-        <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-3">
+        <DialogFooter className="flex-shrink-0 flex flex-col sm:flex-row sm:justify-end gap-3">
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleClose}>
-              Close
+            <Button variant="outline" onClick={handleTutup}>
+              Tutup
             </Button>
             <Button
               onClick={handleSubmit}
               className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 text-white"
             >
-              Save
+              Simpan
             </Button>
           </div>
         </DialogFooter>

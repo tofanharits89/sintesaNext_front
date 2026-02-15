@@ -139,7 +139,7 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
     }
   };
 
-  const handleClose = () => {
+  const handleTutup = () => {
     onOpenChange(false);
     // Reset form when closing
     setFormData({
@@ -156,13 +156,13 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl sm:max-w-4xl">
-          <DialogHeader>
+        <DialogContent className="max-w-7xl sm:max-w-7xl flex flex-col overflow-hidden">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>Pencabutan KMK</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-6 py-4">
+          <div className="flex-1 overflow-y-auto grid gap-3 py-4">
             {/* Row 1: Tahun & Dasar Penundaan */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {/* Tahun */}
               <div className="space-y-2">
                 <Label htmlFor="tahun">Tahun</Label>
@@ -221,7 +221,7 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
             </div>
 
             {/* Row 2: Nomor & Tanggal KMK */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {/* Nomor */}
               <div className="space-y-2">
                 <Label htmlFor="nomor">Nomor</Label>
@@ -296,7 +296,7 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
             </div>
           </div>
 
-          <DialogFooter className="flex flex-col sm:flex-row sm:justify-between gap-3">
+          <DialogFooter className="flex-shrink-0 flex flex-col sm:flex-row sm:justify-between gap-3">
             <div className="flex justify-start">
               <Button
                 variant="outline"
@@ -309,14 +309,14 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
               </Button>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={handleClose}>
-                Close
+              <Button variant="outline" onClick={handleTutup}>
+                Tutup
               </Button>
               <Button
                 onClick={handleSubmit}
                 className="bg-slate-800 hover:bg-slate-900"
               >
-                Save
+                Simpan
               </Button>
             </div>
           </DialogFooter>

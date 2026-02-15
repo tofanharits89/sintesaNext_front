@@ -107,8 +107,8 @@ export function DataPenundaanModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] md:max-w-[1200px] h-[85vh] flex flex-col overflow-hidden">
-        <DialogHeader>
+      <DialogContent className="max-w-7xl h-[85vh] sm:max-w-7xl flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Data Penundaan - {resolvedNoKmk || "-"}</DialogTitle>
         </DialogHeader>
         <div className="flex-1 overflow-hidden flex flex-col min-h-0 px-3 py-3">
@@ -142,7 +142,7 @@ export function DataPenundaanModal({
                   className="max-w-sm"
                 />
               </div>
-              <div className="flex-1 min-h-0">
+              <div className="flex-1 min-h-0 overflow-auto">
                 <PenundaanTable
                   rows={paginatedRows}
                   renderActions={(r: RawPotonganItem) => (
@@ -165,7 +165,7 @@ export function DataPenundaanModal({
             </>
           )}
         </div>
-        <DialogFooter className="flex items-center justify-between">
+        <DialogFooter className="flex-shrink-0 flex items-center justify-between">
           <div className="w-[72px]" />
           <div className="flex-1 flex items-center justify-center gap-2">
             <Button

@@ -128,7 +128,7 @@ export function LaporanKppnModal({
     form.reset();
   };
 
-  const handleClose = () => {
+  const handleTutup = () => {
     onOpenChange(false);
     form.reset();
     setSelectedPeriode("");
@@ -137,8 +137,8 @@ export function LaporanKppnModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl sm:max-w-4xl">
-        <DialogHeader>
+      <DialogContent className="max-w-7xl sm:max-w-7xl flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Upload Laporan KPPN</DialogTitle>
         </DialogHeader>
 
@@ -146,9 +146,9 @@ export function LaporanKppnModal({
           <form
             id="laporan-kppn-form"
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-4"
+            className="flex-1 overflow-y-auto space-y-4"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Tahun */}
               <FormField
                 control={form.control}
@@ -389,16 +389,16 @@ export function LaporanKppnModal({
           </form>
         </Form>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>
-            Close
+        <DialogFooter className="flex-shrink-0">
+          <Button variant="outline" onClick={handleTutup}>
+            Tutup
           </Button>
           <Button
             type="submit"
             form="laporan-kppn-form"
             className="bg-slate-800 hover:bg-slate-900 text-white"
           >
-            Save
+            Simpan
           </Button>
         </DialogFooter>
       </DialogContent>

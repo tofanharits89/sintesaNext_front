@@ -163,11 +163,11 @@ export function KmkPenundaanListModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl sm:max-w-6xl max-h-[80vh] flex flex-col overflow-hidden">
-        <DialogHeader>
+      <DialogContent className="max-w-7xl sm:max-w-7xl flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>List KMK Penundaan</DialogTitle>
         </DialogHeader>
-        <div className="py-4 flex-1 overflow-auto px-1">
+        <div className="flex-1 overflow-y-auto py-4 px-1">
           {isLoading ? (
             <div className="text-center text-sm text-muted-foreground py-10">
               Memuat data...
@@ -187,7 +187,7 @@ export function KmkPenundaanListModal({
             </div>
           )}
         </div>
-        <DialogFooter className="flex items-center justify-between mt-2">
+        <DialogFooter className="flex-shrink-0 flex items-center justify-between mt-2">
           <div className="w-[72px]" />
           <div className="flex-1 flex items-center justify-center gap-2">
             <Button

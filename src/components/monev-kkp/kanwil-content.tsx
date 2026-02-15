@@ -13,12 +13,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { ResetButton } from "@/components/ui/reset-button";
-import { Eye, Building2, Pencil, Loader2 } from "lucide-react";
+import { Eye, Building2, Pencil } from "lucide-react";
 import { RingkasanLaporanModal } from "./modals/ringkasan-laporan-modal";
 import { KendalaHambatanModal } from "./modals/kendala-hambatan-modal";
 import { LihatKendalaModal } from "./modals/lihat-kendala-modal";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
 
 // Type for the Ringkasan Kanwil data
 export interface RingkasanKanwilData {
@@ -628,10 +629,7 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
                 </CardHeader>
                 <CardContent>
                     {isLoading ? (
-                        <div className="flex flex-col items-center justify-center py-20 gap-4">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                            <p className="text-sm text-muted-foreground italic">Memuat data...</p>
-                        </div>
+                        <TableSkeleton rows={10} />
                     ) : (
                         contentType === "ringkasan" ? (
                             <DataTable columns={ringkasanColumns} data={ringkasanData} initialPageSize={25} />
