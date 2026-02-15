@@ -12,11 +12,11 @@ export const methodDefinitions: Record<string, string> = {
 };
 
 export const Section = ({ title, children, className = "" }: { title: string; children: React.ReactNode; className?: string }) => (
-    <Card className={`mb-6 overflow-hidden ${className}`}>
-        <CardHeader className="pb-2 pt-4 px-6 border-b">
-            <CardTitle className="text-lg font-semibold tracking-tight">{title}</CardTitle>
+    <Card className={`mb-6 ${className}`}>
+        <CardHeader>
+            <CardTitle className="text-lg">{title}</CardTitle>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent>
             {children}
         </CardContent>
     </Card>

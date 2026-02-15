@@ -51,7 +51,7 @@ export const PrognosisFilters = ({
                 <RadioGroup
                     defaultValue={jenisLaporan}
                     onValueChange={setJenisLaporan}
-                    className="flex flex-col space-y-4"
+                    className="grid grid-cols-2 gap-4"
                 >
                     <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted transition-colors cursor-pointer">
                         <RadioGroupItem value="1" id="l-bulanan" />
@@ -71,7 +71,7 @@ export const PrognosisFilters = ({
             </Section>
 
             <Section title="Parameter Filter">
-                <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
                     <Field label="Kementerian / Lembaga">
                         <Select value={selectedKddept} onValueChange={setSelectedKddept}>
                             <SelectTrigger className="w-full">
@@ -121,7 +121,7 @@ export const PrognosisFilters = ({
             </Section>
 
             <Section title="Setting Model & AI">
-                <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                     <Field label="Metode Prediksi">
                         <Select value={selectedMetode} onValueChange={setSelectedMetode}>
                             <SelectTrigger className="w-full">
