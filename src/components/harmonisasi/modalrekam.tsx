@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -365,89 +366,91 @@ export default function Rekam({
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && onHide()}>
-      <DialogContent className="max-w-4xl p-0 overflow-hidden flex flex-col max-h-[90vh]">
-        <DialogHeader className="px-6 py-4 border-b">
+      <DialogContent className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2 text-xl">
             <MessageSquareText className="w-5 h-5 text-primary" />
             <span>Clustering Tantangan {clusterTitle[jenis]}</span>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar (Navigation) */}
-          <div className="w-1/4 border-r bg-muted/30 p-4 overflow-y-auto flex flex-col gap-2">
-            {clusterMapping[jenis].map(({ key, label }) => (
-              <Button
-                key={key}
-                variant={activeKey === key ? "secondary" : "ghost"}
-                className={cn(
-                  "justify-start text-left h-auto py-2 px-3 whitespace-normal",
-                  activeKey === key &&
-                  "bg-white shadow-sm border font-medium text-primary"
-                )}
-                onClick={() => setActiveKey(key)}
-              >
-                {label}
-              </Button>
-            ))}
-
-            <div className="mt-4 pt-4 border-t">
-              <Button
-                variant={
-                  Object.values(formState).some((val) => val === "")
-                    ? "default"
-                    : "secondary"
-                }
-                onClick={isiSemuaDenganTidakAda}
-                className="w-full"
-              >
-                Tidak Ada
-              </Button>
-            </div>
-          </div>
-
-          {/* Main Content Form */}
-          <div className="w-3/4 p-6 overflow-y-auto bg-white">
-            <form
-              id="rekam-form"
-              onSubmit={handleSubmit}
-              className="h-full flex flex-col"
-            >
-              {clusterMapping[jenis].map(({ key, label, contoh }) => (
-                <div
+        <div className="flex-1 overflow-y-auto">
+          <div className="flex flex-col md:flex-row gap-4 min-h-0">
+            {/* Sidebar (Navigation) */}
+            <div className="md:w-1/4 flex flex-row md:flex-col gap-2 flex-wrap md:flex-nowrap border-b md:border-b-0 md:border-r border-border/50 pb-4 md:pb-0 md:pr-4">
+              {clusterMapping[jenis].map(({ key, label }) => (
+                <Button
                   key={key}
+                  variant={activeKey === key ? "secondary" : "ghost"}
                   className={cn(
-                    "flex-col h-full gap-4",
-                    activeKey === key ? "flex" : "hidden"
+                    "justify-start text-left h-auto py-2 px-3 whitespace-normal",
+                    activeKey === key &&
+                    "bg-secondary shadow-sm border font-medium text-primary"
                   )}
+                  onClick={() => setActiveKey(key)}
                 >
-                  <div className="bg-primary text-primary-foreground p-3 rounded-md flex items-center justify-between shadow-sm">
-                    <span className="font-semibold">{label}</span>
-                    <TooltipProvider>
-                      <Tooltip delayDuration={300}>
-                        <TooltipTrigger asChild>
-                          <Info className="w-5 h-5 cursor-help opacity-90 hover:opacity-100" />
-                        </TooltipTrigger>
-                        <TooltipContent side="left" className="max-w-xs italic">
-                          <p>{contoh}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-
-                  <Textarea
-                    className="flex-1 min-h-[300px] resize-none text-base p-4 leading-relaxed"
-                    value={formState[key] || ""}
-                    onChange={(e) => handleInputChange(key, e.target.value)}
-                    placeholder={`Uraian Tantangan ${label}...`}
-                  />
-                </div>
+                  {label}
+                </Button>
               ))}
-            </form>
+
+              <div className="mt-2 md:mt-4 md:pt-4 md:border-t">
+                <Button
+                  variant={
+                    Object.values(formState).some((val) => val === "")
+                      ? "default"
+                      : "secondary"
+                  }
+                  onClick={isiSemuaDenganTidakAda}
+                  className="w-full"
+                >
+                  Tidak Ada
+                </Button>
+              </div>
+            </div>
+
+            {/* Main Content Form */}
+            <div className="md:w-3/4">
+              <form
+                id="rekam-form"
+                onSubmit={handleSubmit}
+                className="h-full flex flex-col"
+              >
+                {clusterMapping[jenis].map(({ key, label, contoh }) => (
+                  <div
+                    key={key}
+                    className={cn(
+                      "flex-col h-full gap-4",
+                      activeKey === key ? "flex" : "hidden"
+                    )}
+                  >
+                    <div className="bg-primary text-primary-foreground p-3 rounded-md flex items-center justify-between shadow-sm">
+                      <span className="font-semibold">{label}</span>
+                      <TooltipProvider>
+                        <Tooltip delayDuration={300}>
+                          <TooltipTrigger asChild>
+                            <Info className="w-5 h-5 cursor-help opacity-90 hover:opacity-100" />
+                          </TooltipTrigger>
+                          <TooltipContent side="left" className="max-w-xs italic">
+                            <p>{contoh}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+
+                    <Textarea
+                      className="flex-1 min-h-[300px] resize-none text-base p-4 leading-relaxed"
+                      value={formState[key] || ""}
+                      onChange={(e) => handleInputChange(key, e.target.value)}
+                      placeholder={`Uraian Tantangan ${label}...`}
+                    />
+                  </div>
+                ))}
+              </form>
+            </div>
           </div>
         </div>
 
-        <div className="p-4 border-t bg-muted/50 flex justify-end gap-2">
+        <DialogFooter className="flex-shrink-0">
           <Button variant="outline" onClick={onHide}>
             Tutup
           </Button>
@@ -458,7 +461,7 @@ export default function Rekam({
           >
             Simpan
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

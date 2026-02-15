@@ -1,5 +1,7 @@
 "use client";
 
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
+
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
@@ -14,7 +16,15 @@ import {
   Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -419,11 +429,11 @@ export default function Harmonisasi() {
     <div
       onClick={onClick}
       className={cn(
-        "cursor-pointer text-xl flex justify-center transition-colors duration-150",
+        "cursor-pointer flex justify-center transition-colors duration-150",
         active ? "text-green-600" : "text-yellow-500"
       )}
     >
-      <CheckSquare className="h-6 w-6" />
+      <CheckSquare className="h-4 w-4" />
     </div>
   );
 
@@ -468,7 +478,10 @@ export default function Harmonisasi() {
 
         {/* Filters */}
         <Card>
-          <CardContent className="p-4">
+          <CardHeader>
+            <CardTitle>Filter Data</CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-medium">Tahun</label>
@@ -558,284 +571,297 @@ export default function Harmonisasi() {
           </CardContent>
         </Card>
 
-        {loading ? (
-          <div className="flex justify-center p-8">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-        ) : (
-          <div className="rounded-md border border-border overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-secondary text-secondary-foreground text-center align-middle">
-                <tr className="border-b border-border">
-                  <th rowSpan={2} className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
-                    No
-                  </th>
-                  <th
-                    rowSpan={2}
-                    className="h-12 px-4 text-center align-middle font-medium text-muted-foreground w-40"
+        <Card>
+          <CardHeader>
+            <CardTitle>Data Harmonisasi</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <TableSkeleton />
+            ) : (
+              <div className="rounded-md border">
+                <Table className="text-xs">
+                  <TableHeader className="bg-muted/50">
+                    <TableRow>
+                      <TableHead rowSpan={2} className="text-center whitespace-nowrap">
+                        No
+                      </TableHead>
+                      <TableHead
+                        rowSpan={2}
+                        className="text-center whitespace-nowrap"
+                      >
+                        Nama Satker
+                      </TableHead>
+                      <TableHead rowSpan={2} className="text-center whitespace-nowrap">
+                        Bidang
+                      </TableHead>
+                      <TableHead rowSpan={2} className="text-center whitespace-nowrap">
+                        Jenis TKD
+                      </TableHead>
+                      <TableHead rowSpan={2} className="text-center whitespace-nowrap">
+                        Lokasi/Kabkota
+                      </TableHead>
+                      <TableHead
+                        rowSpan={2}
+                        className="text-center whitespace-nowrap"
+                      >
+                        COA
+                      </TableHead>
+                      <TableHead rowSpan={2} className="text-center whitespace-nowrap">
+                        Nama RO
+                      </TableHead>
+                      <TableHead rowSpan={2} className="text-center whitespace-nowrap">
+                        Satuan/Vol
+                      </TableHead>
+                      <TableHead rowSpan={2} className="text-center whitespace-nowrap">
+                        Pagu
+                      </TableHead>
+                      <TableHead colSpan={6} className="text-center whitespace-nowrap">
+                        Realisasi (Rupiah)
+                      </TableHead>
+                      <TableHead colSpan={6} className="text-center whitespace-nowrap">
+                        RVRO (Volume)
+                      </TableHead>
+                      <TableHead colSpan={5} className="text-center whitespace-nowrap">
+                        Cluster Tantangan/Hambatan
+                      </TableHead>
+                    </TableRow>
+                    <TableRow>
+                      {[0, 1, 2, 3, 4, 5].map((i) => (
+                        <TableHead key={`real-${i}`} className="text-center whitespace-nowrap">
+                          {namaSemester === "1"
+                            ? ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun"][i]
+                            : ["Jul", "Ags", "Sep", "Okt", "Nov", "Des"][i]}
+                        </TableHead>
+                      ))}
+                      {[0, 1, 2, 3, 4, 5].map((i) => (
+                        <TableHead key={`phy-${i}`} className="text-center whitespace-nowrap">
+                          {namaSemester === "1"
+                            ? ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun"][i]
+                            : ["Jul", "Ags", "Sep", "Okt", "Nov", "Des"][i]}
+                        </TableHead>
+                      ))}
+                      <TableHead className="text-center whitespace-nowrap">Penganggaran</TableHead>
+                      <TableHead className="text-center whitespace-nowrap">PBJ</TableHead>
+                      <TableHead className="text-center whitespace-nowrap">Eksekusi</TableHead>
+                      <TableHead className="text-center whitespace-nowrap">Regulasi</TableHead>
+                      <TableHead className="text-center whitespace-nowrap">SDM</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data.slice(page * limit, (page + 1) * limit).length > 0 ? (
+                      data.slice(page * limit, (page + 1) * limit).map((row: any, index: number) => (
+                        <TableRow key={row.id}>
+                          <TableCell className="text-center whitespace-nowrap">
+                            {index + 1 + page * limit}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {row.nmsatker} ({row.kddept}.{row.kdsatker})
+                          </TableCell>
+                          <TableCell className="text-center whitespace-nowrap">{row.bidang_dak}</TableCell>
+                          <TableCell className="text-center whitespace-nowrap">{row.jenis_tkd}</TableCell>
+                          <TableCell className="text-center whitespace-nowrap">
+                            {row.kdlokasi} - {row.nmkabkota}
+                          </TableCell>
+                          <TableCell className="text-center select-none">{row.coa}</TableCell>
+                          <TableCell className="whitespace-nowrap">{row.ursoutput}</TableCell>
+                          <TableCell className="text-center whitespace-nowrap">
+                            {row.sat} - {numeral(row.vol).format("0,0")}
+                          </TableCell>
+                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
+                            {numeral(row.pagu).format("0,0")}
+                          </TableCell>
+
+                          {/* Realisation Rupiah */}
+                          < TableCell className="text-right font-mono tabular-nums whitespace-nowrap" >
+                            {
+                              numeral(
+                                namaSemester === "1" ? row.real1 : row.real7
+                              ).format("0,0")}
+                          </TableCell>
+                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
+                            {numeral(
+                              namaSemester === "1" ? row.real2 : row.real8
+                            ).format("0,0")}
+                          </TableCell>
+                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
+                            {numeral(
+                              namaSemester === "1" ? row.real3 : row.real9
+                            ).format("0,0")}
+                          </TableCell>
+                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
+                            {numeral(
+                              namaSemester === "1" ? row.real4 : row.real10
+                            ).format("0,0")}
+                          </TableCell>
+                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
+                            {numeral(
+                              namaSemester === "1" ? row.real5 : row.real11
+                            ).format("0,0")}
+                          </TableCell>
+                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
+                            {numeral(
+                              namaSemester === "1" ? row.real6 : row.real12
+                            ).format("0,0")}
+                          </TableCell>
+
+                          {/* Realisation Fisik */}
+                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
+                            {numeral(
+                              namaSemester === "1" ? row.realfisik1 : row.realfisik7
+                            ).format("0,0")}
+                          </TableCell>
+                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
+                            {numeral(
+                              namaSemester === "1" ? row.realfisik2 : row.realfisik8
+                            ).format("0,0")}
+                          </TableCell>
+                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
+                            {numeral(
+                              namaSemester === "1" ? row.realfisik3 : row.realfisik9
+                            ).format("0,0")}
+                          </TableCell>
+                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
+                            {numeral(
+                              namaSemester === "1" ? row.realfisik4 : row.realfisik10
+                            ).format("0,0")}
+                          </TableCell>
+                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
+                            {numeral(
+                              namaSemester === "1" ? row.realfisik5 : row.realfisik11
+                            ).format("0,0")}
+                          </TableCell>
+                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
+                            {numeral(
+                              namaSemester === "1" ? row.realfisik6 : row.realfisik12
+                            ).format("0,0")}
+                          </TableCell>
+
+                          {/* Clusters */}
+                          <TableCell className="whitespace-nowrap">
+                            <StatusIcon
+                              active={
+                                !!(
+                                  row.revisi_anggaran &&
+                                  row.blokir_anggaran &&
+                                  row.automatic_adjustment &&
+                                  row.halaman_3_dipa &&
+                                  row.sdana_sbsn &&
+                                  row.lainnya_anggaran
+                                )
+                              }
+                              onClick={() => handleOpenRekam(row, 1)}
+                            />
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <StatusIcon
+                              active={
+                                !!(
+                                  row.proses_lelang &&
+                                  row.lelang_dini &&
+                                  row.gagal_lelang &&
+                                  row.keterbatasan_penyedia &&
+                                  row.tkdn &&
+                                  row.ecatalog &&
+                                  row.lainnya_pbj
+                                )
+                              }
+                              onClick={() => handleOpenRekam(row, 2)}
+                            />
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <StatusIcon
+                              active={
+                                !!(
+                                  row.kekurangan_prasyarat &&
+                                  row.prasyarat_lahan &&
+                                  row.faktor_cuaca &&
+                                  row.kesiapan_pedum &&
+                                  row.penerimaan_bantuan &&
+                                  row.pembagian_bantuan &&
+                                  row.kenaikan_harga &&
+                                  row.lainnya_eksekusi
+                                )
+                              }
+                              onClick={() => handleOpenRekam(row, 3)}
+                            />
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <StatusIcon
+                              active={
+                                !!(
+                                  row.regulasi_kemenkeu &&
+                                  row.regulasi_kl &&
+                                  row.regulasi_pemda &&
+                                  row.lainnya_regulasi
+                                )
+                              }
+                              onClick={() => handleOpenRekam(row, 4)}
+                            />
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <StatusIcon
+                              active={
+                                !!(
+                                  row.pergantian_pejabat &&
+                                  row.kekurangan_sdm &&
+                                  row.pemahaman_aplikasi &&
+                                  row.lainnya_sdm
+                                )
+                              }
+                              onClick={() => handleOpenRekam(row, 5)}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={26}
+                          className="h-24 text-center text-muted-foreground"
+                        >
+                          Tidak ada data.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {data.length > 0 && (
+              <div className="flex items-center justify-between space-x-2 pt-4">
+                <div className="flex-1 text-sm text-muted-foreground">
+                  Total: {numeral(rows).format("0,0")} | Hal: {page + 1} dari{" "}
+                  {pages}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                    disabled={page === 0}
                   >
-                    Nama Satker
-                  </th>
-                  <th rowSpan={2} className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
-                    Bidang
-                  </th>
-                  <th rowSpan={2} className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
-                    Jenis TKD
-                  </th>
-                  <th rowSpan={2} className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
-                    Lokasi/Kabkota
-                  </th>
-                  <th
-                    rowSpan={2}
-                    className="h-12 px-4 text-center align-middle font-medium text-muted-foreground w-32"
+                    <ChevronLeft className="h-4 w-4" /> Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.min(pages - 1, p + 1))}
+                    disabled={page >= pages - 1}
                   >
-                    COA
-                  </th>
-                  <th rowSpan={2} className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
-                    Nama RO
-                  </th>
-                  <th rowSpan={2} className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
-                    Satuan/Vol
-                  </th>
-                  <th rowSpan={2} className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
-                    Pagu
-                  </th>
-                  <th colSpan={6} className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
-                    Realisasi (Rupiah)
-                  </th>
-                  <th colSpan={6} className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
-                    RVRO (Volume)
-                  </th>
-                  <th colSpan={5} className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
-                    Cluster Tantangan/Hambatan
-                  </th>
-                </tr>
-                <tr className="border-b border-border">
-                  {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <th key={`real-${i}`} className="h-12 px-2 text-center align-middle font-medium text-muted-foreground text-xs">
-                      {namaSemester === "1"
-                        ? ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun"][i]
-                        : ["Jul", "Ags", "Sep", "Okt", "Nov", "Des"][i]}
-                    </th>
-                  ))}
-                  {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <th key={`phy-${i}`} className="h-12 px-2 text-center align-middle font-medium text-muted-foreground text-xs">
-                      {namaSemester === "1"
-                        ? ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun"][i]
-                        : ["Jul", "Ags", "Sep", "Okt", "Nov", "Des"][i]}
-                    </th>
-                  ))}
-                  <th className="h-12 px-2 text-center align-middle font-medium text-muted-foreground text-xs">Penganggaran</th>
-                  <th className="h-12 px-2 text-center align-middle font-medium text-muted-foreground text-xs">PBJ</th>
-                  <th className="h-12 px-2 text-center align-middle font-medium text-muted-foreground text-xs">Eksekusi</th>
-                  <th className="h-12 px-2 text-center align-middle font-medium text-muted-foreground text-xs">Regulasi</th>
-                  <th className="h-12 px-2 text-center align-middle font-medium text-muted-foreground text-xs">SDM</th>
-                </tr>
-              </thead>
-              <tbody className="text-xs">
-                {data.slice(page * limit, (page + 1) * limit).map((row: any, index: number) => (
-                  <tr key={row.id} className="border-b border-border transition-colors hover:bg-muted/50">
-                    <td className="p-2 text-center">
-                      {index + 1 + page * limit}
-                    </td>
-                    <td className="p-2">
-                      {row.nmsatker} ({row.kddept}.{row.kdsatker})
-                    </td>
-                    <td className="p-2 text-center">{row.bidang_dak}</td>
-                    <td className="p-2 text-center">{row.jenis_tkd}</td>
-                    <td className="p-2 text-center">
-                      {row.kdlokasi}
-                      <br />
-                      {row.nmkabkota}
-                    </td>
-                    <td className="p-2 text-center text-[10px] select-none">{row.coa}</td>
-                    <td className="p-2">{row.ursoutput}</td>
-                    <td className="p-2 text-center">
-                      {row.sat}
-                      <br />
-                      {numeral(row.vol).format("0,0")}
-                    </td>
-                    <td className="p-2 text-right">
-                      {numeral(row.pagu).format("0,0")}
-                    </td>
-
-                    {/* Realisation Rupiah */}
-                    <td className="p-2 text-right">
-                      {numeral(
-                        namaSemester === "1" ? row.real1 : row.real7
-                      ).format("0,0")}
-                    </td>
-                    <td className="p-2 text-right">
-                      {numeral(
-                        namaSemester === "1" ? row.real2 : row.real8
-                      ).format("0,0")}
-                    </td>
-                    <td className="p-2 text-right">
-                      {numeral(
-                        namaSemester === "1" ? row.real3 : row.real9
-                      ).format("0,0")}
-                    </td>
-                    <td className="p-2 text-right">
-                      {numeral(
-                        namaSemester === "1" ? row.real4 : row.real10
-                      ).format("0,0")}
-                    </td>
-                    <td className="p-2 text-right">
-                      {numeral(
-                        namaSemester === "1" ? row.real5 : row.real11
-                      ).format("0,0")}
-                    </td>
-                    <td className="p-2 text-right">
-                      {numeral(
-                        namaSemester === "1" ? row.real6 : row.real12
-                      ).format("0,0")}
-                    </td>
-
-                    {/* Realisation Fisik */}
-                    <td className="p-2 text-right">
-                      {numeral(
-                        namaSemester === "1" ? row.realfisik1 : row.realfisik7
-                      ).format("0,0")}
-                    </td>
-                    <td className="p-2 text-right">
-                      {numeral(
-                        namaSemester === "1" ? row.realfisik2 : row.realfisik8
-                      ).format("0,0")}
-                    </td>
-                    <td className="p-2 text-right">
-                      {numeral(
-                        namaSemester === "1" ? row.realfisik3 : row.realfisik9
-                      ).format("0,0")}
-                    </td>
-                    <td className="p-2 text-right">
-                      {numeral(
-                        namaSemester === "1" ? row.realfisik4 : row.realfisik10
-                      ).format("0,0")}
-                    </td>
-                    <td className="p-2 text-right">
-                      {numeral(
-                        namaSemester === "1" ? row.realfisik5 : row.realfisik11
-                      ).format("0,0")}
-                    </td>
-                    <td className="p-2 text-right">
-                      {numeral(
-                        namaSemester === "1" ? row.realfisik6 : row.realfisik12
-                      ).format("0,0")}
-                    </td>
-
-                    {/* Clusters */}
-                    <td className="p-2">
-                      <StatusIcon
-                        active={
-                          !!(
-                            row.revisi_anggaran &&
-                            row.blokir_anggaran &&
-                            row.automatic_adjustment &&
-                            row.halaman_3_dipa &&
-                            row.sdana_sbsn &&
-                            row.lainnya_anggaran
-                          )
-                        }
-                        onClick={() => handleOpenRekam(row, 1)}
-                      />
-                    </td>
-                    <td className="p-2">
-                      <StatusIcon
-                        active={
-                          !!(
-                            row.proses_lelang &&
-                            row.lelang_dini &&
-                            row.gagal_lelang &&
-                            row.keterbatasan_penyedia &&
-                            row.tkdn &&
-                            row.ecatalog &&
-                            row.lainnya_pbj
-                          )
-                        }
-                        onClick={() => handleOpenRekam(row, 2)}
-                      />
-                    </td>
-                    <td className="p-2">
-                      <StatusIcon
-                        active={
-                          !!(
-                            row.kekurangan_prasyarat &&
-                            row.prasyarat_lahan &&
-                            row.faktor_cuaca &&
-                            row.kesiapan_pedum &&
-                            row.penerimaan_bantuan &&
-                            row.pembagian_bantuan &&
-                            row.kenaikan_harga &&
-                            row.lainnya_eksekusi
-                          )
-                        }
-                        onClick={() => handleOpenRekam(row, 3)}
-                      />
-                    </td>
-                    <td className="p-2">
-                      <StatusIcon
-                        active={
-                          !!(
-                            row.regulasi_kemenkeu &&
-                            row.regulasi_kl &&
-                            row.regulasi_pemda &&
-                            row.lainnya_regulasi
-                          )
-                        }
-                        onClick={() => handleOpenRekam(row, 4)}
-                      />
-                    </td>
-                    <td className="p-2">
-                      <StatusIcon
-                        active={
-                          !!(
-                            row.pergantian_pejabat &&
-                            row.kekurangan_sdm &&
-                            row.pemahaman_aplikasi &&
-                            row.lainnya_sdm
-                          )
-                        }
-                        onClick={() => handleOpenRekam(row, 5)}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Pagination Controls */}
-        {data.length > 0 && (
-          <div className="flex justify-between items-center py-4">
-            <div className="text-sm text-muted-foreground">
-              Total: {numeral(rows).format("0,0")} | Hal: {page + 1} dari{" "}
-              {pages}
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-                disabled={page === 0}
-              >
-                <ChevronLeft className="h-4 w-4" /> Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.min(pages - 1, p + 1))}
-                disabled={page >= pages - 1}
-              >
-                Next <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
-      </section>
+                    Next <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section >
 
       {/* Modals */}
-      <RekamUpaya show={showModalUpaya} onHide={handleCloseModalUpaya} />
+      < RekamUpaya show={showModalUpaya} onHide={handleCloseModalUpaya} />
 
       <Rekam
         show={showModal}
@@ -873,6 +899,6 @@ export default function Harmonisasi() {
         lainnya_sdm_isi={lainnya_sdm}
         onSaveSuccess={handleSaveSuccess}
       />
-    </div>
+    </div >
   );
 }

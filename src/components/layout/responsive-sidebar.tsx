@@ -89,31 +89,8 @@ const defaultMenu: MenuItem[] = [
     ],
   },
   {
-    label: "Data Supplier",
-    children: [
-      { label: "Dashboard Supplier" },
-      { label: "Profil Supplier" },
-      { label: "Konsentrasi Supplier" },
-      { label: "Deteksi Anomali Supplier" },
-      { label: "Klaster Supplier" },
-      { label: "Jaringan Supplier" },
-    ],
-  },
-  {
-    label: "EPA",
-    children: [
-      { label: "Summary" },
-      { label: "Analisa EPA" },
-      { label: "Rekap EPA" },
-    ],
-  },
-  {
     label: "Monev KKP",
     children: [{ label: "KPPN" }, { label: "Kanwil" }, { label: "Direktorat PA" }],
-  },
-  {
-    label: "Spending Review",
-    children: [{ label: "Sektor" }, { label: "Rekomendasi" }],
   },
   {
     label: "Transfer Daerah",
@@ -134,10 +111,6 @@ const defaultMenu: MenuItem[] = [
       { label: "RKAKL Detail" },
       { label: "Prognosis" },
     ],
-  },
-  {
-    label: "Profil K/L",
-    children: [{ label: "Kementerian" }, { label: "Lembaga" }],
   },
   {
     label: "Laporan",
@@ -169,6 +142,33 @@ const defaultMenu: MenuItem[] = [
   {
     label: "Monev IKPA",
     children: [{ label: "Monev Dispensasi IKPA" }],
+  },
+  {
+    label: "Data Supplier",
+    children: [
+      { label: "Dashboard Supplier" },
+      { label: "Profil Supplier" },
+      { label: "Konsentrasi Supplier" },
+      { label: "Deteksi Anomali Supplier" },
+      { label: "Klaster Supplier" },
+      { label: "Jaringan Supplier" },
+    ],
+  },
+  {
+    label: "EPA",
+    children: [
+      { label: "Summary" },
+      { label: "Analisa EPA" },
+      { label: "Rekap EPA" },
+    ],
+  },
+  {
+    label: "Spending Review",
+    children: [{ label: "Sektor" }, { label: "Rekomendasi" }],
+  },
+  {
+    label: "Profil K/L",
+    children: [{ label: "Kementerian" }, { label: "Lembaga" }],
   },
   {
     label: "Tentang Kita",
