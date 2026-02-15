@@ -165,8 +165,8 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
+            <DialogContent className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
+                <DialogHeader className="flex-shrink-0">
                     <DialogTitle className="text-xl font-bold flex items-center gap-2">
                         <Edit className="h-5 w-5 text-primary" />
                         Edit Data IKPA
@@ -174,7 +174,7 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
                 </DialogHeader>
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 overflow-y-auto grid gap-4 py-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Tahun Anggaran */}
                             <FormField
@@ -401,7 +401,7 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
                             />
                         </div>
 
-                        <DialogFooter className="gap-2">
+                        <DialogFooter className="flex-shrink-0 gap-2">
                             <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
                                 <X className="h-4 w-4 mr-2" />
                                 Batal

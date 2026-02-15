@@ -68,7 +68,7 @@ export function LihatKendalaModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-7xl h-[90vh] flex flex-col overflow-hidden p-6">
+            <DialogContent className="max-w-7xl sm:max-w-7xl flex flex-col overflow-hidden">
                 <DialogHeader className="flex-shrink-0">
                     <DialogTitle>Lihat Kendala/Hambatan</DialogTitle>
                 </DialogHeader>
@@ -77,7 +77,7 @@ export function LihatKendalaModal({
                         <div className="text-sm text-muted-foreground">Memuat data...</div>
                     </div>
                 ) : (
-                <div className="py-4 space-y-4 flex-1 overflow-auto">
+                <div className="flex-1 overflow-y-auto py-4 space-y-4">
                     {data && (
                         <>
                             <div className="p-3 bg-muted rounded-lg space-y-1.5">

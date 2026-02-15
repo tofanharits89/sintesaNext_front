@@ -143,15 +143,15 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-4xl sm:max-w-4xl max-h-[85vh] flex flex-col">
-                <DialogHeader>
+            <DialogContent className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
+                <DialogHeader className="flex-shrink-0">
                     <DialogTitle>Rekam Data IKPA</DialogTitle>
                 </DialogHeader>
 
                 <Form {...form}>
-                    <form id="ikpa-form" onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6 py-4 overflow-y-auto flex-1 pr-2">
+                    <form id="ikpa-form" onSubmit={form.handleSubmit(onSubmit)} className="flex-1 overflow-y-auto grid gap-4 py-4 pr-2">
                         {/* First Row - Year, Date, ND Number */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div className="w-full space-y-2">
                                 <Label htmlFor="thang">Tahun Anggaran</Label>
                                 <Select
@@ -213,7 +213,7 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                         </div>
 
                         {/* Second Row - Indikator, No Doc */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="w-full space-y-2">
                                 <Label htmlFor="nm_indikator">Indikator IKPA</Label>
                                 <Select
@@ -321,7 +321,7 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                     </form>
                 </Form>
 
-                <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-3 shrink-0">
+                <DialogFooter className="flex-shrink-0 flex flex-col sm:flex-row sm:justify-end gap-3">
                     <div className="flex gap-2">
                         <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
                             Tutup
@@ -335,7 +335,7 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                             ) : (
                                 <>
                                     <Save className="h-4 w-4 mr-2" />
-                                    Save
+                                    Simpan
                                 </>
                             )}
                         </Button>

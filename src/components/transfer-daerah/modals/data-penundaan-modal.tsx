@@ -107,7 +107,7 @@ export function DataPenundaanModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl h-[85vh] sm:max-w-7xl flex flex-col overflow-hidden">
+      <DialogContent className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Data Penundaan - {resolvedNoKmk || "-"}</DialogTitle>
         </DialogHeader>
