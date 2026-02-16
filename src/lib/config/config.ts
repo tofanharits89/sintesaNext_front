@@ -35,7 +35,7 @@ function getApiUrl(): string {
       process.env.NEXT_PUBLIC_BACKEND_PORT ||
       "8080";
     const backendHost =
-      process.env.NODE_ENV === "production" ? "backend" : "localhost";
+      process.env.BACKEND_HOST || "localhost";
     const origin =
       process.env.NEXT_PUBLIC_BACKEND_ORIGIN ||
       `http://${backendHost}:${backendPort}`;
@@ -48,23 +48,17 @@ function getApiUrl(): string {
         process.env.NEXT_PUBLIC_BACKEND_PORT ||
         "8080";
       const backendHost =
-        process.env.NODE_ENV === "production" ? "backend" : "localhost";
+        process.env.BACKEND_HOST || "localhost";
       return `http://${backendHost}:${backendPort}/api/v1`;
     }
   }
 
-  // Fallback: use Docker service name in production, localhost in dev
-  return process.env.NODE_ENV === "production"
-    ? `http://backend:${
-        process.env.BACKEND_PORT ||
-        process.env.NEXT_PUBLIC_BACKEND_PORT ||
-        "8080"
-      }/api/v1`
-    : `http://localhost:${
-        process.env.BACKEND_PORT ||
-        process.env.NEXT_PUBLIC_BACKEND_PORT ||
-        "8080"
-      }/api/v1`;
+  // Fallback: use BACKEND_HOST in production, localhost in dev, default to localhost
+  const host = process.env.BACKEND_HOST || "localhost";
+  return `http://${host}:${process.env.BACKEND_PORT ||
+    process.env.NEXT_PUBLIC_BACKEND_PORT ||
+    "7777"
+    }/api/v1`;
 }
 
 /**
@@ -94,13 +88,12 @@ function getSocketUrl(): string {
       // Socket.IO should connect to the same origin (nginx will proxy to backend)
       if (process.env.NODE_ENV === "production") {
         // Use same origin as the page (works for both domain and IP)
-        return `${protocol}//${hostname}${
-          port && port !== "80" && port !== "443" ? ":" + port : ""
-        }`;
+        return `${protocol}//${hostname}${port && port !== "80" && port !== "443" ? ":" + port : ""
+          }`;
       }
 
       // Development: connect to backend port
-      const backendPort = (process.env.NEXT_PUBLIC_BACKEND_PORT || "88").trim();
+      const backendPort = (process.env.NEXT_PUBLIC_BACKEND_PORT || "7777").trim();
       return `${protocol}//${hostname}:${backendPort}`;
     } catch {
       // ignore and fall through
@@ -108,9 +101,9 @@ function getSocketUrl(): string {
   }
   // Server-side fallback - use backend service name in Docker
   const backendPort =
-    process.env.BACKEND_PORT || process.env.NEXT_PUBLIC_BACKEND_PORT || "88";
+    process.env.BACKEND_PORT || process.env.NEXT_PUBLIC_BACKEND_PORT || "7777";
   const backendHost =
-    process.env.NODE_ENV === "production" ? "backend" : "localhost";
+    process.env.BACKEND_HOST || "localhost";
   return `http://${backendHost}:${backendPort}`;
 }
 

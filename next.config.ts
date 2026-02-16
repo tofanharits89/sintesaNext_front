@@ -193,8 +193,8 @@ const nextConfig: NextConfig = {
 
   async rewrites() {
     const backendHost =
-      process.env.NODE_ENV === "production" ? "backend" : "localhost";
-    const backendPort = process.env.BACKEND_PORT || process.env.NEXT_PUBLIC_BACKEND_PORT || "8080";
+      process.env.BACKEND_HOST || "localhost";
+    const backendPort = process.env.BACKEND_PORT || process.env.NEXT_PUBLIC_BACKEND_PORT || "7777";
 
     return [
       // Proxy API requests to backend
