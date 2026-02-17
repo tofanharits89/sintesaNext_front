@@ -2,10 +2,11 @@
 
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
 import { cn } from "@/lib/utils";
+import { useDebounce } from "@/hooks/use-debounce";
 import {
   Loader2,
   CheckSquare,
@@ -49,6 +50,50 @@ const Encrypt = (text: string) => {
     return window.btoa(text); // Base64 encoding as placeholder
   }
   return text;
+};
+
+const encryptHarmonisasiQuery = (query: string): string => {
+  // Backend harmonisasi2 decodes with decodeURIComponent after base64 decode.
+  // Encode first so raw SQL LIKE patterns (%...%) don't break URI decoding.
+  return Encrypt(encodeURIComponent(query));
+};
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (!error) return fallback;
+
+  if (typeof error === "string") return error;
+
+  if (error instanceof Error && typeof error.message === "string") {
+    return error.message;
+  }
+
+  const maybeAxiosError = error as {
+    message?: unknown;
+    response?: {
+      data?: {
+        error?: unknown;
+        message?: unknown;
+      };
+    };
+  };
+
+  const backendError = maybeAxiosError.response?.data?.error;
+  if (typeof backendError === "string") return backendError;
+  if (
+    backendError &&
+    typeof backendError === "object" &&
+    "message" in backendError &&
+    typeof (backendError as { message?: unknown }).message === "string"
+  ) {
+    return (backendError as { message: string }).message;
+  }
+
+  const backendMessage = maybeAxiosError.response?.data?.message;
+  if (typeof backendMessage === "string") return backendMessage;
+
+  if (typeof maybeAxiosError.message === "string") return maybeAxiosError.message;
+
+  return fallback;
 };
 
 export default function Harmonisasi() {
@@ -108,9 +153,11 @@ export default function Harmonisasi() {
   const [namaThang, setNamaThang] = useState("2025");
   const [namaSemester, setNamaSemester] = useState("1");
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 400);
   const [sql, setSql] = useState("");
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [export2, setExport2] = useState(false);
+  const latestRequestRef = useRef(0);
 
   // Derive unique kanwil options from JSON
   const kanwilOptions = useMemo(() => {
@@ -140,18 +187,20 @@ export default function Harmonisasi() {
   useEffect(() => {
     getData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, kanwil, namaBidang, namaThang, namaSemester, searchQuery]);
+  }, [kanwil, namaBidang, namaThang, namaSemester, debouncedSearchQuery, username, role, userKdkanwil]);
 
   // Debounced search could be implemented here, but keeping it simple for now as requested
 
-  const getSqlQuery = () => {
+  const getSqlQuery = (searchValue: string = debouncedSearchQuery) => {
+    const safeSearchQuery = searchValue.trim().replace(/'/g, "''");
+    const normalizedSearchQuery = safeSearchQuery.toLowerCase();
     const kanwilFilter = kanwil === "00" ? "" : `a.kdkanwil = '${kanwil}'`;
     const bidangFilter =
       namaBidang === "00" ? "" : `a.bidang_dak = '${namaBidang}'`;
     const semesterFilter =
       namaSemester === "1" ? "a.semester='1'" : `a.semester = '2'`;
     const thangFilter =
-      namaThang === "2025" ? "a.thang='2025'" : `a.thang = '2024'`;
+      namaThang === "2025" ? "a.thang='2025'" : `a.thang = '2026'`;
 
     const whereClause = [
       kanwilFilter,
@@ -161,14 +210,16 @@ export default function Harmonisasi() {
     ]
       .filter(Boolean)
       .concat(
-        searchQuery
+        safeSearchQuery
           ? [
-            `(a.kdsatker LIKE '%${searchQuery}%'
-          or a.nmsatker LIKE '%${searchQuery}%'
-          or a.kdkabkota LIKE '%${searchQuery}%'
-          or c.nmkabkota LIKE '%${searchQuery}%'
-          or a.ursoutput LIKE '%${searchQuery}%'
-          or a.jenis_tkd LIKE '%${searchQuery}%')`,
+            `(LOWER(a.kdsatker) LIKE '%${normalizedSearchQuery}%'
+          or LOWER(a.nmsatker) LIKE '%${normalizedSearchQuery}%'
+          or LOWER(a.kdkabkota) LIKE '%${normalizedSearchQuery}%'
+          or LOWER(c.nmkabkota) LIKE '%${normalizedSearchQuery}%'
+          or LOWER(a.ursoutput) LIKE '%${normalizedSearchQuery}%'
+          or LOWER(a.jenis_tkd) LIKE '%${normalizedSearchQuery}%'
+          or LOWER(a.bidang_dak) LIKE '%${normalizedSearchQuery}%'
+          or LOWER(CONCAT(a.kdprogram,'.',a.kdgiat,'.',a.kdoutput,'.',a.kdsoutput)) LIKE '%${normalizedSearchQuery}%')`,
           ]
           : []
       )
@@ -220,8 +271,10 @@ export default function Harmonisasi() {
   };
 
   const getData = async () => {
+    const requestId = Date.now();
+    latestRequestRef.current = requestId;
     setLoading(true);
-    const query = getSqlQuery();
+    const query = getSqlQuery(debouncedSearchQuery);
     if (!query) {
       setLoading(false);
       return;
@@ -234,24 +287,52 @@ export default function Harmonisasi() {
       .trim();
     setSql(cleanedQuery);
 
-    const encryptedQuery = Encrypt(cleanedQuery);
+    const encryptedQuery = encryptHarmonisasiQuery(cleanedQuery);
 
     try {
       const tayangHarmonisasiUrl = process.env.NEXT_PUBLIC_TAYANG_HARMONISASI;
-      // Fetch all data for client-side pagination
-      const fetchLimit = 100000;
-      const url = tayangHarmonisasiUrl
-        ? `${tayangHarmonisasiUrl}${encodeURIComponent(encryptedQuery)}&limit=${fetchLimit}&page=0&user=${username}`
-        : "";
+      // Try bigger payload first, then fallback to smaller limit on connection reset.
+      const fetchLimits = [100000, 50000, 20000];
+      let resultData: any[] = [];
+      let usedFallbackLimit = false;
+      let lastError: unknown = null;
 
-      if (!url) {
+      if (!tayangHarmonisasiUrl) {
         console.error("URL API Harmonisasi tidak ditemukan");
         setLoading(false);
         return;
       }
 
-      const response: any = await http.get(url);
-      const resultData = response.data.result || [];
+      for (let i = 0; i < fetchLimits.length; i += 1) {
+        const fetchLimit = fetchLimits[i];
+        const url = `${tayangHarmonisasiUrl}${encodeURIComponent(encryptedQuery)}&limit=${fetchLimit}&page=0&user=${username}`;
+
+        try {
+          const response: any = await http.get(url);
+          resultData = response.data.result || [];
+          usedFallbackLimit = i > 0;
+          break;
+        } catch (err) {
+          lastError = err;
+          const errMsg = getErrorMessage(err, "").toLowerCase();
+          const isConnReset =
+            errMsg.includes("econnreset") ||
+            errMsg.includes("socket hang up") ||
+            errMsg.includes("network error");
+
+          if (!isConnReset || i === fetchLimits.length - 1) {
+            throw err;
+          }
+        }
+      }
+
+      if (latestRequestRef.current !== requestId) {
+        return;
+      }
+
+      if (lastError && resultData.length === 0) {
+        throw lastError;
+      }
 
       // Client-side pagination logic
       const totalCount = resultData.length;
@@ -260,12 +341,23 @@ export default function Harmonisasi() {
       setData(resultData);
       setPages(totalPages);
       setRows(totalCount);
+
+      if (usedFallbackLimit) {
+        toast.warning(
+          "Koneksi backend tidak stabil. Data ditampilkan dengan batas lebih kecil, gunakan filter/pencarian untuk mempersempit data."
+        );
+      }
+
       setLoading(false);
     } catch (error: any) {
+      if (latestRequestRef.current !== requestId) {
+        return;
+      }
       setLoading(false);
-      const message =
-        error.response?.data?.error ||
-        "Terjadi Permasalahan Koneksi atau Server Backend";
+      const message = getErrorMessage(
+        error,
+        "Terjadi Permasalahan Koneksi atau Server Backend"
+      );
       toast.error(message);
     }
   };
@@ -284,7 +376,7 @@ export default function Harmonisasi() {
       .replace(/\n/g, " ")
       .replace(/\s+/g, " ")
       .trim();
-    const encryptedQuery = Encrypt(cleanedQuery);
+    const encryptedQuery = encryptHarmonisasiQuery(cleanedQuery);
 
     try {
       const tayangHarmonisasiUrl = process.env.NEXT_PUBLIC_TAYANG_HARMONISASI;
@@ -322,8 +414,7 @@ export default function Harmonisasi() {
 
     } catch (error: any) {
       console.error(error);
-      const message =
-        error.response?.data?.error || "Gagal mengunduh data";
+      const message = getErrorMessage(error, "Gagal mengunduh data");
       toast.error(message);
     } finally {
       setLoadingStatus(false);
@@ -413,6 +504,7 @@ export default function Harmonisasi() {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+    setPage(0);
     if (query) {
       setKanwil("00");
       setNamaBidang("00");
@@ -482,7 +574,7 @@ export default function Harmonisasi() {
             <CardTitle>Filter Data</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-medium">Tahun</label>
                 <Select value={namaThang} onValueChange={setNamaThang}>
@@ -556,24 +648,22 @@ export default function Harmonisasi() {
                 </Select>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium">Pencarian</label>
-                <Input
-                  type="text"
-                  placeholder="Cari..."
-                  value={searchQuery}
-                  onChange={(e) => handleSearch(e.target.value)}
-                />
-              </div>
-
-
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle>Data Harmonisasi</CardTitle>
+            <div className="w-full sm:w-72">
+              <Input
+                type="text"
+                aria-label="Pencarian data harmonisasi"
+                placeholder="Cari..."
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+              />
+            </div>
           </CardHeader>
           <CardContent>
             {loading ? (

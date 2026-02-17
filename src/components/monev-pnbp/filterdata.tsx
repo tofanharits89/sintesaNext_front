@@ -142,7 +142,7 @@ const FilterData: React.FC<FilterDataProps> = ({ show, onHide, onFilter }) => {
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-4xl w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center text-lg gap-2">
             <Grid3X3 className="w-5 h-5 text-primary font-bold" />

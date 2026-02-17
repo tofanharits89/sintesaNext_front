@@ -351,7 +351,7 @@ export default function RekamanTantangan({
 
   return (
     <Dialog open={show} onOpenChange={onHide}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent showCloseButton={false} className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col w-[95vw] max-w-7xl sm:max-w-7xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MessageSquareText className="text-green-600" />

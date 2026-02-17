@@ -565,7 +565,7 @@ export default function NotificationsPage() {
 
       {/* Broadcast Dialog */}
       <Dialog open={showBroadcast} onOpenChange={setShowBroadcast}>
-        <DialogContent className="sm:max-w-4xl md:max-w-5xl max-h-[85vh] overflow-y-auto">
+        <DialogContent showCloseButton={false} className="sm:max-w-4xl md:max-w-5xl max-h-[85vh] overflow-y-auto w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>Broadcast Notifikasi</DialogTitle>
             <DialogDescription>
@@ -822,7 +822,7 @@ export default function NotificationsPage() {
 
       {/* Delete Confirmation Dialog (single) */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent className="max-w-md">
+        <DialogContent showCloseButton={false} className="max-w-md w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
           <DialogHeader>
             <DialogTitle className="text-red-600">Konfirmasi Hapus</DialogTitle>
             <DialogDescription>
@@ -867,7 +867,7 @@ export default function NotificationsPage() {
 
       {/* Multiple Delete Confirmation Dialog */}
       <Dialog open={showMultipleDeleteConfirm} onOpenChange={setShowMultipleDeleteConfirm}>
-        <DialogContent className="max-w-md">
+        <DialogContent showCloseButton={false} className="max-w-md w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
           <DialogHeader>
             <DialogTitle className="text-red-600 flex items-center gap-2">
               <AlertTriangle className="h-5 w-5" />
@@ -911,7 +911,7 @@ export default function NotificationsPage() {
           open={!!selectedNotification}
           onOpenChange={() => setSelectedNotification(null)}
         >
-          <DialogContent className="max-w-2xl">
+          <DialogContent showCloseButton={false} className="max-w-2xl w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 {getTypeIcon(selectedNotification.type)}

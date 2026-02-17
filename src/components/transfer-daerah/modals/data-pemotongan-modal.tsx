@@ -55,7 +55,7 @@ export function DataPemotonganModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] md:max-w-[1200px] h-[85vh] flex flex-col overflow-hidden">
+      <DialogContent showCloseButton={false} className="max-w-[95vw] md:max-w-[1200px] h-[85vh] flex flex-col overflow-hidden w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>Data Pemotongan - {no_kmk || "-"}</DialogTitle>
         </DialogHeader>

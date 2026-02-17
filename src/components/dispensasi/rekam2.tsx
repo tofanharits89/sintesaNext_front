@@ -296,7 +296,7 @@ export default function Rekam2({
   return (
     <>
       <Dialog open={show} onOpenChange={handleModalClose}>
-        <DialogContent className="w-full max-w-5xl sm:max-w-6xl max-h-[90vh] flex flex-col overflow-hidden" showCloseButton={false}>
+        <DialogContent className="w-full max-w-5xl sm:max-w-6xl max-h-[90vh] flex flex-col overflow-hidden w-[95vw] max-w-7xl sm:max-w-7xl" showCloseButton={false}>
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="flex items-center gap-2 text-xl font-bold">
               <span className="text-green-600">Data SPM Dispensasi</span>

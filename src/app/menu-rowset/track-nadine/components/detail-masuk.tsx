@@ -200,7 +200,7 @@ export default function Detail({
   return (
     <>
       <Dialog open={showModal} onOpenChange={handleCloseModal}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <DialogContent showCloseButton={false} className="max-w-4xl max-h-[90vh] overflow-y-auto fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] max-w-7xl sm:max-w-7xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Mail className="h-5 w-5 text-green-600" />
@@ -349,7 +349,7 @@ export default function Detail({
       </Dialog>
 
       <Dialog open={showKonseptorModal} onOpenChange={handleCloseKonseptor}>
-        <DialogContent className="max-w-3xl fixed z-[60] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <DialogContent showCloseButton={false} className="max-w-3xl fixed z-[60] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <User className="h-5 w-5 text-blue-500" />

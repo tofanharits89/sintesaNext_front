@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -401,15 +401,21 @@ export default function RekamTpid() {
         )}
 
         {/* Table Content */}
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-12 space-y-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">Memuat data...</p>
-          </div>
-        ) : (
-          <Card className="overflow-hidden border shadow-sm">
-            <Table>
-              <TableHeader className="bg-secondary/50">
+        <Card>
+          <CardHeader>
+            <CardTitle>Data Tantangan/Kendala TPID</CardTitle>
+            <p className="text-sm text-muted-foreground">{getQuarterLabel()}</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-muted-foreground">Memuat data...</p>
+              </div>
+            ) : (
+              <div className="rounded-md border">
+                <Table className="text-xs">
+                  <TableHeader className="bg-muted/50">
                 <TableRow>
                   <TableHead
                     rowSpan={2}
@@ -433,7 +439,7 @@ export default function RekamTpid() {
                     Tantangan/Kendala dan Rekomendasi Belanja TKD
                   </TableHead>
                 </TableRow>
-                <TableRow className="bg-secondary/20">
+                <TableRow>
                   {/* K/L Columns */}
                   <TableHead className="text-center text-xs border-r h-auto py-2">
                     Penganggaran
@@ -684,49 +690,53 @@ export default function RekamTpid() {
                   </TableRow>
                 )}
               </TableBody>
-            </Table>
-          </Card>
-        )}
+                </Table>
+              </div>
+            )}
 
-        {/* Pagination */}
-        <div className="flex flex-col md:flex-row justify-between items-center py-4 gap-4">
-          <div className="text-sm text-muted-foreground">
-            Menampilkan <span className="font-medium text-foreground">{numeral(rows).format("0,0")}</span> data.
-            Halaman <span className="font-medium text-foreground">{rows ? page + 1 : 0}</span> dari <span className="font-medium text-foreground">{pages}</span>
-          </div>
-          <div className="flex justify-center">
-            <ReactPaginate
-              previousLabel={
-                <div className="flex items-center gap-1 pl-2.5 pr-4">
-                  <ChevronLeft className="h-4 w-4" />
-                  <span>Previous</span>
+            {/* Pagination */}
+            {!loading && (
+              <div className="flex flex-col md:flex-row justify-between items-center pt-1 gap-4">
+                <div className="text-sm text-muted-foreground">
+                  Menampilkan <span className="font-medium text-foreground">{numeral(rows).format("0,0")}</span> data.
+                  Halaman <span className="font-medium text-foreground">{rows ? page + 1 : 0}</span> dari <span className="font-medium text-foreground">{pages}</span>
                 </div>
-              }
-              nextLabel={
-                <div className="flex items-center gap-1 pl-4 pr-2.5">
-                  <span>Next</span>
-                  <ChevronRight className="h-4 w-4" />
+                <div className="flex justify-center">
+                  <ReactPaginate
+                    previousLabel={
+                      <div className="flex items-center gap-1 pl-2.5 pr-4">
+                        <ChevronLeft className="h-4 w-4" />
+                        <span>Previous</span>
+                      </div>
+                    }
+                    nextLabel={
+                      <div className="flex items-center gap-1 pl-4 pr-2.5">
+                        <span>Next</span>
+                        <ChevronRight className="h-4 w-4" />
+                      </div>
+                    }
+                    breakLabel={<span className="px-4">...</span>}
+                    pageCount={pages}
+                    marginPagesDisplayed={1}
+                    pageRangeDisplayed={3}
+                    onPageChange={handlePageClick}
+                    containerClassName="flex items-center gap-1 select-none"
+                    pageClassName="block"
+                    pageLinkClassName="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 w-9"
+                    activeClassName=""
+                    activeLinkClassName="border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground font-bold pointer-events-none"
+                    previousClassName="block"
+                    previousLinkClassName="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9"
+                    nextClassName="block"
+                    nextLinkClassName="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9"
+                    disabledClassName="opacity-50 pointer-events-none"
+                    forcePage={page}
+                  />
                 </div>
-              }
-              breakLabel={<span className="px-4">...</span>}
-              pageCount={pages}
-              marginPagesDisplayed={1}
-              pageRangeDisplayed={3}
-              onPageChange={handlePageClick}
-              containerClassName="flex items-center gap-1 select-none"
-              pageClassName="block"
-              pageLinkClassName="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 w-9"
-              activeClassName=""
-              activeLinkClassName="border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground font-bold pointer-events-none"
-              previousClassName="block"
-              previousLinkClassName="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9"
-              nextClassName="block"
-              nextLinkClassName="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9"
-              disabledClassName="opacity-50 pointer-events-none"
-              forcePage={page}
-            />
-          </div>
-        </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <ModalTpid

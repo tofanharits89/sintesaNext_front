@@ -323,7 +323,7 @@ export default function Rekam2({
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && handleModalClose()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent showCloseButton={false} className="max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw] max-w-7xl sm:max-w-7xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <ArrowRightToLine className="w-5 h-5 text-green-600 mx-3" />

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -76,6 +77,7 @@ export default function RekamKesimpulan({
       setRekomendasi("");
       setGambaran_umum("");
       setSql("");
+      setActiveTab("form-gambaran");
     }
   }, [show]);
 
@@ -85,8 +87,7 @@ export default function RekamKesimpulan({
     }
   }, [show, thang, triwulan, kanwil]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if (!thang || !triwulan || !kanwil || !kesimpulan) {
       toast.error("Semua field kesimpulan harus diisi!");
       return;
@@ -121,8 +122,7 @@ export default function RekamKesimpulan({
     }
   };
 
-  const handleSubmitRekom = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmitRekom = async () => {
     if (!thang || !triwulan || !kanwil || !rekomendasi) {
       toast.error("Semua field rekomendasi harus diisi!");
       return;
@@ -157,8 +157,7 @@ export default function RekamKesimpulan({
     }
   };
 
-  const handleSubmitGambaran = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmitGambaran = async () => {
     if (!thang || !triwulan || !kanwil || !gambaran_umum) {
       toast.error("Semua field gambaran umum harus diisi!");
       return;
@@ -244,15 +243,32 @@ export default function RekamKesimpulan({
     }
   };
 
+  const handleSaveByTab = async () => {
+    if (activeTab === "form-gambaran") {
+      await handleSubmitGambaran();
+      return;
+    }
+    if (activeTab === "form-kesimpulan") {
+      await handleSubmit();
+      return;
+    }
+    if (activeTab === "form-rekomendasi") {
+      await handleSubmitRekom();
+    }
+  };
+
   return (
     <Dialog open={show} onOpenChange={(open) => !open && onHide()}>
-      <DialogContent className="w-full max-w-5xl sm:max-w-6xl max-h-[90vh] overflow-y-auto" showCloseButton={false}>
+      <DialogContent
+        className="w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh] flex flex-col overflow-hidden"
+        showCloseButton={false}
+      >
         <DialogHeader>
           <DialogTitle className="break-words text-wrap">Rekam Gambaran Umum, Kesimpulan, dan Rekomendasi Pelaksanaan Monev PNBP</DialogTitle>
         </DialogHeader>
 
-        <div className="w-full space-y-4 overflow-hidden">
-          <Tabs defaultValue="form-gambaran" className="w-full gap-3">
+        <div className="w-full space-y-4 overflow-hidden flex-1 overflow-y-auto">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full gap-3">
             <div className="border-b border-border/50 pb-3 mb-0">
               <TabsList className="relative w-full h-auto p-2 rounded-xl grid grid-cols-2 md:grid-cols-4 gap-2">
                 <TabsTrigger
@@ -346,25 +362,6 @@ export default function RekamKesimpulan({
                       placeholder="Tuliskan gambaran umum pelaksanaan penerimaan dan belanja PNBP..."
                       className="min-h-[200px]"
                     />
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={onHide}>
-                        Tutup
-                      </Button>
-                      <Button
-                        variant="default"
-                        disabled={loading}
-                        onClick={handleSubmitGambaran}
-                      >
-                        {loading ? (
-                          <>
-                            <Spinner className="mr-2 h-4 w-4" />
-                            Simpan...
-                          </>
-                        ) : (
-                          "Simpan"
-                        )}
-                      </Button>
-                    </div>
                   </div>
                 </TabsContent>
 
@@ -378,25 +375,6 @@ export default function RekamKesimpulan({
                       placeholder="Tuliskan kesimpulan monev PNBP yang sudah dilakukan..."
                       className="min-h-[200px]"
                     />
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={onHide}>
-                        Tutup
-                      </Button>
-                      <Button
-                        variant="default"
-                        disabled={loading}
-                        onClick={handleSubmit}
-                      >
-                        {loading ? (
-                          <>
-                            <Spinner className="mr-2 h-4 w-4" />
-                            Simpan...
-                          </>
-                        ) : (
-                          "Simpan"
-                        )}
-                      </Button>
-                    </div>
                   </div>
                 </TabsContent>
 
@@ -410,25 +388,6 @@ export default function RekamKesimpulan({
                       placeholder="Tuliskan rekomendasi bagi KPPN/Kanwil DJPb..."
                       className="min-h-[200px]"
                     />
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={onHide}>
-                        Tutup
-                      </Button>
-                      <Button
-                        variant="default"
-                        disabled={loading}
-                        onClick={handleSubmitRekom}
-                      >
-                        {loading ? (
-                          <>
-                            <Spinner className="mr-2 h-4 w-4" />
-                            Simpan...
-                          </>
-                        ) : (
-                          "Simpan"
-                        )}
-                      </Button>
-                    </div>
                   </div>
                 </TabsContent>
 
@@ -509,6 +468,23 @@ export default function RekamKesimpulan({
             </div>
           </Tabs>
         </div>
+        <DialogFooter className="flex-shrink-0 mt-4">
+          <Button variant="outline" onClick={onHide}>
+            Tutup
+          </Button>
+          {activeTab !== "hasil" ? (
+            <Button variant="default" disabled={loading} onClick={handleSaveByTab}>
+              {loading ? (
+                <>
+                  <Spinner className="mr-2 h-4 w-4" />
+                  Simpan...
+                </>
+              ) : (
+                "Simpan"
+              )}
+            </Button>
+          ) : null}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -143,7 +143,7 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
+            <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
                 <DialogHeader className="flex-shrink-0">
                     <DialogTitle>Rekam Data IKPA</DialogTitle>
                 </DialogHeader>

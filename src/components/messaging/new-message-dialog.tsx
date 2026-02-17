@@ -7,6 +7,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -308,7 +309,10 @@ export function NewMessageDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent
+        showCloseButton={false}
+        className="w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh] flex flex-col overflow-hidden"
+      >
         <DialogHeader>
           <DialogTitle>Pesan Baru</DialogTitle>
           <DialogDescription>
@@ -316,7 +320,7 @@ export function NewMessageDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 flex-1 overflow-y-auto">
           {/* User Selection */}
           {!selectedUser ? (
             <div className="space-y-3">
@@ -446,23 +450,24 @@ export function NewMessageDialog({
                 </p>
               </div>
 
-              {/* Send Button */}
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => onOpenChange(false)}>
-                  Batal
-                </Button>
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={!message.trim() || isSending}
-                  className="flex items-center gap-2"
-                >
-                  <Send className="h-4 w-4" />
-                  {isSending ? "Sedang mengirim..." : "Kirim Pesan"}
-                </Button>
-              </div>
             </div>
           )}
         </div>
+        <DialogFooter className="mt-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Batal
+          </Button>
+          {selectedUser ? (
+            <Button
+              onClick={handleSendMessage}
+              disabled={!message.trim() || isSending}
+              className="flex items-center gap-2"
+            >
+              <Send className="h-4 w-4" />
+              {isSending ? "Sedang mengirim..." : "Kirim Pesan"}
+            </Button>
+          ) : null}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -25,7 +25,7 @@ export function DeleteProyeksiTkdModal({
 }: DeleteProyeksiTkdModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] flex flex-col overflow-hidden">
+      <DialogContent showCloseButton={false} className="sm:max-w-[500px] flex flex-col overflow-hidden w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-red-500" />

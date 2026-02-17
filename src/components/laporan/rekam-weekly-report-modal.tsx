@@ -76,7 +76,7 @@ export function RekamWeeklyReportModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl sm:max-w-3xl">
+      <DialogContent showCloseButton={false} className="w-full max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Rekam Data Weekly Report</DialogTitle>
         </DialogHeader>
@@ -200,14 +200,13 @@ export function RekamWeeklyReportModal({
           </form>
         </Form>
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0 mt-4">
           <Button variant="outline" onClick={handleClose}>
             Batal
           </Button>
           <Button
             type="submit"
             form="rekam-weekly-report-form"
-            className="bg-slate-800 hover:bg-slate-900 text-white"
           >
             Simpan
           </Button>

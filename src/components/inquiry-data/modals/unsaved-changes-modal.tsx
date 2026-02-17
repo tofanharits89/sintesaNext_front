@@ -67,7 +67,7 @@ export function UnsavedChangesModal({
       onOpenChange={handleClose}
       modal={true}
     >
-      <DialogContent 
+      <DialogContent showCloseButton={false} 
         className="max-w-md"
         onPointerDownOutside={(e) => {
           // Prevent closing when loading

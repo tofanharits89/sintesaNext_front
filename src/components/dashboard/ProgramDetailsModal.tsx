@@ -64,7 +64,10 @@ export function ProgramDetailsModal({
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-7xl sm:max-w-7xl max-h-[85vh] flex flex-col overflow-hidden [&>button]:hidden">
+      <DialogContent
+        showCloseButton={false}
+        className="w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh] flex flex-col overflow-hidden [&>button]:hidden"
+      >
         <DialogHeader>
           <DialogTitle>{programName}</DialogTitle>
           <DialogDescription>

@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
@@ -57,8 +58,17 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
   const userKdkanwil = user?.kdkanwil || "";
   const username = user?.username || "";
 
-  const [thang, setThang] = useState<string>("");
-  const [semester, setSemester] = useState<string>("");
+  const getCurrentPeriod = () => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentSemester = now.getMonth() + 1 <= 6 ? "1" : "2";
+    return { currentYear: String(currentYear), currentSemester };
+  };
+
+  const { currentYear, currentSemester } = getCurrentPeriod();
+
+  const [thang, setThang] = useState<string>(currentYear);
+  const [semester, setSemester] = useState<string>(currentSemester);
   const [kanwil, setKanwil] = useState<string>("00");
   const [upaya, setUpaya] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -69,8 +79,13 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
   const [page, setPage] = useState<number>(0);
   const [loadingStatus, setLoadingStatus] = useState<boolean>(false);
   const [export2, setExport2] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>("form");
 
-  const thangOptions = Array.from({ length: 3 }, (_, i) => 2025 + i);
+  const thangOptions = React.useMemo(() => {
+    const years = new Set(Array.from({ length: 3 }, (_, i) => 2025 + i));
+    years.add(Number(currentYear));
+    return Array.from(years).sort((a, b) => a - b);
+  }, [currentYear]);
   const semesterOptions = [1, 2];
 
   // Derive unique kanwil options from JSON
@@ -92,13 +107,14 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
   useEffect(() => {
     if (show) {
       setKanwil(role === "kanwil_djpb" ? userKdkanwil : "00");
-      setThang("");
-      setSemester("");
+      setThang(currentYear);
+      setSemester(currentSemester);
       setUpaya("");
       setRekamanUpaya([]);
       setSql("");
+      setActiveTab("form");
     }
-  }, [show, role, userKdkanwil]);
+  }, [show, role, userKdkanwil, currentYear, currentSemester]);
 
   useEffect(() => {
     if (show && thang && semester) {
@@ -195,13 +211,17 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && onHide()}>
-      <DialogContent className="max-w-3xl sm:max-w-4xl max-h-[90vh] overflow-y-auto" showCloseButton={false}>
-        <DialogHeader>
+      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Rekam Upaya Harmonisasi</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
-          <Tabs defaultValue="form" className="w-full gap-3">
+        <div className="flex-1 overflow-y-auto py-2 px-1">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full gap-3"
+          >
             <div className="border-b border-border/50 pb-3 mb-0">
               <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-2 gap-2 md:gap-0">
                 <TabsTrigger value="form" className="h-12 md:h-full px-4 md:px-5 py-0 text-sm md:text-base flex items-center justify-center gap-2">
@@ -215,88 +235,73 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
 
             <TabsContents>
               <TabsContent value="form" className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Tahun</label>
-                    <Select value={thang} onValueChange={setThang}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Pilih Tahun" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {thangOptions.map((year) => (
-                          <SelectItem key={year} value={String(year)}>
-                            {year}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                <form id="upaya-form" onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Tahun</label>
+                      <Select value={thang} onValueChange={setThang}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Pilih Tahun" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {thangOptions.map((year) => (
+                            <SelectItem key={year} value={String(year)}>
+                              {year}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Semester</label>
+                      <Select value={semester} onValueChange={setSemester}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Pilih Semester" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {semesterOptions.map((smt) => (
+                            <SelectItem key={smt} value={String(smt)}>
+                              Semester {smt}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Kanwil</label>
+                      <Select
+                        value={kanwil}
+                        onValueChange={setKanwil}
+                        disabled={role === "kanwil_djpb"}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Pilih Kanwil" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="00">Semua Kanwil</SelectItem>
+                          {kanwilOptions.map((opt) => (
+                            <SelectItem key={opt.kdkanwil} value={opt.kdkanwil}>
+                              {opt.kdkanwil} - {opt.nmkanwil}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Semester</label>
-                    <Select value={semester} onValueChange={setSemester}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Pilih Semester" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {semesterOptions.map((smt) => (
-                          <SelectItem key={smt} value={String(smt)}>
-                            Semester {smt}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <label className="text-sm font-medium">Upaya</label>
+                    <Textarea
+                      rows={10}
+                      className="min-h-[200px] w-full"
+                      value={upaya}
+                      onChange={(e) => setUpaya(e.target.value)}
+                      placeholder="Tuliskan upaya harmonisasi yang sudah dilakukan..."
+                    />
                   </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Kanwil</label>
-                    <Select
-                      value={kanwil}
-                      onValueChange={setKanwil}
-                      disabled={role === "kanwil_djpb"}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Pilih Kanwil" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="00">Semua Kanwil</SelectItem>
-                        {kanwilOptions.map((opt) => (
-                          <SelectItem key={opt.kdkanwil} value={opt.kdkanwil}>
-                            {opt.kdkanwil} - {opt.nmkanwil}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Upaya</label>
-                  <Textarea
-                    rows={10}
-                    className="min-h-[200px] w-full"
-                    value={upaya}
-                    onChange={(e) => setUpaya(e.target.value)}
-                    placeholder="Tuliskan upaya harmonisasi yang sudah dilakukan..."
-                  />
-                </div>
-
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button variant="outline" onClick={onHide} type="button">
-                    Batal
-                  </Button>
-                  <Button
-                    variant="default"
-                    className="bg-primary hover:bg-primary/90"
-                    onClick={(e) => handleSubmit(e as any)}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : null}
-                    Simpan
-                  </Button>
-                </div>
+                </form>
               </TabsContent>
 
               <TabsContent value="rekaman" className="mt-0">
@@ -355,24 +360,6 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
                   </div>
                 </div>
 
-                <div className="flex justify-end mt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setLoadingStatus(true);
-                      setExport2(true);
-                    }}
-                    disabled={loadingStatus}
-                  >
-                    {loadingStatus ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                      <FileSpreadsheet className="h-4 w-4 mr-2" />
-                    )}
-                    {loadingStatus ? "Mengunduh..." : "Unduh Excel"}
-                  </Button>
-                </div>
               </TabsContent>
             </TabsContents>
           </Tabs>
@@ -387,6 +374,39 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
             />
           )}
         </div>
+
+        <DialogFooter className="flex-shrink-0 mt-4">
+          <Button variant="outline" onClick={onHide} type="button">
+            Tutup
+          </Button>
+          {activeTab === "form" ? (
+            <Button
+              type="submit"
+              form="upaya-form"
+              className="bg-primary hover:bg-primary/90"
+              disabled={loading}
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Simpan
+            </Button>
+          ) : (
+            <Button
+              variant="default"
+              onClick={() => {
+                setLoadingStatus(true);
+                setExport2(true);
+              }}
+              disabled={loadingStatus}
+            >
+              {loadingStatus ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+              )}
+              {loadingStatus ? "Mengunduh..." : "Unduh Excel"}
+            </Button>
+          )}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

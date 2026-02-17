@@ -103,7 +103,7 @@ export function UpdateRencanaRealisasiModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent showCloseButton={false} className="sm:max-w-[600px] w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Update Rencana Sisa Realisasi</DialogTitle>

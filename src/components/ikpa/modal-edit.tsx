@@ -165,7 +165,7 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
+            <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
                 <DialogHeader className="flex-shrink-0">
                     <DialogTitle className="text-xl font-bold flex items-center gap-2">
                         <Edit className="h-5 w-5 text-primary" />

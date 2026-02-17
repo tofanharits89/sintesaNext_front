@@ -86,7 +86,7 @@ export function RekamMonthlyReportModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl sm:max-w-3xl">
+      <DialogContent showCloseButton={false} className="w-full max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Rekam Data Monthly Report</DialogTitle>
         </DialogHeader>
@@ -196,15 +196,11 @@ export function RekamMonthlyReportModal({
           </form>
         </Form>
 
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleClose}
-          >
+        <DialogFooter className="flex-shrink-0 mt-4">
+          <Button variant="outline" onClick={handleClose}>
             Batal
           </Button>
-          <Button form="rekam-monthly-report-form" type="submit">
+          <Button type="submit" form="rekam-monthly-report-form">
             Simpan
           </Button>
         </DialogFooter>

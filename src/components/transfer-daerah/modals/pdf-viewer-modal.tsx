@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
 
 type ReactPdfModule = typeof import("react-pdf");
 
@@ -75,58 +75,61 @@ export function PdfViewerModal({ open, onOpenChange, url, title }: PdfViewerModa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[98vw] w-[98vw] h-[92vh] p-0 overflow-hidden">
+      <DialogContent
+        showCloseButton={false}
+        className="w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh] p-0 flex flex-col overflow-hidden"
+      >
         <DialogHeader className="p-4 pb-2 border-b">
-          <DialogTitle className="flex items-center justify-between w-full">
-            <span className="truncate mr-2">{title || "Pratinjau PDF"}</span>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" onClick={() => setScale((s) => Math.max(0.5, s - 0.1))}>
-                <ZoomOut className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" onClick={() => setScale((s) => Math.min(3, s + 0.1))}>
-                <ZoomIn className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" onClick={() => onOpenChange(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          </DialogTitle>
+          <DialogTitle className="truncate">{title || "Pratinjau PDF"}</DialogTitle>
         </DialogHeader>
 
-        <div className="flex h-[calc(92vh-56px)]">
-          <div ref={containerRef} className="flex-1 flex flex-col items-center justify-start overflow-auto bg-muted/30 p-3">
-            {!url ? (
-              <div className="p-4 text-sm text-muted-foreground">Tidak ada URL PDF</div>
-            ) : !pdfMod ? (
-              <div className="p-4">Memuat penampil PDF...</div>
-            ) : (
-              <pdfMod.Document
-                file={url}
-                onLoadSuccess={onDocumentLoadSuccess}
-                onLoadError={onDocumentLoadError}
-                loading={<div className="p-4">Memuat PDF...</div>}
-                error={<div className="p-4 text-sm text-red-600">Gagal memuat PDF</div>}
-              >
-                <pdfMod.Page
-                  pageNumber={pageNumber}
-                  {...(containerWidth ? { width: containerWidth } : {})}
-                  renderTextLayer={false}
-                  renderAnnotationLayer={false}
-                />
-              </pdfMod.Document>
-            )}
-          </div>
-          <div className="w-[72px] border-l p-2 flex flex-col items-center gap-2 bg-background">
-            <div className="text-xs text-muted-foreground mt-1">Halaman</div>
-            <div className="text-sm font-medium">{pageNumber} / {numPages || 1}</div>
+        <div ref={containerRef} className="flex-1 flex flex-col items-center justify-start overflow-auto bg-muted/30 p-3">
+          {!url ? (
+            <div className="p-4 text-sm text-muted-foreground">Tidak ada URL PDF</div>
+          ) : !pdfMod ? (
+            <div className="p-4">Memuat penampil PDF...</div>
+          ) : (
+            <pdfMod.Document
+              file={url}
+              onLoadSuccess={onDocumentLoadSuccess}
+              onLoadError={onDocumentLoadError}
+              loading={<div className="p-4">Memuat PDF...</div>}
+              error={<div className="p-4 text-sm text-red-600">Gagal memuat PDF</div>}
+            >
+              <pdfMod.Page
+                pageNumber={pageNumber}
+                {...(containerWidth ? { width: containerWidth } : {})}
+                scale={scale}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+              />
+            </pdfMod.Document>
+          )}
+        </div>
+        <DialogFooter className="p-4 pt-2 border-t sm:justify-between">
+          <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" disabled={!canPrev} onClick={() => setPageNumber((p) => Math.max(1, p - 1))}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
+            <div className="text-sm font-medium min-w-[88px] text-center">
+              {pageNumber} / {numPages || 1}
+            </div>
             <Button variant="outline" size="icon" disabled={!canNext} onClick={() => setPageNumber((p) => Math.min(numPages || 1, p + 1))}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-        </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={() => setScale((s) => Math.max(0.5, s - 0.1))}>
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => setScale((s) => Math.min(3, s + 0.1))}>
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Tutup
+            </Button>
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

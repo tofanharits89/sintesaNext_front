@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -87,7 +87,7 @@ export function SupplierEntityDetailModal({ open, onOpenChange, type, items }: S
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-7xl sm:max-w-7xl h-[85vh] flex flex-col overflow-hidden">
+      <DialogContent showCloseButton={false} className="w-full max-w-7xl sm:max-w-7xl h-[85vh] flex flex-col overflow-hidden max-h-[90vw] sm:max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>{meta.title}</DialogTitle>
           <DialogDescription>{meta.description}</DialogDescription>
@@ -116,25 +116,34 @@ export function SupplierEntityDetailModal({ open, onOpenChange, type, items }: S
                   ))}
                 </div>
               </ScrollArea>
-              <div className="flex flex-col gap-3 border-t pt-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-xs text-muted-foreground">
-                  Menampilkan {startNumber.toLocaleString("id-ID")}-{endNumber.toLocaleString("id-ID")} dari {totalItems.toLocaleString("id-ID")}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={handlePrev} disabled={!canPrev}>
-                    Sebelumnya
-                  </Button>
-                  <div className="text-xs text-muted-foreground">
-                    Halaman {clampedPageIndex + 1} dari {totalPages.toLocaleString("id-ID")}
-                  </div>
-                  <Button type="button" variant="outline" size="sm" onClick={handleNext} disabled={!canNext}>
-                    Selanjutnya
-                  </Button>
-                </div>
-              </div>
             </div>
           )}
         </div>
+        <DialogFooter className="flex-shrink-0 border-t pt-3 sm:items-center sm:justify-between">
+          <div className="text-xs text-muted-foreground">
+            {totalItems === 0
+              ? "Data belum tersedia untuk ditampilkan."
+              : `Menampilkan ${startNumber.toLocaleString("id-ID")}-${endNumber.toLocaleString("id-ID")} dari ${totalItems.toLocaleString("id-ID")}`}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+              Tutup
+            </Button>
+            {totalItems > 0 ? (
+              <>
+                <Button type="button" variant="outline" size="sm" onClick={handlePrev} disabled={!canPrev}>
+                  Sebelumnya
+                </Button>
+                <div className="text-xs text-muted-foreground">
+                  Halaman {clampedPageIndex + 1} dari {totalPages.toLocaleString("id-ID")}
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={handleNext} disabled={!canNext}>
+                  Selanjutnya
+                </Button>
+              </>
+            ) : null}
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

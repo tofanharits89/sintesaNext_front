@@ -163,7 +163,7 @@ export function KmkPenundaanListModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl sm:max-w-7xl flex flex-col overflow-hidden">
+      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl flex flex-col overflow-hidden max-h-[90vw] sm:max-h-[90vh]">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>List KMK Penundaan</DialogTitle>
         </DialogHeader>

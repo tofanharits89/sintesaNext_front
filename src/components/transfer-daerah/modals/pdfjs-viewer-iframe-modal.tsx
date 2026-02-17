@@ -33,7 +33,7 @@ export function PdfjsViewerIframeModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-7xl sm:max-w-7xl p-0 overflow-hidden flex flex-col h-[92vh]"
+        className="max-w-7xl sm:max-w-7xl p-0 overflow-hidden flex flex-col h-[92vh] max-h-[90vw] sm:max-h-[90vh]"
         showCloseButton={false}
       >
         <DialogHeader className="p-4 pb-0 border-0">

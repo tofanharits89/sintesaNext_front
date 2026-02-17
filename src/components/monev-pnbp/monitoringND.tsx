@@ -94,7 +94,7 @@ export default function RekamanNotaDinas({ show, onHide }: any) {
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && onHide()}>
-      <DialogContent className="max-w-3xl sm:max-w-4xl max-h-[90vh] overflow-y-auto" showCloseButton={false}>
+      <DialogContent className="max-w-3xl sm:max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw] max-w-7xl sm:max-w-7xl" showCloseButton={false}>
         <DialogHeader>
           <DialogTitle>Monitoring Kiriman ND Kanwil</DialogTitle>
         </DialogHeader>

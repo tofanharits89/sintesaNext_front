@@ -196,7 +196,7 @@ const Rekam: React.FC<RekamProps> = ({
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && onHide()}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent showCloseButton={false} className="max-w-4xl w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>Kirim Nota Dinas</DialogTitle>
         </DialogHeader>

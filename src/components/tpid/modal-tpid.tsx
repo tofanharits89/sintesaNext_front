@@ -149,12 +149,16 @@ export default function ModalTpid({
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && onHide()}>
-      <DialogContent className="max-w-3xl sm:max-w-4xl max-h-[90vh] overflow-y-auto" showCloseButton={false}>
-        <DialogHeader>
+      <DialogContent showCloseButton={false} className="w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Clustering {tema}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          id="tpid-clustering-form"
+          onSubmit={handleSubmit}
+          className="flex-1 overflow-y-auto py-4 px-1 space-y-6"
+        >
           {clusterOptions && clusterOptions.length > 0 && (
             <div className="space-y-2">
               {clusterOptions.map((option, index) => (
@@ -196,22 +200,23 @@ export default function ModalTpid({
               required
             />
           </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={onHide} type="button">
-              Batal
-            </Button>
-            <Button
-              type="submit"
-              variant="default"
-              disabled={loading}
-              className="bg-primary hover:bg-primary/90"
-            >
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Simpan
-            </Button>
-          </DialogFooter>
         </form>
+
+        <DialogFooter className="flex-shrink-0 mt-4">
+          <Button variant="outline" onClick={onHide} type="button">
+            Tutup
+          </Button>
+          <Button
+            type="submit"
+            form="tpid-clustering-form"
+            variant="default"
+            disabled={loading}
+            className="bg-primary hover:bg-primary/90"
+          >
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Simpan
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

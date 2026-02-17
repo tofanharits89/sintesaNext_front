@@ -3,6 +3,7 @@ import Kddept from "../../data/kddept.json";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -66,7 +67,10 @@ const FilterData: React.FC<FilterDataProps> = ({
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && onHide()}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent
+        showCloseButton={false}
+        className="w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh] flex flex-col overflow-hidden"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <i className="bi bi-grid-3x3-gap-fill text-primary" />
@@ -74,7 +78,7 @@ const FilterData: React.FC<FilterDataProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-4 py-4 flex-1 overflow-y-auto">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="kementerian" className="text-right">
               Kementerian
@@ -100,14 +104,17 @@ const FilterData: React.FC<FilterDataProps> = ({
           </div>
         </div>
 
-        <div className="flex justify-end gap-2">
+        <DialogFooter>
+          <Button variant="outline" onClick={onHide}>
+            Tutup
+          </Button>
           <Button variant="secondary" onClick={resetFilter}>
             Reset Filter
           </Button>
           <Button variant="default" onClick={handleFilter}>
             Terapkan Filter
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

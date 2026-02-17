@@ -23,7 +23,7 @@ export const PrognosisSQLModal = ({
 }: PrognosisSQLModalProps) => {
     return (
         <Dialog open={showModalSQL} onOpenChange={setShowModalSQL}>
-            <DialogContent className="max-w-4xl">
+            <DialogContent showCloseButton={false} className="max-w-4xl w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Database className="h-5 w-5 text-blue-600" />
