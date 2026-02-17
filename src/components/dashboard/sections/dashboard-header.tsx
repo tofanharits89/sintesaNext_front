@@ -46,7 +46,7 @@ export const DashboardHeader = ({
   ];
 
   return (
-    <div className="flex items-start justify-between">
+    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
           Dashboard Utama K/L
@@ -58,11 +58,11 @@ export const DashboardHeader = ({
           Terakhir diperbarui: <NoSSR>{lastRefreshText}</NoSSR>
         </p>
       </div>
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
+      <div className="w-full md:w-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
           <span className="text-sm text-muted-foreground">Tahun:</span>
           <Select value={selectedYear} onValueChange={onYearChange}>
-            <SelectTrigger className="w-[100px]">
+            <SelectTrigger className="w-full sm:w-[100px]">
               <SelectValue placeholder="Pilih Tahun" />
             </SelectTrigger>
             <SelectContent>
@@ -74,10 +74,10 @@ export const DashboardHeader = ({
             </SelectContent>
           </Select>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
           <span className="text-sm text-muted-foreground">Kanwil:</span>
           <Select value={selectedKanwil} onValueChange={onKanwilChange}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Pilih Kanwil" />
             </SelectTrigger>
             <SelectContent>
@@ -94,3 +94,4 @@ export const DashboardHeader = ({
     </div>
   );
 };
+

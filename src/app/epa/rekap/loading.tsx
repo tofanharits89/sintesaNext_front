@@ -2,7 +2,7 @@ export default function RekapEpaLoading() {
   return (
     <div className="space-y-6 md:space-y-8">
       {/* Page Header Skeleton */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="space-y-2">
           <div className="h-8 w-40 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
           <div className="h-4 w-64 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>

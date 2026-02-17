@@ -17,7 +17,7 @@ export default function UploadLaporanPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
             Upload Laporan
@@ -89,3 +89,4 @@ export default function UploadLaporanPage() {
     </div>
   );
 }
+

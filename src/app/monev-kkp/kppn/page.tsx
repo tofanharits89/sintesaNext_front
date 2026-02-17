@@ -238,7 +238,7 @@ export default function MonevKkpKppnPage() {
     return (
         <div className="space-y-6">
             {/* Page Header */}
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
                     <h1 className="text-2xl font-semibold tracking-tight">
                         Monev KKP
@@ -297,4 +297,5 @@ export default function MonevKkpKppnPage() {
 
 // Force dynamic rendering to prevent SSR issues
 export const dynamic = 'force-dynamic';
+
 

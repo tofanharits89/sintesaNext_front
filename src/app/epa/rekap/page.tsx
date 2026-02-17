@@ -222,7 +222,7 @@ export default function RekapEpaPage() {
   return (
     <div className="space-y-6 md:space-y-8">
       {/* Page Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Rekap EPA</h1>
           <p className="text-sm text-muted-foreground">
@@ -303,3 +303,4 @@ export default function RekapEpaPage() {
 }
 
 export const dynamic = "force-dynamic";
+

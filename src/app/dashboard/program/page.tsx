@@ -46,7 +46,7 @@ export default function DashboardProgramPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
             Dashboard Program
@@ -57,11 +57,11 @@ export default function DashboardProgramPage() {
         </div>
         
         {/* Filters */}
-        <div className="flex items-center gap-3">
+        <div className="w-full md:w-auto flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex flex-col gap-1">
             <label className="text-xs text-muted-foreground">Jenis Program</label>
             <Select value={selectedProgram} onValueChange={setSelectedProgram}>
-              <SelectTrigger className="w-[220px]">
+              <SelectTrigger className="w-full sm:w-[220px]">
                 <SelectValue placeholder="Pilih Jenis Program" />
               </SelectTrigger>
               <SelectContent>
@@ -74,7 +74,7 @@ export default function DashboardProgramPage() {
           <div className="flex flex-col gap-1">
             <label className="text-xs text-muted-foreground">Tahun</label>
             <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-[100px]">
+              <SelectTrigger className="w-full sm:w-[100px]">
                 <SelectValue placeholder="Pilih Tahun" />
               </SelectTrigger>
               <SelectContent>
@@ -119,3 +119,4 @@ export default function DashboardProgramPage() {
     </div>
   );
 }
+

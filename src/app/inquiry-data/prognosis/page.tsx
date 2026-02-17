@@ -456,7 +456,7 @@ export default function PrognosisPage() {
   return (
     <div className="space-y-6">
       {/* Page Header - Matched with Belanja Page style */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Prognosis</h1>
           <p className="text-sm text-muted-foreground">
@@ -570,3 +570,4 @@ export default function PrognosisPage() {
 }
 
 export const dynamic = "force-dynamic";
+
