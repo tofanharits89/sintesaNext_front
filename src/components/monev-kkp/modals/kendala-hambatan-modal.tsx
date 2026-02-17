@@ -12,6 +12,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
+    Field,
+    FieldLabel,
+} from "@/components/ui/field";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
     Select,
     SelectContent,
     SelectItem,
@@ -20,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
+import { X } from "lucide-react";
 
 // Predefined category options for kendala
 const KENDALA_CATEGORIES = [
@@ -65,9 +71,9 @@ export function KendalaHambatanModal({
                     // Use props triwulan/tahun, fallback to data, then to defaults
                     const selectedTriwulan = triwulan || data?.triwulan || "1";
                     const selectedTahun = tahun || data?.tahun || "2026";
-                    
+
                     console.log("Fetching existing kendala with:", { selectedTahun, selectedTriwulan, kodeSatker: data.kodeSatker });
-                    
+
                     const response = await fetch(
                         `${process.env.NEXT_PUBLIC_API_URL}/monev-kkp/kendala?tahun=${selectedTahun}&triwulan=${selectedTriwulan}&kdsatker=${data.kodeSatker}`,
                         {
@@ -125,7 +131,7 @@ export function KendalaHambatanModal({
             // Use props triwulan/tahun, fallback to data, then to defaults
             const selectedTriwulan = triwulan || data?.triwulan || "1";
             const selectedTahun = tahun || data?.tahun || "2026";
-            
+
             const csrfHeaders = addCsrfToHeaders({ "Content-Type": "application/json" });
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/monev-kkp/kendala`, {
                 method: "POST",
@@ -148,7 +154,7 @@ export function KendalaHambatanModal({
 
             const result = await response.json();
             toast.success(result.message || "Data berhasil disimpan");
-            
+
             if (onSaved) {
                 onSaved();
             }
@@ -172,71 +178,81 @@ export function KendalaHambatanModal({
                         <div className="text-sm text-muted-foreground">Memuat data...</div>
                     </div>
                 ) : (
-                <div className="flex-1 overflow-y-auto py-4 space-y-4">
-                    {data && (
-                        <div className="p-3 bg-muted rounded-lg space-y-1.5">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Kode Satker:</span>
-                                <span className="font-medium">{data.kodeSatker}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Nama Satker:</span>
-                                <span className="font-medium max-w-[250px] truncate" title={data.namaSatker}>
-                                    {data.namaSatker}
-                                </span>
-                            </div>
-                        </div>
-                    )}
-                    <div className="space-y-2">
-                        <Label>Kategori Kendala</Label>
-                        <div className="border rounded-md p-4 space-y-2 max-h-[350px] overflow-y-auto">
-                            {KENDALA_CATEGORIES.map((cat) => (
-                                <label
-                                    key={cat}
-                                    className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-1 rounded"
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={kategori.includes(cat)}
-                                        onChange={() => handleToggleKategori(cat)}
-                                        className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-                                    />
-                                    <span className="text-sm">{cat}</span>
-                                </label>
-                            ))}
-                        </div>
-                        {kategori.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-2">
-                                {kategori.map((cat) => (
-                                    <span
-                                        key={cat}
-                                        className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-primary/10 text-primary"
-                                    >
-                                        {cat}
-                                        <button
-                                            type="button"
-                                            onClick={() => handleToggleKategori(cat)}
-                                            className="hover:text-destructive"
-                                        >
-                                            ×
-                                        </button>
+                    <div className="flex-1 overflow-y-auto py-4 space-y-4">
+                        {data && (
+                            <div className="p-3 bg-muted rounded-lg space-y-1.5">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">Kode Satker:</span>
+                                    <span className="font-medium">{data.kodeSatker}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">Nama Satker:</span>
+                                    <span className="font-medium flex-1 text-right ml-4 truncate" title={data.namaSatker}>
+                                        {data.namaSatker}
                                     </span>
-                                ))}
+                                </div>
                             </div>
                         )}
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <Label>Kategori Kendala</Label>
+                                {kategori.length > 0 && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setKategori([])}
+                                        className="h-8 text-xs text-muted-foreground hover:text-destructive"
+                                    >
+                                        Bersihkan Pilihan
+                                    </Button>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 border rounded-md p-4 max-h-[350px] overflow-y-auto">
+                                {KENDALA_CATEGORIES.map((cat) => (
+                                    <label
+                                        key={cat}
+                                        className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-1.5 rounded transition-colors"
+                                    >
+                                        <Checkbox
+                                            checked={kategori.includes(cat)}
+                                            onCheckedChange={() => handleToggleKategori(cat)}
+                                        />
+                                        <span className="text-sm select-none">{cat}</span>
+                                    </label>
+                                ))}
+                            </div>
+                            {kategori.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                    {kategori.map((cat) => (
+                                        <span
+                                            key={cat}
+                                            className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-primary/10 text-primary"
+                                        >
+                                            {cat}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleToggleKategori(cat)}
+                                                className="hover:text-destructive flex items-center"
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </button>
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <Field className="space-y-2">
+                            <FieldLabel htmlFor="detilMasukan">Detil/Masukan</FieldLabel>
+                            <Textarea
+                                id="detilMasukan"
+                                placeholder="Masukkan detail atau masukan tambahan..."
+                                value={detilMasukan}
+                                onChange={(e) => setDetilMasukan(e.target.value)}
+                                rows={5}
+                                className="min-h-[120px]"
+                            />
+                        </Field>
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="detilMasukan">Detil/Masukan</Label>
-                        <Textarea
-                            id="detilMasukan"
-                            placeholder="Masukkan detail atau masukan tambahan..."
-                            value={detilMasukan}
-                            onChange={(e) => setDetilMasukan(e.target.value)}
-                            rows={5}
-                            className="resize-none"
-                        />
-                    </div>
-                </div>
                 )}
                 <DialogFooter className="flex-shrink-0 mt-4">
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
