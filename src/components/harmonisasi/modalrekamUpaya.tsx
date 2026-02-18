@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
 // import Encrypt from "../../../auth/Random"; // Placeholder import
-import GenerateCSV from "@/components/GenerateCSV";
+import GenerateExcel from "@/components/GenerateExcel";
 import moment from "moment";
 import kdkanwilJson from "@/data/kdkanwil.json";
 
@@ -133,12 +133,7 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
 
     try {
       setLoading(true);
-      // Use backend URL directly
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-      const cleanBaseUrl = baseUrl.replace(/\/$/, "").replace(/\/api\/v1$/, "");
-      const endpoint = `${cleanBaseUrl}/api/v1/harmonisasi/upaya`;
-
-      await http.patch(endpoint, payload);
+      await http.patch("/api/v1/harmonisasi/upaya", payload);
 
       toast.success("Data berhasil disimpan");
       setUpaya("");
@@ -176,14 +171,11 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
     const encryptedQuery = Encrypt(cleanedQuery);
 
     try {
-      // Use backend URL directly
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-      const cleanBaseUrl = baseUrl.replace(/\/$/, "").replace(/\/api\/v1$/, "");
-      const endpoint = `${cleanBaseUrl}/api/v1/harmonisasi/upaya/view`;
+      const url = `/api/v1/harmonisasi/upaya/view?queryParams=${encryptedQuery}&limit=${limit}&page=${page}&user=${username}`;
 
-      const url = `${endpoint}?queryParams=${encryptedQuery}&limit=${limit}&page=${page}&user=${username}`;
-
-      const response = await http.get(url);
+      const response = await http.get(url, {
+        headers: { "x-bypass-cache": "true" },
+      });
 
       setRekamanUpaya(response.data.result || []);
     } catch (error: any) {
@@ -365,10 +357,10 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
           </Tabs>
 
           {export2 && (
-            <GenerateCSV
+            <GenerateExcel
               query3={sql}
               status={handleStatus}
-              namafile={`v3_CSV_UPAYA_HARMONISASI_${moment().format(
+              namafile={`v3_XLSX_UPAYA_HARMONISASI_${moment().format(
                 "DDMMYY-HHmmss"
               )}`}
             />

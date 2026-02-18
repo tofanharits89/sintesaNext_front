@@ -38,7 +38,7 @@ import numeral from "numeral";
 import RekamUpaya from "./modalrekamUpaya";
 import Rekam from "./modalrekam";
 import kdkanwilJson from "@/data/kdkanwil.json";
-import Papa from "papaparse";
+import * as XLSX from "xlsx";
 import moment from "moment";
 import { toast } from "sonner";
 
@@ -400,17 +400,13 @@ export default function Harmonisasi() {
         return;
       }
 
-      // Convert to CSV
-      const csv = Papa.unparse(resultData, { delimiter: ";" });
+      // Convert to XLSX
+      const worksheet = XLSX.utils.json_to_sheet(resultData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Harmonisasi");
 
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      const downloadUrl = URL.createObjectURL(blob);
-      link.href = downloadUrl;
-      link.download = `harmonisasi_${namaThang}_${moment().format("YYYYMMDD_HHmmss")}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const filename = `harmonisasi_${namaThang}_${moment().format("YYYYMMDD_HHmmss")}.xlsx`;
+      XLSX.writeFile(workbook, filename);
 
     } catch (error: any) {
       console.error(error);
