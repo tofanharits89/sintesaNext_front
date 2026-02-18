@@ -215,6 +215,8 @@ interface RekamProps {
   onHide: () => void;
   id: string | number | null;
   jenis: number | null;
+  thang: string;
+  semester: string;
   onSaveSuccess: (id: any, ...args: any[]) => void;
   // Dynamic props mapping
   [key: string]: any;
@@ -233,6 +235,8 @@ export default function Rekam({
   onHide,
   id,
   jenis,
+  thang,
+  semester,
   onSaveSuccess,
   revisi_anggaran_isi,
   blokir_anggaran_isi,
@@ -352,12 +356,19 @@ export default function Rekam({
         return;
       }
 
-      await http.post(url, { id, ...formState });
+      const response: any = await http.post(url, { id, thang, semester, ...formState });
 
-      toast.success("Data berhasil disimpan");
+      if (response.data?.affectedRows === 0) {
+        toast.info("Data tidak berubah atau ID tidak ditemukan");
+      } else {
+        toast.success("Data berhasil disimpan");
+      }
       onSaveSuccess(id, ...Object.values(formState));
     } catch (error: any) {
-      const message = error.response?.data?.error || "Gagal menyimpan data";
+      const backendError = error.response?.data?.error;
+      const message = typeof backendError === "string"
+        ? backendError
+        : backendError?.message || error.message || "Gagal menyimpan data";
       toast.error(message);
     }
   };

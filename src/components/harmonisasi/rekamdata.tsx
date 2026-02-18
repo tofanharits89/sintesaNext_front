@@ -958,6 +958,8 @@ export default function Harmonisasi() {
         onHide={handleCloseModal}
         id={idCluster}
         jenis={jenisCluster}
+        thang={namaThang}
+        semester={namaSemester}
         revisi_anggaran_isi={revisi_anggaran}
         blokir_anggaran_isi={blokir_anggaran}
         automatic_adjustment_isi={automatic_adjustment}

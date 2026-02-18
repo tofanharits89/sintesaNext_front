@@ -8,6 +8,7 @@ import {
     DialogTitle,
     DialogFooter,
 } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -174,8 +175,37 @@ export function KendalaHambatanModal({
                     <DialogTitle>Edit Kendala/Hambatan</DialogTitle>
                 </DialogHeader>
                 {isLoading ? (
-                    <div className="flex items-center justify-center py-8 flex-1">
-                        <div className="text-sm text-muted-foreground">Memuat data...</div>
+                    <div className="flex-1 overflow-y-auto py-4 space-y-6">
+                        {/* Satker Info Skeleton */}
+                        <div className="p-3 bg-muted/50 rounded-lg space-y-3">
+                            <div className="flex justify-between">
+                                <Skeleton className="h-4 w-24" />
+                                <Skeleton className="h-4 w-20" />
+                            </div>
+                            <div className="flex justify-between">
+                                <Skeleton className="h-4 w-24" />
+                                <Skeleton className="h-4 w-48" />
+                            </div>
+                        </div>
+
+                        {/* Kategori Skeleton */}
+                        <div className="space-y-3">
+                            <Skeleton className="h-5 w-32" />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 border rounded-md p-4">
+                                {Array.from({ length: 8 }).map((_, i) => (
+                                    <div key={i} className="flex items-center gap-2">
+                                        <Skeleton className="h-4 w-4 rounded" />
+                                        <Skeleton className="h-4 flex-1" />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Detil Skeleton */}
+                        <div className="space-y-3">
+                            <Skeleton className="h-5 w-28" />
+                            <Skeleton className="h-[120px] w-full" />
+                        </div>
                     </div>
                 ) : (
                     <div className="flex-1 overflow-y-auto py-4 space-y-4">
