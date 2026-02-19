@@ -41,7 +41,7 @@ export function DonutChartComponent({
             {data.map((entry, index) => (
               <Cell
                 key={`cell-${index}`}
-                fill={colors[index % colors.length]}
+                fill={colors[index % colors.length] || "#000"}
               />
             ))}
           </Pie>

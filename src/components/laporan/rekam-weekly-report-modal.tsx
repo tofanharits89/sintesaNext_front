@@ -32,8 +32,8 @@ import * as z from "zod";
 
 const formSchema = z.object({
   tahun: z.string().min(1, "Tahun harus dipilih"),
-  tanggalAwal: z.date().optional().refine((date) => !!date, "Tanggal awal harus diisi"),
-  tanggalAkhir: z.date().optional().refine((date) => !!date, "Tanggal akhir harus diisi"),
+  tanggalAwal: z.date({ message: "Tanggal awal harus diisi" }),
+  tanggalAkhir: z.date({ message: "Tanggal akhir harus diisi" }),
   keterangan: z.string().min(1, "Keterangan harus diisi"),
   file: z.any().refine((file) => file, "File harus diupload"),
 });
