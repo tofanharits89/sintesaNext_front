@@ -22,9 +22,6 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -245,89 +242,83 @@ export default function MonitoringBlokir({
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Monitoring Blokir Perjadin
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Monitoring target blokir dan realisasi per satuan kerja.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Monitoring Blokir Perjadin
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Monitoring target blokir dan realisasi per satuan kerja.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Active Filters */}
+          {filter.selectedKementerian !== "00" && (
+            <Badge
+              variant="secondary"
+              className="h-9 px-3 gap-1 bg-green-100 text-green-700 hover:bg-green-100/80 border-green-200"
+            >
+              <div className="w-2 h-2 rounded-full bg-green-500" />
+              Kementerian {filter.selectedKementerian}
+            </Badge>
+          )}
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleFilter}
+            className="h-9 self-start sm:self-center"
+          >
+            <Filter className="mr-2 h-4 w-4" />
+            Filter Data
+          </Button>
+
+          <Button
+            variant={loadingStatus ? "secondary" : "default"}
+            size="sm"
+            onClick={() => {
+              setLoadingStatus(true);
+              setExport2(true);
+            }}
+            disabled={loadingStatus}
+            className="h-9 self-start sm:self-center"
+          >
+            {loadingStatus ? (
+              <>
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Download className="mr-2 h-4 w-4" />
+                Download CSV
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       <Card className="border shadow-sm">
-        <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6">
-          <div className="space-y-1">
-            <CardTitle className="text-xl">Data Monitoring</CardTitle>
-            <CardDescription>
-              Daftar monitoring target blokir dan realisasi per satuan kerja.
-            </CardDescription>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Active Filters */}
-            {filter.selectedKementerian !== "00" && (
-              <Badge
-                variant="secondary"
-                className="h-9 px-3 gap-1 bg-green-100 text-green-700 hover:bg-green-100/80 border-green-200"
-              >
-                <div className="w-2 h-2 rounded-full bg-green-500" />
-                Kementerian {filter.selectedKementerian}
-              </Badge>
-            )}
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleFilter}
-              className="h-9"
-            >
-              <Filter className="mr-2 h-4 w-4" />
-              Filter Data
-            </Button>
-
-            <Button
-              variant={loadingStatus ? "secondary" : "default"}
-              size="sm"
-              onClick={() => {
-                setLoadingStatus(true);
-                setExport2(true);
-              }}
-              disabled={loadingStatus}
-              className="h-9"
-            >
-              {loadingStatus ? (
-                <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <Download className="mr-2 h-4 w-4" />
-                  Download CSV
-                </>
-              )}
-            </Button>
-          </div>
-        </CardHeader>
         <CardContent>
           <div className="rounded-md border overflow-hidden">
             <Table>
               <TableHeader className="bg-muted/50">
                 <TableRow>
-                  <TableHead className="w-[60px] font-semibold">No.</TableHead>
-                  <TableHead className="font-semibold">
+                  <TableHead className="w-[60px] font-semibold text-center">No.</TableHead>
+                  <TableHead className="font-semibold text-center">
                     Kementerian/Lembaga
                   </TableHead>
-                  <TableHead className="font-semibold">Unit Eselon I</TableHead>
-                  <TableHead className="text-right font-semibold">
+                  <TableHead className="font-semibold text-center">Unit Eselon I</TableHead>
+                  <TableHead className="font-semibold text-center">
                     Target Blokir
                   </TableHead>
-                  <TableHead className="text-right font-semibold">
+                  <TableHead className="font-semibold text-center">
                     Dispensasi
                   </TableHead>
-                  <TableHead className="text-right font-semibold">
+                  <TableHead className="font-semibold text-center">
                     Sudah Blokir
                   </TableHead>
-                  <TableHead className="text-right font-semibold">
+                  <TableHead className="font-semibold text-center">
                     Sisa
                   </TableHead>
                 </TableRow>

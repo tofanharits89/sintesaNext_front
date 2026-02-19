@@ -18,7 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import {
   Select,
   SelectContent,
@@ -94,11 +94,11 @@ export default function RekamanNotaDinas({ show, onHide }: any) {
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && onHide()}>
-      <DialogContent className="max-w-3xl sm:max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw] max-w-7xl sm:max-w-7xl" showCloseButton={false}>
+      <DialogContent className="max-w-4xl w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Monitoring Kiriman ND Kanwil</DialogTitle>
         </DialogHeader>
-        <div className="space-y-6">
+        <div className="flex-1 overflow-y-auto space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* ... (leaving content logic, just updating wrapper if needed) ... matches original logic */}
             <div className="space-y-2">
@@ -144,11 +144,9 @@ export default function RekamanNotaDinas({ show, onHide }: any) {
           </div>
 
           {loading ? (
-            <div className="text-center flex justify-center py-4">
-              <Spinner size="lg" />
-            </div>
+            <TableSkeleton rows={5} />
           ) : uniqueRekaman.length > 0 ? (
-            <div className="rounded-md border">
+            <div className="rounded-md border max-h-[400px] overflow-y-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">

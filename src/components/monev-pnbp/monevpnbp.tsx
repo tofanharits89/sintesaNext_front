@@ -35,10 +35,11 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
+import FilterCard from "./filtercard";
 import Rekam2 from "./modalrekam2";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
 
 import Swal from "sweetalert2";
-import FilterData from "./filterdata";
 import moment from "moment";
 import Rekam from "./modalrekam";
 import RekamanNotaDinas from "./monitoringND";
@@ -56,7 +57,7 @@ export default function MonevPnbp() {
   const username = user?.username || "";
   const role = user?.role || "";
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [id, setId] = useState("");
   const [jenisCluster, setJenisCluster] = useState<number | null>(null);
   const [data, setData] = useState<any[]>([]);
@@ -74,7 +75,6 @@ export default function MonevPnbp() {
   const [nmsatker, setNmsatker] = useState("");
   const [nmmppnbp, setNmmppnbp] = useState("");
   const [cek, setCek] = useState(false);
-  const [showModalFilter, setShowModalFilter] = useState(false);
   const [where, setWhere] = useState("");
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [export2, setExport2] = useState(false);
@@ -197,8 +197,8 @@ export default function MonevPnbp() {
       finalWhere +=
         (finalWhere ? " AND " : "") +
         `(
-                a.nmsatker LIKE '%${searchQuery}%' 
-                OR a.kdsatker LIKE '%${searchQuery}%'
+                a.nmsatker ILIKE '%${searchQuery}%'
+                OR a.kdsatker ILIKE '%${searchQuery}%'
             )`;
     }
 
@@ -420,14 +420,6 @@ export default function MonevPnbp() {
     setPage(newPage);
   };
 
-  const handleFilter = () => {
-    setShowModalFilter(true);
-  };
-  const handleCloseModalFilter = () => {
-    setShowModalFilter(false);
-    setOpen(false);
-  };
-
   const handleStatus = (status: boolean, total: number) => {
     setLoadingStatus(status);
     setExport2(status);
@@ -448,16 +440,10 @@ export default function MonevPnbp() {
             Monitoring dan evaluasi penerimaan negara bukan pajak per satuan kerja.
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-9 self-start sm:self-center"
-          onClick={handleFilter}
-        >
-          <Grid3X3 className="w-4 h-4 mr-2" />
-          Filter Data
-        </Button>
       </div>
+
+      {/* Filter Card */}
+      <FilterCard onFilter={handleFilterResult} />
 
       {/* Filter badges */}
       {(filter.selectedKanwil !== "00" ||
@@ -497,93 +483,88 @@ export default function MonevPnbp() {
         )}
 
       <section className="section">
-        {loading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-          </div>
-        ) : (
-          <Card className="border shadow-sm">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-6 border-b">
-              <div className="flex items-center gap-2 w-full md:w-auto">
-                <Input
-                  type="text"
-                  placeholder="Cari Satker..."
-                  value={searchQuery}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleSearch(e.target.value)
-                  }
-                  className="min-w-[200px]"
-                />
-              </div>
-              <div className="flex flex-wrap gap-2 w-full md:w-auto justify-end">
-                {(role === "kantor_pusat" ||
-                  role === "ditpa" ||
-                  role === "co_admin" ||
-                  role === "super_admin") && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-9"
-                      onClick={() => setShowRekaman(true)}
-                    >
-                      <BookOpen className="w-4 h-4 mr-2" />
-                      Monitoring ND
-                    </Button>
-                  )}
-
-                {role === "kanwil_djpb" && (
+        <Card className="border shadow-sm">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 py-2 px-6">
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <Input
+                type="text"
+                placeholder="Cari Satker..."
+                value={searchQuery}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  handleSearch(e.target.value)
+                }
+                className="min-w-[200px]"
+              />
+            </div>
+            <div className="flex flex-wrap gap-2 w-full md:w-auto justify-end">
+              {(role === "kantor_pusat" ||
+                role === "ditpa" ||
+                role === "co_admin" ||
+                role === "super_admin") && (
                   <Button
-                    variant="default"
+                    variant="outline"
                     size="sm"
                     className="h-9"
-                    onClick={() => handleRekam()}
+                    onClick={() => setShowRekaman(true)}
                   >
-                    <Edit className="w-4 h-4 mr-2" />
-                    Rekam ND Kanwil
+                    <BookOpen className="w-4 h-4 mr-2" />
+                    Monitoring ND
                   </Button>
                 )}
 
+              {role === "kanwil_djpb" && (
                 <Button
-                  variant="outline"
+                  variant="default"
                   size="sm"
                   className="h-9"
-                  onClick={() => handleRekamKesimpulan()}
+                  onClick={() => handleRekam()}
                 >
-                  <Save className="w-4 h-4 mr-2" />
-                  Kesimpulan
+                  <Edit className="w-4 h-4 mr-2" />
+                  Rekam ND Kanwil
                 </Button>
+              )}
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9"
-                  onClick={() => {
-                    setLoadingStatus(true);
-                    setExport2(true);
-                  }}
-                  disabled={loadingStatus}
-                >
-                  {loadingStatus ? (
-                    <>
-                      <Spinner className="mr-2 h-4 w-4 animate-spin" />
-                      Loading...
-                    </>
-                  ) : (
-                    <>
-                      <FileSpreadsheet className="w-4 h-4 mx-1" />
-                      Download
-                    </>
-                  )}
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9"
+                onClick={() => handleRekamKesimpulan()}
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Kesimpulan
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9"
+                onClick={() => {
+                  setLoadingStatus(true);
+                  setExport2(true);
+                }}
+                disabled={loadingStatus}
+              >
+                {loadingStatus ? (
+                  <>
+                    <Spinner className="mr-2 h-4 w-4 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <FileSpreadsheet className="w-4 h-4 mx-1" />
+                    Download
+                  </>
+                )}
+              </Button>
             </div>
+          </div>
 
-            <CardContent>
-              <div className="rounded-md border overflow-hidden">
+          <CardContent>
+            {loading ? (
+              <TableSkeleton rows={10} />
+            ) : (
+              <>
+                <div className="rounded-md border overflow-hidden">
                 <Table>
                   <TableHeader className="bg-muted/50">
                     <TableRow>
@@ -998,18 +979,19 @@ export default function MonevPnbp() {
                   </div>
                 </div>
               )}
-            </CardContent>
-
-            {export2 && (
-              <GenerateCSV
-                query3={sql}
-                status={handleStatus}
-                namafile={`v3_CSV_MONEV_PNBP_${moment().format(
-                  "DDMMYY-HHmmss",
-                )}`}
-              />
+              </>
             )}
-          </Card>
+        </CardContent>
+        </Card>
+
+        {export2 && (
+          <GenerateCSV
+            query3={sql}
+            status={handleStatus}
+            namafile={`v3_CSV_MONEV_PNBP_${moment().format(
+              "DDMMYY-HHmmss",
+            )}`}
+          />
         )}
       </section>
 
@@ -1042,11 +1024,6 @@ export default function MonevPnbp() {
           />
         )
       }
-      <FilterData
-        show={showModalFilter}
-        onHide={handleCloseModalFilter}
-        onFilter={handleFilterResult}
-      />
       <RekamanNotaDinas
         show={showRekaman}
         onHide={() => setShowRekaman(false)}

@@ -119,7 +119,7 @@ const defaultMenu: MenuItem[] = [
       { label: "Monthly Report" },
       { label: "Harmonisasi" },
       { label: "Tantangan TPID" },
-      { label: "Monitoring Blokir" },
+      { label: "Monitoring Blokir Perjadin" },
       { label: "Monev PNBP" },
     ],
   },
@@ -347,7 +347,7 @@ export function ResponsiveSidebar({
         return <CalendarDays className={cls} />;
       case "Laporan__Tantangan TPID":
         return <CalendarDays className={cls} />;
-      case "Laporan__Monitoring Blokir":
+      case "Laporan__Monitoring Blokir Perjadin":
         return <CalendarDays className={cls} />;
       case "Laporan__Monev PNBP":
         return <CalendarDays className={cls} />;
@@ -691,7 +691,7 @@ export function ResponsiveSidebar({
                             ) {
                               href = "/laporan/tpid";
                             } else if (
-                              c.label === "Monitoring Blokir" &&
+                              c.label === "Monitoring Blokir Perjadin" &&
                               m.label === "Laporan"
                             ) {
                               href = "/laporan/blokir-perjadin";
@@ -1404,7 +1404,7 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </Link>
-                    ) : c.label === "Monitoring Blokir" &&
+                    ) : c.label === "Monitoring Blokir Perjadin" &&
                       m.label === "Laporan" ? (
                       <Link
                         key={c.label}
