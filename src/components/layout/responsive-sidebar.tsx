@@ -213,6 +213,18 @@ export function ResponsiveSidebar({
           if (allowedChildren.length === 0) return null; // Hide menu entirely
           return { ...item, children: allowedChildren };
         }
+
+        // Filter Dashboard children: hide Pengendalian Belanja for non-ditpa, non-admin
+        if (item.label === "Dashboard") {
+          if (isAdmin || user.role === "ditpa") return item;
+          return {
+            ...item,
+            children: (item.children || []).filter(
+              (child) => child.label !== "Dashboard Pengendalian Belanja"
+            ),
+          };
+        }
+
         return item;
       })
       .filter(Boolean) as MenuItem[];
