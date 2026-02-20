@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Grid3X3, RotateCcw } from "lucide-react";
+import { Check, Grid3X3, RotateCcw, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -13,11 +13,25 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 import Kddept from "@/data/kddept.json";
 
 const CURRENT_YEAR = String(new Date().getFullYear()); // "2026"
-const TAHUN_OPTIONS = ["2024", "2025", "2026"];
+const TAHUN_OPTIONS = ["2026", "2025", "2024"];
 
 export interface FilterResult {
     tahun: string;
@@ -33,6 +47,13 @@ export default function FilterCard({ onFilter }: FilterCardProps) {
     const [tahun, setTahun] = useState(CURRENT_YEAR);
     const [kddept, setKddept] = useState("00");
     const [exclude999, setExclude999] = useState(false);
+
+    const selectedDept = Kddept.find((d) => d.kddept === kddept);
+    const displayValue = kddept === "00" 
+        ? "Semua K/L" 
+        : selectedDept 
+            ? `${kddept} - ${selectedDept.nmdept}`
+            : kddept;
 
     const resetFilter = () => {
         const reset: FilterResult = { tahun: CURRENT_YEAR, kddept: "00", exclude999: false };
@@ -105,7 +126,7 @@ export default function FilterCard({ onFilter }: FilterCardProps) {
                             <SelectContent>
                                 {TAHUN_OPTIONS.map((t) => (
                                     <SelectItem key={t} value={t}>
-                                        TA {t}
+                                        {t}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
@@ -115,25 +136,68 @@ export default function FilterCard({ onFilter }: FilterCardProps) {
                     {/* Kementerian/Lembaga */}
                     <div className="flex flex-col gap-2">
                         <Label className="text-sm font-medium">Kementerian/Lembaga</Label>
-                        <Select
-                            value={kddept}
-                            onValueChange={(val) => {
-                                setKddept(val);
-                                handleChange({ kddept: val });
-                            }}
-                        >
-                            <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Semua K/L" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="00">Semua K/L</SelectItem>
-                                {Kddept.map((dept, idx) => (
-                                    <SelectItem key={idx} value={dept.kddept}>
-                                        {dept.kddept} - {dept.nmdept}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn(
+                                        "w-full justify-between",
+                                        !kddept && "text-muted-foreground"
+                                    )}
+                                >
+                                    {displayValue}
+                                    <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent
+                                className="p-0"
+                                align="start"
+                                style={{ width: 'var(--radix-popover-trigger-width)' }}
+                            >
+                                <Command>
+                                    <CommandInput placeholder="Cari Kementerian/Lembaga..." />
+                                    <CommandList>
+                                        <CommandEmpty>Tidak ditemukan.</CommandEmpty>
+                                        <CommandGroup>
+                                            <CommandItem
+                                                value="all"
+                                                onSelect={() => {
+                                                    setKddept("00");
+                                                    handleChange({ kddept: "00" });
+                                                }}
+                                            >
+                                                <Check
+                                                    className={cn(
+                                                        "mr-2 h-4 w-4",
+                                                        kddept === "00" ? "opacity-100" : "opacity-0"
+                                                    )}
+                                                />
+                                                Semua K/L
+                                            </CommandItem>
+                                            {Kddept.map((dept) => (
+                                                <CommandItem
+                                                    key={dept.kddept}
+                                                    value={`${dept.kddept} - ${dept.nmdept}`}
+                                                    onSelect={() => {
+                                                        setKddept(dept.kddept);
+                                                        handleChange({ kddept: dept.kddept });
+                                                    }}
+                                                >
+                                                    <Check
+                                                        className={cn(
+                                                            "mr-2 h-4 w-4",
+                                                            kddept === dept.kddept ? "opacity-100" : "opacity-0"
+                                                        )}
+                                                    />
+                                                    {dept.kddept} - {dept.nmdept}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                     </div>
                 </div>
             </CardContent>
