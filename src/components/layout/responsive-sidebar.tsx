@@ -40,6 +40,7 @@ import {
   Archive,
   Gavel,
   CreditCard,
+  BarChart2,
 } from "lucide-react";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -79,6 +80,7 @@ const defaultMenu: MenuItem[] = [
       { label: "Dashboard Utama" },
       { label: "Dashboard Program" },
       { label: "Dashboard Efisiensi" },
+      { label: "Dashboard Pengendalian Belanja" },
     ],
   },
   {
@@ -297,6 +299,8 @@ export function ResponsiveSidebar({
         return <Layers className={cls} />;
       case "Dashboard__Dashboard Efisiensi":
         return <TrendingUp className={cls} />;
+      case "Dashboard__Dashboard Pengendalian Belanja":
+        return <BarChart2 className={cls} />;
       case "Makan Bergizi__Dashboard MBG":
         return <LineChart className={cls} />;
       case "Makan Bergizi__Kertas Kerja":
@@ -514,6 +518,11 @@ export function ResponsiveSidebar({
                               m.label === "Dashboard"
                             ) {
                               href = "/dashboard/efisiensi";
+                            } else if (
+                              c.label === "Dashboard Pengendalian Belanja" &&
+                              m.label === "Dashboard"
+                            ) {
+                              href = "/dashboard/pengendalian-belanja";
                             } else if (
                               c.label === "Kontrak" &&
                               m.label === "Inquiry Data"
@@ -887,6 +896,26 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/dashboard/efisiensi",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Dashboard Pengendalian Belanja" &&
+                      m.label === "Dashboard" ? (
+                      <Link
+                        key={c.label}
+                        href="/dashboard/pengendalian-belanja"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/dashboard/pengendalian-belanja",
                           });
                           setOpen(false);
                         }}
