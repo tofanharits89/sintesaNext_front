@@ -21,12 +21,12 @@ import {
 } from "@/components/animate-ui/components/radix/alert-dialog";
 import { Loading2 } from "../../layout/LoadingTable";
 
-// Table styling - matching weekly-report pattern
+// Table styling - matching dispen-spm pattern
 const tableStyles = {
-  headerCell: "h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap",
-  headerCellCenter: "h-10 px-4 text-center align-middle font-medium text-muted-foreground whitespace-nowrap",
-  bodyCell: "px-4 py-3 text-sm align-middle border-b whitespace-nowrap",
-  bodyCellCenter: "px-4 py-3 text-sm text-center align-middle border-b whitespace-nowrap",
+  headerCell: "h-10 px-2 text-center align-middle font-medium text-muted-foreground whitespace-nowrap",
+  headerCellCenter: "h-10 px-2 text-center align-middle font-medium text-muted-foreground whitespace-nowrap",
+  bodyCell: "px-2 py-2 text-sm align-middle border-b",
+  bodyCellCenter: "px-2 py-2 text-sm text-center align-middle border-b whitespace-nowrap",
 };
 
 interface DataTupProps {
@@ -60,7 +60,7 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
   const [showModal, setShowModal] = useState(false);
   const [showModalRekam, setShowModalRekam] = useState(false);
   const [page, setPage] = useState(0);
-  const [limit, setLimit] = useState(10);
+  const [limit, setLimit] = useState(15);
   const [pages, setPages] = useState(0);
   const [rows, setRows] = useState(0);
   const [sql, setSql] = useState("");
@@ -223,14 +223,12 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
   };
 
   const handledownloadTup = async (id: string) => {
-    const intId = parseInt(id, 10); // Pastikan ID adalah integer
-    const fileUrl = `${process.env.NEXT_PUBLIC_LOCAL_BASIC}dispentup/download/${intId}`;
+    const intId = parseInt(id, 10);
+    const fileUrl = `/api/v1/dispensasi/download-tup/${intId}`;
 
     try {
       const response = await fetch(fileUrl, {
-        headers: {
-          // Authorization: `Bearer ${user?.token}`,
-        },
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -268,8 +266,7 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
       // Revoke the object URL to free up resources
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      setError2("Terjadi kesalahan saat mendownload file. Silakan coba lagi.");
-      toast.error(error2 || "Terjadi kesalahan saat mendownload file.");
+      toast.error("Terjadi kesalahan saat mendownload file. Silakan coba lagi.");
     }
   };
 
@@ -287,7 +284,16 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
         <>
           <div className="rounded-md border">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-fixed">
+                <colgroup>
+                  <col className="w-10" />
+                  <col className="w-[8%]" />
+                  <col className="w-[38%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[26%]" />
+                  <col className="w-[8%]" />
+                  <col className="w-[8%]" />
+                </colgroup>
                 <thead>
                   <tr className="border-b bg-muted/50">
                     <th className={tableStyles.headerCellCenter}>No.</th>
@@ -315,18 +321,14 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
                         <td className={tableStyles.bodyCellCenter}>
                           {row.thang}
                         </td>
-                        <td className={tableStyles.bodyCell}>
-                          <div className="max-w-[300px] truncate" title={`${row.nmsatker?.trim()} (${row.kdsatker})`}>
-                            {row.nmsatker?.trim()} ({row.kdsatker})
-                          </div>
+                        <td className={`${tableStyles.bodyCell} overflow-hidden`} title={`${row.nmsatker?.trim()} (${row.kdsatker})`}>
+                          <span className="block truncate">{row.nmsatker?.trim()} ({row.kdsatker})</span>
                         </td>
-                        <td className={tableStyles.bodyCell}>
+                        <td className={tableStyles.bodyCellCenter}>
                           {row.tgpermohonan}
                         </td>
-                        <td className={tableStyles.bodyCell}>
-                          <div className="max-w-[280px] truncate" title={row.nopermohonan?.trim()}>
-                            {row.nopermohonan?.trim()}
-                          </div>
+                        <td className={`${tableStyles.bodyCell} overflow-hidden`} title={row.nopermohonan?.trim()}>
+                          <span className="block truncate">{row.nopermohonan?.trim()}</span>
                         </td>
                         <td className={tableStyles.bodyCellCenter}>
                           {row.jumlah ?? "-"}

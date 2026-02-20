@@ -303,7 +303,35 @@ export default function RekamanTantangan({
         setActiveKey(mapping[0]?.key || "");
       }
     }
-  }, [show, jenis, isiProps]);
+  }, [
+    show,
+    jenis,
+    kesesuaian_pnbp_isi,
+    ketepatan_waktu_isi,
+    surat_dispensasi_isi,
+    kesesuaian_tarif_isi,
+    tambahan_kepatuhan_isi,
+    kesesuaian_kas_isi,
+    kesesuaian_nomor_isi,
+    ketepatan_lpj_isi,
+    kepatuhan_saldo_isi,
+    kesesuaian_transaksi_isi,
+    tambahan_pelaporan_isi,
+    tren_belanja_isi,
+    masalah_penganggaran_isi,
+    masalah_kegiatan_isi,
+    masalah_regulasi_isi,
+    masalah_mp_isi,
+    kesesuaian_real_rpd_isi,
+    kendala_belanja_lainnya_isi,
+    kendala_internal_isi,
+    kendala_eksternal_isi,
+    kendala_jaringan_app_isi,
+    kendala_lokasi_isi,
+    kesesuaian_pnbp_target_isi,
+    kendala_penerimaan_lainnya_isi,
+    rekomendasi_isi,
+  ]);
 
   const handleInputChange = (key: string, value: string) => {
     setFormState((prev) => ({ ...prev, [key]: value }));

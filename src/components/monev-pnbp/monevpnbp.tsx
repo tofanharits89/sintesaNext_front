@@ -565,423 +565,423 @@ export default function MonevPnbp() {
             ) : (
               <>
                 <div className="rounded-md border overflow-hidden">
-                <Table>
-                  <TableHeader className="bg-muted/50">
-                    <TableRow>
-                      <TableHead className="text-center font-semibold text-muted-foreground">
-                        No.
-                      </TableHead>
-                      <TableHead className="text-center font-semibold text-muted-foreground">
-                        Periode (Y/Q)
-                      </TableHead>
-                      <TableHead className="text-center font-semibold text-muted-foreground">
-                        Satker
-                      </TableHead>
-                      <TableHead className="text-center font-semibold text-muted-foreground">
-                        Target PNBP
-                      </TableHead>
-                      <TableHead className="text-center font-semibold text-muted-foreground">
-                        Setoran PNBP
-                      </TableHead>
-                      <TableHead className="text-center font-semibold text-muted-foreground">
-                        % Penerimaan
-                      </TableHead>
-                      <TableHead className="text-center font-semibold text-muted-foreground">
-                        MP Riil
-                      </TableHead>
-                      <TableHead className="text-center font-semibold text-muted-foreground">
-                        Pagu Belanja
-                      </TableHead>
-                      <TableHead className="text-center font-semibold text-muted-foreground">
-                        MP PNBP
-                      </TableHead>
-                      <TableHead className="text-center font-semibold text-muted-foreground">
-                        Jenis PNBP
-                      </TableHead>
-                      <TableHead className="text-center font-semibold text-muted-foreground">
-                        Real Belanja
-                      </TableHead>
-                      <TableHead className="text-center font-semibold text-muted-foreground">
-                        % Real Belanja
-                      </TableHead>
-                      <TableHead className="text-center font-semibold text-muted-foreground">
-                        Selisih (Real Belanja - MP Riil)
-                      </TableHead>
-                      <TableHead className="text-center font-semibold text-muted-foreground">
-                        Hasil Koordinasi
-                      </TableHead>
-                      <TableHead className="text-center font-semibold text-muted-foreground">
-                        Kepatuhan
-                      </TableHead>
-                      <TableHead className="text-center font-semibold text-muted-foreground">
-                        Pelaporan
-                      </TableHead>
-                      <TableHead className="text-center font-semibold text-muted-foreground">
-                        Pelaksanaan
-                      </TableHead>
-                      <TableHead className="text-center font-semibold text-muted-foreground">
-                        Penerimaan
-                      </TableHead>
-                      <TableHead className="text-center font-semibold text-muted-foreground">
-                        Rekomendasi
-                      </TableHead>
-                      <TableHead className="text-center font-semibold text-muted-foreground">
-                        Tgl Kirim ND
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
+                  <Table>
+                    <TableHeader className="bg-muted/50">
+                      <TableRow>
+                        <TableHead className="text-center font-semibold text-muted-foreground">
+                          No.
+                        </TableHead>
+                        <TableHead className="text-center font-semibold text-muted-foreground">
+                          Periode (Y/Q)
+                        </TableHead>
+                        <TableHead className="text-center font-semibold text-muted-foreground">
+                          Satker
+                        </TableHead>
+                        <TableHead className="text-center font-semibold text-muted-foreground">
+                          Target PNBP
+                        </TableHead>
+                        <TableHead className="text-center font-semibold text-muted-foreground">
+                          Setoran PNBP
+                        </TableHead>
+                        <TableHead className="text-center font-semibold text-muted-foreground">
+                          % Penerimaan
+                        </TableHead>
+                        <TableHead className="text-center font-semibold text-muted-foreground">
+                          MP Riil
+                        </TableHead>
+                        <TableHead className="text-center font-semibold text-muted-foreground">
+                          Pagu Belanja
+                        </TableHead>
+                        <TableHead className="text-center font-semibold text-muted-foreground">
+                          MP PNBP
+                        </TableHead>
+                        <TableHead className="text-center font-semibold text-muted-foreground">
+                          Jenis PNBP
+                        </TableHead>
+                        <TableHead className="text-center font-semibold text-muted-foreground">
+                          Real Belanja
+                        </TableHead>
+                        <TableHead className="text-center font-semibold text-muted-foreground">
+                          % Real Belanja
+                        </TableHead>
+                        <TableHead className="text-center font-semibold text-muted-foreground">
+                          Selisih (Real Belanja - MP Riil)
+                        </TableHead>
+                        <TableHead className="text-center font-semibold text-muted-foreground">
+                          Hasil Koordinasi
+                        </TableHead>
+                        <TableHead className="text-center font-semibold text-muted-foreground">
+                          Kepatuhan
+                        </TableHead>
+                        <TableHead className="text-center font-semibold text-muted-foreground">
+                          Pelaporan
+                        </TableHead>
+                        <TableHead className="text-center font-semibold text-muted-foreground">
+                          Pelaksanaan
+                        </TableHead>
+                        <TableHead className="text-center font-semibold text-muted-foreground">
+                          Penerimaan
+                        </TableHead>
+                        <TableHead className="text-center font-semibold text-muted-foreground">
+                          Rekomendasi
+                        </TableHead>
+                        <TableHead className="text-center font-semibold text-muted-foreground">
+                          Tgl Kirim ND
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
 
-                  <TableBody className="text-center">
-                    {data.map((row: any, index: number) => (
-                      <TableRow key={index} className="hover:bg-muted/50 transition-colors">
-                        <TableCell className="text-center font-medium text-muted-foreground">
-                          {index + 1 + page * limit}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {row.tahun}/{row.triwulan}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {row.nmsatker} ({row.kdsatker})
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {numeral(row.target).format("0,0")}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {numeral(row.setoran).format("0,0")}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {(row.persen_pnbp * 100).toFixed(2)}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {numeral(row.mp_riil).format("0,0")}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {numeral(row.pagu_belanja).format("0,0")}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {numeral(row.mp_pnbp).format("0,0")}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {row.nmmppnbp}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {numeral(row.real_belanja).format("0,0")}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {(row.persen_belanja * 100).toFixed(2)}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {numeral(row.selisih_belanja_mp_riil).format(
-                            "0,0",
-                          )}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {role !== "kppn" && role !== "lainnya" && (
-                            <PlusSquare
-                              className="text-primary mx-3 cursor-pointer w-[17px] h-[17px]"
-                              onClick={() =>
-                                handleRekamMonev(
-                                  row.id,
-                                  row.nmmppnbp,
-                                  row.nmsatker,
-                                  row.kdsatker,
-                                  row.tahun,
-                                  row.triwulan,
-                                  row.ringkasan,
-                                  row.no_surat,
-                                  row.tgl_surat,
-                                  row.laporan,
-                                  row.file_surat,
+                    <TableBody className="text-center">
+                      {data.map((row: any, index: number) => (
+                        <TableRow key={index} className="hover:bg-muted/50 transition-colors">
+                          <TableCell className="text-center font-medium text-muted-foreground">
+                            {index + 1 + page * limit}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {row.tahun}/{row.triwulan}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {row.nmsatker} ({row.kdsatker})
+                          </TableCell>
+                          <TableCell className="text-right font-mono">
+                            {numeral(row.target).format("0,0")}
+                          </TableCell>
+                          <TableCell className="text-right font-mono">
+                            {numeral(row.setoran).format("0,0")}
+                          </TableCell>
+                          <TableCell className="text-right font-mono">
+                            {(row.persen_pnbp * 100).toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-right font-mono">
+                            {numeral(row.mp_riil).format("0,0")}
+                          </TableCell>
+                          <TableCell className="text-right font-mono">
+                            {numeral(row.pagu_belanja).format("0,0")}
+                          </TableCell>
+                          <TableCell className="text-right font-mono">
+                            {numeral(row.mp_pnbp).format("0,0")}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {row.nmmppnbp}
+                          </TableCell>
+                          <TableCell className="text-right font-mono">
+                            {numeral(row.real_belanja).format("0,0")}
+                          </TableCell>
+                          <TableCell className="text-right font-mono">
+                            {(row.persen_belanja * 100).toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-right font-mono">
+                            {numeral(row.selisih_belanja_mp_riil).format(
+                              "0,0",
+                            )}
+                          </TableCell>
+                          <TableCell className="flex items-center justify-center">
+                            {role !== "kppn" && role !== "lainnya" && (
+                              <PlusSquare
+                                className="text-primary cursor-pointer w-[17px] h-[17px]"
+                                onClick={() =>
+                                  handleRekamMonev(
+                                    row.id,
+                                    row.nmmppnbp,
+                                    row.nmsatker,
+                                    row.kdsatker,
+                                    row.tahun,
+                                    row.triwulan,
+                                    row.ringkasan,
+                                    row.no_surat,
+                                    row.tgl_surat,
+                                    row.laporan,
+                                    row.file_surat,
+                                  )
+                                }
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <CheckSquare
+                              className={`${row.triwulan === "1" ||
+                                row.triwulan === "3"
+                                ? "text-red-500"
+                                : row.kesesuaian_pnbp !== "" &&
+                                  row.ketepatan_waktu !== "" &&
+                                  row.surat_dispensasi !== "" &&
+                                  row.kesesuaian_tarif !== "" &&
+                                  row.tambahan_kepatuhan !== ""
+                                  ? "text-green-500"
+                                  : "text-yellow-500"
+                                } mx-3 cursor-pointer w-5 h-5`}
+                              onClick={() => {
+                                if (
+                                  row.triwulan !== "1" &&
+                                  row.triwulan !== "3"
                                 )
+                                  handleRekamTantangan({
+                                    id: row.id,
+                                    jenis: 1,
+                                    kesesuaian_pnbp: row.kesesuaian_pnbp,
+                                    ketepatan_waktu: row.ketepatan_waktu,
+                                    surat_dispensasi:
+                                      row.surat_dispensasi,
+                                    kesesuaian_tarif:
+                                      row.kesesuaian_tarif,
+                                    tambahan_kepatuhan:
+                                      row.tambahan_kepatuhan,
+                                  });
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <CheckSquare
+                              className={`${row.triwulan === "1" ||
+                                row.triwulan === "3"
+                                ? "text-red-500"
+                                : row.kesesuaian_kas !== "" &&
+                                  row.kesesuaian_nomor !== "" &&
+                                  row.ketepatan_lpj !== "" &&
+                                  row.kepatuhan_saldo !== "" &&
+                                  row.kesesuaian_transaksi !== "" &&
+                                  row.tambahan_pelaporan !== ""
+                                  ? "text-green-500"
+                                  : "text-yellow-500"
+                                } mx-3 cursor-pointer w-5 h-5`}
+                              onClick={() => {
+                                if (
+                                  row.triwulan !== "1" &&
+                                  row.triwulan !== "3"
+                                )
+                                  handleRekamTantangan({
+                                    id: row.id,
+                                    jenis: 2,
+                                    kesesuaian_kas: row.kesesuaian_kas,
+                                    kesesuaian_nomor:
+                                      row.kesesuaian_nomor,
+                                    ketepatan_lpj: row.ketepatan_lpj,
+                                    kepatuhan_saldo: row.kepatuhan_saldo,
+                                    kesesuaian_transaksi:
+                                      row.kesesuaian_transaksi,
+                                    tambahan_pelaporan:
+                                      row.tambahan_pelaporan,
+                                  });
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <CheckSquare
+                              className={`${row.triwulan === "1" ||
+                                row.triwulan === "3"
+                                ? "text-red-500"
+                                : row.tren_belanja !== "" &&
+                                  row.masalah_penganggaran !== "" &&
+                                  row.masalah_kegiatan !== "" &&
+                                  row.masalah_regulasi !== "" &&
+                                  row.masalah_mp !== "" &&
+                                  row.kesesuaian_real_rpd !== "" &&
+                                  row.kendala_belanja_lainnya !== ""
+                                  ? "text-green-500"
+                                  : "text-yellow-500"
+                                } mx-3 cursor-pointer w-5 h-5`}
+                              onClick={() => {
+                                if (
+                                  row.triwulan !== "1" &&
+                                  row.triwulan !== "3"
+                                )
+                                  handleRekamTantangan({
+                                    id: row.id,
+                                    jenis: 3,
+                                    tren_belanja: row.tren_belanja,
+                                    masalah_penganggaran:
+                                      row.masalah_penganggaran,
+                                    masalah_kegiatan:
+                                      row.masalah_kegiatan,
+                                    masalah_regulasi:
+                                      row.masalah_regulasi,
+                                    masalah_mp: row.masalah_mp,
+                                    kesesuaian_real_rpd:
+                                      row.kesesuaian_real_rpd,
+                                    kendala_belanja_lainnya:
+                                      row.kendala_belanja_lainnya,
+                                  });
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <CheckSquare
+                              className={`${row.triwulan === "1" ||
+                                row.triwulan === "3"
+                                ? "text-red-500"
+                                : row.kendala_internal !== "" &&
+                                  row.kendala_eksternal !== "" &&
+                                  row.kendala_jaringan_app !== "" &&
+                                  row.kendala_lokasi !== "" &&
+                                  row.kesesuaian_pnbp_target !== ""
+                                  ? "text-green-500"
+                                  : "text-yellow-500"
+                                } mx-3 cursor-pointer w-5 h-5`}
+                              onClick={() => {
+                                if (
+                                  row.triwulan !== "1" &&
+                                  row.triwulan !== "3"
+                                )
+                                  handleRekamTantangan({
+                                    id: row.id,
+                                    jenis: 4,
+                                    kendala_internal:
+                                      row.kendala_internal,
+                                    kendala_eksternal:
+                                      row.kendala_eksternal,
+                                    kendala_jaringan_app:
+                                      row.kendala_jaringan_app,
+                                    kendala_lokasi: row.kendala_lokasi,
+                                    kesesuaian_pnbp_target:
+                                      row.kesesuaian_pnbp_target,
+                                  });
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <CheckSquare
+                              className={`${row.triwulan === "1" ||
+                                row.triwulan === "3"
+                                ? "text-red-500"
+                                : row.rekomendasi !== ""
+                                  ? "text-green-500"
+                                  : "text-yellow-500"
+                                } mx-3 cursor-pointer w-5 h-5`}
+                              onClick={() => {
+                                if (
+                                  row.triwulan !== "1" &&
+                                  row.triwulan !== "3"
+                                )
+                                  handleRekamTantangan({
+                                    id: row.id,
+                                    jenis: 5,
+                                    rekomendasi: row.rekomendasi,
+                                  });
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {row.tgl_kirim
+                              ? moment(row.tgl_kirim).format("DD-MM-YYYY HH:mm:ss")
+                              : "-"}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {data.length > 0 && (
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-5">
+                    <div className="text-sm text-muted-foreground">
+                      Menampilkan{" "}
+                      <span className="font-medium text-foreground">
+                        {numeral(rows).format("0,0")}
+                      </span>{" "}
+                      data. Halaman{" "}
+                      <span className="font-medium text-foreground">
+                        {rows ? page + 1 : 0}
+                      </span>{" "}
+                      dari{" "}
+                      <span className="font-medium text-foreground">
+                        {pages}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious
+                              onClick={() => halaman(Math.max(0, page - 1))}
+                              className={
+                                page === 0
+                                  ? "pointer-events-none opacity-50"
+                                  : "cursor-pointer"
                               }
                             />
+                          </PaginationItem>
+
+                          {/* Show first page if we are far ahead */}
+                          {page > 2 && (
+                            <PaginationItem>
+                              <PaginationLink onClick={() => halaman(0)}>
+                                1
+                              </PaginationLink>
+                            </PaginationItem>
                           )}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <CheckSquare
-                            className={`${row.triwulan === "1" ||
-                              row.triwulan === "3"
-                              ? "text-red-500"
-                              : row.kesesuaian_pnbp !== "" &&
-                                row.ketepatan_waktu !== "" &&
-                                row.surat_dispensasi !== "" &&
-                                row.kesesuaian_tarif !== "" &&
-                                row.tambahan_kepatuhan !== ""
-                                ? "text-green-500"
-                                : "text-yellow-500"
-                              } mx-3 cursor-pointer w-5 h-5`}
-                            onClick={() => {
-                              if (
-                                row.triwulan !== "1" &&
-                                row.triwulan !== "3"
-                              )
-                                handleRekamTantangan({
-                                  id: row.id,
-                                  jenis: 1,
-                                  kesesuaian_pnbp: row.kesesuaian_pnbp,
-                                  ketepatan_waktu: row.ketepatan_waktu,
-                                  surat_dispensasi:
-                                    row.surat_dispensasi,
-                                  kesesuaian_tarif:
-                                    row.kesesuaian_tarif,
-                                  tambahan_kepatuhan:
-                                    row.tambahan_kepatuhan,
-                                });
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <CheckSquare
-                            className={`${row.triwulan === "1" ||
-                              row.triwulan === "3"
-                              ? "text-red-500"
-                              : row.kesesuaian_kas !== "" &&
-                                row.kesesuaian_nomor !== "" &&
-                                row.ketepatan_lpj !== "" &&
-                                row.kepatuhan_saldo !== "" &&
-                                row.kesesuaian_transaksi !== "" &&
-                                row.tambahan_pelaporan !== ""
-                                ? "text-green-500"
-                                : "text-yellow-500"
-                              } mx-3 cursor-pointer w-5 h-5`}
-                            onClick={() => {
-                              if (
-                                row.triwulan !== "1" &&
-                                row.triwulan !== "3"
-                              )
-                                handleRekamTantangan({
-                                  id: row.id,
-                                  jenis: 2,
-                                  kesesuaian_kas: row.kesesuaian_kas,
-                                  kesesuaian_nomor:
-                                    row.kesesuaian_nomor,
-                                  ketepatan_lpj: row.ketepatan_lpj,
-                                  kepatuhan_saldo: row.kepatuhan_saldo,
-                                  kesesuaian_transaksi:
-                                    row.kesesuaian_transaksi,
-                                  tambahan_pelaporan:
-                                    row.tambahan_pelaporan,
-                                });
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <CheckSquare
-                            className={`${row.triwulan === "1" ||
-                              row.triwulan === "3"
-                              ? "text-red-500"
-                              : row.tren_belanja !== "" &&
-                                row.masalah_penganggaran !== "" &&
-                                row.masalah_kegiatan !== "" &&
-                                row.masalah_regulasi !== "" &&
-                                row.masalah_mp !== "" &&
-                                row.kesesuaian_real_rpd !== "" &&
-                                row.kendala_belanja_lainnya !== ""
-                                ? "text-green-500"
-                                : "text-yellow-500"
-                              } mx-3 cursor-pointer w-5 h-5`}
-                            onClick={() => {
-                              if (
-                                row.triwulan !== "1" &&
-                                row.triwulan !== "3"
-                              )
-                                handleRekamTantangan({
-                                  id: row.id,
-                                  jenis: 3,
-                                  tren_belanja: row.tren_belanja,
-                                  masalah_penganggaran:
-                                    row.masalah_penganggaran,
-                                  masalah_kegiatan:
-                                    row.masalah_kegiatan,
-                                  masalah_regulasi:
-                                    row.masalah_regulasi,
-                                  masalah_mp: row.masalah_mp,
-                                  kesesuaian_real_rpd:
-                                    row.kesesuaian_real_rpd,
-                                  kendala_belanja_lainnya:
-                                    row.kendala_belanja_lainnya,
-                                });
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <CheckSquare
-                            className={`${row.triwulan === "1" ||
-                              row.triwulan === "3"
-                              ? "text-red-500"
-                              : row.kendala_internal !== "" &&
-                                row.kendala_eksternal !== "" &&
-                                row.kendala_jaringan_app !== "" &&
-                                row.kendala_lokasi !== "" &&
-                                row.kesesuaian_pnbp_target !== ""
-                                ? "text-green-500"
-                                : "text-yellow-500"
-                              } mx-3 cursor-pointer w-5 h-5`}
-                            onClick={() => {
-                              if (
-                                row.triwulan !== "1" &&
-                                row.triwulan !== "3"
-                              )
-                                handleRekamTantangan({
-                                  id: row.id,
-                                  jenis: 4,
-                                  kendala_internal:
-                                    row.kendala_internal,
-                                  kendala_eksternal:
-                                    row.kendala_eksternal,
-                                  kendala_jaringan_app:
-                                    row.kendala_jaringan_app,
-                                  kendala_lokasi: row.kendala_lokasi,
-                                  kesesuaian_pnbp_target:
-                                    row.kesesuaian_pnbp_target,
-                                });
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <CheckSquare
-                            className={`${row.triwulan === "1" ||
-                              row.triwulan === "3"
-                              ? "text-red-500"
-                              : row.rekomendasi !== ""
-                                ? "text-green-500"
-                                : "text-yellow-500"
-                              } mx-3 cursor-pointer w-5 h-5`}
-                            onClick={() => {
-                              if (
-                                row.triwulan !== "1" &&
-                                row.triwulan !== "3"
-                              )
-                                handleRekamTantangan({
-                                  id: row.id,
-                                  jenis: 5,
-                                  rekomendasi: row.rekomendasi,
-                                });
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {moment(row.tgl_kirim).format(
-                            "DD-MM-YYYY HH:mm:ss",
+
+                          {/* Ellipsis if needed */}
+                          {page > 2 && (
+                            <PaginationItem>
+                              <PaginationEllipsis />
+                            </PaginationItem>
                           )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
 
-              {data.length > 0 && (
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-5">
-                  <div className="text-sm text-muted-foreground">
-                    Menampilkan{" "}
-                    <span className="font-medium text-foreground">
-                      {numeral(rows).format("0,0")}
-                    </span>{" "}
-                    data. Halaman{" "}
-                    <span className="font-medium text-foreground">
-                      {rows ? page + 1 : 0}
-                    </span>{" "}
-                    dari{" "}
-                    <span className="font-medium text-foreground">
-                      {pages}
-                    </span>
+                          {/* Previous page if exists */}
+                          {page > 0 && (
+                            <PaginationItem>
+                              <PaginationLink
+                                onClick={() => halaman(page - 1)}
+                              >
+                                {page}
+                              </PaginationLink>
+                            </PaginationItem>
+                          )}
+
+                          {/* Current page */}
+                          <PaginationItem>
+                            <PaginationLink isActive>{page + 1}</PaginationLink>
+                          </PaginationItem>
+
+                          {/* Next page if exists */}
+                          {page < pages - 1 && (
+                            <PaginationItem>
+                              <PaginationLink
+                                onClick={() => halaman(page + 1)}
+                              >
+                                {page + 2}
+                              </PaginationLink>
+                            </PaginationItem>
+                          )}
+
+                          {/* Ellipsis if more pages */}
+                          {page < pages - 3 && (
+                            <PaginationItem>
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          )}
+
+                          {/* Last page if we are far behind */}
+                          {page < pages - 1 && page < pages - 2 && (
+                            <PaginationItem>
+                              <PaginationLink
+                                onClick={() => halaman(pages - 1)}
+                              >
+                                {pages}
+                              </PaginationLink>
+                            </PaginationItem>
+                          )}
+
+                          <PaginationItem>
+                            <PaginationNext
+                              onClick={() =>
+                                halaman(Math.min(pages - 1, page + 1))
+                              }
+                              className={
+                                page === pages - 1
+                                  ? "pointer-events-none opacity-50"
+                                  : "cursor-pointer"
+                              }
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Pagination>
-                      <PaginationContent>
-                        <PaginationItem>
-                          <PaginationPrevious
-                            onClick={() => halaman(Math.max(0, page - 1))}
-                            className={
-                              page === 0
-                                ? "pointer-events-none opacity-50"
-                                : "cursor-pointer"
-                            }
-                          />
-                        </PaginationItem>
-
-                        {/* Show first page if we are far ahead */}
-                        {page > 2 && (
-                          <PaginationItem>
-                            <PaginationLink onClick={() => halaman(0)}>
-                              1
-                            </PaginationLink>
-                          </PaginationItem>
-                        )}
-
-                        {/* Ellipsis if needed */}
-                        {page > 2 && (
-                          <PaginationItem>
-                            <PaginationEllipsis />
-                          </PaginationItem>
-                        )}
-
-                        {/* Previous page if exists */}
-                        {page > 0 && (
-                          <PaginationItem>
-                            <PaginationLink
-                              onClick={() => halaman(page - 1)}
-                            >
-                              {page}
-                            </PaginationLink>
-                          </PaginationItem>
-                        )}
-
-                        {/* Current page */}
-                        <PaginationItem>
-                          <PaginationLink isActive>{page + 1}</PaginationLink>
-                        </PaginationItem>
-
-                        {/* Next page if exists */}
-                        {page < pages - 1 && (
-                          <PaginationItem>
-                            <PaginationLink
-                              onClick={() => halaman(page + 1)}
-                            >
-                              {page + 2}
-                            </PaginationLink>
-                          </PaginationItem>
-                        )}
-
-                        {/* Ellipsis if more pages */}
-                        {page < pages - 3 && (
-                          <PaginationItem>
-                            <PaginationEllipsis />
-                          </PaginationItem>
-                        )}
-
-                        {/* Last page if we are far behind */}
-                        {page < pages - 1 && page < pages - 2 && (
-                          <PaginationItem>
-                            <PaginationLink
-                              onClick={() => halaman(pages - 1)}
-                            >
-                              {pages}
-                            </PaginationLink>
-                          </PaginationItem>
-                        )}
-
-                        <PaginationItem>
-                          <PaginationNext
-                            onClick={() =>
-                              halaman(Math.min(pages - 1, page + 1))
-                            }
-                            className={
-                              page === pages - 1
-                                ? "pointer-events-none opacity-50"
-                                : "cursor-pointer"
-                            }
-                          />
-                        </PaginationItem>
-                      </PaginationContent>
-                    </Pagination>
-                  </div>
-                </div>
-              )}
+                )}
               </>
             )}
-        </CardContent>
+          </CardContent>
         </Card>
 
         {export2 && (

@@ -24,10 +24,10 @@ import GenerateCSV from "@/components/GenerateCSV";
 
 // Table styling - matching dispensasi/llat pattern
 const tableStyles = {
-  headerCell: "h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap",
-  headerCellCenter: "h-10 px-4 text-center align-middle font-medium text-muted-foreground whitespace-nowrap",
-  bodyCell: "px-4 py-3 text-sm align-middle border-b whitespace-nowrap",
-  bodyCellCenter: "px-4 py-3 text-sm text-center align-middle border-b whitespace-nowrap",
+  headerCell: "h-10 px-2 text-center align-middle font-medium text-muted-foreground whitespace-nowrap",
+  headerCellCenter: "h-10 px-2 text-center align-middle font-medium text-muted-foreground whitespace-nowrap",
+  bodyCell: "px-2 py-2 text-sm align-middle border-b",
+  bodyCellCenter: "px-2 py-2 text-sm text-center align-middle border-b whitespace-nowrap",
 };
 
 interface DispensasiData {
@@ -325,7 +325,16 @@ const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = f
             <CardContent className="p-4">
               <div className="rounded-md border">
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full table-fixed">
+                    <colgroup>
+                      <col className="w-10" />
+                      <col className="w-[18%]" />
+                      <col className="w-[28%]" />
+                      <col className="w-[12%]" />
+                      <col className="w-[24%]" />
+                      <col className="w-[10%]" />
+                      <col className="w-[8%]" />
+                    </colgroup>
                     <thead>
                       <tr className="border-b bg-muted/50">
                         <th className={tableStyles.headerCellCenter}>No.</th>
@@ -350,23 +359,17 @@ const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = f
                             <td className={tableStyles.bodyCellCenter}>
                               {index + 1 + page * limit}
                             </td>
-                            <td className={tableStyles.bodyCell}>
-                              <div className="max-w-[180px] truncate" title={`${row.nmkppn} (${row.kdkppn})`}>
-                                {row.nmkppn} ({row.kdkppn})
-                              </div>
+                            <td className={`${tableStyles.bodyCell} overflow-hidden`} title={`${row.nmkppn} (${row.kdkppn})`}>
+                              <span className="block truncate">{row.nmkppn} ({row.kdkppn})</span>
                             </td>
-                            <td className={tableStyles.bodyCell}>
-                              <div className="max-w-[200px] truncate" title={`${row.nmsatker?.trim()} (${row.kdsatker})`}>
-                                {row.nmsatker?.trim()} ({row.kdsatker})
-                              </div>
+                            <td className={`${tableStyles.bodyCell} overflow-hidden`} title={`${row.nmsatker?.trim()} (${row.kdsatker})`}>
+                              <span className="block truncate">{row.nmsatker?.trim()} ({row.kdsatker})</span>
                             </td>
-                            <td className={tableStyles.bodyCell}>
+                            <td className={`${tableStyles.bodyCell} whitespace-nowrap`}>
                               {row.tgpermohonan}
                             </td>
-                            <td className={tableStyles.bodyCell}>
-                              <div className="max-w-[200px] truncate" title={row.nopermohonan?.trim()}>
-                                {row.nopermohonan?.trim()}
-                              </div>
+                            <td className={`${tableStyles.bodyCell} overflow-hidden`} title={row.nopermohonan?.trim()}>
+                              <span className="block truncate">{row.nopermohonan?.trim()}</span>
                             </td>
                             <td className={tableStyles.bodyCellCenter}>
                               {row.jmlkontrak > 0 ? (

@@ -504,7 +504,7 @@ export function ResponsiveSidebar({
                     </NavigationMenuTrigger>
                     {m.children?.length ? (
                       <NavigationMenuContent className="left-0 p-1.5">
-                        <ul className="grid w-64 gap-1">
+                        <ul className="grid w-72 gap-1">
                           {m.children.map((c) => {
                             const menuKey = `${m.label}__${c.label}`;
                             let href = "#";

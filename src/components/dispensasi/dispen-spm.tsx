@@ -23,10 +23,10 @@ import {
 
 // Styling untuk table dan kolom - matching weekly-report pattern
 const tableStyles = {
-  headerCell: "h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap",
-  headerCellCenter: "h-10 px-4 text-center align-middle font-medium text-muted-foreground whitespace-nowrap",
-  bodyCell: "px-4 py-3 text-sm align-middle border-b whitespace-nowrap",
-  bodyCellCenter: "px-4 py-3 text-sm text-center align-middle border-b whitespace-nowrap",
+  headerCell: "h-10 px-2 text-center align-middle font-medium text-muted-foreground whitespace-nowrap",
+  headerCellCenter: "h-10 px-2 text-center align-middle font-medium text-muted-foreground whitespace-nowrap",
+  bodyCell: "px-2 py-2 text-sm align-middle border-b",
+  bodyCellCenter: "px-2 py-2 text-sm text-center align-middle border-b whitespace-nowrap",
 };
 
 interface DispenSpmProps {
@@ -216,13 +216,11 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
 
   const handledownload = async (id: string) => {
     const intId = parseInt(id, 10);
-    const fileUrl = `${process.env.NEXT_PUBLIC_LOCAL_BASIC}dispen/download/${intId}`;
+    const fileUrl = `/api/v1/dispensasi/download-spm/${intId}`;
 
     try {
       const response = await fetch(fileUrl, {
-        headers: {
-          // Authorization: `Bearer ${user?.token}`,
-        },
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -253,8 +251,7 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      setError2("Terjadi kesalahan saat mendownload file. Silakan coba lagi.");
-      toast.error(error2 || "Terjadi kesalahan saat mendownload file.");
+      toast.error("Terjadi kesalahan saat mendownload file. Silakan coba lagi.");
     }
   };
 
@@ -281,7 +278,16 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
         <>
           <div className="rounded-md border">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-fixed">
+                <colgroup>
+                  <col className="w-10" />
+                  <col className="w-[8%]" />
+                  <col className="w-[38%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[26%]" />
+                  <col className="w-[8%]" />
+                  <col className="w-[8%]" />
+                </colgroup>
                 <thead>
                   <tr className="border-b bg-muted/50">
                     <th className={tableStyles.headerCellCenter}>No.</th>
@@ -309,18 +315,14 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
                         <td className={tableStyles.bodyCellCenter}>
                           {row.thang}
                         </td>
-                        <td className={tableStyles.bodyCell}>
-                          <div className="max-w-[300px] truncate" title={`${row.nmsatker?.trim()} (${row.kdsatker})`}>
-                            {row.nmsatker?.trim()} ({row.kdsatker})
-                          </div>
+                        <td className={`${tableStyles.bodyCell} overflow-hidden`} title={`${row.nmsatker?.trim()} (${row.kdsatker})`}>
+                          <span className="block truncate">{row.nmsatker?.trim()} ({row.kdsatker})</span>
                         </td>
-                        <td className={tableStyles.bodyCell}>
+                        <td className={tableStyles.bodyCellCenter}>
                           {row.tgpermohonan}
                         </td>
-                        <td className={tableStyles.bodyCell}>
-                          <div className="max-w-[280px] truncate" title={row.nopermohonan?.trim()}>
-                            {row.nopermohonan?.trim()}
-                          </div>
+                        <td className={`${tableStyles.bodyCell} overflow-hidden`} title={row.nopermohonan?.trim()}>
+                          <span className="block truncate">{row.nopermohonan?.trim()}</span>
                         </td>
                         <td className={tableStyles.bodyCellCenter}>
                           {row.jmlspm ?? "-"}
