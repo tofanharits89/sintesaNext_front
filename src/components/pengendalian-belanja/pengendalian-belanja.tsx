@@ -5,7 +5,6 @@ import numeral from "numeral";
 import { RefreshCw, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { toast } from "sonner";
 import { http } from "@/lib/api/httpClient";
@@ -106,9 +105,6 @@ export default function PengendalianBelanja() {
         });
     }, [data, sortKey, sortDir]);
 
-
-
-    const isFiltered = !!filter.tahun || (filter.kddept && filter.kddept !== "00") || filter.exclude999;
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -139,24 +135,6 @@ export default function PengendalianBelanja() {
 
             {/* Filter Card */}
             <FilterCard onFilter={handleFilter} />
-
-            {/* Active filter badges */}
-            {isFiltered && (
-                <div className="flex flex-wrap gap-1">
-                    <Badge variant="default" className="bg-green-600 hover:bg-green-700">
-                        Filter Aktif
-                    </Badge>
-                    {filter.tahun && (
-                        <Badge variant="secondary">Tahun {filter.tahun}</Badge>
-                    )}
-                    {filter.kddept && filter.kddept !== "00" && (
-                        <Badge variant="secondary">K/L {filter.kddept}</Badge>
-                    )}
-                    {filter.exclude999 && (
-                        <Badge variant="secondary">BA 999 dikecualikan</Badge>
-                    )}
-                </div>
-            )}
 
             {/* Data Table */}
             <section>
