@@ -1,36 +1,35 @@
 import type { MapStats } from "@/features/mbg/types/domain";
+import { apiClient } from "@/lib/api/httpClient";
+
+type MbgMapStatsApiResponse = {
+  success: boolean;
+  data?: {
+    scope: "national" | "province" | "regency";
+    provinceName?: string | null;
+    stats: MapStats | null;
+  };
+};
 
 export async function getMapStats(
   scope: "national" | "province" | "regency",
-  id?: string
-): Promise<MapStats> {
-  // TODO: Replace with real API call
-  // Simulate network latency and return deterministic sample data by scope/id
-  await new Promise((r) => setTimeout(r, 300));
+  id?: string,
+  provinceName?: string
+): Promise<MapStats | null> {
+  const params = new URLSearchParams();
+  params.set("scope", scope);
+  if (provinceName) {
+    params.set("provinceName", provinceName);
+  }
 
-  if (scope === "national") {
-    return {
-      totalAllocation: 3_000_000_000_000,
-      totalRealization: 2_100_000_000_000,
-      beneficiaries: 12_500_120,
-      coveragePct: 75.1,
-    };
+  const response = await apiClient.get<MbgMapStatsApiResponse>(
+    `/dashboard/mbg/map-stats?${params.toString()}`
+  );
+
+  if (!response?.success || !response.data) {
+    throw new Error("Failed to fetch MBG map stats");
   }
-  if (scope === "province") {
-    return {
-      totalAllocation: 120_000_000_000,
-      totalRealization: 98_000_000_000,
-      beneficiaries: 245_012,
-      coveragePct: 78.4,
-    };
-  }
-  // regency
-  return {
-    totalAllocation: 25_000_000_000,
-    totalRealization: 18_000_000_000,
-    beneficiaries: 12_045,
-    coveragePct: 74.2,
-  };
+
+  return response.data.stats;
 }
 
 export type QuickStatView = {
@@ -40,41 +39,71 @@ export type QuickStatView = {
   variant?: "up" | "down" | "neutral";
 };
 
+type MbgQuickStatsApiData = {
+  jumlahsppg: number;
+  jumlahpetugas: number;
+  jumlahsupplier: number;
+  jumlahkelompok: number;
+  jumlahpenerima: number;
+  jumlahmitra: number;
+};
+
+type MbgQuickStatsApiResponse = {
+  success: boolean;
+  data?: MbgQuickStatsApiData;
+};
+
+function formatCount(value: number): string {
+  return value.toLocaleString("id-ID");
+}
+
 export async function getQuickStats(): Promise<QuickStatView[]> {
-  // Simulate 1.5s latency to match current UX
-  await new Promise((r) => setTimeout(r, 1500));
+  const response = await apiClient.get<MbgQuickStatsApiResponse>("/dashboard/mbg/quick-stats");
+
+  if (!response?.success || !response.data) {
+    throw new Error("Failed to fetch MBG quick stats");
+  }
+
+  const stats = response.data;
+
   return [
-    { label: "Total Alokasi", value: "Rp 1.250 M", trend: "+5.2%", variant: "up" },
-    { label: "Total Realisasi", value: "Rp 980 M", trend: "+3.1%", variant: "up" },
-    { label: "Serapan (%)", value: "78,4%", trend: "+1,0%", variant: "up" },
-    { label: "Penerima Manfaat", value: "2.450.120", trend: "-0,3%", variant: "down" },
-    { label: "Kab/Kota Aktif", value: "415", trend: "+2", variant: "neutral" },
+    { label: "Total SPPG Aktif", value: formatCount(stats.jumlahsppg), variant: "neutral" },
+    { label: "Petugas SPPG", value: formatCount(stats.jumlahpetugas), variant: "neutral" },
+    { label: "Supplier MBG", value: formatCount(stats.jumlahsupplier), variant: "neutral" },
+    { label: "Kelompok Manfaat", value: formatCount(stats.jumlahkelompok), variant: "neutral" },
+    { label: "Penerima Manfaat", value: formatCount(stats.jumlahpenerima), variant: "neutral" },
+    { label: "Total Mitra", value: formatCount(stats.jumlahmitra), variant: "neutral" },
   ];
 }
 
 export type RankingsData = {
-  top5: { name: string; value: number }[];
-  bottom5: { name: string; value: number }[];
+  items: {
+    name: string;
+    value: number;
+    percentage: number;
+  }[];
 };
 
 export async function getRankings(): Promise<RankingsData> {
-  // Simulate 2.5s latency to match current UX
-  await new Promise((r) => setTimeout(r, 2500));
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: Array<{
+      nama_provinsi: string;
+      penerima_manfaat: number;
+      persen_penerima: number;
+    }>;
+  }>("/dashboard/mbg/penerima-rankings");
+
+  if (!response?.success || !response.data) {
+    throw new Error("Failed to fetch MBG penerima rankings");
+  }
+
   return {
-    top5: [
-      { name: "DKI Jakarta", value: 125_000 },
-      { name: "Jawa Barat", value: 112_000 },
-      { name: "Jawa Timur", value: 97_500 },
-      { name: "Sumatera Utara", value: 84_200 },
-      { name: "Riau", value: 70_900 },
-    ],
-    bottom5: [
-      { name: "Maluku Utara", value: 12_300 },
-      { name: "Gorontalo", value: 13_100 },
-      { name: "Sulawesi Barat", value: 14_900 },
-      { name: "Papua Barat Daya", value: 15_200 },
-      { name: "Papua Pegunungan", value: 16_500 },
-    ],
+    items: response.data.map((row) => ({
+      name: row.nama_provinsi,
+      value: Number(row.penerima_manfaat) || 0,
+      percentage: Number(row.persen_penerima) || 0,
+    })),
   };
 }
 

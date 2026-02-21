@@ -1,15 +1,17 @@
-import { ProvinceSelect, RegencySelect } from "@/components/mbg/ProvinceRegencySelectors";
+import { ProvinceSelect } from "@/components/mbg/ProvinceRegencySelectors";
+import { MBG_INDICATOR_OPTIONS, type MbgIndicatorKey } from "@/features/mbg/types/domain";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function Filters({
   provinceId,
-  regencyId,
+  indicator,
   onProvinceChange,
-  onRegencyChange,
+  onIndicatorChange,
 }: {
   provinceId: string;
-  regencyId: string;
+  indicator: MbgIndicatorKey;
   onProvinceChange: (v: string) => void;
-  onRegencyChange: (v: string) => void;
+  onIndicatorChange: (v: MbgIndicatorKey) => void;
 }) {
   return (
     <>
@@ -20,7 +22,18 @@ export function Filters({
           // clearing regency when province changes is handled by parent
         }}
       />
-      <RegencySelect value={regencyId} onChange={onRegencyChange} provinceId={provinceId} />
+      <Select value={indicator} onValueChange={(value) => onIndicatorChange(value as MbgIndicatorKey)}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Pilih Indikator" />
+        </SelectTrigger>
+        <SelectContent>
+          {MBG_INDICATOR_OPTIONS.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </>
   );
 }

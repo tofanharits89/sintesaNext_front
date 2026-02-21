@@ -1,15 +1,18 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils/utils";
 import { Badge } from "@/components/ui/badge";
 
 export function QuickStatCard({
   label,
+  icon,
   value,
   trend,
   trendVariant = "neutral",
 }: {
   label: string;
+  icon?: ReactNode;
   value: string;
   trend?: string;
   trendVariant?: "up" | "down" | "neutral";
@@ -28,7 +31,10 @@ export function QuickStatCard({
           {trend}
         </Badge>
       )}
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <div className="flex items-center gap-2">
+        {icon}
+        <p className="text-xs text-muted-foreground">{label}</p>
+      </div>
       <p className="mt-1 text-lg font-semibold">{value}</p>
     </div>
   );

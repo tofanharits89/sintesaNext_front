@@ -219,33 +219,56 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
 
   const handledownloadKontrak = async (id: string) => {
     const intId = parseInt(id, 10);
-    const fileUrl = `${process.env.NEXT_PUBLIC_BASIC_URL}dispenkontrak/download/${intId}`;
+    const fileUrl = `/api/v1/dispensasi/download-kontrak/${intId}`;
 
     try {
       const response = await fetch(fileUrl, {
-        headers: {
-          // Authorization: `Bearer ${user?.token}`,
-        },
+        credentials: "include",
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let errMsg = `HTTP error! status: ${response.status}`;
+        try {
+          const errData = await response.json();
+          if (errData && errData.msg) errMsg = errData.msg;
+        } catch (e) {
+          // ignore JSON parse error
+        }
+        throw new Error(errMsg);
       }
 
       const blob = await response.blob();
+
+      // Extract the filename from Content-Disposition header
+      const contentDisposition = response.headers.get("content-disposition");
+      let fileName = "Surat_Persetujuan_Dispen_Kontrak.pdf"; // Default filename
+
+      if (contentDisposition) {
+        const fileNameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (fileNameMatch && fileNameMatch.length === 2 && fileNameMatch[1]) {
+          fileName = fileNameMatch[1];
+        }
+      }
+
+      // Create a URL for the blob
       const url = window.URL.createObjectURL(blob);
 
+      // Create a temporary link element to trigger the download
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", "Surat_Persetujuan_Dispen_Kontrak.pdf");
+      link.setAttribute("target", "_blank");
+      link.setAttribute("rel", "noopener noreferrer");
+
+      // Set the filename for download
+      link.setAttribute("download", fileName);
       document.body.appendChild(link);
-      link.click();
-      link.remove();
+      link.click(); // Trigger the download
+      link.remove(); // Clean up the link element
+
+      // Revoke the object URL to free up resources
       window.URL.revokeObjectURL(url);
-    } catch (error) {
-      toast.error(
-        "Terjadi kesalahan saat mendownload file. Silakan coba lagi."
-      );
+    } catch (error: any) {
+      toast.error(error.message || "Terjadi kesalahan saat mendownload file. Silakan coba lagi.");
     }
   };
 

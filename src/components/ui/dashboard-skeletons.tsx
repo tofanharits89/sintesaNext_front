@@ -59,9 +59,8 @@ export function MapSearchCardSkeleton({ className }: BaseSkeletonProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* Search controls grid - matches the original 3-column layout */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-          <Skeleton className="h-10 w-full rounded-md" />
+        {/* Search controls grid - matches MBG filter layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <Skeleton className="h-10 w-full rounded-md" />
           <Skeleton className="h-10 w-full rounded-md" />
         </div>
@@ -102,7 +101,7 @@ export function MapSearchCardSkeleton({ className }: BaseSkeletonProps) {
 
 /**
  * StatsRankingCardSkeleton - Loading skeleton for StatsRankingCard components
- * Matches exact layout with numbered list items (no circles)
+ * Matches ranking list layout with percentage badges
  */
 export function StatsRankingCardSkeleton({ className }: BaseSkeletonProps) {
   return (
@@ -113,36 +112,18 @@ export function StatsRankingCardSkeleton({ className }: BaseSkeletonProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {/* Top 5 section */}
-          <div>
-            <Skeleton className="h-4 w-20 mb-2" />
-            <div className="space-y-1">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div
-                  key={`top-${i}`}
-                  className="flex items-center justify-between text-sm"
-                >
-                  <Skeleton className="h-3 w-32" />
-                  <Skeleton className="h-3 w-16" />
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-44" />
+          <div className="space-y-1.5">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={`ranking-${i}`} className="rounded-md border px-2 py-1.5 space-y-1">
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-3 w-28" />
+                  <Skeleton className="h-5 w-14 rounded-md" />
                 </div>
-              ))}
-            </div>
-          </div>
-          {/* Bottom 5 section */}
-          <div>
-            <Skeleton className="h-4 w-24 mb-2" />
-            <div className="space-y-1">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div
-                  key={`bottom-${i}`}
-                  className="flex items-center justify-between text-sm"
-                >
-                  <Skeleton className="h-3 w-32" />
-                  <Skeleton className="h-3 w-16" />
-                </div>
-              ))}
-            </div>
+                <Skeleton className="h-3 w-20" />
+              </div>
+            ))}
           </div>
         </div>
       </CardContent>

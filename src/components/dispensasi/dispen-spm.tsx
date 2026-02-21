@@ -224,7 +224,14 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let errMsg = `HTTP error! status: ${response.status}`;
+        try {
+          const errData = await response.json();
+          if (errData && errData.msg) errMsg = errData.msg;
+        } catch (e) {
+          // ignore JSON parse error
+        }
+        throw new Error(errMsg);
       }
 
       const blob = await response.blob();
@@ -250,8 +257,8 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-    } catch (error) {
-      toast.error("Terjadi kesalahan saat mendownload file. Silakan coba lagi.");
+    } catch (error: any) {
+      toast.error(error.message || "Terjadi kesalahan saat mendownload file. Silakan coba lagi.");
     }
   };
 

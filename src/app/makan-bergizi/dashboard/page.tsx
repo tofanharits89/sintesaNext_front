@@ -5,6 +5,15 @@ import dynamic from "next/dynamic";
 import { QuickStatCard } from "@/components/mbg/QuickStatCard";
 import { StatsRankingCard } from "@/components/mbg/StatsRankingCard";
 import { PlaceholderChartCard } from "@/components/mbg/PlaceholderChartCard";
+import {
+  Building2,
+  Users,
+  Truck,
+  Layers3,
+  UserCheck,
+  Handshake,
+  CircleDashed,
+} from "lucide-react";
 import { QueryErrorBoundary } from "@/components/ui/query-error-boundary";
 import {
   QuickStatCardSkeleton,
@@ -26,6 +35,17 @@ export default function DashboardMBGPage() {
   const { isLoading: isChartsLoading } = useChartsReady();
 
   const quickStats = useMemo(() => quickStatsData ?? [], [quickStatsData]);
+  const iconByLabel = useMemo(
+    () => ({
+      "Total SPPG Aktif": Building2,
+      "Petugas SPPG": Users,
+      "Supplier MBG": Truck,
+      "Kelompok Manfaat": Layers3,
+      "Penerima Manfaat": UserCheck,
+      "Total Mitra": Handshake,
+    }),
+    []
+  );
 
   return (
     <div className="space-y-6">
@@ -34,22 +54,26 @@ export default function DashboardMBGPage() {
         <p className="text-sm text-muted-foreground">Ringkasan dan analitik Makan Bergizi.</p>
       </div>
 
-      {/* Row 1: Quick Stats (5 cards) */}
-      <div className="grid gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
+      {/* Row 1: Quick Stats (6 cards) */}
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
         {isQuickStatsLoading ? (
-          Array.from({ length: 5 }).map((_, i) => (
+          Array.from({ length: 6 }).map((_, i) => (
             <QuickStatCardSkeleton key={`skeleton-${i}`} />
           ))
         ) : (
-          quickStats.map((s: any, i: number) => (
-            <QuickStatCard
-              key={i}
-              label={s.label}
-              value={String(s.value)}
-              trend={s.trend}
-              trendVariant={(s.variant as any) ?? "neutral"}
-            />
-          ))
+          quickStats.map((s: any, i: number) => {
+            const Icon = iconByLabel[s.label as keyof typeof iconByLabel] ?? CircleDashed;
+            return (
+              <QuickStatCard
+                key={i}
+                label={s.label}
+                icon={<Icon className="h-4 w-4 text-blue-500" />}
+                value={String(s.value)}
+                trend={s.trend}
+                trendVariant={(s.variant as any) ?? "neutral"}
+              />
+            );
+          })
         )}
       </div>
 
@@ -68,8 +92,7 @@ export default function DashboardMBGPage() {
           ) : (
             <StatsRankingCard
               title="Statistik Wilayah"
-              topItems={rankingsData?.top5 ?? []}
-              bottomItems={rankingsData?.bottom5 ?? []}
+              items={rankingsData?.items ?? []}
             />
           )}
         </div>
@@ -92,4 +115,3 @@ export default function DashboardMBGPage() {
     </div>
   );
 }
-

@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useProvinceRegency } from "@/components/mbg/ProvinceRegencySelectors";
 import { toast } from "sonner";
-import { SearchAutocomplete } from "@/features/mbg/components/SearchAutocomplete";
 import { Filters } from "@/features/mbg/components/Filters";
 import { useMapStats } from "@/features/mbg/hooks/useMapStats";
 import { useGoogleMaps } from "@/features/mbg/hooks/useGoogleMaps";
 import { MapView } from "@/features/mbg/components/MapView";
+import type { MbgIndicatorKey } from "@/features/mbg/types/domain";
 
 
 
@@ -21,7 +21,7 @@ export function MapSearch() {
   const markerRef = useRef<any | null>(null);
 
   const { provinceId, setProvinceId, regencyId, setRegencyId, selectedProvince, selectedRegency } = useProvinceRegency();
-  const [searchText, setSearchText] = useState("");
+  const [indicator, setIndicator] = useState<MbgIndicatorKey>("jumlahsppg");
 
   const [overlayScope, setOverlayScope] = useState<"national" | "province" | "regency">("national");
   const [overlayName, setOverlayName] = useState<string | undefined>(undefined);
@@ -29,7 +29,15 @@ export function MapSearch() {
   // Derive query parameters for stats
   const statScope = overlayScope;
   const statId = statScope === "regency" ? regencyId : statScope === "province" ? provinceId : undefined;
-  const { data: stats, isLoading: statsLoading, error: statsError } = useMapStats(statScope, statId);
+  const statProvinceName =
+    statScope === "national"
+      ? undefined
+      : selectedProvince?.name ?? (statScope === "province" ? overlayName : undefined);
+  const { data: stats, isLoading: statsLoading, error: statsError } = useMapStats(
+    statScope,
+    statId,
+    statProvinceName,
+  );
   const overlayError = statsError ? (statsError as Error).message : null;
 
   // Initialize map once
@@ -47,38 +55,10 @@ export function MapSearch() {
     mapInstanceRef.current = map;
   }, [loaded]);
 
-  // Handle place selection from autocomplete
-  const handlePlaceSelected = (place: any) => {
-    const map = mapInstanceRef.current;
-    if (!map || !place.geometry || !place.geometry.location) return;
-
-    const loc = place.geometry.location;
-    map.panTo(loc);
-    map.setZoom(8);
-
-    if (!markerRef.current) {
-      markerRef.current = new google.maps.marker.AdvancedMarkerElement({
-        map,
-        position: loc,
-      });
-    } else {
-      markerRef.current.position = loc;
-    }
-
-    // Sync state: clear dropdowns, set overlay scope by place granularity
-    setProvinceId("");
-    setRegencyId("");
-    setOverlayScope("province");
-    setOverlayName(place.name);
-  };
-
   // Pan/zoom when province/regency changes
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
-
-    // If a dropdown selection happens, clear search input
-    if (provinceId || regencyId) setSearchText("");
 
     if (selectedRegency?.centroid) {
       map.panTo(selectedRegency.centroid);
@@ -139,44 +119,22 @@ export function MapSearch() {
         <CardTitle className="text-base">Peta Distribusi MBG</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-          <SearchAutocomplete
-            value={searchText}
-            onChange={(v) => {
-              setSearchText(v);
-              if (!v) {
-                // Reset map to national view and clear markers
-                const map = mapInstanceRef.current;
-                if (map) {
-                  map.panTo({ lat: -2.5, lng: 118.0 });
-                  map.setZoom(5);
-                }
-                if (markerRef.current) {
-                  markerRef.current.map = null;
-                  markerRef.current = null;
-                }
-                setProvinceId("");
-                setRegencyId("");
-                setOverlayScope("national");
-              }
-            }}
-            onPlaceSelected={handlePlaceSelected}
-            disabled={!loaded}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <Filters
             provinceId={provinceId}
-            regencyId={regencyId}
+            indicator={indicator}
             onProvinceChange={(v) => {
               setProvinceId(v);
               setRegencyId("");
             }}
-            onRegencyChange={setRegencyId}
+            onIndicatorChange={setIndicator}
           />
         </div>
         <MapView
           mapRef={mapRef}
           loaded={loaded}
           overlayScope={overlayScope}
+          indicator={indicator}
           {...(overlayName !== undefined ? { overlayName } : {})}
           {...(typeof stats !== 'undefined' ? { stats } : {})}
           statsLoading={statsLoading}

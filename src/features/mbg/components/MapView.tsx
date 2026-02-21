@@ -1,9 +1,11 @@
 import { MapStatsOverlay } from "@/components/mbg/MapStatsOverlay";
+import type { MapStats, MbgIndicatorKey } from "@/features/mbg/types/domain";
 
 export function MapView({
   mapRef,
   loaded,
   overlayScope,
+  indicator,
   overlayName,
   stats,
   statsLoading,
@@ -12,13 +14,9 @@ export function MapView({
   mapRef: React.RefObject<HTMLDivElement | null>;
   loaded: boolean;
   overlayScope: "national" | "province" | "regency";
+  indicator: MbgIndicatorKey;
   overlayName?: string;
-  stats?: {
-    totalAllocation: number;
-    totalRealization: number;
-    beneficiaries: number;
-    coveragePct: number;
-  };
+  stats?: MapStats | null;
   statsLoading: boolean;
   statsError: string | null;
 }) {
@@ -32,6 +30,7 @@ export function MapView({
       )}
       <MapStatsOverlay
         scope={overlayScope}
+        indicator={indicator}
         {...(overlayName !== undefined ? { scopeName: overlayName } : {})}
         {...(typeof stats !== 'undefined' ? { stats } : {})}
         isLoading={statsLoading}

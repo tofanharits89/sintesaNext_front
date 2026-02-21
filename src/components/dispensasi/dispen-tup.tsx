@@ -232,7 +232,14 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let errMsg = `HTTP error! status: ${response.status}`;
+        try {
+          const errData = await response.json();
+          if (errData && errData.msg) errMsg = errData.msg;
+        } catch (e) {
+          // ignore JSON parse error
+        }
+        throw new Error(errMsg);
       }
 
       const blob = await response.blob();
@@ -265,8 +272,8 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
 
       // Revoke the object URL to free up resources
       window.URL.revokeObjectURL(url);
-    } catch (error) {
-      toast.error("Terjadi kesalahan saat mendownload file. Silakan coba lagi.");
+    } catch (error: any) {
+      toast.error(error.message || "Terjadi kesalahan saat mendownload file. Silakan coba lagi.");
     }
   };
 

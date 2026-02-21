@@ -153,8 +153,8 @@ export const queryKeyFactories = {
       quickStats: () => [...queryKeyFactories.financial.mbg.all(), 'quickStats'] as const,
       charts: () => [...queryKeyFactories.financial.mbg.all(), 'charts'] as const,
       rankings: () => [...queryKeyFactories.financial.mbg.all(), 'rankings'] as const,
-      mapStats: (scope: 'national' | 'province' | 'regency', id?: string) =>
-        [...queryKeyFactories.financial.mbg.all(), 'mapStats', scope, id ?? 'all'] as const,
+      mapStats: (scope: 'national' | 'province' | 'regency', id?: string, provinceName?: string) =>
+        [...queryKeyFactories.financial.mbg.all(), 'mapStats', scope, id ?? 'all', provinceName ?? 'all'] as const,
     },
   },
   
