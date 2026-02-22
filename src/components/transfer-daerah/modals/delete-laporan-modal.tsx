@@ -1,13 +1,16 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/animate-ui/components/radix/alert-dialog";
+import { AlertTriangle } from "lucide-react";
 
 interface DeleteLaporanModalProps {
   open: boolean;
@@ -34,66 +37,67 @@ export function DeleteLaporanModal({
     onOpenChange(false);
   };
 
-  const handleCancel = () => {
-    onOpenChange(false);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="max-w-md w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle>Konfirmasi Hapus Laporan</DialogTitle>
-        </DialogHeader>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent className="sm:max-w-[500px] w-[95vw]">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-red-500" />
+            Konfirmasi Hapus Laporan
+          </AlertDialogTitle>
+          <AlertDialogDescription className="pt-2">
+            Apakah Anda yakin ingin menghapus laporan ini? Tindakan ini tidak
+            dapat dibatalkan.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
 
-        <div className="py-4">
-          <p className="text-sm text-muted-foreground mb-4">
-            Apakah Anda yakin ingin menghapus laporan ini?
-          </p>
-
-          {itemData && (
-            <div className="bg-muted p-3 rounded-md space-y-2">
-              <div className="text-sm">
-                <span className="font-medium">Tahun:</span> {itemData.tahun}
+        {itemData && (
+          <div className="py-2">
+            <div className="p-4 bg-muted rounded-md space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Tahun:</span>
+                <span className="text-sm font-medium">{itemData.tahun}</span>
               </div>
               {itemData.kppn && (
-                <div className="text-sm">
-                  <span className="font-medium">KPPN:</span> {itemData.kppn}
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">KPPN:</span>
+                  <span className="text-sm font-medium">{itemData.kppn}</span>
                 </div>
               )}
               {itemData.kanwil && (
-                <div className="text-sm">
-                  <span className="font-medium">Kanwil:</span> {itemData.kanwil}
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Kanwil:</span>
+                  <span className="text-sm font-medium">{itemData.kanwil}</span>
                 </div>
               )}
-              <div className="text-sm">
-                <span className="font-medium">Jenis:</span> {itemData.jenis}
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Jenis:</span>
+                <span className="text-sm font-medium">{itemData.jenis}</span>
               </div>
-              <div className="text-sm">
-                <span className="font-medium">Periode:</span> {itemData.periode}
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Periode:</span>
+                <span className="text-sm font-medium">{itemData.periode}</span>
               </div>
-              <div className="text-sm">
-                <span className="font-medium">Uraian:</span>
-                <span className="block mt-1 text-muted-foreground">
+              <div className="flex justify-between items-start">
+                <span className="text-sm text-muted-foreground">Uraian:</span>
+                <span className="text-sm font-medium max-w-[300px] text-right break-words">
                   {itemData.uraian}
                 </span>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          <p className="text-sm text-destructive mt-4">
-            Tindakan ini tidak dapat dibatalkan.
-          </p>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={handleCancel}>
-            Batal
-          </Button>
-          <Button variant="destructive" onClick={handleConfirm}>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Batal</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleConfirm}
+            className="bg-destructive !text-white hover:bg-destructive/90 hover:!text-white"
+          >
             Hapus
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

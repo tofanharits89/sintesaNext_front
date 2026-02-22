@@ -28,6 +28,7 @@ import {
   UploadLaporanKeuanganKppnRow,
   useUploadLaporanKeuanganKppn,
 } from "@/hooks/use-upload-laporan-keuangan-kppn";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
 
 export function LaporanKeuanganKppnTab() {
   const ITEMS_PER_PAGE = 25;
@@ -223,11 +224,8 @@ export function LaporanKeuanganKppnTab() {
               ) : null}
               {isLoading ? (
                 <TableRow>
-                  <TableCell
-                    colSpan={8}
-                    className="text-center py-8 text-muted-foreground"
-                  >
-                    Memuat data laporan...
+                  <TableCell colSpan={8} className="p-0">
+                    <TableSkeleton rows={10} />
                   </TableCell>
                 </TableRow>
               ) : null}

@@ -19,6 +19,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  useProyeksiTkdKppnOptions,
+  useProyeksiTkdSatkerOptions,
+} from "@/hooks/use-proyeksi-tkd-options";
 
 interface ProyeksiTkdModalProps {
   open: boolean;
@@ -56,16 +60,6 @@ const DEFAULT_MONTHLY_VALUES: MonthlyValues = {
   november: "",
   desember: "",
 };
-
-const KPPN_OPTIONS = [
-  "KPPN Jakarta I",
-  "KPPN Jakarta II",
-  "KPPN Jakarta III",
-  "KPPN Bandung",
-  "KPPN Surabaya",
-];
-
-const SATKER_OPTIONS = ["001", "002", "003", "004", "005"];
 const JENIS_KEPERLUAN_OPTIONS = ["alco", "iku"];
 const JENIS_LAPORAN_OPTIONS = ["01", "02", "03", "04", "05"];
 
@@ -120,22 +114,25 @@ const PERIOD_ALIAS_TO_KEY: Record<string, MonthKey> = {
   desember: "desember",
 };
 
-const buildEmptyForm = () => ({
-  tahun: "",
+const getCurrentMonthKey = (date: Date = new Date()): MonthKey =>
+  MONTH_KEYS[date.getMonth()] || "januari";
+
+const buildDefaultForm = () => ({
+  tahun: String(new Date().getFullYear()),
   kppn: "",
   kppnSebagaiSatker: "",
-  periodeBulan: "",
+  periodeBulan: getCurrentMonthKey(),
   jenisKeperluan: "",
   jenisLaporan: "",
   keterangan: "",
   monthlyValues: { ...DEFAULT_MONTHLY_VALUES },
 });
 
-const normalizeSelectFromLabeledText = (value: unknown): string => {
+const normalizeCodeFromLabeledText = (value: unknown): string => {
   const text = String(value ?? "").trim();
   if (!text) return "";
   const parts = text.split(" - ").map((part) => part.trim()).filter(Boolean);
-  return parts.length > 1 ? (parts[1] || "") : text;
+  return parts[0] || text;
 };
 
 const normalizeSatker = (value: unknown): string => {
@@ -169,13 +166,13 @@ const normalizeJenisLaporan = (value: unknown): string => {
   return raw;
 };
 
-const normalizePeriode = (value: unknown): string => {
+const normalizePeriode = (value: unknown): MonthKey | "" => {
   const raw = String(value ?? "").trim();
   if (!raw) return "";
   const lower = raw.toLowerCase();
 
   if (MONTH_KEYS.includes(lower as MonthKey)) {
-    return lower;
+    return lower as MonthKey;
   }
   if (PERIOD_ALIAS_TO_KEY[lower]) {
     return PERIOD_ALIAS_TO_KEY[lower];
@@ -212,20 +209,32 @@ export function ProyeksiTkdModal({
   onOpenChange,
   editData,
 }: ProyeksiTkdModalProps) {
-  const [formData, setFormData] = useState(buildEmptyForm);
+  const [formData, setFormData] = useState(buildDefaultForm);
+  const { options: kppnOptions, isLoading: isKppnOptionsLoading } =
+    useProyeksiTkdKppnOptions();
+  const { options: satkerOptions, isLoading: isSatkerOptionsLoading } =
+    useProyeksiTkdSatkerOptions(formData.kppn);
 
   // Pre-fill form data when editing
   useEffect(() => {
-    if (editData && open) {
+    if (!open) {
+      setFormData(buildDefaultForm());
+      return;
+    }
+
+    if (editData) {
+      const normalizedPeriode =
+        normalizePeriode(editData.periodeRaw ?? editData.periode) ||
+        getCurrentMonthKey();
       const mappedData = {
-        tahun: editData.tahun || "",
+        tahun: editData.tahun || String(new Date().getFullYear()),
         kppn:
-          normalizeSelectFromLabeledText(editData.kppn) ||
-          String(editData.kdkppnRaw ?? "").trim(),
+          String(editData.kdkppnRaw ?? "").trim() ||
+          normalizeCodeFromLabeledText(editData.kppn),
         kppnSebagaiSatker:
-          normalizeSatker(editData.kppnSebagaiSatker) ||
-          String(editData.kdsatkerRaw ?? "").trim(),
-        periodeBulan: normalizePeriode(editData.periodeRaw ?? editData.periode),
+          String(editData.kdsatkerRaw ?? "").trim() ||
+          normalizeSatker(editData.kppnSebagaiSatker),
+        periodeBulan: normalizedPeriode,
         jenisKeperluan: normalizeJenisKeperluan(
           editData.keperluanRaw ?? editData.jenisKeperluan
         ),
@@ -238,7 +247,8 @@ export function ProyeksiTkdModal({
       setFormData(mappedData);
       return;
     }
-    if (!open) setFormData(buildEmptyForm());
+
+    setFormData(buildDefaultForm());
   }, [editData, open]);
 
   const handleSubmit = () => {
@@ -256,7 +266,7 @@ export function ProyeksiTkdModal({
   };
 
   const resetForm = () => {
-    setFormData(buildEmptyForm());
+    setFormData(buildDefaultForm());
   };
 
   const handleMonthlyValueChange = (month: string, value: string) => {
@@ -271,7 +281,7 @@ export function ProyeksiTkdModal({
 
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 10 }, (_, i) =>
-    (currentYear + 5 - i).toString()
+    (currentYear - i).toString()
   );
 
   const months = [
@@ -288,10 +298,6 @@ export function ProyeksiTkdModal({
     { key: "november", label: "November" },
     { key: "desember", label: "Desember" },
   ];
-
-  const currentMonth = new Date()
-    .toLocaleString("id-ID", { month: "long" })
-    .toLowerCase();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -332,23 +338,34 @@ export function ProyeksiTkdModal({
               <Select
                 value={formData.kppn}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, kppn: value })
+                  setFormData((prev) => ({
+                    ...prev,
+                    kppn: value,
+                    kppnSebagaiSatker:
+                      prev.kppn === value ? prev.kppnSebagaiSatker : "",
+                  }))
                 }
               >
                 <SelectTrigger className="w-full">
                   <SelectValue className="truncate" placeholder="Pilih KPPN" />
                 </SelectTrigger>
                 <SelectContent>
-                  {KPPN_OPTIONS.map((kppn) => (
-                    <SelectItem key={kppn} value={kppn} title={kppn}>
-                      <span className="truncate">{kppn}</span>
+                  {kppnOptions.map((item) => (
+                    <SelectItem key={item.value} value={item.value} title={item.label}>
+                      <span className="truncate">{item.label}</span>
                     </SelectItem>
                   ))}
-                  {formData.kppn && !KPPN_OPTIONS.includes(formData.kppn) && (
+                  {isKppnOptionsLoading && (
+                    <SelectItem value="__loading_kppn" disabled>
+                      Memuat data KPPN...
+                    </SelectItem>
+                  )}
+                  {formData.kppn &&
+                    !kppnOptions.some((item) => item.value === formData.kppn) && (
                     <SelectItem value={formData.kppn} title={formData.kppn}>
                       <span className="truncate">{formData.kppn}</span>
                     </SelectItem>
-                  )}
+                    )}
                 </SelectContent>
               </Select>
             </div>
@@ -361,21 +378,31 @@ export function ProyeksiTkdModal({
                 onValueChange={(value) =>
                   setFormData({ ...formData, kppnSebagaiSatker: value })
                 }
+                disabled={!formData.kppn}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue
                     className="truncate"
-                    placeholder="Pilih kode satker"
+                    placeholder={
+                      formData.kppn ? "Pilih kode satker" : "Pilih KPPN dahulu"
+                    }
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {SATKER_OPTIONS.map((satker) => (
-                    <SelectItem key={satker} value={satker} title={satker}>
-                      <span className="truncate">{satker}</span>
+                  {satkerOptions.map((item) => (
+                    <SelectItem key={item.value} value={item.value} title={item.label}>
+                      <span className="truncate">{item.label}</span>
                     </SelectItem>
                   ))}
+                  {isSatkerOptionsLoading && formData.kppn && (
+                    <SelectItem value="__loading_satker" disabled>
+                      Memuat data satker...
+                    </SelectItem>
+                  )}
                   {formData.kppnSebagaiSatker &&
-                    !SATKER_OPTIONS.includes(formData.kppnSebagaiSatker) && (
+                    !satkerOptions.some(
+                      (item) => item.value === formData.kppnSebagaiSatker
+                    ) && (
                       <SelectItem
                         value={formData.kppnSebagaiSatker}
                         title={formData.kppnSebagaiSatker}
@@ -393,7 +420,7 @@ export function ProyeksiTkdModal({
               <Select
                 value={formData.periodeBulan}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, periodeBulan: value })
+                  setFormData({ ...formData, periodeBulan: value as MonthKey })
                 }
               >
                 <SelectTrigger className="w-full">

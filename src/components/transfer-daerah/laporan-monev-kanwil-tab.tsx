@@ -28,6 +28,7 @@ import {
   UploadLaporanMonevKanwilRow,
   useUploadLaporanMonevKanwil,
 } from "@/hooks/use-upload-laporan-monev-kanwil";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
 
 export function LaporanMonevKanwilTab() {
   const ITEMS_PER_PAGE = 25;
@@ -184,11 +185,8 @@ export function LaporanMonevKanwilTab() {
               ) : null}
               {isLoading ? (
                 <TableRow>
-                  <TableCell
-                    colSpan={8}
-                    className="text-center py-8 text-muted-foreground"
-                  >
-                    Memuat data laporan...
+                  <TableCell colSpan={8} className="p-0">
+                    <TableSkeleton rows={10} />
                   </TableCell>
                 </TableRow>
               ) : null}

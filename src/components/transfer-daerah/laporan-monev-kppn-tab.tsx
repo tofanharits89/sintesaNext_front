@@ -28,6 +28,7 @@ import {
   UploadLaporanMonevKppnRow,
   useUploadLaporanMonevKppn,
 } from "@/hooks/use-upload-laporan-monev-kppn";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
 
 export function LaporanMonevKppnTab() {
   const ITEMS_PER_PAGE = 25;
@@ -186,11 +187,8 @@ export function LaporanMonevKppnTab() {
               ) : null}
               {isLoading ? (
                 <TableRow>
-                  <TableCell
-                    colSpan={8}
-                    className="text-center py-8 text-muted-foreground"
-                  >
-                    Memuat data laporan...
+                  <TableCell colSpan={8} className="p-0">
+                    <TableSkeleton rows={10} />
                   </TableCell>
                 </TableRow>
               ) : null}
