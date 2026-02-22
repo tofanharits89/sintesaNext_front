@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -18,93 +19,121 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Download, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { DeleteLaporanModal } from "@/components/transfer-daerah/modals/delete-laporan-modal";
-
-// Mock data for demonstration
-const mockData = [
-  {
-    id: 1,
-    tahun: "2024",
-    kanwil: "Kanwil DKI Jakarta",
-    jenis: "Laporan Monev",
-    periode: "Semester I",
-    uraian:
-      "Laporan monitoring dan evaluasi semester I Kanwil DKI Jakarta 2024",
-    tanggalUpload: "2024-07-20 10:30:00",
-  },
-  {
-    id: 2,
-    tahun: "2024",
-    kanwil: "Kanwil Jawa Barat",
-    jenis: "Laporan Monev",
-    periode: "Semester I",
-    uraian: "Laporan monitoring dan evaluasi semester I Kanwil Jawa Barat 2024",
-    tanggalUpload: "2024-07-18 14:15:00",
-  },
-  {
-    id: 3,
-    tahun: "2023",
-    kanwil: "Kanwil Jawa Tengah",
-    jenis: "Laporan Monev",
-    periode: "Semester II",
-    uraian:
-      "Laporan monitoring dan evaluasi semester II Kanwil Jawa Tengah 2023",
-    tanggalUpload: "2024-01-15 09:45:00",
-  },
-  {
-    id: 4,
-    tahun: "2024",
-    kanwil: "Kanwil Sumatera Utara",
-    jenis: "Laporan Monev",
-    periode: "Semester II",
-    uraian:
-      "Laporan monitoring dan evaluasi semester II Kanwil Sumatera Utara 2024",
-    tanggalUpload: "2024-08-10 16:20:00",
-  },
-];
+import { apiPath } from "@/lib/config/base-path";
+import { addCsrfToHeaders } from "@/utils/csrf-utils";
+import {
+  UploadLaporanMonevKanwilRow,
+  useUploadLaporanMonevKanwil,
+} from "@/hooks/use-upload-laporan-monev-kanwil";
 
 export function LaporanMonevKanwilTab() {
-  const [selectedPeriode, setSelectedPeriode] = useState("");
-  const [filteredData, setFilteredData] = useState(mockData);
+  const ITEMS_PER_PAGE = 25;
+  const queryClient = useQueryClient();
+  const { rows, isLoading, error, refetch } = useUploadLaporanMonevKanwil();
+  const [selectedPeriode, setSelectedPeriode] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<(typeof mockData)[0] | null>(
-    null
+  const [selectedItem, setSelectedItem] =
+    useState<UploadLaporanMonevKanwilRow | null>(null);
+
+  const filteredData = useMemo(() => {
+    if (!selectedPeriode || selectedPeriode === "all") return rows;
+    return rows.filter((item) => item.periodeCode === selectedPeriode);
+  }, [rows, selectedPeriode]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedData = useMemo(
+    () => filteredData.slice(startIndex, endIndex),
+    [filteredData, startIndex, endIndex]
   );
 
-  const handlePeriodeFilter = (periode: string) => {
-    setSelectedPeriode(periode);
-    if (periode === "" || periode === "all") {
-      setFilteredData(mockData);
-    } else {
-      const filtered = mockData.filter((item) =>
-        item.periode.toLowerCase().includes(periode.toLowerCase())
-      );
-      setFilteredData(filtered);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedPeriode]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
     }
+  }, [currentPage, totalPages]);
+
+  const formatTanggalUpload = (value: string) => {
+    if (!value) return "-";
+    const dt = new Date(value);
+    if (Number.isNaN(dt.getTime())) return value;
+    return dt.toLocaleString("id-ID", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
   };
 
-  const handleDownload = (id: number) => {
-    console.log("Downloading file for ID:", id);
-    // Implement download logic here
+  const handleDownload = (item: UploadLaporanMonevKanwilRow) => {
+    if (!item.fileUrl) {
+      alert("File tidak tersedia.");
+      return;
+    }
+    const link = document.createElement("a");
+    link.href = item.fileUrl;
+    link.target = "_blank";
+    link.rel = "noopener,noreferrer";
+    if (item.fileName) {
+      link.setAttribute("download", item.fileName);
+    }
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
-  const handleDelete = (id: number) => {
-    const item = filteredData.find((item) => item.id === id);
+  const handleDelete = (id: string) => {
+    const item = filteredData.find((x) => x.id === id);
     if (item) {
       setSelectedItem(item);
       setIsDeleteModalOpen(true);
     }
   };
 
-  const handleConfirmDelete = () => {
-    if (selectedItem) {
-      console.log("Deleting file for ID:", selectedItem.id);
-      setFilteredData(
-        filteredData.filter((item) => item.id !== selectedItem.id)
+  const handleConfirmDelete = async () => {
+    if (!selectedItem) return;
+    try {
+      const headersWithCsrf: HeadersInit = addCsrfToHeaders({
+        "Content-Type": "application/json",
+      });
+      const resp = await fetch(
+        apiPath(
+          `/transfer-daerah/upload-laporan/kanwil/monev/${encodeURIComponent(
+            selectedItem.id
+          )}`
+        ),
+        {
+          method: "DELETE",
+          headers: headersWithCsrf,
+          credentials: "include",
+        }
       );
+      if (!resp.ok) {
+        const payload = await resp.json().catch(() => ({}));
+        throw new Error(payload?.message || `HTTP ${resp.status}`);
+      }
       setSelectedItem(null);
+      setIsDeleteModalOpen(false);
+      await queryClient.invalidateQueries({
+        queryKey: ["upload-laporan-monev-kanwil"],
+        refetchType: "active",
+      });
+      await refetch();
+    } catch (e: any) {
+      alert(`Gagal menghapus data: ${String(e?.message || e)}`);
     }
   };
 
@@ -114,19 +143,16 @@ export function LaporanMonevKanwilTab() {
         <div className="flex items-center justify-between">
           <CardTitle className="text-center">Laporan Monev Kanwil</CardTitle>
 
-          {/* Periode Filter */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              Filter Periode:
-            </span>
-            <Select value={selectedPeriode} onValueChange={handlePeriodeFilter}>
-              <SelectTrigger className="w-40">
+            <span className="text-sm text-muted-foreground">Filter Periode:</span>
+            <Select value={selectedPeriode} onValueChange={setSelectedPeriode}>
+              <SelectTrigger className="w-44">
                 <SelectValue placeholder="Semua Periode" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Semua Periode</SelectItem>
-                <SelectItem value="semester i">Semester I</SelectItem>
-                <SelectItem value="semester ii">Semester II</SelectItem>
+                <SelectItem value="0201">Semester I</SelectItem>
+                <SelectItem value="0202">Semester II</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -144,16 +170,31 @@ export function LaporanMonevKanwilTab() {
                 <TableHead className="text-center">Jenis</TableHead>
                 <TableHead className="text-center">Periode</TableHead>
                 <TableHead className="text-center">Uraian</TableHead>
-                <TableHead className="text-center">
-                  Tanggal dan Jam Upload
-                </TableHead>
+                <TableHead className="text-center">Tanggal dan Jam Upload</TableHead>
                 <TableHead className="text-center">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredData.map((item, index) => (
+              {error ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8 text-red-600">
+                    Gagal memuat data: {String((error as any)?.message || error)}
+                  </TableCell>
+                </TableRow>
+              ) : null}
+              {isLoading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={8}
+                    className="text-center py-8 text-muted-foreground"
+                  >
+                    Memuat data laporan...
+                  </TableCell>
+                </TableRow>
+              ) : null}
+              {paginatedData.map((item, index) => (
                 <TableRow key={item.id}>
-                  <TableCell className="text-center">{index + 1}</TableCell>
+                  <TableCell className="text-center">{startIndex + index + 1}</TableCell>
                   <TableCell className="text-center">
                     <Badge variant="outline">{item.tahun}</Badge>
                   </TableCell>
@@ -168,22 +209,23 @@ export function LaporanMonevKanwilTab() {
                   </TableCell>
                   <TableCell className="text-center">
                     <span
-                      className="truncate max-w-xs block"
+                      className="max-w-[520px] mx-auto block text-center whitespace-normal break-words"
                       title={item.uraian}
                     >
                       {item.uraian}
                     </span>
                   </TableCell>
                   <TableCell className="text-center">
-                    <span className="text-sm">{item.tanggalUpload}</span>
+                    <span className="text-sm">{formatTanggalUpload(item.tanggalUpload)}</span>
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-2">
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleDownload(item.id)}
+                        onClick={() => handleDownload(item)}
                         className="h-8 w-8 p-0"
+                        title={item.fileName || "Download file"}
                       >
                         <Download className="h-4 w-4" />
                       </Button>
@@ -199,12 +241,9 @@ export function LaporanMonevKanwilTab() {
                   </TableCell>
                 </TableRow>
               ))}
-              {filteredData.length === 0 && (
+              {!isLoading && !error && filteredData.length === 0 && (
                 <TableRow>
-                  <TableCell
-                    colSpan={8}
-                    className="text-center py-8 text-muted-foreground"
-                  >
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     Tidak ada data laporan yang sesuai dengan filter
                   </TableCell>
                 </TableRow>
@@ -212,12 +251,43 @@ export function LaporanMonevKanwilTab() {
             </TableBody>
           </Table>
         </div>
+
+        {!isLoading && !error && filteredData.length > 0 && (
+          <div className="flex flex-col gap-3 px-1 pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-sm text-muted-foreground">
+              Menampilkan {startIndex + 1}-{Math.min(endIndex, filteredData.length)} dari{" "}
+              {filteredData.length} data
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={safePage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Sebelumnya
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Halaman {safePage} dari {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safePage >= totalPages}
+              >
+                Berikutnya
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
 
-      {/* Delete Confirmation Modal */}
       <DeleteLaporanModal
         open={isDeleteModalOpen}
-        onOpenChange={(open) => setIsDeleteModalOpen(open)}
+        onOpenChange={setIsDeleteModalOpen}
         onConfirm={handleConfirmDelete}
         itemData={{
           tahun: selectedItem?.tahun ?? "",
