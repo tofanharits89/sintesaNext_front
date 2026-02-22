@@ -1,13 +1,15 @@
 "use client";
 
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/animate-ui/components/radix/alert-dialog";
 import { AlertTriangle } from "lucide-react";
 
 interface DeleteProyeksiTkdModalProps {
@@ -24,19 +26,19 @@ export function DeleteProyeksiTkdModal({
   onConfirm,
 }: DeleteProyeksiTkdModalProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="sm:max-w-[500px] flex flex-col overflow-hidden w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="flex items-center gap-2">
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent className="sm:max-w-[500px] w-[95vw]">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-red-500" />
             Konfirmasi Hapus
-          </DialogTitle>
-        </DialogHeader>
-        <div className="flex-1 overflow-y-auto py-4">
-          <p className="text-sm text-muted-foreground mb-4">
+          </AlertDialogTitle>
+          <AlertDialogDescription className="pt-2">
             Apakah Anda yakin ingin menghapus data proyeksi TKD ini? Tindakan
             ini tidak dapat dibatalkan.
-          </p>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="py-2">
           {data && (
             <div className="p-4 bg-muted rounded-lg space-y-2">
               <div className="flex justify-between">
@@ -73,15 +75,16 @@ export function DeleteProyeksiTkdModal({
             </div>
           )}
         </div>
-        <DialogFooter className="flex-shrink-0">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Batal
-          </Button>
-          <Button variant="destructive" onClick={onConfirm}>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Batal</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onConfirm}
+            className="bg-destructive !text-white hover:bg-destructive/90 hover:!text-white"
+          >
             Hapus
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

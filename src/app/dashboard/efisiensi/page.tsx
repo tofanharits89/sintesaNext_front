@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { StatCard } from "@/components/dashboard/StatCard";
 import {
   Table,
@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Lock, TrendingUp, Target, Download } from "lucide-react";
+import { DollarSign, Lock, TrendingUp, Target, Download, ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import * as XLSX from "xlsx";
 
 // Types for data structure
@@ -23,6 +23,16 @@ interface EfisiensiRow {
   avg_potensi_efisiensi: number;
   total_nilai_efisiensi: number;
 }
+
+type SortKey =
+  | "kddept"
+  | "nmdept"
+  | "total_pagu"
+  | "total_blokir"
+  | "avg_potensi_efisiensi"
+  | "total_nilai_efisiensi";
+
+type SortDirection = "asc" | "desc";
 
 // Formatters
 const formatCurrency = (value: number | null | undefined) => {
@@ -63,6 +73,13 @@ export default function DashboardEfisiensiPage() {
   const [efisiensiData, setEfisiensiData] = useState<EfisiensiRow[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [sortConfig, setSortConfig] = useState<{
+    key: SortKey;
+    direction: SortDirection;
+  }>({
+    key: "kddept",
+    direction: "asc",
+  });
 
   useEffect(() => {
     const now = new Date();
@@ -128,6 +145,55 @@ export default function DashboardEfisiensiPage() {
       ? (totals.totalNilaiEfisiensi / totals.totalPagu) * 100
       : 0;
 
+  const sortedEfisiensiData = useMemo(() => {
+    const sorted = [...efisiensiData];
+    const { key, direction } = sortConfig;
+    const directionMultiplier = direction === "asc" ? 1 : -1;
+
+    sorted.sort((a, b) => {
+      if (key === "kddept" || key === "nmdept") {
+        return (
+          a[key].localeCompare(b[key], "id-ID", {
+            numeric: true,
+            sensitivity: "base",
+          }) * directionMultiplier
+        );
+      }
+
+      return ((a[key] ?? 0) - (b[key] ?? 0)) * directionMultiplier;
+    });
+
+    return sorted;
+  }, [efisiensiData, sortConfig]);
+
+  const handleSort = (key: SortKey) => {
+    setSortConfig((prev) => {
+      if (prev.key === key) {
+        return {
+          key,
+          direction: prev.direction === "asc" ? "desc" : "asc",
+        };
+      }
+
+      return {
+        key,
+        direction: "asc",
+      };
+    });
+  };
+
+  const getSortIcon = (key: SortKey) => {
+    if (sortConfig.key !== key) {
+      return <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />;
+    }
+
+    return sortConfig.direction === "asc" ? (
+      <ArrowUp className="h-3.5 w-3.5" />
+    ) : (
+      <ArrowDown className="h-3.5 w-3.5" />
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -183,7 +249,7 @@ export default function DashboardEfisiensiPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handleExportToExcel(efisiensiData)}
+            onClick={() => handleExportToExcel(sortedEfisiensiData)}
             disabled={isLoading || efisiensiData.length === 0}
             className="shrink-0"
           >
@@ -204,43 +270,99 @@ export default function DashboardEfisiensiPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[120px] text-center">Kode K/L</TableHead>
-                    <TableHead className="text-center">Nama Kementerian/Lembaga</TableHead>
-                    <TableHead className="text-center">Total Pagu</TableHead>
-                    <TableHead className="text-center">Total Blokir</TableHead>
-                    <TableHead className="text-center">Rata-rata Potensi Inefisiensi</TableHead>
-                    <TableHead className="text-center">Total Nilai Inefisiensi</TableHead>
+                    <TableHead className="w-[60px] text-center">No.</TableHead>
+                    <TableHead className="w-[120px] text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleSort("kddept")}
+                        className="mx-auto inline-flex items-center gap-1 hover:text-foreground"
+                      >
+                        Kode K/L
+                        {getSortIcon("kddept")}
+                      </button>
+                    </TableHead>
+                    <TableHead className="text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleSort("nmdept")}
+                        className="mx-auto inline-flex items-center gap-1 hover:text-foreground"
+                      >
+                        Nama Kementerian/Lembaga
+                        {getSortIcon("nmdept")}
+                      </button>
+                    </TableHead>
+                    <TableHead className="text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleSort("total_pagu")}
+                        className="mx-auto inline-flex items-center gap-1 hover:text-foreground"
+                      >
+                        Total Pagu
+                        {getSortIcon("total_pagu")}
+                      </button>
+                    </TableHead>
+                    <TableHead className="text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleSort("total_blokir")}
+                        className="mx-auto inline-flex items-center gap-1 hover:text-foreground"
+                      >
+                        Total Blokir
+                        {getSortIcon("total_blokir")}
+                      </button>
+                    </TableHead>
+                    <TableHead className="text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleSort("avg_potensi_efisiensi")}
+                        className="mx-auto inline-flex items-center gap-1 hover:text-foreground"
+                      >
+                        Rata-rata Potensi Inefisiensi
+                        {getSortIcon("avg_potensi_efisiensi")}
+                      </button>
+                    </TableHead>
+                    <TableHead className="text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleSort("total_nilai_efisiensi")}
+                        className="mx-auto inline-flex items-center gap-1 hover:text-foreground"
+                      >
+                        Total Nilai Inefisiensi
+                        {getSortIcon("total_nilai_efisiensi")}
+                      </button>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center text-muted-foreground">
                         Loading data...
                       </TableCell>
                     </TableRow>
-                  ) : efisiensiData.length > 0 ? (
-                    efisiensiData.map((row) => (
+                  ) : sortedEfisiensiData.length > 0 ? (
+                    sortedEfisiensiData.map((row, index) => (
                       <TableRow key={row.kddept}>
-                        <TableCell className="font-medium">{row.kddept}</TableCell>
+                        <TableCell className="text-center">{index + 1}</TableCell>
+                        <TableCell className="font-medium text-center">{row.kddept}</TableCell>
                         <TableCell>{row.nmdept}</TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right font-mono">
                           {formatCurrency(row.total_pagu)}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right font-mono">
                           {formatCurrency(row.total_blokir)}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right font-mono">
                           {formatPercentage(row.avg_potensi_efisiensi)}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right font-mono">
                           {formatCurrency(row.total_nilai_efisiensi)}
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center text-muted-foreground">
                         Tidak ada data tersedia
                       </TableCell>
                     </TableRow>

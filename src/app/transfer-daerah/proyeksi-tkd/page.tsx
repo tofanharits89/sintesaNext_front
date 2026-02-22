@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,82 +12,115 @@ import {
 } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { ProyeksiTkdModal } from "@/components/transfer-daerah/modals/proyeksi-tkd-modal";
 import { DeleteProyeksiTkdModal } from "@/components/transfer-daerah/modals/delete-proyeksi-tkd-modal";
-import { Download, Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, FileSpreadsheet } from "lucide-react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
-
-// Mock data for the table
-const mockData = [
-  {
-    id: 1,
-    tahun: "2024",
-    periode: "Januari",
-    kppn: "KPPN Jakarta I",
-    kppnSebagaiSatker: "001",
-    jenisTkd: "01 - DAU",
-    jenisKeperluan: "ALCo",
-    waktuUpdate: new Date("2024-01-15T10:30:00"),
-  },
-  {
-    id: 2,
-    tahun: "2024",
-    periode: "Februari",
-    kppn: "KPPN Jakarta II",
-    kppnSebagaiSatker: "002",
-    jenisTkd: "02 - DBH",
-    jenisKeperluan: "IKU",
-    waktuUpdate: new Date("2024-02-20T14:15:00"),
-  },
-  {
-    id: 3,
-    tahun: "2024",
-    periode: "Maret",
-    kppn: "KPPN Bandung",
-    kppnSebagaiSatker: "004",
-    jenisTkd: "03 - DAK Fisik",
-    jenisKeperluan: "ALCo",
-    waktuUpdate: new Date("2024-03-10T09:45:00"),
-  },
-  {
-    id: 4,
-    tahun: "2024",
-    periode: "April",
-    kppn: "KPPN Surabaya",
-    kppnSebagaiSatker: "005",
-    jenisTkd: "04 - Dana Desa",
-    jenisKeperluan: "IKU",
-    waktuUpdate: new Date("2024-04-05T16:20:00"),
-  },
-  {
-    id: 5,
-    tahun: "2024",
-    periode: "Mei",
-    kppn: "KPPN Jakarta III",
-    kppnSebagaiSatker: "003",
-    jenisTkd: "05 - DAK Non Fisik",
-    jenisKeperluan: "ALCo",
-    waktuUpdate: new Date("2024-05-12T11:10:00"),
-  },
-];
+import { useProyeksiTkd } from "@/hooks/use-proyeksi-tkd";
+import { apiPath } from "@/lib/config/base-path";
+import { toast } from "sonner";
+import * as XLSX from "xlsx";
 
 export default function ProyeksiTkdPage() {
-  const [selectedYear, setSelectedYear] = useState("2024");
+  const PAGE_SIZE = 30;
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState(String(currentYear));
+  const [offset, setOffset] = useState(0);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [editingItem, setEditingItem] = useState<any>(null);
 
   // Generate years from current year back to 2020
-  const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear - 2019 }, (_, i) =>
     (currentYear - i).toString()
   );
 
-  const handleDownload = () => {
-    // Handle download functionality
-    console.log("Download clicked");
+  const handleDownload = async () => {
+    const LIMIT_PER_REQUEST = 200;
+    setIsDownloading(true);
+
+    try {
+      const allRows: Record<string, unknown>[] = [];
+      let currentOffset = 0;
+      let hasNext = true;
+      let guard = 0;
+
+      while (hasNext && guard < 1000) {
+        const params = new URLSearchParams({
+          thang: selectedYear,
+          limit: String(LIMIT_PER_REQUEST),
+          offset: String(currentOffset),
+        });
+
+        const response = await fetch(
+          apiPath(`/transfer-daerah/proyeksi-tkd?${params.toString()}`),
+          {
+            method: "GET",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            cache: "no-store",
+            signal: AbortSignal.timeout(30000),
+          }
+        );
+
+        const text = await response.text();
+        if (!response.ok) {
+          let message = `HTTP ${response.status}`;
+          try {
+            const parsed = JSON.parse(text);
+            message = parsed?.message || parsed?.error || message;
+          } catch {
+            // Keep fallback message.
+          }
+          throw new Error(message);
+        }
+
+        if (!text.trim()) break;
+        const parsed = JSON.parse(text);
+        const chunk = Array.isArray(parsed?.data) ? parsed.data : [];
+        const paginationInfo = parsed?.pagination || {};
+
+        allRows.push(...chunk);
+
+        const limit = Number(paginationInfo.limit || LIMIT_PER_REQUEST) || LIMIT_PER_REQUEST;
+        const offsetValue = Number(paginationInfo.offset || currentOffset) || currentOffset;
+        const nextFromServer = Boolean(paginationInfo.hasNext);
+
+        hasNext = nextFromServer && chunk.length > 0;
+        currentOffset = offsetValue + limit;
+        guard += 1;
+
+        if (chunk.length === 0) break;
+      }
+
+      if (allRows.length === 0) {
+        toast.error("Tidak ada data untuk diunduh");
+        return;
+      }
+
+      const worksheet = XLSX.utils.json_to_sheet(allRows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Proyeksi TKD");
+
+      const now = new Date();
+      const timestamp = now.toISOString().slice(0, 19).replace(/[-:T]/g, "");
+      const filename = `proyeksi-tkd-${selectedYear}-${timestamp}.xlsx`;
+
+      XLSX.writeFile(workbook, filename);
+      toast.success(`Berhasil mengunduh ${allRows.length} baris data`);
+    } catch (error: any) {
+      toast.error(
+        error?.message
+          ? `Gagal mengunduh Excel: ${error.message}`
+          : "Gagal mengunduh Excel"
+      );
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const handleEdit = (item: any) => {
@@ -112,6 +145,22 @@ export default function ProyeksiTkdPage() {
     setEditingItem(null);
   };
 
+  useEffect(() => {
+    setOffset(0);
+  }, [selectedYear]);
+
+  const { rows, pagination, isLoading, error } = useProyeksiTkd({
+    thang: selectedYear,
+    limit: PAGE_SIZE,
+    offset,
+  });
+
+  const currentPage = pagination.currentPage;
+  const totalPages = pagination.totalPages;
+  const totalItems = pagination.total;
+  const startItem = totalItems > 0 ? offset + 1 : 0;
+  const endItem = offset + rows.length;
+
   const columns = [
     {
       accessorKey: "no",
@@ -119,7 +168,7 @@ export default function ProyeksiTkdPage() {
         <div className="text-center font-medium">No</div>
       ),
       cell: ({ row }: any) => (
-        <div className="text-center">{row.index + 1}</div>
+        <div className="text-center">{offset + row.index + 1}</div>
       ),
     },
     {
@@ -230,7 +279,10 @@ export default function ProyeksiTkdPage() {
         <div className="text-center font-medium">Waktu Update</div>
       ),
       cell: ({ row }: any) => {
-        const waktuUpdate = row.getValue("waktuUpdate");
+        const waktuUpdate = row.getValue("waktuUpdate") as Date | null;
+        if (!waktuUpdate || Number.isNaN(waktuUpdate.getTime())) {
+          return <div className="text-center text-muted-foreground">-</div>;
+        }
         return (
           <div className="text-center text-sm">
             <div>{format(waktuUpdate, "dd/MM/yyyy", { locale: localeId })}</div>
@@ -285,18 +337,19 @@ export default function ProyeksiTkdPage() {
         </div>
         <div className="flex gap-2">
           <Button
+            onClick={handleDownload}
+            disabled={isDownloading || isLoading}
+            className="bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white min-w-[140px] h-10"
+          >
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            {isDownloading ? "Downloading..." : "Download Excel"}
+          </Button>
+          <Button
             onClick={() => setIsModalOpen(true)}
             className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 text-white min-w-[100px] h-10"
           >
             <Plus className="h-4 w-4 mr-2" />
             Rekam
-          </Button>
-          <Button
-            onClick={handleDownload}
-            className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 text-white min-w-[100px] h-10"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Download
           </Button>
         </div>
       </div>
@@ -329,10 +382,50 @@ export default function ProyeksiTkdPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <DataTable
-            columns={columns}
-            data={mockData.filter((item) => item.tahun === selectedYear)}
-          />
+          {isLoading ? (
+            <TableSkeleton rows={10} />
+          ) : error ? (
+            <div className="text-sm text-red-600">
+              {String((error as Error)?.message || error)}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <DataTable
+                columns={columns}
+                data={rows}
+                hidePagination
+                initialPageSize={PAGE_SIZE}
+              />
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  Menampilkan {startItem}-{endItem} dari {totalItems} data
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="text-sm text-muted-foreground">
+                    Halaman {currentPage} / {totalPages}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setOffset((prev) => Math.max(0, prev - PAGE_SIZE))
+                    }
+                    disabled={!pagination.hasPrev || isLoading}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setOffset((prev) => prev + PAGE_SIZE)}
+                    disabled={!pagination.hasNext || isLoading}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

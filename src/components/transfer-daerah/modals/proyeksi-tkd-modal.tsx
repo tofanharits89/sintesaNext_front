@@ -26,64 +26,219 @@ interface ProyeksiTkdModalProps {
   editData?: any;
 }
 
+type MonthKey =
+  | "januari"
+  | "februari"
+  | "maret"
+  | "april"
+  | "mei"
+  | "juni"
+  | "juli"
+  | "agustus"
+  | "september"
+  | "oktober"
+  | "november"
+  | "desember";
+
+type MonthlyValues = Record<MonthKey, string>;
+
+const DEFAULT_MONTHLY_VALUES: MonthlyValues = {
+  januari: "",
+  februari: "",
+  maret: "",
+  april: "",
+  mei: "",
+  juni: "",
+  juli: "",
+  agustus: "",
+  september: "",
+  oktober: "",
+  november: "",
+  desember: "",
+};
+
+const KPPN_OPTIONS = [
+  "KPPN Jakarta I",
+  "KPPN Jakarta II",
+  "KPPN Jakarta III",
+  "KPPN Bandung",
+  "KPPN Surabaya",
+];
+
+const SATKER_OPTIONS = ["001", "002", "003", "004", "005"];
+const JENIS_KEPERLUAN_OPTIONS = ["alco", "iku"];
+const JENIS_LAPORAN_OPTIONS = ["01", "02", "03", "04", "05"];
+
+const MONTH_KEYS: MonthKey[] = [
+  "januari",
+  "februari",
+  "maret",
+  "april",
+  "mei",
+  "juni",
+  "juli",
+  "agustus",
+  "september",
+  "oktober",
+  "november",
+  "desember",
+];
+
+const PERIOD_ALIAS_TO_KEY: Record<string, MonthKey> = {
+  januari: "januari",
+  january: "januari",
+  feb: "februari",
+  februari: "februari",
+  february: "februari",
+  mar: "maret",
+  maret: "maret",
+  march: "maret",
+  apr: "april",
+  april: "april",
+  mei: "mei",
+  may: "mei",
+  jun: "juni",
+  juni: "juni",
+  june: "juni",
+  jul: "juli",
+  juli: "juli",
+  july: "juli",
+  ags: "agustus",
+  agu: "agustus",
+  agt: "agustus",
+  agustus: "agustus",
+  august: "agustus",
+  sep: "september",
+  september: "september",
+  okt: "oktober",
+  october: "oktober",
+  oktober: "oktober",
+  nov: "november",
+  november: "november",
+  des: "desember",
+  december: "desember",
+  desember: "desember",
+};
+
+const buildEmptyForm = () => ({
+  tahun: "",
+  kppn: "",
+  kppnSebagaiSatker: "",
+  periodeBulan: "",
+  jenisKeperluan: "",
+  jenisLaporan: "",
+  keterangan: "",
+  monthlyValues: { ...DEFAULT_MONTHLY_VALUES },
+});
+
+const normalizeSelectFromLabeledText = (value: unknown): string => {
+  const text = String(value ?? "").trim();
+  if (!text) return "";
+  const parts = text.split(" - ").map((part) => part.trim()).filter(Boolean);
+  return parts.length > 1 ? (parts[1] || "") : text;
+};
+
+const normalizeSatker = (value: unknown): string => {
+  const text = String(value ?? "").trim();
+  if (!text) return "";
+  return text.split(" - ")[0]?.trim() || text;
+};
+
+const normalizeJenisKeperluan = (value: unknown): string => {
+  const raw = String(value ?? "").trim().toLowerCase();
+  if (!raw) return "";
+  if (raw.startsWith("alc")) return "alco";
+  if (raw === "iku") return "iku";
+  return raw;
+};
+
+const normalizeJenisLaporan = (value: unknown): string => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+
+  const codeMatch = raw.match(/^(\d{1,2})/);
+  if (codeMatch?.[1]) return codeMatch[1].padStart(2, "0");
+
+  const lower = raw.toLowerCase();
+  if (lower.includes("dau")) return "01";
+  if (lower.includes("dbh")) return "02";
+  if (lower.includes("dak fisik")) return "03";
+  if (lower.includes("dana desa")) return "04";
+  if (lower.includes("dak non fisik")) return "05";
+
+  return raw;
+};
+
+const normalizePeriode = (value: unknown): string => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  const lower = raw.toLowerCase();
+
+  if (MONTH_KEYS.includes(lower as MonthKey)) {
+    return lower;
+  }
+  if (PERIOD_ALIAS_TO_KEY[lower]) {
+    return PERIOD_ALIAS_TO_KEY[lower];
+  }
+
+  const parsedNum = Number.parseInt(raw, 10);
+  if (Number.isFinite(parsedNum) && parsedNum >= 1 && parsedNum <= 12) {
+    return MONTH_KEYS[parsedNum - 1] || "";
+  }
+
+  return "";
+};
+
+const normalizeMonthlyValues = (source: any): MonthlyValues => {
+  const payload = source?.monthlyValues || source || {};
+  return {
+    januari: String(payload.januari ?? payload.jan ?? ""),
+    februari: String(payload.februari ?? payload.feb ?? ""),
+    maret: String(payload.maret ?? payload.mar ?? ""),
+    april: String(payload.april ?? payload.apr ?? ""),
+    mei: String(payload.mei ?? ""),
+    juni: String(payload.juni ?? payload.jun ?? ""),
+    juli: String(payload.juli ?? payload.jul ?? ""),
+    agustus: String(payload.agustus ?? payload.ags ?? ""),
+    september: String(payload.september ?? payload.sep ?? ""),
+    oktober: String(payload.oktober ?? payload.okt ?? ""),
+    november: String(payload.november ?? payload.nov ?? ""),
+    desember: String(payload.desember ?? payload.des ?? ""),
+  };
+};
+
 export function ProyeksiTkdModal({
   open,
   onOpenChange,
   editData,
 }: ProyeksiTkdModalProps) {
-  const [formData, setFormData] = useState({
-    tahun: "",
-    kppn: "",
-    kppnSebagaiSatker: "",
-    periodeBulan: "",
-    jenisKeperluan: "",
-    jenisLaporan: "",
-    keterangan: "",
-    monthlyValues: {
-      januari: "",
-      februari: "",
-      maret: "",
-      april: "",
-      mei: "",
-      juni: "",
-      juli: "",
-      agustus: "",
-      september: "",
-      oktober: "",
-      november: "",
-      desember: "",
-    },
-  });
+  const [formData, setFormData] = useState(buildEmptyForm);
 
   // Pre-fill form data when editing
   useEffect(() => {
     if (editData && open) {
-      // Map the editData to the form structure
       const mappedData = {
         tahun: editData.tahun || "",
-        kppn: editData.kppn || "",
-        kppnSebagaiSatker: editData.kppnSebagaiSatker || "",
-        periodeBulan: editData.periode || "",
-        jenisKeperluan: editData.jenisKeperluan || "",
-        jenisLaporan: editData.jenisTkd || "",
+        kppn:
+          normalizeSelectFromLabeledText(editData.kppn) ||
+          String(editData.kdkppnRaw ?? "").trim(),
+        kppnSebagaiSatker:
+          normalizeSatker(editData.kppnSebagaiSatker) ||
+          String(editData.kdsatkerRaw ?? "").trim(),
+        periodeBulan: normalizePeriode(editData.periodeRaw ?? editData.periode),
+        jenisKeperluan: normalizeJenisKeperluan(
+          editData.keperluanRaw ?? editData.jenisKeperluan
+        ),
+        jenisLaporan: normalizeJenisLaporan(
+          editData.jenisTkdCode ?? editData.jenisTkd
+        ),
         keterangan: editData.keterangan || "",
-        monthlyValues: editData.monthlyValues || {
-          januari: "",
-          februari: "",
-          maret: "",
-          april: "",
-          mei: "",
-          juni: "",
-          juli: "",
-          agustus: "",
-          september: "",
-          oktober: "",
-          november: "",
-          desember: "",
-        },
+        monthlyValues: normalizeMonthlyValues(editData),
       };
       setFormData(mappedData);
+      return;
     }
+    if (!open) setFormData(buildEmptyForm());
   }, [editData, open]);
 
   const handleSubmit = () => {
@@ -101,29 +256,7 @@ export function ProyeksiTkdModal({
   };
 
   const resetForm = () => {
-    setFormData({
-      tahun: "",
-      kppn: "",
-      kppnSebagaiSatker: "",
-      periodeBulan: "",
-      jenisKeperluan: "",
-      jenisLaporan: "",
-      keterangan: "",
-      monthlyValues: {
-        januari: "",
-        februari: "",
-        maret: "",
-        april: "",
-        mei: "",
-        juni: "",
-        juli: "",
-        agustus: "",
-        september: "",
-        oktober: "",
-        november: "",
-        desember: "",
-      },
-    });
+    setFormData(buildEmptyForm());
   };
 
   const handleMonthlyValueChange = (month: string, value: string) => {
@@ -206,21 +339,16 @@ export function ProyeksiTkdModal({
                   <SelectValue className="truncate" placeholder="Pilih KPPN" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="KPPN Jakarta I" title="KPPN Jakarta I">
-                    <span className="truncate">KPPN Jakarta I</span>
-                  </SelectItem>
-                  <SelectItem value="KPPN Jakarta II" title="KPPN Jakarta II">
-                    <span className="truncate">KPPN Jakarta II</span>
-                  </SelectItem>
-                  <SelectItem value="KPPN Jakarta III" title="KPPN Jakarta III">
-                    <span className="truncate">KPPN Jakarta III</span>
-                  </SelectItem>
-                  <SelectItem value="KPPN Bandung" title="KPPN Bandung">
-                    <span className="truncate">KPPN Bandung</span>
-                  </SelectItem>
-                  <SelectItem value="KPPN Surabaya" title="KPPN Surabaya">
-                    <span className="truncate">KPPN Surabaya</span>
-                  </SelectItem>
+                  {KPPN_OPTIONS.map((kppn) => (
+                    <SelectItem key={kppn} value={kppn} title={kppn}>
+                      <span className="truncate">{kppn}</span>
+                    </SelectItem>
+                  ))}
+                  {formData.kppn && !KPPN_OPTIONS.includes(formData.kppn) && (
+                    <SelectItem value={formData.kppn} title={formData.kppn}>
+                      <span className="truncate">{formData.kppn}</span>
+                    </SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -241,21 +369,20 @@ export function ProyeksiTkdModal({
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="001" title="001">
-                    <span className="truncate">001</span>
-                  </SelectItem>
-                  <SelectItem value="002" title="002">
-                    <span className="truncate">002</span>
-                  </SelectItem>
-                  <SelectItem value="003" title="003">
-                    <span className="truncate">003</span>
-                  </SelectItem>
-                  <SelectItem value="004" title="004">
-                    <span className="truncate">004</span>
-                  </SelectItem>
-                  <SelectItem value="005" title="005">
-                    <span className="truncate">005</span>
-                  </SelectItem>
+                  {SATKER_OPTIONS.map((satker) => (
+                    <SelectItem key={satker} value={satker} title={satker}>
+                      <span className="truncate">{satker}</span>
+                    </SelectItem>
+                  ))}
+                  {formData.kppnSebagaiSatker &&
+                    !SATKER_OPTIONS.includes(formData.kppnSebagaiSatker) && (
+                      <SelectItem
+                        value={formData.kppnSebagaiSatker}
+                        title={formData.kppnSebagaiSatker}
+                      >
+                        <span className="truncate">{formData.kppnSebagaiSatker}</span>
+                      </SelectItem>
+                    )}
                 </SelectContent>
               </Select>
             </div>
@@ -281,6 +408,12 @@ export function ProyeksiTkdModal({
                       {month.label}
                     </SelectItem>
                   ))}
+                  {formData.periodeBulan &&
+                    !months.some((month) => month.key === formData.periodeBulan) && (
+                      <SelectItem value={formData.periodeBulan}>
+                        {formData.periodeBulan}
+                      </SelectItem>
+                    )}
                 </SelectContent>
               </Select>
             </div>
@@ -310,6 +443,15 @@ export function ProyeksiTkdModal({
                   <SelectItem value="iku" title="IKU">
                     <span className="truncate">IKU</span>
                   </SelectItem>
+                  {formData.jenisKeperluan &&
+                    !JENIS_KEPERLUAN_OPTIONS.includes(formData.jenisKeperluan) && (
+                      <SelectItem
+                        value={formData.jenisKeperluan}
+                        title={formData.jenisKeperluan}
+                      >
+                        <span className="truncate">{formData.jenisKeperluan}</span>
+                      </SelectItem>
+                    )}
                 </SelectContent>
               </Select>
             </div>
@@ -345,6 +487,15 @@ export function ProyeksiTkdModal({
                   <SelectItem value="05" title="05 - DAK Non Fisik">
                     <span className="truncate">05 - DAK Non Fisik</span>
                   </SelectItem>
+                  {formData.jenisLaporan &&
+                    !JENIS_LAPORAN_OPTIONS.includes(formData.jenisLaporan) && (
+                      <SelectItem
+                        value={formData.jenisLaporan}
+                        title={formData.jenisLaporan}
+                      >
+                        <span className="truncate">{formData.jenisLaporan}</span>
+                      </SelectItem>
+                    )}
                 </SelectContent>
               </Select>
             </div>
