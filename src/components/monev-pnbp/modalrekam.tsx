@@ -32,6 +32,7 @@ import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
+import { apiPath } from "@/lib/config/base-path";
 
 interface RekamProps {
   show: boolean;
@@ -97,9 +98,7 @@ const Rekam: React.FC<RekamProps> = ({
 
   const fetchDataRekaman = async () => {
     try {
-      const response = await http.get(
-        `${process.env.NEXT_PUBLIC_LOCAL_GET_REKAMAN}`,
-      );
+      const response = await http.get(apiPath("/monev-pnbp/rekaman"));
       setRekamanSebelumnya(response.data);
     } catch (error) {
       console.error("Gagal mengambil data rekaman:", error);
@@ -166,15 +165,11 @@ const Rekam: React.FC<RekamProps> = ({
     }
 
     try {
-      await http.patch(
-        `${process.env.NEXT_PUBLIC_LOCAL_UPDATE_LAPPNBP}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+      await http.patch(apiPath("/monev-pnbp/update-laporan"), formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
         },
-      );
+      });
 
       Swal.fire("Sukses", "Data berhasil disimpan", "success").then(() => {
         onSaveSuccess(values.nd_kanwil);

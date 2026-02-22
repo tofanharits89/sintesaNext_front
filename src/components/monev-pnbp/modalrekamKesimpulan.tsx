@@ -38,6 +38,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import moment from "moment";
+import { apiPath } from "@/lib/config/base-path";
 
 interface RekamKesimpulanProps {
   show: boolean;
@@ -97,11 +98,10 @@ export default function RekamKesimpulan({
 
     try {
       setLoading(true);
-      const url =
-        process.env.NEXT_PUBLIC_SIMPANKESIMPULAN_MONEVPNBP ||
-        "/api/simpan-kesimpulan";
+      const url = "/api/simpan-kesimpulan";
       const response = await fetch(url, {
         method: "PATCH",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -132,11 +132,10 @@ export default function RekamKesimpulan({
 
     try {
       setLoading(true);
-      const url =
-        process.env.NEXT_PUBLIC_SIMPANREKOMENDASI_MONEVPNBP ||
-        "/api/simpan-rekomendasi";
+      const url = "/api/simpan-rekomendasi";
       const response = await fetch(url, {
         method: "PATCH",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -167,11 +166,10 @@ export default function RekamKesimpulan({
 
     try {
       setLoading(true);
-      const url =
-        process.env.NEXT_PUBLIC_SIMPANGAMBARAN_MONEVPNBP ||
-        "/api/simpan-gambaran";
+      const url = "/api/simpan-gambaran";
       const response = await fetch(url, {
         method: "PATCH",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -211,11 +209,13 @@ export default function RekamKesimpulan({
 
     try {
       const encryptedQuery = btoa(cleanedQuery);
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
-      const apiUrl = `${baseUrl}/kesimpulan/${encryptedQuery}?limit=${limit}&page=${page}`;
+      const apiUrl = apiPath(
+        `/kesimpulan/${encryptedQuery}?limit=${limit}&page=${page}`
+      );
 
       const response = await fetch(apiUrl, {
         method: "GET",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },

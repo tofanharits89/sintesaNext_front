@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { Loading2 } from "../../layout/LoadingTable";
 import { Trash2 } from "lucide-react";
+import { apiPath } from "@/lib/config/base-path";
 
 interface DataKontrakDetailProps {
   cek: boolean;
@@ -42,9 +43,8 @@ export default function DataKontrakDetail({ cek, id }: DataKontrakDetailProps) {
     const encryptedQuery = btoa(query);
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
       const response = await fetch(
-        `${baseUrl}/dispensasi/${encryptedQuery}?limit=999999&page=0`,
+        apiPath(`/dispensasi/${encryptedQuery}?limit=999999&page=0`),
         {
           credentials: "include",
           headers: {
@@ -86,9 +86,10 @@ export default function DataKontrakDetail({ cek, id }: DataKontrakDetailProps) {
       if (result.isConfirmed) {
         try {
           const response = await fetch(
-            `${process.env.NEXT_PUBLIC_LOCAL_BASIC}hapusdetailkppn/delete/${id}/${kdsatker}/${kdkppn}/${id_dispensasi}`,
+            apiPath(`/dispensasi/kontrak/${id}/${id_dispensasi}`),
             {
               method: "DELETE",
+              credentials: "include",
               headers: {
                 // Authorization: `Bearer ${user?.token}`,
               },

@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { apiPath } from "@/lib/config/base-path";
 
 interface UploadKontrakProps {
   id?: string;
@@ -41,26 +42,17 @@ export default function UploadKontrak({ id, cekupload }: UploadKontrakProps) {
 
   async function fetchFormData() {
     try {
-      // Original project used an encrypted SQL query endpoint. We try a simple GET to a configured inquiry endpoint.
-      const base =
-        process.env.NEXT_PUBLIC_INQUIRY_GETDATA ||
-        process.env.NEXT_PUBLIC_API_URL ||
-        "";
-      if (!base) return;
-
-      const encodedQuery = encodeURIComponent(
+      const query =
         `SELECT id,thang,kddept,kdunit,kdkanwil,kdlokasi,kdsatker,tgpermohonan,nopermohonan FROM  laporan_2023.dispensasi_kontrak WHERE id='${id}' GROUP BY id`
-      );
-
-      const url = base.endsWith("/")
-        ? `${base}${encodedQuery}`
-        : `${base}${encodedQuery}`;
+      ;
+      const encryptedQuery = btoa(query);
+      const url = apiPath(`/dispensasi/${encryptedQuery}?limit=1&page=0`);
 
       const resp = await fetch(url, { credentials: "include" });
       if (!resp.ok) throw new Error(`Request failed: ${resp.status}`);
       const json = await resp.json();
       // Keep the same shape as original where response.data contained values
-      setFormData(json?.data || json || []);
+      setFormData(json?.result || json?.data || json || []);
     } catch (err: any) {
       // Non-fatal: keep quiet and allow upload without formData
       console.warn("fetchFormData error:", err?.message || err);
@@ -172,10 +164,7 @@ export default function UploadKontrak({ id, cekupload }: UploadKontrakProps) {
     setProcessError(null);
     setProcessSuccess(null);
     try {
-      const apiBase =
-        process.env.NEXT_PUBLIC_API_URL ||
-        `http://localhost:${process.env.NEXT_PUBLIC_BACKEND_PORT || "88"}`;
-      const url = `${apiBase.replace(/\/$/, "")}/dispensasi/upload-kontrak/`;
+      const url = apiPath("/dispensasi/upload-kontrak");
 
       const body = { formData, data };
 

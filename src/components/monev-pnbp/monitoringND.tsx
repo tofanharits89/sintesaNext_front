@@ -29,6 +29,7 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
+import { apiPath } from "@/lib/config/base-path";
 
 export default function RekamanNotaDinas({ show, onHide }: any) {
   const { user } = useAuth();
@@ -49,20 +50,13 @@ export default function RekamanNotaDinas({ show, onHide }: any) {
   const fetchRekaman = async () => {
     setLoading(true);
     try {
-      const url =
-        process.env.NEXT_PUBLIC_GET_REKAMAN_NOTADINAS ||
-        "/api/get-rekaman-notadinas";
-
-      const response = await http.get(url);
+      const response = await http.get(apiPath("/monev-pnbp/rekaman-nd"));
       const data = response.data;
-
-      const backendUrl =
-        process.env.NEXT_PUBLIC_BACKEND_URL || "https://api.example.com";
 
       const updatedData = data.map((item: any) => ({
         ...item,
         fileUrl: item.nd_kanwil
-          ? `${backendUrl}/monev_pnbp/${item.nd_kanwil}`
+          ? item.fileUrl || `/monev_pnbp/${item.nd_kanwil}`
           : null,
       }));
 

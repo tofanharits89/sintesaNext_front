@@ -227,13 +227,7 @@ export default function Rekam2({
     setCek(false);
     setLoading(true);
     try {
-      // NOTE: apiClient forces /api/v1 prefix handling, so check if NEXT_PUBLIC_SIMPANSPM includes it or not.
-      // Assuming straightforward path like "/simpan-spm" or full URL.
-      // If full URL, apiClient might be tricky, but let's assume relative path works best.
-      // If process.env.NEXT_PUBLIC_SIMPANSPM contains a full URL, we might need to handle it.
-      // But for now, we pass it as is, and apiClient handles apiPath.
-      // If the original was "/api/simpan-spm", apiPath transforms it to "/api/v1/simpan-spm".
-      const url = process.env.NEXT_PUBLIC_SIMPANSPM || "/simpan-spm";
+      const url = "/dispensasi/simpan-spm";
 
       await apiClient.post(url, values);
 

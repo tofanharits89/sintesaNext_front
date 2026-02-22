@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { apiPath } from "@/lib/config/base-path";
 
 interface UploadTupProps {
   id?: string;
@@ -38,23 +39,15 @@ export default function UploadTup({ id, cekupload }: UploadTupProps) {
 
   async function fetchFormData() {
     try {
-      const base =
-        process.env.NEXT_PUBLIC_INQUIRY_GETDATA ||
-        process.env.NEXT_PUBLIC_API_URL ||
-        "";
-      if (!base) return;
-
-      const encodedQuery = encodeURIComponent(
+      const query =
         `SELECT id,thang,kddept,kdunit,kdkanwil,kdlokasi,kdsatker,tgpermohonan,nopermohonan FROM  laporan_2023.dispensasi_tup WHERE id='${id}' GROUP BY id`
-      );
-
-      const url = base.endsWith("/")
-        ? `${base}${encodedQuery}`
-        : `${base}${encodedQuery}`;
+      ;
+      const encryptedQuery = btoa(query);
+      const url = apiPath(`/dispensasi/${encryptedQuery}?limit=1&page=0`);
       const resp = await fetch(url, { credentials: "include" });
       if (!resp.ok) throw new Error(`Request failed: ${resp.status}`);
       const json = await resp.json();
-      setFormData(json?.data || json || []);
+      setFormData(json?.result || json?.data || json || []);
     } catch (err: any) {
       console.warn("fetchFormData error:", err?.message || err);
     }
@@ -176,10 +169,7 @@ export default function UploadTup({ id, cekupload }: UploadTupProps) {
     setProcessSuccess(null);
 
     try {
-      const apiBase =
-        process.env.NEXT_PUBLIC_API_URL ||
-        `http://localhost:${process.env.NEXT_PUBLIC_BACKEND_PORT || "88"}`;
-      const url = `${apiBase.replace(/\/$/, "")}/dispensasi/upload-tup/`;
+      const url = apiPath("/dispensasi/upload-tup");
 
       const body = { formData, data };
 

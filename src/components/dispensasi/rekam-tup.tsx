@@ -124,8 +124,7 @@ export default function RekamTup({
     setCek(false);
     setLoading(true);
     try {
-      const url =
-        process.env.NEXT_PUBLIC_SIMPANLAMPIRANTUP || "/simpan-lampiran-tup";
+      const url = "/dispensasi/simpan-lampiran-tup";
 
       // Using apiClient.post instead of fetch
       await apiClient.post(url, values.formRows); // Note: Original code sent values (including id/tahun), but rekam-kontrak sent values.formRows. 
@@ -239,7 +238,7 @@ export default function RekamTup({
                       setCek(false);
                       setLoading(true);
                       try {
-                        const url = process.env.NEXT_PUBLIC_SIMPANLAMPIRANTUP || "/simpan-lampiran-tup";
+                        const url = "/dispensasi/simpan-lampiran-tup";
                         // Using values directly as per original code
                         await apiClient.post(url, values);
 

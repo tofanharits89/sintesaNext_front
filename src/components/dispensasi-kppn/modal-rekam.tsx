@@ -30,6 +30,7 @@ import moment from "moment";
 import { X, Save } from "lucide-react";
 import CekKppn from "./cek-kppn";
 import { apiClient } from "@/lib/api/httpClient";
+import { apiPath } from "@/lib/config/base-path";
 
 interface Satker {
   kdsatker: string;
@@ -116,7 +117,7 @@ const Rekam: React.FC<Props> = ({ show, onHide }) => {
     setLoading(true);
     try {
       const response = await fetch(
-        process.env.NEXT_PUBLIC_SIMPANKONTRAKKPPN || "",
+        apiPath("/dispensasi/simpan-kontrak"),
         {
           method: "POST",
           headers: {

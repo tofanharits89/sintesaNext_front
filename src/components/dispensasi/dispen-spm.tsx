@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api/httpClient";
+import { apiPath } from "@/lib/config/base-path";
 import { PlusSquare, Trash2, Download, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import { Loading2 } from "../../layout/LoadingTable";
 import Rekam2 from "./rekam2";
@@ -190,9 +191,10 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
   const confirmDelete = async () => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_LOCAL_BASIC}dispspm/delete/${deleteTargetId}`,
+        apiPath(`/dispensasi/dispspm/${deleteTargetId}`),
         {
           method: "DELETE",
+          credentials: "include",
           headers: {
             // Authorization: `Bearer ${user?.token}`,
           },

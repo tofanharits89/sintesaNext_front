@@ -23,6 +23,7 @@ import { PlusSquare, Save, Trash2 } from "lucide-react";
 import DataKontrakDetail from "./data-kontrak-detail";
 import { format, parse } from "date-fns";
 import moment from "moment";
+import { apiPath } from "@/lib/config/base-path";
 
 interface RekamKontrakProps {
   show: boolean;
@@ -108,7 +109,7 @@ export default function ModalRekamKontrak({
     setLoading(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SIMPANLAMPIRANKONTRAKKPPN}`,
+        apiPath("/dispensasi/simpan-lampiran-kontrak"),
         {
           credentials: "include",
           method: "POST",

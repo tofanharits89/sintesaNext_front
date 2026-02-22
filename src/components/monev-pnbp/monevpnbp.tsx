@@ -49,6 +49,7 @@ import { toast } from "sonner";
 import GenerateCSV from "../GenerateCSV";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
+import { apiPath } from "@/lib/config/base-path";
 
 export default function MonevPnbp() {
   const { user } = useAuth();
@@ -223,8 +224,7 @@ export default function MonevPnbp() {
     setSql(query);
 
     try {
-      const url =
-        process.env.NEXT_PUBLIC_TAYANGMONEVPNBP || "/api/tayang-monev-pnbp";
+      const url = apiPath("/monev-pnbp/tayang");
       const response = await http.get(
         `${url}?query=${encodedQuery}&limit=${limit}&page=${page}&user=${username}`,
       );
@@ -395,9 +395,7 @@ export default function MonevPnbp() {
 
   const handledownload = async (id: string) => {
     const intId = parseInt(id, 10);
-    const baseUrl =
-      process.env.NEXT_PUBLIC_BASIC_URL || "https://api.example.com";
-    const fileUrl = `${baseUrl}/ND_Kanwil/download/${intId}`;
+    const fileUrl = `/ND_Kanwil/download/${intId}`;
 
     try {
       const response = await http.get(fileUrl, {

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api/httpClient";
+import { apiPath } from "@/lib/config/base-path";
 import { PlusSquare, Trash2, Download, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import RekamTup from "./rekam-tup";
 import {
@@ -198,9 +199,10 @@ export default function DispenTup({ cek, id, where }: DataTupProps) {
   const confirmDelete = async () => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_LOCAL_BASIC}disptup/delete/${deleteTargetId}`,
+        apiPath(`/dispensasi/disptup/${deleteTargetId}`),
         {
           method: "DELETE",
+          credentials: "include",
           headers: {
             // Authorization: `Bearer ${user?.token}`,
           },

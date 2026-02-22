@@ -127,9 +127,7 @@ export default function RekamKontrak({
     setCek(false);
     setLoading(true);
     try {
-      const url =
-        process.env.NEXT_PUBLIC_SIMPANLAMPIRANKONTRAK ||
-        "/simpan-lampiran-kontrak";
+      const url = "/dispensasi/simpan-lampiran-kontrak";
 
       // Using apiClient.post instead of fetch
       await apiClient.post(url, values.formRows);

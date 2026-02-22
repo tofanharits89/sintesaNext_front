@@ -21,6 +21,7 @@ import { Loader2, FileSpreadsheet, CheckSquare, ChevronLeft, ChevronRight } from
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
+import { apiPath } from "@/lib/config/base-path";
 import ReactPaginate from "react-paginate";
 import numeral from "numeral";
 import moment from "moment";
@@ -165,13 +166,7 @@ export default function RekamTpid() {
     const encryptedQuery = Encrypt(cleanedQuery);
 
     try {
-      // Direct API call using http client
-      // Adjust endpoint to match new backend structure
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-      // Remove trailing slash and /api/v1 if present to avoid duplication
-      const cleanBaseUrl = baseUrl.replace(/\/$/, "").replace(/\/api\/v1$/, "");
-      const endpoint = `${cleanBaseUrl}/api/v1/tpid/permasalahan/view`;
+      const endpoint = apiPath("/tpid/permasalahan/view");
 
       const fetchLimit = 100000;
       const response = await http.get(

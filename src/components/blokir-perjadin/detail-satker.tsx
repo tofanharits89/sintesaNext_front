@@ -3,6 +3,7 @@ import numeral from "numeral";
 import GenerateCSV from "../GenerateCSV";
 import { toast } from "sonner";
 import moment from "moment";
+import { apiPath } from "@/lib/config/base-path";
 
 interface DetailSatkerBlokir {
   isModalOpen: boolean;
@@ -72,12 +73,11 @@ export default function DetailSatkerBlokir({
 
     try {
       setLoading(true);
-      // Construct URL - assuming a similar pattern to GenerateCSV or a specific endpoint
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
-      const apiUrl = `${baseUrl}/monitoring-blokir-satker/${encryptedQuery}`;
+      const apiUrl = apiPath(`/blokir/monitoring-satker/${encryptedQuery}`);
 
       const response = await fetch(apiUrl, {
         method: "GET",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),

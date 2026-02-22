@@ -71,14 +71,13 @@ function getSocketUrl(): string {
     return apiUrl.replace(/\/api\/v1$/, "");
   }
 
-  // API is relative (e.g. '/api/v1'). Build backend origin for sockets.
-  // Priority: explicit env → derive from window → sane fallback
-  const envOrigin =
-    (typeof process !== "undefined" &&
-      (process.env.NEXT_PUBLIC_SOCKET_ORIGIN ||
-        process.env.NEXT_PUBLIC_BACKEND_ORIGIN)) ||
-    undefined;
-  if (envOrigin) return envOrigin;
+  // API is relative (e.g. '/api/v1'). Build socket origin safely.
+  // Use explicit socket origin only when provided.
+  const explicitSocketOrigin =
+    typeof process !== "undefined"
+      ? process.env.NEXT_PUBLIC_SOCKET_ORIGIN
+      : undefined;
+  if (explicitSocketOrigin) return explicitSocketOrigin;
 
   if (typeof window !== "undefined") {
     try {
@@ -99,12 +98,19 @@ function getSocketUrl(): string {
       // ignore and fall through
     }
   }
-  // Server-side fallback - use backend service name in Docker
-  const backendPort =
-    process.env.BACKEND_PORT || process.env.NEXT_PUBLIC_BACKEND_PORT || "7777";
-  const backendHost =
-    process.env.BACKEND_HOST || "localhost";
-  return `http://${backendHost}:${backendPort}`;
+
+  // Server-side fallback only (no browser context available)
+  // Keep BACKEND_ORIGIN support here for SSR environments.
+  const serverOrigin =
+    process.env.NEXT_PUBLIC_BACKEND_ORIGIN ||
+    (() => {
+      const backendPort =
+        process.env.BACKEND_PORT || process.env.NEXT_PUBLIC_BACKEND_PORT || "7777";
+      const backendHost = process.env.BACKEND_HOST || "localhost";
+      return `http://${backendHost}:${backendPort}`;
+    })();
+
+  return serverOrigin;
 }
 
 /**

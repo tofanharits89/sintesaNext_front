@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import moment from "moment";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Loader2 } from "lucide-react";
+import { apiPath } from "@/lib/config/base-path";
 
 interface MonitoringProps {
   cek: number;
@@ -80,12 +81,11 @@ export default function Monitoring({ cek, id, where }: MonitoringProps) {
     const encryptedQuery = btoa(cleanedQuery);
 
     try {
-      // API endpoint: POST /api/v1/dispensasi/query with JSON body
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "/api/v1"
-        }/dispensasi/query`;
+      const apiUrl = apiPath("/dispensasi/query");
 
       const response = await fetch(apiUrl, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },

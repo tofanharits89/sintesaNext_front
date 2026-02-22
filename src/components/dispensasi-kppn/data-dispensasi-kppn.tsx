@@ -21,6 +21,7 @@ import {
 } from "@/components/animate-ui/components/radix/alert-dialog";
 import RekamKontrak from "./modal-rekam-kontrak";
 import GenerateCSV from "@/components/GenerateCSV";
+import { apiPath } from "@/lib/config/base-path";
 
 // Table styling - matching dispensasi/llat pattern
 const tableStyles = {
@@ -187,13 +188,9 @@ const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = f
 
     setSql(cleanedQuery2);
 
-    const baseUrl =
-      process.env.NEXT_PUBLIC_LOCAL_TAYANGDISPENSASIKPPN ||
-      process.env.NEXT_PUBLIC_API_URL ||
-      "/api/v1";
-
-    const requestUrl = `${baseUrl}/dispensasi/${encryptedQuery}?limit=${limit}&page=${page}&user=${user?.username || ""
-      }`;
+    const requestUrl = apiPath(
+      `/dispensasi/${encryptedQuery}?limit=${limit}&page=${page}&user=${user?.username || ""}`
+    );
     console.debug("dispensasi-kppn request url", requestUrl);
 
     try {
@@ -270,9 +267,10 @@ const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = f
     setLoading(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_LOCAL_BASIC}dispkontrakkppn/delete/${deleteTargetId}/${deleteTargetKdsatker}/${deleteTargetKppn}`,
+        apiPath(`/dispensasi/dispkontrak/${deleteTargetId}`),
         {
           method: "DELETE",
+          credentials: "include",
           headers: {},
         }
       );

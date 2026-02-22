@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api/httpClient";
+import { apiPath } from "@/lib/config/base-path";
 import { PlusSquare, Trash2, Download, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import RekamKontrak from "./rekam-kontrak";
 import {
@@ -193,9 +194,10 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
   const confirmDelete = async () => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASIC_URL}dispkontrak/delete/${deleteTargetId}`,
+        apiPath(`/dispensasi/dispkontrak/${deleteTargetId}`),
         {
           method: "DELETE",
+          credentials: "include",
           headers: {
             // Authorization: `Bearer ${user?.token}`,
           },

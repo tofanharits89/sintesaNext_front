@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Swal from "sweetalert2";
 import { toast } from "sonner";
 import { MinusCircle } from "lucide-react";
+import { apiPath } from "@/lib/config/base-path";
 
 interface DataRow {
   id: string;
@@ -52,11 +53,11 @@ export default function DataTupDetail(props: DataTupDetailProps) {
     try {
       const query = `SELECT a.id,a.thang,a.kdsatker,a.tgpermohonan, a.nopermohonan,a.notup,a.tgtup,a.niltup,a.status FROM laporan_2023.dispensasi_tup_lampiran a WHERE a.id_dispensasi='${props.id}' GROUP BY a.id ORDER BY id DESC`;
       const encryptedQuery = btoa(query);
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
 
       const response = await fetch(
-        `${baseUrl}/dispensasi/${encryptedQuery}?limit=999999&page=0`,
+        apiPath(`/dispensasi/${encryptedQuery}?limit=999999&page=0`),
         {
+          credentials: "include",
           headers: {},
         }
       );
@@ -95,12 +96,11 @@ export default function DataTupDetail(props: DataTupDetailProps) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const url = process.env.NEXT_PUBLIC_BASIC_URL
-            ? `${process.env.NEXT_PUBLIC_BASIC_URL}tup/delete/${id}/${id_dispensasi}`
-            : "";
+          const url = apiPath(`/dispensasi/tup/${id}/${id_dispensasi}`);
 
           const response = await fetch(url, {
             method: "DELETE",
+            credentials: "include",
             headers: {
               "Content-Type": "application/json",
             },

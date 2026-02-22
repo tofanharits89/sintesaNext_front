@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { apiPath } from "@/lib/config/base-path";
 
 interface UploadSpmProps {
   id?: string;
@@ -30,23 +31,15 @@ export default function UploadSPM({ id, cekupload }: UploadSpmProps) {
 
   async function fetchFormData() {
     try {
-      const base =
-        process.env.NEXT_PUBLIC_INQUIRY_GETDATA ||
-        process.env.NEXT_PUBLIC_API_URL ||
-        "";
-      if (!base) return;
-
-      const encodedQuery = encodeURIComponent(
+      const query =
         `SELECT id,thang,kddept,kdunit,kdkanwil,kdlokasi,kdsatker,tgpermohonan,nopermohonan,kd_dispensasi,rpata FROM  laporan_2023.dispensasi_spm WHERE id='${id}' GROUP BY id`
-      );
-
-      const url = base.endsWith("/")
-        ? `${base}${encodedQuery}`
-        : `${base}${encodedQuery}`;
+      ;
+      const encryptedQuery = btoa(query);
+      const url = apiPath(`/dispensasi/${encryptedQuery}?limit=1&page=0`);
       const resp = await fetch(url, { credentials: "include" });
       if (!resp.ok) throw new Error(`Request failed: ${resp.status}`);
       const json = await resp.json();
-      setFormData(json?.data || json || []);
+      setFormData(json?.result || json?.data || json || []);
     } catch (err: any) {
       console.warn("fetchFormData error:", err?.message || err);
     }
@@ -172,10 +165,7 @@ export default function UploadSPM({ id, cekupload }: UploadSpmProps) {
     setProcessSuccess(null);
 
     try {
-      const apiBase =
-        process.env.NEXT_PUBLIC_API_URL ||
-        `http://localhost:${process.env.NEXT_PUBLIC_BACKEND_PORT || "88"}`;
-      const url = `${apiBase.replace(/\/$/, "")}/dispensasi/upload-spm/`;
+      const url = apiPath("/dispensasi/upload-spm");
 
       const body = { formData, data };
 

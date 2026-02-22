@@ -33,6 +33,7 @@ import Swal from "sweetalert2";
 import moment from "moment";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
+import { apiPath } from "@/lib/config/base-path";
 
 interface Rekam2Props {
   show: boolean;
@@ -275,15 +276,11 @@ export default function Rekam2({
     if (values.laporan) formData.append("laporan", values.laporan as any);
 
     try {
-      await http.patch(
-        `${process.env.NEXT_PUBLIC_LOCAL_SIMPANMONEVPNBP}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+      await http.patch(apiPath("/monev-pnbp/update"), formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
         },
-      );
+      });
       setLoading(false);
       Swal.fire({
         html: `<div class='text-green-600 mt-4'>Hasil Monev Berhasil Disimpan</div>`,

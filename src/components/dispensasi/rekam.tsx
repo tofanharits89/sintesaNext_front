@@ -34,6 +34,7 @@ import Swal from "sweetalert2";
 import moment from "moment";
 import { X, Save } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { apiPath } from "@/lib/config/base-path";
 
 interface RekamProps {
   show: boolean;
@@ -240,11 +241,11 @@ export default function Rekam({
 
       let endpoint = "";
       if (values.jenis === "01" || values.jenis === "03") {
-        endpoint = process.env.NEXT_PUBLIC_SIMPANDISPENSASI || "";
+        endpoint = apiPath("/dispensasi/simpan-dispensasi");
       } else if (values.jenis === "02") {
-        endpoint = process.env.NEXT_PUBLIC_SIMPANKONTRAK || "";
+        endpoint = apiPath("/dispensasi/simpan-kontrak");
       } else if (values.jenis === "04") {
-        endpoint = process.env.NEXT_PUBLIC_SIMPANTUP || "";
+        endpoint = apiPath("/dispensasi/simpan-tup");
       }
 
       console.log("Sending POST to:", endpoint);
@@ -316,10 +317,9 @@ export default function Rekam({
     }
 
     const encryptedQuery = btoa(query);
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
     try {
       const response = await fetch(
-        `${baseUrl}/dispensasi/${encryptedQuery}?limit=999999&page=0`,
+        apiPath(`/dispensasi/${encryptedQuery}?limit=999999&page=0`),
         {
           credentials: "include",
           headers: {

@@ -348,10 +348,10 @@ export default function RekamanTantangan({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const url =
-        process.env.NEXT_PUBLIC_SIMPANMONEVTANTANGAN || "/api/simpan-tachter";
+      const url = "/api/simpan-tachter";
       const response = await fetch(url, {
         method: "PATCH",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
