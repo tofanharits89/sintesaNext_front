@@ -10,9 +10,16 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContents,
+  TabsContent,
+} from "@/components/animate-ui/components/animate/tabs";
 import { http } from "@/lib/api/httpClient";
 import { toast } from "sonner";
-import { Info, MessageSquareText } from "lucide-react";
+import { Info } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -20,7 +27,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
-import { cn } from "@/lib/utils"; // Adjust if utils path is different, commonly in @/lib/utils
 
 interface ClusterItem {
   key: string;
@@ -379,86 +385,82 @@ export default function Rekam({
     <Dialog open={show} onOpenChange={(open) => !open && onHide()}>
       <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <MessageSquareText className="w-5 h-5 text-primary" />
-            <span>Clustering Tantangan {clusterTitle[jenis]}</span>
+          <DialogTitle className="text-xl text-center">
+            Clustering Tantangan {clusterTitle[jenis]}
           </DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="flex flex-col md:flex-row gap-4 min-h-0">
-            {/* Sidebar (Navigation) */}
-            <div className="md:w-1/4 flex flex-row md:flex-col gap-2 flex-wrap md:flex-nowrap border-b md:border-b-0 md:border-r border-border/50 pb-4 md:pb-0 md:pr-4">
-              {clusterMapping[jenis].map(({ key, label }) => (
-                <Button
-                  key={key}
-                  variant={activeKey === key ? "secondary" : "ghost"}
-                  className={cn(
-                    "justify-start text-left h-auto py-2 px-3 whitespace-normal",
-                    activeKey === key &&
-                    "bg-secondary shadow-sm border font-medium text-primary"
-                  )}
-                  onClick={() => setActiveKey(key)}
-                >
-                  {label}
-                </Button>
-              ))}
+          <Tabs value={activeKey} onValueChange={setActiveKey} className="w-full gap-0">
+            <div className="flex flex-col md:flex-row gap-4 min-h-0">
+              {/* Sidebar (Navigation) */}
+              <div className="md:w-1/4 border-b md:border-b-0 md:border-r border-border/50 pb-4 md:pb-0 md:pr-4">
+                <TabsList className="relative w-full h-auto p-2 rounded-xl flex flex-row md:flex-col flex-wrap md:flex-nowrap items-stretch gap-2 bg-zinc-100/80 dark:bg-card/70">
+                  {clusterMapping[jenis].map(({ key, label }) => (
+                    <TabsTrigger
+                      key={key}
+                      value={key}
+                      className="!flex-none h-auto py-2 px-3 whitespace-normal text-left justify-start data-[state=active]:bg-background/80 data-[state=active]:border data-[state=active]:border-border/70"
+                    >
+                      {label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
 
-              <div className="mt-2 md:mt-4 md:pt-4 md:border-t">
-                <Button
-                  variant={
-                    Object.values(formState).some((val) => val === "")
-                      ? "default"
-                      : "secondary"
-                  }
-                  onClick={isiSemuaDenganTidakAda}
-                  className="w-full"
+                <div className="mt-2 md:mt-4 md:pt-4 md:border-t">
+                  <Button
+                    variant={
+                      Object.values(formState).some((val) => val === "")
+                        ? "default"
+                        : "secondary"
+                    }
+                    onClick={isiSemuaDenganTidakAda}
+                    className="w-full"
+                  >
+                    Tidak Ada
+                  </Button>
+                </div>
+              </div>
+
+              {/* Main Content Form */}
+              <div className="md:w-3/4">
+                <form
+                  id="rekam-form"
+                  onSubmit={handleSubmit}
+                  className="h-full flex flex-col"
                 >
-                  Tidak Ada
-                </Button>
+                  <TabsContents className="mt-0 space-y-0">
+                    {clusterMapping[jenis].map(({ key, label, contoh }) => (
+                      <TabsContent key={key} value={key} className="mt-0">
+                        <div className="flex flex-col h-full gap-4">
+                          <div className="bg-primary text-primary-foreground p-3 rounded-md flex items-center justify-between shadow-sm">
+                            <span className="font-semibold">{label}</span>
+                            <TooltipProvider>
+                              <Tooltip delayDuration={300}>
+                                <TooltipTrigger asChild>
+                                  <Info className="w-5 h-5 cursor-help opacity-90 hover:opacity-100" />
+                                </TooltipTrigger>
+                                <TooltipContent side="left" className="max-w-xs italic">
+                                  <p>{contoh}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+
+                          <Textarea
+                            className="flex-1 min-h-[300px] resize-none text-base p-4 leading-relaxed"
+                            value={formState[key] || ""}
+                            onChange={(e) => handleInputChange(key, e.target.value)}
+                            placeholder={`Uraian Tantangan ${label}...`}
+                          />
+                        </div>
+                      </TabsContent>
+                    ))}
+                  </TabsContents>
+                </form>
               </div>
             </div>
-
-            {/* Main Content Form */}
-            <div className="md:w-3/4">
-              <form
-                id="rekam-form"
-                onSubmit={handleSubmit}
-                className="h-full flex flex-col"
-              >
-                {clusterMapping[jenis].map(({ key, label, contoh }) => (
-                  <div
-                    key={key}
-                    className={cn(
-                      "flex-col h-full gap-4",
-                      activeKey === key ? "flex" : "hidden"
-                    )}
-                  >
-                    <div className="bg-primary text-primary-foreground p-3 rounded-md flex items-center justify-between shadow-sm">
-                      <span className="font-semibold">{label}</span>
-                      <TooltipProvider>
-                        <Tooltip delayDuration={300}>
-                          <TooltipTrigger asChild>
-                            <Info className="w-5 h-5 cursor-help opacity-90 hover:opacity-100" />
-                          </TooltipTrigger>
-                          <TooltipContent side="left" className="max-w-xs italic">
-                            <p>{contoh}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-
-                    <Textarea
-                      className="flex-1 min-h-[300px] resize-none text-base p-4 leading-relaxed"
-                      value={formState[key] || ""}
-                      onChange={(e) => handleInputChange(key, e.target.value)}
-                      placeholder={`Uraian Tantangan ${label}...`}
-                    />
-                  </div>
-                ))}
-              </form>
-            </div>
-          </div>
+          </Tabs>
         </div>
 
         <DialogFooter className="flex-shrink-0">
