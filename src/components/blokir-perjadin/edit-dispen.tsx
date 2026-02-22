@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Formik, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { toast } from "sonner";
+import { apiPath } from "@/lib/config/base-path";
 
 interface EditDispenProps {
   show: boolean;
@@ -86,18 +87,13 @@ const EditDispen: React.FC<EditDispenProps> = ({
     const encryptedQuery = btoa(cleanedQuery);
 
     try {
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_BLOKIR_SATKER}/${encryptedQuery}${
-        username ? `&user=${username}` : ""
-      }`;
-
-      if (!apiUrl || !process.env.NEXT_PUBLIC_API_BLOKIR_SATKER) {
-        toast.error("API URL tidak terkonfigurasi");
-        setLoading(false);
-        return;
-      }
+      const apiUrl = apiPath(
+        `/blokir/monitoring/${encryptedQuery}${username ? `?user=${username}` : ""}`,
+      );
 
       const response = await fetch(apiUrl, {
         method: "GET",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -124,25 +120,16 @@ const EditDispen: React.FC<EditDispenProps> = ({
   ) => {
     setLoading(true);
 
-    if (!process.env.NEXT_PUBLIC_API_BLOKIR_UPDATE_DISPEN) {
-      toast.error("API URL tidak terkonfigurasi");
-      setLoading(false);
-      setSubmitting(false);
-      return;
-    }
-
     try {
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_API_BLOKIR_UPDATE_DISPEN,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify(values),
+      const response = await fetch(apiPath("/blokir/update-dispen"), {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-      );
+        body: JSON.stringify(values),
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

@@ -33,6 +33,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { apiPath } from "@/lib/config/base-path";
 
 interface MonitoringBlokirProps {
   role?: string;
@@ -169,10 +170,13 @@ export default function MonitoringBlokir({
 
     try {
       // Fetch ALL data (limit=10000)
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_BLOKIR_MONITORING}/${encryptedQuery}?limit=10000${username ? `&user=${username}` : ""}`;
+      const apiUrl = apiPath(
+        `/blokir/monitoring/${encryptedQuery}?limit=10000${username ? `&user=${username}` : ""}`,
+      );
 
       const response = await fetch(apiUrl, {
         method: "GET",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -472,7 +476,7 @@ export default function MonitoringBlokir({
           query3={sql}
           status={handleStatus}
           namafile={`v3_CSV_MONITORING_BLOKIR_${moment().format("DDMMYY-HHmmss")}`}
-          url={process.env.NEXT_PUBLIC_API_BLOKIR_MONITORING || ""}
+          url={apiPath("/blokir/monitoring")}
           token={token}
         />
       )}
