@@ -19,6 +19,7 @@ import { LihatKendalaModal } from "./modals/lihat-kendala-modal";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
+import { apiPath } from "@/lib/config/base-path";
 
 // Type for the Ringkasan data (for both Kanwil and KPPN aggregation)
 export interface RingkasanData {
@@ -119,7 +120,7 @@ export const DirektoratPaContent = forwardRef<DirektoratPaContentRef, Direktorat
             if (contentType === "ringkasan-kanwil" && selectedKanwil !== "all") {
                 kanwilParam = `&kdkanwil=${selectedKanwil}`;
             }
-            const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}${kanwilParam}${kppnParam}`;
+            const apiUrl = apiPath(`/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}${kanwilParam}${kppnParam}`);
 
             const response = await fetch(apiUrl, { credentials: "include" });
             if (!response.ok) throw new Error("Gagal mengambil data ringkasan");
@@ -156,7 +157,7 @@ export const DirektoratPaContent = forwardRef<DirektoratPaContentRef, Direktorat
         try {
             const triwulan = selectedPeriode.replace("Q", "");
             const kanwilParam = selectedKanwil !== "all" ? `&kdkanwil=${selectedKanwil}` : "";
-            const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/monev-kkp/direktorat/monitoring-kanwil?tahun=${selectedYear}&triwulan=${triwulan}${kanwilParam}`;
+            const apiUrl = apiPath(`/monev-kkp/direktorat/monitoring-kanwil?tahun=${selectedYear}&triwulan=${triwulan}${kanwilParam}`);
 
             const response = await fetch(apiUrl, { credentials: "include" });
             if (!response.ok) throw new Error("Gagal mengambil data monitoring kanwil");
@@ -187,7 +188,7 @@ export const DirektoratPaContent = forwardRef<DirektoratPaContentRef, Direktorat
         try {
             const triwulan = selectedPeriode.replace("Q", "");
             const kanwilParam = selectedKanwil !== "all" ? `&kdkanwil=${selectedKanwil}` : "";
-            const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/monev-kkp/kanwil/monitoring-kppn?tahun=${selectedYear}&triwulan=${triwulan}${kanwilParam}`;
+            const apiUrl = apiPath(`/monev-kkp/kanwil/monitoring-kppn?tahun=${selectedYear}&triwulan=${triwulan}${kanwilParam}`);
 
             const response = await fetch(apiUrl, { credentials: "include" });
             if (!response.ok) throw new Error("Gagal mengambil data monitoring KPPN");
@@ -304,7 +305,7 @@ export const DirektoratPaContent = forwardRef<DirektoratPaContentRef, Direktorat
 
             // Check if it's monitoring-kppn (has kdkppn)
             if (item.kdkppn) {
-                apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}&kdkppn=${item.kdkppn}`;
+                apiUrl = apiPath(`/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}&kdkppn=${item.kdkppn}`);
                 
                 const response = await fetch(apiUrl, { credentials: "include" });
                 if (!response.ok) throw new Error("Gagal mengambil data satker");
@@ -333,7 +334,7 @@ export const DirektoratPaContent = forwardRef<DirektoratPaContentRef, Direktorat
             // Check if it's monitoring-kanwil (has kdkanwil)
             else if (item.kdkanwil) {
                 // For kanwil, fetch all satkers for that kanwil
-                apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}&kdkanwil=${item.kdkanwil}`;
+                apiUrl = apiPath(`/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}&kdkanwil=${item.kdkanwil}`);
                 
                 const response = await fetch(apiUrl, { credentials: "include" });
                 if (!response.ok) throw new Error("Gagal mengambil data satker");

@@ -19,6 +19,7 @@ import { LihatKendalaModal } from "./modals/lihat-kendala-modal";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
+import { apiPath } from "@/lib/config/base-path";
 
 // Type for the KKP data
 export interface KkpData {
@@ -71,7 +72,7 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(function
         try {
             const triwulan = selectedPeriode.replace("Q", "");
             const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}`,
+                apiPath(`/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}`),
                 {
                     credentials: "include",
                     headers: {

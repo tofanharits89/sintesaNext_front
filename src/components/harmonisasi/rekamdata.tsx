@@ -5,6 +5,7 @@ import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
+import { apiPath } from "@/lib/config/base-path";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
@@ -290,22 +291,17 @@ export default function Harmonisasi() {
     const encryptedQuery = encryptHarmonisasiQuery(cleanedQuery);
 
     try {
-      const tayangHarmonisasiUrl = process.env.NEXT_PUBLIC_TAYANG_HARMONISASI;
       // Try bigger payload first, then fallback to smaller limit on connection reset.
       const fetchLimits = [100000, 50000, 20000];
       let resultData: any[] = [];
       let usedFallbackLimit = false;
       let lastError: unknown = null;
 
-      if (!tayangHarmonisasiUrl) {
-        console.error("URL API Harmonisasi tidak ditemukan");
-        setLoading(false);
-        return;
-      }
-
       for (let i = 0; i < fetchLimits.length; i += 1) {
         const fetchLimit = fetchLimits[i];
-        const url = `${tayangHarmonisasiUrl}${encodeURIComponent(encryptedQuery)}&limit=${fetchLimit}&page=0&user=${username}`;
+        const url = apiPath(
+          `/harmonisasi/view?queryParams=${encodeURIComponent(encryptedQuery)}&limit=${fetchLimit}&page=0&user=${encodeURIComponent(username || "")}`
+        );
 
         try {
           const response: any = await http.get(url);
@@ -379,17 +375,10 @@ export default function Harmonisasi() {
     const encryptedQuery = encryptHarmonisasiQuery(cleanedQuery);
 
     try {
-      const tayangHarmonisasiUrl = process.env.NEXT_PUBLIC_TAYANG_HARMONISASI;
       // High limit to fetch all
-      const url = tayangHarmonisasiUrl
-        ? `${tayangHarmonisasiUrl}${encodeURIComponent(encryptedQuery)}&limit=1000000&page=0&user=${username}`
-        : "";
-
-      if (!url) {
-        toast.error("URL API Harmonisasi tidak ditemukan");
-        setLoadingStatus(false);
-        return;
-      }
+      const url = apiPath(
+        `/harmonisasi/view?queryParams=${encodeURIComponent(encryptedQuery)}&limit=1000000&page=0&user=${encodeURIComponent(username || "")}`
+      );
 
       const response: any = await http.get(url);
       const resultData = response.data.result;

@@ -27,6 +27,7 @@ import {
 import { toast } from "sonner";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
 import { X } from "lucide-react";
+import { apiPath } from "@/lib/config/base-path";
 
 // Predefined category options for kendala
 const KENDALA_CATEGORIES = [
@@ -76,7 +77,7 @@ export function KendalaHambatanModal({
                     console.log("Fetching existing kendala with:", { selectedTahun, selectedTriwulan, kodeSatker: data.kodeSatker });
 
                     const response = await fetch(
-                        `${process.env.NEXT_PUBLIC_API_URL}/monev-kkp/kendala?tahun=${selectedTahun}&triwulan=${selectedTriwulan}&kdsatker=${data.kodeSatker}`,
+                        apiPath(`/monev-kkp/kendala?tahun=${selectedTahun}&triwulan=${selectedTriwulan}&kdsatker=${data.kodeSatker}`),
                         {
                             credentials: "include",
                             headers: {
@@ -134,7 +135,7 @@ export function KendalaHambatanModal({
             const selectedTahun = tahun || data?.tahun || "2026";
 
             const csrfHeaders = addCsrfToHeaders({ "Content-Type": "application/json" });
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/monev-kkp/kendala`, {
+            const response = await fetch(apiPath("/monev-kkp/kendala"), {
                 method: "POST",
                 credentials: "include",
                 headers: csrfHeaders,

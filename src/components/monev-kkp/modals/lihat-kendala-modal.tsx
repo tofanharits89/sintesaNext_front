@@ -9,6 +9,7 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { apiPath } from "@/lib/config/base-path";
 
 interface LihatKendalaModalProps {
     open: boolean;
@@ -40,7 +41,7 @@ export function LihatKendalaModal({
                     console.log("Fetching kendala with:", { selectedTahun, selectedTriwulan, kodeSatker: data.kodeSatker });
                     
                     const response = await fetch(
-                        `${process.env.NEXT_PUBLIC_API_URL}/monev-kkp/kendala?tahun=${selectedTahun}&triwulan=${selectedTriwulan}&kdsatker=${data.kodeSatker}`,
+                        apiPath(`/monev-kkp/kendala?tahun=${selectedTahun}&triwulan=${selectedTriwulan}&kdsatker=${data.kodeSatker}`),
                         {
                             credentials: "include",
                             headers: {

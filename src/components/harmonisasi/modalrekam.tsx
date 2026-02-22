@@ -20,6 +20,7 @@ import {
 import { http } from "@/lib/api/httpClient";
 import { toast } from "sonner";
 import { Info } from "lucide-react";
+import { apiPath } from "@/lib/config/base-path";
 import {
   Tooltip,
   TooltipContent,
@@ -353,16 +354,10 @@ export default function Rekam({
     if (!jenis) return;
 
     try {
-      const url =
-        process.env.NEXT_PUBLIC_HARMONISASI ||
-        process.env.VITE_REACT_APP_LOCAL_HARMONISASI;
-
-      if (!url) {
-        toast.error("Konfigurasi URL API tidak ditemukan");
-        return;
-      }
-
-      const response: any = await http.post(url, { id, thang, semester, ...formState });
+      const response: any = await http.post(
+        apiPath("/harmonisasi/simpan"),
+        { id, thang, semester, ...formState }
+      );
 
       if (response.data?.affectedRows === 0) {
         toast.info("Data tidak berubah atau ID tidak ditemukan");

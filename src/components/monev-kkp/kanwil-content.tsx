@@ -20,6 +20,7 @@ import { LihatKendalaModal } from "./modals/lihat-kendala-modal";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
+import { apiPath } from "@/lib/config/base-path";
 
 // Type for the Ringkasan Kanwil data
 export interface RingkasanKanwilData {
@@ -87,7 +88,7 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
             // Only add kdkppn parameter if explicitly selected from dropdown (not 'all')
             // For Kanwil users, backend will automatically filter by kdkanwil
             const kppnParam = selectedKppn !== "all" ? `&kdkppn=${selectedKppn}` : "";
-            const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}${kppnParam}`;
+            const apiUrl = apiPath(`/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}${kppnParam}`);
 
             console.log("[Kanwil Ringkasan] Fetching data:", {
                 url: apiUrl,
@@ -137,7 +138,7 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
         try {
             const triwulan = selectedPeriode.replace("Q", "");
             const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/monev-kkp/kanwil/monitoring-kppn?tahun=${selectedYear}&triwulan=${triwulan}`,
+                apiPath(`/monev-kkp/kanwil/monitoring-kppn?tahun=${selectedYear}&triwulan=${triwulan}`),
                 { credentials: "include" }
             );
 
@@ -231,7 +232,7 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
         try {
             const triwulan = selectedPeriode.replace("Q", "");
             const kdkppn = item.kdkppn;
-            const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}&kdkppn=${kdkppn}`;
+            const apiUrl = apiPath(`/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}&kdkppn=${kdkppn}`);
 
             const response = await fetch(apiUrl, { credentials: "include" });
             if (!response.ok) throw new Error("Gagal mengambil data satker");
