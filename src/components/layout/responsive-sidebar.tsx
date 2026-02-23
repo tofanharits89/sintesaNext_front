@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/utils";
 import {
   ChevronDown,
@@ -117,12 +118,12 @@ const defaultMenu: MenuItem[] = [
   {
     label: "Laporan",
     children: [
-      { label: "Weekly Report" },
-      { label: "Monthly Report" },
       { label: "Harmonisasi" },
       { label: "Tantangan TPID" },
       { label: "Monitoring Blokir Perjadin" },
       { label: "Monev PNBP" },
+      { label: "Weekly Report" },
+      { label: "Monthly Report" },
     ],
   },
   {
@@ -178,11 +179,45 @@ const defaultMenu: MenuItem[] = [
   },
 ];
 
+const MENU_ROUTE_PREFIXES: Array<{ prefix: string; parent: string }> = [
+  { prefix: "/dashboard", parent: "Dashboard" },
+  { prefix: "/makan-bergizi", parent: "Makan Bergizi" },
+  { prefix: "/monev-kkp", parent: "Monev KKP" },
+  { prefix: "/transfer-daerah", parent: "Transfer Daerah" },
+  { prefix: "/inquiry-data", parent: "Inquiry Data" },
+  { prefix: "/laporan", parent: "Laporan" },
+  { prefix: "/data-makrokesra", parent: "Data Makrokesra" },
+  { prefix: "/menu-rowset", parent: "Rowset Data" },
+  { prefix: "/dispensasi", parent: "Dispensasi" },
+  { prefix: "/ikpa", parent: "Monev IKPA" },
+  { prefix: "/data-supplier", parent: "Data Supplier" },
+  { prefix: "/epa", parent: "EPA" },
+  { prefix: "/spending-review", parent: "Spending Review" },
+  { prefix: "/profil-kl", parent: "Profil K/L" },
+  { prefix: "/tentang-kita", parent: "Tentang Kita" },
+];
+
+function resolveActiveMenuLabel(pathname: string | null): string | null {
+  if (!pathname) return null;
+
+  const match = MENU_ROUTE_PREFIXES.find(
+    ({ prefix }) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+
+  return match?.parent ?? null;
+}
+
+function isPathActive(pathname: string | null, href: string): boolean {
+  if (!pathname || href === "#") return false;
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function ResponsiveSidebar({
   menu = defaultMenu,
 }: {
   menu?: MenuItem[];
 }) {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
 
@@ -412,6 +447,7 @@ export function ResponsiveSidebar({
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(5); // Default items per page
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const activeMenuLabel = useMemo(() => resolveActiveMenuLabel(pathname), [pathname]);
 
   // Calculate items per page based on container width
   const calculateItemsPerPage = () => {
@@ -450,6 +486,18 @@ export function ResponsiveSidebar({
       window.removeEventListener("resize", onResize);
     };
   }, [filteredMenu.length, currentPage]);
+
+  useEffect(() => {
+    if (!activeMenuLabel || itemsPerPage <= 0) return;
+
+    const activeMenuIndex = filteredMenu.findIndex(
+      (menuItem) => menuItem.label === activeMenuLabel
+    );
+    if (activeMenuIndex < 0) return;
+
+    const activePage = Math.floor(activeMenuIndex / itemsPerPage);
+    setCurrentPage((prevPage) => (prevPage === activePage ? prevPage : activePage));
+  }, [activeMenuLabel, filteredMenu, itemsPerPage]);
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredMenu.length / itemsPerPage);
@@ -496,7 +544,12 @@ export function ResponsiveSidebar({
               <NavigationMenuList className="gap-1">
                 {currentPageItems.map((m) => (
                   <NavigationMenuItem key={m.label}>
-                    <NavigationMenuTrigger className="h-9 w-48 gap-1 bg-white dark:bg-card hover:bg-accent dark:hover:bg-accent">
+                    <NavigationMenuTrigger
+                      className={cn(
+                        "h-9 w-48 gap-1 bg-white dark:bg-card hover:bg-accent dark:hover:bg-accent",
+                        activeMenuLabel === m.label && "bg-accent text-accent-foreground"
+                      )}
+                    >
                       <span className="inline-flex items-center">
                         {iconFor(m.label)}
                         <span>{m.label}</span>
@@ -784,7 +837,12 @@ export function ResponsiveSidebar({
                                 <NavigationMenuLink asChild>
                                   <Link
                                     href={href}
-                                    className="flex flex-row items-center gap-2 w-full"
+                                    className={cn(
+                                      "flex w-full flex-row items-center gap-2 rounded-md px-2 py-1",
+                                      isPathActive(pathname, href)
+                                        ? "bg-accent text-accent-foreground"
+                                        : "hover:bg-accent/60"
+                                    )}
                                     onMouseEnter={onMouseEnterFn}
                                     onClick={() =>
                                       trackMenuUsage({

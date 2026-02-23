@@ -24,21 +24,9 @@ export default function Page() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    );
-  }
-
-  // If used in a protected route layout, user might not be null here.
-  // But just in case, we can handle it or let the component handle empty props.
-
   return (
     <MonitoringBlokir
+      authLoading={isLoading}
       role={getLegacyRole(user?.role)}
       kdkanwil={user?.kdkanwil || ""}
       kdkppn={user?.kdkppn || ""}

@@ -29,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { useUploadLaporanKanwilOptions } from "@/hooks/use-upload-laporan-ref-options";
 
 const formSchema = z.object({
   tahun: z.string().min(1, "Tahun harus dipilih"),
@@ -48,10 +49,16 @@ export function LaporanKanwilModal({
   open,
   onOpenChange,
 }: LaporanKanwilModalProps) {
+  const {
+    options: kanwilOptions,
+    isLoading: isKanwilLoading,
+    error: kanwilError,
+  } = useUploadLaporanKanwilOptions();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      tahun: "",
+      tahun: "2026",
       kanwil: "",
       jenisLaporan: "laporan-monev", // Fixed to Laporan Monev only
       periodeLaporan: "",
@@ -144,30 +151,26 @@ export function LaporanKanwilModal({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="kanwil-001">
-                          Kanwil DKI Jakarta
-                        </SelectItem>
-                        <SelectItem value="kanwil-002">
-                          Kanwil Jawa Barat
-                        </SelectItem>
-                        <SelectItem value="kanwil-003">
-                          Kanwil Jawa Tengah
-                        </SelectItem>
-                        <SelectItem value="kanwil-004">
-                          Kanwil Jawa Timur
-                        </SelectItem>
-                        <SelectItem value="kanwil-005">
-                          Kanwil Sumatera Utara
-                        </SelectItem>
-                        <SelectItem value="kanwil-006">
-                          Kanwil Sumatera Selatan
-                        </SelectItem>
-                        <SelectItem value="kanwil-007">
-                          Kanwil Kalimantan Barat
-                        </SelectItem>
-                        <SelectItem value="kanwil-008">
-                          Kanwil Sulawesi Selatan
-                        </SelectItem>
+                        {kanwilOptions.map((item) => (
+                          <SelectItem key={item.value} value={item.value} title={item.label}>
+                            <span className="truncate">{item.label}</span>
+                          </SelectItem>
+                        ))}
+                        {isKanwilLoading && (
+                          <SelectItem value="__loading_kanwil" disabled>
+                            Memuat data Kanwil...
+                          </SelectItem>
+                        )}
+                        {!isKanwilLoading && kanwilOptions.length === 0 && !kanwilError && (
+                          <SelectItem value="__empty_kanwil" disabled>
+                            Data Kanwil tidak tersedia
+                          </SelectItem>
+                        )}
+                        {kanwilError && (
+                          <SelectItem value="__error_kanwil" disabled>
+                            Gagal memuat data Kanwil
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />

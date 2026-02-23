@@ -29,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { useUploadLaporanKppnSatkerOptions } from "@/hooks/use-upload-laporan-ref-options";
 
 const formSchema = z.object({
   tahun: z.string().min(1, "Tahun harus dipilih"),
@@ -51,11 +52,16 @@ export function LaporanKppnModal({
 }: LaporanKppnModalProps) {
   const [selectedPeriode, setSelectedPeriode] = useState("");
   const [selectedJenisLaporan, setSelectedJenisLaporan] = useState("");
+  const {
+    options: kppnSatkerOptions,
+    isLoading: isKppnSatkerLoading,
+    error: kppnSatkerError,
+  } = useUploadLaporanKppnSatkerOptions();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      tahun: "",
+      tahun: "2026",
       kppn: "",
       jenisLaporan: "",
       periodeLaporan: "",
@@ -195,19 +201,32 @@ export function LaporanKppnModal({
                       <FormControl>
                         <SelectTrigger className="w-full">
                           <SelectValue
-                            placeholder="Pilih KPPN"
+                            placeholder="Pilih KPPN sebagai Satker"
                             className="truncate"
                           />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="kppn-001">KPPN Jakarta I</SelectItem>
-                        <SelectItem value="kppn-002">
-                          KPPN Jakarta II
-                        </SelectItem>
-                        <SelectItem value="kppn-003">KPPN Bandung</SelectItem>
-                        <SelectItem value="kppn-004">KPPN Surabaya</SelectItem>
-                        <SelectItem value="kppn-005">KPPN Medan</SelectItem>
+                        {kppnSatkerOptions.map((item) => (
+                          <SelectItem key={item.value} value={item.value} title={item.label}>
+                            <span className="truncate">{item.label}</span>
+                          </SelectItem>
+                        ))}
+                        {isKppnSatkerLoading && (
+                          <SelectItem value="__loading_kppn_satker" disabled>
+                            Memuat data KPPN sebagai satker...
+                          </SelectItem>
+                        )}
+                        {!isKppnSatkerLoading && kppnSatkerOptions.length === 0 && !kppnSatkerError && (
+                          <SelectItem value="__empty_kppn_satker" disabled>
+                            Data satker KPPN tidak tersedia
+                          </SelectItem>
+                        )}
+                        {kppnSatkerError && (
+                          <SelectItem value="__error_kppn_satker" disabled>
+                            Gagal memuat data satker KPPN
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />

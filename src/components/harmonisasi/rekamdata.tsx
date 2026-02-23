@@ -517,14 +517,14 @@ export default function Harmonisasi() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Harmonisasi Belanja K/L & TKD</h1>
           <p className="text-sm text-muted-foreground">
             Harmonisasi Perencanaan dan Penganggaran Belanja K/L dan TKD
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           <Button
             variant="default"
             className="w-32 gap-2"

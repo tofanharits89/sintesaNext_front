@@ -33,6 +33,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { apiPath } from "@/lib/config/base-path";
 
 interface MonitoringBlokirProps {
@@ -41,6 +42,7 @@ interface MonitoringBlokirProps {
   kdkppn?: string;
   username?: string;
   token?: string;
+  authLoading?: boolean;
 }
 
 interface BlokirData {
@@ -61,8 +63,9 @@ export default function MonitoringBlokir({
   kdkppn = "",
   username = "admin",
   token = "",
+  authLoading = false,
 }: MonitoringBlokirProps) {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [id, setId] = useState<string | number>("");
   const [data, setData] = useState<BlokirData[]>([]);
   const [showModaledit, setShowModaledit] = useState(false);
@@ -124,8 +127,9 @@ export default function MonitoringBlokir({
   };
 
   useEffect(() => {
+    if (authLoading) return;
     getData();
-  }, [where, refresh]); // Removed 'page' dependency
+  }, [authLoading, where, refresh]); // Removed 'page' dependency
 
   const getData = async () => {
     setLoading(true);
@@ -243,6 +247,8 @@ export default function MonitoringBlokir({
     setRefresh(!refresh);
   };
 
+  const isTableLoading = authLoading || loading;
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -304,168 +310,165 @@ export default function MonitoringBlokir({
 
       <Card className="border shadow-sm">
         <CardContent>
-          <div className="rounded-md border overflow-hidden">
-            <Table>
-              <TableHeader className="bg-muted/50">
-                <TableRow>
-                  <TableHead className="w-[60px] font-semibold text-center">No.</TableHead>
-                  <TableHead className="font-semibold text-center">
-                    Kementerian/Lembaga
-                  </TableHead>
-                  <TableHead className="font-semibold text-center">Unit Eselon I</TableHead>
-                  <TableHead className="font-semibold text-center">
-                    Target Blokir
-                  </TableHead>
-                  <TableHead className="font-semibold text-center">
-                    Dispensasi
-                  </TableHead>
-                  <TableHead className="font-semibold text-center">
-                    Sudah Blokir
-                  </TableHead>
-                  <TableHead className="font-semibold text-center">
-                    Sisa
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="h-32 text-center">
-                      <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
-                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                        <p>Memuat data...</p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : data.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={7}
-                      className="h-32 text-center text-muted-foreground"
-                    >
-                      Tidak ada data ditemukan.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  <>
-                    {paginatedData.map((row, index) => (
-                      <TableRow
-                        key={index}
-                        className="hover:bg-muted/50 transition-colors"
-                      >
-                        <TableCell className="font-medium text-muted-foreground">
-                          {index + 1 + page * limit}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-medium text-sm">
-                              {row.nmdept}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              Code: {row.kddept}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="text-sm">{row.nmunit}</span>
-                            <span className="text-xs text-muted-foreground">
-                              Code: {row.kdunit}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right font-mono text-sm">
-                          {numeral(row.target_blokir).format("0,0")}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <span
-                            onClick={() => handleEditdata(row.id)}
-                            className="font-mono text-sm text-blue-600 dark:text-blue-400 cursor-pointer hover:underline font-medium"
-                          >
-                            {numeral(row.dispensasi_blokir).format("0,0")}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <span
-                            onClick={() =>
-                              handleModalOpen(row.kddept, row.kdunit)
-                            }
-                            className="font-mono text-sm text-blue-600 dark:text-blue-400 cursor-pointer hover:underline font-medium"
-                          >
-                            {numeral(row.sudah_blokir).format("0,0")}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right font-mono text-sm font-medium">
-                          {numeral(row.sisa).format("0,0")}
+          {isTableLoading ? (
+            <TableSkeleton rows={10} />
+          ) : (
+            <>
+              <div className="rounded-md border overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-muted/50">
+                    <TableRow>
+                      <TableHead className="w-[60px] font-semibold text-center">No.</TableHead>
+                      <TableHead className="font-semibold text-center">
+                        Kementerian/Lembaga
+                      </TableHead>
+                      <TableHead className="font-semibold text-center">Unit Eselon I</TableHead>
+                      <TableHead className="font-semibold text-center">
+                        Target Blokir
+                      </TableHead>
+                      <TableHead className="font-semibold text-center">
+                        Dispensasi
+                      </TableHead>
+                      <TableHead className="font-semibold text-center">
+                        Sudah Blokir
+                      </TableHead>
+                      <TableHead className="font-semibold text-center">
+                        Sisa
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={7}
+                          className="h-32 text-center text-muted-foreground"
+                        >
+                          Tidak ada data ditemukan.
                         </TableCell>
                       </TableRow>
-                    ))}
-                    {/* Summary Row */}
-                    <TableRow className="bg-muted/70 hover:bg-muted/80 font-bold border-t-2">
-                      <TableCell colSpan={3} className="text-right text-sm">
-                        TOTAL
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-sm">
-                        {numeral(totals.target).format("0,0")}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-sm">
-                        {numeral(totals.dispen).format("0,0")}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-sm">
-                        {numeral(totals.sudah).format("0,0")}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-sm">
-                        {numeral(totals.sisa).format("0,0")}
-                      </TableCell>
-                    </TableRow>
-                  </>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Pagination */}
-          {data.length > 0 && (
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-5">
-              <div className="text-sm text-muted-foreground">
-                Menampilkan{" "}
-                <span className="font-medium text-foreground">
-                  {numeral(paginatedData.length).format("0,0")}
-                </span>{" "}
-                dari{" "}
-                <span className="font-medium text-foreground">
-                  {numeral(data.length).format("0,0")}
-                </span>{" "}
-                data. Halaman{" "}
-                <span className="font-medium text-foreground">
-                  {page + 1}
-                </span>{" "}
-                dari{" "}
-                <span className="font-medium text-foreground">{totalPages}</span>
+                    ) : (
+                      <>
+                        {paginatedData.map((row, index) => (
+                          <TableRow
+                            key={index}
+                            className="hover:bg-muted/50 transition-colors"
+                          >
+                            <TableCell className="text-center font-medium text-muted-foreground">
+                              {index + 1 + page * limit}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col">
+                                <span className="font-medium text-sm">
+                                  {row.nmdept}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  Code: {row.kddept}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col">
+                                <span className="text-sm">{row.nmunit}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  Code: {row.kdunit}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right font-mono text-sm">
+                              {numeral(row.target_blokir).format("0,0")}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <span
+                                onClick={() => handleEditdata(row.id)}
+                                className="font-mono text-sm text-blue-600 dark:text-blue-400 cursor-pointer hover:underline font-medium"
+                              >
+                                {numeral(row.dispensasi_blokir).format("0,0")}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <span
+                                onClick={() =>
+                                  handleModalOpen(row.kddept, row.kdunit)
+                                }
+                                className="font-mono text-sm text-blue-600 dark:text-blue-400 cursor-pointer hover:underline font-medium"
+                              >
+                                {numeral(row.sudah_blokir).format("0,0")}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right font-mono text-sm font-medium">
+                              {numeral(row.sisa).format("0,0")}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {/* Summary Row */}
+                        <TableRow className="bg-muted/70 hover:bg-muted/80 font-bold border-t-2">
+                          <TableCell colSpan={3} className="text-right text-sm">
+                            TOTAL
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-sm">
+                            {numeral(totals.target).format("0,0")}
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-sm">
+                            {numeral(totals.dispen).format("0,0")}
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-sm">
+                            {numeral(totals.sudah).format("0,0")}
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-sm">
+                            {numeral(totals.sisa).format("0,0")}
+                          </TableCell>
+                        </TableRow>
+                      </>
+                    )}
+                  </TableBody>
+                </Table>
               </div>
 
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={() => setPage(Math.max(0, page - 1))}
-                      aria-disabled={page === 0}
-                      className={page === 0 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
+              {/* Pagination */}
+              {data.length > 0 && (
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-5">
+                  <div className="text-sm text-muted-foreground">
+                    Menampilkan{" "}
+                    <span className="font-medium text-foreground">
+                      {numeral(paginatedData.length).format("0,0")}
+                    </span>{" "}
+                    dari{" "}
+                    <span className="font-medium text-foreground">
+                      {numeral(data.length).format("0,0")}
+                    </span>{" "}
+                    data. Halaman{" "}
+                    <span className="font-medium text-foreground">
+                      {page + 1}
+                    </span>{" "}
+                    dari{" "}
+                    <span className="font-medium text-foreground">{totalPages}</span>
+                  </div>
 
-                  {/* Simple Prev/Next for now, can implement complex logic if needed */}
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => setPage(Math.max(0, page - 1))}
+                          aria-disabled={page === 0}
+                          className={page === 0 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
 
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
-                      aria-disabled={page === totalPages - 1}
-                      className={page === totalPages - 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
+                      {/* Simple Prev/Next for now, can implement complex logic if needed */}
+
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+                          aria-disabled={page === totalPages - 1}
+                          className={page === totalPages - 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
