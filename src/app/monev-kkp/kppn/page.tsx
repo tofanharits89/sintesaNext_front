@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { GenericCardSkeleton } from "@/components/ui/dashboard-skeletons";
 import { KppnContent, KppnContentRef, KkpData } from "@/components/monev-kkp/kppn-content";
+import { MonevKkpPageSkeleton } from "@/components/monev-kkp/monev-page-skeleton";
 import { Button } from "@/components/ui/button";
 import { FileSpreadsheet, FileText, Send } from "lucide-react";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
@@ -51,7 +51,7 @@ export default function MonevKkpKppnPage() {
     }, [user, isLoading, router]);
 
     if (isLoading || !user || !ALLOWED_ROLES.includes(user.role as string)) {
-        return <GenericCardSkeleton showHeader contentLines={8} />;
+        return <MonevKkpPageSkeleton actionCount={3} filterCount={2} showStatusBadge />;
     }
 
     const handleExportExcel = async () => {
@@ -288,9 +288,7 @@ export default function MonevKkpKppnPage() {
             </div>
 
             {/* Main Content */}
-            <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} />}>
-                <KppnContent ref={kppnContentRef} statusLaporan={statusLaporan} />
-            </Suspense>
+            <KppnContent ref={kppnContentRef} statusLaporan={statusLaporan} />
         </div>
     );
 }

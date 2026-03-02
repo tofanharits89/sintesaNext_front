@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
 import { apiPath } from "@/lib/config/base-path";
+import { cn } from "@/lib/utils/utils";
 import ReactPaginate from "react-paginate";
 import numeral from "numeral";
 import moment from "moment";
@@ -248,25 +249,39 @@ export default function RekamTpid() {
     return `${namaThang} Triwulan ${namaTriwulan}`;
   };
 
+  const checklistHeadClass =
+    "text-center text-xs h-auto py-2 w-[110px] min-w-[110px] max-w-[110px] whitespace-normal break-words leading-tight px-1";
+  const checklistCellClass =
+    "text-center w-[110px] min-w-[110px] max-w-[110px] p-1";
+
   // Helper to render check icon or status
   const StatusIcon = ({
     active,
     filled,
     onClick,
+    disabled,
   }: {
     active?: boolean;
     filled: boolean;
     onClick?: () => void;
+    disabled?: boolean;
   }) => (
-    <CheckSquare
-      className={`w-5 h-5 cursor-pointer mx-auto ${active
-        ? "text-blue-500" // Special blue for certain prokers
-        : filled
-          ? "text-green-500"
-          : "text-red-500"
-        }`}
-      onClick={onClick}
-    />
+    <div className="flex justify-center">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={disabled ? undefined : onClick}
+        className={cn("h-8 w-8 p-0", disabled ? "pointer-events-none" : "")}
+        title={active || filled ? "Sudah direkam" : "Belum direkam"}
+      >
+        <CheckSquare
+          className={cn(
+            "h-4 w-4",
+            active || filled ? "text-blue-600" : "text-amber-600"
+          )}
+        />
+      </Button>
+    </div>
   );
 
   return (
@@ -302,9 +317,13 @@ export default function RekamTpid() {
 
 
         {/* Filters */}
-        <Card className="p-4 bg-card">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-            <div className="space-y-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Filter Data</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+              <div className="space-y-2">
               <label className="text-sm font-medium">Tahun</label>
               <Select value={namaThang} onValueChange={setNamaThang}>
                 <SelectTrigger className="w-full">
@@ -317,7 +336,7 @@ export default function RekamTpid() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
+              <div className="space-y-2">
               <label className="text-sm font-medium">Triwulan</label>
               <Select value={namaTriwulan} onValueChange={setNamaTriwulan}>
                 <SelectTrigger className="w-full">
@@ -331,7 +350,7 @@ export default function RekamTpid() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
+              <div className="space-y-2">
               <label className="text-sm font-medium">Kode Kanwil</label>
               <Select
                 value={kanwil}
@@ -351,7 +370,7 @@ export default function RekamTpid() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
+              <div className="space-y-2">
               <label className="text-sm font-medium">Nama Proker</label>
               <Select value={namaProker} onValueChange={setNamaProker}>
                 <SelectTrigger className="w-full">
@@ -374,16 +393,8 @@ export default function RekamTpid() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Pencarian</label>
-              <Input
-                placeholder="Cari..."
-                value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
-              />
             </div>
-
-          </div>
+          </CardContent>
         </Card>
 
         {/* CSV Generation Component */}
@@ -397,9 +408,20 @@ export default function RekamTpid() {
 
         {/* Table Content */}
         <Card>
-          <CardHeader>
-            <CardTitle>Data Tantangan/Kendala TPID</CardTitle>
-            <p className="text-sm text-muted-foreground">{getQuarterLabel()}</p>
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <CardTitle>Data Tantangan/Kendala TPID</CardTitle>
+              <p className="text-sm text-muted-foreground">{getQuarterLabel()}</p>
+            </div>
+            <div className="w-full sm:w-72">
+              <Input
+                type="text"
+                aria-label="Pencarian data tantangan kendala tpid"
+                placeholder="Cari..."
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+              />
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             {loading ? (
@@ -436,41 +458,41 @@ export default function RekamTpid() {
                 </TableRow>
                 <TableRow>
                   {/* K/L Columns */}
-                  <TableHead className="text-center text-xs border-r h-auto py-2">
+                  <TableHead className={`${checklistHeadClass} border-r`}>
                     Penganggaran
                   </TableHead>
-                  <TableHead className="text-center text-xs border-r h-auto py-2">
+                  <TableHead className={`${checklistHeadClass} border-r`}>
                     PBJ (K1 & K4 Tidak Diisi)
                   </TableHead>
-                  <TableHead className="text-center text-xs border-r h-auto py-2">
+                  <TableHead className={`${checklistHeadClass} border-r`}>
                     Eksekusi Kegiatan
                   </TableHead>
-                  <TableHead className="text-center text-xs border-r h-auto py-2">
+                  <TableHead className={`${checklistHeadClass} border-r`}>
                     Regulasi
                   </TableHead>
-                  <TableHead className="text-center text-xs border-r h-auto py-2">
+                  <TableHead className={`${checklistHeadClass} border-r`}>
                     SDM
                   </TableHead>
-                  <TableHead className="text-center text-xs border-r h-auto py-2">
+                  <TableHead className={`${checklistHeadClass} border-r`}>
                     Tantangan Lainnya
                   </TableHead>
                   {/* TKD Columns */}
-                  <TableHead className="text-center text-xs border-r h-auto py-2">
+                  <TableHead className={`${checklistHeadClass} border-r`}>
                     Penganggaran
                   </TableHead>
-                  <TableHead className="text-center text-xs border-r h-auto py-2">
+                  <TableHead className={`${checklistHeadClass} border-r`}>
                     PBJ (K1 & K4 Tidak Diisi)
                   </TableHead>
-                  <TableHead className="text-center text-xs border-r h-auto py-2">
+                  <TableHead className={`${checklistHeadClass} border-r`}>
                     Eksekusi Kegiatan
                   </TableHead>
-                  <TableHead className="text-center text-xs border-r h-auto py-2">
+                  <TableHead className={`${checklistHeadClass} border-r`}>
                     Regulasi
                   </TableHead>
-                  <TableHead className="text-center text-xs border-r h-auto py-2">
+                  <TableHead className={`${checklistHeadClass} border-r`}>
                     SDM
                   </TableHead>
-                  <TableHead className="text-center text-xs h-auto py-2">
+                  <TableHead className={checklistHeadClass}>
                     Tantangan Lainnya
                   </TableHead>
                 </TableRow>
@@ -501,7 +523,7 @@ export default function RekamTpid() {
                           </TableCell>
 
                           {/* K/L Cells */}
-                          <TableCell className="text-center border-r p-2">
+                          <TableCell className={`${checklistCellClass} border-r`}>
                             <StatusIcon
                               filled={!!row.ket1_kl && !!row.rekom1_kl}
                               onClick={() =>
@@ -514,11 +536,11 @@ export default function RekamTpid() {
                               }
                             />
                           </TableCell>
-                          <TableCell className="text-center border-r p-2">
-                            <div
-                              className={!isK1OrK4 ? "cursor-pointer" : ""}
+                          <TableCell className={`${checklistCellClass} border-r`}>
+                            <StatusIcon
+                              active={isK1OrK4}
+                              filled={!!row.ket2_kl && !!row.rekom2_kl}
                               onClick={() =>
-                                !isK1OrK4 &&
                                 handleRekam(
                                   row.id,
                                   "2",
@@ -526,14 +548,10 @@ export default function RekamTpid() {
                                   row.rekom2_kl
                                 )
                               }
-                            >
-                              <StatusIcon
-                                active={isK1OrK4}
-                                filled={!!row.ket2_kl && !!row.rekom2_kl}
-                              />
-                            </div>
+                              disabled={isK1OrK4}
+                            />
                           </TableCell>
-                          <TableCell className="text-center border-r p-2">
+                          <TableCell className={`${checklistCellClass} border-r`}>
                             <StatusIcon
                               filled={!!row.ket3_kl && !!row.rekom3_kl}
                               onClick={() =>
@@ -546,7 +564,7 @@ export default function RekamTpid() {
                               }
                             />
                           </TableCell>
-                          <TableCell className="text-center border-r p-2">
+                          <TableCell className={`${checklistCellClass} border-r`}>
                             <StatusIcon
                               filled={!!row.ket4_kl && !!row.rekom4_kl}
                               onClick={() =>
@@ -559,7 +577,7 @@ export default function RekamTpid() {
                               }
                             />
                           </TableCell>
-                          <TableCell className="text-center border-r p-2">
+                          <TableCell className={`${checklistCellClass} border-r`}>
                             <StatusIcon
                               filled={!!row.ket5_kl && !!row.rekom5_kl}
                               onClick={() =>
@@ -572,7 +590,7 @@ export default function RekamTpid() {
                               }
                             />
                           </TableCell>
-                          <TableCell className="text-center border-r p-2">
+                          <TableCell className={`${checklistCellClass} border-r`}>
                             <StatusIcon
                               filled={!!row.ket6_kl && !!row.rekom6_kl}
                               onClick={() =>
@@ -587,7 +605,7 @@ export default function RekamTpid() {
                           </TableCell>
 
                           {/* TKD Cells */}
-                          <TableCell className="text-center border-r p-2">
+                          <TableCell className={`${checklistCellClass} border-r`}>
                             <StatusIcon
                               filled={!!row.ket7_tkd && !!row.rekom7_tkd}
                               onClick={() =>
@@ -600,11 +618,11 @@ export default function RekamTpid() {
                               }
                             />
                           </TableCell>
-                          <TableCell className="text-center border-r p-2">
-                            <div
-                              className={!isK1OrK4 ? "cursor-pointer" : ""}
+                          <TableCell className={`${checklistCellClass} border-r`}>
+                            <StatusIcon
+                              active={isK1OrK4}
+                              filled={!!row.ket8_tkd && !!row.rekom8_tkd}
                               onClick={() =>
-                                !isK1OrK4 &&
                                 handleRekam(
                                   row.id,
                                   "8",
@@ -612,14 +630,10 @@ export default function RekamTpid() {
                                   row.rekom8_tkd
                                 )
                               }
-                            >
-                              <StatusIcon
-                                active={isK1OrK4}
-                                filled={!!row.ket8_tkd && !!row.rekom8_tkd}
-                              />
-                            </div>
+                              disabled={isK1OrK4}
+                            />
                           </TableCell>
-                          <TableCell className="text-center border-r p-2">
+                          <TableCell className={`${checklistCellClass} border-r`}>
                             <StatusIcon
                               filled={!!row.ket9_tkd && !!row.rekom9_tkd}
                               onClick={() =>
@@ -632,7 +646,7 @@ export default function RekamTpid() {
                               }
                             />
                           </TableCell>
-                          <TableCell className="text-center border-r p-2">
+                          <TableCell className={`${checklistCellClass} border-r`}>
                             <StatusIcon
                               filled={!!row.ket10_tkd && !!row.rekom10_tkd}
                               onClick={() =>
@@ -645,7 +659,7 @@ export default function RekamTpid() {
                               }
                             />
                           </TableCell>
-                          <TableCell className="text-center border-r p-2">
+                          <TableCell className={`${checklistCellClass} border-r`}>
                             <StatusIcon
                               filled={!!row.ket11_tkd && !!row.rekom11_tkd}
                               onClick={() =>
@@ -658,7 +672,7 @@ export default function RekamTpid() {
                               }
                             />
                           </TableCell>
-                          <TableCell className="text-center p-2">
+                          <TableCell className={checklistCellClass}>
                             <StatusIcon
                               filled={!!row.ket12_tkd && !!row.rekom12_tkd}
                               onClick={() =>

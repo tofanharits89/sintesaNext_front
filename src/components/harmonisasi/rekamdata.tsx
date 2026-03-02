@@ -496,6 +496,11 @@ export default function Harmonisasi() {
     }
   };
 
+  const clusterHeadClass =
+    "text-center w-[90px] min-w-[90px] max-w-[90px] whitespace-nowrap px-1";
+  const clusterCellClass =
+    "text-center w-[90px] min-w-[90px] max-w-[90px] px-1";
+
   const StatusIcon = ({
     active,
     onClick,
@@ -503,14 +508,21 @@ export default function Harmonisasi() {
     active: boolean;
     onClick: () => void;
   }) => (
-    <div
-      onClick={onClick}
-      className={cn(
-        "cursor-pointer flex justify-center transition-colors duration-150",
-        active ? "text-green-600" : "text-yellow-500"
-      )}
-    >
-      <CheckSquare className="h-4 w-4" />
+    <div className="flex justify-center">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onClick}
+        className="h-8 w-8 p-0"
+        title={active ? "Sudah direkam" : "Belum direkam"}
+      >
+        <CheckSquare
+          className={cn(
+            "h-4 w-4",
+            active ? "text-blue-600" : "text-amber-600"
+          )}
+        />
+      </Button>
     </div>
   );
 
@@ -716,11 +728,11 @@ export default function Harmonisasi() {
                             : ["Jul", "Ags", "Sep", "Okt", "Nov", "Des"][i]}
                         </TableHead>
                       ))}
-                      <TableHead className="text-center whitespace-nowrap">Penganggaran</TableHead>
-                      <TableHead className="text-center whitespace-nowrap">PBJ</TableHead>
-                      <TableHead className="text-center whitespace-nowrap">Eksekusi</TableHead>
-                      <TableHead className="text-center whitespace-nowrap">Regulasi</TableHead>
-                      <TableHead className="text-center whitespace-nowrap">SDM</TableHead>
+                      <TableHead className={clusterHeadClass}>Penganggaran</TableHead>
+                      <TableHead className={clusterHeadClass}>PBJ</TableHead>
+                      <TableHead className={clusterHeadClass}>Eksekusi</TableHead>
+                      <TableHead className={clusterHeadClass}>Regulasi</TableHead>
+                      <TableHead className={clusterHeadClass}>SDM</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -813,7 +825,7 @@ export default function Harmonisasi() {
                           </TableCell>
 
                           {/* Clusters */}
-                          <TableCell className="whitespace-nowrap">
+                          <TableCell className={clusterCellClass}>
                             <StatusIcon
                               active={
                                 !!(
@@ -828,7 +840,7 @@ export default function Harmonisasi() {
                               onClick={() => handleOpenRekam(row, 1)}
                             />
                           </TableCell>
-                          <TableCell className="whitespace-nowrap">
+                          <TableCell className={clusterCellClass}>
                             <StatusIcon
                               active={
                                 !!(
@@ -844,7 +856,7 @@ export default function Harmonisasi() {
                               onClick={() => handleOpenRekam(row, 2)}
                             />
                           </TableCell>
-                          <TableCell className="whitespace-nowrap">
+                          <TableCell className={clusterCellClass}>
                             <StatusIcon
                               active={
                                 !!(
@@ -861,7 +873,7 @@ export default function Harmonisasi() {
                               onClick={() => handleOpenRekam(row, 3)}
                             />
                           </TableCell>
-                          <TableCell className="whitespace-nowrap">
+                          <TableCell className={clusterCellClass}>
                             <StatusIcon
                               active={
                                 !!(
@@ -874,7 +886,7 @@ export default function Harmonisasi() {
                               onClick={() => handleOpenRekam(row, 4)}
                             />
                           </TableCell>
-                          <TableCell className="whitespace-nowrap">
+                          <TableCell className={clusterCellClass}>
                             <StatusIcon
                               active={
                                 !!(

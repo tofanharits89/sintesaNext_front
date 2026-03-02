@@ -412,22 +412,22 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
             cell: ({ row }: any) => (
                 <div className="flex items-center justify-center gap-2">
                     <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950"
+                        className="h-8 w-8 p-0"
                         onClick={() => handleEditKendala(row.original)}
                         title="Edit Kendala/Hambatan"
                     >
-                        <Pencil className="h-4 w-4" />
+                        <Pencil className="h-4 w-4 text-blue-600" />
                     </Button>
                     <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="h-8 w-8 p-0 text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-950"
+                        className="h-8 w-8 p-0"
                         onClick={() => handleViewKendala(row.original)}
                         title="Lihat Kendala/Hambatan"
                     >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-4 w-4 text-amber-600" />
                     </Button>
                 </div>
             ),
@@ -512,14 +512,14 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
             cell: ({ row }: any) => (
                 <div className="flex items-center justify-center">
                     <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="h-8 w-8 p-0 text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-950"
+                        className="h-8 w-8 p-0"
                         onClick={() => handleViewRingkasan(row.original)}
                         title="Lihat Ringkasan Laporan"
                         disabled={row.original.status !== "sent"}
                     >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-4 w-4 text-amber-600" />
                     </Button>
                 </div>
             ),

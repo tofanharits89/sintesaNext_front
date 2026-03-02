@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { GenericCardSkeleton } from "@/components/ui/dashboard-skeletons";
 import { KanwilContent, KanwilContentRef, RingkasanKanwilData } from "@/components/monev-kkp/kanwil-content";
+import { MonevKkpPageSkeleton } from "@/components/monev-kkp/monev-page-skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/components/animate-ui/components/animate/tabs";
 import { Button } from "@/components/ui/button";
@@ -53,7 +53,7 @@ export default function MonevKkpKanwilPage() {
     }, [user, isLoading, router]);
 
     if (isLoading || !user || !ALLOWED_ROLES.includes(user.role as string)) {
-        return <GenericCardSkeleton showHeader contentLines={8} />;
+        return <MonevKkpPageSkeleton actionCount={3} tabCount={2} filterCount={3} showStatusBadge />;
     }
 
     const handleExportExcel = async () => {
@@ -320,15 +320,11 @@ export default function MonevKkpKanwilPage() {
 
                 <TabsContents>
                     <TabsContent value="ringkasan-kanwil" className="space-y-4">
-                        <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} />}>
-                            <KanwilContent ref={kanwilContentRef} contentType="ringkasan" statusLaporan={statusLaporan} />
-                        </Suspense>
+                        <KanwilContent ref={kanwilContentRef} contentType="ringkasan" statusLaporan={statusLaporan} />
                     </TabsContent>
 
                     <TabsContent value="monitoring-kppn" className="space-y-4">
-                        <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} />}>
-                            <KanwilContent contentType="monitoring" />
-                        </Suspense>
+                        <KanwilContent contentType="monitoring" />
                     </TabsContent>
                 </TabsContents>
             </Tabs>

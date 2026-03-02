@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { GenericCardSkeleton } from "@/components/ui/dashboard-skeletons";
+import { DispensasiPageSkeleton } from "@/components/dispensasi/dispensasi-page-skeleton";
 
 export default function DispensasiLayout({
   children,
@@ -7,7 +7,7 @@ export default function DispensasiLayout({
   children: React.ReactNode;
 }) {
   return (
-    <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} />}>
+    <Suspense fallback={<DispensasiPageSkeleton />}>
       {children}
     </Suspense>
   );

@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { GenericCardSkeleton } from "@/components/ui/dashboard-skeletons";
+import { IkpaPageSkeleton } from "@/components/ikpa/ikpa-page-skeleton";
 
 export default function IkpaLayout({
     children,
@@ -7,7 +7,7 @@ export default function IkpaLayout({
     children: React.ReactNode;
 }) {
     return (
-        <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} />}>
+        <Suspense fallback={<IkpaPageSkeleton />}>
             {children}
         </Suspense>
     );
