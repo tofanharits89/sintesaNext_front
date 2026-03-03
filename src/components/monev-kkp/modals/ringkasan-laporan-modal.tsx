@@ -142,8 +142,26 @@ export function RingkasanLaporanModal({
                                                     <td className="p-2 text-right font-mono text-xs">
                                                         Rp {formatRupiah(r.nilaiTransaksi)}
                                                     </td>
-                                                    <td className="p-2 text-left text-xs max-w-[150px] truncate" title={r.kendala || "Tidak ada kendala"}>
-                                                        {r.kendala || <span className="text-muted-foreground italic">-</span>}
+                                                    <td className="p-2 text-left text-xs max-w-[200px] truncate" title={r.kendala || "Tidak ada kendala"}>
+                                                        {r.kendala && r.kendala.trim() !== '' ? (
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {r.kendala.split(',').slice(0, 2).map((cat: string, idx: number) => (
+                                                                    <span
+                                                                        key={idx}
+                                                                        className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary whitespace-nowrap"
+                                                                    >
+                                                                        {cat.trim()}
+                                                                    </span>
+                                                                ))}
+                                                                {r.kendala.split(',').length > 2 && (
+                                                                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                                                        +{r.kendala.split(',').length - 2} lainnya
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-muted-foreground italic">-</span>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             ))
