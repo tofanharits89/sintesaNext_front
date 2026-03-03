@@ -77,7 +77,7 @@ export function KendalaHambatanModal({
                     console.log("Fetching existing kendala with:", { selectedTahun, selectedTriwulan, kodeSatker: data.kodeSatker });
 
                     const response = await fetch(
-                        apiPath(`/monev-kkp/kendala?tahun=${selectedTahun}&triwulan=${selectedTriwulan}&kdsatker=${data.kodeSatker}`),
+                        apiPath(`/monev-kkp/kendala?tahun=${selectedTahun}&triwulan=${selectedTriwulan}&kdsatker=${data.kodeSatker}&_t=${Date.now()}`),
                         {
                             credentials: "include",
                             headers: {
@@ -88,9 +88,11 @@ export function KendalaHambatanModal({
 
                     if (response.ok) {
                         const result = await response.json();
-                        if (result.data && result.data.kategori_kendala) {
-                            // Parse comma-separated categories
-                            const savedCategories = result.data.kategori_kendala.split(",").map((c: string) => c.trim()).filter(Boolean);
+                        if (result.data) {
+                            // Parse comma-separated categories if they exist
+                            const savedCategories = result.data.kategori_kendala 
+                                ? result.data.kategori_kendala.split(",").map((c: string) => c.trim()).filter(Boolean)
+                                : [];
                             setKategori(savedCategories);
                             setDetilMasukan(result.data.detil_masukan_kendala || "");
                         } else {

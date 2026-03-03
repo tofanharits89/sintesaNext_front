@@ -75,6 +75,8 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
     const [selectedYear, setSelectedYear] = useState(defaultYear);
     const [selectedKppn, setSelectedKppn] = useState("all");
     const [selectedPeriode, setSelectedPeriode] = useState(defaultPeriode);
+    const [kppnRefList, setKppnRefList] = useState<{ value: string; label: string }[]>([]);
+    const [isLoadingKppnRef, setIsLoadingKppnRef] = useState(false);
 
     // Expose getData method to parent component via ref
     useImperativeHandle(ref, () => ({
@@ -164,6 +166,30 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
         }
     };
 
+    const fetchKppnRefList = async () => {
+        setIsLoadingKppnRef(true);
+        try {
+            const response = await fetch(
+                apiPath(`/monev-kkp/kanwil/ref-kppn`),
+                { credentials: "include" }
+            );
+
+            if (!response.ok) throw new Error("Gagal mengambil data referensi KPPN");
+            const result = await response.json();
+
+            const mappedList = result.data.map((item: any) => ({
+                value: item.kdkppn,
+                label: `${item.kdkppn} - ${item.nmkppn}`,
+            }));
+            setKppnRefList(mappedList);
+        } catch (error) {
+            console.error(error);
+            toast.error("Gagal mengambil data referensi KPPN");
+        } finally {
+            setIsLoadingKppnRef(false);
+        }
+    };
+
     useEffect(() => {
         if (!user) return;
         if (contentType === "ringkasan") {
@@ -172,6 +198,12 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
             fetchMonitoringData();
         }
     }, [user, contentType, selectedYear, selectedPeriode, selectedKppn]);
+
+    // Fetch KPPN reference list on mount (for dropdown)
+    useEffect(() => {
+        if (!user) return;
+        fetchKppnRefList();
+    }, [user]);
 
 
     // Reset KPPN filter when user changes to prevent stale data from previous sessions
@@ -188,21 +220,11 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
     const [selectedItem, setSelectedItem] = useState<any>(null);
     const [isModalLoading, setIsModalLoading] = useState(false);
 
-    // Filter list of KPPNs
+    // Build KPPN dropdown list from reference data (all KPPNs under this Kanwil)
     const kppnList = [
         { value: "all", label: "Semua KPPN" },
+        ...kppnRefList,
     ];
-
-    // Dynamically build KPPN list from ringkasan data
-    const uniqueKppnsMap = new Map();
-    ringkasanData.forEach(d => {
-        if (d.kodeKppn && !uniqueKppnsMap.has(d.kodeKppn)) {
-            uniqueKppnsMap.set(d.kodeKppn, d.namaKppn || d.kodeKppn);
-        }
-    });
-    uniqueKppnsMap.forEach((label, value) => {
-        kppnList.push({ value, label });
-    });
 
     const years = ["2026", "2025", "2024", "2023"];
 
@@ -588,7 +610,7 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
                             <label className="text-sm font-medium">KPPN</label>
                             <Select value={selectedKppn} onValueChange={setSelectedKppn}>
                                 <SelectTrigger className="w-full">
-                                    <SelectValue />
+                                    <SelectValue placeholder={isLoadingKppnRef ? "Memuat..." : "Pilih KPPN"} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {kppnList.map((kppn) => (
