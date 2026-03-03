@@ -54,14 +54,17 @@ export interface MonitoringKppnData {
 // Ref interface for parent component access
 export interface KanwilContentRef {
     getData: () => RingkasanKanwilData[];
+    getSelectedPeriode: () => { year: string; periode: string };
 }
 
 interface KanwilContentProps {
     contentType?: "ringkasan" | "monitoring";
     statusLaporan?: "sent" | "not_sent";
+    kppnCompletionStatus?: "complete" | "incomplete";
+    onPeriodeChange?: (year: string, periode: string) => void;
 }
 
-export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(function KanwilContent({ contentType = "monitoring", statusLaporan = "not_sent" }, ref) {
+export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(function KanwilContent({ contentType = "monitoring", statusLaporan = "not_sent", kppnCompletionStatus = "incomplete", onPeriodeChange }, ref) {
     // Get authenticated user info
     const { user, isLoading: isAuthLoading } = useAuth();
 
@@ -78,9 +81,10 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
     const [kppnRefList, setKppnRefList] = useState<{ value: string; label: string }[]>([]);
     const [isLoadingKppnRef, setIsLoadingKppnRef] = useState(false);
 
-    // Expose getData method to parent component via ref
+    // Expose getData and getSelectedPeriode methods to parent component via ref
     useImperativeHandle(ref, () => ({
         getData: () => ringkasanData,
+        getSelectedPeriode: () => ({ year: selectedYear, periode: selectedPeriode }),
     }));
 
     const fetchRingkasanData = async () => {
@@ -198,6 +202,13 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
             fetchMonitoringData();
         }
     }, [user, contentType, selectedYear, selectedPeriode, selectedKppn]);
+
+    // Notify parent when year or periode changes
+    useEffect(() => {
+        if (onPeriodeChange) {
+            onPeriodeChange(selectedYear, selectedPeriode);
+        }
+    }, [selectedYear, selectedPeriode]);
 
     // Fetch KPPN reference list on mount (for dropdown)
     useEffect(() => {
@@ -445,7 +456,8 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
                         size="sm"
                         className="h-8 w-8 p-0 cursor-pointer"
                         onClick={() => handleEditKendala(row.original)}
-                        title="Edit Kendala/Hambatan"
+                        title={statusLaporan === "sent" ? "Laporan sudah dikirim, tidak dapat mengedit" : "Edit Kendala/Hambatan"}
+                        disabled={statusLaporan === "sent"}
                     >
                         <Pencil className="h-4 w-4 text-blue-600" />
                     </Button>
@@ -650,9 +662,9 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
                         </CardTitle>
                         {contentType === "ringkasan" && (
                             <Badge
-                                variant={statusLaporan === "sent" ? "success" : "destructive"}
+                                variant={statusLaporan === "sent" ? "success" : kppnCompletionStatus === "complete" ? "success" : "destructive"}
                             >
-                                {statusLaporan === "sent" ? "Sudah Dikirim" : "Belum Dikirim"}
+                                {statusLaporan === "sent" ? "Sudah Dikirim" : kppnCompletionStatus === "complete" ? "Sudah Lengkap" : "Belum Lengkap"}
                             </Badge>
                         )}
                     </div>

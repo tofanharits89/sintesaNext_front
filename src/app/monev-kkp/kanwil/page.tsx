@@ -12,6 +12,8 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { useAuth } from "@/hooks/useAuth";
+import { apiPath } from "@/lib/config/base-path";
+import { addCsrfToHeaders } from "@/utils/csrf-utils";
 
 // Allowed roles for Kanwil page
 const ALLOWED_ROLES = ["kanwil_djpb", "super_admin", "co_admin"];
@@ -38,7 +40,15 @@ export default function MonevKkpKanwilPage() {
     const [isExporting, setIsExporting] = useState(false);
     const [isSending, setIsSending] = useState(false);
     const [statusLaporan, setStatusLaporan] = useState<"sent" | "not_sent">("not_sent");
+    const [allKppnSent, setAllKppnSent] = useState(false);
     const kanwilContentRef = useRef<KanwilContentRef>(null);
+
+    // Get current triwulan defaults
+    const now2 = new Date();
+    const defaultYear = "2026";
+    const defaultPeriode = `Q${Math.ceil((now2.getMonth() + 1) / 3)}`;
+    const [selectedYear, setSelectedYear] = useState(defaultYear);
+    const [selectedPeriode, setSelectedPeriode] = useState(defaultPeriode);
 
     // Role-based access control
     useEffect(() => {
@@ -51,6 +61,37 @@ export default function MonevKkpKanwilPage() {
             router.push("/unauthorized?reason=monev_kkp_kanwil_access_denied");
         }
     }, [user, isLoading, router]);
+
+    // Fetch kanwil laporan status whenever year/periode changes
+    useEffect(() => {
+        if (!user) return;
+        const fetchStatus = async () => {
+            try {
+                const triwulan = selectedPeriode.replace("Q", "");
+                const response = await fetch(
+                    apiPath(`/monev-kkp/status-laporan-kanwil?tahun=${selectedYear}&triwulan=${triwulan}`),
+                    { credentials: "include" }
+                );
+                if (!response.ok) return;
+                const result = await response.json();
+                if (result.data?.sts_kirim_kanwil === "1") {
+                    setStatusLaporan("sent");
+                } else {
+                    setStatusLaporan("not_sent");
+                }
+                setAllKppnSent(!!result.data?.all_kppn_sent);
+            } catch (error) {
+                console.error("Error fetching status laporan kanwil:", error);
+            }
+        };
+        fetchStatus();
+    }, [user, selectedYear, selectedPeriode]);
+
+    // Callback from KanwilContent when filters change
+    const handlePeriodeChange = (year: string, periode: string) => {
+        setSelectedYear(year);
+        setSelectedPeriode(periode);
+    };
 
     if (isLoading || !user || !ALLOWED_ROLES.includes(user.role as string)) {
         return <MonevKkpPageSkeleton actionCount={3} tabCount={2} filterCount={3} showStatusBadge />;
@@ -237,10 +278,28 @@ export default function MonevKkpKanwilPage() {
     const handleKirimLaporan = async () => {
         setIsSending(true);
         try {
-            // TODO: Implement send report to Direktorat PA/Kantor Pusat API call
+            const triwulan = selectedPeriode.replace("Q", "");
+            const response = await fetch(
+                apiPath("/monev-kkp/kirim-laporan-kanwil"),
+                {
+                    method: "POST",
+                    credentials: "include",
+                    headers: addCsrfToHeaders({ "Content-Type": "application/json" }),
+                    body: JSON.stringify({ tahun: selectedYear, triwulan }),
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                toast.error(result.message || "Gagal mengirim laporan");
+                return;
+            }
+
             setStatusLaporan("sent");
             toast.success("Laporan berhasil dikirim ke Direktorat PA/Kantor Pusat");
         } catch (error) {
+            console.error("Error sending laporan kanwil:", error);
             toast.error("Gagal mengirim laporan");
         } finally {
             setIsSending(false);
@@ -281,9 +340,9 @@ export default function MonevKkpKanwilPage() {
                         </Button>
                         <ConfirmationModal
                             trigger={
-                                <Button disabled={isSending}>
+                                <Button disabled={isSending || statusLaporan === "sent" || !allKppnSent}>
                                     <Send className="mr-2 h-4 w-4" />
-                                    {isSending ? "Mengirim..." : "Kirim Laporan"}
+                                    {isSending ? "Mengirim..." : statusLaporan === "sent" ? "Sudah Dikirim" : !allKppnSent ? "KPPN Belum Lengkap" : "Kirim Laporan"}
                                 </Button>
                             }
                             title="Kirim Laporan ke Direktorat PA?"
@@ -292,7 +351,7 @@ export default function MonevKkpKanwilPage() {
                             cancelText="Batal"
                             variant="info"
                             onConfirm={handleKirimLaporan}
-                            disabled={isSending}
+                            disabled={isSending || statusLaporan === "sent" || !allKppnSent}
                         />
                     </div>
                 )}
@@ -320,11 +379,11 @@ export default function MonevKkpKanwilPage() {
 
                 <TabsContents>
                     <TabsContent value="ringkasan-kanwil" className="space-y-4">
-                        <KanwilContent ref={kanwilContentRef} contentType="ringkasan" statusLaporan={statusLaporan} />
+                        <KanwilContent ref={kanwilContentRef} contentType="ringkasan" statusLaporan={statusLaporan} kppnCompletionStatus={allKppnSent ? "complete" : "incomplete"} onPeriodeChange={handlePeriodeChange} />
                     </TabsContent>
 
                     <TabsContent value="monitoring-kppn" className="space-y-4">
-                        <KanwilContent contentType="monitoring" />
+                        <KanwilContent contentType="monitoring" onPeriodeChange={handlePeriodeChange} />
                     </TabsContent>
                 </TabsContents>
             </Tabs>

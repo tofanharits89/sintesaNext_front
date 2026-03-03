@@ -40,12 +40,12 @@ export default function MonevKkpKppnPage() {
     const [statusLaporan, setStatusLaporan] = useState<"sent" | "not_sent">("not_sent");
     const kppnContentRef = useRef<KppnContentRef>(null);
 
-    // Get current triwulan
+    // Get current triwulan defaults
     const now = new Date();
     const defaultYear = "2026";
     const defaultPeriode = `Q${Math.ceil((now.getMonth() + 1) / 3)}`;
-    const [selectedYear] = useState(defaultYear);
-    const [selectedPeriode] = useState(defaultPeriode);
+    const [selectedYear, setSelectedYear] = useState(defaultYear);
+    const [selectedPeriode, setSelectedPeriode] = useState(defaultPeriode);
 
     // Role-based access control
     useEffect(() => {
@@ -59,7 +59,7 @@ export default function MonevKkpKppnPage() {
         }
     }, [user, isLoading, router]);
 
-    // Fetch laporan status on mount
+    // Fetch laporan status whenever year/periode changes
     useEffect(() => {
         if (!user) return;
         const fetchStatus = async () => {
@@ -82,6 +82,12 @@ export default function MonevKkpKppnPage() {
         };
         fetchStatus();
     }, [user, selectedYear, selectedPeriode]);
+
+    // Callback from KppnContent when filters change
+    const handlePeriodeChange = (year: string, periode: string) => {
+        setSelectedYear(year);
+        setSelectedPeriode(periode);
+    };
 
     if (isLoading || !user || !ALLOWED_ROLES.includes(user.role as string)) {
         return <MonevKkpPageSkeleton actionCount={3} filterCount={2} showStatusBadge />;
@@ -339,7 +345,7 @@ export default function MonevKkpKppnPage() {
             </div>
 
             {/* Main Content */}
-            <KppnContent ref={kppnContentRef} statusLaporan={statusLaporan} />
+            <KppnContent ref={kppnContentRef} statusLaporan={statusLaporan} onPeriodeChange={handlePeriodeChange} />
         </div>
     );
 }

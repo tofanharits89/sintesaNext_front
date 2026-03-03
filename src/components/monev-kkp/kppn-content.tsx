@@ -43,14 +43,16 @@ export interface KkpData {
 // Ref interface for parent component access
 export interface KppnContentRef {
     getData: () => KkpData[];
+    getSelectedPeriode: () => { year: string; periode: string };
 }
 
 // Props interface
 interface KppnContentProps {
     statusLaporan?: "sent" | "not_sent";
+    onPeriodeChange?: (year: string, periode: string) => void;
 }
 
-export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(function KppnContent({ statusLaporan = "not_sent" }, ref) {
+export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(function KppnContent({ statusLaporan = "not_sent", onPeriodeChange }, ref) {
     // Get authenticated user info
     const { user, isLoading: isAuthLoading } = useAuth();
     const now = new Date();
@@ -62,9 +64,10 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(function
     const [selectedYear, setSelectedYear] = useState(defaultYear);
     const [selectedPeriode, setSelectedPeriode] = useState(defaultPeriode);
 
-    // Expose getData method to parent component via ref
+    // Expose getData and getSelectedPeriode methods to parent component via ref
     useImperativeHandle(ref, () => ({
         getData: () => data,
+        getSelectedPeriode: () => ({ year: selectedYear, periode: selectedPeriode }),
     }));
 
     const fetchData = async () => {
@@ -121,6 +124,13 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(function
             fetchData();
         }
     }, [user, selectedYear, selectedPeriode]);
+
+    // Notify parent when year or periode changes
+    useEffect(() => {
+        if (onPeriodeChange) {
+            onPeriodeChange(selectedYear, selectedPeriode);
+        }
+    }, [selectedYear, selectedPeriode]);
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
