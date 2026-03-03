@@ -257,16 +257,17 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(function
                     <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 w-8 p-0"
+                        className="h-8 w-8 p-0 cursor-pointer"
                         onClick={() => handleEditKendala(row.original)}
-                        title="Edit Kendala/Hambatan"
+                        title={statusLaporan === "sent" ? "Laporan sudah dikirim, tidak dapat mengedit" : "Edit Kendala/Hambatan"}
+                        disabled={statusLaporan === "sent"}
                     >
                         <Pencil className="h-4 w-4 text-blue-600" />
                     </Button>
                     <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 w-8 p-0"
+                        className="h-8 w-8 p-0 cursor-pointer"
                         onClick={() => handleViewKendala(row.original)}
                         title="Lihat Kendala/Hambatan"
                     >

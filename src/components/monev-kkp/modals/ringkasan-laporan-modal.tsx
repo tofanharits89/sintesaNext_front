@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
 
 interface RingkasanLaporanModalProps {
     open: boolean;
@@ -88,15 +89,15 @@ export function RingkasanLaporanModal({
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="max-w-sm"
+                            disabled={isLoading}
                         />
                     </div>
 
                     {/* Table */}
                     <div className="border rounded-lg h-full flex flex-col overflow-hidden">
                         {isLoading ? (
-                            <div className="flex-1 flex items-center justify-center py-20">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                                <p className="ml-2 text-muted-foreground">Memuat data...</p>
+                            <div className="flex-1 p-4">
+                                <TableSkeleton rows={10} />
                             </div>
                         ) : (
                         <div className="flex-1 w-full overflow-auto">

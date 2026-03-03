@@ -10,6 +10,8 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { useAuth } from "@/hooks/useAuth";
+import { apiPath } from "@/lib/config/base-path";
+import { addCsrfToHeaders } from "@/utils/csrf-utils";
 
 // Allowed roles for KPPN page
 const ALLOWED_ROLES = ["kppn", "super_admin", "co_admin"];
@@ -38,6 +40,13 @@ export default function MonevKkpKppnPage() {
     const [statusLaporan, setStatusLaporan] = useState<"sent" | "not_sent">("not_sent");
     const kppnContentRef = useRef<KppnContentRef>(null);
 
+    // Get current triwulan
+    const now = new Date();
+    const defaultYear = "2026";
+    const defaultPeriode = `Q${Math.ceil((now.getMonth() + 1) / 3)}`;
+    const [selectedYear] = useState(defaultYear);
+    const [selectedPeriode] = useState(defaultPeriode);
+
     // Role-based access control
     useEffect(() => {
         if (isLoading) return;
@@ -49,6 +58,30 @@ export default function MonevKkpKppnPage() {
             router.push("/unauthorized?reason=monev_kkp_kppn_access_denied");
         }
     }, [user, isLoading, router]);
+
+    // Fetch laporan status on mount
+    useEffect(() => {
+        if (!user) return;
+        const fetchStatus = async () => {
+            try {
+                const triwulan = selectedPeriode.replace("Q", "");
+                const response = await fetch(
+                    apiPath(`/monev-kkp/status-laporan?tahun=${selectedYear}&triwulan=${triwulan}`),
+                    { credentials: "include" }
+                );
+                if (!response.ok) return;
+                const result = await response.json();
+                if (result.data?.sts_kirim_kppn === "1") {
+                    setStatusLaporan("sent");
+                } else {
+                    setStatusLaporan("not_sent");
+                }
+            } catch (error) {
+                console.error("Error fetching status laporan:", error);
+            }
+        };
+        fetchStatus();
+    }, [user, selectedYear, selectedPeriode]);
 
     if (isLoading || !user || !ALLOWED_ROLES.includes(user.role as string)) {
         return <MonevKkpPageSkeleton actionCount={3} filterCount={2} showStatusBadge />;
@@ -225,10 +258,28 @@ export default function MonevKkpKppnPage() {
     const handleKirimLaporan = async () => {
         setIsSending(true);
         try {
-            // TODO: Implement send report to Kanwil API call
+            const triwulan = selectedPeriode.replace("Q", "");
+            const response = await fetch(
+                apiPath("/monev-kkp/kirim-laporan"),
+                {
+                    method: "POST",
+                    credentials: "include",
+                    headers: addCsrfToHeaders({ "Content-Type": "application/json" }),
+                    body: JSON.stringify({ tahun: selectedYear, triwulan }),
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                toast.error(result.message || "Gagal mengirim laporan");
+                return;
+            }
+
             setStatusLaporan("sent");
             toast.success("Laporan berhasil dikirim ke Kanwil");
         } catch (error) {
+            console.error("Error sending laporan:", error);
             toast.error("Gagal mengirim laporan");
         } finally {
             setIsSending(false);
@@ -271,9 +322,9 @@ export default function MonevKkpKppnPage() {
                     {/* Kirim Laporan Button */}
                     <ConfirmationModal
                         trigger={
-                            <Button disabled={isSending}>
+                            <Button disabled={isSending || statusLaporan === "sent"}>
                                 <Send className="mr-2 h-4 w-4" />
-                                {isSending ? "Mengirim..." : "Kirim Laporan"}
+                                {isSending ? "Mengirim..." : statusLaporan === "sent" ? "Sudah Dikirim" : "Kirim Laporan"}
                             </Button>
                         }
                         title="Kirim Laporan ke Kanwil?"
@@ -282,7 +333,7 @@ export default function MonevKkpKppnPage() {
                         cancelText="Batal"
                         variant="info"
                         onConfirm={handleKirimLaporan}
-                        disabled={isSending}
+                        disabled={isSending || statusLaporan === "sent"}
                     />
                 </div>
             </div>

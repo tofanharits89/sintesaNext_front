@@ -152,8 +152,8 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
                 jumlah_satker_up_kkp: Number(item.jumlah_satker_up_kkp || 0),
                 jumlah_satker_transaksi: Number(item.jumlah_satker_transaksi || 0),
                 nilai_transaksi: Number(item.nilai_transaksi || 0),
-                status: "sent", // Default for now
-                tanggalKirim: null,
+                status: String(item.sts_kirim_kppn || "").trim() === "1" ? "sent" : "not_sent",
+                tanggalKirim: item.tgkirim_kppn || null,
             }));
             setMonitoringData(mappedData);
         } catch (error) {
@@ -227,8 +227,16 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
             return;
         }
 
-        // For monitoring tab, fetch satker data from the KPPN API
+        // For monitoring tab, open modal instantly with basic info
+        const initialItem = {
+            kodeKppn: item.kdkppn,
+            namaKppn: item.nmkppn,
+            satkerData: [],
+        };
+        setSelectedItem(initialItem);
+        setIsRingkasanModalOpen(true);
         setIsModalLoading(true);
+
         try {
             const triwulan = selectedPeriode.replace("Q", "");
             const kdkppn = item.kdkppn;
@@ -261,7 +269,6 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
             };
 
             setSelectedItem(combinedItem);
-            setIsRingkasanModalOpen(true);
         } catch (error) {
             console.error("Error fetching satker data:", error);
             toast.error("Gagal mengambil data detail satker");
@@ -414,7 +421,7 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
                     <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 w-8 p-0"
+                        className="h-8 w-8 p-0 cursor-pointer"
                         onClick={() => handleEditKendala(row.original)}
                         title="Edit Kendala/Hambatan"
                     >
@@ -423,7 +430,7 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
                     <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 w-8 p-0"
+                        className="h-8 w-8 p-0 cursor-pointer"
                         onClick={() => handleViewKendala(row.original)}
                         title="Lihat Kendala/Hambatan"
                     >
@@ -514,7 +521,7 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
                     <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 w-8 p-0"
+                        className="h-8 w-8 p-0 cursor-pointer"
                         onClick={() => handleViewRingkasan(row.original)}
                         title="Lihat Ringkasan Laporan"
                         disabled={row.original.status !== "sent"}
