@@ -185,7 +185,16 @@ const fetcher = async (url: string) => {
  */
 export function useSavedQueries(
   params: GetSavedQueriesParams & {
-    scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d";
+    scope?:
+      | "belanja"
+      | "tematik"
+      | "general"
+      | "rkakl_detail"
+      | "kontrak"
+      | "up_tup"
+      | "penerimaan_pnbp"
+      | "sp2d"
+      | "revisi_dipa";
   } = {},
 ) {
   const queryClient = useQueryClient();
@@ -201,6 +210,7 @@ export function useSavedQueries(
       "up_tup",
       "penerimaan_pnbp",
       "sp2d",
+      "revisi_dipa",
     ] as const;
     const rawPage = typeof params.page === "number" ? params.page : undefined;
     const rawLimit =
@@ -324,7 +334,6 @@ export function useSavedQueries(
     any,
     CreateSavedQueryRequest
   >({
-
     mutationFn: async (arg: CreateSavedQueryRequest): Promise<SavedQuery> => {
       const res = await retrySavedQueryOperation(
         createNetworkAwareOperation(async () => {
@@ -472,9 +481,9 @@ export function useSavedQueries(
               existing && typeof existing === "object"
                 ? existing
                 : {
-                  queries: [],
-                  pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
-                };
+                    queries: [],
+                    pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+                  };
             const queries = Array.isArray(base.queries) ? base.queries : [];
             const exists = queries.some((q: any) => q?.id === newQuery.id);
             const merged = exists ? queries : [newQuery, ...queries];

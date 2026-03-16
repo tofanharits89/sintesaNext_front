@@ -1,4 +1,7 @@
-import { SCOPE_EXCLUSIONS_BASE, getBelanjaDynamicExclusions } from "./scopeFilterConfig";
+import {
+  SCOPE_EXCLUSIONS_BASE,
+  getBelanjaDynamicExclusions,
+} from "./scopeFilterConfig";
 
 export type JenisTampilan =
   | "kode"
@@ -20,6 +23,7 @@ export interface FilterDef {
   mandatory?: boolean; // e.g., cutOff
   showInUI?: boolean; // hide internal keys like kodeBkpk/jenisBelanja
   defaultTampilan?: JenisTampilan;
+  noYearSuffix?: boolean; // reference table lives in dbref without a year suffix (e.g. t_kew_revisi)
   query?: {
     columnName: string;
     reference?: RefDef;
@@ -658,13 +662,46 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
       nameColumn: "nmsumber",
     },
   },
+  // Revisi DIPA-specific filters (reference tables have NO year suffix)
+  {
+    key: "kewenanganRevisi",
+    label: "Kewenangan Revisi",
+    order: 300,
+    showInUI: true,
+    noYearSuffix: true,
+    query: {
+      columnName: "dgb_kanwil_type",
+      reference: {
+        database: "dbref",
+        table: "t_kew_revisi",
+        joinKey: "kdkewrevisi",
+        nameColumn: "nmkewrevisi",
+      },
+    },
+  },
+  {
+    key: "jenisRevisi",
+    label: "Jenis Revisi",
+    order: 301,
+    showInUI: true,
+    noYearSuffix: true,
+    query: {
+      columnName: "kdjnsrevisi",
+      reference: {
+        database: "dbref",
+        table: "t_jnsrevisi",
+        joinKey: "kdjnsrevisi",
+        nameColumn: "nmjnsrevisi",
+      },
+    },
+  },
 ];
 
 export type FilterKey = (typeof INQUIRY_FILTER_DEFS)[number]["key"];
 
 export const getUIFilters = (): FilterDef[] =>
   INQUIRY_FILTER_DEFS.filter((d) => d.showInUI !== false).sort(
-    (a, b) => a.order - b.order
+    (a, b) => a.order - b.order,
   );
 
 export const getFilterLabel = (key: string): string => {
@@ -682,6 +719,7 @@ export const getFilterConfigMap = () => {
       referenceDatabase?: string;
       joinKey?: string;
       nameColumn?: string;
+      noYearSuffix?: boolean;
     }
   > = {};
   for (const d of INQUIRY_FILTER_DEFS) {
@@ -693,6 +731,7 @@ export const getFilterConfigMap = () => {
         referenceDatabase?: string;
         joinKey?: string;
         nameColumn?: string;
+        noYearSuffix?: boolean;
       } = {
         key: d.key,
         columnName: d.query.columnName,
@@ -712,6 +751,10 @@ export const getFilterConfigMap = () => {
       const nameColumn = reference?.nameColumn ?? d.query.nameColumn;
       if (nameColumn) {
         entry.nameColumn = nameColumn;
+      }
+
+      if (d.noYearSuffix) {
+        entry.noYearSuffix = true;
       }
 
       map[d.key] = entry;
@@ -748,9 +791,18 @@ export const normalizeActiveFilters = (activeFilters: string[]): string[] => {
  * @returns Array of available filter keys for the scope
  */
 export const getAvailableFiltersForScope = (
-  scope: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d" = "general",
+  scope:
+    | "belanja"
+    | "tematik"
+    | "general"
+    | "rkakl_detail"
+    | "kontrak"
+    | "up_tup"
+    | "penerimaan_pnbp"
+    | "revisi_dipa"
+    | "sp2d" = "general",
   excludeFilters: string[] = [],
-  options?: { tipeLaporan?: string }
+  options?: { tipeLaporan?: string },
 ): string[] => {
   const allUIFilters = getUIFilters().map((f) => f.key);
 
@@ -759,7 +811,9 @@ export const getAvailableFiltersForScope = (
 
   // Dynamic exclusions (currently only Belanja has dynamic rules)
   const dynamicExclusions =
-    scope === "belanja" ? getBelanjaDynamicExclusions(options?.tipeLaporan) : [];
+    scope === "belanja"
+      ? getBelanjaDynamicExclusions(options?.tipeLaporan)
+      : [];
 
   // Aggregate exclusions preserving previous behavior
   const filtersToExclude: string[] = [
@@ -769,7 +823,7 @@ export const getAvailableFiltersForScope = (
   ];
 
   return allUIFilters.filter(
-    (filterKey) => !filtersToExclude.includes(filterKey)
+    (filterKey) => !filtersToExclude.includes(filterKey),
   );
 };
 
@@ -781,7 +835,15 @@ export const getAvailableFiltersForScope = (
  */
 export const isFilterAvailableInScope = (
   filterKey: string,
-  scope: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d" = "general"
+  scope:
+    | "belanja"
+    | "tematik"
+    | "general"
+    | "rkakl_detail"
+    | "kontrak"
+    | "up_tup"
+    | "penerimaan_pnbp"
+    | "sp2d" = "general",
 ): boolean => {
   const availableFilters = getAvailableFiltersForScope(scope);
   return availableFilters.includes(filterKey);
@@ -795,11 +857,20 @@ export const isFilterAvailableInScope = (
  */
 export const validateFiltersForScope = (
   activeFilters: string[],
-  scope: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d"
+  scope:
+    | "belanja"
+    | "tematik"
+    | "general"
+    | "rkakl_detail"
+    | "kontrak"
+    | "up_tup"
+    | "penerimaan_pnbp"
+    | "sp2d"
+    | "revisi_dipa",
 ): { isValid: boolean; incompatibleFilters: string[] } => {
   const availableFilters = getAvailableFiltersForScope(scope);
   const incompatibleFilters = activeFilters.filter(
-    (filter) => !availableFilters.includes(filter)
+    (filter) => !availableFilters.includes(filter),
   );
 
   return {

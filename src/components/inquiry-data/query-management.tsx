@@ -54,7 +54,16 @@ import { QueryListItem } from "./query-list-item";
 interface QueryManagementProps {
   onLoadQuery: (query: SavedQuery) => void;
   currentUserId: string;
-  scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d"; // Add scope for filtering queries
+  scope?:
+    | "belanja"
+    | "tematik"
+    | "general"
+    | "rkakl_detail"
+    | "kontrak"
+    | "up_tup"
+    | "penerimaan_pnbp"
+    | "sp2d"
+    | "revisi_dipa"; // Add scope for filtering queries
   onRefreshReady?: (refreshFn: () => void) => void;
 }
 
@@ -82,7 +91,7 @@ export const QueryManagement = React.memo(function QueryManagement({
       {
         maxRenders: 15, // Lower threshold for earlier detection
         timeWindow: 2000, // 2 second window
-      }
+      },
     );
   }
 
@@ -97,7 +106,7 @@ export const QueryManagement = React.memo(function QueryManagement({
 
   // Bulk operations state
   const [selectedQueries, setSelectedQueries] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{
@@ -120,7 +129,7 @@ export const QueryManagement = React.memo(function QueryManagement({
       search: debouncedSearch,
       scope, // Include scope for filtering
     }),
-    [currentPage, debouncedSearch, scope]
+    [currentPage, debouncedSearch, scope],
   );
 
   // Fetch saved queries with pagination and search
@@ -135,7 +144,6 @@ export const QueryManagement = React.memo(function QueryManagement({
     isUpdating,
     isDeleting,
   } = useSavedQueries(queryParams);
-
 
   // Filter and sort queries client-side for additional filtering
   const filteredAndSortedQueries = useMemo(() => {
@@ -159,7 +167,7 @@ export const QueryManagement = React.memo(function QueryManagement({
       }
 
       filtered = filtered.filter(
-        (query) => new Date(query.createdAt) >= cutoffDate
+        (query) => new Date(query.createdAt) >= cutoffDate,
       );
     }
 
@@ -195,7 +203,7 @@ export const QueryManagement = React.memo(function QueryManagement({
       setFilters((prev) => ({ ...prev, [key]: value }));
       setCurrentPage(1); // Reset to first page when filtering
     },
-    []
+    [],
   );
 
   const handlePageChange = useCallback((page: number) => {
@@ -223,7 +231,7 @@ export const QueryManagement = React.memo(function QueryManagement({
         console.error("Failed to update query:", error);
       }
     },
-    [updateQuery]
+    [updateQuery],
   );
 
   const handleDeleteQuery = useCallback(
@@ -234,7 +242,7 @@ export const QueryManagement = React.memo(function QueryManagement({
         console.error("Failed to delete query:", error);
       }
     },
-    [deleteQuery]
+    [deleteQuery],
   );
 
   const handleLoadQuery = useCallback(
@@ -250,7 +258,7 @@ export const QueryManagement = React.memo(function QueryManagement({
         });
       }
     },
-    [onLoadQuery]
+    [onLoadQuery],
   );
 
   // Bulk operations handlers
@@ -266,7 +274,7 @@ export const QueryManagement = React.memo(function QueryManagement({
         return newSet;
       });
     },
-    []
+    [],
   );
 
   const handleSelectAll = useCallback(() => {
@@ -305,7 +313,7 @@ export const QueryManagement = React.memo(function QueryManagement({
           },
           continueOnError: true,
           showToast: false, // We'll show our own toast
-        }
+        },
       );
 
       // Show enhanced result summary
@@ -313,7 +321,7 @@ export const QueryManagement = React.memo(function QueryManagement({
         "Penghapusan",
         result.successful.length,
         selectedQueries.size,
-        result.failed.length
+        result.failed.length,
       );
 
       setSelectedQueries(new Set());
@@ -453,33 +461,33 @@ export const QueryManagement = React.memo(function QueryManagement({
               {(filters.search ||
                 filters.dateRange !== "all" ||
                 filters.sortBy !== "newest") && (
-                  <div className="flex flex-wrap gap-2 pt-2 border-t">
-                    <span className="text-sm text-muted-foreground">
-                      Filter aktif:
-                    </span>
-                    {filters.search && (
-                      <Badge variant="secondary">
-                        Pencarian: "{filters.search}"
-                      </Badge>
-                    )}
-                    {filters.dateRange !== "all" && (
-                      <Badge variant="secondary">
-                        Tanggal:{" "}
-                        {filters.dateRange === "today"
-                          ? "Hari Ini"
-                          : filters.dateRange === "week"
-                            ? "7 Hari"
-                            : "30 Hari"}
-                      </Badge>
-                    )}
-                    {filters.sortBy !== "newest" && (
-                      <Badge variant="secondary">
-                        Urutan:{" "}
-                        {filters.sortBy === "oldest" ? "Terlama" : "Nama A-Z"}
-                      </Badge>
-                    )}
-                  </div>
-                )}
+                <div className="flex flex-wrap gap-2 pt-2 border-t">
+                  <span className="text-sm text-muted-foreground">
+                    Filter aktif:
+                  </span>
+                  {filters.search && (
+                    <Badge variant="secondary">
+                      Pencarian: "{filters.search}"
+                    </Badge>
+                  )}
+                  {filters.dateRange !== "all" && (
+                    <Badge variant="secondary">
+                      Tanggal:{" "}
+                      {filters.dateRange === "today"
+                        ? "Hari Ini"
+                        : filters.dateRange === "week"
+                          ? "7 Hari"
+                          : "30 Hari"}
+                    </Badge>
+                  )}
+                  {filters.sortBy !== "newest" && (
+                    <Badge variant="secondary">
+                      Urutan:{" "}
+                      {filters.sortBy === "oldest" ? "Terlama" : "Nama A-Z"}
+                    </Badge>
+                  )}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -614,10 +622,10 @@ export const QueryManagement = React.memo(function QueryManagement({
                   description="Terjadi kesalahan saat memuat daftar query tersimpan."
                   variant={
                     error.message?.includes("network") ||
-                      error.message?.includes("connection")
+                    error.message?.includes("connection")
                       ? "network"
                       : error.message?.includes("server") ||
-                        error.message?.includes("5")
+                          error.message?.includes("5")
                         ? "server"
                         : "generic"
                   }

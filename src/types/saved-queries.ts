@@ -25,7 +25,16 @@ export interface SavedQuery {
   activeFilters: string[];
   filterValues: Record<string, FilterValue>;
   userId: string;
-  scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d"; // New field to identify query scope
+  scope?:
+    | "belanja"
+    | "tematik"
+    | "general"
+    | "rkakl_detail"
+    | "kontrak"
+    | "up_tup"
+    | "penerimaan_pnbp"
+    | "sp2d"
+    | "revisi_dipa";
   createdAt: string;
   updatedAt: string;
 }
@@ -37,7 +46,16 @@ export interface CreateSavedQueryRequest {
   reportParams: ReportParams;
   activeFilters: string[];
   filterValues: Record<string, FilterValue>;
-  scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d"; // New field for creating scoped queries
+  scope?:
+    | "belanja"
+    | "tematik"
+    | "general"
+    | "rkakl_detail"
+    | "kontrak"
+    | "up_tup"
+    | "penerimaan_pnbp"
+    | "sp2d"
+    | "revisi_dipa";
 }
 
 export interface UpdateSavedQueryRequest {
@@ -66,5 +84,14 @@ export interface GetSavedQueriesParams {
   page?: number;
   limit?: number;
   search?: string;
-  scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d"; // Add scope for filtering queries
+  scope?:
+    | "belanja"
+    | "tematik"
+    | "general"
+    | "rkakl_detail"
+    | "kontrak"
+    | "up_tup"
+    | "penerimaan_pnbp"
+    | "sp2d"
+    | "revisi_dipa";
 }

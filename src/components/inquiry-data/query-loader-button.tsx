@@ -38,7 +38,16 @@ interface QueryLoaderButtonProps {
   hasUnsavedChanges?: boolean;
   disabled?: boolean;
   className?: string;
-  scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d";
+  scope?:
+    | "belanja"
+    | "tematik"
+    | "general"
+    | "rkakl_detail"
+    | "kontrak"
+    | "up_tup"
+    | "penerimaan_pnbp"
+    | "sp2d"
+    | "revisi_dipa";
 }
 
 const QueryLoaderButtonComponent = function QueryLoaderButton({
@@ -96,8 +105,6 @@ const QueryLoaderButtonComponent = function QueryLoaderButton({
     refetch: refetchQueries,
     pagination,
   } = useSavedQueries(queryParams);
-
-  
 
   // Get filtered queries - only process when dropdown is open
   const filteredQueries = useMemo(() => {

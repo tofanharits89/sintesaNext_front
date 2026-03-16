@@ -5,7 +5,15 @@ import { getAllMandatoryFilterKeys } from "./categoryRegistry";
  * Do not modify behavior when moving from filterRegistry.ts.
  */
 export const SCOPE_EXCLUSIONS_BASE: Record<
-  "belanja" | "tematik" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d" | "general",
+  | "belanja"
+  | "tematik"
+  | "rkakl_detail"
+  | "kontrak"
+  | "up_tup"
+  | "penerimaan_pnbp"
+  | "sp2d"
+  | "general"
+  | "revisi_dipa",
   string[]
 > = {
   belanja: [
@@ -22,6 +30,9 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "jenisKontrak",
     // Status Sumber only on Penerimaan PNBP
     "statusSumber",
+    // Revisi DIPA-specific filters not used on Belanja
+    "kewenanganRevisi",
+    "jenisRevisi",
   ],
   tematik: [
     "register",
@@ -39,6 +50,9 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "jenisKontrak",
     // Status Sumber only on Penerimaan PNBP
     "statusSumber",
+    // Revisi DIPA-specific filters not used on Tematik
+    "kewenanganRevisi",
+    "jenisRevisi",
   ],
   rkakl_detail: [
     "cutOff", // No cutOff needed for RKAKL Detail since no realisasi
@@ -64,6 +78,9 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "jenisKontrak",
     // Status Sumber only on Penerimaan PNBP
     "statusSumber",
+    // Revisi DIPA-specific filters not used on RKAKL Detail
+    "kewenanganRevisi",
+    "jenisRevisi",
   ],
   kontrak: [
     // Explicitly exclude all filters that are NOT required on Kontrak page.
@@ -106,6 +123,9 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "jenisBlokir",
     // Status Sumber only on Penerimaan PNBP
     "statusSumber",
+    // Revisi DIPA-specific filters not used on Kontrak
+    "kewenanganRevisi",
+    "jenisRevisi",
   ],
   up_tup: [
     // Allowed filters on UP/TUP page:
@@ -153,6 +173,9 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "sumberDana",
     // Status Sumber not used on UP/TUP
     "statusSumber",
+    // Revisi DIPA-specific filters not used on UP/TUP
+    "kewenanganRevisi",
+    "jenisRevisi",
   ],
   penerimaan_pnbp: [
     // Allowed filters on Penerimaan PNBP page:
@@ -196,10 +219,67 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "kegiatan",
     "outputKro",
     "sumberDana",
+    // Revisi DIPA-specific filters not used on Penerimaan PNBP
+    "kewenanganRevisi",
+    "jenisRevisi",
+  ],
+  revisi_dipa: [
+    // Allowed standard filters on Revisi DIPA page:
+    // - kementerian, eselonI, kewenangan, kanwil, kppn, satker
+    // Mandatory filters rendered separately: kewenanganRevisi, jenisRevisi
+    "cutOff", // No cutOff for Revisi DIPA
+    "provinsi",
+    "kabkota",
+    "fungsi",
+    "subFungsi",
+    // Tematik & special switches not used on Revisi DIPA
+    "jenisPn",
+    "programPrioritas",
+    "kegiatanPrioritas",
+    "proyekPrioritas",
+    "jenisMajorProject",
+    "jenisInflasiIntervensi",
+    "jenisInflasiPengeluaran",
+    "stuntingIntervensi",
+    "mbgIntervensi",
+    "jenisProgramStrategis",
+    "jenisTemaAnggaran",
+    "kemiskinanEkstrim",
+    "belanjaPemilu",
+    "ibuKotaNusantara",
+    "ketahananPangan",
+    "swasembadaPangan",
+    "belanjaPemerintah",
+    // RKAKL Detail specific hierarchy not needed
+    "subOutputRo",
+    "komponen",
+    "subKomponen",
+    "item",
+    // Internal akun variants not shown on UI
+    "kodeBkpk",
+    "jenisBelanja",
+    // Other UI filters not required
+    "register",
+    "jenisBlokir",
+    // Kontrak-specific filters not needed
+    "jenisKontrak",
+    // Hierarchy filters not needed on Revisi DIPA
+    "program",
+    "kegiatan",
+    "outputKro",
+    "sumberDana",
+    "statusSumber",
+    "akun",
+    // Mandatory revisi filters are excluded from standard filter panel
+    "kewenanganRevisi",
+    "jenisRevisi",
   ],
   general: [
     // Status Sumber only on Penerimaan PNBP
     "statusSumber",
+    // Revisi DIPA-specific filters not used on general pages
+    "kewenanganRevisi",
+    "jenisRevisi",
   ],
   sp2d: [
     // Allowed filters on SP2D page:
@@ -244,6 +324,9 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "jenisKontrak",
     // Status Sumber only on Penerimaan PNBP
     "statusSumber",
+    // Revisi DIPA-specific filters not used on SP2D
+    "kewenanganRevisi",
+    "jenisRevisi",
   ],
 };
 
@@ -253,9 +336,7 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
  * - If tipeLaporan === "volume_output_kegiatan": hide akun, sumberDana, register
  * - Else: hide tematik mandatory keys, specified tematik switches, and subOutputRo
  */
-export function getBelanjaDynamicExclusions(
-  tipeLaporan?: string,
-): string[] {
+export function getBelanjaDynamicExclusions(tipeLaporan?: string): string[] {
   const filtersToExclude: string[] = [];
 
   if (tipeLaporan === "volume_output_kegiatan") {

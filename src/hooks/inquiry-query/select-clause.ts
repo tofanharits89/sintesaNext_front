@@ -204,7 +204,9 @@ export function buildSelectClause(
       }
 
       const year = reportParams.tahun || new Date().getFullYear();
-      const joinTable = `${config.referenceDatabase}.${referenceTable}_${year}`;
+      const joinTable = config.noYearSuffix
+        ? `${config.referenceDatabase}.${referenceTable}`
+        : `${config.referenceDatabase}.${referenceTable}_${year}`;
       joinTables.push(`LEFT JOIN ${joinTable} AS ${alias} ON ${joinCondition}`);
       joinedTables.add(alias);
     }
@@ -266,7 +268,11 @@ export function buildSelectClause(
               selectColumns.push(
                 `LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`,
               );
-            } else if (filterKey === "komponen" || filterKey === "subKomponen" || filterKey === "subFungsi") {
+            } else if (
+              filterKey === "komponen" ||
+              filterKey === "subKomponen" ||
+              filterKey === "subFungsi"
+            ) {
               // Trim kode for columns with trailing spaces
               selectColumns.push(
                 `TRIM(main.${config.columnName}) AS ${filterKey}_kode`,
@@ -302,7 +308,11 @@ export function buildSelectClause(
               selectColumns.push(
                 `LEFT(main.${config.columnName}, 2) AS ${filterKey}_kode`,
               );
-            } else if (filterKey === "komponen" || filterKey === "subKomponen" || filterKey === "subFungsi") {
+            } else if (
+              filterKey === "komponen" ||
+              filterKey === "subKomponen" ||
+              filterKey === "subFungsi"
+            ) {
               // Trim kode for columns with trailing spaces
               selectColumns.push(
                 `TRIM(main.${config.columnName}) AS ${filterKey}_kode`,
@@ -348,7 +358,7 @@ export function buildSelectClause(
 
   const tematikKategori = (reportParams as { tematikKategori?: string })
     .tematikKategori;
-  if (tematikKategori) {
+  if (tematikKategori && reportParams.tipeLaporan !== "revisi_dipa") {
     const mandatoryColumns = getCategoryMandatoryColumns(tematikKategori);
     const categoryMandatoryColumns = mandatoryColumns
       .sort((a, b) => a.order - b.order)
@@ -439,16 +449,19 @@ export function buildSelectClause(
     selectColumns.push(
       `ROUND(SUM(CONVERT(main.pagu_apbn, SIGNED)) / ${divisor}, 0) AS PAGU_APBN`,
     );
-    selectColumns.push(`ROUND(SUM(main.pagu_dipa) / ${divisor}, 0) AS PAGU_DIPA`);
+    selectColumns.push(
+      `ROUND(SUM(main.pagu_dipa) / ${divisor}, 0) AS PAGU_DIPA`,
+    );
   } else if (reportParams.tipeLaporan === "pagu_dan_blokir") {
     selectColumns.push(`ROUND(SUM(main.pagu) / ${divisor}, 0) AS PAGU`);
     selectColumns.push(`ROUND(SUM(main.blokir) / ${divisor}, 0) AS BLOKIR`);
   } else if (
     reportParams.tipeLaporan !== "pergerakan_pagu_bulanan" &&
     reportParams.tipeLaporan !== "pergerakan_blokir_bulanan" &&
-    reportParams.tipeLaporan !== "pergerakan_blokir_bulanan_per_jenis"
+    reportParams.tipeLaporan !== "pergerakan_blokir_bulanan_per_jenis" &&
+    reportParams.tipeLaporan !== "revisi_dipa"
   ) {
-    // Include PAGU_DIPA for tipe laporan 1, 2, 3, and 7 (exclude 4, 5, 6)
+    // Include PAGU_DIPA for tipe laporan 1, 2, 3, and 7 (exclude 4, 5, 6, revisi_dipa)
     selectColumns.push(`ROUND(SUM(main.pagu) / ${divisor}, 0) AS PAGU_DIPA`);
   }
 
@@ -518,6 +531,12 @@ export function buildSelectClause(
     });
     selectColumns.push(`main.os AS os`);
     selectColumns.push(`main.ket AS ket`);
+  } else if (reportParams.tipeLaporan === "revisi_dipa") {
+    selectColumns.push(`main.revision_number AS revision_number`);
+    selectColumns.push(
+      `TO_CHAR(main.TANGGAL, 'YYYY-MM-DD') AS TANGGAL_POSTING`,
+    );
+    selectColumns.push(`ROUND(SUM(main.pagu) / ${divisor}, 0) AS PAGU`);
   } else {
     selectColumns.push(
       `ROUND(SUM(${realizationSum}) / ${divisor}, 0) AS REALISASI`,
@@ -525,6 +544,8 @@ export function buildSelectClause(
     if (cfg.addBlokirAfterReal)
       selectColumns.push(`ROUND(SUM(main.blokir) / ${divisor}, 0) AS BLOKIR`);
   }
+
+  console.log(selectColumns);
 
   return { selectColumns, joinTables };
 }
