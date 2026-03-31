@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { Loading2 } from "@/layout/LoadingTable";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,10 +25,10 @@ import { apiPath } from "@/lib/config/base-path";
 
 // Table styling - matching dispensasi/llat pattern
 const tableStyles = {
-  headerCell: "h-10 px-2 text-center align-middle font-medium text-muted-foreground whitespace-nowrap",
-  headerCellCenter: "h-10 px-2 text-center align-middle font-medium text-muted-foreground whitespace-nowrap",
-  bodyCell: "px-2 py-2 text-sm align-middle border-b",
-  bodyCellCenter: "px-2 py-2 text-sm text-center align-middle border-b whitespace-nowrap",
+  headerCell: "h-10 px-3 text-center align-middle font-medium whitespace-nowrap",
+  headerCellCenter: "h-10 px-3 text-center align-middle font-medium whitespace-nowrap",
+  bodyCell: "px-3 py-2 text-sm align-middle border-b",
+  bodyCellCenter: "px-3 py-2 text-sm text-center align-middle border-b whitespace-nowrap",
 };
 
 interface DispensasiData {
@@ -58,7 +58,7 @@ interface DataDispensasiKPPNProps {
 
 const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = false, onRekamClose, onDownload, isExporting = false, onExportComplete }) => {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [id, setId] = useState("");
   const [nomor, setNomor] = useState("");
   const [data, setData] = useState<DispensasiData[]>([]);
@@ -312,18 +312,14 @@ const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = f
   return (
     <div className="space-y-4">
       {loading ? (
-        <div className="space-y-4">
-          <Loading2 />
-          <Loading2 />
-          <Loading2 />
-        </div>
+        <TableSkeleton rows={10} />
       ) : (
         <>
           <Card>
             <CardContent className="p-4">
               <div className="rounded-md border">
                 <div className="overflow-x-auto">
-                  <table className="w-full table-fixed">
+                  <table className="w-full table-fixed text-sm">
                     <colgroup>
                       <col className="w-10" />
                       <col className="w-[18%]" />
@@ -334,7 +330,7 @@ const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = f
                       <col className="w-[8%]" />
                     </colgroup>
                     <thead>
-                      <tr className="border-b bg-muted/50">
+                      <tr className="border-b">
                         <th className={tableStyles.headerCellCenter}>No.</th>
                         <th className={tableStyles.headerCell}>KPPN</th>
                         <th className={tableStyles.headerCell}>Satker</th>
@@ -380,11 +376,11 @@ const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = f
                             </td>
                             <td className={tableStyles.bodyCellCenter}>
                               {user?.role !== "kanwil_djpb" ? (
-                                <div className="flex items-center justify-center gap-1">
+                                <div className="flex items-center justify-center gap-2">
                                   <Button
-                                    variant="ghost"
+                                    variant="outline"
                                     size="sm"
-                                    className="h-8 w-8 p-0 text-green-600 hover:text-green-800"
+                                    className="h-8 w-8 p-0"
                                     title="Rekam Kontrak"
                                     onClick={() =>
                                       handleRekamKontrak(
@@ -396,12 +392,12 @@ const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = f
                                       )
                                     }
                                   >
-                                    <PlusSquare className="h-4 w-4" />
+                                    <PlusSquare className="h-4 w-4 text-blue-600" />
                                   </Button>
                                   <Button
-                                    variant="ghost"
+                                    variant="outline"
                                     size="sm"
-                                    className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
+                                    className="h-8 w-8 p-0"
                                     title="Hapus Dispensasi"
                                     onClick={() =>
                                       handleHapusDispSPM(
@@ -412,7 +408,7 @@ const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = f
                                       )
                                     }
                                   >
-                                    <Trash2 className="h-4 w-4" />
+                                    <Trash2 className="h-4 w-4 text-red-600" />
                                   </Button>
                                 </div>
                               ) : (

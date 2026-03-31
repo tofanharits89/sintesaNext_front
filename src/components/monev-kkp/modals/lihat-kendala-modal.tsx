@@ -41,7 +41,7 @@ export function LihatKendalaModal({
                     console.log("Fetching kendala with:", { selectedTahun, selectedTriwulan, kodeSatker: data.kodeSatker });
                     
                     const response = await fetch(
-                        apiPath(`/monev-kkp/kendala?tahun=${selectedTahun}&triwulan=${selectedTriwulan}&kdsatker=${data.kodeSatker}`),
+                        apiPath(`/monev-kkp/kendala?tahun=${selectedTahun}&triwulan=${selectedTriwulan}&kdsatker=${data.kodeSatker}&_t=${Date.now()}`),
                         {
                             credentials: "include",
                             headers: {

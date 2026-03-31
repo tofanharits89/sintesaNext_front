@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { GenericCardSkeleton } from "@/components/ui/dashboard-skeletons";
 import { DirektoratPaContent, DirektoratPaContentRef, RingkasanData } from "@/components/monev-kkp/direktorat-pa-content";
+import { MonevKkpPageSkeleton } from "@/components/monev-kkp/monev-page-skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/components/animate-ui/components/animate/tabs";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,7 @@ export default function MonevKkpDirektoratPaPage() {
     }, [user, isLoading, router]);
 
     if (isLoading || !user || !ALLOWED_ROLES.includes(user.role as string)) {
-        return <GenericCardSkeleton showHeader contentLines={8} />;
+        return <MonevKkpPageSkeleton actionCount={2} tabCount={4} filterCount={3} />;
     }
 
     const handleExportExcel = async () => {
@@ -309,27 +309,19 @@ export default function MonevKkpDirektoratPaPage() {
 
                 <TabsContents>
                     <TabsContent value="ringkasan-kanwil" className="space-y-4">
-                        <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} />}>
-                            <DirektoratPaContent ref={direktoratPaContentRef} contentType="ringkasan-kanwil" />
-                        </Suspense>
+                        <DirektoratPaContent ref={direktoratPaContentRef} contentType="ringkasan-kanwil" />
                     </TabsContent>
 
                     <TabsContent value="ringkasan-kppn" className="space-y-4">
-                        <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} />}>
-                            <DirektoratPaContent ref={direktoratPaContentRef} contentType="ringkasan-kppn" />
-                        </Suspense>
+                        <DirektoratPaContent ref={direktoratPaContentRef} contentType="ringkasan-kppn" />
                     </TabsContent>
 
                     <TabsContent value="monitoring-kanwil" className="space-y-4">
-                        <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} />}>
-                            <DirektoratPaContent contentType="monitoring-kanwil" />
-                        </Suspense>
+                        <DirektoratPaContent contentType="monitoring-kanwil" />
                     </TabsContent>
 
                     <TabsContent value="monitoring-kppn" className="space-y-4">
-                        <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} />}>
-                            <DirektoratPaContent contentType="monitoring-kppn" />
-                        </Suspense>
+                        <DirektoratPaContent contentType="monitoring-kppn" />
                     </TabsContent>
                 </TabsContents>
             </Tabs>

@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { apiClient } from "@/lib/api/httpClient";
 import { apiPath } from "@/lib/config/base-path";
 import { PlusSquare, Trash2, Download, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
-import { Loading2 } from "../../layout/LoadingTable";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import Rekam2 from "./rekam2";
 import {
   AlertDialog,
@@ -24,10 +24,10 @@ import {
 
 // Styling untuk table dan kolom - matching weekly-report pattern
 const tableStyles = {
-  headerCell: "h-10 px-2 text-center align-middle font-medium text-muted-foreground whitespace-nowrap",
-  headerCellCenter: "h-10 px-2 text-center align-middle font-medium text-muted-foreground whitespace-nowrap",
-  bodyCell: "px-2 py-2 text-sm align-middle border-b",
-  bodyCellCenter: "px-2 py-2 text-sm text-center align-middle border-b whitespace-nowrap",
+  headerCell: "h-10 px-3 text-center align-middle font-medium whitespace-nowrap",
+  headerCellCenter: "h-10 px-3 text-center align-middle font-medium whitespace-nowrap",
+  bodyCell: "px-3 py-2 text-sm align-middle border-b",
+  bodyCellCenter: "px-3 py-2 text-sm text-center align-middle border-b whitespace-nowrap",
 };
 
 interface DispenSpmProps {
@@ -54,7 +54,7 @@ interface SpmData {
 
 const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [data, setData] = useState<SpmData[]>([]);
   const [page, setPage] = useState(0);
   const limit = 15;
@@ -276,18 +276,12 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
   return (
     <div>
       {loading ? (
-        <>
-          <Loading2 />
-          <br />
-          <Loading2 />
-          <br />
-          <Loading2 />
-        </>
+        <TableSkeleton rows={10} />
       ) : (
         <>
           <div className="rounded-md border">
             <div className="overflow-x-auto">
-              <table className="w-full table-fixed">
+              <table className="w-full table-fixed text-sm">
                 <colgroup>
                   <col className="w-10" />
                   <col className="w-[8%]" />
@@ -298,7 +292,7 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
                   <col className="w-[8%]" />
                 </colgroup>
                 <thead>
-                  <tr className="border-b bg-muted/50">
+                  <tr className="border-b">
                     <th className={tableStyles.headerCellCenter}>No.</th>
                     <th className={tableStyles.headerCellCenter}>TA</th>
                     <th className={tableStyles.headerCell}>Satker</th>
@@ -337,13 +331,13 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
                           {row.jmlspm ?? "-"}
                         </td>
                         <td className={tableStyles.bodyCellCenter}>
-                          <div className="flex items-center justify-center gap-1">
+                          <div className="flex items-center justify-center gap-2">
                             {/* Rekam SPM - hanya untuk non-KPPN */}
                             {user?.role !== "kppn" && (
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                className="h-8 w-8 p-0 text-green-600 hover:text-green-800"
+                                className="h-8 w-8 p-0"
                                 title="Rekam SPM"
                                 onClick={() =>
                                   handleRekamSPM(
@@ -355,16 +349,16 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
                                   )
                                 }
                               >
-                                <PlusSquare className="h-4 w-4" />
+                                <PlusSquare className="h-4 w-4 text-blue-600" />
                               </Button>
                             )}
 
                             {/* Hapus Dispensasi - hanya untuk non-KPPN */}
                             {user?.role !== "kppn" && (
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
+                                className="h-8 w-8 p-0"
                                 title="Hapus Dispensasi"
                                 onClick={() =>
                                   handleHapusDispSPM(
@@ -373,19 +367,19 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
                                   )
                                 }
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-4 w-4 text-red-600" />
                               </Button>
                             )}
 
                             {/* Download - untuk semua role */}
                             <Button
-                              variant="ghost"
+                              variant="outline"
                               size="sm"
-                              className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800"
+                              className="h-8 w-8 p-0"
                               title="Download Dokumen"
                               onClick={() => handledownload(String(row.id))}
                             >
-                              <Download className="h-4 w-4" />
+                              <Download className="h-4 w-4 text-amber-600" />
                             </Button>
                           </div>
                         </td>

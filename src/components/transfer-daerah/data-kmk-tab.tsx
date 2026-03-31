@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Trash2, Scissors, PauseCircle, Undo2 } from "lucide-react";
 import { PdfjsViewerIframeModal } from "./modals/pdfjs-viewer-iframe-modal";
@@ -362,9 +363,7 @@ export function DataKmkTab({}: DataKmkTabProps) {
             </div>
           ) : null}
           {isLoading ? (
-            <div className="text-sm text-muted-foreground">
-              Memuat data KMK...
-            </div>
+            <TableSkeleton rows={10} />
           ) : (
             <DataTable columns={columns} data={rows} />
           )}

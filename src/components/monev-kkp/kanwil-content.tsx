@@ -54,14 +54,17 @@ export interface MonitoringKppnData {
 // Ref interface for parent component access
 export interface KanwilContentRef {
     getData: () => RingkasanKanwilData[];
+    getSelectedPeriode: () => { year: string; periode: string };
 }
 
 interface KanwilContentProps {
     contentType?: "ringkasan" | "monitoring";
     statusLaporan?: "sent" | "not_sent";
+    kppnCompletionStatus?: "complete" | "incomplete";
+    onPeriodeChange?: (year: string, periode: string) => void;
 }
 
-export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(function KanwilContent({ contentType = "monitoring", statusLaporan = "not_sent" }, ref) {
+export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(function KanwilContent({ contentType = "monitoring", statusLaporan = "not_sent", kppnCompletionStatus = "incomplete", onPeriodeChange }, ref) {
     // Get authenticated user info
     const { user, isLoading: isAuthLoading } = useAuth();
 
@@ -75,10 +78,13 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
     const [selectedYear, setSelectedYear] = useState(defaultYear);
     const [selectedKppn, setSelectedKppn] = useState("all");
     const [selectedPeriode, setSelectedPeriode] = useState(defaultPeriode);
+    const [kppnRefList, setKppnRefList] = useState<{ value: string; label: string }[]>([]);
+    const [isLoadingKppnRef, setIsLoadingKppnRef] = useState(false);
 
-    // Expose getData method to parent component via ref
+    // Expose getData and getSelectedPeriode methods to parent component via ref
     useImperativeHandle(ref, () => ({
         getData: () => ringkasanData,
+        getSelectedPeriode: () => ({ year: selectedYear, periode: selectedPeriode }),
     }));
 
     const fetchRingkasanData = async () => {
@@ -152,8 +158,8 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
                 jumlah_satker_up_kkp: Number(item.jumlah_satker_up_kkp || 0),
                 jumlah_satker_transaksi: Number(item.jumlah_satker_transaksi || 0),
                 nilai_transaksi: Number(item.nilai_transaksi || 0),
-                status: "sent", // Default for now
-                tanggalKirim: null,
+                status: String(item.sts_kirim_kppn || "").trim() === "1" ? "sent" : "not_sent",
+                tanggalKirim: item.tgkirim_kppn || null,
             }));
             setMonitoringData(mappedData);
         } catch (error) {
@@ -161,6 +167,30 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
             toast.error("Gagal mengambil data monitoring");
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const fetchKppnRefList = async () => {
+        setIsLoadingKppnRef(true);
+        try {
+            const response = await fetch(
+                apiPath(`/monev-kkp/kanwil/ref-kppn`),
+                { credentials: "include" }
+            );
+
+            if (!response.ok) throw new Error("Gagal mengambil data referensi KPPN");
+            const result = await response.json();
+
+            const mappedList = result.data.map((item: any) => ({
+                value: item.kdkppn,
+                label: `${item.kdkppn} - ${item.nmkppn}`,
+            }));
+            setKppnRefList(mappedList);
+        } catch (error) {
+            console.error(error);
+            toast.error("Gagal mengambil data referensi KPPN");
+        } finally {
+            setIsLoadingKppnRef(false);
         }
     };
 
@@ -172,6 +202,19 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
             fetchMonitoringData();
         }
     }, [user, contentType, selectedYear, selectedPeriode, selectedKppn]);
+
+    // Notify parent when year or periode changes
+    useEffect(() => {
+        if (onPeriodeChange) {
+            onPeriodeChange(selectedYear, selectedPeriode);
+        }
+    }, [selectedYear, selectedPeriode]);
+
+    // Fetch KPPN reference list on mount (for dropdown)
+    useEffect(() => {
+        if (!user) return;
+        fetchKppnRefList();
+    }, [user]);
 
 
     // Reset KPPN filter when user changes to prevent stale data from previous sessions
@@ -188,21 +231,11 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
     const [selectedItem, setSelectedItem] = useState<any>(null);
     const [isModalLoading, setIsModalLoading] = useState(false);
 
-    // Filter list of KPPNs
+    // Build KPPN dropdown list from reference data (all KPPNs under this Kanwil)
     const kppnList = [
         { value: "all", label: "Semua KPPN" },
+        ...kppnRefList,
     ];
-
-    // Dynamically build KPPN list from ringkasan data
-    const uniqueKppnsMap = new Map();
-    ringkasanData.forEach(d => {
-        if (d.kodeKppn && !uniqueKppnsMap.has(d.kodeKppn)) {
-            uniqueKppnsMap.set(d.kodeKppn, d.namaKppn || d.kodeKppn);
-        }
-    });
-    uniqueKppnsMap.forEach((label, value) => {
-        kppnList.push({ value, label });
-    });
 
     const years = ["2026", "2025", "2024", "2023"];
 
@@ -227,8 +260,16 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
             return;
         }
 
-        // For monitoring tab, fetch satker data from the KPPN API
+        // For monitoring tab, open modal instantly with basic info
+        const initialItem = {
+            kodeKppn: item.kdkppn,
+            namaKppn: item.nmkppn,
+            satkerData: [],
+        };
+        setSelectedItem(initialItem);
+        setIsRingkasanModalOpen(true);
         setIsModalLoading(true);
+
         try {
             const triwulan = selectedPeriode.replace("Q", "");
             const kdkppn = item.kdkppn;
@@ -261,7 +302,6 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
             };
 
             setSelectedItem(combinedItem);
-            setIsRingkasanModalOpen(true);
         } catch (error) {
             console.error("Error fetching satker data:", error);
             toast.error("Gagal mengambil data detail satker");
@@ -412,22 +452,23 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
             cell: ({ row }: any) => (
                 <div className="flex items-center justify-center gap-2">
                     <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950"
+                        className="h-8 w-8 p-0 cursor-pointer"
                         onClick={() => handleEditKendala(row.original)}
-                        title="Edit Kendala/Hambatan"
+                        title={statusLaporan === "sent" ? "Laporan sudah dikirim, tidak dapat mengedit" : "Edit Kendala/Hambatan"}
+                        disabled={statusLaporan === "sent"}
                     >
-                        <Pencil className="h-4 w-4" />
+                        <Pencil className="h-4 w-4 text-blue-600" />
                     </Button>
                     <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="h-8 w-8 p-0 text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-950"
+                        className="h-8 w-8 p-0 cursor-pointer"
                         onClick={() => handleViewKendala(row.original)}
                         title="Lihat Kendala/Hambatan"
                     >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-4 w-4 text-amber-600" />
                     </Button>
                 </div>
             ),
@@ -512,14 +553,14 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
             cell: ({ row }: any) => (
                 <div className="flex items-center justify-center">
                     <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="h-8 w-8 p-0 text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-950"
+                        className="h-8 w-8 p-0 cursor-pointer"
                         onClick={() => handleViewRingkasan(row.original)}
                         title="Lihat Ringkasan Laporan"
                         disabled={row.original.status !== "sent"}
                     >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-4 w-4 text-amber-600" />
                     </Button>
                 </div>
             ),
@@ -581,7 +622,7 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
                             <label className="text-sm font-medium">KPPN</label>
                             <Select value={selectedKppn} onValueChange={setSelectedKppn}>
                                 <SelectTrigger className="w-full">
-                                    <SelectValue />
+                                    <SelectValue placeholder={isLoadingKppnRef ? "Memuat..." : "Pilih KPPN"} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {kppnList.map((kppn) => (
@@ -621,9 +662,9 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(fu
                         </CardTitle>
                         {contentType === "ringkasan" && (
                             <Badge
-                                variant={statusLaporan === "sent" ? "success" : "destructive"}
+                                variant={statusLaporan === "sent" ? "success" : kppnCompletionStatus === "complete" ? "success" : "destructive"}
                             >
-                                {statusLaporan === "sent" ? "Sudah Dikirim" : "Belum Dikirim"}
+                                {statusLaporan === "sent" ? "Sudah Dikirim" : kppnCompletionStatus === "complete" ? "Sudah Lengkap" : "Belum Lengkap"}
                             </Badge>
                         )}
                     </div>

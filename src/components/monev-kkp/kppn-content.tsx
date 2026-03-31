@@ -43,14 +43,16 @@ export interface KkpData {
 // Ref interface for parent component access
 export interface KppnContentRef {
     getData: () => KkpData[];
+    getSelectedPeriode: () => { year: string; periode: string };
 }
 
 // Props interface
 interface KppnContentProps {
     statusLaporan?: "sent" | "not_sent";
+    onPeriodeChange?: (year: string, periode: string) => void;
 }
 
-export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(function KppnContent({ statusLaporan = "not_sent" }, ref) {
+export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(function KppnContent({ statusLaporan = "not_sent", onPeriodeChange }, ref) {
     // Get authenticated user info
     const { user, isLoading: isAuthLoading } = useAuth();
     const now = new Date();
@@ -62,9 +64,10 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(function
     const [selectedYear, setSelectedYear] = useState(defaultYear);
     const [selectedPeriode, setSelectedPeriode] = useState(defaultPeriode);
 
-    // Expose getData method to parent component via ref
+    // Expose getData and getSelectedPeriode methods to parent component via ref
     useImperativeHandle(ref, () => ({
         getData: () => data,
+        getSelectedPeriode: () => ({ year: selectedYear, periode: selectedPeriode }),
     }));
 
     const fetchData = async () => {
@@ -121,6 +124,13 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(function
             fetchData();
         }
     }, [user, selectedYear, selectedPeriode]);
+
+    // Notify parent when year or periode changes
+    useEffect(() => {
+        if (onPeriodeChange) {
+            onPeriodeChange(selectedYear, selectedPeriode);
+        }
+    }, [selectedYear, selectedPeriode]);
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -255,22 +265,23 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(function
             cell: ({ row }: any) => (
                 <div className="flex items-center justify-center gap-2">
                     <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950"
+                        className="h-8 w-8 p-0 cursor-pointer"
                         onClick={() => handleEditKendala(row.original)}
-                        title="Edit Kendala/Hambatan"
+                        title={statusLaporan === "sent" ? "Laporan sudah dikirim, tidak dapat mengedit" : "Edit Kendala/Hambatan"}
+                        disabled={statusLaporan === "sent"}
                     >
-                        <Pencil className="h-4 w-4" />
+                        <Pencil className="h-4 w-4 text-blue-600" />
                     </Button>
                     <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="h-8 w-8 p-0 text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-950"
+                        className="h-8 w-8 p-0 cursor-pointer"
                         onClick={() => handleViewKendala(row.original)}
                         title="Lihat Kendala/Hambatan"
                     >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-4 w-4 text-amber-600" />
                     </Button>
                 </div>
             ),
