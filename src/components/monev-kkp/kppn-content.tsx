@@ -482,7 +482,7 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
           open={isTransaksiModalOpen}
           onOpenChange={setIsTransaksiModalOpen}
           kdsatker={transaksiTarget?.kdsatker ?? ""}
-          namaSatker={transaksiTarget?.namaSatker}
+          namaSatker={transaksiTarget?.namaSatker ?? ""}
           tahun={selectedYear}
           triwulan={selectedPeriode.replace("Q", "")}
         />
@@ -492,7 +492,7 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
           open={isTagihanModalOpen}
           onOpenChange={setIsTagihanModalOpen}
           kdsatker={tagihanTarget?.kdsatker ?? ""}
-          namaSatker={tagihanTarget?.namaSatker}
+          namaSatker={tagihanTarget?.namaSatker ?? ""}
           tahun={selectedYear}
           triwulan={selectedPeriode.replace("Q", "")}
         />
@@ -502,7 +502,7 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
           open={isKartuModalOpen}
           onOpenChange={setIsKartuModalOpen}
           kdsatker={kartuTarget?.kdsatker ?? ""}
-          namaSatker={kartuTarget?.namaSatker}
+          namaSatker={kartuTarget?.namaSatker ?? ""}
           tahun={selectedYear}
         />
       </div>
