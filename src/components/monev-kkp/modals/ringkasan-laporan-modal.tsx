@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
 
 interface RingkasanLaporanModalProps {
     open: boolean;
@@ -88,15 +89,15 @@ export function RingkasanLaporanModal({
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="max-w-sm"
+                            disabled={isLoading}
                         />
                     </div>
 
                     {/* Table */}
                     <div className="border rounded-lg h-full flex flex-col overflow-hidden">
                         {isLoading ? (
-                            <div className="flex-1 flex items-center justify-center py-20">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                                <p className="ml-2 text-muted-foreground">Memuat data...</p>
+                            <div className="flex-1 p-4">
+                                <TableSkeleton rows={10} />
                             </div>
                         ) : (
                         <div className="flex-1 w-full overflow-auto">
@@ -141,8 +142,26 @@ export function RingkasanLaporanModal({
                                                     <td className="p-2 text-right font-mono text-xs">
                                                         Rp {formatRupiah(r.nilaiTransaksi)}
                                                     </td>
-                                                    <td className="p-2 text-left text-xs max-w-[150px] truncate" title={r.kendala || "Tidak ada kendala"}>
-                                                        {r.kendala || <span className="text-muted-foreground italic">-</span>}
+                                                    <td className="p-2 text-left text-xs max-w-[200px] truncate" title={r.kendala || "Tidak ada kendala"}>
+                                                        {r.kendala && r.kendala.trim() !== '' ? (
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {r.kendala.split(',').slice(0, 2).map((cat: string, idx: number) => (
+                                                                    <span
+                                                                        key={idx}
+                                                                        className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary whitespace-nowrap"
+                                                                    >
+                                                                        {cat.trim()}
+                                                                    </span>
+                                                                ))}
+                                                                {r.kendala.split(',').length > 2 && (
+                                                                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                                                        +{r.kendala.split(',').length - 2} lainnya
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-muted-foreground italic">-</span>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             ))

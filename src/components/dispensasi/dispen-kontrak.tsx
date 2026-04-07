@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { apiClient } from "@/lib/api/httpClient";
 import { apiPath } from "@/lib/config/base-path";
 import { PlusSquare, Trash2, Download, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import RekamKontrak from "./rekam-kontrak";
 import {
   AlertDialog,
@@ -23,10 +24,10 @@ import {
 
 // Table styling - matching dispen-spm pattern
 const tableStyles = {
-  headerCell: "h-10 px-2 text-center align-middle font-medium text-muted-foreground whitespace-nowrap",
-  headerCellCenter: "h-10 px-2 text-center align-middle font-medium text-muted-foreground whitespace-nowrap",
-  bodyCell: "px-2 py-2 text-sm align-middle border-b",
-  bodyCellCenter: "px-2 py-2 text-sm text-center align-middle border-b whitespace-nowrap",
+  headerCell: "h-10 px-3 text-center align-middle font-medium whitespace-nowrap",
+  headerCellCenter: "h-10 px-3 text-center align-middle font-medium whitespace-nowrap",
+  bodyCell: "px-3 py-2 text-sm align-middle border-b",
+  bodyCellCenter: "px-3 py-2 text-sm text-center align-middle border-b whitespace-nowrap",
 };
 
 interface DataKontrakProps {
@@ -52,7 +53,7 @@ interface KontrakData {
 
 export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [data, setData] = useState<KontrakData[]>([]);
   const [showModalRekam, setShowModalRekam] = useState(false);
   const [page, setPage] = useState(0);
@@ -277,24 +278,12 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
   return (
     <>
       {loading ? (
-        <>
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-800" />
-          </div>
-          <br />
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-800" />
-          </div>
-          <br />
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-800" />
-          </div>
-        </>
+        <TableSkeleton rows={10} />
       ) : (
         <>
           <div className="rounded-md border">
             <div className="overflow-x-auto">
-              <table className="w-full table-fixed">
+              <table className="w-full table-fixed text-sm">
                 <colgroup>
                   <col className="w-10" />
                   <col className="w-[8%]" />
@@ -305,7 +294,7 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
                   <col className="w-[8%]" />
                 </colgroup>
                 <thead>
-                  <tr className="border-b bg-muted/50">
+                  <tr className="border-b">
                     <th className={tableStyles.headerCellCenter}>No.</th>
                     <th className={tableStyles.headerCellCenter}>TA</th>
                     <th className={tableStyles.headerCell}>Satker</th>
@@ -344,13 +333,13 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
                           {row.jumlah ?? "-"}
                         </td>
                         <td className={tableStyles.bodyCellCenter}>
-                          <div className="flex items-center justify-center gap-1">
+                          <div className="flex items-center justify-center gap-2">
                             {/* Rekam Kontrak - hanya untuk non-KPPN */}
                             {user?.role !== "kppn" && (
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                className="h-8 w-8 p-0 text-green-600 hover:text-green-800"
+                                className="h-8 w-8 p-0"
                                 title="Rekam Kontrak"
                                 onClick={() =>
                                   handleRekamKontrak(
@@ -362,16 +351,16 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
                                   )
                                 }
                               >
-                                <PlusSquare className="h-4 w-4" />
+                                <PlusSquare className="h-4 w-4 text-blue-600" />
                               </Button>
                             )}
 
                             {/* Hapus Dispensasi - hanya untuk non-KPPN */}
                             {user?.role !== "kppn" && (
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
+                                className="h-8 w-8 p-0"
                                 title="Hapus Dispensasi"
                                 onClick={() =>
                                   handleHapusDispKontrak(
@@ -380,19 +369,19 @@ export default function DispenKontrak({ cek, id, where }: DataKontrakProps) {
                                   )
                                 }
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-4 w-4 text-red-600" />
                               </Button>
                             )}
 
                             {/* Download - untuk semua role */}
                             <Button
-                              variant="ghost"
+                              variant="outline"
                               size="sm"
-                              className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800"
+                              className="h-8 w-8 p-0"
                               title="Download Dokumen"
                               onClick={() => handledownloadKontrak(String(row.id))}
                             >
-                              <Download className="h-4 w-4" />
+                              <Download className="h-4 w-4 text-amber-600" />
                             </Button>
                           </div>
                         </td>

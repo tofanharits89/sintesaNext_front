@@ -5,6 +5,7 @@ export interface FilterConfig {
   referenceDatabase?: string;
   joinKey?: string;
   nameColumn?: string;
+  noYearSuffix?: boolean;
 }
 
 export interface QueryBuilderState {

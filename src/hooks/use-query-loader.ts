@@ -26,7 +26,16 @@ export interface QueryBuilderState {
 export interface UseQueryLoaderProps {
   onStateChange: (state: QueryBuilderState) => void;
   getCurrentState: () => QueryBuilderState;
-  scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d"; // Add scope for compatibility validation
+  scope?:
+    | "belanja"
+    | "tematik"
+    | "general"
+    | "rkakl_detail"
+    | "kontrak"
+    | "up_tup"
+    | "penerimaan_pnbp"
+    | "sp2d"
+    | "revisi_dipa"; // Add scope for compatibility validation
 }
 
 /**
@@ -53,7 +62,7 @@ export function useQueryLoader({
 
       // Validate report parameters
       const reportParams = query.reportParams || {};
-      if (!reportParams || typeof reportParams !== 'object') {
+      if (!reportParams || typeof reportParams !== "object") {
         errors.push("Query tidak memiliki parameter laporan yang valid");
       } else {
         if (!reportParams.tahun) {
@@ -78,7 +87,7 @@ export function useQueryLoader({
       if (scope !== "general") {
         const scopeValidation = validateFiltersForScope(
           query.activeFilters || [],
-          scope
+          scope,
         );
         if (!scopeValidation.isValid) {
           const incompatibleFilterLabels = scopeValidation.incompatibleFilters
@@ -88,11 +97,11 @@ export function useQueryLoader({
           if (query.scope && query.scope !== scope) {
             errors.push(
               `Query ini dibuat untuk halaman ${query.scope} dan tidak kompatibel dengan halaman ${scope}. ` +
-                `Filter yang tidak didukung: ${incompatibleFilterLabels}`
+                `Filter yang tidak didukung: ${incompatibleFilterLabels}`,
             );
           } else {
             errors.push(
-              `Query menggunakan filter yang tidak tersedia di halaman ${scope}: ${incompatibleFilterLabels}`
+              `Query menggunakan filter yang tidak tersedia di halaman ${scope}: ${incompatibleFilterLabels}`,
             );
           }
         }
@@ -106,7 +115,7 @@ export function useQueryLoader({
         // Helper function to check if a filter is configured
         const isFilterConfigured = (
           filterKey: string,
-          filterValue: FilterValue
+          filterValue: FilterValue,
         ): boolean => {
           if (filterKey === "cutOff") {
             // cutOff filter is configured if it has a kondisiCode
@@ -127,18 +136,18 @@ export function useQueryLoader({
           // 3. A non-empty mengandungKata
           const hasValidSelection = Boolean(
             filterValue.selection &&
-              typeof filterValue.selection === "string" &&
-              filterValue.selection.trim() !== ""
+            typeof filterValue.selection === "string" &&
+            filterValue.selection.trim() !== "",
           );
           const hasValidKondisiCode = Boolean(
             filterValue.kondisiCode &&
-              typeof filterValue.kondisiCode === "string" &&
-              filterValue.kondisiCode.trim() !== ""
+            typeof filterValue.kondisiCode === "string" &&
+            filterValue.kondisiCode.trim() !== "",
           );
           const hasValidMengandungKata = Boolean(
             filterValue.mengandungKata &&
-              typeof filterValue.mengandungKata === "string" &&
-              filterValue.mengandungKata.trim() !== ""
+            typeof filterValue.mengandungKata === "string" &&
+            filterValue.mengandungKata.trim() !== "",
           );
 
           return (
@@ -149,7 +158,7 @@ export function useQueryLoader({
         // Get only configured filters for validation
         const configuredFilters = Object.entries(filterValues).filter(
           ([filterKey, filterValue]) =>
-            filterValue && isFilterConfigured(filterKey, filterValue)
+            filterValue && isFilterConfigured(filterKey, filterValue),
         );
 
         // Ensure we have at least one configured filter
@@ -167,14 +176,14 @@ export function useQueryLoader({
           // For cutOff filter, kondisiCode is required (already checked in isFilterConfigured)
           if (filterKey === "cutOff" && !filterValue.kondisiCode) {
             errors.push(
-              `Filter "${filterKey}" tidak memiliki kondisi yang valid`
+              `Filter "${filterKey}" tidak memiliki kondisi yang valid`,
             );
           }
 
           // Validate jenisTampilan is present
           if (!filterValue.jenisTampilan) {
             errors.push(
-              `Filter "${filterKey}" tidak memiliki jenis tampilan yang valid`
+              `Filter "${filterKey}" tidak memiliki jenis tampilan yang valid`,
             );
           }
 
@@ -186,7 +195,7 @@ export function useQueryLoader({
           ) {
             if (!filterValue.selection && !filterValue.mengandungKata) {
               errors.push(
-                `Filter "${filterKey}" memerlukan nilai atau kata kunci`
+                `Filter "${filterKey}" memerlukan nilai atau kata kunci`,
               );
             }
           }
@@ -198,7 +207,7 @@ export function useQueryLoader({
         errors,
       };
     },
-    [scope]
+    [scope],
   );
 
   /**
@@ -207,7 +216,7 @@ export function useQueryLoader({
   const detectUnsavedChanges = useCallback(
     (
       currentState: QueryBuilderState,
-      originalState: QueryBuilderState | null
+      originalState: QueryBuilderState | null,
     ): boolean => {
       if (!originalState) return false;
 
@@ -228,7 +237,7 @@ export function useQueryLoader({
 
       return reportParamsChanged || activeFiltersChanged || filterValuesChanged;
     },
-    []
+    [],
   );
 
   /**
@@ -238,7 +247,7 @@ export function useQueryLoader({
     const currentState = getCurrentState();
     const hasChanges = detectUnsavedChanges(
       currentState,
-      loaderState.originalState
+      loaderState.originalState,
     );
 
     setLoaderState((prev) => ({
@@ -267,7 +276,7 @@ export function useQueryLoader({
     (query: SavedQuery): ReportParams => {
       // Add safety checks for reportParams
       const reportParams = query.reportParams || {};
-      
+
       return {
         tahun: reportParams.tahun || "",
         tipeLaporan: reportParams.tipeLaporan || "",
@@ -277,7 +286,7 @@ export function useQueryLoader({
         tematikKategori: (reportParams as any).tematikKategori,
       };
     },
-    []
+    [],
   );
 
   /**
@@ -285,7 +294,7 @@ export function useQueryLoader({
    */
   const restoreFiltersAndValues = useCallback(
     (
-      query: SavedQuery
+      query: SavedQuery,
     ): {
       activeFilters: string[];
       filterValues: Record<string, FilterValue>;
@@ -328,7 +337,7 @@ export function useQueryLoader({
 
       return { activeFilters, filterValues };
     },
-    [scope]
+    [scope],
   );
 
   /**
@@ -336,7 +345,7 @@ export function useQueryLoader({
    */
   const loadQuery = useCallback(
     async (
-      query: SavedQuery
+      query: SavedQuery,
     ): Promise<{ success: boolean; errors?: string[] }> => {
       try {
         // Validate query compatibility
@@ -379,7 +388,7 @@ export function useQueryLoader({
       restoreFiltersAndValues,
       onStateChange,
       setOriginalState,
-    ]
+    ],
   );
 
   /**
@@ -400,7 +409,7 @@ export function useQueryLoader({
     const currentState = getCurrentState();
     const hasChanges = detectUnsavedChanges(
       currentState,
-      loaderState.originalState
+      loaderState.originalState,
     );
     return {
       hasUnsavedChanges: hasChanges,

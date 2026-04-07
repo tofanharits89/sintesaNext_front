@@ -22,7 +22,15 @@ interface PilihLaporanCardProps {
   };
   setReportParams: React.Dispatch<React.SetStateAction<any>>;
   // Optional overrides for tematik and rkakl_detail context
-  mode?: "general" | "tematik" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d";
+  mode?:
+    | "general"
+    | "tematik"
+    | "rkakl_detail"
+    | "kontrak"
+    | "up_tup"
+    | "penerimaan_pnbp"
+    | "sp2d"
+    | "revisi_dipa";
   customTipeLaporanOptions?: { value: string; label: string }[];
   hideJenisAkumulasi?: boolean;
 }
@@ -75,8 +83,10 @@ export function PilihLaporanCard({
     { value: "detil_penerimaan_pnbp", label: "Detil Penerimaan PNBP" },
   ];
 
-  const sp2dTipeLaporanOptions = [
-    { value: "spm_sp2d", label: "SPM/SP2D" },
+  const sp2dTipeLaporanOptions = [{ value: "spm_sp2d", label: "SPM/SP2D" }];
+
+  const revisiDipaTipeLaporanOptions = [
+    { value: "revisi_dipa", label: "Revisi" },
   ];
 
   // Use appropriate options based on mode
@@ -84,16 +94,18 @@ export function PilihLaporanCard({
     mode === "tematik"
       ? customTipeLaporanOptions || getTematikCategoryOptions()
       : mode === "rkakl_detail"
-      ? customTipeLaporanOptions || rkaklDetailTipeLaporanOptions
-      : mode === "kontrak"
-      ? customTipeLaporanOptions || kontrakTipeLaporanOptions
-      : mode === "up_tup"
-      ? customTipeLaporanOptions || upTupTipeLaporanOptions
-      : mode === "penerimaan_pnbp"
-      ? customTipeLaporanOptions || penerimaaanPnbpTipeLaporanOptions
-      : mode === "sp2d"
-      ? customTipeLaporanOptions || sp2dTipeLaporanOptions
-      : customTipeLaporanOptions || defaultTipeLaporanOptions;
+        ? customTipeLaporanOptions || rkaklDetailTipeLaporanOptions
+        : mode === "kontrak"
+          ? customTipeLaporanOptions || kontrakTipeLaporanOptions
+          : mode === "up_tup"
+            ? customTipeLaporanOptions || upTupTipeLaporanOptions
+            : mode === "penerimaan_pnbp"
+              ? customTipeLaporanOptions || penerimaaanPnbpTipeLaporanOptions
+              : mode === "sp2d"
+                ? customTipeLaporanOptions || sp2dTipeLaporanOptions
+                : mode === "revisi_dipa"
+                  ? customTipeLaporanOptions || revisiDipaTipeLaporanOptions
+                  : customTipeLaporanOptions || defaultTipeLaporanOptions;
 
   const pembulatanOptions = [
     { value: "satuan", label: "Satuan" },
@@ -149,27 +161,29 @@ export function PilihLaporanCard({
                 {mode === "tematik"
                   ? "Kategori Tematik"
                   : mode === "rkakl_detail"
-                  ? "Tipe Laporan RKAKL"
-                  : mode === "kontrak"
-                  ? "Tipe Laporan Kontrak"
-                  : mode === "up_tup"
-                  ? "Tipe Laporan UP/TUP"
-                  : mode === "penerimaan_pnbp"
-                  ? "Tipe Laporan Penerimaan PNBP"
-                  : mode === "sp2d"
-                  ? "Tipe Laporan SPM/SP2D"
-                  : "Tipe Laporan"}
+                    ? "Tipe Laporan RKAKL"
+                    : mode === "kontrak"
+                      ? "Tipe Laporan Kontrak"
+                      : mode === "up_tup"
+                        ? "Tipe Laporan UP/TUP"
+                        : mode === "penerimaan_pnbp"
+                          ? "Tipe Laporan Penerimaan PNBP"
+                          : mode === "sp2d"
+                            ? "Tipe Laporan SPM/SP2D"
+                            : mode === "revisi_dipa"
+                              ? "Tipe Laporan Revisi DIPA"
+                              : "Tipe Laporan"}
               </label>
               <Select
                 value={
                   mode === "tematik"
-                    ? reportParams.tematikKategori ?? ""
+                    ? (reportParams.tematikKategori ?? "")
                     : reportParams.tipeLaporan
                 }
                 onValueChange={(value) =>
                   handleChange(
                     mode === "tematik" ? "tematikKategori" : "tipeLaporan",
-                    value
+                    value,
                   )
                 }
               >
@@ -179,16 +193,18 @@ export function PilihLaporanCard({
                       mode === "tematik"
                         ? "Pilih kategori tematik"
                         : mode === "rkakl_detail"
-                        ? "Pilih tipe laporan RKAKL"
-                        : mode === "kontrak"
-                        ? "Pilih tipe laporan kontrak"
-                        : mode === "up_tup"
-                        ? "Pilih tipe laporan UP/TUP"
-                        : mode === "penerimaan_pnbp"
-                        ? "Pilih tipe laporan Penerimaan PNBP"
-                        : mode === "sp2d"
-                        ? "Pilih tipe laporan SPM/SP2D"
-                        : "Pilih tipe laporan"
+                          ? "Pilih tipe laporan RKAKL"
+                          : mode === "kontrak"
+                            ? "Pilih tipe laporan kontrak"
+                            : mode === "up_tup"
+                              ? "Pilih tipe laporan UP/TUP"
+                              : mode === "penerimaan_pnbp"
+                                ? "Pilih tipe laporan Penerimaan PNBP"
+                                : mode === "sp2d"
+                                  ? "Pilih tipe laporan SPM/SP2D"
+                                  : mode === "revisi_dipa"
+                                    ? "Pilih tipe laporan Revisi DIPA"
+                                    : "Pilih tipe laporan"
                     }
                   />
                 </SelectTrigger>

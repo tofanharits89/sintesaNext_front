@@ -86,14 +86,15 @@ const defaultMenu: MenuItem[] = [
   },
   {
     label: "Makan Bergizi",
-    children: [
-      { label: "Dashboard MBG" },
-      { label: "Kertas Kerja" },
-    ],
+    children: [{ label: "Dashboard MBG" }, { label: "Kertas Kerja" }],
   },
   {
     label: "Monev KKP",
-    children: [{ label: "KPPN" }, { label: "Kanwil" }, { label: "Direktorat PA" }],
+    children: [
+      { label: "KPPN" },
+      { label: "Kanwil" },
+      { label: "Direktorat PA" },
+    ],
   },
   {
     label: "Transfer Daerah",
@@ -112,6 +113,7 @@ const defaultMenu: MenuItem[] = [
       { label: "UP/TUP" },
       { label: "Penerimaan PNBP" },
       { label: "RKAKL Detail" },
+      { label: "Revisi DIPA" },
       { label: "Prognosis" },
     ],
   },
@@ -201,7 +203,7 @@ function resolveActiveMenuLabel(pathname: string | null): string | null {
   if (!pathname) return null;
 
   const match = MENU_ROUTE_PREFIXES.find(
-    ({ prefix }) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+    ({ prefix }) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 
   return match?.parent ?? null;
@@ -240,8 +242,10 @@ export function ResponsiveSidebar({
 
           const allowedChildren = (item.children || []).filter((child) => {
             if (child.label === "KPPN" && user.role === "kppn") return true;
-            if (child.label === "Kanwil" && user.role === "kanwil_djpb") return true;
-            if (child.label === "Direktorat PA" && user.role === "ditpa") return true;
+            if (child.label === "Kanwil" && user.role === "kanwil_djpb")
+              return true;
+            if (child.label === "Direktorat PA" && user.role === "ditpa")
+              return true;
             return false;
           });
 
@@ -255,7 +259,7 @@ export function ResponsiveSidebar({
           return {
             ...item,
             children: (item.children || []).filter(
-              (child) => child.label !== "Dashboard Pengendalian Belanja"
+              (child) => child.label !== "Dashboard Pengendalian Belanja",
             ),
           };
         }
@@ -326,7 +330,11 @@ export function ResponsiveSidebar({
       case "Monev IKPA":
         return <Gauge className={`${cls} text-red-600 dark:text-red-400`} />;
       case "Monev KKP":
-        return <CreditCard className={`${cls} text-orange-600 dark:text-orange-400`} />;
+        return (
+          <CreditCard
+            className={`${cls} text-orange-600 dark:text-orange-400`}
+          />
+        );
       case "Tentang Kita":
         return (
           <Info className={`${cls} text-neutral-600 dark:text-neutral-300`} />
@@ -388,6 +396,8 @@ export function ResponsiveSidebar({
         return <Database className={cls} />;
       case "Inquiry Data__RKAKL Detail":
         return <Database className={cls} />;
+      case "Inquiry Data__Revisi DIPA":
+        return <Database className={cls} />;
       case "Inquiry Data__Prognosis":
         return <Database className={cls} />;
       case "Laporan__Monthly Report":
@@ -447,7 +457,10 @@ export function ResponsiveSidebar({
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(5); // Default items per page
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const activeMenuLabel = useMemo(() => resolveActiveMenuLabel(pathname), [pathname]);
+  const activeMenuLabel = useMemo(
+    () => resolveActiveMenuLabel(pathname),
+    [pathname],
+  );
 
   // Calculate items per page based on container width
   const calculateItemsPerPage = () => {
@@ -491,12 +504,14 @@ export function ResponsiveSidebar({
     if (!activeMenuLabel || itemsPerPage <= 0) return;
 
     const activeMenuIndex = filteredMenu.findIndex(
-      (menuItem) => menuItem.label === activeMenuLabel
+      (menuItem) => menuItem.label === activeMenuLabel,
     );
     if (activeMenuIndex < 0) return;
 
     const activePage = Math.floor(activeMenuIndex / itemsPerPage);
-    setCurrentPage((prevPage) => (prevPage === activePage ? prevPage : activePage));
+    setCurrentPage((prevPage) =>
+      prevPage === activePage ? prevPage : activePage,
+    );
   }, [activeMenuLabel, filteredMenu, itemsPerPage]);
 
   // Calculate pagination
@@ -547,7 +562,8 @@ export function ResponsiveSidebar({
                     <NavigationMenuTrigger
                       className={cn(
                         "h-9 w-48 gap-1 bg-white dark:bg-card hover:bg-accent dark:hover:bg-accent",
-                        activeMenuLabel === m.label && "bg-accent text-accent-foreground"
+                        activeMenuLabel === m.label &&
+                          "bg-accent text-accent-foreground",
                       )}
                     >
                       <span className="inline-flex items-center">
@@ -561,7 +577,7 @@ export function ResponsiveSidebar({
                           {m.children.map((c) => {
                             const menuKey = `${m.label}__${c.label}`;
                             let href = "#";
-                            let onMouseEnterFn = () => { };
+                            let onMouseEnterFn = () => {};
 
                             // Route mapping
                             if (
@@ -607,6 +623,13 @@ export function ResponsiveSidebar({
                               m.label === "Inquiry Data"
                             ) {
                               href = "/inquiry-data/penerimaan-pnbp";
+                              onMouseEnterFn = () =>
+                                import("@/components/inquiry-data/enhanced-filter-card");
+                            } else if (
+                              c.label === "Revisi DIPA" &&
+                              m.label === "Inquiry Data"
+                            ) {
+                              href = "/inquiry-data/revisi-dipa";
                               onMouseEnterFn = () =>
                                 import("@/components/inquiry-data/enhanced-filter-card");
                             } else if (
@@ -841,7 +864,7 @@ export function ResponsiveSidebar({
                                       "flex w-full flex-row items-center gap-2 rounded-md px-2 py-1",
                                       isPathActive(pathname, href)
                                         ? "bg-accent text-accent-foreground"
-                                        : "hover:bg-accent/60"
+                                        : "hover:bg-accent/60",
                                     )}
                                     onMouseEnter={onMouseEnterFn}
                                     onClick={() =>
@@ -1046,7 +1069,7 @@ export function ResponsiveSidebar({
                         key={c.label}
                         href="/tentang-kita/profil"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
-                        onMouseEnter={() => { }}
+                        onMouseEnter={() => {}}
                         onClick={() => {
                           trackMenuUsage({
                             menu: m.label,
@@ -1255,6 +1278,29 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/inquiry-data/rkakl-detail",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Revisi DIPA" &&
+                      m.label === "Inquiry Data" ? (
+                      <Link
+                        key={c.label}
+                        href="/inquiry-data/revisi-dipa"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onMouseEnter={() => {
+                          import("@/components/inquiry-data/dynamic-filters-card");
+                        }}
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/inquiry-data/revisi-dipa",
                           });
                           setOpen(false);
                         }}
@@ -1704,7 +1750,8 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </Link>
-                    ) : c.label === "Direktorat PA" && m.label === "Monev KKP" ? (
+                    ) : c.label === "Direktorat PA" &&
+                      m.label === "Monev KKP" ? (
                       <Link
                         key={c.label}
                         href="/monev-kkp/direktorat-pa"

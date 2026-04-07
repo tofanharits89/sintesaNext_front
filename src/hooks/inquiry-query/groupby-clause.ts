@@ -79,6 +79,12 @@ export function buildGroupByClause(
     addGroupBy("main.nmblokir");
   }
 
+  if (reportParams.tipeLaporan === "revisi_dipa") {
+    addGroupBy("main.revision_number");
+    addGroupBy("main.TANGGAL");
+    // Let the main filter loop below handle kewenanganRevisi and jenisRevisi
+  }
+
   const uniqueActiveFilters = Array.from(new Set(activeFilters));
 
   if (uniqueActiveFilters.includes("kemiskinanEkstrim")) addGroupBy("main.kemiskinan_ekstrim");

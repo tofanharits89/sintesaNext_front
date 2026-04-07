@@ -426,7 +426,7 @@ export const TEMATIK_CATEGORIES: CategoryDefinition[] = [
 
 // Helper functions for working with the registry
 export function getTematikCategory(
-  key: string
+  key: string,
 ): CategoryDefinition | undefined {
   return TEMATIK_CATEGORIES.find((cat) => cat.key === key);
 }
@@ -495,7 +495,7 @@ export function getCategoryMandatoryFilters(key: string): CategoryFilter[] {
  */
 export function getAllMandatoryFilterKeys(): string[] {
   const all = TEMATIK_CATEGORIES.flatMap((cat) =>
-    (cat.mandatoryFilters || []).map((f) => f.key)
+    (cat.mandatoryFilters || []).map((f) => f.key),
   );
   return Array.from(new Set(all));
 }
@@ -506,7 +506,7 @@ export function getCategoryMandatoryColumns(key: string): CategoryColumn[] {
 }
 
 export function getCategoryQueryConfig(
-  key: string
+  key: string,
 ): CategoryQueryConfig | undefined {
   const category = getTematikCategory(key);
   return category?.queryConfig;
@@ -519,11 +519,11 @@ export function getCategoryExcludedFilters(key: string): string[] {
 
 export function isCategoryFilterMandatory(
   categoryKey: string,
-  filterKey: string
+  filterKey: string,
 ): boolean {
   const mandatoryFilters = getCategoryMandatoryFilters(categoryKey);
   return mandatoryFilters.some(
-    (filter) => filter.key === filterKey && filter.mandatory
+    (filter) => filter.key === filterKey && filter.mandatory,
   );
 }
 

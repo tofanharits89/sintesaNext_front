@@ -90,7 +90,7 @@ export default function PrognosisPage() {
       if (selectedKddept) {
         try {
           const belanjas = await apiClient.get(
-            `/prognosis/getJenisBelanja?kddept=${selectedKddept}`
+            `/prognosis/getJenisBelanja?kddept=${selectedKddept}`,
           );
           setJenisBelanjaOptions(belanjas || []);
           // Reset pilihan jenis belanja ke "all" ketika kementerian berubah
@@ -114,7 +114,7 @@ export default function PrognosisPage() {
           jenbel: selectedJenisBelanja || "all",
         });
         const res = await apiClient.get(
-          `/prognosis/getPagu?${params.toString()}`
+          `/prognosis/getPagu?${params.toString()}`,
         );
         const pagu = Number((res as any)?.pagu ?? 0);
         setPagu2026(Number.isFinite(pagu) ? pagu : 0);
@@ -355,7 +355,7 @@ export default function PrognosisPage() {
           historical,
           prediction,
           predictionStartMonth,
-          predictionStartYear
+          predictionStartYear,
         );
       } else {
         console.warn("[fetchPredictionData] No prediction data in response");
@@ -370,7 +370,7 @@ export default function PrognosisPage() {
     historical: any[],
     prediction: any,
     startMonth: number,
-    startYear: number
+    startYear: number,
   ) => {
     const data: any[] = [];
     historical.forEach((item) => {
@@ -411,7 +411,7 @@ export default function PrognosisPage() {
     if (prediction.predictions) {
       prediction.predictions.forEach((pred: any, i: number) => {
         const percentage = Number(
-          pred?.cumulative_percentage ?? pred?.percentage ?? 0
+          pred?.cumulative_percentage ?? pred?.percentage ?? 0,
         );
         let pName = "";
         if (jenisLaporan === "1") {
@@ -570,4 +570,3 @@ export default function PrognosisPage() {
 }
 
 export const dynamic = "force-dynamic";
-

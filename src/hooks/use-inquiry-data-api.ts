@@ -178,20 +178,24 @@ export function useInquiryDataApi() {
         try {
           const text = await (async () => {
             if (blobResp instanceof Blob) return await blobResp.text();
-            if (blobResp && (blobResp as any).text) return await (blobResp as any).text();
+            if (blobResp && (blobResp as any).text)
+              return await (blobResp as any).text();
             return "";
           })();
           if (text && text.trim().startsWith("{")) {
             const maybe = JSON.parse(text);
             if (maybe && maybe.success === false) {
-              throw new Error(maybe.error || "Failed to get data for Excel export");
+              throw new Error(
+                maybe.error || "Failed to get data for Excel export",
+              );
             }
           }
         } catch (_) {
           // not JSON, proceed as binary
         }
 
-        const blob: Blob = blobResp instanceof Blob ? blobResp : new Blob([blobResp]);
+        const blob: Blob =
+          blobResp instanceof Blob ? blobResp : new Blob([blobResp]);
 
         const XLSX = await import("xlsx");
         const wb = XLSX.utils.book_new();
@@ -240,7 +244,7 @@ export function useInquiryDataApi() {
         // Build AOA with header first, then rows; coerce monetary cells to numbers
         const aoa: any[][] = [];
         aoa.push(columns);
-        const rows = parsed?.data || [] as any[];
+        const rows = parsed?.data || ([] as any[]);
         for (const row of rows) {
           const arr: any[] = [];
           for (const col of columns) {
@@ -263,7 +267,10 @@ export function useInquiryDataApi() {
 
         // Apply number format to monetary columns (thousands separator)
         const range = XLSX.utils.decode_range(
-          ws["!ref"] || (columns.length ? `A1:${XLSX.utils.encode_col(columns.length - 1)}${aoa.length}` : "A1:A1"),
+          ws["!ref"] ||
+            (columns.length
+              ? `A1:${XLSX.utils.encode_col(columns.length - 1)}${aoa.length}`
+              : "A1:A1"),
         );
         columns.forEach((col, cIdx) => {
           if (!isMonetary(col)) return;

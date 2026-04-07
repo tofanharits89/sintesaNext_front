@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/components/animate-ui/components/animate/tabs";
-import { DataKmkTab, DataTransaksiTab, RekonsiliasiDataTab } from "@/components/lazy";
-import { GenericCardSkeleton } from "@/components/ui/dashboard-skeletons";
-import { Suspense } from "react";
+import { DataKmkTab } from "@/components/transfer-daerah/data-kmk-tab";
+import { DataTransaksiTab } from "@/components/transfer-daerah/data-transaksi-tab";
+import { RekonsiliasiDataTab } from "@/components/transfer-daerah/rekonsilisasi-data-tab";
 
 export default function DAUPage() {
   return (
@@ -40,21 +38,15 @@ export default function DAUPage() {
 
         <TabsContents>
           <TabsContent value="data-kmk">
-            <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} /> }>
-              <DataKmkTab />
-            </Suspense>
+            <DataKmkTab />
           </TabsContent>
 
           <TabsContent value="data-transaksi">
-            <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} /> }>
-              <DataTransaksiTab />
-            </Suspense>
+            <DataTransaksiTab />
           </TabsContent>
 
           <TabsContent value="rekonsilisasi-data">
-            <Suspense fallback={<GenericCardSkeleton showHeader contentLines={8} /> }>
-              <RekonsiliasiDataTab />
-            </Suspense>
+            <RekonsiliasiDataTab />
           </TabsContent>
         </TabsContents>
       </Tabs>

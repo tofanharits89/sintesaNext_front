@@ -14,6 +14,7 @@ export const TABLE_MAPPING = {
   outstanding_up_tup: "pa_up",
   detil_penerimaan_pnbp: "pa_pnbp",
   spm_sp2d: "pa_realisasi",
+  revisi_dipa: "dja_revisi_kanwil",
 } as const;
 
 const REPORTS_EXCLUDE_PAGU_DIPA = new Set([
@@ -45,10 +46,14 @@ export const MONTH_NAMES = [
   "DES",
 ] as const;
 
-const SPECIAL_TABLE_NAME_BUILDERS: Record<string, (thang: string, baseTable: string) => string> = {
+const SPECIAL_TABLE_NAME_BUILDERS: Record<
+  string,
+  (thang: string, baseTable: string) => string
+> = {
   pergerakan_blokir_bulanan_per_jenis: (thang) =>
     `monev${thang}.pa_pagu_blokir_akun_${thang}_bulanan`,
-  volume_output_kegiatan: (thang, baseTable) => `monev${thang}.${baseTable}_${thang}_new`,
+  volume_output_kegiatan: (thang, baseTable) =>
+    `monev${thang}.${baseTable}_${thang}_new`,
 };
 
 const REPORT_TYPE_REGISTRY: Record<string, ReportTypeConfig> = {
@@ -60,17 +65,20 @@ const REPORT_TYPE_REGISTRY: Record<string, ReportTypeConfig> = {
   pergerakan_blokir_bulanan_per_jenis: {
     includePaguDipa: false,
     requiresGroupByBlokirJenis: true,
-    tableNameBuilder: (thang) => `monev${thang}.pa_pagu_blokir_akun_${thang}_bulanan`,
+    tableNameBuilder: (thang) =>
+      `monev${thang}.pa_pagu_blokir_akun_${thang}_bulanan`,
   },
   volume_output_kegiatan: {
     includePaguDipa: true,
     isVolumeOutput: true,
-    tableNameBuilder: (thang, baseTable) => `monev${thang}.${baseTable}_${thang}_new`,
+    tableNameBuilder: (thang, baseTable) =>
+      `monev${thang}.${baseTable}_${thang}_new`,
   },
   pagu_dan_blokir: {
     includePaguDipa: true,
     addBlokirAfterReal: false,
-    tableNameBuilder: (thang, baseTable) => `monev${thang}.${baseTable}_${thang}`,
+    tableNameBuilder: (thang, baseTable) =>
+      `monev${thang}.${baseTable}_${thang}`,
   },
   semua_kontrak: {
     includePaguDipa: false,
@@ -92,22 +100,35 @@ const REPORT_TYPE_REGISTRY: Record<string, ReportTypeConfig> = {
     addBlokirAfterReal: false,
     tableNameBuilder: (thang) => `monev${thang}.PA_PNBP_${thang}`,
   },
+  revisi_dipa: {
+    includePaguDipa: false,
+    addBlokirAfterReal: false,
+    tableNameBuilder: (thang) => `monev${thang}.dja_revisi_kanwil_${thang}`,
+  },
   spm_sp2d: {
     includePaguDipa: false,
     addBlokirAfterReal: false,
   },
 };
 
-export function getReportTypeConfig(tipeLaporan: string): Required<ReportTypeConfig> {
+export function getReportTypeConfig(
+  tipeLaporan: string,
+): Required<ReportTypeConfig> {
   const base: Required<ReportTypeConfig> = {
     includePaguDipa: !REPORTS_EXCLUDE_PAGU_DIPA.has(tipeLaporan),
     addBlokirAfterReal: REPORTS_ADD_BLOKIR_AFTER_REAL.has(tipeLaporan),
-    requiresGroupByBlokirJenis: REPORTS_MANDATORY_GROUPBY_BLOKIR_JENIS.has(tipeLaporan),
+    requiresGroupByBlokirJenis:
+      REPORTS_MANDATORY_GROUPBY_BLOKIR_JENIS.has(tipeLaporan),
     isVolumeOutput: REPORTS_VOLUME_OUTPUT.has(tipeLaporan),
     tableNameBuilder:
       SPECIAL_TABLE_NAME_BUILDERS[tipeLaporan] ||
-      ((thang: string, baseTable: string) => `monev${thang}.${baseTable}_${thang}`),
+      ((thang: string, baseTable: string) =>
+        `monev${thang}.${baseTable}_${thang}`),
   };
   const override = REPORT_TYPE_REGISTRY[tipeLaporan] || {};
-  return { ...base, ...override, tableNameBuilder: override.tableNameBuilder || base.tableNameBuilder } as Required<ReportTypeConfig>;
+  return {
+    ...base,
+    ...override,
+    tableNameBuilder: override.tableNameBuilder || base.tableNameBuilder,
+  } as Required<ReportTypeConfig>;
 }
