@@ -76,7 +76,7 @@ export function KartuKkpModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="max-w-[95vw] md:max-w-[900px] h-[80vh] flex flex-col overflow-hidden w-[95vw] sm:max-w-3xl max-h-[90vh]"
+        className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden"
       >
         <DialogHeader>
           <DialogTitle>Detail Kartu KKP</DialogTitle>

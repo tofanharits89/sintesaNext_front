@@ -128,7 +128,7 @@ export function TransaksiKkpModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="max-w-[95vw] md:max-w-[1200px] h-[85vh] flex flex-col overflow-hidden w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]"
+        className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden"
       >
         <DialogHeader>
           <DialogTitle>Detail Transaksi KKP</DialogTitle>

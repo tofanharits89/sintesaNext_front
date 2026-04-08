@@ -88,7 +88,7 @@ export function LihatKendalaModal({
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground">Nama Satker:</span>
-                                    <span className="font-medium max-w-[250px] truncate" title={data.namaSatker}>
+                                    <span className="font-medium flex-1 text-right ml-4 truncate" title={data.namaSatker}>
                                         {data.namaSatker}
                                     </span>
                                 </div>
