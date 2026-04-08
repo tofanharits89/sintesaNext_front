@@ -20,6 +20,7 @@ import { LihatKendalaModal } from "./modals/lihat-kendala-modal";
 import { TransaksiKkpModal } from "./modals/transaksi-kkp-modal";
 import { TagihanKkpModal } from "./modals/tagihan-kkp-modal";
 import { KartuKkpModal } from "./modals/kartu-kkp-modal";
+import { SatkerDetailModal } from "./modals/satker-detail-modal";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
@@ -276,6 +277,12 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
       kdsatker: string;
       namaSatker?: string;
     } | null>(null);
+    const [isSatkerDetailModalOpen, setIsSatkerDetailModalOpen] =
+      useState(false);
+    const [satkerDetailTarget, setSatkerDetailTarget] = useState<{
+      kdsatker: string;
+      namaSatker?: string;
+    } | null>(null);
     // Build KPPN dropdown list from reference data (all KPPNs under this Kanwil)
     const kppnList = [{ value: "all", label: "Semua KPPN" }, ...kppnRefList];
 
@@ -427,7 +434,19 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
           <div className="text-center font-medium">Kode Satker</div>
         ),
         cell: ({ row }: any) => (
-          <div className="text-center">{row.getValue("kodeSatker")}</div>
+          <div
+            className="text-center cursor-pointer text-blue-600 hover:underline font-medium"
+            onClick={() => {
+              setSatkerDetailTarget({
+                kdsatker: row.original.kodeSatker,
+                namaSatker: row.original.namaSatker,
+              });
+              setIsSatkerDetailModalOpen(true);
+            }}
+            title="Lihat detail satker"
+          >
+            {row.getValue("kodeSatker")}
+          </div>
         ),
       },
       {
@@ -885,6 +904,16 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
             ? { namaSatker: kartuTarget.namaSatker }
             : {})}
           tahun={selectedYear}
+        />
+
+        {/* Satker Detail Modal */}
+        <SatkerDetailModal
+          open={isSatkerDetailModalOpen}
+          onOpenChange={setIsSatkerDetailModalOpen}
+          kdsatker={satkerDetailTarget?.kdsatker ?? ""}
+          namaSatker={satkerDetailTarget?.namaSatker ?? ""}
+          tahun={selectedYear}
+          onSaved={fetchRingkasanData}
         />
       </div>
     );
