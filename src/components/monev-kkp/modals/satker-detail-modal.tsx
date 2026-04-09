@@ -68,8 +68,8 @@ export function SatkerDetailModal({
   const [nomorDispen, setNomorDispen] = useState("");
   const [tanggalDispen, setTanggalDispen] = useState<Date | undefined>(undefined);
   const [jmlKartuUsul, setJmlKartuUsul] = useState("");
-  const [tanggalCtkTagihan, setTanggalCtkTagihan] = useState<Date | undefined>(undefined);
-  const [tanggalJthTempo, setTanggalJthTempo] = useState<Date | undefined>(undefined);
+  const [tanggalCtkTagihan, setTanggalCtkTagihan] = useState("");
+  const [tanggalJthTempo, setTanggalJthTempo] = useState("");
 
   const safeParseDate = (dateStr: string | null) => {
     if (!dateStr) return undefined;
@@ -84,8 +84,15 @@ export function SatkerDetailModal({
       setIsLoading(true);
       try {
         const response = await fetch(
-          apiPath(`/monev-kkp/satker-detail?kdsatker=${encodeURIComponent(kdsatker)}&tahun=${tahun}`),
-          { credentials: "include" }
+          apiPath(`/monev-kkp/satker-detail?kdsatker=${encodeURIComponent(kdsatker)}&tahun=${tahun}&_t=${Date.now()}`),
+          { 
+            credentials: "include",
+            cache: "no-store",
+            headers: {
+              "Cache-Control": "no-cache",
+              "Pragma": "no-cache",
+            }
+          }
         );
         if (response.ok) {
           const result = await response.json();
@@ -101,8 +108,8 @@ export function SatkerDetailModal({
           // Handle jml_kartu_usul which might be string or number from backend
           setJmlKartuUsul(detail.jml_kartu_usul !== null && detail.jml_kartu_usul !== undefined ? String(detail.jml_kartu_usul) : "");
           
-          setTanggalCtkTagihan(safeParseDate(detail.tanggal_ctk_tagihan));
-          setTanggalJthTempo(safeParseDate(detail.tanggal_jth_tempo));
+          setTanggalCtkTagihan(detail.tanggal_ctk_tagihan || "");
+          setTanggalJthTempo(detail.tanggal_jth_tempo || "");
         } else {
           toast.error("Gagal mengambil data detail satker");
         }
@@ -135,8 +142,8 @@ export function SatkerDetailModal({
         nomor_dispen: nomorDispen || null,
         tanggal_dispen: tanggalDispen ? format(tanggalDispen, "yyyy-MM-dd") : null,
         jml_kartu_usul: jmlKartuUsul !== "" ? jmlKartuUsul : null, // Sending as string since DB is varchar
-        tanggal_ctk_tagihan: tanggalCtkTagihan ? format(tanggalCtkTagihan, "yyyy-MM-dd") : null,
-        tanggal_jth_tempo: tanggalJthTempo ? format(tanggalJthTempo, "yyyy-MM-dd") : null,
+        tanggal_ctk_tagihan: tanggalCtkTagihan !== "" ? tanggalCtkTagihan : null,
+        tanggal_jth_tempo: tanggalJthTempo !== "" ? tanggalJthTempo : null,
       };
 
       console.log("[SatkerDetailModal] Saving payload:", payload);
@@ -279,19 +286,23 @@ export function SatkerDetailModal({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Tanggal Cetak Tagihan</Label>
-                  <DatePicker 
-                    date={tanggalCtkTagihan} 
-                    onDateChange={setTanggalCtkTagihan}
-                    placeholder="Pilih Tanggal"
+                  <Label htmlFor="tanggal_ctk_tagihan">Tanggal Cetak Tagihan</Label>
+                  <Input 
+                    id="tanggal_ctk_tagihan"
+                    type="text"
+                    value={tanggalCtkTagihan} 
+                    onChange={(e) => setTanggalCtkTagihan(e.target.value)}
+                    placeholder="Contoh: Tanggal 15"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Tanggal Jatuh Tempo Pembayaran</Label>
-                  <DatePicker 
-                    date={tanggalJthTempo} 
-                    onDateChange={setTanggalJthTempo}
-                    placeholder="Pilih Tanggal"
+                  <Label htmlFor="tanggal_jth_tempo">Tanggal Jatuh Tempo Pembayaran</Label>
+                  <Input 
+                    id="tanggal_jth_tempo"
+                    type="text"
+                    value={tanggalJthTempo} 
+                    onChange={(e) => setTanggalJthTempo(e.target.value)}
+                    placeholder="Contoh: Tanggal 20"
                   />
                 </div>
               </div>
@@ -320,7 +331,7 @@ export function SatkerDetailModal({
           </div>
         )}
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="gap-2 sm:gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
             Batal
           </Button>
