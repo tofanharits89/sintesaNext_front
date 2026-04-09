@@ -121,7 +121,9 @@ export default function MonevKkpKanwilPage() {
                 "Jumlah Kartu": row.jumlahKartu,
                 "Nilai Tagihan": row.nilaiTagihan,
                 "Nilai Transaksi KKP": row.nilaiTransaksi,
-                "Kendala dan Hambatan": row.kendala || "-",
+                "Kategori Kendala": row.kendala || "-",
+                "Detil Kendala": row.detil_kendala || "-",
+                "Detil Masukan": row.detil_masukan_kendala || "-",
             }));
 
             // Create worksheet
@@ -141,7 +143,9 @@ export default function MonevKkpKanwilPage() {
                 { wch: 12 },  // Jumlah Kartu
                 { wch: 18 },  // Nilai Tagihan
                 { wch: 20 },  // Nilai Transaksi
-                { wch: 40 },  // Kendala
+                { wch: 30 },  // Kategori Kendala
+                { wch: 40 },  // Detil Kendala
+                { wch: 40 },  // Detil Masukan
             ];
 
             // Create workbook

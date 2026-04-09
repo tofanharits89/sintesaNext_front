@@ -40,6 +40,8 @@ export interface KkpData {
   nilaiTagihan: number;
   nilaiTransaksi: number;
   kendala: string;
+  detil_kendala?: string;
+  detil_masukan_kendala?: string;
   bulan?: string;
   triwulan?: string;
 }
@@ -112,7 +114,9 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
           jumlahKartu: Number(item.jumlah_kartu || 0),
           nilaiTagihan: Number(item.nilai_tagihan || 0),
           nilaiTransaksi: Number(item.nilai_trans_sp2d || 0),
-          kendala: "", // Kendala seems not to be in the main query
+          kendala: item.kendala || "",
+          detil_kendala: item.detil_kendala || "",
+          detil_masukan_kendala: item.detil_masukan_kendala || "",
           bulan: item.bulan,
           triwulan: item.triwulan,
           tahun: selectedYear,

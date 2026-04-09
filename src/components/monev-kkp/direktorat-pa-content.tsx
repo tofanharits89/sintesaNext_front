@@ -42,6 +42,8 @@ export interface RingkasanData {
   nilaiTagihan: number;
   nilaiTransaksi: number;
   kendala: string;
+  detil_kendala?: string;
+  detil_masukan_kendala?: string;
 }
 
 // Type for Monitoring Kanwil data
@@ -177,7 +179,9 @@ export const DirektoratPaContent = forwardRef<
           jumlahKartu: Number(item.jumlah_kartu || 0),
           nilaiTagihan: Number(item.nilai_tagihan || 0),
           nilaiTransaksi: Number(item.nilai_trans_sp2d || 0),
-          kendala: "",
+          kendala: item.kendala || "",
+          detil_kendala: item.detil_kendala || "",
+          detil_masukan_kendala: item.detil_masukan_kendala || "",
         }),
       );
       setRingkasanData(mappedData);
