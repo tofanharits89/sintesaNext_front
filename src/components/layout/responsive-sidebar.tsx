@@ -343,9 +343,7 @@ export function ResponsiveSidebar({
         );
       case "IKI PA":
         return (
-          <CreditCard
-            className={`${cls} text-orange-600 dark:text-orange-400`}
-          />
+          <Gauge className={`${cls} text-orange-600 dark:text-orange-400`} />
         );
       case "Tentang Kita":
         return (
@@ -463,7 +461,7 @@ export function ResponsiveSidebar({
       case "IKI PA__IKI Kontraktual":
         return <Building2 className={cls} />;
       case "IKI PA__IKI PAPD":
-        return <CreditCard className={cls} />;
+        return <BookOpen className={cls} />;
       default:
         return null;
     }
@@ -579,7 +577,7 @@ export function ResponsiveSidebar({
                       className={cn(
                         "h-9 w-48 gap-1 bg-white dark:bg-card hover:bg-accent dark:hover:bg-accent",
                         activeMenuLabel === m.label &&
-                        "bg-accent text-accent-foreground",
+                          "bg-accent text-accent-foreground",
                       )}
                     >
                       <span className="inline-flex items-center">
@@ -593,7 +591,7 @@ export function ResponsiveSidebar({
                           {m.children.map((c) => {
                             const menuKey = `${m.label}__${c.label}`;
                             let href = "#";
-                            let onMouseEnterFn = () => { };
+                            let onMouseEnterFn = () => {};
 
                             // Route mapping
                             if (
@@ -1099,7 +1097,7 @@ export function ResponsiveSidebar({
                         key={c.label}
                         href="/tentang-kita/profil"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
-                        onMouseEnter={() => { }}
+                        onMouseEnter={() => {}}
                         onClick={() => {
                           trackMenuUsage({
                             menu: m.label,
@@ -1823,8 +1821,7 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </Link>
-                    ) : c.label === "IKI PA" &&
-                      m.label === "IKI PA" ? (
+                    ) : c.label === "IKI PA" && m.label === "IKI PA" ? (
                       <Link
                         key={c.label}
                         href="/iku-pa/apbd"
