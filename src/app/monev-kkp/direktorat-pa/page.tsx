@@ -73,10 +73,16 @@ export default function MonevKkpDirektoratPaPage() {
                 "Kode BA": row.kodeBA,
                 "Kode Satker": row.kodeSatker,
                 "Nama Satker": row.namaSatker,
+                "Nomor PKS": row.nomor_pks || "-",
+                "Tanggal PKS": row.tanggal_pks ? new Date(row.tanggal_pks).toLocaleDateString("id-ID") : "-",
+                "Nomor Surat Penetapan UP": row.nomor_surat_up || "-",
+                "Tanggal Surat Penetapan UP": row.tanggal_surat_up ? new Date(row.tanggal_surat_up).toLocaleDateString("id-ID") : "-",
                 "UP KKP Per Bulan": row.upKkpPerBulan,
                 "Porsi UP KKP dari Total UP (%)": row.porsiUpKkp,
                 "Bank Penerbit KKP": row.bankPenerbit,
                 "Jumlah Kartu": row.jumlahKartu,
+                "Tanggal Cetak Tagihan per Bulan": row.tanggal_ctk_tagihan || "-",
+                "Tanggal Jatuh Tempo Pembayaran per Bulan": row.tanggal_jth_tempo || "-",
                 "Nilai Tagihan": row.nilaiTagihan,
                 "Nilai Transaksi KKP": row.nilaiTransaksi,
                 "Kategori Kendala": row.kendala || "-",
@@ -97,10 +103,16 @@ export default function MonevKkpDirektoratPaPage() {
                 { wch: 10 },  // Kode BA
                 { wch: 12 },  // Kode Satker
                 { wch: 30 },  // Nama Satker
+                { wch: 25 },  // Nomor PKS
+                { wch: 15 },  // Tanggal PKS
+                { wch: 25 },  // Nomor Surat Penetapan UP
+                { wch: 15 },  // Tanggal Surat Penetapan UP
                 { wch: 20 },  // UP KKP Per Bulan
                 { wch: 25 },  // Porsi UP KKP
                 { wch: 18 },  // Bank Penerbit
                 { wch: 12 },  // Jumlah Kartu
+                { wch: 25 },  // Tanggal Cetak Tagihan
+                { wch: 25 },  // Tanggal Jatuh Tempo
                 { wch: 18 },  // Nilai Tagihan
                 { wch: 20 },  // Nilai Transaksi
                 { wch: 30 },  // Kategori Kendala

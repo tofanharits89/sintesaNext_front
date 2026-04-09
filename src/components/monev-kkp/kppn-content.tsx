@@ -32,7 +32,9 @@ export interface KkpData {
   kodeSatker: string;
   namaSatker: string;
   kdkppn?: string;
+  nmkppn?: string;
   kdkanwil?: string;
+  nmkanwil?: string;
   upKkpPerBulan: number;
   porsiUpKkp: number;
   bankPenerbit: string;
@@ -42,6 +44,12 @@ export interface KkpData {
   kendala: string;
   detil_kendala?: string;
   detil_masukan_kendala?: string;
+  nomor_pks?: string;
+  tanggal_pks?: string;
+  nomor_surat_up?: string;
+  tanggal_surat_up?: string;
+  tanggal_ctk_tagihan?: string;
+  tanggal_jth_tempo?: string;
   bulan?: string;
   triwulan?: string;
 }
@@ -107,7 +115,9 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
           kodeSatker: item.kdsatker,
           namaSatker: item.nmsatker,
           kdkppn: item.kdkppn,
+          nmkppn: item.nmkppn,
           kdkanwil: item.kdkanwil,
+          nmkanwil: item.nmkanwil,
           upKkpPerBulan: Number(item.nilai_up_kkp || 0),
           porsiUpKkp: Number(item.porsi_up_kkp_dari_total_up || 0),
           bankPenerbit: item.bank_penerbit,
@@ -117,6 +127,12 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
           kendala: item.kendala || "",
           detil_kendala: item.detil_kendala || "",
           detil_masukan_kendala: item.detil_masukan_kendala || "",
+          nomor_pks: item.nomor_pks || "",
+          tanggal_pks: item.tanggal_pks || "",
+          nomor_surat_up: item.nomor_surat_up || "",
+          tanggal_surat_up: item.tanggal_surat_up || "",
+          tanggal_ctk_tagihan: item.tanggal_ctk_tagihan || "",
+          tanggal_jth_tempo: item.tanggal_jth_tempo || "",
           bulan: item.bulan,
           triwulan: item.triwulan,
           tahun: selectedYear,

@@ -43,6 +43,12 @@ export interface RingkasanKanwilData {
   kendala: string;
   detil_kendala?: string;
   detil_masukan_kendala?: string;
+  nomor_pks?: string;
+  tanggal_pks?: string;
+  nomor_surat_up?: string;
+  tanggal_surat_up?: string;
+  tanggal_ctk_tagihan?: string;
+  tanggal_jth_tempo?: string;
 }
 
 // Type for Monitoring KPPN data
@@ -158,6 +164,12 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
           kendala: item.kendala || "",
           detil_kendala: item.detil_kendala || "",
           detil_masukan_kendala: item.detil_masukan_kendala || "",
+          nomor_pks: item.nomor_pks || "",
+          tanggal_pks: item.tanggal_pks || "",
+          nomor_surat_up: item.nomor_surat_up || "",
+          tanggal_surat_up: item.tanggal_surat_up || "",
+          tanggal_ctk_tagihan: item.tanggal_ctk_tagihan || "",
+          tanggal_jth_tempo: item.tanggal_jth_tempo || "",
         }));
         setRingkasanData(mappedData);
       } catch (error) {
