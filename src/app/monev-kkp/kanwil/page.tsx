@@ -127,6 +127,9 @@ export default function MonevKkpKanwilPage() {
                 "Tanggal Jatuh Tempo Pembayaran per Bulan": row.tanggal_jth_tempo || "-",
                 "Nilai Tagihan": row.nilaiTagihan,
                 "Nilai Transaksi KKP": row.nilaiTransaksi,
+                "Nomor SP2D GUP/SP2D PTUP KKP": row.nomor_sp2d_list || "-",
+                "Tanggal SP2D GUP/SP2D PTUP KKP": row.tanggal_sp2d_list || "-",
+                "Jenis Transaksi Belanja yang Telah Dilakukan dengan Menggunakan KKP": row.jenis_belanja_list || "-",
                 "Kategori Kendala": row.kendala || "-",
                 "Detil Kendala": row.detil_kendala || "-",
                 "Detil Masukan": row.detil_masukan_kendala || "-",
@@ -152,13 +155,16 @@ export default function MonevKkpKanwilPage() {
                 { wch: 18 },  // Bank Penerbit
                 { wch: 12 },  // Jumlah Kartu
                 { wch: 25 },  // Tanggal Cetak Tagihan
-                { wch: 25 },  // Tanggal Jatuh Tempo
+                { wch: 25 },   // Tanggal Jatuh Tempo
                 { wch: 18 },  // Nilai Tagihan
                 { wch: 20 },  // Nilai Transaksi
+                { wch: 30 },  // Nomor SP2D GUP/PTUP
+                { wch: 25 },  // Tanggal SP2D GUP/PTUP
+                { wch: 50 },  // Jenis Belanja
                 { wch: 30 },  // Kategori Kendala
                 { wch: 40 },  // Detil Kendala
                 { wch: 40 },  // Detil Masukan
-            ];
+                ];
 
             // Create workbook
             const workbook = XLSX.utils.book_new();

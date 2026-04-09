@@ -50,6 +50,9 @@ export interface KkpData {
   tanggal_surat_up?: string;
   tanggal_ctk_tagihan?: string;
   tanggal_jth_tempo?: string;
+  nomor_sp2d_list?: string;
+  tanggal_sp2d_list?: string;
+  jenis_belanja_list?: string;
   bulan?: string;
   triwulan?: string;
 }
@@ -133,6 +136,9 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
           tanggal_surat_up: item.tanggal_surat_up || "",
           tanggal_ctk_tagihan: item.tanggal_ctk_tagihan || "",
           tanggal_jth_tempo: item.tanggal_jth_tempo || "",
+          nomor_sp2d_list: item.nomor_sp2d_list || "",
+          tanggal_sp2d_list: item.tanggal_sp2d_list || "",
+          jenis_belanja_list: item.jenis_belanja_list || "",
           bulan: item.bulan,
           triwulan: item.triwulan,
           tahun: selectedYear,
