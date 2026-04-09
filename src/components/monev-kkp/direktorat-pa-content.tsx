@@ -973,7 +973,13 @@ export const DirektoratPaContent = forwardRef<
       </Card>
 
       <RingkasanLaporanModal open={isRingkasanModalOpen} onOpenChange={setIsRingkasanModalOpen} data={selectedItem} periode={selectedPeriode} isLoading={isModalLoading} />
-      <LihatKendalaModal open={isViewModalOpen} onOpenChange={setIsViewModalOpen} data={selectedItem} />
+      <LihatKendalaModal 
+        open={isViewModalOpen} 
+        onOpenChange={setIsViewModalOpen} 
+        data={selectedItem} 
+        tahun={selectedYear}
+        triwulan={selectedPeriode.replace("Q", "")}
+      />
       <TransaksiKkpModal open={isTransaksiModalOpen} onOpenChange={setIsTransaksiModalOpen} kdsatker={transaksiTarget?.kdsatker ?? ""} {...(transaksiTarget?.namaSatker ? { namaSatker: transaksiTarget.namaSatker } : {})} tahun={selectedYear} triwulan={selectedPeriode.replace("Q", "")} />
       <TagihanKkpModal open={isTagihanModalOpen} onOpenChange={setIsTagihanModalOpen} kdsatker={tagihanTarget?.kdsatker ?? ""} {...(tagihanTarget?.namaSatker ? { namaSatker: tagihanTarget.namaSatker } : {})} tahun={selectedYear} triwulan={selectedPeriode.replace("Q", "")} />
       <KartuKkpModal open={isKartuModalOpen} onOpenChange={setIsKartuModalOpen} kdsatker={kartuTarget?.kdsatker ?? ""} {...(kartuTarget?.namaSatker ? { namaSatker: kartuTarget.namaSatker } : {})} tahun={selectedYear} />

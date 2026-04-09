@@ -59,6 +59,7 @@ export function KendalaHambatanModal({
     triwulan,
 }: KendalaHambatanModalProps) {
     const [kategori, setKategori] = useState<string[]>([]);
+    const [detilKendala, setDetilKendala] = useState<string>("");
     const [detilMasukan, setDetilMasukan] = useState<string>("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -94,9 +95,11 @@ export function KendalaHambatanModal({
                                 ? result.data.kategori_kendala.split(",").map((c: string) => c.trim()).filter(Boolean)
                                 : [];
                             setKategori(savedCategories);
+                            setDetilKendala(result.data.detil_kendala || "");
                             setDetilMasukan(result.data.detil_masukan_kendala || "");
                         } else {
                             setKategori([]);
+                            setDetilKendala("");
                             setDetilMasukan("");
                         }
                     }
@@ -110,6 +113,7 @@ export function KendalaHambatanModal({
             fetchKendala();
         } else if (!open) {
             setKategori([]);
+            setDetilKendala("");
             setDetilMasukan("");
         }
     }, [data, open, tahun, triwulan]);
@@ -147,6 +151,7 @@ export function KendalaHambatanModal({
                     kdsatker: data?.kodeSatker,
                     kdba: data?.kodeBA,
                     kategori_kendala: kategori.join(", "),
+                    detil_kendala: detilKendala,
                     detil_masukan_kendala: detilMasukan,
                 }),
             });
@@ -220,9 +225,17 @@ export function KendalaHambatanModal({
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground">Nama Satker:</span>
-                                    <span className="font-medium flex-1 text-right ml-4 truncate" title={data.namaSatker}>
+                                    <span className="font-medium truncate ml-4" title={data.namaSatker}>
                                         {data.namaSatker}
                                     </span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">Tahun:</span>
+                                    <span className="font-medium">{tahun || data?.tahun || "2026"}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">Triwulan:</span>
+                                    <span className="font-medium">Triwulan {triwulan || data?.triwulan || "1"}</span>
                                 </div>
                             </div>
                         )}
@@ -274,17 +287,30 @@ export function KendalaHambatanModal({
                                 </div>
                             )}
                         </div>
-                        <Field className="space-y-2">
-                            <FieldLabel htmlFor="detilMasukan">Detil/Masukan</FieldLabel>
-                            <Textarea
-                                id="detilMasukan"
-                                placeholder="Masukkan detail atau masukan tambahan..."
-                                value={detilMasukan}
-                                onChange={(e) => setDetilMasukan(e.target.value)}
-                                rows={5}
-                                className="min-h-[120px]"
-                            />
-                        </Field>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Field className="space-y-2">
+                                <FieldLabel htmlFor="detilKendala">Detil Kendala</FieldLabel>
+                                <Textarea
+                                    id="detilKendala"
+                                    placeholder="Masukkan detail kendala..."
+                                    value={detilKendala}
+                                    onChange={(e) => setDetilKendala(e.target.value)}
+                                    rows={5}
+                                    className="min-h-[120px]"
+                                />
+                            </Field>
+                            <Field className="space-y-2">
+                                <FieldLabel htmlFor="detilMasukan">Detil Masukan</FieldLabel>
+                                <Textarea
+                                    id="detilMasukan"
+                                    placeholder="Masukkan masukan tambahan..."
+                                    value={detilMasukan}
+                                    onChange={(e) => setDetilMasukan(e.target.value)}
+                                    rows={5}
+                                    className="min-h-[120px]"
+                                />
+                            </Field>
+                        </div>
                     </div>
                 )}
                 <DialogFooter className="flex-shrink-0 mt-4">

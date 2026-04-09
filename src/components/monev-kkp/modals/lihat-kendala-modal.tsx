@@ -65,7 +65,7 @@ export function LihatKendalaModal({
         } else if (!open) {
             setKendalaData(null);
         }
-    }, [data, open]);
+    }, [data, open, tahun, triwulan]);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -88,9 +88,17 @@ export function LihatKendalaModal({
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground">Nama Satker:</span>
-                                    <span className="font-medium flex-1 text-right ml-4 truncate" title={data.namaSatker}>
+                                    <span className="font-medium truncate ml-4" title={data.namaSatker}>
                                         {data.namaSatker}
                                     </span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">Tahun:</span>
+                                    <span className="font-medium">{tahun || data?.tahun || "2026"}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">Triwulan:</span>
+                                    <span className="font-medium">Triwulan {triwulan || data?.triwulan || "1"}</span>
                                 </div>
                             </div>
                             <div className="space-y-2">
@@ -114,16 +122,30 @@ export function LihatKendalaModal({
                                     )}
                                 </div>
                             </div>
-                            <div className="space-y-2">
-                                <p className="text-sm font-medium">Detil/Masukan:</p>
-                                <div className="p-3 bg-muted/50 rounded-lg min-h-[100px]">
-                                    {kendalaData?.detil_masukan_kendala ? (
-                                        <p className="text-sm">{kendalaData.detil_masukan_kendala}</p>
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground italic">
-                                            Tidak ada detail/masukan yang tercatat.
-                                        </p>
-                                    )}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <p className="text-sm font-medium">Detil Kendala:</p>
+                                    <div className="p-3 bg-muted/50 rounded-lg min-h-[100px]">
+                                        {kendalaData?.detil_kendala ? (
+                                            <p className="text-sm">{kendalaData.detil_kendala}</p>
+                                        ) : (
+                                            <p className="text-sm text-muted-foreground italic">
+                                                Tidak ada detail kendala yang tercatat.
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <p className="text-sm font-medium">Detil Masukan:</p>
+                                    <div className="p-3 bg-muted/50 rounded-lg min-h-[100px]">
+                                        {kendalaData?.detil_masukan_kendala ? (
+                                            <p className="text-sm">{kendalaData.detil_masukan_kendala}</p>
+                                        ) : (
+                                            <p className="text-sm text-muted-foreground italic">
+                                                Tidak ada detail masukan yang tercatat.
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </>

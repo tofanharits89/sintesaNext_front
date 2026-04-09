@@ -286,7 +286,7 @@ export function SatkerDetailModal({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="tanggal_ctk_tagihan">Tanggal Cetak Tagihan</Label>
+                  <Label htmlFor="tanggal_ctk_tagihan">Tanggal Cetak Tagihan per Bulan</Label>
                   <Input 
                     id="tanggal_ctk_tagihan"
                     type="text"
@@ -296,7 +296,7 @@ export function SatkerDetailModal({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="tanggal_jth_tempo">Tanggal Jatuh Tempo Pembayaran</Label>
+                  <Label htmlFor="tanggal_jth_tempo">Tanggal Jatuh Tempo Pembayaran per Bulan</Label>
                   <Input 
                     id="tanggal_jth_tempo"
                     type="text"
