@@ -190,9 +190,11 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
       setIsLoading(true);
       try {
         const triwulan = selectedPeriode.replace("Q", "");
+        const kppnParam =
+          selectedKppn !== "all" ? `&kdkppn=${selectedKppn}` : "";
         const response = await fetch(
           apiPath(
-            `/monev-kkp/kanwil/monitoring-kppn?tahun=${selectedYear}&triwulan=${triwulan}`,
+            `/monev-kkp/kanwil/monitoring-kppn?tahun=${selectedYear}&triwulan=${triwulan}${kppnParam}`,
           ),
           { credentials: "include" },
         );
