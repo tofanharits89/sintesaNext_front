@@ -56,16 +56,23 @@ export function SearchableSelect({
       disabled={disabled}
     >
       <ComboboxInput
-        className={cn("w-full", className)}
+        className={cn(
+          "w-full bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 [&_[data-slot=input-group-button]]:hover:!bg-zinc-200 dark:[&_[data-slot=input-group-button]]:hover:!bg-zinc-950",
+          className,
+        )}
         placeholder={placeholder}
         aria-label={searchPlaceholder}
         disabled={disabled}
       />
-      <ComboboxContent>
+      <ComboboxContent className="!bg-zinc-100 dark:!bg-black">
         <ComboboxEmpty>{emptyMessage}</ComboboxEmpty>
         <ComboboxList>
           {(option: SearchableSelectOption) => (
-            <ComboboxItem key={option.value} value={option}>
+            <ComboboxItem
+              key={option.value}
+              value={option}
+              className="data-highlighted:!bg-zinc-200 dark:data-highlighted:!bg-zinc-950"
+            >
               {option.label}
             </ComboboxItem>
           )}
