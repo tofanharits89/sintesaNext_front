@@ -29,7 +29,7 @@ import { apiPath } from "@/lib/config/base-path";
 export interface RingkasanData {
   id: string | number;
   kodeKanwil?: string;
-  namaKanwil?: string;
+  namaLokasi?: string;
   kodeKppn?: string;
   namaKppn?: string;
   kodeBA: string;
@@ -59,7 +59,7 @@ export interface RingkasanData {
 interface MonitoringKanwilData {
   id: string | number;
   kdkanwil: string;
-  nmkanwil: string;
+  nmlokasi: string;
   jumlah_kppn: number;
   jumlah_satker_up_kkp: number;
   jumlah_satker_transaksi: number;
@@ -176,7 +176,7 @@ export const DirektoratPaContent = forwardRef<
         (item: any, index: number) => ({
           id: `${item.kdsatker}-${index}`,
           kodeKanwil: item.kdkanwil,
-          namaKanwil: item.nmkanwil || item.kdkanwil || "-",
+          namaLokasi: item.nmlokasi || item.kdkanwil || "-",
           kodeKppn: item.kdkppn,
           namaKppn: item.nmkppn || item.kdkppn || "-",
           kodeBA: item.kddept,
@@ -230,7 +230,7 @@ export const DirektoratPaContent = forwardRef<
         (item: any) => ({
           id: item.kdkanwil,
           kdkanwil: item.kdkanwil,
-          nmkanwil: item.nmkanwil,
+          nmlokasi: item.nmlokasi,
           jumlah_kppn: Number(item.jumlah_kppn || 0),
           jumlah_satker_up_kkp: Number(item.jumlah_satker_up_kkp || 0),
           jumlah_satker_transaksi: Number(item.jumlah_satker_transaksi || 0),
@@ -255,10 +255,10 @@ export const DirektoratPaContent = forwardRef<
     setIsLoading(true);
     try {
       const triwulan = selectedPeriode.replace("Q", "");
-      const kanwilParam =
-        selectedKanwil !== "all" ? `&kdkanwil=${selectedKanwil}` : "";
+      const kppnParam =
+        selectedKppn !== "all" ? `&kdkppn=${selectedKppn}` : "";
       const apiUrl = apiPath(
-        `/monev-kkp/kanwil/monitoring-kppn?tahun=${selectedYear}&triwulan=${triwulan}${kanwilParam}`,
+        `/monev-kkp/kanwil/monitoring-kppn?tahun=${selectedYear}&triwulan=${triwulan}${kppnParam}`,
       );
 
       const response = await fetch(apiUrl, { credentials: "include" });
@@ -317,7 +317,7 @@ export const DirektoratPaContent = forwardRef<
   const uniqueKanwilsMap = new Map<string, string>();
   ringkasanData.forEach((d) => {
     if (d.kodeKanwil && !uniqueKanwilsMap.has(d.kodeKanwil)) {
-      uniqueKanwilsMap.set(d.kodeKanwil, d.namaKanwil || d.kodeKanwil);
+      uniqueKanwilsMap.set(d.kodeKanwil, d.namaLokasi || d.kodeKanwil);
     }
   });
   uniqueKanwilsMap.forEach((label, value) => {
@@ -343,11 +343,24 @@ export const DirektoratPaContent = forwardRef<
   const uniqueMonKanwilsMap = new Map<string, string>();
   monitoringKanwilData.forEach((d) => {
     if (d.kdkanwil && !uniqueMonKanwilsMap.has(d.kdkanwil)) {
-      uniqueMonKanwilsMap.set(d.kdkanwil, d.nmkanwil || d.kdkanwil);
+      uniqueMonKanwilsMap.set(d.kdkanwil, d.nmlokasi || d.kdkanwil);
     }
   });
   uniqueMonKanwilsMap.forEach((label, value) => {
     monitoringKanwilList.push({ value, label });
+  });
+
+  const monitoringKppnList: { value: string; label: string }[] = [
+    { value: "all", label: "Semua KPPN" },
+  ];
+  const uniqueMonKppnsMap = new Map<string, string>();
+  monitoringKppnData.forEach((d) => {
+    if (d.kdkppn && !uniqueMonKppnsMap.has(d.kdkppn)) {
+      uniqueMonKppnsMap.set(d.kdkppn, d.nmkppn || d.kdkppn);
+    }
+  });
+  uniqueMonKppnsMap.forEach((label, value) => {
+    monitoringKppnList.push({ value, label });
   });
 
   // ─── Helpers ───────────────────────────────────────────
@@ -377,7 +390,7 @@ export const DirektoratPaContent = forwardRef<
 
     const initialItem = {
       kodeKppn: item.kdkppn || item.kdkanwil,
-      namaKppn: item.nmkppn || item.nmkanwil,
+      namaKppn: item.nmkppn || item.nmlokasi,
       satkerData: [],
     };
     setSelectedItem(initialItem);
@@ -430,7 +443,7 @@ export const DirektoratPaContent = forwardRef<
           nilaiTransaksi: Number(satker.nilai_trans_sp2d || 0),
           kendala: satker.kendala || "",
         }));
-        combinedItem = { kodeKppn: item.kdkanwil, namaKppn: item.nmkanwil, satkerData: satkerData };
+        combinedItem = { kodeKppn: item.kdkanwil, namaKppn: item.nmlokasi, satkerData: satkerData };
       } else if (item.kodeSatker) {
         combinedItem = { kodeKppn: item.kodeKppn, namaKppn: item.namaKppn, satkerData: [item] };
       }
@@ -482,11 +495,11 @@ export const DirektoratPaContent = forwardRef<
       cell: ({ row }: any) => <div className="text-center">{row.getValue("kodeKanwil")}</div>,
     },
     {
-      accessorKey: "namaKanwil",
+      accessorKey: "namaLokasi",
       header: () => <div className="text-center font-medium">Nama Kanwil</div>,
       cell: ({ row }: any) => (
-        <div className="text-left max-w-[200px] truncate" title={row.getValue("namaKanwil")}>
-          {row.getValue("namaKanwil")}
+        <div className="text-left max-w-[200px] truncate" title={row.getValue("namaLokasi")}>
+          {row.getValue("namaLokasi")}
         </div>
       ),
     },
@@ -760,11 +773,11 @@ export const DirektoratPaContent = forwardRef<
       cell: ({ row }: any) => <div className="text-center">{row.getValue("kdkanwil")}</div>,
     },
     {
-      accessorKey: "nmkanwil",
+      accessorKey: "nmlokasi",
       header: () => <div className="text-center font-medium">Nama Kanwil</div>,
       cell: ({ row }: any) => (
-        <div className="text-left max-w-[200px] truncate" title={row.getValue("nmkanwil")}>
-          {row.getValue("nmkanwil")}
+        <div className="text-left max-w-[200px] truncate" title={row.getValue("nmlokasi")}>
+          {row.getValue("nmlokasi")}
         </div>
       ),
     },
@@ -932,6 +945,7 @@ export const DirektoratPaContent = forwardRef<
   };
 
   const activeKanwilList = contentType === "monitoring-kanwil" ? monitoringKanwilList : kanwilList;
+  const activeKppnList = contentType === "monitoring-kppn" ? monitoringKppnList : kppnList;
 
   return (
     <div className="space-y-6">
@@ -958,7 +972,7 @@ export const DirektoratPaContent = forwardRef<
                 <SelectContent>{years.map((year) => (<SelectItem key={year} value={year}>{year}</SelectItem>))}</SelectContent>
               </Select>
             </div>
-            {(contentType === "ringkasan-kanwil" || contentType === "monitoring-kanwil" || contentType === "monitoring-kppn") && (
+            {(contentType === "ringkasan-kanwil" || contentType === "monitoring-kanwil") && (
               <div className="space-y-2">
                 <label className="text-sm font-medium">Kanwil</label>
                 <Select value={selectedKanwil} onValueChange={setSelectedKanwil}>
@@ -967,12 +981,12 @@ export const DirektoratPaContent = forwardRef<
                 </Select>
               </div>
             )}
-            {contentType === "ringkasan-kppn" && (
+            {(contentType === "ringkasan-kppn" || contentType === "monitoring-kppn") && (
               <div className="space-y-2">
                 <label className="text-sm font-medium">KPPN</label>
                 <Select value={selectedKppn} onValueChange={setSelectedKppn}>
                   <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                  <SelectContent>{kppnList.map((kppn) => (<SelectItem key={kppn.value} value={kppn.value}>{kppn.label}</SelectItem>))}</SelectContent>
+                  <SelectContent>{activeKppnList.map((kppn) => (<SelectItem key={kppn.value} value={kppn.value}>{kppn.label}</SelectItem>))}</SelectContent>
                 </Select>
               </div>
             )}
