@@ -13,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { ResetButton } from "@/components/ui/reset-button";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Eye, Building2, Pencil } from "lucide-react";
 import { RingkasanLaporanModal } from "./modals/ringkasan-laporan-modal";
 import { KendalaHambatanModal } from "./modals/kendala-hambatan-modal";
@@ -787,22 +788,18 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">KPPN</label>
-                <Select value={selectedKppn} onValueChange={setSelectedKppn}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue
-                      placeholder={
-                        isLoadingKppnRef ? "Memuat..." : "Pilih KPPN"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {kppnList.map((kppn) => (
-                      <SelectItem key={kppn.value} value={kppn.value}>
-                        {kppn.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  options={kppnList}
+                  value={selectedKppn}
+                  onValueChange={setSelectedKppn}
+                  placeholder={
+                    isLoadingKppnRef && kppnRefList.length === 0
+                      ? "Memuat KPPN..."
+                      : "Pilih KPPN"
+                  }
+                  searchPlaceholder="Cari kode atau nama KPPN..."
+                  emptyMessage="KPPN tidak ditemukan."
+                />
               </div>
 
               <div className="space-y-2">

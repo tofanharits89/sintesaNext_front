@@ -13,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { ResetButton } from "@/components/ui/reset-button";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Eye, Building2 } from "lucide-react";
 import { RingkasanLaporanModal } from "./modals/ringkasan-laporan-modal";
 import { LihatKendalaModal } from "./modals/lihat-kendala-modal";
@@ -118,6 +119,10 @@ export const DirektoratPaContent = forwardRef<
   const [selectedKanwil, setSelectedKanwil] = useState("all");
   const [selectedKppn, setSelectedKppn] = useState("all");
   const [selectedPeriode, setSelectedPeriode] = useState(defaultPeriode);
+  const [kppnRefList, setKppnRefList] = useState<
+    { value: string; label: string }[]
+  >([]);
+  const [isLoadingKppnRef, setIsLoadingKppnRef] = useState(false);
 
   // Modal state
   const [isRingkasanModalOpen, setIsRingkasanModalOpen] = useState(false);
@@ -287,6 +292,32 @@ export const DirektoratPaContent = forwardRef<
     }
   };
 
+  const fetchKppnRefList = async () => {
+    setIsLoadingKppnRef(true);
+    try {
+      const response = await fetch(apiPath("/monev-kkp/kanwil/ref-kppn"), {
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Gagal mengambil data referensi KPPN");
+      }
+
+      const result = await response.json();
+      const mappedList = result.data.map((item: any) => ({
+        value: item.kdkppn,
+        label: `${item.kdkppn} - ${item.nmkppn}`,
+      }));
+
+      setKppnRefList(mappedList);
+    } catch (error) {
+      console.error(error);
+      toast.error("Gagal mengambil data referensi KPPN");
+    } finally {
+      setIsLoadingKppnRef(false);
+    }
+  };
+
   // Fetch on mount and when filters change
   useEffect(() => {
     if (!user) return;
@@ -309,6 +340,11 @@ export const DirektoratPaContent = forwardRef<
     selectedKppn,
   ]);
 
+  useEffect(() => {
+    if (!user) return;
+    fetchKppnRefList();
+  }, [user]);
+
   // ─── Dynamic filter lists ──────────────────────────────
 
   const kanwilList: { value: string; label: string }[] = [
@@ -330,7 +366,10 @@ export const DirektoratPaContent = forwardRef<
   const uniqueKppnsMap = new Map<string, string>();
   ringkasanData.forEach((d) => {
     if (d.kodeKppn && !uniqueKppnsMap.has(d.kodeKppn)) {
-      uniqueKppnsMap.set(d.kodeKppn, d.namaKppn || d.kodeKppn);
+      uniqueKppnsMap.set(
+        d.kodeKppn,
+        `${d.kodeKppn} - ${d.namaKppn || d.kodeKppn}`,
+      );
     }
   });
   uniqueKppnsMap.forEach((label, value) => {
@@ -356,7 +395,10 @@ export const DirektoratPaContent = forwardRef<
   const uniqueMonKppnsMap = new Map<string, string>();
   monitoringKppnData.forEach((d) => {
     if (d.kdkppn && !uniqueMonKppnsMap.has(d.kdkppn)) {
-      uniqueMonKppnsMap.set(d.kdkppn, d.nmkppn || d.kdkppn);
+      uniqueMonKppnsMap.set(
+        d.kdkppn,
+        `${d.kdkppn} - ${d.nmkppn || d.kdkppn}`,
+      );
     }
   });
   uniqueMonKppnsMap.forEach((label, value) => {
@@ -945,7 +987,12 @@ export const DirektoratPaContent = forwardRef<
   };
 
   const activeKanwilList = contentType === "monitoring-kanwil" ? monitoringKanwilList : kanwilList;
-  const activeKppnList = contentType === "monitoring-kppn" ? monitoringKppnList : kppnList;
+  const activeKppnList =
+    kppnRefList.length > 0
+      ? [{ value: "all", label: "Semua KPPN" }, ...kppnRefList]
+      : contentType === "monitoring-kppn"
+        ? monitoringKppnList
+        : kppnList;
 
   return (
     <div className="space-y-6">
@@ -984,10 +1031,18 @@ export const DirektoratPaContent = forwardRef<
             {(contentType === "ringkasan-kppn" || contentType === "monitoring-kppn") && (
               <div className="space-y-2">
                 <label className="text-sm font-medium">KPPN</label>
-                <Select value={selectedKppn} onValueChange={setSelectedKppn}>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                  <SelectContent>{activeKppnList.map((kppn) => (<SelectItem key={kppn.value} value={kppn.value}>{kppn.label}</SelectItem>))}</SelectContent>
-                </Select>
+                <SearchableSelect
+                  options={activeKppnList}
+                  value={selectedKppn}
+                  onValueChange={setSelectedKppn}
+                  placeholder={
+                    isLoadingKppnRef && kppnRefList.length === 0
+                      ? "Memuat KPPN..."
+                      : "Pilih KPPN"
+                  }
+                  searchPlaceholder="Cari kode atau nama KPPN..."
+                  emptyMessage="KPPN tidak ditemukan."
+                />
               </div>
             )}
             <div className="space-y-2">
