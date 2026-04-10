@@ -369,9 +369,9 @@ export const DirektoratPaContent = forwardRef<
 
   const periodes = [
     { value: "Q1", label: "Triwulan 1 (Jan - Mar)" },
-    { value: "Q2", label: "Triwulan 2 (Apr - Jun)" },
-    { value: "Q3", label: "Triwulan 3 (Jul - Sep)" },
-    { value: "Q4", label: "Triwulan 4 (Okt - Des)" },
+    { value: "Q2", label: "Triwulan 2 (Jan - Jun)" },
+    { value: "Q3", label: "Triwulan 3 (Jan - Sep)" },
+    { value: "Q4", label: "Triwulan 4 (Jan - Des)" },
   ];
 
   const handleReset = () => {
@@ -991,7 +991,7 @@ export const DirektoratPaContent = forwardRef<
               </div>
             )}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Periode</label>
+              <label className="text-sm font-medium">Periode (Akumulatif)</label>
               <Select value={selectedPeriode} onValueChange={setSelectedPeriode}>
                 <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>{periodes.map((periode) => (<SelectItem key={periode.value} value={periode.value}>{periode.label}</SelectItem>))}</SelectContent>
