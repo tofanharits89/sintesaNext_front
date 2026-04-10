@@ -67,7 +67,7 @@ export default function MonevKkpDirektoratPaPage() {
             const excelData = data.map((row, index) => ({
                 "No": index + 1,
                 "Kode Kanwil": row.kodeKanwil || "-",
-                "Nama Kanwil": row.namaKanwil || "-",
+                "Nama Kanwil": row.namaLokasi || "-",
                 "Kode KPPN": row.kodeKppn || "-",
                 "Nama KPPN": row.namaKppn || "-",
                 "Kode BA": row.kodeBA,
@@ -179,7 +179,7 @@ export default function MonevKkpDirektoratPaPage() {
             const tableData = data.map((row, index) => [
                 index + 1,
                 row.kodeKanwil || "-",
-                row.namaKanwil || "-",
+                row.namaLokasi || "-",
                 row.kodeKppn || "-",
                 row.namaKppn || "-",
                 row.kodeBA,
