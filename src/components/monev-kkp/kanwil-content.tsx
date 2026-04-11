@@ -738,33 +738,42 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
         {/* Filter Card */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Filter Data</CardTitle>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle className="shrink-0">Filter Data</CardTitle>
+              {/* Kanwil info inline — desktop only */}
+              <div className="hidden md:flex items-center gap-x-5 flex-1 text-sm px-3 py-1.5">
+                <Building2 className="h-4 w-4 text-primary shrink-0" />
+                <div className="flex items-center gap-1.5">
+                  <span className="text-muted-foreground">Kode Kanwil:</span>
+                  <span className="font-medium">{user?.kdkanwil || "-"}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-muted-foreground">Nama Kanwil:</span>
+                  <span className="font-medium">{user?.nmkanwil || user?.kdkanwil || "-"}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-muted-foreground">Role:</span>
+                  <Badge variant="outline">{user?.role || "-"}</Badge>
+                </div>
+              </div>
               <ResetButton onReset={handleReset} />
             </div>
           </CardHeader>
           <CardContent>
-            {/* Kanwil Info from Auth */}
-            <div className="mb-4 p-3 bg-muted rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Building2 className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium">Informasi Kanwil</span>
+            {/* Kanwil Info — mobile only (on desktop it lives in the CardHeader) */}
+            <div className="flex md:hidden mb-4 p-3 bg-muted rounded-lg items-center gap-x-5 gap-y-1 flex-wrap text-sm">
+              <Building2 className="h-4 w-4 text-primary shrink-0" />
+              <div className="flex items-center gap-1.5">
+                <span className="text-muted-foreground">Kode Kanwil:</span>
+                <span className="font-medium">{user?.kdkanwil || "-"}</span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div className="flex justify-between md:flex-col md:gap-0.5">
-                  <span className="text-muted-foreground">Kode Kanwil:</span>
-                  <span className="font-medium">{user?.kdkanwil || "-"}</span>
-                </div>
-                <div className="flex justify-between md:flex-col md:gap-0.5">
-                  <span className="text-muted-foreground">Nama Kanwil:</span>
-                  <span className="font-medium">
-                    {user?.nmkanwil || user?.kdkanwil || "-"}
-                  </span>
-                </div>
-                <div className="flex justify-between md:flex-col md:gap-0.5">
-                  <span className="text-muted-foreground">Role:</span>
-                  <Badge variant="outline">{user?.role || "-"}</Badge>
-                </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-muted-foreground">Nama Kanwil:</span>
+                <span className="font-medium">{user?.nmkanwil || user?.kdkanwil || "-"}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-muted-foreground">Role:</span>
+                <Badge variant="outline">{user?.role || "-"}</Badge>
               </div>
             </div>
 

@@ -998,18 +998,23 @@ export const DirektoratPaContent = forwardRef<
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Filter Data</CardTitle>
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle className="shrink-0">Filter Data</CardTitle>
+            {/* Direktorat info inline — desktop only */}
+            <div className="hidden md:flex items-center gap-x-2 flex-1 text-sm px-3 py-1.5">
+              <Building2 className="h-4 w-4 text-primary shrink-0" />
+              <span className="font-medium">Direktorat Pelaksanaan Anggaran</span>
+              <span className="text-muted-foreground">— Menampilkan data agregat dari seluruh Kanwil dan KPPN</span>
+            </div>
             <ResetButton onReset={handleReset} />
           </div>
         </CardHeader>
         <CardContent>
-          <div className="mb-4 p-3 bg-muted rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <Building2 className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">Direktorat Pelaksanaan Anggaran</span>
-            </div>
-            <p className="text-xs text-muted-foreground">Menampilkan data agregat dari seluruh Kanwil dan KPPN</p>
+          {/* Direktorat info — mobile only (on desktop it lives in the CardHeader) */}
+          <div className="flex md:hidden mb-4 p-3 bg-muted rounded-lg items-center gap-x-3 gap-y-1 flex-wrap text-sm">
+            <Building2 className="h-4 w-4 text-primary shrink-0" />
+            <span className="font-medium">Direktorat Pelaksanaan Anggaran</span>
+            <span className="text-muted-foreground text-xs">Menampilkan data agregat dari seluruh Kanwil dan KPPN</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
