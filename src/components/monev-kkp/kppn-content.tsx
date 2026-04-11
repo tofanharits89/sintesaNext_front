@@ -38,6 +38,7 @@ export interface KkpData {
   upKkpPerBulan: number;
   porsiUpKkp: number;
   bankPenerbit: string;
+  jmlKartuUsul: number | null;
   jumlahKartu: number;
   nilaiTagihan: number;
   nilaiTransaksi: number;
@@ -124,6 +125,7 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
           upKkpPerBulan: Number(item.nilai_up_kkp || 0),
           porsiUpKkp: Number(item.porsi_up_kkp_dari_total_up || 0),
           bankPenerbit: item.bank_penerbit,
+          jmlKartuUsul: item.jml_kartu_usul !== undefined && item.jml_kartu_usul !== null ? Number(item.jml_kartu_usul) : null,
           jumlahKartu: Number(item.jumlah_kartu || 0),
           nilaiTagihan: Number(item.nilai_tagihan || 0),
           nilaiTransaksi: Number(item.nilai_trans_sp2d || 0),
