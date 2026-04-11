@@ -123,45 +123,70 @@ export default function MonevKkpKanwilPage() {
                 "KODE KANWIL:", user?.kdkanwil || "-",
             ];
 
-            // Two-level header with TWO parent groups:
-            // Group 1 (cols 8–11): SURAT PERSETUJUAN/PERUBAHAN PERSETUJUAN BESARAN UP KKP
-            // Group 2 (cols 12–14): STATUS KKP
-            // Non-grouped cols (0–7, 15–24): vertically merged across parent and child rows
-            const group1Start = 8;   // NOMOR SURAT PENETAPAN UP
-            const group1End   = 11;  // PORSI UP KKP DARI TOTAL UP (%)
-            const group2Start = 12;  // BANK PENERBIT KKP
-            const group2End   = 14;  // JUMLAH KKP YANG SUDAH DITERIMA
+            // Three-level header:
+            // Non-grouped (cols 0-7, 19-28): label in top row, vertically merged down to bottom row (r4-r6)
+            // Group 1 & 2 & 4 (cols 8-14, 19-25): parent label in top row (r4), child labels in mid row (r5) vertically merged to bottom row (r6)
+            // Group 3 (cols 15-18): parent label in top row (r4), sub-labels in mid row (r5), child labels in bot row (r6)
+            const group1Start = 8;
+            const group1End = 11;
+            const group2Start = 12;
+            const group2End = 14;
+            const group3Start = 15;
+            const group3End = 18;
+            const group4Start = 19;
+            const group4End = 25;
 
-            const parentHeaderRow = [
+            const topHeaderRow = [
                 "NO", "KODE KPPN", "NAMA KPPN", "KODE BA", "KODE SATKER", "NAMA SATKER",
                 "NOMOR PKS", "TANGGAL PKS",
                 // Group 1: cols 8–11
                 "SURAT PERSETUJUAN/PERUBAHAN PERSETUJUAN BESARAN UP KKP", "", "", "",
                 // Group 2: cols 12–14
                 "STATUS KKP", "", "",
-                // Non-grouped: cols 15–24
-                "TANGGAL CETAK TAGIHAN PER BULAN", "TANGGAL JATUH TEMPO PEMBAYARAN PER BULAN",
-                "NILAI TAGIHAN", "NILAI TRANSAKSI KKP",
-                "NOMOR SP2D GUP/SP2D PTUP KKP", "TANGGAL SP2D GUP/SP2D PTUP KKP",
-                "JENIS TRANSAKSI BELANJA YANG TELAH DILAKUKAN DENGAN MENGGUNAKAN KKP",
+                // Group 3: cols 15-18
+                "JUMLAH DAN TOTAL LIMIT KKP YANG DISETUJUI BANK", "", "", "",
+                // Group 4: cols 19-25
+                "RINGKASAN BELANJA DAN PEMBAYARAN", "", "", "", "", "", "",
+                // Non-grouped rest: cols 26–28
                 "KATEGORI KENDALA", "DETIL KENDALA", "DETIL MASUKAN",
             ];
 
-            // Child header row: content only for grouped cols (8–11 and 12–14)
-            const childHeaderRow = [
-                // Cols 0–7: empty (vertically merged from parent row)
+            const midHeaderRow = [
                 "", "", "", "", "", "", "", "",
-                // Cols 8–11: group 1 child labels
+                // Group 1 child labels
                 "NOMOR SURAT PENETAPAN UP", "TANGGAL SURAT PENETAPAN UP",
                 "UP KKP PER BULAN", "PORSI UP KKP DARI TOTAL UP (%)",
-                // Cols 12–14: group 2 child labels
+                // Group 2 child labels
                 "BANK PENERBIT KKP", "JUMLAH KKP YANG DIUSULKAN KE BANK PENERBIT KKP",
                 "JUMLAH KKP YANG SUDAH DITERIMA",
-                // Cols 15–24: empty (vertically merged from parent row)
-                "", "", "", "", "", "", "", "", "", "",
+                // Group 3 mid labels
+                "KKP UNTUK KEPERLUAN BELANJA OPERASIONAL DAN BELANJA MODAL", "",
+                "KKP UNTUK KEPERLUAN BELANJA PERJALANAN DINAS JABATAN", "",
+                // Group 4 child labels
+                "TANGGAL CETAK TAGIHAN PER BULAN", "TANGGAL JATUH TEMPO PEMBAYARAN PER BULAN",
+                "TOTAL TAGIHAN BANK BULAN BERJALAN (DALAM RUPIAH)", "TOTAL TAGIHAN KKP YANG DIBAYARKAN PER PERIODE TAGIHAN (DALAM RUPIAH)",
+                "NOMOR SP2D GUP/SP2D PTUP KKP", "TANGGAL SP2D GUP/SP2D PTUP KKP",
+                "JENIS TRANSAKSI BELANJA YANG TELAH DILAKUKAN DENGAN MENGGUNAKAN KKP",
+                // Non-grouped rest
+                "", "", "",
             ];
 
-            const totalCols = parentHeaderRow.length; // 25 columns
+            const botHeaderRow = [
+                "", "", "", "", "", "", "", "",
+                // Group 1
+                "", "", "", "",
+                // Group 2
+                "", "", "",
+                // Group 3 bot labels
+                "JUMLAH KARTU", "TOTAL LIMIT (DALAM RUPIAH)",
+                "JUMLAH KARTU", "TOTAL LIMIT (DALAM RUPIAH)",
+                // Group 4
+                "", "", "", "", "", "", "",
+                // Non-grouped rest
+                "", "", "",
+            ];
+
+            const totalCols = topHeaderRow.length; // 29 columns
 
             // Data rows
             const dataRows = data.map((row, index) => [
@@ -180,6 +205,10 @@ export default function MonevKkpKanwilPage() {
                 row.bankPenerbit,
                 row.jmlKartuUsul ?? "-",
                 row.jumlahKartu,
+                row.jmlKartuOpr,
+                row.limitOpr,
+                row.jmlKartuPd,
+                row.limitPd,
                 row.tanggal_ctk_tagihan || "-",
                 row.tanggal_jth_tempo || "-",
                 row.nilaiTagihan,
@@ -192,35 +221,45 @@ export default function MonevKkpKanwilPage() {
                 row.detil_masukan_kendala || "-",
             ]);
 
-            // Build sheet: title1, title2, empty, kanwil, parentHeaders, childHeaders, data
-            const aoaData = [titleRow1, titleRow2, emptyRow, kanwilRow, parentHeaderRow, childHeaderRow, ...dataRows];
+            // Build sheet: title1, title2, empty, kanwil, topHeader, midHeader, botHeader, data
+            const aoaData = [titleRow1, titleRow2, emptyRow, kanwilRow, topHeaderRow, midHeaderRow, botHeaderRow, ...dataRows];
             const worksheet = XLSX.utils.aoa_to_sheet(aoaData);
 
-            // Merges:
-            // r0, r1 : title rows spanning all columns
-            // r4 cols 8–11 : group 1 (SURAT PERSETUJUAN) horizontal merge
-            // r4 cols 12–14: group 2 (STATUS KKP) horizontal merge
-            // r4 remaining non-grouped cols: vertical merge with r5
+            // Merges
             const lastCol = totalCols - 1;
-            const verticalMerges: XLSX.Range[] = [];
-            for (let c = 0; c < group1Start; c++) {
-                verticalMerges.push({ s: { r: 4, c }, e: { r: 5, c } });
-            }
-            for (let c = group2End + 1; c < totalCols; c++) {
-                verticalMerges.push({ s: { r: 4, c }, e: { r: 5, c } });
-            }
-            worksheet["!merges"] = [
-                { s: { r: 0, c: 0 }, e: { r: 0, c: lastCol } },                      // Title row 1
-                { s: { r: 1, c: 0 }, e: { r: 1, c: lastCol } },                      // Title row 2
-                { s: { r: 4, c: group1Start }, e: { r: 4, c: group1End } },          // Group 1 label
-                { s: { r: 4, c: group2Start }, e: { r: 4, c: group2End } },          // Group 2 label
-                ...verticalMerges,
+            const merges: XLSX.Range[] = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: lastCol } }, // Title 1
+                { s: { r: 1, c: 0 }, e: { r: 1, c: lastCol } }, // Title 2
+                // Top header groups (r4)
+                { s: { r: 4, c: group1Start }, e: { r: 4, c: group1End } },
+                { s: { r: 4, c: group2Start }, e: { r: 4, c: group2End } },
+                { s: { r: 4, c: group3Start }, e: { r: 4, c: group3End } },
+                { s: { r: 4, c: group4Start }, e: { r: 4, c: group4End } },
+                // Mid header groups (r5)
+                { s: { r: 5, c: group3Start }, e: { r: 5, c: group3Start + 1 } },
+                { s: { r: 5, c: group3Start + 2 }, e: { r: 5, c: group3End } },
             ];
+
+            // Vertical merges for non-grouped cols (r4 to r6)
+            for (let c = 0; c < group1Start; c++) merges.push({ s: { r: 4, c }, e: { r: 6, c } });
+            for (let c = group4End + 1; c < totalCols; c++) merges.push({ s: { r: 4, c }, e: { r: 6, c } });
+
+            // Vertical merges for group 1 & 2 & 4 children (r5 to r6)
+            for (let c = group1Start; c <= group2End; c++) merges.push({ s: { r: 5, c }, e: { r: 6, c } });
+            for (let c = group4Start; c <= group4End; c++) merges.push({ s: { r: 5, c }, e: { r: 6, c } });
+
+            worksheet["!merges"] = merges;
 
             // --- Styling ---
             const boldStyle = { font: { bold: true } };
+            const borderStyle = {
+                top: { style: "thin" },
+                bottom: { style: "thin" },
+                left: { style: "thin" },
+                right: { style: "thin" }
+            };
 
-            // Title rows (r=0, r=1): bold only col 0 (merged cells show top-left style)
+            // Title rows (r=0, r=1): bold only col 0
             for (const r of [0, 1]) {
                 const addr = XLSX.utils.encode_cell({ r, c: 0 });
                 if (!worksheet[addr]) worksheet[addr] = { v: "", t: "s" };
@@ -234,30 +273,34 @@ export default function MonevKkpKanwilPage() {
                 worksheet[addr].s = boldStyle;
             }
 
-            // Parent header row (r=4): bold + alignment
-            // Centered: NO(0), KODE KPPN(1), KODE BA(3), KODE SATKER(4), group labels(8,12)
-            const centeredColIndexes = new Set([0, 1, 3, 4, group1Start, group2Start]);
-            for (let c = 0; c < totalCols; c++) {
-                const addr = XLSX.utils.encode_cell({ r: 4, c });
-                if (!worksheet[addr]) worksheet[addr] = { v: "", t: "s" };
-                worksheet[addr].s = {
-                    font: { bold: true },
-                    alignment: {
-                        horizontal: centeredColIndexes.has(c) ? "center" : "left",
-                        vertical: "center",
-                        wrapText: true,
-                    },
-                };
-            }
-
-            // Child header row (r=5): bold + center for both grouped ranges (8–11 and 12–14)
-            for (let c = group1Start; c <= group2End; c++) {
-                const addr = XLSX.utils.encode_cell({ r: 5, c });
-                if (!worksheet[addr]) worksheet[addr] = { v: "", t: "s" };
-                worksheet[addr].s = {
-                    font: { bold: true },
-                    alignment: { horizontal: "center", vertical: "center", wrapText: true },
-                };
+            // Apply styling to table area (headers at r=4,5,6 and data rows onwards)
+            const accountingCols = new Set([10, 16, 18, 21, 22]);
+            const centeredCols = new Set([0, 1, 3, 4, 11, 13, 14, 15, 17]);
+            for (let r = 4; r < aoaData.length; r++) {
+                for (let c = 0; c < totalCols; c++) {
+                    const addr = XLSX.utils.encode_cell({ r, c });
+                    if (!worksheet[addr]) worksheet[addr] = { v: "", t: "s" };
+                    
+                    const isHeader = r <= 6;
+                    
+                    if (!isHeader && accountingCols.has(c) && typeof worksheet[addr].v === "number") {
+                        worksheet[addr].z = '#,##0';
+                    }
+                    
+                    worksheet[addr].s = {
+                        ...(worksheet[addr].s || {}),
+                        border: borderStyle,
+                        font: { 
+                            ...(worksheet[addr].s?.font || {}),
+                            bold: isHeader
+                        },
+                        alignment: {
+                            horizontal: isHeader ? "center" : (centeredCols.has(c) ? "center" : (accountingCols.has(c) ? "right" : "left")),
+                            vertical: isHeader ? "center" : "bottom",
+                            wrapText: isHeader
+                        }
+                    };
+                }
             }
 
             // Set column widths
@@ -276,7 +319,11 @@ export default function MonevKkpKanwilPage() {
                 { wch: 25 },  // Porsi UP KKP
                 { wch: 18 },  // Bank Penerbit
                 { wch: 25 },  // Jumlah KKP Diusulkan
-                { wch: 12 },  // Jumlah Kartu
+                { wch: 12 },  // Jumlah KKP Terima
+                { wch: 12 },  // Jml Kartu Opr
+                { wch: 25 },  // Limit Opr
+                { wch: 12 },  // Jml Kartu PD
+                { wch: 25 },  // Limit PD
                 { wch: 25 },  // Tanggal Cetak Tagihan
                 { wch: 25 },  // Tanggal Jatuh Tempo
                 { wch: 18 },  // Nilai Tagihan

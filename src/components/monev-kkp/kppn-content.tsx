@@ -40,6 +40,10 @@ export interface KkpData {
   bankPenerbit: string;
   jmlKartuUsul: number | null;
   jumlahKartu: number;
+  jmlKartuOpr: number;
+  limitOpr: number;
+  jmlKartuPd: number;
+  limitPd: number;
   nilaiTagihan: number;
   nilaiTransaksi: number;
   kendala: string;
@@ -127,6 +131,10 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
           bankPenerbit: item.bank_penerbit,
           jmlKartuUsul: item.jml_kartu_usul !== undefined && item.jml_kartu_usul !== null ? Number(item.jml_kartu_usul) : null,
           jumlahKartu: Number(item.jumlah_kartu || 0),
+          jmlKartuOpr: Number(item.jml_kartu_opr || 0),
+          limitOpr: Number(item.limit_opr || 0),
+          jmlKartuPd: Number(item.jml_kartu_pd || 0),
+          limitPd: Number(item.limit_pd || 0),
           nilaiTagihan: Number(item.nilai_tagihan || 0),
           nilaiTransaksi: Number(item.nilai_trans_sp2d || 0),
           kendala: item.kendala || "",
