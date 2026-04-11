@@ -100,12 +100,16 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
       setIsLoading(true);
       try {
         const triwulan = selectedPeriode.replace("Q", "");
+        const ts = new Date().getTime();
         const response = await fetch(
-          apiPath(`/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}`),
+          apiPath(`/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}&_t=${ts}`),
           {
             credentials: "include",
+            cache: "no-store",
             headers: {
               "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              "Pragma": "no-cache"
             },
           },
         );

@@ -68,9 +68,17 @@ export default function MonevKkpKanwilPage() {
         const fetchStatus = async () => {
             try {
                 const triwulan = selectedPeriode.replace("Q", "");
+                const ts = new Date().getTime();
                 const response = await fetch(
-                    apiPath(`/monev-kkp/status-laporan-kanwil?tahun=${selectedYear}&triwulan=${triwulan}`),
-                    { credentials: "include" }
+                    apiPath(`/monev-kkp/status-laporan-kanwil?tahun=${selectedYear}&triwulan=${triwulan}&_t=${ts}`),
+                    { 
+                        credentials: "include",
+                        cache: "no-store",
+                        headers: {
+                            "Cache-Control": "no-cache",
+                            "Pragma": "no-cache"
+                        }
+                    }
                 );
                 if (!response.ok) return;
                 const result = await response.json();

@@ -134,8 +134,9 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
         // For Kanwil users, backend will automatically filter by kdkanwil
         const kppnParam =
           selectedKppn !== "all" ? `&kdkppn=${selectedKppn}` : "";
+        const ts = new Date().getTime();
         const apiUrl = apiPath(
-          `/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}${kppnParam}`,
+          `/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}${kppnParam}&_t=${ts}`,
         );
 
         console.log("[Kanwil Ringkasan] Fetching data:", {
@@ -147,7 +148,14 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
           userKdkanwil: user?.kdkanwil,
         });
 
-        const response = await fetch(apiUrl, { credentials: "include" });
+        const response = await fetch(apiUrl, { 
+          credentials: "include",
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache"
+          }
+        });
 
         if (!response.ok) throw new Error("Gagal mengambil data ringkasan");
         const result = await response.json();
@@ -203,11 +211,19 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
         const triwulan = selectedPeriode.replace("Q", "");
         const kppnParam =
           selectedKppn !== "all" ? `&kdkppn=${selectedKppn}` : "";
+        const ts = new Date().getTime();
         const response = await fetch(
           apiPath(
-            `/monev-kkp/kanwil/monitoring-kppn?tahun=${selectedYear}&triwulan=${triwulan}${kppnParam}`,
+            `/monev-kkp/kanwil/monitoring-kppn?tahun=${selectedYear}&triwulan=${triwulan}${kppnParam}&_t=${ts}`,
           ),
-          { credentials: "include" },
+          { 
+            credentials: "include",
+            cache: "no-store",
+            headers: {
+              "Cache-Control": "no-cache",
+              "Pragma": "no-cache"
+            }
+          },
         );
 
         if (!response.ok) throw new Error("Gagal mengambil data monitoring");
