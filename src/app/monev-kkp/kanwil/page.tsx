@@ -14,6 +14,7 @@ import * as XLSX from "xlsx-js-style";
 import { useAuth } from "@/hooks/useAuth";
 import { apiPath } from "@/lib/config/base-path";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
+import kdkanwilData from "@/data/kdkanwil.json";
 
 // Allowed roles for Kanwil page
 const ALLOWED_ROLES = ["kanwil_djpb", "super_admin", "co_admin"];
@@ -125,8 +126,13 @@ export default function MonevKkpKanwilPage() {
 
             // Row 3: empty spacer, Row 4: Kanwil info from logged-in user (Nama first, then Kode)
             const emptyRow: string[] = [];
+            
+            // Get nmlokasi from kdkanwil.json mapping
+            const kanwilItem = kdkanwilData.find((k: any) => k.kdkanwil === user?.kdkanwil);
+            const nmLokasiExport = kanwilItem?.nmlokasi ? `KANWIL DJPB PROVINSI ${kanwilItem.nmlokasi}` : (user?.nmkanwil || "-");
+
             const kanwilRow = [
-                "NAMA KANWIL:", user?.nmkanwil || "-",
+                "NAMA KANWIL:", nmLokasiExport,
                 "", "",
                 "KODE KANWIL:", user?.kdkanwil || "-",
             ];
