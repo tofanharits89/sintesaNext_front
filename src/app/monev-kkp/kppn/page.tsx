@@ -117,14 +117,14 @@ export default function MonevKkpKppnPage() {
 
             // Title header rows
             const titleRow1 = ["LAPORAN MONITORING DAN EVALUASI PELAKSANAAN PEMBAYARAN DENGAN KKP"];
-            const titleRow2 = [`TINGKAT KANWIL DJPB TRIWULAN ${triwulanRoman} TAHUN ${selectedYear}`];
+            const titleRow2 = [`TINGKAT KPPN TRIWULAN ${triwulanRoman} TAHUN ${selectedYear}`];
 
             // Row 3: empty spacer, Row 4: Kanwil info from logged-in user (Nama first, then Kode)
             const emptyRow: string[] = [];
             const kanwilRow = [
-                "NAMA KANWIL:", user?.nmkanwil || "-",
+                "NAMA KPPN:", user?.nmkppn || "-",
                 "", "",
-                "KODE KANWIL:", user?.kdkanwil || "-",
+                "KODE KPPN:", user?.kdkppn || "-",
             ];
 
             // Three-level header:
@@ -168,7 +168,7 @@ export default function MonevKkpKppnPage() {
                 "KKP UNTUK KEPERLUAN BELANJA PERJALANAN DINAS JABATAN", "",
                 // Group 4 child labels
                 "TANGGAL CETAK TAGIHAN PER BULAN", "TANGGAL JATUH TEMPO PEMBAYARAN PER BULAN",
-                "TOTAL TAGIHAN BANK BULAN BERJALAN (DALAM RUPIAH)", "TOTAL TAGIHAN KKP YANG DIBAYARKAN PER PERIODE TAGIHAN (DALAM RUPIAH)",
+                "TOTAL TAGIHAN BANK (DALAM RUPIAH)", "TOTAL TAGIHAN KKP YANG DIBAYARKAN (DALAM RUPIAH)",
                 "NOMOR SP2D GUP/SP2D PTUP KKP", "TANGGAL SP2D GUP/SP2D PTUP KKP",
                 "JENIS TRANSAKSI BELANJA YANG TELAH DILAKUKAN DENGAN MENGGUNAKAN KKP",
                 // Non-grouped rest
