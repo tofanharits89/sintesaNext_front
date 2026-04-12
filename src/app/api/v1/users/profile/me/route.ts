@@ -39,3 +39,40 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export async function PUT(request: NextRequest) {
+  try {
+    const cookieHeader = createCookieHeader(request);
+    const hasSid = request.cookies.get('sid')?.value || /(?:^|;\s*)sid=/.test(cookieHeader);
+    if (!hasSid) {
+      return NextResponse.json({ success: false, message: "No session" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    
+    // Pass CSRF token if present
+    const csrfToken = request.headers.get("x-csrf-token");
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...(cookieHeader ? { cookie: cookieHeader } : {})
+    };
+    if (csrfToken) headers["x-csrf-token"] = csrfToken;
+
+    const resp = await fetch(backendPath("/users/profile/me"), {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(body),
+      credentials: "include",
+    });
+
+    const data = await resp.json().catch(() => ({}));
+    const res = NextResponse.json(data, { status: resp.status });
+    forwardSetCookies(resp, res);
+    return res;
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: "Proxy error" },
+      { status: 500 },
+    );
+  }
+}

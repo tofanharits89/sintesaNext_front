@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/components/animate-ui/components/animate/tabs";
 import {
   Card,
@@ -22,6 +22,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
+import { attachCSRFToken } from "@/lib/security/csrfManager";
 
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -37,16 +39,48 @@ import {
 import { WhatsAppSettingsTab } from "./whatsapp-settings-tab";
 
 export default function SettingsPage() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, refetch } = useAuth();
   const u = user as { name?: string; email?: string; role?: string; location?: string } | undefined;
   const [theme, setTheme] = useState("system");
   const [language, setLanguage] = useState("id");
+  const [allowMultiSession, setAllowMultiSession] = useState<boolean>(false);
+  const [isUpdatingMultiSession, setIsUpdatingMultiSession] = useState(false);
   const [notifications, setNotifications] = useState({
     email: true,
     push: false,
     desktop: true,
     sound: false,
   });
+
+  // Track the user data to set state
+  useEffect(() => {
+    if (user && 'allowMultiSession' in user) {
+      setAllowMultiSession((user as any).allowMultiSession === true);
+    }
+  }, [user]);
+
+  const handleMultiSessionToggle = async (checked: boolean) => {
+    setAllowMultiSession(checked);
+    setIsUpdatingMultiSession(true);
+    try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      await attachCSRFToken(headers);
+
+      const res = await fetch("/api/v1/users/profile/me", {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ allowMultiSession: checked })
+      });
+      if (!res.ok) throw new Error("Gagal menyimpan pengaturan");
+      toast.success("Pengaturan perangkat berhasil diperbarui.");
+      refetch();
+    } catch (err: any) {
+      setAllowMultiSession(!checked); // Revert on fail
+      toast.error(err.message || "Gagal memperbarui pengaturan");
+    } finally {
+      setIsUpdatingMultiSession(false);
+    }
+  };
 
   // Guard against cases where the profile query finished but user data isn't available yet
   if (isLoading || !user) {
@@ -137,6 +171,34 @@ export default function SettingsPage() {
                         <SelectItem value="en">English</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Account Security Settings */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Lock className="h-5 w-5" />
+                    Keamanan Akun
+                  </CardTitle>
+                  <CardDescription>
+                    Atur preferensi keamanan akun Anda
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Multi-Device Login</Label>
+                      <p className="text-sm text-muted-foreground pr-4">
+                        Izinkan akun Anda login di beberapa perangkat secara bersamaan. Jika dinonaktifkan, login baru akan otomatis mengeluarkan akun dari perangkat lain.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={allowMultiSession}
+                      onCheckedChange={handleMultiSessionToggle}
+                      disabled={isUpdatingMultiSession}
+                    />
                   </div>
                 </CardContent>
               </Card>

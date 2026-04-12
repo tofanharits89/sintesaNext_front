@@ -26,6 +26,7 @@ export interface User {
   kdkppn?: string | null;
   nmkanwil?: string | null;
   nmkppn?: string | null;
+  allowMultiSession?: boolean;
   status: "active" | "disabled";
   createdAt: string;
 }
