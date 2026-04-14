@@ -423,23 +423,23 @@ export function SatkerDetailModal({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="tanggal_ctk_tagihan">Tanggal Cetak Tagihan per Bulan</Label>
-                  <Input 
+                  <Input
                     id="tanggal_ctk_tagihan"
                     type="text"
-                    value={tanggalCtkTagihan} 
+                    value={tanggalCtkTagihan}
                     onChange={(e) => setTanggalCtkTagihan(e.target.value)}
-                    placeholder="Contoh: Tanggal 15"
+                    placeholder="Contoh: 15"
                     className="bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="tanggal_jth_tempo">Tanggal Jatuh Tempo Pembayaran per Bulan</Label>
-                  <Input 
+                  <Input
                     id="tanggal_jth_tempo"
                     type="text"
-                    value={tanggalJthTempo} 
+                    value={tanggalJthTempo}
                     onChange={(e) => setTanggalJthTempo(e.target.value)}
-                    placeholder="Contoh: Tanggal 20"
+                    placeholder="Contoh: 20"
                     className="bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors"
                   />
                 </div>
