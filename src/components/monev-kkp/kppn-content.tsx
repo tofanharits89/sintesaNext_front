@@ -393,33 +393,38 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
         header: () => (
           <div className="text-center font-medium">Kendala dan Hambatan</div>
         ),
-        cell: ({ row }: any) => (
-          <div className="flex items-center justify-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 w-8 p-0 cursor-pointer"
-              onClick={() => handleEditKendala(row.original)}
-              title={
-                statusLaporan === "sent"
-                  ? "Laporan sudah dikirim, tidak dapat mengedit"
-                  : "Edit Kendala/Hambatan"
-              }
-              disabled={statusLaporan === "sent"}
-            >
-              <Pencil className="h-4 w-4 text-blue-600" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 w-8 p-0 cursor-pointer"
-              onClick={() => handleViewKendala(row.original)}
-              title="Lihat Kendala/Hambatan"
-            >
-              <Eye className="h-4 w-4 text-amber-600" />
-            </Button>
-          </div>
-        ),
+        cell: ({ row }: any) => {
+          const hasKendalaData = row.original.kendala && row.original.kendala.trim() !== "";
+          return (
+            <div className="flex items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0 cursor-pointer"
+                onClick={() => handleEditKendala(row.original)}
+                title={
+                  statusLaporan === "sent"
+                    ? "Laporan sudah dikirim, tidak dapat mengedit"
+                    : hasKendalaData
+                    ? "Edit Kendala/Hambatan (Sudah diisi)"
+                    : "Edit Kendala/Hambatan"
+                }
+                disabled={statusLaporan === "sent"}
+              >
+                <Pencil className={`h-4 w-4 ${hasKendalaData ? "text-green-600" : "text-blue-600"}`} />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0 cursor-pointer"
+                onClick={() => handleViewKendala(row.original)}
+                title="Lihat Kendala/Hambatan"
+              >
+                <Eye className="h-4 w-4 text-amber-600" />
+              </Button>
+            </div>
+          );
+        },
       },
     ];
 
