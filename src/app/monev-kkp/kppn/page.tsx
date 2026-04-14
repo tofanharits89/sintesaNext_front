@@ -38,6 +38,7 @@ export default function MonevKkpKppnPage() {
     const [isExporting, setIsExporting] = useState(false);
     const [isSending, setIsSending] = useState(false);
     const [statusLaporan, setStatusLaporan] = useState<"sent" | "not_sent">("not_sent");
+    const [prevStatusLaporan, setPrevStatusLaporan] = useState<"sent" | "not_sent" | "none">("none");
     const kppnContentRef = useRef<KppnContentRef>(null);
 
     // Get current triwulan defaults
@@ -66,6 +67,8 @@ export default function MonevKkpKppnPage() {
             try {
                 const triwulan = selectedPeriode.replace("Q", "");
                 const ts = new Date().getTime();
+                
+                // Fetch current status
                 const response = await fetch(
                     apiPath(`/monev-kkp/status-laporan?tahun=${selectedYear}&triwulan=${triwulan}&_t=${ts}`),
                     { 
@@ -77,12 +80,36 @@ export default function MonevKkpKppnPage() {
                         }
                     }
                 );
-                if (!response.ok) return;
-                const result = await response.json();
-                if (result.data?.sts_kirim_kppn === "1") {
-                    setStatusLaporan("sent");
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.data?.sts_kirim_kppn === "1") {
+                        setStatusLaporan("sent");
+                    } else {
+                        setStatusLaporan("not_sent");
+                    }
+                }
+
+                // Fetch previous status if triwulan > 1
+                const triwulanInt = parseInt(triwulan);
+                if (triwulanInt > 1) {
+                    const prevTriwulan = String(triwulanInt - 1);
+                    const prevResponse = await fetch(
+                        apiPath(`/monev-kkp/status-laporan?tahun=${selectedYear}&triwulan=${prevTriwulan}&_t=${ts}`),
+                        { 
+                            credentials: "include",
+                            cache: "no-store",
+                            headers: {
+                                "Cache-Control": "no-cache",
+                                "Pragma": "no-cache"
+                            }
+                        }
+                    );
+                    if (prevResponse.ok) {
+                        const prevResult = await prevResponse.json();
+                        setPrevStatusLaporan(prevResult.data?.sts_kirim_kppn === "1" ? "sent" : "not_sent");
+                    }
                 } else {
-                    setStatusLaporan("not_sent");
+                    setPrevStatusLaporan("sent"); // Q1 is always allowed
                 }
             } catch (error) {
                 console.error("Error fetching status laporan:", error);
@@ -419,7 +446,7 @@ export default function MonevKkpKppnPage() {
                     {/* Kirim Laporan Button */}
                     <ConfirmationModal
                         trigger={
-                            <Button disabled={isSending || statusLaporan === "sent"}>
+                            <Button disabled={isSending || statusLaporan === "sent" || (selectedPeriode !== "Q1" && prevStatusLaporan === "not_sent")}>
                                 <Send className="mr-2 h-4 w-4" />
                                 {isSending ? "Mengirim..." : statusLaporan === "sent" ? "Sudah Dikirim" : "Kirim Laporan"}
                             </Button>
@@ -430,10 +457,28 @@ export default function MonevKkpKppnPage() {
                         cancelText="Batal"
                         variant="info"
                         onConfirm={handleKirimLaporan}
-                        disabled={isSending || statusLaporan === "sent"}
+                        disabled={isSending || statusLaporan === "sent" || (selectedPeriode !== "Q1" && prevStatusLaporan === "not_sent")}
                     />
                 </div>
             </div>
+
+            {/* Warning if previous quarter not sent */}
+            {selectedPeriode !== "Q1" && prevStatusLaporan === "not_sent" && (
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-xl dark:bg-yellow-950 dark:border-yellow-700 shadow-sm">
+                    <div className="flex">
+                        <div className="flex-shrink-0">
+                            <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                        <div className="ml-3">
+                            <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                                Laporan {selectedPeriode.replace("Q", "Triwulan ")} tidak dapat dikirim karena laporan triwulan sebelumnya belum dikirim.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Main Content */}
             <KppnContent ref={kppnContentRef} statusLaporan={statusLaporan} onPeriodeChange={handlePeriodeChange} />
