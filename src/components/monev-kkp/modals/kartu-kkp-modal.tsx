@@ -220,7 +220,7 @@ export function KartuKkpModal({
         )}
 
         <DialogFooter className="gap-2 sm:gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button onClick={() => onOpenChange(false)}>
             Tutup
           </Button>
         </DialogFooter>

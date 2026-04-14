@@ -7,8 +7,9 @@ import {
     DialogHeader,
     DialogTitle,
     DialogFooter,
-} from "@/components/ui/dialog";
+} from "@/components/animate-ui/components/radix/dialog";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { apiPath } from "@/lib/config/base-path";
 
 interface LihatKendalaModalProps {
@@ -28,18 +29,45 @@ export function LihatKendalaModal({
 }: LihatKendalaModalProps) {
     const [kendalaData, setKendalaData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [satkerInfo, setSatkerInfo] = useState<{ kddept: string; nmdept: string; kdsatker: string; nmsatker: string } | null>(null);
 
     useEffect(() => {
         if (data && open) {
+            // Fetch satker info for Kementerian/Lembaga display
+            const fetchSatkerInfo = async () => {
+                try {
+                    const response = await fetch(
+                        apiPath(`/monev-kkp/satker-detail?kdsatker=${data.kodeSatker}&tahun=${tahun || data?.tahun || "2026"}&_t=${Date.now()}`),
+                        {
+                            credentials: "include",
+                            cache: "no-store",
+                        }
+                    );
+                    if (response.ok) {
+                        const result = await response.json();
+                        if (result.data) {
+                            setSatkerInfo({
+                                kddept: result.data.kddept,
+                                nmdept: result.data.nmdept,
+                                kdsatker: result.data.kdsatker,
+                                nmsatker: result.data.nmsatker,
+                            });
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error fetching satker info:", error);
+                }
+            };
+
             const fetchKendala = async () => {
                 setIsLoading(true);
                 try {
                     // Use props triwulan/tahun, fallback to data, then to defaults
                     const selectedTriwulan = triwulan || data?.triwulan || "1";
                     const selectedTahun = tahun || data?.tahun || "2026";
-                    
+
                     console.log("Fetching kendala with:", { selectedTahun, selectedTriwulan, kodeSatker: data.kodeSatker });
-                    
+
                     const response = await fetch(
                         apiPath(`/monev-kkp/kendala?tahun=${selectedTahun}&triwulan=${selectedTriwulan}&kdsatker=${data.kodeSatker}&_t=${Date.now()}`),
                         {
@@ -61,98 +89,126 @@ export function LihatKendalaModal({
                 }
             };
 
+            fetchSatkerInfo();
             fetchKendala();
         } else if (!open) {
             setKendalaData(null);
+            setSatkerInfo(null);
         }
     }, [data, open, tahun, triwulan]);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl flex flex-col overflow-hidden max-h-[90vw] sm:max-h-[90vh]">
-                <DialogHeader className="flex-shrink-0">
+            <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
                     <DialogTitle>Lihat Kendala/Hambatan</DialogTitle>
                 </DialogHeader>
                 {isLoading ? (
-                    <div className="flex items-center justify-center py-8 flex-1">
-                        <div className="text-sm text-muted-foreground">Memuat data...</div>
-                    </div>
-                ) : (
-                <div className="flex-1 overflow-y-auto py-4 space-y-4">
-                    {data && (
-                        <>
-                            <div className="p-3 bg-muted rounded-lg space-y-1.5">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Kode Satker:</span>
-                                    <span className="font-medium">{data.kodeSatker}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Nama Satker:</span>
-                                    <span className="font-medium truncate ml-4" title={data.namaSatker}>
-                                        {data.namaSatker}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Tahun:</span>
-                                    <span className="font-medium">{tahun || data?.tahun || "2026"}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Triwulan:</span>
-                                    <span className="font-medium">Triwulan {triwulan || data?.triwulan || "1"}</span>
-                                </div>
+                    <div className="space-y-6 py-2">
+                        {/* Satker Info Skeleton */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm bg-primary/5 p-4 rounded-lg">
+                            <div className="space-y-1">
+                                <span className="text-muted-foreground text-xs uppercase font-semibold">Kementerian/Lembaga</span>
+                                <Skeleton className="h-5 w-48 bg-muted-foreground/20 mt-1" />
+                            </div>
+                            <div className="space-y-1">
+                                <span className="text-muted-foreground text-xs uppercase font-semibold">Satuan Kerja</span>
+                                <Skeleton className="h-5 w-64 bg-muted-foreground/20 mt-1" />
+                            </div>
+                        </div>
+
+                        {/* Kategori Skeleton */}
+                        <div className="space-y-2">
+                            <Skeleton className="h-5 w-32 bg-muted-foreground/20" />
+                            <Skeleton className="h-20 w-full bg-muted-foreground/10 rounded-lg" />
+                        </div>
+
+                        {/* Detil Skeleton */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Skeleton className="h-5 w-28 bg-muted-foreground/20" />
+                                <Skeleton className="h-[100px] w-full bg-muted-foreground/10 rounded-lg" />
                             </div>
                             <div className="space-y-2">
-                                <p className="text-sm font-medium">Kategori Kendala:</p>
-                                <div className="p-3 bg-muted/50 rounded-lg">
-                                    {kendalaData?.kategori_kendala ? (
-                                        <div className="flex flex-wrap gap-2">
-                                            {kendalaData.kategori_kendala.split(",").map((cat: string, idx: number) => (
-                                                <span
-                                                    key={idx}
-                                                    className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-primary/10 text-primary"
-                                                >
-                                                    {cat.trim()}
-                                                </span>
-                                            ))}
-                                        </div>
+                                <Skeleton className="h-5 w-28 bg-muted-foreground/20" />
+                                <Skeleton className="h-[100px] w-full bg-muted-foreground/10 rounded-lg" />
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="space-y-6 py-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm bg-primary/5 p-4 rounded-lg">
+                            <div className="space-y-1">
+                                <span className="text-muted-foreground text-xs uppercase font-semibold">Kementerian/Lembaga</span>
+                                <div className="font-medium mt-1">
+                                    {satkerInfo ? `${satkerInfo.kddept} – ${satkerInfo.nmdept}` : data?.kodeSatker || "-"}
+                                </div>
+                            </div>
+                            <div className="space-y-1">
+                                <span className="text-muted-foreground text-xs uppercase font-semibold">Satuan Kerja</span>
+                                <div className="font-medium mt-1">
+                                    {satkerInfo ? `${satkerInfo.kdsatker} – ${satkerInfo.nmsatker}` : data?.namaSatker || "-"}
+                                </div>
+                            </div>
+                            <div className="space-y-1">
+                                <span className="text-muted-foreground text-xs uppercase font-semibold">Tahun</span>
+                                <div className="font-medium mt-1">{tahun || data?.tahun || "2026"}</div>
+                            </div>
+                            <div className="space-y-1">
+                                <span className="text-muted-foreground text-xs uppercase font-semibold">Triwulan</span>
+                                <div className="font-medium mt-1">Triwulan {triwulan || data?.triwulan || "1"}</div>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <p className="text-sm font-medium">Kategori Kendala:</p>
+                            <div className="p-3 bg-primary/5 rounded-lg">
+                                {kendalaData?.kategori_kendala ? (
+                                    <div className="flex flex-wrap gap-2">
+                                        {kendalaData.kategori_kendala.split(",").map((cat: string, idx: number) => (
+                                            <span
+                                                key={idx}
+                                                className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-primary/10 text-primary"
+                                            >
+                                                {cat.trim()}
+                                            </span>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground italic">
+                                        Tidak ada kategori kendala yang tercatat.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <p className="text-sm font-medium">Detil Kendala:</p>
+                                <div className="p-3 bg-primary/5 rounded-lg min-h-[100px]">
+                                    {kendalaData?.detil_kendala ? (
+                                        <p className="text-sm">{kendalaData.detil_kendala}</p>
                                     ) : (
                                         <p className="text-sm text-muted-foreground italic">
-                                            Tidak ada kategori kendala yang tercatat.
+                                            Tidak ada detail kendala yang tercatat.
                                         </p>
                                     )}
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <p className="text-sm font-medium">Detil Kendala:</p>
-                                    <div className="p-3 bg-muted/50 rounded-lg min-h-[100px]">
-                                        {kendalaData?.detil_kendala ? (
-                                            <p className="text-sm">{kendalaData.detil_kendala}</p>
-                                        ) : (
-                                            <p className="text-sm text-muted-foreground italic">
-                                                Tidak ada detail kendala yang tercatat.
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <p className="text-sm font-medium">Detil Masukan:</p>
-                                    <div className="p-3 bg-muted/50 rounded-lg min-h-[100px]">
-                                        {kendalaData?.detil_masukan_kendala ? (
-                                            <p className="text-sm">{kendalaData.detil_masukan_kendala}</p>
-                                        ) : (
-                                            <p className="text-sm text-muted-foreground italic">
-                                                Tidak ada detail masukan yang tercatat.
-                                            </p>
-                                        )}
-                                    </div>
+                            <div className="space-y-2">
+                                <p className="text-sm font-medium">Detil Masukan:</p>
+                                <div className="p-3 bg-primary/5 rounded-lg min-h-[100px]">
+                                    {kendalaData?.detil_masukan_kendala ? (
+                                        <p className="text-sm">{kendalaData.detil_masukan_kendala}</p>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground italic">
+                                            Tidak ada detail masukan yang tercatat.
+                                        </p>
+                                    )}
                                 </div>
                             </div>
-                        </>
-                    )}
-                </div>
+                        </div>
+                    </div>
                 )}
-                <DialogFooter className="flex-shrink-0 mt-4">
+                <DialogFooter className="gap-2 sm:gap-2">
                     <Button onClick={() => onOpenChange(false)}>Tutup</Button>
                 </DialogFooter>
             </DialogContent>

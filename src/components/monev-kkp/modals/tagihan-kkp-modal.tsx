@@ -7,8 +7,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog";
+} from "@/components/animate-ui/components/radix/dialog";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
 import { apiPath } from "@/lib/config/base-path";
 
@@ -40,9 +41,13 @@ interface TagihanRow {
 
 const periodeLabels: Record<string, string> = {
   "1": "Triwulan 1 (Jan - Mar)",
-  "2": "Triwulan 2 (Apr - Jun)",
-  "3": "Triwulan 3 (Jul - Sep)",
-  "4": "Triwulan 4 (Okt - Des)",
+  "2": "Triwulan 2 (Jan - Jun)",
+  "3": "Triwulan 3 (Jan - Sep)",
+  "4": "Triwulan 4 (Jan - Des)",
+  "Q1": "Triwulan 1 (Jan - Mar)",
+  "Q2": "Triwulan 2 (Jan - Jun)",
+  "Q3": "Triwulan 3 (Jan - Sep)",
+  "Q4": "Triwulan 4 (Jan - Des)",
 };
 
 const bulanNames: Record<string, string> = {
@@ -70,9 +75,16 @@ export function TagihanKkpModal({
 }: TagihanKkpModalProps) {
   const [data, setData] = useState<TagihanRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isMountedReady, setIsMountedReady] = useState(false);
 
   useEffect(() => {
     if (!open || !kdsatker) return;
+    
+    // Delay to allow dialog animation to complete
+    const timer = setTimeout(() => {
+      setIsMountedReady(true);
+    }, 300);
+
     setData([]);
     const fetchData = async () => {
       setIsLoading(true);
@@ -94,6 +106,8 @@ export function TagihanKkpModal({
       }
     };
     fetchData();
+
+    return () => clearTimeout(timer);
   }, [open, kdsatker, tahun, triwulan]);
 
   const formatRupiah = (value: number) =>
@@ -113,123 +127,133 @@ export function TagihanKkpModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden"
+        className="max-w-7xl sm:max-w-7xl max-h-[90vh] overflow-y-auto"
       >
         <DialogHeader>
           <DialogTitle>Detail Tagihan KKP</DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden flex flex-col min-h-0 px-3 py-3">
-          {/* Info section */}
-          <div className="mb-3 flex flex-wrap items-center gap-4 text-sm">
-            {data[0] && (
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">K/L:</span>
-                <span className="font-medium">
-                  {data[0].kddept} – {data[0].nmdept}
-                </span>
+        {isLoading ? (
+          <div className="space-y-6 py-2">
+            {/* Skeleton for Header Info */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm bg-primary/5 p-4 rounded-lg">
+              <div className="space-y-1">
+                <span className="text-muted-foreground text-xs uppercase font-semibold">Kementerian/Lembaga</span>
+                <Skeleton className="h-5 w-48 bg-muted-foreground/20 mt-1" />
               </div>
-            )}
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">Satker:</span>
-              <span className="font-medium">
-                {kdsatker}
-                {namaSatker ? ` – ${namaSatker}` : ""}
-              </span>
+              <div className="space-y-1">
+                <span className="text-muted-foreground text-xs uppercase font-semibold">Satuan Kerja</span>
+                <Skeleton className="h-5 w-64 bg-muted-foreground/20 mt-1" />
+              </div>
+              <div className="space-y-1">
+                <span className="text-muted-foreground text-xs uppercase font-semibold">Periode</span>
+                <Skeleton className="h-5 w-40 bg-muted-foreground/20 mt-1" />
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">Periode:</span>
-              <span className="font-medium">
-                {periodeLabels[triwulan] ?? `Triwulan ${triwulan}`} {tahun}
-              </span>
+
+            {/* Skeleton for Table */}
+            <div className="border rounded-lg p-8">
+              <div className="space-y-3">
+                <Skeleton className="h-8 w-full bg-muted-foreground/10" />
+                <Skeleton className="h-8 w-full bg-muted-foreground/10" />
+                <Skeleton className="h-8 w-full bg-muted-foreground/10" />
+              </div>
             </div>
           </div>
-
-          {/* Table */}
-          <div className="border rounded-lg flex-1 flex flex-col overflow-hidden">
-            {isLoading ? (
-              <div className="flex items-center justify-center flex-1">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        ) : (
+          <div className="space-y-6 py-2">
+            {/* Info section */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm bg-primary/5 p-4 rounded-lg">
+              {data[0] && (
+                <div className="space-y-1">
+                  <span className="text-muted-foreground text-xs uppercase font-semibold">Kementerian/Lembaga</span>
+                  <div className="font-medium mt-1">
+                    {data[0].kddept} – {data[0].nmdept}
+                  </div>
+                </div>
+              )}
+              <div className="space-y-1">
+                <span className="text-muted-foreground text-xs uppercase font-semibold">Satuan Kerja</span>
+                <div className="font-medium mt-1">
+                  {kdsatker}
+                  {namaSatker ? ` – ${namaSatker}` : ""}
+                </div>
               </div>
-            ) : (
-              <div className="flex-1 w-full overflow-auto">
-                <div className="min-w-full">
-                  <table className="w-full min-w-max text-xs border-collapse">
-                    <thead className="bg-muted sticky top-0 z-30">
+              <div className="space-y-1">
+                <span className="text-muted-foreground text-xs uppercase font-semibold">Periode</span>
+                <div className="font-medium mt-1">
+                  {periodeLabels[triwulan] ?? `Triwulan ${triwulan}`} {tahun}
+                </div>
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="border rounded-lg overflow-hidden">
+              {data.length === 0 ? (
+                <div className="py-10 text-center text-muted-foreground">
+                  Tidak ada data tagihan.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs border-collapse">
+                    <thead className="bg-muted">
                       <tr>
-                        <th className="p-2 text-center whitespace-nowrap border border-border">
+                        <th className="p-3 text-center whitespace-nowrap border-b border-border font-semibold">
                           No.
                         </th>
-                        <th className="p-2 text-left whitespace-nowrap border border-border">
+                        <th className="p-3 text-left whitespace-nowrap border-b border-border font-semibold">
                           Nomor KKP
                         </th>
-                        <th className="p-2 text-center whitespace-nowrap border border-border">
+                        <th className="p-3 text-center whitespace-nowrap border-b border-border font-semibold">
                           Tanggal Cetak Tagihan
                         </th>
-                        <th className="p-2 text-center whitespace-nowrap border border-border">
+                        <th className="p-3 text-right whitespace-nowrap border-b border-border font-semibold">
                           Nilai Tagihan (Rp)
                         </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {data.length === 0 ? (
-                        <tr>
-                          <td
-                            colSpan={4}
-                            className="text-center py-8 text-muted-foreground"
-                          >
-                            Tidak ada data tagihan.
+                      {data.map((row, idx) => (
+                        <tr
+                          key={`${row.no_kartu}-${idx}`}
+                          className="border-t hover:bg-muted/40 transition-colors"
+                        >
+                          <td className="p-3 text-center border-b border-border">
+                            {idx + 1}
+                          </td>
+                          <td className="p-3 text-left font-mono font-medium border-b border-border">
+                            {row.no_kartu}
+                          </td>
+                          <td className="p-3 text-center border-b border-border">
+                            {formatBulan(row.tahun, row.bulan)}
+                          </td>
+                          <td className="p-3 text-right font-mono border-b border-border pr-3">
+                            Rp {formatRupiah(row.nilai_tagihan)}
                           </td>
                         </tr>
-                      ) : (
-                        data.map((row, idx) => (
-                          <tr
-                            key={`${row.no_kartu}-${idx}`}
-                            className="border-t hover:bg-muted/40"
-                          >
-                            <td className="p-2 text-center border border-border">
-                              {idx + 1}
-                            </td>
-                            <td className="p-2 text-left font-mono border border-border">
-                              {row.no_kartu}
-                            </td>
-                            <td className="p-2 text-center border border-border">
-                              {formatBulan(row.tahun, row.bulan)}
-                            </td>
-                            <td className="p-2 text-right font-mono border border-border pr-2">
-                              Rp {formatRupiah(row.nilai_tagihan)}
-                            </td>
-                          </tr>
-                        ))
-                      )}
+                      ))}
                     </tbody>
-                    {data.length > 0 && (
-                      <tfoot className="bg-muted font-semibold sticky bottom-0">
-                        <tr>
-                          <td className="p-2 border border-border" />
-                          <td className="p-2 border border-border" />
-                          <td className="p-2 text-center border border-border">
-                            Total
-                          </td>
-                          <td className="p-2 text-right font-mono border border-border pr-2">
-                            Rp {formatRupiah(totalNilaiTagihan)}
-                          </td>
-                        </tr>
-                      </tfoot>
-                    )}
+                    <tfoot className="bg-muted font-semibold">
+                      <tr>
+                        <td className="p-3 border-t border-border" />
+                        <td className="p-3 border-t border-border" />
+                        <td className="p-3 text-center border-t border-border">
+                          Total
+                        </td>
+                        <td className="p-3 text-right font-mono border-t border-border pr-3">
+                          Rp {formatRupiah(totalNilaiTagihan)}
+                        </td>
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
-        <DialogFooter className="flex items-center justify-end">
-          <Button
-            variant="destructive"
-            className="w-24"
-            onClick={() => onOpenChange(false)}
-          >
+        <DialogFooter className="gap-2 sm:gap-2">
+          <Button onClick={() => onOpenChange(false)}>
             Tutup
           </Button>
         </DialogFooter>
