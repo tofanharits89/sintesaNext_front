@@ -117,9 +117,9 @@ function DialogContent({
       forceMount
       onOpenAutoFocus={onOpenAutoFocus}
       onCloseAutoFocus={onCloseAutoFocus}
-      onEscapeKeyDown={onEscapeKeyDown}
-      onPointerDownOutside={onPointerDownOutside}
-      onInteractOutside={onInteractOutside}
+      {...(onEscapeKeyDown && { onEscapeKeyDown })}
+      {...(onPointerDownOutside && { onPointerDownOutside })}
+      {...(onInteractOutside && { onInteractOutside })}
     >
       <motion.div
         key="dialog-content"
