@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { KppnContent, KppnContentRef, KkpData } from "@/components/monev-kkp/kppn-content";
 import { MonevKkpPageSkeleton } from "@/components/monev-kkp/monev-page-skeleton";
 import { Button } from "@/components/ui/button";
-import { FileSpreadsheet, FileText, Send } from "lucide-react";
+import { FileSpreadsheet, Send } from "lucide-react";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { toast } from "sonner";
 import * as XLSX from "xlsx-js-style";
@@ -361,110 +361,6 @@ export default function MonevKkpKppnPage() {
         }
     };
 
-    const handleExportPdf = async () => {
-        setIsExporting(true);
-        try {
-            const data = kppnContentRef.current?.getData() || [];
-
-            if (data.length === 0) {
-                toast.error("Tidak ada data untuk diekspor");
-                return;
-            }
-
-            // Dynamic import for jspdf and jspdf-autotable
-            const { default: jsPDF } = await import("jspdf");
-            const autoTable = (await import("jspdf-autotable")).default;
-
-            // Create PDF document (landscape for wide table)
-            const doc = new jsPDF({
-                orientation: "landscape",
-                unit: "mm",
-                format: "a4",
-            });
-
-            // Add title
-            doc.setFontSize(16);
-            doc.text("Laporan Monev KKP - KPPN", 14, 15);
-
-            doc.setFontSize(10);
-            doc.text(`Tanggal: ${new Date().toLocaleDateString("id-ID")}`, 14, 22);
-
-            // Prepare table data
-            const tableData = data.map((row, index) => [
-                index + 1,
-                row.kodeBA,
-                row.kodeSatker,
-                row.namaSatker,
-                formatRupiah(row.upKkpPerBulan),
-                formatPercent(row.porsiUpKkp),
-                row.bankPenerbit,
-                row.jumlahKartu,
-                formatRupiah(row.nilaiTagihan),
-                formatRupiah(row.nilaiTransaksi),
-                row.kendala || "-",
-            ]);
-
-            // Create table
-            autoTable(doc, {
-                head: [[
-                    "No",
-                    "Kode BA",
-                    "Kode Satker",
-                    "Nama Satker",
-                    "UP KKP/Bulan",
-                    "Porsi UP KKP",
-                    "Bank",
-                    "Jml Kartu",
-                    "Nilai Tagihan",
-                    "Nilai Transaksi",
-                    "Kendala",
-                ]],
-                body: tableData,
-                startY: 28,
-                styles: {
-                    fontSize: 7,
-                    cellPadding: 2,
-                },
-                headStyles: {
-                    fillColor: [66, 139, 202],
-                    textColor: 255,
-                    fontStyle: "bold",
-                },
-                columnStyles: {
-                    0: { cellWidth: 8, halign: "center" },
-                    1: { cellWidth: 15, halign: "center" },
-                    2: { cellWidth: 18, halign: "center" },
-                    3: { cellWidth: 40 },
-                    4: { cellWidth: 28, halign: "right" },
-                    5: { cellWidth: 20, halign: "center" },
-                    6: { cellWidth: 22 },
-                    7: { cellWidth: 15, halign: "center" },
-                    8: { cellWidth: 28, halign: "right" },
-                    9: { cellWidth: 28, halign: "right" },
-                    10: { cellWidth: 45 },
-                },
-                alternateRowStyles: {
-                    fillColor: [245, 245, 245],
-                },
-            });
-
-            // Generate filename with timestamp
-            const now = new Date();
-            const timestamp = now.toISOString().slice(0, 19).replace(/[-:T]/g, "");
-            const filename = `monev-kkp-kppn-${timestamp}.pdf`;
-
-            // Save file
-            doc.save(filename);
-
-            toast.success("Data berhasil diekspor ke PDF");
-        } catch (error) {
-            console.error("Error exporting to PDF:", error);
-            toast.error("Gagal mengekspor data ke PDF");
-        } finally {
-            setIsExporting(false);
-        }
-    };
-
     const handleKirimLaporan = async () => {
         setIsSending(true);
         try {
@@ -518,15 +414,6 @@ export default function MonevKkpKppnPage() {
                     >
                         <FileSpreadsheet className="mr-2 h-4 w-4" />
                         Export Excel
-                    </Button>
-                    <Button
-                        variant="outline"
-                        disabled={isExporting}
-                        onClick={handleExportPdf}
-                        className="border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-500 dark:text-red-400 dark:hover:bg-red-950 dark:hover:text-red-300"
-                    >
-                        <FileText className="mr-2 h-4 w-4" />
-                        Export PDF
                     </Button>
 
                     {/* Kirim Laporan Button */}

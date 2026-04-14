@@ -7,7 +7,7 @@ import { MonevKkpPageSkeleton } from "@/components/monev-kkp/monev-page-skeleton
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/components/animate-ui/components/animate/tabs";
 import { Button } from "@/components/ui/button";
-import { FileSpreadsheet, FileText, LayoutList, Building2, MapPin } from "lucide-react";
+import { FileSpreadsheet, LayoutList, Building2, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { useAuth } from "@/hooks/useAuth";
@@ -147,122 +147,6 @@ export default function MonevKkpDirektoratPaPage() {
         }
     };
 
-    const handleExportPdf = async () => {
-        setIsExporting(true);
-        try {
-            const data = direktoratPaContentRef.current?.getData() || [];
-
-            if (data.length === 0) {
-                toast.error("Tidak ada data untuk diekspor");
-                return;
-            }
-
-            // Dynamic import for jspdf and jspdf-autotable
-            const { default: jsPDF } = await import("jspdf");
-            const autoTable = (await import("jspdf-autotable")).default;
-
-            // Create PDF document (landscape for wide table)
-            const doc = new jsPDF({
-                orientation: "landscape",
-                unit: "mm",
-                format: "a4",
-            });
-
-            // Add title
-            doc.setFontSize(16);
-            doc.text("Laporan Monev KKP - Direktorat PA", 14, 15);
-
-            doc.setFontSize(10);
-            doc.text(`Tanggal: ${new Date().toLocaleDateString("id-ID")}`, 14, 22);
-
-            // Prepare table data
-            const tableData = data.map((row, index) => [
-                index + 1,
-                row.kodeKanwil || "-",
-                row.namaLokasi || "-",
-                row.kodeKppn || "-",
-                row.namaKppn || "-",
-                row.kodeBA,
-                row.kodeSatker,
-                row.namaSatker,
-                formatRupiah(row.upKkpPerBulan),
-                formatPercent(row.porsiUpKkp),
-                row.bankPenerbit,
-                row.jumlahKartu,
-                formatRupiah(row.nilaiTagihan),
-                formatRupiah(row.nilaiTransaksi),
-                row.kendala || "-",
-            ]);
-
-            // Create table
-            autoTable(doc, {
-                head: [[
-                    "No",
-                    "Kd Kanwil",
-                    "Nama Kanwil",
-                    "Kd KPPN",
-                    "Nama KPPN",
-                    "Kd BA",
-                    "Kd Satker",
-                    "Nama Satker",
-                    "UP KKP/Bulan",
-                    "Porsi UP",
-                    "Bank",
-                    "Kartu",
-                    "Tagihan",
-                    "Transaksi",
-                    "Kendala",
-                ]],
-                body: tableData,
-                startY: 28,
-                styles: {
-                    fontSize: 5,
-                    cellPadding: 1,
-                },
-                headStyles: {
-                    fillColor: [66, 139, 202],
-                    textColor: 255,
-                    fontStyle: "bold",
-                },
-                columnStyles: {
-                    0: { cellWidth: 6, halign: "center" },
-                    1: { cellWidth: 12, halign: "center" },
-                    2: { cellWidth: 22 },
-                    3: { cellWidth: 12, halign: "center" },
-                    4: { cellWidth: 22 },
-                    5: { cellWidth: 10, halign: "center" },
-                    6: { cellWidth: 14, halign: "center" },
-                    7: { cellWidth: 30 },
-                    8: { cellWidth: 20, halign: "right" },
-                    9: { cellWidth: 12, halign: "center" },
-                    10: { cellWidth: 16 },
-                    11: { cellWidth: 8, halign: "center" },
-                    12: { cellWidth: 20, halign: "right" },
-                    13: { cellWidth: 20, halign: "right" },
-                    14: { cellWidth: 35 },
-                },
-                alternateRowStyles: {
-                    fillColor: [245, 245, 245],
-                },
-            });
-
-            // Generate filename with timestamp
-            const now = new Date();
-            const timestamp = now.toISOString().slice(0, 19).replace(/[-:T]/g, "");
-            const filename = `monev-kkp-direktorat-pa-${timestamp}.pdf`;
-
-            // Save file
-            doc.save(filename);
-
-            toast.success("Data berhasil diekspor ke PDF");
-        } catch (error) {
-            console.error("Error exporting to PDF:", error);
-            toast.error("Gagal mengekspor data ke PDF");
-        } finally {
-            setIsExporting(false);
-        }
-    };
-
     return (
         <div className="space-y-6">
             {/* Page Header */}
@@ -285,15 +169,6 @@ export default function MonevKkpDirektoratPaPage() {
                         >
                             <FileSpreadsheet className="mr-2 h-4 w-4" />
                             Export Excel
-                        </Button>
-                        <Button
-                            variant="outline"
-                            disabled={isExporting}
-                            onClick={handleExportPdf}
-                            className="border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-500 dark:text-red-400 dark:hover:bg-red-950 dark:hover:text-red-300"
-                        >
-                            <FileText className="mr-2 h-4 w-4" />
-                            Export PDF
                         </Button>
                     </div>
                 )}

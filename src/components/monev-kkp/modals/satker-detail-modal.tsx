@@ -7,10 +7,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog";
+} from "@/components/animate-ui/components/radix/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2, Save } from "lucide-react";
 import { apiPath } from "@/lib/config/base-path";
 import { toast } from "sonner";
@@ -59,8 +60,9 @@ export function SatkerDetailModal({
   onSaved,
 }: SatkerDetailModalProps) {
   const [data, setData] = useState<SatkerDetailData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
 
   // Form states
   const [nomorPks, setNomorPks] = useState("");
@@ -78,50 +80,85 @@ export function SatkerDetailModal({
   };
 
   useEffect(() => {
-    if (!open || !kdsatker) return;
-    
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(
-          apiPath(`/monev-kkp/satker-detail?kdsatker=${encodeURIComponent(kdsatker)}&tahun=${tahun}&_t=${Date.now()}`),
-          { 
-            credentials: "include",
-            cache: "no-store",
-            headers: {
-              "Cache-Control": "no-cache",
-              "Pragma": "no-cache",
-            }
-          }
-        );
-        if (response.ok) {
-          const result = await response.json();
-          const detail = result.data;
-          console.log("[SatkerDetailModal] Received detail:", detail);
-          
-          setData(detail);
-          setNomorPks(detail.nomor_pks || "");
-          setTanggalPks(safeParseDate(detail.tanggal_pks));
-          setNomorDispen(detail.nomor_dispen || "");
-          setTanggalDispen(safeParseDate(detail.tanggal_dispen));
-          
-          // Handle jml_kartu_usul which might be string or number from backend
-          setJmlKartuUsul(detail.jml_kartu_usul !== null && detail.jml_kartu_usul !== undefined ? String(detail.jml_kartu_usul) : "");
-          
-          setTanggalCtkTagihan(detail.tanggal_ctk_tagihan || "");
-          setTanggalJthTempo(detail.tanggal_jth_tempo || "");
-        } else {
-          toast.error("Gagal mengambil data detail satker");
+    let isMounted = true;
+
+    if (!open) {
+      // Small delay to allow close animation to finish smoothly
+      const timer = setTimeout(() => {
+        if (isMounted) {
+          setData(null);
+          setIsLoading(true);
+          setFetchError(false);
         }
-      } catch (e) {
-        console.error("Error fetching satker detail:", e);
-        toast.error("Terjadi kesalahan saat mengambil data");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      }, 300);
+      return () => {
+        isMounted = false;
+        clearTimeout(timer);
+      };
+    }
+
+    if (!kdsatker) return;
     
-    fetchData();
+    // Delay fetching data until the dialog's opening animation completes (~300ms)
+    const fetchTimer = setTimeout(() => {
+      const fetchData = async () => {
+        if (!isMounted) return;
+        setIsLoading(true);
+        setFetchError(false);
+        try {
+          const response = await fetch(
+            apiPath(`/monev-kkp/satker-detail?kdsatker=${encodeURIComponent(kdsatker)}&tahun=${tahun}&_t=${Date.now()}`),
+            { 
+              credentials: "include",
+              cache: "no-store",
+              headers: {
+                "Cache-Control": "no-cache",
+                "Pragma": "no-cache",
+              }
+            }
+          );
+          
+          if (!isMounted) return;
+
+          if (response.ok) {
+            const result = await response.json();
+            const detail = result.data;
+            console.log("[SatkerDetailModal] Received detail:", detail);
+            
+            setData(detail);
+            setNomorPks(detail.nomor_pks || "");
+            setTanggalPks(safeParseDate(detail.tanggal_pks));
+            setNomorDispen(detail.nomor_dispen || "");
+            setTanggalDispen(safeParseDate(detail.tanggal_dispen));
+            
+            // Handle jml_kartu_usul which might be string or number from backend
+            setJmlKartuUsul(detail.jml_kartu_usul !== null && detail.jml_kartu_usul !== undefined ? String(detail.jml_kartu_usul) : "");
+            
+            setTanggalCtkTagihan(detail.tanggal_ctk_tagihan || "");
+            setTanggalJthTempo(detail.tanggal_jth_tempo || "");
+          } else {
+            setFetchError(true);
+            toast.error("Gagal mengambil data detail satker");
+          }
+        } catch (e) {
+          console.error("Error fetching satker detail:", e);
+          if (!isMounted) return;
+          setFetchError(true);
+          toast.error("Terjadi kesalahan saat mengambil data");
+        } finally {
+          if (isMounted) {
+            setIsLoading(false);
+          }
+        }
+      };
+      
+      fetchData();
+    }, 300); // 300ms matches the typical Framer Motion dialog entry duration
+
+    return () => {
+      isMounted = false;
+      clearTimeout(fetchTimer);
+    };
   }, [open, kdsatker, tahun]);
 
   const handleSave = async () => {
@@ -181,19 +218,113 @@ export function SatkerDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl sm:max-w-7xl max-h-[90vh] overflow-y-auto">
+      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Informasi Satker KKP</DialogTitle>
         </DialogHeader>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <div className="space-y-6 py-2">
+            {/* Skeleton for Header Info with real labels */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm bg-primary/5 p-4 rounded-lg">
+              <div className="space-y-1">
+                <div className="flex flex-col">
+                  <span className="text-muted-foreground text-xs uppercase font-semibold mb-1">Kementerian/Lembaga</span>
+                  <Skeleton className="h-5 w-48 bg-muted-foreground/20" />
+                </div>
+                <div className="flex flex-col mt-2">
+                  <span className="text-muted-foreground text-xs uppercase font-semibold mb-1">Satuan Kerja</span>
+                  <Skeleton className="h-5 w-64 bg-muted-foreground/20" />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="flex flex-col">
+                  <span className="text-muted-foreground text-xs uppercase font-semibold mb-1">Kanwil</span>
+                  <Skeleton className="h-5 w-40 bg-muted-foreground/20" />
+                </div>
+                <div className="flex flex-col mt-2">
+                  <span className="text-muted-foreground text-xs uppercase font-semibold mb-1">KPPN</span>
+                  <Skeleton className="h-5 w-32 bg-muted-foreground/20" />
+                </div>
+              </div>
+            </div>
+
+            {/* Skeleton for Form Fields with real labels */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Nomor PKS</Label>
+                  <Skeleton className="h-10 w-full bg-muted-foreground/10" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tanggal PKS</Label>
+                  <Skeleton className="h-10 w-full bg-muted-foreground/10" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Bank Penerbit KKP</Label>
+                <Skeleton className="h-10 w-full bg-muted-foreground/10" />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Nomor Surat Penetapan UP</Label>
+                  <Skeleton className="h-10 w-full bg-muted-foreground/10" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tanggal Surat Penetapan UP</Label>
+                  <Skeleton className="h-10 w-full bg-muted-foreground/10" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Nomor Surat Dispensasi Proporsi UP (apabila ada)</Label>
+                  <Skeleton className="h-10 w-full bg-muted-foreground/10" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tanggal Surat Dispensasi Proporsi UP (apabila ada)</Label>
+                  <Skeleton className="h-10 w-full bg-muted-foreground/10" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Jumlah Kartu Diusulkan</Label>
+                  <Skeleton className="h-10 w-full bg-muted-foreground/10" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tanggal Cetak Tagihan per Bulan</Label>
+                  <Skeleton className="h-10 w-full bg-muted-foreground/10" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tanggal Jatuh Tempo Pembayaran per Bulan</Label>
+                  <Skeleton className="h-10 w-full bg-muted-foreground/10" />
+                </div>
+              </div>
+
+              {/* Skeleton for Summary Box with real labels */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-primary/5 p-4 rounded-lg">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground uppercase">Total UP</Label>
+                  <Skeleton className="h-5 w-32 mt-1 bg-primary/20" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground uppercase">UP KKP</Label>
+                  <Skeleton className="h-5 w-32 mt-1 bg-primary/20" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground uppercase">% UP KKP</Label>
+                  <Skeleton className="h-5 w-16 mt-1 bg-primary/20" />
+                </div>
+              </div>
+            </div>
           </div>
         ) : data ? (
           <div className="space-y-6 py-2">
             {/* Header Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm bg-muted/30 p-4 rounded-lg border">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm bg-primary/5 p-4 rounded-lg">
               <div className="space-y-1">
                 <div className="flex flex-col">
                   <span className="text-muted-foreground text-xs uppercase font-semibold">Kementerian/Lembaga</span>
@@ -226,6 +357,7 @@ export function SatkerDetailModal({
                     value={nomorPks} 
                     onChange={(e) => setNomorPks(e.target.value)}
                     placeholder="Masukkan Nomor PKS"
+                    className="bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors"
                   />
                 </div>
                 <div className="space-y-2">
@@ -234,23 +366,24 @@ export function SatkerDetailModal({
                     date={tanggalPks} 
                     onDateChange={setTanggalPks}
                     placeholder="Pilih Tanggal PKS"
+                    className="bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="bank_penerbit">Bank Penerbit KKP</Label>
-                <Input id="bank_penerbit" value={data.bank_penerbit || "-"} disabled className="bg-muted" />
+                <Input id="bank_penerbit" value={data.bank_penerbit || "-"} disabled className="bg-zinc-100/50 dark:bg-black/50 cursor-not-allowed" />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="nomor_surat_up">Nomor Surat Penetapan UP</Label>
-                  <Input id="nomor_surat_up" value={data.nomor_surat_up || "-"} disabled className="bg-muted" />
+                  <Input id="nomor_surat_up" value={data.nomor_surat_up || "-"} disabled className="bg-zinc-100/50 dark:bg-black/50 cursor-not-allowed" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="tanggal_surat_up">Tanggal Surat Penetapan UP</Label>
-                  <Input id="tanggal_surat_up" value={data.tanggal_surat_up ? format(new Date(data.tanggal_surat_up), "PPP") : "-"} disabled className="bg-muted" />
+                  <Input id="tanggal_surat_up" value={data.tanggal_surat_up ? format(new Date(data.tanggal_surat_up), "PPP") : "-"} disabled className="bg-zinc-100/50 dark:bg-black/50 cursor-not-allowed" />
                 </div>
               </div>
 
@@ -262,6 +395,7 @@ export function SatkerDetailModal({
                     value={nomorDispen} 
                     onChange={(e) => setNomorDispen(e.target.value)}
                     placeholder="Masukkan Nomor Surat Dispensasi"
+                    className="bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors"
                   />
                 </div>
                 <div className="space-y-2">
@@ -270,6 +404,7 @@ export function SatkerDetailModal({
                     date={tanggalDispen} 
                     onDateChange={setTanggalDispen}
                     placeholder="Pilih Tanggal Dispensasi"
+                    className="bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors"
                   />
                 </div>
               </div>
@@ -283,6 +418,7 @@ export function SatkerDetailModal({
                     value={jmlKartuUsul} 
                     onChange={(e) => setJmlKartuUsul(e.target.value)}
                     placeholder="0"
+                    className="bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors"
                   />
                 </div>
                 <div className="space-y-2">
@@ -293,6 +429,7 @@ export function SatkerDetailModal({
                     value={tanggalCtkTagihan} 
                     onChange={(e) => setTanggalCtkTagihan(e.target.value)}
                     placeholder="Contoh: Tanggal 15"
+                    className="bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors"
                   />
                 </div>
                 <div className="space-y-2">
@@ -303,11 +440,12 @@ export function SatkerDetailModal({
                     value={tanggalJthTempo} 
                     onChange={(e) => setTanggalJthTempo(e.target.value)}
                     placeholder="Contoh: Tanggal 20"
+                    className="bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-primary/5 p-4 rounded-lg border border-primary/10">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-primary/5 p-4 rounded-lg">
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground uppercase">Total UP</Label>
                   <div className="font-mono font-semibold text-sm">Rp {formatRupiah(data.nilai_total_up)}</div>
