@@ -385,7 +385,7 @@ export default function KontraktualContent() {
               <tbody>
                 {rows.map((r, i) => (
                   <tr
-                    key={`${r.kddept}-${r.periode}`}
+                    key={`${r.kddept}-${r.periode}-${r.jenbel}-${i}`}
                     className="hover:bg-blue-50 dark:hover:bg-blue-950"
                   >
                     <td className="border border-gray-300 dark:border-gray-700 px-2 py-1.5 text-center">

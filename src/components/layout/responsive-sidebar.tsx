@@ -173,7 +173,7 @@ const defaultMenu: MenuItem[] = [
   },
   {
     label: "IKI PA",
-    children: [{ label: "IKI Kontraktual" }, { label: "IKI PAPD" }],
+    children: [{ label: "IKI Kontraktual" }, { label: "IKI APBD" }],
   },
 
   {
@@ -460,7 +460,7 @@ export function ResponsiveSidebar({
         return <Building2 className={cls} />;
       case "IKI PA__IKI Kontraktual":
         return <Building2 className={cls} />;
-      case "IKI PA__IKI PAPD":
+      case "IKI PA__IKI APBD":
         return <BookOpen className={cls} />;
       default:
         return null;
@@ -1821,7 +1821,7 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </Link>
-                    ) : c.label === "IKI PA" && m.label === "IKI PA" ? (
+                    ) : c.label === "IKI APBD" && m.label === "IKI PA" ? (
                       <Link
                         key={c.label}
                         href="/iku-pa/apbd"

@@ -1,17 +1,21 @@
 "use client";
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import dynamic from "next/dynamic";
+
+const MapApbd = dynamic(() => import("./map-apbd"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-64 text-sm text-muted-foreground">
+      Memuat peta…
+    </div>
+  ),
+});
 
 export default function ApbdContent() {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Data IKI APBD</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground">Isi konten atau tabel IKI APBD akan tampil di sini.</p>
-      </CardContent>
-    </Card>
+    <div className="space-y-4 p-1">
+      <MapApbd />
+    </div>
   );
 }
