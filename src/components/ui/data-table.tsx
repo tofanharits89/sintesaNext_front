@@ -24,7 +24,24 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils/utils";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -186,33 +203,145 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
       {hidePagination ? null : (
-        <div className="flex items-center justify-between space-x-2 py-4">
-          <div className="flex-1 text-sm text-muted-foreground">
+        <div className="flex flex-col md:grid md:grid-cols-3 items-center justify-between gap-4 py-4">
+          {/* Left: Rows per page */}
+          <div className="flex items-center space-x-2 order-2 md:order-1">
+            <p className="text-sm font-medium">Rows per page</p>
+            <Select
+              value={`${table.getState().pagination.pageSize}`}
+              onValueChange={(value) => {
+                table.setPageSize(Number(value));
+              }}
+            >
+              <SelectTrigger className="h-8 w-[80px]">
+                <SelectValue placeholder={table.getState().pagination.pageSize} />
+              </SelectTrigger>
+              <SelectContent side="top">
+                {[10, 25, 50, 100].map((pageSize) => (
+                  <SelectItem key={pageSize} value={`${pageSize}`}>
+                    {pageSize}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Center: Pagination */}
+          <div className="flex items-center justify-center order-1 md:order-2 w-full md:w-auto">
+            <Pagination className="mx-auto overflow-x-auto no-scrollbar justify-center">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => table.previousPage()}
+                    className={cn(
+                      "cursor-pointer select-none",
+                      !table.getCanPreviousPage() && "pointer-events-none opacity-50"
+                    )}
+                  />
+                </PaginationItem>
+
+                {/* Page numbers logic */}
+                {(() => {
+                  const totalPage = table.getPageCount();
+                  const currentPage = table.getState().pagination.pageIndex + 1;
+                  const items = [];
+
+                  if (totalPage <= 7) {
+                    for (let i = 1; i <= totalPage; i++) {
+                      items.push(
+                        <PaginationItem key={i}>
+                          <PaginationLink
+                            isActive={currentPage === i}
+                            onClick={() => table.setPageIndex(i - 1)}
+                            className="cursor-pointer select-none"
+                          >
+                            {i}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    }
+                  } else {
+                    // Always show first
+                    items.push(
+                      <PaginationItem key={1}>
+                        <PaginationLink
+                          isActive={currentPage === 1}
+                          onClick={() => table.setPageIndex(0)}
+                          className="cursor-pointer select-none"
+                        >
+                          1
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+
+                    if (currentPage > 3) {
+                      items.push(<PaginationEllipsis key="left-ellipsis" />);
+                    }
+
+                    // Middle pages
+                    const start = Math.max(2, currentPage - 1);
+                    const end = Math.min(totalPage - 1, currentPage + 1);
+
+                    for (let i = start; i <= end; i++) {
+                      items.push(
+                        <PaginationItem key={i}>
+                          <PaginationLink
+                            isActive={currentPage === i}
+                            onClick={() => table.setPageIndex(i - 1)}
+                            className="cursor-pointer select-none"
+                          >
+                            {i}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    }
+
+                    if (currentPage < totalPage - 2) {
+                      items.push(<PaginationEllipsis key="right-ellipsis" />);
+                    }
+
+                    // Always show last
+                    items.push(
+                      <PaginationItem key={totalPage}>
+                        <PaginationLink
+                          isActive={currentPage === totalPage}
+                          onClick={() => table.setPageIndex(totalPage - 1)}
+                          className="cursor-pointer select-none"
+                        >
+                          {totalPage}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  }
+                  return items;
+                })()}
+
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => table.nextPage()}
+                    className={cn(
+                      "cursor-pointer select-none",
+                      !table.getCanNextPage() && "pointer-events-none opacity-50"
+                    )}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+
+          {/* Right: Showing entries text */}
+          <div className="text-sm text-muted-foreground whitespace-nowrap order-3 md:text-right">
             {footerInfoText ?? (
               <>
-                Showing {table.getFilteredRowModel().rows.length} of {table.getCoreRowModel().rows.length} entries
+                Showing {(() => {
+                  const { pageIndex, pageSize } = table.getState().pagination;
+                  const total = table.getFilteredRowModel().rows.length;
+                  const start = total === 0 ? 0 : pageIndex * pageSize + 1;
+                  const end = Math.min((pageIndex + 1) * pageSize, total);
+                  return `${start}-${end} of ${total}`;
+                })()} entries
               </>
             )}
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              Next
-              <ChevronRight className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       )}
