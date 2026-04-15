@@ -203,7 +203,7 @@ export default function MonevKkpKanwilPage() {
             const totalCols = topHeaderRow.length; // 29 columns
 
             // Data rows
-            const dataRows = data.map((row, index) => [
+            const dataRows = data.map((row: RingkasanKanwilData, index: number) => [
                 index + 1,
                 row.kodeKppn,
                 row.namaKppn,
