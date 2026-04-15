@@ -9,7 +9,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/compon
 import { Button } from "@/components/ui/button";
 import { FileSpreadsheet, LayoutList, Building2, MapPin } from "lucide-react";
 import { toast } from "sonner";
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style";
 import { useAuth } from "@/hooks/useAuth";
 
 // Allowed roles for Direktorat PA page
@@ -35,7 +35,8 @@ export default function MonevKkpDirektoratPaPage() {
     const { user, isLoading } = useAuth();
     const [activeTab, setActiveTab] = useState("ringkasan-kanwil");
     const [isExporting, setIsExporting] = useState(false);
-    const direktoratPaContentRef = useRef<DirektoratPaContentRef>(null);
+    const kanwilDataRef = useRef<DirektoratPaContentRef>(null);
+    const kppnDataRef = useRef<DirektoratPaContentRef>(null);
 
     // Role-based access control
     useEffect(() => {
@@ -56,51 +57,219 @@ export default function MonevKkpDirektoratPaPage() {
     const handleExportExcel = async () => {
         setIsExporting(true);
         try {
-            const data = direktoratPaContentRef.current?.getData() || [];
+            const currentRef = activeTab === "ringkasan-kanwil" ? kanwilDataRef : kppnDataRef;
+            const data = currentRef.current?.getData() || [];
+            const filters = currentRef.current?.getFilters();
 
             if (data.length === 0) {
                 toast.error("Tidak ada data untuk diekspor");
                 return;
             }
 
-            // Prepare data for Excel export
-            const excelData = data.map((row, index) => ({
-                "No": index + 1,
-                "Kode Kanwil": row.kodeKanwil || "-",
-                "Nama Kanwil": row.namaLokasi || "-",
-                "Kode KPPN": row.kodeKppn || "-",
-                "Nama KPPN": row.namaKppn || "-",
-                "Kode BA": row.kodeBA,
-                "Kode Satker": row.kodeSatker,
-                "Nama Satker": row.namaSatker,
-                "Nomor PKS": row.nomor_pks || "-",
-                "Tanggal PKS": row.tanggal_pks ? new Date(row.tanggal_pks).toLocaleDateString("id-ID") : "-",
-                "Nomor Surat Penetapan UP": row.nomor_surat_up || "-",
-                "Tanggal Surat Penetapan UP": row.tanggal_surat_up ? new Date(row.tanggal_surat_up).toLocaleDateString("id-ID") : "-",
-                "UP KKP Per Bulan": row.upKkpPerBulan,
-                "Porsi UP KKP dari Total UP (%)": row.porsiUpKkp,
-                "Bank Penerbit KKP": row.bankPenerbit,
-                "Jumlah Kartu": row.jumlahKartu,
-                "Tanggal Cetak Tagihan per Bulan": row.tanggal_ctk_tagihan || "-",
-                "Tanggal Jatuh Tempo Pembayaran per Bulan": row.tanggal_jth_tempo || "-",
-                "Nilai Tagihan": row.nilaiTagihan,
-                "Nilai Transaksi KKP": row.nilaiTransaksi,
-                "Nomor SP2D GUP/SP2D PTUP KKP": row.nomor_sp2d_list || "-",
-                "Tanggal SP2D GUP/SP2D PTUP KKP": row.tanggal_sp2d_list || "-",
-                "Jenis Transaksi Belanja yang Telah Dilakukan dengan Menggunakan KKP": row.jenis_belanja_list || "-",
-                "Kategori Kendala": row.kendala || "-",
-                "Detil Kendala": row.detil_kendala || "-",
-                "Detil Masukan": row.detil_masukan_kendala || "-",
-            }));
+            const selectedYear = filters?.selectedYear || "2026";
+            const selectedPeriode = filters?.selectedPeriode || "Q1";
+            const kanwilLabel = filters?.kanwilLabel || "Semua Kanwil";
+            const kppnLabel = filters?.kppnLabel || "Semua KPPN";
 
-            // Create worksheet
-            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            // Convert selected periode (e.g. "Q1") to Roman numeral for the header
+            const romanNumerals: Record<string, string> = { "Q1": "I", "Q2": "II", "Q3": "III", "Q4": "IV" };
+            const triwulanRoman = romanNumerals[selectedPeriode] ?? selectedPeriode.replace("Q", "");
+
+            // Title header rows
+            const titleRow1 = ["LAPORAN MONITORING DAN EVALUASI PELAKSANAAN PEMBAYARAN DENGAN KKP"];
+            const titleRow2 = [`TINGKAT DIREKTORAT PA TRIWULAN ${triwulanRoman} TAHUN ${selectedYear}`];
+
+            // Row 3: empty spacer, Row 4: Filter info
+            const emptyRow: string[] = [];
+            const filterRow = [
+                "KANWIL:", kanwilLabel,
+                "", "",
+                "KPPN:", kppnLabel,
+            ];
+
+            // Three-level header structure (Matching KPPN format)
+            const group1Start = 8;
+            const group1End = 11;
+            const group2Start = 12;
+            const group2End = 14;
+            const group3Start = 15;
+            const group3End = 18;
+            const group4Start = 19;
+            const group4End = 25;
+
+            const topHeaderRow = [
+                "NO", "KODE KPPN", "NAMA KPPN", "KODE BA", "KODE SATKER", "NAMA SATKER",
+                "NOMOR PKS", "TANGGAL PKS",
+                // Group 1: cols 8–11
+                "SURAT PERSETUJUAN/PERUBAHAN PERSETUJUAN BESARAN UP KKP", "", "", "",
+                // Group 2: cols 12–14
+                "STATUS KKP", "", "",
+                // Group 3: cols 15-18
+                "JUMLAH DAN TOTAL LIMIT KKP YANG DISETUJUI BANK", "", "", "",
+                // Group 4: cols 19-25
+                "RINGKASAN BELANJA DAN PEMBAYARAN", "", "", "", "", "", "",
+                // Non-grouped rest: cols 26–28
+                "KATEGORI KENDALA", "DETIL KENDALA", "DETIL MASUKAN",
+            ];
+
+            const midHeaderRow = [
+                "", "", "", "", "", "", "", "",
+                // Group 1 child labels
+                "NOMOR SURAT PENETAPAN UP", "TANGGAL SURAT PENETAPAN UP",
+                "UP KKP PER BULAN", "PORSI UP KKP DARI TOTAL UP (%)",
+                // Group 2 child labels
+                "BANK PENERBIT KKP", "JUMLAH KKP YANG DIUSULKAN KE BANK PENERBIT KKP",
+                "JUMLAH KKP YANG SUDAH DITERIMA",
+                // Group 3 mid labels
+                "KKP UNTUK KEPERLUAN BELANJA OPERASIONAL DAN BELANJA MODAL", "",
+                "KKP UNTUK KEPERLUAN BELANJA PERJALANAN DINAS JABATAN", "",
+                // Group 4 child labels
+                "TANGGAL CETAK TAGIHAN PER BULAN", "TANGGAL JATUH TEMPO PEMBAYARAN PER BULAN",
+                "TOTAL TAGIHAN BANK (DALAM RUPIAH)", "TOTAL TAGIHAN KKP YANG DIBAYARKAN (DALAM RUPIAH)",
+                "NOMOR SP2D GUP/SP2D PTUP KKP", "TANGGAL SP2D GUP/SP2D PTUP KKP",
+                "JENIS TRANSAKSI BELANJA YANG TELAH DILAKUKAN DENGAN MENGGUNAKAN KKP",
+                // Non-grouped rest
+                "", "", "",
+            ];
+
+            const botHeaderRow = [
+                "", "", "", "", "", "", "", "",
+                // Group 1
+                "", "", "", "",
+                // Group 2
+                "", "", "",
+                // Group 3 bot labels
+                "JUMLAH KARTU", "TOTAL LIMIT (DALAM RUPIAH)",
+                "JUMLAH KARTU", "TOTAL LIMIT (DALAM RUPIAH)",
+                // Group 4
+                "", "", "", "", "", "", "",
+                // Non-grouped rest
+                "", "", "",
+            ];
+
+            const totalCols = topHeaderRow.length;
+
+            // Data rows
+            const dataRows = data.map((row, index) => [
+                index + 1,
+                row.kodeKppn || "-",
+                row.namaKppn || "-",
+                row.kodeBA,
+                row.kodeSatker,
+                row.namaSatker,
+                row.nomor_pks || "-",
+                row.tanggal_pks ? new Date(row.tanggal_pks).toLocaleDateString("id-ID") : "-",
+                row.nomor_surat_up || "-",
+                row.tanggal_surat_up ? new Date(row.tanggal_surat_up).toLocaleDateString("id-ID") : "-",
+                row.upKkpPerBulan,
+                row.porsiUpKkp,
+                row.bankPenerbit,
+                row.jmlKartuUsul ?? "-",
+                row.jumlahKartu,
+                row.jmlKartuOpr,
+                row.limitOpr,
+                row.jmlKartuPd,
+                row.limitPd,
+                row.tanggal_ctk_tagihan || "-",
+                row.tanggal_jth_tempo || "-",
+                row.nilaiTagihan,
+                row.nilaiTransaksi,
+                row.nomor_sp2d_list || "-",
+                row.tanggal_sp2d_list || "-",
+                row.jenis_belanja_list || "-",
+                row.kendala || "-",
+                row.detil_kendala || "-",
+                row.detil_masukan_kendala || "-",
+            ]);
+
+            // Build sheet: title1, title2, empty, info, topHeader, midHeader, botHeader, data
+            const aoaData = [titleRow1, titleRow2, emptyRow, filterRow, topHeaderRow, midHeaderRow, botHeaderRow, ...dataRows];
+            const worksheet = XLSX.utils.aoa_to_sheet(aoaData);
+
+            // Merges
+            const lastCol = totalCols - 1;
+            const merges: XLSX.Range[] = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: lastCol } }, // Title 1
+                { s: { r: 1, c: 0 }, e: { r: 1, c: lastCol } }, // Title 2
+                // Top header groups (r4)
+                { s: { r: 4, c: group1Start }, e: { r: 4, c: group1End } },
+                { s: { r: 4, c: group2Start }, e: { r: 4, c: group2End } },
+                { s: { r: 4, c: group3Start }, e: { r: 4, c: group3End } },
+                { s: { r: 4, c: group4Start }, e: { r: 4, c: group4End } },
+                // Mid header groups (r5)
+                { s: { r: 5, c: group3Start }, e: { r: 5, c: group3Start + 1 } },
+                { s: { r: 5, c: group3Start + 2 }, e: { r: 5, c: group3End } },
+            ];
+
+            // Vertical merges for non-grouped cols (r4 to r6)
+            for (let c = 0; c < group1Start; c++) merges.push({ s: { r: 4, c }, e: { r: 6, c } });
+            for (let c = group4End + 1; c < totalCols; c++) merges.push({ s: { r: 4, c }, e: { r: 6, c } });
+
+            // Vertical merges for group 1 & 2 & 4 children (r5 to r6)
+            for (let c = group1Start; c <= group2End; c++) merges.push({ s: { r: 5, c }, e: { r: 6, c } });
+            for (let c = group4Start; c <= group4End; c++) merges.push({ s: { r: 5, c }, e: { r: 6, c } });
+
+            worksheet["!merges"] = merges;
+
+            // --- Styling ---
+            const boldStyle = { font: { bold: true } };
+            const borderStyle = {
+                top: { style: "thin" },
+                bottom: { style: "thin" },
+                left: { style: "thin" },
+                right: { style: "thin" }
+            };
+
+            // Title rows (r=0, r=1): bold and center
+            for (const r of [0, 1]) {
+                const addr = XLSX.utils.encode_cell({ r, c: 0 });
+                if (!worksheet[addr]) worksheet[addr] = { v: "", t: "s" };
+                worksheet[addr].s = {
+                    font: { bold: true, size: 14 },
+                    alignment: { horizontal: "left" }
+                };
+            }
+
+            // Filter row (r=3): bold labels
+            for (const c of [0, 1, 4, 5]) {
+                const addr = XLSX.utils.encode_cell({ r: 3, c });
+                if (!worksheet[addr]) worksheet[addr] = { v: "", t: "s" };
+                worksheet[addr].s = boldStyle;
+            }
+
+            // Apply styling to table area (headers starting at r=4 and data)
+            const accountingCols = new Set([10, 16, 18, 21, 22]);
+            const centeredCols = new Set([0, 1, 3, 4, 11, 13, 14, 15, 17]);
+            for (let r = 4; r < aoaData.length; r++) {
+                for (let c = 0; c < totalCols; c++) {
+                    const addr = XLSX.utils.encode_cell({ r, c });
+                    if (!worksheet[addr]) worksheet[addr] = { v: "", t: "s" };
+                    
+                    const isHeader = r <= 6;
+                    
+                    if (!isHeader && accountingCols.has(c) && typeof worksheet[addr].v === "number") {
+                        worksheet[addr].z = '#,##0';
+                    }
+                    
+                    worksheet[addr].s = {
+                        ...(worksheet[addr].s || {}),
+                        border: borderStyle,
+                        font: { 
+                            ...(worksheet[addr].s?.font || {}),
+                            bold: isHeader
+                        },
+                        alignment: {
+                            horizontal: isHeader ? "center" : (centeredCols.has(c) ? "center" : (accountingCols.has(c) ? "right" : "left")),
+                            vertical: isHeader ? "center" : "bottom",
+                            wrapText: isHeader
+                        }
+                    };
+                }
+            }
 
             // Set column widths
             worksheet["!cols"] = [
                 { wch: 5 },   // No
-                { wch: 12 },  // Kode Kanwil
-                { wch: 25 },  // Nama Kanwil
                 { wch: 12 },  // Kode KPPN
                 { wch: 20 },  // Nama KPPN
                 { wch: 10 },  // Kode BA
@@ -113,9 +282,14 @@ export default function MonevKkpDirektoratPaPage() {
                 { wch: 20 },  // UP KKP Per Bulan
                 { wch: 25 },  // Porsi UP KKP
                 { wch: 18 },  // Bank Penerbit
-                { wch: 12 },  // Jumlah Kartu
+                { wch: 25 },  // Jumlah KKP Diusulkan
+                { wch: 12 },  // Jumlah KKP Terima
+                { wch: 12 },  // Jml Kartu Opr
+                { wch: 25 },  // Limit Opr
+                { wch: 12 },  // Jml Kartu PD
+                { wch: 25 },  // Limit PD
                 { wch: 25 },  // Tanggal Cetak Tagihan
-                { wch: 25 },   // Tanggal Jatuh Tempo
+                { wch: 25 },  // Tanggal Jatuh Tempo
                 { wch: 18 },  // Nilai Tagihan
                 { wch: 20 },  // Nilai Transaksi
                 { wch: 30 },  // Nomor SP2D GUP/PTUP
@@ -124,7 +298,7 @@ export default function MonevKkpDirektoratPaPage() {
                 { wch: 30 },  // Kategori Kendala
                 { wch: 40 },  // Detil Kendala
                 { wch: 40 },  // Detil Masukan
-                ];
+            ];
 
             // Create workbook
             const workbook = XLSX.utils.book_new();
@@ -206,11 +380,11 @@ export default function MonevKkpDirektoratPaPage() {
 
                 <TabsContents>
                     <TabsContent value="ringkasan-kanwil" className="space-y-4">
-                        <DirektoratPaContent ref={direktoratPaContentRef} contentType="ringkasan-kanwil" />
+                        <DirektoratPaContent ref={kanwilDataRef} contentType="ringkasan-kanwil" />
                     </TabsContent>
-
+ 
                     <TabsContent value="ringkasan-kppn" className="space-y-4">
-                        <DirektoratPaContent ref={direktoratPaContentRef} contentType="ringkasan-kppn" />
+                        <DirektoratPaContent ref={kppnDataRef} contentType="ringkasan-kppn" />
                     </TabsContent>
 
                     <TabsContent value="monitoring-kanwil" className="space-y-4">

@@ -39,7 +39,12 @@ export interface RingkasanData {
   upKkpPerBulan: number;
   porsiUpKkp: number;
   bankPenerbit: string;
+  jmlKartuUsul: number | null;
   jumlahKartu: number;
+  jmlKartuOpr: number;
+  limitOpr: number;
+  jmlKartuPd: number;
+  limitPd: number;
   nilaiTagihan: number;
   nilaiTransaksi: number;
   kendala: string;
@@ -84,6 +89,14 @@ interface MonitoringKppnData {
 // Ref interface for parent component access
 export interface DirektoratPaContentRef {
   getData: () => RingkasanData[];
+  getFilters: () => {
+    selectedYear: string;
+    selectedPeriode: string;
+    selectedKanwil: string;
+    selectedKppn: string;
+    kanwilLabel: string;
+    kppnLabel: string;
+  };
 }
 
 interface DirektoratPaContentProps {
@@ -154,9 +167,17 @@ export const DirektoratPaContent = forwardRef<
     namaSatker?: string;
   } | null>(null);
 
-  // Expose getData method to parent component via ref
+  // Expose methods to parent component via ref
   useImperativeHandle(ref, () => ({
     getData: () => ringkasanData,
+    getFilters: () => ({
+      selectedYear,
+      selectedPeriode,
+      selectedKanwil,
+      selectedKppn,
+      kanwilLabel: kanwilRefList.find(k => k.value === selectedKanwil)?.label || selectedKanwil,
+      kppnLabel: kppnRefList.find(k => k.value === selectedKppn)?.label || selectedKppn,
+    }),
   }));
 
   // ─── Data Fetching ─────────────────────────────────────
@@ -198,7 +219,12 @@ export const DirektoratPaContent = forwardRef<
           upKkpPerBulan: Number(item.nilai_up_kkp || 0),
           porsiUpKkp: Number(item.porsi_up_kkp_dari_total_up || 0),
           bankPenerbit: item.bank_penerbit,
+          jmlKartuUsul: item.jml_kartu_usul !== undefined && item.jml_kartu_usul !== null ? Number(item.jml_kartu_usul) : null,
           jumlahKartu: Number(item.jumlah_kartu || 0),
+          jmlKartuOpr: Number(item.jml_kartu_opr || 0),
+          limitOpr: Number(item.limit_opr || 0),
+          jmlKartuPd: Number(item.jml_kartu_pd || 0),
+          limitPd: Number(item.limit_pd || 0),
           nilaiTagihan: Number(item.nilai_tagihan || 0),
           nilaiTransaksi: Number(item.nilai_trans_sp2d || 0),
           kendala: item.kendala || "",
