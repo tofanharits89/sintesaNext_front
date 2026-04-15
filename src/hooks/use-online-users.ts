@@ -11,6 +11,8 @@ export interface OnlineUser {
     username: string;
     name: string;
     role: string;
+    nmkanwil?: string | null;
+    nmkppn?: string | null;
   };
   connectedAt?: string;
   loginAt?: string;
@@ -110,6 +112,8 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
             username: u.username || "",
             name: u.name || u.username || "",
             role: u.role || "",
+            nmkanwil: u.nmkanwil || null,
+            nmkppn: u.nmkppn || null,
           },
           connectedAt: payload?.connectedAt || new Date().toISOString(),
           loginAt: payload?.loginAt || new Date().toISOString(),

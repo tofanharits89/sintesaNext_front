@@ -408,6 +408,7 @@ export default function LogUserPage() {
                             <TableHead className="text-center font-bold">Nama Lengkap</TableHead>
                             <TableHead className="text-center font-bold">Username</TableHead>
                             <TableHead className="text-center font-bold">Role</TableHead>
+                            <TableHead className="text-center font-bold">Unit Kerja</TableHead>
                             <TableHead className="text-center font-bold">Lokasi</TableHead>
                             <TableHead className="text-center font-bold">Waktu Login</TableHead>
                             <TableHead className="text-center font-bold">Durasi Login</TableHead>
@@ -425,6 +426,9 @@ export default function LogUserPage() {
                                   <Badge variant="outline" className="text-xs">
                                     {getRoleDisplayName(userInfo.user.role as any)}
                                   </Badge>
+                                </TableCell>
+                                <TableCell className="text-sm text-center">
+                                  {userInfo.user.nmkppn || userInfo.user.nmkanwil || "-"}
                                 </TableCell>
                                 <TableCell className="text-sm text-muted-foreground text-center">{userInfo.location || "Tidak diketahui"}</TableCell>
                                 <TableCell className="text-sm text-muted-foreground text-center">{userInfo.loginAt ? formatLoginDateTime(userInfo.loginAt) : "Tidak diketahui"}</TableCell>
@@ -460,6 +464,7 @@ export default function LogUserPage() {
                                   </Badge>
                                 </div>
                                 <div className="space-y-1">
+                                  <p className="text-xs text-muted-foreground"><span className="font-medium">Unit:</span> {userInfo.user.nmkppn || userInfo.user.nmkanwil || "-"}</p>
                                   <p className="text-xs text-muted-foreground"><span className="font-medium">Lokasi:</span> {userInfo.location || "Tidak diketahui"}</p>
                                   <p className="text-xs text-muted-foreground"><span className="font-medium">Login:</span> {userInfo.loginAt ? formatLoginDateTime(userInfo.loginAt) : "Tidak diketahui"}</p>
                                   <p className="text-xs text-muted-foreground"><span className="font-medium">Durasi:</span> {userInfo.loginAt ? calculateLoginDuration(userInfo.loginAt) : "Tidak diketahui"}</p>
@@ -638,7 +643,9 @@ export default function LogUserPage() {
                               </div>
                               <div>
                                 <p className="font-medium text-sm">{entry.userName || entry.username}</p>
-                                <p className="text-xs text-muted-foreground">{entry.userRole}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {entry.userRole} {entry.nmkppn || entry.nmkanwil ? `| ${entry.nmkppn || entry.nmkanwil}` : ""}
+                                </p>
                                 <p className="text-xs text-muted-foreground">
                                   Lokasi: {entry.location || "Tidak diketahui"}
                                 </p>

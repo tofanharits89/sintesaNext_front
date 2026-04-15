@@ -7,6 +7,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 import kdkanwilData from "@/data/kdkanwil.json";
 
 interface DashboardHeaderProps {
@@ -15,6 +17,8 @@ interface DashboardHeaderProps {
   selectedYear: string;
   onYearChange: (value: string) => void;
   lastRefreshText: string;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
 // Component to prevent hydration mismatch
@@ -34,6 +38,8 @@ export const DashboardHeader = ({
   selectedYear,
   onYearChange,
   lastRefreshText,
+  onRefresh,
+  isRefreshing,
 }: DashboardHeaderProps) => {
   const router = useRouter();
 
@@ -90,6 +96,21 @@ export const DashboardHeader = ({
             </SelectContent>
           </Select>
         </div>
+        {onRefresh && (
+          <Button
+            id="dashboard-refresh-btn"
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 shrink-0"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            title="Refresh data (invalidate cache)"
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+            />
+          </Button>
+        )}
       </div>
     </div>
   );

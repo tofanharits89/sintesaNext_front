@@ -19,6 +19,8 @@ interface LoginHistoryEntry {
   ipAddress: string;
   userAgent: string;
   location?: string | null;
+  nmkanwil?: string | null;
+  nmkppn?: string | null;
   createdAt: string;
 }
 
