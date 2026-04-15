@@ -123,6 +123,10 @@ export const DirektoratPaContent = forwardRef<
     { value: string; label: string }[]
   >([]);
   const [isLoadingKppnRef, setIsLoadingKppnRef] = useState(false);
+  const [kanwilRefList, setKanwilRefList] = useState<
+    { value: string; label: string }[]
+  >([]);
+  const [isLoadingKanwilRef, setIsLoadingKanwilRef] = useState(false);
 
   // Modal state
   const [isRingkasanModalOpen, setIsRingkasanModalOpen] = useState(false);
@@ -166,7 +170,11 @@ export const DirektoratPaContent = forwardRef<
       if (contentType === "ringkasan-kppn" && selectedKppn !== "all") {
         kppnParam = `&kdkppn=${selectedKppn}`;
       }
-      if (contentType === "ringkasan-kanwil" && selectedKanwil !== "all") {
+      if (
+        (contentType === "ringkasan-kanwil" ||
+          contentType === "ringkasan-kppn") &&
+        selectedKanwil !== "all"
+      ) {
         kanwilParam = `&kdkanwil=${selectedKanwil}`;
       }
       const apiUrl = apiPath(
@@ -262,8 +270,10 @@ export const DirektoratPaContent = forwardRef<
       const triwulan = selectedPeriode.replace("Q", "");
       const kppnParam =
         selectedKppn !== "all" ? `&kdkppn=${selectedKppn}` : "";
+      const kanwilParam =
+        selectedKanwil !== "all" ? `&kdkanwil=${selectedKanwil}` : "";
       const apiUrl = apiPath(
-        `/monev-kkp/kanwil/monitoring-kppn?tahun=${selectedYear}&triwulan=${triwulan}${kppnParam}`,
+        `/monev-kkp/kanwil/monitoring-kppn?tahun=${selectedYear}&triwulan=${triwulan}${kppnParam}${kanwilParam}`,
       );
 
       const response = await fetch(apiUrl, { credentials: "include" });
@@ -292,12 +302,17 @@ export const DirektoratPaContent = forwardRef<
     }
   };
 
-  const fetchKppnRefList = async () => {
+  const fetchKppnRefList = async (kdkanwil?: string) => {
     setIsLoadingKppnRef(true);
     try {
-      const response = await fetch(apiPath("/monev-kkp/kanwil/ref-kppn"), {
-        credentials: "include",
-      });
+      const kanwilParam =
+        kdkanwil && kdkanwil !== "all" ? `?kdkanwil=${kdkanwil}` : "";
+      const response = await fetch(
+        apiPath(`/monev-kkp/kanwil/ref-kppn${kanwilParam}`),
+        {
+          credentials: "include",
+        },
+      );
 
       if (!response.ok) {
         throw new Error("Gagal mengambil data referensi KPPN");
@@ -315,6 +330,36 @@ export const DirektoratPaContent = forwardRef<
       toast.error("Gagal mengambil data referensi KPPN");
     } finally {
       setIsLoadingKppnRef(false);
+    }
+  };
+
+  const fetchKanwilRefList = async (tahun?: string) => {
+    setIsLoadingKanwilRef(true);
+    try {
+      const yearParam = tahun ? `?tahun=${tahun}` : "";
+      const response = await fetch(
+        apiPath(`/monev-kkp/kanwil/ref-kanwil${yearParam}`),
+        {
+          credentials: "include",
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Gagal mengambil data referensi Kanwil");
+      }
+
+      const result = await response.json();
+      const mappedList = result.data.map((item: any) => ({
+        value: item.kdkanwil,
+        label: `${item.kdkanwil} - ${item.nmlokasi}`,
+      }));
+
+      setKanwilRefList(mappedList);
+    } catch (error) {
+      console.error(error);
+      toast.error("Gagal mengambil data referensi Kanwil");
+    } finally {
+      setIsLoadingKanwilRef(false);
     }
   };
 
@@ -342,8 +387,16 @@ export const DirektoratPaContent = forwardRef<
 
   useEffect(() => {
     if (!user) return;
-    fetchKppnRefList();
-  }, [user]);
+    fetchKanwilRefList(selectedYear);
+    fetchKppnRefList(selectedKanwil);
+  }, [user, selectedYear]);
+
+  // Handle hierarchical filter change
+  const handleKanwilChange = (value: string) => {
+    setSelectedKanwil(value);
+    setSelectedKppn("all");
+    fetchKppnRefList(value);
+  };
 
   // ─── Dynamic filter lists ──────────────────────────────
 
@@ -986,7 +1039,12 @@ export const DirektoratPaContent = forwardRef<
     }
   };
 
-  const activeKanwilList = contentType === "monitoring-kanwil" ? monitoringKanwilList : kanwilList;
+  const activeKanwilList =
+    kanwilRefList.length > 0
+      ? [{ value: "all", label: "Semua Kanwil" }, ...kanwilRefList]
+      : contentType === "monitoring-kanwil"
+        ? monitoringKanwilList
+        : kanwilList;
   const activeKppnList =
     kppnRefList.length > 0
       ? [{ value: "all", label: "Semua KPPN" }, ...kppnRefList]
@@ -1016,7 +1074,11 @@ export const DirektoratPaContent = forwardRef<
             <span className="font-medium">Direktorat Pelaksanaan Anggaran</span>
             <span className="text-muted-foreground text-xs">Menampilkan data agregat dari seluruh Kanwil dan KPPN</span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className={`grid grid-cols-1 ${
+            contentType === "ringkasan-kppn" || contentType === "monitoring-kppn"
+              ? "md:grid-cols-4"
+              : "md:grid-cols-3"
+          } gap-4`}>
             <div className="space-y-2">
               <label className="text-sm font-medium">Tahun</label>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
@@ -1024,12 +1086,32 @@ export const DirektoratPaContent = forwardRef<
                 <SelectContent>{years.map((year) => (<SelectItem key={year} value={year}>{year}</SelectItem>))}</SelectContent>
               </Select>
             </div>
-            {(contentType === "ringkasan-kanwil" || contentType === "monitoring-kanwil") && (
+            {(contentType === "ringkasan-kanwil" ||
+              contentType === "monitoring-kanwil" ||
+              contentType === "monitoring-kppn" ||
+              contentType === "ringkasan-kppn") && (
               <div className="space-y-2">
                 <label className="text-sm font-medium">Kanwil</label>
-                <Select value={selectedKanwil} onValueChange={setSelectedKanwil}>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                  <SelectContent>{activeKanwilList.map((kanwil) => (<SelectItem key={kanwil.value} value={kanwil.value}>{kanwil.label}</SelectItem>))}</SelectContent>
+                <Select
+                  value={selectedKanwil}
+                  onValueChange={handleKanwilChange}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={
+                        isLoadingKanwilRef && kanwilRefList.length === 0
+                          ? "Memuat Kanwil..."
+                          : "Pilih Kanwil"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeKanwilList.map((kanwil) => (
+                      <SelectItem key={kanwil.value} value={kanwil.value}>
+                        {kanwil.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
             )}
