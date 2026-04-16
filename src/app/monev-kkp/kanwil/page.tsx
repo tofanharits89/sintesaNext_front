@@ -439,6 +439,7 @@ export default function MonevKkpKanwilPage() {
             }
 
             setStatusLaporan("sent");
+            setTglKirimKanwil(result.data?.tgkirim_kanwil || new Date().toISOString());
             toast.success("Laporan berhasil dikirim ke Direktorat PA/Kantor Pusat");
         } catch (error) {
             console.error("Error sending laporan kanwil:", error);

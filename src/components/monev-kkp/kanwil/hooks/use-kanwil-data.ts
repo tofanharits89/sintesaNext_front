@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { apiPath } from "@/lib/config/base-path";
 import { useAuth } from "@/hooks/useAuth";
+import { addCsrfToHeaders } from "@/utils/csrf-utils";
 import { RingkasanKanwilData, MonitoringKppnData } from "../types";
 
 export const useKanwilData = (
@@ -200,6 +201,35 @@ export const useKanwilData = (
     setSelectedPeriode(`Q${prevQ}`);
   }, [prevYear, prevQ]);
 
+  const resetLaporanKppn = useCallback(async (kdkppn: string, tahun: string, triwulan: string) => {
+    try {
+      const response = await fetch(apiPath("/monev-kkp/reset-laporan-kppn"), {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          ...addCsrfToHeaders({}),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          kdkppn,
+          tahun,
+          triwulan: triwulan.replace("Q", ""),
+        }),
+      });
+
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.message || "Gagal mengembalikan status laporan");
+      }
+
+      toast.success("Laporan berhasil dikembalikan");
+      fetchMonitoringData();
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "Gagal mengembalikan status laporan");
+    }
+  }, [fetchMonitoringData]);
+
   return {
     ringkasanData,
     monitoringData,
@@ -215,5 +245,6 @@ export const useKanwilData = (
     handleReset,
     fetchRingkasanData,
     fetchMonitoringData,
+    resetLaporanKppn,
   };
 };

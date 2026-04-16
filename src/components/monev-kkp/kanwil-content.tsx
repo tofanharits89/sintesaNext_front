@@ -63,6 +63,7 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
       isLoadingKppnRef,
       handleReset,
       fetchRingkasanData,
+      resetLaporanKppn,
     } = useKanwilData(contentType, onPeriodeChange);
 
     // Modal state
@@ -225,8 +226,13 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
       statusLaporan,
     };
 
+    const handleResetStatus = (item: any) => {
+      resetLaporanKppn(item.kdkppn, selectedYear, selectedPeriode);
+    };
+
     const monitoringHandlers = {
       onViewRingkasan: handleViewRingkasan,
+      onResetStatus: handleResetStatus,
     };
 
     const columns = contentType === "ringkasan" 

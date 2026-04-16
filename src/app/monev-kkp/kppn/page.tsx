@@ -455,6 +455,7 @@ export default function MonevKkpKppnPage() {
             }
 
             setStatusLaporan("sent");
+            setTglKirimKppn(result.data?.tgkirim_kppn || new Date().toISOString());
             toast.success("Laporan berhasil dikirim ke Kanwil");
         } catch (error) {
             console.error("Error sending laporan:", error);
