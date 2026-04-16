@@ -132,9 +132,18 @@ export const useKanwilData = (
     if (!user) return;
     setIsLoadingKppnRef(true);
     try {
-      const response = await fetch(apiPath(`/monev-kkp/kanwil/ref-kppn`), {
-        credentials: "include",
-      });
+      const ts = new Date().getTime();
+      const response = await fetch(
+        apiPath(`/monev-kkp/kanwil/ref-kppn?tahun=${selectedYear}&_t=${ts}`),
+        {
+          credentials: "include",
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+          },
+        }
+      );
 
       if (!response.ok) throw new Error("Gagal mengambil data referensi KPPN");
       const result = await response.json();
@@ -150,7 +159,7 @@ export const useKanwilData = (
     } finally {
       setIsLoadingKppnRef(false);
     }
-  }, [user]);
+  }, [user, selectedYear]);
 
   useEffect(() => {
     if (contentType === "ringkasan") {
