@@ -49,6 +49,7 @@ export interface KanwilContentRef {
 export interface KanwilContentProps {
   contentType?: "ringkasan" | "monitoring";
   statusLaporan?: "sent" | "not_sent";
+  tglKirimKanwil?: string | null;
   kppnCompletionStatus?: "complete" | "incomplete";
   onPeriodeChange?: (year: string, periode: string) => void;
 }

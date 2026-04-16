@@ -12,6 +12,7 @@ import * as XLSX from "xlsx-js-style";
 import { useAuth } from "@/hooks/useAuth";
 import { apiPath } from "@/lib/config/base-path";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
+import { Spinner } from "@/components/ui/spinner";
 
 // Allowed roles for KPPN page
 const ALLOWED_ROLES = ["kppn", "super_admin", "co_admin"];
@@ -38,15 +39,50 @@ export default function MonevKkpKppnPage() {
     const [isExporting, setIsExporting] = useState(false);
     const [isSending, setIsSending] = useState(false);
     const [statusLaporan, setStatusLaporan] = useState<"sent" | "not_sent">("not_sent");
+    const [tglKirimKppn, setTglKirimKppn] = useState<string | null>(null);
+    const [isLoadingStatus, setIsLoadingStatus] = useState(true);
     const [prevStatusLaporan, setPrevStatusLaporan] = useState<"sent" | "not_sent" | "none">("none");
     const kppnContentRef = useRef<KppnContentRef>(null);
 
-    // Get current triwulan defaults
-    const now = new Date();
-    const defaultYear = "2026";
-    const defaultPeriode = `Q${Math.ceil((now.getMonth() + 1) / 3)}`;
-    const [selectedYear, setSelectedYear] = useState(defaultYear);
-    const [selectedPeriode, setSelectedPeriode] = useState(defaultPeriode);
+    // Get default periode selection: previous triwulan from current date
+    const getInitialPeriode = () => {
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1;
+        const currentYear = now.getFullYear();
+        const currentQ = Math.ceil(currentMonth / 3);
+        
+        let prevQ = currentQ - 1;
+        let prevYear = currentYear;
+        
+        if (prevQ === 0) {
+            prevQ = 4;
+            prevYear = currentYear - 1;
+        }
+        
+        return {
+            year: String(prevYear),
+            periode: `Q${prevQ}`
+        };
+    };
+
+    const initial = getInitialPeriode();
+    const [selectedYear, setSelectedYear] = useState(initial.year);
+    const [selectedPeriode, setSelectedPeriode] = useState(initial.periode);
+
+    // Helper to check if the selected period has ended
+    const isPeriodPast = () => {
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1;
+        const currentYear = now.getFullYear();
+        const currentQ = Math.ceil(currentMonth / 3);
+        
+        const targetYear = parseInt(selectedYear);
+        const targetQ = parseInt(selectedPeriode.replace("Q", ""));
+        
+        if (currentYear > targetYear) return true;
+        if (currentYear === targetYear && currentQ > targetQ) return true;
+        return false;
+    };
 
     // Role-based access control
     useEffect(() => {
@@ -64,6 +100,11 @@ export default function MonevKkpKppnPage() {
     useEffect(() => {
         if (!user) return;
         const fetchStatus = async () => {
+            setIsLoadingStatus(true);
+            // Reset state to avoid stale UI while loading
+            setStatusLaporan("not_sent");
+            setTglKirimKppn(null);
+            
             try {
                 const triwulan = selectedPeriode.replace("Q", "");
                 const ts = new Date().getTime();
@@ -84,8 +125,10 @@ export default function MonevKkpKppnPage() {
                     const result = await response.json();
                     if (result.data?.sts_kirim_kppn === "1") {
                         setStatusLaporan("sent");
+                        setTglKirimKppn(result.data?.tgkirim_kppn || null);
                     } else {
                         setStatusLaporan("not_sent");
+                        setTglKirimKppn(null);
                     }
                 }
 
@@ -113,6 +156,8 @@ export default function MonevKkpKppnPage() {
                 }
             } catch (error) {
                 console.error("Error fetching status laporan:", error);
+            } finally {
+                setIsLoadingStatus(false);
             }
         };
         fetchStatus();
@@ -446,9 +491,13 @@ export default function MonevKkpKppnPage() {
                     {/* Kirim Laporan Button */}
                     <ConfirmationModal
                         trigger={
-                            <Button disabled={isSending || statusLaporan === "sent" || (selectedPeriode !== "Q1" && prevStatusLaporan === "not_sent")}>
-                                <Send className="mr-2 h-4 w-4" />
-                                {isSending ? "Mengirim..." : statusLaporan === "sent" ? "Sudah Dikirim" : "Kirim Laporan"}
+                            <Button disabled={isLoadingStatus || isSending || statusLaporan === "sent" || (selectedPeriode !== "Q1" && prevStatusLaporan === "not_sent") || !isPeriodPast()}>
+                                {isLoadingStatus ? (
+                                    <Spinner size="sm" className="mr-2" />
+                                ) : (
+                                    <Send className="mr-2 h-4 w-4" />
+                                )}
+                                {isLoadingStatus ? "Checking Status..." : isSending ? "Mengirim..." : statusLaporan === "sent" ? "Sudah Dikirim" : !isPeriodPast() ? "Periode Belum Berakhir" : "Kirim Laporan"}
                             </Button>
                         }
                         title="Kirim Laporan ke Kanwil?"
@@ -457,7 +506,7 @@ export default function MonevKkpKppnPage() {
                         cancelText="Batal"
                         variant="info"
                         onConfirm={handleKirimLaporan}
-                        disabled={isSending || statusLaporan === "sent" || (selectedPeriode !== "Q1" && prevStatusLaporan === "not_sent")}
+                        disabled={isLoadingStatus || isSending || statusLaporan === "sent" || (selectedPeriode !== "Q1" && prevStatusLaporan === "not_sent") || !isPeriodPast()}
                     />
                 </div>
             </div>
@@ -481,7 +530,12 @@ export default function MonevKkpKppnPage() {
             )}
 
             {/* Main Content */}
-            <KppnContent ref={kppnContentRef} statusLaporan={statusLaporan} onPeriodeChange={handlePeriodeChange} />
+            <KppnContent 
+                ref={kppnContentRef} 
+                statusLaporan={statusLaporan} 
+                tglKirimKppn={tglKirimKppn}
+                onPeriodeChange={handlePeriodeChange} 
+            />
         </div>
     );
 }

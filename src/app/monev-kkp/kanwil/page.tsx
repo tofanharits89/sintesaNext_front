@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { apiPath } from "@/lib/config/base-path";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
 import kdkanwilData from "@/data/kdkanwil.json";
+import { Spinner } from "@/components/ui/spinner";
 
 // Allowed roles for Kanwil page
 const ALLOWED_ROLES = ["kanwil_djpb", "super_admin", "co_admin"];
@@ -41,15 +42,50 @@ export default function MonevKkpKanwilPage() {
     const [isExporting, setIsExporting] = useState(false);
     const [isSending, setIsSending] = useState(false);
     const [statusLaporan, setStatusLaporan] = useState<"sent" | "not_sent">("not_sent");
+    const [tglKirimKanwil, setTglKirimKanwil] = useState<string | null>(null);
     const [allKppnSent, setAllKppnSent] = useState(false);
+    const [isLoadingStatus, setIsLoadingStatus] = useState(true);
     const kanwilContentRef = useRef<KanwilContentRef>(null);
 
-    // Get current triwulan defaults
-    const now2 = new Date();
-    const defaultYear = "2026";
-    const defaultPeriode = `Q${Math.ceil((now2.getMonth() + 1) / 3)}`;
-    const [selectedYear, setSelectedYear] = useState(defaultYear);
-    const [selectedPeriode, setSelectedPeriode] = useState(defaultPeriode);
+    // Get default periode selection: previous triwulan from current date
+    const getInitialPeriode = () => {
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1;
+        const currentYear = now.getFullYear();
+        const currentQ = Math.ceil(currentMonth / 3);
+        
+        let prevQ = currentQ - 1;
+        let prevYear = currentYear;
+        
+        if (prevQ === 0) {
+            prevQ = 4;
+            prevYear = currentYear - 1;
+        }
+        
+        return {
+            year: String(prevYear),
+            periode: `Q${prevQ}`
+        };
+    };
+
+    const initial = getInitialPeriode();
+    const [selectedYear, setSelectedYear] = useState(initial.year);
+    const [selectedPeriode, setSelectedPeriode] = useState(initial.periode);
+
+    // Helper to check if the selected period has ended
+    const isPeriodPast = () => {
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1;
+        const currentYear = now.getFullYear();
+        const currentQ = Math.ceil(currentMonth / 3);
+        
+        const targetYear = parseInt(selectedYear);
+        const targetQ = parseInt(selectedPeriode.replace("Q", ""));
+        
+        if (currentYear > targetYear) return true;
+        if (currentYear === targetYear && currentQ > targetQ) return true;
+        return false;
+    };
 
     // Role-based access control
     useEffect(() => {
@@ -67,6 +103,12 @@ export default function MonevKkpKanwilPage() {
     useEffect(() => {
         if (!user) return;
         const fetchStatus = async () => {
+            setIsLoadingStatus(true);
+            // Reset state to avoid stale UI while loading
+            setStatusLaporan("not_sent");
+            setTglKirimKanwil(null);
+            setAllKppnSent(false);
+
             try {
                 const triwulan = selectedPeriode.replace("Q", "");
                 const ts = new Date().getTime();
@@ -85,12 +127,16 @@ export default function MonevKkpKanwilPage() {
                 const result = await response.json();
                 if (result.data?.sts_kirim_kanwil === "1") {
                     setStatusLaporan("sent");
+                    setTglKirimKanwil(result.data?.tgkirim_kanwil || null);
                 } else {
                     setStatusLaporan("not_sent");
+                    setTglKirimKanwil(null);
                 }
                 setAllKppnSent(!!result.data?.all_kppn_sent);
             } catch (error) {
                 console.error("Error fetching status laporan kanwil:", error);
+            } finally {
+                setIsLoadingStatus(false);
             }
         };
         fetchStatus();
@@ -427,9 +473,13 @@ export default function MonevKkpKanwilPage() {
                         </Button>
                         <ConfirmationModal
                             trigger={
-                                <Button disabled={isSending || statusLaporan === "sent" || !allKppnSent}>
-                                    <Send className="mr-2 h-4 w-4" />
-                                    {isSending ? "Mengirim..." : statusLaporan === "sent" ? "Sudah Dikirim" : !allKppnSent ? "KPPN Belum Lengkap" : "Kirim Laporan"}
+                                <Button disabled={isLoadingStatus || isSending || statusLaporan === "sent" || !allKppnSent || !isPeriodPast()}>
+                                    {isLoadingStatus ? (
+                                        <Spinner size="sm" className="mr-2" />
+                                    ) : (
+                                        <Send className="mr-2 h-4 w-4" />
+                                    )}
+                                    {isLoadingStatus ? "Checking Status..." : isSending ? "Mengirim..." : statusLaporan === "sent" ? "Sudah Dikirim" : !isPeriodPast() ? "Periode Belum Berakhir" : !allKppnSent ? "KPPN Belum Lengkap" : "Kirim Laporan"}
                                 </Button>
                             }
                             title="Kirim Laporan ke Direktorat PA?"
@@ -438,7 +488,7 @@ export default function MonevKkpKanwilPage() {
                             cancelText="Batal"
                             variant="info"
                             onConfirm={handleKirimLaporan}
-                            disabled={isSending || statusLaporan === "sent" || !allKppnSent}
+                            disabled={isLoadingStatus || isSending || statusLaporan === "sent" || !allKppnSent || !isPeriodPast()}
                         />
                     </div>
                 )}
@@ -466,11 +516,18 @@ export default function MonevKkpKanwilPage() {
 
                 <TabsContents>
                     <TabsContent value="ringkasan-kanwil" className="space-y-4">
-                        <KanwilContent ref={kanwilContentRef} contentType="ringkasan" statusLaporan={statusLaporan} kppnCompletionStatus={allKppnSent ? "complete" : "incomplete"} onPeriodeChange={handlePeriodeChange} />
+                        <KanwilContent 
+                            ref={kanwilContentRef} 
+                            contentType="ringkasan" 
+                            statusLaporan={statusLaporan} 
+                            tglKirimKanwil={tglKirimKanwil}
+                            kppnCompletionStatus={allKppnSent ? "complete" : "incomplete"} 
+                            onPeriodeChange={handlePeriodeChange} 
+                        />
                     </TabsContent>
 
                     <TabsContent value="monitoring-kppn" className="space-y-4">
-                        <KanwilContent contentType="monitoring" onPeriodeChange={handlePeriodeChange} />
+                        <KanwilContent contentType="monitoring" />
                     </TabsContent>
                 </TabsContents>
             </Tabs>

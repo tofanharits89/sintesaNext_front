@@ -13,6 +13,8 @@ import { SatkerDetailModal } from "./modals/satker-detail-modal";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { apiPath } from "@/lib/config/base-path";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Clock } from "lucide-react";
 
 // Modularized imports
 import { 
@@ -40,6 +42,7 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
     {
       contentType = "monitoring",
       statusLaporan = "not_sent",
+      tglKirimKanwil = null,
       kppnCompletionStatus = "incomplete",
       onPeriodeChange,
     },
@@ -219,11 +222,37 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
 
         <Card>
           <CardHeader>
-            <CardTitle>
-              {contentType === "ringkasan" 
-                ? "Ringkasan Laporan per Satker" 
-                : "Monitoring Laporan KPPN"}
-            </CardTitle>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <CardTitle>
+                {contentType === "ringkasan" 
+                  ? "Ringkasan Laporan per Satker" 
+                  : "Monitoring Laporan KPPN"}
+              </CardTitle>
+              
+              {contentType === "ringkasan" && (
+                <div className="flex flex-wrap items-center gap-3">
+                  <Badge
+                    variant={statusLaporan === "sent" ? "success" : "destructive"}
+                    className="px-3 py-1 text-xs font-semibold uppercase tracking-wider shadow-sm"
+                  >
+                    {statusLaporan === "sent" ? "Sudah Dikirim" : "Belum Dikirim"}
+                  </Badge>
+                  
+                  {statusLaporan === "sent" && tglKirimKanwil && (
+                    <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground bg-muted/30 px-3 py-1.5 rounded-lg border border-border/50">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 text-blue-500" />
+                        <span>{new Date(tglKirimKanwil).toLocaleDateString("id-ID", { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 border-l border-border/50 pl-4">
+                        <Clock className="h-3.5 w-3.5 text-amber-500" />
+                        <span>{new Date(tglKirimKanwil).toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' })} WIB</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
