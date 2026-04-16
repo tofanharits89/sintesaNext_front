@@ -60,7 +60,7 @@ export function ConfirmationModal({
         return {
           icon: Trash2,
           iconColor: "text-destructive",
-          buttonClass: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+          buttonClass: "bg-destructive text-white hover:bg-destructive/90",
           titleColor: "text-destructive",
         };
       case "warning":

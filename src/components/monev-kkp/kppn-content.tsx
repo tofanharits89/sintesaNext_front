@@ -13,7 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { ResetButton } from "@/components/ui/reset-button";
-import { Pencil, Eye, Building2, Calendar, Clock } from "lucide-react";
+import { Pencil, Eye, Trash2, Building2, Calendar, Clock } from "lucide-react";
 import { KendalaHambatanModal } from "./modals/kendala-hambatan-modal";
 import { LihatKendalaModal } from "./modals/lihat-kendala-modal";
 import { TransaksiKkpModal } from "./modals/transaksi-kkp-modal";
@@ -24,6 +24,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { apiPath } from "@/lib/config/base-path";
+import { addCsrfToHeaders } from "@/utils/csrf-utils";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 // Type for the KKP data
 export interface KkpData {
@@ -239,6 +241,31 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
       setIsViewModalOpen(true);
     };
 
+    const handleDeleteKendala = async (item: any) => {
+      try {
+        const triwulan = selectedPeriode.replace("Q", "");
+        const response = await fetch(
+          apiPath(`/monev-kkp/kendala?tahun=${selectedYear}&triwulan=${triwulan}&kdsatker=${item.kodeSatker}`),
+          {
+            method: "DELETE",
+            credentials: "include",
+            headers: addCsrfToHeaders({}),
+          }
+        );
+
+        if (!response.ok) {
+          const result = await response.json();
+          throw new Error(result.message || "Gagal menghapus data");
+        }
+
+        toast.success("Data kendala berhasil dihapus");
+        fetchData();
+      } catch (error: any) {
+        console.error("Error deleting kendala:", error);
+        toast.error(error.message || "Gagal menghapus data kendala");
+      }
+    };
+
     const formatRupiah = (value: number) => {
       return new Intl.NumberFormat("id-ID", {
         style: "currency",
@@ -432,6 +459,27 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
               >
                 <Eye className="h-4 w-4 text-amber-600" />
               </Button>
+              {hasKendalaData && (
+                <ConfirmationModal
+                  trigger={
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="h-8 w-8 p-0 cursor-pointer"
+                      title="Hapus Kendala/Hambatan"
+                      disabled={statusLaporan === "sent"}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  }
+                  title="Hapus Kendala?"
+                  description={`Apakah Anda yakin ingin menghapus data kendala untuk satker ${row.original.namaSatker}? Tindakan ini tidak dapat dibatalkan.`}
+                  confirmText="Ya, Hapus"
+                  cancelText="Batal"
+                  variant="destructive"
+                  onConfirm={() => handleDeleteKendala(row.original)}
+                />
+              )}
             </div>
           );
         },

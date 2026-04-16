@@ -14,7 +14,8 @@ import { toast } from "sonner";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { apiPath } from "@/lib/config/base-path";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock } from "lucide-react";
+import { Calendar, Clock, Trash2 } from "lucide-react";
+import { addCsrfToHeaders } from "@/utils/csrf-utils";
 
 // Modularized imports
 import { 
@@ -173,6 +174,32 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
       setIsViewModalOpen(true);
     };
 
+    const handleDeleteKendala = async (item: any) => {
+      try {
+        const triwulan = selectedPeriode.replace("Q", "");
+        const kdsatker = item.kodeSatker || item.kdsatker;
+        const response = await fetch(
+          apiPath(`/monev-kkp/kendala?tahun=${selectedYear}&triwulan=${triwulan}&kdsatker=${kdsatker}`),
+          {
+            method: "DELETE",
+            credentials: "include",
+            headers: addCsrfToHeaders({}),
+          }
+        );
+
+        if (!response.ok) {
+          const result = await response.json();
+          throw new Error(result.message || "Gagal menghapus data");
+        }
+
+        toast.success("Data kendala berhasil dihapus");
+        fetchRingkasanData();
+      } catch (error: any) {
+        console.error("Error deleting kendala:", error);
+        toast.error(error.message || "Gagal menghapus data kendala");
+      }
+    };
+
     // ─── Column Handlers ────────────────────────────────────
 
     const ringkasanHandlers = {
@@ -194,6 +221,7 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
       },
       onEditKendala: handleEditKendala,
       onViewKendala: handleViewKendala,
+      onDeleteKendala: handleDeleteKendala,
       statusLaporan,
     };
 

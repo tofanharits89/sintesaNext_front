@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Pencil } from "lucide-react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { RingkasanKanwilData, MonitoringKppnData } from "./types";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 // Formatting helpers
 export const formatRupiah = (value: number) => {
@@ -33,6 +34,7 @@ interface ColumnHandlers {
   onViewTransaksi: (kdsatker: string, namaSatker: string) => void;
   onEditKendala: (item: RingkasanKanwilData) => void;
   onViewKendala: (item: RingkasanKanwilData) => void;
+  onDeleteKendala: (item: RingkasanKanwilData) => void;
   statusLaporan?: string;
 }
 
@@ -213,6 +215,27 @@ export const getRingkasanColumns = (handlers: ColumnHandlers) => [
           >
             <Eye className="h-4 w-4 text-amber-600" />
           </Button>
+          {hasKendalaData && (
+            <ConfirmationModal
+              trigger={
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="h-8 w-8 p-0 cursor-pointer"
+                  title="Hapus Kendala/Hambatan"
+                  disabled={handlers.statusLaporan === "sent"}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              }
+              title="Hapus Kendala?"
+              description={`Apakah Anda yakin ingin menghapus data kendala untuk satker ${row.original.namaSatker}? Tindakan ini tidak dapat dibatalkan.`}
+              confirmText="Ya, Hapus"
+              cancelText="Batal"
+              variant="destructive"
+              onConfirm={() => handlers.onDeleteKendala(row.original)}
+            />
+          )}
         </div>
       );
     },
