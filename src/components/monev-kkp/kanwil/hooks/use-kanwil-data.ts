@@ -11,15 +11,24 @@ export const useKanwilData = (
   const { user } = useAuth();
   
   const now = new Date();
-  const defaultYear = "2026";
-  const defaultPeriode = `Q${Math.ceil((now.getMonth() + 1) / 3)}`;
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
+  const currentQ = Math.ceil(currentMonth / 3);
+  
+  let prevQ = currentQ - 1;
+  let prevYear = currentYear;
+  
+  if (prevQ === 0) {
+    prevQ = 4;
+    prevYear = currentYear - 1;
+  }
 
   const [ringkasanData, setRingkasanData] = useState<RingkasanKanwilData[]>([]);
   const [monitoringData, setMonitoringData] = useState<MonitoringKppnData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedYear, setSelectedYear] = useState(defaultYear);
+  const [selectedYear, setSelectedYear] = useState(String(prevYear));
   const [selectedKppn, setSelectedKppn] = useState("all");
-  const [selectedPeriode, setSelectedPeriode] = useState(defaultPeriode);
+  const [selectedPeriode, setSelectedPeriode] = useState(`Q${prevQ}`);
   const [kppnRefList, setKppnRefList] = useState<{ value: string; label: string }[]>([]);
   const [isLoadingKppnRef, setIsLoadingKppnRef] = useState(false);
 
@@ -186,10 +195,10 @@ export const useKanwilData = (
   }, [user?.id]);
 
   const handleReset = useCallback(() => {
-    setSelectedYear(defaultYear);
+    setSelectedYear(String(prevYear));
     setSelectedKppn("all");
-    setSelectedPeriode(defaultPeriode);
-  }, [defaultYear, defaultPeriode]);
+    setSelectedPeriode(`Q${prevQ}`);
+  }, [prevYear, prevQ]);
 
   return {
     ringkasanData,

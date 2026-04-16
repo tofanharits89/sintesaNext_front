@@ -13,7 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { ResetButton } from "@/components/ui/reset-button";
-import { Pencil, Eye, Building2 } from "lucide-react";
+import { Pencil, Eye, Building2, Calendar, Clock } from "lucide-react";
 import { KendalaHambatanModal } from "./modals/kendala-hambatan-modal";
 import { LihatKendalaModal } from "./modals/lihat-kendala-modal";
 import { TransaksiKkpModal } from "./modals/transaksi-kkp-modal";
@@ -71,21 +71,31 @@ export interface KppnContentRef {
 // Props interface
 interface KppnContentProps {
   statusLaporan?: "sent" | "not_sent";
+  tglKirimKppn?: string | null;
   onPeriodeChange?: (year: string, periode: string) => void;
 }
 
 export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
-  function KppnContent({ statusLaporan = "not_sent", onPeriodeChange }, ref) {
+  function KppnContent({ statusLaporan = "not_sent", tglKirimKppn = null, onPeriodeChange }, ref) {
     // Get authenticated user info
     const { user, isLoading: isAuthLoading } = useAuth();
     const now = new Date();
-    const defaultYear = "2026"; // Set to 2026 as per user requirement
-    const defaultPeriode = `Q${Math.ceil((now.getMonth() + 1) / 3)}`;
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+    const currentQ = Math.ceil(currentMonth / 3);
+    
+    let prevQ = currentQ - 1;
+    let prevYear = currentYear;
+    
+    if (prevQ === 0) {
+      prevQ = 4;
+      prevYear = currentYear - 1;
+    }
 
     const [data, setData] = useState<KkpData[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [selectedYear, setSelectedYear] = useState(defaultYear);
-    const [selectedPeriode, setSelectedPeriode] = useState(defaultPeriode);
+    const [selectedYear, setSelectedYear] = useState(String(prevYear));
+    const [selectedPeriode, setSelectedPeriode] = useState(`Q${prevQ}`);
 
     // Expose getData and getSelectedPeriode methods to parent component via ref
     useImperativeHandle(ref, () => ({
@@ -215,8 +225,8 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
     ];
 
     const handleReset = () => {
-      setSelectedYear(defaultYear);
-      setSelectedPeriode(defaultPeriode);
+      setSelectedYear(String(prevYear));
+      setSelectedPeriode(`Q${prevQ}`);
     };
 
     const handleEditKendala = (item: any) => {
@@ -515,13 +525,29 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
         {/* Data Table Card */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <CardTitle>Ringkasan Laporan KPPN</CardTitle>
-              <Badge
-                variant={statusLaporan === "sent" ? "success" : "destructive"}
-              >
-                {statusLaporan === "sent" ? "Sudah Dikirim" : "Belum Dikirim"}
-              </Badge>
+              <div className="flex flex-wrap items-center gap-3">
+                <Badge
+                  variant={statusLaporan === "sent" ? "success" : "destructive"}
+                  className="px-3 py-1 text-xs font-semibold uppercase tracking-wider shadow-sm"
+                >
+                  {statusLaporan === "sent" ? "Sudah Dikirim" : "Belum Dikirim"}
+                </Badge>
+                
+                {statusLaporan === "sent" && tglKirimKppn && (
+                  <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground bg-muted/30 px-3 py-1.5 rounded-lg border border-border/50">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5 text-blue-500" />
+                      <span>{new Date(tglKirimKppn).toLocaleDateString("id-ID", { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 border-l border-border/50 pl-4">
+                      <Clock className="h-3.5 w-3.5 text-amber-500" />
+                      <span>{new Date(tglKirimKppn).toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' })} WIB</span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent>
