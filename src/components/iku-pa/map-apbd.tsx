@@ -127,6 +127,7 @@ export default function MapApbd() {
   const mapRef = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const layerRef = useRef<any>(null);
+  const fittedRef = useRef(false);
 
   const [triwulan, setTriwulan] = useState(1);
   const [data, setData] = useState<KanwilRow[]>([]);
@@ -157,7 +158,7 @@ export default function MapApbd() {
         attributionControl: false,
         scrollWheelZoom: true,
         zoomControl: true,
-      }).setView([-2, 118], 5);
+      }).setView([-2, 118], 6);
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
         attribution: "© OpenStreetMap contributors",
@@ -234,14 +235,6 @@ export default function MapApbd() {
 
       layer.addTo(mapRef.current);
       layerRef.current = layer;
-
-      if (data.length > 0) {
-        try {
-          mapRef.current.fitBounds(layer.getBounds(), { padding: [20, 20] });
-        } catch {
-          /* kosong */
-        }
-      }
     });
   }, [data, dataMap]);
 
@@ -287,6 +280,43 @@ export default function MapApbd() {
     }
   }, []);
 
+  const downloadExcel = useCallback(() => {
+    if (!detailData.length || !selectedKanwil) return;
+    const maxMonth = triwulan * 3;
+    const headers = [
+      "Pemerintah Daerah",
+      "Kategori",
+      "Kode Akun",
+      "Nama Akun",
+      "Pagu",
+      ...MONTH_LABELS.slice(0, maxMonth),
+      `Total s.d. Tw ${["I", "II", "III", "IV"][triwulan - 1]}`,
+      "%",
+    ];
+    const rows = detailData.map((row) => [
+      row.nmpemda,
+      row.nmakun1,
+      row.akun2,
+      row.nmakun2,
+      row.pagu,
+      ...Array.from({ length: maxMonth }, (_, j) => getReal(row, j + 1)),
+      row.realisasi,
+      row.persen.toFixed(1),
+    ]);
+    const csv = [headers, ...rows]
+      .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob(["\uFEFF" + csv], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `detail-apbd-${selectedKanwil.name.replace(/\s+/g, "-")}-tw${triwulan}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [detailData, selectedKanwil, triwulan]);
+
   useEffect(() => {
     fetchData(triwulan);
   }, [triwulan, fetchData]);
@@ -330,7 +360,7 @@ export default function MapApbd() {
       <div
         ref={containerRef}
         className="w-full rounded-lg border border-yellow-400 overflow-hidden"
-        style={{ height: 560, background: "#b8b89a" }}
+        style={{ height: 750, background: "#b8b89a" }}
       />
 
       {/* â”€â”€ Tabel Legenda â”€â”€â”€ */}
@@ -409,13 +439,36 @@ export default function MapApbd() {
               Detail: {selectedKanwil.name} &mdash; Tw{" "}
               {["I", "II", "III", "IV"][triwulan - 1]}
             </span>
-            <button
-              type="button"
-              onClick={() => setSelectedKanwil(null)}
-              className="ml-2 text-white hover:text-yellow-300 font-bold"
-            >
-              ✕
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={downloadExcel}
+                disabled={!detailData.length}
+                className="flex items-center gap-1 px-2 py-0.5 rounded bg-green-700 hover:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold transition-colors"
+                title="Download Excel"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-3.5 h-3.5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                Excel
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedKanwil(null)}
+                className="text-white hover:text-yellow-300 font-bold"
+              >
+                ✕
+              </button>
+            </div>
           </div>
           {detailLoading ? (
             <div className="p-4 text-xs text-center text-gray-500 animate-pulse">
@@ -431,7 +484,7 @@ export default function MapApbd() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <div style={{ maxHeight: 340, overflowY: "auto" }}>
+              <div style={{ maxHeight: 500, overflowY: "auto" }}>
                 <table
                   className="border-collapse text-xs"
                   style={{ minWidth: "max-content", width: "100%" }}
@@ -442,10 +495,13 @@ export default function MapApbd() {
                         Pemerintah Daerah
                       </th>
                       <th className="border border-blue-700 px-2 py-1.5 text-left whitespace-nowrap">
-                        Kel. Akun
+                        Kategori
                       </th>
                       <th className="border border-blue-700 px-2 py-1.5 text-left whitespace-nowrap">
-                        Kategori
+                        Kode Akun
+                      </th>
+                      <th className="border border-blue-700 px-2 py-1.5 text-left whitespace-nowrap">
+                        Nama Akun
                       </th>
                       <th className="border border-blue-700 px-2 py-1.5 text-right whitespace-nowrap">
                         Pagu (Rp)
@@ -482,6 +538,9 @@ export default function MapApbd() {
                         </td>
                         <td className="border border-gray-200 px-2 py-1 text-[11px] text-gray-900 whitespace-nowrap">
                           {row.nmakun1}
+                        </td>
+                        <td className="border border-gray-200 px-2 py-1 text-[11px] text-gray-900 whitespace-nowrap">
+                          {row.akun2}
                         </td>
                         <td className="border border-gray-200 px-2 py-1 text-[11px] text-gray-900 whitespace-nowrap">
                           {row.nmakun2}
