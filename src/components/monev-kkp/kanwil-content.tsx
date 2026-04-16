@@ -251,6 +251,8 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
           onOpenChange={setIsEditModalOpen}
           data={selectedItem}
           onSaved={fetchRingkasanData}
+          tahun={selectedYear}
+          triwulan={selectedPeriode.replace("Q", "")}
         />
 
         <LihatKendalaModal
