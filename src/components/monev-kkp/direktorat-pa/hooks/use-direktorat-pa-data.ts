@@ -11,9 +11,30 @@ import {
 export const useDirektoratPaData = (contentType: string) => {
   const { user } = useAuth();
 
-  const now = new Date();
-  const defaultYear = "2026";
-  const defaultPeriode = `Q${Math.ceil((now.getMonth() + 1) / 3)}`;
+  // Get default periode selection: previous triwulan from current date
+  const getInitialPeriode = () => {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+    const currentQ = Math.ceil(currentMonth / 3);
+
+    let prevQ = currentQ - 1;
+    let prevYear = currentYear;
+
+    if (prevQ === 0) {
+      prevQ = 4;
+      prevYear = currentYear - 1;
+    }
+
+    return {
+      year: String(prevYear),
+      periode: `Q${prevQ}`,
+    };
+  };
+
+  const initial = getInitialPeriode();
+  const defaultYear = initial.year;
+  const defaultPeriode = initial.periode;
 
   // State for data
   const [ringkasanData, setRingkasanData] = useState<RingkasanData[]>([]);
