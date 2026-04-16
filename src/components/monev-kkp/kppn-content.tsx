@@ -459,7 +459,7 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
               >
                 <Eye className="h-4 w-4 text-amber-600" />
               </Button>
-              {hasKendalaData && (
+              {hasKendalaData && statusLaporan !== "sent" && (
                 <ConfirmationModal
                   trigger={
                     <Button
@@ -467,7 +467,6 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
                       size="sm"
                       className="h-8 w-8 p-0 cursor-pointer"
                       title="Hapus Kendala/Hambatan"
-                      disabled={statusLaporan === "sent"}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
