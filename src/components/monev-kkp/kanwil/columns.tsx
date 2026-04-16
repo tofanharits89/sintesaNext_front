@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil, Trash2, RotateCcw } from "lucide-react";
 import { RingkasanKanwilData, MonitoringKppnData } from "./types";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
@@ -243,6 +243,7 @@ export const getRingkasanColumns = (handlers: ColumnHandlers) => [
 
 interface MonitoringHandlers {
     onViewRingkasan: (item: MonitoringKppnData) => void;
+    onResetStatus: (item: MonitoringKppnData) => void;
 }
 
 export const getMonitoringColumns = (handlers: MonitoringHandlers) => [
@@ -351,6 +352,39 @@ export const getMonitoringColumns = (handlers: MonitoringHandlers) => [
         >
           <Eye className="h-4 w-4 text-amber-600" />
         </Button>
+      </div>
+    ),
+  },
+  {
+    id: "pengembalian",
+    header: () => (
+      <div className="text-center font-medium pr-4">Pengembalian</div>
+    ),
+    cell: ({ row }: any) => (
+      <div className="flex items-center justify-center pr-4">
+        <ConfirmationModal
+          trigger={
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0 cursor-pointer"
+              title={
+                row.original.status === "sent" 
+                  ? "Kembalikan laporan ke status Belum Kirim" 
+                  : "Laporan belum dikirim"
+              }
+              disabled={row.original.status !== "sent"}
+            >
+              <RotateCcw className={`h-4 w-4 ${row.original.status === "sent" ? "text-rose-600" : "text-muted-foreground"}`} />
+            </Button>
+          }
+          title="Kembalikan Laporan?"
+          description={`Apakah Anda yakin ingin mengembalikan laporan KPPN ${row.original.nmkppn} ke status Belum Kirim? Hal ini juga akan mereset status laporan Kanwil untuk periode ini.`}
+          confirmText="Ya, Kembalikan"
+          cancelText="Batal"
+          variant="destructive"
+          onConfirm={() => handlers.onResetStatus(row.original)}
+        />
       </div>
     ),
   },
