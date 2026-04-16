@@ -23,7 +23,7 @@ import {
   type AlertDialogActionProps as AlertDialogActionPrimitiveProps,
   type AlertDialogCancelProps as AlertDialogCancelPrimitiveProps,
 } from '@/components/animate-ui/primitives/radix/alert-dialog';
-import { buttonVariants } from '@/components/animate-ui/components/buttons/button';
+import { Button, buttonVariants } from '@/components/animate-ui/components/buttons/button';
 import { cn } from '@/lib/utils';
 
 type AlertDialogProps = AlertDialogPrimitiveProps;
@@ -120,13 +120,13 @@ type AlertDialogActionProps = AlertDialogActionPrimitiveProps;
 
 function AlertDialogAction({
   className,
+  children,
   ...props
 }: AlertDialogActionPrimitiveProps) {
   return (
-    <AlertDialogActionPrimitive
-      className={cn(buttonVariants(), className)}
-      {...props}
-    />
+    <AlertDialogActionPrimitive asChild {...props}>
+      <Button className={className}>{children}</Button>
+    </AlertDialogActionPrimitive>
   );
 }
 
@@ -134,13 +134,15 @@ type AlertDialogCancelProps = AlertDialogCancelPrimitiveProps;
 
 function AlertDialogCancel({
   className,
+  children,
   ...props
 }: AlertDialogCancelPrimitiveProps) {
   return (
-    <AlertDialogCancelPrimitive
-      className={cn(buttonVariants({ variant: 'outline' }), className)}
-      {...props}
-    />
+    <AlertDialogCancelPrimitive asChild {...props}>
+      <Button variant="outline" className={className}>
+        {children}
+      </Button>
+    </AlertDialogCancelPrimitive>
   );
 }
 
