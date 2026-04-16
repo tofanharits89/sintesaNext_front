@@ -22,7 +22,14 @@ interface DatePickerProps {
   disabled?: boolean
   className?: string
   showTime?: boolean
+  captionLayout?: "label" | "dropdown" | "dropdown-months" | "dropdown-years"
+  startMonth?: Date
+  endMonth?: Date
+  locale?: Locale
 }
+
+import { id } from "date-fns/locale/id"
+import { Locale } from "date-fns"
 
 export function DatePicker({
   date,
@@ -31,6 +38,10 @@ export function DatePicker({
   disabled = false,
   className,
   showTime = false,
+  captionLayout = "label",
+  startMonth,
+  endMonth,
+  locale = id,
 }: DatePickerProps) {
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(date)
   const [timeValue, setTimeValue] = React.useState<string>(
@@ -85,9 +96,9 @@ export function DatePicker({
           <CalendarIcon className="mr-2 h-4 w-4" />
           {selectedDate ? (
             showTime ? (
-              format(selectedDate, "PPP HH:mm")
+              format(selectedDate, "dd-MM-yyyy HH:mm", { locale })
             ) : (
-              format(selectedDate, "PPP")
+              format(selectedDate, "dd-MM-yyyy", { locale })
             )
           ) : (
             <span>{placeholder}</span>
@@ -100,6 +111,10 @@ export function DatePicker({
           selected={selectedDate}
           onSelect={handleDateSelect}
           initialFocus
+          captionLayout={captionLayout}
+          {...(startMonth && { startMonth })}
+          {...(endMonth && { endMonth })}
+          locale={locale}
         />
         {showTime && (
           <div className="p-3 border-t">

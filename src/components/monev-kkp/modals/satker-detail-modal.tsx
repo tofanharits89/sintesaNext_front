@@ -367,6 +367,9 @@ export function SatkerDetailModal({
                     onDateChange={setTanggalPks}
                     placeholder="Pilih Tanggal PKS"
                     className="bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors"
+                    captionLayout="dropdown"
+                    startMonth={new Date(2000, 0)}
+                    endMonth={new Date(new Date().getFullYear() + 10, 11)}
                   />
                 </div>
               </div>
@@ -383,7 +386,7 @@ export function SatkerDetailModal({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="tanggal_surat_up">Tanggal Surat Penetapan UP</Label>
-                  <Input id="tanggal_surat_up" value={data.tanggal_surat_up ? format(new Date(data.tanggal_surat_up), "PPP") : "-"} disabled className="bg-zinc-100/50 dark:bg-black/50 cursor-not-allowed" />
+                  <Input id="tanggal_surat_up" value={data.tanggal_surat_up ? format(new Date(data.tanggal_surat_up), "dd-MM-yyyy") : "-"} disabled className="bg-zinc-100/50 dark:bg-black/50 cursor-not-allowed" />
                 </div>
               </div>
 
@@ -405,6 +408,9 @@ export function SatkerDetailModal({
                     onDateChange={setTanggalDispen}
                     placeholder="Pilih Tanggal Dispensasi"
                     className="bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors"
+                    captionLayout="dropdown"
+                    startMonth={new Date(2000, 0)}
+                    endMonth={new Date(new Date().getFullYear() + 10, 11)}
                   />
                 </div>
               </div>
