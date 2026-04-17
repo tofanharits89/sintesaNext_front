@@ -244,9 +244,11 @@ export const getRingkasanColumns = (handlers: ColumnHandlers) => [
 interface MonitoringHandlers {
     onViewRingkasan: (item: MonitoringKppnData) => void;
     onResetStatus: (item: MonitoringKppnData) => void;
+    showPengembalian?: boolean;
 }
 
-export const getMonitoringColumns = (handlers: MonitoringHandlers) => [
+export const getMonitoringColumns = (handlers: MonitoringHandlers) => {
+  const columns = [
   {
     id: "no",
     header: () => <div className="text-center font-medium">No</div>,
@@ -389,3 +391,10 @@ export const getMonitoringColumns = (handlers: MonitoringHandlers) => [
     ),
   },
 ];
+
+  if (!handlers.showPengembalian) {
+    return columns.filter(col => col.id !== "pengembalian");
+  }
+  
+  return columns;
+};

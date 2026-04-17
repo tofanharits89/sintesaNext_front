@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, forwardRef, useImperativeHandle } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { RingkasanLaporanModal } from "./modals/ringkasan-laporan-modal";
@@ -49,6 +50,9 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
     },
     ref,
   ) {
+    const { user } = useAuth();
+    const isSuperAdminOrCoAdmin = user?.role === "super_admin" || user?.role === "co_admin";
+
     const {
       ringkasanData,
       monitoringData,
@@ -233,6 +237,7 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
     const monitoringHandlers = {
       onViewRingkasan: handleViewRingkasan,
       onResetStatus: handleResetStatus,
+      showPengembalian: isSuperAdminOrCoAdmin,
     };
 
     const columns = contentType === "ringkasan" 
