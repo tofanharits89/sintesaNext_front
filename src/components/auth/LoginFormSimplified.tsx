@@ -222,25 +222,9 @@ export default function SimplifiedLoginForm() {
 
         // Wait for auth to be loaded before redirecting
         // This ensures user data is available when dashboard mounts
+        // Auth state is now loaded (waited for in useAuth.login), 
+        // the useEffect above will handle the redirect reactively.
         setIsRedirecting(true);
-        
-        // Poll for auth to be loaded (max 5 seconds)
-        let attempts = 0;
-        const maxAttempts = 50; // 50 * 100ms = 5 seconds
-        
-        const waitForAuth = setInterval(() => {
-          attempts++;
-          
-          // Check if user data is loaded
-          if (user && !isLoading) {
-            clearInterval(waitForAuth);
-            router.push("/dashboard/utama");
-          } else if (attempts >= maxAttempts) {
-            // Timeout - redirect anyway
-            clearInterval(waitForAuth);
-            router.push("/dashboard/utama");
-          }
-        }, 100);
       } else {
         throw new Error(result.error || "Login gagal");
       }
