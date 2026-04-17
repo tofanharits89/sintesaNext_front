@@ -129,7 +129,7 @@ export default function UsersPage() {
 
   // simple pagination
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(10);
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
 
@@ -449,30 +449,14 @@ export default function UsersPage() {
           onRoleFilterChange={setRole}
           statusFilter={status}
           onStatusFilterChange={setStatus}
+          totalCount={filtered.length}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
         />
       </Suspense>
-
-      <div className="mt-4 flex items-center justify-between">
-        <div className="text-xs text-muted-foreground">
-          {filtered.length} data • Halaman {page} dari {pageCount}
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="secondary"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-          >
-            Sebelumnya
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-            disabled={page === pageCount}
-          >
-            Berikutnya
-          </Button>
-        </div>
-      </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent showCloseButton={false} className="sm:max-w-[700px] w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">

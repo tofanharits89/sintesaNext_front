@@ -25,6 +25,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Pencil, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import kanwilData from "@/data/kdkanwil.json";
 import kppnData from "@/data/kdkppn.json";
@@ -45,6 +54,9 @@ interface ModernUsersTableProps {
   onRoleFilterChange: (role: string) => void;
   statusFilter: string;
   onStatusFilterChange: (status: string) => void;
+  totalCount: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
 }
 
 const columnHelper = createColumnHelper<User>();
@@ -64,6 +76,9 @@ export function ModernUsersTable({
   onRoleFilterChange,
   statusFilter,
   onStatusFilterChange,
+  totalCount,
+  onPageChange,
+  onPageSizeChange,
 }: ModernUsersTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -97,12 +112,12 @@ export function ModernUsersTable({
       }),
       columnHelper.display({
         id: "number",
-        header: "No",
+        header: () => <div className="text-center w-full">No</div>,
         cell: ({ row }) => (
           <div className="text-center font-medium text-muted-foreground">
             {(currentPage - 1) * pageSize + row.index + 1}
           </div>
-        ),
+        ) ,
         enableSorting: false,
         size: 60,
       }),
@@ -251,32 +266,32 @@ export function ModernUsersTable({
 
       columnHelper.display({
         id: "actions",
-        header: "Aksi",
+        header: () => <div className="text-center w-full">Aksi</div>,
         cell: ({ row }) => (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center justify-center gap-2">
             <Button
-              variant="ghost"
-              size="icon"
+              variant="outline"
+              size="sm"
               onClick={(e) => {
                 e.stopPropagation();
                 onEdit(row.original);
               }}
-              className="h-8 w-8 hover:bg-blue-100 hover:text-blue-600"
-              aria-label="Edit pengguna"
+              className="h-8 w-8 p-0 cursor-pointer"
+              title="Edit Pengguna"
             >
-              <Pencil className="h-4 w-4" />
+              <Pencil className="h-4 w-4 text-blue-600" />
             </Button>
             <Button
-              variant="ghost"
-              size="icon"
+              variant="outline"
+              size="sm"
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete(row.original.id, row.original.name);
               }}
-              className="h-8 w-8 hover:bg-red-100 hover:text-red-600"
-              aria-label="Hapus pengguna"
+              className="h-8 w-8 p-0 cursor-pointer"
+              title="Hapus Pengguna"
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-4 w-4 text-red-600" />
             </Button>
           </div>
         ),
@@ -353,7 +368,8 @@ export function ModernUsersTable({
                       <th
                         key={header.id}
                         className={cn(
-                          "h-10 px-2 text-left align-middle font-medium [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+                          "h-10 px-2 align-middle font-medium [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+                          (header.id === "actions" || header.id === "number") ? "text-center" : "text-left",
                           header.column.getCanSort() && "cursor-pointer select-none"
                         )}
                         style={{ width: header.getSize() }}
@@ -378,7 +394,10 @@ export function ModernUsersTable({
                     {row.getVisibleCells().map((cell) => (
                       <td
                         key={cell.id}
-                        className="p-2 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]"
+                        className={cn(
+                          "p-2 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+                          (cell.column.id === "actions" || cell.column.id === "number") ? "text-center" : "text-left"
+                        )}
                         style={{ width: cell.column.getSize() }}
                       >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -396,6 +415,142 @@ export function ModernUsersTable({
               </div>
             </div>
           )}
+        </div>
+        <div className="flex flex-col md:grid md:grid-cols-3 items-center justify-between gap-4 py-4 mt-2">
+          {/* Left: Rows per page */}
+          <div className="flex items-center space-x-2 order-2 md:order-1">
+            <p className="text-sm font-medium">Rows per page</p>
+            <Select
+              value={`${pageSize}`}
+              onValueChange={(value) => {
+                onPageSizeChange(Number(value));
+              }}
+            >
+              <SelectTrigger className="h-8 w-[80px]">
+                <SelectValue placeholder={pageSize} />
+              </SelectTrigger>
+              <SelectContent side="top">
+                {[10, 25, 50, 100].map((size) => (
+                  <SelectItem key={size} value={`${size}`}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Center: Pagination */}
+          <div className="flex items-center justify-center order-1 md:order-2 w-full md:w-auto">
+            <Pagination className="mx-auto overflow-x-auto no-scrollbar justify-center">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+                    className={cn(
+                      "cursor-pointer select-none",
+                      currentPage === 1 && "pointer-events-none opacity-50"
+                    )}
+                  />
+                </PaginationItem>
+
+                {/* Page numbers logic */}
+                {(() => {
+                  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
+                  const totalPage = pageCount;
+                  const current = currentPage;
+                  const items = [];
+
+                  if (totalPage <= 7) {
+                    for (let i = 1; i <= totalPage; i++) {
+                      items.push(
+                        <PaginationItem key={i}>
+                          <PaginationLink
+                            isActive={current === i}
+                            onClick={() => onPageChange(i)}
+                            className="cursor-pointer select-none"
+                          >
+                            {i}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    }
+                  } else {
+                    // Always show first
+                    items.push(
+                      <PaginationItem key={1}>
+                        <PaginationLink
+                          isActive={current === 1}
+                          onClick={() => onPageChange(1)}
+                          className="cursor-pointer select-none"
+                        >
+                          1
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+
+                    if (current > 3) {
+                      items.push(<PaginationEllipsis key="left-ellipsis" />);
+                    }
+
+                    // Middle pages
+                    const start = Math.max(2, current - 1);
+                    const end = Math.min(totalPage - 1, current + 1);
+
+                    for (let i = start; i <= end; i++) {
+                      items.push(
+                        <PaginationItem key={i}>
+                          <PaginationLink
+                            isActive={current === i}
+                            onClick={() => onPageChange(i)}
+                            className="cursor-pointer select-none"
+                          >
+                            {i}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    }
+
+                    if (current < totalPage - 2) {
+                      items.push(<PaginationEllipsis key="right-ellipsis" />);
+                    }
+
+                    // Always show last
+                    items.push(
+                      <PaginationItem key={totalPage}>
+                        <PaginationLink
+                          isActive={current === totalPage}
+                          onClick={() => onPageChange(totalPage)}
+                          className="cursor-pointer select-none"
+                        >
+                          {totalPage}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  }
+                  return items;
+                })()}
+
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => {
+                      const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
+                      onPageChange(Math.min(pageCount, currentPage + 1));
+                    }}
+                    className={cn(
+                      "cursor-pointer select-none",
+                      currentPage >= Math.max(1, Math.ceil(totalCount / pageSize)) && "pointer-events-none opacity-50"
+                    )}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+
+          {/* Right: Showing entries text */}
+          <div className="text-sm text-muted-foreground whitespace-nowrap order-3 md:text-right">
+            Showing {totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1}-
+            {Math.min(currentPage * pageSize, totalCount)} of {totalCount} entries
+          </div>
         </div>
       </CardContent>
     </Card>
