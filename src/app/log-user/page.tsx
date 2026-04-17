@@ -45,6 +45,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+
 import { getRoleDisplayName } from "@/shared/rbac";
 import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/components/animate-ui/components/animate/tabs";
 
@@ -71,23 +80,27 @@ export default function LogUserPage() {
   const {
     weeklyStats,
     loginHistory,
+    pagination,
     isLoading: isLoadingStats,
     error: statsError,
     fetchWeeklyStats,
     fetchLoginHistory,
   } = useLoginHistory();
 
+  const [historyPage, setHistoryPage] = useState(1);
+  const itemsPerPage = 20;
+
   // Guard: only super_admin and co_admin
   const allowed =
     currentUser?.role === "super_admin" || currentUser?.role === "co_admin";
 
-  // Fetch login history on component mount
+  // Fetch login history when tab is active or page changes
   useEffect(() => {
-    if (allowed) {
-      console.log("[LogUser] Fetching login history...");
-      fetchLoginHistory(10);
+    if (allowed && active === "history") {
+      console.log(`[LogUser] Fetching login history page ${historyPage}...`);
+      fetchLoginHistory(itemsPerPage, (historyPage - 1) * itemsPerPage);
     }
-  }, [allowed, fetchLoginHistory]);
+  }, [allowed, active, historyPage, fetchLoginHistory]);
 
   // Debug: Data state changes
   useEffect(() => {
@@ -479,7 +492,7 @@ export default function LogUserPage() {
         </TabsContent>
 
         <TabsContent value="history">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="flex flex-col gap-6">
             {/* Weekly Login Chart */}
             <Card>
               <CardHeader>
@@ -580,7 +593,10 @@ export default function LogUserPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => fetchLoginHistory(20, 0)}
+                    onClick={() => {
+                      setHistoryPage(1);
+                      fetchLoginHistory(itemsPerPage, 0);
+                    }}
                     disabled={isLoadingStats}
                     className="h-8 w-8 p-0"
                   >
@@ -613,45 +629,109 @@ export default function LogUserPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-3 max-h-80 overflow-y-auto">
-                    {loginHistory && loginHistory.length > 0 ? (
-                      loginHistory.map((entry) => {
-                        const loginTime = new Date(entry.loginTimestamp);
-                        const timeAgo = calculateLoginDuration(entry.loginTimestamp);
+                  <div className="space-y-4">
+                    <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+                      {loginHistory && loginHistory.length > 0 ? (
+                        loginHistory.map((entry) => {
+                          const loginTime = new Date(entry.loginTimestamp);
+                          const timeAgo = calculateLoginDuration(entry.loginTimestamp);
 
-                        return (
-                          <div
-                            key={entry.id}
-                            className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                          >
-                            <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                                <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          return (
+                            <div
+                              key={entry.id}
+                              className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="flex items-center space-x-3">
+                                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                                  <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <div>
+                                  <p className="font-medium text-sm">{entry.userName || entry.username}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {entry.userRole} {entry.nmkppn || entry.nmkanwil ? `| ${entry.nmkppn || entry.nmkanwil}` : ""}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Lokasi: {entry.location || "Tidak diketahui"}
+                                  </p>
+                                  <p className="text-[10px] text-muted-foreground font-mono">IP: {entry.ipAddress || "-"}</p>
+                                </div>
                               </div>
-                              <div>
-                                <p className="font-medium text-sm">{entry.userName || entry.username}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {entry.userRole} {entry.nmkppn || entry.nmkanwil ? `| ${entry.nmkppn || entry.nmkanwil}` : ""}
+                              <div className="text-right">
+                                <p className="text-xs font-medium">
+                                  {loginTime.toLocaleString("id-ID", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                                 </p>
-                                <p className="text-xs text-muted-foreground">
-                                  Lokasi: {entry.location || "Tidak diketahui"}
-                                </p>
-                                <p className="text-[10px] text-muted-foreground font-mono">IP: {entry.ipAddress || "-"}</p>
+                                <p className="text-xs text-muted-foreground">{timeAgo}</p>
                               </div>
                             </div>
-                            <div className="text-right">
-                              <p className="text-xs font-medium">
-                                {loginTime.toLocaleString("id-ID", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
-                              </p>
-                              <p className="text-xs text-muted-foreground">{timeAgo}</p>
-                            </div>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="text-center py-8">
-                        <User className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                        <p className="text-sm text-muted-foreground">Belum ada riwayat login</p>
+                          );
+                        })
+                      ) : (
+                        <div className="text-center py-8">
+                          <User className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                          <p className="text-sm text-muted-foreground">Belum ada riwayat login</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Pagination Controls */}
+                    {pagination && pagination.totalPages > 1 && (
+                      <div className="pt-4 border-t">
+                        <Pagination>
+                          <PaginationContent>
+                            <PaginationItem>
+                              <PaginationPrevious
+                                onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
+                                className={cn(
+                                  "cursor-pointer",
+                                  historyPage === 1 && "pointer-events-none opacity-50"
+                                )}
+                              />
+                            </PaginationItem>
+
+                            {/* Show a limited number of page numbers */}
+                            {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                              // Simple pagination window logic
+                              let pageNum = i + 1;
+                              if (pagination.totalPages > 5) {
+                                if (historyPage > 3) {
+                                  pageNum = historyPage - 2 + i;
+                                  if (pageNum > pagination.totalPages) {
+                                    pageNum = pagination.totalPages - 4 + i;
+                                  }
+                                }
+                              }
+
+                              if (pageNum <= 0 || pageNum > pagination.totalPages) return null;
+
+                              return (
+                                <PaginationItem key={pageNum}>
+                                  <PaginationLink
+                                    isActive={historyPage === pageNum}
+                                    onClick={() => setHistoryPage(pageNum)}
+                                    className="cursor-pointer"
+                                  >
+                                    {pageNum}
+                                  </PaginationLink>
+                                </PaginationItem>
+                              );
+                            })}
+
+                            <PaginationItem>
+                              <PaginationNext
+                                onClick={() =>
+                                  setHistoryPage((p) => Math.min(pagination.totalPages, p + 1))
+                                }
+                                className={cn(
+                                  "cursor-pointer",
+                                  historyPage === pagination.totalPages && "pointer-events-none opacity-50"
+                                )}
+                              />
+                            </PaginationItem>
+                          </PaginationContent>
+                        </Pagination>
+                        <div className="text-center mt-2 text-xs text-muted-foreground">
+                          Halaman {historyPage} dari {pagination.totalPages} ({pagination.totalItems} total entri)
+                        </div>
                       </div>
                     )}
                   </div>
