@@ -551,7 +551,9 @@ export default function LogUserPage() {
                               <Tooltip
                                 content={({ active, payload, label }) => {
                                   if (active && payload && payload.length) {
-                                    const data = payload[0].payload;
+                                    const entry = payload[0];
+                                    if (!entry) return null;
+                                    const data = entry.payload;
                                     return (
                                       <div className="bg-background border rounded-lg p-3 shadow-lg">
                                         <p className="font-medium">{label}</p>
@@ -559,7 +561,7 @@ export default function LogUserPage() {
                                           <p className="text-sm text-muted-foreground">{data.date}</p>
                                         )}
                                         <p className="text-sm">
-                                          <span className="font-medium text-blue-600">{payload[0].value}</span> login unik
+                                          <span className="font-medium text-blue-600">{entry.value}</span> login unik
                                         </p>
                                       </div>
                                     );
