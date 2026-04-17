@@ -3,17 +3,21 @@
  * Provides optimized caching strategies based on data characteristics
  */
 
-import { UseQueryOptions, UseInfiniteQueryOptions, type QueryKey } from '@tanstack/react-query'
+import {
+  UseQueryOptions,
+  UseInfiniteQueryOptions,
+  type QueryKey,
+} from "@tanstack/react-query";
 
 // Base configuration types
 export interface QueryConfig {
-  staleTime: number
-  gcTime: number
-  retry: number | ((failureCount: number, error: Error) => boolean)
-  retryDelay: number | ((retryAttempt: number) => number)
-  refetchOnWindowFocus: boolean
-  refetchOnReconnect: boolean
-  refetchInterval: number | false
+  staleTime: number;
+  gcTime: number;
+  retry: number | ((failureCount: number, error: Error) => boolean);
+  retryDelay: number | ((retryAttempt: number) => number);
+  refetchOnWindowFocus: boolean;
+  refetchOnReconnect: boolean;
+  refetchInterval: number | false;
 }
 
 // Predefined configurations for different data types
@@ -23,7 +27,8 @@ export const queryConfigs = {
     staleTime: 30 * 60 * 1000, // 30 minutes
     gcTime: 60 * 60 * 1000, // 1 hour
     retry: 3,
-    retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retryDelay: (attemptIndex: number) =>
+      Math.min(1000 * 2 ** attemptIndex, 30000),
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     refetchInterval: false,
@@ -67,7 +72,8 @@ export const queryConfigs = {
     staleTime: 1 * 60 * 1000, // 1 minute
     gcTime: 5 * 60 * 1000, // 5 minutes
     retry: 3,
-    retryDelay: (attemptIndex: number) => Math.min(500 * 2 ** attemptIndex, 3000),
+    retryDelay: (attemptIndex: number) =>
+      Math.min(500 * 2 ** attemptIndex, 3000),
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     refetchInterval: false,
@@ -78,7 +84,8 @@ export const queryConfigs = {
     staleTime: 3 * 60 * 1000, // 3 minutes
     gcTime: 15 * 60 * 1000, // 15 minutes
     retry: 3,
-    retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 8000),
+    retryDelay: (attemptIndex: number) =>
+      Math.min(1000 * 2 ** attemptIndex, 8000),
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     refetchInterval: false,
@@ -94,25 +101,31 @@ export const queryConfigs = {
     refetchOnReconnect: false,
     refetchInterval: false,
   } as QueryConfig,
-} as const
+} as const;
 
 // Helper function to create typed query options
 export function createQueryOptions<
   TQueryFnData = unknown,
   TError = Error,
   TData = TQueryFnData,
-  TQueryKey extends QueryKey = QueryKey
+  TQueryKey extends QueryKey = QueryKey,
 >(
   configType: keyof typeof queryConfigs,
   overrides?: Partial<
-    Omit<UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>, 'queryKey' | 'queryFn'>
-  >
-): Omit<UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>, 'queryKey' | 'queryFn'> {
-  const config = queryConfigs[configType]
+    Omit<
+      UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
+      "queryKey" | "queryFn"
+    >
+  >,
+): Omit<
+  UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
+  "queryKey" | "queryFn"
+> {
+  const config = queryConfigs[configType];
   return {
     ...config,
     ...(overrides as any),
-  }
+  };
 }
 
 // Helper function to create typed infinite query options
@@ -121,100 +134,151 @@ export function createInfiniteQueryOptions<
   TError = Error,
   TData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey,
-  TPageParam = unknown
+  TPageParam = unknown,
 >(
   configType: keyof typeof queryConfigs,
   overrides?: Partial<
     Omit<
-      UseInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryKey, TPageParam>,
-      'queryKey' | 'queryFn'
+      UseInfiniteQueryOptions<
+        TQueryFnData,
+        TError,
+        TData,
+        TQueryKey,
+        TPageParam
+      >,
+      "queryKey" | "queryFn"
     >
-  >
+  >,
 ): Omit<
   UseInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryKey, TPageParam>,
-  'queryKey' | 'queryFn'
+  "queryKey" | "queryFn"
 > {
-  const config = queryConfigs[configType]
+  const config = queryConfigs[configType];
   return {
     ...config,
     ...(overrides as any),
-  }
+  };
 }
 
 // Query key factories for consistent cache management
-const scopedUserKey = (userId?: string | null) => userId ?? 'anonymous';
+const scopedUserKey = (userId?: string | null) => userId ?? "anonymous";
 
 export const queryKeyFactories = {
   // Financial data keys
   financial: {
-    all: () => ['financial'] as const,
+    all: () => ["financial"] as const,
     mbg: {
-      all: () => ['financial', 'mbg'] as const,
-      quickStats: () => [...queryKeyFactories.financial.mbg.all(), 'quickStats'] as const,
-      charts: () => [...queryKeyFactories.financial.mbg.all(), 'charts'] as const,
-      rankings: () => [...queryKeyFactories.financial.mbg.all(), 'rankings'] as const,
-      mapStats: (scope: 'national' | 'province' | 'regency', id?: string, provinceName?: string) =>
-        [...queryKeyFactories.financial.mbg.all(), 'mapStats', scope, id ?? 'all', provinceName ?? 'all'] as const,
+      all: () => ["financial", "mbg"] as const,
+      quickStats: () =>
+        [...queryKeyFactories.financial.mbg.all(), "quickStats"] as const,
+      charts: () =>
+        [...queryKeyFactories.financial.mbg.all(), "charts"] as const,
+      rankings: () =>
+        [...queryKeyFactories.financial.mbg.all(), "rankings"] as const,
+      mapStats: (
+        scope: "national" | "province" | "regency",
+        id?: string,
+        provinceName?: string,
+      ) =>
+        [
+          ...queryKeyFactories.financial.mbg.all(),
+          "mapStats",
+          scope,
+          id ?? "all",
+          provinceName ?? "all",
+        ] as const,
+      mapChoropleth: () =>
+        [...queryKeyFactories.financial.mbg.all(), "mapChoropleth"] as const,
+      provRankings: () =>
+        [...queryKeyFactories.financial.mbg.all(), "provRankings"] as const,
+      realisasiBgn: () =>
+        [...queryKeyFactories.financial.mbg.all(), "realisasiBgn"] as const,
+      sebaranPenerima: () =>
+        [...queryKeyFactories.financial.mbg.all(), "sebaranPenerima"] as const,
     },
   },
-  
+
   // Dashboard data keys
   dashboard: {
-    all: () => ['dashboard'] as const,
-    stats: () => [...queryKeyFactories.dashboard.all(), 'stats'] as const,
-    charts: () => [...queryKeyFactories.dashboard.all(), 'charts'] as const,
+    all: () => ["dashboard"] as const,
+    stats: () => [...queryKeyFactories.dashboard.all(), "stats"] as const,
+    charts: () => [...queryKeyFactories.dashboard.all(), "charts"] as const,
   },
 
   // User data keys (auth-related) - FIXED CONSISTENCY
   user: {
-    all: () => ['auth'] as const, // Keep 'auth' for backward compatibility
-    profile: () => ['auth', 'user'] as const, // SAME as login invalidation key
-    verify: () => [...queryKeyFactories.user.all(), 'verify'] as const,
-    preferences: () => [...queryKeyFactories.user.all(), 'preferences'] as const,
+    all: () => ["auth"] as const, // Keep 'auth' for backward compatibility
+    profile: () => ["auth", "user"] as const, // SAME as login invalidation key
+    verify: () => [...queryKeyFactories.user.all(), "verify"] as const,
+    preferences: () =>
+      [...queryKeyFactories.user.all(), "preferences"] as const,
   },
 
   // Messaging keys
   messaging: {
-    all: (userId?: string | null) => ['messaging', scopedUserKey(userId)] as const,
+    all: (userId?: string | null) =>
+      ["messaging", scopedUserKey(userId)] as const,
     conversations: (userId?: string | null) =>
-      [...queryKeyFactories.messaging.all(userId), 'conversations'] as const,
+      [...queryKeyFactories.messaging.all(userId), "conversations"] as const,
     messages: (userId?: string | null, conversationId?: string | null) =>
-      [...queryKeyFactories.messaging.all(userId), 'messages', conversationId ?? ''] as const,
+      [
+        ...queryKeyFactories.messaging.all(userId),
+        "messages",
+        conversationId ?? "",
+      ] as const,
     thread: (userId?: string | null, conversationId?: string | null) =>
-      [...queryKeyFactories.messaging.messages(userId, conversationId), 'thread'] as const,
+      [
+        ...queryKeyFactories.messaging.messages(userId, conversationId),
+        "thread",
+      ] as const,
   },
 
   // Search keys
   search: {
-    all: () => ['search'] as const,
-    results: (query: string) => [...queryKeyFactories.search.all(), 'results', query] as const,
+    all: () => ["search"] as const,
+    results: (query: string) =>
+      [...queryKeyFactories.search.all(), "results", query] as const,
   },
-} as const
+} as const;
 
 // Cache invalidation helpers
 export const cacheInvalidation = {
   invalidateUser: (queryClient: any, userId?: string) => {
-    queryClient.invalidateQueries({ queryKey: ['auth', 'user'] }) // Use SSOT key
+    queryClient.invalidateQueries({ queryKey: ["auth", "user"] }); // Use SSOT key
     if (userId) {
-      queryClient.invalidateQueries({ queryKey: ['auth', 'user', userId] })
+      queryClient.invalidateQueries({ queryKey: ["auth", "user", userId] });
     }
   },
 
   invalidateDashboard: (queryClient: any) => {
-    queryClient.invalidateQueries({ queryKey: queryKeyFactories.dashboard.all() })
-    queryClient.invalidateQueries({ queryKey: queryKeyFactories.dashboard.stats() })
-    queryClient.invalidateQueries({ queryKey: queryKeyFactories.dashboard.charts() })
+    queryClient.invalidateQueries({
+      queryKey: queryKeyFactories.dashboard.all(),
+    });
+    queryClient.invalidateQueries({
+      queryKey: queryKeyFactories.dashboard.stats(),
+    });
+    queryClient.invalidateQueries({
+      queryKey: queryKeyFactories.dashboard.charts(),
+    });
   },
 
   invalidateMessaging: (queryClient: any, conversationId?: string) => {
-    queryClient.invalidateQueries({ queryKey: queryKeyFactories.messaging.all() })
+    queryClient.invalidateQueries({
+      queryKey: queryKeyFactories.messaging.all(),
+    });
     if (conversationId) {
-      queryClient.invalidateQueries({ queryKey: queryKeyFactories.messaging.messages(conversationId) })
+      queryClient.invalidateQueries({
+        queryKey: queryKeyFactories.messaging.messages(conversationId),
+      });
     }
   },
 
   invalidateFinancial: (queryClient: any) => {
-    queryClient.invalidateQueries({ queryKey: queryKeyFactories.financial.all() })
-    queryClient.invalidateQueries({ queryKey: queryKeyFactories.financial.mbg.all() })
+    queryClient.invalidateQueries({
+      queryKey: queryKeyFactories.financial.all(),
+    });
+    queryClient.invalidateQueries({
+      queryKey: queryKeyFactories.financial.mbg.all(),
+    });
   },
-}
+};

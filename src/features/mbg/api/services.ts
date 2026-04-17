@@ -13,7 +13,7 @@ type MbgMapStatsApiResponse = {
 export async function getMapStats(
   scope: "national" | "province" | "regency",
   id?: string,
-  provinceName?: string
+  provinceName?: string,
 ): Promise<MapStats | null> {
   const params = new URLSearchParams();
   params.set("scope", scope);
@@ -22,7 +22,7 @@ export async function getMapStats(
   }
 
   const response = await apiClient.get<MbgMapStatsApiResponse>(
-    `/dashboard/mbg/map-stats?${params.toString()}`
+    `/dashboard/mbg/map-stats?${params.toString()}`,
   );
 
   if (!response?.success || !response.data) {
@@ -58,7 +58,9 @@ function formatCount(value: number): string {
 }
 
 export async function getQuickStats(): Promise<QuickStatView[]> {
-  const response = await apiClient.get<MbgQuickStatsApiResponse>("/dashboard/mbg/quick-stats");
+  const response = await apiClient.get<MbgQuickStatsApiResponse>(
+    "/dashboard/mbg/quick-stats",
+  );
 
   if (!response?.success || !response.data) {
     throw new Error("Failed to fetch MBG quick stats");
@@ -67,12 +69,36 @@ export async function getQuickStats(): Promise<QuickStatView[]> {
   const stats = response.data;
 
   return [
-    { label: "Total SPPG Aktif", value: formatCount(stats.jumlahsppg), variant: "neutral" },
-    { label: "Petugas SPPG", value: formatCount(stats.jumlahpetugas), variant: "neutral" },
-    { label: "Supplier MBG", value: formatCount(stats.jumlahsupplier), variant: "neutral" },
-    { label: "Kelompok Manfaat", value: formatCount(stats.jumlahkelompok), variant: "neutral" },
-    { label: "Penerima Manfaat", value: formatCount(stats.jumlahpenerima), variant: "neutral" },
-    { label: "Total Mitra", value: formatCount(stats.jumlahmitra), variant: "neutral" },
+    {
+      label: "Total SPPG Aktif",
+      value: formatCount(stats.jumlahsppg),
+      variant: "neutral",
+    },
+    {
+      label: "Petugas SPPG",
+      value: formatCount(stats.jumlahpetugas),
+      variant: "neutral",
+    },
+    {
+      label: "Supplier MBG",
+      value: formatCount(stats.jumlahsupplier),
+      variant: "neutral",
+    },
+    {
+      label: "Kelompok Manfaat",
+      value: formatCount(stats.jumlahkelompok),
+      variant: "neutral",
+    },
+    {
+      label: "Penerima Manfaat",
+      value: formatCount(stats.jumlahpenerima),
+      variant: "neutral",
+    },
+    {
+      label: "Total Mitra",
+      value: formatCount(stats.jumlahmitra),
+      variant: "neutral",
+    },
   ];
 }
 
@@ -105,6 +131,112 @@ export async function getRankings(): Promise<RankingsData> {
       percentage: Number(row.persen_penerima) || 0,
     })),
   };
+}
+
+export type MbgProvChoroplethRow = {
+  wilkode: string;
+  nama_provinsi: string;
+  jumlahsppg: number;
+  jumlahpetugas: number;
+  jumlahsupplier: number;
+  jumlahkelompok: number;
+  jumlahpenerima: number;
+  jumlahmitra: number;
+};
+
+export async function getMapChoropleth(): Promise<MbgProvChoroplethRow[]> {
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: MbgProvChoroplethRow[];
+  }>("/dashboard/mbg/map-choropleth");
+  if (!response?.success || !response.data) {
+    throw new Error("Failed to fetch MBG map choropleth");
+  }
+  return response.data;
+}
+
+export type PenerimaKabItem = {
+  provinsi: string;
+  kabkota: string;
+  penerimakab: number;
+  persen_penerimakab: number;
+};
+
+export async function getPenerimaByRegency(
+  prov: string,
+): Promise<PenerimaKabItem[]> {
+  const params = new URLSearchParams({ prov });
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: PenerimaKabItem[];
+  }>(`/dashboard/mbg/penerima-by-regency?${params.toString()}`);
+  if (!response?.success || !response.data) return [];
+  return response.data;
+}
+
+export type RankedItem = { name: string; value: number; percentage: number };
+
+export type ProvRankingsData = {
+  penerima: RankedItem[];
+  sppg: RankedItem[];
+  petugas: RankedItem[];
+};
+
+export async function getProvRankings(): Promise<ProvRankingsData> {
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: ProvRankingsData;
+  }>("/dashboard/mbg/province-rankings");
+  if (!response?.success || !response.data) {
+    throw new Error("Failed to fetch MBG province rankings");
+  }
+  return response.data;
+}
+
+export type BgnMonthlyPoint = {
+  month: string;
+  realisasi2025: number | null;
+  realisasi2026: number | null;
+};
+
+export type RealisasiBgnData = {
+  pagu2025: number;
+  pagu2026: number;
+  months: BgnMonthlyPoint[];
+};
+
+export async function getRealisasiBgn(): Promise<RealisasiBgnData> {
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: RealisasiBgnData;
+  }>("/dashboard/mbg/realisasi-bgn");
+  if (!response?.success || !response.data) {
+    throw new Error("Failed to fetch BGN realisasi data");
+  }
+  return response.data;
+}
+
+export type SebaranProvItem = {
+  nama_provinsi: string;
+  penerima2025: number;
+  penerima2026: number;
+  persen2025: number;
+  persen2026: number;
+};
+
+export type SebaranPenerimaData = {
+  items: SebaranProvItem[];
+};
+
+export async function getSebaranPenerima(): Promise<SebaranPenerimaData> {
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: SebaranPenerimaData;
+  }>("/dashboard/mbg/sebaran-penerima");
+  if (!response?.success || !response.data) {
+    throw new Error("Failed to fetch MBG sebaran penerima data");
+  }
+  return response.data;
 }
 
 export async function getChartsReady(): Promise<boolean> {
