@@ -22,6 +22,7 @@ import {
   FieldDescription,
 } from "@/components/ui/field";
 import { toast } from "sonner";
+import { Save, Lock } from "lucide-react";
 import kdkanwilData from "@/data/kdkanwil.json";
 import kdkppnData from "@/data/kdkppn.json";
 
@@ -84,6 +85,25 @@ export default function ProfilePage() {
     }
     const url = URL.createObjectURL(f);
     setAvatarUrl(url);
+  }
+
+  function onReset() {
+    if (current) {
+      setName(current.name ?? "");
+      setUsername(current.username ?? "");
+      setEmail(current.email ?? "");
+      setRole(current.role ?? "lainnya");
+      setLimitKodeBA(current.limitKodeBA ?? "");
+      setKdkanwil(current.kdkanwil ?? "");
+      setKdkppn(current.kdkppn ?? "");
+      setNmkanwil(current.nmkanwil ?? "");
+      setNmkppn(current.nmkppn ?? "");
+    }
+    setNewPassword("");
+    setConfirmPassword("");
+    setAvatarUrl(undefined);
+    toast.info("Perubahan dibatalkan");
+    refetch();
   }
 
   async function onSave() {
@@ -265,10 +285,13 @@ export default function ProfilePage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Profil Akun</h1>
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => refetch()}>
+          <Button variant="secondary" onClick={onReset}>
             Reset
           </Button>
-          <Button onClick={onSave}>Simpan</Button>
+          <Button onClick={onSave}>
+            <Save className="mr-2 h-4 w-4" />
+            Simpan
+          </Button>
         </div>
       </div>
 
@@ -531,16 +554,18 @@ export default function ProfilePage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-semibold">Keamanan</h2>
           <Button onClick={onChangePassword} disabled={changingPassword}>
+            <Lock className="mr-2 h-4 w-4" />
             {changingPassword ? "Menyimpan..." : "Ubah Password"}
           </Button>
         </div>
-        <FieldGroup>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Field>
             <FieldLabel htmlFor="newPassword">Password Baru</FieldLabel>
             <Input
               id="newPassword"
               type="password"
-              placeholder="••••••••"
+              autoComplete="new-password"
+              placeholder="Minimal 12 Karakter (terdapat huruf besar, angka & simbol)"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
             />
@@ -550,12 +575,13 @@ export default function ProfilePage() {
             <Input
               id="confirmPassword"
               type="password"
-              placeholder="••••••••"
+              autoComplete="new-password"
+              placeholder="Konfirmasi password baru"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
           </Field>
-        </FieldGroup>
+        </div>
       </div>
     </div>
   );
