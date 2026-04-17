@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { apiPath } from "@/lib/config/base-path";
+import { cn } from "@/lib/utils/utils";
 import { User } from "@/lib/stores/users-store";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
@@ -515,7 +516,7 @@ export default function UsersPage() {
                   />
                 </Field>
                 {!form.id && (
-                  <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Field>
                       <FieldLabel htmlFor="password">Password</FieldLabel>
                       <div className="relative">
@@ -523,6 +524,7 @@ export default function UsersPage() {
                           id="password"
                           type={showPassword ? "text" : "password"}
                           autoComplete="new-password"
+                          placeholder="Minimal 12 karakter, huruf besar, angka, dan simbol"
                           value={form.password}
                           onChange={(e) =>
                             setForm((f) => ({ ...f, password: e.target.value }))
@@ -555,6 +557,7 @@ export default function UsersPage() {
                           id="confirm-password"
                           type={showConfirmPassword ? "text" : "password"}
                           autoComplete="new-password"
+                          placeholder="Konfirmasi password"
                           value={form.confirmPassword}
                           onChange={(e) =>
                             setForm((f) => ({
@@ -583,72 +586,44 @@ export default function UsersPage() {
                         </Button>
                       </div>
                     </Field>
-                  </>
-                )}
-                <Field>
-                  <FieldLabel htmlFor="role">Role</FieldLabel>
-                  <Select
-                    value={form.role}
-                    onValueChange={(v) =>
-                      setForm((f) => ({
-                        ...f,
-                        role: v as any,
-                        kdkanwil: "",
-                        kdkppn: "",
-                      }))
-                    }
-                  >
-                    <SelectTrigger id="role" className="h-11">
-                      <SelectValue placeholder="Pilih role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="super_admin">Super Admin (X)</SelectItem>
-                      <SelectItem value="co_admin">Co-Admin (0)</SelectItem>
-                      <SelectItem value="kantor_pusat">Kantor Pusat (1)</SelectItem>
-                      <SelectItem value="ditpa">DIT PA (1)</SelectItem>
-                      <SelectItem value="kanwil_djpb">Kanwil DJPb (2)</SelectItem>
-                      <SelectItem value="kppn">KPPN (3)</SelectItem>
-                      <SelectItem value="lainnya">User Lainnya (4)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                {/* Conditional Kanwil DJPb Selection */}
-                {form.role === "kanwil_djpb" && (
+                  </div>
+                )}                <div className={cn(
+                  "grid grid-cols-1 gap-4",
+                  form.role === "kanwil_djpb" && "sm:grid-cols-2",
+                  form.role === "kppn" && "sm:grid-cols-3"
+                )}>
                   <Field>
-                    <FieldLabel htmlFor="pilih-kanwil-djpb">Pilih Kanwil DJPb</FieldLabel>
+                    <FieldLabel htmlFor="role">Role</FieldLabel>
                     <Select
-                      value={form.kdkanwil ?? ""}
-                      onValueChange={(v) => {
-                        const selectedKanwil = kdkanwilData.find(
-                          (k) => k.kdkanwil === v
-                        );
+                      value={form.role}
+                      onValueChange={(v) =>
                         setForm((f) => ({
                           ...f,
-                          kdkanwil: v,
-                          nmkanwil: selectedKanwil?.nmkanwil || "",
-                        }));
-                      }}
+                          role: v as any,
+                          kdkanwil: "",
+                          kdkppn: "",
+                        }))
+                      }
                     >
-                      <SelectTrigger id="pilih-kanwil-djpb" className="h-11">
-                        <SelectValue placeholder="Pilih Provinsi" />
+                      <SelectTrigger id="role" className="h-11">
+                        <SelectValue placeholder="Pilih role" />
                       </SelectTrigger>
                       <SelectContent>
-                        {kdkanwilData.map((kanwil) => (
-                          <SelectItem key={kanwil.kdkanwil} value={kanwil.kdkanwil}>
-                            {kanwil.nmkanwil}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="super_admin">Super Admin (X)</SelectItem>
+                        <SelectItem value="co_admin">Co-Admin (0)</SelectItem>
+                        <SelectItem value="kantor_pusat">Kantor Pusat (1)</SelectItem>
+                        <SelectItem value="ditpa">DIT PA (1)</SelectItem>
+                        <SelectItem value="kanwil_djpb">Kanwil DJPb (2)</SelectItem>
+                        <SelectItem value="kppn">KPPN (3)</SelectItem>
+                        <SelectItem value="lainnya">User Lainnya (4)</SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>
-                )}
 
-                {/* Conditional KPPN Selection */}
-                {form.role === "kppn" && (
-                  <>
+                  {/* Conditional Kanwil DJPb Selection */}
+                  {form.role === "kanwil_djpb" && (
                     <Field>
-                      <FieldLabel htmlFor="pilih-kanwil-kppn">Pilih Kanwil</FieldLabel>
+                      <FieldLabel htmlFor="pilih-kanwil-djpb">Pilih Kanwil DJPb</FieldLabel>
                       <Select
                         value={form.kdkanwil ?? ""}
                         onValueChange={(v) => {
@@ -659,13 +634,11 @@ export default function UsersPage() {
                             ...f,
                             kdkanwil: v,
                             nmkanwil: selectedKanwil?.nmkanwil || "",
-                            kdkppn: "",
-                            nmkppn: "",
                           }));
                         }}
                       >
-                        <SelectTrigger id="pilih-kanwil-kppn" className="h-11">
-                          <SelectValue placeholder="Pilih Kanwil" />
+                        <SelectTrigger id="pilih-kanwil-djpb" className="h-11">
+                          <SelectValue placeholder="Pilih Provinsi" />
                         </SelectTrigger>
                         <SelectContent>
                           {kdkanwilData.map((kanwil) => (
@@ -676,11 +649,45 @@ export default function UsersPage() {
                         </SelectContent>
                       </Select>
                     </Field>
+                  )}
 
-                    {form.kdkanwil && (
+                  {/* Conditional KPPN Selection */}
+                  {form.role === "kppn" && (
+                    <>
+                      <Field>
+                        <FieldLabel htmlFor="pilih-kanwil-kppn">Pilih Kanwil</FieldLabel>
+                        <Select
+                          value={form.kdkanwil ?? ""}
+                          onValueChange={(v) => {
+                            const selectedKanwil = kdkanwilData.find(
+                              (k) => k.kdkanwil === v
+                            );
+                            setForm((f) => ({
+                              ...f,
+                              kdkanwil: v,
+                              nmkanwil: selectedKanwil?.nmkanwil || "",
+                              kdkppn: "",
+                              nmkppn: "",
+                            }));
+                          }}
+                        >
+                          <SelectTrigger id="pilih-kanwil-kppn" className="h-11">
+                            <SelectValue placeholder="Pilih Kanwil" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {kdkanwilData.map((kanwil) => (
+                              <SelectItem key={kanwil.kdkanwil} value={kanwil.kdkanwil}>
+                                {kanwil.nmkanwil}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </Field>
+
                       <Field>
                         <FieldLabel htmlFor="pilih-kppn">Pilih KPPN</FieldLabel>
                         <Select
+                          disabled={!form.kdkanwil}
                           value={form.kdkppn ?? ""}
                           onValueChange={(v) => {
                             const selectedKppn = filteredKppn.find(
@@ -705,9 +712,9 @@ export default function UsersPage() {
                           </SelectContent>
                         </Select>
                       </Field>
-                    )}
-                  </>
-                )}
+                    </>
+                  )}
+                </div>
                 <Field>
                   <FieldLabel htmlFor="limit-kode-ba">Limit Kode BA</FieldLabel>
                   <Input
