@@ -234,7 +234,7 @@ export const DirektoratPaContent = forwardRef<
   const uniqueKanwilsMap = new Map<string, string>();
   ringkasanData.forEach((d) => {
     if (d.kodeKanwil && !uniqueKanwilsMap.has(d.kodeKanwil)) {
-      uniqueKanwilsMap.set(d.kodeKanwil, d.namaLokasi || d.kodeKanwil);
+      uniqueKanwilsMap.set(d.kodeKanwil, `${d.kodeKanwil} - ${d.namaLokasi || d.kodeKanwil}`);
     }
   });
   uniqueKanwilsMap.forEach((label, value) => kanwilList.push({ value, label }));
@@ -252,7 +252,7 @@ export const DirektoratPaContent = forwardRef<
   const uniqueMonKanwilsMap = new Map<string, string>();
   monitoringKanwilData.forEach((d) => {
     if (d.kdkanwil && !uniqueMonKanwilsMap.has(d.kdkanwil)) {
-      uniqueMonKanwilsMap.set(d.kdkanwil, d.nmlokasi || d.kdkanwil);
+      uniqueMonKanwilsMap.set(d.kdkanwil, `${d.kdkanwil} - ${d.nmlokasi || d.kdkanwil}`);
     }
   });
   uniqueMonKanwilsMap.forEach((label, value) => monitoringKanwilList.push({ value, label }));
