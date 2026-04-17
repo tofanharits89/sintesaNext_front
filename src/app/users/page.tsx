@@ -91,7 +91,7 @@ type FormState = {
 
 export default function UsersPage() {
   const router = useRouter();
-  const { user: currentUser, canManageUsers } = useAuth();
+  const { user: currentUser, canManageUsers, isLoading: isAuthLoading } = useAuth();
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["users"],
@@ -102,10 +102,10 @@ export default function UsersPage() {
 
   // Check if user has permission to access this page
   useEffect(() => {
-    if (!canManageUsers()) {
+    if (!isAuthLoading && !canManageUsers()) {
       router.push("/");
     }
-  }, [canManageUsers, router]);
+  }, [isAuthLoading, canManageUsers, router]);
 
   const [query, setQuery] = useState("");
   const [role, setRole] = useState<string>("all");
@@ -402,7 +402,18 @@ export default function UsersPage() {
   }
 
   // Show loading or redirect if no permission
-  if (!canManageUsers) {
+  if (isAuthLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-sm text-muted-foreground animate-pulse">Memverifikasi akses...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!canManageUsers()) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center space-y-4">
