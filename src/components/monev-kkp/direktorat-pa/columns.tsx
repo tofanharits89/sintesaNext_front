@@ -299,7 +299,7 @@ export const getMonitoringKanwilColumns = (handlers: ColumnHandlers) => [
         {row.getValue("nmlokasi")}
       </div>
     ),
-    footer: () => <div className="text-right font-bold pr-4">GRAND TOTAL</div>,
+    footer: () => <div className="text-center font-bold">GRAND TOTAL</div>,
   },
   {
     accessorKey: "jumlah_kppn",
@@ -340,7 +340,7 @@ export const getMonitoringKanwilColumns = (handlers: ColumnHandlers) => [
       </div>
     ),
     footer: ({ table }: any) => (
-      <div className="text-right font-mono tabular-nums pr-2 font-bold text-blue-600">
+      <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
         {formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("nilai_transaksi")) || 0), 0))}
       </div>
     ),
@@ -403,7 +403,7 @@ export const getMonitoringKppnColumns = (handlers: ColumnHandlers) => [
         {row.getValue("nmkppn")}
       </div>
     ),
-    footer: () => <div className="text-right font-bold pr-4">GRAND TOTAL</div>,
+    footer: () => <div className="text-center font-bold">GRAND TOTAL</div>,
   },
   {
     accessorKey: "jumlah_satker_up_kkp",
@@ -434,7 +434,7 @@ export const getMonitoringKppnColumns = (handlers: ColumnHandlers) => [
       </div>
     ),
     footer: ({ table }: any) => (
-      <div className="text-right font-mono tabular-nums pr-2 font-bold text-blue-600">
+      <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
         {formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("nilai_transaksi")) || 0), 0))}
       </div>
     ),
