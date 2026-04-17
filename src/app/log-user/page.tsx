@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useLoginHistory } from "@/hooks/use-login-history";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -277,6 +278,53 @@ export default function LogUserPage() {
     <div className="space-y-6 md:space-y-8">
       <div className="flex items-center justify-between gap-2">
         <h1 className="text-xl font-semibold">Log User</h1>
+        <div className="flex items-center gap-3">
+          {/* Connection Status Badge */}
+          <div className={cn(
+            "flex items-center gap-2 px-3 py-1.5 rounded-full border bg-background transition-colors shadow-sm",
+            connectionStatus === "connected" ? "border-green-200 bg-green-50/50 dark:bg-green-950/20 dark:border-green-900/50" :
+            connectionStatus === "connecting" ? "border-yellow-200 bg-yellow-50/50 dark:bg-yellow-950/20 dark:border-yellow-900/50" :
+            "border-red-200 bg-red-50/50 dark:bg-red-950/20 dark:border-red-900/50"
+          )}>
+            <StatusIcon
+              className={cn(
+                "h-4 w-4",
+                statusInfo.color,
+                connectionStatus === "connecting" && "animate-spin"
+              )}
+            />
+            <span className="text-xs font-semibold whitespace-nowrap hidden sm:inline-block">
+              {statusInfo.text}
+            </span>
+            {connectionStatus !== "connected" && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5 p-0 hover:bg-transparent"
+                onClick={reconnectSocket}
+                title="Reconnect"
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+              </Button>
+            )}
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refreshUsers}
+            disabled={!isConnected}
+            className="h-8 w-8 p-0 shadow-sm transition-colors cursor-pointer"
+            title="Refresh Users"
+          >
+            <RefreshCw
+              className={cn(
+                "h-4 w-4 text-muted-foreground",
+                connectionStatus === "connecting" && "animate-spin"
+              )}
+            />
+          </Button>
+        </div>
       </div>
 
       {/* Tabs header (Animate UI) */}
@@ -298,67 +346,6 @@ export default function LogUserPage() {
       <TabsContents>
         <TabsContent value="online">
           <div className="space-y-4">
-            {/* Connection Status and Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card>
-                <CardContent>
-                  <div className="flex items-center space-x-2">
-                    <StatusIcon
-                      className={`h-5 w-5 ${statusInfo.color} ${connectionStatus === "connecting" ? "animate-spin" : ""}`}
-                    />
-                    <div>
-                      <p className="text-sm font-medium">{statusInfo.text}</p>
-                      <p className="text-xs text-muted-foreground">Status Koneksi</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent>
-                  <div className="flex items-center space-x-2">
-                    <Users className="h-5 w-5 text-blue-500" />
-                    <div>
-                      <p className="text-sm font-medium">{userCount} User</p>
-                      <p className="text-xs text-muted-foreground">Sedang Online</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Clock className="h-5 w-5 text-purple-500" />
-                      <div>
-                        <p className="text-sm font-medium">Real-time</p>
-                        <p className="text-xs text-muted-foreground">Monitoring Aktif</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={refreshUsers}
-                        disabled={!isConnected}
-                        className="h-8 w-8 p-0"
-                      >
-                        <RefreshCw
-                          className={`h-4 w-4 ${connectionStatus === "connecting" ? "animate-spin" : ""}`}
-                        />
-                      </Button>
-                      {(connectionStatus === "disconnected" || connectionStatus === "error") && (
-                        <Button onClick={reconnectSocket} variant="default" size="sm" className="flex items-center gap-2 h-8 px-3">
-                          <Wifi className="h-4 w-4" />
-                          <span className="text-xs">Reconnect</span>
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
 
             {/* Online Users List */}
             <Card>
