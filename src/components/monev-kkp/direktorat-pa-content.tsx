@@ -306,7 +306,7 @@ export const DirektoratPaContent = forwardRef<
               columns={columns} 
               data={data} 
               initialPageSize={25} 
-              showFooter={contentType === "monitoring-kanwil" || contentType === "monitoring-kppn"}
+              showFooter={contentType === "monitoring-kanwil" || contentType === "monitoring-kppn" || contentType === "ringkasan-kppn" || contentType === "ringkasan-kanwil"}
             />
           )}
         </CardContent>

@@ -301,6 +301,7 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
                 columns={columns}
                 data={data}
                 initialPageSize={25}
+                showFooter={true}
               />
             )}
           </CardContent>
