@@ -43,7 +43,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Pencil, Trash2, AlertTriangle, Eye, EyeOff } from "lucide-react";
 import { ModernUsersTable } from "@/components/lazy";
-import { TableLoadingFallback } from "@/components/ui/loading-fallback";
+import { TableLoadingFallback, UsersPageSkeleton } from "@/components/ui/loading-fallback";
 import { Suspense } from "react";
 import kdkanwilData from "@/data/kdkanwil.json";
 import kdkppnData from "@/data/kdkppn.json";
@@ -403,14 +403,7 @@ export default function UsersPage() {
 
   // Show loading or redirect if no permission
   if (isAuthLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-sm text-muted-foreground animate-pulse">Memverifikasi akses...</p>
-        </div>
-      </div>
-    );
+    return <UsersPageSkeleton />;
   }
 
   if (!canManageUsers()) {
@@ -444,30 +437,34 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <Suspense fallback={<TableLoadingFallback />}>
-        <ModernUsersTable
-          users={paged}
-          selected={selected}
-          onToggleSelect={toggleSelect}
-          onToggleSelectAll={toggleSelectAll}
-          onEdit={openEdit}
-          onDelete={handleDeleteClick}
-          currentPage={page}
-          pageSize={pageSize}
-          searchQuery={query}
-          onSearchChange={setQuery}
-          roleFilter={role}
-          onRoleFilterChange={setRole}
-          statusFilter={status}
-          onStatusFilterChange={setStatus}
-          totalCount={filtered.length}
-          onPageChange={setPage}
-          onPageSizeChange={(size) => {
-            setPageSize(size);
-            setPage(1);
-          }}
-        />
-      </Suspense>
+      {isLoading ? (
+        <TableLoadingFallback />
+      ) : (
+        <Suspense fallback={<TableLoadingFallback />}>
+          <ModernUsersTable
+            users={paged}
+            selected={selected}
+            onToggleSelect={toggleSelect}
+            onToggleSelectAll={toggleSelectAll}
+            onEdit={openEdit}
+            onDelete={handleDeleteClick}
+            currentPage={page}
+            pageSize={pageSize}
+            searchQuery={query}
+            onSearchChange={setQuery}
+            roleFilter={role}
+            onRoleFilterChange={setRole}
+            statusFilter={status}
+            onStatusFilterChange={setStatus}
+            totalCount={filtered.length}
+            onPageChange={setPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(1);
+            }}
+          />
+        </Suspense>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent showCloseButton={false} className="sm:max-w-[700px] w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
