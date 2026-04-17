@@ -44,6 +44,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import {
   Pagination,
@@ -55,6 +56,12 @@ import {
 } from "@/components/ui/pagination";
 
 import { getRoleDisplayName } from "@/shared/rbac";
+import {
+  LogUserShellSkeleton,
+  LogUserOnlineSkeleton,
+  LogUserHistorySkeleton,
+  LogUserMenuSkeleton
+} from "@/components/ui/loading-fallback";
 import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/components/animate-ui/components/animate/tabs";
 
 // Simple tabs using local state
@@ -67,7 +74,7 @@ const TABS = [
 type TabKey = (typeof TABS)[number]["key"];
 
 export default function LogUserPage() {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, canManageUsers, isLoading } = useAuth();
   const [active, setActive] = useState<TabKey>("online");
   const {
     onlineUsers,
@@ -272,76 +279,47 @@ export default function LogUserPage() {
     fetchTop: refreshMenu,
   } = useMenuUsageTop();
 
-  if (!allowed) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center space-y-2">
-          <h2 className="text-xl font-semibold text-muted-foreground">
-            Akses Ditolak
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Halaman ini hanya untuk Super Admin dan Co-Admin.
-          </p>
-        </div>
-      </div>
-    );
+  function refreshHistory() {
+    throw new Error("Function not implemented.");
   }
 
   return (
-    <div className="space-y-6 md:space-y-8">
+    <div className="space-y-6 md:space-y-8 animate-in fade-in duration-700">
+      {/* Page Header - Always Visible */}
       <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold">Log User</h1>
-        <div className="flex items-center gap-3">
-          {/* Connection Status Badge */}
+        <h1 className="text-xl font-semibold">
+          Log User
+        </h1>
+        <div className="flex items-center gap-2 md:gap-3">
           <div className={cn(
-            "flex items-center gap-2 px-3 py-1.5 rounded-full border bg-background transition-colors shadow-sm",
-            connectionStatus === "connected" ? "border-green-200 bg-green-50/50 dark:bg-green-950/20 dark:border-green-900/50" :
-            connectionStatus === "connecting" ? "border-yellow-200 bg-yellow-50/50 dark:bg-yellow-950/20 dark:border-yellow-900/50" :
-            "border-red-200 bg-red-50/50 dark:bg-red-950/20 dark:border-red-900/50"
+            "flex items-center gap-2 px-3 py-1.5 rounded-full border shadow-sm transition-all duration-300",
+            statusInfo.color,
+            "bg-white/50 dark:bg-slate-900/50"
           )}>
-            <StatusIcon
-              className={cn(
-                "h-4 w-4",
-                statusInfo.color,
-                connectionStatus === "connecting" && "animate-spin"
-              )}
-            />
-            <span className="text-xs font-semibold whitespace-nowrap hidden sm:inline-block">
-              {statusInfo.text}
-            </span>
-            {connectionStatus !== "connected" && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5 p-0 hover:bg-transparent"
-                onClick={reconnectSocket}
-                title="Reconnect"
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-              </Button>
-            )}
+            <div className={cn(
+              "w-2 h-2 rounded-full",
+              connectionStatus === "connected" ? "bg-green-500 animate-pulse" :
+                connectionStatus === "connecting" ? "bg-yellow-500 animate-pulse" : "bg-slate-400"
+            )} />
+            <span className="text-xs font-semibold hidden md:inline">{statusInfo.text}</span>
           </div>
 
           <Button
+            onClick={() => {
+              refreshUsers();
+              refreshHistory();
+              refreshMenu();
+            }}
             variant="outline"
-            size="sm"
-            onClick={refreshUsers}
-            disabled={!isConnected}
-            className="h-8 w-8 p-0 shadow-sm transition-colors cursor-pointer"
-            title="Refresh Users"
+            size="icon"
+            className="rounded-lg hover:rotate-180 transition-transform duration-500 h-9 w-9 bg-white/50 dark:bg-slate-900/50"
+            disabled={isLoading || isLoadingStats || isLoadingMenu}
           >
-            <RefreshCw
-              className={cn(
-                "h-4 w-4 text-muted-foreground",
-                connectionStatus === "connecting" && "animate-spin"
-              )}
-            />
+            <RefreshCw className={cn("h-4 w-4", (isLoading || isLoadingStats || isLoadingMenu) && "animate-spin")} />
           </Button>
         </div>
       </div>
-
-      {/* Tabs header (Animate UI) */}
-      <Tabs className="gap-3" value={active} onValueChange={(v) => setActive(v as TabKey)}>
+      <Tabs value={active} onValueChange={(v) => setActive(v as TabKey)} className="w-full">
         <div className="border-b border-border/50 pb-3 mb-0">
           <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-0">
             {TABS.map((t) => (
@@ -356,487 +334,478 @@ export default function LogUserPage() {
             ))}
           </TabsList>
         </div>
-      <TabsContents>
-        <TabsContent value="online">
-          <div className="space-y-4">
 
-            {/* Online Users List */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>User Online (Real-time)</span>
-                  <Badge variant="secondary" className="ml-2">
-                    {userCount} Online
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {!isConnected ? (
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <div>
-                      <p className="font-medium">Koneksi Terputus</p>
-                      <p className="text-sm">Tidak dapat menampilkan user online. Status: {statusInfo.text}</p>
-                      {(connectionStatus === "disconnected" || connectionStatus === "error") && (
-                        <div className="mt-3">
-                          <Button onClick={reconnectSocket} variant="default" size="sm" className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
-                            <Wifi className="h-4 w-4" />
-                            Coba Koneksi Ulang
-                          </Button>
-                          <p className="text-xs text-muted-foreground mt-2">
-                            Pastikan Anda sudah login dan coba refresh halaman jika masalah berlanjut
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </Alert>
-                ) : onlineUsers.length === 0 ? (
-                  <Alert>
-                    <Users className="h-4 w-4" />
-                    <div>
-                      <p className="font-medium">Tidak Ada User Online</p>
-                      <p className="text-sm">Belum ada user yang sedang online saat ini.</p>
-                    </div>
-                  </Alert>
-                ) : (
-                  <div className="space-y-4">
-                    {/* Desktop Table View */}
-                    <div className="hidden md:block overflow-x-auto rounded-md border">
-                      <Table>
-                        <TableHeader className="bg-slate-50 dark:bg-slate-800">
-                          <TableRow>
-                            <TableHead className="text-center font-bold">Nama Lengkap</TableHead>
-                            <TableHead className="text-center font-bold">Username</TableHead>
-                            <TableHead className="text-center font-bold">Role</TableHead>
-                            <TableHead className="text-center font-bold">Unit Kerja</TableHead>
-                            <TableHead className="text-center font-bold">Lokasi</TableHead>
-                            <TableHead className="text-center font-bold">Waktu Login</TableHead>
-                            <TableHead className="text-center font-bold">Durasi Login</TableHead>
-                            <TableHead className="text-center font-bold">Status</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {onlineUsers.map((userInfo) => {
-                            if (!userInfo?.user) return null;
-                            return (
-                              <TableRow key={userInfo.socketId} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                                <TableCell className="font-medium text-center">{userInfo.user.name || "Unknown"}</TableCell>
-                                <TableCell className="font-mono text-sm text-center">{userInfo.user.username || "Unknown"}</TableCell>
-                                <TableCell className="text-center">
-                                  <Badge variant="outline" className="text-xs">
-                                    {getRoleDisplayName(userInfo.user.role as any)}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell className="text-sm text-center">
-                                  {userInfo.user.nmkppn || userInfo.user.nmkanwil || "-"}
-                                </TableCell>
-                                <TableCell className="text-sm text-muted-foreground text-center">{userInfo.location || "Tidak diketahui"}</TableCell>
-                                <TableCell className="text-sm text-muted-foreground text-center">{userInfo.loginAt ? formatLoginDateTime(userInfo.loginAt) : "Tidak diketahui"}</TableCell>
-                                <TableCell className="text-sm text-muted-foreground text-center">{userInfo.loginAt ? calculateLoginDuration(userInfo.loginAt) : "Tidak diketahui"}</TableCell>
-                                <TableCell className="text-center">
-                                  <Badge variant="default" className="text-xs bg-green-600 hover:bg-green-700 text-white border-green-600">
-                                    <div className="w-2 h-2 bg-white rounded-full mr-1 animate-pulse"></div>
-                                    Online
-                                  </Badge>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
-                    </div>
+        <div className="mt-4">
+          {isLoading ? (
+            <div className="animate-in fade-in duration-500">
+              {active === "online" && <LogUserOnlineSkeleton />}
+              {active === "history" && <LogUserHistorySkeleton />}
+              {active === "menu" && <LogUserMenuSkeleton />}
+            </div>
+          ) : !canManageUsers() ? (
+            <div className="flex items-center justify-center min-h-[50vh] animate-in fade-in zoom-in-95 duration-500">
+              <div className="text-center space-y-2 text-rose-500 bg-rose-50/50 dark:bg-rose-950/20 p-8 rounded-2xl border border-rose-100 dark:border-rose-900/50 shadow-sm">
+                <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-80" />
+                <h2 className="text-xl font-bold">Akses Ditolak</h2>
+                <p className="text-sm text-balance max-w-xs mx-auto text-rose-600/80 dark:text-rose-400/80">
+                  Halaman ini hanya dapat diakses oleh Super Admin dan Co-Admin.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <TabsContents>
+              <TabsContent value="online">
+                <div className="space-y-4">
+                  {/* Online Users List */}
+                  {!isConnected && connectionStatus === "connecting" ? (
+                    <LogUserOnlineSkeleton />
+                  ) : !isConnected ? (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                          <span>User Online (Real-time)</span>
+                          <Skeleton className="h-6 w-20 rounded-full" />
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Alert>
+                          <AlertCircle className="h-4 w-4" />
+                          <div>
+                            <p className="font-medium">Koneksi Terputus</p>
+                            <p className="text-sm">Tidak dapat menampilkan user online. Status: {statusInfo.text}</p>
+                            {(connectionStatus === "disconnected" || connectionStatus === "error") && (
+                              <div className="mt-3">
+                                <Button onClick={reconnectSocket} variant="default" size="sm" className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
+                                  <Wifi className="h-4 w-4" />
+                                  Coba Koneksi Ulang
+                                </Button>
+                                <p className="text-xs text-muted-foreground mt-2">
+                                  Pastikan Anda sudah login dan coba refresh halaman jika masalah berlanjut
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </Alert>
+                      </CardContent>
+                    </Card>
+                  ) : onlineUsers.length === 0 ? (
+                    <Alert>
+                      <Users className="h-4 w-4" />
+                      <div>
+                        <p className="font-medium">Tidak Ada User Online</p>
+                        <p className="text-sm">Belum ada user yang sedang online saat ini.</p>
+                      </div>
+                    </Alert>
+                  ) : (
+                    <div className="space-y-4">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="flex items-center justify-between">
+                            <span>User Online (Real-time)</span>
+                            <Badge variant="secondary" className="ml-2">
+                              {userCount} Online
+                            </Badge>
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          {/* Desktop Table View */}
+                          <div className="hidden md:block overflow-x-auto rounded-md border">
+                            <Table>
+                              <TableHeader className="bg-slate-50 dark:bg-slate-800">
+                                <TableRow>
+                                  <TableHead className="text-center font-bold">Nama Lengkap</TableHead>
+                                  <TableHead className="text-center font-bold">Username</TableHead>
+                                  <TableHead className="text-center font-bold">Role</TableHead>
+                                  <TableHead className="text-center font-bold">Unit Kerja</TableHead>
+                                  <TableHead className="text-center font-bold">Lokasi</TableHead>
+                                  <TableHead className="text-center font-bold">Waktu Login</TableHead>
+                                  <TableHead className="text-center font-bold">Durasi Login</TableHead>
+                                  <TableHead className="text-center font-bold">Status</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {onlineUsers.map((userInfo) => (
+                                  <TableRow key={userInfo.socketId} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <TableCell className="font-medium text-center">{userInfo.user.name || "Unknown"}</TableCell>
+                                    <TableCell className="font-mono text-sm text-center">{userInfo.user.username || "Unknown"}</TableCell>
+                                    <TableCell className="text-center">
+                                      <Badge variant="outline" className="text-xs">
+                                        {getRoleDisplayName(userInfo.user.role as any)}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-sm text-center">
+                                      {userInfo.user.nmkppn || userInfo.user.nmkanwil || "-"}
+                                    </TableCell>
+                                    <TableCell className="text-sm text-muted-foreground text-center">{userInfo.location || "Tidak diketahui"}</TableCell>
+                                    <TableCell className="text-sm text-muted-foreground text-center">{userInfo.loginAt ? formatLoginDateTime(userInfo.loginAt) : "Tidak diketahui"}</TableCell>
+                                    <TableCell className="text-sm text-muted-foreground text-center">{userInfo.loginAt ? calculateLoginDuration(userInfo.loginAt) : "Tidak diketahui"}</TableCell>
+                                    <TableCell className="text-center">
+                                      <Badge variant="default" className="text-xs bg-green-600 hover:bg-green-700 text-white border-green-600">
+                                        <div className="w-2 h-2 bg-white rounded-full mr-1 animate-pulse"></div>
+                                        Online
+                                      </Badge>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
 
-                    {/* Mobile Card View */}
-                    <div className="md:hidden space-y-3">
-                      {onlineUsers.map((userInfo) => {
-                        if (!userInfo?.user) return null;
-                        return (
-                          <Card key={userInfo.socketId} className="p-4">
-                            <div className="flex items-start justify-between">
-                              <div className="space-y-1">
-                                <p className="font-medium">{userInfo.user.name || "Unknown"}</p>
-                                <p className="text-sm text-muted-foreground font-mono">{userInfo.user.username || "Unknown"}</p>
-                                <div className="flex items-center space-x-2">
-                                  <Badge variant="outline" className="text-xs">{getRoleDisplayName(userInfo.user.role as any)}</Badge>
-                                  <Badge variant="default" className="text-xs bg-green-600 hover:bg-green-700 text-white border-green-600">
-                                    <div className="w-2 h-2 bg-white rounded-full mr-1 animate-pulse"></div>
-                                    Online
-                                  </Badge>
+                          {/* Mobile Card View */}
+                          <div className="md:hidden space-y-3">
+                            {onlineUsers.map((userInfo) => (
+                              <Card key={userInfo.socketId} className="p-4">
+                                <div className="flex items-start justify-between">
+                                  <div className="space-y-1">
+                                    <p className="font-medium">{userInfo.user.name || "Unknown"}</p>
+                                    <p className="text-sm text-muted-foreground font-mono">{userInfo.user.username || "Unknown"}</p>
+                                    <div className="flex items-center space-x-2">
+                                      <Badge variant="outline" className="text-xs">{getRoleDisplayName(userInfo.user.role as any)}</Badge>
+                                      <Badge variant="default" className="text-xs bg-green-600 hover:bg-green-700 text-white border-green-600">
+                                        <div className="w-2 h-2 bg-white rounded-full mr-1 animate-pulse"></div>
+                                        Online
+                                      </Badge>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-xs text-muted-foreground"><span className="font-medium">Unit:</span> {userInfo.user.nmkppn || userInfo.user.nmkanwil || "-"}</p>
+                                      <p className="text-xs text-muted-foreground"><span className="font-medium">Lokasi:</span> {userInfo.location || "Tidak diketahui"}</p>
+                                      <p className="text-xs text-muted-foreground"><span className="font-medium">Login:</span> {userInfo.loginAt ? formatLoginDateTime(userInfo.loginAt) : "Tidak diketahui"}</p>
+                                      <p className="text-xs text-muted-foreground"><span className="font-medium">Durasi:</span> {userInfo.loginAt ? calculateLoginDuration(userInfo.loginAt) : "Tidak diketahui"}</p>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="space-y-1">
-                                  <p className="text-xs text-muted-foreground"><span className="font-medium">Unit:</span> {userInfo.user.nmkppn || userInfo.user.nmkanwil || "-"}</p>
-                                  <p className="text-xs text-muted-foreground"><span className="font-medium">Lokasi:</span> {userInfo.location || "Tidak diketahui"}</p>
-                                  <p className="text-xs text-muted-foreground"><span className="font-medium">Login:</span> {userInfo.loginAt ? formatLoginDateTime(userInfo.loginAt) : "Tidak diketahui"}</p>
-                                  <p className="text-xs text-muted-foreground"><span className="font-medium">Durasi:</span> {userInfo.loginAt ? calculateLoginDuration(userInfo.loginAt) : "Tidak diketahui"}</p>
-                                </div>
+                              </Card>
+                            ))}
+                          </div>
+
+                          {isConnected && (
+                            <div className="mt-4 text-sm text-muted-foreground border-t pt-4">
+                              <div className="flex items-center space-x-2">
+                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                <span>Data diperbarui secara real-time melalui WebSocket connection</span>
                               </div>
                             </div>
-                          </Card>
-                        );
-                      })}
+                          )}
+                        </CardContent>
+                      </Card>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
+              </TabsContent>
 
-                {isConnected && (
-                  <div className="mt-4 text-sm text-muted-foreground border-t pt-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span>Data diperbarui secara real-time melalui WebSocket connection</span>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="history">
-          <div className="flex flex-col gap-6">
-            {/* Weekly Login Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Login 7 Hari Terakhir</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fetchWeeklyStats(7)}
-                    disabled={isLoadingStats}
-                    className="h-8 w-8 p-0"
-                  >
-                    <RefreshCw
-                      className={`h-4 w-4 ${isLoadingStats ? "animate-spin" : ""}`}
-                    />
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {statsError ? (
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <div>
-                      <p className="font-medium">Error Loading Data</p>
-                      <p className="text-sm">{statsError}</p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => fetchWeeklyStats(7)}
-                        className="mt-2"
-                      >
-                        Coba Lagi
-                      </Button>
-                    </div>
-                  </Alert>
-                ) : isLoadingStats ? (
-                  <div className="flex items-center justify-center h-56">
-                    <div className="flex items-center space-x-2">
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                      <span className="text-sm text-muted-foreground">Memuat data...</span>
-                    </div>
+              <TabsContent value="history">
+                {isLoadingStats ? (
+                  <LogUserHistorySkeleton />
+                ) : statsError ? (
+                  <div className="space-y-6">
+                    <Card>
+                      <CardContent className="pt-6">
+                        <Alert>
+                          <AlertCircle className="h-4 w-4" />
+                          <div>
+                            <p className="font-medium">Error Loading Data</p>
+                            <p className="text-sm">{statsError}</p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => fetchWeeklyStats(7)}
+                              className="mt-2"
+                            >
+                              Coba Lagi
+                            </Button>
+                          </div>
+                        </Alert>
+                      </CardContent>
+                    </Card>
                   </div>
                 ) : (
-                  <>
-                    <div className="h-80 w-full">
-                      <ResponsiveContainer width="100%" height={320} minWidth={0}>
-                        <BarChart
-                          data={weeklyLogins}
-                          margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                          <XAxis dataKey="day" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
-                          <YAxis tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
-                          <Tooltip
-                            content={({ active, payload, label }) => {
-                              if (active && payload && payload.length) {
-                                const data = payload[0].payload;
+                  <div className="flex flex-col gap-6">
+                    {/* Weekly Login Chart */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                          <span>Login 7 Hari Terakhir</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => fetchWeeklyStats(7)}
+                            disabled={isLoadingStats}
+                            className="h-8 w-8 p-0"
+                          >
+                            <RefreshCw
+                              className={`h-4 w-4 ${isLoadingStats ? "animate-spin" : ""}`}
+                            />
+                          </Button>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-80 w-full">
+                          <ResponsiveContainer width="100%" height={320} minWidth={0}>
+                            <BarChart
+                              data={weeklyLogins}
+                              margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                            >
+                              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                              <XAxis dataKey="day" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
+                              <YAxis tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
+                              <Tooltip
+                                content={({ active, payload, label }) => {
+                                  if (active && payload && payload.length) {
+                                    const data = payload[0].payload;
+                                    return (
+                                      <div className="bg-background border rounded-lg p-3 shadow-lg">
+                                        <p className="font-medium">{label}</p>
+                                        {data.date && (
+                                          <p className="text-sm text-muted-foreground">{data.date}</p>
+                                        )}
+                                        <p className="text-sm">
+                                          <span className="font-medium text-blue-600">{payload[0].value}</span> login unik
+                                        </p>
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                }}
+                              />
+                              <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} className="fill-blue-500 dark:fill-blue-600" />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div className="mt-4 space-y-2">
+                          <div className="text-sm text-muted-foreground">
+                            Menampilkan jumlah login unik per hari dalam 7 hari terakhir.
+                          </div>
+                          {weeklyStats && weeklyStats.length > 0 && (
+                            <div className="text-xs text-muted-foreground">
+                              Total login unik: {weeklyStats.reduce((sum, stat) => sum + stat.distinctUsers, 0)} | Total login: {weeklyStats.reduce((sum, stat) => sum + stat.totalLogins, 0)}
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Recent Login History */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                          <span>Riwayat Login Terbaru</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setHistoryPage(1);
+                              fetchLoginHistory(itemsPerPage, 0);
+                            }}
+                            disabled={isLoadingStats}
+                            className="h-8 w-8 p-0"
+                          >
+                            <RefreshCw className={`h-4 w-4 ${isLoadingStats ? "animate-spin" : ""}`} />
+                          </Button>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+                            {loginHistory && loginHistory.length > 0 ? (
+                              loginHistory.map((entry) => {
+                                const loginTime = new Date(entry.loginTimestamp);
+                                const timeAgo = calculateLoginDuration(entry.loginTimestamp);
+
                                 return (
-                                  <div className="bg-background border rounded-lg p-3 shadow-lg">
-                                    <p className="font-medium">{label}</p>
-                                    {data.date && (
-                                      <p className="text-sm text-muted-foreground">{data.date}</p>
-                                    )}
-                                    <p className="text-sm">
-                                      <span className="font-medium text-blue-600">{payload[0].value}</span>{" "}
-                                      login unik
-                                    </p>
+                                  <div
+                                    key={entry.id}
+                                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                                  >
+                                    <div className="flex items-center space-x-3">
+                                      <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                                        <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                      </div>
+                                      <div>
+                                        <p className="font-medium text-sm">{entry.userName || entry.username}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                          {entry.userRole} {entry.nmkppn || entry.nmkanwil ? `| ${entry.nmkppn || entry.nmkanwil}` : ""}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                          Lokasi: {entry.location || "Tidak diketahui"}
+                                        </p>
+                                        <p className="text-[10px] text-muted-foreground font-mono">IP: {entry.ipAddress || "-"}</p>
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="text-xs font-medium">
+                                        {loginTime.toLocaleString("id-ID", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                                      </p>
+                                      <p className="text-xs text-muted-foreground">{timeAgo}</p>
+                                    </div>
                                   </div>
                                 );
-                              }
-                              return null;
-                            }}
-                          />
-                          <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} className="fill-blue-500 dark:fill-blue-600" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="mt-4 space-y-2">
-                      <div className="text-sm text-muted-foreground">
-                        Menampilkan jumlah login unik per hari dalam 7 hari terakhir.
-                      </div>
-                      {weeklyStats && weeklyStats.length > 0 && (
-                        <div className="text-xs text-muted-foreground">
-                          Total login unik: {weeklyStats.reduce((sum, stat) => sum + stat.distinctUsers, 0)} | Total login: {weeklyStats.reduce((sum, stat) => sum + stat.totalLogins, 0)}
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Recent Login History */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Riwayat Login Terbaru</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setHistoryPage(1);
-                      fetchLoginHistory(itemsPerPage, 0);
-                    }}
-                    disabled={isLoadingStats}
-                    className="h-8 w-8 p-0"
-                  >
-                    <RefreshCw className={`h-4 w-4 ${isLoadingStats ? "animate-spin" : ""}`} />
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {statsError ? (
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <div>
-                      <p className="font-medium">Error Loading Data</p>
-                      <p className="text-sm">{statsError}</p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => fetchLoginHistory(20, 0)}
-                        className="mt-2"
-                      >
-                        Coba Lagi
-                      </Button>
-                    </div>
-                  </Alert>
-                ) : isLoadingStats ? (
-                  <div className="flex items-center justify-center h-80">
-                    <div className="flex items-center space-x-2">
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                      <span className="text-sm text-muted-foreground">Memuat data...</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
-                      {loginHistory && loginHistory.length > 0 ? (
-                        loginHistory.map((entry) => {
-                          const loginTime = new Date(entry.loginTimestamp);
-                          const timeAgo = calculateLoginDuration(entry.loginTimestamp);
-
-                          return (
-                            <div
-                              key={entry.id}
-                              className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                            >
-                              <div className="flex items-center space-x-3">
-                                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                                  <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                                </div>
-                                <div>
-                                  <p className="font-medium text-sm">{entry.userName || entry.username}</p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {entry.userRole} {entry.nmkppn || entry.nmkanwil ? `| ${entry.nmkppn || entry.nmkanwil}` : ""}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    Lokasi: {entry.location || "Tidak diketahui"}
-                                  </p>
-                                  <p className="text-[10px] text-muted-foreground font-mono">IP: {entry.ipAddress || "-"}</p>
-                                </div>
+                              })
+                            ) : (
+                              <div className="text-center py-8">
+                                <User className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                                <p className="text-sm text-muted-foreground">Belum ada riwayat login</p>
                               </div>
-                              <div className="text-right">
-                                <p className="text-xs font-medium">
-                                  {loginTime.toLocaleString("id-ID", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
-                                </p>
-                                <p className="text-xs text-muted-foreground">{timeAgo}</p>
+                            )}
+                          </div>
+
+                          {/* Pagination Controls */}
+                          {pagination && pagination.totalPages > 1 && (
+                            <div className="pt-4 border-t">
+                              <Pagination>
+                                <PaginationContent>
+                                  <PaginationItem>
+                                    <PaginationPrevious
+                                      onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
+                                      className={cn(
+                                        "cursor-pointer",
+                                        historyPage === 1 && "pointer-events-none opacity-50"
+                                      )}
+                                    />
+                                  </PaginationItem>
+
+                                  {/* Show a limited number of page numbers */}
+                                  {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                                    let pageNum = i + 1;
+                                    if (pagination.totalPages > 5) {
+                                      if (historyPage > 3) {
+                                        pageNum = historyPage - 2 + i;
+                                        if (pageNum > pagination.totalPages) {
+                                          pageNum = pagination.totalPages - 4 + i;
+                                        }
+                                      }
+                                    }
+                                    if (pageNum <= 0 || pageNum > pagination.totalPages) return null;
+                                    return (
+                                      <PaginationItem key={pageNum}>
+                                        <PaginationLink
+                                          isActive={historyPage === pageNum}
+                                          onClick={() => setHistoryPage(pageNum)}
+                                          className="cursor-pointer"
+                                        >
+                                          {pageNum}
+                                        </PaginationLink>
+                                      </PaginationItem>
+                                    );
+                                  })}
+
+                                  <PaginationItem>
+                                    <PaginationNext
+                                      onClick={() => setHistoryPage((p) => Math.min(pagination.totalPages, p + 1))}
+                                      className={cn(
+                                        "cursor-pointer",
+                                        historyPage === pagination.totalPages && "pointer-events-none opacity-50"
+                                      )}
+                                    />
+                                  </PaginationItem>
+                                </PaginationContent>
+                              </Pagination>
+                              <div className="text-center mt-2 text-xs text-muted-foreground">
+                                Halaman {historyPage} dari {pagination.totalPages} ({pagination.totalItems} total entri)
                               </div>
                             </div>
-                          );
-                        })
-                      ) : (
-                        <div className="text-center py-8">
-                          <User className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                          <p className="text-sm text-muted-foreground">Belum ada riwayat login</p>
+                          )}
                         </div>
-                      )}
-                    </div>
-
-                    {/* Pagination Controls */}
-                    {pagination && pagination.totalPages > 1 && (
-                      <div className="pt-4 border-t">
-                        <Pagination>
-                          <PaginationContent>
-                            <PaginationItem>
-                              <PaginationPrevious
-                                onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
-                                className={cn(
-                                  "cursor-pointer",
-                                  historyPage === 1 && "pointer-events-none opacity-50"
-                                )}
-                              />
-                            </PaginationItem>
-
-                            {/* Show a limited number of page numbers */}
-                            {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                              // Simple pagination window logic
-                              let pageNum = i + 1;
-                              if (pagination.totalPages > 5) {
-                                if (historyPage > 3) {
-                                  pageNum = historyPage - 2 + i;
-                                  if (pageNum > pagination.totalPages) {
-                                    pageNum = pagination.totalPages - 4 + i;
-                                  }
-                                }
-                              }
-
-                              if (pageNum <= 0 || pageNum > pagination.totalPages) return null;
-
-                              return (
-                                <PaginationItem key={pageNum}>
-                                  <PaginationLink
-                                    isActive={historyPage === pageNum}
-                                    onClick={() => setHistoryPage(pageNum)}
-                                    className="cursor-pointer"
-                                  >
-                                    {pageNum}
-                                  </PaginationLink>
-                                </PaginationItem>
-                              );
-                            })}
-
-                            <PaginationItem>
-                              <PaginationNext
-                                onClick={() =>
-                                  setHistoryPage((p) => Math.min(pagination.totalPages, p + 1))
-                                }
-                                className={cn(
-                                  "cursor-pointer",
-                                  historyPage === pagination.totalPages && "pointer-events-none opacity-50"
-                                )}
-                              />
-                            </PaginationItem>
-                          </PaginationContent>
-                        </Pagination>
-                        <div className="text-center mt-2 text-xs text-muted-foreground">
-                          Halaman {historyPage} dari {pagination.totalPages} ({pagination.totalItems} total entri)
-                        </div>
-                      </div>
-                    )}
+                      </CardContent>
+                    </Card>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+              </TabsContent>
 
-        <TabsContent value="menu">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="text-sm text-muted-foreground">Bulan:</div>
-                  <Select
-                    value={menuMonth}
-                    onValueChange={(val) => {
-                      setMenuMonth(val);
-                      // Refresh after changing month
-                      refreshMenu(val);
-                    }}
-                  >
-                    <SelectTrigger size="sm">
-                      <SelectValue placeholder="Pilih bulan" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 12 }).map((_, idx) => {
-                        // Anchor to the first day to avoid month rollover (e.g., 31st → next month)
-                        const d = new Date();
-                        d.setDate(1);
-                        d.setMonth(d.getMonth() - idx);
+              <TabsContent value="menu">
+                {isLoadingMenu ? (
+                  <LogUserMenuSkeleton />
+                ) : (
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="text-sm text-muted-foreground">Bulan:</div>
+                          <Select
+                            value={menuMonth}
+                            onValueChange={(val) => {
+                              setMenuMonth(val);
+                              // Refresh after changing month
+                              refreshMenu(val);
+                            }}
+                          >
+                            <SelectTrigger size="sm">
+                              <SelectValue placeholder="Pilih bulan" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Array.from({ length: 12 }).map((_, idx) => {
+                                // Anchor to the first day to avoid month rollover (e.g., 31st → next month)
+                                const d = new Date();
+                                d.setDate(1);
+                                d.setMonth(d.getMonth() - idx);
 
-                        const year = d.getFullYear();
-                        const month = String(d.getMonth() + 1).padStart(2, "0");
-                        const val = `${year}-${month}`;
-                        const label = d.toLocaleString("id-ID", { month: "long", year: "numeric" });
-                        return (
-                          <SelectItem key={val} value={val}>
-                            {label}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button size="sm" variant="outline" onClick={() => refreshMenu()}>
-                  <RefreshCw className="h-4 w-4 mr-1" /> Refresh
-                </Button>
-              </div>
+                                const year = d.getFullYear();
+                                const month = String(d.getMonth() + 1).padStart(2, "0");
+                                const val = `${year}-${month}`;
+                                const label = d.toLocaleString("id-ID", { month: "long", year: "numeric" });
+                                return (
+                                  <SelectItem key={val} value={val}>
+                                    {label}
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button size="sm" variant="outline" onClick={() => refreshMenu()}>
+                          <RefreshCw className="h-4 w-4 mr-1" /> Refresh
+                        </Button>
+                      </div>
 
-              <CardTitle>Menu Paling Sering Diakses</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto rounded-md border bg-white dark:bg-neutral-900">
-                <Table>
-                  <TableHeader className="bg-slate-600 dark:bg-slate-800 [&_th]:text-white">
-                    <TableRow>
-                      <TableHead>Menu</TableHead>
-                      <TableHead className="w-32 text-right">Akses</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isLoadingMenu ? (
-                      <TableRow>
-                        <TableCell colSpan={2}>
-                          <div className="py-6 text-center text-sm text-muted-foreground">Memuat data menu...</div>
-                        </TableCell>
-                      </TableRow>
-                    ) : menuAgg.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={2}>
-                          <div className="py-6 text-center text-sm text-muted-foreground">Tidak ada data untuk bulan {menuMonth}</div>
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      menuAgg.map((parent) => (
-                        <Fragment key={parent?.menu || Math.random()}>
-                          <TableRow key={parent?.menu || Math.random()} className="bg-muted/40">
-                            <TableCell className="font-medium">{parent?.menu || "Unknown"}</TableCell>
-                            <TableCell className="text-right font-medium">{parent?.total || 0}</TableCell>
-                          </TableRow>
-                          {(parent?.items || []).map((it) => (
-                            <TableRow key={`${parent?.menu}__${it?.submenu || Math.random()}`}>
-                              <TableCell className="pl-8 text-sm text-muted-foreground">{it?.submenu || "Unknown"}</TableCell>
-                              <TableCell className="text-right text-sm text-muted-foreground">{it?.count || 0}</TableCell>
+                      <CardTitle>Menu Paling Sering Diakses</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="overflow-x-auto rounded-md border bg-white dark:bg-neutral-900">
+                        <Table>
+                          <TableHeader className="bg-slate-600 dark:bg-slate-800 [&_th]:text-white">
+                            <TableRow>
+                              <TableHead>Menu</TableHead>
+                              <TableHead className="w-32 text-right">Akses</TableHead>
                             </TableRow>
-                          ))}
-                        </Fragment>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-              <div className="mt-4 text-sm text-muted-foreground">
-                Catatan: Ganti dengan data agregasi log akses menu dari backend.
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        </TabsContents>
+                          </TableHeader>
+                          <TableBody>
+                            {menuAgg.length === 0 ? (
+                              <TableRow>
+                                <TableCell colSpan={2}>
+                                  <div className="py-6 text-center text-sm text-muted-foreground">Tidak ada data untuk bulan {menuMonth}</div>
+                                </TableCell>
+                              </TableRow>
+                            ) : (
+                              menuAgg.map((parent) => (
+                                <Fragment key={parent?.menu || Math.random()}>
+                                  <TableRow key={parent?.menu || Math.random()} className="bg-muted/40">
+                                    <TableCell className="font-medium">{parent?.menu || "Unknown"}</TableCell>
+                                    <TableCell className="text-right font-medium">{parent?.total || 0}</TableCell>
+                                  </TableRow>
+                                  {(parent?.items || []).map((it) => (
+                                    <TableRow key={`${parent?.menu}__${it?.submenu || Math.random()}`}>
+                                      <TableCell className="pl-8 text-sm text-muted-foreground">{it?.submenu || "Unknown"}</TableCell>
+                                      <TableCell className="text-right text-sm text-muted-foreground">{it?.count || 0}</TableCell>
+                                    </TableRow>
+                                  ))}
+                                </Fragment>
+                              ))
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+                      <div className="mt-4 text-sm text-muted-foreground">
+                        Catatan: Ganti dengan data agregasi log akses menu dari backend.
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+            </TabsContents>
+          )}
+        </div>
       </Tabs>
     </div>
   );
 }
 
-// Force dynamic rendering to prevent SSR issues
 export const dynamic = "force-dynamic";

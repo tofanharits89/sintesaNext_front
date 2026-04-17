@@ -25,11 +25,13 @@ import { toast } from "sonner";
 import { Save, Lock } from "lucide-react";
 import kdkanwilData from "@/data/kdkanwil.json";
 import kdkppnData from "@/data/kdkppn.json";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProfilePage() {
   const {
     user: current,
     refetch,
+    isLoading,
     canEditRoleAndLocation,
   } = useAuth();
 
@@ -279,6 +281,10 @@ export default function ProfilePage() {
         .join("") || "US"
     );
   }, [name]);
+
+  if (isLoading) {
+    return <ProfileSkeleton />;
+  }
 
   return (
     <div className="space-y-8">
@@ -581,6 +587,61 @@ export default function ProfilePage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
           </Field>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProfileSkeleton() {
+  return (
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-8 w-40" />
+        <div className="flex gap-2">
+          <Skeleton className="h-10 w-20" />
+          <Skeleton className="h-10 w-28" />
+        </div>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-[280px_1fr]">
+        {/* Avatar card skeleton matching Avatar card */}
+        <div className="rounded-lg p-4 bg-white dark:bg-neutral-900 shadow">
+          <div className="flex flex-col items-center gap-4">
+            <Skeleton className="size-24 rounded-full" />
+            <div className="flex gap-2">
+              <Skeleton className="h-9 w-28" />
+            </div>
+            <Skeleton className="h-3 w-48" />
+          </div>
+        </div>
+
+        {/* Profile form skeleton matching Profile form */}
+        <div className="rounded-lg p-4 bg-white dark:bg-neutral-900 shadow">
+          <div className="space-y-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-11 w-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Password change section skeleton matching Password change section */}
+      <div className="rounded-lg p-4 bg-white dark:bg-neutral-900 shadow">
+        <div className="flex items-center justify-between mb-4">
+          <Skeleton className="h-6 w-24" />
+          <Skeleton className="h-10 w-36" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-11 w-full" />
+            </div>
+          ))}
         </div>
       </div>
     </div>

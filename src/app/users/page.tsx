@@ -409,12 +409,11 @@ export default function UsersPage() {
   if (!canManageUsers()) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center space-y-4">
-          <h2 className="text-xl font-semibold text-muted-foreground">
-            Akses Ditolak
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Anda tidak memiliki izin untuk mengakses halaman ini.
+        <div className="text-center space-y-2 text-rose-500 bg-rose-50/50 dark:bg-rose-950/20 p-8 rounded-2xl border border-rose-100 dark:border-rose-900/50 shadow-sm animate-in zoom-in-95 duration-300">
+          <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-80" />
+          <h2 className="text-xl font-bold">Akses Ditolak</h2>
+          <p className="text-sm text-balance max-w-xs mx-auto text-rose-600/80 dark:text-rose-400/80">
+            Anda tidak memiliki izin untuk mengakses halaman manajemen akun.
           </p>
         </div>
       </div>

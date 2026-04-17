@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { attachCSRFToken } from "@/lib/security/csrfManager";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -82,16 +83,6 @@ export default function SettingsPage() {
     }
   };
 
-  // Guard against cases where the profile query finished but user data isn't available yet
-  if (isLoading || !user) {
-    return (
-      <div className="space-y-4">
-        <div className="h-8 bg-muted animate-pulse rounded"></div>
-        <div className="h-4 bg-muted animate-pulse rounded w-1/2"></div>
-        <div className="h-64 bg-muted animate-pulse rounded"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 md:space-y-8">
@@ -119,7 +110,10 @@ export default function SettingsPage() {
         <TabsContents>
           {/* General Settings Tab */}
           <TabsContent value="general" className="space-y-6">
-            <div className="grid gap-6">
+            {isLoading || !user ? (
+              <SettingsContentSkeleton />
+            ) : (
+              <div className="grid gap-6">
               {/* Theme Settings */}
               <Card>
                 <CardHeader>
@@ -288,16 +282,20 @@ export default function SettingsPage() {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
+          )}
+        </TabsContent>
 
-          {/* WhatsApp Settings Tab */}
+        {/* WhatsApp Settings Tab */}
           <TabsContent value="whatsapp">
-            <WhatsAppSettingsTab />
+            {isLoading || !user ? <SettingsContentSkeleton /> : <WhatsAppSettingsTab />}
           </TabsContent>
 
           {/* System Settings Tab */}
           <TabsContent value="system" className="space-y-6">
-            <div className="grid gap-6">
+            {isLoading || !user ? (
+              <SettingsContentSkeleton />
+            ) : (
+              <div className="grid gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -338,11 +336,55 @@ export default function SettingsPage() {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
-        </TabsContents>
-      </Tabs>
+          )}
+        </TabsContent>
+      </TabsContents>
+    </Tabs>
 
 
+    </div>
+  );
+}
+
+function SettingsContentSkeleton() {
+  return (
+    <div className="mt-6 space-y-6 animate-in fade-in duration-500">
+      {/* Skeletons for the cards in the General tab */}
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div
+          key={i}
+          className="rounded-lg border p-6 space-y-4 shadow-sm bg-white dark:bg-neutral-900"
+        >
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-5 rounded-md" />
+              <Skeleton className="h-6 w-48" />
+            </div>
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <Skeleton className="h-10 w-full" />
+        </div>
+      ))}
+      <div className="rounded-lg border p-6 space-y-4 shadow-sm bg-white dark:bg-neutral-900">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-5 w-5 rounded-md" />
+            <Skeleton className="h-6 w-32" />
+          </div>
+          <Skeleton className="h-4 w-48" />
+        </div>
+        <div className="space-y-4">
+          {Array.from({ length: 4 }).map((_, j) => (
+            <div key={j} className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-48" />
+              </div>
+              <Skeleton className="h-6 w-10 rounded-full" />
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
