@@ -18,6 +18,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -64,6 +65,8 @@ interface DataTableProps<TData, TValue> {
   initialPageSize?: number;
   // Custom footer info text. If provided, overrides the default "Showing X of Y entries" text.
   footerInfoText?: string;
+  // Whether to show the table footer (grand totals)
+  showFooter?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -79,6 +82,7 @@ export function DataTable<TData, TValue>({
   tableClassName,
   initialPageSize,
   footerInfoText,
+  showFooter = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -153,13 +157,13 @@ export function DataTable<TData, TValue>({
         </div>
       )}
       <div className="rounded-md border">
-        <Table className={tableClassName}>
-          <TableHeader>
+        <Table className={cn("relative border-separate border-spacing-0", tableClassName)}>
+          <TableHeader className="bg-background sticky top-0 z-10 shadow-sm">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead key={header.id} className="bg-background">
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -200,6 +204,24 @@ export function DataTable<TData, TValue>({
               </TableRow>
             )}
           </TableBody>
+          {showFooter && (
+            <TableFooter className="sticky bottom-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] border-t-2 z-10">
+              {table.getFooterGroups().map((footerGroup) => (
+                <TableRow key={footerGroup.id}>
+                  {footerGroup.headers.map((footer) => (
+                    <TableCell key={footer.id} className="font-bold py-3">
+                      {footer.isPlaceholder
+                        ? null
+                        : flexRender(
+                            footer.column.columnDef.footer,
+                            footer.getContext()
+                          )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableFooter>
+          )}
         </Table>
       </div>
       {hidePagination ? null : (

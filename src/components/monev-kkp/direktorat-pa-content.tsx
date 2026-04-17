@@ -301,7 +301,14 @@ export const DirektoratPaContent = forwardRef<
       <Card>
         <CardHeader><CardTitle>{getTitle()}</CardTitle></CardHeader>
         <CardContent>
-          {isLoading ? <TableSkeleton rows={10} /> : <DataTable columns={columns} data={data} initialPageSize={25} />}
+          {isLoading ? <TableSkeleton rows={10} /> : (
+            <DataTable 
+              columns={columns} 
+              data={data} 
+              initialPageSize={25} 
+              showFooter={contentType === "monitoring-kanwil" || contentType === "monitoring-kppn"}
+            />
+          )}
         </CardContent>
       </Card>
 
