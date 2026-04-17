@@ -6,7 +6,6 @@ import {
   getCoreRowModel,
   getSortedRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   flexRender,
   createColumnHelper,
   SortingState,
@@ -26,6 +25,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+import {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
@@ -34,7 +38,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Pencil, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Pencil, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Search } from "lucide-react";
 import kanwilData from "@/data/kdkanwil.json";
 import kppnData from "@/data/kdkppn.json";
 import { cn } from "@/lib/utils/utils";
@@ -315,7 +319,6 @@ export function ModernUsersTable({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
   });
 
   return (
@@ -323,12 +326,16 @@ export function ModernUsersTable({
       <CardContent className="px-6 py-2">
         <div className="flex flex-col gap-4 mb-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <Input
-              className="h-9 max-w-xl"
-              placeholder="Cari nama, email, atau peran"
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-            />
+            <InputGroup className="h-9 max-w-xl bg-zinc-100 dark:bg-black">
+              <InputGroupAddon align="inline-start">
+                <Search className="size-4" />
+              </InputGroupAddon>
+              <InputGroupInput 
+                placeholder="Cari nama, email, atau peran"
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+              />
+            </InputGroup>
             <div className="flex gap-2">
               <Select value={roleFilter} onValueChange={onRoleFilterChange}>
                 <SelectTrigger className="h-9 min-w-40">
