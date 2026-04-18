@@ -51,6 +51,7 @@ export const useDirektoratPaData = (contentType: string) => {
   const [selectedKanwil, setSelectedKanwil] = useState("all");
   const [selectedKppn, setSelectedKppn] = useState("all");
   const [selectedPeriode, setSelectedPeriode] = useState(defaultPeriode);
+  const [selectedStatus, setSelectedStatus] = useState("all");
   const [kppnRefList, setKppnRefList] = useState<
     { value: string; label: string }[]
   >([]);
@@ -317,6 +318,7 @@ export const useDirektoratPaData = (contentType: string) => {
     setSelectedKanwil("all");
     setSelectedKppn("all");
     setSelectedPeriode(defaultPeriode);
+    setSelectedStatus("all");
   };
 
   return {
@@ -332,6 +334,8 @@ export const useDirektoratPaData = (contentType: string) => {
     setSelectedKppn,
     selectedPeriode,
     setSelectedPeriode,
+    selectedStatus,
+    setSelectedStatus,
     handleReset,
     kanwilRefList,
     isLoadingKanwilRef,

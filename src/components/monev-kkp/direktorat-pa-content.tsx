@@ -55,6 +55,8 @@ export const DirektoratPaContent = forwardRef<
     setSelectedKppn,
     selectedPeriode,
     setSelectedPeriode,
+    selectedStatus,
+    setSelectedStatus,
     handleReset,
     kanwilRefList,
     isLoadingKanwilRef,
@@ -207,12 +209,23 @@ export const DirektoratPaContent = forwardRef<
     onViewRingkasan: handleViewRingkasan,
   };
 
+  // Apply client-side status filter for monitoring tabs
+  const filteredMonitoringKanwilData =
+    selectedStatus === "all"
+      ? monitoringKanwilData
+      : monitoringKanwilData.filter((d) => d.status === selectedStatus);
+
+  const filteredMonitoringKppnData =
+    selectedStatus === "all"
+      ? monitoringKppnData
+      : monitoringKppnData.filter((d) => d.status === selectedStatus);
+
   const getColumnsAndData = (): { columns: any[]; data: any[] } => {
     switch (contentType) {
       case "ringkasan-kanwil": return { columns: getRingkasanKanwilColumns(columnHandlers), data: ringkasanData };
       case "ringkasan-kppn": return { columns: getRingkasanKppnColumns(columnHandlers), data: ringkasanData };
-      case "monitoring-kanwil": return { columns: getMonitoringKanwilColumns(columnHandlers), data: monitoringKanwilData };
-      case "monitoring-kppn": return { columns: getMonitoringKppnColumns(columnHandlers), data: monitoringKppnData };
+      case "monitoring-kanwil": return { columns: getMonitoringKanwilColumns(columnHandlers), data: filteredMonitoringKanwilData };
+      case "monitoring-kppn": return { columns: getMonitoringKppnColumns(columnHandlers), data: filteredMonitoringKppnData };
       default: return { columns: getRingkasanKanwilColumns(columnHandlers), data: ringkasanData };
     }
   };
@@ -291,6 +304,8 @@ export const DirektoratPaContent = forwardRef<
         setSelectedKppn={setSelectedKppn}
         selectedPeriode={selectedPeriode}
         setSelectedPeriode={setSelectedPeriode}
+        selectedStatus={selectedStatus}
+        setSelectedStatus={setSelectedStatus}
         handleReset={handleReset}
         activeKanwilList={activeKanwilList}
         activeKppnList={activeKppnList}

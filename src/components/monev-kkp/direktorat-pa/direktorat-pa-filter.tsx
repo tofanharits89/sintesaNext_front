@@ -20,12 +20,20 @@ interface DirektoratPaFilterProps {
   setSelectedKppn: (value: string) => void;
   selectedPeriode: string;
   setSelectedPeriode: (value: string) => void;
+  selectedStatus: string;
+  setSelectedStatus: (value: string) => void;
   handleReset: () => void;
   activeKanwilList: { value: string; label: string }[];
   activeKppnList: { value: string; label: string }[];
   isLoadingKanwilRef: boolean;
   isLoadingKppnRef: boolean;
 }
+
+const STATUS_OPTIONS = [
+  { value: "all", label: "Semua" },
+  { value: "sent", label: "Sudah Kirim" },
+  { value: "not_sent", label: "Belum Kirim" },
+];
 
 export const DirektoratPaFilter = ({
   contentType,
@@ -37,6 +45,8 @@ export const DirektoratPaFilter = ({
   setSelectedKppn,
   selectedPeriode,
   setSelectedPeriode,
+  selectedStatus,
+  setSelectedStatus,
   handleReset,
   activeKanwilList,
   activeKppnList,
@@ -50,6 +60,24 @@ export const DirektoratPaFilter = ({
     { value: "Q3", label: "Triwulan 3 (Jan - Sep)" },
     { value: "Q4", label: "Triwulan 4 (Jan - Des)" },
   ];
+
+  const isMonitoring =
+    contentType === "monitoring-kppn" || contentType === "monitoring-kanwil";
+  const showKanwil =
+    contentType === "ringkasan-kanwil" ||
+    contentType === "monitoring-kanwil" ||
+    contentType === "monitoring-kppn" ||
+    contentType === "ringkasan-kppn";
+  const showKppn =
+    contentType === "ringkasan-kppn" || contentType === "monitoring-kppn";
+
+  // Compute grid cols for monitoring: always Tahun + Kanwil + (KPPN?) + Status + Periode
+  // monitoring-kanwil: 4 cols (Tahun, Kanwil, Status, Periode)
+  // monitoring-kppn:   5 cols (Tahun, Kanwil, KPPN, Status, Periode)
+  const monitoringCols = showKppn ? "md:grid-cols-5" : "md:grid-cols-4";
+
+  // Ringkasan grid cols (no Status)
+  const ringkasanCols = showKppn ? "md:grid-cols-4" : "md:grid-cols-3";
 
   return (
     <Card>
@@ -70,28 +98,26 @@ export const DirektoratPaFilter = ({
           <span className="font-medium">Direktorat Pelaksanaan Anggaran</span>
           <span className="text-muted-foreground text-xs">Menampilkan data agregat dari seluruh Kanwil dan KPPN</span>
         </div>
-        <div className={`grid grid-cols-1 ${
-          contentType === "ringkasan-kppn" || contentType === "monitoring-kppn"
-            ? "md:grid-cols-4"
-            : "md:grid-cols-3"
-        } gap-4`}>
+
+        <div className={`grid grid-cols-1 ${isMonitoring ? monitoringCols : ringkasanCols} gap-4`}>
+          {/* Tahun */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Tahun</label>
             <Select value={selectedYear} onValueChange={setSelectedYear}>
               <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-              <SelectContent>{years.map((year) => (<SelectItem key={year} value={year}>{year}</SelectItem>))}</SelectContent>
+              <SelectContent>
+                {years.map((year) => (
+                  <SelectItem key={year} value={year}>{year}</SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
-          {(contentType === "ringkasan-kanwil" ||
-            contentType === "monitoring-kanwil" ||
-            contentType === "monitoring-kppn" ||
-            contentType === "ringkasan-kppn") && (
+
+          {/* Kanwil */}
+          {showKanwil && (
             <div className="space-y-2">
               <label className="text-sm font-medium">Kanwil</label>
-              <Select
-                value={selectedKanwil}
-                onValueChange={onKanwilChange}
-              >
+              <Select value={selectedKanwil} onValueChange={onKanwilChange}>
                 <SelectTrigger className="w-full">
                   <SelectValue
                     placeholder={
@@ -111,7 +137,9 @@ export const DirektoratPaFilter = ({
               </Select>
             </div>
           )}
-          {(contentType === "ringkasan-kppn" || contentType === "monitoring-kppn") && (
+
+          {/* KPPN */}
+          {showKppn && (
             <div className="space-y-2">
               <label className="text-sm font-medium">KPPN</label>
               <SearchableSelect
@@ -128,11 +156,32 @@ export const DirektoratPaFilter = ({
               />
             </div>
           )}
+
+          {/* Status — only for monitoring tabs */}
+          {isMonitoring && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Status</label>
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Periode */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Periode (Akumulatif)</label>
             <Select value={selectedPeriode} onValueChange={setSelectedPeriode}>
               <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-              <SelectContent>{periodes.map((periode) => (<SelectItem key={periode.value} value={periode.value}>{periode.label}</SelectItem>))}</SelectContent>
+              <SelectContent>
+                {periodes.map((periode) => (
+                  <SelectItem key={periode.value} value={periode.value}>{periode.label}</SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
         </div>
