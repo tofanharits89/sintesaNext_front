@@ -239,6 +239,30 @@ export async function getSebaranPenerima(): Promise<SebaranPenerimaData> {
   return response.data;
 }
 
+export type EfektivitasYearItem = {
+  tahun: string;
+  nmdept: string;
+  nmprogram: string;
+  penerima_manfaat: number;
+  rata_realisasi_per_bulan: number;
+  persentase_efektivitas: number;
+};
+
+export type EfektivitasProgramData = {
+  items: EfektivitasYearItem[];
+};
+
+export async function getEfektivitasProgram(): Promise<EfektivitasProgramData> {
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: EfektivitasProgramData;
+  }>("/dashboard/mbg/efektivitas-program");
+  if (!response?.success || !response.data) {
+    throw new Error("Failed to fetch MBG efektivitas program data");
+  }
+  return response.data;
+}
+
 export async function getChartsReady(): Promise<boolean> {
   // Simulate 3s latency to match current UX
   await new Promise((r) => setTimeout(r, 3000));

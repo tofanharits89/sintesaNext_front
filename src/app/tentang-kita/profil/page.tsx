@@ -15,8 +15,8 @@ const coreTeam: Person[] = [
   { role: "Direktur", name: "Moudy Hermawan", nip: "197504031994031001" },
   {
     role: "Penanggung Jawab",
-    name: "Arie Suwandani W. Wirastuti",
-    nip: "197510221995122001",
+    name: "Zulfitri Nasran",
+    nip: "197011301998031003",
   },
   {
     role: "Project Manager",
@@ -40,8 +40,8 @@ const coreTeam: Person[] = [
   },
   {
     role: "Liaison Officer",
-    name: "Nugraheni Vikri Puspitaningtyas",
-    nip: "199712112019122001",
+    name: "Nur Achmad Taufiq",
+    nip: "200003052022011001",
   },
 ];
 
@@ -129,7 +129,8 @@ export default function TentangKitaProfilPage() {
   const pj = coreTeam.find((p) => p.role === "Penanggung Jawab")!;
   const pm = coreTeam.find((p) => p.role === "Project Manager")!;
   const teknis = coreTeam.filter(
-    (p) => !["Direktur", "Penanggung Jawab", "Project Manager"].includes(p.role)
+    (p) =>
+      !["Direktur", "Penanggung Jawab", "Project Manager"].includes(p.role),
   );
 
   return (

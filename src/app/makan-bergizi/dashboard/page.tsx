@@ -7,6 +7,7 @@ import { StatsRankingCard } from "@/components/mbg/StatsRankingCard";
 import { PlaceholderChartCard } from "@/components/mbg/PlaceholderChartCard";
 import { BgnTrendChart } from "@/components/mbg/BgnTrendChart";
 import { SebaranPenerimaChart } from "@/components/mbg/SebaranPenerimaChart";
+import { EfektivitasProgramChart } from "@/components/mbg/EfektivitasProgramChart";
 import {
   Building2,
   Users,
@@ -122,10 +123,7 @@ export default function DashboardMBGPage() {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <BgnTrendChart />
         <SebaranPenerimaChart />
-        <PlaceholderChartCard
-          title="Efektivitas Program"
-          description="Indikator kunci"
-        />
+        <EfektivitasProgramChart />
       </div>
     </div>
   );

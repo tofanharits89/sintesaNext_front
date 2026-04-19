@@ -195,6 +195,11 @@ export const queryKeyFactories = {
         [...queryKeyFactories.financial.mbg.all(), "realisasiBgn"] as const,
       sebaranPenerima: () =>
         [...queryKeyFactories.financial.mbg.all(), "sebaranPenerima"] as const,
+      efektivitasProgram: () =>
+        [
+          ...queryKeyFactories.financial.mbg.all(),
+          "efektivitasProgram",
+        ] as const,
     },
   },
 
