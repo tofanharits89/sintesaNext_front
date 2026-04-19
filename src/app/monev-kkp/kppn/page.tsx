@@ -175,6 +175,10 @@ export default function MonevKkpKppnPage() {
 
     const handleExportExcel = async () => {
         setIsExporting(true);
+
+        // Give time for the spinner to render
+        await new Promise(resolve => setTimeout(resolve, 100));
+
         try {
             const data = kppnContentRef.current?.getData() || [];
 
@@ -483,10 +487,16 @@ export default function MonevKkpKppnPage() {
                         variant="outline"
                         disabled={isExporting}
                         onClick={handleExportExcel}
-                        className="border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-950 dark:hover:text-green-300"
+                        className="bg-white dark:bg-card hover:bg-zinc-200 flex items-center gap-2 w-60 h-12 rounded-xl border-2 border-green-600 dark:border-green-300"
                     >
-                        <FileSpreadsheet className="mr-2 h-4 w-4" />
-                        Export Excel
+                        {isExporting ? (
+                            <Spinner size="sm" className="mr-2 text-green-600 dark:text-green-300" />
+                        ) : (
+                            <FileSpreadsheet className="w-4 h-4 text-green-600 dark:text-green-300" />
+                        )}
+                        <p className="text-sm font-semibold text-green-600 dark:text-green-300">
+                            {isExporting ? "Mengunduh..." : "Unduh Laporan Excel"}
+                        </p>
                     </Button>
 
                     {/* Kirim Laporan Button */}

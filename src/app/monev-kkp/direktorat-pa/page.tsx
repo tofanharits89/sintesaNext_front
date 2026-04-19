@@ -11,6 +11,7 @@ import { FileSpreadsheet, LayoutList, Building2, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx-js-style";
 import { useAuth } from "@/hooks/useAuth";
+import { Spinner } from "@/components/ui/spinner";
 
 // Allowed roles for Direktorat PA page
 const ALLOWED_ROLES = ["ditpa", "super_admin", "co_admin"];
@@ -56,6 +57,10 @@ export default function MonevKkpDirektoratPaPage() {
 
     const handleExportExcel = async () => {
         setIsExporting(true);
+
+        // Give time for the spinner to render
+        await new Promise(resolve => setTimeout(resolve, 100));
+
         try {
             const currentRef = activeTab === "ringkasan-kanwil" ? kanwilDataRef : kppnDataRef;
             const data = currentRef.current?.getData() || [];
@@ -244,17 +249,17 @@ export default function MonevKkpDirektoratPaPage() {
                 for (let c = 0; c < totalCols; c++) {
                     const addr = XLSX.utils.encode_cell({ r, c });
                     if (!worksheet[addr]) worksheet[addr] = { v: "", t: "s" };
-                    
+
                     const isHeader = r <= 6;
-                    
+
                     if (!isHeader && accountingCols.has(c) && typeof worksheet[addr].v === "number") {
                         worksheet[addr].z = '#,##0';
                     }
-                    
+
                     worksheet[addr].s = {
                         ...(worksheet[addr].s || {}),
                         border: borderStyle,
-                        font: { 
+                        font: {
                             ...(worksheet[addr].s?.font || {}),
                             bold: isHeader
                         },
@@ -339,10 +344,16 @@ export default function MonevKkpDirektoratPaPage() {
                             variant="outline"
                             disabled={isExporting}
                             onClick={handleExportExcel}
-                            className="border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-950 dark:hover:text-green-300"
+                            className="bg-white dark:bg-card hover:bg-zinc-200 flex items-center gap-2 w-60 h-12 rounded-xl border-2 border-green-600 dark:border-green-300"
                         >
-                            <FileSpreadsheet className="mr-2 h-4 w-4" />
-                            Export Excel
+                            {isExporting ? (
+                                <Spinner size="sm" className="mr-2 text-green-600 dark:text-green-300" />
+                            ) : (
+                                <FileSpreadsheet className="w-4 h-4 text-green-600 dark:text-green-300" />
+                            )}
+                            <p className="text-sm font-semibold text-green-600 dark:text-green-300">
+                                {isExporting ? "Mengunduh..." : "Unduh Laporan Excel"}
+                            </p>
                         </Button>
                     </div>
                 )}
@@ -382,7 +393,7 @@ export default function MonevKkpDirektoratPaPage() {
                     <TabsContent value="ringkasan-kanwil" className="space-y-4">
                         <DirektoratPaContent ref={kanwilDataRef} contentType="ringkasan-kanwil" />
                     </TabsContent>
- 
+
                     <TabsContent value="ringkasan-kppn" className="space-y-4">
                         <DirektoratPaContent ref={kppnDataRef} contentType="ringkasan-kppn" />
                     </TabsContent>
