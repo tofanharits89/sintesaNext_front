@@ -662,6 +662,25 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
       nameColumn: "nmsumber",
     },
   },
+  // Belwil-specific filters (kewilayahan table only)
+  {
+    key: "regional",
+    label: "Regional",
+    order: 25,
+    showInUI: true,
+    query: {
+      columnName: "kdregional",
+    },
+  },
+  {
+    key: "lokusAnggaran",
+    label: "Lokus Anggaran",
+    order: 26,
+    showInUI: true,
+    query: {
+      columnName: "kode_lokus_anggaran",
+    },
+  },
   // Revisi DIPA-specific filters (reference tables have NO year suffix)
   {
     key: "kewenanganRevisi",

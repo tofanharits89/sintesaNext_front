@@ -49,8 +49,9 @@ const AppShell = memo(function AppShell({
       "/dispensasi",
       "/ikpa",
       "/monev-kkp",
+      "/belwil",
     ],
-    []
+    [],
   );
 
   const isLikely404Page = useMemo(() => {
@@ -64,7 +65,7 @@ const AppShell = memo(function AppShell({
         pathname.startsWith("/api/") ||
         pathname.startsWith("/_next/") ||
         pathname.startsWith("/fonts/") ||
-        pathname.startsWith("/images/")
+        pathname.startsWith("/images/"),
     );
 
     // Also check for static files and assets
@@ -84,7 +85,7 @@ const AppShell = memo(function AppShell({
       pathname?.startsWith("/unauthorized") ||
       isNotFoundPage ||
       isLikely404Page,
-    [pathname, isNotFoundPage, isLikely404Page]
+    [pathname, isNotFoundPage, isLikely404Page],
   );
 
   // Initialize login notifications for admin users - always call hooks

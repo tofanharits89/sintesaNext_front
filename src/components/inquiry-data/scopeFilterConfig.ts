@@ -33,6 +33,9 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     // Revisi DIPA-specific filters not used on Belanja
     "kewenanganRevisi",
     "jenisRevisi",
+    // Belwil-specific filters not used on Belanja
+    "regional",
+    "lokusAnggaran",
   ],
   tematik: [
     "register",
@@ -53,6 +56,9 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     // Revisi DIPA-specific filters not used on Tematik
     "kewenanganRevisi",
     "jenisRevisi",
+    // Belwil-specific filters not used on Tematik
+    "regional",
+    "lokusAnggaran",
   ],
   rkakl_detail: [
     "cutOff", // No cutOff needed for RKAKL Detail since no realisasi
@@ -81,6 +87,9 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     // Revisi DIPA-specific filters not used on RKAKL Detail
     "kewenanganRevisi",
     "jenisRevisi",
+    // Belwil-specific filters not used on RKAKL Detail
+    "regional",
+    "lokusAnggaran",
   ],
   kontrak: [
     // Explicitly exclude all filters that are NOT required on Kontrak page.
@@ -126,6 +135,9 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     // Revisi DIPA-specific filters not used on Kontrak
     "kewenanganRevisi",
     "jenisRevisi",
+    // Belwil-specific filters not used on Kontrak
+    "regional",
+    "lokusAnggaran",
   ],
   up_tup: [
     // Allowed filters on UP/TUP page:
@@ -176,6 +188,9 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     // Revisi DIPA-specific filters not used on UP/TUP
     "kewenanganRevisi",
     "jenisRevisi",
+    // Belwil-specific filters not used on UP/TUP
+    "regional",
+    "lokusAnggaran",
   ],
   penerimaan_pnbp: [
     // Allowed filters on Penerimaan PNBP page:
@@ -222,6 +237,9 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     // Revisi DIPA-specific filters not used on Penerimaan PNBP
     "kewenanganRevisi",
     "jenisRevisi",
+    // Belwil-specific filters not used on Penerimaan PNBP
+    "regional",
+    "lokusAnggaran",
   ],
   revisi_dipa: [
     // Allowed standard filters on Revisi DIPA page:
@@ -273,6 +291,9 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     // Mandatory revisi filters are excluded from standard filter panel
     "kewenanganRevisi",
     "jenisRevisi",
+    // Belwil-specific filters not used on Revisi DIPA
+    "regional",
+    "lokusAnggaran",
   ],
   general: [
     // Status Sumber only on Penerimaan PNBP
@@ -317,6 +338,9 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     // Internal akun variants not shown on UI
     "kodeBkpk",
     "jenisBelanja",
+    // Belwil-specific filters not used on SP2D
+    "regional",
+    "lokusAnggaran",
     // Other UI filters not required on SP2D
     "register",
     "jenisBlokir",
