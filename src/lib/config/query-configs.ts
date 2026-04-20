@@ -168,29 +168,30 @@ export const queryKeyFactories = {
   financial: {
     all: () => ["financial"] as const,
     mbg: {
-      all: () => ["financial", "mbg"] as const,
-      quickStats: () =>
-        [...queryKeyFactories.financial.mbg.all(), "quickStats"] as const,
+      all: (year: string = "2026") => ["financial", "mbg", year] as const,
+      quickStats: (year: string = "2026") =>
+        [...queryKeyFactories.financial.mbg.all(year), "quickStats"] as const,
       charts: () =>
         [...queryKeyFactories.financial.mbg.all(), "charts"] as const,
-      rankings: () =>
-        [...queryKeyFactories.financial.mbg.all(), "rankings"] as const,
+      rankings: (year: string = "2026") =>
+        [...queryKeyFactories.financial.mbg.all(year), "rankings"] as const,
       mapStats: (
         scope: "national" | "province" | "regency",
         id?: string,
         provinceName?: string,
+        year: string = "2026",
       ) =>
         [
-          ...queryKeyFactories.financial.mbg.all(),
+          ...queryKeyFactories.financial.mbg.all(year),
           "mapStats",
           scope,
           id ?? "all",
           provinceName ?? "all",
         ] as const,
-      mapChoropleth: () =>
-        [...queryKeyFactories.financial.mbg.all(), "mapChoropleth"] as const,
-      provRankings: () =>
-        [...queryKeyFactories.financial.mbg.all(), "provRankings"] as const,
+      mapChoropleth: (year: string = "2026") =>
+        [...queryKeyFactories.financial.mbg.all(year), "mapChoropleth"] as const,
+      provRankings: (year: string = "2026") =>
+        [...queryKeyFactories.financial.mbg.all(year), "provRankings"] as const,
       realisasiBgn: () =>
         [...queryKeyFactories.financial.mbg.all(), "realisasiBgn"] as const,
       sebaranPenerima: () =>

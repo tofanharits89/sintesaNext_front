@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { QuickStatCard } from "@/components/mbg/QuickStatCard";
 import { StatsRankingCard } from "@/components/mbg/StatsRankingCard";
@@ -16,6 +16,7 @@ import {
   UserCheck,
   Handshake,
   CircleDashed,
+  Calendar,
 } from "lucide-react";
 import { QueryErrorBoundary } from "@/components/ui/query-error-boundary";
 import {
@@ -26,16 +27,24 @@ import {
 } from "@/components/ui/dashboard-skeletons";
 import { useQuickStats } from "@/features/mbg/hooks/useQuickStats";
 import { useProvRankings } from "@/features/mbg/hooks/useProvRankings";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { MapSearch } from "@/features/mbg/components/MapSearch";
 import { Suspense } from "react";
 
 export default function DashboardMBGPage() {
-  // Replace simulated timers with data hooks preserving the same UX timings
+  const [year, setYear] = useState("2026");
+
   const { data: quickStatsData, isLoading: isQuickStatsLoading } =
-    useQuickStats();
+    useQuickStats(year);
   const { data: provRankingsData, isLoading: isRankingLoading } =
-    useProvRankings();
+    useProvRankings(year);
 
   const quickStats = useMemo(() => quickStatsData ?? [], [quickStatsData]);
   const iconByLabel = useMemo(
@@ -52,11 +61,27 @@ export default function DashboardMBGPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard MBG</h1>
-        <p className="text-sm text-muted-foreground">
-          Ringkasan dan analitik Makan Bergizi.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Dashboard MBG</h1>
+          <p className="text-sm text-muted-foreground">
+            Ringkasan dan analitik Makan Bergizi.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">Tahun:</span>
+          <Select value={year} onValueChange={setYear}>
+            <SelectTrigger className="w-[120px] h-9">
+              <SelectValue placeholder="Pilih Tahun" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="2026">2026</SelectItem>
+              <SelectItem value="2025">2025</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Row 1: Quick Stats (6 cards) */}
@@ -71,7 +96,7 @@ export default function DashboardMBGPage() {
                 CircleDashed;
               return (
                 <QuickStatCard
-                  key={i}
+                  key={`${year}-${i}`}
                   label={s.label}
                   icon={<Icon className="h-4 w-4 text-blue-500" />}
                   value={String(s.value)}
@@ -87,7 +112,7 @@ export default function DashboardMBGPage() {
         <div className="xl:col-span-3">
           <QueryErrorBoundary>
             <Suspense fallback={<MapSearchCardSkeleton className="h-96" />}>
-              <MapSearch />
+              <MapSearch year={year} />
             </Suspense>
           </QueryErrorBoundary>
         </div>

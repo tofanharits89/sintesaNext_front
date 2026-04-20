@@ -141,7 +141,7 @@ const LEGEND_ITEMS: Record<
 const fmt = (n: number) =>
   new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(n);
 
-export function MapSearch() {
+export function MapSearch({ year = "2026" }: { year?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null);
@@ -155,7 +155,7 @@ export function MapSearch() {
   // Tracks when Leaflet map is ready — prevents layers firing before map init
   const [mapReady, setMapReady] = useState(false);
 
-  const { data: choroplethData } = useMapChoropleth();
+  const { data: choroplethData } = useMapChoropleth(year);
 
   // Lookup province name from id
   const selectedProvince = useMemo(
@@ -178,7 +178,7 @@ export function MapSearch() {
   }, [provinceId, choroplethData, selectedProvince]);
 
   // Kab-level penerima data (uses jumlahpenerimaKab hook → /penerima-by-regency)
-  const { dataPenerimaKab } = useJumlahPenerimaKab(provNameForKab);
+  const { dataPenerimaKab } = useJumlahPenerimaKab(provNameForKab, year);
 
   // Kab penerima lookup: normalized kabkota → data
   const penerimaKabMap = useMemo(() => {
@@ -210,6 +210,7 @@ export function MapSearch() {
     overlayScope,
     provinceId || undefined,
     selectedProvince?.name,
+    year
   );
   const overlayError = statsError ? (statsError as Error).message : null;
 
@@ -380,7 +381,7 @@ export function MapSearch() {
           const kabRow = penerimaKabMap.get(normalizeName(kabName));
           const tooltipExtra =
             showPenerima && kabRow
-              ? `<br/>Penerima: <strong>${fmt(kabRow.penerimakab)}</strong> (${Number(kabRow.persenpenerimakab).toFixed(1)}%)`
+              ? `<br/>Penerima: <strong>${fmt(kabRow.penerimakab)}</strong> (${Number(kabRow.persen_penerimakab).toFixed(1)}%)`
               : "";
           lyr.bindTooltip(
             `<div style="font-size:12px;line-height:1.6"><strong>${kabName}</strong>${tooltipExtra}</div>`,
