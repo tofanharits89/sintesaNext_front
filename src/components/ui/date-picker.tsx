@@ -43,6 +43,7 @@ export function DatePicker({
   endMonth,
   locale = id,
 }: DatePickerProps) {
+  const [isOpen, setIsOpen] = React.useState(false)
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(date)
   const [timeValue, setTimeValue] = React.useState<string>(
     date ? format(date, "HH:mm") : "00:00"
@@ -64,6 +65,11 @@ export function DatePicker({
     }
     setSelectedDate(newDate)
     onDateChange?.(newDate)
+    
+    // Auto-close if not showing time
+    if (!showTime) {
+      setIsOpen(false)
+    }
   }
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,7 +88,7 @@ export function DatePicker({
   }
 
   return (
-    <Popover>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button
           variant={"outline"}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import * as XLSX from "xlsx";
 import { format } from "date-fns";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -24,15 +24,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContents,
+  TabsContent,
+} from "@/components/animate-ui/components/animate/tabs";
+import { DataTable } from "@/components/ui/data-table";
+import { ColumnDef } from "@tanstack/react-table";
+import { cn } from "@/lib/utils/utils";
+import { ResetButton } from "@/components/ui/reset-button";
+import kanwilData from "@/data/kdkanwil.json";
 
 type RowData = Record<string, string | number | null>;
 
@@ -90,12 +93,143 @@ function TabRealisasiBGN() {
     downloadExcel(data, "DataBGN", `data_realisasi_bgn_${date}.xlsx`);
   };
 
-  const columns = data && data.length > 0 ? Object.keys(data[0]!) : [];
+  const handleReset = () => {
+    setTglAwal(undefined);
+    setTglAkhir(undefined);
+    setData(null);
+    setError("");
+  };
+
+  const tableColumns = useMemo<ColumnDef<RowData>[]>(() => {
+    if (!data || data.length === 0) return [];
+    const keys = Object.keys(data[0]!);
+    return [
+      {
+        id: "no",
+        header: () => <div className="text-center font-medium w-10">No</div>,
+        cell: ({ row }) => <div className="text-center w-10">{row.index + 1}</div>,
+      },
+      ...keys.map((key) => ({
+        accessorKey: key,
+        header: () => (
+          <div className="text-center font-medium whitespace-nowrap">
+            {key.toUpperCase()}
+          </div>
+        ),
+        cell: ({ row }: any) => {
+          const rawVal = row.getValue(key);
+          const keyUpper = key.toUpperCase();
+          const isKD = keyUpper.startsWith("KD");
+          const isTgl = keyUpper.includes("TGL");
+          const isYear =
+            keyUpper === "THANG" || keyUpper === "TAHUN" || keyUpper === "THN";
+          
+          const months = [
+            "JANUARI",
+            "FEBRUARI",
+            "MARET",
+            "APRIL",
+            "MEI",
+            "JUNI",
+            "JULI",
+            "AGUSTUS",
+            "SEPTEMBER",
+            "OKTOBER",
+            "NOVEMBER",
+            "DESEMBER",
+          ];
+          const shortMonths = ["JAN", "FEB", "MAR", "APR", "MEI", "JUN", "JUL", "AGU", "SEP", "OKT", "NOV", "DES"];
+          
+          const isMonth = months.includes(keyUpper) || shortMonths.some(m => keyUpper.startsWith(m));
+          const isRealisasi =
+            keyUpper.includes("REALISASI") ||
+            keyUpper.includes("NILAI") ||
+            keyUpper.includes("PAGU") ||
+            keyUpper.includes("TOTAL") ||
+            keyUpper.includes("JUMLAH") ||
+            isMonth;
+
+          // Handle strings that should be numbers (but skip KD, Date, and Year columns)
+          let val = rawVal;
+          if (
+            typeof rawVal === "string" &&
+            !isKD &&
+            !isTgl &&
+            !isYear &&
+            rawVal.trim() !== "" &&
+            !isNaN(Number(rawVal))
+          ) {
+            val = Number(rawVal);
+          }
+
+          // Fallback: If TOTAL/JUMLAH is empty/0, try to sum months
+          if (
+            (keyUpper.includes("TOTAL") || keyUpper.includes("JUMLAH")) &&
+            (val === null || val === undefined || val === 0 || val === "0")
+          ) {
+            // Get all keys from the original row to find month-like columns
+            const rowKeys = Object.keys(row.original);
+            const sum = rowKeys.reduce((acc, rk) => {
+              const rkUpper = rk.toUpperCase();
+              const isMonthCol = months.includes(rkUpper) || 
+                                (shortMonths.some(m => rkUpper.startsWith(m)) && !rkUpper.includes("TOTAL") && !rkUpper.includes("JUMLAH"));
+              
+              if (isMonthCol) {
+                const mVal = row.original[rk];
+                const n = typeof mVal === "number" ? mVal : Number(mVal);
+                return acc + (isNaN(n) ? 0 : n);
+              }
+              return acc;
+            }, 0);
+            if (sum > 0) val = sum;
+          }
+
+          return (
+            <div
+              className={cn(
+                "whitespace-nowrap px-2",
+                (isKD || isTgl || isYear) && "text-center",
+                isRealisasi && "text-right font-mono tabular-nums",
+              )}
+            >
+              {typeof val === "number"
+                ? isYear
+                  ? String(val)
+                  : val.toLocaleString("id-ID", {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    })
+                : isTgl && val
+                  ? (() => {
+                      try {
+                        const d = new Date(String(val));
+                        return isNaN(d.getTime())
+                          ? String(val)
+                          : format(d, "dd-MM-yyyy");
+                      } catch {
+                        return String(val);
+                      }
+                    })()
+                  : val !== null && val !== undefined
+                    ? String(val)
+                    : "-"}
+            </div>
+          );
+        },
+      })),
+    ];
+  }, [data]);
 
   return (
     <div className="space-y-4">
       <Card>
-        <CardContent className="pt-6">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base font-semibold">Filter Data</CardTitle>
+            <ResetButton onReset={handleReset} />
+          </div>
+        </CardHeader>
+        <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
             <div className="space-y-1.5">
               <Label>Tanggal Awal SP2D</Label>
@@ -151,7 +285,7 @@ function TabRealisasiBGN() {
       {data && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between py-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Table2 className="h-4 w-4" />
               Hasil Data ({data.length} record)
             </CardTitle>
@@ -160,47 +294,18 @@ function TabRealisasiBGN() {
               size="sm"
               onClick={handleDownload}
               disabled={data.length === 0}
+              className="bg-green-700 dark:bg-card hover:bg-green-600 flex items-center"
             >
-              <FileSpreadsheet className="h-4 w-4 mr-1" />
-              Excel
+              <FileSpreadsheet className="w-4 h-4 text-white mr-2" />
+              <span className="text-sm text-white">Unduh Data Excel</span>
             </Button>
           </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-auto max-h-96">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="sticky top-0 bg-background w-10">
-                      No
-                    </TableHead>
-                    {columns.map((col) => (
-                      <TableHead
-                        key={col}
-                        className="sticky top-0 bg-background whitespace-nowrap"
-                      >
-                        {col.toUpperCase()}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.map((row, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="text-center text-muted-foreground">
-                        {i + 1}
-                      </TableCell>
-                      {columns.map((col) => (
-                        <TableCell key={col} className="whitespace-nowrap">
-                          {row[col] !== null && row[col] !== undefined
-                            ? String(row[col])
-                            : "-"}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+          <CardContent>
+            <DataTable
+              columns={tableColumns}
+              data={data}
+              initialPageSize={25}
+            />
           </CardContent>
         </Card>
       )}
@@ -252,17 +357,147 @@ function TabRekapLokus() {
     );
   };
 
-  const columns = data && data.length > 0 ? Object.keys(data[0]!) : [];
+  const handleReset = () => {
+    setThang(currentYear.toString());
+    setData(null);
+    setError("");
+  };
+
+  const tableColumns = useMemo<ColumnDef<RowData>[]>(() => {
+    if (!data || data.length === 0) return [];
+    const keys = Object.keys(data[0]!);
+    return [
+      {
+        id: "no",
+        header: () => <div className="text-center font-medium w-10">No</div>,
+        cell: ({ row }) => <div className="text-center w-10">{row.index + 1}</div>,
+      },
+      ...keys.map((key) => ({
+        accessorKey: key,
+        header: () => (
+          <div className="text-center font-medium whitespace-nowrap">
+            {key.toUpperCase()}
+          </div>
+        ),
+        cell: ({ row }: any) => {
+          const rawVal = row.getValue(key);
+          const keyUpper = key.toUpperCase();
+          const isKD = keyUpper.startsWith("KD");
+          const isTgl = keyUpper.includes("TGL");
+          const isYear =
+            keyUpper === "THANG" || keyUpper === "TAHUN" || keyUpper === "THN";
+          
+          const months = [
+            "JANUARI",
+            "FEBRUARI",
+            "MARET",
+            "APRIL",
+            "MEI",
+            "JUNI",
+            "JULI",
+            "AGUSTUS",
+            "SEPTEMBER",
+            "OKTOBER",
+            "NOVEMBER",
+            "DESEMBER",
+          ];
+          const shortMonths = ["JAN", "FEB", "MAR", "APR", "MEI", "JUN", "JUL", "AGU", "SEP", "OKT", "NOV", "DES"];
+          
+          const isMonth = months.includes(keyUpper) || shortMonths.some(m => keyUpper.startsWith(m));
+          const isRealisasi =
+            keyUpper.includes("REALISASI") ||
+            keyUpper.includes("NILAI") ||
+            keyUpper.includes("PAGU") ||
+            keyUpper.includes("TOTAL") ||
+            keyUpper.includes("JUMLAH") ||
+            isMonth;
+
+          // Handle strings that should be numbers (but skip KD, Date, and Year columns)
+          let val = rawVal;
+          if (
+            typeof rawVal === "string" &&
+            !isKD &&
+            !isTgl &&
+            !isYear &&
+            rawVal.trim() !== "" &&
+            !isNaN(Number(rawVal))
+          ) {
+            val = Number(rawVal);
+          }
+
+          // Fallback: If TOTAL/JUMLAH is empty/0, try to sum months
+          if (
+            (keyUpper.includes("TOTAL") || keyUpper.includes("JUMLAH")) &&
+            (val === null || val === undefined || val === 0 || val === "0")
+          ) {
+            // Get all keys from the original row to find month-like columns
+            const rowKeys = Object.keys(row.original);
+            const sum = rowKeys.reduce((acc, rk) => {
+              const rkUpper = rk.toUpperCase();
+              const isMonthCol = months.includes(rkUpper) || 
+                                (shortMonths.some(m => rkUpper.startsWith(m)) && !rkUpper.includes("TOTAL") && !rkUpper.includes("JUMLAH"));
+              
+              if (isMonthCol) {
+                const mVal = row.original[rk];
+                const n = typeof mVal === "number" ? mVal : Number(mVal);
+                return acc + (isNaN(n) ? 0 : n);
+              }
+              return acc;
+            }, 0);
+            if (sum > 0) val = sum;
+          }
+
+          return (
+            <div
+              className={cn(
+                "whitespace-nowrap px-2",
+                (isKD || isTgl || isYear) && "text-center",
+                isRealisasi && "text-right font-mono tabular-nums",
+              )}
+            >
+              {typeof val === "number"
+                ? isYear
+                  ? String(val)
+                  : val.toLocaleString("id-ID", {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    })
+                : isTgl && val
+                  ? (() => {
+                      try {
+                        const d = new Date(String(val));
+                        return isNaN(d.getTime())
+                          ? String(val)
+                          : format(d, "dd-MM-yyyy");
+                      } catch {
+                        return String(val);
+                      }
+                    })()
+                  : val !== null && val !== undefined
+                    ? String(val)
+                    : "-"}
+            </div>
+          );
+        },
+      })),
+    ];
+  }, [data]);
 
   return (
     <div className="space-y-4">
       <Card>
-        <CardContent className="pt-6">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base font-semibold">Filter Data</CardTitle>
+            <ResetButton onReset={handleReset} />
+          </div>
+        </CardHeader>
+        <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
             <div className="space-y-1.5">
               <Label htmlFor="thang">Pilih Tahun</Label>
               <Select value={thang} onValueChange={setThang}>
-                <SelectTrigger id="thang">
+                <SelectTrigger id="thang" className="w-full">
                   <SelectValue placeholder="Pilih tahun" />
                 </SelectTrigger>
                 <SelectContent>
@@ -300,7 +535,7 @@ function TabRekapLokus() {
       {data && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between py-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Table2 className="h-4 w-4" />
               Hasil Data Rekap ({data.length} record)
             </CardTitle>
@@ -309,49 +544,18 @@ function TabRekapLokus() {
               size="sm"
               onClick={handleDownload}
               disabled={data.length === 0}
+              className="bg-green-700 dark:bg-card hover:bg-green-600 flex items-center"
             >
-              <FileSpreadsheet className="h-4 w-4 mr-1" />
-              Excel
+              <FileSpreadsheet className="w-4 h-4 text-white mr-2" />
+              <span className="text-sm text-white">Unduh Data Excel</span>
             </Button>
           </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-auto max-h-96">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="sticky top-0 bg-background w-10">
-                      No
-                    </TableHead>
-                    {columns.map((col) => (
-                      <TableHead
-                        key={col}
-                        className="sticky top-0 bg-background whitespace-nowrap"
-                      >
-                        {col.toUpperCase()}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.map((row, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="text-center text-muted-foreground">
-                        {i + 1}
-                      </TableCell>
-                      {columns.map((col) => (
-                        <TableCell key={col} className="whitespace-nowrap">
-                          {typeof row[col] === "number"
-                            ? (row[col] as number).toLocaleString("id-ID")
-                            : row[col] !== null && row[col] !== undefined
-                              ? String(row[col])
-                              : "-"}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+          <CardContent>
+            <DataTable
+              columns={tableColumns}
+              data={data}
+              initialPageSize={25}
+            />
           </CardContent>
         </Card>
       )}
@@ -362,24 +566,34 @@ function TabRekapLokus() {
 // --- Main Component ---
 export function DataSP2DMBG() {
   return (
-    <div className="space-y-4">
-      <Tabs defaultValue="realisasi">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="realisasi" className="flex items-center gap-2">
-            <CalendarRange className="h-4 w-4" />
-            Realisasi BGN COA
-          </TabsTrigger>
-          <TabsTrigger value="rekap" className="flex items-center gap-2">
-            <MapPin className="h-4 w-4" />
-            Rekap Lokus MBG
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="realisasi" className="mt-4">
-          <TabRealisasiBGN />
-        </TabsContent>
-        <TabsContent value="rekap" className="mt-4">
-          <TabRekapLokus />
-        </TabsContent>
+    <div className="space-y-6">
+      <Tabs defaultValue="realisasi" className="w-full gap-3">
+        <div className="border-b border-border/50 pb-3 mb-0">
+          <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-2 gap-2 md:gap-0">
+            <TabsTrigger
+              value="realisasi"
+              className="h-12 md:h-full px-3 md:px-5 py-0 text-xs md:text-base whitespace-nowrap flex items-center justify-center gap-2"
+            >
+              <CalendarRange className="h-4 w-4 md:h-5 md:w-5" />
+              Realisasi BGN COA
+            </TabsTrigger>
+            <TabsTrigger
+              value="rekap"
+              className="h-12 md:h-full px-3 md:px-5 py-0 text-xs md:text-base whitespace-nowrap flex items-center justify-center gap-2"
+            >
+              <MapPin className="h-4 w-4 md:h-5 md:w-5" />
+              Rekap Lokus MBG
+            </TabsTrigger>
+          </TabsList>
+        </div>
+        <TabsContents>
+          <TabsContent value="realisasi" className="mt-0">
+            <TabRealisasiBGN />
+          </TabsContent>
+          <TabsContent value="rekap" className="mt-0">
+            <TabRekapLokus />
+          </TabsContent>
+        </TabsContents>
       </Tabs>
     </div>
   );

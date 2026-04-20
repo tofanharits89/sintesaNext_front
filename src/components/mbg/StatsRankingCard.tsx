@@ -4,7 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContents,
+  TabsContent,
+} from "@/components/animate-ui/components/animate/tabs";
 
 export type RankedItem = { name: string; value: number; percentage: number };
 
@@ -131,26 +137,28 @@ export function StatsRankingCard({
         <CardTitle className="text-base">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue={defaultTab}>
-          <TabsList className="w-full mb-3">
+        <Tabs defaultValue={defaultTab} className="w-full">
+          <TabsList className="relative w-full h-auto md:h-12 p-2 rounded-xl">
             {tabs.map((tab) => (
               <TabsTrigger
                 key={tab.key}
                 value={tab.key}
-                className="flex-1 text-xs"
+                className="flex-1 h-10 md:h-full text-xs md:text-sm py-0"
               >
                 {tab.label}
               </TabsTrigger>
             ))}
           </TabsList>
-          {tabs.map((tab) => (
-            <TabsContent key={tab.key} value={tab.key}>
-              <RankingList
-                items={tab.items}
-                badgeColor={TAB_BADGE_COLOR[tab.key] ?? "blue"}
-              />
-            </TabsContent>
-          ))}
+          <TabsContents className="mt-4">
+            {tabs.map((tab) => (
+              <TabsContent key={tab.key} value={tab.key} className="p-1">
+                <RankingList
+                  items={tab.items}
+                  badgeColor={TAB_BADGE_COLOR[tab.key] ?? "blue"}
+                />
+              </TabsContent>
+            ))}
+          </TabsContents>
         </Tabs>
       </CardContent>
     </Card>
