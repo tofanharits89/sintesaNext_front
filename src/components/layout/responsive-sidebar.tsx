@@ -102,6 +102,14 @@ const defaultMenu: MenuItem[] = [
     ],
   },
   {
+    label: "Kewilayahan",
+    children: [
+      { label: "Belanja" },
+      { label: "Tematik" },
+      { label: "Subsidi" },
+    ],
+  },
+  {
     label: "Transfer Daerah",
     children: [
       { label: "DAU" },
@@ -143,14 +151,6 @@ const defaultMenu: MenuItem[] = [
       { label: "Generate Dataset" },
       { label: "SP2D" },
       { label: "Track Nadine" },
-    ],
-  },
-  {
-    label: "Kewilayahan",
-    children: [
-      { label: "Belanja" },
-      { label: "Tematik" },
-      { label: "Subsidi" },
     ],
   },
   {
@@ -203,12 +203,12 @@ const MENU_ROUTE_PREFIXES: Array<{ prefix: string; parent: string }> = [
   { prefix: "/dashboard", parent: "Dashboard" },
   { prefix: "/makan-bergizi", parent: "Makan Bergizi" },
   { prefix: "/monev-kkp", parent: "Monev KKP" },
+  { prefix: "/belwil", parent: "Kewilayahan" },
   { prefix: "/transfer-daerah", parent: "Transfer Daerah" },
   { prefix: "/inquiry-data", parent: "Inquiry Data" },
   { prefix: "/laporan", parent: "Laporan" },
   { prefix: "/data-makrokesra", parent: "Data Makrokesra" },
   { prefix: "/menu-rowset", parent: "Rowset Data" },
-  { prefix: "/belwil", parent: "Kewilayahan" },
   { prefix: "/dispensasi", parent: "Dispensasi" },
   { prefix: "/ikpa", parent: "Monev IKPA" },
   { prefix: "/data-supplier", parent: "Data Supplier" },
