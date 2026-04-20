@@ -53,6 +53,21 @@ function downloadExcel(data: RowData[], sheetName: string, fileName: string) {
   URL.revokeObjectURL(url);
 }
 
+// --- Skeleton Loader ---
+function TableSkeleton() {
+  return (
+    <div className="space-y-3 animate-pulse">
+      <div className="h-10 bg-muted rounded-md w-full" />
+      <div className="space-y-2">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-12 bg-muted/50 rounded-md w-full" />
+        ))}
+      </div>
+      <div className="h-10 bg-muted rounded-md w-full" />
+    </div>
+  );
+}
+
 // --- Tab 1: Tarik Data Realisasi BGN COA ---
 function TabRealisasiBGN() {
   const [tglAwal, setTglAwal] = useState<Date | undefined>(undefined);
@@ -282,33 +297,46 @@ function TabRealisasiBGN() {
         </Alert>
       )}
 
-      {data && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between py-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Table2 className="h-4 w-4" />
-              Hasil Data ({data.length} record)
-            </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDownload}
-              disabled={data.length === 0}
-              className="bg-green-700 dark:bg-card hover:bg-green-600 flex items-center"
-            >
-              <FileSpreadsheet className="w-4 h-4 text-white mr-2" />
-              <span className="text-sm text-white">Unduh Data Excel</span>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <DataTable
-              columns={tableColumns}
-              data={data}
-              initialPageSize={25}
-            />
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between py-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Table2 className="h-4 w-4" />
+            Hasil Data Realisasi BGN COA {data ? `(${data.length} record)` : ""}
+          </CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownload}
+            disabled={!data || data.length === 0}
+            className="bg-green-700 dark:bg-card hover:bg-green-600 flex items-center"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-white mr-2" />
+            <span className="text-sm text-white">Unduh Data Excel</span>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <TableSkeleton />
+          ) : data ? (
+            <DataTable columns={tableColumns} data={data} initialPageSize={25} />
+          ) : (
+            <div className="border rounded-md">
+              <div className="h-10 bg-muted/50 border-b flex items-center px-4">
+                <div className="text-xs font-medium text-muted-foreground uppercase">
+                  Data belum ditarik
+                </div>
+              </div>
+              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-background/50">
+                <Table2 className="h-10 w-10 mb-2 opacity-20" />
+                <p className="text-sm">
+                  Silahkan Pilih Tanggal dan klik "Tarik Data" untuk menampilkan
+                  hasil
+                </p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -532,33 +560,45 @@ function TabRekapLokus() {
         </Alert>
       )}
 
-      {data && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between py-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Table2 className="h-4 w-4" />
-              Hasil Data Rekap ({data.length} record)
-            </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDownload}
-              disabled={data.length === 0}
-              className="bg-green-700 dark:bg-card hover:bg-green-600 flex items-center"
-            >
-              <FileSpreadsheet className="w-4 h-4 text-white mr-2" />
-              <span className="text-sm text-white">Unduh Data Excel</span>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <DataTable
-              columns={tableColumns}
-              data={data}
-              initialPageSize={25}
-            />
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between py-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Table2 className="h-4 w-4" />
+            Hasil Data Rekap Lokus Banper MBG {data ? `(${data.length} record)` : ""}
+          </CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownload}
+            disabled={!data || data.length === 0}
+            className="bg-green-700 dark:bg-card hover:bg-green-600 flex items-center"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-white mr-2" />
+            <span className="text-sm text-white">Unduh Data Excel</span>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <TableSkeleton />
+          ) : data ? (
+            <DataTable columns={tableColumns} data={data} initialPageSize={25} />
+          ) : (
+            <div className="border rounded-md">
+              <div className="h-10 bg-muted/50 border-b flex items-center px-4">
+                <div className="text-xs font-medium text-muted-foreground uppercase">
+                  Data belum ditarik
+                </div>
+              </div>
+              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-background/50">
+                <Table2 className="h-10 w-10 mb-2 opacity-20" />
+                <p className="text-sm">
+                  Silahkan Pilih Tahun dan klik "Tarik Data Rekap" untuk menampilkan hasil
+                </p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
