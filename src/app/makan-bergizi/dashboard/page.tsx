@@ -5,6 +5,9 @@ import dynamic from "next/dynamic";
 import { QuickStatCard } from "@/components/mbg/QuickStatCard";
 import { StatsRankingCard } from "@/components/mbg/StatsRankingCard";
 import { PlaceholderChartCard } from "@/components/mbg/PlaceholderChartCard";
+import { BgnTrendChart } from "@/components/mbg/BgnTrendChart";
+import { SebaranPenerimaChart } from "@/components/mbg/SebaranPenerimaChart";
+import { EfektivitasProgramChart } from "@/components/mbg/EfektivitasProgramChart";
 import {
   Building2,
   Users,
@@ -22,17 +25,17 @@ import {
   ChartCardSkeleton,
 } from "@/components/ui/dashboard-skeletons";
 import { useQuickStats } from "@/features/mbg/hooks/useQuickStats";
-import { useRankings } from "@/features/mbg/hooks/useRankings";
-import { useChartsReady } from "@/features/mbg/hooks/useChartsReady";
+import { useProvRankings } from "@/features/mbg/hooks/useProvRankings";
 
 import { MapSearch } from "@/features/mbg/components/MapSearch";
 import { Suspense } from "react";
 
 export default function DashboardMBGPage() {
   // Replace simulated timers with data hooks preserving the same UX timings
-  const { data: quickStatsData, isLoading: isQuickStatsLoading } = useQuickStats();
-  const { data: rankingsData, isLoading: isRankingLoading } = useRankings();
-  const { isLoading: isChartsLoading } = useChartsReady();
+  const { data: quickStatsData, isLoading: isQuickStatsLoading } =
+    useQuickStats();
+  const { data: provRankingsData, isLoading: isRankingLoading } =
+    useProvRankings();
 
   const quickStats = useMemo(() => quickStatsData ?? [], [quickStatsData]);
   const iconByLabel = useMemo(
@@ -44,37 +47,39 @@ export default function DashboardMBGPage() {
       "Penerima Manfaat": UserCheck,
       "Total Mitra": Handshake,
     }),
-    []
+    [],
   );
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard MBG</h1>
-        <p className="text-sm text-muted-foreground">Ringkasan dan analitik Makan Bergizi.</p>
+        <p className="text-sm text-muted-foreground">
+          Ringkasan dan analitik Makan Bergizi.
+        </p>
       </div>
 
       {/* Row 1: Quick Stats (6 cards) */}
       <div className="grid gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
-        {isQuickStatsLoading ? (
-          Array.from({ length: 6 }).map((_, i) => (
-            <QuickStatCardSkeleton key={`skeleton-${i}`} />
-          ))
-        ) : (
-          quickStats.map((s: any, i: number) => {
-            const Icon = iconByLabel[s.label as keyof typeof iconByLabel] ?? CircleDashed;
-            return (
-              <QuickStatCard
-                key={i}
-                label={s.label}
-                icon={<Icon className="h-4 w-4 text-blue-500" />}
-                value={String(s.value)}
-                trend={s.trend}
-                trendVariant={(s.variant as any) ?? "neutral"}
-              />
-            );
-          })
-        )}
+        {isQuickStatsLoading
+          ? Array.from({ length: 6 }).map((_, i) => (
+              <QuickStatCardSkeleton key={`skeleton-${i}`} />
+            ))
+          : quickStats.map((s: any, i: number) => {
+              const Icon =
+                iconByLabel[s.label as keyof typeof iconByLabel] ??
+                CircleDashed;
+              return (
+                <QuickStatCard
+                  key={i}
+                  label={s.label}
+                  icon={<Icon className="h-4 w-4 text-blue-500" />}
+                  value={String(s.value)}
+                  trend={s.trend}
+                  trendVariant={(s.variant as any) ?? "neutral"}
+                />
+              );
+            })}
       </div>
 
       {/* Row 2: Map (75%) + Stats (25%) */}
@@ -92,25 +97,33 @@ export default function DashboardMBGPage() {
           ) : (
             <StatsRankingCard
               title="Statistik Wilayah"
-              items={rankingsData?.items ?? []}
+              tabs={[
+                {
+                  key: "penerima",
+                  label: "Penerima",
+                  items: provRankingsData?.penerima ?? [],
+                },
+                {
+                  key: "sppg",
+                  label: "SPPG",
+                  items: provRankingsData?.sppg ?? [],
+                },
+                {
+                  key: "petugas",
+                  label: "Petugas",
+                  items: provRankingsData?.petugas ?? [],
+                },
+              ]}
             />
           )}
         </div>
       </div>
 
-      {/* Row 3: 3 placeholder charts */}
+      {/* Row 3: charts */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {isChartsLoading ? (
-          Array.from({ length: 3 }).map((_, i) => (
-            <ChartCardSkeleton key={`chart-skeleton-${i}`} />
-          ))
-        ) : (
-          <>
-            <PlaceholderChartCard title="Tren Realisasi MBG" description="Per bulan" />
-            <PlaceholderChartCard title="Sebaran Penerima" description="Per wilayah" />
-            <PlaceholderChartCard title="Efektivitas Program" description="Indikator kunci" />
-          </>
-        )}
+        <BgnTrendChart />
+        <SebaranPenerimaChart />
+        <EfektivitasProgramChart />
       </div>
     </div>
   );
