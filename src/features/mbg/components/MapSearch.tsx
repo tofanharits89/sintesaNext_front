@@ -9,6 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { RotateCcw } from "lucide-react";
 import { useMapStats } from "@/features/mbg/hooks/useMapStats";
 import { useMapChoropleth } from "@/features/mbg/hooks/useMapChoropleth";
 import { MapStatsOverlay } from "@/components/mbg/MapStatsOverlay";
@@ -141,7 +143,7 @@ const LEGEND_ITEMS: Record<
 const fmt = (n: number) =>
   new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(n);
 
-export function MapSearch() {
+export function MapSearch({ year = "2026" }: { year?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null);
@@ -155,7 +157,7 @@ export function MapSearch() {
   // Tracks when Leaflet map is ready — prevents layers firing before map init
   const [mapReady, setMapReady] = useState(false);
 
-  const { data: choroplethData } = useMapChoropleth();
+  const { data: choroplethData } = useMapChoropleth(year);
 
   // Lookup province name from id
   const selectedProvince = useMemo(
@@ -178,7 +180,7 @@ export function MapSearch() {
   }, [provinceId, choroplethData, selectedProvince]);
 
   // Kab-level penerima data (uses jumlahpenerimaKab hook → /penerima-by-regency)
-  const { dataPenerimaKab } = useJumlahPenerimaKab(provNameForKab);
+  const { dataPenerimaKab } = useJumlahPenerimaKab(provNameForKab, year);
 
   // Kab penerima lookup: normalized kabkota → data
   const penerimaKabMap = useMemo(() => {
@@ -210,6 +212,7 @@ export function MapSearch() {
     overlayScope,
     provinceId || undefined,
     selectedProvince?.name,
+    year
   );
   const overlayError = statsError ? (statsError as Error).message : null;
 
@@ -434,12 +437,29 @@ export function MapSearch() {
     setProvinceId(val === "all" ? "" : val);
   };
 
+  const handleReset = () => {
+    setProvinceId("");
+    setIndicator("jumlahpenerima");
+    if (mapRef.current) {
+      mapRef.current.setView([-2.5, 118], 5);
+    }
+  };
+
   const internalProvinceValue = !provinceId ? "all" : provinceId;
 
   return (
     <Card className="h-full">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-base">Peta Distribusi MBG</CardTitle>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleReset}
+          className="h-8 gap-1.5 text-xs"
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+          Reset
+        </Button>
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Filters */}
@@ -482,10 +502,10 @@ export function MapSearch() {
 
         {/* Map container */}
         <div
-          className="relative w-full rounded-md overflow-hidden border"
+          className="relative w-full rounded-md overflow-hidden border z-0"
           style={{ height: 420 }}
         >
-          <div ref={containerRef} className="h-full w-full" />
+          <div ref={containerRef} className="h-full w-full z-0" />
 
           {/* Back to national button */}
           {selectedProvince && (

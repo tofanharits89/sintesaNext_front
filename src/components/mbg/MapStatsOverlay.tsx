@@ -35,7 +35,7 @@ export function MapStatsOverlay({
   const indicatorValue = stats ? stats[indicator] : 0;
 
   return (
-    <div className="absolute left-3 bottom-3 z-10 w-[min(92vw,320px)] pointer-events-none">
+    <div className="absolute left-3 bottom-3 z-[1000] w-[min(92vw,320px)] pointer-events-none">
       <Card className="bg-background/85 backdrop-blur pointer-events-auto border py-1.5 gap-1">
         <CardHeader className="py-1 px-3 gap-0.5">
           <CardTitle className="text-xs">{title}</CardTitle>

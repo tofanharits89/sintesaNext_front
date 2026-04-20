@@ -20,7 +20,7 @@ type PenerimaKabResponse = {
   data?: PenerimaKabRow[];
 };
 
-const useJumlahPenerimaKab = (prov: string) => {
+const useJumlahPenerimaKab = (prov: string, year: string = "2026") => {
   const [dataPenerimaKab, setDataPenerimaKab] = useState<PenerimaKabItem[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -29,7 +29,7 @@ const useJumlahPenerimaKab = (prov: string) => {
     setLoading(true);
 
     try {
-      const params = new URLSearchParams({ prov });
+      const params = new URLSearchParams({ prov, year });
       const response = await apiClient.get<PenerimaKabResponse>(
         `/dashboard/mbg/penerima-by-regency?${params.toString()}`,
       );
@@ -53,7 +53,7 @@ const useJumlahPenerimaKab = (prov: string) => {
 
   useEffect(() => {
     getData();
-  }, [prov]);
+  }, [prov, year]);
 
   return { dataPenerimaKab, loading };
 };

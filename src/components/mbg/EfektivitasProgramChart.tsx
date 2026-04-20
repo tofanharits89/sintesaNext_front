@@ -75,7 +75,7 @@ export function EfektivitasProgramChart() {
       : null;
 
   return (
-    <Card className="h-full">
+    <Card className="flex h-full flex-col">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2 flex-wrap">
           <div>
@@ -114,9 +114,10 @@ export function EfektivitasProgramChart() {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={220} minWidth={0}>
-          <ComposedChart
+      <CardContent className="flex flex-1 flex-col p-6 pt-0 pb-4">
+        <div className="flex-1 min-h-[220px] w-full">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+            <ComposedChart
             data={chartData}
             margin={{ top: 8, right: 48, left: 8, bottom: 0 }}
             barCategoryGap="40%"
@@ -222,6 +223,7 @@ export function EfektivitasProgramChart() {
             />
           </ComposedChart>
         </ResponsiveContainer>
+        </div>
 
         {/* Stat row below chart */}
         <div className="mt-4 grid grid-cols-2 gap-3">

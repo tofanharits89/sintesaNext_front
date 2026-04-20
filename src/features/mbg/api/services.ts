@@ -14,9 +14,11 @@ export async function getMapStats(
   scope: "national" | "province" | "regency",
   id?: string,
   provinceName?: string,
+  year: string = "2026",
 ): Promise<MapStats | null> {
   const params = new URLSearchParams();
   params.set("scope", scope);
+  params.set("year", year);
   if (provinceName) {
     params.set("provinceName", provinceName);
   }
@@ -57,9 +59,10 @@ function formatCount(value: number): string {
   return value.toLocaleString("id-ID");
 }
 
-export async function getQuickStats(): Promise<QuickStatView[]> {
+export async function getQuickStats(year: string = "2026"): Promise<QuickStatView[]> {
+  const params = new URLSearchParams({ year });
   const response = await apiClient.get<MbgQuickStatsApiResponse>(
-    "/dashboard/mbg/quick-stats",
+    `/dashboard/mbg/quick-stats?${params.toString()}`,
   );
 
   if (!response?.success || !response.data) {
@@ -110,7 +113,8 @@ export type RankingsData = {
   }[];
 };
 
-export async function getRankings(): Promise<RankingsData> {
+export async function getRankings(year: string = "2026"): Promise<RankingsData> {
+  const params = new URLSearchParams({ year });
   const response = await apiClient.get<{
     success: boolean;
     data?: Array<{
@@ -118,10 +122,10 @@ export async function getRankings(): Promise<RankingsData> {
       penerima_manfaat: number;
       persen_penerima: number;
     }>;
-  }>("/dashboard/mbg/penerima-rankings");
+  }>(`/dashboard/mbg/penerima-rankings?${params.toString()}`);
 
   if (!response?.success || !response.data) {
-    throw new Error("Failed to fetch MBG penerima rankings");
+    throw new Error("Failed to fetch MBG object rankings");
   }
 
   return {
@@ -144,11 +148,12 @@ export type MbgProvChoroplethRow = {
   jumlahmitra: number;
 };
 
-export async function getMapChoropleth(): Promise<MbgProvChoroplethRow[]> {
+export async function getMapChoropleth(year: string = "2026"): Promise<MbgProvChoroplethRow[]> {
+  const params = new URLSearchParams({ year });
   const response = await apiClient.get<{
     success: boolean;
     data?: MbgProvChoroplethRow[];
-  }>("/dashboard/mbg/map-choropleth");
+  }>(`/dashboard/mbg/map-choropleth?${params.toString()}`);
   if (!response?.success || !response.data) {
     throw new Error("Failed to fetch MBG map choropleth");
   }
@@ -164,8 +169,9 @@ export type PenerimaKabItem = {
 
 export async function getPenerimaByRegency(
   prov: string,
+  year: string = "2026",
 ): Promise<PenerimaKabItem[]> {
-  const params = new URLSearchParams({ prov });
+  const params = new URLSearchParams({ prov, year });
   const response = await apiClient.get<{
     success: boolean;
     data?: PenerimaKabItem[];
@@ -182,11 +188,12 @@ export type ProvRankingsData = {
   petugas: RankedItem[];
 };
 
-export async function getProvRankings(): Promise<ProvRankingsData> {
+export async function getProvRankings(year: string = "2026"): Promise<ProvRankingsData> {
+  const params = new URLSearchParams({ year });
   const response = await apiClient.get<{
     success: boolean;
     data?: ProvRankingsData;
-  }>("/dashboard/mbg/province-rankings");
+  }>(`/dashboard/mbg/province-rankings?${params.toString()}`);
   if (!response?.success || !response.data) {
     throw new Error("Failed to fetch MBG province rankings");
   }
