@@ -51,6 +51,7 @@ export const getRingkasanKanwilColumns = (handlers: ColumnHandlers) => [
         {row.getValue("namaLokasi")}
       </div>
     ),
+    footer: () => <div className="text-center font-bold">GRAND TOTAL</div>,
   },
   {
     accessorKey: "kodeBA",
@@ -87,6 +88,11 @@ export const getRingkasanKanwilColumns = (handlers: ColumnHandlers) => [
         {formatRupiah(row.getValue("upKkpPerBulan"))}
       </div>
     ),
+    footer: ({ table }: any) => (
+      <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
+        {formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("upKkpPerBulan")) || 0), 0))}
+      </div>
+    ),
   },
   {
     accessorKey: "porsiUpKkp",
@@ -110,6 +116,11 @@ export const getRingkasanKanwilColumns = (handlers: ColumnHandlers) => [
         {row.getValue("jumlahKartu")}
       </div>
     ),
+    footer: ({ table }: any) => (
+      <div className="text-center font-bold">
+        {table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("jumlahKartu")) || 0), 0)}
+      </div>
+    ),
   },
   {
     accessorKey: "nilaiTagihan",
@@ -123,6 +134,11 @@ export const getRingkasanKanwilColumns = (handlers: ColumnHandlers) => [
         {formatRupiah(row.getValue("nilaiTagihan"))}
       </div>
     ),
+    footer: ({ table }: any) => (
+      <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
+        {formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("nilaiTagihan")) || 0), 0))}
+      </div>
+    ),
   },
   {
     accessorKey: "nilaiTransaksi",
@@ -134,6 +150,11 @@ export const getRingkasanKanwilColumns = (handlers: ColumnHandlers) => [
         title="Lihat detail transaksi"
       >
         {formatRupiah(row.getValue("nilaiTransaksi"))}
+      </div>
+    ),
+    footer: ({ table }: any) => (
+      <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
+        {formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("nilaiTransaksi")) || 0), 0))}
       </div>
     ),
   },
@@ -175,6 +196,7 @@ export const getRingkasanKppnColumns = (handlers: ColumnHandlers) => [
         {row.getValue("namaKppn")}
       </div>
     ),
+    footer: () => <div className="text-center font-bold">GRAND TOTAL</div>,
   },
   {
     accessorKey: "kodeBA",
@@ -211,6 +233,11 @@ export const getRingkasanKppnColumns = (handlers: ColumnHandlers) => [
         {formatRupiah(row.getValue("upKkpPerBulan"))}
       </div>
     ),
+    footer: ({ table }: any) => (
+      <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
+        {formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("upKkpPerBulan")) || 0), 0))}
+      </div>
+    ),
   },
   {
     accessorKey: "porsiUpKkp",
@@ -234,6 +261,11 @@ export const getRingkasanKppnColumns = (handlers: ColumnHandlers) => [
         {row.getValue("jumlahKartu")}
       </div>
     ),
+    footer: ({ table }: any) => (
+      <div className="text-center font-bold">
+        {table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("jumlahKartu")) || Number(row.original.jumlahKartu) || 0), 0)}
+      </div>
+    ),
   },
   {
     accessorKey: "nilaiTagihan",
@@ -247,6 +279,11 @@ export const getRingkasanKppnColumns = (handlers: ColumnHandlers) => [
         {formatRupiah(row.getValue("nilaiTagihan"))}
       </div>
     ),
+    footer: ({ table }: any) => (
+      <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
+        {formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("nilaiTagihan")) || 0), 0))}
+      </div>
+    ),
   },
   {
     accessorKey: "nilaiTransaksi",
@@ -258,6 +295,11 @@ export const getRingkasanKppnColumns = (handlers: ColumnHandlers) => [
         title="Lihat detail transaksi"
       >
         {formatRupiah(row.getValue("nilaiTransaksi"))}
+      </div>
+    ),
+    footer: ({ table }: any) => (
+      <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
+        {formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("nilaiTransaksi")) || 0), 0))}
       </div>
     ),
   },
@@ -299,21 +341,37 @@ export const getMonitoringKanwilColumns = (handlers: ColumnHandlers) => [
         {row.getValue("nmlokasi")}
       </div>
     ),
+    footer: () => <div className="text-center font-bold">GRAND TOTAL</div>,
   },
   {
     accessorKey: "jumlah_kppn",
     header: () => <div className="text-center font-medium">Jumlah KPPN</div>,
     cell: ({ row }: any) => <div className="text-center">{row.getValue("jumlah_kppn")}</div>,
+    footer: ({ table }: any) => (
+      <div className="text-center font-bold">
+        {table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("jumlah_kppn")) || 0), 0)}
+      </div>
+    ),
   },
   {
     accessorKey: "jumlah_satker_up_kkp",
     header: () => <div className="text-center font-medium">Total Satker UP KKP</div>,
     cell: ({ row }: any) => <div className="text-center">{row.getValue("jumlah_satker_up_kkp")}</div>,
+    footer: ({ table }: any) => (
+      <div className="text-center font-bold">
+        {table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("jumlah_satker_up_kkp")) || 0), 0)}
+      </div>
+    ),
   },
   {
     accessorKey: "jumlah_satker_transaksi",
     header: () => <div className="text-center font-medium">Satker (Transaksi)</div>,
     cell: ({ row }: any) => <div className="text-center">{row.getValue("jumlah_satker_transaksi")}</div>,
+    footer: ({ table }: any) => (
+      <div className="text-center font-bold">
+        {table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("jumlah_satker_transaksi")) || 0), 0)}
+      </div>
+    ),
   },
   {
     accessorKey: "nilai_transaksi",
@@ -321,6 +379,11 @@ export const getMonitoringKanwilColumns = (handlers: ColumnHandlers) => [
     cell: ({ row }: any) => (
       <div className="text-right font-mono tabular-nums pr-2">
         {formatRupiah(row.getValue("nilai_transaksi"))}
+      </div>
+    ),
+    footer: ({ table }: any) => (
+      <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
+        {formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("nilai_transaksi")) || 0), 0))}
       </div>
     ),
   },
@@ -382,16 +445,27 @@ export const getMonitoringKppnColumns = (handlers: ColumnHandlers) => [
         {row.getValue("nmkppn")}
       </div>
     ),
+    footer: () => <div className="text-center font-bold">GRAND TOTAL</div>,
   },
   {
     accessorKey: "jumlah_satker_up_kkp",
-    header: () => <div className="text-center font-medium">Jumlah Satker dengan UP KKP</div>,
+    header: () => <div className="text-center font-medium">Jumlah Satker with UP KKP</div>,
     cell: ({ row }: any) => <div className="text-center">{row.getValue("jumlah_satker_up_kkp")}</div>,
+    footer: ({ table }: any) => (
+      <div className="text-center font-bold">
+        {table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("jumlah_satker_up_kkp")) || 0), 0)}
+      </div>
+    ),
   },
   {
     accessorKey: "jumlah_satker_transaksi",
     header: () => <div className="text-center font-medium">Jumlah Satker (Transaksi)</div>,
     cell: ({ row }: any) => <div className="text-center">{row.getValue("jumlah_satker_transaksi")}</div>,
+    footer: ({ table }: any) => (
+      <div className="text-center font-bold">
+        {table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("jumlah_satker_transaksi")) || 0), 0)}
+      </div>
+    ),
   },
   {
     accessorKey: "nilai_transaksi",
@@ -399,6 +473,11 @@ export const getMonitoringKppnColumns = (handlers: ColumnHandlers) => [
     cell: ({ row }: any) => (
       <div className="text-right font-mono tabular-nums pr-2">
         {formatRupiah(row.getValue("nilai_transaksi"))}
+      </div>
+    ),
+    footer: ({ table }: any) => (
+      <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
+        {formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("nilai_transaksi")) || 0), 0))}
       </div>
     ),
   },

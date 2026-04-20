@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { apiPath } from "@/lib/config/base-path";
+import { cn } from "@/lib/utils/utils";
 import { User } from "@/lib/stores/users-store";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
@@ -42,7 +43,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Pencil, Trash2, AlertTriangle, Eye, EyeOff } from "lucide-react";
 import { ModernUsersTable } from "@/components/lazy";
-import { TableLoadingFallback } from "@/components/ui/loading-fallback";
+import { TableLoadingFallback, UsersPageSkeleton } from "@/components/ui/loading-fallback";
 import { Suspense } from "react";
 import kdkanwilData from "@/data/kdkanwil.json";
 import kdkppnData from "@/data/kdkppn.json";
@@ -90,7 +91,7 @@ type FormState = {
 
 export default function UsersPage() {
   const router = useRouter();
-  const { user: currentUser, canManageUsers } = useAuth();
+  const { user: currentUser, canManageUsers, isLoading: isAuthLoading } = useAuth();
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["users"],
@@ -101,10 +102,10 @@ export default function UsersPage() {
 
   // Check if user has permission to access this page
   useEffect(() => {
-    if (!canManageUsers()) {
+    if (!isAuthLoading && !canManageUsers()) {
       router.push("/");
     }
-  }, [canManageUsers, router]);
+  }, [isAuthLoading, canManageUsers, router]);
 
   const [query, setQuery] = useState("");
   const [role, setRole] = useState<string>("all");
@@ -128,7 +129,7 @@ export default function UsersPage() {
 
   // simple pagination
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(10);
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
 
@@ -401,15 +402,18 @@ export default function UsersPage() {
   }
 
   // Show loading or redirect if no permission
-  if (!canManageUsers) {
+  if (isAuthLoading) {
+    return <UsersPageSkeleton />;
+  }
+
+  if (!canManageUsers()) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center space-y-4">
-          <h2 className="text-xl font-semibold text-muted-foreground">
-            Akses Ditolak
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Anda tidak memiliki izin untuk mengakses halaman ini.
+        <div className="text-center space-y-2 text-rose-500 bg-rose-50/50 dark:bg-rose-950/20 p-8 rounded-2xl border border-rose-100 dark:border-rose-900/50 shadow-sm animate-in zoom-in-95 duration-300">
+          <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-80" />
+          <h2 className="text-xl font-bold">Akses Ditolak</h2>
+          <p className="text-sm text-balance max-w-xs mx-auto text-rose-600/80 dark:text-rose-400/80">
+            Anda tidak memiliki izin untuk mengakses halaman manajemen akun.
           </p>
         </div>
       </div>
@@ -432,46 +436,34 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <Suspense fallback={<TableLoadingFallback />}>
-        <ModernUsersTable
-          users={paged}
-          selected={selected}
-          onToggleSelect={toggleSelect}
-          onToggleSelectAll={toggleSelectAll}
-          onEdit={openEdit}
-          onDelete={handleDeleteClick}
-          currentPage={page}
-          pageSize={pageSize}
-          searchQuery={query}
-          onSearchChange={setQuery}
-          roleFilter={role}
-          onRoleFilterChange={setRole}
-          statusFilter={status}
-          onStatusFilterChange={setStatus}
-        />
-      </Suspense>
-
-      <div className="mt-4 flex items-center justify-between">
-        <div className="text-xs text-muted-foreground">
-          {filtered.length} data • Halaman {page} dari {pageCount}
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="secondary"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-          >
-            Sebelumnya
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-            disabled={page === pageCount}
-          >
-            Berikutnya
-          </Button>
-        </div>
-      </div>
+      {isLoading ? (
+        <TableLoadingFallback />
+      ) : (
+        <Suspense fallback={<TableLoadingFallback />}>
+          <ModernUsersTable
+            users={paged}
+            selected={selected}
+            onToggleSelect={toggleSelect}
+            onToggleSelectAll={toggleSelectAll}
+            onEdit={openEdit}
+            onDelete={handleDeleteClick}
+            currentPage={page}
+            pageSize={pageSize}
+            searchQuery={query}
+            onSearchChange={setQuery}
+            roleFilter={role}
+            onRoleFilterChange={setRole}
+            statusFilter={status}
+            onStatusFilterChange={setStatus}
+            totalCount={filtered.length}
+            onPageChange={setPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(1);
+            }}
+          />
+        </Suspense>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent showCloseButton={false} className="sm:max-w-[700px] w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
@@ -515,7 +507,7 @@ export default function UsersPage() {
                   />
                 </Field>
                 {!form.id && (
-                  <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Field>
                       <FieldLabel htmlFor="password">Password</FieldLabel>
                       <div className="relative">
@@ -523,6 +515,7 @@ export default function UsersPage() {
                           id="password"
                           type={showPassword ? "text" : "password"}
                           autoComplete="new-password"
+                          placeholder="Minimal 12 karakter, huruf besar, angka, dan simbol"
                           value={form.password}
                           onChange={(e) =>
                             setForm((f) => ({ ...f, password: e.target.value }))
@@ -555,6 +548,7 @@ export default function UsersPage() {
                           id="confirm-password"
                           type={showConfirmPassword ? "text" : "password"}
                           autoComplete="new-password"
+                          placeholder="Konfirmasi password"
                           value={form.confirmPassword}
                           onChange={(e) =>
                             setForm((f) => ({
@@ -583,72 +577,44 @@ export default function UsersPage() {
                         </Button>
                       </div>
                     </Field>
-                  </>
-                )}
-                <Field>
-                  <FieldLabel htmlFor="role">Role</FieldLabel>
-                  <Select
-                    value={form.role}
-                    onValueChange={(v) =>
-                      setForm((f) => ({
-                        ...f,
-                        role: v as any,
-                        kdkanwil: "",
-                        kdkppn: "",
-                      }))
-                    }
-                  >
-                    <SelectTrigger id="role" className="h-11">
-                      <SelectValue placeholder="Pilih role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="super_admin">Super Admin (X)</SelectItem>
-                      <SelectItem value="co_admin">Co-Admin (0)</SelectItem>
-                      <SelectItem value="kantor_pusat">Kantor Pusat (1)</SelectItem>
-                      <SelectItem value="ditpa">DIT PA (1)</SelectItem>
-                      <SelectItem value="kanwil_djpb">Kanwil DJPb (2)</SelectItem>
-                      <SelectItem value="kppn">KPPN (3)</SelectItem>
-                      <SelectItem value="lainnya">User Lainnya (4)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                {/* Conditional Kanwil DJPb Selection */}
-                {form.role === "kanwil_djpb" && (
+                  </div>
+                )}                <div className={cn(
+                  "grid grid-cols-1 gap-4",
+                  form.role === "kanwil_djpb" && "sm:grid-cols-2",
+                  form.role === "kppn" && "sm:grid-cols-3"
+                )}>
                   <Field>
-                    <FieldLabel htmlFor="pilih-kanwil-djpb">Pilih Kanwil DJPb</FieldLabel>
+                    <FieldLabel htmlFor="role">Role</FieldLabel>
                     <Select
-                      value={form.kdkanwil ?? ""}
-                      onValueChange={(v) => {
-                        const selectedKanwil = kdkanwilData.find(
-                          (k) => k.kdkanwil === v
-                        );
+                      value={form.role}
+                      onValueChange={(v) =>
                         setForm((f) => ({
                           ...f,
-                          kdkanwil: v,
-                          nmkanwil: selectedKanwil?.nmkanwil || "",
-                        }));
-                      }}
+                          role: v as any,
+                          kdkanwil: "",
+                          kdkppn: "",
+                        }))
+                      }
                     >
-                      <SelectTrigger id="pilih-kanwil-djpb" className="h-11">
-                        <SelectValue placeholder="Pilih Provinsi" />
+                      <SelectTrigger id="role" className="h-11">
+                        <SelectValue placeholder="Pilih role" />
                       </SelectTrigger>
                       <SelectContent>
-                        {kdkanwilData.map((kanwil) => (
-                          <SelectItem key={kanwil.kdkanwil} value={kanwil.kdkanwil}>
-                            {kanwil.nmkanwil}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="super_admin">Super Admin (X)</SelectItem>
+                        <SelectItem value="co_admin">Co-Admin (0)</SelectItem>
+                        <SelectItem value="kantor_pusat">Kantor Pusat (1)</SelectItem>
+                        <SelectItem value="ditpa">DIT PA (1)</SelectItem>
+                        <SelectItem value="kanwil_djpb">Kanwil DJPb (2)</SelectItem>
+                        <SelectItem value="kppn">KPPN (3)</SelectItem>
+                        <SelectItem value="lainnya">User Lainnya (4)</SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>
-                )}
 
-                {/* Conditional KPPN Selection */}
-                {form.role === "kppn" && (
-                  <>
+                  {/* Conditional Kanwil DJPb Selection */}
+                  {form.role === "kanwil_djpb" && (
                     <Field>
-                      <FieldLabel htmlFor="pilih-kanwil-kppn">Pilih Kanwil</FieldLabel>
+                      <FieldLabel htmlFor="pilih-kanwil-djpb">Pilih Kanwil DJPb</FieldLabel>
                       <Select
                         value={form.kdkanwil ?? ""}
                         onValueChange={(v) => {
@@ -659,13 +625,11 @@ export default function UsersPage() {
                             ...f,
                             kdkanwil: v,
                             nmkanwil: selectedKanwil?.nmkanwil || "",
-                            kdkppn: "",
-                            nmkppn: "",
                           }));
                         }}
                       >
-                        <SelectTrigger id="pilih-kanwil-kppn" className="h-11">
-                          <SelectValue placeholder="Pilih Kanwil" />
+                        <SelectTrigger id="pilih-kanwil-djpb" className="h-11">
+                          <SelectValue placeholder="Pilih Provinsi" />
                         </SelectTrigger>
                         <SelectContent>
                           {kdkanwilData.map((kanwil) => (
@@ -676,11 +640,45 @@ export default function UsersPage() {
                         </SelectContent>
                       </Select>
                     </Field>
+                  )}
 
-                    {form.kdkanwil && (
+                  {/* Conditional KPPN Selection */}
+                  {form.role === "kppn" && (
+                    <>
+                      <Field>
+                        <FieldLabel htmlFor="pilih-kanwil-kppn">Pilih Kanwil</FieldLabel>
+                        <Select
+                          value={form.kdkanwil ?? ""}
+                          onValueChange={(v) => {
+                            const selectedKanwil = kdkanwilData.find(
+                              (k) => k.kdkanwil === v
+                            );
+                            setForm((f) => ({
+                              ...f,
+                              kdkanwil: v,
+                              nmkanwil: selectedKanwil?.nmkanwil || "",
+                              kdkppn: "",
+                              nmkppn: "",
+                            }));
+                          }}
+                        >
+                          <SelectTrigger id="pilih-kanwil-kppn" className="h-11">
+                            <SelectValue placeholder="Pilih Kanwil" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {kdkanwilData.map((kanwil) => (
+                              <SelectItem key={kanwil.kdkanwil} value={kanwil.kdkanwil}>
+                                {kanwil.nmkanwil}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </Field>
+
                       <Field>
                         <FieldLabel htmlFor="pilih-kppn">Pilih KPPN</FieldLabel>
                         <Select
+                          disabled={!form.kdkanwil}
                           value={form.kdkppn ?? ""}
                           onValueChange={(v) => {
                             const selectedKppn = filteredKppn.find(
@@ -705,9 +703,9 @@ export default function UsersPage() {
                           </SelectContent>
                         </Select>
                       </Field>
-                    )}
-                  </>
-                )}
+                    </>
+                  )}
+                </div>
                 <Field>
                   <FieldLabel htmlFor="limit-kode-ba">Limit Kode BA</FieldLabel>
                   <Input

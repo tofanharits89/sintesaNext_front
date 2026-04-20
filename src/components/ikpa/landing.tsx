@@ -14,7 +14,6 @@ import {
     Building2,
     Landmark,
     FileCheck,
-    Loader2,
     Plus,
     FilePlus,
     Edit,
@@ -51,7 +50,8 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+
 import { Badge } from "@/components/ui/badge";
 import {
     Pagination,
@@ -60,8 +60,10 @@ import {
     PaginationPrevious,
     PaginationNext,
     PaginationLink,
+    PaginationEllipsis,
 } from "@/components/ui/pagination";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/api/httpClient";
 import { useQuery } from "@tanstack/react-query";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -166,19 +168,14 @@ export function IkpaLanding() {
 
     // Fetch Data from Backend
     const { data, isLoading } = useQuery<IkpaResponse>({
-        queryKey: ['ikpa-data', currentPage, searchQuery, selectedKppn, selectedSatker, selectedYear], // Add filters to queryKey
-        queryFn: async () => apiClient.get(`/ikpa?page=${currentPage}&limit=10&search=${searchQuery}&kdkppn=${selectedKppn === 'all' ? '' : selectedKppn}&kdsatker=${selectedSatker === 'all' ? '' : selectedSatker}&thang=${selectedYear}`),
+        queryKey: ['ikpa-data', currentPage, searchQuery, selectedKppn, selectedSatker, selectedYear, statusFilter], // Add filters to queryKey
+        queryFn: async () => apiClient.get(`/ikpa?page=${currentPage}&limit=10&search=${searchQuery}&kdkppn=${selectedKppn === 'all' ? '' : selectedKppn}&kdsatker=${selectedSatker === 'all' ? '' : selectedSatker}&thang=${selectedYear}&status=${statusFilter === 'all' ? '' : statusFilter}`),
         keepPreviousData: true
     } as any);
 
     const ikpaData = data?.result || [];
     const totalRows = data?.totalRows || 0;
     const totalPages = data?.totalPages || 0;
-
-    const filteredData = ikpaData.filter((item: IkpaRequest) => {
-        if (statusFilter === "all") return true;
-        return item.approval?.toLowerCase() === statusFilter.toLowerCase();
-    });
 
     const summary = statsData?.summary || { total: 0, approved: 0, rejected: 0, pending: 0 };
 
@@ -188,6 +185,7 @@ export function IkpaLanding() {
         setSelectedKppn("all");
         setSelectedSatker("all");
         setSearchQuery("");
+        setStatusFilter("all");
         setCurrentPage(0);
     };
 
@@ -245,7 +243,8 @@ export function IkpaLanding() {
                                         variant="outline"
                                         role="combobox"
                                         aria-expanded={satkerComboboxOpen}
-                                        className="w-full justify-between font-normal h-10 px-3"
+                                        noAnimate
+                                        className="w-full justify-between font-normal h-9 px-3 bg-zinc-100 hover:bg-zinc-200 hover:text-foreground dark:bg-black dark:hover:bg-zinc-950 border-input shadow-xs"
                                     >
                                         <span className="truncate">
                                             {selectedSatker === "all"
@@ -362,127 +361,204 @@ export function IkpaLanding() {
                 </Card>
             </div>
 
-            {/* Middle Section: Table & Analytics */}
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                {/* Table Section */}
-                <div className="xl:col-span-8 space-y-6">
-                    <Card>
-                        <CardHeader className="pb-2 border-b">
-                            <div className="flex items-center justify-between">
-                                <Tabs defaultValue="all" onValueChange={(val) => setStatusFilter(val)}>
-                                    <TabsList className="bg-background/50 border">
-                                        <TabsTrigger value="all">Semua</TabsTrigger>
-                                        <TabsTrigger value="Disetujui">Disetujui</TabsTrigger>
-                                        <TabsTrigger value="Ditolak">Ditolak</TabsTrigger>
-                                    </TabsList>
-                                </Tabs>
-                                <h3 className="font-semibold text-sm">Daftar Permohonan</h3>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="px-6">
-                            <div className="rounded-md border">
-                                <div className="overflow-x-auto">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead className="text-center">No. ND</TableHead>
-                                                <TableHead className="text-center">Satker / KPPN</TableHead>
-                                                <TableHead className="text-center">Indikator</TableHead>
-                                                <TableHead className="text-center">Status</TableHead>
-                                                <TableHead className="text-center">Aksi</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {isLoading ? (
-                                                <TableRow><TableCell colSpan={5} className="h-32 text-center"><Loader2 className="animate-spin mx-auto h-8 w-8 text-primary" /></TableCell></TableRow>
-                                            ) : (
-                                                filteredData.length > 0 ? (
-                                                    filteredData.map((item: IkpaRequest) => (
-                                                        <TableRow key={item.id}>
-                                                            <TableCell>
-                                                                <div className="flex flex-col">
-                                                                    <span className="font-medium">{item.no_nd}</span>
-                                                                    <span className="text-[10px] text-muted-foreground">{new Date(item.tg_nd).toLocaleDateString()}</span>
-                                                                </div>
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                <div className="flex flex-col">
-                                                                    <span className="text-sm">{item.nmsatker}</span>
-                                                                    <span className="text-[10px] text-muted-foreground uppercase">{item.nmkppn?.toLowerCase()} ({item.kdkppn})</span>
-                                                                </div>
-                                                            </TableCell>
-                                                            <TableCell className="text-xs text-muted-foreground max-w-[150px] truncate">{item.nm_indikator}</TableCell>
-                                                            <TableCell><StatusBadge status={item.approval} /></TableCell>
-                                                            <TableCell className="text-center">
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    className="h-8 w-8 text-muted-foreground hover:text-primary"
-                                                                    onClick={() => {
-                                                                        setEditingItem(item);
-                                                                        setIsEditModalOpen(true);
-                                                                    }}
-                                                                >
-                                                                    <Edit className="h-4 w-4" />
-                                                                </Button>
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    ))
-                                                ) : (
-                                                    <TableRow><TableCell colSpan={5} className="h-32 text-center text-muted-foreground">Tidak ada data ditemukan.</TableCell></TableRow>
-                                                )
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                </div>
-                            </div>
-                            <div className="p-4 border-t flex items-center justify-between text-xs text-muted-foreground">
-                                <span>Total {totalRows} data</span>
-                                <Pagination>
-                                    <PaginationContent>
-                                        <PaginationItem>
-                                            <PaginationPrevious
-                                                onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
-                                                className={currentPage === 0 || isLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                                            />
-                                        </PaginationItem>
-                                        <PaginationItem>
-                                            <span className="text-xs">Hal. {currentPage + 1} / {totalPages || 1}</span>
-                                        </PaginationItem>
-                                        <PaginationItem>
-                                            <PaginationNext
-                                                onClick={() => setCurrentPage(p => p + 1)}
-                                                className={currentPage >= totalPages - 1 || isLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                                            />
-                                        </PaginationItem>
-                                    </PaginationContent>
-                                </Pagination>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Footer Detail Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <SmallDetailCard title="Rincian Disetujui" icon={CheckCircle2} color="emerald" data={ikpaData.filter((i: IkpaRequest) => i.approval === 'Disetujui').slice(0, 5)} />
-                        <SmallDetailCard title="Rincian Ditolak" icon={XCircle} color="rose" data={ikpaData.filter((i: IkpaRequest) => i.approval === 'Ditolak').slice(0, 5)} />
+            {/* Main Table - Full Width */}
+            <Card className="mb-6">
+                <CardHeader className="pb-2 border-b">
+                    <div className="flex items-center justify-between">
+                        <CardTitle>Daftar Permohonan</CardTitle>
+                        <Select value={statusFilter} onValueChange={(val) => {
+                            setStatusFilter(val);
+                            setCurrentPage(0);
+                        }}>
+                            <SelectTrigger className="w-[140px] h-8">
+                                <SelectValue placeholder="Filter Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Semua</SelectItem>
+                                <SelectItem value="Disetujui">Disetujui</SelectItem>
+                                <SelectItem value="Ditolak">Ditolak</SelectItem>
+                                <SelectItem value="Pending">Pending</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
-                </div>
+                </CardHeader>
+                <CardContent className="px-6">
+                    <div className="rounded-md border">
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="text-center w-10">No</TableHead>
+                                        <TableHead className="text-center">No. ND</TableHead>
+                                        <TableHead className="text-center">Satker / KPPN</TableHead>
+                                        <TableHead className="text-center">Indikator</TableHead>
+                                        <TableHead className="text-center">Status</TableHead>
+                                        <TableHead className="text-center">Aksi</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {isLoading ? (
+                                        Array.from({ length: 10 }).map((_, i) => (
+                                            <TableRow key={i}>
+                                                <TableCell className="text-center">
+                                                    <Skeleton className="h-3.5 w-5 mx-auto" />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-col gap-1.5">
+                                                        <Skeleton className="h-3.5 w-24" />
+                                                        <Skeleton className="h-3 w-16" />
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-col gap-1.5">
+                                                        <Skeleton className="h-3.5 w-40" />
+                                                        <Skeleton className="h-3 w-28" />
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Skeleton className="h-3.5 w-32" />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex justify-center">
+                                                        <Skeleton className="h-5 w-16 rounded-md" />
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex justify-center">
+                                                        <Skeleton className="h-8 w-8 rounded-md" />
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        ikpaData.length > 0 ? (
+                                            ikpaData.map((item: IkpaRequest, index: number) => (
+                                                <TableRow key={item.id}>
+                                                    <TableCell className="text-center text-muted-foreground text-sm">
+                                                        {currentPage * 10 + index + 1}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex flex-col">
+                                                            <span className="font-medium">{item.no_nd}</span>
+                                                            <span className="text-[10px] text-muted-foreground">{new Date(item.tg_nd).toLocaleDateString()}</span>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-sm">{item.nmsatker}</span>
+                                                            <span className="text-[10px] text-muted-foreground uppercase">{item.nmkppn?.toLowerCase()} ({item.kdkppn})</span>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-xs text-muted-foreground max-w-[150px] truncate">{item.nm_indikator}</TableCell>
+                                                    <TableCell><div className="flex justify-center"><StatusBadge status={item.approval} /></div></TableCell>
+                                                    <TableCell className="text-center">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="h-8 w-8 p-0 cursor-pointer"
+                                                            onClick={() => {
+                                                                setEditingItem(item);
+                                                                setIsEditModalOpen(true);
+                                                            }}
+                                                            title="Edit Permohonan"
+                                                        >
+                                                            <Edit className="h-4 w-4 text-blue-600" />
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow><TableCell colSpan={6} className="h-32 text-center text-muted-foreground">Tidak ada data ditemukan.</TableCell></TableRow>
+                                        )
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </div>
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4 px-4 py-3 border-t text-xs text-muted-foreground">
+                        <span>Total {totalRows} data</span>
+                        <Pagination className="mx-0 w-auto">
+                            <PaginationContent>
+                                <PaginationItem>
+                                    <PaginationPrevious
+                                        onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                                        className={cn("cursor-pointer select-none", (currentPage === 0 || isLoading) && "pointer-events-none opacity-50")}
+                                    />
+                                </PaginationItem>
 
-                {/* Right Analytics Section */}
-                <div className="xl:col-span-4 space-y-6">
-                    <ShareChartCard
-                        title="Share Permohonan Per KPPN"
-                        data={statsData?.sharePerKppn.map(item => ({
-                            name: `${item.nmkppn} (${item.kdkppn})`,
-                            value: parseInt(item.count)
-                        })) || []}
-                    />
-                    <ShareChartCard
-                        title="Share Permohonan Per Indikator"
-                        data={statsData?.sharePerIndikator.map(item => ({ name: item.indikator, value: parseInt(item.count) })) || []}
-                        horizontal={true}
-                    />
-                </div>
+                                {(() => {
+                                    const total = totalPages || 1;
+                                    const active = currentPage + 1;
+                                    const items = [];
+
+                                    if (total <= 7) {
+                                        for (let i = 1; i <= total; i++) {
+                                            items.push(
+                                                <PaginationItem key={i}>
+                                                    <PaginationLink
+                                                        isActive={active === i}
+                                                        onClick={() => setCurrentPage(i - 1)}
+                                                        className="cursor-pointer select-none"
+                                                    >
+                                                        {i}
+                                                    </PaginationLink>
+                                                </PaginationItem>
+                                            );
+                                        }
+                                    } else {
+                                        items.push(
+                                            <PaginationItem key={1}>
+                                                <PaginationLink isActive={active === 1} onClick={() => setCurrentPage(0)} className="cursor-pointer select-none">1</PaginationLink>
+                                            </PaginationItem>
+                                        );
+                                        if (active > 3) items.push(<PaginationEllipsis key="left-ellipsis" />);
+                                        const start = Math.max(2, active - 1);
+                                        const end = Math.min(total - 1, active + 1);
+                                        for (let i = start; i <= end; i++) {
+                                            items.push(
+                                                <PaginationItem key={i}>
+                                                    <PaginationLink isActive={active === i} onClick={() => setCurrentPage(i - 1)} className="cursor-pointer select-none">{i}</PaginationLink>
+                                                </PaginationItem>
+                                            );
+                                        }
+                                        if (active < total - 2) items.push(<PaginationEllipsis key="right-ellipsis" />);
+                                        items.push(
+                                            <PaginationItem key={total}>
+                                                <PaginationLink isActive={active === total} onClick={() => setCurrentPage(total - 1)} className="cursor-pointer select-none">{total}</PaginationLink>
+                                            </PaginationItem>
+                                        );
+                                    }
+                                    return items;
+                                })()}
+
+                                <PaginationItem>
+                                    <PaginationNext
+                                        onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                                        className={cn("cursor-pointer select-none", (currentPage >= totalPages - 1 || isLoading) && "pointer-events-none opacity-50")}
+                                    />
+                                </PaginationItem>
+                            </PaginationContent>
+                        </Pagination>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Bottom Analytics Row - All 4 cards side by side */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                <SmallDetailCard title="Rincian Disetujui" icon={CheckCircle2} color="emerald" data={ikpaData.filter((i: IkpaRequest) => i.approval === 'Disetujui').slice(0, 5)} />
+                <SmallDetailCard title="Rincian Ditolak" icon={XCircle} color="rose" data={ikpaData.filter((i: IkpaRequest) => i.approval === 'Ditolak').slice(0, 5)} />
+                <ShareChartCard
+                    title="Share Permohonan Per KPPN"
+                    data={statsData?.sharePerKppn.map(item => ({
+                        name: `${item.nmkppn} (${item.kdkppn})`,
+                        value: parseInt(item.count)
+                    })) || []}
+                />
+                <ShareChartCard
+                    title="Share Permohonan Per Indikator"
+                    data={statsData?.sharePerIndikator.map(item => ({ name: item.indikator, value: parseInt(item.count) })) || []}
+                    horizontal={true}
+                />
             </div>
         </div>
     );
@@ -557,14 +633,10 @@ function StatusBadge({ status }: { status: string }) {
     const s = (status || "").toLowerCase();
     const isApproved = s === "disetujui";
     const isRejected = s === "ditolak";
+    const variant = isApproved ? "success" : isRejected ? "destructive" : "secondary";
 
     return (
-        <Badge variant="outline" className={cn(
-            "text-[10px] font-medium py-0 px-2",
-            isApproved ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30" :
-                isRejected ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/30" :
-                    "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30"
-        )}>
+        <Badge variant={variant}>
             {status || "Pending"}
         </Badge>
     );

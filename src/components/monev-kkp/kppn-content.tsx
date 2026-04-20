@@ -328,6 +328,7 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
             {row.getValue("namaSatker")}
           </div>
         ),
+        footer: () => <div className="text-center font-bold">GRAND TOTAL</div>,
       },
       {
         accessorKey: "upKkpPerBulan",
@@ -337,6 +338,11 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
         cell: ({ row }: any) => (
           <div className="text-right font-mono tabular-nums pr-2">
             {formatRupiah(row.getValue("upKkpPerBulan"))}
+          </div>
+        ),
+        footer: ({ table }: any) => (
+          <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
+            {formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("upKkpPerBulan")) || 0), 0))}
           </div>
         ),
       },
@@ -382,6 +388,11 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
             {row.getValue("jumlahKartu")}
           </div>
         ),
+        footer: ({ table }: any) => (
+          <div className="text-center font-bold">
+            {table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("jumlahKartu")) || 0), 0)}
+          </div>
+        ),
       },
       {
         accessorKey: "nilaiTagihan",
@@ -403,6 +414,11 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
             {formatRupiah(row.getValue("nilaiTagihan"))}
           </div>
         ),
+        footer: ({ table }: any) => (
+          <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
+            {formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("nilaiTagihan")) || 0), 0))}
+          </div>
+        ),
       },
       {
         accessorKey: "nilaiTransaksi",
@@ -422,6 +438,11 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
             title="Lihat detail transaksi"
           >
             {formatRupiah(row.getValue("nilaiTransaksi"))}
+          </div>
+        ),
+        footer: ({ table }: any) => (
+          <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
+            {formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("nilaiTransaksi")) || 0), 0))}
           </div>
         ),
       },
@@ -601,7 +622,7 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
             {isLoading ? (
               <TableSkeleton rows={10} />
             ) : (
-              <DataTable columns={columns} data={data} initialPageSize={25} />
+              <DataTable columns={columns} data={data} initialPageSize={25} showFooter={true} />
             )}
           </CardContent>
         </Card>

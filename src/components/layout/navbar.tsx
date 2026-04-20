@@ -564,6 +564,7 @@ export function Navbar() {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
+                  noAnimate
                   className="relative flex items-center gap-2 h-auto py-1.5 px-2 rounded-lg hover:bg-accent"
                   disabled={authLoading}
                 >

@@ -42,9 +42,21 @@ export function PilihLaporanCard({
   customTipeLaporanOptions,
   hideJenisAkumulasi = false,
 }: PilihLaporanCardProps) {
-  // Generate years from current year back to 10 years
+  // Generate years from current year down to 2014
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 11 }, (_, i) => currentYear - i);
+
+  let years;
+  if (reportParams.tipeLaporan.startsWith("belwil")) {
+    years = Array.from(
+      { length: currentYear - 2025 + 1 },
+      (_, i) => currentYear - i,
+    );
+  } else {
+    years = Array.from(
+      { length: currentYear - 2014 + 1 },
+      (_, i) => currentYear - i,
+    );
+  }
 
   const defaultTipeLaporanOptions = [
     { value: "pagu_apbn", label: "1. Pagu APBN" },

@@ -15,8 +15,8 @@ const coreTeam: Person[] = [
   { role: "Direktur", name: "Moudy Hermawan", nip: "197504031994031001" },
   {
     role: "Penanggung Jawab",
-    name: "Arie Suwandani W. Wirastuti",
-    nip: "197510221995122001",
+    name: "Zulfitri Nasran",
+    nip: "197011301998031003",
   },
   {
     role: "Project Manager",
@@ -39,43 +39,53 @@ const coreTeam: Person[] = [
     nip: "199312282014111001",
   },
   {
-    role: "Liaison Officer",
-    name: "Nugraheni Vikri Puspitaningtyas",
-    nip: "199712112019122001",
+    role: "Data Analyst",
+    name: "Nur Achmad Taufiq",
+    nip: "200003052022011001",
   },
 ];
 
 // Placeholder honorable mentions (silakan ubah nama & NIP di kemudian hari)
 const honorableMentions: Person[] = [
   {
+    role: "Data Analyst (Alumni)",
+    name: "Nugraheni Vikri Puspitaningtyas",
+    nip: "199712112019122001",
+  },
+  {
     role: "Fullstack Developer (Alumni)",
     name: "Yacob Yulis Setyoko",
-    nip: "1987xxxxxxxxxxx",
+    nip: "198307242002121004",
   },
   {
     role: "Database Engineer (Alumni)",
     name: "Restu Alam Siagian",
-    nip: "2000xxxxxxxxxxx",
+    nip: "199903112019121001",
   },
   {
     role: "Project Manager (Alumni)",
     name: "Catur Ery Prabowo",
-    nip: "1977xxxxxxxxxxxxx",
+    nip: "197712052002121002",
   },
   {
     role: "Data Analyst (Alumni)",
     name: "Fatqur Hidayat",
-    nip: "1988xxxxxxxxxxxxxx",
+    nip: "198909232010121002",
   },
   {
     role: "Database Engineer (Alumni)",
     name: "M Fajri Natsir",
-    nip: "1988xxxxxxxxxxxxxx",
+    nip: "198209052003121004",
   },
   {
     role: "Fullstack Developer (Alumni)",
     name: "Sabar Sautomo",
-    nip: "1984xxxxxxxxxxxx",
+    nip: "198011242001121002",
+  },
+  {
+    role: "Data Analyst (Alumni)",
+    name: "I Nyoman Enri Suryanata Sulendra",
+    nip: "198304072004121003",
   },
 ];
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, forwardRef, useImperativeHandle } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { RingkasanLaporanModal } from "./modals/ringkasan-laporan-modal";
@@ -18,23 +19,20 @@ import { Calendar, Clock, Trash2 } from "lucide-react";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
 
 // Modularized imports
-import { 
-  KanwilContentProps, 
+import {
+  KanwilContentProps,
   KanwilContentRef,
   RingkasanKanwilData,
-  MonitoringKppnData 
+  MonitoringKppnData,
 } from "./kanwil/types";
 
-export type { 
-  KanwilContentProps, 
+export type {
+  KanwilContentProps,
   KanwilContentRef,
   RingkasanKanwilData,
-  MonitoringKppnData
+  MonitoringKppnData,
 };
-import { 
-  getRingkasanColumns, 
-  getMonitoringColumns 
-} from "./kanwil/columns";
+import { getRingkasanColumns, getMonitoringColumns } from "./kanwil/columns";
 import { useKanwilData } from "./kanwil/hooks/use-kanwil-data";
 import { KanwilFilter } from "./kanwil/kanwil-filter";
 
@@ -49,6 +47,10 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
     },
     ref,
   ) {
+    const { user } = useAuth();
+    const isSuperAdminOrCoAdmin =
+      user?.role === "super_admin" || user?.role === "co_admin";
+
     const {
       ringkasanData,
       monitoringData,
@@ -180,12 +182,14 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
         const triwulan = selectedPeriode.replace("Q", "");
         const kdsatker = item.kodeSatker || item.kdsatker;
         const response = await fetch(
-          apiPath(`/monev-kkp/kendala?tahun=${selectedYear}&triwulan=${triwulan}&kdsatker=${kdsatker}`),
+          apiPath(
+            `/monev-kkp/kendala?tahun=${selectedYear}&triwulan=${triwulan}&kdsatker=${kdsatker}`,
+          ),
           {
             method: "DELETE",
             credentials: "include",
             headers: addCsrfToHeaders({}),
-          }
+          },
         );
 
         if (!response.ok) {
@@ -233,13 +237,16 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
     const monitoringHandlers = {
       onViewRingkasan: handleViewRingkasan,
       onResetStatus: handleResetStatus,
+      showPengembalian: isSuperAdminOrCoAdmin,
     };
 
-    const columns = contentType === "ringkasan" 
-      ? getRingkasanColumns(ringkasanHandlers) 
-      : getMonitoringColumns(monitoringHandlers);
+    const columns =
+      contentType === "ringkasan"
+        ? getRingkasanColumns(ringkasanHandlers)
+        : getMonitoringColumns(monitoringHandlers);
 
-    const data: any[] = contentType === "ringkasan" ? ringkasanData : monitoringData;
+    const data: any[] =
+      contentType === "ringkasan" ? ringkasanData : monitoringData;
 
     return (
       <div className="space-y-6">
@@ -258,29 +265,44 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
           <CardHeader>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <CardTitle>
-                {contentType === "ringkasan" 
-                  ? "Ringkasan Laporan per Satker" 
+                {contentType === "ringkasan"
+                  ? "Ringkasan Laporan per Satker"
                   : "Monitoring Laporan KPPN"}
               </CardTitle>
-              
+
               {contentType === "ringkasan" && (
                 <div className="flex flex-wrap items-center gap-3">
                   <Badge
-                    variant={statusLaporan === "sent" ? "success" : "destructive"}
+                    variant={
+                      statusLaporan === "sent" ? "success" : "destructive"
+                    }
                     className="px-3 py-1 text-xs font-semibold uppercase tracking-wider shadow-sm"
                   >
-                    {statusLaporan === "sent" ? "Sudah Dikirim" : "Belum Dikirim"}
+                    {statusLaporan === "sent"
+                      ? "Sudah Dikirim"
+                      : "Belum Dikirim"}
                   </Badge>
-                  
+
                   {statusLaporan === "sent" && tglKirimKanwil && (
                     <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground bg-muted/30 px-3 py-1.5 rounded-lg border border-border/50">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="h-3.5 w-3.5 text-blue-500" />
-                        <span>{new Date(tglKirimKanwil).toLocaleDateString("id-ID", { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+                        <span>
+                          {new Date(tglKirimKanwil).toLocaleDateString(
+                            "id-ID",
+                            { day: "2-digit", month: "long", year: "numeric" },
+                          )}
+                        </span>
                       </div>
                       <div className="flex items-center gap-1.5 border-l border-border/50 pl-4">
                         <Clock className="h-3.5 w-3.5 text-amber-500" />
-                        <span>{new Date(tglKirimKanwil).toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' })} WIB</span>
+                        <span>
+                          {new Date(tglKirimKanwil).toLocaleTimeString(
+                            "id-ID",
+                            { hour: "2-digit", minute: "2-digit" },
+                          )}{" "}
+                          WIB
+                        </span>
                       </div>
                     </div>
                   )}
@@ -296,6 +318,7 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
                 columns={columns}
                 data={data}
                 initialPageSize={25}
+                showFooter={true}
               />
             )}
           </CardContent>
@@ -330,7 +353,9 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
           open={isTransaksiModalOpen}
           onOpenChange={setIsTransaksiModalOpen}
           kdsatker={transaksiTarget?.kdsatker ?? ""}
-          {...(transaksiTarget?.namaSatker ? { namaSatker: transaksiTarget.namaSatker } : {})}
+          {...(transaksiTarget?.namaSatker
+            ? { namaSatker: transaksiTarget.namaSatker }
+            : {})}
           tahun={selectedYear}
           triwulan={selectedPeriode.replace("Q", "")}
         />
@@ -339,7 +364,9 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
           open={isTagihanModalOpen}
           onOpenChange={setIsTagihanModalOpen}
           kdsatker={tagihanTarget?.kdsatker ?? ""}
-          {...(tagihanTarget?.namaSatker ? { namaSatker: tagihanTarget.namaSatker } : {})}
+          {...(tagihanTarget?.namaSatker
+            ? { namaSatker: tagihanTarget.namaSatker }
+            : {})}
           tahun={selectedYear}
           triwulan={selectedPeriode.replace("Q", "")}
         />
@@ -348,7 +375,9 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
           open={isKartuModalOpen}
           onOpenChange={setIsKartuModalOpen}
           kdsatker={kartuTarget?.kdsatker ?? ""}
-          {...(kartuTarget?.namaSatker ? { namaSatker: kartuTarget.namaSatker } : {})}
+          {...(kartuTarget?.namaSatker
+            ? { namaSatker: kartuTarget.namaSatker }
+            : {})}
           tahun={selectedYear}
         />
 

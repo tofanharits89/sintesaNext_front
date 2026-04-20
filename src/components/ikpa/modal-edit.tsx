@@ -99,6 +99,13 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
     // Update form values when data changes
     useEffect(() => {
         if (data && isOpen) {
+            let parsedApproval = "Pending";
+            if (data.approval) {
+                const lower = data.approval.toLowerCase();
+                if (lower.includes("disetujui") || lower.includes("setuju")) parsedApproval = "Disetujui";
+                else if (lower.includes("ditolak") || lower.includes("tolak")) parsedApproval = "Ditolak";
+            }
+
             form.reset({
                 thang: data.thang || "",
                 tg_nd: (data.tg_nd ? new Date(data.tg_nd).toISOString().split('T')[0] : "") as string,
@@ -109,7 +116,7 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
                 keterangan: data.keterangan || "",
                 kronologis: data.kronologis || "",
                 perbaikan: data.perbaikan || "",
-                approval: data.approval || "Pending",
+                approval: parsedApproval,
                 file: undefined,
             });
         }
@@ -174,8 +181,9 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
                 </DialogHeader>
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 overflow-y-auto grid gap-4 py-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 overflow-hidden flex flex-col">
+                        <div className="flex-1 overflow-y-auto pr-2 space-y-4 py-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {/* Tahun Anggaran */}
                             <FormField
                                 control={form.control}
@@ -185,7 +193,7 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
                                         <FormLabel>Tahun Anggaran</FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
-                                                <SelectTrigger>
+                                                <SelectTrigger className="w-full">
                                                     <SelectValue placeholder="Pilih Tahun" />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -216,11 +224,11 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
                             />
 
                             {/* Nomor ND */}
-                            <FormField
-                                control={form.control}
-                                name="no_nd"
-                                render={({ field }) => (
-                                    <FormItem className="md:col-span-2">
+                                <FormField
+                                    control={form.control}
+                                    name="no_nd"
+                                    render={({ field }) => (
+                                        <FormItem>
                                         <FormLabel>Nomor Nota Dinas</FormLabel>
                                         <FormControl>
                                             <Input placeholder="Input nomor ND..." {...field} />
@@ -239,18 +247,44 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
                                         <FormLabel>Satuan Kerja</FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
-                                                <SelectTrigger>
+                                                <SelectTrigger className="w-full">
                                                     <SelectValue placeholder="Pilih Satker" />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent className="max-h-[300px]">
-                                                {(satkerData as any[]).slice(0, 500).map((s) => (
-                                                    <SelectItem key={s.kdsatker} value={s.kdsatker}>
-                                                        {s.kdsatker} - {s.nmsatker}
-                                                    </SelectItem>
-                                                ))}
+                                                {(() => {
+                                                    const val = field.value;
+                                                    let subset = (satkerData as any[]).slice(0, 500);
+                                                    if (val) {
+                                                        const exists = subset.find(s => s.kdsatker === val);
+                                                        if (!exists) {
+                                                            const missing = (satkerData as any[]).find(s => s.kdsatker === val);
+                                                            if (missing) subset = [missing, ...subset];
+                                                        }
+                                                    }
+                                                    return subset.map((s) => (
+                                                        <SelectItem key={s.kdsatker} value={s.kdsatker}>
+                                                            {s.kdsatker} - {s.nmsatker}
+                                                        </SelectItem>
+                                                    ));
+                                                })()}
                                             </SelectContent>
                                         </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* No Doc */}
+                            <FormField
+                                control={form.control}
+                                name="no_doc"
+                                render={({ field }) => (
+                                    <FormItem className="md:col-span-1">
+                                        <FormLabel>Nomor Dokumen</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Input nomor dokumen..." {...field} />
+                                        </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -261,11 +295,11 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
                                 control={form.control}
                                 name="nm_indikator"
                                 render={({ field }) => (
-                                    <FormItem>
+                                    <FormItem className="md:col-span-2">
                                         <FormLabel>Indikator IKPA</FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
-                                                <SelectTrigger>
+                                                <SelectTrigger className="w-full">
                                                     <SelectValue placeholder="Pilih Indikator" />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -282,31 +316,16 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
                                 )}
                             />
 
-                            {/* No Doc */}
-                            <FormField
-                                control={form.control}
-                                name="no_doc"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Nomor Dokumen</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Input nomor dokumen..." {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
                             {/* Approval Status */}
                             <FormField
                                 control={form.control}
                                 name="approval"
                                 render={({ field }) => (
-                                    <FormItem className="md:col-span-2">
+                                    <FormItem className="md:col-span-1">
                                         <FormLabel>Status Approval</FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
-                                                <SelectTrigger>
+                                                <SelectTrigger className="w-full">
                                                     <SelectValue placeholder="Pilih Status" />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -323,8 +342,7 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
                                 )}
                             />
 
-                            {/* File Upload (Edit Mode) */}
-                            <div className="md:col-span-2 p-4 border-2 border-dashed rounded-lg bg-muted/20 flex flex-col items-center justify-center gap-2">
+                            <div className="md:col-span-3 p-4 border-2 border-dashed rounded-lg bg-muted/20 flex flex-col items-center justify-center gap-2">
                                 <FormLabel className="flex items-center gap-2 text-primary cursor-pointer hover:underline" htmlFor="file-upload-edit">
                                     <FilePlus className="h-5 w-5" />
                                     {form.watch("file") ? (form.watch("file") as File).name : data?.file ? `Ganti File (${data.file})` : "Upload PDF Nota Dinas / Dokumen (Maks 5MB)"}
@@ -400,8 +418,9 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
                                 )}
                             />
                         </div>
+                        </div>
 
-                        <DialogFooter className="flex-shrink-0 gap-2">
+                        <DialogFooter className="flex-shrink-0 gap-2 pt-4 border-t mt-2">
                             <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
                                 <X className="h-4 w-4 mr-2" />
                                 Batal

@@ -18,6 +18,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -53,7 +54,10 @@ interface DataTableProps<TData, TValue> {
   // Callback to expose the internal table instance to the parent for external pagination control
   onTableInstance?: (table: ReturnType<typeof useReactTable<TData>>) => void;
   // Notify parent when pagination changes (pageIndex/pageSize)
-  onPaginationChange?: (pagination: { pageIndex: number; pageSize: number }) => void;
+  onPaginationChange?: (pagination: {
+    pageIndex: number;
+    pageSize: number;
+  }) => void;
   // If provided, use this as controlled pagination state
   controlledPagination?: { pageIndex: number; pageSize: number };
   // Control react-table's auto reset behavior for page index
@@ -64,6 +68,8 @@ interface DataTableProps<TData, TValue> {
   initialPageSize?: number;
   // Custom footer info text. If provided, overrides the default "Showing X of Y entries" text.
   footerInfoText?: string;
+  // Whether to show the table footer (grand totals)
+  showFooter?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -79,11 +85,15 @@ export function DataTable<TData, TValue>({
   tableClassName,
   initialPageSize,
   footerInfoText,
+  showFooter = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [uncontrolledPagination, setUncontrolledPagination] = useState({ pageIndex: 0, pageSize: initialPageSize ?? 10 });
+  const [uncontrolledPagination, setUncontrolledPagination] = useState({
+    pageIndex: 0,
+    pageSize: initialPageSize ?? 10,
+  });
   const effectivePagination = controlledPagination ?? uncontrolledPagination;
 
   const table = useReactTable({
@@ -102,7 +112,10 @@ export function DataTable<TData, TValue>({
       : {
           onPaginationChange: (updater: any) => {
             // Uncontrolled: update internal state and notify parent
-            const next = typeof updater === "function" ? updater(uncontrolledPagination) : updater;
+            const next =
+              typeof updater === "function"
+                ? updater(uncontrolledPagination)
+                : updater;
             setUncontrolledPagination(next);
             onPaginationChange?.(next);
           },
@@ -124,7 +137,10 @@ export function DataTable<TData, TValue>({
 
   // Keep react-table internal page size in sync with the requested initialPageSize
   useEffect(() => {
-    if (initialPageSize && table.getState().pagination.pageSize !== initialPageSize) {
+    if (
+      initialPageSize &&
+      table.getState().pagination.pageSize !== initialPageSize
+    ) {
       table.setPageSize(initialPageSize);
     }
   }, [initialPageSize, table]);
@@ -153,18 +169,23 @@ export function DataTable<TData, TValue>({
         </div>
       )}
       <div className="rounded-md border">
-        <Table className={tableClassName}>
-          <TableHeader>
+        <Table
+          className={cn(
+            "relative border-separate border-spacing-0",
+            tableClassName,
+          )}
+        >
+          <TableHeader className="bg-background sticky top-0 z-10 shadow-sm">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead key={header.id} className="bg-background">
                       {header.isPlaceholder
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   );
@@ -183,7 +204,7 @@ export function DataTable<TData, TValue>({
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
@@ -200,6 +221,27 @@ export function DataTable<TData, TValue>({
               </TableRow>
             )}
           </TableBody>
+          {showFooter && (
+            <TableFooter className="bg-background sticky bottom-0 z-10">
+              {table.getFooterGroups().map((footerGroup) => (
+                <TableRow key={footerGroup.id}>
+                  {footerGroup.headers.map((footer) => (
+                    <TableCell
+                      key={footer.id}
+                      className="font-bold py-3 text-black border-t border-zinc-200"
+                    >
+                      {footer.isPlaceholder
+                        ? null
+                        : flexRender(
+                            footer.column.columnDef.footer,
+                            footer.getContext(),
+                          )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableFooter>
+          )}
         </Table>
       </div>
       {hidePagination ? null : (
@@ -214,7 +256,9 @@ export function DataTable<TData, TValue>({
               }}
             >
               <SelectTrigger className="h-8 w-[80px]">
-                <SelectValue placeholder={table.getState().pagination.pageSize} />
+                <SelectValue
+                  placeholder={table.getState().pagination.pageSize}
+                />
               </SelectTrigger>
               <SelectContent side="top">
                 {[10, 25, 50, 100].map((pageSize) => (
@@ -235,7 +279,8 @@ export function DataTable<TData, TValue>({
                     onClick={() => table.previousPage()}
                     className={cn(
                       "cursor-pointer select-none",
-                      !table.getCanPreviousPage() && "pointer-events-none opacity-50"
+                      !table.getCanPreviousPage() &&
+                        "pointer-events-none opacity-50",
                     )}
                   />
                 </PaginationItem>
@@ -257,7 +302,7 @@ export function DataTable<TData, TValue>({
                           >
                             {i}
                           </PaginationLink>
-                        </PaginationItem>
+                        </PaginationItem>,
                       );
                     }
                   } else {
@@ -271,7 +316,7 @@ export function DataTable<TData, TValue>({
                         >
                           1
                         </PaginationLink>
-                      </PaginationItem>
+                      </PaginationItem>,
                     );
 
                     if (currentPage > 3) {
@@ -292,7 +337,7 @@ export function DataTable<TData, TValue>({
                           >
                             {i}
                           </PaginationLink>
-                        </PaginationItem>
+                        </PaginationItem>,
                       );
                     }
 
@@ -310,7 +355,7 @@ export function DataTable<TData, TValue>({
                         >
                           {totalPage}
                         </PaginationLink>
-                      </PaginationItem>
+                      </PaginationItem>,
                     );
                   }
                   return items;
@@ -321,7 +366,8 @@ export function DataTable<TData, TValue>({
                     onClick={() => table.nextPage()}
                     className={cn(
                       "cursor-pointer select-none",
-                      !table.getCanNextPage() && "pointer-events-none opacity-50"
+                      !table.getCanNextPage() &&
+                        "pointer-events-none opacity-50",
                     )}
                   />
                 </PaginationItem>
@@ -333,13 +379,15 @@ export function DataTable<TData, TValue>({
           <div className="text-sm text-muted-foreground whitespace-nowrap order-3 md:text-right">
             {footerInfoText ?? (
               <>
-                Showing {(() => {
+                Showing{" "}
+                {(() => {
                   const { pageIndex, pageSize } = table.getState().pagination;
                   const total = table.getFilteredRowModel().rows.length;
                   const start = total === 0 ? 0 : pageIndex * pageSize + 1;
                   const end = Math.min((pageIndex + 1) * pageSize, total);
                   return `${start}-${end} of ${total}`;
-                })()} entries
+                })()}{" "}
+                entries
               </>
             )}
           </div>

@@ -55,6 +55,8 @@ export const DirektoratPaContent = forwardRef<
     setSelectedKppn,
     selectedPeriode,
     setSelectedPeriode,
+    selectedStatus,
+    setSelectedStatus,
     handleReset,
     kanwilRefList,
     isLoadingKanwilRef,
@@ -207,12 +209,23 @@ export const DirektoratPaContent = forwardRef<
     onViewRingkasan: handleViewRingkasan,
   };
 
+  // Apply client-side status filter for monitoring tabs
+  const filteredMonitoringKanwilData =
+    selectedStatus === "all"
+      ? monitoringKanwilData
+      : monitoringKanwilData.filter((d) => d.status === selectedStatus);
+
+  const filteredMonitoringKppnData =
+    selectedStatus === "all"
+      ? monitoringKppnData
+      : monitoringKppnData.filter((d) => d.status === selectedStatus);
+
   const getColumnsAndData = (): { columns: any[]; data: any[] } => {
     switch (contentType) {
       case "ringkasan-kanwil": return { columns: getRingkasanKanwilColumns(columnHandlers), data: ringkasanData };
       case "ringkasan-kppn": return { columns: getRingkasanKppnColumns(columnHandlers), data: ringkasanData };
-      case "monitoring-kanwil": return { columns: getMonitoringKanwilColumns(columnHandlers), data: monitoringKanwilData };
-      case "monitoring-kppn": return { columns: getMonitoringKppnColumns(columnHandlers), data: monitoringKppnData };
+      case "monitoring-kanwil": return { columns: getMonitoringKanwilColumns(columnHandlers), data: filteredMonitoringKanwilData };
+      case "monitoring-kppn": return { columns: getMonitoringKppnColumns(columnHandlers), data: filteredMonitoringKppnData };
       default: return { columns: getRingkasanKanwilColumns(columnHandlers), data: ringkasanData };
     }
   };
@@ -234,7 +247,7 @@ export const DirektoratPaContent = forwardRef<
   const uniqueKanwilsMap = new Map<string, string>();
   ringkasanData.forEach((d) => {
     if (d.kodeKanwil && !uniqueKanwilsMap.has(d.kodeKanwil)) {
-      uniqueKanwilsMap.set(d.kodeKanwil, d.namaLokasi || d.kodeKanwil);
+      uniqueKanwilsMap.set(d.kodeKanwil, `${d.kodeKanwil} - ${d.namaLokasi || d.kodeKanwil}`);
     }
   });
   uniqueKanwilsMap.forEach((label, value) => kanwilList.push({ value, label }));
@@ -252,7 +265,7 @@ export const DirektoratPaContent = forwardRef<
   const uniqueMonKanwilsMap = new Map<string, string>();
   monitoringKanwilData.forEach((d) => {
     if (d.kdkanwil && !uniqueMonKanwilsMap.has(d.kdkanwil)) {
-      uniqueMonKanwilsMap.set(d.kdkanwil, d.nmlokasi || d.kdkanwil);
+      uniqueMonKanwilsMap.set(d.kdkanwil, `${d.kdkanwil} - ${d.nmlokasi || d.kdkanwil}`);
     }
   });
   uniqueMonKanwilsMap.forEach((label, value) => monitoringKanwilList.push({ value, label }));
@@ -291,6 +304,8 @@ export const DirektoratPaContent = forwardRef<
         setSelectedKppn={setSelectedKppn}
         selectedPeriode={selectedPeriode}
         setSelectedPeriode={setSelectedPeriode}
+        selectedStatus={selectedStatus}
+        setSelectedStatus={setSelectedStatus}
         handleReset={handleReset}
         activeKanwilList={activeKanwilList}
         activeKppnList={activeKppnList}
@@ -301,7 +316,14 @@ export const DirektoratPaContent = forwardRef<
       <Card>
         <CardHeader><CardTitle>{getTitle()}</CardTitle></CardHeader>
         <CardContent>
-          {isLoading ? <TableSkeleton rows={10} /> : <DataTable columns={columns} data={data} initialPageSize={25} />}
+          {isLoading ? <TableSkeleton rows={10} /> : (
+            <DataTable 
+              columns={columns} 
+              data={data} 
+              initialPageSize={25} 
+              showFooter={contentType === "monitoring-kanwil" || contentType === "monitoring-kppn" || contentType === "ringkasan-kppn" || contentType === "ringkasan-kanwil"}
+            />
+          )}
         </CardContent>
       </Card>
 

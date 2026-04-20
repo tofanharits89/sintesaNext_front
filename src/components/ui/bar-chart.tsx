@@ -89,6 +89,7 @@ export function BarChartComponent({
               content={({ active, payload, label }) => {
                 if (active && payload && payload.length) {
                   const entry = payload[0];
+                  if (!entry) return null;
                   const val = entry.value as number;
                   const datum = entry.payload as any;
                   const title = formatTooltipLabel
