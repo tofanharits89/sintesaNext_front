@@ -450,11 +450,20 @@ export default function UsersPage() {
             currentPage={page}
             pageSize={pageSize}
             searchQuery={query}
-            onSearchChange={setQuery}
+            onSearchChange={(q) => {
+              setQuery(q);
+              setPage(1);
+            }}
             roleFilter={role}
-            onRoleFilterChange={setRole}
+            onRoleFilterChange={(r) => {
+              setRole(r);
+              setPage(1);
+            }}
             statusFilter={status}
-            onStatusFilterChange={setStatus}
+            onStatusFilterChange={(s) => {
+              setStatus(s);
+              setPage(1);
+            }}
             totalCount={filtered.length}
             onPageChange={setPage}
             onPageSizeChange={(size) => {
