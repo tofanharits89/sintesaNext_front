@@ -139,7 +139,8 @@ export default function TentangKitaProfilPage() {
   const pj = coreTeam.find((p) => p.role === "Penanggung Jawab")!;
   const pm = coreTeam.find((p) => p.role === "Project Manager")!;
   const teknis = coreTeam.filter(
-    (p) => !["Direktur", "Penanggung Jawab", "Project Manager"].includes(p.role)
+    (p) =>
+      !["Direktur", "Penanggung Jawab", "Project Manager"].includes(p.role),
   );
 
   return (

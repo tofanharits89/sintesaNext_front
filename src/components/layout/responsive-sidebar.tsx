@@ -86,7 +86,11 @@ const defaultMenu: MenuItem[] = [
   },
   {
     label: "Makan Bergizi",
-    children: [{ label: "Dashboard MBG" }, { label: "Kertas Kerja" }],
+    children: [
+      { label: "Dashboard MBG" },
+      { label: "Kertas Kerja" },
+      { label: "Data MBG" },
+    ],
   },
   {
     label: "Monev KKP",
@@ -172,6 +176,11 @@ const defaultMenu: MenuItem[] = [
     children: [{ label: "Sektor" }, { label: "Rekomendasi" }],
   },
   {
+    label: "IKI PA",
+    children: [{ label: "IKI Kontraktual" }, { label: "IKI APBD" }],
+  },
+
+  {
     label: "Profil K/L",
     children: [{ label: "Kementerian" }, { label: "Lembaga" }],
   },
@@ -195,6 +204,7 @@ const MENU_ROUTE_PREFIXES: Array<{ prefix: string; parent: string }> = [
   { prefix: "/data-supplier", parent: "Data Supplier" },
   { prefix: "/epa", parent: "EPA" },
   { prefix: "/spending-review", parent: "Spending Review" },
+  { prefix: "/iku-pa", parent: "IKI PA" },
   { prefix: "/profil-kl", parent: "Profil K/L" },
   { prefix: "/tentang-kita", parent: "Tentang Kita" },
 ];
@@ -335,6 +345,10 @@ export function ResponsiveSidebar({
             className={`${cls} text-orange-600 dark:text-orange-400`}
           />
         );
+      case "IKI PA":
+        return (
+          <Gauge className={`${cls} text-orange-600 dark:text-orange-400`} />
+        );
       case "Tentang Kita":
         return (
           <Info className={`${cls} text-neutral-600 dark:text-neutral-300`} />
@@ -360,6 +374,8 @@ export function ResponsiveSidebar({
         return <LineChart className={cls} />;
       case "Makan Bergizi__Kertas Kerja":
         return <ClipboardList className={cls} />;
+      case "Makan Bergizi__Data MBG":
+        return <BarChart2 className={cls} />;
       case "Profil K/L__Kementerian":
         return <Users className={cls} />;
       case "Profil K/L__Lembaga":
@@ -448,6 +464,10 @@ export function ResponsiveSidebar({
         return <Building2 className={cls} />;
       case "Monev KKP__Direktorat PA":
         return <Building2 className={cls} />;
+      case "IKI PA__IKI Kontraktual":
+        return <Building2 className={cls} />;
+      case "IKI PA__IKI APBD":
+        return <BookOpen className={cls} />;
       default:
         return null;
     }
@@ -654,6 +674,13 @@ export function ResponsiveSidebar({
                               onMouseEnterFn = () =>
                                 import("@/features/mbg/components/MapView");
                             } else if (
+                              c.label === "Data MBG" &&
+                              m.label === "Makan Bergizi"
+                            ) {
+                              href = "/makan-bergizi/data-mbg";
+                              onMouseEnterFn = () =>
+                                import("@/components/mbg/data-mbg/data-sp2d-mbg");
+                            } else if (
                               c.label === "Profil" &&
                               m.label === "Tentang Kita"
                             ) {
@@ -853,6 +880,20 @@ export function ResponsiveSidebar({
                               href = "/monev-kkp/direktorat-pa";
                               onMouseEnterFn = () =>
                                 import("@/components/monev-kkp/direktorat-pa-content");
+                            } else if (
+                              c.label === "IKI Kontraktual" &&
+                              m.label === "IKI PA"
+                            ) {
+                              href = "/iku-pa/kontraktual";
+                              onMouseEnterFn = () =>
+                                import("@/components/iku-pa/kontraktual");
+                            } else if (
+                              c.label === "IKI APBD" &&
+                              m.label === "IKI PA"
+                            ) {
+                              href = "/iku-pa/apbd";
+                              onMouseEnterFn = () =>
+                                import("@/components/iku-pa/apbd");
                             }
 
                             return (
@@ -1055,6 +1096,29 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/makan-bergizi/kertas-kerja",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Data MBG" &&
+                      m.label === "Makan Bergizi" ? (
+                      <Link
+                        key={c.label}
+                        href="/makan-bergizi/data-mbg"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onMouseEnter={() => {
+                          import("@/components/mbg/data-mbg/data-sp2d-mbg");
+                        }}
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/makan-bergizi/data-mbg",
                           });
                           setOpen(false);
                         }}
@@ -1778,6 +1842,25 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/ikpa"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/ikpa",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "IKI APBD" && m.label === "IKI PA" ? (
+                      <Link
+                        key={c.label}
+                        href="/iku-pa/apbd"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onClick={() => {
                           trackMenuUsage({
