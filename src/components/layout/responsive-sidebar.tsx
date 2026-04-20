@@ -91,6 +91,7 @@ const defaultMenu: MenuItem[] = [
       { label: "Dashboard MBG" },
       { label: "Kertas Kerja" },
       { label: "Data MBG" },
+      { label: "Trend MBG" },
     ],
   },
   {
@@ -388,6 +389,8 @@ export function ResponsiveSidebar({
         return <ClipboardList className={cls} />;
       case "Makan Bergizi__Data MBG":
         return <BarChart2 className={cls} />;
+      case "Makan Bergizi__Trend MBG":
+        return <TrendingUp className={cls} />;
       case "Profil K/L__Kementerian":
         return <Users className={cls} />;
       case "Profil K/L__Lembaga":
@@ -698,6 +701,13 @@ export function ResponsiveSidebar({
                               href = "/makan-bergizi/data-mbg";
                               onMouseEnterFn = () =>
                                 import("@/components/mbg/data-mbg/data-sp2d-mbg");
+                            } else if (
+                              c.label === "Trend MBG" &&
+                              m.label === "Makan Bergizi"
+                            ) {
+                              href = "/makan-bergizi/trend-mbg";
+                              onMouseEnterFn = () =>
+                                import("@/components/mbg/trend-mbg/landing");
                             } else if (
                               c.label === "Profil" &&
                               m.label === "Tentang Kita"
@@ -1152,6 +1162,29 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/makan-bergizi/data-mbg",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Trend MBG" &&
+                      m.label === "Makan Bergizi" ? (
+                      <Link
+                        key={c.label}
+                        href="/makan-bergizi/trend-mbg"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onMouseEnter={() => {
+                          import("@/components/mbg/trend-mbg/landing");
+                        }}
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/makan-bergizi/trend-mbg",
                           });
                           setOpen(false);
                         }}
