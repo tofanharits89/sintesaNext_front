@@ -9,6 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { RotateCcw } from "lucide-react";
 import { useMapStats } from "@/features/mbg/hooks/useMapStats";
 import { useMapChoropleth } from "@/features/mbg/hooks/useMapChoropleth";
 import { MapStatsOverlay } from "@/components/mbg/MapStatsOverlay";
@@ -381,7 +383,7 @@ export function MapSearch({ year = "2026" }: { year?: string }) {
           const kabRow = penerimaKabMap.get(normalizeName(kabName));
           const tooltipExtra =
             showPenerima && kabRow
-              ? `<br/>Penerima: <strong>${fmt(kabRow.penerimakab)}</strong> (${Number(kabRow.persen_penerimakab).toFixed(1)}%)`
+              ? `<br/>Penerima: <strong>${fmt(kabRow.penerimakab)}</strong> (${Number(kabRow.persenpenerimakab).toFixed(1)}%)`
               : "";
           lyr.bindTooltip(
             `<div style="font-size:12px;line-height:1.6"><strong>${kabName}</strong>${tooltipExtra}</div>`,
@@ -435,12 +437,29 @@ export function MapSearch({ year = "2026" }: { year?: string }) {
     setProvinceId(val === "all" ? "" : val);
   };
 
+  const handleReset = () => {
+    setProvinceId("");
+    setIndicator("jumlahpenerima");
+    if (mapRef.current) {
+      mapRef.current.setView([-2.5, 118], 5);
+    }
+  };
+
   const internalProvinceValue = !provinceId ? "all" : provinceId;
 
   return (
     <Card className="h-full">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-base">Peta Distribusi MBG</CardTitle>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleReset}
+          className="h-8 gap-1.5 text-xs"
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+          Reset
+        </Button>
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Filters */}
@@ -483,10 +502,10 @@ export function MapSearch({ year = "2026" }: { year?: string }) {
 
         {/* Map container */}
         <div
-          className="relative w-full rounded-md overflow-hidden border"
+          className="relative w-full rounded-md overflow-hidden border z-0"
           style={{ height: 420 }}
         >
-          <div ref={containerRef} className="h-full w-full" />
+          <div ref={containerRef} className="h-full w-full z-0" />
 
           {/* Back to national button */}
           {selectedProvince && (

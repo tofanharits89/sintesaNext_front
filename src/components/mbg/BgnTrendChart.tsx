@@ -68,7 +68,7 @@ export function BgnTrendChart() {
   }));
 
   return (
-    <Card className="h-full">
+    <Card className="flex h-full flex-col">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2 flex-wrap">
           <div>
@@ -113,9 +113,10 @@ export function BgnTrendChart() {
           )}
         </div>
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={248} minWidth={0}>
-          <LineChart
+      <CardContent className="flex flex-1 flex-col p-6 pt-0 pb-4">
+        <div className="flex-1 min-h-[248px] w-full">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+            <LineChart
             data={chartData}
             margin={{ top: 8, right: 16, bottom: 0, left: 8 }}
           >
@@ -205,6 +206,7 @@ export function BgnTrendChart() {
             />
           </LineChart>
         </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   );

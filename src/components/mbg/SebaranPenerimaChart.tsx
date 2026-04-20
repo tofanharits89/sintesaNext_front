@@ -62,18 +62,19 @@ export function SebaranPenerimaChart() {
   }));
 
   return (
-    <Card className="h-full">
+    <Card className="flex h-full flex-col">
       <CardHeader className="pb-2">
         <CardTitle className="text-base">Sebaran Penerima Manfaat</CardTitle>
         <CardDescription>
           Top 8 provinsi – perbandingan 2025 vs 2026
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={264} minWidth={0}>
-          <BarChart
+      <CardContent className="flex flex-1 flex-col p-6 pt-0 pb-4">
+        <div className="flex-1 min-h-[264px] w-full">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+            <BarChart
             data={chartData}
-            margin={{ top: 8, right: 8, left: 0, bottom: 52 }}
+            margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
             barCategoryGap="25%"
             barGap={2}
           >
@@ -155,6 +156,7 @@ export function SebaranPenerimaChart() {
             />
           </BarChart>
         </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   );

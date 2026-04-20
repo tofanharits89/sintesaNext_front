@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, {
   useEffect,
@@ -356,14 +356,14 @@ export default function MapApbd() {
 
       {error && <div className="text-sm text-red-500">{error}</div>}
 
-      {/* â”€â”€ Peta Leaflet â”€â”€â”€ */}
+      {/* ─── Peta Leaflet ─── */}
       <div
         ref={containerRef}
-        className="w-full rounded-lg border border-yellow-400 overflow-hidden"
+        className="relative isolate z-0 w-full rounded-lg border border-yellow-400 overflow-hidden"
         style={{ height: 750, background: "#b8b89a" }}
       />
 
-      {/* â”€â”€ Tabel Legenda â”€â”€â”€ */}
+      {/* ─── Tabel Legenda ─── */}
       {/* ─── Legenda Indeks (Accordion) ─── */}
       <div className="rounded-lg border overflow-hidden">
         <button
