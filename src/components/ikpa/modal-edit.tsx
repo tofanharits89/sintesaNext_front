@@ -75,6 +75,27 @@ const STATUS_OPTIONS = [
     { label: "Ditolak", value: "Ditolak" },
 ];
 
+const normalizeIndikatorText = (value: string) =>
+    value
+        .toLowerCase()
+        .replace(/\bup\s*\/\s*tup\b/g, "up dan tup")
+        .replace(/\bup\s+tup\b/g, "up dan tup")
+        .replace(/&/g, "dan")
+        .replace(/[^a-z0-9]+/g, "");
+
+const resolveIndikatorOption = (nmIndikator?: string | null) => {
+    if (nmIndikator) {
+        const directMatch = INDIKATOR_OPTIONS.find((opt) => opt.value === nmIndikator);
+        if (directMatch) return directMatch;
+
+        const normalizedIncoming = normalizeIndikatorText(nmIndikator);
+        const normalizedMatch = INDIKATOR_OPTIONS.find((opt) => normalizeIndikatorText(opt.value) === normalizedIncoming);
+        if (normalizedMatch) return normalizedMatch;
+    }
+
+    return undefined;
+};
+
 export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
     const queryClient = useQueryClient();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -111,7 +132,7 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
                 tg_nd: (data.tg_nd ? new Date(data.tg_nd).toISOString().split('T')[0] : "") as string,
                 no_nd: data.no_nd || "",
                 kdsatker: data.kdsatker || "",
-                nm_indikator: data.nm_indikator || "",
+                nm_indikator: resolveIndikatorOption(data.nm_indikator)?.value || data.nm_indikator || "",
                 no_doc: data.no_doc || "",
                 keterangan: data.keterangan || "",
                 kronologis: data.kronologis || "",
@@ -145,7 +166,7 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
         // Find satker details
         const satker = (satkerData as any[]).find(s => s.kdsatker === values.kdsatker);
         // Find indicator code
-        const indicator = INDIKATOR_OPTIONS.find(i => i.value === values.nm_indikator);
+        const indicator = resolveIndikatorOption(values.nm_indikator);
 
         const payload = {
             ...values,
