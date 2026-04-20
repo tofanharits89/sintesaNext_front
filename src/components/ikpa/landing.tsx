@@ -68,6 +68,8 @@ import { apiClient } from "@/lib/api/httpClient";
 import { useQuery } from "@tanstack/react-query";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { ResetButton } from "@/components/ui/reset-button";
+import { useAuth } from "@/hooks/useAuth";
+import { filterSatkerByUserAccess } from "@/utils/satker-rbac";
 
 import {
     LineChart,
@@ -127,6 +129,7 @@ type IkpaResponse = {
 };
 
 export function IkpaLanding() {
+    const { user } = useAuth();
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
@@ -140,8 +143,17 @@ export function IkpaLanding() {
 
     // Fetch Global Stats
     const { data: statsData, isLoading: isStatsLoading } = useQuery<IkpaStats>({
-        queryKey: ['ikpa-stats', selectedKppn, selectedSatker, selectedYear],
-        queryFn: async () => apiClient.get(`/ikpa/stats?kdkppn=${selectedKppn === 'all' ? '' : selectedKppn}&kdsatker=${selectedSatker === 'all' ? '' : selectedSatker}&thang=${selectedYear}`),
+        queryKey: ['ikpa-stats', user?.id, user?.role, user?.kdkanwil, user?.kdkppn, selectedKppn, selectedSatker, selectedYear],
+        queryFn: async () => apiClient.get(
+            `/ikpa/stats?kdkppn=${selectedKppn === 'all' ? '' : selectedKppn}&kdsatker=${selectedSatker === 'all' ? '' : selectedSatker}&thang=${selectedYear}`,
+            {
+                headers: {
+                    "X-Bypass-Cache": "1",
+                    "Cache-Control": "no-cache, no-store, must-revalidate",
+                    "Pragma": "no-cache",
+                },
+            }
+        ),
         staleTime: 0,
         gcTime: 0,
         refetchOnWindowFocus: false
@@ -150,30 +162,99 @@ export function IkpaLanding() {
     // Memoize unique KPPN list from data
     const uniqueKppnList = useMemo(() => {
         const seen = new Set<string>();
-        return (kppnData as { kdkppn: string; nmkppn: string }[]).filter(item => {
+        let scopedKppn = (kppnData as { kdkppn: string; nmkppn: string; kdkanwil?: string | null }[]);
+
+        if (user?.role === "kanwil_djpb" && user.kdkanwil) {
+            scopedKppn = scopedKppn.filter(item => item.kdkanwil === user.kdkanwil);
+        } else if (user?.role === "kppn" && user.kdkppn) {
+            scopedKppn = scopedKppn.filter(item => item.kdkppn === user.kdkppn);
+        }
+
+        return scopedKppn.filter(item => {
             if (seen.has(item.kdkppn)) return false;
             seen.add(item.kdkppn);
             return true;
         }).sort((a, b) => a.kdkppn.localeCompare(b.kdkppn));
-    }, []);
+    }, [user]);
 
     // Filter satker based on selected KPPN
     const filteredSatkerList = useMemo(() => {
+        const scopedSatker = filterSatkerByUserAccess(
+            satkerData as { kdsatker: string; nmsatker: string; kdkppn: string; kdkanwil: string }[],
+            user
+        );
+
         if (selectedKppn === "all") {
-            return (satkerData as { kdsatker: string; nmsatker: string; kdkppn: string }[]).slice(0, 100);
+            if (user?.role === "kanwil_djpb" || user?.role === "kppn") {
+                return scopedSatker;
+            }
+            return scopedSatker.slice(0, 100);
         }
-        return (satkerData as { kdsatker: string; nmsatker: string; kdkppn: string }[])
-            .filter(s => s.kdkppn === selectedKppn);
-    }, [selectedKppn]);
+
+        return scopedSatker.filter(s => s.kdkppn === selectedKppn);
+    }, [selectedKppn, user]);
+
+    useEffect(() => {
+        if (user?.role === "kppn" && user.kdkppn && selectedKppn !== user.kdkppn) {
+            setSelectedKppn(user.kdkppn);
+            setSelectedSatker("all");
+            setCurrentPage(0);
+            return;
+        }
+
+        if (user?.role === "kanwil_djpb" && selectedKppn !== "all") {
+            const hasSelectedKppn = uniqueKppnList.some((item) => item.kdkppn === selectedKppn);
+            if (!hasSelectedKppn) {
+                setSelectedKppn("all");
+                setSelectedSatker("all");
+                setCurrentPage(0);
+            }
+        }
+    }, [selectedKppn, uniqueKppnList, user]);
+
+    useEffect(() => {
+        if (selectedSatker === "all") return;
+
+        const hasSelectedSatker = filteredSatkerList.some((item) => item.kdsatker === selectedSatker);
+        if (!hasSelectedSatker) {
+            setSelectedSatker("all");
+            setCurrentPage(0);
+        }
+    }, [filteredSatkerList, selectedSatker]);
 
     // Fetch Data from Backend
     const { data, isLoading } = useQuery<IkpaResponse>({
-        queryKey: ['ikpa-data', currentPage, searchQuery, selectedKppn, selectedSatker, selectedYear, statusFilter], // Add filters to queryKey
-        queryFn: async () => apiClient.get(`/ikpa?page=${currentPage}&limit=10&search=${searchQuery}&kdkppn=${selectedKppn === 'all' ? '' : selectedKppn}&kdsatker=${selectedSatker === 'all' ? '' : selectedSatker}&thang=${selectedYear}&status=${statusFilter === 'all' ? '' : statusFilter}`),
+        queryKey: ['ikpa-data', user?.id, user?.role, user?.kdkanwil, user?.kdkppn, currentPage, searchQuery, selectedKppn, selectedSatker, selectedYear, statusFilter],
+        queryFn: async () => apiClient.get(
+            `/ikpa?page=${currentPage}&limit=10&search=${searchQuery}&kdkppn=${selectedKppn === 'all' ? '' : selectedKppn}&kdsatker=${selectedSatker === 'all' ? '' : selectedSatker}&thang=${selectedYear}&status=${statusFilter === 'all' ? '' : statusFilter}`,
+            {
+                headers: {
+                    "X-Bypass-Cache": "1",
+                    "Cache-Control": "no-cache, no-store, must-revalidate",
+                    "Pragma": "no-cache",
+                },
+            }
+        ),
         keepPreviousData: true
     } as any);
 
-    const ikpaData = data?.result || [];
+    const ikpaData = useMemo(() => {
+        const rows = data?.result || [];
+
+        if (!user) return [];
+        if (user.role === "super_admin" || user.role === "co_admin" || user.role === "kantor_pusat" || user.role === "ditpa") {
+            return rows;
+        }
+        if (user.role === "kanwil_djpb" && user.kdkanwil) {
+            return rows.filter((item) => item.kdkanwil === user.kdkanwil);
+        }
+        if (user.role === "kppn" && user.kdkppn) {
+            return rows.filter((item) => item.kdkppn === user.kdkppn);
+        }
+
+        return rows;
+    }, [data?.result, user]);
+
     const totalRows = data?.totalRows || 0;
     const totalPages = data?.totalPages || 0;
 
@@ -221,8 +302,9 @@ export function IkpaLanding() {
                                 setSelectedKppn(val);
                                 setSelectedSatker("all");
                                 setSearchQuery("");
+                                setCurrentPage(0);
                             }}>
-                                <SelectTrigger className="w-full">
+                                <SelectTrigger className="w-full" disabled={user?.role === "kppn"}>
                                     <SelectValue placeholder="Semua KPPN" />
                                 </SelectTrigger>
                                 <SelectContent className="max-h-[300px]">
