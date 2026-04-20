@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import * as XLSX from "xlsx";
+import { format } from "date-fns";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Download,
   Loader2,
@@ -50,8 +52,8 @@ function downloadExcel(data: RowData[], sheetName: string, fileName: string) {
 
 // --- Tab 1: Tarik Data Realisasi BGN COA ---
 function TabRealisasiBGN() {
-  const [tglAwal, setTglAwal] = useState("");
-  const [tglAkhir, setTglAkhir] = useState("");
+  const [tglAwal, setTglAwal] = useState<Date | undefined>(undefined);
+  const [tglAkhir, setTglAkhir] = useState<Date | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<RowData[] | null>(null);
   const [error, setError] = useState("");
@@ -61,7 +63,10 @@ function TabRealisasiBGN() {
     setError("");
     setData(null);
     try {
-      const params = new URLSearchParams({ tglAwal, tglAkhir });
+      const params = new URLSearchParams({
+        tglAwal: tglAwal ? format(tglAwal, "yyyy-MM-dd") : "",
+        tglAkhir: tglAkhir ? format(tglAkhir, "yyyy-MM-dd") : "",
+      });
       const res = await fetch(`/api/mbg/realisasi-sp2d?${params.toString()}`, {
         credentials: "include",
         cache: "no-store",
@@ -93,21 +98,27 @@ function TabRealisasiBGN() {
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
             <div className="space-y-1.5">
-              <Label htmlFor="tgl-awal">Tanggal Awal SP2D</Label>
-              <Input
-                id="tgl-awal"
-                type="date"
-                value={tglAwal}
-                onChange={(e) => setTglAwal(e.target.value)}
+              <Label>Tanggal Awal SP2D</Label>
+              <DatePicker
+                date={tglAwal}
+                onDateChange={setTglAwal}
+                placeholder="Pilih Tanggal Awal"
+                className="bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors"
+                captionLayout="dropdown"
+                startMonth={new Date(2020, 0)}
+                endMonth={new Date(new Date().getFullYear() + 5, 11)}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="tgl-akhir">Tanggal Akhir SP2D</Label>
-              <Input
-                id="tgl-akhir"
-                type="date"
-                value={tglAkhir}
-                onChange={(e) => setTglAkhir(e.target.value)}
+              <Label>Tanggal Akhir SP2D</Label>
+              <DatePicker
+                date={tglAkhir}
+                onDateChange={setTglAkhir}
+                placeholder="Pilih Tanggal Akhir"
+                className="bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors"
+                captionLayout="dropdown"
+                startMonth={new Date(2020, 0)}
+                endMonth={new Date(new Date().getFullYear() + 5, 11)}
               />
             </div>
             <Button
