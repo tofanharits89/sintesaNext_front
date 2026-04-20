@@ -138,7 +138,11 @@ export function IkpaPageSkeleton() {
             <CardContent className="px-6">
               <div className="rounded-md border p-4 space-y-3">
                 {Array.from({ length: 7 }).map((_, idx) => (
-                  <div key={`table-row-${idx}`} className="grid grid-cols-5 gap-3">
+                  <div key={`table-row-${idx}`} className="grid grid-cols-9 gap-3">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-full" />
