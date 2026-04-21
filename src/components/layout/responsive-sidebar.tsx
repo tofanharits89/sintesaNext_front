@@ -150,7 +150,6 @@ const defaultMenu: MenuItem[] = [
     children: [
       { label: "Generate Dataset" },
       { label: "SP2D" },
-      { label: "Track Nadine" },
     ],
   },
   {
@@ -478,8 +477,6 @@ export function ResponsiveSidebar({
         return <CheckCircle className={cls} />;
       case "Rowset Data__SP2D":
         return <Banknote className={cls} />;
-      case "Rowset Data__Track Nadine":
-        return <Search className={cls} />;
       case "Kewilayahan__Belanja":
         return <Database className={cls} />;
       case "Kewilayahan__Tematik":
@@ -863,11 +860,6 @@ export function ResponsiveSidebar({
                               m.label === "Data Makrokesra"
                             ) {
                               href = "/data-makrokesra/data-bps";
-                            } else if (
-                              c.label === "Track Nadine" &&
-                              m.label === "Rowset Data"
-                            ) {
-                              href = "/menu-rowset/track-nadine";
                             } else if (
                               c.label === "SP2D" &&
                               m.label === "Rowset Data"
@@ -1712,26 +1704,6 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/data-makrokesra/data-bps",
-                          });
-                          setOpen(false);
-                        }}
-                      >
-                        <span className="inline-flex items-center">
-                          {subIconFor(m.label, c.label)}
-                          <span>{c.label}</span>
-                        </span>
-                      </Link>
-                    ) : c.label === "Track Nadine" &&
-                      m.label === "Rowset Data" ? (
-                      <Link
-                        key={c.label}
-                        href="/menu-rowset/track-nadine"
-                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
-                        onClick={() => {
-                          trackMenuUsage({
-                            menu: m.label,
-                            submenu: c.label,
-                            path: "/menu-rowset/track-nadine",
                           });
                           setOpen(false);
                         }}
