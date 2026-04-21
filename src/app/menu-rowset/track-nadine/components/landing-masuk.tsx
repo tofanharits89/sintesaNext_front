@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import moment from "moment";
+// @ts-ignore
 import "moment/locale/id";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";

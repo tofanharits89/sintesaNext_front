@@ -62,7 +62,7 @@ export interface UseAuthReturn {
   clearCache: () => void;
 
   // RBAC utilities
-  hasPermission: (module: "users" | "profile" | "dashboard" | "settings" | "messages" | "notifications", action: string) => boolean;
+  hasPermission: (module: "users" | "profile" | "dashboard" | "settings" | "messages" | "notifications" | "analytics" | "nadine", action: string) => boolean;
   canAccessUserManagement: () => boolean;
   canEditRoleAndLocation: () => boolean;
   canManageUsers: () => boolean;
@@ -213,7 +213,7 @@ export function useAuth(): UseAuthReturn {
   }, [user]);
 
   // RBAC utilities
-  const hasPermission = useCallback((module: "users" | "profile" | "dashboard" | "settings" | "messages" | "notifications", action: string): boolean => {
+  const hasPermission = useCallback((module: "users" | "profile" | "dashboard" | "settings" | "messages" | "notifications" | "analytics" | "nadine", action: string): boolean => {
     return rbacHasPermission(normalizedUser, module, action);
   }, [normalizedUser]);
 
