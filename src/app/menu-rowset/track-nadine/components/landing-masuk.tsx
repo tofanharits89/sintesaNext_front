@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import moment from "moment";
+import "moment/locale/id";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import SaveUserData from "@/components/SaveUserData";
@@ -19,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, X, ArrowRightSquare } from "lucide-react";
+import { Loader2, X, ArrowRightSquare, Eye } from "lucide-react";
 import { apiClient } from "@/lib/api/httpClient";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
@@ -203,9 +204,46 @@ export default function TrackNadineMasuk({
         cell: ({ row }) => <div className="text-center">{row.index + 1}</div>,
       },
       {
+        accessorKey: "NotaNadine.NoNd",
+        header: () => <div className="text-center font-medium">No. ND/Surat {isMasuk ? "Masuk" : "Keluar"}</div>,
+        cell: ({ row }) => <div className="text-center whitespace-nowrap px-4">{row.original.NotaNadine?.NoNd}</div>,
+      },
+      {
+        accessorKey: "NotaNadine.TglNd",
+        header: () => <div className="text-center font-medium">Tanggal ND/Surat {isMasuk ? "Masuk" : "Keluar"}</div>,
+        cell: ({ row }) => {
+          const tgl = row.original.NotaNadine?.TglNd;
+          if (!tgl) return <div className="text-center">-</div>;
+          return (
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-sm font-normal whitespace-nowrap text-foreground">{moment(tgl).locale("id").format("D MMMM YYYY")}</span>
+              <span className="text-[10px] text-muted-foreground font-mono">{moment(tgl).format("HH:mm:ss")}</span>
+            </div>
+          );
+        },
+      },
+      {
+        id: "tanggalKirim",
+        header: () => <div className="text-center font-medium">Tanggal Kirim ND/Surat {isMasuk ? "Masuk" : "Keluar"}</div>,
+        cell: ({ row }) => {
+          const tgl = isMasuk ? row.original.updatedAt : row.original.NotaNadine?.TanggalKirim;
+          if (!tgl) return <div className="text-center">-</div>;
+          return (
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-sm font-normal whitespace-nowrap text-foreground">{moment(tgl).locale("id").format("D MMMM YYYY")}</span>
+              <span className="text-[10px] text-muted-foreground font-mono">{moment(tgl).format("HH:mm:ss")}</span>
+            </div>
+          );
+        },
+      },
+      {
         accessorKey: "NotaNadine.Pengirim",
         header: () => <div className="text-center font-medium">Pengirim</div>,
-        cell: ({ row }) => row.original.NotaNadine?.Pengirim || "Tidak ada pengirim",
+        cell: ({ row }) => (
+          <div className="min-w-[200px] max-w-[300px] whitespace-normal break-words">
+            {row.original.NotaNadine?.Pengirim || "Tidak ada pengirim"}
+          </div>
+        ),
       },
       {
         accessorKey: "NotaNadine.Perihal",
@@ -221,66 +259,28 @@ export default function TrackNadineMasuk({
         },
       },
       {
-        accessorKey: "NotaNadine.NoNd",
-        header: () => <div className="text-center font-medium">No ND</div>,
-        cell: ({ row }) => row.original.NotaNadine?.NoNd,
+        id: "actions",
+        header: () => <div className="text-center font-medium">Detail</div>,
+        size: 120,
+        cell: ({ row }) => (
+          <div className="flex justify-center min-w-[100px]">
+            {row.original.ID ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0 cursor-pointer"
+                onClick={() => handleDetailClick(row.original.ID as string)}
+                title="Lihat Detail"
+              >
+                <Eye className="h-4 w-4 text-amber-600" />
+              </Button>
+            ) : (
+              <span className="text-muted-foreground text-xs">null</span>
+            )}
+          </div>
+        ),
       },
     ];
-
-    if (isMasuk) {
-      cols.push(
-        {
-          accessorKey: "NotaNadine.TglNd",
-          header: () => <div className="text-center font-medium">Tgl ND</div>,
-          cell: ({ row }) => row.original.NotaNadine?.TglNd ? moment(row.original.NotaNadine.TglNd).format("DD-MM-YYYY HH:mm:ss") : "-",
-        },
-        {
-          id: "tujuanDispo",
-          header: () => <div className="text-center font-medium">Tujuan Disposisi</div>,
-          cell: ({ row }) => (
-            <ul className="list-disc pl-5 space-y-1">
-              {(row.original.tujuanDispo || []).map((tujuan, i) => (
-                <li key={i} className="text-sm">
-                  {tujuan}
-                </li>
-              ))}
-            </ul>
-          ),
-        },
-        {
-          accessorKey: "updatedAt",
-          header: () => <div className="text-center font-medium">Tgl Kirim ND</div>,
-          cell: ({ row }) => row.original.updatedAt ? moment(row.original.updatedAt).format("DD-MM-YYYY HH:mm:ss") : "-",
-        }
-      );
-    } else {
-      cols.push({
-        accessorKey: "NotaNadine.TanggalKirim",
-        header: () => <div className="text-center font-medium">Tgl Kirim</div>,
-        cell: ({ row }) => row.original.NotaNadine?.TanggalKirim || "-",
-      });
-    }
-
-    cols.push({
-      id: "actions",
-      header: () => <div className="text-center font-medium">Detail</div>,
-      cell: ({ row }) => (
-        <div className="flex justify-center">
-          {row.original.ID ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-              onClick={() => handleDetailClick(row.original.ID as string)}
-            >
-              <ArrowRightSquare className="h-5 w-5" />
-            </Button>
-          ) : (
-            <span className="text-muted-foreground text-xs">null</span>
-          )}
-        </div>
-      ),
-    });
 
     return cols;
   }, [isMasuk]);

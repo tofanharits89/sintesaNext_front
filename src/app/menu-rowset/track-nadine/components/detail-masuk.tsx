@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton-loader";
 import { Loader2, Mail, User, Building2, IdCard, Hash, Shield, Users, X } from "lucide-react";
 import { apiClient } from "@/lib/api/httpClient";
 // import { io } from "socket.io-client"; // optional: keep commented until needed
@@ -174,15 +175,15 @@ export default function Detail({
   return (
     <>
       <Dialog open={showModal} onOpenChange={handleCloseModal}>
-        <DialogContent showCloseButton={false} className="max-w-4xl max-h-[90vh] overflow-y-auto fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] max-w-7xl sm:max-w-7xl">
-          <DialogHeader>
+        <DialogContent showCloseButton={false} className="max-w-4xl max-h-[90vh] flex flex-col p-0 fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] max-w-7xl sm:max-w-7xl bg-white dark:bg-zinc-950">
+          <DialogHeader className="p-8 pb-6">
             <DialogTitle className="flex items-center gap-2">
               <Mail className="h-5 w-5 text-green-600" />
               Detail Nota ID : {id}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 p-2">
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {message && (
               <Alert
                 variant="destructive"
@@ -204,16 +205,14 @@ export default function Detail({
               </Alert>
             )}
             {loading ? (
-              <div className="flex justify-center items-center h-[300px]">
-                <Loader2 className="h-10 w-10 animate-spin text-primary/50" />
-              </div>
-            ) : data && Array.isArray(data) && data.length > 0 ? (<div className="space-y-10">
+              <DetailSkeleton />
+            ) : data && Array.isArray(data) && data.length > 0 ? (<div className="space-y-8 pb-4">
               {data.map((dispo: Dispo, index: number) => (
                 <div
                   key={index}
-                  className="overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300"
+                  className="bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300"
                 >
-                  <div className="flex items-center justify-between mb-6 pb-2 border-b">
+                  <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/50">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-primary/10 rounded-lg text-primary">
                         <Building2 className="h-5 w-5" />
@@ -242,31 +241,19 @@ export default function Detail({
                       </div>
                       <div className={`grid grid-cols-1 ${dispo.dispoEs4.length > 1 ? "md:grid-cols-2" : ""} gap-4`}>
                         {dispo.dispoEs4.map((es4, es4Index) => (
-                          <Card key={es4Index} className="bg-muted overflow-hidden p-0 gap-0 shadow-none">
+                          <Card key={es4Index} className="bg-white dark:bg-zinc-950 overflow-hidden p-0 gap-0 shadow-sm border-zinc-200 dark:border-zinc-800">
                             <div className="px-3 py-2 border-b border-border/50 bg-muted/30">
-                              <div className="flex items-center gap-2">
-                                <Building2 className="h-3.5 w-3.5 text-primary/70" />
-                                <p className="text-sm font-bold text-foreground tracking-tight">
-                                  {es4.UnitPenerima?.NamaOrganisasi || "-"}
-                                </p>
-                              </div>
+                              <p className="text-sm font-bold text-foreground tracking-tight truncate">
+                                {es4.UnitPenerima?.NamaOrganisasi || "-"}
+                              </p>
                             </div>
-                            <div className="p-3">
-                              <div className="grid grid-cols-2 gap-4">
-                                <div className="flex items-start gap-2">
-                                  <User className="h-3.5 w-3.5 text-primary/70 mt-0.5 shrink-0" />
-                                  <div className="min-w-0">
-                                    <p className="text-[10px] text-muted-foreground uppercase font-bold">Nama</p>
-                                    <p className="text-sm font-medium text-foreground leading-tight truncate">{es4.UnitPenerima?.NamaPejabat || "-"}</p>
-                                  </div>
-                                </div>
-                                <div className="flex items-start gap-2">
-                                  <IdCard className="h-3.5 w-3.5 text-primary/70 mt-0.5 shrink-0" />
-                                  <div className="min-w-0">
-                                    <p className="text-[10px] text-muted-foreground uppercase font-bold">NIP</p>
-                                    <p className="text-sm font-mono font-medium text-foreground leading-tight truncate">{es4.UnitPenerima?.NipPejabat || "-"}</p>
-                                  </div>
-                                </div>
+                            <div className="p-2.5 flex items-center gap-3">
+                              <div className="h-8 w-8 bg-primary/5 rounded-full flex items-center justify-center text-primary shrink-0">
+                                <User className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-foreground truncate leading-tight">{es4.UnitPenerima?.NamaPejabat || "-"}</p>
+                                <p className="text-xs text-muted-foreground truncate font-mono">{es4.UnitPenerima?.NipPejabat || "-"}</p>
                               </div>
                             </div>
                           </Card>
@@ -286,7 +273,7 @@ export default function Detail({
                         dispo.dispoStaf.length >= 3 ? "sm:grid-cols-2 lg:grid-cols-3" : ""
                         } gap-3`}>
                         {dispo.dispoStaf.map((staf, stafIndex) => (
-                          <Card key={stafIndex} className="bg-muted overflow-hidden p-0 gap-0 shadow-none">
+                          <Card key={stafIndex} className="bg-white dark:bg-zinc-950 overflow-hidden p-0 gap-0 shadow-sm border-zinc-200 dark:border-zinc-800">
                             <div className="px-3 py-2 border-b border-border/50 bg-muted/30">
                               <p className="text-sm font-bold text-foreground tracking-tight truncate">
                                 {staf.UserPenerima?.NamaJabatan || "Pelaksana"}
@@ -322,7 +309,7 @@ export default function Detail({
             )}
           </div>
 
-          <DialogFooter className="gap-3">
+          <DialogFooter className="p-8 pt-6 gap-3">
             <Button
               onClick={handleShowKonseptor}
               variant="default"
@@ -412,5 +399,68 @@ export default function Detail({
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function DetailSkeleton() {
+  return (
+    <div className="space-y-8 pb-4">
+      {Array.from({ length: 1 }).map((_, i) => (
+        <div key={i} className="bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm space-y-6">
+          <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-10 w-10 rounded-lg" />
+              <Skeleton className="h-7 w-64" />
+            </div>
+            <Skeleton className="h-6 w-20 rounded-full" />
+          </div>
+
+          <div className="space-y-8">
+            {/* ESELON 4 SECTION SKELETON */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-4 w-4" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Array.from({ length: 2 }).map((_, j) => (
+                  <div key={j} className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-0 gap-0 shadow-sm overflow-hidden">
+                    <div className="px-3 py-2 border-b border-border/50 bg-muted/30">
+                      <Skeleton className="h-4 w-3/4" />
+                    </div>
+                    <div className="p-2.5 flex items-center gap-3">
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-1/2" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* PELAKSANA SECTION SKELETON */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-4 w-4" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {Array.from({ length: 3 }).map((_, k) => (
+                  <div key={k} className="rounded-lg border bg-muted p-3 flex items-center gap-3 shadow-none">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
