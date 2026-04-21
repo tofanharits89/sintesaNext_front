@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, X, ArrowRightSquare, Eye, Table2 } from "lucide-react";
+import { Loader2, X, ArrowRightSquare, Eye, Table2, Search } from "lucide-react";
 import { apiClient } from "@/lib/api/httpClient";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
@@ -318,13 +318,6 @@ export default function TrackNadineMasuk({
               )}
             </div>
             <div className="flex items-center gap-3">
-              {status && status.data && (
-                <p className="text-xs text-muted-foreground">
-                  {filteredData.length > 0
-                    ? `${filteredData.length} data ditemukan`
-                    : `${status.data.result.length} data ditemukan`}
-                </p>
-              )}
               <div className="flex items-center space-x-2 bg-white/50 p-2 rounded-lg">
                 <Label
                   htmlFor="mode-switch"
@@ -358,7 +351,7 @@ export default function TrackNadineMasuk({
             Track Disposisi Nadine - Surat {isMasuk ? "Masuk" : "Keluar"}
           </CardTitle>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex gap-3">
+            <div className="flex flex-col md:flex-row gap-3">
               <div className="flex-1">
                 <Input
                   type="text"
@@ -366,10 +359,10 @@ export default function TrackNadineMasuk({
                   value={documentId}
                   onChange={(e) => setDocumentId(e.target.value)}
                   required
-                  className="h-12"
+                  className="h-12 w-full"
                 />
               </div>
-              <Button type="submit" disabled={loading} className="h-12 px-8">
+              <Button type="submit" disabled={loading} className="h-12 w-full md:w-[250px]">
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -414,61 +407,63 @@ export default function TrackNadineMasuk({
 
       {/* Results */}
       <div className="space-y-4">
-        {showResult && status && !error && (
-          <div className="flex gap-3">
-            <Select value={filterYear} onValueChange={setFilterYear}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Pilih Tahun" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Tahun</SelectItem>
-                {Array.from(
-                  new Set<number>(
-                    status.data.result.map((item: any) =>
-                      new Date(item.NotaNadine.TglNd2).getFullYear()
-                    )
-                  )
-                ).map((year: number) => (
-                  <SelectItem key={year} value={String(year)}>
-                    Tahun {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <Card className="transition-all duration-300 shadow-sm border-border/50">
+          <CardHeader className="py-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <CardTitle className="text-lg font-semibold">
+                Daftar Surat {isMasuk ? "Masuk" : "Keluar"}
+              </CardTitle>
 
-            <div className="flex-1 relative">
-              <Input
-                type="text"
-                placeholder="Cari data..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {searchQuery && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
-                  onClick={() => setSearchQuery("")}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+              {showResult && status && !error && (
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                  <div className="relative flex-1 md:w-[450px]">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Cari data..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-9 pr-8"
+                    />
+                    {searchQuery && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-transparent"
+                        onClick={() => setSearchQuery("")}
+                      >
+                        <X className="h-3 w-3 text-muted-foreground" />
+                      </Button>
+                    )}
+                  </div>
+
+                  <Select value={filterYear} onValueChange={setFilterYear}>
+                    <SelectTrigger className="w-[130px] md:w-[150px]">
+                      <SelectValue placeholder="Pilih Tahun" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Semua Tahun</SelectItem>
+                      {Array.from(
+                        new Set<number>(
+                          status.data.result
+                            .map((item: any) => {
+                              const t = item.NotaNadine?.TglNd2 || item.NotaNadine?.TglNd || "";
+                              return t ? new Date(t).getFullYear() : NaN;
+                            })
+                            .filter((year: number) => !isNaN(year))
+                        )
+                      )
+                        .sort((a, b) => b - a)
+                        .map((year: number) => (
+                          <SelectItem key={year} value={String(year)}>
+                            Tahun {year}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
             </div>
-          </div>
-        )}
-
-        <Card className="transition-all duration-300 shadow-sm border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold flex items-center justify-between">
-              <span>Daftar Surat {isMasuk ? "Masuk" : "Keluar"}</span>
-              {showResult && status && !error && (
-                <span className="text-xs font-normal text-muted-foreground">
-                  {filteredData.length > 0
-                    ? `${filteredData.length} data ditemukan`
-                    : `${status.data.result.length} data ditemukan`}
-                </span>
-              )}
-            </CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
