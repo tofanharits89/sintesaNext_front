@@ -28,6 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Loader2, X } from "lucide-react";
+import { apiClient } from "@/lib/api/httpClient";
 
 interface NadineItemAny {
   ID?: string;
@@ -100,29 +101,16 @@ export default function TrackNadineMasuk({
     return () => clearInterval(interval);
   }, []);
 
-  const NADINE_BASE = (process.env.NEXT_PUBLIC_NADINE as string) || "";
-  const NADINE_KONSEP = (process.env.NEXT_PUBLIC_NADINE_KONSEP as string) || "";
-  const NADINE_UPDATE_TOKEN =
-    (process.env.NEXT_PUBLIC_NADINE_UPDATE_TOKEN as string) || "";
 
   const getUpdate = async () => {
     try {
-      const response = await fetch(NADINE_UPDATE_TOKEN, {
-        method: "GET",
-        credentials: "include",
-        mode: "cors",
-        headers: {
-          Accept: "application/json",
-        },
-      });
-      if (response.status === 401) {
-        setDataupdate(null);
-        return;
-      }
-      const dataup = await response.json();
+      const dataup = await apiClient.get("/track-nadine/update-token");
       setDataupdate(dataup);
     } catch (err) {
-      // Silent fail
+      if ((err as any)?.response?.status === 401) {
+        setDataupdate(null);
+      }
+      // Silent fail for others
     }
   };
 
@@ -137,65 +125,39 @@ export default function TrackNadineMasuk({
     setShowResult(false);
 
     try {
-      // Guard: ensure the API base URLs are configured. If not, show a clear error
-      if (isMasuk && !NADINE_BASE) {
-        setError(
-          "NADINE API belum dikonfigurasi. Pastikan env NEXT_PUBLIC_NADINE diset ke alamat backend (mis. http://localhost:88/api/v1/track-nadine/disposisi?limit=...&offset=0&search=)"
-        );
-        setShowResult(false);
-        setLoading(false);
-        return;
-      }
-      if (!isMasuk && !NADINE_KONSEP) {
-        setError(
-          "NADINE KONSEP API belum dikonfigurasi. Pastikan env NEXT_PUBLIC_NADINE_KONSEP diset ke alamat backend (mis. http://localhost:88/api/v1/track-nadine/keluar?limit=...&offset=0&general=)"
-        );
-        setShowResult(false);
-        setLoading(false);
-        return;
-      }
       const idToUse = overrideId ?? documentId;
-      const encodedId = encodeURIComponent(String(idToUse));
-      const url = isMasuk
-        ? `${NADINE_BASE}${encodedId}`
-        : `${NADINE_KONSEP}${encodedId}`;
-      // Debug log so developers can inspect actual URL being requested
-      // eslint-disable-next-line no-console
-      console.debug("TrackNadine - fetching:", url);
-      const response = await fetch(url, {
-        method: "GET",
-        credentials: "include",
-        mode: "cors",
-        headers: {
-          Accept: "application/json",
-        },
-      });
-      const data = await response.json();
+      const path = isMasuk ? "/track-nadine/disposisi" : "/track-nadine/keluar";
+      const params = isMasuk
+        ? { limit: 100, offset: 0, search: idToUse }
+        : { limit: 100, offset: 0, general: idToUse };
 
-      if (response.ok) {
-        setSearchQuery("");
-        setStatus(data);
-        setFilteredData(data.data.result);
-        setToken(data.data.token);
-        setShowResult(true);
-      } else {
-        if (response.status === 401) {
-          setError(
-            "Unauthorized — silakan login terlebih dahulu untuk mengakses fitur ini"
-          );
-        } else {
-          setError(data.message || "Terjadi kesalahan");
-        }
-        setShowResult(false);
-      }
+      // Debug log so developers can inspect actual request
+      // eslint-disable-next-line no-console
+      console.debug("TrackNadine - fetching:", path, params);
+
+      const data = await apiClient.get(path, { params });
+
+      setSearchQuery("");
+      setStatus(data);
+      setFilteredData(data.data.result);
+      setToken(data.data.token);
+      setShowResult(true);
       getUpdate();
-    } catch (err) {
-      // If parsing JSON fails or fetch failed, provide helpful message
+    } catch (err: any) {
       // eslint-disable-next-line no-console
       console.error("TrackNadine fetch error", err);
-      setError(
-        "Gagal menghubungi server — periksa konfigurasi NEXT_PUBLIC_NADINE/NEXT_PUBLIC_NADINE_KONSEP dan jalankan backend"
-      );
+
+      if (err?.response?.status === 401) {
+        setError(
+          "Unauthorized — silakan login terlebih dahulu untuk mengakses fitur ini"
+        );
+      } else {
+        setError(
+          err?.response?.data?.message ||
+            err?.message ||
+            "Gagal menghubungi server — periksa koneksi dan jalankan backend"
+        );
+      }
       setShowResult(false);
     } finally {
       setLoading(false);

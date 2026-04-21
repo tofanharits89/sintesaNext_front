@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Mail, User } from "lucide-react";
+import { apiClient } from "@/lib/api/httpClient";
 // import { io } from "socket.io-client"; // optional: keep commented until needed
 
 interface DetailProps {
@@ -107,37 +108,14 @@ export default function Detail({
   }, []);
   */
 
-  const NADINE_DETAIL = (process.env.NEXT_PUBLIC_NADINE_DETAIL as string) || "";
 
   const getData = async () => {
     if (!selectedDetail) return;
     setLoading(true);
     try {
-      if (!NADINE_DETAIL) {
-        console.error(
-          "NADINE_DETAIL env not configured. Please set NEXT_PUBLIC_NADINE_DETAIL to the backend detail endpoint."
-        );
-        setData([]);
-        setLoading(false);
-        return;
-      }
-      const url = `${NADINE_DETAIL}/${selectedDetail}/${token}`;
-      const response = await fetch(url, {
-        method: "GET",
-        credentials: "include",
-        mode: "cors",
-        headers: { Accept: "application/json" },
-      });
-      if (response.status === 401) {
-        console.warn(
-          "Unauthorized request to NADINE detail endpoint; user should login or refresh session."
-        );
-        setMessage("Unauthorized — silakan login untuk melihat detail");
-        setData([]);
-        setLoading(false);
-        return;
-      }
-      const result = await response.json();
+      const result = await apiClient.get(
+        `/track-nadine/disposisi/detail/${selectedDetail}/${token}`
+      );
 
       if (
         result?.success &&
@@ -148,8 +126,11 @@ export default function Detail({
       } else {
         setData([]);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error fetching detail data:", err);
+      if (err?.response?.status === 401) {
+        setMessage("Unauthorized — silakan login untuk melihat detail");
+      }
       setData([]);
     } finally {
       setLoading(false);
