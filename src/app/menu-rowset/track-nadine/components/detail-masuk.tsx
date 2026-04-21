@@ -30,7 +30,6 @@ interface DetailProps {
   selectedDetail?: string | null;
   token?: string | null;
   id?: string | null;
-  bgcolor?: string;
 }
 
 interface UnitPenerima {
@@ -73,7 +72,6 @@ export default function Detail({
   selectedDetail,
   token,
   id,
-  bgcolor,
 }: DetailProps) {
   const [data, setData] = useState<Dispo[] | null | []>(null);
   const [loading, setLoading] = useState(false);
@@ -189,10 +187,7 @@ export default function Detail({
             </DialogTitle>
           </DialogHeader>
 
-          <div
-            className="space-y-4 p-4 rounded-lg"
-            style={{ background: bgcolor || "white" }}
-          >
+          <div className="space-y-4 p-4 rounded-lg bg-background">
             {message && (
               <Alert
                 variant="destructive"

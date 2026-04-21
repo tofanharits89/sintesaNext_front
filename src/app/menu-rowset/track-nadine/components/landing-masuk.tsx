@@ -19,16 +19,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, ArrowRightSquare } from "lucide-react";
 import { apiClient } from "@/lib/api/httpClient";
+import { DataTable } from "@/components/ui/data-table";
+import { ColumnDef } from "@tanstack/react-table";
+import { useMemo } from "react";
 
 interface NadineItemAny {
   ID?: string;
@@ -71,36 +66,6 @@ export default function TrackNadineMasuk({
   const [showModal, setShowModal] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [dataupdate, setDataupdate] = useState<any>(null);
-
-  const gradients = [
-    "linear-gradient(135deg, rgba(199, 249, 204, 0.8), rgba(189, 224, 254, 0.8))",
-    "linear-gradient(135deg, rgba(233, 216, 253, 0.8), rgba(255, 250, 205, 0.8))",
-    "linear-gradient(135deg, rgba(253, 221, 210, 0.8), rgba(253, 226, 228, 0.8))",
-    "linear-gradient(135deg, rgba(189, 245, 255, 0.8), rgba(255, 253, 208, 0.8))",
-    "linear-gradient(135deg, rgba(255, 223, 234, 0.8), rgba(255, 204, 203, 0.8))",
-    "linear-gradient(135deg, rgba(208, 236, 236, 0.8), rgba(230, 224, 245, 0.8))",
-    "linear-gradient(135deg, rgba(255, 245, 238, 0.8), rgba(255, 253, 248, 0.8))",
-    "linear-gradient(135deg, rgba(240, 240, 255, 0.8), rgba(220, 235, 250, 0.8))",
-    "linear-gradient(135deg, rgba(255, 235, 215, 0.8), rgba(255, 250, 240, 0.8))",
-    "linear-gradient(135deg, rgba(240, 248, 255, 0.8), rgba(230, 230, 250, 0.8))",
-    "linear-gradient(135deg, rgba(255, 248, 220, 0.8), rgba(250, 250, 210, 0.8))",
-    "linear-gradient(135deg, rgba(255, 239, 213, 0.8), rgba(250, 230, 230, 0.8))",
-    "linear-gradient(135deg, rgba(244, 252, 250, 0.8), rgba(240, 255, 240, 0.8))",
-    "linear-gradient(135deg, rgba(255, 250, 244, 0.8), rgba(245, 222, 179, 0.8))",
-  ];
-
-  const [bgColor, setBgColor] = useState<string>(gradients[0] || "");
-
-  useEffect(() => {
-    let index = 0;
-    const interval = setInterval(() => {
-      index = (index + 1) % gradients.length;
-      const nextColor = gradients[index];
-      if (nextColor) setBgColor(nextColor);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
 
   const getUpdate = async () => {
     try {
@@ -230,13 +195,100 @@ export default function TrackNadineMasuk({
     setSelectedDetail(null);
   };
 
+  const columns = useMemo<ColumnDef<NadineItemAny>[]>(() => {
+    const cols: ColumnDef<NadineItemAny>[] = [
+      {
+        id: "no",
+        header: () => <div className="text-center font-medium">No</div>,
+        cell: ({ row }) => <div className="text-center">{row.index + 1}</div>,
+      },
+      {
+        accessorKey: "NotaNadine.Pengirim",
+        header: () => <div className="text-center font-medium">Pengirim</div>,
+        cell: ({ row }) => row.original.NotaNadine?.Pengirim || "Tidak ada pengirim",
+      },
+      {
+        accessorKey: "NotaNadine.Perihal",
+        header: () => <div className="text-center font-medium">Perihal</div>,
+        cell: ({ row }) => {
+          const perihal = row.original.NotaNadine?.Perihal || "";
+          const isRahasia = perihal.includes("Rahasia");
+          return (
+            <div className={`min-w-[300px] max-w-[500px] whitespace-normal break-words ${isRahasia ? "blur-sm select-none" : ""}`}>
+              {perihal}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "NotaNadine.NoNd",
+        header: () => <div className="text-center font-medium">No ND</div>,
+        cell: ({ row }) => row.original.NotaNadine?.NoNd,
+      },
+    ];
+
+    if (isMasuk) {
+      cols.push(
+        {
+          accessorKey: "NotaNadine.TglNd",
+          header: () => <div className="text-center font-medium">Tgl ND</div>,
+          cell: ({ row }) => row.original.NotaNadine?.TglNd ? moment(row.original.NotaNadine.TglNd).format("DD-MM-YYYY HH:mm:ss") : "-",
+        },
+        {
+          id: "tujuanDispo",
+          header: () => <div className="text-center font-medium">Tujuan Disposisi</div>,
+          cell: ({ row }) => (
+            <ul className="list-disc pl-5 space-y-1">
+              {(row.original.tujuanDispo || []).map((tujuan, i) => (
+                <li key={i} className="text-sm">
+                  {tujuan}
+                </li>
+              ))}
+            </ul>
+          ),
+        },
+        {
+          accessorKey: "updatedAt",
+          header: () => <div className="text-center font-medium">Tgl Kirim ND</div>,
+          cell: ({ row }) => row.original.updatedAt ? moment(row.original.updatedAt).format("DD-MM-YYYY HH:mm:ss") : "-",
+        }
+      );
+    } else {
+      cols.push({
+        accessorKey: "NotaNadine.TanggalKirim",
+        header: () => <div className="text-center font-medium">Tgl Kirim</div>,
+        cell: ({ row }) => row.original.NotaNadine?.TanggalKirim || "-",
+      });
+    }
+
+    cols.push({
+      id: "actions",
+      header: () => <div className="text-center font-medium">Detail</div>,
+      cell: ({ row }) => (
+        <div className="flex justify-center">
+          {row.original.ID ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+              onClick={() => handleDetailClick(row.original.ID as string)}
+            >
+              <ArrowRightSquare className="h-5 w-5" />
+            </Button>
+          ) : (
+            <span className="text-muted-foreground text-xs">null</span>
+          )}
+        </div>
+      ),
+    });
+
+    return cols;
+  }, [isMasuk]);
+
   return (
     <div className="space-y-6">
       {/* Search Card */}
-      <Card
-        style={{ background: bgColor }}
-        className="transition-all duration-300"
-      >
+      <Card className="transition-all duration-300">
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex flex-col gap-2">
@@ -287,7 +339,7 @@ export default function TrackNadineMasuk({
           </div>
         </CardHeader>
         <CardContent>
-          <CardTitle className="text-center mb-6 text-secondary-foreground">
+            <CardTitle className="text-center mb-6">
             Track Disposisi Nadine - Surat {isMasuk ? "Masuk" : "Keluar"}
           </CardTitle>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -391,103 +443,16 @@ export default function TrackNadineMasuk({
           </div>
 
           {/* Results Table */}
-          <Card
-            style={{ background: bgColor }}
-            className="transition-all duration-300"
-          >
-            <CardContent className="p-0">
-              <div className="max-h-[600px] overflow-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[60px]">No</TableHead>
-                      <TableHead>Pengirim</TableHead>
-                      <TableHead>Perihal</TableHead>
-                      <TableHead>No ND</TableHead>
-                      {isMasuk ? (
-                        <>
-                          <TableHead>Tgl ND</TableHead>
-                          <TableHead>Tujuan Disposisi</TableHead>
-                          <TableHead>Tgl Kirim ND</TableHead>
-                        </>
-                      ) : (
-                        <TableHead>Tgl Kirim</TableHead>
-                      )}
-                      <TableHead className="w-[80px]">Detail</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(filteredData.length > 0
-                      ? filteredData
-                      : status.data.result
-                    ).map((item: NadineItemAny, index: number) => {
-                      const nota = item.NotaNadine || ({} as any);
-                      const isRahasia = (nota.Perihal || "").includes(
-                        "Rahasia"
-                      );
-
-                      return (
-                        <TableRow
-                          key={index}
-                          className={
-                            isRahasia ? "blur-sm pointer-events-none" : ""
-                          }
-                        >
-                          <TableCell>{index + 1}</TableCell>
-                          <TableCell>
-                            {nota.Pengirim || "Tidak ada pengirim"}
-                          </TableCell>
-                          <TableCell>{nota.Perihal}</TableCell>
-                          <TableCell>{nota.NoNd}</TableCell>
-                          {isMasuk ? (
-                            <>
-                              <TableCell>
-                                {moment(nota.TglNd).format(
-                                  "DD-MM-YYYY HH:mm:ss"
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                <ul className="list-disc pl-5 space-y-1">
-                                  {(item.tujuanDispo || []).map((tujuan, i) => (
-                                    <li key={i} className="text-sm">
-                                      {tujuan}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </TableCell>
-                              <TableCell>
-                                {moment(item.updatedAt).format(
-                                  "DD-MM-YYYY HH:mm:ss"
-                                )}
-                              </TableCell>
-                            </>
-                          ) : (
-                            <TableCell>{nota.TanggalKirim}</TableCell>
-                          )}
-                          <TableCell>
-                            {item.ID ? (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                                onClick={() =>
-                                  handleDetailClick(item.ID as string)
-                                }
-                              >
-                                <i className="bi bi-arrow-right-square-fill text-xl" />
-                              </Button>
-                            ) : (
-                              <span className="text-muted-foreground text-xs">
-                                null
-                              </span>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+          <Card className="transition-all duration-300 shadow-sm border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-semibold">Daftar Surat {isMasuk ? "Masuk" : "Keluar"}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DataTable 
+                columns={columns} 
+                data={filteredData.length > 0 ? filteredData : (status?.data?.result || [])} 
+                initialPageSize={10} 
+              />
             </CardContent>
           </Card>
         </div>
@@ -502,7 +467,6 @@ export default function TrackNadineMasuk({
           selectedDetail={selectedDetail}
           token={token || ""}
           id={status && selectedDetail}
-          bgcolor={bgColor}
         />
       ) : (
         <DetailKeluar
@@ -511,7 +475,6 @@ export default function TrackNadineMasuk({
           selectedDetail={selectedDetail}
           token={token || ""}
           id={status && selectedDetail ? selectedDetail : ""}
-          bgcolor={bgColor}
         />
       )}
     </div>

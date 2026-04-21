@@ -29,7 +29,6 @@ interface DetailKeluarProps {
   selectedDetail: string | null;
   token: string;
   id: string;
-  bgcolor: string;
 }
 
 interface DataNd {
@@ -65,7 +64,6 @@ export default function DetailKeluar({
   selectedDetail,
   token,
   id,
-  bgcolor,
 }: DetailKeluarProps) {
   const [data, setData] = useState<DetailData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -134,10 +132,7 @@ export default function DetailKeluar({
           </DialogTitle>
         </DialogHeader>
 
-        <div
-          className="space-y-6 p-4 rounded-lg"
-          style={{ background: bgcolor || "white" }}
-        >
+        <div className="space-y-6 p-4 rounded-lg bg-background">
           {loading ? (
             <>
               {message && (
