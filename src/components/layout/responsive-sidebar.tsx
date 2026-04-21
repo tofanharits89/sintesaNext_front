@@ -284,6 +284,22 @@ export function ResponsiveSidebar({
           };
         }
 
+        // Filter IKI PA children:
+        if (item.label === "IKI PA") {
+          const isKontraktualAllowed = isAdmin || user.role === "ditpa";
+          const isApbdAllowed = isAdmin || user.role === "kanwil_djpb";
+
+          return {
+            ...item,
+            children: (item.children || []).filter((child) => {
+              if (child.label === "IKI Kontraktual" && !isKontraktualAllowed)
+                return false;
+              if (child.label === "IKI APBD" && !isApbdAllowed) return false;
+              return true;
+            }),
+          };
+        }
+
         return item;
       })
       .filter(Boolean) as MenuItem[];
