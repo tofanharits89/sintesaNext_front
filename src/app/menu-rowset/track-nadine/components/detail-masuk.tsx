@@ -19,8 +19,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Mail, User } from "lucide-react";
+import { Loader2, Mail, User, Building2, IdCard, Hash, Shield, Users, X } from "lucide-react";
 import { apiClient } from "@/lib/api/httpClient";
 // import { io } from "socket.io-client"; // optional: keep commented until needed
 
@@ -139,21 +140,15 @@ export default function Detail({
     if (!token || !notaId) return;
     setLoadingKonseptor(true);
     try {
-      const response = await fetch(
-        `https://service.kemenkeu.go.id/nadine-web/gateway/grid/konsepnaskah/DetailKonsepByNdId/${notaId}?tipedata=Konsep`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const result = await apiClient.get(
+        `/track-nadine/konsep/detail/${notaId}/${token}`
       );
-      const result = await response.json();
       setKonseptorData(
-        result?.Data ? { Data: result.Data, Konseptor: result.Konseptor } : null
+        result?.data?.Data ? { Data: result.data.Data, Konseptor: result.data.Konseptor } : null
       );
 
       const uniqueMap = new Map<string, string>();
-      result?.Data?.Riwayat?.forEach((item: any) => {
+      result?.data?.Data?.Riwayat?.forEach((item: any) => {
         if (item?.Unit) uniqueMap.set(item.Unit, item.Unit);
       });
       const uniqueFilteredRiwayat = [...uniqueMap.values()];
@@ -187,7 +182,7 @@ export default function Detail({
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 p-4 rounded-lg bg-background">
+          <div className="space-y-4 p-2">
             {message && (
               <Alert
                 variant="destructive"
@@ -208,116 +203,136 @@ export default function Detail({
                 )}
               </Alert>
             )}
-
             {loading ? (
               <div className="flex justify-center items-center h-[300px]">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <Loader2 className="h-10 w-10 animate-spin text-primary/50" />
               </div>
-            ) : data && Array.isArray(data) && data.length > 0 ? (
-              <div className="space-y-4">
-                {data.map((dispo: Dispo, index: number) => (
-                  <Card
-                    key={index}
-                    className="shadow-sm border-0 bg-white/80 backdrop-blur-sm"
-                  >
-                    <CardHeader className="bg-primary/10 py-3 px-4 rounded-t-lg">
-                      <h5 className="font-semibold text-primary m-0 text-lg">
+            ) : data && Array.isArray(data) && data.length > 0 ? (<div className="space-y-10">
+              {data.map((dispo: Dispo, index: number) => (
+                <div
+                  key={index}
+                  className="overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300"
+                >
+                  <div className="flex items-center justify-between mb-6 pb-2 border-b">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                        <Building2 className="h-5 w-5" />
+                      </div>
+                      <h5 className="font-bold text-foreground m-0 text-xl tracking-tight">
                         {dispo?.dispoEs4 &&
-                        dispo.dispoEs4.length > 0 &&
-                        dispo.dispoEs4[0]?.UnitPenerima
+                          dispo.dispoEs4.length > 0 &&
+                          dispo.dispoEs4[0]?.UnitPenerima
                           ? dispo.dispoEs4[0].UnitPenerima?.NamaEselon3
                           : "Data Eselon 3 Tidak Tersedia"}
                       </h5>
-                    </CardHeader>
-                    <CardContent className="p-4">
-                      <div className="bg-muted/50 p-2 rounded text-center mb-3 font-medium text-sm uppercase tracking-wide">
-                        Eselon 4
+                    </div>
+                    <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider">
+                      Eselon 3
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-8">
+                    {/* ESELON 4 SECTION */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                          Eselon 4
+                        </span>
                       </div>
-                      <ul className="space-y-3 mb-6">
+                      <div className={`grid grid-cols-1 ${dispo.dispoEs4.length > 1 ? "md:grid-cols-2" : ""} gap-4`}>
                         {dispo.dispoEs4.map((es4, es4Index) => (
-                          <li
-                            key={es4Index}
-                            className="text-sm border-b border-border/50 pb-3 last:border-0 last:pb-0"
-                          >
-                            <div className="grid grid-cols-[60px_1fr] gap-1">
-                              <span className="font-semibold text-gray-900">
-                                Unit:
-                              </span>
-                              <span className="text-gray-900">
-                                {es4.UnitPenerima?.NamaOrganisasi || "-"}
-                              </span>
-
-                              <span className="font-semibold text-gray-900">
-                                Nama:
-                              </span>
-                              <span className="text-gray-900">
-                                {es4.UnitPenerima?.NamaPejabat || "-"}
-                              </span>
-
-                              <span className="font-semibold text-gray-900">
-                                NIP:
-                              </span>
-                              <span className="text-gray-900">
-                                {es4.UnitPenerima?.NipPejabat || "-"}
-                              </span>
+                          <Card key={es4Index} className="bg-muted overflow-hidden p-0 gap-0 shadow-none">
+                            <div className="px-3 py-2 border-b border-border/50 bg-muted/30">
+                              <div className="flex items-center gap-2">
+                                <Building2 className="h-3.5 w-3.5 text-primary/70" />
+                                <p className="text-sm font-bold text-foreground tracking-tight">
+                                  {es4.UnitPenerima?.NamaOrganisasi || "-"}
+                                </p>
+                              </div>
                             </div>
-                          </li>
+                            <div className="p-3">
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="flex items-start gap-2">
+                                  <User className="h-3.5 w-3.5 text-primary/70 mt-0.5 shrink-0" />
+                                  <div className="min-w-0">
+                                    <p className="text-[10px] text-muted-foreground uppercase font-bold">Nama</p>
+                                    <p className="text-sm font-medium text-foreground leading-tight truncate">{es4.UnitPenerima?.NamaPejabat || "-"}</p>
+                                  </div>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                  <IdCard className="h-3.5 w-3.5 text-primary/70 mt-0.5 shrink-0" />
+                                  <div className="min-w-0">
+                                    <p className="text-[10px] text-muted-foreground uppercase font-bold">NIP</p>
+                                    <p className="text-sm font-mono font-medium text-foreground leading-tight truncate">{es4.UnitPenerima?.NipPejabat || "-"}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </Card>
                         ))}
-                      </ul>
-
-                      <div className="bg-muted/50 p-2 rounded text-center mb-3 font-medium text-sm uppercase tracking-wide">
-                        Pelaksana
                       </div>
-                      <ul className="space-y-3">
+                    </div>
+
+                    {/* PELAKSANA SECTION */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                          Pelaksana
+                        </span>
+                      </div>
+                      <div className={`grid grid-cols-1 ${dispo.dispoStaf.length === 2 ? "sm:grid-cols-2" :
+                        dispo.dispoStaf.length >= 3 ? "sm:grid-cols-2 lg:grid-cols-3" : ""
+                        } gap-3`}>
                         {dispo.dispoStaf.map((staf, stafIndex) => (
-                          <li
-                            key={stafIndex}
-                            className="text-sm border-b border-border/50 pb-3 last:border-0 last:pb-0"
-                          >
-                            <div className="grid grid-cols-[60px_1fr] gap-1">
-                              <span className="font-semibold text-gray-900">
-                                Nama:
-                              </span>
-                              <span className="text-gray-900">
-                                {staf.UserPenerima?.Nama}
-                              </span>
-
-                              <span className="font-semibold text-gray-900">
-                                NIP:
-                              </span>
-                              <span className="text-gray-900">
-                                {staf.UserPenerima?.Nip18}
-                              </span>
-
-                              <span className="font-semibold text-gray-900">
-                                Jabatan:
-                              </span>
-                              <span className="text-gray-900">
-                                {staf.UserPenerima?.NamaJabatan}
-                              </span>
+                          <Card key={stafIndex} className="bg-muted overflow-hidden p-0 gap-0 shadow-none">
+                            <div className="px-3 py-2 border-b border-border/50 bg-muted/30">
+                              <p className="text-sm font-bold text-foreground tracking-tight truncate">
+                                {staf.UserPenerima?.NamaJabatan || "Pelaksana"}
+                              </p>
                             </div>
-                          </li>
+                            <div className="p-2.5 flex items-center gap-3">
+                              <div className="h-8 w-8 bg-primary/5 rounded-full flex items-center justify-center text-primary shrink-0">
+                                <User className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-foreground truncate leading-tight">{staf.UserPenerima?.Nama}</p>
+                                <p className="text-xs text-muted-foreground truncate font-mono">{staf.UserPenerima?.Nip18}</p>
+                              </div>
+                            </div>
+                          </Card>
                         ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             ) : (
-              <div className="text-center text-destructive font-bold py-10 bg-red-50/50 rounded-lg">
-                Data nota detail Nadine gagal didapatkan...
+              <div className="text-center py-16 bg-muted/30 rounded-2xl border-2 border-dashed border-border/50">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="h-12 w-12 bg-muted rounded-full flex items-center justify-center text-muted-foreground">
+                    <Mail className="h-6 w-6" />
+                  </div>
+                  <p className="text-muted-foreground font-medium italic">Data nota detail Nadine gagal didapatkan...</p>
+                </div>
               </div>
             )}
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-3">
             <Button
               onClick={handleShowKonseptor}
-              className="bg-blue-600 hover:bg-blue-700"
+              variant="default"
+              className="flex items-center gap-2"
             >
+              <Users className="h-4 w-4" />
               Lihat Konseptor
             </Button>
-            <Button variant="outline" onClick={handleCloseModal}>
+            <Button variant="outline" onClick={handleCloseModal} className="flex items-center gap-2">
+              <X className="h-4 w-4" />
               Tutup
             </Button>
           </DialogFooter>
@@ -362,10 +377,10 @@ export default function Detail({
                       <TableCell className="align-top text-gray-900">
                         {namaKonseptorDanKasi && namaKonseptorDanKasi.length > 0
                           ? namaKonseptorDanKasi.map((item, idx) => (
-                              <div key={idx} className="mb-1">
-                                {item}
-                              </div>
-                            ))
+                            <div key={idx} className="mb-1">
+                              {item}
+                            </div>
+                          ))
                           : "Tidak tersedia"}
                       </TableCell>
                       <TableCell className="align-top text-gray-900">
