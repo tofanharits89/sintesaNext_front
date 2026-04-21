@@ -39,34 +39,52 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { useLokusProvinsi } from "@/features/mbg/hooks/useLokusProvinsi";
-import { useLokusData } from "@/features/mbg/hooks/useLokusData";
-import { getLokusExport } from "@/features/mbg/api/services";
-import type { LokusRow } from "@/features/mbg/api/services";
+import {
+  usePdrbKategori,
+  usePdrbProvinsi,
+  usePdrbData,
+} from "@/features/mbg/hooks/usePdrb";
+import { getPdrbExport } from "@/features/mbg/api/services";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 type Option = { value: string; label: string };
 
-const BULAN_LIST: { key: keyof LokusRow; label: string }[] = [
-  { key: "Januari", label: "Jan" },
-  { key: "Februari", label: "Feb" },
-  { key: "Maret", label: "Mar" },
-  { key: "April", label: "Apr" },
-  { key: "Mei", label: "Mei" },
-  { key: "Juni", label: "Jun" },
-  { key: "Juli", label: "Jul" },
-  { key: "Agustus", label: "Agt" },
-  { key: "September", label: "Sep" },
-  { key: "Oktober", label: "Okt" },
-  { key: "November", label: "Nov" },
-  { key: "Desember", label: "Des" },
+const KATEGORI_LABEL: Record<string, string> = {
+  "A Pertanian, Kehutanan dan Perikanan": "Pertanian",
+  "B Pertambangan dan Penggalian": "Pertambangan",
+  "C Industri Pengolahan": "Industri",
+  "D Pengadaan Listrik dan Gas": "Pengadaan Listrik & Gas",
+  "E Pengadaan Air, Pengelolaan Sampah, Limbah dan Daur Ulang":
+    "Pengelolaan Air & Sampah",
+  "F Konstruksi": "Konstruksi",
+  "G Perdagangan Besar dan Eceran, Reparasi Mobil dan Sepeda Motor":
+    "Perdagangan Besar & Ritel",
+  "H Transportasi dan Pergudangan": "Transportasi",
+  "I Penyediaan Akomodasi dan Makan Minum": "Akomodasi & Mamin",
+  "J Informasi dan Komunikasi": "Informasi & Komunikasi",
+  "K Jasa Keuangan dan Asuransi": "Jasa Keuangan",
+  "L Real Estate": "Real Estate",
+  "M,N Jasa Perusahaan": "Jasa Perusahaan",
+  "O Administrasi Pemerintahan, Pertahanan dan Jaminan Sosial Wajib":
+    "Administrasi Pemerintahan",
+  "P Jasa Pendidikan": "Jasa Pendidikan",
+  "Q Jasa Kesehatan dan Kegiatan Sosial": "Jasa Kesehatan",
+  "R,S,T,U Jasa Lainnya": "Jasa Lainnya",
+  "Produk Domestik Regional Bruto": "Total PDRB",
+};
+
+const TW_LIST: { key: "tw1" | "tw2" | "tw3" | "tw4"; label: string }[] = [
+  { key: "tw1", label: "Q1" },
+  { key: "tw2", label: "Q2" },
+  { key: "tw3", label: "Q3" },
+  { key: "tw4", label: "Q4" },
 ];
 
 const TAHUN_OPTIONS: Option[] = [
+  { value: "2024", label: "2024" },
   { value: "2025", label: "2025" },
-  { value: "2026", label: "2026" },
 ];
 
 const COLORS = [
@@ -81,7 +99,7 @@ const COLORS = [
 ];
 
 // ---------------------------------------------------------------------------
-// Multi-select popover (Popover + Command, no react-select)
+// Multi-select provinsi (Popover + Command)
 // ---------------------------------------------------------------------------
 function MultiSelectProv({
   options,
@@ -231,31 +249,35 @@ const CustomTooltip = ({
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
-export default function SpasialLineChart() {
+export default function PdrbChart() {
   const { user } = useAuth();
   const isKanwil = user?.role === "kanwil_djpb";
   const kdkanwil = isKanwil ? (user?.kdkanwil ?? undefined) : undefined;
 
   const [selectedProv, setSelectedProv] = useState<Option[]>([]);
-  const [tahun, setTahun] = useState<Option>({ value: "2025", label: "2025" });
+  const [kategori, setKategori] = useState(
+    "A Pertanian, Kehutanan dan Perikanan",
+  );
+  const [tahun, setTahun] = useState("2025");
   const [isExporting, setIsExporting] = useState(false);
   const [autoSelected, setAutoSelected] = useState(false);
 
-  // Data fetching
+  const { data: kategoriData, isLoading: loadingKat } = usePdrbKategori(tahun);
   const {
     data: provinsiData,
     isLoading: loadingProv,
     isError: isProvError,
     error: provError,
-  } = useLokusProvinsi(kdkanwil);
+  } = usePdrbProvinsi(tahun, kdkanwil);
   const {
-    data: lokusData,
+    data: pdrbData,
     isLoading: loadingData,
     isError: isDataError,
     error: dataError,
-  } = useLokusData(
+  } = usePdrbData(
     selectedProv.map((p) => p.value),
-    tahun.value,
+    kategori,
+    tahun,
     kdkanwil,
   );
 
@@ -264,36 +286,38 @@ export default function SpasialLineChart() {
     label: p,
   }));
 
-  // Auto-select default province once data loads
+  const kategoriOptions: Option[] = (kategoriData?.kategori ?? []).map((k) => ({
+    value: k,
+    label: KATEGORI_LABEL[k] ?? k,
+  }));
+
+  // Auto-select default province
   useEffect(() => {
     if (autoSelected || loadingProv || provOptions.length === 0) return;
     if (isKanwil) {
       setSelectedProv(provOptions);
     } else {
-      const dki = provOptions.find((p) => p.value === "DKI JAKARTA");
+      const dki = provOptions.find((p) => p.value === "DKI Jakarta");
       setSelectedProv(dki ? [dki] : provOptions[0] ? [provOptions[0]] : []);
     }
     setAutoSelected(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [provOptions.length, loadingProv]);
 
-  // Reset when kdkanwil changes
   useEffect(() => {
     setAutoSelected(false);
     setSelectedProv([]);
   }, [kdkanwil]);
 
-  // Build chart data
+  // Build chart data (X: Q1–Q4, one line per province)
+  const rows = pdrbData?.rows ?? [];
   const provNames = selectedProv.map((p) => p.value);
-  const rows = lokusData?.rows ?? [];
 
-  const chartData = BULAN_LIST.map(({ key, label }) => {
+  const chartData = TW_LIST.map(({ key, label }) => {
     const row: Record<string, string | number> = { label };
     provNames.forEach((pv) => {
-      const total = rows
-        .filter((r) => r.prov === pv)
-        .reduce((sum, r) => sum + (Number(r[key]) || 0), 0);
-      row[pv] = total;
+      const found = rows.find((r) => r.provinsi === pv);
+      if (found) row[pv] = Number(found[key]) || 0;
     });
     return row;
   });
@@ -305,39 +329,27 @@ export default function SpasialLineChart() {
     if (isExporting) return;
     setIsExporting(true);
     try {
-      const { rows: allRows } = await getLokusExport();
+      const { rows: allRows } = await getPdrbExport();
       if (!allRows.length) return;
-      const exportData = allRows.map((row) => ({
-        Tahun: row.thang ?? "",
-        Provinsi: row.prov ?? "",
-        "Kode Kab/Kota": row.kdkabkota ?? "",
-        "Kab/Kota": row.nmkabkota ?? "",
-        Januari: row.Januari ?? 0,
-        Februari: row.Februari ?? 0,
-        Maret: row.Maret ?? 0,
-        April: row.April ?? 0,
-        Mei: row.Mei ?? 0,
-        Juni: row.Juni ?? 0,
-        Juli: row.Juli ?? 0,
-        Agustus: row.Agustus ?? 0,
-        September: row.September ?? 0,
-        Oktober: row.Oktober ?? 0,
-        November: row.November ?? 0,
-        Desember: row.Desember ?? 0,
+      const exportData = allRows.map((r) => ({
+        Provinsi: r.provinsi ?? "",
+        Kategori: r.kategori ?? "",
+        TW1: r.tw1 ?? 0,
+        TW2: r.tw2 ?? 0,
+        TW3: r.tw3 ?? 0,
+        TW4: r.tw4 ?? 0,
+        Tahun: r.tahun ?? "",
       }));
       const ws = XLSX.utils.json_to_sheet(exportData);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Data Detail");
-      XLSX.writeFile(
-        wb,
-        `Data_MBG_Detail_${new Date().toISOString().split("T")[0]}.xlsx`,
-      );
+      XLSX.utils.book_append_sheet(wb, ws, "Data PDRB");
+      XLSX.writeFile(wb, `PDRB_${tahun}.xlsx`);
     } catch {
       // silent fail
     } finally {
       setIsExporting(false);
     }
-  }, [isExporting]);
+  }, [isExporting, tahun]);
 
   // ---------------------------------------------------------------------------
   // Render
@@ -348,7 +360,7 @@ export default function SpasialLineChart() {
         <CardContent className="p-6 flex flex-col items-center gap-2 text-center">
           <span className="text-3xl">⚠️</span>
           <p className="text-sm font-medium text-destructive">
-            Gagal memuat data provinsi dari backend.
+            Gagal memuat data provinsi.
           </p>
           <p className="text-xs text-muted-foreground break-all max-w-sm">
             {provError?.message ?? "Unknown error"}
@@ -360,13 +372,17 @@ export default function SpasialLineChart() {
 
   return (
     <Card className="overflow-hidden">
-      {/* Filter header */}
       <CardHeader className="p-0">
         <div className="bg-muted/50 px-4 py-3 border-b border-border flex flex-wrap gap-3 items-end justify-between">
           {/* Province multi-select */}
-          <div className="flex-1 min-w-[200px]">
+          <div className="flex-1 min-w-[180px]">
             <label className="block text-xs font-medium text-foreground mb-1">
               Pilih Provinsi
+              {isKanwil && kdkanwil && (
+                <span className="text-muted-foreground font-normal ml-1">
+                  (Wilayah Anda – {kdkanwil})
+                </span>
+              )}
             </label>
             <MultiSelectProv
               options={provOptions}
@@ -381,15 +397,41 @@ export default function SpasialLineChart() {
             />
           </div>
 
-          {/* Year select */}
-          <div className="w-[110px]">
+          {/* Kategori select */}
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-xs font-medium text-foreground mb-1">
+              Pilih Kategori
+            </label>
+            <ShadSelect
+              value={kategori}
+              onValueChange={setKategori}
+              disabled={loadingKat || kategoriOptions.length === 0}
+            >
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue
+                  placeholder={loadingKat ? "Memuat..." : "Pilih kategori..."}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {kategoriOptions.map((opt) => (
+                  <SelectItem
+                    key={opt.value}
+                    value={opt.value}
+                    className="text-xs"
+                  >
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </ShadSelect>
+          </div>
+
+          {/* Tahun */}
+          <div className="w-[100px]">
             <label className="block text-xs font-medium text-foreground mb-1">
               Tahun
             </label>
-            <ShadSelect
-              value={tahun.value}
-              onValueChange={(val) => setTahun({ value: val, label: val })}
-            >
+            <ShadSelect value={tahun} onValueChange={setTahun}>
               <SelectTrigger className="h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
@@ -414,14 +456,13 @@ export default function SpasialLineChart() {
             onClick={handleDownload}
             disabled={isExporting}
             className="h-8 px-3 gap-1.5 text-emerald-700 border-emerald-300 hover:bg-emerald-50 dark:text-emerald-400 dark:border-emerald-700 dark:hover:bg-emerald-950"
-            title="Download Excel semua data"
+            title="Download Excel semua data PDRB"
           >
             <Download className="h-3.5 w-3.5" />
           </Button>
         </div>
       </CardHeader>
 
-      {/* Chart */}
       <CardContent className="p-4">
         <div className="h-[300px]">
           {isDataError ? (
@@ -444,14 +485,12 @@ export default function SpasialLineChart() {
             <div className="flex flex-col items-center justify-center h-full bg-muted/50 rounded border border-dashed border-border p-6">
               <span className="text-5xl mb-2">📊</span>
               <h4 className="text-sm font-medium text-foreground mb-1">
-                {isKanwil
-                  ? "Data Wilayah Anda"
-                  : "Pilih Provinsi untuk Memulai"}
+                {isKanwil ? "Data Wilayah Anda" : "Pilih Provinsi dan Kategori"}
               </h4>
               <p className="text-xs text-muted-foreground text-center max-w-[200px]">
                 {isKanwil
-                  ? `Data akan ditampilkan sesuai wilayah kerja Anda${kdkanwil ? ` (${kdkanwil})` : ""}`
-                  : "Gunakan dropdown untuk memilih provinsi yang ingin dianalisis"}
+                  ? `Data ditampilkan sesuai wilayah kerja Anda${kdkanwil ? ` (${kdkanwil})` : ""}`
+                  : "Gunakan dropdown untuk memilih provinsi dan kategori PDRB yang ingin dianalisis"}
               </p>
             </div>
           ) : (

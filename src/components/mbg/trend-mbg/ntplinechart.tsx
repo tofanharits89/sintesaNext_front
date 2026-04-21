@@ -39,29 +39,43 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { useLokusProvinsi } from "@/features/mbg/hooks/useLokusProvinsi";
-import { useLokusData } from "@/features/mbg/hooks/useLokusData";
-import { getLokusExport } from "@/features/mbg/api/services";
-import type { LokusRow } from "@/features/mbg/api/services";
+import {
+  useNtpKategori,
+  useNtpProvinsi,
+  useNtpData,
+} from "@/features/mbg/hooks/useNtp";
+import { getNtpExport } from "@/features/mbg/api/services";
+import type { NtpRow } from "@/features/mbg/api/services";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 type Option = { value: string; label: string };
 
-const BULAN_LIST: { key: keyof LokusRow; label: string }[] = [
-  { key: "Januari", label: "Jan" },
-  { key: "Februari", label: "Feb" },
-  { key: "Maret", label: "Mar" },
-  { key: "April", label: "Apr" },
-  { key: "Mei", label: "Mei" },
-  { key: "Juni", label: "Jun" },
-  { key: "Juli", label: "Jul" },
-  { key: "Agustus", label: "Agt" },
-  { key: "September", label: "Sep" },
-  { key: "Oktober", label: "Okt" },
-  { key: "November", label: "Nov" },
-  { key: "Desember", label: "Des" },
+const KATEGORI_LABEL: Record<string, string> = {
+  Petani: "Petani",
+  "Petani Tanaman Pangan": "Tanaman Pangan",
+  "Petani Hortikultura": "Hortikultura",
+  "Petani Tanaman Perkebunan": "Perkebunan",
+  "Petani Peternakan": "Peternakan",
+  Nelayan: "Nelayan",
+  "Pembudidayaan Ikan": "Pembudidaya Ikan",
+  "Nelayan dan Pembudidayaan Ikan": "Nelayan + Budidaya",
+};
+
+const BULAN_LIST: { key: keyof NtpRow; label: string }[] = [
+  { key: "jan", label: "Jan" },
+  { key: "feb", label: "Feb" },
+  { key: "mar", label: "Mar" },
+  { key: "apr", label: "Apr" },
+  { key: "mei", label: "Mei" },
+  { key: "jun", label: "Jun" },
+  { key: "jul", label: "Jul" },
+  { key: "aug", label: "Agu" },
+  { key: "sep", label: "Sep" },
+  { key: "okt", label: "Okt" },
+  { key: "nov", label: "Nov" },
+  { key: "des", label: "Des" },
 ];
 
 const TAHUN_OPTIONS: Option[] = [
@@ -81,7 +95,7 @@ const COLORS = [
 ];
 
 // ---------------------------------------------------------------------------
-// Multi-select popover (Popover + Command, no react-select)
+// Multi-select provinsi (Popover + Command)
 // ---------------------------------------------------------------------------
 function MultiSelectProv({
   options,
@@ -231,31 +245,34 @@ const CustomTooltip = ({
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
-export default function SpasialLineChart() {
+export default function NtpChartLine() {
   const { user } = useAuth();
   const isKanwil = user?.role === "kanwil_djpb";
   const kdkanwil = isKanwil ? (user?.kdkanwil ?? undefined) : undefined;
 
   const [selectedProv, setSelectedProv] = useState<Option[]>([]);
-  const [tahun, setTahun] = useState<Option>({ value: "2025", label: "2025" });
+  const [kategori, setKategori] = useState("Petani");
+  const [tahun, setTahun] = useState("2025");
   const [isExporting, setIsExporting] = useState(false);
   const [autoSelected, setAutoSelected] = useState(false);
 
   // Data fetching
+  const { data: kategoriData, isLoading: loadingKat } = useNtpKategori(tahun);
   const {
     data: provinsiData,
     isLoading: loadingProv,
     isError: isProvError,
     error: provError,
-  } = useLokusProvinsi(kdkanwil);
+  } = useNtpProvinsi(tahun, kdkanwil);
   const {
-    data: lokusData,
+    data: ntpData,
     isLoading: loadingData,
     isError: isDataError,
     error: dataError,
-  } = useLokusData(
+  } = useNtpData(
     selectedProv.map((p) => p.value),
-    tahun.value,
+    kategori,
+    tahun,
     kdkanwil,
   );
 
@@ -264,36 +281,46 @@ export default function SpasialLineChart() {
     label: p,
   }));
 
-  // Auto-select default province once data loads
+  const kategoriOptions: Option[] = (kategoriData?.kategori ?? []).map((k) => ({
+    value: k,
+    label: KATEGORI_LABEL[k] ?? k,
+  }));
+
+  // Auto-select default province
   useEffect(() => {
     if (autoSelected || loadingProv || provOptions.length === 0) return;
     if (isKanwil) {
       setSelectedProv(provOptions);
     } else {
-      const dki = provOptions.find((p) => p.value === "DKI JAKARTA");
-      setSelectedProv(dki ? [dki] : provOptions[0] ? [provOptions[0]] : []);
+      const jatim = provOptions.find((p) => p.value === "Jawa Timur");
+      setSelectedProv(jatim ? [jatim] : provOptions[0] ? [provOptions[0]] : []);
     }
     setAutoSelected(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [provOptions.length, loadingProv]);
 
-  // Reset when kdkanwil changes
+  // Reset on kdkanwil change
   useEffect(() => {
     setAutoSelected(false);
     setSelectedProv([]);
   }, [kdkanwil]);
 
-  // Build chart data
+  // Build chart data (one row per month, one key per province)
+  const rows = ntpData?.rows ?? [];
   const provNames = selectedProv.map((p) => p.value);
-  const rows = lokusData?.rows ?? [];
 
-  const chartData = BULAN_LIST.map(({ key, label }) => {
+  const filteredBulanList = BULAN_LIST.filter(({ key }) =>
+    provNames.some((pv) => {
+      const found = rows.find((r) => r.provinsi === pv);
+      return found && found[key] != null && found[key] !== "";
+    }),
+  );
+
+  const chartData = filteredBulanList.map(({ key, label }) => {
     const row: Record<string, string | number> = { label };
     provNames.forEach((pv) => {
-      const total = rows
-        .filter((r) => r.prov === pv)
-        .reduce((sum, r) => sum + (Number(r[key]) || 0), 0);
-      row[pv] = total;
+      const found = rows.find((r) => r.provinsi === pv);
+      if (found) row[pv] = Number(found[key]) || 0;
     });
     return row;
   });
@@ -305,39 +332,35 @@ export default function SpasialLineChart() {
     if (isExporting) return;
     setIsExporting(true);
     try {
-      const { rows: allRows } = await getLokusExport();
+      const { rows: allRows } = await getNtpExport();
       if (!allRows.length) return;
-      const exportData = allRows.map((row) => ({
-        Tahun: row.thang ?? "",
-        Provinsi: row.prov ?? "",
-        "Kode Kab/Kota": row.kdkabkota ?? "",
-        "Kab/Kota": row.nmkabkota ?? "",
-        Januari: row.Januari ?? 0,
-        Februari: row.Februari ?? 0,
-        Maret: row.Maret ?? 0,
-        April: row.April ?? 0,
-        Mei: row.Mei ?? 0,
-        Juni: row.Juni ?? 0,
-        Juli: row.Juli ?? 0,
-        Agustus: row.Agustus ?? 0,
-        September: row.September ?? 0,
-        Oktober: row.Oktober ?? 0,
-        November: row.November ?? 0,
-        Desember: row.Desember ?? 0,
+      const exportData = allRows.map((r) => ({
+        Provinsi: r.provinsi ?? "",
+        Kategori: r.kategori ?? "",
+        Jan: r.jan ?? 0,
+        Feb: r.feb ?? 0,
+        Mar: r.mar ?? 0,
+        Apr: r.apr ?? 0,
+        Mei: r.mei ?? 0,
+        Jun: r.jun ?? 0,
+        Jul: r.jul ?? 0,
+        Agu: r.aug ?? 0,
+        Sep: r.sep ?? 0,
+        Okt: r.okt ?? 0,
+        Nov: r.nov ?? 0,
+        Des: r.des ?? 0,
+        Tahun: r.tahun ?? "",
       }));
       const ws = XLSX.utils.json_to_sheet(exportData);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Data Detail");
-      XLSX.writeFile(
-        wb,
-        `Data_MBG_Detail_${new Date().toISOString().split("T")[0]}.xlsx`,
-      );
+      XLSX.utils.book_append_sheet(wb, ws, "Data NTP");
+      XLSX.writeFile(wb, `NTP_${kategori}_${tahun}.xlsx`);
     } catch {
       // silent fail
     } finally {
       setIsExporting(false);
     }
-  }, [isExporting]);
+  }, [isExporting, kategori, tahun]);
 
   // ---------------------------------------------------------------------------
   // Render
@@ -348,7 +371,7 @@ export default function SpasialLineChart() {
         <CardContent className="p-6 flex flex-col items-center gap-2 text-center">
           <span className="text-3xl">⚠️</span>
           <p className="text-sm font-medium text-destructive">
-            Gagal memuat data provinsi dari backend.
+            Gagal memuat data provinsi.
           </p>
           <p className="text-xs text-muted-foreground break-all max-w-sm">
             {provError?.message ?? "Unknown error"}
@@ -364,9 +387,14 @@ export default function SpasialLineChart() {
       <CardHeader className="p-0">
         <div className="bg-muted/50 px-4 py-3 border-b border-border flex flex-wrap gap-3 items-end justify-between">
           {/* Province multi-select */}
-          <div className="flex-1 min-w-[200px]">
+          <div className="flex-1 min-w-[180px]">
             <label className="block text-xs font-medium text-foreground mb-1">
               Pilih Provinsi
+              {isKanwil && kdkanwil && (
+                <span className="text-muted-foreground font-normal ml-1">
+                  (Wilayah Anda – {kdkanwil})
+                </span>
+              )}
             </label>
             <MultiSelectProv
               options={provOptions}
@@ -381,15 +409,41 @@ export default function SpasialLineChart() {
             />
           </div>
 
-          {/* Year select */}
-          <div className="w-[110px]">
+          {/* Kategori select */}
+          <div className="flex-1 min-w-[160px]">
+            <label className="block text-xs font-medium text-foreground mb-1">
+              Pilih Kategori
+            </label>
+            <ShadSelect
+              value={kategori}
+              onValueChange={setKategori}
+              disabled={loadingKat || kategoriOptions.length === 0}
+            >
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue
+                  placeholder={loadingKat ? "Memuat..." : "Pilih kategori..."}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {kategoriOptions.map((opt) => (
+                  <SelectItem
+                    key={opt.value}
+                    value={opt.value}
+                    className="text-xs"
+                  >
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </ShadSelect>
+          </div>
+
+          {/* Tahun */}
+          <div className="w-[100px]">
             <label className="block text-xs font-medium text-foreground mb-1">
               Tahun
             </label>
-            <ShadSelect
-              value={tahun.value}
-              onValueChange={(val) => setTahun({ value: val, label: val })}
-            >
+            <ShadSelect value={tahun} onValueChange={setTahun}>
               <SelectTrigger className="h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
@@ -414,7 +468,7 @@ export default function SpasialLineChart() {
             onClick={handleDownload}
             disabled={isExporting}
             className="h-8 px-3 gap-1.5 text-emerald-700 border-emerald-300 hover:bg-emerald-50 dark:text-emerald-400 dark:border-emerald-700 dark:hover:bg-emerald-950"
-            title="Download Excel semua data"
+            title="Download Excel semua data NTP"
           >
             <Download className="h-3.5 w-3.5" />
           </Button>
@@ -440,18 +494,16 @@ export default function SpasialLineChart() {
               <Skeleton className="h-4 w-5/6" />
               <Skeleton className="h-40 w-full" />
             </div>
-          ) : selectedProv.length === 0 ? (
+          ) : selectedProv.length === 0 || chartData.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full bg-muted/50 rounded border border-dashed border-border p-6">
               <span className="text-5xl mb-2">📊</span>
               <h4 className="text-sm font-medium text-foreground mb-1">
-                {isKanwil
-                  ? "Data Wilayah Anda"
-                  : "Pilih Provinsi untuk Memulai"}
+                {isKanwil ? "Data Wilayah Anda" : "Pilih Provinsi dan Kategori"}
               </h4>
               <p className="text-xs text-muted-foreground text-center max-w-[200px]">
                 {isKanwil
                   ? `Data akan ditampilkan sesuai wilayah kerja Anda${kdkanwil ? ` (${kdkanwil})` : ""}`
-                  : "Gunakan dropdown untuk memilih provinsi yang ingin dianalisis"}
+                  : "Gunakan dropdown untuk memilih provinsi dan kategori yang ingin dianalisis"}
               </p>
             </div>
           ) : (
@@ -476,16 +528,8 @@ export default function SpasialLineChart() {
                   tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
                   axisLine={{ stroke: "hsl(var(--border))" }}
                   tickLine={{ stroke: "hsl(var(--border))" }}
-                  tickFormatter={(v: number) => {
-                    if (v >= 1_000_000_000)
-                      return `${(v / 1_000_000_000).toFixed(1)}M`;
-                    if (v >= 1_000_000)
-                      return `${(v / 1_000_000).toFixed(1)}Jt`;
-                    if (v >= 1_000) return `${(v / 1_000).toFixed(1)}Rb`;
-                    return String(v);
-                  }}
                   tickMargin={2}
-                  width={60}
+                  width={50}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend

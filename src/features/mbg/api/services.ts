@@ -290,7 +290,7 @@ export async function getChartsReady(): Promise<boolean> {
 
 export type LokusRow = {
   thang: string;
-  PROV: string;
+  prov: string;
   kdkabkota: string;
   nmkabkota: string;
   kdkanwil: string | null;
@@ -353,5 +353,241 @@ export async function getLokusExport(): Promise<LokusDataResponse> {
   if (!response?.success || !response.data) {
     throw new Error("Failed to fetch lokus export data");
   }
+  return response.data;
+}
+
+// ---------------------------------------------------------------------------
+// OWID – NTP/NTN
+// ---------------------------------------------------------------------------
+
+export type NtpRow = {
+  provinsi: string;
+  kategori: string;
+  jan: number | null;
+  feb: number | null;
+  mar: number | null;
+  apr: number | null;
+  mei: number | null;
+  jun: number | null;
+  jul: number | null;
+  aug: number | null;
+  sep: number | null;
+  okt: number | null;
+  nov: number | null;
+  des: number | null;
+  tahun: string;
+  kode_kanwil: string | null;
+};
+
+export type NtpKategoriData = { kategori: string[] };
+export type NtpProvinsiData = { provinsi: string[] };
+export type NtpDataResponse = { rows: NtpRow[] };
+
+export async function getNtpKategori(tahun: string): Promise<NtpKategoriData> {
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: NtpKategoriData;
+  }>(`/dashboard/owid/ntp-kategori?tahun=${tahun}`);
+  if (!response?.success || !response.data)
+    throw new Error("Failed to fetch NTP kategori");
+  return response.data;
+}
+
+export async function getNtpProvinsi(
+  tahun: string,
+  kdkanwil?: string,
+): Promise<NtpProvinsiData> {
+  const params = new URLSearchParams({ tahun });
+  if (kdkanwil) params.set("kdkanwil", kdkanwil);
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: NtpProvinsiData;
+  }>(`/dashboard/owid/ntp-provinsi?${params.toString()}`);
+  if (!response?.success || !response.data)
+    throw new Error("Failed to fetch NTP provinsi");
+  return response.data;
+}
+
+export async function getNtpData(
+  provinsi: string[],
+  kategori: string,
+  tahun: string,
+  kdkanwil?: string,
+): Promise<NtpDataResponse> {
+  const params = new URLSearchParams({ tahun, kategori });
+  if (provinsi.length > 0) params.set("provinsi", provinsi.join(","));
+  if (kdkanwil) params.set("kdkanwil", kdkanwil);
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: NtpDataResponse;
+  }>(`/dashboard/owid/ntp-data?${params.toString()}`);
+  if (!response?.success || !response.data)
+    throw new Error("Failed to fetch NTP data");
+  return response.data;
+}
+
+export async function getNtpExport(): Promise<NtpDataResponse> {
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: NtpDataResponse;
+  }>(`/dashboard/owid/ntp-export`);
+  if (!response?.success || !response.data)
+    throw new Error("Failed to fetch NTP export");
+  return response.data;
+}
+
+// ---------------------------------------------------------------------------
+// OWID – PDRB
+// ---------------------------------------------------------------------------
+
+export type PdrbRow = {
+  provinsi: string;
+  kategori: string;
+  tw1: number | null;
+  tw2: number | null;
+  tw3: number | null;
+  tw4: number | null;
+  tahun: string;
+  kode_kanwil: string | null;
+};
+
+export type PdrbKategoriData = { kategori: string[] };
+export type PdrbProvinsiData = { provinsi: string[] };
+export type PdrbDataResponse = { rows: PdrbRow[] };
+
+export async function getPdrbKategori(
+  tahun: string,
+): Promise<PdrbKategoriData> {
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: PdrbKategoriData;
+  }>(`/dashboard/owid/pdrb-kategori?tahun=${tahun}`);
+  if (!response?.success || !response.data)
+    throw new Error("Failed to fetch PDRB kategori");
+  return response.data;
+}
+
+export async function getPdrbProvinsi(
+  tahun: string,
+  kdkanwil?: string,
+): Promise<PdrbProvinsiData> {
+  const params = new URLSearchParams({ tahun });
+  if (kdkanwil) params.set("kdkanwil", kdkanwil);
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: PdrbProvinsiData;
+  }>(`/dashboard/owid/pdrb-provinsi?${params.toString()}`);
+  if (!response?.success || !response.data)
+    throw new Error("Failed to fetch PDRB provinsi");
+  return response.data;
+}
+
+export async function getPdrbData(
+  provinsi: string[],
+  kategori: string,
+  tahun: string,
+  kdkanwil?: string,
+): Promise<PdrbDataResponse> {
+  const params = new URLSearchParams({ tahun, kategori });
+  if (provinsi.length > 0) params.set("provinsi", provinsi.join(","));
+  if (kdkanwil) params.set("kdkanwil", kdkanwil);
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: PdrbDataResponse;
+  }>(`/dashboard/owid/pdrb-data?${params.toString()}`);
+  if (!response?.success || !response.data)
+    throw new Error("Failed to fetch PDRB data");
+  return response.data;
+}
+
+export async function getPdrbExport(): Promise<PdrbDataResponse> {
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: PdrbDataResponse;
+  }>(`/dashboard/owid/pdrb-export`);
+  if (!response?.success || !response.data)
+    throw new Error("Failed to fetch PDRB export");
+  return response.data;
+}
+
+// ---------------------------------------------------------------------------
+// OWID – Komoditas
+// ---------------------------------------------------------------------------
+
+export type KomoditasRow = {
+  Provinsi: string;
+  Kategori: string;
+  Jan: number | null;
+  Feb: number | null;
+  Mar: number | null;
+  Apr: number | null;
+  Mei: number | null;
+  Jun: number | null;
+  Jul: number | null;
+  Agt: number | null;
+  Sep: number | null;
+  Okt: number | null;
+  Nov: number | null;
+  Des: number | null;
+  tahun: string;
+  kode_kanwil: string | null;
+};
+
+export type KomoditasKategoriData = { kategori: string[] };
+export type KomoditasProvinsiData = { provinsi: string[] };
+export type KomoditasDataResponse = { rows: KomoditasRow[] };
+
+export async function getKomoditasKategori(
+  tahun: string,
+): Promise<KomoditasKategoriData> {
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: KomoditasKategoriData;
+  }>(`/dashboard/owid/komoditas-kategori?tahun=${tahun}`);
+  if (!response?.success || !response.data)
+    throw new Error("Failed to fetch Komoditas kategori");
+  return response.data;
+}
+
+export async function getKomoditasProvinsi(
+  tahun: string,
+  kdkanwil?: string,
+): Promise<KomoditasProvinsiData> {
+  const params = new URLSearchParams({ tahun });
+  if (kdkanwil) params.set("kdkanwil", kdkanwil);
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: KomoditasProvinsiData;
+  }>(`/dashboard/owid/komoditas-provinsi?${params.toString()}`);
+  if (!response?.success || !response.data)
+    throw new Error("Failed to fetch Komoditas provinsi");
+  return response.data;
+}
+
+export async function getKomoditasData(
+  provinsi: string[],
+  kategori: string,
+  tahun: string,
+  kdkanwil?: string,
+): Promise<KomoditasDataResponse> {
+  const params = new URLSearchParams({ tahun, kategori });
+  if (provinsi.length > 0) params.set("provinsi", provinsi.join(","));
+  if (kdkanwil) params.set("kdkanwil", kdkanwil);
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: KomoditasDataResponse;
+  }>(`/dashboard/owid/komoditas-data?${params.toString()}`);
+  if (!response?.success || !response.data)
+    throw new Error("Failed to fetch Komoditas data");
+  return response.data;
+}
+
+export async function getKomoditasExport(): Promise<KomoditasDataResponse> {
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: KomoditasDataResponse;
+  }>(`/dashboard/owid/komoditas-export`);
+  if (!response?.success || !response.data)
+    throw new Error("Failed to fetch Komoditas export");
   return response.data;
 }

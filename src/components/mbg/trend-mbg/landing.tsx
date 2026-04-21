@@ -19,6 +19,7 @@ interface TrendItem {
 }
 
 import SpasialLineChart from "./spasiallinechart";
+import NtpChartLine from "./ntplinechart";
 
 const PLACEHOLDER = (
   <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
@@ -53,7 +54,7 @@ const items: TrendItem[] = [
     title: "Tren Nilai Tukar Petani dan Nilai Tukar Nelayan",
     icon: <Leaf className="h-5 w-5" />,
     accentColor: "#C7F464",
-    content: PLACEHOLDER,
+    content: <NtpChartLine />,
   },
   {
     id: 5,
