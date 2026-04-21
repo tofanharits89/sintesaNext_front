@@ -18,6 +18,8 @@ interface TrendItem {
   content: React.ReactNode;
 }
 
+import SpasialLineChart from "./spasiallinechart";
+
 const PLACEHOLDER = (
   <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
     Chart akan ditampilkan di sini.
@@ -30,7 +32,7 @@ const items: TrendItem[] = [
     title: "Penyerapan Anggaran MBG – Non Kumulatif",
     icon: <TrendingUp className="h-5 w-5" />,
     accentColor: "#FF6B6B",
-    content: PLACEHOLDER,
+    content: <SpasialLineChart />,
   },
   {
     id: 2,

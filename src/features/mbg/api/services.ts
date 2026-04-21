@@ -59,7 +59,9 @@ function formatCount(value: number): string {
   return value.toLocaleString("id-ID");
 }
 
-export async function getQuickStats(year: string = "2026"): Promise<QuickStatView[]> {
+export async function getQuickStats(
+  year: string = "2026",
+): Promise<QuickStatView[]> {
   const params = new URLSearchParams({ year });
   const response = await apiClient.get<MbgQuickStatsApiResponse>(
     `/dashboard/mbg/quick-stats?${params.toString()}`,
@@ -113,7 +115,9 @@ export type RankingsData = {
   }[];
 };
 
-export async function getRankings(year: string = "2026"): Promise<RankingsData> {
+export async function getRankings(
+  year: string = "2026",
+): Promise<RankingsData> {
   const params = new URLSearchParams({ year });
   const response = await apiClient.get<{
     success: boolean;
@@ -148,7 +152,9 @@ export type MbgProvChoroplethRow = {
   jumlahmitra: number;
 };
 
-export async function getMapChoropleth(year: string = "2026"): Promise<MbgProvChoroplethRow[]> {
+export async function getMapChoropleth(
+  year: string = "2026",
+): Promise<MbgProvChoroplethRow[]> {
   const params = new URLSearchParams({ year });
   const response = await apiClient.get<{
     success: boolean;
@@ -188,7 +194,9 @@ export type ProvRankingsData = {
   petugas: RankedItem[];
 };
 
-export async function getProvRankings(year: string = "2026"): Promise<ProvRankingsData> {
+export async function getProvRankings(
+  year: string = "2026",
+): Promise<ProvRankingsData> {
   const params = new URLSearchParams({ year });
   const response = await apiClient.get<{
     success: boolean;
@@ -274,4 +282,76 @@ export async function getChartsReady(): Promise<boolean> {
   // Simulate 3s latency to match current UX
   await new Promise((r) => setTimeout(r, 3000));
   return true;
+}
+
+// ---------------------------------------------------------------------------
+// Lokus MBG Rekap – SpasialLineChart
+// ---------------------------------------------------------------------------
+
+export type LokusRow = {
+  thang: string;
+  PROV: string;
+  kdkabkota: string;
+  nmkabkota: string;
+  kdkanwil: string | null;
+  Januari: number | null;
+  Februari: number | null;
+  Maret: number | null;
+  April: number | null;
+  Mei: number | null;
+  Juni: number | null;
+  Juli: number | null;
+  Agustus: number | null;
+  September: number | null;
+  Oktober: number | null;
+  November: number | null;
+  Desember: number | null;
+};
+
+export type LokusProvinsiData = { provinsi: string[] };
+export type LokusDataResponse = { rows: LokusRow[] };
+
+export async function getLokusProvinsi(
+  kdkanwil?: string,
+): Promise<LokusProvinsiData> {
+  const params = new URLSearchParams();
+  if (kdkanwil) params.set("kdkanwil", kdkanwil);
+  const qs = params.toString();
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: LokusProvinsiData;
+  }>(`/dashboard/mbg/lokus-provinsi${qs ? `?${qs}` : ""}`);
+  if (!response?.success || !response.data) {
+    throw new Error("Failed to fetch lokus provinsi");
+  }
+  return response.data;
+}
+
+export async function getLokusData(
+  prov: string[],
+  tahun: string,
+  kdkanwil?: string,
+): Promise<LokusDataResponse> {
+  const params = new URLSearchParams({ tahun });
+  if (prov.length > 0) params.set("prov", prov.join(","));
+  if (kdkanwil) params.set("kdkanwil", kdkanwil);
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: LokusDataResponse;
+  }>(`/dashboard/mbg/lokus-data?${params.toString()}`);
+  if (!response?.success || !response.data) {
+    throw new Error("Failed to fetch lokus data");
+  }
+  return response.data;
+}
+
+export async function getLokusExport(): Promise<LokusDataResponse> {
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: LokusDataResponse;
+  }>(`/dashboard/mbg/lokus-export`);
+  if (!response?.success || !response.data) {
+    throw new Error("Failed to fetch lokus export data");
+  }
+  return response.data;
 }
