@@ -20,11 +20,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, X, ArrowRightSquare, Eye } from "lucide-react";
+import { Loader2, X, ArrowRightSquare, Eye, Table2 } from "lucide-react";
 import { apiClient } from "@/lib/api/httpClient";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
+
+// --- Skeleton Loader ---
+function TableSkeleton() {
+  return (
+    <div className="space-y-3 animate-pulse">
+      <div className="h-10 bg-muted rounded-md w-full" />
+      <div className="space-y-2">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-12 bg-muted/50 rounded-md w-full" />
+        ))}
+      </div>
+      <div className="h-10 bg-muted rounded-md w-full" />
+    </div>
+  );
+}
 
 interface NadineItemAny {
   ID?: string;
@@ -398,9 +413,8 @@ export default function TrackNadineMasuk({
       )}
 
       {/* Results */}
-      {showResult && status && !error && (
-        <div className="space-y-4">
-          {/* Filters */}
+      <div className="space-y-4">
+        {showResult && status && !error && (
           <div className="flex gap-3">
             <Select value={filterYear} onValueChange={setFilterYear}>
               <SelectTrigger className="w-[200px]">
@@ -441,22 +455,48 @@ export default function TrackNadineMasuk({
               )}
             </div>
           </div>
+        )}
 
-          {/* Results Table */}
-          <Card className="transition-all duration-300 shadow-sm border-border/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-semibold">Daftar Surat {isMasuk ? "Masuk" : "Keluar"}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <DataTable 
-                columns={columns} 
-                data={filteredData.length > 0 ? filteredData : (status?.data?.result || [])} 
-                initialPageSize={10} 
+        <Card className="transition-all duration-300 shadow-sm border-border/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-semibold flex items-center justify-between">
+              <span>Daftar Surat {isMasuk ? "Masuk" : "Keluar"}</span>
+              {showResult && status && !error && (
+                <span className="text-xs font-normal text-muted-foreground">
+                  {filteredData.length > 0
+                    ? `${filteredData.length} data ditemukan`
+                    : `${status.data.result.length} data ditemukan`}
+                </span>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <TableSkeleton />
+            ) : showResult && status && !error ? (
+              <DataTable
+                columns={columns}
+                data={filteredData.length > 0 ? filteredData : (status?.data?.result || [])}
+                initialPageSize={10}
               />
-            </CardContent>
-          </Card>
-        </div>
-      )}
+            ) : (
+              <div className="border rounded-md">
+                <div className="h-10 bg-muted/50 border-b flex items-center px-4">
+                  <div className="text-xs font-medium text-muted-foreground uppercase">
+                    Silakan cari data {isMasuk ? "Surat Masuk" : "Surat Keluar"}
+                  </div>
+                </div>
+                <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-background/50">
+                  <Table2 className="h-10 w-10 mb-2 opacity-20" />
+                  <p className="text-sm">
+                    Masukkan kata kunci pencarian dan klik "Search" untuk menampilkan hasil
+                  </p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <SaveUserData userData={username || ""} menu="track-nadine" />
 
