@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -34,6 +34,8 @@ import {
 import { apiClient } from "@/lib/api/httpClient";
 import { Loader2, Save, X, Edit, FilePlus } from "lucide-react";
 import satkerData from "@/data/carisatker.json";
+import { useAuth } from "@/hooks/useAuth";
+import { filterSatkerByUserAccess } from "@/utils/satker-rbac";
 
 // Schema based on the SQL provided
 const formSchema = z.object({
@@ -97,8 +99,16 @@ const resolveIndikatorOption = (nmIndikator?: string | null) => {
 };
 
 export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
+    const { user } = useAuth();
     const queryClient = useQueryClient();
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const filteredSatkerList = useMemo(() => {
+        return filterSatkerByUserAccess(
+            satkerData as { kdsatker: string; nmsatker: string; kdkppn: string; kdkanwil: string }[],
+            user
+        );
+    }, [user]);
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -275,7 +285,7 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
                                             <SelectContent className="max-h-[300px]">
                                                 {(() => {
                                                     const val = field.value;
-                                                    let subset = (satkerData as any[]).slice(0, 500);
+                                                    let subset = [...filteredSatkerList];
                                                     if (val) {
                                                         const exists = subset.find(s => s.kdsatker === val);
                                                         if (!exists) {

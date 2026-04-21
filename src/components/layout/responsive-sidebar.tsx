@@ -289,15 +289,15 @@ export function ResponsiveSidebar({
           const isKontraktualAllowed = isAdmin || user.role === "ditpa";
           const isApbdAllowed = isAdmin || user.role === "kanwil_djpb";
 
-          return {
-            ...item,
-            children: (item.children || []).filter((child) => {
-              if (child.label === "IKI Kontraktual" && !isKontraktualAllowed)
-                return false;
-              if (child.label === "IKI APBD" && !isApbdAllowed) return false;
-              return true;
-            }),
-          };
+          const allowedChildren = (item.children || []).filter((child) => {
+            if (child.label === "IKI Kontraktual" && !isKontraktualAllowed)
+              return false;
+            if (child.label === "IKI APBD" && !isApbdAllowed) return false;
+            return true;
+          });
+
+          if (allowedChildren.length === 0) return null; // Hide menu entirely
+          return { ...item, children: allowedChildren };
         }
 
         return item;
