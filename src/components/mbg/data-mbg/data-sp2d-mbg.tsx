@@ -122,7 +122,9 @@ function TabRealisasiBGN() {
       {
         id: "no",
         header: () => <div className="text-center font-medium w-10">No</div>,
-        cell: ({ row }) => <div className="text-center w-10">{row.index + 1}</div>,
+        cell: ({ row }) => (
+          <div className="text-center w-10">{row.index + 1}</div>
+        ),
       },
       ...keys.map((key) => ({
         accessorKey: key,
@@ -138,7 +140,7 @@ function TabRealisasiBGN() {
           const isTgl = keyUpper.includes("TGL");
           const isYear =
             keyUpper === "THANG" || keyUpper === "TAHUN" || keyUpper === "THN";
-          
+
           const months = [
             "JANUARI",
             "FEBRUARI",
@@ -153,9 +155,24 @@ function TabRealisasiBGN() {
             "NOVEMBER",
             "DESEMBER",
           ];
-          const shortMonths = ["JAN", "FEB", "MAR", "APR", "MEI", "JUN", "JUL", "AGU", "SEP", "OKT", "NOV", "DES"];
-          
-          const isMonth = months.includes(keyUpper) || shortMonths.some(m => keyUpper.startsWith(m));
+          const shortMonths = [
+            "JAN",
+            "FEB",
+            "MAR",
+            "APR",
+            "MEI",
+            "JUN",
+            "JUL",
+            "AGU",
+            "SEP",
+            "OKT",
+            "NOV",
+            "DES",
+          ];
+
+          const isMonth =
+            months.includes(keyUpper) ||
+            shortMonths.some((m) => keyUpper.startsWith(m));
           const isRealisasi =
             keyUpper.includes("REALISASI") ||
             keyUpper.includes("NILAI") ||
@@ -186,9 +203,12 @@ function TabRealisasiBGN() {
             const rowKeys = Object.keys(row.original);
             const sum = rowKeys.reduce((acc, rk) => {
               const rkUpper = rk.toUpperCase();
-              const isMonthCol = months.includes(rkUpper) || 
-                                (shortMonths.some(m => rkUpper.startsWith(m)) && !rkUpper.includes("TOTAL") && !rkUpper.includes("JUMLAH"));
-              
+              const isMonthCol =
+                months.includes(rkUpper) ||
+                (shortMonths.some((m) => rkUpper.startsWith(m)) &&
+                  !rkUpper.includes("TOTAL") &&
+                  !rkUpper.includes("JUMLAH"));
+
               if (isMonthCol) {
                 const mVal = row.original[rk];
                 const n = typeof mVal === "number" ? mVal : Number(mVal);
@@ -240,7 +260,9 @@ function TabRealisasiBGN() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-semibold">Filter Data</CardTitle>
+            <CardTitle className="text-base font-semibold">
+              Filter Data
+            </CardTitle>
             <ResetButton onReset={handleReset} />
           </div>
         </CardHeader>
@@ -318,7 +340,11 @@ function TabRealisasiBGN() {
           {loading ? (
             <TableSkeleton />
           ) : data ? (
-            <DataTable columns={tableColumns} data={data} initialPageSize={25} />
+            <DataTable
+              columns={tableColumns}
+              data={data}
+              initialPageSize={25}
+            />
           ) : (
             <div className="border rounded-md">
               <div className="h-10 bg-muted/50 border-b flex items-center px-4">
@@ -398,7 +424,9 @@ function TabRekapLokus() {
       {
         id: "no",
         header: () => <div className="text-center font-medium w-10">No</div>,
-        cell: ({ row }) => <div className="text-center w-10">{row.index + 1}</div>,
+        cell: ({ row }) => (
+          <div className="text-center w-10">{row.index + 1}</div>
+        ),
       },
       ...keys.map((key) => ({
         accessorKey: key,
@@ -414,7 +442,7 @@ function TabRekapLokus() {
           const isTgl = keyUpper.includes("TGL");
           const isYear =
             keyUpper === "THANG" || keyUpper === "TAHUN" || keyUpper === "THN";
-          
+
           const months = [
             "JANUARI",
             "FEBRUARI",
@@ -429,9 +457,24 @@ function TabRekapLokus() {
             "NOVEMBER",
             "DESEMBER",
           ];
-          const shortMonths = ["JAN", "FEB", "MAR", "APR", "MEI", "JUN", "JUL", "AGU", "SEP", "OKT", "NOV", "DES"];
-          
-          const isMonth = months.includes(keyUpper) || shortMonths.some(m => keyUpper.startsWith(m));
+          const shortMonths = [
+            "JAN",
+            "FEB",
+            "MAR",
+            "APR",
+            "MEI",
+            "JUN",
+            "JUL",
+            "AGU",
+            "SEP",
+            "OKT",
+            "NOV",
+            "DES",
+          ];
+
+          const isMonth =
+            months.includes(keyUpper) ||
+            shortMonths.some((m) => keyUpper.startsWith(m));
           const isRealisasi =
             keyUpper.includes("REALISASI") ||
             keyUpper.includes("NILAI") ||
@@ -462,9 +505,12 @@ function TabRekapLokus() {
             const rowKeys = Object.keys(row.original);
             const sum = rowKeys.reduce((acc, rk) => {
               const rkUpper = rk.toUpperCase();
-              const isMonthCol = months.includes(rkUpper) || 
-                                (shortMonths.some(m => rkUpper.startsWith(m)) && !rkUpper.includes("TOTAL") && !rkUpper.includes("JUMLAH"));
-              
+              const isMonthCol =
+                months.includes(rkUpper) ||
+                (shortMonths.some((m) => rkUpper.startsWith(m)) &&
+                  !rkUpper.includes("TOTAL") &&
+                  !rkUpper.includes("JUMLAH"));
+
               if (isMonthCol) {
                 const mVal = row.original[rk];
                 const n = typeof mVal === "number" ? mVal : Number(mVal);
@@ -516,7 +562,9 @@ function TabRekapLokus() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-semibold">Filter Data</CardTitle>
+            <CardTitle className="text-base font-semibold">
+              Filter Data
+            </CardTitle>
             <ResetButton onReset={handleReset} />
           </div>
         </CardHeader>
@@ -564,7 +612,8 @@ function TabRekapLokus() {
         <CardHeader className="flex flex-row items-center justify-between py-3">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <Table2 className="h-4 w-4" />
-            Hasil Data Rekap Lokus Banper MBG {data ? `(${data.length} record)` : ""}
+            Hasil Data Rekap Lokus Banper MBG{" "}
+            {data ? `(${data.length} record)` : ""}
           </CardTitle>
           <Button
             variant="outline"
@@ -581,7 +630,11 @@ function TabRekapLokus() {
           {loading ? (
             <TableSkeleton />
           ) : data ? (
-            <DataTable columns={tableColumns} data={data} initialPageSize={25} />
+            <DataTable
+              columns={tableColumns}
+              data={data}
+              initialPageSize={25}
+            />
           ) : (
             <div className="border rounded-md">
               <div className="h-10 bg-muted/50 border-b flex items-center px-4">
@@ -592,7 +645,312 @@ function TabRekapLokus() {
               <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-background/50">
                 <Table2 className="h-10 w-10 mb-2 opacity-20" />
                 <p className="text-sm">
-                  Silahkan Pilih Tahun dan klik "Tarik Data Rekap" untuk menampilkan hasil
+                  Silahkan Pilih Tahun dan klik "Tarik Data Rekap" untuk
+                  menampilkan hasil
+                </p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function DataSpasial() {
+  const ALL_CATEGORIES = [
+    "SPPG",
+    "Petugas SPPG",
+    "Supplier MBG",
+    "Kelompok Penerima",
+    "Penerima",
+    "Mitra",
+  ] as const;
+
+  type Category = (typeof ALL_CATEGORIES)[number];
+
+  const categoryToTable = (cat: Category, year: string): string => {
+    const key = cat.toLowerCase().replace(/\s+/g, "");
+    const map: Record<string, string> = {
+      sppg: `a_mbg_sppg_${year}`,
+      petugassppg: `a_mbg_petugas_${year}`,
+      suppliermbg: `a_mbg_supplier_${year}`,
+      kelompokpenerima: `a_mbg_kelompok_${year}`,
+      penerima: `a_mbg_penerima_${year}`,
+      mitra: `a_mbg_mitra_${year}`,
+    };
+    return map[key] ?? `a_mbg_sppg_${year}`;
+  };
+
+  const [selectedCategory, setSelectedCategory] = useState<Category>("SPPG");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<RowData[] | null>(null);
+  const [error, setError] = useState("");
+
+  const yearSuffix = dateFrom
+    ? String(dateFrom.getFullYear())
+    : String(new Date().getFullYear());
+
+  const handleFetch = async () => {
+    setLoading(true);
+    setError("");
+    setData(null);
+    try {
+      const params = new URLSearchParams({
+        tabel: categoryToTable(selectedCategory, yearSuffix),
+        ...(dateFrom && dateTo
+          ? {
+              dateFrom: format(dateFrom, "yyyy-MM-dd"),
+              dateTo: format(dateTo, "yyyy-MM-dd"),
+            }
+          : {}),
+      });
+      const res = await fetch(`/api/mbg/unduh-data?${params.toString()}`, {
+        credentials: "include",
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(
+          (err as { message?: string }).message ?? "Gagal mengambil data",
+        );
+      }
+      const json = await res.json();
+      setData((json.data ?? json) as RowData[]);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Terjadi kesalahan");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownload = () => {
+    if (!data || data.length === 0) return;
+    const date = new Date().toISOString().slice(0, 10);
+    downloadExcel(
+      data,
+      selectedCategory,
+      `mbg-${selectedCategory.toLowerCase().replace(/\s+/g, "_")}-${date}.xlsx`,
+    );
+  };
+
+  const handleReset = () => {
+    setSelectedCategory("SPPG");
+    setDateFrom(undefined);
+    setDateTo(undefined);
+    setData(null);
+    setError("");
+  };
+
+  const tableColumns = useMemo<ColumnDef<RowData>[]>(() => {
+    if (!data || data.length === 0) return [];
+    const keys = Object.keys(data[0]!);
+    return [
+      {
+        id: "no",
+        header: () => <div className="text-center font-medium w-10">No</div>,
+        cell: ({ row }) => (
+          <div className="text-center w-10">{row.index + 1}</div>
+        ),
+      },
+      ...keys.map((key) => ({
+        accessorKey: key,
+        header: () => (
+          <div className="text-center font-medium whitespace-nowrap">
+            {key.toUpperCase()}
+          </div>
+        ),
+        cell: ({
+          row,
+        }: {
+          row: {
+            getValue: (k: string) => unknown;
+            original: RowData;
+            index: number;
+          };
+        }) => {
+          const rawVal = row.getValue(key);
+          const keyUpper = key.toUpperCase();
+          const isKD = keyUpper.startsWith("KD");
+          const isTgl =
+            keyUpper.includes("TGL") || keyUpper.includes("TGTARIK");
+          const isYear =
+            keyUpper === "THANG" || keyUpper === "TAHUN" || keyUpper === "THN";
+          const isRealisasi =
+            keyUpper.includes("NILAI") ||
+            keyUpper.includes("TOTAL") ||
+            keyUpper.includes("JUMLAH");
+
+          let val: unknown = rawVal;
+          if (
+            typeof rawVal === "string" &&
+            !isKD &&
+            !isTgl &&
+            !isYear &&
+            rawVal.trim() !== "" &&
+            !isNaN(Number(rawVal))
+          ) {
+            val = Number(rawVal);
+          }
+
+          return (
+            <div
+              className={cn(
+                "whitespace-nowrap px-2",
+                (isKD || isTgl || isYear) && "text-center",
+                isRealisasi && "text-right font-mono tabular-nums",
+              )}
+            >
+              {typeof val === "number"
+                ? isYear
+                  ? String(val)
+                  : val.toLocaleString("id-ID", {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    })
+                : isTgl && val
+                  ? (() => {
+                      try {
+                        const d = new Date(String(val));
+                        return isNaN(d.getTime())
+                          ? String(val)
+                          : format(d, "dd-MM-yyyy");
+                      } catch {
+                        return String(val);
+                      }
+                    })()
+                  : val !== null && val !== undefined
+                    ? String(val)
+                    : "-"}
+            </div>
+          );
+        },
+      })),
+    ];
+  }, [data]);
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base font-semibold">
+              Filter Unduh Data MBG
+            </CardTitle>
+            <ResetButton onReset={handleReset} />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+            <div className="space-y-1.5">
+              <Label>Kategori Data</Label>
+              <Select
+                value={selectedCategory}
+                onValueChange={(v) => setSelectedCategory(v as Category)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Pilih kategori" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ALL_CATEGORIES.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Tanggal Dari</Label>
+              <DatePicker
+                date={dateFrom}
+                onDateChange={setDateFrom}
+                placeholder="Pilih Tanggal Dari"
+                className="bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors"
+                captionLayout="dropdown"
+                startMonth={new Date(2025, 8)}
+                endMonth={new Date(new Date().getFullYear() + 1, 11)}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Tanggal Sampai</Label>
+              <DatePicker
+                date={dateTo}
+                onDateChange={setDateTo}
+                placeholder="Pilih Tanggal Sampai"
+                className="bg-zinc-100 dark:bg-black hover:bg-zinc-200 dark:hover:bg-zinc-950 transition-colors"
+                captionLayout="dropdown"
+                startMonth={new Date(2025, 8)}
+                endMonth={new Date(new Date().getFullYear() + 1, 11)}
+              />
+            </div>
+
+            <Button onClick={handleFetch} disabled={loading} className="w-full">
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Memproses...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  Tarik Data
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between py-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Table2 className="h-4 w-4" />
+            Hasil Data {selectedCategory}{" "}
+            {data ? `(${data.length} record)` : ""}
+          </CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownload}
+            disabled={!data || data.length === 0}
+            className="bg-green-700 dark:bg-card hover:bg-green-600 flex items-center"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-white mr-2" />
+            <span className="text-sm text-white">Unduh Data Excel</span>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <TableSkeleton />
+          ) : data ? (
+            <DataTable
+              columns={tableColumns}
+              data={data}
+              initialPageSize={25}
+            />
+          ) : (
+            <div className="border rounded-md">
+              <div className="h-10 bg-muted/50 border-b flex items-center px-4">
+                <div className="text-xs font-medium text-muted-foreground uppercase">
+                  Data belum ditarik
+                </div>
+              </div>
+              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-background/50">
+                <Table2 className="h-10 w-10 mb-2 opacity-20" />
+                <p className="text-sm">
+                  Pilih Kategori dan klik &quot;Tarik Data&quot; untuk
+                  menampilkan hasil
                 </p>
               </div>
             </div>
@@ -609,7 +967,7 @@ export function DataSP2DMBG() {
     <div className="space-y-6">
       <Tabs defaultValue="realisasi" className="w-full gap-3">
         <div className="border-b border-border/50 pb-3 mb-0">
-          <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-2 gap-2 md:gap-0">
+          <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-3 gap-2 md:gap-0">
             <TabsTrigger
               value="realisasi"
               className="h-12 md:h-full px-3 md:px-5 py-0 text-xs md:text-base whitespace-nowrap flex items-center justify-center gap-2"
@@ -624,6 +982,13 @@ export function DataSP2DMBG() {
               <MapPin className="h-4 w-4 md:h-5 md:w-5" />
               Rekap Lokus MBG
             </TabsTrigger>
+            <TabsTrigger
+              value="spasial"
+              className="h-12 md:h-full px-3 md:px-5 py-0 text-xs md:text-base whitespace-nowrap flex items-center justify-center gap-2"
+            >
+              <FileSpreadsheet className="h-4 w-4 md:h-5 md:w-5" />
+              Unduh Data MBG
+            </TabsTrigger>
           </TabsList>
         </div>
         <TabsContents>
@@ -632,6 +997,9 @@ export function DataSP2DMBG() {
           </TabsContent>
           <TabsContent value="rekap" className="mt-0">
             <TabRekapLokus />
+          </TabsContent>
+          <TabsContent value="spasial" className="mt-0">
+            <DataSpasial />
           </TabsContent>
         </TabsContents>
       </Tabs>

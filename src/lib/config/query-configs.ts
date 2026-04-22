@@ -189,7 +189,10 @@ export const queryKeyFactories = {
           provinceName ?? "all",
         ] as const,
       mapChoropleth: (year: string = "2026") =>
-        [...queryKeyFactories.financial.mbg.all(year), "mapChoropleth"] as const,
+        [
+          ...queryKeyFactories.financial.mbg.all(year),
+          "mapChoropleth",
+        ] as const,
       provRankings: (year: string = "2026") =>
         [...queryKeyFactories.financial.mbg.all(year), "provRankings"] as const,
       realisasiBgn: () =>
@@ -200,6 +203,20 @@ export const queryKeyFactories = {
         [
           ...queryKeyFactories.financial.mbg.all(),
           "efektivitasProgram",
+        ] as const,
+      lokusProvinsi: (kdkanwil?: string) =>
+        [
+          ...queryKeyFactories.financial.mbg.all(),
+          "lokusProvinsi",
+          kdkanwil ?? "all",
+        ] as const,
+      lokusData: (prov: string[], tahun: string, kdkanwil?: string) =>
+        [
+          ...queryKeyFactories.financial.mbg.all(),
+          "lokusData",
+          tahun,
+          kdkanwil ?? "all",
+          prov.join(","),
         ] as const,
     },
   },

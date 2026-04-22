@@ -13,8 +13,8 @@ const nextConfig: NextConfig = {
     removeConsole:
       process.env.NODE_ENV === "production"
         ? {
-          exclude: ["error", "warn"], // Keep console.error and console.warn
-        }
+            exclude: ["error", "warn"], // Keep console.error and console.warn
+          }
         : false,
   },
 
@@ -66,11 +66,11 @@ const nextConfig: NextConfig = {
           // HSTS - Force HTTPS (only in production with HTTPS enabled)
           ...(isProduction && process.env.HTTPS === "true"
             ? [
-              {
-                key: "Strict-Transport-Security",
-                value: "max-age=31536000; includeSubDomains; preload",
-              },
-            ]
+                {
+                  key: "Strict-Transport-Security",
+                  value: "max-age=31536000; includeSubDomains; preload",
+                },
+              ]
             : []),
           // Content Security Policy
           {
@@ -88,7 +88,7 @@ const nextConfig: NextConfig = {
               "connect-src 'self' ws: wss: http://localhost:* http://10.0.8.42:* https://*",
               "media-src 'self'",
               "object-src 'none'",
-              "frame-src 'self'",
+              "frame-src 'self' https://app.powerbi.com",
               "frame-ancestors 'none'",
               "form-action 'self'",
               "base-uri 'self'",
@@ -149,10 +149,10 @@ const nextConfig: NextConfig = {
       // This affects only the server bundle when isServer === true
       ...(isServer
         ? {
-          "pdfjs-dist/build/pdf": "pdfjs-dist/legacy/build/pdf",
-          "pdfjs-dist/build/pdf.worker": "pdfjs-dist/legacy/build/pdf.worker",
-          "pdfjs-dist/build/pdf.min": "pdfjs-dist/legacy/build/pdf",
-        }
+            "pdfjs-dist/build/pdf": "pdfjs-dist/legacy/build/pdf",
+            "pdfjs-dist/build/pdf.worker": "pdfjs-dist/legacy/build/pdf.worker",
+            "pdfjs-dist/build/pdf.min": "pdfjs-dist/legacy/build/pdf",
+          }
         : {}),
     };
 
@@ -166,7 +166,7 @@ const nextConfig: NextConfig = {
           reportFilename: isServer
             ? "../analyze/server.html"
             : "./analyze/client.html",
-        })
+        }),
       );
     }
 
@@ -192,9 +192,11 @@ const nextConfig: NextConfig = {
   },
 
   async rewrites() {
-    const backendHost =
-      process.env.BACKEND_HOST || "localhost";
-    const backendPort = process.env.BACKEND_PORT || process.env.NEXT_PUBLIC_BACKEND_PORT || "7777";
+    const backendHost = process.env.BACKEND_HOST || "localhost";
+    const backendPort =
+      process.env.BACKEND_PORT ||
+      process.env.NEXT_PUBLIC_BACKEND_PORT ||
+      "7777";
 
     return [
       // Proxy API requests to backend
