@@ -88,7 +88,7 @@ const nextConfig: NextConfig = {
               "connect-src 'self' ws: wss: http://localhost:* http://10.0.8.42:* https://*",
               "media-src 'self'",
               "object-src 'none'",
-              "frame-src 'self'",
+              "frame-src 'self' https://app.powerbi.com",
               "frame-ancestors 'none'",
               "form-action 'self'",
               "base-uri 'self'",
