@@ -19,8 +19,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Mail, User } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton-loader";
+import { Loader2, Mail, User, Building2, IdCard, Hash, Shield, Users, X } from "lucide-react";
+import { apiClient } from "@/lib/api/httpClient";
 // import { io } from "socket.io-client"; // optional: keep commented until needed
 
 interface DetailProps {
@@ -29,7 +32,6 @@ interface DetailProps {
   selectedDetail?: string | null;
   token?: string | null;
   id?: string | null;
-  bgcolor?: string;
 }
 
 interface UnitPenerima {
@@ -72,7 +74,6 @@ export default function Detail({
   selectedDetail,
   token,
   id,
-  bgcolor,
 }: DetailProps) {
   const [data, setData] = useState<Dispo[] | null | []>(null);
   const [loading, setLoading] = useState(false);
@@ -107,37 +108,14 @@ export default function Detail({
   }, []);
   */
 
-  const NADINE_DETAIL = (process.env.NEXT_PUBLIC_NADINE_DETAIL as string) || "";
 
   const getData = async () => {
     if (!selectedDetail) return;
     setLoading(true);
     try {
-      if (!NADINE_DETAIL) {
-        console.error(
-          "NADINE_DETAIL env not configured. Please set NEXT_PUBLIC_NADINE_DETAIL to the backend detail endpoint."
-        );
-        setData([]);
-        setLoading(false);
-        return;
-      }
-      const url = `${NADINE_DETAIL}/${selectedDetail}/${token}`;
-      const response = await fetch(url, {
-        method: "GET",
-        credentials: "include",
-        mode: "cors",
-        headers: { Accept: "application/json" },
-      });
-      if (response.status === 401) {
-        console.warn(
-          "Unauthorized request to NADINE detail endpoint; user should login or refresh session."
-        );
-        setMessage("Unauthorized — silakan login untuk melihat detail");
-        setData([]);
-        setLoading(false);
-        return;
-      }
-      const result = await response.json();
+      const result = await apiClient.get(
+        `/track-nadine/disposisi/detail/${selectedDetail}/${token}`
+      );
 
       if (
         result?.success &&
@@ -148,8 +126,11 @@ export default function Detail({
       } else {
         setData([]);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error fetching detail data:", err);
+      if (err?.response?.status === 401) {
+        setMessage("Unauthorized — silakan login untuk melihat detail");
+      }
       setData([]);
     } finally {
       setLoading(false);
@@ -160,21 +141,15 @@ export default function Detail({
     if (!token || !notaId) return;
     setLoadingKonseptor(true);
     try {
-      const response = await fetch(
-        `https://service.kemenkeu.go.id/nadine-web/gateway/grid/konsepnaskah/DetailKonsepByNdId/${notaId}?tipedata=Konsep`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const result = await apiClient.get(
+        `/track-nadine/konsep/detail/${notaId}/${token}`
       );
-      const result = await response.json();
       setKonseptorData(
-        result?.Data ? { Data: result.Data, Konseptor: result.Konseptor } : null
+        result?.data?.Data ? { Data: result.data.Data, Konseptor: result.data.Konseptor } : null
       );
 
       const uniqueMap = new Map<string, string>();
-      result?.Data?.Riwayat?.forEach((item: any) => {
+      result?.data?.Data?.Riwayat?.forEach((item: any) => {
         if (item?.Unit) uniqueMap.set(item.Unit, item.Unit);
       });
       const uniqueFilteredRiwayat = [...uniqueMap.values()];
@@ -200,18 +175,15 @@ export default function Detail({
   return (
     <>
       <Dialog open={showModal} onOpenChange={handleCloseModal}>
-        <DialogContent showCloseButton={false} className="max-w-4xl max-h-[90vh] overflow-y-auto fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] max-w-7xl sm:max-w-7xl">
-          <DialogHeader>
+        <DialogContent showCloseButton={false} className="max-w-4xl max-h-[90vh] flex flex-col p-0 fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] max-w-7xl sm:max-w-7xl bg-white dark:bg-zinc-950">
+          <DialogHeader className="p-8 pb-6">
             <DialogTitle className="flex items-center gap-2">
               <Mail className="h-5 w-5 text-green-600" />
               Detail Nota ID : {id}
             </DialogTitle>
           </DialogHeader>
 
-          <div
-            className="space-y-4 p-4 rounded-lg"
-            style={{ background: bgcolor || "white" }}
-          >
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {message && (
               <Alert
                 variant="destructive"
@@ -232,116 +204,122 @@ export default function Detail({
                 )}
               </Alert>
             )}
-
             {loading ? (
-              <div className="flex justify-center items-center h-[300px]">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : data && Array.isArray(data) && data.length > 0 ? (
-              <div className="space-y-4">
-                {data.map((dispo: Dispo, index: number) => (
-                  <Card
-                    key={index}
-                    className="shadow-sm border-0 bg-white/80 backdrop-blur-sm"
-                  >
-                    <CardHeader className="bg-primary/10 py-3 px-4 rounded-t-lg">
-                      <h5 className="font-semibold text-primary m-0 text-lg">
+              <DetailSkeleton />
+            ) : data && Array.isArray(data) && data.length > 0 ? (<div className="space-y-8 pb-4">
+              {data.map((dispo: Dispo, index: number) => (
+                <div
+                  key={index}
+                  className="bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300"
+                >
+                  <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/50">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                        <Building2 className="h-5 w-5" />
+                      </div>
+                      <h5 className="font-bold text-foreground m-0 text-xl tracking-tight">
                         {dispo?.dispoEs4 &&
-                        dispo.dispoEs4.length > 0 &&
-                        dispo.dispoEs4[0]?.UnitPenerima
+                          dispo.dispoEs4.length > 0 &&
+                          dispo.dispoEs4[0]?.UnitPenerima
                           ? dispo.dispoEs4[0].UnitPenerima?.NamaEselon3
                           : "Data Eselon 3 Tidak Tersedia"}
                       </h5>
-                    </CardHeader>
-                    <CardContent className="p-4">
-                      <div className="bg-muted/50 p-2 rounded text-center mb-3 font-medium text-sm uppercase tracking-wide">
-                        Eselon 4
+                    </div>
+                    <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider">
+                      Eselon 3
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-8">
+                    {/* ESELON 4 SECTION */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                          Eselon 4
+                        </span>
                       </div>
-                      <ul className="space-y-3 mb-6">
+                      <div className={`grid grid-cols-1 ${dispo.dispoEs4.length > 1 ? "md:grid-cols-2" : ""} gap-4`}>
                         {dispo.dispoEs4.map((es4, es4Index) => (
-                          <li
-                            key={es4Index}
-                            className="text-sm border-b border-border/50 pb-3 last:border-0 last:pb-0"
-                          >
-                            <div className="grid grid-cols-[60px_1fr] gap-1">
-                              <span className="font-semibold text-gray-900">
-                                Unit:
-                              </span>
-                              <span className="text-gray-900">
+                          <Card key={es4Index} className="bg-white dark:bg-zinc-950 overflow-hidden p-0 gap-0 shadow-sm border-zinc-200 dark:border-zinc-800">
+                            <div className="px-3 py-2 border-b border-border/50 bg-muted/30">
+                              <p className="text-sm font-bold text-foreground tracking-tight truncate">
                                 {es4.UnitPenerima?.NamaOrganisasi || "-"}
-                              </span>
-
-                              <span className="font-semibold text-gray-900">
-                                Nama:
-                              </span>
-                              <span className="text-gray-900">
-                                {es4.UnitPenerima?.NamaPejabat || "-"}
-                              </span>
-
-                              <span className="font-semibold text-gray-900">
-                                NIP:
-                              </span>
-                              <span className="text-gray-900">
-                                {es4.UnitPenerima?.NipPejabat || "-"}
-                              </span>
+                              </p>
                             </div>
-                          </li>
+                            <div className="p-2.5 flex items-center gap-3">
+                              <div className="h-8 w-8 bg-primary/5 rounded-full flex items-center justify-center text-primary shrink-0">
+                                <User className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-foreground truncate leading-tight">{es4.UnitPenerima?.NamaPejabat || "-"}</p>
+                                <p className="text-xs text-muted-foreground truncate font-mono">{es4.UnitPenerima?.NipPejabat || "-"}</p>
+                              </div>
+                            </div>
+                          </Card>
                         ))}
-                      </ul>
-
-                      <div className="bg-muted/50 p-2 rounded text-center mb-3 font-medium text-sm uppercase tracking-wide">
-                        Pelaksana
                       </div>
-                      <ul className="space-y-3">
+                    </div>
+
+                    {/* PELAKSANA SECTION */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                          Pelaksana
+                        </span>
+                      </div>
+                      <div className={`grid grid-cols-1 ${dispo.dispoStaf.length === 2 ? "sm:grid-cols-2" :
+                        dispo.dispoStaf.length >= 3 ? "sm:grid-cols-2 lg:grid-cols-3" : ""
+                        } gap-3`}>
                         {dispo.dispoStaf.map((staf, stafIndex) => (
-                          <li
-                            key={stafIndex}
-                            className="text-sm border-b border-border/50 pb-3 last:border-0 last:pb-0"
-                          >
-                            <div className="grid grid-cols-[60px_1fr] gap-1">
-                              <span className="font-semibold text-gray-900">
-                                Nama:
-                              </span>
-                              <span className="text-gray-900">
-                                {staf.UserPenerima?.Nama}
-                              </span>
-
-                              <span className="font-semibold text-gray-900">
-                                NIP:
-                              </span>
-                              <span className="text-gray-900">
-                                {staf.UserPenerima?.Nip18}
-                              </span>
-
-                              <span className="font-semibold text-gray-900">
-                                Jabatan:
-                              </span>
-                              <span className="text-gray-900">
-                                {staf.UserPenerima?.NamaJabatan}
-                              </span>
+                          <Card key={stafIndex} className="bg-white dark:bg-zinc-950 overflow-hidden p-0 gap-0 shadow-sm border-zinc-200 dark:border-zinc-800">
+                            <div className="px-3 py-2 border-b border-border/50 bg-muted/30">
+                              <p className="text-sm font-bold text-foreground tracking-tight truncate">
+                                {staf.UserPenerima?.NamaJabatan || "Pelaksana"}
+                              </p>
                             </div>
-                          </li>
+                            <div className="p-2.5 flex items-center gap-3">
+                              <div className="h-8 w-8 bg-primary/5 rounded-full flex items-center justify-center text-primary shrink-0">
+                                <User className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-foreground truncate leading-tight">{staf.UserPenerima?.Nama}</p>
+                                <p className="text-xs text-muted-foreground truncate font-mono">{staf.UserPenerima?.Nip18}</p>
+                              </div>
+                            </div>
+                          </Card>
                         ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             ) : (
-              <div className="text-center text-destructive font-bold py-10 bg-red-50/50 rounded-lg">
-                Data nota detail Nadine gagal didapatkan...
+              <div className="text-center py-16 bg-muted/30 rounded-2xl border-2 border-dashed border-border/50">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="h-12 w-12 bg-muted rounded-full flex items-center justify-center text-muted-foreground">
+                    <Mail className="h-6 w-6" />
+                  </div>
+                  <p className="text-muted-foreground font-medium italic">Data nota detail Nadine gagal didapatkan...</p>
+                </div>
               </div>
             )}
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="p-8 pt-6 gap-3">
             <Button
               onClick={handleShowKonseptor}
-              className="bg-blue-600 hover:bg-blue-700"
+              variant="default"
+              className="flex items-center gap-2"
             >
+              <Users className="h-4 w-4" />
               Lihat Konseptor
             </Button>
-            <Button variant="outline" onClick={handleCloseModal}>
+            <Button variant="outline" onClick={handleCloseModal} className="flex items-center gap-2">
+              <X className="h-4 w-4" />
               Tutup
             </Button>
           </DialogFooter>
@@ -386,10 +364,10 @@ export default function Detail({
                       <TableCell className="align-top text-gray-900">
                         {namaKonseptorDanKasi && namaKonseptorDanKasi.length > 0
                           ? namaKonseptorDanKasi.map((item, idx) => (
-                              <div key={idx} className="mb-1">
-                                {item}
-                              </div>
-                            ))
+                            <div key={idx} className="mb-1">
+                              {item}
+                            </div>
+                          ))
                           : "Tidak tersedia"}
                       </TableCell>
                       <TableCell className="align-top text-gray-900">
@@ -421,5 +399,68 @@ export default function Detail({
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function DetailSkeleton() {
+  return (
+    <div className="space-y-8 pb-4">
+      {Array.from({ length: 1 }).map((_, i) => (
+        <div key={i} className="bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm space-y-6">
+          <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-10 w-10 rounded-lg" />
+              <Skeleton className="h-7 w-64" />
+            </div>
+            <Skeleton className="h-6 w-20 rounded-full" />
+          </div>
+
+          <div className="space-y-8">
+            {/* ESELON 4 SECTION SKELETON */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-4 w-4" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Array.from({ length: 2 }).map((_, j) => (
+                  <div key={j} className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-0 gap-0 shadow-sm overflow-hidden">
+                    <div className="px-3 py-2 border-b border-border/50 bg-muted/30">
+                      <Skeleton className="h-4 w-3/4" />
+                    </div>
+                    <div className="p-2.5 flex items-center gap-3">
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-1/2" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* PELAKSANA SECTION SKELETON */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-4 w-4" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {Array.from({ length: 3 }).map((_, k) => (
+                  <div key={k} className="rounded-lg border bg-muted p-3 flex items-center gap-3 shadow-none">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

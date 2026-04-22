@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -37,6 +37,8 @@ import { apiClient } from "@/lib/api/httpClient";
 import { FilePlus, Loader2, Save } from "lucide-react";
 import satkerData from "@/data/carisatker.json";
 import { format } from "date-fns";
+import { useAuth } from "@/hooks/useAuth";
+import { filterSatkerByUserAccess } from "@/utils/satker-rbac";
 
 // Schema based on the SQL provided
 const formSchema = z.object({
@@ -71,8 +73,16 @@ const INDIKATOR_OPTIONS = [
 ];
 
 export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
+    const { user } = useAuth();
     const queryClient = useQueryClient();
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const filteredSatkerList = useMemo(() => {
+        return filterSatkerByUserAccess(
+            satkerData as { kdsatker: string; nmsatker: string; kdkppn: string; kdkanwil: string }[],
+            user
+        );
+    }, [user]);
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -203,7 +213,7 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                                     <SelectValue placeholder="Pilih Satker" />
                                 </SelectTrigger>
                                 <SelectContent className="max-h-[300px]">
-                                    {(satkerData as any[]).slice(0, 200).map((s) => (
+                                    {filteredSatkerList.map((s) => (
                                         <SelectItem key={s.kdsatker} value={s.kdsatker}>
                                             {s.kdsatker} - {s.nmsatker}
                                         </SelectItem>

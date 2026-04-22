@@ -107,25 +107,26 @@ export function DataTable<TData, TValue>({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    ...(controlledPagination
-      ? {}
-      : {
-          onPaginationChange: (updater: any) => {
-            // Uncontrolled: update internal state and notify parent
-            const next =
-              typeof updater === "function"
-                ? updater(uncontrolledPagination)
-                : updater;
-            setUncontrolledPagination(next);
-            onPaginationChange?.(next);
-          },
-        }),
+    onPaginationChange: (updater: any) => {
+      const next =
+        typeof updater === "function"
+          ? updater(effectivePagination)
+          : updater;
+      
+      if (!controlledPagination) {
+        setUncontrolledPagination(next);
+      }
+      
+      onPaginationChange?.(next);
+    },
+    manualPagination: false, // We want client-side pagination since we pass the full dataset
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       pagination: effectivePagination,
     },
+
   });
 
   // Expose table instance to parent for external pagination controls
@@ -252,7 +253,14 @@ export function DataTable<TData, TValue>({
             <Select
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(value) => {
-                table.setPageSize(Number(value));
+                const newSize = Number(value);
+                table.setPageSize(newSize);
+                // Force triggering onPaginationChange with the new value immediately 
+                // in case table.setPageSize internal update is batched
+                onPaginationChange?.({
+                  ...effectivePagination,
+                  pageSize: newSize,
+                });
               }}
             >
               <SelectTrigger className="h-8 w-[80px]">
@@ -276,7 +284,10 @@ export function DataTable<TData, TValue>({
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious
-                    onClick={() => table.previousPage()}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      table.previousPage();
+                    }}
                     className={cn(
                       "cursor-pointer select-none",
                       !table.getCanPreviousPage() &&
@@ -297,7 +308,10 @@ export function DataTable<TData, TValue>({
                         <PaginationItem key={i}>
                           <PaginationLink
                             isActive={currentPage === i}
-                            onClick={() => table.setPageIndex(i - 1)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              table.setPageIndex(i - 1);
+                            }}
                             className="cursor-pointer select-none"
                           >
                             {i}
@@ -311,7 +325,10 @@ export function DataTable<TData, TValue>({
                       <PaginationItem key={1}>
                         <PaginationLink
                           isActive={currentPage === 1}
-                          onClick={() => table.setPageIndex(0)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            table.setPageIndex(0);
+                          }}
                           className="cursor-pointer select-none"
                         >
                           1
@@ -332,7 +349,10 @@ export function DataTable<TData, TValue>({
                         <PaginationItem key={i}>
                           <PaginationLink
                             isActive={currentPage === i}
-                            onClick={() => table.setPageIndex(i - 1)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              table.setPageIndex(i - 1);
+                            }}
                             className="cursor-pointer select-none"
                           >
                             {i}
@@ -350,7 +370,10 @@ export function DataTable<TData, TValue>({
                       <PaginationItem key={totalPage}>
                         <PaginationLink
                           isActive={currentPage === totalPage}
-                          onClick={() => table.setPageIndex(totalPage - 1)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            table.setPageIndex(totalPage - 1);
+                          }}
                           className="cursor-pointer select-none"
                         >
                           {totalPage}
@@ -363,7 +386,10 @@ export function DataTable<TData, TValue>({
 
                 <PaginationItem>
                   <PaginationNext
-                    onClick={() => table.nextPage()}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      table.nextPage();
+                    }}
                     className={cn(
                       "cursor-pointer select-none",
                       !table.getCanNextPage() &&

@@ -134,9 +134,9 @@ export function IkpaLanding() {
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [currentPage, setCurrentPage] = useState(0);
+    const [pageSize, setPageSize] = useState(10);
     const [selectedKppn, setSelectedKppn] = useState("all");
     const [selectedSatker, setSelectedSatker] = useState("all");
-    const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<IkpaRequest | null>(null);
     const [satkerComboboxOpen, setSatkerComboboxOpen] = useState(false);
@@ -224,9 +224,9 @@ export function IkpaLanding() {
 
     // Fetch Data from Backend
     const { data, isLoading } = useQuery<IkpaResponse>({
-        queryKey: ['ikpa-data', user?.id, user?.role, user?.kdkanwil, user?.kdkppn, currentPage, searchQuery, selectedKppn, selectedSatker, selectedYear, statusFilter],
+        queryKey: ['ikpa-data', user?.id, user?.role, user?.kdkanwil, user?.kdkppn, currentPage, pageSize, searchQuery, selectedKppn, selectedSatker, selectedYear, statusFilter],
         queryFn: async () => apiClient.get(
-            `/ikpa?page=${currentPage}&limit=10&search=${searchQuery}&kdkppn=${selectedKppn === 'all' ? '' : selectedKppn}&kdsatker=${selectedSatker === 'all' ? '' : selectedSatker}&thang=${selectedYear}&status=${statusFilter === 'all' ? '' : statusFilter}`,
+            `/ikpa?page=${currentPage}&limit=${pageSize}&search=${searchQuery}&kdkppn=${selectedKppn === 'all' ? '' : selectedKppn}&kdsatker=${selectedSatker === 'all' ? '' : selectedSatker}&thang=${selectedYear}&status=${statusFilter === 'all' ? '' : statusFilter}`,
             {
                 headers: {
                     "X-Bypass-Cache": "1",
@@ -239,7 +239,15 @@ export function IkpaLanding() {
     } as any);
 
     const ikpaData = useMemo(() => {
-        const rows = data?.result || [];
+        let rows = data?.result || [];
+
+        // Deduplicate by ID
+        const seen = new Set();
+        rows = rows.filter(item => {
+            if (seen.has(item.id)) return false;
+            seen.add(item.id);
+            return true;
+        });
 
         if (!user) return [];
         if (user.role === "super_admin" || user.role === "co_admin" || user.role === "kantor_pusat" || user.role === "ditpa") {
@@ -380,11 +388,6 @@ export function IkpaLanding() {
                 </CardContent>
             </Card>
 
-            <ModalRekamIkpa
-                isOpen={isRecordModalOpen}
-                onClose={() => setIsRecordModalOpen(false)}
-            />
-
             <ModalEditIkpa
                 isOpen={isEditModalOpen}
                 onClose={() => {
@@ -444,19 +447,19 @@ export function IkpaLanding() {
             </div>
 
             {/* Main Table - Full Width */}
-            <Card className="mb-6">
-                <CardHeader className="pb-2 border-b">
+            <Card className="mb-6 overflow-hidden">
+                <CardHeader>
                     <div className="flex items-center justify-between">
                         <CardTitle>Daftar Permohonan</CardTitle>
                         <Select value={statusFilter} onValueChange={(val) => {
                             setStatusFilter(val);
                             setCurrentPage(0);
                         }}>
-                            <SelectTrigger className="w-[140px] h-8">
+                            <SelectTrigger className="w-[160px] h-9 bg-background">
                                 <SelectValue placeholder="Filter Status" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">Semua</SelectItem>
+                                <SelectItem value="all">Semua Status</SelectItem>
                                 <SelectItem value="Disetujui">Disetujui</SelectItem>
                                 <SelectItem value="Ditolak">Ditolak</SelectItem>
                                 <SelectItem value="Pending">Pending</SelectItem>
@@ -464,18 +467,21 @@ export function IkpaLanding() {
                         </Select>
                     </div>
                 </CardHeader>
-                <CardContent className="px-6">
-                    <div className="rounded-md border">
+                <CardContent className="px-6 pb-6">
+                    <div className="rounded-md border overflow-hidden bg-card">
                         <div className="overflow-x-auto">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="text-center w-10">No</TableHead>
-                                        <TableHead className="text-center">No. ND</TableHead>
-                                        <TableHead className="text-center">Satker / KPPN</TableHead>
-                                        <TableHead className="text-center">Indikator</TableHead>
-                                        <TableHead className="text-center">Status</TableHead>
-                                        <TableHead className="text-center">Aksi</TableHead>
+                            <Table className="border-separate border-spacing-0">
+                                <TableHeader className="bg-background sticky top-0 z-10 shadow-sm text-center">
+                                    <TableRow className="hover:bg-transparent border-b-0">
+                                        <TableHead className="bg-background text-center w-12 h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b">No</TableHead>
+                                        <TableHead className="bg-background text-center h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b w-96">No. ND</TableHead>
+                                        <TableHead className="bg-background text-center h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b">Kode KPPN</TableHead>
+                                        <TableHead className="bg-background text-center h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b">Nama KPPN</TableHead>
+                                        <TableHead className="bg-background text-center h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b">Kode Satker</TableHead>
+                                        <TableHead className="bg-background text-center h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b">Nama Satker</TableHead>
+                                        <TableHead className="bg-background text-center h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b">Indikator</TableHead>
+                                        <TableHead className="bg-background text-center h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b w-36">Status</TableHead>
+                                        <TableHead className="bg-background text-center h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b w-24">Aksi</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -487,18 +493,24 @@ export function IkpaLanding() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex flex-col gap-1.5">
-                                                        <Skeleton className="h-3.5 w-24" />
-                                                        <Skeleton className="h-3 w-16" />
+                                                        <Skeleton className="h-3.5 w-24 mx-auto" />
+                                                        <Skeleton className="h-3 w-16 mx-auto" />
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div className="flex flex-col gap-1.5">
-                                                        <Skeleton className="h-3.5 w-40" />
-                                                        <Skeleton className="h-3 w-28" />
-                                                    </div>
+                                                    <Skeleton className="h-3.5 w-16 mx-auto" />
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Skeleton className="h-3.5 w-32" />
+                                                    <Skeleton className="h-3.5 w-24 mx-auto" />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Skeleton className="h-3.5 w-16 mx-auto" />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Skeleton className="h-3.5 w-40 mx-auto" />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Skeleton className="h-3.5 w-32 mx-auto" />
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex justify-center">
@@ -515,29 +527,45 @@ export function IkpaLanding() {
                                     ) : (
                                         ikpaData.length > 0 ? (
                                             ikpaData.map((item: IkpaRequest, index: number) => (
-                                                <TableRow key={item.id}>
-                                                    <TableCell className="text-center text-muted-foreground text-sm">
+                                                <TableRow key={item.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-colors">
+                                                    <TableCell className="text-center text-muted-foreground text-xs font-normal">
                                                         {currentPage * 10 + index + 1}
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <div className="flex flex-col">
-                                                            <span className="font-medium">{item.no_nd}</span>
-                                                            <span className="text-[10px] text-muted-foreground">{new Date(item.tg_nd).toLocaleDateString()}</span>
+                                                    <TableCell className="text-center">
+                                                        <div className="flex flex-col items-center">
+                                                            <span className="font-normal text-zinc-900 dark:text-zinc-100">{item.no_nd}</span>
+                                                            <span className="text-[10px] text-muted-foreground">{new Date(item.tg_nd).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <div className="flex flex-col">
-                                                            <span className="text-sm">{item.nmsatker}</span>
-                                                            <span className="text-[10px] text-muted-foreground uppercase">{item.nmkppn?.toLowerCase()} ({item.kdkppn})</span>
+                                                    <TableCell className="text-center">
+                                                        <Badge variant="outline" className="font-mono text-xs font-normal bg-zinc-50 dark:bg-zinc-900 uppercase">
+                                                            {item.kdkppn}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell className="text-center">
+                                                        <div className="text-sm font-normal text-foreground whitespace-nowrap px-2">
+                                                            {item.nmkppn}
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="text-xs text-muted-foreground max-w-[150px] truncate">{item.nm_indikator}</TableCell>
+                                                    <TableCell className="text-center text-sm font-normal text-foreground">
+                                                        {item.kdsatker}
+                                                    </TableCell>
+                                                    <TableCell className="text-left max-w-0 w-[35%]">
+                                                        <div className="text-sm font-normal text-foreground truncate" title={item.nmsatker}>
+                                                            {item.nmsatker}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-center max-w-0 w-[20%]">
+                                                        <div className="text-sm text-foreground font-normal truncate mx-auto" title={item.nm_indikator}>
+                                                            {item.nm_indikator}
+                                                        </div>
+                                                    </TableCell>
                                                     <TableCell><div className="flex justify-center"><StatusBadge status={item.approval} /></div></TableCell>
                                                     <TableCell className="text-center">
                                                         <Button
                                                             variant="outline"
-                                                            size="sm"
-                                                            className="h-8 w-8 p-0 cursor-pointer"
+                                                            size="icon"
+                                                            className="h-8 w-8 cursor-pointer"
                                                             onClick={() => {
                                                                 setEditingItem(item);
                                                                 setIsEditModalOpen(true);
@@ -550,77 +578,127 @@ export function IkpaLanding() {
                                                 </TableRow>
                                             ))
                                         ) : (
-                                            <TableRow><TableCell colSpan={6} className="h-32 text-center text-muted-foreground">Tidak ada data ditemukan.</TableCell></TableRow>
+                                            <TableRow><TableCell colSpan={9} className="h-32 text-center text-muted-foreground">Tidak ada data ditemukan.</TableCell></TableRow>
                                         )
                                     )}
                                 </TableBody>
                             </Table>
                         </div>
                     </div>
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-4 px-4 py-3 border-t text-xs text-muted-foreground">
-                        <span>Total {totalRows} data</span>
-                        <Pagination className="mx-0 w-auto">
-                            <PaginationContent>
-                                <PaginationItem>
-                                    <PaginationPrevious
-                                        onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
-                                        className={cn("cursor-pointer select-none", (currentPage === 0 || isLoading) && "pointer-events-none opacity-50")}
-                                    />
-                                </PaginationItem>
+                    <div className="flex flex-col md:grid md:grid-cols-3 items-center justify-between gap-4 py-4 px-2">
+                        {/* Left: Rows per page */}
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                Rows per page
+                            </span>
+                            <Select
+                                value={pageSize.toString()}
+                                onValueChange={(val) => {
+                                    setPageSize(Number(val));
+                                    setCurrentPage(0);
+                                }}
+                            >
+                                <SelectTrigger className="h-8 w-[70px]">
+                                    <SelectValue placeholder={pageSize.toString()} />
+                                </SelectTrigger>
+                                <SelectContent side="top">
+                                    {[10, 20, 30, 40, 50].map((size) => (
+                                        <SelectItem key={size} value={size.toString()}>
+                                            {size}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                                {(() => {
-                                    const total = totalPages || 1;
-                                    const active = currentPage + 1;
-                                    const items = [];
+                        {/* Center: Pagination Buttons */}
+                        <div className="flex justify-center">
+                            <Pagination className="mx-0 w-auto">
+                                <PaginationContent>
+                                    <PaginationItem>
+                                        <PaginationPrevious
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                setCurrentPage(p => Math.max(0, p - 1));
+                                            }}
+                                            className={cn(
+                                                "cursor-pointer select-none",
+                                                currentPage === 0 && "pointer-events-none opacity-50",
+                                            )}
+                                        />
+                                    </PaginationItem>
 
-                                    if (total <= 7) {
-                                        for (let i = 1; i <= total; i++) {
+                                    {(() => {
+                                        const total = totalPages || 1;
+                                        const active = currentPage + 1;
+                                        const items = [];
+
+                                        if (total <= 7) {
+                                            for (let i = 1; i <= total; i++) {
+                                                items.push(
+                                                    <PaginationItem key={i}>
+                                                        <PaginationLink
+                                                            isActive={active === i}
+                                                            onClick={() => setCurrentPage(i - 1)}
+                                                            className="cursor-pointer select-none"
+                                                        >
+                                                            {i}
+                                                        </PaginationLink>
+                                                    </PaginationItem>
+                                                );
+                                            }
+                                        } else {
                                             items.push(
-                                                <PaginationItem key={i}>
-                                                    <PaginationLink
-                                                        isActive={active === i}
-                                                        onClick={() => setCurrentPage(i - 1)}
-                                                        className="cursor-pointer select-none"
-                                                    >
-                                                        {i}
-                                                    </PaginationLink>
+                                                <PaginationItem key={1}>
+                                                    <PaginationLink isActive={active === 1} onClick={() => setCurrentPage(0)} className="cursor-pointer select-none">1</PaginationLink>
+                                                </PaginationItem>
+                                            );
+                                            if (active > 3) items.push(<PaginationEllipsis key="left-ellipsis" />);
+                                            const start = Math.max(2, active - 1);
+                                            const end = Math.min(total - 1, active + 1);
+                                            for (let i = start; i <= end; i++) {
+                                                items.push(
+                                                    <PaginationItem key={i}>
+                                                        <PaginationLink isActive={active === i} onClick={() => setCurrentPage(i - 1)} className="cursor-pointer select-none">{i}</PaginationLink>
+                                                    </PaginationItem>
+                                                );
+                                            }
+                                            if (active < total - 2) items.push(<PaginationEllipsis key="right-ellipsis" />);
+                                            items.push(
+                                                <PaginationItem key={total}>
+                                                    <PaginationLink isActive={active === total} onClick={() => setCurrentPage(total - 1)} className="cursor-pointer select-none">{total}</PaginationLink>
                                                 </PaginationItem>
                                             );
                                         }
-                                    } else {
-                                        items.push(
-                                            <PaginationItem key={1}>
-                                                <PaginationLink isActive={active === 1} onClick={() => setCurrentPage(0)} className="cursor-pointer select-none">1</PaginationLink>
-                                            </PaginationItem>
-                                        );
-                                        if (active > 3) items.push(<PaginationEllipsis key="left-ellipsis" />);
-                                        const start = Math.max(2, active - 1);
-                                        const end = Math.min(total - 1, active + 1);
-                                        for (let i = start; i <= end; i++) {
-                                            items.push(
-                                                <PaginationItem key={i}>
-                                                    <PaginationLink isActive={active === i} onClick={() => setCurrentPage(i - 1)} className="cursor-pointer select-none">{i}</PaginationLink>
-                                                </PaginationItem>
-                                            );
-                                        }
-                                        if (active < total - 2) items.push(<PaginationEllipsis key="right-ellipsis" />);
-                                        items.push(
-                                            <PaginationItem key={total}>
-                                                <PaginationLink isActive={active === total} onClick={() => setCurrentPage(total - 1)} className="cursor-pointer select-none">{total}</PaginationLink>
-                                            </PaginationItem>
-                                        );
-                                    }
-                                    return items;
-                                })()}
+                                        return items;
+                                    })()}
 
-                                <PaginationItem>
-                                    <PaginationNext
-                                        onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
-                                        className={cn("cursor-pointer select-none", (currentPage >= totalPages - 1 || isLoading) && "pointer-events-none opacity-50")}
-                                    />
-                                </PaginationItem>
-                            </PaginationContent>
-                        </Pagination>
+                                    <PaginationItem>
+                                        <PaginationNext
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                setCurrentPage(p => Math.min(totalPages - 1, p + 1));
+                                            }}
+                                            className={cn(
+                                                "cursor-pointer select-none",
+                                                currentPage >= totalPages - 1 && "pointer-events-none opacity-50",
+                                            )}
+                                        />
+                                    </PaginationItem>
+                                </PaginationContent>
+                            </Pagination>
+                        </div>
+
+                        {/* Right: Showing entries text */}
+                        <div className="text-xs text-muted-foreground whitespace-nowrap md:text-right">
+                            Showing{" "}
+                            {(() => {
+                                const start = totalRows === 0 ? 0 : currentPage * pageSize + 1;
+                                const end = Math.min((currentPage + 1) * pageSize, totalRows);
+                                return `${start}-${end} of ${totalRows}`;
+                            })()}{" "}
+                            entries
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -718,7 +796,7 @@ function StatusBadge({ status }: { status: string }) {
     const variant = isApproved ? "success" : isRejected ? "destructive" : "secondary";
 
     return (
-        <Badge variant={variant}>
+        <Badge variant={variant} className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider shadow-sm">
             {status || "Pending"}
         </Badge>
     );

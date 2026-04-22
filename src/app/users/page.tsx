@@ -118,8 +118,11 @@ export default function UsersPage() {
       const hit =
         !q ||
         u.name.toLowerCase().includes(q) ||
+        u.username.toLowerCase().includes(q) ||
         u.email.toLowerCase().includes(q) ||
-        u.role.toLowerCase().includes(q);
+        u.role.toLowerCase().replace("_", " ").includes(q) ||
+        (u.nmkanwil?.toLowerCase().includes(q) ?? false) ||
+        (u.nmkppn?.toLowerCase().includes(q) ?? false);
       const roleOk = role === "all" || !role || u.role === (role as any);
       const statusOk =
         status === "all" || !status || u.status === (status as any);
@@ -127,11 +130,10 @@ export default function UsersPage() {
     });
   }, [users, query, role, status]);
 
-  // simple pagination
+  // pagination state for DataTable
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
+
 
   // create/edit dialog
   const [open, setOpen] = useState(false);
@@ -386,20 +388,22 @@ export default function UsersPage() {
   }
 
   function toggleSelectAll() {
-    if (paged.every((u) => selected.has(u.id))) {
+    const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
+    if (paged.every((u: User) => selected.has(u.id))) {
       setSelected((s) => {
         const next = new Set(s);
-        paged.forEach((u) => next.delete(u.id));
+        paged.forEach((u: User) => next.delete(u.id));
         return next;
       });
     } else {
       setSelected((s) => {
         const next = new Set(s);
-        paged.forEach((u) => next.add(u.id));
+        paged.forEach((u: User) => next.add(u.id));
         return next;
       });
     }
   }
+
 
   // Show loading or redirect if no permission
   if (isAuthLoading) {
@@ -423,7 +427,7 @@ export default function UsersPage() {
   return (
     <div className="space-y-6 md:space-y-8">
       <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold">Akun Manajemen</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Manajemen Akun</h1>
         <div className="flex gap-2">
           <Button
             variant="destructive"
@@ -441,7 +445,7 @@ export default function UsersPage() {
       ) : (
         <Suspense fallback={<TableLoadingFallback />}>
           <ModernUsersTable
-            users={paged}
+            users={filtered}
             selected={selected}
             onToggleSelect={toggleSelect}
             onToggleSelectAll={toggleSelectAll}
@@ -450,18 +454,30 @@ export default function UsersPage() {
             currentPage={page}
             pageSize={pageSize}
             searchQuery={query}
-            onSearchChange={setQuery}
+            onSearchChange={(q) => {
+              setQuery(q);
+              setPage(1);
+            }}
             roleFilter={role}
-            onRoleFilterChange={setRole}
+            onRoleFilterChange={(r) => {
+              setRole(r);
+              setPage(1);
+            }}
             statusFilter={status}
-            onStatusFilterChange={setStatus}
+            onStatusFilterChange={(s) => {
+              setStatus(s);
+              setPage(1);
+            }}
             totalCount={filtered.length}
             onPageChange={setPage}
             onPageSizeChange={(size) => {
-              setPageSize(size);
-              setPage(1);
+              if (size !== pageSize) {
+                setPageSize(size);
+                setPage(1);
+              }
             }}
           />
+
         </Suspense>
       )}
 

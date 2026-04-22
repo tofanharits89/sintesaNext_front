@@ -50,6 +50,7 @@ import { SatkerSearch } from "./satker-search";
 import { LoginLoading } from "@/components/ui/login-loading";
 import { toast } from "sonner";
 import { ThemeTogglerButton } from "@/components/animate-ui/components/buttons/theme-toggler";
+import { trackMenuUsage } from "@/hooks/use-menu-usage";
 
 export function Navbar() {
   // ThemeTogglerButton handles theme switching internally
@@ -61,6 +62,7 @@ export function Navbar() {
     isLoggingOut,
     isLoading: authLoading,
     logout,
+    hasPermission,
     getRoleDisplayName,
     canManageUsers,
     canAccessSettings,
@@ -331,6 +333,32 @@ export function Navbar() {
 
           {/* right: icons */}
           <div className="ml-auto flex items-center gap-2">
+            {/* Track Nadine icon */}
+            {hasPermission("nadine", "view") && (
+              <Button
+                asChild
+                variant="ghost"
+                className="relative flex items-center gap-2 h-9 px-2 bg-zinc-100 dark:bg-black text-muted-foreground hover:text-foreground rounded-lg"
+                aria-label="Track Nadine"
+              >
+                <Link
+                  href="/menu-rowset/track-nadine"
+                  onClick={() =>
+                    trackMenuUsage({
+                      menu: "Rowset Data",
+                      submenu: "Track Nadine",
+                      path: "/menu-rowset/track-nadine",
+                    })
+                  }
+                >
+                  <Search className="h-5 w-5" />
+                  <span className="hidden md:inline text-sm font-medium">
+                    Track Nadine
+                  </span>
+                </Link>
+              </Button>
+            )}
+
             {/* Notifications popover */}
             <Popover
               open={notificationsOpen}

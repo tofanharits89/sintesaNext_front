@@ -1,6 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import moment from "moment";
+// @ts-ignore
+import "moment/locale/id";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import SaveUserData from "@/components/SaveUserData";
@@ -19,15 +21,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, ArrowRightSquare, Eye, Table2, Search } from "lucide-react";
+import { apiClient } from "@/lib/api/httpClient";
+import { DataTable } from "@/components/ui/data-table";
+import { ColumnDef } from "@tanstack/react-table";
+import { useMemo } from "react";
+
+// --- Skeleton Loader ---
+function TableSkeleton() {
+  return (
+    <div className="space-y-3 animate-pulse">
+      <div className="h-10 bg-muted rounded-md w-full" />
+      <div className="space-y-2">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-12 bg-muted/50 rounded-md w-full" />
+        ))}
+      </div>
+      <div className="h-10 bg-muted rounded-md w-full" />
+    </div>
+  );
+}
 
 interface NadineItemAny {
   ID?: string;
@@ -71,58 +84,15 @@ export default function TrackNadineMasuk({
   const [token, setToken] = useState<string | null>(null);
   const [dataupdate, setDataupdate] = useState<any>(null);
 
-  const gradients = [
-    "linear-gradient(135deg, rgba(199, 249, 204, 0.8), rgba(189, 224, 254, 0.8))",
-    "linear-gradient(135deg, rgba(233, 216, 253, 0.8), rgba(255, 250, 205, 0.8))",
-    "linear-gradient(135deg, rgba(253, 221, 210, 0.8), rgba(253, 226, 228, 0.8))",
-    "linear-gradient(135deg, rgba(189, 245, 255, 0.8), rgba(255, 253, 208, 0.8))",
-    "linear-gradient(135deg, rgba(255, 223, 234, 0.8), rgba(255, 204, 203, 0.8))",
-    "linear-gradient(135deg, rgba(208, 236, 236, 0.8), rgba(230, 224, 245, 0.8))",
-    "linear-gradient(135deg, rgba(255, 245, 238, 0.8), rgba(255, 253, 248, 0.8))",
-    "linear-gradient(135deg, rgba(240, 240, 255, 0.8), rgba(220, 235, 250, 0.8))",
-    "linear-gradient(135deg, rgba(255, 235, 215, 0.8), rgba(255, 250, 240, 0.8))",
-    "linear-gradient(135deg, rgba(240, 248, 255, 0.8), rgba(230, 230, 250, 0.8))",
-    "linear-gradient(135deg, rgba(255, 248, 220, 0.8), rgba(250, 250, 210, 0.8))",
-    "linear-gradient(135deg, rgba(255, 239, 213, 0.8), rgba(250, 230, 230, 0.8))",
-    "linear-gradient(135deg, rgba(244, 252, 250, 0.8), rgba(240, 255, 240, 0.8))",
-    "linear-gradient(135deg, rgba(255, 250, 244, 0.8), rgba(245, 222, 179, 0.8))",
-  ];
-
-  const [bgColor, setBgColor] = useState<string>(gradients[0] || "");
-
-  useEffect(() => {
-    let index = 0;
-    const interval = setInterval(() => {
-      index = (index + 1) % gradients.length;
-      const nextColor = gradients[index];
-      if (nextColor) setBgColor(nextColor);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const NADINE_BASE = (process.env.NEXT_PUBLIC_NADINE as string) || "";
-  const NADINE_KONSEP = (process.env.NEXT_PUBLIC_NADINE_KONSEP as string) || "";
-  const NADINE_UPDATE_TOKEN =
-    (process.env.NEXT_PUBLIC_NADINE_UPDATE_TOKEN as string) || "";
-
   const getUpdate = async () => {
     try {
-      const response = await fetch(NADINE_UPDATE_TOKEN, {
-        method: "GET",
-        credentials: "include",
-        mode: "cors",
-        headers: {
-          Accept: "application/json",
-        },
-      });
-      if (response.status === 401) {
-        setDataupdate(null);
-        return;
-      }
-      const dataup = await response.json();
+      const dataup = await apiClient.get("/track-nadine/update-token");
       setDataupdate(dataup);
     } catch (err) {
-      // Silent fail
+      if ((err as any)?.response?.status === 401) {
+        setDataupdate(null);
+      }
+      // Silent fail for others
     }
   };
 
@@ -137,65 +107,39 @@ export default function TrackNadineMasuk({
     setShowResult(false);
 
     try {
-      // Guard: ensure the API base URLs are configured. If not, show a clear error
-      if (isMasuk && !NADINE_BASE) {
-        setError(
-          "NADINE API belum dikonfigurasi. Pastikan env NEXT_PUBLIC_NADINE diset ke alamat backend (mis. http://localhost:88/api/v1/track-nadine/disposisi?limit=...&offset=0&search=)"
-        );
-        setShowResult(false);
-        setLoading(false);
-        return;
-      }
-      if (!isMasuk && !NADINE_KONSEP) {
-        setError(
-          "NADINE KONSEP API belum dikonfigurasi. Pastikan env NEXT_PUBLIC_NADINE_KONSEP diset ke alamat backend (mis. http://localhost:88/api/v1/track-nadine/keluar?limit=...&offset=0&general=)"
-        );
-        setShowResult(false);
-        setLoading(false);
-        return;
-      }
       const idToUse = overrideId ?? documentId;
-      const encodedId = encodeURIComponent(String(idToUse));
-      const url = isMasuk
-        ? `${NADINE_BASE}${encodedId}`
-        : `${NADINE_KONSEP}${encodedId}`;
-      // Debug log so developers can inspect actual URL being requested
-      // eslint-disable-next-line no-console
-      console.debug("TrackNadine - fetching:", url);
-      const response = await fetch(url, {
-        method: "GET",
-        credentials: "include",
-        mode: "cors",
-        headers: {
-          Accept: "application/json",
-        },
-      });
-      const data = await response.json();
+      const path = isMasuk ? "/track-nadine/disposisi" : "/track-nadine/keluar";
+      const params = isMasuk
+        ? { limit: 100, offset: 0, search: idToUse }
+        : { limit: 100, offset: 0, general: idToUse };
 
-      if (response.ok) {
-        setSearchQuery("");
-        setStatus(data);
-        setFilteredData(data.data.result);
-        setToken(data.data.token);
-        setShowResult(true);
-      } else {
-        if (response.status === 401) {
-          setError(
-            "Unauthorized — silakan login terlebih dahulu untuk mengakses fitur ini"
-          );
-        } else {
-          setError(data.message || "Terjadi kesalahan");
-        }
-        setShowResult(false);
-      }
+      // Debug log so developers can inspect actual request
+      // eslint-disable-next-line no-console
+      console.debug("TrackNadine - fetching:", path, params);
+
+      const data = await apiClient.get(path, { params });
+
+      setSearchQuery("");
+      setStatus(data);
+      setFilteredData(data.data.result);
+      setToken(data.data.token);
+      setShowResult(true);
       getUpdate();
-    } catch (err) {
-      // If parsing JSON fails or fetch failed, provide helpful message
+    } catch (err: any) {
       // eslint-disable-next-line no-console
       console.error("TrackNadine fetch error", err);
-      setError(
-        "Gagal menghubungi server — periksa konfigurasi NEXT_PUBLIC_NADINE/NEXT_PUBLIC_NADINE_KONSEP dan jalankan backend"
-      );
+
+      if (err?.response?.status === 401) {
+        setError(
+          "Unauthorized — silakan login terlebih dahulu untuk mengakses fitur ini"
+        );
+      } else {
+        setError(
+          err?.response?.data?.message ||
+            err?.message ||
+            "Gagal menghubungi server — periksa koneksi dan jalankan backend"
+        );
+      }
       setShowResult(false);
     } finally {
       setLoading(false);
@@ -268,13 +212,99 @@ export default function TrackNadineMasuk({
     setSelectedDetail(null);
   };
 
+  const columns = useMemo<ColumnDef<NadineItemAny>[]>(() => {
+    const cols: ColumnDef<NadineItemAny>[] = [
+      {
+        id: "no",
+        header: () => <div className="text-center font-medium">No</div>,
+        cell: ({ row }) => <div className="text-center">{row.index + 1}</div>,
+      },
+      {
+        accessorKey: "NotaNadine.NoNd",
+        header: () => <div className="text-center font-medium">No. ND/Surat {isMasuk ? "Masuk" : "Keluar"}</div>,
+        cell: ({ row }) => <div className="text-center whitespace-nowrap px-4">{row.original.NotaNadine?.NoNd}</div>,
+      },
+      {
+        accessorKey: "NotaNadine.TglNd",
+        header: () => <div className="text-center font-medium">Tanggal ND/Surat {isMasuk ? "Masuk" : "Keluar"}</div>,
+        cell: ({ row }) => {
+          const tgl = row.original.NotaNadine?.TglNd;
+          if (!tgl) return <div className="text-center">-</div>;
+          return (
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-sm font-normal whitespace-nowrap text-foreground">{moment(tgl).locale("id").format("D MMMM YYYY")}</span>
+              <span className="text-[10px] text-muted-foreground font-mono">{moment(tgl).format("HH:mm:ss")}</span>
+            </div>
+          );
+        },
+      },
+      {
+        id: "tanggalKirim",
+        header: () => <div className="text-center font-medium">Tanggal Kirim ND/Surat {isMasuk ? "Masuk" : "Keluar"}</div>,
+        cell: ({ row }) => {
+          const tgl = isMasuk ? row.original.updatedAt : row.original.NotaNadine?.TanggalKirim;
+          if (!tgl) return <div className="text-center">-</div>;
+          return (
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-sm font-normal whitespace-nowrap text-foreground">{moment(tgl).locale("id").format("D MMMM YYYY")}</span>
+              <span className="text-[10px] text-muted-foreground font-mono">{moment(tgl).format("HH:mm:ss")}</span>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "NotaNadine.Pengirim",
+        header: () => <div className="text-center font-medium">Pengirim</div>,
+        cell: ({ row }) => (
+          <div className="min-w-[200px] max-w-[300px] whitespace-normal break-words">
+            {row.original.NotaNadine?.Pengirim || "Tidak ada pengirim"}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "NotaNadine.Perihal",
+        header: () => <div className="text-center font-medium">Perihal</div>,
+        cell: ({ row }) => {
+          const perihal = row.original.NotaNadine?.Perihal || "";
+          const isRahasia = perihal.includes("Rahasia");
+          return (
+            <div className={`min-w-[300px] max-w-[500px] whitespace-normal break-words ${isRahasia ? "blur-sm select-none" : ""}`}>
+              {perihal}
+            </div>
+          );
+        },
+      },
+      {
+        id: "actions",
+        header: () => <div className="text-center font-medium">Detail</div>,
+        size: 120,
+        cell: ({ row }) => (
+          <div className="flex justify-center min-w-[100px]">
+            {row.original.ID ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0 cursor-pointer"
+                onClick={() => handleDetailClick(row.original.ID as string)}
+                title="Lihat Detail"
+              >
+                <Eye className="h-4 w-4 text-amber-600" />
+              </Button>
+            ) : (
+              <span className="text-muted-foreground text-xs">null</span>
+            )}
+          </div>
+        ),
+      },
+    ];
+
+    return cols;
+  }, [isMasuk]);
+
   return (
     <div className="space-y-6">
       {/* Search Card */}
-      <Card
-        style={{ background: bgColor }}
-        className="transition-all duration-300"
-      >
+      <Card className="transition-all duration-300">
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex flex-col gap-2">
@@ -289,13 +319,6 @@ export default function TrackNadineMasuk({
               )}
             </div>
             <div className="flex items-center gap-3">
-              {status && status.data && (
-                <p className="text-xs text-muted-foreground">
-                  {filteredData.length > 0
-                    ? `${filteredData.length} data ditemukan`
-                    : `${status.data.result.length} data ditemukan`}
-                </p>
-              )}
               <div className="flex items-center space-x-2 bg-white/50 p-2 rounded-lg">
                 <Label
                   htmlFor="mode-switch"
@@ -325,11 +348,11 @@ export default function TrackNadineMasuk({
           </div>
         </CardHeader>
         <CardContent>
-          <CardTitle className="text-center mb-6 text-secondary-foreground">
+            <CardTitle className="text-center mb-6">
             Track Disposisi Nadine - Surat {isMasuk ? "Masuk" : "Keluar"}
           </CardTitle>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex gap-3">
+            <div className="flex flex-col md:flex-row gap-3">
               <div className="flex-1">
                 <Input
                   type="text"
@@ -337,10 +360,10 @@ export default function TrackNadineMasuk({
                   value={documentId}
                   onChange={(e) => setDocumentId(e.target.value)}
                   required
-                  className="h-12"
+                  className="h-12 w-full"
                 />
               </div>
-              <Button type="submit" disabled={loading} className="h-12 px-8">
+              <Button type="submit" disabled={loading} className="h-12 w-full md:w-[250px]">
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -384,152 +407,92 @@ export default function TrackNadineMasuk({
       )}
 
       {/* Results */}
-      {showResult && status && !error && (
-        <div className="space-y-4">
-          {/* Filters */}
-          <div className="flex gap-3">
-            <Select value={filterYear} onValueChange={setFilterYear}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Pilih Tahun" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Tahun</SelectItem>
-                {Array.from(
-                  new Set<number>(
-                    status.data.result.map((item: any) =>
-                      new Date(item.NotaNadine.TglNd2).getFullYear()
-                    )
-                  )
-                ).map((year: number) => (
-                  <SelectItem key={year} value={String(year)}>
-                    Tahun {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <div className="space-y-4">
+        <Card className="transition-all duration-300 shadow-sm border-border/50">
+          <CardHeader className="py-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <CardTitle className="text-lg font-semibold">
+                Daftar Surat {isMasuk ? "Masuk" : "Keluar"}
+              </CardTitle>
 
-            <div className="flex-1 relative">
-              <Input
-                type="text"
-                placeholder="Cari data..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {searchQuery && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
-                  onClick={() => setSearchQuery("")}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+              {showResult && status && !error && (
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                  <div className="relative flex-1 md:w-[450px]">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Cari data..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-9 pr-8"
+                    />
+                    {searchQuery && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-transparent"
+                        onClick={() => setSearchQuery("")}
+                      >
+                        <X className="h-3 w-3 text-muted-foreground" />
+                      </Button>
+                    )}
+                  </div>
+
+                  <Select value={filterYear} onValueChange={setFilterYear}>
+                    <SelectTrigger className="w-[130px] md:w-[150px]">
+                      <SelectValue placeholder="Pilih Tahun" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Semua Tahun</SelectItem>
+                      {Array.from(
+                        new Set<number>(
+                          status.data.result
+                            .map((item: any) => {
+                              const t = item.NotaNadine?.TglNd2 || item.NotaNadine?.TglNd || "";
+                              return t ? new Date(t).getFullYear() : NaN;
+                            })
+                            .filter((year: number) => !isNaN(year))
+                        )
+                      )
+                        .sort((a, b) => b - a)
+                        .map((year: number) => (
+                          <SelectItem key={year} value={String(year)}>
+                            Tahun {year}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
             </div>
-          </div>
-
-          {/* Results Table */}
-          <Card
-            style={{ background: bgColor }}
-            className="transition-all duration-300"
-          >
-            <CardContent className="p-0">
-              <div className="max-h-[600px] overflow-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[60px]">No</TableHead>
-                      <TableHead>Pengirim</TableHead>
-                      <TableHead>Perihal</TableHead>
-                      <TableHead>No ND</TableHead>
-                      {isMasuk ? (
-                        <>
-                          <TableHead>Tgl ND</TableHead>
-                          <TableHead>Tujuan Disposisi</TableHead>
-                          <TableHead>Tgl Kirim ND</TableHead>
-                        </>
-                      ) : (
-                        <TableHead>Tgl Kirim</TableHead>
-                      )}
-                      <TableHead className="w-[80px]">Detail</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(filteredData.length > 0
-                      ? filteredData
-                      : status.data.result
-                    ).map((item: NadineItemAny, index: number) => {
-                      const nota = item.NotaNadine || ({} as any);
-                      const isRahasia = (nota.Perihal || "").includes(
-                        "Rahasia"
-                      );
-
-                      return (
-                        <TableRow
-                          key={index}
-                          className={
-                            isRahasia ? "blur-sm pointer-events-none" : ""
-                          }
-                        >
-                          <TableCell>{index + 1}</TableCell>
-                          <TableCell>
-                            {nota.Pengirim || "Tidak ada pengirim"}
-                          </TableCell>
-                          <TableCell>{nota.Perihal}</TableCell>
-                          <TableCell>{nota.NoNd}</TableCell>
-                          {isMasuk ? (
-                            <>
-                              <TableCell>
-                                {moment(nota.TglNd).format(
-                                  "DD-MM-YYYY HH:mm:ss"
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                <ul className="list-disc pl-5 space-y-1">
-                                  {(item.tujuanDispo || []).map((tujuan, i) => (
-                                    <li key={i} className="text-sm">
-                                      {tujuan}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </TableCell>
-                              <TableCell>
-                                {moment(item.updatedAt).format(
-                                  "DD-MM-YYYY HH:mm:ss"
-                                )}
-                              </TableCell>
-                            </>
-                          ) : (
-                            <TableCell>{nota.TanggalKirim}</TableCell>
-                          )}
-                          <TableCell>
-                            {item.ID ? (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                                onClick={() =>
-                                  handleDetailClick(item.ID as string)
-                                }
-                              >
-                                <i className="bi bi-arrow-right-square-fill text-xl" />
-                              </Button>
-                            ) : (
-                              <span className="text-muted-foreground text-xs">
-                                null
-                              </span>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <TableSkeleton />
+            ) : showResult && status && !error ? (
+              <DataTable
+                columns={columns}
+                data={filteredData.length > 0 ? filteredData : (status?.data?.result || [])}
+                initialPageSize={10}
+              />
+            ) : (
+              <div className="border rounded-md">
+                <div className="h-10 bg-muted/50 border-b flex items-center px-4">
+                  <div className="text-xs font-medium text-muted-foreground uppercase">
+                    Silakan cari data {isMasuk ? "Surat Masuk" : "Surat Keluar"}
+                  </div>
+                </div>
+                <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-background/50">
+                  <Table2 className="h-10 w-10 mb-2 opacity-20" />
+                  <p className="text-sm">
+                    Masukkan kata kunci pencarian dan klik "Search" untuk menampilkan hasil
+                  </p>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <SaveUserData userData={username || ""} menu="track-nadine" />
 
@@ -540,7 +503,6 @@ export default function TrackNadineMasuk({
           selectedDetail={selectedDetail}
           token={token || ""}
           id={status && selectedDetail}
-          bgcolor={bgColor}
         />
       ) : (
         <DetailKeluar
@@ -549,7 +511,6 @@ export default function TrackNadineMasuk({
           selectedDetail={selectedDetail}
           token={token || ""}
           id={status && selectedDetail ? selectedDetail : ""}
-          bgcolor={bgColor}
         />
       )}
     </div>

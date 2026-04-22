@@ -2,21 +2,14 @@
 
 import { useMemo, useState } from "react";
 import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-  flexRender,
+  ColumnDef,
   createColumnHelper,
-  SortingState,
-  ColumnFiltersState,
 } from "@tanstack/react-table";
 import { User } from "@/lib/stores/users-store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -29,19 +22,13 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import { Pencil, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Search } from "lucide-react";
+import { Pencil, Trash2, Search, FilterX, Users } from "lucide-react";
 import kanwilData from "@/data/kdkanwil.json";
 import kppnData from "@/data/kdkppn.json";
 import { cn } from "@/lib/utils/utils";
+import { DataTable } from "@/components/ui/data-table";
+import { ResetButton } from "@/components/ui/reset-button";
+
 
 interface ModernUsersTableProps {
   users: User[];
@@ -84,190 +71,151 @@ export function ModernUsersTable({
   onPageChange,
   onPageSizeChange,
 }: ModernUsersTableProps) {
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-
-  const columns = useMemo(
+  const columns = useMemo<ColumnDef<User, any>[]>(
     () => [
       columnHelper.display({
         id: "select",
         header: ({ table }) => (
-          <Checkbox
-            checked={table.getIsAllPageRowsSelected()}
-            onCheckedChange={(value) => {
-              table.toggleAllPageRowsSelected(!!value);
-              onToggleSelectAll();
-            }}
-            aria-label="Select all"
-            className="translate-y-[2px]"
-          />
+          <div className="flex justify-center">
+            <Checkbox
+              checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+              onCheckedChange={(value) => {
+                table.toggleAllPageRowsSelected(!!value);
+                onToggleSelectAll();
+              }}
+              aria-label="Select all"
+              className="translate-y-[2px]"
+            />
+          </div>
         ),
         cell: ({ row }) => (
-          <Checkbox
-            checked={selected.has(row.original.id)}
-            onCheckedChange={() => onToggleSelect(row.original.id)}
-            aria-label="Select row"
-            className="translate-y-[2px]"
-          />
+          <div className="flex justify-center">
+            <Checkbox
+              checked={selected.has(row.original.id)}
+              onCheckedChange={() => onToggleSelect(row.original.id)}
+              aria-label="Select row"
+              className="translate-y-[2px]"
+            />
+          </div>
         ),
         enableSorting: false,
         enableHiding: false,
-        size: 40,
+        size: 50,
       }),
       columnHelper.display({
         id: "number",
         header: () => <div className="text-center w-full">No</div>,
         cell: ({ row }) => (
           <div className="text-center font-medium text-muted-foreground">
-            {(currentPage - 1) * pageSize + row.index + 1}
+            {row.index + 1 + (currentPage - 1) * pageSize}
           </div>
-        ) ,
+        ),
         enableSorting: false,
         size: 60,
       }),
       columnHelper.accessor("name", {
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-              className="-ml-4 h-8 data-[state=open]:bg-accent"
-            >
-              Nama Lengkap
-              {column.getIsSorted() === "asc" ? (
-                <ArrowUp className="ml-2 h-4 w-4" />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowDown className="ml-2 h-4 w-4" />
-              ) : (
-                <ArrowUpDown className="ml-2 h-4 w-4" />
-              )}
-            </Button>
-          );
-        },
-        cell: ({ getValue }) => (
-          <div className="font-medium">
-            {getValue()}
-          </div>
-        ),
+        header: () => <div className="text-center w-full">Nama Lengkap</div>,
+        cell: ({ getValue }) => <div className="font-semibold text-zinc-900 dark:text-zinc-100">{getValue()}</div>,
         size: 200,
       }),
       columnHelper.accessor("username", {
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-              className="-ml-4 h-8 data-[state=open]:bg-accent"
-            >
-              Username
-              {column.getIsSorted() === "asc" ? (
-                <ArrowUp className="ml-2 h-4 w-4" />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowDown className="ml-2 h-4 w-4" />
-              ) : (
-                <ArrowUpDown className="ml-2 h-4 w-4" />
-              )}
-            </Button>
-          );
-        },
+        header: () => <div className="text-center w-full">Username</div>,
         cell: ({ getValue }) => (
-          <div className="font-mono text-sm">
-            {getValue()}
+          <div className="text-center">
+            <code className="text-xs font-mono bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">{getValue()}</code>
           </div>
         ),
         size: 150,
       }),
       columnHelper.accessor("email", {
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-              className="-ml-4 h-8 data-[state=open]:bg-accent"
-            >
-              Email
-              {column.getIsSorted() === "asc" ? (
-                <ArrowUp className="ml-2 h-4 w-4" />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowDown className="ml-2 h-4 w-4" />
-              ) : (
-                <ArrowUpDown className="ml-2 h-4 w-4" />
-              )}
-            </Button>
-          );
-        },
-        cell: ({ getValue }) => (
-          <div>
-            {getValue()}
-          </div>
-        ),
+        header: () => <div className="text-center w-full">Email</div>,
+        cell: ({ getValue }) => <div className="text-muted-foreground">{getValue()}</div>,
         size: 200,
       }),
       columnHelper.accessor("role", {
-        header: "Role",
-        cell: ({ getValue }) => (
-          <div className="capitalize">
-            {getValue().replaceAll("_", " ")}
-          </div>
-        ),
-        enableSorting: false,
+        header: () => <div className="text-center w-full">Role</div>,
+        cell: ({ getValue }) => {
+          const role = getValue();
+          const roleColors: Record<string, string> = {
+            super_admin: "bg-rose-500 hover:bg-rose-600 text-white border-transparent",
+            co_admin: "bg-amber-500 hover:bg-amber-600 text-white border-transparent",
+            kantor_pusat: "bg-indigo-500 hover:bg-indigo-600 text-white border-transparent",
+            ditpa: "bg-emerald-500 hover:bg-emerald-600 text-white border-transparent",
+            kanwil_djpb: "bg-blue-500 hover:bg-blue-600 text-white border-transparent",
+            kppn: "bg-sky-500 hover:bg-sky-600 text-white border-transparent",
+            lainnya: "bg-zinc-500 hover:bg-zinc-600 text-white border-transparent",
+          };
+          
+          return (
+            <div className="flex justify-center">
+              <Badge className={cn("uppercase tracking-wider px-2.5 py-0.5", roleColors[role] || "bg-zinc-500 text-white border-transparent")}>
+                {role.replaceAll("_", " ")}
+              </Badge>
+            </div>
+          );
+        },
         size: 150,
       }),
       columnHelper.display({
         id: "kanwil",
-        header: "Kanwil",
+        header: () => <div className="text-center w-full">Kanwil</div>,
         cell: ({ row }) => {
           const kanwil = row.original.kdkanwil
             ? kanwilData.find((k) => k.kdkanwil === row.original.kdkanwil)
             : null;
+          
+          if (!kanwil) return <div className="text-center"><span className="text-muted-foreground italic">-</span></div>;
+          
           return (
-            <div>
-              {kanwil?.nmkanwil ?? "-"}
+            <div className="font-medium text-zinc-700 dark:text-zinc-300 truncate max-w-[150px] mx-auto text-center" title={kanwil.nmkanwil}>
+              {kanwil.nmkanwil}
             </div>
           );
         },
-        enableSorting: false,
-        size: 150,
+        size: 160,
       }),
       columnHelper.display({
         id: "kppn",
-        header: "KPPN",
+        header: () => <div className="text-center w-full">KPPN</div>,
         cell: ({ row }) => {
           const kppn = row.original.kdkppn
             ? kppnData.find((k) => k.kdkppn === row.original.kdkppn)
             : null;
+          
+          if (!kppn) return <div className="text-center"><span className="text-muted-foreground italic">-</span></div>;
+          
           return (
-            <div>
-              {kppn?.nmkppn ?? "-"}
+            <div className="font-medium text-zinc-700 dark:text-zinc-300 truncate max-w-[150px] mx-auto text-center" title={kppn.nmkppn}>
+              {kppn.nmkppn}
             </div>
           );
         },
-        enableSorting: false,
-        size: 150,
+        size: 160,
       }),
+
       columnHelper.accessor("limitKodeBA", {
-        header: "Limit BA",
+        header: () => <div className="text-center w-full">Limit BA</div>,
         cell: ({ getValue }) => (
-          <div className="font-mono">
-            {getValue() ?? "-"}
+          <div className="font-mono text-center">
+            {getValue() || "-"}
           </div>
         ),
-        enableSorting: false,
         size: 100,
       }),
       columnHelper.accessor("status", {
-        header: "Status",
+        header: () => <div className="text-center w-full">Status</div>,
         cell: ({ getValue }) => (
-          <Badge
-            variant={getValue() === "active" ? "success" : "destructive"}
-          >
-            {getValue() === "active" ? <span className="font-bold">Aktif</span> : "Nonaktif"}
-          </Badge>
+          <div className="flex justify-center">
+            <Badge
+              variant={getValue() === "active" ? "success" : "destructive"}
+              className="capitalize"
+            >
+              {getValue() === "active" ? "Aktif" : "Nonaktif"}
+            </Badge>
+          </div>
         ),
-        enableSorting: false,
         size: 100,
       }),
-
       columnHelper.display({
         id: "actions",
         header: () => <div className="text-center w-full">Aksi</div>,
@@ -275,70 +223,74 @@ export function ModernUsersTable({
           <div className="flex items-center justify-center gap-2">
             <Button
               variant="outline"
-              size="sm"
+              size="icon"
               onClick={(e) => {
                 e.stopPropagation();
                 onEdit(row.original);
               }}
-              className="h-8 w-8 p-0 cursor-pointer"
+              className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
               title="Edit Pengguna"
             >
-              <Pencil className="h-4 w-4 text-blue-600" />
+              <Pencil className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
-              size="sm"
+              size="icon"
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete(row.original.id, row.original.name);
               }}
-              className="h-8 w-8 p-0 cursor-pointer"
+              className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
               title="Hapus Pengguna"
             >
-              <Trash2 className="h-4 w-4 text-red-600" />
+              <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         ),
         enableSorting: false,
-        enableHiding: false,
         size: 100,
       }),
     ],
     [selected, onToggleSelect, onToggleSelectAll, onEdit, onDelete, currentPage, pageSize]
   );
 
-  const table = useReactTable({
-    data: users,
-    columns,
-    state: {
-      sorting,
-      columnFilters,
-    },
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-  });
-
   return (
-    <Card>
-      <CardContent className="px-6 py-2">
-        <div className="flex flex-col gap-4 mb-4">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <InputGroup className="h-9 max-w-xl bg-zinc-100 dark:bg-black">
-              <InputGroupAddon align="inline-start">
-                <Search className="size-4" />
-              </InputGroupAddon>
-              <InputGroupInput 
-                placeholder="Cari nama, email, atau peran"
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-              />
-            </InputGroup>
-            <div className="flex gap-2">
+    <div className="space-y-6">
+      {/* Search & Filter Card */}
+      <Card className="overflow-hidden border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <CardHeader>
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle className="text-xl font-semibold">Filter Pengguna</CardTitle>
+            <ResetButton 
+              onReset={() => {
+                onSearchChange("");
+                onRoleFilterChange("all");
+                onStatusFilterChange("all");
+              }} 
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Cari Pengguna</label>
+              <InputGroup className="bg-zinc-100 dark:bg-black border-transparent transition-all">
+                <InputGroupAddon align="inline-start">
+                  <Search className="size-4 text-muted-foreground" />
+                </InputGroupAddon>
+                <InputGroupInput 
+                  placeholder="Nama, email, atau username..."
+                  value={searchQuery}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  className="w-full"
+                />
+              </InputGroup>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Role</label>
               <Select value={roleFilter} onValueChange={onRoleFilterChange}>
-                <SelectTrigger className="h-9 min-w-40">
+                <SelectTrigger className="w-full bg-zinc-100 dark:bg-black border-transparent">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -352,8 +304,12 @@ export function ModernUsersTable({
                   <SelectItem value="lainnya">User Lainnya</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Status</label>
               <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-                <SelectTrigger className="h-9 min-w-40">
+                <SelectTrigger className="w-full bg-zinc-100 dark:bg-black border-transparent">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -364,202 +320,33 @@ export function ModernUsersTable({
               </Select>
             </div>
           </div>
-        </div>
-        <div className="rounded-md border">
-          <div className="relative w-full overflow-x-auto">
-            <table className="w-full caption-bottom text-sm">
-              <thead className="[&_tr]:border-b">
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id} className="border-b transition-colors hover:bg-muted/50">
-                    {headerGroup.headers.map((header) => (
-                      <th
-                        key={header.id}
-                        className={cn(
-                          "h-10 px-2 align-middle font-medium [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
-                          (header.id === "actions" || header.id === "number") ? "text-center" : "text-left",
-                          header.column.getCanSort() && "cursor-pointer select-none"
-                        )}
-                        style={{ width: header.getSize() }}
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody className="[&_tr:last-child]:border-0">
-                {table.getRowModel().rows.map((row) => (
-                  <tr
-                    key={row.id}
-                    className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <td
-                        key={cell.id}
-                        className={cn(
-                          "p-2 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
-                          (cell.column.id === "actions" || cell.column.id === "number") ? "text-center" : "text-left"
-                        )}
-                        style={{ width: cell.column.getSize() }}
-                      >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {table.getRowModel().rows.length === 0 && (
-            <div className="text-center py-12">
-              <div className="text-muted-foreground">
-                Tidak ada data yang ditemukan
-              </div>
-            </div>
-          )}
-        </div>
-        <div className="flex flex-col md:grid md:grid-cols-3 items-center justify-between gap-4 py-4 mt-2">
-          {/* Left: Rows per page */}
-          <div className="flex items-center space-x-2 order-2 md:order-1">
-            <p className="text-sm font-medium">Rows per page</p>
-            <Select
-              value={`${pageSize}`}
-              onValueChange={(value) => {
-                onPageSizeChange(Number(value));
-              }}
-            >
-              <SelectTrigger className="h-8 w-[80px]">
-                <SelectValue placeholder={pageSize} />
-              </SelectTrigger>
-              <SelectContent side="top">
-                {[10, 25, 50, 100].map((size) => (
-                  <SelectItem key={size} value={`${size}`}>
-                    {size}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        </CardContent>
+      </Card>
 
-          {/* Center: Pagination */}
-          <div className="flex items-center justify-center order-1 md:order-2 w-full md:w-auto">
-            <Pagination className="mx-auto overflow-x-auto no-scrollbar justify-center">
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-                    className={cn(
-                      "cursor-pointer select-none",
-                      currentPage === 1 && "pointer-events-none opacity-50"
-                    )}
-                  />
-                </PaginationItem>
-
-                {/* Page numbers logic */}
-                {(() => {
-                  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
-                  const totalPage = pageCount;
-                  const current = currentPage;
-                  const items = [];
-
-                  if (totalPage <= 7) {
-                    for (let i = 1; i <= totalPage; i++) {
-                      items.push(
-                        <PaginationItem key={i}>
-                          <PaginationLink
-                            isActive={current === i}
-                            onClick={() => onPageChange(i)}
-                            className="cursor-pointer select-none"
-                          >
-                            {i}
-                          </PaginationLink>
-                        </PaginationItem>
-                      );
-                    }
-                  } else {
-                    // Always show first
-                    items.push(
-                      <PaginationItem key={1}>
-                        <PaginationLink
-                          isActive={current === 1}
-                          onClick={() => onPageChange(1)}
-                          className="cursor-pointer select-none"
-                        >
-                          1
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-
-                    if (current > 3) {
-                      items.push(<PaginationEllipsis key="left-ellipsis" />);
-                    }
-
-                    // Middle pages
-                    const start = Math.max(2, current - 1);
-                    const end = Math.min(totalPage - 1, current + 1);
-
-                    for (let i = start; i <= end; i++) {
-                      items.push(
-                        <PaginationItem key={i}>
-                          <PaginationLink
-                            isActive={current === i}
-                            onClick={() => onPageChange(i)}
-                            className="cursor-pointer select-none"
-                          >
-                            {i}
-                          </PaginationLink>
-                        </PaginationItem>
-                      );
-                    }
-
-                    if (current < totalPage - 2) {
-                      items.push(<PaginationEllipsis key="right-ellipsis" />);
-                    }
-
-                    // Always show last
-                    items.push(
-                      <PaginationItem key={totalPage}>
-                        <PaginationLink
-                          isActive={current === totalPage}
-                          onClick={() => onPageChange(totalPage)}
-                          className="cursor-pointer select-none"
-                        >
-                          {totalPage}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  }
-                  return items;
-                })()}
-
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() => {
-                      const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
-                      onPageChange(Math.min(pageCount, currentPage + 1));
-                    }}
-                    className={cn(
-                      "cursor-pointer select-none",
-                      currentPage >= Math.max(1, Math.ceil(totalCount / pageSize)) && "pointer-events-none opacity-50"
-                    )}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-
-          {/* Right: Showing entries text */}
-          <div className="text-sm text-muted-foreground whitespace-nowrap order-3 md:text-right">
-            Showing {totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1}-
-            {Math.min(currentPage * pageSize, totalCount)} of {totalCount} entries
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+      {/* Table Card */}
+      <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+        <CardContent className="px-6 py-2">
+          <DataTable
+            columns={columns}
+            data={users}
+            controlledPagination={{
+              pageIndex: currentPage - 1,
+              pageSize: pageSize,
+            }}
+            onPaginationChange={(p) => {
+              const newPage = p.pageIndex + 1;
+              if (newPage !== currentPage) {
+                onPageChange(newPage);
+              }
+              if (p.pageSize !== pageSize) {
+                onPageSizeChange(p.pageSize);
+              }
+            }}
+            footerInfoText={`Showing ${totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, totalCount)} of ${totalCount} entries`}
+            tableClassName="text-sm"
+          />
+        </CardContent>
+      </Card>
+    </div>
   );
 }

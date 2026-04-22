@@ -21,52 +21,72 @@ export function ComponentLoadingFallback() {
 
 export function TableLoadingFallback() {
   return (
-    <Card>
-      <CardContent className="px-6 py-2">
-        <div className="flex flex-col gap-4 mb-4 mt-2">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <Skeleton className="h-9 w-full max-w-xl" />
-            <div className="flex gap-2">
-              <Skeleton className="h-9 w-40" />
-              <Skeleton className="h-9 w-40" />
+    <div className="space-y-6">
+      {/* Filter Card Skeleton */}
+      <Card className="overflow-hidden border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-7 w-32" />
+            <Skeleton className="h-8 w-20" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-10 w-full" />
             </div>
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        <div className="rounded-md border">
-          <div className="h-10 border-b flex items-center px-4 bg-muted/30">
-            <Skeleton className="h-4 w-4 mr-6" />
-            <Skeleton className="h-4 w-8 mr-6" />
-            <Skeleton className="h-4 w-32 mr-6" />
-            <Skeleton className="h-4 w-24 mr-6" />
-            <Skeleton className="h-4 w-40 mr-6" />
-            <Skeleton className="h-4 w-20" />
-          </div>
-          <div className="divide-y overflow-hidden">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-12 flex items-center px-4">
-                <Skeleton className="h-4 w-4 mr-6" />
-                <Skeleton className="h-4 w-8 mr-6" />
-                <Skeleton className="h-4 w-32 mr-6" />
-                <Skeleton className="h-4 w-24 mr-6" />
-                <Skeleton className="h-4 w-40 mr-6" />
-                <div className="flex gap-2 ml-auto">
-                  <Skeleton className="h-8 w-8 rounded-md" />
-                  <Skeleton className="h-8 w-8 rounded-md" />
+      {/* Table Card Skeleton */}
+      <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+        <CardContent className="px-6 py-2">
+          <div className="rounded-md border mt-2">
+            {/* Table Header */}
+            <div className="h-10 border-b flex items-center px-4 bg-muted/30">
+              <Skeleton className="h-4 w-4 mr-10" /> {/* Checkbox */}
+              <Skeleton className="h-4 w-8 mr-12" /> {/* No */}
+              <Skeleton className="h-4 w-32 mr-32" /> {/* Nama Lengkap */}
+              <Skeleton className="h-4 w-24 mr-32" /> {/* Username */}
+              <Skeleton className="h-4 w-40" />      {/* Email */}
+            </div>
+            {/* Table Rows */}
+            <div className="divide-y overflow-hidden">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="h-14 flex items-center px-4">
+                  <Skeleton className="h-4 w-4 mr-10" />
+                  <Skeleton className="h-4 w-8 mr-12" />
+                  <Skeleton className="h-4 w-32 mr-32" />
+                  <Skeleton className="h-4 w-24 mr-32" />
+                  <Skeleton className="h-4 w-40" />
+                  <div className="flex gap-2 ml-auto">
+                    <Skeleton className="h-8 w-8 rounded-md" />
+                    <Skeleton className="h-8 w-8 rounded-md" />
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Pagination Footer */}
-        <div className="flex items-center justify-between py-4 mt-2">
-          <Skeleton className="h-8 w-36" />
-          <Skeleton className="h-8 w-64" />
-          <Skeleton className="h-8 w-40" />
-        </div>
-      </CardContent>
-    </Card>
+          {/* Pagination Footer */}
+          <div className="flex items-center justify-between py-6 mt-2">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-8 w-32" />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 

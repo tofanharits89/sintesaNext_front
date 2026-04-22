@@ -102,6 +102,14 @@ const defaultMenu: MenuItem[] = [
     ],
   },
   {
+    label: "Kewilayahan",
+    children: [
+      { label: "Belanja" },
+      { label: "Tematik" },
+      { label: "Subsidi" },
+    ],
+  },
+  {
     label: "Transfer Daerah",
     children: [
       { label: "DAU" },
@@ -142,15 +150,6 @@ const defaultMenu: MenuItem[] = [
     children: [
       { label: "Generate Dataset" },
       { label: "SP2D" },
-      { label: "Track Nadine" },
-    ],
-  },
-  {
-    label: "Kewilayahan",
-    children: [
-      { label: "Belanja" },
-      { label: "Tematik" },
-      { label: "Subsidi" },
     ],
   },
   {
@@ -203,12 +202,12 @@ const MENU_ROUTE_PREFIXES: Array<{ prefix: string; parent: string }> = [
   { prefix: "/dashboard", parent: "Dashboard" },
   { prefix: "/makan-bergizi", parent: "Makan Bergizi" },
   { prefix: "/monev-kkp", parent: "Monev KKP" },
+  { prefix: "/belwil", parent: "Kewilayahan" },
   { prefix: "/transfer-daerah", parent: "Transfer Daerah" },
   { prefix: "/inquiry-data", parent: "Inquiry Data" },
   { prefix: "/laporan", parent: "Laporan" },
   { prefix: "/data-makrokesra", parent: "Data Makrokesra" },
   { prefix: "/menu-rowset", parent: "Rowset Data" },
-  { prefix: "/belwil", parent: "Kewilayahan" },
   { prefix: "/dispensasi", parent: "Dispensasi" },
   { prefix: "/ikpa", parent: "Monev IKPA" },
   { prefix: "/data-supplier", parent: "Data Supplier" },
@@ -282,6 +281,22 @@ export function ResponsiveSidebar({
               (child) => child.label !== "Dashboard Pengendalian Belanja",
             ),
           };
+        }
+
+        // Filter IKI PA children:
+        if (item.label === "IKI PA") {
+          const isKontraktualAllowed = isAdmin || user.role === "ditpa";
+          const isApbdAllowed = isAdmin || user.role === "kanwil_djpb";
+
+          const allowedChildren = (item.children || []).filter((child) => {
+            if (child.label === "IKI Kontraktual" && !isKontraktualAllowed)
+              return false;
+            if (child.label === "IKI APBD" && !isApbdAllowed) return false;
+            return true;
+          });
+
+          if (allowedChildren.length === 0) return null; // Hide menu entirely
+          return { ...item, children: allowedChildren };
         }
 
         return item;
@@ -462,8 +477,6 @@ export function ResponsiveSidebar({
         return <CheckCircle className={cls} />;
       case "Rowset Data__SP2D":
         return <Banknote className={cls} />;
-      case "Rowset Data__Track Nadine":
-        return <Search className={cls} />;
       case "Kewilayahan__Belanja":
         return <Database className={cls} />;
       case "Kewilayahan__Tematik":
@@ -847,11 +860,6 @@ export function ResponsiveSidebar({
                               m.label === "Data Makrokesra"
                             ) {
                               href = "/data-makrokesra/data-bps";
-                            } else if (
-                              c.label === "Track Nadine" &&
-                              m.label === "Rowset Data"
-                            ) {
-                              href = "/menu-rowset/track-nadine";
                             } else if (
                               c.label === "SP2D" &&
                               m.label === "Rowset Data"
@@ -1696,26 +1704,6 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/data-makrokesra/data-bps",
-                          });
-                          setOpen(false);
-                        }}
-                      >
-                        <span className="inline-flex items-center">
-                          {subIconFor(m.label, c.label)}
-                          <span>{c.label}</span>
-                        </span>
-                      </Link>
-                    ) : c.label === "Track Nadine" &&
-                      m.label === "Rowset Data" ? (
-                      <Link
-                        key={c.label}
-                        href="/menu-rowset/track-nadine"
-                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
-                        onClick={() => {
-                          trackMenuUsage({
-                            menu: m.label,
-                            submenu: c.label,
-                            path: "/menu-rowset/track-nadine",
                           });
                           setOpen(false);
                         }}
