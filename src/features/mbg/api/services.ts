@@ -633,3 +633,47 @@ export async function getPetugasData(
     throw new Error("Failed to fetch Petugas data");
   return response.data;
 }
+
+// ---------------------------------------------------------------------------
+// MBG – SPPG
+// ---------------------------------------------------------------------------
+
+export type SppgRawRow = {
+  nmprov: string;
+  tgtarik: string;
+  nilai: number;
+};
+
+export type SppgKanwilData = { kanwil: string[] };
+export type SppgDataResponse = { rows: SppgRawRow[] };
+
+export async function getSppgKanwil(
+  kdkanwil?: string,
+): Promise<SppgKanwilData> {
+  const params = new URLSearchParams();
+  if (kdkanwil) params.set("kdkanwil", kdkanwil);
+  const qs = params.toString();
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: SppgKanwilData;
+  }>(`/dashboard/mbg/sppg-kanwil${qs ? `?${qs}` : ""}`);
+  if (!response?.success || !response.data)
+    throw new Error("Failed to fetch SPPG kanwil");
+  return response.data;
+}
+
+export async function getSppgData(
+  kanwil: string[],
+  kdkanwil?: string,
+): Promise<SppgDataResponse> {
+  const params = new URLSearchParams();
+  if (kanwil.length > 0) params.set("kanwil", kanwil.join(","));
+  if (kdkanwil) params.set("kdkanwil", kdkanwil);
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: SppgDataResponse;
+  }>(`/dashboard/mbg/sppg-data?${params.toString()}`);
+  if (!response?.success || !response.data)
+    throw new Error("Failed to fetch SPPG data");
+  return response.data;
+}

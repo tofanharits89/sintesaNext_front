@@ -23,6 +23,7 @@ import NtpChartLine from "./ntplinechart";
 import PdrbChartLine from "./pdrblinechart";
 import KomoditasChartLine from "./komoditaslinechart";
 import PetugasBarChart from "./petugasbarchart";
+import SPPGChartLine from "./sppglinechart";
 
 const PLACEHOLDER = (
   <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
@@ -61,10 +62,10 @@ const items: TrendItem[] = [
   },
   {
     id: 5,
-    title: "Data Summary MBG",
+    title: "Trend SPPG",
     icon: <LayoutList className="h-5 w-5" />,
     accentColor: "#FFA07A",
-    content: PLACEHOLDER,
+    content: <SPPGChartLine />,
   },
   {
     id: 6,
