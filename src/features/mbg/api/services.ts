@@ -591,3 +591,45 @@ export async function getKomoditasExport(): Promise<KomoditasDataResponse> {
     throw new Error("Failed to fetch Komoditas export");
   return response.data;
 }
+
+// ---------------------------------------------------------------------------
+// MBG – Petugas
+// ---------------------------------------------------------------------------
+
+export type PetugasRow = {
+  tipe_petugas: string;
+  jumlah: number;
+};
+
+export type PetugasProvinsiData = { provinsi: string[] };
+export type PetugasDataResponse = { rows: PetugasRow[] };
+
+export async function getPetugasProvinsi(
+  kdkanwil?: string,
+): Promise<PetugasProvinsiData> {
+  const params = new URLSearchParams();
+  if (kdkanwil) params.set("kdkanwil", kdkanwil);
+  const qs = params.toString();
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: PetugasProvinsiData;
+  }>(`/dashboard/mbg/petugas-provinsi${qs ? `?${qs}` : ""}`);
+  if (!response?.success || !response.data)
+    throw new Error("Failed to fetch Petugas provinsi");
+  return response.data;
+}
+
+export async function getPetugasData(
+  provinsi: string,
+  kdkanwil?: string,
+): Promise<PetugasDataResponse> {
+  const params = new URLSearchParams({ provinsi });
+  if (kdkanwil) params.set("kdkanwil", kdkanwil);
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: PetugasDataResponse;
+  }>(`/dashboard/mbg/petugas-data?${params.toString()}`);
+  if (!response?.success || !response.data)
+    throw new Error("Failed to fetch Petugas data");
+  return response.data;
+}

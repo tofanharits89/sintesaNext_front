@@ -22,6 +22,7 @@ import SpasialLineChart from "./spasiallinechart";
 import NtpChartLine from "./ntplinechart";
 import PdrbChartLine from "./pdrblinechart";
 import KomoditasChartLine from "./komoditaslinechart";
+import PetugasBarChart from "./petugasbarchart";
 
 const PLACEHOLDER = (
   <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
@@ -70,7 +71,7 @@ const items: TrendItem[] = [
     title: "Jumlah Petugas Per Provinsi",
     icon: <Users className="h-5 w-5" />,
     accentColor: "#6A0572",
-    content: PLACEHOLDER,
+    content: <PetugasBarChart />,
   },
 ];
 
