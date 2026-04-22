@@ -20,6 +20,8 @@ interface TrendItem {
 
 import SpasialLineChart from "./spasiallinechart";
 import NtpChartLine from "./ntplinechart";
+import PdrbChartLine from "./pdrblinechart";
+import KomoditasChartLine from "./komoditaslinechart";
 
 const PLACEHOLDER = (
   <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
@@ -40,14 +42,14 @@ const items: TrendItem[] = [
     title: "Tren Harga Komoditas",
     icon: <Tag className="h-5 w-5" />,
     accentColor: "#4ECDC4",
-    content: PLACEHOLDER,
+    content: <KomoditasChartLine />,
   },
   {
     id: 3,
     title: "PDRB Atas Dasar Harga Berlaku",
     icon: <BarChart2 className="h-5 w-5" />,
     accentColor: "#556270",
-    content: PLACEHOLDER,
+    content: <PdrbChartLine />,
   },
   {
     id: 4,
