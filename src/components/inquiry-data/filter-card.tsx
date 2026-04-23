@@ -92,6 +92,7 @@ interface FilterCardProps {
     mengandungKata?: string;
     jenisTampilan?: string;
     akunType?: string;
+    subSelection?: string;
   }; // Current filter's values from parent (for loading saved queries)
   onFilterChange?: (filterKey: string, field: string, value: string) => void; // Callback for value changes
   removable?: boolean; // Optional: hide remove button for mandatory cards
@@ -158,12 +159,13 @@ export function FilterCard({
       filterKey === "cutOff"
         ? getCurrentMonth()
         : filterKey === "jenisTemaAnggaran"
-        ? "000"
-        : "all", // Default to "000" for Jenis Tema Anggaran, "Semua" for others
+          ? "000"
+          : "all", // Default to "000" for Jenis Tema Anggaran, "Semua" for others
     kondisiCode: filterKey === "cutOff" ? "equals" : "",
     mengandungKata: "",
     jenisTampilan: "kode", // Default to "Kode"
     akunType: "kodeAkun", // Default to "Kode Akun (6 Digit)" for Akun filter
+    subSelection: filterKey === "levelAPBD" ? "6" : "", // Default to Level 6 for APBD Level filter
   });
 
   // Special handling flags for boolean switch filters (no options/tampilan/kondisi/kata)
@@ -198,6 +200,7 @@ export function FilterCard({
             currentFilterValue.mengandungKata ?? prev.mengandungKata,
           jenisTampilan: currentFilterValue.jenisTampilan ?? prev.jenisTampilan,
           akunType: currentFilterValue.akunType ?? prev.akunType,
+          subSelection: currentFilterValue.subSelection ?? prev.subSelection,
         };
         return newState;
       });
@@ -220,7 +223,7 @@ export function FilterCard({
         // Check if current selection is still valid for the new parent
         const validOptions = getFilterOptions("eselonI");
         const isValid = validOptions.some(
-          (option) => option.value === filterData.selection
+          (option) => option.value === filterData.selection,
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" })); // Reset to default
@@ -239,7 +242,7 @@ export function FilterCard({
         // Check if current selection is still valid for the new parent
         const validOptions = getFilterOptions("kppn");
         const isValid = validOptions.some(
-          (option) => option.value === filterData.selection
+          (option) => option.value === filterData.selection,
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" })); // Reset to default
@@ -258,7 +261,7 @@ export function FilterCard({
         // Check if current selection is still valid for the new parent
         const validOptions = getFilterOptions("kanwil");
         const isValid = validOptions.some(
-          (option) => option.value === filterData.selection
+          (option) => option.value === filterData.selection,
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" })); // Reset to default
@@ -277,7 +280,7 @@ export function FilterCard({
         // Check if current selection is still valid for the new parent
         const validOptions = getFilterOptions("kabkota");
         const isValid = validOptions.some(
-          (option) => option.value === filterData.selection
+          (option) => option.value === filterData.selection,
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" })); // Reset to default
@@ -302,7 +305,7 @@ export function FilterCard({
         // Check if current selection is still valid for the new parent(s)
         const validOptions = getFilterOptions("satker");
         const isValid = validOptions.some(
-          (option) => option.value === filterData.selection
+          (option) => option.value === filterData.selection,
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" })); // Reset to default
@@ -321,7 +324,7 @@ export function FilterCard({
         // Check if current selection is still valid for the new parent
         const validOptions = getFilterOptions("subFungsi");
         const isValid = validOptions.some(
-          (option) => option.value === filterData.selection
+          (option) => option.value === filterData.selection,
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" })); // Reset to default
@@ -342,7 +345,7 @@ export function FilterCard({
         // Check if current selection is still valid for the new parent(s)
         const validOptions = getFilterOptions("program");
         const isValid = validOptions.some(
-          (option) => option.value === filterData.selection
+          (option) => option.value === filterData.selection,
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" })); // Reset to default
@@ -367,7 +370,7 @@ export function FilterCard({
         // Check if current selection is still valid for the new parent(s)
         const validOptions = getFilterOptions("kegiatan");
         const isValid = validOptions.some(
-          (option) => option.value === filterData.selection
+          (option) => option.value === filterData.selection,
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" })); // Reset to default
@@ -396,7 +399,7 @@ export function FilterCard({
         // Check if current selection is still valid for the new parent(s)
         const validOptions = getFilterOptions("outputKro");
         const isValid = validOptions.some(
-          (option) => option.value === filterData.selection
+          (option) => option.value === filterData.selection,
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" })); // Reset to default
@@ -414,7 +417,7 @@ export function FilterCard({
       if (currentPn && filterData.selection) {
         const validOptions = getFilterOptions("programPrioritas");
         const isValid = validOptions.some(
-          (o) => o.value === filterData.selection
+          (o) => o.value === filterData.selection,
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" }));
@@ -430,7 +433,7 @@ export function FilterCard({
       if ((currentPn || currentPp) && filterData.selection) {
         const validOptions = getFilterOptions("kegiatanPrioritas");
         const isValid = validOptions.some(
-          (o) => o.value === filterData.selection
+          (o) => o.value === filterData.selection,
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" }));
@@ -447,7 +450,7 @@ export function FilterCard({
       if ((currentPn || currentPp || currentKp) && filterData.selection) {
         const validOptions = getFilterOptions("proyekPrioritas");
         const isValid = validOptions.some(
-          (o) => o.value === filterData.selection
+          (o) => o.value === filterData.selection,
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" }));
@@ -475,7 +478,7 @@ export function FilterCard({
         // Check if current selection is still valid for the new parent(s)
         const validOptions = getFilterOptions("subOutputRo");
         const isValid = validOptions.some(
-          (option) => option.value === filterData.selection
+          (option) => option.value === filterData.selection,
         );
         if (!isValid) {
           setFilterData((prev) => ({ ...prev, selection: "all" })); // Reset to default
@@ -504,8 +507,8 @@ export function FilterCard({
       filterKey === "cutOff"
         ? getCurrentMonth()
         : filterKey === "jenisTemaAnggaran"
-        ? "000"
-        : "all";
+          ? "000"
+          : "all";
     onFilterChange(filterKey, "selection", initialValue);
     initialNotificationSent.current = true;
   }, [filterKey, onFilterChange, currentFilterValue]);
@@ -551,7 +554,7 @@ export function FilterCard({
             const selectedKementerian = activeFilterValues?.kementerian;
             if (selectedKementerian && selectedKementerian !== "all") {
               eselonIData = eselonIData.filter(
-                (item) => item.kddept === selectedKementerian
+                (item) => item.kddept === selectedKementerian,
               );
             }
             const eselonIOptions = eselonIData.map((item) => ({
@@ -569,7 +572,7 @@ export function FilterCard({
               selectedProvinsiForKanwil !== "all"
             ) {
               kanwilData = kanwilData.filter(
-                (item) => item.kdlokasi === selectedProvinsiForKanwil
+                (item) => item.kdlokasi === selectedProvinsiForKanwil,
               );
             }
             const kanwilOptions = kanwilData.map((item) => ({
@@ -584,7 +587,7 @@ export function FilterCard({
             const selectedKanwil = activeFilterValues?.kanwil;
             if (selectedKanwil && selectedKanwil !== "all") {
               kppnData = kppnData.filter(
-                (item) => item.kdkanwil === selectedKanwil
+                (item) => item.kdkanwil === selectedKanwil,
               );
             }
             const kppnOptions = kppnData.map((item) => ({
@@ -621,7 +624,7 @@ export function FilterCard({
             const selectedProvinsi = activeFilterValues?.provinsi;
             if (selectedProvinsi && selectedProvinsi !== "all") {
               kabkotaData = kabkotaData.filter(
-                (item) => item.kdlokasi === selectedProvinsi
+                (item) => item.kdlokasi === selectedProvinsi,
               );
             }
             const kabkotaOptions = kabkotaData.map((item) => ({
@@ -649,7 +652,7 @@ export function FilterCard({
               selectedKementarianForSatker !== "all"
             ) {
               satkerData = satkerData.filter(
-                (item) => item.kddept === selectedKementarianForSatker
+                (item) => item.kddept === selectedKementarianForSatker,
               );
             }
 
@@ -657,7 +660,7 @@ export function FilterCard({
             const selectedKanwilForSatker = activeFilterValues?.kanwil;
             if (selectedKanwilForSatker && selectedKanwilForSatker !== "all") {
               satkerData = satkerData.filter(
-                (item) => item.kdkanwil === selectedKanwilForSatker
+                (item) => item.kdkanwil === selectedKanwilForSatker,
               );
             }
 
@@ -665,7 +668,7 @@ export function FilterCard({
             const selectedKppnForSatker = activeFilterValues?.kppn;
             if (selectedKppnForSatker && selectedKppnForSatker !== "all") {
               satkerData = satkerData.filter(
-                (item) => item.kdkppn === selectedKppnForSatker
+                (item) => item.kdkppn === selectedKppnForSatker,
               );
             }
 
@@ -697,7 +700,7 @@ export function FilterCard({
             const selectedFungsi = activeFilterValues?.fungsi;
             if (selectedFungsi && selectedFungsi !== "all") {
               subFungsiData = subFungsiData.filter(
-                (item) => item.kdfungsi === selectedFungsi
+                (item) => item.kdfungsi === selectedFungsi,
               );
             }
 
@@ -723,7 +726,7 @@ export function FilterCard({
               selectedKementarianForProgram !== "all"
             ) {
               programData = programData.filter(
-                (item) => item.kddept === selectedKementarianForProgram
+                (item) => item.kddept === selectedKementarianForProgram,
               );
             }
 
@@ -731,7 +734,7 @@ export function FilterCard({
             const selectedEselonI = activeFilterValues?.eselonI;
             if (selectedEselonI && selectedEselonI !== "all") {
               programData = programData.filter(
-                (item) => item.kdunit === selectedEselonI
+                (item) => item.kdunit === selectedEselonI,
               );
             }
 
@@ -758,7 +761,7 @@ export function FilterCard({
               selectedKementarianForKegiatan !== "all"
             ) {
               kegiatanData = kegiatanData.filter(
-                (item) => item.kddept === selectedKementarianForKegiatan
+                (item) => item.kddept === selectedKementarianForKegiatan,
               );
             }
 
@@ -766,7 +769,7 @@ export function FilterCard({
             const selectedUnitForKegiatan = activeFilterValues?.eselonI;
             if (selectedUnitForKegiatan && selectedUnitForKegiatan !== "all") {
               kegiatanData = kegiatanData.filter(
-                (item) => item.kdunit === selectedUnitForKegiatan
+                (item) => item.kdunit === selectedUnitForKegiatan,
               );
             }
 
@@ -774,7 +777,7 @@ export function FilterCard({
             const selectedProgram = activeFilterValues?.program;
             if (selectedProgram && selectedProgram !== "all") {
               kegiatanData = kegiatanData.filter(
-                (item) => item.kdprogram === selectedProgram
+                (item) => item.kdprogram === selectedProgram,
               );
             }
 
@@ -803,7 +806,7 @@ export function FilterCard({
               selectedKementarianForOutput !== "all"
             ) {
               outputData = outputData.filter(
-                (item) => item.kddept === selectedKementarianForOutput
+                (item) => item.kddept === selectedKementarianForOutput,
               );
             }
 
@@ -811,7 +814,7 @@ export function FilterCard({
             const selectedUnitForOutput = activeFilterValues?.eselonI;
             if (selectedUnitForOutput && selectedUnitForOutput !== "all") {
               outputData = outputData.filter(
-                (item) => item.kdunit === selectedUnitForOutput
+                (item) => item.kdunit === selectedUnitForOutput,
               );
             }
 
@@ -822,7 +825,7 @@ export function FilterCard({
               selectedProgramForOutput !== "all"
             ) {
               outputData = outputData.filter(
-                (item) => item.kdprogram === selectedProgramForOutput
+                (item) => item.kdprogram === selectedProgramForOutput,
               );
             }
 
@@ -830,7 +833,7 @@ export function FilterCard({
             const selectedKegiatan = activeFilterValues?.kegiatan;
             if (selectedKegiatan && selectedKegiatan !== "all") {
               outputData = outputData.filter(
-                (item) => item.kdgiat === selectedKegiatan
+                (item) => item.kdgiat === selectedKegiatan,
               );
             }
 
@@ -860,7 +863,7 @@ export function FilterCard({
               selectedKementarianForSubOutput !== "all"
             ) {
               subOutputData = subOutputData.filter(
-                (item) => item.kddept === selectedKementarianForSubOutput
+                (item) => item.kddept === selectedKementarianForSubOutput,
               );
             }
 
@@ -871,7 +874,7 @@ export function FilterCard({
               selectedUnitForSubOutput !== "all"
             ) {
               subOutputData = subOutputData.filter(
-                (item) => item.kdunit === selectedUnitForSubOutput
+                (item) => item.kdunit === selectedUnitForSubOutput,
               );
             }
 
@@ -882,7 +885,7 @@ export function FilterCard({
               selectedProgramForSubOutput !== "all"
             ) {
               subOutputData = subOutputData.filter(
-                (item) => item.kdprogram === selectedProgramForSubOutput
+                (item) => item.kdprogram === selectedProgramForSubOutput,
               );
             }
 
@@ -893,7 +896,7 @@ export function FilterCard({
               selectedKegiatanForSubOutput !== "all"
             ) {
               subOutputData = subOutputData.filter(
-                (item) => item.kdgiat === selectedKegiatanForSubOutput
+                (item) => item.kdgiat === selectedKegiatanForSubOutput,
               );
             }
 
@@ -901,7 +904,7 @@ export function FilterCard({
             const selectedOutput = activeFilterValues?.outputKro;
             if (selectedOutput && selectedOutput !== "all") {
               subOutputData = subOutputData.filter(
-                (item) => item.kdoutput === selectedOutput
+                (item) => item.kdoutput === selectedOutput,
               );
             }
 
@@ -1119,7 +1122,7 @@ export function FilterCard({
               "Desember",
             ];
 
-            const monthOptions: Array<{value: string; label: string}> = [];
+            const monthOptions: Array<{ value: string; label: string }> = [];
 
             // Add months 1-12
             for (let month = 1; month <= 12; month++) {
@@ -1158,12 +1161,12 @@ export function FilterCard({
 
           case "statusSumber": {
             // Status Sumber filter with predefined options
-            const statusSumberOptions = (statusSumberData as Array<{ value: string; label: string }>).map(
-              (item) => ({
-                value: item.value,
-                label: item.label,
-              })
-            );
+            const statusSumberOptions = (
+              statusSumberData as Array<{ value: string; label: string }>
+            ).map((item) => ({
+              value: item.value,
+              label: item.label,
+            }));
             // Replace "all" option with "Semua Status" from data
             return statusSumberOptions;
           }
@@ -1176,7 +1179,7 @@ export function FilterCard({
         return commonOptions;
       }
     },
-    [activeFilterValues, filterData]
+    [activeFilterValues, filterData],
   );
 
   const jenisTampilanOptions = [
@@ -1210,7 +1213,7 @@ export function FilterCard({
             onFilterChange(
               filterKey,
               "kondisiCode",
-              filterKey === "cutOff" ? "equals" : ""
+              filterKey === "cutOff" ? "equals" : "",
             );
             onFilterChange(filterKey, "mengandungKata", "");
           }, 0);
@@ -1244,7 +1247,7 @@ export function FilterCard({
             onFilterChange(
               filterKey,
               "kondisiCode",
-              filterKey === "cutOff" ? "equals" : ""
+              filterKey === "cutOff" ? "equals" : "",
             );
           }, 0);
         }
@@ -1328,6 +1331,27 @@ export function FilterCard({
                   </SelectContent>
                 </Select>
               </>
+            ) : filterKey === "levelAPBD" ? (
+              <>
+                <Label className="text-xs font-medium">Tipe Level</Label>
+                <Select
+                  value={filterData.subSelection || "6"}
+                  onValueChange={(value) =>
+                    handleInputChange("subSelection", value)
+                  }
+                >
+                  <SelectTrigger className="w-full h-8 text-xs">
+                    <SelectValue placeholder="Pilih tipe level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5, 6].map((n) => (
+                      <SelectItem key={n} value={String(n)}>
+                        Level {n}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </>
             ) : filterKey === "cutOff" ? (
               <>
                 <Label className="text-xs font-medium">Pilih Bulan</Label>
@@ -1363,7 +1387,7 @@ export function FilterCard({
                       filterData.kondisiCode.trim()) ||
                       (filterData.mengandungKata &&
                         filterData.mengandungKata.trim())) &&
-                      "opacity-50 cursor-not-allowed"
+                      "opacity-50 cursor-not-allowed",
                   )}
                   disabled={
                     !!(
@@ -1402,7 +1426,7 @@ export function FilterCard({
                     (filterData.selection && filterData.selection !== "all") ||
                     (filterData.mengandungKata &&
                       filterData.mengandungKata.trim())) &&
-                    "opacity-50 cursor-not-allowed"
+                    "opacity-50 cursor-not-allowed",
                 )}
               />
             </div>
@@ -1432,7 +1456,7 @@ export function FilterCard({
                     (filterData.selection && filterData.selection !== "all") ||
                     (filterData.kondisiCode &&
                       filterData.kondisiCode.trim())) &&
-                    "opacity-50 cursor-not-allowed"
+                    "opacity-50 cursor-not-allowed",
                 )}
               />
             </div>
@@ -1452,7 +1476,7 @@ export function FilterCard({
                 <SelectTrigger
                   className={cn(
                     "w-full h-8 text-xs",
-                    isBooleanSwitch && "opacity-50 cursor-not-allowed"
+                    isBooleanSwitch && "opacity-50 cursor-not-allowed",
                   )}
                   disabled={isBooleanSwitch}
                 >
@@ -1475,18 +1499,23 @@ export function FilterCard({
           <div className="mt-2 space-y-1">
             {filterData.kondisiCode && filterData.kondisiCode.trim() && (
               <>
-                {filterKey === "akun" || filterKey === "kodeBkpk" || filterKey === "jenisBelanja" ? (
+                {filterKey === "akun" ||
+                filterKey === "kodeBkpk" ||
+                filterKey === "jenisBelanja" ? (
                   <p className="text-xs text-muted-foreground">
-                    💡 Partial: 5 (5xxx) atau Exact: 5211 | Exclude: !5 atau !5211
+                    💡 Partial: 5 (5xxx) atau Exact: 5211 | Exclude: !5 atau
+                    !5211
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground">
                     💡 Include: 001,002,003 atau Exclude: !001,002,003
                   </p>
                 )}
-                {(filterData.kondisiCode.startsWith('!') || filterData.kondisiCode.startsWith('-')) && (
+                {(filterData.kondisiCode.startsWith("!") ||
+                  filterData.kondisiCode.startsWith("-")) && (
                   <p className="text-xs text-red-600">
-                    🚫 Mode Exclude aktif - data dengan kode ini akan dikecualikan
+                    🚫 Mode Exclude aktif - data dengan kode ini akan
+                    dikecualikan
                   </p>
                 )}
               </>

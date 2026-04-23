@@ -37,6 +37,8 @@ export interface FilterValue {
   mengandungKata: string;
   jenisTampilan: "kode" | "kode_uraian" | "uraian" | "jangan_tampilkan";
   akunType?: "kodeAkun" | "kodeBkpk" | "jenisBelanja";
+  /** Generic sub-selector; used by levelAPBD to store the chosen level ("1"–"6"). */
+  subSelection?: string;
 }
 
 export function useInquiryDataApi() {
