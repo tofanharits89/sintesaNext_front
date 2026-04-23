@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { PilihLaporanCard } from "@/components/inquiry-data/pilih-laporan-card";
 import { FilterParametersCard } from "@/components/inquiry-data/filter-parameters-card";
-import { BelwilSubsidiDynamicFiltersCard } from "@/components/belwil/belwil-dynamic-filters-card";
+import { BelwilBansosDynamicFiltersCard } from "@/components/belwil/belwil-dynamic-filters-card";
 import { FilterCardSkeleton } from "@/components/ui/dashboard-skeletons";
 import { Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,12 +19,12 @@ import { Input } from "@/components/ui/input";
 import { Loader2, HandCoins } from "lucide-react";
 import { cn } from "@/lib/utils/utils";
 import type { FilterValue } from "@/hooks/use-inquiry-data-api";
-import type { SubsidiTipeLaporan } from "@/hooks/belwil/use-belwil-subsidi-query-builder";
+import type { BansosTipeLaporan } from "@/hooks/belwil/use-belwil-bansos-query-builder";
 import { directBackendClient } from "@/lib/api/httpClient";
 import type { QueryExecutionResult } from "@/hooks/use-inquiry-data-api";
 
-// Filters not present in the subsidi kewilayahan table
-const BELWIL_SUBSIDI_EXCLUDED_FILTERS = [
+// Filters not present in the bansos table
+const BELWIL_BANSOS_EXCLUDED_FILTERS = [
   "cutOff",
   "jenisAkumulasi",
   "jenisDataLokasi",
@@ -53,32 +53,38 @@ const BELWIL_SUBSIDI_EXCLUDED_FILTERS = [
   "jenisRevisi",
   "kodeBkpk",
   "jenisBelanja",
-  "kewenangan",
   "kppn",
   "fungsi",
   "subFungsi",
+  "program",
+  "kegiatan",
   "outputKro",
   "subOutputRo",
+  "akun",
   "komponen",
   "subKomponen",
   "item",
   "regional",
   "lokusAnggaran",
+  "sumberDana",
+  "urusanAPBD",
+  "bidangAPBD",
+  "subKegiatanAPBD",
+  "levelAPBD",
 ];
 
-const BELWIL_SUBSIDI_TIPE_LAPORAN = [
-  { value: "belwil_subsidi_all", label: "Semua" },
-  { value: "belwil_subsidi_realisasi", label: "Realisasi" },
-  { value: "belwil_subsidi_jumlah_penerima", label: "Jumlah Penerima" },
-  { value: "belwil_subsidi_jumlah_va", label: "Jumlah VA" },
+const BELWIL_BANSOS_TIPE_LAPORAN = [
+  { value: "belwil_bansos_all", label: "Realisasi dan Penerima" },
+  { value: "belwil_bansos_realisasi", label: "Realisasi Bansos" },
+  { value: "belwil_bansos_jumlah_penerima", label: "Jumlah Penerima" },
 ];
 
 function encryptQuery(query: string): string {
   return btoa(encodeURIComponent(query));
 }
 
-function useJnsBansosOptions(tahun: string) {
-  const [options, setOptions] = useState<string[]>([]);
+function useKdBansosOptions(tahun: string) {
+  const [options, setOptions] = useState<{ kd: string; nm: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -86,7 +92,7 @@ function useJnsBansosOptions(tahun: string) {
     const load = async () => {
       setIsLoading(true);
       try {
-        const sql = `SELECT DISTINCT jns_bansos FROM monev${tahun}.subsidi_bulanan_${tahun} ORDER BY jns_bansos`;
+        const sql = `SELECT DISTINCT jenis_transaksi FROM monev${tahun}.bansos_pkh_bulanan`;
         const result = await directBackendClient.post<QueryExecutionResult>(
           "/inquiry-data/query",
           {
@@ -99,7 +105,14 @@ function useJnsBansosOptions(tahun: string) {
         if (!cancelled) {
           const rows =
             (result?.data as Record<string, string>[] | undefined) || [];
-          setOptions(rows.map((r) => String(r.jns_bansos)).filter(Boolean));
+          setOptions(
+            rows
+              .map((r) => ({
+                kd: String(r.jenis_transaksi || ""),
+                nm: String(r.jenis_transaksi || ""),
+              }))
+              .filter((o) => o.kd),
+          );
         }
       } catch {
         if (!cancelled) setOptions([]);
@@ -116,7 +129,7 @@ function useJnsBansosOptions(tahun: string) {
   return { options, isLoading };
 }
 
-export default function BelwilSubsidiPage() {
+export default function BelwilBansosPage() {
   const currentYear = new Date().getFullYear();
 
   const [activeFilters, setActiveFilters] = useState<string[]>(["kementerian"]);
@@ -124,7 +137,7 @@ export default function BelwilSubsidiPage() {
   const [filterValues, setFilterValues] = useState<Record<string, FilterValue>>(
     {
       kementerian: {
-        selection: "",
+        selection: "all",
         kondisiCode: "",
         mengandungKata: "",
         jenisTampilan: "kode",
@@ -134,38 +147,42 @@ export default function BelwilSubsidiPage() {
 
   const [reportParams, setReportParams] = useState({
     tahun: currentYear.toString(),
-    tipeLaporan: "belwil_subsidi_all" as SubsidiTipeLaporan,
+    tipeLaporan: "belwil_bansos_all" as BansosTipeLaporan,
     pembulatan: "satuan",
     jenisAkumulasi: "non_akumulatif",
-    jnsBansos: "all",
-    jnsBansosKondisi: "",
-    jnsBansosKataKunci: "",
-    jnsBansosJenisTampilan: "uraian",
+    kdbansos: "all",
+    kdbansosKondisi: "",
+    kdbansosKataKunci: "",
+    kdbansosJenisTampilan: "uraian",
+    akumulatif: false,
   });
 
-  const { options: jnsBansosOptions, isLoading: jnsLoading } =
-    useJnsBansosOptions(reportParams.tahun);
+  const { options: kdBansosOptions, isLoading: kdBansosLoading } =
+    useKdBansosOptions(reportParams.tahun);
 
-  const handleSubsidiFilterChange = useCallback(
+  const handleBansosFilterChange = useCallback(
     (
       field:
-        | "jnsBansos"
-        | "jnsBansosKondisi"
-        | "jnsBansosKataKunci"
-        | "jnsBansosJenisTampilan",
+        | "kdbansos"
+        | "kdbansosKondisi"
+        | "kdbansosKataKunci"
+        | "kdbansosJenisTampilan",
       value: string,
     ) => {
       setReportParams((prev) => {
         const next = { ...prev, [field]: value };
-        if (field === "jnsBansos" && value !== "all") {
-          next.jnsBansosKondisi = "";
-          next.jnsBansosKataKunci = "";
-        } else if (field === "jnsBansosKondisi" && value.trim()) {
-          next.jnsBansos = "all";
-          next.jnsBansosKataKunci = "";
-        } else if (field === "jnsBansosKataKunci" && value.trim()) {
-          next.jnsBansos = "all";
-          next.jnsBansosKondisi = "";
+        if (field === "kdbansos" && value !== "all") {
+          next.kdbansosKondisi = "";
+          next.kdbansosKataKunci = "";
+        } else if (field === "kdbansosKondisi" && value.trim()) {
+          next.kdbansos = "all";
+          next.kdbansosKataKunci = "";
+        } else if (field === "kdbansosKataKunci" && value.trim()) {
+          next.kdbansos = "all";
+          next.kdbansosKondisi = "";
+          if (prev.kdbansosJenisTampilan === "kode") {
+            next.kdbansosJenisTampilan = "kode_uraian";
+          }
         }
         return next;
       });
@@ -209,7 +226,7 @@ export default function BelwilSubsidiPage() {
     const normalized: Record<string, FilterValue> = {};
     Object.entries(filterValues).forEach(([key, value]) => {
       normalized[key] = {
-        selection: value.selection || "",
+        selection: value.selection || "all",
         kondisiCode: value.kondisiCode || "",
         mengandungKata: value.mengandungKata || "",
         jenisTampilan: value.jenisTampilan || "kode",
@@ -218,15 +235,16 @@ export default function BelwilSubsidiPage() {
     return normalized;
   }, [filterValues]);
 
-  const subsidiReportParams = useMemo(
+  const bansosReportParams = useMemo(
     () => ({
       tahun: reportParams.tahun,
       tipeLaporan: reportParams.tipeLaporan,
       pembulatan: reportParams.pembulatan,
-      jnsBansos: reportParams.jnsBansos,
-      jnsBansosKondisi: reportParams.jnsBansosKondisi,
-      jnsBansosKataKunci: reportParams.jnsBansosKataKunci,
-      jnsBansosJenisTampilan: reportParams.jnsBansosJenisTampilan,
+      kdbansos: reportParams.kdbansos,
+      kdbansosKondisi: reportParams.kdbansosKondisi,
+      kdbansosKataKunci: reportParams.kdbansosKataKunci,
+      kdbansosJenisTampilan: reportParams.kdbansosJenisTampilan,
+      akumulatif: reportParams.akumulatif,
     }),
     [reportParams],
   );
@@ -236,11 +254,11 @@ export default function BelwilSubsidiPage() {
       {/* Page Header */}
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold tracking-tight">
-          Kewilayahan Subsidi
+          Kewilayahan Bansos
         </h1>
         <p className="text-sm text-muted-foreground">
-          Query builder untuk data kewilayahan subsidi berdasarkan lokasi dengan
-          filter parameter yang dapat disesuaikan
+          Query builder untuk data kewilayahan bantuan sosial (bansos)
+          berdasarkan lokasi dengan filter parameter yang dapat disesuaikan
         </p>
       </div>
 
@@ -249,14 +267,14 @@ export default function BelwilSubsidiPage() {
         <PilihLaporanCard
           reportParams={reportParams}
           setReportParams={setReportParams}
-          customTipeLaporanOptions={BELWIL_SUBSIDI_TIPE_LAPORAN}
+          customTipeLaporanOptions={BELWIL_BANSOS_TIPE_LAPORAN}
           hideJenisAkumulasi
         />
 
-        {/* 2. Parameter Subsidi Card */}
+        {/* 2. Parameter Bansos Card */}
         <Card className="w-full">
           <CardHeader>
-            <CardTitle className="text-lg">Parameter Subsidi</CardTitle>
+            <CardTitle className="text-lg">Parameter Bansos</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-start sm:items-center">
@@ -264,46 +282,46 @@ export default function BelwilSubsidiPage() {
               <div className="flex items-center space-x-2 min-w-0">
                 <HandCoins className="h-4 w-4 shrink-0" />
                 <span className="text-sm font-medium truncate">
-                  Jenis Subsidi
+                  Jenis Bansos
                 </span>
               </div>
 
               {/* Column 2: Pilihan */}
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Pilihan</Label>
-                {jnsLoading ? (
+                {kdBansosLoading ? (
                   <div className="flex items-center gap-2 h-8 text-xs text-muted-foreground">
                     <Loader2 className="w-3 h-3 animate-spin" />
                     Memuat...
                   </div>
                 ) : (
                   <Select
-                    value={reportParams.jnsBansos}
+                    value={reportParams.kdbansos}
                     onValueChange={(val) =>
-                      handleSubsidiFilterChange("jnsBansos", val)
+                      handleBansosFilterChange("kdbansos", val)
                     }
                     disabled={
                       !!(
-                        reportParams.jnsBansosKondisi.trim() ||
-                        reportParams.jnsBansosKataKunci.trim()
+                        reportParams.kdbansosKondisi.trim() ||
+                        reportParams.kdbansosKataKunci.trim()
                       )
                     }
                   >
                     <SelectTrigger
                       className={cn(
                         "w-full h-8 text-xs",
-                        (reportParams.jnsBansosKondisi.trim() ||
-                          reportParams.jnsBansosKataKunci.trim()) &&
+                        (reportParams.kdbansosKondisi.trim() ||
+                          reportParams.kdbansosKataKunci.trim()) &&
                           "opacity-50 cursor-not-allowed",
                       )}
                     >
-                      <SelectValue placeholder="Pilih jenis subsidi" />
+                      <SelectValue placeholder="Pilih jenis bansos" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Semua Subsidi</SelectItem>
-                      {jnsBansosOptions.map((opt) => (
-                        <SelectItem key={opt} value={opt}>
-                          {opt}
+                      <SelectItem value="all">Semua Jenis Bansos</SelectItem>
+                      {kdBansosOptions.map((opt) => (
+                        <SelectItem key={opt.kd} value={opt.kd}>
+                          {opt.nm}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -316,23 +334,20 @@ export default function BelwilSubsidiPage() {
                 <Label className="text-xs font-medium">Kondisi</Label>
                 <Input
                   placeholder="Kode kondisi"
-                  value={reportParams.jnsBansosKondisi}
+                  value={reportParams.kdbansosKondisi}
                   onChange={(e) =>
-                    handleSubsidiFilterChange(
-                      "jnsBansosKondisi",
-                      e.target.value,
-                    )
+                    handleBansosFilterChange("kdbansosKondisi", e.target.value)
                   }
                   disabled={
                     !!(
-                      reportParams.jnsBansos !== "all" ||
-                      reportParams.jnsBansosKataKunci.trim()
+                      reportParams.kdbansos !== "all" ||
+                      reportParams.kdbansosKataKunci.trim()
                     )
                   }
                   className={cn(
                     "w-full h-8 text-xs placeholder:text-xs",
-                    (reportParams.jnsBansos !== "all" ||
-                      reportParams.jnsBansosKataKunci.trim()) &&
+                    (reportParams.kdbansos !== "all" ||
+                      reportParams.kdbansosKataKunci.trim()) &&
                       "opacity-50 cursor-not-allowed",
                   )}
                 />
@@ -342,24 +357,24 @@ export default function BelwilSubsidiPage() {
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Kata Kunci</Label>
                 <Input
-                  placeholder="Nama subsidi"
-                  value={reportParams.jnsBansosKataKunci}
+                  placeholder="Nama bansos"
+                  value={reportParams.kdbansosKataKunci}
                   onChange={(e) =>
-                    handleSubsidiFilterChange(
-                      "jnsBansosKataKunci",
+                    handleBansosFilterChange(
+                      "kdbansosKataKunci",
                       e.target.value,
                     )
                   }
                   disabled={
                     !!(
-                      reportParams.jnsBansos !== "all" ||
-                      reportParams.jnsBansosKondisi.trim()
+                      reportParams.kdbansos !== "all" ||
+                      reportParams.kdbansosKondisi.trim()
                     )
                   }
                   className={cn(
                     "w-full h-8 text-xs placeholder:text-xs",
-                    (reportParams.jnsBansos !== "all" ||
-                      reportParams.jnsBansosKondisi.trim()) &&
+                    (reportParams.kdbansos !== "all" ||
+                      reportParams.kdbansosKondisi.trim()) &&
                       "opacity-50 cursor-not-allowed",
                   )}
                 />
@@ -369,9 +384,9 @@ export default function BelwilSubsidiPage() {
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Tampilan</Label>
                 <Select
-                  value={reportParams.jnsBansosJenisTampilan}
+                  value={reportParams.kdbansosJenisTampilan}
                   onValueChange={(val) =>
-                    handleSubsidiFilterChange("jnsBansosJenisTampilan", val)
+                    handleBansosFilterChange("kdbansosJenisTampilan", val)
                   }
                 >
                   <SelectTrigger className="w-full h-8 text-xs">
@@ -393,16 +408,16 @@ export default function BelwilSubsidiPage() {
         <FilterParametersCard
           activeFilters={activeFilters}
           setActiveFilters={setActiveFilters}
-          excludeFilters={BELWIL_SUBSIDI_EXCLUDED_FILTERS}
+          excludeFilters={BELWIL_BANSOS_EXCLUDED_FILTERS}
           scope="belwil"
           tipeLaporan={reportParams.tipeLaporan}
         />
 
-        {/* 4. Dynamic Filters and Actions Card */}
+        {/* 4. Dynamic Filters + Actions Card */}
         <Suspense fallback={<FilterCardSkeleton />}>
-          <BelwilSubsidiDynamicFiltersCard
+          <BelwilBansosDynamicFiltersCard
             activeFilters={activeFilters}
-            reportParams={subsidiReportParams}
+            reportParams={bansosReportParams}
             onRemoveFilter={removeFilter}
             onClearAllFilters={clearAllFilters}
             filterValues={normalizedFilterValues}

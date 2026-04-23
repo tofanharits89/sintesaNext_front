@@ -10,7 +10,18 @@ interface FilterParametersCardProps {
   activeFilters: string[];
   setActiveFilters: React.Dispatch<React.SetStateAction<string[]>>;
   excludeFilters?: string[]; // Optional array of filter keys to exclude
-  scope?: "belanja" | "tematik" | "general" | "rkakl_detail" | "kontrak" | "up_tup" | "penerimaan_pnbp" | "sp2d" | "revisi_dipa"; // Optional scope for context-aware visibility
+  scope?:
+    | "belanja"
+    | "tematik"
+    | "general"
+    | "rkakl_detail"
+    | "kontrak"
+    | "up_tup"
+    | "penerimaan_pnbp"
+    | "sp2d"
+    | "revisi_dipa"
+    | "belwil"
+    | "apbd"; // Optional scope for context-aware visibility
   tipeLaporan?: string; // Pass current report type to gate tematik mandatory filters on Belanja
 }
 
@@ -22,15 +33,11 @@ export function FilterParametersCard({
   tipeLaporan,
 }: FilterParametersCardProps) {
   // Determine allowed filters for the given scope then apply exclude list
-  const allowedKeys = getAvailableFiltersForScope(
-    scope,
-    excludeFilters,
-    {
-      ...(tipeLaporan !== undefined ? { tipeLaporan } : {}),
-    }
-  );
+  const allowedKeys = getAvailableFiltersForScope(scope, excludeFilters, {
+    ...(tipeLaporan !== undefined ? { tipeLaporan } : {}),
+  });
   const uiFilters = getUIFilters().filter((filter) =>
-    allowedKeys.includes(filter.key)
+    allowedKeys.includes(filter.key),
   );
 
   const handleToggle = (filterKey: string) => {
