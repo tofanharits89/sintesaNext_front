@@ -64,8 +64,10 @@ import {
   PaginationPrevious,
   PaginationNext,
   PaginationLink,
+  PaginationEllipsis,
 } from "@/components/ui/pagination";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/api/httpClient";
 import { useQuery } from "@tanstack/react-query";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -562,133 +564,290 @@ export function IkpaLanding() {
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         {/* Table Section */}
         <div className="xl:col-span-8 space-y-6">
-          <Card>
-            <CardHeader className="pb-2 border-b">
+          <Card className="mb-6 overflow-hidden">
+            <CardHeader>
               <div className="flex items-center justify-between">
-                <Tabs
-                  defaultValue="all"
-                  onValueChange={(val) => setStatusFilter(val)}
-                >
-                  <TabsList className="bg-background/50 border">
-                    <TabsTrigger value="all">Semua</TabsTrigger>
-                    <TabsTrigger value="Disetujui">Disetujui</TabsTrigger>
-                    <TabsTrigger value="Ditolak">Ditolak</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-                <h3 className="font-semibold text-sm">Daftar Permohonan</h3>
+                <CardTitle>Daftar Permohonan</CardTitle>
+                <Select value={statusFilter} onValueChange={(val) => {
+                  setStatusFilter(val);
+                  setCurrentPage(0);
+                }}>
+                  <SelectTrigger className="w-[160px] h-9 bg-background">
+                    <SelectValue placeholder="Filter Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Status</SelectItem>
+                    <SelectItem value="Disetujui">Disetujui</SelectItem>
+                    <SelectItem value="Ditolak">Ditolak</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CardHeader>
-            <CardContent className="px-6">
-              <div className="rounded-md border">
+            <CardContent className="px-6 pb-6">
+              <div className="rounded-md border overflow-hidden bg-card">
                 <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-center">No. ND</TableHead>
-                        <TableHead className="text-center">
-                          Satker / KPPN
-                        </TableHead>
-                        <TableHead className="text-center">Indikator</TableHead>
-                        <TableHead className="text-center">Status</TableHead>
-                        <TableHead className="text-center">Aksi</TableHead>
+                  <Table className="border-separate border-spacing-0">
+                    <TableHeader className="bg-background sticky top-0 z-10 shadow-sm text-center">
+                      <TableRow className="hover:bg-transparent border-b-0">
+                        <TableHead className="bg-background text-center w-12 h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b">No</TableHead>
+                        <TableHead className="bg-background text-center h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b w-96">No. ND</TableHead>
+                        <TableHead className="bg-background text-center h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b">Kode KPPN</TableHead>
+                        <TableHead className="bg-background text-center h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b">Nama KPPN</TableHead>
+                        <TableHead className="bg-background text-center h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b">Kode Satker</TableHead>
+                        <TableHead className="bg-background text-center h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b">Nama Satker</TableHead>
+                        <TableHead className="bg-background text-center h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b">Indikator</TableHead>
+                        <TableHead className="bg-background text-center h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b w-36">Status</TableHead>
+                        <TableHead className="bg-background text-center h-11 font-medium text-zinc-700 dark:text-zinc-300 border-b w-24">Aksi</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {isLoading ? (
-                        <TableRow>
-                          <TableCell colSpan={5} className="h-32 text-center">
-                            <Loader2 className="animate-spin mx-auto h-8 w-8 text-primary" />
-                          </TableCell>
-                        </TableRow>
-                      ) : filteredData.length > 0 ? (
-                        filteredData.map((item: IkpaRequest) => (
-                          <TableRow key={item.id}>
+                        Array.from({ length: 10 }).map((_, i) => (
+                          <TableRow key={i}>
+                            <TableCell className="text-center">
+                              <Skeleton className="h-3.5 w-5 mx-auto" />
+                            </TableCell>
                             <TableCell>
-                              <div className="flex flex-col">
-                                <span className="font-medium">
-                                  {item.no_nd}
-                                </span>
-                                <span className="text-[10px] text-muted-foreground">
-                                  {new Date(item.tg_nd).toLocaleDateString()}
-                                </span>
+                              <div className="flex flex-col gap-1.5">
+                                <Skeleton className="h-3.5 w-24 mx-auto" />
+                                <Skeleton className="h-3 w-16 mx-auto" />
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="flex flex-col">
-                                <span className="text-sm">{item.nmsatker}</span>
-                                <span className="text-[10px] text-muted-foreground uppercase">
-                                  {item.nmkppn?.toLowerCase()} ({item.kdkppn})
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-xs text-muted-foreground max-w-[150px] truncate">
-                              {item.nm_indikator}
+                              <Skeleton className="h-3.5 w-16 mx-auto" />
                             </TableCell>
                             <TableCell>
-                              <StatusBadge status={item.approval} />
+                              <Skeleton className="h-3.5 w-24 mx-auto" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-3.5 w-16 mx-auto" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-3.5 w-40 mx-auto" />
+                            </TableCell>
+                            <TableCell>
+                              <Skeleton className="h-3.5 w-32 mx-auto" />
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex justify-center">
+                                <Skeleton className="h-5 w-16 rounded-md" />
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex justify-center">
+                                <Skeleton className="h-8 w-8 rounded-md" />
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : ikpaData.length > 0 ? (
+                        ikpaData.map((item: IkpaRequest, index: number) => (
+                          <TableRow key={item.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-colors">
+                            <TableCell className="text-center text-muted-foreground text-xs font-normal">
+                              {currentPage * 10 + index + 1}
                             </TableCell>
                             <TableCell className="text-center">
+                              <div className="flex flex-col items-center">
+                                <span className="font-normal text-zinc-900 dark:text-zinc-100">{item.no_nd}</span>
+                                <span className="text-[10px] text-muted-foreground">{new Date(item.tg_nd).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="outline" className="font-mono text-xs font-normal bg-zinc-50 dark:bg-zinc-900 uppercase">
+                                {item.kdkppn}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <div className="text-sm font-normal text-foreground whitespace-nowrap px-2">
+                                {item.nmkppn}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-center text-sm font-normal text-foreground">
+                              {item.kdsatker}
+                            </TableCell>
+                            <TableCell className="text-left max-w-0 w-[35%]">
+                              <div className="text-sm font-normal text-foreground truncate" title={item.nmsatker}>
+                                {item.nmsatker}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-center max-w-0 w-[20%]">
+                              <div className="text-sm text-foreground font-normal truncate mx-auto" title={item.nm_indikator}>
+                                {item.nm_indikator}
+                              </div>
+                            </TableCell>
+                            <TableCell><div className="flex justify-center"><StatusBadge status={item.approval} /></div></TableCell>
+                            <TableCell className="text-center">
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="icon"
-                                className="h-8 w-8 text-muted-foreground hover:text-primary"
+                                className="h-8 w-8 cursor-pointer"
                                 onClick={() => {
                                   setEditingItem(item);
                                   setIsEditModalOpen(true);
                                 }}
+                                title="Edit Permohonan"
                               >
-                                <Edit className="h-4 w-4" />
+                                <Edit className="h-4 w-4 text-blue-600" />
                               </Button>
                             </TableCell>
                           </TableRow>
                         ))
                       ) : (
-                        <TableRow>
-                          <TableCell
-                            colSpan={5}
-                            className="h-32 text-center text-muted-foreground"
-                          >
-                            Tidak ada data ditemukan.
-                          </TableCell>
-                        </TableRow>
+                        <TableRow><TableCell colSpan={9} className="h-32 text-center text-muted-foreground">Tidak ada data ditemukan.</TableCell></TableRow>
                       )}
                     </TableBody>
                   </Table>
                 </div>
               </div>
-              <div className="p-4 border-t flex items-center justify-between text-xs text-muted-foreground">
-                <span>Total {totalRows} data</span>
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        onClick={() =>
-                          setCurrentPage((p) => Math.max(0, p - 1))
+              <div className="flex flex-col md:grid md:grid-cols-3 items-center justify-between gap-4 py-4 px-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    Rows per page
+                  </span>
+                  <Select
+                    value={pageSize.toString()}
+                    onValueChange={(val) => {
+                      setPageSize(Number(val));
+                      setCurrentPage(0);
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-[70px]">
+                      <SelectValue placeholder={pageSize.toString()} />
+                    </SelectTrigger>
+                    <SelectContent side="top">
+                      {[10, 20, 30, 40, 50].map((size) => (
+                        <SelectItem key={size} value={size.toString()}>
+                          {size}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex justify-center">
+                  <Pagination className="mx-0 w-auto">
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentPage(p => Math.max(0, p - 1));
+                          }}
+                          className={cn(
+                            "cursor-pointer select-none",
+                            currentPage === 0 && "pointer-events-none opacity-50",
+                          )}
+                        />
+                      </PaginationItem>
+                      {(() => {
+                        const total = totalPages || 1;
+                        const active = currentPage + 1;
+                        const items = [];
+                        if (total <= 7) {
+                          for (let i = 1; i <= total; i++) {
+                            items.push(
+                              <PaginationItem key={i}>
+                                <PaginationLink
+                                  isActive={active === i}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setCurrentPage(i - 1);
+                                  }}
+                                  className="cursor-pointer select-none"
+                                >
+                                  {i}
+                                </PaginationLink>
+                              </PaginationItem>
+                            );
+                          }
+                        } else {
+                          items.push(
+                            <PaginationItem key={1}>
+                              <PaginationLink
+                                isActive={active === 1}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setCurrentPage(0);
+                                }}
+                                className="cursor-pointer select-none"
+                              >
+                                1
+                              </PaginationLink>
+                            </PaginationItem>
+                          );
+                          if (active > 3) {
+                            items.push(
+                              <PaginationItem key="start-ellipsis">
+                                <PaginationEllipsis />
+                              </PaginationItem>
+                            );
+                          }
+                          const start = Math.max(2, active - 1);
+                          const end = Math.min(total - 1, active + 1);
+                          for (let i = start; i <= end; i++) {
+                            items.push(
+                              <PaginationItem key={i}>
+                                <PaginationLink
+                                  isActive={active === i}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setCurrentPage(i - 1);
+                                  }}
+                                  className="cursor-pointer select-none"
+                                >
+                                  {i}
+                                </PaginationLink>
+                              </PaginationItem>
+                            );
+                          }
+                          if (active < total - 2) {
+                            items.push(
+                              <PaginationItem key="end-ellipsis">
+                                <PaginationEllipsis />
+                              </PaginationItem>
+                            );
+                          }
+                          items.push(
+                            <PaginationItem key={total}>
+                              <PaginationLink
+                                isActive={active === total}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setCurrentPage(total - 1);
+                                }}
+                                className="cursor-pointer select-none"
+                              >
+                                {total}
+                              </PaginationLink>
+                            </PaginationItem>
+                          );
                         }
-                        className={
-                          currentPage === 0 || isLoading
-                            ? "pointer-events-none opacity-50"
-                            : "cursor-pointer"
-                        }
-                      />
-                    </PaginationItem>
-                    <PaginationItem>
-                      <span className="text-xs">
-                        Hal. {currentPage + 1} / {totalPages || 1}
-                      </span>
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationNext
-                        onClick={() => setCurrentPage((p) => p + 1)}
-                        className={
-                          currentPage >= totalPages - 1 || isLoading
-                            ? "pointer-events-none opacity-50"
-                            : "cursor-pointer"
-                        }
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
+                        return items;
+                      })()}
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentPage(p => Math.min(totalPages - 1, p + 1));
+                          }}
+                          className={cn(
+                            "cursor-pointer select-none",
+                            currentPage >= totalPages - 1 && "pointer-events-none opacity-50",
+                          )}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+                <div className="text-xs text-muted-foreground whitespace-nowrap md:text-right">
+                  Showing{" "}
+                  {(() => {
+                    const start = totalRows === 0 ? 0 : currentPage * pageSize + 1;
+                    const end = Math.min((currentPage + 1) * pageSize, totalRows);
+                    return `${start}-${end} of ${totalRows}`;
+                  })()}{" "}
+                  entries
+                </div>
               </div>
             </CardContent>
           </Card>
