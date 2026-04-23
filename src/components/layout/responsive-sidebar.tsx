@@ -146,7 +146,7 @@ const defaultMenu: MenuItem[] = [
     ],
   },
   {
-    label: "Data Makrokesra",
+    label: "Data Eksternal",
     children: [{ label: "Data BPS" }],
   },
   {
@@ -205,7 +205,7 @@ const MENU_ROUTE_PREFIXES: Array<{ prefix: string; parent: string }> = [
   { prefix: "/transfer-daerah", parent: "Transfer Daerah" },
   { prefix: "/inquiry-data", parent: "Inquiry Data" },
   { prefix: "/laporan", parent: "Laporan" },
-  { prefix: "/data-makrokesra", parent: "Data Makrokesra" },
+  { prefix: "/data-eksternal", parent: "Data Eksternal" },
   { prefix: "/menu-rowset", parent: "Rowset Data" },
   { prefix: "/dispensasi", parent: "Dispensasi" },
   { prefix: "/ikpa", parent: "Monev IKPA" },
@@ -334,7 +334,7 @@ export function ResponsiveSidebar({
         return (
           <FileText className={`${cls} text-cyan-600 dark:text-cyan-400`} />
         );
-      case "Data Makrokesra":
+      case "Data Eksternal":
         return (
           <PieChart className={`${cls} text-violet-600 dark:text-violet-400`} />
         );
@@ -455,7 +455,7 @@ export function ResponsiveSidebar({
         return <Layers className={cls} />;
       case "Data Supplier__Jaringan Supplier":
         return <Share2 className={cls} />;
-      case "Data Makrokesra__Data BPS":
+      case "Data Eksternal__Data BPS":
         return <Database className={cls} />;
       case "Rowset Data__Generate Dataset":
         return <CheckCircle className={cls} />;
@@ -860,9 +860,9 @@ export function ResponsiveSidebar({
                               href = "/laporan/monev-pnbp";
                             } else if (
                               c.label === "Data BPS" &&
-                              m.label === "Data Makrokesra"
+                              m.label === "Data Eksternal"
                             ) {
-                              href = "/data-makrokesra/data-bps";
+                              href = "/data-eksternal/data-bps";
                             } else if (
                               c.label === "SP2D" &&
                               m.label === "Rowset Data"
@@ -1756,16 +1756,16 @@ export function ResponsiveSidebar({
                         </span>
                       </Link>
                     ) : c.label === "Data BPS" &&
-                      m.label === "Data Makrokesra" ? (
+                      m.label === "Data Eksternal" ? (
                       <Link
                         key={c.label}
-                        href="/data-makrokesra/data-bps"
+                        href="/data-eksternal/data-bps"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onClick={() => {
                           trackMenuUsage({
                             menu: m.label,
                             submenu: c.label,
-                            path: "/data-makrokesra/data-bps",
+                            path: "/data-eksternal/data-bps",
                           });
                           setOpen(false);
                         }}
