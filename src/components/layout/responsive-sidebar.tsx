@@ -38,6 +38,7 @@ import {
   Share2,
   Gauge,
   BookOpen,
+  MapPin,
   Archive,
   Gavel,
   CreditCard,
@@ -86,11 +87,7 @@ const defaultMenu: MenuItem[] = [
   },
   {
     label: "Makan Bergizi",
-    children: [
-      { label: "Dashboard MBG" },
-      { label: "Kertas Kerja" },
-      { label: "Data MBG" },
-    ],
+    children: [{ label: "Dashboard MBG" }, { label: "Kertas Kerja" }],
   },
   {
     label: "Monev KKP",
@@ -98,14 +95,6 @@ const defaultMenu: MenuItem[] = [
       { label: "KPPN" },
       { label: "Kanwil" },
       { label: "Direktorat PA" },
-    ],
-  },
-  {
-    label: "Kewilayahan",
-    children: [
-      { label: "Belanja" },
-      { label: "Tematik" },
-      { label: "Subsidi" },
     ],
   },
   {
@@ -125,6 +114,8 @@ const defaultMenu: MenuItem[] = [
       { label: "UP/TUP" },
       { label: "Penerimaan PNBP" },
       { label: "RKAKL Detail" },
+      { label: "Revisi DIPA" },
+      { label: "APBD" },
       { label: "Prognosis" },
     ],
   },
@@ -145,7 +136,20 @@ const defaultMenu: MenuItem[] = [
   },
   {
     label: "Rowset Data",
-    children: [{ label: "Generate Dataset" }, { label: "SP2D" }],
+    children: [
+      { label: "Generate Dataset" },
+      { label: "SP2D" },
+      { label: "Track Nadine" },
+    ],
+  },
+  {
+    label: "Kewilayahan",
+    children: [
+      { label: "Belanja" },
+      { label: "Tematik" },
+      { label: "Bansos" },
+      { label: "Subsidi" },
+    ],
   },
   {
     label: "Dispensasi",
@@ -179,11 +183,6 @@ const defaultMenu: MenuItem[] = [
     children: [{ label: "Sektor" }, { label: "Rekomendasi" }],
   },
   {
-    label: "IKI PA",
-    children: [{ label: "IKI Kontraktual" }, { label: "IKI APBD" }],
-  },
-
-  {
     label: "Profil K/L",
     children: [{ label: "Kementerian" }, { label: "Lembaga" }],
   },
@@ -197,18 +196,17 @@ const MENU_ROUTE_PREFIXES: Array<{ prefix: string; parent: string }> = [
   { prefix: "/dashboard", parent: "Dashboard" },
   { prefix: "/makan-bergizi", parent: "Makan Bergizi" },
   { prefix: "/monev-kkp", parent: "Monev KKP" },
-  { prefix: "/belwil", parent: "Kewilayahan" },
   { prefix: "/transfer-daerah", parent: "Transfer Daerah" },
   { prefix: "/inquiry-data", parent: "Inquiry Data" },
   { prefix: "/laporan", parent: "Laporan" },
   { prefix: "/data-makrokesra", parent: "Data Makrokesra" },
   { prefix: "/menu-rowset", parent: "Rowset Data" },
+  { prefix: "/belwil", parent: "Kewilayahan" },
   { prefix: "/dispensasi", parent: "Dispensasi" },
   { prefix: "/ikpa", parent: "Monev IKPA" },
   { prefix: "/data-supplier", parent: "Data Supplier" },
   { prefix: "/epa", parent: "EPA" },
   { prefix: "/spending-review", parent: "Spending Review" },
-  { prefix: "/iku-pa", parent: "IKI PA" },
   { prefix: "/profil-kl", parent: "Profil K/L" },
   { prefix: "/tentang-kita", parent: "Tentang Kita" },
 ];
@@ -278,22 +276,6 @@ export function ResponsiveSidebar({
           };
         }
 
-        // Filter IKI PA children:
-        if (item.label === "IKI PA") {
-          const isKontraktualAllowed = isAdmin || user.role === "ditpa";
-          const isApbdAllowed = isAdmin || user.role === "kanwil_djpb";
-
-          const allowedChildren = (item.children || []).filter((child) => {
-            if (child.label === "IKI Kontraktual" && !isKontraktualAllowed)
-              return false;
-            if (child.label === "IKI APBD" && !isApbdAllowed) return false;
-            return true;
-          });
-
-          if (allowedChildren.length === 0) return null; // Hide menu entirely
-          return { ...item, children: allowedChildren };
-        }
-
         return item;
       })
       .filter(Boolean) as MenuItem[];
@@ -355,6 +337,8 @@ export function ResponsiveSidebar({
         return (
           <Inbox className={`${cls} text-green-600 dark:text-green-400`} />
         );
+      case "Kewilayahan":
+        return <MapPin className={`${cls} text-teal-600 dark:text-teal-400`} />;
       case "Dispensasi":
         return <BookOpen className={`${cls} text-red-600 dark:text-red-400`} />;
       case "Monev IKPA":
@@ -364,10 +348,6 @@ export function ResponsiveSidebar({
           <CreditCard
             className={`${cls} text-orange-600 dark:text-orange-400`}
           />
-        );
-      case "IKI PA":
-        return (
-          <Gauge className={`${cls} text-orange-600 dark:text-orange-400`} />
         );
       case "Tentang Kita":
         return (
@@ -394,8 +374,6 @@ export function ResponsiveSidebar({
         return <LineChart className={cls} />;
       case "Makan Bergizi__Kertas Kerja":
         return <ClipboardList className={cls} />;
-      case "Makan Bergizi__Data MBG":
-        return <BarChart2 className={cls} />;
       case "Profil K/L__Kementerian":
         return <Users className={cls} />;
       case "Profil K/L__Lembaga":
@@ -432,7 +410,11 @@ export function ResponsiveSidebar({
         return <Database className={cls} />;
       case "Inquiry Data__RKAKL Detail":
         return <Database className={cls} />;
+      case "Inquiry Data__Revisi DIPA":
+        return <Database className={cls} />;
       case "Inquiry Data__Prognosis":
+        return <Database className={cls} />;
+      case "Inquiry Data__APBD":
         return <Database className={cls} />;
       case "Laporan__Monthly Report":
         return <CalendarDays className={cls} />;
@@ -468,9 +450,13 @@ export function ResponsiveSidebar({
         return <CheckCircle className={cls} />;
       case "Rowset Data__SP2D":
         return <Banknote className={cls} />;
+      case "Rowset Data__Track Nadine":
+        return <Search className={cls} />;
       case "Kewilayahan__Belanja":
         return <Database className={cls} />;
       case "Kewilayahan__Tematik":
+        return <Database className={cls} />;
+      case "Kewilayahan__Bansos":
         return <Database className={cls} />;
       case "Kewilayahan__Subsidi":
         return <Database className={cls} />;
@@ -486,10 +472,6 @@ export function ResponsiveSidebar({
         return <Building2 className={cls} />;
       case "Monev KKP__Direktorat PA":
         return <Building2 className={cls} />;
-      case "IKI PA__IKI Kontraktual":
-        return <Building2 className={cls} />;
-      case "IKI PA__IKI APBD":
-        return <BookOpen className={cls} />;
       default:
         return null;
     }
@@ -668,6 +650,20 @@ export function ResponsiveSidebar({
                               onMouseEnterFn = () =>
                                 import("@/components/inquiry-data/enhanced-filter-card");
                             } else if (
+                              c.label === "Revisi DIPA" &&
+                              m.label === "Inquiry Data"
+                            ) {
+                              href = "/inquiry-data/revisi-dipa";
+                              onMouseEnterFn = () =>
+                                import("@/components/inquiry-data/enhanced-filter-card");
+                            } else if (
+                              c.label === "APBD" &&
+                              m.label === "Inquiry Data"
+                            ) {
+                              href = "/inquiry-data/apbd";
+                              onMouseEnterFn = () =>
+                                import("@/components/inquiry-data/enhanced-filter-card");
+                            } else if (
                               c.label === "Prognosis" &&
                               m.label === "Inquiry Data"
                             ) {
@@ -688,13 +684,6 @@ export function ResponsiveSidebar({
                               href = "/makan-bergizi/kertas-kerja";
                               onMouseEnterFn = () =>
                                 import("@/features/mbg/components/MapView");
-                            } else if (
-                              c.label === "Data MBG" &&
-                              m.label === "Makan Bergizi"
-                            ) {
-                              href = "/makan-bergizi/data-mbg";
-                              onMouseEnterFn = () =>
-                                import("@/components/mbg/data-mbg/data-sp2d-mbg");
                             } else if (
                               c.label === "Profil" &&
                               m.label === "Tentang Kita"
@@ -845,6 +834,11 @@ export function ResponsiveSidebar({
                             ) {
                               href = "/data-makrokesra/data-bps";
                             } else if (
+                              c.label === "Track Nadine" &&
+                              m.label === "Rowset Data"
+                            ) {
+                              href = "/menu-rowset/track-nadine";
+                            } else if (
                               c.label === "SP2D" &&
                               m.label === "Rowset Data"
                             ) {
@@ -854,6 +848,26 @@ export function ResponsiveSidebar({
                               m.label === "Rowset Data"
                             ) {
                               href = "/menu-rowset/dataset";
+                            } else if (
+                              c.label === "Belanja" &&
+                              m.label === "Kewilayahan"
+                            ) {
+                              href = "/belwil/belanja";
+                            } else if (
+                              c.label === "Tematik" &&
+                              m.label === "Kewilayahan"
+                            ) {
+                              href = "/belwil/tematik";
+                            } else if (
+                              c.label === "Subsidi" &&
+                              m.label === "Kewilayahan"
+                            ) {
+                              href = "/belwil/subsidi";
+                            } else if (
+                              c.label === "Bansos" &&
+                              m.label === "Kewilayahan"
+                            ) {
+                              href = "/belwil/bansos";
                             } else if (
                               c.label === "LLAT" &&
                               m.label === "Dispensasi"
@@ -890,20 +904,6 @@ export function ResponsiveSidebar({
                               href = "/monev-kkp/direktorat-pa";
                               onMouseEnterFn = () =>
                                 import("@/components/monev-kkp/direktorat-pa-content");
-                            } else if (
-                              c.label === "IKI Kontraktual" &&
-                              m.label === "IKI PA"
-                            ) {
-                              href = "/iku-pa/kontraktual";
-                              onMouseEnterFn = () =>
-                                import("@/components/iku-pa/kontraktual");
-                            } else if (
-                              c.label === "IKI APBD" &&
-                              m.label === "IKI PA"
-                            ) {
-                              href = "/iku-pa/apbd";
-                              onMouseEnterFn = () =>
-                                import("@/components/iku-pa/apbd");
                             }
 
                             return (
@@ -1106,29 +1106,6 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/makan-bergizi/kertas-kerja",
-                          });
-                          setOpen(false);
-                        }}
-                      >
-                        <span className="inline-flex items-center">
-                          {subIconFor(m.label, c.label)}
-                          <span>{c.label}</span>
-                        </span>
-                      </Link>
-                    ) : c.label === "Data MBG" &&
-                      m.label === "Makan Bergizi" ? (
-                      <Link
-                        key={c.label}
-                        href="/makan-bergizi/data-mbg"
-                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
-                        onMouseEnter={() => {
-                          import("@/components/mbg/data-mbg/data-sp2d-mbg");
-                        }}
-                        onClick={() => {
-                          trackMenuUsage({
-                            menu: m.label,
-                            submenu: c.label,
-                            path: "/makan-bergizi/data-mbg",
                           });
                           setOpen(false);
                         }}
@@ -1352,6 +1329,51 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/inquiry-data/rkakl-detail",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Revisi DIPA" &&
+                      m.label === "Inquiry Data" ? (
+                      <Link
+                        key={c.label}
+                        href="/inquiry-data/revisi-dipa"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onMouseEnter={() => {
+                          import("@/components/inquiry-data/dynamic-filters-card");
+                        }}
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/inquiry-data/revisi-dipa",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "APBD" && m.label === "Inquiry Data" ? (
+                      <Link
+                        key={c.label}
+                        href="/inquiry-data/apbd"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onMouseEnter={() => {
+                          import("@/components/inquiry-data/dynamic-filters-card");
+                        }}
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/inquiry-data/revisi-dipa",
                           });
                           setOpen(false);
                         }}
@@ -1659,6 +1681,26 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </Link>
+                    ) : c.label === "Track Nadine" &&
+                      m.label === "Rowset Data" ? (
+                      <Link
+                        key={c.label}
+                        href="/menu-rowset/track-nadine"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/menu-rowset/track-nadine",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
                     ) : c.label === "SP2D" && m.label === "Rowset Data" ? (
                       <Link
                         key={c.label}
@@ -1689,6 +1731,82 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/menu-rowset/dataset",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Belanja" && m.label === "Kewilayahan" ? (
+                      <Link
+                        key={c.label}
+                        href="/belwil/belanja"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/belwil/belanja",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Tematik" && m.label === "Kewilayahan" ? (
+                      <Link
+                        key={c.label}
+                        href="/belwil/tematik"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/belwil/tematik",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Subsidi" && m.label === "Kewilayahan" ? (
+                      <Link
+                        key={c.label}
+                        href="/belwil/subsidi"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/belwil/subsidi",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Bansos" && m.label === "Kewilayahan" ? (
+                      <Link
+                        key={c.label}
+                        href="/belwil/bansos"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/belwil/bansos",
                           });
                           setOpen(false);
                         }}
@@ -1809,25 +1927,6 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/ikpa"
-                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
-                        onClick={() => {
-                          trackMenuUsage({
-                            menu: m.label,
-                            submenu: c.label,
-                            path: "/ikpa",
-                          });
-                          setOpen(false);
-                        }}
-                      >
-                        <span className="inline-flex items-center">
-                          {subIconFor(m.label, c.label)}
-                          <span>{c.label}</span>
-                        </span>
-                      </Link>
-                    ) : c.label === "IKI APBD" && m.label === "IKI PA" ? (
-                      <Link
-                        key={c.label}
-                        href="/iku-pa/apbd"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onClick={() => {
                           trackMenuUsage({
