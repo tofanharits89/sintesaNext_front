@@ -714,6 +714,57 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
       },
     },
   },
+  // APBD-specific filters
+  {
+    key: "urusanAPBD",
+    label: "Urusan",
+    order: 401,
+    showInUI: true,
+    noYearSuffix: true,
+    query: {
+      columnName: "kdurusan",
+      reference: {
+        database: "dbref",
+        table: "t_urusan_apbd",
+        joinKey: "kdurusan",
+        nameColumn: "nmurusan",
+      },
+    },
+  },
+  {
+    key: "bidangAPBD",
+    label: "Bidang",
+    order: 402,
+    showInUI: true,
+    noYearSuffix: true,
+    query: {
+      columnName: "kdbidurusan",
+      reference: {
+        database: "dbref",
+        table: "t_bidurusan_apbd",
+        joinKey: "kdbidurusan",
+        nameColumn: "nmbidurusan",
+      },
+    },
+  },
+  {
+    key: "subKegiatanAPBD",
+    label: "Sub Kegiatan",
+    order: 403,
+    showInUI: true,
+    query: {
+      columnName: "kdsubgiat",
+    },
+  },
+  {
+    key: "levelAPBD",
+    label: "Level",
+    order: 404,
+    showInUI: true,
+    query: {
+      columnName: "kdlevel6",
+    },
+  },
 ];
 
 export type FilterKey = (typeof INQUIRY_FILTER_DEFS)[number]["key"];
@@ -819,6 +870,8 @@ export const getAvailableFiltersForScope = (
     | "up_tup"
     | "penerimaan_pnbp"
     | "revisi_dipa"
+    | "belwil"
+    | "apbd"
     | "sp2d" = "general",
   excludeFilters: string[] = [],
   options?: { tipeLaporan?: string },
@@ -885,7 +938,9 @@ export const validateFiltersForScope = (
     | "up_tup"
     | "penerimaan_pnbp"
     | "sp2d"
-    | "revisi_dipa",
+    | "revisi_dipa"
+    | "belwil"
+    | "apbd",
 ): { isValid: boolean; incompatibleFilters: string[] } => {
   const availableFilters = getAvailableFiltersForScope(scope);
   const incompatibleFilters = activeFilters.filter(

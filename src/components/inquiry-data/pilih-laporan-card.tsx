@@ -51,6 +51,11 @@ export function PilihLaporanCard({
       { length: currentYear - 2025 + 1 },
       (_, i) => currentYear - i,
     );
+  } else if (reportParams.tipeLaporan.startsWith("apbd")) {
+    years = Array.from(
+      { length: currentYear - 2024 + 1 },
+      (_, i) => currentYear - i,
+    );
   } else {
     years = Array.from(
       { length: currentYear - 2014 + 1 },

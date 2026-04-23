@@ -51,6 +51,9 @@ export interface BelwilSubsidiReportParams {
   tipeLaporan: SubsidiTipeLaporan;
   pembulatan: string;
   jnsBansos?: string;
+  jnsBansosKondisi?: string;
+  jnsBansosKataKunci?: string;
+  jnsBansosJenisTampilan?: string;
 }
 
 const PEMBULATAN_DIVISOR: Record<string, number> = {
@@ -65,25 +68,10 @@ function getPembulatanDivisor(pembulatan: string): number {
   return PEMBULATAN_DIVISOR[pembulatan] ?? 1;
 }
 
-const ALLOWED_JNS_BANSOS = new Set([
-  "SUBSIDI PUPUK",
-  "SUBSIDI ENERGI",
-  "SUBSIDI LISTRIK",
-  "SUBSIDI LPG",
-  "SUBSIDI BBM",
-  "SUBSIDI BUNGA KUR",
-  "SUBSIDI BUNGA KREDIT",
-  "PSO",
-]);
-
-function sanitizeJnsBansos(value: string): string | null {
-  // Whitelist check - must be exactly matching known values to prevent injection
-  // We use "contains" matching against known subsidy types from the table
+function escapeJnsBansos(value: string): string | null {
   const trimmed = value.trim();
   if (!trimmed || trimmed === "all") return null;
-  // Only allow alphanumeric, spaces, and forward slashes
-  if (!/^[A-Za-z0-9 /]+$/.test(trimmed)) return null;
-  return trimmed;
+  return trimmed.replace(/'/g, "''");
 }
 
 export function useBelwilSubsidiQueryBuilder() {
@@ -128,11 +116,15 @@ export function useBelwilSubsidiQueryBuilder() {
         }
       });
 
-      // Always include jns_bansos dimension
-      selectColumns.push("main.jns_bansos");
+      // jns_bansos column based on jenisTampilan (only uraian / jangan_tampilkan)
+      const jnsBansosJenisTampilan =
+        reportParams.jnsBansosJenisTampilan || "uraian";
+      if (jnsBansosJenisTampilan !== "jangan_tampilkan") {
+        selectColumns.push("main.jns_bansos");
+      }
 
-      if (selectColumns.length === 1) {
-        // Only jns_bansos — add a fallback dimension
+      if (selectColumns.length === 0) {
+        // Only metrics — add a fallback dimension
         selectColumns.unshift("main.kddept AS kementerian_kode");
       }
 
@@ -209,12 +201,44 @@ export function useBelwilSubsidiQueryBuilder() {
       // Filter by tahun (the table has a tahun column)
       whereConditions.push(`main.tahun = '${reportParams.tahun}'`);
 
-      // Filter by jnsBansos if specified
+      // Filter by jnsBansos (pilihan)
       if (reportParams.jnsBansos && reportParams.jnsBansos !== "all") {
-        const safe = sanitizeJnsBansos(reportParams.jnsBansos);
+        const safe = escapeJnsBansos(reportParams.jnsBansos);
         if (safe) {
           whereConditions.push(`main.jns_bansos = '${safe}'`);
         }
+      }
+
+      // Filter by jnsBansosKondisi (comma-separated include/exclude)
+      if (
+        reportParams.jnsBansosKondisi &&
+        reportParams.jnsBansosKondisi.trim()
+      ) {
+        const codes = reportParams.jnsBansosKondisi
+          .split(",")
+          .map((c) => c.trim())
+          .filter(Boolean);
+        const includeCodes = codes
+          .filter((c) => !c.startsWith("!") && !c.startsWith("-"))
+          .map((c) => c.replace(/'/g, "''"));
+        const excludeCodes = codes
+          .filter((c) => c.startsWith("!") || c.startsWith("-"))
+          .map((c) => c.slice(1).replace(/'/g, "''"));
+        for (const code of includeCodes) {
+          whereConditions.push(`main.jns_bansos = '${code}'`);
+        }
+        for (const code of excludeCodes) {
+          whereConditions.push(`main.jns_bansos != '${code}'`);
+        }
+      }
+
+      // Filter by jnsBansosKataKunci (LIKE search on jns_bansos)
+      if (
+        reportParams.jnsBansosKataKunci &&
+        reportParams.jnsBansosKataKunci.trim()
+      ) {
+        const kw = reportParams.jnsBansosKataKunci.replace(/'/g, "''");
+        whereConditions.push(`LOWER(main.jns_bansos) LIKE LOWER('%${kw}%')`);
       }
 
       // Active filter conditions
@@ -272,6 +296,7 @@ export function useBelwilSubsidiQueryBuilder() {
     (
       activeFilters: string[],
       filterValues: Record<string, FilterValue>,
+      reportParams: BelwilSubsidiReportParams,
     ): string[] => {
       const groupByColumns: string[] = [];
       const seen = new Set<string>();
@@ -305,8 +330,12 @@ export function useBelwilSubsidiQueryBuilder() {
         }
       });
 
-      // Always group by jns_bansos
-      addGroupBy("main.jns_bansos");
+      // Include jns_bansos in GROUP BY only when it's shown
+      const jnsBansosJenisTampilanGb =
+        reportParams.jnsBansosJenisTampilan || "uraian";
+      if (jnsBansosJenisTampilanGb !== "jangan_tampilkan") {
+        addGroupBy("main.jns_bansos");
+      }
 
       return groupByColumns;
     },
@@ -331,7 +360,11 @@ export function useBelwilSubsidiQueryBuilder() {
           filterValues,
           reportParams,
         );
-        const groupByColumns = buildGroupByClause(activeFilters, filterValues);
+        const groupByColumns = buildGroupByClause(
+          activeFilters,
+          filterValues,
+          reportParams,
+        );
 
         let query = `SELECT\n  ${selectColumns.join(",\n  ")}\nFROM ${mainTable} AS main`;
 

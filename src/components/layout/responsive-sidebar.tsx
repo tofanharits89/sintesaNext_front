@@ -38,7 +38,6 @@ import {
   Share2,
   Gauge,
   BookOpen,
-  MapPin,
   Archive,
   Gavel,
   CreditCard,
@@ -126,7 +125,6 @@ const defaultMenu: MenuItem[] = [
       { label: "UP/TUP" },
       { label: "Penerimaan PNBP" },
       { label: "RKAKL Detail" },
-      { label: "Revisi DIPA" },
       { label: "Prognosis" },
     ],
   },
@@ -147,10 +145,7 @@ const defaultMenu: MenuItem[] = [
   },
   {
     label: "Rowset Data",
-    children: [
-      { label: "Generate Dataset" },
-      { label: "SP2D" },
-    ],
+    children: [{ label: "Generate Dataset" }, { label: "SP2D" }],
   },
   {
     label: "Dispensasi",
@@ -360,8 +355,6 @@ export function ResponsiveSidebar({
         return (
           <Inbox className={`${cls} text-green-600 dark:text-green-400`} />
         );
-      case "Kewilayahan":
-        return <MapPin className={`${cls} text-teal-600 dark:text-teal-400`} />;
       case "Dispensasi":
         return <BookOpen className={`${cls} text-red-600 dark:text-red-400`} />;
       case "Monev IKPA":
@@ -438,8 +431,6 @@ export function ResponsiveSidebar({
       case "Inquiry Data__Penerimaan PNBP":
         return <Database className={cls} />;
       case "Inquiry Data__RKAKL Detail":
-        return <Database className={cls} />;
-      case "Inquiry Data__Revisi DIPA":
         return <Database className={cls} />;
       case "Inquiry Data__Prognosis":
         return <Database className={cls} />;
@@ -677,13 +668,6 @@ export function ResponsiveSidebar({
                               onMouseEnterFn = () =>
                                 import("@/components/inquiry-data/enhanced-filter-card");
                             } else if (
-                              c.label === "Revisi DIPA" &&
-                              m.label === "Inquiry Data"
-                            ) {
-                              href = "/inquiry-data/revisi-dipa";
-                              onMouseEnterFn = () =>
-                                import("@/components/inquiry-data/enhanced-filter-card");
-                            } else if (
                               c.label === "Prognosis" &&
                               m.label === "Inquiry Data"
                             ) {
@@ -870,21 +854,6 @@ export function ResponsiveSidebar({
                               m.label === "Rowset Data"
                             ) {
                               href = "/menu-rowset/dataset";
-                            } else if (
-                              c.label === "Belanja" &&
-                              m.label === "Kewilayahan"
-                            ) {
-                              href = "/belwil/belanja";
-                            } else if (
-                              c.label === "Tematik" &&
-                              m.label === "Kewilayahan"
-                            ) {
-                              href = "/belwil/tematik";
-                            } else if (
-                              c.label === "Subsidi" &&
-                              m.label === "Kewilayahan"
-                            ) {
-                              href = "/belwil/subsidi";
                             } else if (
                               c.label === "LLAT" &&
                               m.label === "Dispensasi"
@@ -1392,29 +1361,6 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </Link>
-                    ) : c.label === "Revisi DIPA" &&
-                      m.label === "Inquiry Data" ? (
-                      <Link
-                        key={c.label}
-                        href="/inquiry-data/revisi-dipa"
-                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
-                        onMouseEnter={() => {
-                          import("@/components/inquiry-data/dynamic-filters-card");
-                        }}
-                        onClick={() => {
-                          trackMenuUsage({
-                            menu: m.label,
-                            submenu: c.label,
-                            path: "/inquiry-data/revisi-dipa",
-                          });
-                          setOpen(false);
-                        }}
-                      >
-                        <span className="inline-flex items-center">
-                          {subIconFor(m.label, c.label)}
-                          <span>{c.label}</span>
-                        </span>
-                      </Link>
                     ) : c.label === "Prognosis" &&
                       m.label === "Inquiry Data" ? (
                       <Link
@@ -1743,63 +1689,6 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/menu-rowset/dataset",
-                          });
-                          setOpen(false);
-                        }}
-                      >
-                        <span className="inline-flex items-center">
-                          {subIconFor(m.label, c.label)}
-                          <span>{c.label}</span>
-                        </span>
-                      </Link>
-                    ) : c.label === "Belanja" && m.label === "Kewilayahan" ? (
-                      <Link
-                        key={c.label}
-                        href="/belwil/belanja"
-                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
-                        onClick={() => {
-                          trackMenuUsage({
-                            menu: m.label,
-                            submenu: c.label,
-                            path: "/belwil/belanja",
-                          });
-                          setOpen(false);
-                        }}
-                      >
-                        <span className="inline-flex items-center">
-                          {subIconFor(m.label, c.label)}
-                          <span>{c.label}</span>
-                        </span>
-                      </Link>
-                    ) : c.label === "Tematik" && m.label === "Kewilayahan" ? (
-                      <Link
-                        key={c.label}
-                        href="/belwil/tematik"
-                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
-                        onClick={() => {
-                          trackMenuUsage({
-                            menu: m.label,
-                            submenu: c.label,
-                            path: "/belwil/tematik",
-                          });
-                          setOpen(false);
-                        }}
-                      >
-                        <span className="inline-flex items-center">
-                          {subIconFor(m.label, c.label)}
-                          <span>{c.label}</span>
-                        </span>
-                      </Link>
-                    ) : c.label === "Subsidi" && m.label === "Kewilayahan" ? (
-                      <Link
-                        key={c.label}
-                        href="/belwil/subsidi"
-                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
-                        onClick={() => {
-                          trackMenuUsage({
-                            menu: m.label,
-                            submenu: c.label,
-                            path: "/belwil/subsidi",
                           });
                           setOpen(false);
                         }}

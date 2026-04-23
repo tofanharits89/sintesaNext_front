@@ -8,11 +8,13 @@ import {
   BelwilTayangModal,
   BelwilTematikTayangModal,
   BelwilSubsidiTayangModal,
+  BelwilBansosTayangModal,
 } from "./belwil-tayang-modal";
 import {
   BelwilLihatSqlModal,
   BelwilTematikLihatSqlModal,
   BelwilSubsidiLihatSqlModal,
+  BelwilBansosLihatSqlModal,
 } from "./belwil-lihat-sql-modal";
 import {
   getFilterLabel,
@@ -24,10 +26,12 @@ import {
   useBelwilDataApi,
   useBelwilTematikDataApi,
   useBelwilSubsidiDataApi,
+  useBelwilBansosDataApi,
 } from "@/hooks/belwil/use-belwil-data-api";
 import type {
   BelwilTematikReportParams,
   BelwilSubsidiReportParams,
+  BelwilBansosReportParams,
 } from "@/hooks/belwil/use-belwil-data-api";
 import type { FilterValue } from "@/hooks/use-inquiry-data-api";
 
@@ -537,6 +541,174 @@ export function BelwilSubsidiDynamicFiltersCard({
       <BelwilSubsidiLihatSqlModal
         open={modals.lihatSql}
         onOpenChange={(open) => !open && closeModal("lihatSql")}
+        activeFilters={activeFilters}
+        reportParams={reportParams}
+        filterValues={filterValues}
+      />
+    </Card>
+  );
+}
+
+
+// ─── Bansos Dynamic Filters Card ──────────────────────────────────────────
+
+interface BelwilBansosDynamicFiltersCardProps {
+  activeFilters: string[];
+  reportParams: BelwilBansosReportParams;
+  onRemoveFilter: (filterKey: string) => void;
+  onClearAllFilters: () => void;
+  filterValues: Record<string, FilterValue>;
+  onFilterChange: (filterKey: string, field: string, value: string) => void;
+}
+
+export function BelwilBansosDynamicFiltersCard({
+  activeFilters,
+  reportParams,
+  onRemoveFilter,
+  onClearAllFilters,
+  filterValues,
+  onFilterChange,
+}: BelwilBansosDynamicFiltersCardProps) {
+  const [modals, setModals] = useState({
+    tayang: false,
+    lihatSql: false,
+  });
+
+  const { user: currentUser } = useAuth();
+  const isAdmin =
+    currentUser?.role === "super_admin" || currentUser?.role === "co_admin";
+
+  const { downloadCSV, downloadExcel, isLoading } = useBelwilBansosDataApi();
+
+  const sortedBansosFilters = normalizeActiveFilters(activeFilters);
+
+  const openBansosModal = (modal: keyof typeof modals) => {
+    setModals((prev) => ({ ...prev, [modal]: true }));
+  };
+
+  const closeBansosModal = (modal: keyof typeof modals) => {
+    setModals((prev) => ({ ...prev, [modal]: false }));
+  };
+
+  const handleDownloadExcel = async () => {
+    try {
+      const normalized = normalizeActiveFilters(activeFilters);
+      await downloadExcel(normalized, filterValues, reportParams);
+    } catch (error) {
+      console.error("Excel download error:", error);
+    }
+  };
+
+  const handleDownloadCSV = async () => {
+    try {
+      const normalized = normalizeActiveFilters(activeFilters);
+      await downloadCSV(normalized, filterValues, reportParams);
+    } catch (error) {
+      console.error("CSV download error:", error);
+    }
+  };
+
+  return (
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="text-lg">Filter Aktif dan Aksi</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {sortedBansosFilters.length > 0 ? (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Filter yang Aktif ({sortedBansosFilters.length})
+              </h3>
+              {sortedBansosFilters.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onClearAllFilters}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  Hapus Semua
+                </Button>
+              )}
+            </div>
+            <div className="space-y-4">
+              {sortedBansosFilters.map((filterKey) => (
+                <EnhancedFilterCard
+                  key={filterKey}
+                  filterKey={filterKey}
+                  filterLabel={getFilterLabel(filterKey)}
+                  onRemove={() => onRemoveFilter(filterKey)}
+                  activeFilterValues={filterValues}
+                  onFilterChange={onFilterChange}
+                />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            <p>Tidak ada filter yang aktif.</p>
+            <p className="text-sm">
+              Aktifkan filter pada kartu &quot;Filter Parameters&quot; di atas.
+            </p>
+          </div>
+        )}
+
+        <div className="border-t pt-6">
+          <div className="flex flex-wrap justify-center gap-3">
+            <Button
+              onClick={() => openBansosModal("tayang")}
+              className="min-w-[150px] h-10"
+              disabled={activeFilters.length === 0 || isLoading}
+            >
+              <Eye className="w-4 h-4 mr-2" />
+              {isLoading ? "Loading..." : "Tayang"}
+            </Button>
+
+            <Button
+              onClick={handleDownloadExcel}
+              variant="outline"
+              className="min-w-[150px] h-10"
+              disabled={activeFilters.length === 0 || isLoading}
+            >
+              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              Download Excel
+            </Button>
+
+            <Button
+              onClick={handleDownloadCSV}
+              variant="outline"
+              className="min-w-[150px] h-10"
+              disabled={activeFilters.length === 0 || isLoading}
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Download CSV
+            </Button>
+
+            {isAdmin && (
+              <Button
+                onClick={() => openBansosModal("lihatSql")}
+                variant="outline"
+                className="min-w-[150px] h-10"
+                disabled={activeFilters.length === 0}
+              >
+                <Code className="w-4 h-4 mr-2" />
+                Lihat SQL
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardContent>
+
+      <BelwilBansosTayangModal
+        open={modals.tayang}
+        onOpenChange={(open) => !open && closeBansosModal("tayang")}
+        activeFilters={activeFilters}
+        reportParams={reportParams}
+        filterValues={filterValues}
+      />
+      <BelwilBansosLihatSqlModal
+        open={modals.lihatSql}
+        onOpenChange={(open) => !open && closeBansosModal("lihatSql")}
         activeFilters={activeFilters}
         reportParams={reportParams}
         filterValues={filterValues}

@@ -596,7 +596,7 @@ export default function BelwilTematikPage() {
           activeFilters={activeFilters}
           setActiveFilters={setActiveFilters}
           excludeFilters={BELWIL_TEMATIK_EXCLUDED_FILTERS}
-          scope="general"
+          scope="belwil"
           tipeLaporan={reportParams.tipeLaporan}
         />
 
