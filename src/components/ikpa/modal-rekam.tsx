@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
 import { apiClient } from "@/lib/api/httpClient";
+import { VirtualizedSelect } from "@/components/ui/virtualized-select";
 import { FilePlus, Loader2, Save } from "lucide-react";
 import satkerData from "@/data/carisatker.json";
 import { format } from "date-fns";
@@ -202,24 +203,17 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
                             </div>
                         </div>
 
-                        {/* Satker - Full Width */}
                         <div className="w-full space-y-2">
                             <Label htmlFor="kdsatker">Satuan Kerja</Label>
-                            <Select
+                            <VirtualizedSelect
+                                options={filteredSatkerList.map(s => ({
+                                    value: s.kdsatker,
+                                    label: `${s.kdsatker} - ${s.nmsatker}`
+                                }))}
                                 value={form.watch("kdsatker")}
                                 onValueChange={(value) => form.setValue("kdsatker", value)}
-                            >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Pilih Satker" />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-[300px]">
-                                    {filteredSatkerList.map((s) => (
-                                        <SelectItem key={s.kdsatker} value={s.kdsatker}>
-                                            {s.kdsatker} - {s.nmsatker}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                placeholder="Pilih Satker"
+                            />
                         </div>
 
                         {/* Second Row - Indikator, No Doc */}
