@@ -37,6 +37,16 @@ import { Loader2, Save, X, Edit, FilePlus } from "lucide-react";
 import satkerData from "@/data/carisatker.json";
 import { useAuth } from "@/hooks/useAuth";
 import { filterSatkerByUserAccess } from "@/utils/satker-rbac";
+import { AxiosError } from "axios";
+
+interface SatkerItem {
+    kdsatker: string;
+    nmsatker: string;
+    kdkppn: string;
+    kdkanwil: string;
+    nmkanwil?: string;
+    nmkppn?: string;
+}
 
 // Schema based on the SQL provided
 const formSchema = z.object({
@@ -106,7 +116,7 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
 
     const filteredSatkerList = useMemo(() => {
         return filterSatkerByUserAccess(
-            satkerData as { kdsatker: string; nmsatker: string; kdkppn: string; kdkanwil: string }[],
+            satkerData as SatkerItem[],
             user
         );
     }, [user]);
@@ -155,14 +165,14 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
     }, [data, isOpen, form]);
 
     const mutation = useMutation({
-        mutationFn: (updatedRecord: any) => apiClient.put(`/ikpa/${data?.id}`, updatedRecord),
+        mutationFn: (formData: FormData) => apiClient.put(`/ikpa/${data?.id}`, formData),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["ikpa-data"] });
             queryClient.invalidateQueries({ queryKey: ["ikpa-stats"] });
             toast.success("Data IKPA berhasil diperbarui");
             onClose();
         },
-        onError: (error: any) => {
+        onError: (error: AxiosError<{ error: string }>) => {
             console.error("Error updating IKPA:", error);
             toast.error("Gagal memperbarui data IKPA: " + (error.response?.data?.error || error.message));
         },
@@ -192,10 +202,14 @@ export function ModalEditIkpa({ isOpen, onClose, data }: ModalEditProps) {
 
         const formData = new FormData();
         Object.entries(payload).forEach(([key, value]) => {
+            if (value === undefined || value === null) return;
+
             if (key === 'file' && value instanceof File) {
                 formData.append('file', value);
-            } else if (value !== undefined && value !== null) {
-                formData.append(key, value as string);
+            } else if (value instanceof Date) {
+                formData.append(key, value.toISOString().substring(0, 10));
+            } else {
+                formData.append(key, String(value));
             }
         });
 

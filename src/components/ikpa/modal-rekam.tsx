@@ -40,6 +40,16 @@ import satkerData from "@/data/carisatker.json";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { filterSatkerByUserAccess } from "@/utils/satker-rbac";
+import { AxiosError } from "axios";
+
+interface SatkerItem {
+    kdsatker: string;
+    nmsatker: string;
+    kdkppn: string;
+    kdkanwil: string;
+    nmkanwil?: string;
+    nmkppn?: string;
+}
 
 // Schema based on the SQL provided
 const formSchema = z.object({
@@ -80,7 +90,7 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
 
     const filteredSatkerList = useMemo(() => {
         return filterSatkerByUserAccess(
-            satkerData as { kdsatker: string; nmsatker: string; kdkppn: string; kdkanwil: string }[],
+            satkerData as SatkerItem[],
             user
         );
     }, [user]);
@@ -102,7 +112,7 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
     });
 
     const mutation = useMutation({
-        mutationFn: (newRecord: any) => apiClient.post("/ikpa", newRecord),
+        mutationFn: (formData: FormData) => apiClient.post("/ikpa", formData),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["ikpa-data"] });
             queryClient.invalidateQueries({ queryKey: ["ikpa-stats"] });
@@ -110,7 +120,7 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
             form.reset();
             onClose();
         },
-        onError: (error: any) => {
+        onError: (error: AxiosError<{ error: string }>) => {
             console.error("Error saving IKPA:", error);
             toast.error("Gagal merekam data IKPA: " + (error.response?.data?.error || error.message));
         },
@@ -142,10 +152,14 @@ export function ModalRekamIkpa({ isOpen, onClose }: ModalRekamProps) {
 
         const formData = new FormData();
         Object.entries(payload).forEach(([key, value]) => {
+            if (value === undefined || value === null) return;
+
             if (key === 'file' && value instanceof File) {
                 formData.append('file', value);
-            } else if (value !== undefined && value !== null) {
-                formData.append(key, value as string);
+            } else if (value instanceof Date) {
+                formData.append(key, value.toISOString().substring(0, 10));
+            } else {
+                formData.append(key, String(value));
             }
         });
 
