@@ -217,7 +217,10 @@ export function PermasalahanIsuTab() {
 
               {/* Action Button */}
               <Button
-                onClick={() => setIsPermasalahanIsuModalOpen(true)}
+                onClick={() => {
+                  setSelectedItem(null);
+                  setIsPermasalahanIsuModalOpen(true);
+                }}
                 className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white min-w-[100px] h-10 flex-1 sm:flex-initial"
               >
                 Rekam
@@ -252,7 +255,10 @@ export function PermasalahanIsuTab() {
       {/* Modals */}
       <PermasalahanIsuModal
         open={isPermasalahanIsuModalOpen}
-        onOpenChange={setIsPermasalahanIsuModalOpen}
+        onOpenChange={(open) => {
+          setIsPermasalahanIsuModalOpen(open);
+          if (!open) setSelectedItem(null);
+        }}
         data={selectedItem}
         onSave={() => {
           setIsPermasalahanIsuModalOpen(false);

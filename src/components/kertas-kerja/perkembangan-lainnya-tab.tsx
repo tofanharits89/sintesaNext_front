@@ -260,7 +260,10 @@ export function PerkembanganLainnyaTab() {
 
               {/* Action Button */}
               <Button
-                onClick={() => setIsPerkembanganLainnyaModalOpen(true)}
+                onClick={() => {
+                  setSelectedItem(null);
+                  setIsPerkembanganLainnyaModalOpen(true);
+                }}
                 className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white min-w-[100px] h-10 flex-1 sm:flex-initial"
               >
                 Rekam
@@ -295,7 +298,10 @@ export function PerkembanganLainnyaTab() {
       {/* Modals */}
       <PerkembanganLainnyaModal
         open={isPerkembanganLainnyaModalOpen}
-        onOpenChange={setIsPerkembanganLainnyaModalOpen}
+        onOpenChange={(open) => {
+          setIsPerkembanganLainnyaModalOpen(open);
+          if (!open) setSelectedItem(null);
+        }}
         data={selectedItem}
         onSave={() => {
           setIsPerkembanganLainnyaModalOpen(false);

@@ -225,7 +225,10 @@ export function KesimpulanRekomendasiTab() {
 
               {/* Action Button */}
               <Button
-                onClick={() => setIsKesimpulanRekomendasiModalOpen(true)}
+                onClick={() => {
+                  setSelectedItem(null);
+                  setIsKesimpulanRekomendasiModalOpen(true);
+                }}
                 className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white min-w-[100px] h-10 flex-1 sm:flex-initial"
               >
                 Rekam
@@ -260,7 +263,10 @@ export function KesimpulanRekomendasiTab() {
       {/* Modals */}
       <KesimpulanRekomendasiModal
         open={isKesimpulanRekomendasiModalOpen}
-        onOpenChange={setIsKesimpulanRekomendasiModalOpen}
+        onOpenChange={(open) => {
+          setIsKesimpulanRekomendasiModalOpen(open);
+          if (!open) setSelectedItem(null);
+        }}
         data={selectedItem}
         onSave={() => {
           setIsKesimpulanRekomendasiModalOpen(false);

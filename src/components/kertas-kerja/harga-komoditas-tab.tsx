@@ -237,7 +237,10 @@ export function HargaKomoditasTab() {
 
               {/* Action Button */}
               <Button
-                onClick={() => setIsHargaKomoditasModalOpen(true)}
+                onClick={() => {
+                  setSelectedItem(null);
+                  setIsHargaKomoditasModalOpen(true);
+                }}
                 className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white min-w-[100px] h-10 flex-1 sm:flex-initial"
               >
                 Rekam
@@ -272,7 +275,10 @@ export function HargaKomoditasTab() {
       {/* Modals */}
       <HargaKomoditasModal
         open={isHargaKomoditasModalOpen}
-        onOpenChange={setIsHargaKomoditasModalOpen}
+        onOpenChange={(open) => {
+          setIsHargaKomoditasModalOpen(open);
+          if (!open) setSelectedItem(null);
+        }}
         data={selectedItem}
         onSave={() => {
           setIsHargaKomoditasModalOpen(false);

@@ -237,7 +237,10 @@ export function MakrokesraTab() {
 
               {/* Action Button */}
               <Button
-                onClick={() => setIsMakrokesraModalOpen(true)}
+                onClick={() => {
+                  setSelectedItem(null);
+                  setIsMakrokesraModalOpen(true);
+                }}
                 className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white min-w-[100px] h-10 flex-1 sm:flex-initial"
               >
                 Rekam
@@ -272,7 +275,10 @@ export function MakrokesraTab() {
       {/* Modals */}
       <MakrokesraModal
         open={isMakrokesraModalOpen}
-        onOpenChange={setIsMakrokesraModalOpen}
+        onOpenChange={(open) => {
+          setIsMakrokesraModalOpen(open);
+          if (!open) setSelectedItem(null);
+        }}
         data={selectedItem}
         onSave={() => {
           setIsMakrokesraModalOpen(false);
