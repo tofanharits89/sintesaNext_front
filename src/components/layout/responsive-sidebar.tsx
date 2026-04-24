@@ -117,6 +117,7 @@ const defaultMenu: MenuItem[] = [
       { label: "DAU" },
       { label: "Upload Laporan" },
       { label: "Proyeksi TKD" },
+      { label: "Penilaian IKU" },
     ],
   },
   {
@@ -149,10 +150,7 @@ const defaultMenu: MenuItem[] = [
   },
   {
     label: "Rowset Data",
-    children: [
-      { label: "Generate Dataset" },
-      { label: "SP2D" },
-    ],
+    children: [{ label: "Generate Dataset" }, { label: "SP2D" }],
   },
   {
     label: "Dispensasi",
@@ -429,6 +427,8 @@ export function ResponsiveSidebar({
         return <Upload className={cls} />;
       case "Transfer Daerah__DAU":
         return <Coins className={cls} />;
+      case "Transfer Daerah__Penilaian IKU":
+        return <Gauge className={cls} />;
       case "Inquiry Data__Permintaan":
         return <Send className={cls} />;
       case "Inquiry Data__Riwayat":
@@ -780,6 +780,13 @@ export function ResponsiveSidebar({
                               href = "/transfer-daerah/dau";
                               onMouseEnterFn = () =>
                                 import("@/components/transfer-daerah/data-transaksi-tab");
+                            } else if (
+                              c.label === "Penilaian IKU" &&
+                              m.label === "Transfer Daerah"
+                            ) {
+                              href = "/transfer-daerah/penilaian-iku";
+                              onMouseEnterFn = () =>
+                                import("@/components/transfer-daerah/penilaian-iku/landing");
                             } else if (
                               c.label === "Belanja" &&
                               m.label === "Inquiry Data"
@@ -1381,6 +1388,29 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/transfer-daerah/dau",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Penilaian IKU" &&
+                      m.label === "Transfer Daerah" ? (
+                      <Link
+                        key={c.label}
+                        href="/transfer-daerah/penilaian-iku"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onMouseEnter={() => {
+                          import("@/components/transfer-daerah/penilaian-iku/landing");
+                        }}
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/transfer-daerah/penilaian-iku",
                           });
                           setOpen(false);
                         }}
