@@ -12,7 +12,12 @@ import {
   TabsContent,
 } from "@/components/animate-ui/components/animate/tabs";
 
-export type RankedItem = { name: string; value: number; percentage: number };
+export type RankedItem = {
+  name: string;
+  value: number;
+  percentage: number;
+  target?: number | null;
+};
 
 export type RankingTab = {
   key: string;
@@ -25,9 +30,11 @@ const PAGE_SIZE = 8;
 function RankingList({
   items,
   badgeColor = "blue",
+  showTargetBar = false,
 }: {
   items: RankedItem[];
   badgeColor?: "blue" | "orange" | "purple";
+  showTargetBar?: boolean;
 }) {
   const [page, setPage] = useState(1);
 
@@ -69,11 +76,40 @@ function RankingList({
             key={`${it.name}-${idx}`}
             className="rounded-md px-2 py-2.5 bg-background"
           >
-            <div className="flex items-center justify-between gap-2">
-              <span className="truncate text-sm min-w-0">
+            <div className="flex items-center gap-2">
+              {/* Left: number + name */}
+              <span className="text-sm min-w-0 flex-1 truncate">
                 {(page - 1) * PAGE_SIZE + idx + 1}.{" "}
                 <span className="font-semibold">{it.name}</span>
               </span>
+
+              {/* Middle: target info (penerima only) */}
+              {showTargetBar && (
+                <div className="flex-shrink-0 w-36 px-1">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>
+                      {it.target != null && it.target > 0
+                        ? it.target.toLocaleString("id-ID")
+                        : "—"}
+                    </span>
+                    {it.target != null && it.target > 0 && (
+                      <span className="font-medium text-blue-600 dark:text-blue-400">
+                        {Math.min(100, it.percentage).toFixed(1)}%
+                      </span>
+                    )}
+                  </div>
+                  {it.target != null && it.target > 0 && (
+                    <div className="w-full bg-muted rounded-full h-1.5 mt-1">
+                      <div
+                        className="bg-blue-500 h-1.5 rounded-full transition-all"
+                        style={{ width: `${Math.min(100, it.percentage)}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Right: realisasi + badge */}
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-sm font-medium font-mono tabular-nums">
                   {it.value.toLocaleString("id-ID")}
@@ -155,6 +191,7 @@ export function StatsRankingCard({
                 <RankingList
                   items={tab.items}
                   badgeColor={TAB_BADGE_COLOR[tab.key] ?? "blue"}
+                  showTargetBar={tab.key === "penerima"}
                 />
               </TabsContent>
             ))}

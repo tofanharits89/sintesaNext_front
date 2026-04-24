@@ -186,7 +186,12 @@ export async function getPenerimaByRegency(
   return response.data;
 }
 
-export type RankedItem = { name: string; value: number; percentage: number };
+export type RankedItem = {
+  name: string;
+  value: number;
+  percentage: number;
+  target?: number | null;
+};
 
 export type ProvRankingsData = {
   penerima: RankedItem[];
