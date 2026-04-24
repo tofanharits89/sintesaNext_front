@@ -19,6 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useKertasKerjaDistinct } from "@/features/mbg/hooks/use-kertas-kerja";
+import kanwilsData from "@/data/kdkanwil.json";
 
 interface MakrokesraModalProps {
   open: boolean;
@@ -42,21 +44,40 @@ export function MakrokesraModal({
     keterangan: "",
   });
 
+  const { data: distinctIndicatorsResponse } = useKertasKerjaDistinct(
+    "data_bgn.indikator_bps",
+    "indikator",
+    formData.tahun || new Date().getFullYear().toString()
+  );
+
+  const getValueCaseInsensitive = (item: any, targetKey: string) => {
+    if (!item) return null;
+    const lowerTarget = targetKey.toLowerCase();
+    const actualKey = Object.keys(item).find(
+      (key) => key.toLowerCase() === lowerTarget
+    );
+    return actualKey ? item[actualKey] : null;
+  };
+
+  const dynamicIndicators = Array.isArray(distinctIndicatorsResponse?.data)
+    ? distinctIndicatorsResponse.data.map((item: any) => getValueCaseInsensitive(item, "indikator"))
+    : [];
+
   useEffect(() => {
     if (data) {
       setFormData({
-        tahun: data.tahun || "",
-        kanwil: data.kanwil || "",
-        triwulan: data.triwulan || "",
-        indikator: data.indikator || "",
-        satuan: data.satuan || "",
-        keterangan: data.keterangan || "",
+        tahun: getValueCaseInsensitive(data, "tahun") || "",
+        kanwil: getValueCaseInsensitive(data, "kode_kanwil") || getValueCaseInsensitive(data, "kodekanwil") || "",
+        triwulan: getValueCaseInsensitive(data, "triwulan") || "",
+        indikator: getValueCaseInsensitive(data, "indikator") || "",
+        satuan: getValueCaseInsensitive(data, "satuan") || getValueCaseInsensitive(data, "customsatuan") || "",
+        keterangan: getValueCaseInsensitive(data, "keterangan") || "",
       });
     } else {
       setFormData({
-        tahun: "",
+        tahun: new Date().getFullYear().toString(),
         kanwil: "",
-        triwulan: "",
+        triwulan: "I",
         indikator: "",
         satuan: "",
         keterangan: "",
@@ -88,34 +109,21 @@ export function MakrokesraModal({
     (currentYear - i).toString()
   );
 
-  const kanwilOptions = [
-    "Kanwil DJPb Sumut",
-    "Kanwil DJPb Sumbar",
-    "Kanwil DJPb Riau",
-    "Kanwil DJPb Jambi",
-    "Kanwil DJPb Sumsel",
-    "Kanwil DJPb Lampung",
-    "Kanwil DJPb Jabar",
-    "Kanwil DJPb Jateng",
-    "Kanwil DJPb Jatim",
-    "Kanwil DJPb DKI Jakarta",
-    "Kanwil DJPb Bali Nusra",
-    "Kanwil DJPb Kalbar",
-    "Kanwil DJPb Kalteng",
-    "Kanwil DJPb Kalsel",
-    "Kanwil DJPb Kaltara",
-    "Kanwil DJPb Sulut",
-    "Kanwil DJPb Sulteng",
-    "Kanwil DJPb Sulsel",
-    "Kanwil DJPb Sultra",
-    "Kanwil DJPb Gorontalo",
-    "Kanwil DJPb Maluku",
-    "Kanwil DJPb Malut",
-    "Kanwil DJPb Papua",
-    "Kanwil DJPb Papua Barat",
-  ];
+  const kanwilOptions = kanwilsData;
 
   const triwulanOptions = ["I", "II", "III", "IV"];
+
+  const staticIndicators = [
+    "Nilai Tukar Petani",
+    "Indeks Pembangunan Manusia",
+    "Gini Ratio",
+    "Tingkat Kemiskinan",
+    "Tingkat Pengangguran Terbuka",
+  ];
+
+  const indikatorOptions = dynamicIndicators.length > 0 ? dynamicIndicators : staticIndicators;
+
+  const satuanOptions = ["%", "Indeks", "Tahun"];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -166,9 +174,9 @@ export function MakrokesraModal({
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {kanwilOptions.map((kanwil) => (
-                    <SelectItem key={kanwil} value={kanwil} title={kanwil}>
-                      <span className="truncate">{kanwil}</span>
+                  {kanwilOptions.map((kanwil: any) => (
+                    <SelectItem key={kanwil.kdkanwil} value={kanwil.kdkanwil} title={kanwil.nmkanwil}>
+                      <span className="truncate">{kanwil.nmkanwil}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -205,29 +213,55 @@ export function MakrokesraModal({
             {/* Indikator */}
             <div className="space-y-2">
               <Label htmlFor="indikator">Indikator</Label>
-              <Input
-                id="indikator"
+              <Select
                 value={formData.indikator}
-                onChange={(e) =>
-                  setFormData({ ...formData, indikator: e.target.value })
+                onValueChange={(value) =>
+                  setFormData({ ...formData, indikator: value })
                 }
-                placeholder="Masukkan indikator"
-                className="w-full"
-              />
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue
+                    className="truncate"
+                    placeholder="Pilih indikator"
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {indikatorOptions.map((indikator: any) => (
+                    <SelectItem
+                      key={indikator}
+                      value={indikator}
+                      title={indikator}
+                    >
+                      <span className="truncate">{indikator}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Satuan */}
             <div className="space-y-2">
               <Label htmlFor="satuan">Satuan</Label>
-              <Input
-                id="satuan"
+              <Select
                 value={formData.satuan}
-                onChange={(e) =>
-                  setFormData({ ...formData, satuan: e.target.value })
+                onValueChange={(value) =>
+                  setFormData({ ...formData, satuan: value })
                 }
-                placeholder="Masukkan satuan"
-                className="w-full"
-              />
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue
+                    className="truncate"
+                    placeholder="Pilih satuan"
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {satuanOptions.map((satuan: any) => (
+                    <SelectItem key={satuan} value={satuan}>
+                      {satuan}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

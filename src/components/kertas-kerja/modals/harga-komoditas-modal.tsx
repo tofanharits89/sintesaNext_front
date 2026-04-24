@@ -19,6 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useKertasKerjaDistinct } from "@/features/mbg/hooks/use-kertas-kerja";
+import kanwilsData from "@/data/kdkanwil.json";
 
 interface HargaKomoditasModalProps {
   open: boolean;
@@ -42,21 +44,40 @@ export function HargaKomoditasModal({
     keterangan: "",
   });
 
+  const { data: distinctIndicatorsResponse } = useKertasKerjaDistinct(
+    "data_bgn.indikator_bapanas",
+    "indikator",
+    formData.tahun || new Date().getFullYear().toString()
+  );
+
+  const dynamicIndicators = Array.isArray(distinctIndicatorsResponse?.data)
+    ? distinctIndicatorsResponse.data.map((item: any) => item.indikator)
+    : [];
+
+  const getValueCaseInsensitive = (item: any, targetKey: string) => {
+    if (!item) return null;
+    const lowerTarget = targetKey.toLowerCase();
+    const actualKey = Object.keys(item).find(
+      (key) => key.toLowerCase() === lowerTarget
+    );
+    return actualKey ? item[actualKey] : null;
+  };
+
   useEffect(() => {
     if (data) {
       setFormData({
-        tahun: data.tahun || "",
-        kanwil: data.kanwil || "",
-        triwulan: data.triwulan || "",
-        indikator: data.indikator || "",
-        satuan: data.satuan || "",
-        keterangan: data.keterangan || "",
+        tahun: getValueCaseInsensitive(data, "tahun") || "",
+        kanwil: getValueCaseInsensitive(data, "kode_kanwil") || getValueCaseInsensitive(data, "kodekanwil") || "",
+        triwulan: getValueCaseInsensitive(data, "triwulan") || "",
+        indikator: getValueCaseInsensitive(data, "indikator") || "",
+        satuan: getValueCaseInsensitive(data, "satuan") || getValueCaseInsensitive(data, "customsatuan") || "",
+        keterangan: getValueCaseInsensitive(data, "keterangan") || "",
       });
     } else {
       setFormData({
-        tahun: "",
+        tahun: new Date().getFullYear().toString(),
         kanwil: "",
-        triwulan: "",
+        triwulan: "I",
         indikator: "",
         satuan: "",
         keterangan: "",
@@ -65,7 +86,6 @@ export function HargaKomoditasModal({
   }, [data, open]);
 
   const handleSubmit = () => {
-    // Handle form submission
     console.log("Submitting Harga Komoditas:", formData);
     onSave();
     handleClose();
@@ -88,53 +108,21 @@ export function HargaKomoditasModal({
     (currentYear - i).toString()
   );
 
-  const kanwilOptions = [
-    "Kanwil DJPb Sumut",
-    "Kanwil DJPb Sumbar",
-    "Kanwil DJPb Riau",
-    "Kanwil DJPb Jambi",
-    "Kanwil DJPb Sumsel",
-    "Kanwil DJPb Lampung",
-    "Kanwil DJPb Jabar",
-    "Kanwil DJPb Jateng",
-    "Kanwil DJPb Jatim",
-    "Kanwil DJPb DKI Jakarta",
-    "Kanwil DJPb Bali Nusra",
-    "Kanwil DJPb Kalbar",
-    "Kanwil DJPb Kalteng",
-    "Kanwil DJPb Kalsel",
-    "Kanwil DJPb Kaltara",
-    "Kanwil DJPb Sulut",
-    "Kanwil DJPb Sulteng",
-    "Kanwil DJPb Sulsel",
-    "Kanwil DJPb Sultra",
-    "Kanwil DJPb Gorontalo",
-    "Kanwil DJPb Maluku",
-    "Kanwil DJPb Malut",
-    "Kanwil DJPb Papua",
-    "Kanwil DJPb Papua Barat",
-  ];
+  const kanwilOptions = kanwilsData;
 
   const triwulanOptions = ["I", "II", "III", "IV"];
 
-  const komoditasOptions = [
-    "Beras Premium",
+  const staticIndicators = [
     "Beras Medium",
-    "Daging Sapi",
-    "Daging Ayam",
-    "Telur Ayam",
-    "Minyak Goreng",
-    "Gula Pasir",
-    "Bawang Merah",
-    "Bawang Putih",
-    "Cabai Merah",
-    "Cabai Rawit",
-    "Susu Kental Manis",
-    "Tepung Terigu",
-    "Ikan Segar",
-    "Tomat",
-    "Wortel",
+    "Karbohidrat",
+    "Protein Hewani",
+    "Minyak & Lemak",
+    "Sayur & Bumbu",
+    "Telur Ayam Ras",
+    "Lain-lain",
   ];
+
+  const komoditasOptions = dynamicIndicators.length > 0 ? dynamicIndicators : staticIndicators;
 
   const satuanOptions = [
     "Rp/Kg",
@@ -194,9 +182,9 @@ export function HargaKomoditasModal({
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {kanwilOptions.map((kanwil) => (
-                    <SelectItem key={kanwil} value={kanwil} title={kanwil}>
-                      <span className="truncate">{kanwil}</span>
+                  {kanwilOptions.map((kanwil: any) => (
+                    <SelectItem key={kanwil.kdkanwil} value={kanwil.kdkanwil} title={kanwil.nmkanwil}>
+                      <span className="truncate">{kanwil.nmkanwil}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -246,13 +234,13 @@ export function HargaKomoditasModal({
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {komoditasOptions.map((komoditas) => (
+                  {komoditasOptions.map((komoditas: any) => (
                     <SelectItem
                       key={komoditas}
-                      value={`Harga ${komoditas}`}
-                      title={`Harga ${komoditas}`}
+                      value={komoditas}
+                      title={komoditas}
                     >
-                      <span className="truncate">Harga {komoditas}</span>
+                      <span className="truncate">{komoditas}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>

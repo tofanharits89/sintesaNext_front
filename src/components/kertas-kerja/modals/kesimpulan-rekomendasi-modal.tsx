@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import kanwilsData from "@/data/kdkanwil.json";
 
 interface KesimpulanRekomendasiModalProps {
   open: boolean;
@@ -40,20 +41,38 @@ export function KesimpulanRekomendasiModal({
     rekomendasi: "",
   });
 
+  const getValueCaseInsensitive = (item: any, targetKey: string) => {
+    if (!item) return null;
+    const lowerTarget = targetKey.toLowerCase();
+    const actualKey = Object.keys(item).find(
+      (key) => key.toLowerCase() === lowerTarget
+    );
+    return actualKey ? item[actualKey] : null;
+  };
+
   useEffect(() => {
     if (data) {
+      const triwulanVal = getValueCaseInsensitive(data, "triwulan") || getValueCaseInsensitive(data, "tw") || "";
+      let mappedTriwulan = String(triwulanVal).trim().toUpperCase();
+      
+      // Map numeric values or variations to Roman numerals
+      if (mappedTriwulan === "1" || mappedTriwulan === "TRIWULAN 1" || mappedTriwulan === "TW 1") mappedTriwulan = "I";
+      else if (mappedTriwulan === "2" || mappedTriwulan === "TRIWULAN 2" || mappedTriwulan === "TW 2") mappedTriwulan = "II";
+      else if (mappedTriwulan === "3" || mappedTriwulan === "TRIWULAN 3" || mappedTriwulan === "TW 3") mappedTriwulan = "III";
+      else if (mappedTriwulan === "4" || mappedTriwulan === "TRIWULAN 4" || mappedTriwulan === "TW 4") mappedTriwulan = "IV";
+
       setFormData({
-        tahun: data.tahun || "",
-        kanwil: data.kanwil || "",
-        triwulan: data.triwulan || "",
-        kesimpulan: data.kesimpulan || "",
-        rekomendasi: data.rekomendasi || "",
+        tahun: getValueCaseInsensitive(data, "tahun") || "",
+        kanwil: getValueCaseInsensitive(data, "kode_kanwil") || getValueCaseInsensitive(data, "kodekanwil") || "",
+        triwulan: mappedTriwulan || "",
+        kesimpulan: getValueCaseInsensitive(data, "kesimpulan") || "",
+        rekomendasi: getValueCaseInsensitive(data, "saran") || getValueCaseInsensitive(data, "rekomendasi") || "",
       });
     } else {
       setFormData({
-        tahun: "",
+        tahun: new Date().getFullYear().toString(),
         kanwil: "",
-        triwulan: "",
+        triwulan: "I",
         kesimpulan: "",
         rekomendasi: "",
       });
@@ -83,32 +102,7 @@ export function KesimpulanRekomendasiModal({
     (currentYear - i).toString()
   );
 
-  const kanwilOptions = [
-    "Kanwil DJPb Sumut",
-    "Kanwil DJPb Sumbar",
-    "Kanwil DJPb Riau",
-    "Kanwil DJPb Jambi",
-    "Kanwil DJPb Sumsel",
-    "Kanwil DJPb Lampung",
-    "Kanwil DJPb Jabar",
-    "Kanwil DJPb Jateng",
-    "Kanwil DJPb Jatim",
-    "Kanwil DJPb DKI Jakarta",
-    "Kanwil DJPb Bali Nusra",
-    "Kanwil DJPb Kalbar",
-    "Kanwil DJPb Kalteng",
-    "Kanwil DJPb Kalsel",
-    "Kanwil DJPb Kaltara",
-    "Kanwil DJPb Sulut",
-    "Kanwil DJPb Sulteng",
-    "Kanwil DJPb Sulsel",
-    "Kanwil DJPb Sultra",
-    "Kanwil DJPb Gorontalo",
-    "Kanwil DJPb Maluku",
-    "Kanwil DJPb Malut",
-    "Kanwil DJPb Papua",
-    "Kanwil DJPb Papua Barat",
-  ];
+  const kanwilOptions = kanwilsData;
 
   const triwulanOptions = ["I", "II", "III", "IV"];
 
@@ -163,9 +157,9 @@ export function KesimpulanRekomendasiModal({
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {kanwilOptions.map((kanwil) => (
-                    <SelectItem key={kanwil} value={kanwil} title={kanwil}>
-                      <span className="truncate">{kanwil}</span>
+                  {kanwilOptions.map((kanwil: any) => (
+                    <SelectItem key={kanwil.kdkanwil} value={kanwil.kdkanwil} title={kanwil.nmkanwil}>
+                      <span className="truncate">{kanwil.nmkanwil}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>

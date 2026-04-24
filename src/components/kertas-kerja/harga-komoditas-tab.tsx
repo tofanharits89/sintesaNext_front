@@ -11,53 +11,32 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, Loader2 } from "lucide-react";
 import { HargaKomoditasModal } from "./modals/harga-komoditas-modal";
 import { DeleteConfirmModal } from "./modals/delete-confirm-modal";
-
-// Mock data for Harga Komoditas table
-const mockHargaKomoditasData = [
-  {
-    id: "1",
-    no: 1,
-    tahun: "2024",
-    kanwil: "Kanwil DJPb Sumut",
-    triwulan: "I",
-    indikator: "Harga Beras Premium",
-    satuan: "Rp/Kg",
-    keterangan: "Harga rata-rata beras premium di pasar tradisional",
-    update: "2024-03-15T10:30:00Z",
-  },
-  {
-    id: "2",
-    no: 2,
-    tahun: "2024",
-    kanwil: "Kanwil DJPb Jabar",
-    triwulan: "I",
-    indikator: "Harga Daging Sapi",
-    satuan: "Rp/Kg",
-    keterangan: "Harga daging sapi kualitas I",
-    update: "2024-03-16T14:20:00Z",
-  },
-  {
-    id: "3",
-    no: 3,
-    tahun: "2024",
-    kanwil: "Kanwil DJPb Jateng",
-    triwulan: "II",
-    indikator: "Harga Minyak Goreng",
-    satuan: "Rp/Liter",
-    keterangan: "Harga minyak goreng kemasan",
-    update: "2024-06-10T09:15:00Z",
-  },
-];
+import { useAuth } from "@/hooks/useAuth";
+import { useKertasKerja } from "@/features/mbg/hooks/use-kertas-kerja";
 
 export function HargaKomoditasTab() {
-  const [selectedYear, setSelectedYear] = useState("2024");
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [isHargaKomoditasModalOpen, setIsHargaKomoditasModalOpen] =
     useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+
+  // Auth for role filtering
+  const { user } = useAuth();
+
+  // Fetch real data with role filtering
+  const { data: response, isLoading, isError, error } = useKertasKerja(
+    "harga-komoditas", 
+    selectedYear,
+    1,
+    1000,
+    user?.role,
+    user?.kdkanwil
+  );
+  const hargaKomoditasData = Array.isArray(response?.data) ? response.data : [];
 
   // Generate years from current year back to 2020
   const currentYear = new Date().getFullYear();
@@ -86,6 +65,15 @@ export function HargaKomoditasTab() {
     });
   };
 
+  const getValueCaseInsensitive = (item: any, targetKey: string) => {
+    if (!item) return null;
+    const lowerTarget = targetKey.toLowerCase();
+    const actualKey = Object.keys(item).find(
+      (key) => key.toLowerCase() === lowerTarget
+    );
+    return actualKey ? item[actualKey] : null;
+  };
+
   const columns = [
     {
       accessorKey: "no",
@@ -102,16 +90,20 @@ export function HargaKomoditasTab() {
         <div className="text-center font-medium">Tahun</div>
       ),
       cell: ({ row }: any) => (
-        <div className="text-center">{row.getValue("tahun")}</div>
+        <div className="text-center">
+          {row.getValue("tahun") || getValueCaseInsensitive(row.original, "tahun")}
+        </div>
       ),
     },
     {
-      accessorKey: "kanwil",
+      accessorKey: "nmkanwil",
       header: ({ column }: any) => (
         <div className="text-center font-medium">Kanwil</div>
       ),
       cell: ({ row }: any) => (
-        <div className="text-center">{row.getValue("kanwil")}</div>
+        <div className="text-center">
+          {row.getValue("nmkanwil") || getValueCaseInsensitive(row.original, "nmkanwil")}
+        </div>
       ),
     },
     {
@@ -120,7 +112,9 @@ export function HargaKomoditasTab() {
         <div className="text-center font-medium">Triwulan</div>
       ),
       cell: ({ row }: any) => (
-        <div className="text-center">{row.getValue("triwulan")}</div>
+        <div className="text-center">
+          {row.getValue("triwulan") || getValueCaseInsensitive(row.original, "triwulan")}
+        </div>
       ),
     },
     {
@@ -128,46 +122,58 @@ export function HargaKomoditasTab() {
       header: ({ column }: any) => (
         <div className="text-center font-medium">Indikator</div>
       ),
-      cell: ({ row }: any) => (
-        <div
-          className="text-center max-w-[200px] truncate mx-auto"
-          title={row.getValue("indikator")}
-        >
-          {row.getValue("indikator")}
-        </div>
-      ),
+      cell: ({ row }: any) => {
+        const val = row.getValue("indikator") || getValueCaseInsensitive(row.original, "indikator");
+        return (
+          <div
+            className="text-center max-w-[200px] truncate mx-auto"
+            title={val}
+          >
+            {val}
+          </div>
+        );
+      },
     },
     {
-      accessorKey: "satuan",
+      id: "satuan",
       header: ({ column }: any) => (
         <div className="text-center font-medium">Satuan</div>
       ),
-      cell: ({ row }: any) => (
-        <div className="text-center">{row.getValue("satuan")}</div>
-      ),
+      cell: ({ row }: any) => {
+        const item = row.original;
+        const val = 
+          getValueCaseInsensitive(item, "customsatuan") || 
+          getValueCaseInsensitive(item, "customsat") || 
+          getValueCaseInsensitive(item, "satuan");
+        
+        return <div className="text-center">{val || "-"}</div>;
+      },
     },
     {
       accessorKey: "keterangan",
       header: ({ column }: any) => (
         <div className="text-center font-medium">Keterangan</div>
       ),
-      cell: ({ row }: any) => (
-        <div
-          className="text-center max-w-[300px] truncate mx-auto"
-          title={row.getValue("keterangan")}
-        >
-          {row.getValue("keterangan")}
-        </div>
-      ),
+      cell: ({ row }: any) => {
+        const val = row.getValue("keterangan") || getValueCaseInsensitive(row.original, "keterangan");
+        return (
+          <div
+            className="text-center max-w-[300px] truncate mx-auto"
+            title={val}
+          >
+            {val}
+          </div>
+        );
+      },
     },
     {
-      accessorKey: "update",
+      accessorKey: "updatedAt",
       header: ({ column }: any) => (
         <div className="text-center font-medium">Update</div>
       ),
       cell: ({ row }: any) => (
         <div className="text-center text-sm">
-          {formatDateTime(row.getValue("update"))}
+          {formatDateTime(row.getValue("updatedAt"))}
         </div>
       ),
     },
@@ -240,13 +246,25 @@ export function HargaKomoditasTab() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <DataTable
-              columns={columns}
-              data={mockHargaKomoditasData.filter(
-                (item) => item.tahun === selectedYear
-              )}
-            />
+          <div className="overflow-x-auto min-h-[400px] relative">
+            {isLoading ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : isError ? (
+              <div className="absolute inset-0 flex items-center justify-center text-red-500">
+                Error: {(error as any)?.message || "Failed to fetch data"}
+              </div>
+            ) : (
+              <DataTable
+                columns={columns}
+                data={hargaKomoditasData.map((item: any, index: number) => ({
+                  ...item,
+                  no: index + 1,
+                }))}
+                initialPageSize={25}
+              />
+            )}
           </div>
         </CardContent>
       </Card>
