@@ -50,7 +50,7 @@ const mockRekonsiliasiData = [
 ];
 
 export function RekonsiliasiDataTab({}: RekonsiliasiDataTabProps) {
-  const [selectedYear, setSelectedYear] = useState("2024");
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedKppn, setSelectedKppn] = useState("");
   const [selectedKabKota, setSelectedKabKota] = useState("");
@@ -105,7 +105,7 @@ export function RekonsiliasiDataTab({}: RekonsiliasiDataTabProps) {
   const statusOptions = ["Selesai", "Pending", "Dalam Proses", "Ditolak"];
 
   const handleReset = () => {
-    setSelectedYear("2024");
+    setSelectedYear(new Date().getFullYear().toString());
     setSelectedMonth("");
     setSelectedKppn("");
     setSelectedKabKota("");

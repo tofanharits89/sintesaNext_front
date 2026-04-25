@@ -41,6 +41,7 @@ const fetcher = async (url: string) => {
 export function useDauRekapBulanan(params: {
   kdpemda?: string;
   bulan?: number | string;
+  thang?: number | string;
 }) {
   // Enhanced validation to prevent invalid kdpemda values
   const isValidKdpemda = params?.kdpemda &&
@@ -56,6 +57,7 @@ export function useDauRekapBulanan(params: {
   const q: string[] = [];
   if (isValidKdpemda) q.push(`kdpemda=${encodeURIComponent(params.kdpemda!)}`);
   if (isValidBulan) q.push(`bulan=${encodeURIComponent(String(params.bulan))}`);
+  if (params.thang) q.push(`thang=${encodeURIComponent(String(params.thang))}`);
   const key =
     isValidKdpemda && isValidBulan
 ? apiPath(`/transfer-daerah/dau/rekap/bulanan?${q.join("&")}`)
@@ -64,7 +66,7 @@ export function useDauRekapBulanan(params: {
   const { data, error, isLoading, refetch } = useQuery<
     DauRekapBulananRow[] | DauRekapBulananRow
   >({
-    queryKey: ["dau-rekap-bulanan", params.kdpemda, params.bulan],
+    queryKey: ["dau-rekap-bulanan", params.kdpemda, params.bulan, params.thang],
     queryFn: () => fetcher(key!),
     enabled: !!key,
     refetchOnWindowFocus: false,

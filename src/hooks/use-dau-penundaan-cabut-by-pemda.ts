@@ -23,14 +23,17 @@ const fetcher = async (url: string) => {
   return result?.data ?? result;
 };
 
-export function useDauPenundaanCabutByPemda(params: { kdpemda?: string }) {
-  const enabled = Boolean(params?.kdpemda);
+export function useDauPenundaanCabutByPemda(params: { kdpemda?: string; thang?: string | number }) {
+  const q: string[] = [];
+  if (params?.kdpemda) q.push(`kdpemda=${encodeURIComponent(params.kdpemda)}`);
+  if (params?.thang) q.push(`thang=${encodeURIComponent(String(params.thang))}`);
+  
   const url = params?.kdpemda
-? apiPath(`/transfer-daerah/dau/penundaan-cabut?kdpemda=${encodeURIComponent(params.kdpemda)}`)
+? apiPath(`/transfer-daerah/dau/penundaan-cabut?${q.join("&")}`)
     : null;
 
   const { data, error, isLoading, refetch } = useQuery<DauPenundaanCabutRow[] | DauPenundaanCabutRow>({
-    queryKey: ["dau-penundaan-cabut-by-pemda", params.kdpemda],
+    queryKey: ["dau-penundaan-cabut-by-pemda", params.kdpemda, params.thang],
     queryFn: () => fetcher(url!),
     enabled: !!url,
     refetchOnWindowFocus: false,

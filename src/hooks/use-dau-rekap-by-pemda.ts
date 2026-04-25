@@ -25,20 +25,23 @@ const fetcher = async (url: string) => {
   return result?.data ?? result;
 };
 
-export function useDauRekapByPemda(params: { kdpemda?: string }) {
+export function useDauRekapByPemda(params: { kdpemda?: string; thang?: string | number }) {
   // Enhanced validation to prevent invalid kdpemda values
   const isValidKdpemda = params?.kdpemda &&
     params.kdpemda !== "undefined" &&
     params.kdpemda !== "null" &&
     params.kdpemda.trim() !== "";
 
-  const enabled = Boolean(isValidKdpemda);
+  const q: string[] = [];
+  if (isValidKdpemda) q.push(`kdpemda=${encodeURIComponent(params.kdpemda!)}`);
+  if (params.thang) q.push(`thang=${encodeURIComponent(String(params.thang))}`);
+  
   const url = isValidKdpemda
-    ? apiPath(`/transfer-daerah/dau/rekap?kdpemda=${encodeURIComponent(params.kdpemda!)}`)
+    ? apiPath(`/transfer-daerah/dau/rekap?${q.join("&")}`)
     : null;
 
   const { data, error, isLoading, refetch } = useQuery<DauRekapByPemdaRow[] | DauRekapByPemdaRow>({
-    queryKey: ["dau-rekap-by-pemda", params.kdpemda],
+    queryKey: ["dau-rekap-by-pemda", params.kdpemda, params.thang],
     queryFn: () => fetcher(url!),
     enabled: !!url,
     refetchOnWindowFocus: false,

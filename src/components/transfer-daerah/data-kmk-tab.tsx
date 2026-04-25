@@ -56,6 +56,8 @@ export function DataKmkTab({}: DataKmkTabProps) {
 
   const fallbackAttemptedRef = useRef(false);
 
+  // Removed fallback logic to keep selection on current year
+  /*
   useEffect(() => {
     if (fallbackAttemptedRef.current) {
       return;
@@ -68,6 +70,7 @@ export function DataKmkTab({}: DataKmkTabProps) {
       }
     }
   }, [rows, isLoading, selectedYear, currentYear, years]);
+  */
 
   const handleDataPotongan = (item: any) => {
     setSelectedItem(item);
@@ -412,7 +415,7 @@ export function DataKmkTab({}: DataKmkTabProps) {
             if (!id) throw new Error("ID tidak ditemukan");
             const headersWithCsrf: HeadersInit = addCsrfToHeaders({ "Content-Type": "application/json" });
             
-const resp = await fetch(apiPath(`/transfer-daerah/dau/kmk/${encodeURIComponent(String(id))}`), {
+            const resp = await fetch(apiPath(`/transfer-daerah/dau/kmk/${encodeURIComponent(String(id))}?year=${encodeURIComponent(selectedYear)}`), {
               method: "DELETE",
               headers: headersWithCsrf,
               credentials: "include",

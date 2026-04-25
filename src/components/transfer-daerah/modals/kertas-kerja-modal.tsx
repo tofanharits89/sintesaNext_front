@@ -211,12 +211,14 @@ export function KertasKerjaModal({ open, onOpenChange, data }: KertasKerjaModalP
 
   // Queries
   // Build params objects conditionally to satisfy exactOptionalPropertyTypes
-  const rekapBulananParams: { kdpemda?: string; bulan?: string | number } = {};
+  const rekapBulananParams: { kdpemda?: string; bulan?: string | number; thang?: string | number } = {};
   if (isValidKdpemda) rekapBulananParams.kdpemda = kdpemda;
   if (bulan !== undefined) rekapBulananParams.bulan = bulan;
+  if (data?.tahun) rekapBulananParams.thang = data.tahun;
 
-  const byPemdaParams: { kdpemda?: string } = {};
+  const byPemdaParams: { kdpemda?: string; thang?: string | number } = {};
   if (isValidKdpemda) byPemdaParams.kdpemda = kdpemda;
+  if (data?.tahun) byPemdaParams.thang = data.tahun;
 
   const rekapBulanan = useDauRekapBulanan(rekapBulananParams);
   const penundaanCabut = useDauPenundaanCabutByPemda(byPemdaParams);
