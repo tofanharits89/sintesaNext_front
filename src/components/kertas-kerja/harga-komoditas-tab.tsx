@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { Edit, Trash2, Loader2 } from "lucide-react";
 import { HargaKomoditasModal } from "./modals/harga-komoditas-modal";
 import { DeleteConfirmModal } from "./modals/delete-confirm-modal";
@@ -251,9 +252,7 @@ export function HargaKomoditasTab() {
         <CardContent>
           <div className="overflow-x-auto min-h-[400px] relative">
             {isLoading ? (
-              <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
+              <TableSkeleton />
             ) : isError ? (
               <div className="absolute inset-0 flex items-center justify-center text-red-500">
                 Error: {(error as any)?.message || "Failed to fetch data"}
