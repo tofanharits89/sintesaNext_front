@@ -1,14 +1,16 @@
 "use client";
 
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { AlertTriangle } from "lucide-react";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/animate-ui/components/radix/alert-dialog";
+import { AlertTriangle, Trash2 } from "lucide-react";
 
 interface DeleteConfirmModalProps {
   open: boolean;
@@ -41,156 +43,116 @@ export function DeleteConfirmModal({
       });
     };
 
+    const Label = ({ children }: { children: React.ReactNode }) => (
+      <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold whitespace-nowrap">
+        {children}
+      </span>
+    );
+
+    const Value = ({ children, title }: { children: React.ReactNode; title?: string }) => (
+      <span className="text-sm font-medium text-right line-clamp-2" title={title}>
+        {children}
+      </span>
+    );
+
+    const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
+      <div className="flex justify-between items-start gap-4">
+        <Label>{label}</Label>
+        {children}
+      </div>
+    );
+
     // Different preview based on data structure
     if (data.kluster) {
       // Permasalahan/Isu structure
       return (
-        <div className="p-4 bg-muted rounded-lg space-y-2">
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Tahun:</span>
-            <span className="text-sm font-medium">{data.tahun}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Kanwil:</span>
-            <span
-              className="text-sm font-medium max-w-[200px] truncate"
-              title={data.kanwil}
-            >
-              {data.kanwil}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Triwulan:</span>
-            <span className="text-sm font-medium">{data.triwulan}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Kluster:</span>
-            <span className="text-sm font-medium">{data.kluster}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Keterangan:</span>
-            <span
-              className="text-sm font-medium max-w-[250px] truncate"
-              title={data.keterangan}
-            >
-              {data.keterangan}
-            </span>
-          </div>
+        <div className="p-4 bg-muted/50 rounded-lg space-y-2 border border-border/50">
+          <Row label="Tahun">
+            <Value>{data.tahun}</Value>
+          </Row>
+          <Row label="Kanwil">
+            <Value title={data.kanwil || data.nmkanwil}>{data.kanwil || data.nmkanwil}</Value>
+          </Row>
+          <Row label="Triwulan">
+            <Value>{data.triwulan}</Value>
+          </Row>
+          <Row label="Kluster">
+            <Value>{data.kluster}</Value>
+          </Row>
+          <Row label="Keterangan">
+            <Value title={data.keterangan}>{data.keterangan}</Value>
+          </Row>
           {data.update && (
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Update:</span>
-              <span className="text-sm font-medium">
-                {formatDateTime(data.update)}
-              </span>
-            </div>
+            <Row label="Update">
+              <Value>{formatDateTime(data.update)}</Value>
+            </Row>
           )}
         </div>
       );
     } else if (data.kesimpulan && data.rekomendasi) {
       // Kesimpulan & Rekomendasi structure
       return (
-        <div className="p-4 bg-muted rounded-lg space-y-2">
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Tahun:</span>
-            <span className="text-sm font-medium">{data.tahun}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Kanwil:</span>
-            <span
-              className="text-sm font-medium max-w-[200px] truncate"
-              title={data.kanwil}
-            >
-              {data.kanwil}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Triwulan:</span>
-            <span className="text-sm font-medium">{data.triwulan}</span>
-          </div>
+        <div className="p-4 bg-muted/50 rounded-lg space-y-3 border border-border/50">
+          <Row label="Tahun">
+            <Value>{data.tahun}</Value>
+          </Row>
+          <Row label="Kanwil">
+            <Value title={data.kanwil || data.nmkanwil}>{data.kanwil || data.nmkanwil}</Value>
+          </Row>
+          <Row label="Triwulan">
+            <Value>{data.triwulan}</Value>
+          </Row>
           <div className="space-y-1">
-            <span className="text-sm text-muted-foreground">Kesimpulan:</span>
-            <p
-              className="text-sm font-medium max-w-full truncate"
-              title={data.kesimpulan}
-            >
+            <Label>Kesimpulan</Label>
+            <p className="text-sm font-medium leading-relaxed bg-background/50 p-2 rounded border border-border/30">
               {data.kesimpulan}
             </p>
           </div>
           <div className="space-y-1">
-            <span className="text-sm text-muted-foreground">Rekomendasi:</span>
-            <p
-              className="text-sm font-medium max-w-full truncate"
-              title={data.rekomendasi}
-            >
+            <Label>Rekomendasi</Label>
+            <p className="text-sm font-medium leading-relaxed bg-background/50 p-2 rounded border border-border/30">
               {data.rekomendasi}
             </p>
           </div>
           {data.update && (
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Update:</span>
-              <span className="text-sm font-medium">
-                {formatDateTime(data.update)}
-              </span>
-            </div>
+            <Row label="Update">
+              <Value>{formatDateTime(data.update)}</Value>
+            </Row>
           )}
         </div>
       );
     } else {
       // Standard structure (Makrokesra, Harga Komoditas, Perkembangan Lainnya)
       return (
-        <div className="p-4 bg-muted rounded-lg space-y-2">
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Tahun:</span>
-            <span className="text-sm font-medium">{data.tahun}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Kanwil:</span>
-            <span
-              className="text-sm font-medium max-w-[200px] truncate"
-              title={data.kanwil}
-            >
-              {data.kanwil}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Triwulan:</span>
-            <span className="text-sm font-medium">{data.triwulan}</span>
-          </div>
+        <div className="p-4 bg-muted/50 rounded-lg space-y-2 border border-border/50">
+          <Row label="Tahun">
+            <Value>{data.tahun}</Value>
+          </Row>
+          <Row label="Kanwil">
+            <Value title={data.kanwil || data.nmkanwil}>{data.kanwil || data.nmkanwil}</Value>
+          </Row>
+          <Row label="Triwulan">
+            <Value>{data.triwulan}</Value>
+          </Row>
           {data.indikator && (
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Indikator:</span>
-              <span
-                className="text-sm font-medium max-w-[200px] truncate"
-                title={data.indikator}
-              >
-                {data.indikator}
-              </span>
-            </div>
+            <Row label="Indikator">
+              <Value title={data.indikator}>{data.indikator}</Value>
+            </Row>
           )}
           {data.satuan && (
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Satuan:</span>
-              <span className="text-sm font-medium">{data.satuan}</span>
-            </div>
+            <Row label="Satuan">
+              <Value>{data.satuan}</Value>
+            </Row>
           )}
           {data.keterangan && (
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Keterangan:</span>
-              <span
-                className="text-sm font-medium max-w-[250px] truncate"
-                title={data.keterangan}
-              >
-                {data.keterangan}
-              </span>
-            </div>
+            <Row label="Keterangan">
+              <Value title={data.keterangan}>{data.keterangan}</Value>
+            </Row>
           )}
           {data.update && (
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Update:</span>
-              <span className="text-sm font-medium">
-                {formatDateTime(data.update)}
-              </span>
-            </div>
+            <Row label="Update">
+              <Value>{formatDateTime(data.update)}</Value>
+            </Row>
           )}
         </div>
       );
@@ -198,31 +160,35 @@ export function DeleteConfirmModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="sm:max-w-[500px] w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent className="sm:max-w-[800px]">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-red-500" />
             {title}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="py-4">
-          <p className="text-sm text-muted-foreground mb-4">{description}</p>
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {description}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        
+        <div className="py-2">
           {renderDataPreview()}
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        
+        <AlertDialogFooter className="mt-2">
+          <AlertDialogCancel onClick={() => onOpenChange(false)}>
             Batal
-          </Button>
-          <Button
-            variant="destructive"
+          </AlertDialogCancel>
+          <AlertDialogAction 
             onClick={onConfirm}
-            className="bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
+            className="bg-destructive text-white hover:bg-destructive/90"
           >
-            Hapus
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            <Trash2 className="mr-2 h-4 w-4" />
+            Hapus Data
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

@@ -217,12 +217,13 @@ export function DataKmkTab({}: DataKmkTabProps) {
       cell: ({ row }: any) => (
         <div className="flex justify-center">
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={() => handleOpenPreview(row.getValue("fileUrl"), row.original?.fileName || undefined)}
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 p-0 cursor-pointer"
+            title="Lihat File"
           >
-            <FileText className="h-4 w-4" />
+            <FileText className="h-4 w-4 text-amber-600" />
           </Button>
         </div>
       ),
@@ -241,41 +242,41 @@ export function DataKmkTab({}: DataKmkTabProps) {
             {/* Data Pemotongan (jenis 1 atau 4) */}
             {(jenis === "1" || jenis === "4") && (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
+                className="h-8 w-8 p-0 cursor-pointer"
                 onClick={() => {
                   setSelectedItem(row.original);
                   setIsDataPemotonganModalOpen(true);
                 }}
                 title="Data Pemotongan"
               >
-                <Scissors className="h-4 w-4" />
+                <Scissors className="h-4 w-4 text-red-600" />
               </Button>
             )}
 
             {/* Data Penundaan (jenis 2 atau 3) */}
             {(jenis === "2" || jenis === "3") && (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800"
+                className="h-8 w-8 p-0 cursor-pointer"
                 onClick={() => {
                   setSelectedItem(row.original);
                   setIsDataPenundaanModalOpen(true);
                 }}
                 title="Data Penundaan"
               >
-                <PauseCircle className="h-4 w-4" />
+                <PauseCircle className="h-4 w-4 text-blue-600" />
               </Button>
             )}
 
             {/* Data Pencabutan (hanya untuk jenis = 2) */}
             {jenis === "2" && (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800"
+                className="h-8 w-8 p-0 cursor-pointer"
                 onClick={() => {
                   setSelectedNoKmkForPencabutan(
                     row.original?.nomorKmk || row.original?.no_kmk || row.getValue?.("nomorKmk")
@@ -284,7 +285,7 @@ export function DataKmkTab({}: DataKmkTabProps) {
                 }}
                 title="Data Pencabutan"
               >
-                <Undo2 className="h-4 w-4" />
+                <Undo2 className="h-4 w-4 text-blue-600" />
               </Button>
             )}
           </div>
@@ -300,9 +301,9 @@ export function DataKmkTab({}: DataKmkTabProps) {
         <div className="flex items-center justify-center gap-2">
           {/* Delete only */}
           <Button
-            variant="ghost"
+            variant="destructive"
             size="sm"
-            className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
+            className="h-8 w-8 p-0 cursor-pointer"
             onClick={() => handleDelete(row.original)}
             title="Hapus"
           >

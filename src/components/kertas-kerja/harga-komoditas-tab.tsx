@@ -188,7 +188,7 @@ export function HargaKomoditasTab() {
             variant="outline"
             size="sm"
             onClick={() => handleEdit(row.original)}
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 p-0 cursor-pointer"
           >
             <Edit className="h-4 w-4 text-blue-600" />
           </Button>
@@ -196,7 +196,7 @@ export function HargaKomoditasTab() {
             variant="outline"
             size="sm"
             onClick={() => handleDelete(row.original)}
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 p-0 cursor-pointer"
           >
             <Trash2 className="h-4 w-4 text-red-600" />
           </Button>

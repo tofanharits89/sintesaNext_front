@@ -194,24 +194,24 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
       cell: ({ row }: any) => (
         <div className="flex items-center justify-center gap-1.5">
           <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0 cursor-pointer"
             title="Rekam Data Transaksi"
             aria-label="Rekam Data Transaksi"
             onClick={() => handleRekamData(row.original)}
           >
-            <FilePenLine className="h-4 w-4" />
+            <FilePenLine className="h-4 w-4 text-blue-600" />
           </Button>
           <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0 cursor-pointer"
             title="Kertas Kerja"
             aria-label="Kertas Kerja"
             onClick={() => handleKertasKerja(row.original)}
           >
-            <FileText className="h-4 w-4" />
+            <FileText className="h-4 w-4 text-amber-600" />
           </Button>
         </div>
       ),
