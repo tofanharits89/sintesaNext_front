@@ -22,7 +22,7 @@ import {
   FieldDescription,
 } from "@/components/ui/field";
 import { toast } from "sonner";
-import { Save, Lock } from "lucide-react";
+import { Save, Lock, Eye, EyeOff } from "lucide-react";
 import kdkanwilData from "@/data/kdkanwil.json";
 import kdkppnData from "@/data/kdkppn.json";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -49,6 +49,8 @@ export default function ProfilePage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Profile picture preview (local-only). In production, upload to storage and save URL.
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
@@ -103,6 +105,8 @@ export default function ProfilePage() {
     }
     setNewPassword("");
     setConfirmPassword("");
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
     setAvatarUrl(undefined);
     toast.info("Perubahan dibatalkan");
     refetch();
@@ -236,6 +240,8 @@ export default function ProfilePage() {
       toast.success("Password berhasil diubah");
       setNewPassword("");
       setConfirmPassword("");
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
       // Optionally refresh user data
       refetch();
     } catch (e: Error | unknown) {
@@ -567,25 +573,65 @@ export default function ProfilePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Field>
             <FieldLabel htmlFor="newPassword">Password Baru</FieldLabel>
-            <Input
-              id="newPassword"
-              type="password"
-              autoComplete="new-password"
-              placeholder="Minimal 12 Karakter (terdapat huruf besar, angka & simbol)"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-            />
+            <div className="relative">
+              <Input
+                id="newPassword"
+                type={showNewPassword ? "text" : "password"}
+                autoComplete="new-password"
+                placeholder="Minimal 12 Karakter (terdapat huruf besar, angka & simbol)"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="pr-10"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-foreground absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+                onClick={() => setShowNewPassword((current) => !current)}
+                aria-label={
+                  showNewPassword ? "Sembunyikan password baru" : "Lihat password baru"
+                }
+              >
+                {showNewPassword ? (
+                  <Eye className="h-4 w-4" />
+                ) : (
+                  <EyeOff className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
           </Field>
           <Field>
             <FieldLabel htmlFor="confirmPassword">Konfirmasi Password Baru</FieldLabel>
-            <Input
-              id="confirmPassword"
-              type="password"
-              autoComplete="new-password"
-              placeholder="Konfirmasi password baru"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
+            <div className="relative">
+              <Input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                autoComplete="new-password"
+                placeholder="Konfirmasi password baru"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="pr-10"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-foreground absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+                onClick={() => setShowConfirmPassword((current) => !current)}
+                aria-label={
+                  showConfirmPassword
+                    ? "Sembunyikan konfirmasi password baru"
+                    : "Lihat konfirmasi password baru"
+                }
+              >
+                {showConfirmPassword ? (
+                  <Eye className="h-4 w-4" />
+                ) : (
+                  <EyeOff className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
           </Field>
         </div>
       </div>

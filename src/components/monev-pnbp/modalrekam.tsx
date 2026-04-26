@@ -65,6 +65,7 @@ const Rekam: React.FC<RekamProps> = ({
   ndkanwilpilih,
   onSaveSuccess,
 }) => {
+  const formId = "monev-pnbp-rekam-nd-form";
   const { user } = useAuth();
   const [loading, setLoading] = useState<boolean>(false);
   const [nd_kanwil, setNdkanwil] = useState<File | string | null>("");
@@ -191,7 +192,10 @@ const Rekam: React.FC<RekamProps> = ({
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && onHide()}>
-      <DialogContent showCloseButton={false} className="max-w-4xl w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
+      <DialogContent
+        showCloseButton={false}
+        className="max-w-4xl w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh] flex flex-col overflow-hidden"
+      >
         <DialogHeader>
           <DialogTitle>Kirim Nota Dinas</DialogTitle>
         </DialogHeader>
@@ -201,80 +205,92 @@ const Rekam: React.FC<RekamProps> = ({
           initialValues={initialValues}
         >
           {({ handleSubmit, setFieldValue, values }) => (
-            <form noValidate onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="col-span-1 space-y-2">
-                  <Label>Tahun</Label>
-                  <Select
-                    value={values.tahun?.toString()}
-                    onValueChange={(val) => setFieldValue("tahun", val)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih Tahun" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tahunOptions.map((year) => (
-                        <SelectItem
-                          key={year}
-                          value={year.toString()}
-                          disabled={triwulanOptions.some((tri) =>
-                            isDisabled(year, tri),
-                          )}
-                        >
-                          {year}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            <form
+              id={formId}
+              noValidate
+              onSubmit={handleSubmit}
+              className="flex flex-1 flex-col overflow-hidden"
+            >
+              <div className="flex-1 space-y-4 overflow-y-auto pr-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="col-span-1 space-y-2">
+                    <Label>Tahun</Label>
+                    <Select
+                      value={values.tahun?.toString()}
+                      onValueChange={(val) => setFieldValue("tahun", val)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih Tahun" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tahunOptions.map((year) => (
+                          <SelectItem
+                            key={year}
+                            value={year.toString()}
+                            disabled={triwulanOptions.some((tri) =>
+                              isDisabled(year, tri),
+                            )}
+                          >
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="col-span-1 space-y-2">
+                    <Label>Triwulan</Label>
+                    <Select
+                      value={values.triwulan?.toString()}
+                      onValueChange={(val) => setFieldValue("triwulan", val)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih Triwulan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {triwulanOptions.map((tri) => (
+                          <SelectItem
+                            key={tri}
+                            value={tri.toString()}
+                            disabled={isDisabled(values.tahun, tri)}
+                          >
+                            Triwulan {tri}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="col-span-1 space-y-2">
-                  <Label>Triwulan</Label>
-                  <Select
-                    value={values.triwulan?.toString()}
-                    onValueChange={(val) => setFieldValue("triwulan", val)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih Triwulan" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {triwulanOptions.map((tri) => (
-                        <SelectItem
-                          key={tri}
-                          value={tri.toString()}
-                          disabled={isDisabled(values.tahun, tri)}
-                        >
-                          Triwulan {tri}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-1 mt-3 space-y-2">
+                  <div className="col-span-1 space-y-2">
+                    <Label>File Nota Dinas (Maks. 2 MB)</Label>
+                    <Input
+                      type="file"
+                      accept=".pdf"
+                      onChange={(e) => handleNdkanwilChange(e, setFieldValue)}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-1 mt-3 space-y-2">
-                <div className="col-span-1 space-y-2">
-                  <Label>File Nota Dinas (Maks. 2 MB)</Label>
-                  <Input
-                    type="file"
-                    accept=".pdf"
-                    onChange={(e) => handleNdkanwilChange(e, setFieldValue)}
-                  />
+                <div className="mt-3 text-center">
+                  <p className="font-bold text-xl">{getGMT7Time()}</p>
+                  <p className="text-sm">Waktu Server (GMT +7)</p>
                 </div>
-              </div>
-              <div className="mt-3 text-center">
-                <p className="font-bold text-xl">{getGMT7Time()}</p>
-                <p className="text-sm">Waktu Server (GMT +7)</p>
-              </div>
-              <div className="flex justify-end mt-3 gap-2">
-                <Button type="submit" variant="destructive" disabled={loading}>
-                  {loading ? <Spinner size="sm" /> : "Simpan"}
-                </Button>
-                <Button variant="secondary" onClick={onHide}>
-                  Tutup
-                </Button>
               </div>
             </form>
           )}
         </Formik>
+        <DialogFooter className="flex-shrink-0 border-t pt-4">
+          <Button variant="secondary" type="button" onClick={onHide}>
+            Tutup
+          </Button>
+          <Button
+            type="submit"
+            form={formId}
+            variant="destructive"
+            disabled={loading}
+          >
+            {loading ? <Spinner size="sm" /> : "Simpan"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

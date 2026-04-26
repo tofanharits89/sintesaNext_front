@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,6 +56,7 @@ export default function SimplifiedLoginForm() {
   const { user, isLoading, login } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [captchaCode, setCaptchaCode] = useState("");
   const [captchaTtlSeconds, setCaptchaTtlSeconds] = useState<number | null>(
     null,
@@ -347,13 +348,33 @@ export default function SimplifiedLoginForm() {
 
                   <Field>
                     <FieldLabel htmlFor="password">Password</FieldLabel>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="Masukkan password"
-                      {...form.register("password")}
-                      disabled={isSubmitting}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Masukkan password"
+                        className="pr-10"
+                        {...form.register("password")}
+                        disabled={isSubmitting}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-foreground absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+                        onClick={() => setShowPassword((current) => !current)}
+                        disabled={isSubmitting}
+                        aria-label={
+                          showPassword ? "Sembunyikan password" : "Lihat password"
+                        }
+                      >
+                        {showPassword ? (
+                          <Eye className="h-4 w-4" />
+                        ) : (
+                          <EyeOff className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                     <FieldError errors={[form.formState.errors.password]} />
                   </Field>
 

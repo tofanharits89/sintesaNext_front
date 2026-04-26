@@ -10,7 +10,13 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsContents,
+  TabsList,
+  TabsTrigger,
+} from "@/components/animate-ui/components/animate/tabs";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -68,6 +74,7 @@ export default function RekamanTantangan({
   rekomendasi_isi,
   onSaveSuccess,
 }: any) {
+  const formId = "monev-pnbp-tantangan-form";
   const isiProps = {
     kesesuaian_pnbp: kesesuaian_pnbp_isi,
     ketepatan_waktu: ketepatan_waktu_isi,
@@ -390,17 +397,17 @@ export default function RekamanTantangan({
         <div className="flex-1 overflow-hidden flex gap-0">
           {/* Left Navigation */}
           <div className="w-1/3 border-r pr-4 flex flex-col">
-            <Tabs
-              value={activeKey}
-              onValueChange={setActiveKey}
-              className="w-full"
-            >
-              <TabsList className="flex flex-col gap-2 h-auto bg-transparent w-full">
+              <Tabs
+                value={activeKey}
+                onValueChange={setActiveKey}
+                className="w-full"
+              >
+              <TabsList className="w-full h-auto p-2 rounded-xl grid grid-cols-1 gap-2">
                 {clusterMapping[jenis as number]?.map(({ key, singkat }) => (
                   <TabsTrigger
                     key={key}
                     value={key}
-                    className="w-full justify-start rounded-full"
+                    className="h-auto min-h-12 w-full px-4 py-3 text-left text-xs md:text-sm flex items-center justify-start whitespace-normal break-words"
                   >
                     {singkat}
                   </TabsTrigger>
@@ -423,53 +430,58 @@ export default function RekamanTantangan({
 
           {/* Right Content */}
           <div className="w-2/3 pl-4 overflow-y-auto flex flex-col">
-            <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
+            <form
+              id={formId}
+              onSubmit={handleSubmit}
+              className="flex-1 flex flex-col"
+            >
               <Tabs
                 value={activeKey}
                 onValueChange={setActiveKey}
                 className="w-full flex-1"
               >
-                <TabsContent value={activeKey} className="flex-1">
-                  {clusterMapping[jenis as number]?.find(
-                    (item) => item.key === activeKey,
-                  ) && (
-                      <div className="space-y-3">
-                        {clusterMapping[jenis as number]
-                          ?.filter((item) => item.key === activeKey)
-                          .map(({ key, label, contoh }) => (
-                            <div
-                              key={key}
-                              className="p-3 border rounded bg-slate-50 shadow-sm"
-                            >
-                              <h5 className="bg-green-600 text-white p-2 rounded mb-3">
-                                {label}
-                              </h5>
-                              <Textarea
-                                className="w-full min-h-[350px]"
-                                value={formState[key] || ""}
-                                onChange={(e) =>
-                                  handleInputChange(key, e.target.value)
-                                }
-                                placeholder={`Uraian ${contoh}`}
-                              />
-                            </div>
-                          ))}
-                      </div>
-                    )}
-                </TabsContent>
+                <TabsContents className="flex-1">
+                  <TabsContent value={activeKey} className="flex-1">
+                    {clusterMapping[jenis as number]?.find(
+                      (item) => item.key === activeKey,
+                    ) && (
+                        <div className="space-y-3">
+                          {clusterMapping[jenis as number]
+                            ?.filter((item) => item.key === activeKey)
+                            .map(({ key, label, contoh }) => (
+                              <div
+                                key={key}
+                                className="p-3 border rounded bg-slate-50 shadow-sm"
+                              >
+                                <h5 className="bg-green-600 text-white p-2 rounded mb-3">
+                                  {label}
+                                </h5>
+                                <Textarea
+                                  className="w-full min-h-[350px]"
+                                  value={formState[key] || ""}
+                                  onChange={(e) =>
+                                    handleInputChange(key, e.target.value)
+                                  }
+                                  placeholder={`Uraian ${contoh}`}
+                                />
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                  </TabsContent>
+                </TabsContents>
               </Tabs>
-
-              <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
-                <Button variant="default" type="submit">
-                  Simpan
-                </Button>
-                <Button variant="outline" onClick={onHide}>
-                  Tutup
-                </Button>
-              </div>
             </form>
           </div>
         </div>
+        <DialogFooter className="flex-shrink-0 border-t pt-4">
+          <Button variant="outline" type="button" onClick={onHide}>
+            Tutup
+          </Button>
+          <Button variant="default" type="submit" form={formId}>
+            Simpan
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
