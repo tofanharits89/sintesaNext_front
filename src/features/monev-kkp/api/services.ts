@@ -53,6 +53,7 @@ export type KkpDashboardData = {
   transaksiPerKppn: TransaksiKppnItem[];
   kendalaStats: KendalaItem[];
   detilKendalaWords: WordCloudItem[];
+  nmlokasi?: string | null;
 };
 
 // Raw item from the backend
@@ -118,11 +119,17 @@ function formatRupiah(value: number): string {
 export async function getKkpDashboardData(
   year: string = "2026",
   triwulan: string = "1",
+  kdkanwil?: string,
+  kdkppn?: string
 ): Promise<KkpDashboardData> {
+  let url = `/monev-kkp/kppn?tahun=${year}&triwulan=${triwulan}`;
+  if (kdkanwil) url += `&kdkanwil=${kdkanwil}`;
+  if (kdkppn) url += `&kdkppn=${kdkppn}`;
+
   const response = await apiClient.get<{
     success: boolean;
     data?: RawKkpRow[];
-  }>(`/monev-kkp/kppn?tahun=${year}&triwulan=${triwulan}`);
+  }>(url);
 
   if (!response?.success || !response.data) {
     throw new Error("Failed to fetch KKP dashboard data");
@@ -367,5 +374,6 @@ export async function getKkpDashboardData(
     transaksiPerKppn,
     kendalaStats,
     detilKendalaWords,
+    nmlokasi: rows.length > 0 ? (rows[0]?.nmlokasi || null) : null,
   };
 }

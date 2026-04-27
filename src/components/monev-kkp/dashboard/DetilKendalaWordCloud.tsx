@@ -152,13 +152,30 @@ export function DetilKendalaWordCloud({
                 height={dimensions.height}
                 font="Inter, system-ui, sans-serif"
                 fontWeight="600"
-                fontSize={(word: { value: number }) => {
+                fontSize={(word: any) => {
                   const maxVal = Math.max(...data.map(d => d.value));
                   const minVal = Math.min(...data.map(d => d.value));
                   const minS = 14;
-                  const maxS = 140;
-                  if (maxVal === minVal) return (minS + maxS) / 2;
-                  return minS + ((word.value - minVal) / (maxVal - minVal)) * (maxS - minS);
+                  const maxS = 80;
+                  
+                  let size;
+                  if (maxVal === minVal) {
+                    size = (minS + maxS) / 2;
+                  } else {
+                    size = minS + ((word.value - minVal) / (maxVal - minVal)) * (maxS - minS);
+                  }
+                  
+                  // D3-cloud drops words that exceed bounding box. 
+                  // Scale down font size if the text is too long for the container.
+                  // A rough estimate: character width is ~0.6x font size.
+                  const estimatedWidth = word.text.length * size * 0.6;
+                  const maxWidth = dimensions.width * 0.9;
+                  
+                  if (estimatedWidth > maxWidth) {
+                    size = maxWidth / (word.text.length * 0.6);
+                  }
+                  
+                  return Math.max(minS, size);
                 }}
                 rotate={() => 0}
                 padding={1}

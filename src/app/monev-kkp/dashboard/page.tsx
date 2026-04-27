@@ -16,12 +16,14 @@ import {
   AlertTriangle,
   CircleDashed,
   Calendar,
+  MapPin,
 } from "lucide-react";
 import {
   QuickStatCardSkeleton,
   StatsRankingCardSkeleton,
   ChartCardSkeleton,
 } from "@/components/ui/dashboard-skeletons";
+import { useAuth } from "@/hooks/useAuth";
 import { useKkpDashboard } from "@/features/monev-kkp/hooks/useKkpDashboard";
 import {
   Select,
@@ -70,11 +72,38 @@ const periodes = [
 ];
 
 export default function DashboardMonevKkpPage() {
+  const { user } = useAuth();
   const initial = getInitialPeriode();
   const [year, setYear] = useState(initial.year);
   const [triwulan, setTriwulan] = useState(initial.triwulan);
+  const [filterScope, setFilterScope] = useState<"all" | "local">("all");
 
-  const { data, isLoading } = useKkpDashboard(year, triwulan);
+  const userRole = String(user?.role || "").toLowerCase();
+  const isKppnUser = userRole === "kppn" || userRole === "3";
+  const isKanwilUser =
+    userRole === "kanwil_djpb" ||
+    userRole === "kanwil" ||
+    userRole === "2" ||
+    userRole.includes("kanwil");
+
+  const showScopeFilter = isKppnUser || isKanwilUser;
+  
+  // Calculate query parameters based on selected scope
+  // We pass 'all' to signal the backend to bypass RBAC restrictions for KPPN/Kanwil users
+  const kdkanwilQuery = (filterScope === "all" ? "all" : (isKanwilUser ? user?.kdkanwil : undefined)) as string | undefined;
+  const kdkppnQuery = (filterScope === "all" ? "all" : (isKppnUser ? user?.kdkppn : undefined)) as string | undefined;
+
+  const { data, isLoading } = useKkpDashboard(year, triwulan, kdkanwilQuery, kdkppnQuery);
+
+  const formatKanwilName = (name: string) => {
+    if (!name) return "";
+    if (name.toUpperCase().startsWith("KANWIL DJPB")) return name;
+    return `Kanwil DJPb ${name}`;
+  };
+
+  const unitLabel = isKanwilUser 
+    ? (user?.nmkanwil ? formatKanwilName(user.nmkanwil) : `Kanwil DJPb ${user?.kdkanwil || ""}`) 
+    : (user?.nmkppn || `KPPN ${user?.kdkppn || ""}`);
 
   const quickStats = useMemo(() => data?.quickStats ?? [], [data]);
   const kppnRankings = useMemo(() => data?.kppnRankings, [data]);
@@ -97,6 +126,24 @@ export default function DashboardMonevKkpPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          {showScopeFilter && (
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Wilayah:</span>
+              <Select value={filterScope} onValueChange={(val: "all" | "local") => setFilterScope(val)}>
+                <SelectTrigger className="w-[180px] h-9">
+                  <SelectValue placeholder="Pilih Wilayah" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua (Nasional)</SelectItem>
+                  <SelectItem value="local">
+                    {unitLabel}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-medium">Tahun:</span>
