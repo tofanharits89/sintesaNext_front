@@ -13,7 +13,9 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
   | "penerimaan_pnbp"
   | "sp2d"
   | "general"
-  | "revisi_dipa",
+  | "revisi_dipa"
+  | "belwil"
+  | "apbd",
   string[]
 > = {
   belanja: [
@@ -36,6 +38,11 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     // Belwil-specific filters not used on Belanja
     "regional",
     "lokusAnggaran",
+    // APBD-specific filters not used on Revisi DIPA
+    "urusanAPBD",
+    "bidangAPBD",
+    "subKegiatanAPBD",
+    "levelAPBD",
   ],
   tematik: [
     "register",
@@ -59,6 +66,11 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     // Belwil-specific filters not used on Tematik
     "regional",
     "lokusAnggaran",
+    // APBD-specific filters not used on Revisi DIPA
+    "urusanAPBD",
+    "bidangAPBD",
+    "subKegiatanAPBD",
+    "levelAPBD",
   ],
   rkakl_detail: [
     "cutOff", // No cutOff needed for RKAKL Detail since no realisasi
@@ -90,6 +102,11 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     // Belwil-specific filters not used on RKAKL Detail
     "regional",
     "lokusAnggaran",
+    // APBD-specific filters not used on Revisi DIPA
+    "urusanAPBD",
+    "bidangAPBD",
+    "subKegiatanAPBD",
+    "levelAPBD",
   ],
   kontrak: [
     // Explicitly exclude all filters that are NOT required on Kontrak page.
@@ -138,6 +155,11 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     // Belwil-specific filters not used on Kontrak
     "regional",
     "lokusAnggaran",
+    // APBD-specific filters not used on Revisi DIPA
+    "urusanAPBD",
+    "bidangAPBD",
+    "subKegiatanAPBD",
+    "levelAPBD",
   ],
   up_tup: [
     // Allowed filters on UP/TUP page:
@@ -191,6 +213,11 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     // Belwil-specific filters not used on UP/TUP
     "regional",
     "lokusAnggaran",
+    // APBD-specific filters not used on Revisi DIPA
+    "urusanAPBD",
+    "bidangAPBD",
+    "subKegiatanAPBD",
+    "levelAPBD",
   ],
   penerimaan_pnbp: [
     // Allowed filters on Penerimaan PNBP page:
@@ -240,6 +267,11 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     // Belwil-specific filters not used on Penerimaan PNBP
     "regional",
     "lokusAnggaran",
+    // APBD-specific filters not used on Revisi DIPA
+    "urusanAPBD",
+    "bidangAPBD",
+    "subKegiatanAPBD",
+    "levelAPBD",
   ],
   revisi_dipa: [
     // Allowed standard filters on Revisi DIPA page:
@@ -294,6 +326,11 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     // Belwil-specific filters not used on Revisi DIPA
     "regional",
     "lokusAnggaran",
+    // APBD-specific filters not used on Revisi DIPA
+    "urusanAPBD",
+    "bidangAPBD",
+    "subKegiatanAPBD",
+    "levelAPBD",
   ],
   general: [
     // Status Sumber only on Penerimaan PNBP
@@ -301,6 +338,11 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     // Revisi DIPA-specific filters not used on general pages
     "kewenanganRevisi",
     "jenisRevisi",
+    // APBD-specific filters not used on Revisi DIPA
+    "urusanAPBD",
+    "bidangAPBD",
+    "subKegiatanAPBD",
+    "levelAPBD",
   ],
   sp2d: [
     // Allowed filters on SP2D page:
@@ -351,6 +393,73 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     // Revisi DIPA-specific filters not used on SP2D
     "kewenanganRevisi",
     "jenisRevisi",
+    // Belwil-specific filters not used on Penerimaan PNBP
+    "regional",
+    "lokusAnggaran",
+    // APBD-specific filters not used on Penerimaan PNBP
+    "urusanAPBD",
+    "bidangAPBD",
+    "subKegiatanAPBD",
+    "levelAPBD",
+  ],
+  belwil: [
+    // Status Sumber only on Penerimaan PNBP
+    "statusSumber",
+    "sumberDana",
+    // Revisi DIPA-specific filters not used on general pages
+    "kewenanganRevisi",
+    "jenisRevisi",
+    // APBD-specific filters not used on Penerimaan PNBP
+    "urusanAPBD",
+    "bidangAPBD",
+    "subKegiatanAPBD",
+    "levelAPBD",
+  ],
+  apbd: [
+    // Status Sumber only on Penerimaan PNBP
+    "statusSumber",
+    "sumberDana",
+    // Revisi DIPA-specific filters not used on APBD pages
+    "kewenanganRevisi",
+    "jenisRevisi",
+    // APBN-specific hierarchy not present on APBD table
+    "kementerian",
+    "eselonI",
+    "kewenangan",
+    "outputKro",
+    "subOutputRo",
+    "akun",
+    "komponen",
+    "subKomponen",
+    "item",
+    "kodeBkpk",
+    "jenisBelanja",
+    // Tematik/special-program switches not used on APBD
+    "cutOff",
+    "jenisAkumulasi",
+    "register",
+    "kemiskinanEkstrim",
+    "belanjaPemilu",
+    "ibuKotaNusantara",
+    "ketahananPangan",
+    "swasembadaPangan",
+    "belanjaPemerintah",
+    "mbgIntervensi",
+    "jenisProgramStrategis",
+    "jenisTemaAnggaran",
+    "jenisBlokir",
+    "jenisPn",
+    "programPrioritas",
+    "kegiatanPrioritas",
+    "proyekPrioritas",
+    "jenisMajorProject",
+    "jenisInflasiIntervensi",
+    "jenisInflasiPengeluaran",
+    "stuntingIntervensi",
+    "jenisKontrak",
+    // Belwil-specific filters not used on APBD
+    "regional",
+    "lokusAnggaran",
   ],
 };
 

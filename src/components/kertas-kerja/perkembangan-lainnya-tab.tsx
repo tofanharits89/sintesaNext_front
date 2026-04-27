@@ -11,53 +11,68 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
-import { Edit, Trash2 } from "lucide-react";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
+import { Edit, Trash2, Loader2 } from "lucide-react";
 import { PerkembanganLainnyaModal } from "./modals/perkembangan-lainnya-modal";
 import { DeleteConfirmModal } from "./modals/delete-confirm-modal";
-
-// Mock data for Perkembangan Lainnya table
-const mockPerkembanganLainnyaData = [
-  {
-    id: "1",
-    no: 1,
-    tahun: "2024",
-    kanwil: "Kanwil DJPb Sumut",
-    triwulan: "I",
-    indikator: "Nilai Tukar Petani",
-    satuan: "Indeks",
-    keterangan: "NTP komposit regional",
-    update: "2024-03-15T10:30:00Z",
-  },
-  {
-    id: "2",
-    no: 2,
-    tahun: "2024",
-    kanwil: "Kanwil DJPb Jabar",
-    triwulan: "I",
-    indikator: "Indeks Pembangunan Manusia",
-    satuan: "Indeks",
-    keterangan: "IPM menurut provinsi",
-    update: "2024-03-16T14:20:00Z",
-  },
-  {
-    id: "3",
-    no: 3,
-    tahun: "2024",
-    kanwil: "Kanwil DJPb Jateng",
-    triwulan: "II",
-    indikator: "Gini Ratio",
-    satuan: "Rasio",
-    keterangan: "Tingkat ketimpangan pendapatan",
-    update: "2024-06-10T09:15:00Z",
-  },
-];
+import { useAuth } from "@/hooks/useAuth";
+import { useKertasKerja } from "@/features/mbg/hooks/use-kertas-kerja";
 
 export function PerkembanganLainnyaTab() {
-  const [selectedYear, setSelectedYear] = useState("2024");
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [isPerkembanganLainnyaModalOpen, setIsPerkembanganLainnyaModalOpen] =
     useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+
+  // Auth for role filtering
+  const { user } = useAuth();
+
+  // Fetch real data with role filtering
+  const { data: response, isLoading, isError, error } = useKertasKerja(
+    "perkembangan-lainnya", 
+    selectedYear, 
+    1, 
+    1000, 
+    user?.role, 
+    user?.kdkanwil
+  );
+  const perkembanganLainnyaData = Array.isArray(response?.data) ? response.data : [];
+
+  // Helper for dynamic units
+  const getSatuanByIndikator = (kategori: string) => {
+    if (!kategori) return "-";
+    const indikatorLower = kategori.toLowerCase();
+    
+    if (
+      indikatorLower.includes("harapan lama sekolah") ||
+      indikatorLower.includes("rata-rata lama sekolah") ||
+      indikatorLower.includes("hls") ||
+      indikatorLower.includes("rls") ||
+      indikatorLower.includes("pembangunan manusia") ||
+      indikatorLower.includes("ipm")
+    ) {
+      return "Poin";
+    }
+
+    if (
+      indikatorLower.includes("biaya pendidikan") ||
+      indikatorLower.includes("primary education")
+    ) {
+      return "Indeks";
+    }
+
+    return "%";
+  };
+
+  const getValueCaseInsensitive = (item: any, targetKey: string) => {
+    if (!item) return null;
+    const lowerTarget = targetKey.toLowerCase();
+    const actualKey = Object.keys(item).find(
+      (key) => key.toLowerCase() === lowerTarget
+    );
+    return actualKey ? item[actualKey] : null;
+  };
 
   // Generate years from current year back to 2020
   const currentYear = new Date().getFullYear();
@@ -76,6 +91,7 @@ export function PerkembanganLainnyaTab() {
   };
 
   const formatDateTime = (dateString: string) => {
+    if (!dateString) return "-";
     const date = new Date(dateString);
     return date.toLocaleString("id-ID", {
       year: "numeric",
@@ -102,16 +118,20 @@ export function PerkembanganLainnyaTab() {
         <div className="text-center font-medium">Tahun</div>
       ),
       cell: ({ row }: any) => (
-        <div className="text-center">{row.getValue("tahun")}</div>
+        <div className="text-center">
+          {row.getValue("tahun") || getValueCaseInsensitive(row.original, "tahun")}
+        </div>
       ),
     },
     {
-      accessorKey: "kanwil",
+      accessorKey: "nmkanwil",
       header: ({ column }: any) => (
         <div className="text-center font-medium">Kanwil</div>
       ),
       cell: ({ row }: any) => (
-        <div className="text-center">{row.getValue("kanwil")}</div>
+        <div className="text-center">
+          {row.getValue("nmkanwil") || getValueCaseInsensitive(row.original, "nmkanwil")}
+        </div>
       ),
     },
     {
@@ -120,54 +140,64 @@ export function PerkembanganLainnyaTab() {
         <div className="text-center font-medium">Triwulan</div>
       ),
       cell: ({ row }: any) => (
-        <div className="text-center">{row.getValue("triwulan")}</div>
-      ),
-    },
-    {
-      accessorKey: "indikator",
-      header: ({ column }: any) => (
-        <div className="text-center font-medium">Indikator</div>
-      ),
-      cell: ({ row }: any) => (
-        <div
-          className="text-center max-w-[200px] truncate mx-auto"
-          title={row.getValue("indikator")}
-        >
-          {row.getValue("indikator")}
+        <div className="text-center">
+          {row.getValue("triwulan") || getValueCaseInsensitive(row.original, "triwulan")}
         </div>
       ),
     },
     {
-      accessorKey: "satuan",
+      accessorKey: "kategori",
+      header: ({ column }: any) => (
+        <div className="text-center font-medium">Indikator</div>
+      ),
+      cell: ({ row }: any) => {
+        const val = row.getValue("kategori") || getValueCaseInsensitive(row.original, "kategori");
+        return (
+          <div
+            className="text-center max-w-[200px] truncate mx-auto"
+            title={val}
+          >
+            {val}
+          </div>
+        );
+      },
+    },
+    {
+      id: "satuan",
       header: ({ column }: any) => (
         <div className="text-center font-medium">Satuan</div>
       ),
-      cell: ({ row }: any) => (
-        <div className="text-center">{row.getValue("satuan")}</div>
-      ),
+      cell: ({ row }: any) => {
+        const item = row.original;
+        const kategori = getValueCaseInsensitive(item, "kategori");
+        return <div className="text-center">{getSatuanByIndikator(kategori)}</div>;
+      },
     },
     {
       accessorKey: "keterangan",
       header: ({ column }: any) => (
         <div className="text-center font-medium">Keterangan</div>
       ),
-      cell: ({ row }: any) => (
-        <div
-          className="text-center max-w-[300px] truncate mx-auto"
-          title={row.getValue("keterangan")}
-        >
-          {row.getValue("keterangan")}
-        </div>
-      ),
+      cell: ({ row }: any) => {
+        const val = row.getValue("keterangan") || getValueCaseInsensitive(row.original, "keterangan");
+        return (
+          <div
+            className="text-center max-w-[300px] truncate mx-auto"
+            title={val}
+          >
+            {val}
+          </div>
+        );
+      },
     },
     {
-      accessorKey: "update",
+      accessorKey: "updatedAt",
       header: ({ column }: any) => (
         <div className="text-center font-medium">Update</div>
       ),
       cell: ({ row }: any) => (
         <div className="text-center text-sm">
-          {formatDateTime(row.getValue("update"))}
+          {formatDateTime(row.getValue("updatedAt") || getValueCaseInsensitive(row.original, "updatedAt"))}
         </div>
       ),
     },
@@ -182,7 +212,7 @@ export function PerkembanganLainnyaTab() {
             variant="outline"
             size="sm"
             onClick={() => handleEdit(row.original)}
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 p-0 cursor-pointer"
           >
             <Edit className="h-4 w-4 text-blue-600" />
           </Button>
@@ -190,7 +220,7 @@ export function PerkembanganLainnyaTab() {
             variant="outline"
             size="sm"
             onClick={() => handleDelete(row.original)}
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 p-0 cursor-pointer"
           >
             <Trash2 className="h-4 w-4 text-red-600" />
           </Button>
@@ -231,7 +261,10 @@ export function PerkembanganLainnyaTab() {
 
               {/* Action Button */}
               <Button
-                onClick={() => setIsPerkembanganLainnyaModalOpen(true)}
+                onClick={() => {
+                  setSelectedItem(null);
+                  setIsPerkembanganLainnyaModalOpen(true);
+                }}
                 className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white min-w-[100px] h-10 flex-1 sm:flex-initial"
               >
                 Rekam
@@ -240,13 +273,23 @@ export function PerkembanganLainnyaTab() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <DataTable
-              columns={columns}
-              data={mockPerkembanganLainnyaData.filter(
-                (item) => item.tahun === selectedYear
-              )}
-            />
+          <div className="overflow-x-auto min-h-[400px] relative">
+            {isLoading ? (
+              <TableSkeleton />
+            ) : isError ? (
+              <div className="absolute inset-0 flex items-center justify-center text-red-500">
+                Error: {(error as any)?.message || "Failed to fetch data"}
+              </div>
+            ) : (
+              <DataTable
+                columns={columns}
+                data={perkembanganLainnyaData.map((item: any, index: number) => ({
+                  ...item,
+                  no: index + 1,
+                }))}
+                initialPageSize={25}
+              />
+            )}
           </div>
         </CardContent>
       </Card>
@@ -254,7 +297,10 @@ export function PerkembanganLainnyaTab() {
       {/* Modals */}
       <PerkembanganLainnyaModal
         open={isPerkembanganLainnyaModalOpen}
-        onOpenChange={setIsPerkembanganLainnyaModalOpen}
+        onOpenChange={(open) => {
+          setIsPerkembanganLainnyaModalOpen(open);
+          if (!open) setSelectedItem(null);
+        }}
         data={selectedItem}
         onSave={() => {
           setIsPerkembanganLainnyaModalOpen(false);

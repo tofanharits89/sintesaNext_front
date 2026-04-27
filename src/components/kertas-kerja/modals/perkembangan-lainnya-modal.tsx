@@ -19,6 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useKertasKerjaDistinct } from "@/features/mbg/hooks/use-kertas-kerja";
+import kanwilsData from "@/data/kdkanwil.json";
 
 interface PerkembanganLainnyaModalProps {
   open: boolean;
@@ -42,21 +44,41 @@ export function PerkembanganLainnyaModal({
     keterangan: "",
   });
 
+  const { data: distinctIndicatorsResponse } = useKertasKerjaDistinct(
+    "data_bgn.indikator_triwulanan",
+    "kategori",
+    formData.tahun || new Date().getFullYear().toString()
+  );
+
+  const dynamicIndicators = Array.isArray(distinctIndicatorsResponse?.data)
+    ? distinctIndicatorsResponse.data.map((item: any) => item.kategori)
+    : [];
+
+  const getValueCaseInsensitive = (item: any, targetKey: string) => {
+    if (!item) return null;
+    const lowerTarget = targetKey.toLowerCase();
+    const actualKey = Object.keys(item).find(
+      (key) => key.toLowerCase() === lowerTarget
+    );
+    return actualKey ? item[actualKey] : null;
+  };
+
   useEffect(() => {
     if (data) {
+      const indikatorValue = getValueCaseInsensitive(data, "kategori") || getValueCaseInsensitive(data, "indikator") || "";
       setFormData({
-        tahun: data.tahun || "",
-        kanwil: data.kanwil || "",
-        triwulan: data.triwulan || "",
-        indikator: data.indikator || "",
-        satuan: data.satuan || "",
-        keterangan: data.keterangan || "",
+        tahun: getValueCaseInsensitive(data, "tahun") || "",
+        kanwil: getValueCaseInsensitive(data, "kode_kanwil") || getValueCaseInsensitive(data, "kodekanwil") || "",
+        triwulan: getValueCaseInsensitive(data, "triwulan") || "",
+        indikator: indikatorValue,
+        satuan: getSatuanByIndikator(indikatorValue),
+        keterangan: getValueCaseInsensitive(data, "keterangan") || "",
       });
     } else {
       setFormData({
-        tahun: "",
+        tahun: new Date().getFullYear().toString(),
         kanwil: "",
-        triwulan: "",
+        triwulan: "I",
         indikator: "",
         satuan: "",
         keterangan: "",
@@ -83,71 +105,41 @@ export function PerkembanganLainnyaModal({
     });
   };
 
+  const getSatuanByIndikator = (indikator: string) => {
+    const mapping: Record<string, string> = {
+      "Harapan Lama Sekolah (HLS)": "Poin",
+      "Tingkat Kemiskinan": "%",
+      "Prevalensi Stunting": "%",
+      "Indeks Pembangunan Manusia (IPM)": "Poin",
+      "Angka Putus Sekolah (APS/Drop Out Rate)": "%",
+      "Biaya Pendidikan Dasar (Primary Education)": "Indeks",
+      "Lainnya": "%",
+    };
+    return mapping[indikator] || "%";
+  };
+
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 10 }, (_, i) =>
     (currentYear - i).toString()
   );
 
-  const kanwilOptions = [
-    "Kanwil DJPb Sumut",
-    "Kanwil DJPb Sumbar",
-    "Kanwil DJPb Riau",
-    "Kanwil DJPb Jambi",
-    "Kanwil DJPb Sumsel",
-    "Kanwil DJPb Lampung",
-    "Kanwil DJPb Jabar",
-    "Kanwil DJPb Jateng",
-    "Kanwil DJPb Jatim",
-    "Kanwil DJPb DKI Jakarta",
-    "Kanwil DJPb Bali Nusra",
-    "Kanwil DJPb Kalbar",
-    "Kanwil DJPb Kalteng",
-    "Kanwil DJPb Kalsel",
-    "Kanwil DJPb Kaltara",
-    "Kanwil DJPb Sulut",
-    "Kanwil DJPb Sulteng",
-    "Kanwil DJPb Sulsel",
-    "Kanwil DJPb Sultra",
-    "Kanwil DJPb Gorontalo",
-    "Kanwil DJPb Maluku",
-    "Kanwil DJPb Malut",
-    "Kanwil DJPb Papua",
-    "Kanwil DJPb Papua Barat",
-  ];
+  const kanwilOptions = kanwilsData;
 
   const triwulanOptions = ["I", "II", "III", "IV"];
 
-  const indikatorOptions = [
-    "Nilai Tukar Petani",
-    "Indeks Pembangunan Manusia",
-    "Gini Ratio",
+  const staticIndicators = [
+    "Harapan Lama Sekolah (HLS)",
     "Tingkat Kemiskinan",
-    "Pertumbuhan PDRB",
-    "Tingkat Pengangguran Terbuka",
-    "Konsumsi Rumah Tangga",
-    "Investasi PMDN",
-    "Investasi PMA",
-    "Ekspor Regional",
-    "Impor Regional",
-    "Indeks Harga Konsumen",
-    "Kurs Rupiah",
-    "Suku Bunga Bank",
-    "Kredit Perbankan",
-    "Dana Pihak Ketiga",
+    "Prevalensi Stunting",
+    "Indeks Pembangunan Manusia (IPM)",
+    "Angka Putus Sekolah (APS/Drop Out Rate)",
+    "Biaya Pendidikan Dasar (Primary Education)",
+    "Lainnya",
   ];
 
-  const satuanOptions = [
-    "Persen",
-    "Indeks",
-    "Rasio",
-    "Miliar Rupiah",
-    "Triliun Rupiah",
-    "Juta USD",
-    "Ribu Orang",
-    "Orang",
-    "Unit",
-    "Ton",
-  ];
+  const indikatorOptions = dynamicIndicators.length > 0 ? dynamicIndicators : staticIndicators;
+
+  const satuanOptions = ["Poin", "%", "Indeks"];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -200,9 +192,9 @@ export function PerkembanganLainnyaModal({
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {kanwilOptions.map((kanwil) => (
-                    <SelectItem key={kanwil} value={kanwil} title={kanwil}>
-                      <span className="truncate">{kanwil}</span>
+                  {kanwilOptions.map((kanwil: any) => (
+                    <SelectItem key={kanwil.kdkanwil} value={kanwil.kdkanwil} title={kanwil.nmkanwil}>
+                      <span className="truncate">{kanwil.nmkanwil}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -242,7 +234,11 @@ export function PerkembanganLainnyaModal({
               <Select
                 value={formData.indikator}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, indikator: value })
+                  setFormData({ 
+                    ...formData, 
+                    indikator: value,
+                    satuan: getSatuanByIndikator(value)
+                  })
                 }
               >
                 <SelectTrigger className="w-full">
@@ -252,7 +248,7 @@ export function PerkembanganLainnyaModal({
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {indikatorOptions.map((indikator) => (
+                  {indikatorOptions.map((indikator: any) => (
                     <SelectItem
                       key={indikator}
                       value={indikator}
@@ -269,6 +265,7 @@ export function PerkembanganLainnyaModal({
             <div className="space-y-2">
               <Label htmlFor="satuan">Satuan</Label>
               <Select
+                disabled
                 value={formData.satuan}
                 onValueChange={(value) =>
                   setFormData({ ...formData, satuan: value })
@@ -281,7 +278,7 @@ export function PerkembanganLainnyaModal({
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {satuanOptions.map((satuan) => (
+                  {satuanOptions.map((satuan: any) => (
                     <SelectItem key={satuan} value={satuan}>
                       {satuan}
                     </SelectItem>

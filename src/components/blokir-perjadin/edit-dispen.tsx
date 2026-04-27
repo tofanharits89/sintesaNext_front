@@ -1,7 +1,21 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import { Formik, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { toast } from "sonner";
+import { Save, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 import { apiPath } from "@/lib/config/base-path";
 
 interface EditDispenProps {
@@ -157,283 +171,84 @@ const EditDispen: React.FC<EditDispenProps> = ({
       .required("Harus diisi"),
   });
 
-  const tutupModal = () => {
+  const handleModalClose = () => {
     if (onUpdate) {
       onUpdate();
     }
     onHide();
   };
 
-  if (!show) return null;
-
   return (
-    <div
-      style={{
-        display: "flex",
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
-        zIndex: 1050,
-        justifyContent: "center",
-        alignItems: "center",
-        padding: "20px",
-      }}
-      onClick={tutupModal}
-    >
-      <div
-        style={{
-          backgroundColor: "white",
-          borderRadius: "8px",
-          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
-          display: "flex",
-          flexDirection: "column",
-          width: "90%",
-          maxWidth: "1140px",
-          maxHeight: "90vh",
-          overflow: "hidden",
-        }}
-        onClick={(e) => e.stopPropagation()}
+    <Dialog open={show} onOpenChange={(open) => !open && handleModalClose()}>
+      <DialogContent
+        showCloseButton={false}
+        className="w-[95vw] max-w-2xl sm:max-w-2xl"
       >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "1rem 1rem",
-            borderBottom: "1px solid #dee2e6",
-            borderTopLeftRadius: "calc(0.3rem - 1px)",
-            borderTopRightRadius: "calc(0.3rem - 1px)",
-          }}
-        >
-          <h5 style={{ margin: 0, fontSize: "20px", fontWeight: 500 }}>
-            <i
-              className="bi bi-back"
-              style={{
-                marginRight: "1rem",
-                marginLeft: "1rem",
-                color: "#198754",
-              }}
-            ></i>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <i className="bi bi-back text-primary" />
             Rekam Dispensasi Blokir
-          </h5>
-          <button
-            type="button"
-            style={{
-              boxSizing: "content-box",
-              width: "1em",
-              height: "1em",
-              padding: "0.25em 0.25em",
-              color: "#000",
-              background:
-                "transparent url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e\") center/1em auto no-repeat",
-              border: 0,
-              borderRadius: "0.25rem",
-              opacity: 0.5,
-              cursor: "pointer",
-            }}
-            aria-label="Close"
-            onClick={tutupModal}
-          ></button>
-        </div>
+          </DialogTitle>
+        </DialogHeader>
 
-        <div
-          style={{ position: "relative", flex: "1 1 auto", padding: "1rem" }}
+        <Formik
+          validationSchema={validationSchema}
+          onSubmit={handleSubmitdata}
+          enableReinitialize={true}
+          initialValues={initialValues}
         >
-          <div
-            style={{
-              position: "relative",
-              display: "flex",
-              flexDirection: "column",
-              minWidth: 0,
-              wordWrap: "break-word",
-              backgroundColor: "#fff",
-              backgroundClip: "border-box",
-              border: "1px solid rgba(0,0,0,.125)",
-              borderRadius: "0.25rem",
-            }}
-          >
-            <div style={{ flex: "1 1 auto", padding: "1.5rem 1.5rem" }}>
-              <Formik
-                validationSchema={validationSchema}
-                onSubmit={handleSubmitdata}
-                enableReinitialize={true}
-                initialValues={initialValues}
-              >
-                {({ handleSubmit, handleChange, values }) => (
-                  <form onSubmit={handleSubmit}>
-                    <div className="mb-3" style={{ position: "relative" }}>
-                      <div
-                        className="form-floating"
-                        style={{ position: "relative" }}
-                      >
-                        <input
-                          type="number"
-                          name="dispensasi_blokir"
-                          value={values.dispensasi_blokir}
-                          onChange={handleChange}
-                          placeholder="Nilai Dispensasi"
-                          className="form-control"
-                          style={{
-                            display: "block",
-                            width: "100%",
-                            padding: "1rem 0.75rem",
-                            fontSize: "1rem",
-                            fontWeight: 400,
-                            lineHeight: 1.5,
-                            color: "#212529",
-                            backgroundColor: "#fff",
-                            backgroundClip: "padding-box",
-                            border: "1px solid #ced4da",
-                            appearance: "none",
-                            borderRadius: "0.25rem",
-                            transition:
-                              "border-color .15s ease-in-out,box-shadow .15s ease-in-out",
-                            height: "calc(3.5rem + 2px)",
-                          }}
-                          id="floatingInput"
-                        />
-                        <label
-                          htmlFor="floatingInput"
-                          style={{
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            height: "100%",
-                            padding: "1rem 0.75rem",
-                            pointerEvents: "none",
-                            border: "1px solid transparent",
-                            transformOrigin: "0 0",
-                            transition:
-                              "opacity .1s ease-in-out,transform .1s ease-in-out",
-                            opacity: 0.65,
-                            transform: values.dispensasi_blokir
-                              ? "scale(.85) translateY(-0.5rem) translateX(0.15rem)"
-                              : "scale(1)",
-                          }}
-                        >
-                          Nilai Dispensasi
-                        </label>
-                      </div>
-                      <ErrorMessage name="dispensasi_blokir">
-                        {(msg) => (
-                          <div
-                            className="text-danger"
-                            style={{
-                              width: "100%",
-                              marginTop: "0.25rem",
-                              fontSize: "0.875em",
-                              color: "#dc3545",
-                            }}
-                          >
-                            {msg}
-                          </div>
-                        )}
-                      </ErrorMessage>
-                    </div>
+          {({ handleSubmit, handleChange, values, touched, errors }) => (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="rounded-lg border bg-card p-4 sm:p-6">
+                <div className="space-y-2">
+                  <Label htmlFor="dispensasi_blokir">Nilai Dispensasi</Label>
+                  <Input
+                    id="dispensasi_blokir"
+                    type="number"
+                    name="dispensasi_blokir"
+                    value={values.dispensasi_blokir}
+                    onChange={handleChange}
+                    placeholder="Masukkan nilai dispensasi"
+                    aria-invalid={
+                      touched.dispensasi_blokir && errors.dispensasi_blokir
+                        ? true
+                        : undefined
+                    }
+                  />
+                  <ErrorMessage name="dispensasi_blokir">
+                    {(msg) => <p className="text-sm text-destructive">{msg}</p>}
+                  </ErrorMessage>
+                </div>
+              </div>
 
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        marginTop: "1.5rem",
-                        marginBottom: "1.5rem",
-                        alignItems: "flex-end", // align-items-bottom -> flex-end
-                      }}
-                    >
-                      <hr style={{ width: "100%", visibility: "hidden" }} />
-                      <div>
-                        <button
-                          type="submit"
-                          disabled={loading}
-                          style={{
-                            display: "inline-block",
-                            fontWeight: 400,
-                            lineHeight: 1.5,
-                            color: "#fff",
-                            textAlign: "center",
-                            textDecoration: "none",
-                            verticalAlign: "middle",
-                            cursor: loading ? "default" : "pointer",
-                            userSelect: "none",
-                            backgroundColor: "#dc3545",
-                            borderColor: "#dc3545",
-                            border: "1px solid transparent",
-                            padding: "0.375rem 0.75rem",
-                            fontSize: "1rem",
-                            borderRadius: "0.25rem",
-                            transition:
-                              "color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out",
-                            opacity: loading ? 0.65 : 1,
-                          }}
-                        >
-                          {loading ? (
-                            <>
-                              <span
-                                style={{
-                                  display: "inline-block",
-                                  width: "1rem",
-                                  height: "1rem",
-                                  verticalAlign: "-0.125em",
-                                  border: "0.2em solid currentColor",
-                                  borderRightColor: "transparent",
-                                  borderRadius: "50%",
-                                  animation:
-                                    "spinner-border .75s linear infinite",
-                                  marginRight: "0.5rem",
-                                }}
-                                role="status"
-                                aria-hidden="true"
-                              ></span>
-                              Loading...
-                            </>
-                          ) : (
-                            "Simpan"
-                          )}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={tutupModal}
-                          style={{
-                            display: "inline-block",
-                            fontWeight: 400,
-                            lineHeight: 1.5,
-                            color: "#fff",
-                            textAlign: "center",
-                            textDecoration: "none",
-                            verticalAlign: "middle",
-                            cursor: "pointer",
-                            userSelect: "none",
-                            backgroundColor: "#6c757d",
-                            borderColor: "#6c757d",
-                            border: "1px solid transparent",
-                            padding: "0.375rem 0.75rem",
-                            fontSize: "1rem",
-                            borderRadius: "0.25rem",
-                            transition:
-                              "color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out",
-                            marginLeft: "0.5rem",
-                          }}
-                        >
-                          Tutup
-                        </button>
-                      </div>
-                    </div>
-                  </form>
-                )}
-              </Formik>
-            </div>
-          </div>
-        </div>
-      </div>
-      <style>{`
-        @keyframes spinner-border {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-    </div>
+              <DialogFooter className="gap-2 sm:gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleModalClose}
+                >
+                  <X className="h-4 w-4" />
+                  Tutup
+                </Button>
+                <Button type="submit" variant="destructive" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Spinner size="sm" className="text-white" />
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" />
+                      Simpan
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </Formik>
+      </DialogContent>
+    </Dialog>
   );
 };
 

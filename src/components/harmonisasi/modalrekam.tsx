@@ -27,6 +27,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 
 interface ClusterItem {
@@ -224,6 +231,13 @@ interface RekamProps {
   jenis: number | null;
   thang: string;
   semester: string;
+  row?: any;
+  tableName?: string;
+  kdsatker?: string;
+  kdprogram?: string;
+  kdgiat?: string;
+  kdoutput?: string;
+  kdsoutput?: string;
   onSaveSuccess: (id: any, ...args: any[]) => void;
   // Dynamic props mapping
   [key: string]: any;
@@ -244,6 +258,13 @@ export default function Rekam({
   jenis,
   thang,
   semester,
+  row,
+  tableName,
+  kdsatker,
+  kdprogram,
+  kdgiat,
+  kdoutput,
+  kdsoutput,
   onSaveSuccess,
   revisi_anggaran_isi,
   blokir_anggaran_isi,
@@ -313,6 +334,7 @@ export default function Rekam({
 
   const [formState, setFormState] = useState<Record<string, string>>({});
   const [activeKey, setActiveKey] = useState<string>("");
+  const [modalSemester, setModalSemester] = useState("1");
 
   useEffect(() => {
     if (show && jenis && clusterMapping[jenis]) {
@@ -327,9 +349,24 @@ export default function Rekam({
         setFormState(newState);
         setActiveKey(mapping[0]?.key || "");
       }
+      setModalSemester("1"); // Reset to S1 each time modal opens
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [show, jenis]); // Dependency array simplified to match intent
+
+  // Re-derive formState when user switches semester inside the modal (2026 only)
+  useEffect(() => {
+    if (!show || !jenis || !clusterMapping[jenis] || thang !== "2026" || !row)
+      return;
+    const mapping = clusterMapping[jenis];
+    const suffix = `_s${modalSemester}`;
+    const newState: Record<string, string> = {};
+    mapping.forEach(({ key }) => {
+      newState[key] = row[`${key}${suffix}`] || "";
+    });
+    setFormState(newState);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modalSemester]);
 
   const handleInputChange = (key: string, value: string) => {
     setFormState((prev) => ({ ...prev, [key]: value }));
@@ -354,9 +391,28 @@ export default function Rekam({
     if (!jenis) return;
 
     try {
+      // For 2026: cluster columns use _s1/_s2 suffix — apply to formState keys
+      const suffix = thang === "2026" ? `_s${modalSemester}` : "";
+      const suffixedFormState = suffix
+        ? Object.fromEntries(
+            Object.entries(formState).map(([k, v]) => [`${k}${suffix}`, v]),
+          )
+        : formState;
+      const payload: Record<string, any> = {
+        id,
+        thang,
+        semester,
+        ...(tableName && { tableName }),
+        ...(kdsatker && { kdsatker }),
+        ...(kdprogram && { kdprogram }),
+        ...(kdgiat && { kdgiat }),
+        ...(kdoutput && { kdoutput }),
+        ...(kdsoutput && { kdsoutput }),
+        ...suffixedFormState,
+      };
       const response: any = await http.post(
         apiPath("/harmonisasi/simpan"),
-        { id, thang, semester, ...formState }
+        payload,
       );
 
       if (response.data?.affectedRows === 0) {
@@ -367,9 +423,10 @@ export default function Rekam({
       onSaveSuccess(id, ...Object.values(formState));
     } catch (error: any) {
       const backendError = error.response?.data?.error;
-      const message = typeof backendError === "string"
-        ? backendError
-        : backendError?.message || error.message || "Gagal menyimpan data";
+      const message =
+        typeof backendError === "string"
+          ? backendError
+          : backendError?.message || error.message || "Gagal menyimpan data";
       toast.error(message);
     }
   };
@@ -378,15 +435,36 @@ export default function Rekam({
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && onHide()}>
-      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
+      <DialogContent
+        showCloseButton={false}
+        className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden"
+      >
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-xl text-center">
             Clustering Tantangan {clusterTitle[jenis]}
           </DialogTitle>
+          {thang === "2026" && (
+            <div className="flex justify-center items-center gap-2 pt-1">
+              <span className="text-sm text-muted-foreground">Semester:</span>
+              <Select value={modalSemester} onValueChange={setModalSemester}>
+                <SelectTrigger className="w-36">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Semester I</SelectItem>
+                  <SelectItem value="2">Semester II</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto">
-          <Tabs value={activeKey} onValueChange={setActiveKey} className="w-full gap-0">
+          <Tabs
+            value={activeKey}
+            onValueChange={setActiveKey}
+            className="w-full gap-0"
+          >
             <div className="flex flex-col md:flex-row gap-4 min-h-0">
               {/* Sidebar (Navigation) */}
               <div className="md:w-1/4 border-b md:border-b-0 md:border-r border-border/50 pb-4 md:pb-0 md:pr-4">
@@ -435,7 +513,10 @@ export default function Rekam({
                                 <TooltipTrigger asChild>
                                   <Info className="w-5 h-5 cursor-help opacity-90 hover:opacity-100" />
                                 </TooltipTrigger>
-                                <TooltipContent side="left" className="max-w-xs italic">
+                                <TooltipContent
+                                  side="left"
+                                  className="max-w-xs italic"
+                                >
                                   <p>{contoh}</p>
                                 </TooltipContent>
                               </Tooltip>
@@ -445,7 +526,9 @@ export default function Rekam({
                           <Textarea
                             className="flex-1 min-h-[300px] resize-none text-base p-4 leading-relaxed"
                             value={formState[key] || ""}
-                            onChange={(e) => handleInputChange(key, e.target.value)}
+                            onChange={(e) =>
+                              handleInputChange(key, e.target.value)
+                            }
                             placeholder={`Uraian Tantangan ${label}...`}
                           />
                         </div>

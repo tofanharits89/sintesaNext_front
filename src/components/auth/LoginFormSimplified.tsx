@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,11 +56,18 @@ export default function SimplifiedLoginForm() {
   const { user, isLoading, login } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [captchaCode, setCaptchaCode] = useState("");
-  const [captchaTtlSeconds, setCaptchaTtlSeconds] = useState<number | null>(null);
+  const [captchaTtlSeconds, setCaptchaTtlSeconds] = useState<number | null>(
+    null,
+  );
   const [captchaFetchedAt, setCaptchaFetchedAt] = useState<number | null>(null);
-  const [captchaNextRefreshAt, setCaptchaNextRefreshAt] = useState<number | null>(null);
-  const [captchaCountdown, setCaptchaCountdown] = useState<number>(CAPTCHA_REFRESH_SECONDS);
+  const [captchaNextRefreshAt, setCaptchaNextRefreshAt] = useState<
+    number | null
+  >(null);
+  const [captchaCountdown, setCaptchaCountdown] = useState<number>(
+    CAPTCHA_REFRESH_SECONDS,
+  );
   const { theme, resolvedTheme, setTheme } = useTheme();
   const [isThemeReady, setIsThemeReady] = useState(false);
   const captchaFetched = useRef(false);
@@ -86,13 +93,21 @@ export default function SimplifiedLoginForm() {
     "flex min-h-svh items-center justify-center p-6 transition-colors duration-500 bg-[radial-gradient(ellipse_at_bottom,_#f4f4f5_0%,_#fafafa_100%)] dark:bg-[radial-gradient(ellipse_at_bottom,_#151515_0%,_#000000_100%)]";
 
   // Client-side redirect if already authenticated
-  // Skip redirect when arriving due to logout/session_expired to prevent dashboard flash
+  // Skip redirect only when FORM is not yet submitted (isSubmitting false)
+  // Once user submits login form, redirect even if reason=session_expired (because now they're authenticated)
   useEffect(() => {
     try {
-      const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-      const reason = params?.get('reason');
-      const isLogoutFlow = reason === 'logout' || reason === 'session_expired' ||
-        (typeof window !== 'undefined' && !!sessionStorage.getItem('sintesa_logout_in_progress'));
+      const params =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search)
+          : null;
+      const reason = params?.get("reason");
+
+      // Skip redirect only if:
+      // 1. We haven't submitted the login form yet (isSubmitting still false)
+      // 2. AND we arrived due to logout/session_expired (not after login)
+      const isLogoutFlow =
+        (reason === "logout" || reason === "session_expired") && !isSubmitting;
 
       if (!isLoading && user && !isLogoutFlow) {
         setIsRedirecting(true);
@@ -105,7 +120,7 @@ export default function SimplifiedLoginForm() {
         router.push("/dashboard/utama");
       }
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, router, isSubmitting]);
 
   const form = useForm<FormInput, any, FormData>({
     resolver: zodResolver(schema),
@@ -118,46 +133,54 @@ export default function SimplifiedLoginForm() {
   });
 
   // Fetch server-generated captcha
-  const fetchCaptcha = useCallback(async (reason: "auto" | "manual" | "error" = "manual") => {
-    if (captchaFetchInFlight.current) return;
-    captchaFetchInFlight.current = true;
+  const fetchCaptcha = useCallback(
+    async (reason: "auto" | "manual" | "error" = "manual") => {
+      if (captchaFetchInFlight.current) return;
+      captchaFetchInFlight.current = true;
 
-    try {
-      const fetchedAt = Date.now();
-      const resp = await fetch("/api/v1/auth/captcha", { credentials: "include", cache: "no-store" });
-      const data = await resp.json().catch(() => ({}));
-      if (resp.ok && data?.success && data?.data?.code) {
-        setCaptchaCode(String(data.data.code));
-        const ttl = Number(data?.data?.ttl);
-        setCaptchaTtlSeconds(Number.isFinite(ttl) ? ttl : null);
-        setCaptchaFetchedAt(fetchedAt);
+      try {
+        const fetchedAt = Date.now();
+        const resp = await fetch("/api/v1/auth/captcha", {
+          credentials: "include",
+          cache: "no-store",
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (resp.ok && data?.success && data?.data?.code) {
+          setCaptchaCode(String(data.data.code));
+          const ttl = Number(data?.data?.ttl);
+          setCaptchaTtlSeconds(Number.isFinite(ttl) ? ttl : null);
+          setCaptchaFetchedAt(fetchedAt);
 
-        if (reason === "auto") {
-          form.setValue("captcha", "");
+          if (reason === "auto") {
+            form.setValue("captcha", "");
+          }
+        } else {
+          setCaptchaCode("");
+          setCaptchaTtlSeconds(null);
+          setCaptchaFetchedAt(null);
+          // Show user-friendly message when captcha service is unavailable
+          if (reason === "manual" && data?.error) {
+            toast.error(
+              "Layanan captcha tidak tersedia. Silakan coba lagi sebentar.",
+            );
+          }
         }
-      } else {
+      } catch {
         setCaptchaCode("");
         setCaptchaTtlSeconds(null);
         setCaptchaFetchedAt(null);
-        // Show user-friendly message when captcha service is unavailable
-        if (reason === "manual" && data?.error) {
-          toast.error("Layanan captcha tidak tersedia. Silakan coba lagi sebentar.");
+        if (reason === "manual") {
+          toast.error("Gagal memuat captcha. Silakan coba lagi.");
         }
+      } finally {
+        captchaFetchInFlight.current = false;
+        const nextAt = Date.now() + CAPTCHA_REFRESH_MS;
+        setCaptchaNextRefreshAt(nextAt);
+        setCaptchaCountdown(CAPTCHA_REFRESH_SECONDS);
       }
-    } catch {
-      setCaptchaCode("");
-      setCaptchaTtlSeconds(null);
-      setCaptchaFetchedAt(null);
-      if (reason === "manual") {
-        toast.error("Gagal memuat captcha. Silakan coba lagi.");
-      }
-    } finally {
-      captchaFetchInFlight.current = false;
-      const nextAt = Date.now() + CAPTCHA_REFRESH_MS;
-      setCaptchaNextRefreshAt(nextAt);
-      setCaptchaCountdown(CAPTCHA_REFRESH_SECONDS);
-    }
-  }, [form]);
+    },
+    [form],
+  );
 
   useEffect(() => {
     if (captchaFetched.current) return;
@@ -204,7 +227,12 @@ export default function SimplifiedLoginForm() {
       }
 
       // Use the new unified login method from useAuth hook
-      const result = await login(data.username, data.password, data.rememberMe, data.captcha);
+      const result = await login(
+        data.username,
+        data.password,
+        data.rememberMe,
+        data.captcha,
+      );
 
       if (result.success) {
         toast.success("Login berhasil");
@@ -222,7 +250,7 @@ export default function SimplifiedLoginForm() {
 
         // Wait for auth to be loaded before redirecting
         // This ensures user data is available when dashboard mounts
-        // Auth state is now loaded (waited for in useAuth.login), 
+        // Auth state is now loaded (waited for in useAuth.login),
         // the useEffect above will handle the redirect reactively.
         setIsRedirecting(true);
       } else {
@@ -320,13 +348,33 @@ export default function SimplifiedLoginForm() {
 
                   <Field>
                     <FieldLabel htmlFor="password">Password</FieldLabel>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="Masukkan password"
-                      {...form.register("password")}
-                      disabled={isSubmitting}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Masukkan password"
+                        className="pr-10"
+                        {...form.register("password")}
+                        disabled={isSubmitting}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-foreground absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+                        onClick={() => setShowPassword((current) => !current)}
+                        disabled={isSubmitting}
+                        aria-label={
+                          showPassword ? "Sembunyikan password" : "Lihat password"
+                        }
+                      >
+                        {showPassword ? (
+                          <Eye className="h-4 w-4" />
+                        ) : (
+                          <EyeOff className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                     <FieldError errors={[form.formState.errors.password]} />
                   </Field>
 

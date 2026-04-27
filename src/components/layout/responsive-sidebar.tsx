@@ -108,6 +108,7 @@ const defaultMenu: MenuItem[] = [
     children: [
       { label: "Belanja" },
       { label: "Tematik" },
+      { label: "Bansos" },
       { label: "Subsidi" },
     ],
   },
@@ -131,6 +132,7 @@ const defaultMenu: MenuItem[] = [
       { label: "Penerimaan PNBP" },
       { label: "RKAKL Detail" },
       { label: "Revisi DIPA" },
+      { label: "APBD" },
       { label: "Prognosis" },
     ],
   },
@@ -146,7 +148,7 @@ const defaultMenu: MenuItem[] = [
     ],
   },
   {
-    label: "Data Makrokesra",
+    label: "Data Eksternal",
     children: [{ label: "Data BPS" }],
   },
   {
@@ -185,11 +187,6 @@ const defaultMenu: MenuItem[] = [
     children: [{ label: "Sektor" }, { label: "Rekomendasi" }],
   },
   {
-    label: "IKI PA",
-    children: [{ label: "IKI Kontraktual" }, { label: "IKI APBD" }],
-  },
-
-  {
     label: "Profil K/L",
     children: [{ label: "Kementerian" }, { label: "Lembaga" }],
   },
@@ -207,14 +204,13 @@ const MENU_ROUTE_PREFIXES: Array<{ prefix: string; parent: string }> = [
   { prefix: "/transfer-daerah", parent: "Transfer Daerah" },
   { prefix: "/inquiry-data", parent: "Inquiry Data" },
   { prefix: "/laporan", parent: "Laporan" },
-  { prefix: "/data-makrokesra", parent: "Data Makrokesra" },
+  { prefix: "/data-eksternal", parent: "Data Eksternal" },
   { prefix: "/menu-rowset", parent: "Rowset Data" },
   { prefix: "/dispensasi", parent: "Dispensasi" },
   { prefix: "/ikpa", parent: "Monev IKPA" },
   { prefix: "/data-supplier", parent: "Data Supplier" },
   { prefix: "/epa", parent: "EPA" },
   { prefix: "/spending-review", parent: "Spending Review" },
-  { prefix: "/iku-pa", parent: "IKI PA" },
   { prefix: "/profil-kl", parent: "Profil K/L" },
   { prefix: "/tentang-kita", parent: "Tentang Kita" },
 ];
@@ -284,22 +280,6 @@ export function ResponsiveSidebar({
           };
         }
 
-        // Filter IKI PA children:
-        if (item.label === "IKI PA") {
-          const isKontraktualAllowed = isAdmin || user.role === "ditpa";
-          const isApbdAllowed = isAdmin || user.role === "kanwil_djpb";
-
-          const allowedChildren = (item.children || []).filter((child) => {
-            if (child.label === "IKI Kontraktual" && !isKontraktualAllowed)
-              return false;
-            if (child.label === "IKI APBD" && !isApbdAllowed) return false;
-            return true;
-          });
-
-          if (allowedChildren.length === 0) return null; // Hide menu entirely
-          return { ...item, children: allowedChildren };
-        }
-
         return item;
       })
       .filter(Boolean) as MenuItem[];
@@ -353,7 +333,7 @@ export function ResponsiveSidebar({
         return (
           <FileText className={`${cls} text-cyan-600 dark:text-cyan-400`} />
         );
-      case "Data Makrokesra":
+      case "Data Eksternal":
         return (
           <PieChart className={`${cls} text-violet-600 dark:text-violet-400`} />
         );
@@ -372,10 +352,6 @@ export function ResponsiveSidebar({
           <CreditCard
             className={`${cls} text-orange-600 dark:text-orange-400`}
           />
-        );
-      case "IKI PA":
-        return (
-          <Gauge className={`${cls} text-orange-600 dark:text-orange-400`} />
         );
       case "Tentang Kita":
         return (
@@ -452,6 +428,8 @@ export function ResponsiveSidebar({
         return <Database className={cls} />;
       case "Inquiry Data__Prognosis":
         return <Database className={cls} />;
+      case "Inquiry Data__APBD":
+        return <Database className={cls} />;
       case "Laporan__Monthly Report":
         return <CalendarDays className={cls} />;
       case "Laporan__Weekly Report":
@@ -480,7 +458,7 @@ export function ResponsiveSidebar({
         return <Layers className={cls} />;
       case "Data Supplier__Jaringan Supplier":
         return <Share2 className={cls} />;
-      case "Data Makrokesra__Data BPS":
+      case "Data Eksternal__Data BPS":
         return <Database className={cls} />;
       case "Rowset Data__Generate Dataset":
         return <CheckCircle className={cls} />;
@@ -489,6 +467,8 @@ export function ResponsiveSidebar({
       case "Kewilayahan__Belanja":
         return <Database className={cls} />;
       case "Kewilayahan__Tematik":
+        return <Database className={cls} />;
+      case "Kewilayahan__Bansos":
         return <Database className={cls} />;
       case "Kewilayahan__Subsidi":
         return <Database className={cls} />;
@@ -504,10 +484,6 @@ export function ResponsiveSidebar({
         return <Building2 className={cls} />;
       case "Monev KKP__Direktorat PA":
         return <Building2 className={cls} />;
-      case "IKI PA__IKI Kontraktual":
-        return <Building2 className={cls} />;
-      case "IKI PA__IKI APBD":
-        return <BookOpen className={cls} />;
       default:
         return null;
     }
@@ -623,7 +599,7 @@ export function ResponsiveSidebar({
                       className={cn(
                         "h-9 w-48 gap-1 bg-white dark:bg-card hover:bg-accent dark:hover:bg-accent",
                         activeMenuLabel === m.label &&
-                          "bg-accent text-accent-foreground",
+                        "bg-accent text-accent-foreground",
                       )}
                     >
                       <span className="inline-flex items-center">
@@ -637,7 +613,7 @@ export function ResponsiveSidebar({
                           {m.children.map((c) => {
                             const menuKey = `${m.label}__${c.label}`;
                             let href = "#";
-                            let onMouseEnterFn = () => {};
+                            let onMouseEnterFn = () => { };
 
                             // Route mapping
                             if (
@@ -690,6 +666,13 @@ export function ResponsiveSidebar({
                               m.label === "Inquiry Data"
                             ) {
                               href = "/inquiry-data/revisi-dipa";
+                              onMouseEnterFn = () =>
+                                import("@/components/inquiry-data/enhanced-filter-card");
+                            } else if (
+                              c.label === "APBD" &&
+                              m.label === "Inquiry Data"
+                            ) {
+                              href = "/inquiry-data/apbd";
                               onMouseEnterFn = () =>
                                 import("@/components/inquiry-data/enhanced-filter-card");
                             } else if (
@@ -894,9 +877,9 @@ export function ResponsiveSidebar({
                               href = "/laporan/monev-pnbp";
                             } else if (
                               c.label === "Data BPS" &&
-                              m.label === "Data Makrokesra"
+                              m.label === "Data Eksternal"
                             ) {
-                              href = "/data-makrokesra/data-bps";
+                              href = "/data-eksternal/data-bps";
                             } else if (
                               c.label === "SP2D" &&
                               m.label === "Rowset Data"
@@ -922,6 +905,11 @@ export function ResponsiveSidebar({
                               m.label === "Kewilayahan"
                             ) {
                               href = "/belwil/subsidi";
+                            } else if (
+                              c.label === "Bansos" &&
+                              m.label === "Kewilayahan"
+                            ) {
+                              href = "/belwil/bansos";
                             } else if (
                               c.label === "LLAT" &&
                               m.label === "Dispensasi"
@@ -958,20 +946,6 @@ export function ResponsiveSidebar({
                               href = "/monev-kkp/direktorat-pa";
                               onMouseEnterFn = () =>
                                 import("@/components/monev-kkp/direktorat-pa-content");
-                            } else if (
-                              c.label === "IKI Kontraktual" &&
-                              m.label === "IKI PA"
-                            ) {
-                              href = "/iku-pa/kontraktual";
-                              onMouseEnterFn = () =>
-                                import("@/components/iku-pa/kontraktual");
-                            } else if (
-                              c.label === "IKI APBD" &&
-                              m.label === "IKI PA"
-                            ) {
-                              href = "/iku-pa/apbd";
-                              onMouseEnterFn = () =>
-                                import("@/components/iku-pa/apbd");
                             }
 
                             return (
@@ -1229,7 +1203,7 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </Link>
-                    ) : c.label === "Proyeksi BI" &&
+                    ) : c.label === "Proyeksi Power Bi" &&
                       m.label === "Makan Bergizi" ? (
                       <Link
                         key={c.label}
@@ -1257,7 +1231,7 @@ export function ResponsiveSidebar({
                         key={c.label}
                         href="/tentang-kita/profil"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
-                        onMouseEnter={() => {}}
+                        onMouseEnter={() => { }}
                         onClick={() => {
                           trackMenuUsage({
                             menu: m.label,
@@ -1526,6 +1500,28 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/inquiry-data/revisi-dipa"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onMouseEnter={() => {
+                          import("@/components/inquiry-data/dynamic-filters-card");
+                        }}
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/inquiry-data/revisi-dipa",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "APBD" && m.label === "Inquiry Data" ? (
+                      <Link
+                        key={c.label}
+                        href="/inquiry-data/apbd"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onMouseEnter={() => {
                           import("@/components/inquiry-data/dynamic-filters-card");
@@ -1823,16 +1819,16 @@ export function ResponsiveSidebar({
                         </span>
                       </Link>
                     ) : c.label === "Data BPS" &&
-                      m.label === "Data Makrokesra" ? (
+                      m.label === "Data Eksternal" ? (
                       <Link
                         key={c.label}
-                        href="/data-makrokesra/data-bps"
+                        href="/data-eksternal/data-bps"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onClick={() => {
                           trackMenuUsage({
                             menu: m.label,
                             submenu: c.label,
-                            path: "/data-makrokesra/data-bps",
+                            path: "/data-eksternal/data-bps",
                           });
                           setOpen(false);
                         }}
@@ -1929,6 +1925,25 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/belwil/subsidi",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Bansos" && m.label === "Kewilayahan" ? (
+                      <Link
+                        key={c.label}
+                        href="/belwil/bansos"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/belwil/bansos",
                           });
                           setOpen(false);
                         }}
@@ -2049,25 +2064,6 @@ export function ResponsiveSidebar({
                       <Link
                         key={c.label}
                         href="/ikpa"
-                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
-                        onClick={() => {
-                          trackMenuUsage({
-                            menu: m.label,
-                            submenu: c.label,
-                            path: "/ikpa",
-                          });
-                          setOpen(false);
-                        }}
-                      >
-                        <span className="inline-flex items-center">
-                          {subIconFor(m.label, c.label)}
-                          <span>{c.label}</span>
-                        </span>
-                      </Link>
-                    ) : c.label === "IKI APBD" && m.label === "IKI PA" ? (
-                      <Link
-                        key={c.label}
-                        href="/iku-pa/apbd"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
                         onClick={() => {
                           trackMenuUsage({

@@ -92,7 +92,8 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
   const backendMessage = maybeAxiosError.response?.data?.message;
   if (typeof backendMessage === "string") return backendMessage;
 
-  if (typeof maybeAxiosError.message === "string") return maybeAxiosError.message;
+  if (typeof maybeAxiosError.message === "string")
+    return maybeAxiosError.message;
 
   return fallback;
 };
@@ -115,6 +116,7 @@ export default function Harmonisasi() {
   // State for Rekam Modal
   const [idCluster, setId] = useState<string | number | null>(null);
   const [jenisCluster, setJenisCluster] = useState<number | null>(null);
+  const [selectedRow, setSelectedRow] = useState<any>(null);
   const [revisi_anggaran, setRevisi_anggaran] = useState("");
   const [blokir_anggaran, setBlokir_anggaran] = useState("");
   const [automatic_adjustment, setAutomatic_adjustment] = useState("");
@@ -151,8 +153,11 @@ export default function Harmonisasi() {
 
   const [kanwil, setKanwil] = useState("00");
   const [namaBidang, setNamaBidang] = useState("00");
-  const [namaThang, setNamaThang] = useState("2025");
-  const [namaSemester, setNamaSemester] = useState("1");
+  const [kdDept, setKdDept] = useState("00");
+  const [klList, setKlList] = useState<{ kddept: string; nmdept: string }[]>(
+    [],
+  );
+  const [bidangList, setBidangList] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 400);
   const [sql, setSql] = useState("");
@@ -186,9 +191,66 @@ export default function Harmonisasi() {
   }, [role, userKdkanwil]);
 
   useEffect(() => {
+    // Fetch Bidang DAK list for filter dropdown
+    const fetchBidangList = async () => {
+      const bidangQuery = `SELECT DISTINCT bidang_dak FROM monev2026.pagu_output_2026_new_harmonis ORDER BY bidang_dak`;
+      const encoded = encodeURIComponent(bidangQuery);
+      const cleaned = decodeURIComponent(encoded)
+        .replace(/\n/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      const encrypted = encryptHarmonisasiQuery(cleaned);
+      try {
+        const url = apiPath(
+          `/harmonisasi/view?queryParams=${encodeURIComponent(encrypted)}&limit=1000&page=0&user=${encodeURIComponent(username || "")}`,
+        );
+        const res: any = await http.get(url);
+        const bidangData: string[] = (res.data?.result || [])
+          .map((row: any) => row.bidang_dak)
+          .filter(Boolean);
+        setBidangList(bidangData);
+      } catch {
+        // ignore
+      }
+    };
+    if (username) fetchBidangList();
+  }, [username]);
+
+  useEffect(() => {
+    // Fetch K/L list for filter dropdown (from 2026 table)
+    const fetchKlList = async () => {
+      const klQuery = `SELECT DISTINCT a.kddept, b.nmdept FROM monev2026.pagu_output_2026_new_harmonis a LEFT JOIN dbref.t_dept_2026 b ON a.kddept = b.kddept ORDER BY a.kddept`;
+      const encoded = encodeURIComponent(klQuery);
+      const cleaned = decodeURIComponent(encoded)
+        .replace(/\n/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      const encrypted = encryptHarmonisasiQuery(cleaned);
+      try {
+        const url = apiPath(
+          `/harmonisasi/view?queryParams=${encodeURIComponent(encrypted)}&limit=1000&page=0&user=${encodeURIComponent(username || "")}`,
+        );
+        const res: any = await http.get(url);
+        setKlList(res.data?.result || []);
+      } catch {
+        // ignore
+      }
+    };
+    if (username) fetchKlList();
+  }, [username]);
+
+  useEffect(() => {
     getData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kanwil, namaBidang, namaThang, namaSemester, debouncedSearchQuery, username, role, userKdkanwil]);
+  }, [
+    kanwil,
+    namaBidang,
+    kdDept,
+    debouncedSearchQuery,
+    username,
+    role,
+    userKdkanwil,
+  ]);
 
   // Debounced search could be implemented here, but keeping it simple for now as requested
 
@@ -198,76 +260,40 @@ export default function Harmonisasi() {
     const kanwilFilter = kanwil === "00" ? "" : `a.kdkanwil = '${kanwil}'`;
     const bidangFilter =
       namaBidang === "00" ? "" : `a.bidang_dak = '${namaBidang}'`;
-    const semesterFilter =
-      namaSemester === "1" ? "a.semester='1'" : `a.semester = '2'`;
-    const thangFilter =
-      namaThang === "2025" ? "a.thang='2025'" : `a.thang = '2026'`;
-
+    const deptFilter = kdDept !== "00" ? `a.kddept = '${kdDept}'` : "";
+    const searchFilter = safeSearchQuery
+      ? `(LOWER(a.kdsatker) LIKE '%${normalizedSearchQuery}%' or LOWER(a.nmsatker) LIKE '%${normalizedSearchQuery}%' or LOWER(a.kdkabkota) LIKE '%${normalizedSearchQuery}%' or LOWER(c.nmkabkota) LIKE '%${normalizedSearchQuery}%' or LOWER(a.ursoutput) LIKE '%${normalizedSearchQuery}%' or LOWER(a.jenis_tkd) LIKE '%${normalizedSearchQuery}%' or LOWER(a.bidang_dak) LIKE '%${normalizedSearchQuery}%' or LOWER(CONCAT(a.kdprogram,'.',a.kdgiat,'.',a.kdoutput,'.',a.kdsoutput)) LIKE '%${normalizedSearchQuery}%')`
+      : "";
     const whereClause = [
       kanwilFilter,
       bidangFilter,
-      thangFilter,
-      semesterFilter,
+      deptFilter,
+      searchFilter,
+      ...(role === "kanwil_djpb" ? [`a.kdkanwil = '${userKdkanwil}'`] : []),
     ]
       .filter(Boolean)
-      .concat(
-        safeSearchQuery
-          ? [
-            `(LOWER(a.kdsatker) LIKE '%${normalizedSearchQuery}%'
-          or LOWER(a.nmsatker) LIKE '%${normalizedSearchQuery}%'
-          or LOWER(a.kdkabkota) LIKE '%${normalizedSearchQuery}%'
-          or LOWER(c.nmkabkota) LIKE '%${normalizedSearchQuery}%'
-          or LOWER(a.ursoutput) LIKE '%${normalizedSearchQuery}%'
-          or LOWER(a.jenis_tkd) LIKE '%${normalizedSearchQuery}%'
-          or LOWER(a.bidang_dak) LIKE '%${normalizedSearchQuery}%'
-          or LOWER(CONCAT(a.kdprogram,'.',a.kdgiat,'.',a.kdoutput,'.',a.kdsoutput)) LIKE '%${normalizedSearchQuery}%')`,
-          ]
-          : []
-      )
-      .concat(role === "kanwil_djpb" ? [`a.kdkanwil = '${userKdkanwil}'`] : [])
       .join(" AND ");
 
-    let query = "";
-    if (namaThang === "2025" && namaSemester === "1") {
-      query = `SELECT a.id,a.thang,a.semester,a.kddept, a.kdsatker, a.nmsatker, a.bidang_dak, a.jenis_tkd, a.kdkabkota,
-      a.kdlokasi, c.nmkabkota, a.kdprogram, a.kdgiat, a.kdoutput, a.kdsoutput, a.ursoutput, a.sat,
-      a.vol, a.pagu, a.real1, a.real2, a.real3, a.real4, a.real5, a.real6, a.realfisik1, a.realfisik2, a.realfisik3, a.realfisik4, a.realfisik5, a.realfisik6,
-      CONCAT(a.kdprogram,'.',a.kdgiat,'.',a.kdoutput,'.',a.kdsoutput) AS coa, a.revisi_anggaran, a.blokir_anggaran, a.automatic_adjustment, 
-      a.halaman_3_dipa, a.sdana_sbsn, a.lainnya_anggaran, a.proses_lelang, a.lelang_dini, a.gagal_lelang, a.keterbatasan_penyedia, a.tkdn, a.ecatalog, a.lainnya_pbj, a.kekurangan_prasyarat,
-      a.prasyarat_lahan, a.faktor_cuaca, a.kesiapan_pedum, a.penerimaan_bantuan, a.pembagian_bantuan, a.kenaikan_harga, a.lainnya_eksekusi, a.regulasi_kemenkeu, a.regulasi_kl,
-      a.regulasi_pemda, a.lainnya_regulasi, a.pergantian_pejabat, a.kekurangan_sdm, a.pemahaman_aplikasi, a.lainnya_sdm
-      FROM monev2025.pagu_output_2025_new_harmonis_smt1 a
-      LEFT JOIN dbref.t_lokasi_2025 b ON a.kdlokasi=b.kdlokasi
-      LEFT JOIN dbref.t_kabkota_2025 c ON a.kdlokasi=c.kdlokasi AND a.kdkabkota=c.kdkabkota
+    const query = `SELECT a.id, a.thang, a.kdkanwil, a.kddept, a.kdsatker, a.nmsatker, a.bidang_dak, a.jenis_tkd, a.kdkabkota, c.nmkabkota, a.kdlokasi, a.kdprogram,
+      a.kdgiat, a.kdoutput, a.kdsoutput, a.ursoutput, a.sat, a.vol, a.pagu, a.real1,
+      a.real2, a.real3, a.real4, a.real5, a.real6, a.real7, a.real8, a.real9, a.real10, a.real11, a.real12,
+      a.realfisik1, a.realfisik2, a.realfisik3, a.realfisik4, a.realfisik5, a.realfisik6, a.realfisik7, a.realfisik8, a.realfisik9, a.realfisik10, a.realfisik11, a.realfisik12,
+      CONCAT(a.kdprogram,'.',a.kdgiat,'.',a.kdoutput,'.',a.kdsoutput) AS coa,
+      a.revisi_anggaran_s1, a.blokir_anggaran_s1, a.automatic_adjustment_s1, a.halaman_3_dipa_s1, a.sdana_sbsn_s1, a.lainnya_anggaran_s1,
+      a.proses_lelang_s1, a.lelang_dini_s1, a.gagal_lelang_s1, a.keterbatasan_penyedia_s1, a.tkdn_s1, a.ecatalog_s1, a.lainnya_pbj_s1,
+      a.kekurangan_prasyarat_s1, a.prasyarat_lahan_s1, a.faktor_cuaca_s1, a.kesiapan_pedum_s1, a.penerimaan_bantuan_s1, a.pembagian_bantuan_s1, a.kenaikan_harga_s1, a.lainnya_eksekusi_s1,
+      a.regulasi_kemenkeu_s1, a.regulasi_kl_s1, a.regulasi_pemda_s1, a.lainnya_regulasi_s1,
+      a.pergantian_pejabat_s1, a.kekurangan_sdm_s1, a.pemahaman_aplikasi_s1, a.lainnya_sdm_s1,
+      a.revisi_anggaran_s2, a.blokir_anggaran_s2, a.automatic_adjustment_s2, a.halaman_3_dipa_s2, a.sdana_sbsn_s2, a.lainnya_anggaran_s2,
+      a.proses_lelang_s2, a.lelang_dini_s2, a.gagal_lelang_s2, a.keterbatasan_penyedia_s2, a.tkdn_s2, a.ecatalog_s2, a.lainnya_pbj_s2,
+      a.kekurangan_prasyarat_s2, a.prasyarat_lahan_s2, a.faktor_cuaca_s2, a.kesiapan_pedum_s2, a.penerimaan_bantuan_s2, a.pembagian_bantuan_s2, a.kenaikan_harga_s2, a.lainnya_eksekusi_s2,
+      a.regulasi_kemenkeu_s2, a.regulasi_kl_s2, a.regulasi_pemda_s2, a.lainnya_regulasi_s2,
+      a.pergantian_pejabat_s2, a.kekurangan_sdm_s2, a.pemahaman_aplikasi_s2, a.lainnya_sdm_s2
+      FROM monev2026.pagu_output_2026_new_harmonis a
+      LEFT JOIN dbref.t_lokasi_2026 b ON a.kdlokasi=b.kdlokasi
+      LEFT JOIN dbref.t_kabkota_2026 c ON a.kdlokasi=c.kdlokasi AND a.kdkabkota=c.kdkabkota
       ${whereClause ? `WHERE ${whereClause}` : ""}
-      ORDER BY bidang_dak, kdlokasi ASC, pagu DESC, persen_real6 ASC`;
-    } else if (namaThang === "2025" && namaSemester === "2") {
-      query = `SELECT a.id,a.thang,a.semester,a.kddept, a.kdsatker, a.nmsatker, a.bidang_dak, a.jenis_tkd, a.kdkabkota,
-      a.kdlokasi, c.nmkabkota, a.kdprogram, a.kdgiat, a.kdoutput, a.kdsoutput, a.ursoutput, a.sat,
-      a.vol, a.pagu, a.real7, a.real8, a.real9, a.real10, a.real11, a.real12, a.realfisik7, a.realfisik8, a.realfisik9, a.realfisik10, a.realfisik11, a.realfisik12,
-      CONCAT(a.kdprogram,'.',a.kdgiat,'.',a.kdoutput,'.',a.kdsoutput) AS coa, a.revisi_anggaran, a.blokir_anggaran, a.automatic_adjustment, 
-      a.halaman_3_dipa, a.sdana_sbsn, a.lainnya_anggaran, a.proses_lelang, a.lelang_dini, a.gagal_lelang, a.keterbatasan_penyedia, a.tkdn, a.ecatalog, a.lainnya_pbj, a.kekurangan_prasyarat,
-      a.prasyarat_lahan, a.faktor_cuaca, a.kesiapan_pedum, a.penerimaan_bantuan, a.pembagian_bantuan, a.kenaikan_harga, a.lainnya_eksekusi, a.regulasi_kemenkeu, a.regulasi_kl,
-      a.regulasi_pemda, a.lainnya_regulasi, a.pergantian_pejabat, a.kekurangan_sdm, a.pemahaman_aplikasi, a.lainnya_sdm
-      FROM monev2025.pagu_output_2025_new_harmonis_smt1 a
-      LEFT JOIN dbref.t_lokasi_2025 b ON a.kdlokasi=b.kdlokasi
-      LEFT JOIN dbref.t_kabkota_2025 c ON a.kdlokasi=c.kdlokasi AND a.kdkabkota=c.kdkabkota
-      ${whereClause ? `WHERE ${whereClause}` : ""}
-      ORDER BY bidang_dak, kdlokasi ASC, pagu DESC, persen_real9 ASC`;
-    } else if (namaThang === "2026") {
-      query = `SELECT a.id,a.thang,a.semester,a.kddept, a.kdsatker, a.nmsatker, a.bidang_dak, a.jenis_tkd, a.kdkabkota,
-      a.kdlokasi, c.nmkabkota, a.kdprogram, a.kdgiat, a.kdoutput, a.kdsoutput, a.ursoutput, a.sat,
-      a.vol, a.pagu, a.real1, a.real2, a.real3, a.real4, a.real5, a.real6, a.realfisik1, a.realfisik2, a.realfisik3, a.realfisik4, a.realfisik5, a.realfisik6,
-      CONCAT(a.kdprogram,'.',a.kdgiat,'.',a.kdoutput,'.',a.kdsoutput) AS coa, a.revisi_anggaran, a.blokir_anggaran, a.automatic_adjustment, 
-      a.halaman_3_dipa, a.sdana_sbsn, a.lainnya_anggaran, a.proses_lelang, a.lelang_dini, a.gagal_lelang, a.keterbatasan_penyedia, a.tkdn, a.ecatalog, a.lainnya_pbj, a.kekurangan_prasyarat,
-      a.prasyarat_lahan, a.faktor_cuaca, a.kesiapan_pedum, a.penerimaan_bantuan, a.pembagian_bantuan, a.kenaikan_harga, a.lainnya_eksekusi, a.regulasi_kemenkeu, a.regulasi_kl,
-      a.regulasi_pemda, a.lainnya_regulasi, a.pergantian_pejabat, a.kekurangan_sdm, a.pemahaman_aplikasi, a.lainnya_sdm
-      FROM monev2025.pagu_output_2026_new_harmonis_smt1 a
-      LEFT JOIN dbref.t_lokasi_2025 b ON a.kdlokasi=b.kdlokasi
-      LEFT JOIN dbref.t_kabkota_2025 c ON a.kdlokasi=c.kdlokasi AND a.kdkabkota=c.kdkabkota
-      ${whereClause ? `WHERE ${whereClause}` : ""}
-      ORDER BY bidang_dak, kdlokasi ASC, pagu DESC, persen_real6 ASC`;
-    }
+      ORDER BY a.bidang_dak, a.kdlokasi ASC, a.pagu DESC`;
     return query;
   };
 
@@ -300,7 +326,7 @@ export default function Harmonisasi() {
       for (let i = 0; i < fetchLimits.length; i += 1) {
         const fetchLimit = fetchLimits[i];
         const url = apiPath(
-          `/harmonisasi/view?queryParams=${encodeURIComponent(encryptedQuery)}&limit=${fetchLimit}&page=0&user=${encodeURIComponent(username || "")}`
+          `/harmonisasi/view?queryParams=${encodeURIComponent(encryptedQuery)}&limit=${fetchLimit}&page=0&user=${encodeURIComponent(username || "")}`,
         );
 
         try {
@@ -340,7 +366,7 @@ export default function Harmonisasi() {
 
       if (usedFallbackLimit) {
         toast.warning(
-          "Koneksi backend tidak stabil. Data ditampilkan dengan batas lebih kecil, gunakan filter/pencarian untuk mempersempit data."
+          "Koneksi backend tidak stabil. Data ditampilkan dengan batas lebih kecil, gunakan filter/pencarian untuk mempersempit data.",
         );
       }
 
@@ -352,7 +378,7 @@ export default function Harmonisasi() {
       setLoading(false);
       const message = getErrorMessage(
         error,
-        "Terjadi Permasalahan Koneksi atau Server Backend"
+        "Terjadi Permasalahan Koneksi atau Server Backend",
       );
       toast.error(message);
     }
@@ -377,7 +403,7 @@ export default function Harmonisasi() {
     try {
       // High limit to fetch all
       const url = apiPath(
-        `/harmonisasi/view?queryParams=${encodeURIComponent(encryptedQuery)}&limit=1000000&page=0&user=${encodeURIComponent(username || "")}`
+        `/harmonisasi/view?queryParams=${encodeURIComponent(encryptedQuery)}&limit=1000000&page=0&user=${encodeURIComponent(username || "")}`,
       );
 
       const response: any = await http.get(url);
@@ -394,9 +420,8 @@ export default function Harmonisasi() {
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Harmonisasi");
 
-      const filename = `harmonisasi_${namaThang}_${moment().format("YYYYMMDD_HHmmss")}.xlsx`;
+      const filename = `harmonisasi_2026_${moment().format("YYYYMMDD_HHmmss")}.xlsx`;
       XLSX.writeFile(workbook, filename);
-
     } catch (error: any) {
       console.error(error);
       const message = getErrorMessage(error, "Gagal mengunduh data");
@@ -416,42 +441,45 @@ export default function Harmonisasi() {
   };
 
   const handleOpenRekam = (row: any, jenis: number) => {
+    setSelectedRow(row);
     setId(row.id);
     setJenisCluster(jenis);
 
-    setRevisi_anggaran(row.revisi_anggaran);
-    setBlokir_anggaran(row.blokir_anggaran);
-    setAutomatic_adjustment(row.automatic_adjustment);
-    setHalaman_3_dipa(row.halaman_3_dipa);
-    setSdana_sbsn(row.sdana_sbsn);
-    setLainnya_anggaran(row.lainnya_anggaran);
+    // 2026: cluster columns use _s1/_s2 suffix; modal handles semester selection internally
+    const suffix = "_s1";
+    setRevisi_anggaran(row[`revisi_anggaran${suffix}`] || "");
+    setBlokir_anggaran(row[`blokir_anggaran${suffix}`] || "");
+    setAutomatic_adjustment(row[`automatic_adjustment${suffix}`] || "");
+    setHalaman_3_dipa(row[`halaman_3_dipa${suffix}`] || "");
+    setSdana_sbsn(row[`sdana_sbsn${suffix}`] || "");
+    setLainnya_anggaran(row[`lainnya_anggaran${suffix}`] || "");
 
-    setProses_lelang(row.proses_lelang);
-    setLelang_dini(row.lelang_dini);
-    setGagal_lelang(row.gagal_lelang);
-    setKeterbatasan_penyedia(row.keterbatasan_penyedia);
-    setTkdn(row.tkdn);
-    setEcatalog(row.ecatalog);
-    setLainnya_pbj(row.lainnya_pbj);
+    setProses_lelang(row[`proses_lelang${suffix}`] || "");
+    setLelang_dini(row[`lelang_dini${suffix}`] || "");
+    setGagal_lelang(row[`gagal_lelang${suffix}`] || "");
+    setKeterbatasan_penyedia(row[`keterbatasan_penyedia${suffix}`] || "");
+    setTkdn(row[`tkdn${suffix}`] || "");
+    setEcatalog(row[`ecatalog${suffix}`] || "");
+    setLainnya_pbj(row[`lainnya_pbj${suffix}`] || "");
 
-    setKekurangan_prasyarat(row.kekurangan_prasyarat);
-    setPrasyarat_lahan(row.prasyarat_lahan);
-    setFaktor_cuaca(row.faktor_cuaca);
-    setKesiapan_pedum(row.kesiapan_pedum);
-    setPenerimaan_bantuan(row.penerimaan_bantuan);
-    setPembagian_bantuan(row.pembagian_bantuan);
-    setKenaikan_harga(row.kenaikan_harga);
-    setLainnya_eksekusi(row.lainnya_eksekusi);
+    setKekurangan_prasyarat(row[`kekurangan_prasyarat${suffix}`] || "");
+    setPrasyarat_lahan(row[`prasyarat_lahan${suffix}`] || "");
+    setFaktor_cuaca(row[`faktor_cuaca${suffix}`] || "");
+    setKesiapan_pedum(row[`kesiapan_pedum${suffix}`] || "");
+    setPenerimaan_bantuan(row[`penerimaan_bantuan${suffix}`] || "");
+    setPembagian_bantuan(row[`pembagian_bantuan${suffix}`] || "");
+    setKenaikan_harga(row[`kenaikan_harga${suffix}`] || "");
+    setLainnya_eksekusi(row[`lainnya_eksekusi${suffix}`] || "");
 
-    setRegulasi_kemenkeu(row.regulasi_kemenkeu);
-    setRegulasi_kl(row.regulasi_kl);
-    setRegulasi_pemda(row.regulasi_pemda);
-    setLainnya_regulasi(row.lainnya_regulasi);
+    setRegulasi_kemenkeu(row[`regulasi_kemenkeu${suffix}`] || "");
+    setRegulasi_kl(row[`regulasi_kl${suffix}`] || "");
+    setRegulasi_pemda(row[`regulasi_pemda${suffix}`] || "");
+    setLainnya_regulasi(row[`lainnya_regulasi${suffix}`] || "");
 
-    setPergantian_pejabat(row.pergantian_pejabat);
-    setKekurangan_sdm(row.kekurangan_sdm);
-    setPemahaman_aplikasi(row.pemahaman_aplikasi);
-    setLainnya_sdm(row.lainnya_sdm);
+    setPergantian_pejabat(row[`pergantian_pejabat${suffix}`] || "");
+    setKekurangan_sdm(row[`kekurangan_sdm${suffix}`] || "");
+    setPemahaman_aplikasi(row[`pemahaman_aplikasi${suffix}`] || "");
+    setLainnya_sdm(row[`lainnya_sdm${suffix}`] || "");
 
     setShowModal(true);
   };
@@ -493,6 +521,7 @@ export default function Harmonisasi() {
     if (query) {
       setKanwil("00");
       setNamaBidang("00");
+      setKdDept("00");
     }
   };
 
@@ -501,11 +530,22 @@ export default function Harmonisasi() {
   const clusterCellClass =
     "text-center w-[90px] min-w-[90px] max-w-[90px] px-1";
 
+  const getRekamStatus = (
+    row: any,
+    fields: string[],
+  ): "full" | "partial" | "none" => {
+    const s1Filled = fields.every((f) => !!row[`${f}_s1`]);
+    const s2Filled = fields.every((f) => !!row[`${f}_s2`]);
+    if (s1Filled && s2Filled) return "full";
+    if (s1Filled || s2Filled) return "partial";
+    return "none";
+  };
+
   const StatusIcon = ({
-    active,
+    status,
     onClick,
   }: {
-    active: boolean;
+    status: "full" | "partial" | "none";
     onClick: () => void;
   }) => (
     <div className="flex justify-center">
@@ -514,12 +554,22 @@ export default function Harmonisasi() {
         size="sm"
         onClick={onClick}
         className="h-8 w-8 p-0"
-        title={active ? "Sudah direkam" : "Belum direkam"}
+        title={
+          status === "full"
+            ? "Lengkap (S1+S2)"
+            : status === "partial"
+              ? "Sebagian terisi"
+              : "Belum direkam"
+        }
       >
         <CheckSquare
           className={cn(
             "h-4 w-4",
-            active ? "text-blue-600" : "text-amber-600"
+            status === "full"
+              ? "text-green-600"
+              : status === "partial"
+                ? "text-amber-500"
+                : "text-gray-400",
           )}
         />
       </Button>
@@ -531,7 +581,9 @@ export default function Harmonisasi() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Harmonisasi Belanja K/L & TKD</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Harmonisasi Belanja K/L & TKD
+          </h1>
           <p className="text-sm text-muted-foreground">
             Harmonisasi Perencanaan dan Penganggaran Belanja K/L dan TKD
           </p>
@@ -564,7 +616,6 @@ export default function Harmonisasi() {
       </div>
 
       <section className="flex flex-col gap-4">
-
         {/* Filters */}
         <Card>
           <CardHeader>
@@ -573,27 +624,18 @@ export default function Harmonisasi() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
               <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium">Tahun</label>
-                <Select value={namaThang} onValueChange={setNamaThang}>
+                <label className="text-sm font-medium">K/L</label>
+                <Select value={kdDept} onValueChange={setKdDept}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Pilih Tahun" />
+                    <SelectValue placeholder="Semua K/L" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="2025">2025</SelectItem>
-                    <SelectItem value="2026">2026</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium">Semester</label>
-                <Select value={namaSemester} onValueChange={setNamaSemester}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Pilih Semester" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">Semester I</SelectItem>
-                    <SelectItem value="2">Semester II</SelectItem>
+                    <SelectItem value="00">Semua K/L</SelectItem>
+                    {klList.map((kl) => (
+                      <SelectItem key={kl.kddept} value={kl.kddept}>
+                        {kl.kddept} - {kl.nmdept}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -627,40 +669,32 @@ export default function Harmonisasi() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="00">Semua Bidang</SelectItem>
-                    <SelectItem value="Ketahanan Pangan">
-                      Ketahanan Pangan
-                    </SelectItem>
-                    <SelectItem value="Pendidikan">Pendidikan</SelectItem>
-                    <SelectItem value="Kesehatan">Kesehatan</SelectItem>
-                    <SelectItem value="Jalan">Jalan</SelectItem>
-                    <SelectItem value="Sanitasi">Sanitasi</SelectItem>
-                    <SelectItem value="Air Minum">Air Minum</SelectItem>
-                    <SelectItem value="Irigasi">Irigasi</SelectItem>
-                    <SelectItem value="Infrastruktur">Infrastruktur</SelectItem>
-                    <SelectItem value="Perumahan">Perumahan</SelectItem>
-                    <SelectItem value="Perlindungan Perempuan dan Anak">
-                      Perlindungan Perempuan dan Anak
-                    </SelectItem>
+                    {bidangList.map((b) => (
+                      <SelectItem key={b} value={b}>
+                        {b}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
 
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium">Pencarian</label>
+                <Input
+                  type="text"
+                  aria-label="Pencarian data harmonisasi"
+                  placeholder="Cari satker, RO, kabkota..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle>Data Harmonisasi</CardTitle>
-            <div className="w-full sm:w-72">
-              <Input
-                type="text"
-                aria-label="Pencarian data harmonisasi"
-                placeholder="Cari..."
-                value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
-              />
-            </div>
+          <CardHeader>
+            <CardTitle>Data Harmonisasi 2026</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -670,7 +704,10 @@ export default function Harmonisasi() {
                 <Table className="text-xs">
                   <TableHeader className="bg-muted/50">
                     <TableRow>
-                      <TableHead rowSpan={2} className="text-center whitespace-nowrap">
+                      <TableHead
+                        rowSpan={2}
+                        className="text-center whitespace-nowrap"
+                      >
                         No
                       </TableHead>
                       <TableHead
@@ -679,13 +716,22 @@ export default function Harmonisasi() {
                       >
                         Nama Satker
                       </TableHead>
-                      <TableHead rowSpan={2} className="text-center whitespace-nowrap">
+                      <TableHead
+                        rowSpan={2}
+                        className="text-center whitespace-nowrap"
+                      >
                         Bidang
                       </TableHead>
-                      <TableHead rowSpan={2} className="text-center whitespace-nowrap">
+                      <TableHead
+                        rowSpan={2}
+                        className="text-center whitespace-nowrap"
+                      >
                         Jenis TKD
                       </TableHead>
-                      <TableHead rowSpan={2} className="text-center whitespace-nowrap">
+                      <TableHead
+                        rowSpan={2}
+                        className="text-center whitespace-nowrap"
+                      >
                         Lokasi/Kabkota
                       </TableHead>
                       <TableHead
@@ -694,217 +740,228 @@ export default function Harmonisasi() {
                       >
                         COA
                       </TableHead>
-                      <TableHead rowSpan={2} className="text-center whitespace-nowrap">
+                      <TableHead
+                        rowSpan={2}
+                        className="text-center whitespace-nowrap"
+                      >
                         Nama RO
                       </TableHead>
-                      <TableHead rowSpan={2} className="text-center whitespace-nowrap">
+                      <TableHead
+                        rowSpan={2}
+                        className="text-center whitespace-nowrap"
+                      >
                         Satuan/Vol
                       </TableHead>
-                      <TableHead rowSpan={2} className="text-center whitespace-nowrap">
+                      <TableHead
+                        rowSpan={2}
+                        className="text-center whitespace-nowrap"
+                      >
                         Pagu
                       </TableHead>
-                      <TableHead colSpan={6} className="text-center whitespace-nowrap">
+                      <TableHead
+                        colSpan={12}
+                        className="text-center whitespace-nowrap"
+                      >
                         Realisasi (Rupiah)
                       </TableHead>
-                      <TableHead colSpan={6} className="text-center whitespace-nowrap">
+                      <TableHead
+                        colSpan={12}
+                        className="text-center whitespace-nowrap"
+                      >
                         RVRO (Volume)
                       </TableHead>
-                      <TableHead colSpan={5} className="text-center whitespace-nowrap">
+                      <TableHead
+                        colSpan={5}
+                        className="text-center whitespace-nowrap"
+                      >
                         Cluster Tantangan/Hambatan
                       </TableHead>
                     </TableRow>
                     <TableRow>
-                      {[0, 1, 2, 3, 4, 5].map((i) => (
-                        <TableHead key={`real-${i}`} className="text-center whitespace-nowrap">
-                          {namaSemester === "1"
-                            ? ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun"][i]
-                            : ["Jul", "Ags", "Sep", "Okt", "Nov", "Des"][i]}
+                      {[
+                        "Jan",
+                        "Feb",
+                        "Mar",
+                        "Apr",
+                        "Mei",
+                        "Jun",
+                        "Jul",
+                        "Ags",
+                        "Sep",
+                        "Okt",
+                        "Nov",
+                        "Des",
+                      ].map((m) => (
+                        <TableHead
+                          key={`real-${m}`}
+                          className="text-center whitespace-nowrap"
+                        >
+                          {m}
                         </TableHead>
                       ))}
-                      {[0, 1, 2, 3, 4, 5].map((i) => (
-                        <TableHead key={`phy-${i}`} className="text-center whitespace-nowrap">
-                          {namaSemester === "1"
-                            ? ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun"][i]
-                            : ["Jul", "Ags", "Sep", "Okt", "Nov", "Des"][i]}
+                      {[
+                        "Jan",
+                        "Feb",
+                        "Mar",
+                        "Apr",
+                        "Mei",
+                        "Jun",
+                        "Jul",
+                        "Ags",
+                        "Sep",
+                        "Okt",
+                        "Nov",
+                        "Des",
+                      ].map((m) => (
+                        <TableHead
+                          key={`phy-${m}`}
+                          className="text-center whitespace-nowrap"
+                        >
+                          {m}
                         </TableHead>
                       ))}
-                      <TableHead className={clusterHeadClass}>Penganggaran</TableHead>
+                      <TableHead className={clusterHeadClass}>
+                        Penganggaran
+                      </TableHead>
                       <TableHead className={clusterHeadClass}>PBJ</TableHead>
-                      <TableHead className={clusterHeadClass}>Eksekusi</TableHead>
-                      <TableHead className={clusterHeadClass}>Regulasi</TableHead>
+                      <TableHead className={clusterHeadClass}>
+                        Eksekusi
+                      </TableHead>
+                      <TableHead className={clusterHeadClass}>
+                        Regulasi
+                      </TableHead>
                       <TableHead className={clusterHeadClass}>SDM</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {data.slice(page * limit, (page + 1) * limit).length > 0 ? (
-                      data.slice(page * limit, (page + 1) * limit).map((row: any, index: number) => (
-                        <TableRow key={row.id}>
-                          <TableCell className="text-center whitespace-nowrap">
-                            {index + 1 + page * limit}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {row.nmsatker} ({row.kddept}.{row.kdsatker})
-                          </TableCell>
-                          <TableCell className="text-center whitespace-nowrap">{row.bidang_dak}</TableCell>
-                          <TableCell className="text-center whitespace-nowrap">{row.jenis_tkd}</TableCell>
-                          <TableCell className="text-center whitespace-nowrap">
-                            {row.kdlokasi} - {row.nmkabkota}
-                          </TableCell>
-                          <TableCell className="text-center select-none">{row.coa}</TableCell>
-                          <TableCell className="whitespace-nowrap">{row.ursoutput}</TableCell>
-                          <TableCell className="text-center whitespace-nowrap">
-                            {row.sat} - {numeral(row.vol).format("0,0")}
-                          </TableCell>
-                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
-                            {numeral(row.pagu).format("0,0")}
-                          </TableCell>
+                      data
+                        .slice(page * limit, (page + 1) * limit)
+                        .map((row: any, index: number) => (
+                          <TableRow key={row.id}>
+                            <TableCell className="text-center whitespace-nowrap">
+                              {index + 1 + page * limit}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {row.nmsatker} ({row.kddept}.{row.kdsatker})
+                            </TableCell>
+                            <TableCell className="text-center whitespace-nowrap">
+                              {row.bidang_dak}
+                            </TableCell>
+                            <TableCell className="text-center whitespace-nowrap">
+                              {row.jenis_tkd}
+                            </TableCell>
+                            <TableCell className="text-center whitespace-nowrap">
+                              {row.kdlokasi} - {row.nmkabkota}
+                            </TableCell>
+                            <TableCell className="text-center select-none">
+                              {row.coa}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {row.ursoutput}
+                            </TableCell>
+                            <TableCell className="text-center whitespace-nowrap">
+                              {row.sat} - {numeral(row.vol).format("0,0")}
+                            </TableCell>
+                            <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
+                              {numeral(row.pagu).format("0,0")}
+                            </TableCell>
 
-                          {/* Realisation Rupiah */}
-                          < TableCell className="text-right font-mono tabular-nums whitespace-nowrap" >
-                            {
-                              numeral(
-                                namaSemester === "1" ? row.real1 : row.real7
-                              ).format("0,0")}
-                          </TableCell>
-                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
-                            {numeral(
-                              namaSemester === "1" ? row.real2 : row.real8
-                            ).format("0,0")}
-                          </TableCell>
-                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
-                            {numeral(
-                              namaSemester === "1" ? row.real3 : row.real9
-                            ).format("0,0")}
-                          </TableCell>
-                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
-                            {numeral(
-                              namaSemester === "1" ? row.real4 : row.real10
-                            ).format("0,0")}
-                          </TableCell>
-                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
-                            {numeral(
-                              namaSemester === "1" ? row.real5 : row.real11
-                            ).format("0,0")}
-                          </TableCell>
-                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
-                            {numeral(
-                              namaSemester === "1" ? row.real6 : row.real12
-                            ).format("0,0")}
-                          </TableCell>
+                            {/* Realisation Rupiah 1-12 */}
+                            {(
+                              [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const
+                            ).map((n) => (
+                              <TableCell
+                                key={`r${n}`}
+                                className="text-right font-mono tabular-nums whitespace-nowrap"
+                              >
+                                {numeral(row[`real${n}`]).format("0,0")}
+                              </TableCell>
+                            ))}
 
-                          {/* Realisation Fisik */}
-                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
-                            {numeral(
-                              namaSemester === "1" ? row.realfisik1 : row.realfisik7
-                            ).format("0,0")}
-                          </TableCell>
-                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
-                            {numeral(
-                              namaSemester === "1" ? row.realfisik2 : row.realfisik8
-                            ).format("0,0")}
-                          </TableCell>
-                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
-                            {numeral(
-                              namaSemester === "1" ? row.realfisik3 : row.realfisik9
-                            ).format("0,0")}
-                          </TableCell>
-                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
-                            {numeral(
-                              namaSemester === "1" ? row.realfisik4 : row.realfisik10
-                            ).format("0,0")}
-                          </TableCell>
-                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
-                            {numeral(
-                              namaSemester === "1" ? row.realfisik5 : row.realfisik11
-                            ).format("0,0")}
-                          </TableCell>
-                          <TableCell className="text-right font-mono tabular-nums whitespace-nowrap">
-                            {numeral(
-                              namaSemester === "1" ? row.realfisik6 : row.realfisik12
-                            ).format("0,0")}
-                          </TableCell>
+                            {/* Realisation Fisik 1-12 */}
+                            {(
+                              [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const
+                            ).map((n) => (
+                              <TableCell
+                                key={`rf${n}`}
+                                className="text-right font-mono tabular-nums whitespace-nowrap"
+                              >
+                                {numeral(row[`realfisik${n}`]).format("0,0")}
+                              </TableCell>
+                            ))}
 
-                          {/* Clusters */}
-                          <TableCell className={clusterCellClass}>
-                            <StatusIcon
-                              active={
-                                !!(
-                                  row.revisi_anggaran &&
-                                  row.blokir_anggaran &&
-                                  row.automatic_adjustment &&
-                                  row.halaman_3_dipa &&
-                                  row.sdana_sbsn &&
-                                  row.lainnya_anggaran
-                                )
-                              }
-                              onClick={() => handleOpenRekam(row, 1)}
-                            />
-                          </TableCell>
-                          <TableCell className={clusterCellClass}>
-                            <StatusIcon
-                              active={
-                                !!(
-                                  row.proses_lelang &&
-                                  row.lelang_dini &&
-                                  row.gagal_lelang &&
-                                  row.keterbatasan_penyedia &&
-                                  row.tkdn &&
-                                  row.ecatalog &&
-                                  row.lainnya_pbj
-                                )
-                              }
-                              onClick={() => handleOpenRekam(row, 2)}
-                            />
-                          </TableCell>
-                          <TableCell className={clusterCellClass}>
-                            <StatusIcon
-                              active={
-                                !!(
-                                  row.kekurangan_prasyarat &&
-                                  row.prasyarat_lahan &&
-                                  row.faktor_cuaca &&
-                                  row.kesiapan_pedum &&
-                                  row.penerimaan_bantuan &&
-                                  row.pembagian_bantuan &&
-                                  row.kenaikan_harga &&
-                                  row.lainnya_eksekusi
-                                )
-                              }
-                              onClick={() => handleOpenRekam(row, 3)}
-                            />
-                          </TableCell>
-                          <TableCell className={clusterCellClass}>
-                            <StatusIcon
-                              active={
-                                !!(
-                                  row.regulasi_kemenkeu &&
-                                  row.regulasi_kl &&
-                                  row.regulasi_pemda &&
-                                  row.lainnya_regulasi
-                                )
-                              }
-                              onClick={() => handleOpenRekam(row, 4)}
-                            />
-                          </TableCell>
-                          <TableCell className={clusterCellClass}>
-                            <StatusIcon
-                              active={
-                                !!(
-                                  row.pergantian_pejabat &&
-                                  row.kekurangan_sdm &&
-                                  row.pemahaman_aplikasi &&
-                                  row.lainnya_sdm
-                                )
-                              }
-                              onClick={() => handleOpenRekam(row, 5)}
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))
+                            {/* Clusters */}
+                            <TableCell className={clusterCellClass}>
+                              <StatusIcon
+                                status={getRekamStatus(row, [
+                                  "revisi_anggaran",
+                                  "blokir_anggaran",
+                                  "automatic_adjustment",
+                                  "halaman_3_dipa",
+                                  "sdana_sbsn",
+                                  "lainnya_anggaran",
+                                ])}
+                                onClick={() => handleOpenRekam(row, 1)}
+                              />
+                            </TableCell>
+                            <TableCell className={clusterCellClass}>
+                              <StatusIcon
+                                status={getRekamStatus(row, [
+                                  "proses_lelang",
+                                  "lelang_dini",
+                                  "gagal_lelang",
+                                  "keterbatasan_penyedia",
+                                  "tkdn",
+                                  "ecatalog",
+                                  "lainnya_pbj",
+                                ])}
+                                onClick={() => handleOpenRekam(row, 2)}
+                              />
+                            </TableCell>
+                            <TableCell className={clusterCellClass}>
+                              <StatusIcon
+                                status={getRekamStatus(row, [
+                                  "kekurangan_prasyarat",
+                                  "prasyarat_lahan",
+                                  "faktor_cuaca",
+                                  "kesiapan_pedum",
+                                  "penerimaan_bantuan",
+                                  "pembagian_bantuan",
+                                  "kenaikan_harga",
+                                  "lainnya_eksekusi",
+                                ])}
+                                onClick={() => handleOpenRekam(row, 3)}
+                              />
+                            </TableCell>
+                            <TableCell className={clusterCellClass}>
+                              <StatusIcon
+                                status={getRekamStatus(row, [
+                                  "regulasi_kemenkeu",
+                                  "regulasi_kl",
+                                  "regulasi_pemda",
+                                  "lainnya_regulasi",
+                                ])}
+                                onClick={() => handleOpenRekam(row, 4)}
+                              />
+                            </TableCell>
+                            <TableCell className={clusterCellClass}>
+                              <StatusIcon
+                                status={getRekamStatus(row, [
+                                  "pergantian_pejabat",
+                                  "kekurangan_sdm",
+                                  "pemahaman_aplikasi",
+                                  "lainnya_sdm",
+                                ])}
+                                onClick={() => handleOpenRekam(row, 5)}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))
                     ) : (
                       <TableRow>
                         <TableCell
-                          colSpan={26}
+                          colSpan={38}
                           className="h-24 text-center text-muted-foreground"
                         >
                           Tidak ada data.
@@ -945,18 +1002,19 @@ export default function Harmonisasi() {
             )}
           </CardContent>
         </Card>
-      </section >
+      </section>
 
       {/* Modals */}
-      < RekamUpaya show={showModalUpaya} onHide={handleCloseModalUpaya} />
+      <RekamUpaya show={showModalUpaya} onHide={handleCloseModalUpaya} />
 
       <Rekam
         show={showModal}
         onHide={handleCloseModal}
         id={idCluster}
         jenis={jenisCluster}
-        thang={namaThang}
-        semester={namaSemester}
+        thang="2026"
+        semester="1"
+        row={selectedRow}
         revisi_anggaran_isi={revisi_anggaran}
         blokir_anggaran_isi={blokir_anggaran}
         automatic_adjustment_isi={automatic_adjustment}
@@ -986,8 +1044,14 @@ export default function Harmonisasi() {
         kekurangan_sdm_isi={kekurangan_sdm}
         pemahaman_aplikasi_isi={pemahaman_aplikasi}
         lainnya_sdm_isi={lainnya_sdm}
+        tableName="monev2026.pagu_output_2026_new_harmonis"
+        kdsatker={selectedRow?.kdsatker}
+        kdprogram={selectedRow?.kdprogram}
+        kdgiat={selectedRow?.kdgiat}
+        kdoutput={selectedRow?.kdoutput}
+        kdsoutput={selectedRow?.kdsoutput}
         onSaveSuccess={handleSaveSuccess}
       />
-    </div >
+    </div>
   );
 }

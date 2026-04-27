@@ -11,51 +11,42 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
-import { Edit, Trash2 } from "lucide-react";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
+import { Edit, Trash2, Loader2 } from "lucide-react";
 import { PermasalahanIsuModal } from "./modals/permasalahan-isu-modal";
 import { DeleteConfirmModal } from "./modals/delete-confirm-modal";
-
-// Mock data for Permasalahan/Isu table
-const mockPermasalahanIsuData = [
-  {
-    id: "1",
-    no: 1,
-    tahun: "2024",
-    kanwil: "Kanwil DJPb Sumut",
-    triwulan: "I",
-    kluster: "Fiskal Daerah",
-    keterangan: "Keterlambatan penyaluran DAU akibat permasalahan administrasi",
-    update: "2024-03-15T10:30:00Z",
-  },
-  {
-    id: "2",
-    no: 2,
-    tahun: "2024",
-    kanwil: "Kanwil DJPb Jabar",
-    triwulan: "I",
-    kluster: "Makrokesra",
-    keterangan:
-      "Tingginya inflasi regional akibat kenaikan harga komoditas pangan",
-    update: "2024-03-16T14:20:00Z",
-  },
-  {
-    id: "3",
-    no: 3,
-    tahun: "2024",
-    kanwil: "Kanwil DJPb Jateng",
-    triwulan: "II",
-    kluster: "Moneter",
-    keterangan: "Dampak kebijakan Bank Indonesia terhadap likuiditas daerah",
-    update: "2024-06-10T09:15:00Z",
-  },
-];
+import { useAuth } from "@/hooks/useAuth";
+import { useKertasKerja } from "@/features/mbg/hooks/use-kertas-kerja";
 
 export function PermasalahanIsuTab() {
-  const [selectedYear, setSelectedYear] = useState("2024");
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [isPermasalahanIsuModalOpen, setIsPermasalahanIsuModalOpen] =
     useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+
+  // Auth for role filtering
+  const { user } = useAuth();
+
+  // Fetch real data with role filtering
+  const { data: response, isLoading, isError, error } = useKertasKerja(
+    "permasalahan-isu", 
+    selectedYear,
+    1,
+    1000,
+    user?.role,
+    user?.kdkanwil
+  );
+  const permasalahanIsuData = Array.isArray(response?.data) ? response.data : [];
+
+  const getValueCaseInsensitive = (item: any, targetKey: string) => {
+    if (!item) return null;
+    const lowerTarget = targetKey.toLowerCase();
+    const actualKey = Object.keys(item).find(
+      (key) => key.toLowerCase() === lowerTarget
+    );
+    return actualKey ? item[actualKey] : null;
+  };
 
   // Generate years from current year back to 2020
   const currentYear = new Date().getFullYear();
@@ -74,6 +65,7 @@ export function PermasalahanIsuTab() {
   };
 
   const formatDateTime = (dateString: string) => {
+    if (!dateString) return "-";
     const date = new Date(dateString);
     return date.toLocaleString("id-ID", {
       year: "numeric",
@@ -100,16 +92,20 @@ export function PermasalahanIsuTab() {
         <div className="text-center font-medium">Tahun</div>
       ),
       cell: ({ row }: any) => (
-        <div className="text-center">{row.getValue("tahun")}</div>
+        <div className="text-center">
+          {row.getValue("tahun") || getValueCaseInsensitive(row.original, "tahun")}
+        </div>
       ),
     },
     {
-      accessorKey: "kanwil",
+      accessorKey: "nmkanwil",
       header: ({ column }: any) => (
         <div className="text-center font-medium">Kanwil</div>
       ),
       cell: ({ row }: any) => (
-        <div className="text-center">{row.getValue("kanwil")}</div>
+        <div className="text-center">
+          {row.getValue("nmkanwil") || getValueCaseInsensitive(row.original, "nmkanwil")}
+        </div>
       ),
     },
     {
@@ -118,40 +114,47 @@ export function PermasalahanIsuTab() {
         <div className="text-center font-medium">Triwulan</div>
       ),
       cell: ({ row }: any) => (
-        <div className="text-center">{row.getValue("triwulan")}</div>
+        <div className="text-center">
+          {row.getValue("triwulan") || getValueCaseInsensitive(row.original, "triwulan")}
+        </div>
       ),
     },
     {
-      accessorKey: "kluster",
+      accessorKey: "kategori",
       header: ({ column }: any) => (
-        <div className="text-center font-medium">Kluster</div>
+        <div className="text-center font-medium">Kategori</div>
       ),
       cell: ({ row }: any) => (
-        <div className="text-center">{row.getValue("kluster")}</div>
+        <div className="text-center">
+          {row.getValue("kategori") || getValueCaseInsensitive(row.original, "kategori")}
+        </div>
       ),
     },
     {
       accessorKey: "keterangan",
       header: ({ column }: any) => (
-        <div className="text-center font-medium">Keterangan</div>
+        <div className="text-center font-medium">Permasalahan</div>
       ),
-      cell: ({ row }: any) => (
-        <div
-          className="text-center max-w-[400px] truncate mx-auto"
-          title={row.getValue("keterangan")}
-        >
-          {row.getValue("keterangan")}
-        </div>
-      ),
+      cell: ({ row }: any) => {
+        const val = row.getValue("keterangan") || getValueCaseInsensitive(row.original, "keterangan");
+        return (
+          <div
+            className="text-center max-w-[400px] truncate mx-auto"
+            title={val}
+          >
+            {val}
+          </div>
+        );
+      },
     },
     {
-      accessorKey: "update",
+      accessorKey: "updatedAt",
       header: ({ column }: any) => (
         <div className="text-center font-medium">Update</div>
       ),
       cell: ({ row }: any) => (
         <div className="text-center text-sm">
-          {formatDateTime(row.getValue("update"))}
+          {formatDateTime(row.getValue("updatedAt") || getValueCaseInsensitive(row.original, "updatedAt"))}
         </div>
       ),
     },
@@ -166,7 +169,7 @@ export function PermasalahanIsuTab() {
             variant="outline"
             size="sm"
             onClick={() => handleEdit(row.original)}
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 p-0 cursor-pointer"
           >
             <Edit className="h-4 w-4 text-blue-600" />
           </Button>
@@ -174,7 +177,7 @@ export function PermasalahanIsuTab() {
             variant="outline"
             size="sm"
             onClick={() => handleDelete(row.original)}
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 p-0 cursor-pointer"
           >
             <Trash2 className="h-4 w-4 text-red-600" />
           </Button>
@@ -215,7 +218,10 @@ export function PermasalahanIsuTab() {
 
               {/* Action Button */}
               <Button
-                onClick={() => setIsPermasalahanIsuModalOpen(true)}
+                onClick={() => {
+                  setSelectedItem(null);
+                  setIsPermasalahanIsuModalOpen(true);
+                }}
                 className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white min-w-[100px] h-10 flex-1 sm:flex-initial"
               >
                 Rekam
@@ -224,13 +230,23 @@ export function PermasalahanIsuTab() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <DataTable
-              columns={columns}
-              data={mockPermasalahanIsuData.filter(
-                (item) => item.tahun === selectedYear
-              )}
-            />
+          <div className="overflow-x-auto min-h-[400px] relative">
+            {isLoading ? (
+              <TableSkeleton />
+            ) : isError ? (
+              <div className="absolute inset-0 flex items-center justify-center text-red-500">
+                Error: {(error as any)?.message || "Failed to fetch data"}
+              </div>
+            ) : (
+              <DataTable
+                columns={columns}
+                data={permasalahanIsuData.map((item: any, index: number) => ({
+                  ...item,
+                  no: index + 1,
+                }))}
+                initialPageSize={25}
+              />
+            )}
           </div>
         </CardContent>
       </Card>
@@ -238,7 +254,10 @@ export function PermasalahanIsuTab() {
       {/* Modals */}
       <PermasalahanIsuModal
         open={isPermasalahanIsuModalOpen}
-        onOpenChange={setIsPermasalahanIsuModalOpen}
+        onOpenChange={(open) => {
+          setIsPermasalahanIsuModalOpen(open);
+          if (!open) setSelectedItem(null);
+        }}
         data={selectedItem}
         onSave={() => {
           setIsPermasalahanIsuModalOpen(false);

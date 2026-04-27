@@ -11,58 +11,44 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
-import { Edit, Trash2 } from "lucide-react";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
+import { Edit, Trash2, Loader2 } from "lucide-react";
 import { KesimpulanRekomendasiModal } from "./modals/kesimpulan-rekomendasi-modal";
 import { DeleteConfirmModal } from "./modals/delete-confirm-modal";
-
-// Mock data for Kesimpulan & Rekomendasi table
-const mockKesimpulanRekomendasiData = [
-  {
-    id: "1",
-    no: 1,
-    tahun: "2024",
-    kanwil: "Kanwil DJPb Sumut",
-    triwulan: "I",
-    kesimpulan:
-      "Penyaluran DAU berjalan lancar namun masih ada keterlambatan di beberapa kabupaten",
-    rekomendasi:
-      "Perlu peningkatan koordinasi dengan pemda dan optimalisasi sistem monitoring",
-    update: "2024-03-15T10:30:00Z",
-  },
-  {
-    id: "2",
-    no: 2,
-    tahun: "2024",
-    kanwil: "Kanwil DJPb Jabar",
-    triwulan: "I",
-    kesimpulan:
-      "Inflasi regional masih dalam kendali namun perlu diwaspadai tren kenaikan",
-    rekomendasi:
-      "Monitoring intensif harga komoditas strategis dan koordinasi dengan Tim Pengendalian Inflasi Daerah",
-    update: "2024-03-16T14:20:00Z",
-  },
-  {
-    id: "3",
-    no: 3,
-    tahun: "2024",
-    kanwil: "Kanwil DJPb Jateng",
-    triwulan: "II",
-    kesimpulan:
-      "Pertumbuhan ekonomi regional menunjukkan tren positif dengan didukung konsumsi rumah tangga",
-    rekomendasi:
-      "Optimalisasi belanja modal dan program sosial untuk menjaga momentum pertumbuhan",
-    update: "2024-06-10T09:15:00Z",
-  },
-];
+import { useAuth } from "@/hooks/useAuth";
+import { useKertasKerja } from "@/features/mbg/hooks/use-kertas-kerja";
 
 export function KesimpulanRekomendasiTab() {
-  const [selectedYear, setSelectedYear] = useState("2024");
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [
     isKesimpulanRekomendasiModalOpen,
     setIsKesimpulanRekomendasiModalOpen,
   ] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+
+  // Auth for role filtering
+  const { user } = useAuth();
+
+  // Fetch real data with role filtering
+  const { data: response, isLoading, isError, error } = useKertasKerja(
+    "kesimpulan-rekomendasi", 
+    selectedYear,
+    1,
+    1000,
+    user?.role,
+    user?.kdkanwil
+  );
+  const kesimpulanRekomendasiData = Array.isArray(response?.data) ? response.data : [];
+
+  const getValueCaseInsensitive = (item: any, targetKey: string) => {
+    if (!item) return null;
+    const lowerTarget = targetKey.toLowerCase();
+    const actualKey = Object.keys(item).find(
+      (key) => key.toLowerCase() === lowerTarget
+    );
+    return actualKey ? item[actualKey] : null;
+  };
 
   // Generate years from current year back to 2020
   const currentYear = new Date().getFullYear();
@@ -81,6 +67,7 @@ export function KesimpulanRekomendasiTab() {
   };
 
   const formatDateTime = (dateString: string) => {
+    if (!dateString) return "-";
     const date = new Date(dateString);
     return date.toLocaleString("id-ID", {
       year: "numeric",
@@ -107,16 +94,20 @@ export function KesimpulanRekomendasiTab() {
         <div className="text-center font-medium">Tahun</div>
       ),
       cell: ({ row }: any) => (
-        <div className="text-center">{row.getValue("tahun")}</div>
+        <div className="text-center">
+          {row.getValue("tahun") || getValueCaseInsensitive(row.original, "tahun")}
+        </div>
       ),
     },
     {
-      accessorKey: "kanwil",
+      accessorKey: "nmkanwil",
       header: ({ column }: any) => (
         <div className="text-center font-medium">Kanwil</div>
       ),
       cell: ({ row }: any) => (
-        <div className="text-center">{row.getValue("kanwil")}</div>
+        <div className="text-center">
+          {row.getValue("nmkanwil") || getValueCaseInsensitive(row.original, "nmkanwil")}
+        </div>
       ),
     },
     {
@@ -125,7 +116,9 @@ export function KesimpulanRekomendasiTab() {
         <div className="text-center font-medium">Triwulan</div>
       ),
       cell: ({ row }: any) => (
-        <div className="text-center">{row.getValue("triwulan")}</div>
+        <div className="text-center">
+          {row.getValue("triwulan") || getValueCaseInsensitive(row.original, "triwulan")}
+        </div>
       ),
     },
     {
@@ -133,37 +126,43 @@ export function KesimpulanRekomendasiTab() {
       header: ({ column }: any) => (
         <div className="text-center font-medium">Kesimpulan</div>
       ),
-      cell: ({ row }: any) => (
-        <div
-          className="text-center max-w-[300px] truncate mx-auto"
-          title={row.getValue("kesimpulan")}
-        >
-          {row.getValue("kesimpulan")}
-        </div>
-      ),
+      cell: ({ row }: any) => {
+        const val = row.getValue("kesimpulan") || getValueCaseInsensitive(row.original, "kesimpulan");
+        return (
+          <div
+            className="text-center max-w-[300px] truncate mx-auto"
+            title={val}
+          >
+            {val}
+          </div>
+        );
+      },
     },
     {
-      accessorKey: "rekomendasi",
+      accessorKey: "saran",
       header: ({ column }: any) => (
         <div className="text-center font-medium">Rekomendasi</div>
       ),
-      cell: ({ row }: any) => (
-        <div
-          className="text-center max-w-[300px] truncate mx-auto"
-          title={row.getValue("rekomendasi")}
-        >
-          {row.getValue("rekomendasi")}
-        </div>
-      ),
+      cell: ({ row }: any) => {
+        const val = row.getValue("saran") || getValueCaseInsensitive(row.original, "saran");
+        return (
+          <div
+            className="text-center max-w-[300px] truncate mx-auto"
+            title={val}
+          >
+            {val}
+          </div>
+        );
+      },
     },
     {
-      accessorKey: "update",
+      accessorKey: "updatedAt",
       header: ({ column }: any) => (
         <div className="text-center font-medium">Update</div>
       ),
       cell: ({ row }: any) => (
         <div className="text-center text-sm">
-          {formatDateTime(row.getValue("update"))}
+          {formatDateTime(row.getValue("updatedAt") || getValueCaseInsensitive(row.original, "updatedAt"))}
         </div>
       ),
     },
@@ -178,7 +177,7 @@ export function KesimpulanRekomendasiTab() {
             variant="outline"
             size="sm"
             onClick={() => handleEdit(row.original)}
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 p-0 cursor-pointer"
           >
             <Edit className="h-4 w-4 text-blue-600" />
           </Button>
@@ -186,7 +185,7 @@ export function KesimpulanRekomendasiTab() {
             variant="outline"
             size="sm"
             onClick={() => handleDelete(row.original)}
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 p-0 cursor-pointer"
           >
             <Trash2 className="h-4 w-4 text-red-600" />
           </Button>
@@ -227,7 +226,10 @@ export function KesimpulanRekomendasiTab() {
 
               {/* Action Button */}
               <Button
-                onClick={() => setIsKesimpulanRekomendasiModalOpen(true)}
+                onClick={() => {
+                  setSelectedItem(null);
+                  setIsKesimpulanRekomendasiModalOpen(true);
+                }}
                 className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white min-w-[100px] h-10 flex-1 sm:flex-initial"
               >
                 Rekam
@@ -236,13 +238,23 @@ export function KesimpulanRekomendasiTab() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <DataTable
-              columns={columns}
-              data={mockKesimpulanRekomendasiData.filter(
-                (item) => item.tahun === selectedYear
-              )}
-            />
+          <div className="overflow-x-auto min-h-[400px] relative">
+            {isLoading ? (
+              <TableSkeleton />
+            ) : isError ? (
+              <div className="absolute inset-0 flex items-center justify-center text-red-500">
+                Error: {(error as any)?.message || "Failed to fetch data"}
+              </div>
+            ) : (
+              <DataTable
+                columns={columns}
+                data={kesimpulanRekomendasiData.map((item: any, index: number) => ({
+                  ...item,
+                  no: index + 1,
+                }))}
+                initialPageSize={25}
+              />
+            )}
           </div>
         </CardContent>
       </Card>
@@ -250,7 +262,10 @@ export function KesimpulanRekomendasiTab() {
       {/* Modals */}
       <KesimpulanRekomendasiModal
         open={isKesimpulanRekomendasiModalOpen}
-        onOpenChange={setIsKesimpulanRekomendasiModalOpen}
+        onOpenChange={(open) => {
+          setIsKesimpulanRekomendasiModalOpen(open);
+          if (!open) setSelectedItem(null);
+        }}
         data={selectedItem}
         onSave={() => {
           setIsKesimpulanRekomendasiModalOpen(false);

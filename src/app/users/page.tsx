@@ -541,15 +541,18 @@ export default function UsersPage() {
                         <Button
                           type="button"
                           variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          size="icon"
+                          className="text-muted-foreground hover:text-foreground absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
                           onClick={() => setShowPassword(!showPassword)}
                           tabIndex={-1}
+                          aria-label={
+                            showPassword ? "Sembunyikan password" : "Lihat password"
+                          }
                         >
                           {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
                             <Eye className="h-4 w-4" />
+                          ) : (
+                            <EyeOff className="h-4 w-4" />
                           )}
                           <span className="sr-only">
                             {showPassword ? "Hide password" : "Show password"}
@@ -577,15 +580,20 @@ export default function UsersPage() {
                         <Button
                           type="button"
                           variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          size="icon"
+                          className="text-muted-foreground hover:text-foreground absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                           tabIndex={-1}
+                          aria-label={
+                            showConfirmPassword
+                              ? "Sembunyikan konfirmasi password"
+                              : "Lihat konfirmasi password"
+                          }
                         >
                           {showConfirmPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
                             <Eye className="h-4 w-4" />
+                          ) : (
+                            <EyeOff className="h-4 w-4" />
                           )}
                           <span className="sr-only">
                             {showConfirmPassword ? "Hide password" : "Show password"}
