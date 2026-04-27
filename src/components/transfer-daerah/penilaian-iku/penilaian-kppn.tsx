@@ -44,7 +44,11 @@ interface PenilaianKppnProps {
   kdkppn: string;
 }
 
-export function PenilaianKppn({ role, username, kdkppn: kdkppnUser }: PenilaianKppnProps) {
+export function PenilaianKppn({
+  role,
+  username,
+  kdkppn: kdkppnUser,
+}: PenilaianKppnProps) {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<KppnData[]>([]);
   const [open, setOpen] = useState("");
@@ -55,7 +59,7 @@ export function PenilaianKppn({ role, username, kdkppn: kdkppnUser }: PenilaianK
 
   useEffect(() => {
     getData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear, selectedPeriod]);
 
   const handleModal = (kdkppn: string, nmkppn: string, periode: string) => {
@@ -72,16 +76,16 @@ export function PenilaianKppn({ role, username, kdkppn: kdkppnUser }: PenilaianK
 
   const getData = async () => {
     setLoading(true);
-    const kppnFilter = role === "3"
-      ? `WHERE a.kdkppn = '${kdkppnUser}' AND c.kddept='999'`
-      : `WHERE c.kddept='999'`;
+    const kppnFilter =
+      role === "3"
+        ? `WHERE a.kdkppn = '${kdkppnUser}' AND c.kddept='999'`
+        : `WHERE c.kddept='999'`;
 
     const sql = `
       SELECT a.kdkppn, a.nmkppn
       FROM dbref.t_kppn_2024 a
       LEFT JOIN tkd.iku_lk_kppn b ON a.kdkppn = b.kdkppn
         AND b.thang='${selectedYear}' AND b.periode='${selectedPeriod}'
-      GROUP BY a.kdkppn, b.thang, b.periode
       ORDER BY a.kdkppn
     `;
     const cleanedQuery = sql.replace(/\n/g, " ").replace(/\s+/g, " ").trim();
@@ -94,7 +98,10 @@ export function PenilaianKppn({ role, username, kdkppn: kdkppnUser }: PenilaianK
       setData(response.data?.result ?? []);
     } catch (error: unknown) {
       const err = error as { response?: { data?: { error?: string } } };
-      toast.error(err?.response?.data?.error ?? "Terjadi Permasalahan Koneksi atau Server Backend");
+      toast.error(
+        err?.response?.data?.error ??
+          "Terjadi Permasalahan Koneksi atau Server Backend",
+      );
     } finally {
       setLoading(false);
     }
@@ -113,6 +120,7 @@ export function PenilaianKppn({ role, username, kdkppn: kdkppnUser }: PenilaianK
               <SelectItem value="2023">2023</SelectItem>
               <SelectItem value="2024">2024</SelectItem>
               <SelectItem value="2025">2025</SelectItem>
+              <SelectItem value="2026">2026</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -152,12 +160,16 @@ export function PenilaianKppn({ role, username, kdkppn: kdkppnUser }: PenilaianK
                   <TableRow key={index}>
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>{selectedYear}</TableCell>
-                    <TableCell>{row.kdkppn} - {row.nmkppn}</TableCell>
+                    <TableCell>
+                      {row.kdkppn} - {row.nmkppn}
+                    </TableCell>
                     <TableCell>{selectedPeriod}</TableCell>
                     <TableCell>
                       <CheckCircle
                         className="h-4 w-4 text-red-500 cursor-pointer"
-                        onClick={() => handleModal(row.kdkppn, row.nmkppn, selectedPeriod)}
+                        onClick={() =>
+                          handleModal(row.kdkppn, row.nmkppn, selectedPeriod)
+                        }
                       />
                     </TableCell>
                   </TableRow>
@@ -171,7 +183,9 @@ export function PenilaianKppn({ role, username, kdkppn: kdkppnUser }: PenilaianK
       {open === "1" && datakirim && (
         <ModalKppn
           open={showModal}
-          onOpenChange={(v) => { if (!v) handleClose(); }}
+          onOpenChange={(v) => {
+            if (!v) handleClose();
+          }}
           username={username}
           kirim={datakirim}
         />
