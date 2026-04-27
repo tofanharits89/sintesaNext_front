@@ -98,6 +98,7 @@ const defaultMenu: MenuItem[] = [
   {
     label: "Monev KKP",
     children: [
+      { label: "Dashboard" },
       { label: "KPPN" },
       { label: "Kanwil" },
       { label: "Direktorat PA" },
@@ -258,6 +259,8 @@ export function ResponsiveSidebar({
           if (isAdmin) return item; // Admins see all submenus
 
           const allowedChildren = (item.children || []).filter((child) => {
+            // Dashboard is visible to all Monev KKP roles
+            if (child.label === "Dashboard") return true;
             if (child.label === "KPPN" && user.role === "kppn") return true;
             if (child.label === "Kanwil" && user.role === "kanwil_djpb")
               return true;
@@ -475,6 +478,8 @@ export function ResponsiveSidebar({
         return <Banknote className={cls} />;
       case "Monev IKPA__Monev Dispensasi IKPA":
         return <Gavel className={cls} />;
+      case "Monev KKP__Dashboard":
+        return <LineChart className={cls} />;
       case "Monev KKP__KPPN":
         return <Building2 className={cls} />;
       case "Monev KKP__Kanwil":
@@ -908,6 +913,11 @@ export function ResponsiveSidebar({
                               m.label === "Monev IKPA"
                             ) {
                               href = "/ikpa";
+                            } else if (
+                              c.label === "Dashboard" &&
+                              m.label === "Monev KKP"
+                            ) {
+                              href = "/monev-kkp/dashboard";
                             } else if (
                               c.label === "KPPN" &&
                               m.label === "Monev KKP"
@@ -1920,6 +1930,25 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/dispensasi/kontrak-kppn",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Dashboard" && m.label === "Monev KKP" ? (
+                      <Link
+                        key={c.label}
+                        href="/monev-kkp/dashboard"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/monev-kkp/dashboard",
                           });
                           setOpen(false);
                         }}
