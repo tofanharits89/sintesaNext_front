@@ -455,7 +455,7 @@ const DakFisik: React.FC = () => {
   const fetchLokasiData = async () => {
     try {
       const query =
-        "SELECT DISTINCT kdlokasi, nmlokasi FROM tkd.dak_fisik ORDER BY nmlokasi";
+        "SELECT kdlokasi, MIN(nmlokasi) AS nmlokasi FROM tkd.dak_fisik GROUP BY kdlokasi ORDER BY nmlokasi";
       const encodedQuery = encodeURIComponent(query);
       const response = await http.get(
         `${process.env.NEXT_PUBLIC_DAKFISIK_DNF_DATA}${encodedQuery}`,
