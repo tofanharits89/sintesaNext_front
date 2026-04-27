@@ -5,6 +5,13 @@ import Swal from "sweetalert2";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
 import * as xlsx from "xlsx";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface SelectOption {
   label: string;
@@ -213,6 +220,21 @@ const ButtonRow: React.FC<{
   );
 };
 
+const MONTHS = [
+  { value: "1", label: "Januari" },
+  { value: "2", label: "Februari" },
+  { value: "3", label: "Maret" },
+  { value: "4", label: "April" },
+  { value: "5", label: "Mei" },
+  { value: "6", label: "Juni" },
+  { value: "7", label: "Juli" },
+  { value: "8", label: "Agustus" },
+  { value: "9", label: "September" },
+  { value: "10", label: "Oktober" },
+  { value: "11", label: "November" },
+  { value: "12", label: "Desember" },
+];
+
 const DNF: React.FC = () => {
   const { user } = useAuth();
   const role =
@@ -226,8 +248,8 @@ const DNF: React.FC = () => {
   // ===== TPG STATE =====
   const [tpgSelectedYear, setTpgSelectedYear] = useState<string>("");
   const [tpgYearOptions, setTpgYearOptions] = useState<SelectOption[]>([]);
-  const [tpgStartDate, setTpgStartDate] = useState<string>(`${year}-01-01`);
-  const [tpgEndDate, setTpgEndDate] = useState<string>(`${year}-12-31`);
+  const [tpgStartMonth, setTpgStartMonth] = useState<string>("1");
+  const [tpgEndMonth, setTpgEndMonth] = useState<string>("12");
   const [tpgSelectedkppn, setTpgSelectedkppn] = useState<string>("");
   const [tpgkppnOptions, setTpgkppnOptions] = useState<SelectOption[]>([]);
   const [tpgSelectedkanwil, setTpgSelectedkanwil] = useState<string>("");
@@ -253,10 +275,8 @@ const DNF: React.FC = () => {
   const [bosBopYearOptions, setBosBopYearOptions] = useState<SelectOption[]>(
     [],
   );
-  const [bosBopStartDate, setBosBopStartDate] = useState<string>(
-    `${year}-01-01`,
-  );
-  const [bosBopEndDate, setBosBopEndDate] = useState<string>(`${year}-12-31`);
+  const [bosBopStartMonth, setBosBopStartMonth] = useState<string>("1");
+  const [bosBopEndMonth, setBosBopEndMonth] = useState<string>("12");
   const [bosBopSelectedProgram, setBosBopSelectedProgram] =
     useState<string>("");
   const [bosBopProgramOptions, setBosBopProgramOptions] = useState<
@@ -302,7 +322,7 @@ const DNF: React.FC = () => {
   const fetchTpgYears = async () => {
     try {
       const d = await fetchData(
-        "SELECT DISTINCT thang FROM bot.tpg ORDER BY thang DESC",
+        "SELECT DISTINCT thang FROM tkd.tpg ORDER BY thang DESC",
       );
       setTpgYearOptions(
         d.map((y: any) => ({ label: y.thang, value: y.thang })),
@@ -362,7 +382,7 @@ const DNF: React.FC = () => {
   const fetchTpgPeriodes = async () => {
     try {
       const d = await fetchData(
-        "SELECT DISTINCT nm_periode FROM bot.tpg WHERE nm_periode IS NOT NULL ORDER BY nm_periode",
+        "SELECT DISTINCT nm_periode FROM tkd.tpg WHERE nm_periode IS NOT NULL ORDER BY nm_periode",
       );
       setTpgPeriodeOptions(
         d.map((p: any) => ({ label: p.nm_periode, value: p.nm_periode })),
@@ -374,7 +394,7 @@ const DNF: React.FC = () => {
   const fetchTpgGelombangs = async () => {
     try {
       const d = await fetchData(
-        "SELECT DISTINCT gelombang FROM bot.tpg WHERE gelombang IS NOT NULL ORDER BY gelombang",
+        "SELECT DISTINCT gelombang FROM tkd.tpg WHERE gelombang IS NOT NULL ORDER BY gelombang",
       );
       setTpgGelombangOptions(
         d.map((g: any) => ({ label: g.gelombang, value: g.gelombang })),
@@ -386,7 +406,7 @@ const DNF: React.FC = () => {
   const fetchTpgJenisTkd = async () => {
     try {
       const d = await fetchData(
-        "SELECT DISTINCT nama_detail FROM bot.tpg WHERE nama_detail IS NOT NULL ORDER BY nama_detail",
+        "SELECT DISTINCT nama_detail FROM tkd.tpg WHERE nama_detail IS NOT NULL ORDER BY nama_detail",
       );
       setTpgJenisTkdOptions(
         d.map((j: any) => ({ label: j.nama_detail, value: j.nama_detail })),
@@ -400,7 +420,7 @@ const DNF: React.FC = () => {
   const fetchBosBopYears = async () => {
     try {
       const d = await fetchData(
-        "SELECT DISTINCT thang FROM bot.bos_bop ORDER BY thang DESC",
+        "SELECT DISTINCT thang FROM tkd.bos_bop ORDER BY thang DESC",
       );
       setBosBopYearOptions(
         d.map((y: any) => ({ label: y.thang, value: y.thang })),
@@ -412,7 +432,7 @@ const DNF: React.FC = () => {
   const fetchBosBopPrograms = async () => {
     try {
       const d = await fetchData(
-        "SELECT DISTINCT nmprogram FROM bot.bos_bop WHERE nmprogram IS NOT NULL ORDER BY nmprogram",
+        "SELECT DISTINCT nmprogram FROM tkd.bos_bop WHERE nmprogram IS NOT NULL ORDER BY nmprogram",
       );
       setBosBopProgramOptions(
         d.map((p: any) => ({ label: p.nmprogram, value: p.nmprogram })),
@@ -424,7 +444,7 @@ const DNF: React.FC = () => {
   const fetchBosBopJenisBos = async () => {
     try {
       const d = await fetchData(
-        "SELECT DISTINCT jenis_bos FROM bot.bos_bop WHERE jenis_bos IS NOT NULL ORDER BY jenis_bos",
+        "SELECT DISTINCT jenis_bos FROM tkd.bos_bop WHERE jenis_bos IS NOT NULL ORDER BY jenis_bos",
       );
       setBosBopJenisBosOptions(
         d.map((j: any) => ({ label: j.jenis_bos, value: j.jenis_bos })),
@@ -436,7 +456,7 @@ const DNF: React.FC = () => {
   const fetchBosBopJenjang = async () => {
     try {
       const d = await fetchData(
-        "SELECT DISTINCT jenjang FROM bot.bos_bop WHERE jenjang IS NOT NULL ORDER BY jenjang",
+        "SELECT DISTINCT jenjang FROM tkd.bos_bop WHERE jenjang IS NOT NULL ORDER BY jenjang",
       );
       setBosBopJenjangOptions(
         d.map((j: any) => ({ label: j.jenjang, value: j.jenjang })),
@@ -502,8 +522,8 @@ const DNF: React.FC = () => {
     if (fKanwil) w += ` AND kode_kanwil = '${fKanwil}'`;
     const fKppn = tpgSelectedkppn || (role === "3" ? kdkppn : "");
     if (fKppn) w += ` AND kppn = '${fKppn}'`;
-    if (tpgStartDate && tpgEndDate)
-      w += ` AND tgsp2d BETWEEN '${tpgStartDate}' AND '${tpgEndDate}'`;
+    if (tpgStartMonth && tpgEndMonth)
+      w += ` AND EXTRACT(MONTH FROM tgsp2d) BETWEEN ${tpgStartMonth} AND ${tpgEndMonth}`;
     if (tpgSelectedPeriode) w += ` AND nm_periode = '${tpgSelectedPeriode}'`;
     if (tpgSelectedGelombang) w += ` AND gelombang = '${tpgSelectedGelombang}'`;
     if (tpgSelectedJenisTkd) w += ` AND nama_detail = '${tpgSelectedJenisTkd}'`;
@@ -514,15 +534,15 @@ const DNF: React.FC = () => {
     SUM(CASE WHEN EXTRACT(MONTH FROM tgsp2d) = 7 THEN rupiah ELSE 0 END) AS Juli, SUM(CASE WHEN EXTRACT(MONTH FROM tgsp2d) = 8 THEN rupiah ELSE 0 END) AS Agustus,
     SUM(CASE WHEN EXTRACT(MONTH FROM tgsp2d) = 9 THEN rupiah ELSE 0 END) AS September, SUM(CASE WHEN EXTRACT(MONTH FROM tgsp2d) = 10 THEN rupiah ELSE 0 END) AS Oktober,
     SUM(CASE WHEN EXTRACT(MONTH FROM tgsp2d) = 11 THEN rupiah ELSE 0 END) AS November, SUM(CASE WHEN EXTRACT(MONTH FROM tgsp2d) = 12 THEN rupiah ELSE 0 END) AS Desember,
-    SUM(rupiah) AS total_setahun FROM bot.tpg ${w}
+    SUM(rupiah) AS total_setahun FROM tkd.tpg ${w}
     GROUP BY thang, nm_periode, kode_kanwil, nm_kanwil, kppn, nm_kppn, nm_lokasi, nama_detail ORDER BY nm_lokasi ASC, nm_periode ASC`;
   };
 
   const generateBosBopSQLQuery = (): string => {
     let w = "WHERE 1=1";
     if (bosBopSelectedYear) w += ` AND a.thang = '${bosBopSelectedYear}'`;
-    if (bosBopStartDate && bosBopEndDate)
-      w += ` AND a.tgsp2d BETWEEN '${bosBopStartDate}' AND '${bosBopEndDate}'`;
+    if (bosBopStartMonth && bosBopEndMonth)
+      w += ` AND EXTRACT(MONTH FROM a.tgsp2d) BETWEEN ${bosBopStartMonth} AND ${bosBopEndMonth}`;
     if (bosBopSelectedProgram)
       w += ` AND a.nmprogram = '${bosBopSelectedProgram}'`;
     if (bosBopSelectedJenisBos)
@@ -542,7 +562,7 @@ const DNF: React.FC = () => {
     SUM(CASE WHEN EXTRACT(MONTH FROM a.tgsp2d) = 9 THEN a.nilai ELSE 0 END) AS September, SUM(CASE WHEN EXTRACT(MONTH FROM a.tgsp2d) = 10 THEN a.nilai ELSE 0 END) AS Oktober,
     SUM(CASE WHEN EXTRACT(MONTH FROM a.tgsp2d) = 11 THEN a.nilai ELSE 0 END) AS November, SUM(CASE WHEN EXTRACT(MONTH FROM a.tgsp2d) = 12 THEN a.nilai ELSE 0 END) AS Desember,
     SUM(a.nilai) AS total_nilai, SUM(a.jumlah_penerima) AS total_siswa
-    FROM bot.bos_bop a LEFT JOIN dbref.t_kabkota_apbd b ON a.kdlokasi_kedudukan = REPLACE(b.kdkabkota, '.', '')
+    FROM tkd.bos_bop a LEFT JOIN dbref.t_kabkota_apbd b ON a.kdlokasi_kedudukan = REPLACE(b.kdkabkota, '.', '')
     LEFT JOIN dbref.t_kppn_2025 c ON a.kdkppn = c.kdkppn LEFT JOIN dbref.t_kanwil_2025 d ON c.kdkanwil = d.kdkanwil
     LEFT JOIN (SELECT kdkppn, MIN(nmkabkota) AS nmkabkota FROM dbref.t_kabkota_apbd GROUP BY kdkppn) e ON a.kdkppn = e.kdkppn
     ${w} GROUP BY a.thang, c.kdkanwil, d.nmkanwil, a.kdkppn, e.nmkabkota, a.nmprogram, a.jenjang, a.status_sekolah, a.jenis_bos, a.kdlokasi_kedudukan, b.nmkabkota
@@ -843,24 +863,6 @@ const DNF: React.FC = () => {
     fetchBosBopJenjang();
   }, []);
   useEffect(() => {
-    if (tpgSelectedYear) {
-      setTpgStartDate(`${tpgSelectedYear}-01-01`);
-      setTpgEndDate(`${tpgSelectedYear}-12-31`);
-    } else {
-      setTpgStartDate(`${year}-01-01`);
-      setTpgEndDate(`${year}-12-31`);
-    }
-  }, [tpgSelectedYear]);
-  useEffect(() => {
-    if (bosBopSelectedYear) {
-      setBosBopStartDate(`${bosBopSelectedYear}-01-01`);
-      setBosBopEndDate(`${bosBopSelectedYear}-12-31`);
-    } else {
-      setBosBopStartDate(`${year}-01-01`);
-      setBosBopEndDate(`${year}-12-31`);
-    }
-  }, [bosBopSelectedYear]);
-  useEffect(() => {
     fetchTpgKppn(tpgSelectedkanwil);
   }, [tpgSelectedkanwil]);
   useEffect(() => {
@@ -1011,33 +1013,40 @@ const DNF: React.FC = () => {
                 onChange={setTpgSelectedJenisTkd}
                 defaultLabel="-- Semua --"
               />
-              <Field label="Tanggal SP2D">
+              <Field label="Bulan SP2D">
                 <div className="flex items-center gap-2">
-                  <input
-                    type="date"
-                    className="form-control flex-1"
-                    value={tpgStartDate}
-                    min={
-                      tpgSelectedYear ? `${tpgSelectedYear}-01-01` : undefined
-                    }
-                    max={
-                      tpgSelectedYear ? `${tpgSelectedYear}-12-31` : undefined
-                    }
-                    onChange={(e: any) => setTpgStartDate(e.target.value)}
-                  />
+                  <div className="flex-1">
+                    <Select
+                      value={tpgStartMonth}
+                      onValueChange={setTpgStartMonth}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Dari Bulan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MONTHS.map((m) => (
+                          <SelectItem key={m.value} value={m.value}>
+                            {m.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <span className="text-white text-sm px-2 shrink-0">s.d.</span>
-                  <input
-                    type="date"
-                    className="form-control flex-1"
-                    value={tpgEndDate}
-                    min={
-                      tpgSelectedYear ? `${tpgSelectedYear}-01-01` : undefined
-                    }
-                    max={
-                      tpgSelectedYear ? `${tpgSelectedYear}-12-31` : undefined
-                    }
-                    onChange={(e: any) => setTpgEndDate(e.target.value)}
-                  />
+                  <div className="flex-1">
+                    <Select value={tpgEndMonth} onValueChange={setTpgEndMonth}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Sampai Bulan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MONTHS.map((m) => (
+                          <SelectItem key={m.value} value={m.value}>
+                            {m.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </Field>
             </Section>
@@ -1256,41 +1265,43 @@ const DNF: React.FC = () => {
                 onChange={setBosBopSelectedJenjang}
                 defaultLabel="-- Semua --"
               />
-              <Field label="Tanggal SP2D">
+              <Field label="Bulan SP2D">
                 <div className="flex items-center gap-2">
-                  <input
-                    type="date"
-                    className="form-control flex-1"
-                    value={bosBopStartDate}
-                    min={
-                      bosBopSelectedYear
-                        ? `${bosBopSelectedYear}-01-01`
-                        : undefined
-                    }
-                    max={
-                      bosBopSelectedYear
-                        ? `${bosBopSelectedYear}-12-31`
-                        : undefined
-                    }
-                    onChange={(e: any) => setBosBopStartDate(e.target.value)}
-                  />
+                  <div className="flex-1">
+                    <Select
+                      value={bosBopStartMonth}
+                      onValueChange={setBosBopStartMonth}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Dari Bulan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MONTHS.map((m) => (
+                          <SelectItem key={m.value} value={m.value}>
+                            {m.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <span className="text-white text-sm px-2 shrink-0">s.d.</span>
-                  <input
-                    type="date"
-                    className="form-control flex-1"
-                    value={bosBopEndDate}
-                    min={
-                      bosBopSelectedYear
-                        ? `${bosBopSelectedYear}-01-01`
-                        : undefined
-                    }
-                    max={
-                      bosBopSelectedYear
-                        ? `${bosBopSelectedYear}-12-31`
-                        : undefined
-                    }
-                    onChange={(e: any) => setBosBopEndDate(e.target.value)}
-                  />
+                  <div className="flex-1">
+                    <Select
+                      value={bosBopEndMonth}
+                      onValueChange={setBosBopEndMonth}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Sampai Bulan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MONTHS.map((m) => (
+                          <SelectItem key={m.value} value={m.value}>
+                            {m.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </Field>
             </Section>

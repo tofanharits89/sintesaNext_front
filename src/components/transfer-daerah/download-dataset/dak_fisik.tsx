@@ -5,6 +5,13 @@ import Swal from "sweetalert2";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
 import * as xlsx from "xlsx";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Interface for select options
 interface SelectOption {
@@ -301,6 +308,21 @@ const ButtonRow: React.FC<ButtonRowProps> = ({
   );
 };
 
+const MONTHS = [
+  { value: "1", label: "Januari" },
+  { value: "2", label: "Februari" },
+  { value: "3", label: "Maret" },
+  { value: "4", label: "April" },
+  { value: "5", label: "Mei" },
+  { value: "6", label: "Juni" },
+  { value: "7", label: "Juli" },
+  { value: "8", label: "Agustus" },
+  { value: "9", label: "September" },
+  { value: "10", label: "Oktober" },
+  { value: "11", label: "November" },
+  { value: "12", label: "Desember" },
+];
+
 const DakFisik: React.FC = () => {
   const { user } = useAuth();
   const role =
@@ -325,17 +347,9 @@ const DakFisik: React.FC = () => {
   const [selectedSubBidang, setSelectedSubBidang] = useState<string>("");
   const [subBidangOptions, setSubBidangOptions] = useState<SelectOption[]>([]);
 
-  // Date Filters
-  const [startDate, setStartDate] = useState<string>(`${year}-01-01`);
-  const [endDate, setEndDate] = useState<string>(`${year}-12-31`);
-
-  // Update dates when year changes
-  useEffect(() => {
-    if (selectedYear) {
-      setStartDate(`${selectedYear}-01-01`);
-      setEndDate(`${selectedYear}-12-31`);
-    }
-  }, [selectedYear]);
+  // Month Filters (Bulan SP2D)
+  const [startMonth, setStartMonth] = useState<string>("1");
+  const [endMonth, setEndMonth] = useState<string>("12");
 
   // State untuk hasil Tayang
   const [showResults, setShowResults] = useState<boolean>(false);
@@ -532,8 +546,8 @@ const DakFisik: React.FC = () => {
     if (filterKanwil) where += ` AND b.kdkanwil = '${filterKanwil}'`;
     if (filterKppn) where += ` AND a.kdkppn = '${filterKppn}'`;
     if (selectedLokasi) where += ` AND a.kdlokasi = '${selectedLokasi}'`;
-    if (startDate && endDate)
-      where += ` AND a.tgsp2d BETWEEN '${startDate}' AND '${endDate}'`;
+    if (startMonth && endMonth)
+      where += ` AND EXTRACT(MONTH FROM a.tgsp2d) BETWEEN ${startMonth} AND ${endMonth}`;
     if (selectedJenisDana)
       where += ` AND a.jenis_dana = '${selectedJenisDana}'`;
     if (selectedBidang) where += ` AND a.kdbidang = '${selectedBidang}'`;
@@ -547,17 +561,17 @@ SELECT
     a.nmlokasi AS pemda,
     b.kdkanwil,
     a.kdkppn,
-    c.nmkppn,
+    b.nmkppn,
     a.kdakun,
     a.jenis_dana,
     a.kdbidang,
     a.nmbidang,
     a.kdsubidang,
     a.nmsubidang,
-    SUM(a.pagu) AS pagu,
+    0 AS pagu,
     SUM(a.nilai) AS total_penyaluran,
-    SUM(a.pagu) - SUM(a.nilai) AS sisa_pagu,
-    ROUND((SUM(a.nilai) / NULLIF(SUM(a.pagu), 0)) * 100, 2) AS prosentase,
+    0 AS sisa_pagu,
+    0 AS prosentase,
     SUM(CASE WHEN EXTRACT(MONTH FROM a.tgsp2d) = 1  THEN a.nilai ELSE 0 END) AS Jan,
     SUM(CASE WHEN EXTRACT(MONTH FROM a.tgsp2d) = 2  THEN a.nilai ELSE 0 END) AS Feb,
     SUM(CASE WHEN EXTRACT(MONTH FROM a.tgsp2d) = 3  THEN a.nilai ELSE 0 END) AS Mar,
@@ -572,11 +586,10 @@ SELECT
     SUM(CASE WHEN EXTRACT(MONTH FROM a.tgsp2d) = 12 THEN a.nilai ELSE 0 END) AS Des
 FROM tkd.dak_fisik a
 LEFT JOIN dbref.t_kppn_2025 b ON a.kdkppn = b.kdkppn
-LEFT JOIN dbref.t_kppn_2025 c ON a.kdkppn = c.kdkppn
 ${where}
 GROUP BY
     a.thang, a.kdlokasi, a.nmlokasi, b.kdkanwil,
-    a.kdkppn, c.nmkppn, a.kdakun, a.jenis_dana,
+    a.kdkppn, b.nmkppn, a.kdakun, a.jenis_dana,
     a.kdbidang, a.nmbidang, a.kdsubidang, a.nmsubidang
 ORDER BY a.kdlokasi, a.kdsubidang, a.kdkppn`;
   };
@@ -995,29 +1008,37 @@ ORDER BY a.kdlokasi, a.kdsubidang, a.kdkppn`;
             defaultLabel="-- Semua --"
           />
         )}
-        <Field label="Tanggal SP2D">
+        <Field label="Bulan SP2D">
           <div className="flex items-center gap-2">
-            <input
-              type="date"
-              className="form-control flex-1"
-              value={startDate}
-              min={selectedYear ? `${selectedYear}-01-01` : undefined}
-              max={selectedYear ? `${selectedYear}-12-31` : undefined}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setStartDate(e.target.value)
-              }
-            />
+            <div className="flex-1">
+              <Select value={startMonth} onValueChange={setStartMonth}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Dari Bulan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map((m) => (
+                    <SelectItem key={m.value} value={m.value}>
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <span className="text-white text-sm px-2 shrink-0">s.d.</span>
-            <input
-              type="date"
-              className="form-control flex-1"
-              value={endDate}
-              min={selectedYear ? `${selectedYear}-01-01` : undefined}
-              max={selectedYear ? `${selectedYear}-12-31` : undefined}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setEndDate(e.target.value)
-              }
-            />
+            <div className="flex-1">
+              <Select value={endMonth} onValueChange={setEndMonth}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Sampai Bulan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map((m) => (
+                    <SelectItem key={m.value} value={m.value}>
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </Field>
       </Section>

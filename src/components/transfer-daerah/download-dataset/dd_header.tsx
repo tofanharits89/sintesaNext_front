@@ -5,6 +5,13 @@ import Swal from "sweetalert2";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
 import * as xlsx from "xlsx";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Interface for select options
 interface SelectOption {
@@ -250,6 +257,21 @@ const ButtonRow: React.FC<ButtonRowProps> = ({
   );
 };
 
+const MONTHS = [
+  { value: "1", label: "Januari" },
+  { value: "2", label: "Februari" },
+  { value: "3", label: "Maret" },
+  { value: "4", label: "April" },
+  { value: "5", label: "Mei" },
+  { value: "6", label: "Juni" },
+  { value: "7", label: "Juli" },
+  { value: "8", label: "Agustus" },
+  { value: "9", label: "September" },
+  { value: "10", label: "Oktober" },
+  { value: "11", label: "November" },
+  { value: "12", label: "Desember" },
+];
+
 const DD_header: React.FC = () => {
   const { user } = useAuth();
   const role =
@@ -267,24 +289,10 @@ const DD_header: React.FC = () => {
   const [yearOptions, setYearOptions] = useState<SelectOption[]>([]);
   const [selectedLokasi, setSelectedLokasi] = useState<string>("");
   const [lokasiOptions, setLokasiOptions] = useState<SelectOption[]>([]);
-  const [selectedJenisDana, setSelectedJenisDana] = useState<string>("");
-  const [jenisDanaOptions, setJenisDanaOptions] = useState<SelectOption[]>([]);
-  const [selectedBidang, setSelectedBidang] = useState<string>("");
-  const [bidangOptions, setBidangOptions] = useState<SelectOption[]>([]);
-  const [selectedSubBidang, setSelectedSubBidang] = useState<string>("");
-  const [subBidangOptions, setSubBidangOptions] = useState<SelectOption[]>([]);
 
-  // Date Filters
-  const [startDate, setStartDate] = useState<string>(`${year}-01-01`);
-  const [endDate, setEndDate] = useState<string>(`${year}-12-31`);
-
-  // Update dates when year changes
-  useEffect(() => {
-    if (selectedYear) {
-      setStartDate(`${selectedYear}-01-01`);
-      setEndDate(`${selectedYear}-12-31`);
-    }
-  }, [selectedYear]);
+  // Month Filters (Bulan SP2D)
+  const [startMonth, setStartMonth] = useState<string>("1");
+  const [endMonth, setEndMonth] = useState<string>("12");
 
   // State untuk hasil Tayang
   const [showResults, setShowResults] = useState<boolean>(false);
@@ -304,7 +312,7 @@ const DD_header: React.FC = () => {
   const fetchYearData = async () => {
     try {
       const query =
-        "SELECT DISTINCT thang FROM tkd.dak_fisik ORDER BY thang DESC";
+        "SELECT DISTINCT thang FROM tkd.dd_header ORDER BY thang DESC";
       const encodedQuery = encodeURIComponent(query);
       const response = await http.get(
         `${process.env.NEXT_PUBLIC_DAKFISIK_DNF_DATA}${encodedQuery}`,
@@ -390,7 +398,7 @@ const DD_header: React.FC = () => {
   const fetchLokasiData = async () => {
     try {
       const query =
-        "SELECT DISTINCT a.kdlokasi, b.nmkabkota FROM bot.dd_header a LEFT JOIN dbref.t_kabkota_apbd b ON a.kdlokasi = REPLACE(b.kdkabkota, '.', '') ORDER BY a.kdlokasi ASC";
+        "SELECT DISTINCT a.kdlokasi, b.nmkabkota FROM tkd.dd_header a LEFT JOIN dbref.t_kabkota_apbd b ON a.kdlokasi = REPLACE(b.kdkabkota, '.', '') ORDER BY a.kdlokasi ASC";
       const encodedQuery = encodeURIComponent(query);
       const response = await http.get(
         `${process.env.NEXT_PUBLIC_DAKFISIK_DNF_DATA}${encodedQuery}`,
@@ -409,25 +417,9 @@ const DD_header: React.FC = () => {
 
   // Generate SQL Query
   const generateSQLQuery = (): string => {
-    let cteWhere = "WHERE 1=1";
-    if (selectedYear) cteWhere += ` AND a.thang = '${selectedYear}'`;
-
     const filterKanwil =
       selectedkanwil || (role === "2" || role === "3" ? kdkanwil : "");
-    if (filterKanwil) cteWhere += ` AND b.kdkanwil = '${filterKanwil}'`;
-
     const filterKppn = selectedkppn || (role === "3" ? kdkppn : "");
-    if (filterKppn) cteWhere += ` AND a.kdkppn = '${filterKppn}'`;
-
-    if (selectedLokasi) cteWhere += ` AND a.kdlokasi = '${selectedLokasi}'`;
-    if (startDate && endDate)
-      cteWhere += ` AND a.tgsp2d BETWEEN '${startDate}' AND '${endDate}'`;
-
-    let mainWhere = "WHERE 1=1";
-    if (selectedYear) mainWhere += ` AND p.thang = '${selectedYear}'`;
-    if (filterKanwil) mainWhere += ` AND k_ref.kdkanwil = '${filterKanwil}'`;
-    if (filterKppn) mainWhere += ` AND p.kdkppn = '${filterKppn}'`;
-    if (selectedLokasi) mainWhere += ` AND p.kdlokasi = '${selectedLokasi}'`;
 
     let whereConditions = "WHERE 1=1";
     if (selectedYear) whereConditions += ` AND a.thang = '${selectedYear}'`;
@@ -435,8 +427,8 @@ const DD_header: React.FC = () => {
     if (filterKppn) whereConditions += ` AND a.kdkppn = '${filterKppn}'`;
     if (selectedLokasi)
       whereConditions += ` AND a.kdlokasi = '${selectedLokasi}'`;
-    if (startDate && endDate)
-      whereConditions += ` AND a.tgl_sp2d BETWEEN '${startDate}' AND '${endDate}'`;
+    if (startMonth && endMonth)
+      whereConditions += ` AND EXTRACT(MONTH FROM a.tgl_sp2d) BETWEEN ${startMonth} AND ${endMonth}`;
 
     return `
 SELECT 
@@ -461,7 +453,7 @@ SELECT
     SUM(CASE WHEN EXTRACT(MONTH FROM a.tgl_sp2d) = 11 THEN a.rupiah ELSE 0 END) AS November,
     SUM(CASE WHEN EXTRACT(MONTH FROM a.tgl_sp2d) = 12 THEN a.rupiah ELSE 0 END) AS Desember,
     SUM(a.rupiah) AS total_nilai
-FROM bot.dd_header a
+FROM tkd.dd_header a
 LEFT JOIN dbref.t_kabkota_apbd b 
     ON a.kdlokasi = REPLACE(b.kdkabkota, '.', '')
 LEFT JOIN dbref.t_kppn_2025 c 
@@ -470,7 +462,7 @@ LEFT JOIN dbref.t_kanwil_2025 d
     ON c.kdkanwil = d.kdkanwil
 LEFT JOIN (
     SELECT thang, kdlokasi, SUM(pagu) AS total_pagu
-    FROM bot.dd_pagu
+    FROM tkd.dd_pagu
     GROUP BY thang, kdlokasi
 ) p ON a.kdlokasi = p.kdlokasi 
     AND a.thang = p.thang
@@ -835,29 +827,37 @@ ORDER BY c.kdkanwil, a.kdkppn`;
           onChange={setSelectedLokasi}
           defaultLabel="-- Semua --"
         />
-        <Field label="Tanggal SP2D">
+        <Field label="Bulan SP2D">
           <div className="flex items-center gap-2">
-            <input
-              type="date"
-              className="form-control flex-1"
-              value={startDate}
-              min={selectedYear ? `${selectedYear}-01-01` : undefined}
-              max={selectedYear ? `${selectedYear}-12-31` : undefined}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setStartDate(e.target.value)
-              }
-            />
+            <div className="flex-1">
+              <Select value={startMonth} onValueChange={setStartMonth}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Dari Bulan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map((m) => (
+                    <SelectItem key={m.value} value={m.value}>
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <span className="text-white text-sm px-2 shrink-0">s.d.</span>
-            <input
-              type="date"
-              className="form-control flex-1"
-              value={endDate}
-              min={selectedYear ? `${selectedYear}-01-01` : undefined}
-              max={selectedYear ? `${selectedYear}-12-31` : undefined}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setEndDate(e.target.value)
-              }
-            />
+            <div className="flex-1">
+              <Select value={endMonth} onValueChange={setEndMonth}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Sampai Bulan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map((m) => (
+                    <SelectItem key={m.value} value={m.value}>
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </Field>
       </Section>
