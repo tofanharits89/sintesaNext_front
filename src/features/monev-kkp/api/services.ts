@@ -398,9 +398,17 @@ function aggregateDashboardData(rows: RawKkpRow[]): KkpDashboardData {
     ]);
 
     const wordFreq = new Map<string, number>();
+    let kendalaProcessed = 0;
+    const MAX_KENDALA_PROCESS = 5000; // Safety limit for Word Cloud processing
+    
     for (const r of rows) {
       const text = (r.detil_kendala || "").trim();
       if (!text) continue;
+      
+      // Limit word cloud processing to keep UI responsive
+      kendalaProcessed++;
+      if (kendalaProcessed > MAX_KENDALA_PROCESS) break;
+
       const tokens = text
         .toLowerCase()
         .split(/[^a-zA-Z0-9]+/)
@@ -425,7 +433,7 @@ function aggregateDashboardData(rows: RawKkpRow[]): KkpDashboardData {
       }
 
       for (const chunk of chunks) {
-        // Keep chunks of 2 to 8 words to capture full context (now that junk is removed)
+        // Keep chunks of 2 to 8 words to capture full context
         if (chunk.length >= 2 && chunk.length <= 8) {
           // Must contain at least one negative indicator
           if (chunk.some(w => NEGATIVE_WORDS.has(w))) {
