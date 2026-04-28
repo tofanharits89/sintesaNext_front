@@ -32,8 +32,8 @@ function RankingList({
 }: {
   items: RankedItem[];
   badgeColor?: "blue" | "orange" | "purple";
-  valuePrefix?: string;
-  valueSuffix?: string;
+  valuePrefix?: string | undefined;
+  valueSuffix?: string | undefined;
 }) {
   const [page, setPage] = useState(1);
 

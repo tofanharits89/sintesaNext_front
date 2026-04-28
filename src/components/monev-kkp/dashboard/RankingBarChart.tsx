@@ -43,6 +43,20 @@ const COLORS = [
   "#60a5fa", "#93c5fd", "#6366f1", "#4f46e5", "#4338ca",
 ];
 
+const CustomYAxisTick = ({ x, y, payload }: any) => {
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <foreignObject x={-176} y={-15} width={164} height={30}>
+        <div className="flex h-full w-full items-center justify-end px-2">
+          <span className="text-[10px] leading-[14px] text-[#888] text-right line-clamp-2 w-full break-words">
+            {payload.value}
+          </span>
+        </div>
+      </foreignObject>
+    </g>
+  );
+};
+
 interface RankingBarChartProps {
   title: string;
   description: string;
@@ -88,7 +102,7 @@ export function RankingBarChart({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col p-6 pt-0 pb-4">
-        <div className="flex-1 min-h-[320px] w-full">
+        <div className="flex-1 min-h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <BarChart
               data={chartData}
@@ -107,10 +121,9 @@ export function RankingBarChart({
               <YAxis
                 dataKey="name"
                 type="category"
-                fontSize={10}
+                tick={<CustomYAxisTick />}
                 tickLine={false}
                 axisLine={false}
-                stroke="#888"
                 width={180}
               />
               <Tooltip
@@ -153,7 +166,7 @@ export function RankingBarChart({
                 <LabelList
                   dataKey="value"
                   position="insideRight"
-                  formatter={(v: number) => fmtRupiah(v)}
+                  formatter={(v: any) => fmtRupiah(Number(v))}
                   fontSize={9}
                   fill="#fff"
                   offset={10}
