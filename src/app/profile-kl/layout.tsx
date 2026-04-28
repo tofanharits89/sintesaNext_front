@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { GenericCardSkeleton } from "@/components/ui/dashboard-skeletons";
 
-export default function ProfileLayout({
+export default function ProfileKlLayout({
   children,
 }: {
   children: React.ReactNode;
