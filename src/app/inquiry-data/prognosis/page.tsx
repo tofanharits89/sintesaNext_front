@@ -555,19 +555,22 @@ export default function PrognosisPage() {
     const tahunFilter = `tahun::integer >= ${startYear} AND tahun::integer <= ${currentYear}`;
 
     if (jenisLaporan === "1") {
+      // COALESCE wraps every realN so NULL columns don't null-out the whole SUM.
+      // Without it, SUM(real1 + real2 + NULL) = NULL and months after the last
+      // loaded month are silently dropped from the chart.
       const realbulananakumulatif = `
-        , ROUND(SUM(real1)/${pembulatan}, 0) AS JAN
-        , ROUND(SUM(real1 + real2)/${pembulatan}, 0) AS FEB
-        , ROUND(SUM(real1 + real2 + real3)/${pembulatan}, 0) AS MAR
-        , ROUND(SUM(real1 + real2 + real3 + real4)/${pembulatan}, 0) AS APR
-        , ROUND(SUM(real1 + real2 + real3 + real4 + real5)/${pembulatan}, 0) AS MEI
-        , ROUND(SUM(real1 + real2 + real3 + real4 + real5 + real6)/${pembulatan}, 0) AS JUN
-        , ROUND(SUM(real1 + real2 + real3 + real4 + real5 + real6 + real7)/${pembulatan}, 0) AS JUL
-        , ROUND(SUM(real1 + real2 + real3 + real4 + real5 + real6 + real7 + real8)/${pembulatan}, 0) AS AGS
-        , ROUND(SUM(real1 + real2 + real3 + real4 + real5 + real6 + real7 + real8 + real9)/${pembulatan}, 0) AS SEP
-        , ROUND(SUM(real1 + real2 + real3 + real4 + real5 + real6 + real7 + real8 + real9 + real10)/${pembulatan}, 0) AS OKT
-        , ROUND(SUM(real1 + real2 + real3 + real4 + real5 + real6 + real7 + real8 + real9 + real10 + real11)/${pembulatan}, 0) AS NOV
-        , ROUND(SUM(real1 + real2 + real3 + real4 + real5 + real6 + real7 + real8 + real9 + real10 + real11 + real12)/${pembulatan}, 0) AS DES`;
+        , ROUND(SUM(COALESCE(real1,0))/${pembulatan}, 0) AS JAN
+        , ROUND(SUM(COALESCE(real1,0) + COALESCE(real2,0))/${pembulatan}, 0) AS FEB
+        , ROUND(SUM(COALESCE(real1,0) + COALESCE(real2,0) + COALESCE(real3,0))/${pembulatan}, 0) AS MAR
+        , ROUND(SUM(COALESCE(real1,0) + COALESCE(real2,0) + COALESCE(real3,0) + COALESCE(real4,0))/${pembulatan}, 0) AS APR
+        , ROUND(SUM(COALESCE(real1,0) + COALESCE(real2,0) + COALESCE(real3,0) + COALESCE(real4,0) + COALESCE(real5,0))/${pembulatan}, 0) AS MEI
+        , ROUND(SUM(COALESCE(real1,0) + COALESCE(real2,0) + COALESCE(real3,0) + COALESCE(real4,0) + COALESCE(real5,0) + COALESCE(real6,0))/${pembulatan}, 0) AS JUN
+        , ROUND(SUM(COALESCE(real1,0) + COALESCE(real2,0) + COALESCE(real3,0) + COALESCE(real4,0) + COALESCE(real5,0) + COALESCE(real6,0) + COALESCE(real7,0))/${pembulatan}, 0) AS JUL
+        , ROUND(SUM(COALESCE(real1,0) + COALESCE(real2,0) + COALESCE(real3,0) + COALESCE(real4,0) + COALESCE(real5,0) + COALESCE(real6,0) + COALESCE(real7,0) + COALESCE(real8,0))/${pembulatan}, 0) AS AGS
+        , ROUND(SUM(COALESCE(real1,0) + COALESCE(real2,0) + COALESCE(real3,0) + COALESCE(real4,0) + COALESCE(real5,0) + COALESCE(real6,0) + COALESCE(real7,0) + COALESCE(real8,0) + COALESCE(real9,0))/${pembulatan}, 0) AS SEP
+        , ROUND(SUM(COALESCE(real1,0) + COALESCE(real2,0) + COALESCE(real3,0) + COALESCE(real4,0) + COALESCE(real5,0) + COALESCE(real6,0) + COALESCE(real7,0) + COALESCE(real8,0) + COALESCE(real9,0) + COALESCE(real10,0))/${pembulatan}, 0) AS OKT
+        , ROUND(SUM(COALESCE(real1,0) + COALESCE(real2,0) + COALESCE(real3,0) + COALESCE(real4,0) + COALESCE(real5,0) + COALESCE(real6,0) + COALESCE(real7,0) + COALESCE(real8,0) + COALESCE(real9,0) + COALESCE(real10,0) + COALESCE(real11,0))/${pembulatan}, 0) AS NOV
+        , ROUND(SUM(COALESCE(real1,0) + COALESCE(real2,0) + COALESCE(real3,0) + COALESCE(real4,0) + COALESCE(real5,0) + COALESCE(real6,0) + COALESCE(real7,0) + COALESCE(real8,0) + COALESCE(real9,0) + COALESCE(real10,0) + COALESCE(real11,0) + COALESCE(real12,0))/${pembulatan}, 0) AS DES`;
 
       if (level === "3") {
         const tableName = "prognosis.histori_satker_bulanan";
@@ -838,8 +841,18 @@ export default function PrognosisPage() {
     startMonth: number,
     startYear: number,
   ) => {
-    const data: any[] = [];
+    // Use a Map keyed by `name` so historical + prediction with the same
+    // period (e.g. "2026-01") are merged into one data point — this makes
+    // the realisasi and prediksi lines overlap on the chart.
+    const pointMap = new Map<string, any>();
+    const upsert = (name: string, extra: object) => {
+      pointMap.set(name, { name, ...pointMap.get(name), ...extra });
+    };
+
+    const currentMonth = new Date().getMonth() + 1; // 1-12
+
     historical.forEach((item) => {
+      const itemYear = parseInt(item.tahun);
       if (jenisLaporan === "1") {
         const months = [
           "JAN",
@@ -855,22 +868,28 @@ export default function PrognosisPage() {
           "NOV",
           "DES",
         ];
+        // For the current year, only plot months up to currentMonth so we
+        // don't show a misleading flat line where future data is still 0.
+        const monthLimit = itemYear === currentYear ? currentMonth : 12;
         months.forEach((m, i) => {
-          const val = item[m];
-          if (val && item.pagu) {
-            data.push({
-              name: `${item.tahun}-${(i + 1).toString().padStart(2, "0")}`,
-              realisasi: (val / item.pagu) * 100,
-              type: "Historical",
+          if (i + 1 > monthLimit) return; // skip future months in current year
+          const val = item[m] ?? item[m.toLowerCase()];
+          if (
+            val !== null &&
+            val !== undefined &&
+            Number(val) > 0 &&
+            Number(item.pagu) > 0
+          ) {
+            const name = `${item.tahun}-${(i + 1).toString().padStart(2, "0")}`;
+            upsert(name, {
+              realisasi: (Number(val) / Number(item.pagu)) * 100,
             });
           }
         });
       } else {
         if (item.pagu) {
-          data.push({
-            name: item.tahun.toString(),
-            realisasi: (item.total_realisasi / item.pagu) * 100,
-            type: "Historical",
+          upsert(item.tahun.toString(), {
+            realisasi: (Number(item.total_realisasi) / Number(item.pagu)) * 100,
           });
         }
       }
@@ -890,10 +909,15 @@ export default function PrognosisPage() {
         } else {
           pName = (startYear + i).toString();
         }
-        data.push({ name: pName, prediksi: percentage, type: "Prediction" });
+        upsert(pName, { prediksi: percentage });
       });
     }
-    setChartData(data);
+
+    // Sort chronologically before setting state
+    const sorted = Array.from(pointMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
+    setChartData(sorted);
   };
 
   const handleRefresh = () => {
