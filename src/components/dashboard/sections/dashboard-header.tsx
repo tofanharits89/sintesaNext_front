@@ -17,8 +17,8 @@ interface DashboardHeaderProps {
   selectedYear: string;
   onYearChange: (value: string) => void;
   lastRefreshText: string;
-  onRefresh?: () => void;
-  isRefreshing?: boolean;
+  onRefresh?: (() => void | Promise<void>) | undefined;
+  isRefreshing?: boolean | undefined;
 }
 
 // Component to prevent hydration mismatch

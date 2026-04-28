@@ -7,12 +7,17 @@ import { useDashboardData, useDashboardFilters } from "@/hooks/dashboard";
 import { formatJakartaDateTime } from "@/utils/formatters";
 import { apiClient } from "@/lib/api/httpClient";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function DashboardUtamaPage() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { selectedKanwil, lastRefreshText, setLastRefreshText, handleKanwilChange, selectedYear, handleYearChange } = useDashboardFilters();
   const dashboardData = useDashboardData(selectedKanwil, selectedYear);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const userRole = String(user?.role || "").toLowerCase();
+  const canRefresh = userRole === "super_admin" || userRole === "co_admin";
 
   const lastRefreshJakarta = (dashboardData.quickStats.data as any)?._meta?.asOfJakarta as string | undefined;
 
@@ -55,7 +60,7 @@ export default function DashboardUtamaPage() {
         selectedYear={selectedYear}
         onYearChange={handleYearChange}
         lastRefreshText={lastRefreshText}
-        onRefresh={handleRefresh}
+        onRefresh={canRefresh ? handleRefresh : undefined}
         isRefreshing={isRefreshing}
       />
 

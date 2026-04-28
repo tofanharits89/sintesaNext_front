@@ -45,7 +45,7 @@ export function DetilKendalaWordCloud({
   isLoading,
 }: DetilKendalaWordCloudProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 320 });
+  const [dimensions, setDimensions] = useState({ width: 800, height: 360 });
   const [hoveredWord, setHoveredWord] = useState<string | null>(null);
 
   useEffect(() => {
@@ -61,7 +61,7 @@ export function DetilKendalaWordCloud({
             setDimensions((prev) => {
               // Only update if changed by more than 5px to avoid infinite sub-pixel loops
               if (Math.abs(prev.width - width) > 5) {
-                return { width: Math.floor(width), height: 320 };
+                return { width: Math.floor(width), height: 360 };
               }
               return prev;
             });
@@ -139,10 +139,10 @@ export function DetilKendalaWordCloud({
         </div>
       </CardHeader>
       <CardContent className="p-6 pt-0 pb-4">
-        <div 
-          ref={containerRef} 
-          className="group"
-          style={{ width: "100%", height: 320, overflow: "hidden", display: "flex", justifyContent: "center" }}
+        <div
+          ref={containerRef}
+          className="group bg-zinc-100 dark:bg-black rounded-lg"
+          style={{ width: "100%", height: 360, overflow: "hidden", display: "flex", justifyContent: "center" }}
         >
           {data.length > 0 && dimensions.width > 0 && (
             <TooltipProvider delayDuration={0}>
@@ -157,28 +157,34 @@ export function DetilKendalaWordCloud({
                   const minVal = Math.min(...data.map(d => d.value));
                   const minS = 14;
                   const maxS = 80;
-                  
+
                   let size;
                   if (maxVal === minVal) {
                     size = (minS + maxS) / 2;
                   } else {
                     size = minS + ((word.value - minVal) / (maxVal - minVal)) * (maxS - minS);
                   }
-                  
+
                   // D3-cloud drops words that exceed bounding box. 
                   // Scale down font size if the text is too long for the container.
                   // A rough estimate: character width is ~0.6x font size.
                   const estimatedWidth = word.text.length * size * 0.6;
                   const maxWidth = dimensions.width * 0.9;
-                  
+
                   if (estimatedWidth > maxWidth) {
                     size = maxWidth / (word.text.length * 0.6);
                   }
-                  
+
+                  // Height check
+                  const maxHeight = dimensions.height * 0.8;
+                  if (size > maxHeight) {
+                    size = maxHeight;
+                  }
+
                   return Math.max(minS, size);
                 }}
                 rotate={() => 0}
-                padding={1}
+                padding={4}
                 spiral="rectangular"
                 renderWord={(word: any) => {
                   const color = wordColor({ text: word.text });
@@ -193,6 +199,7 @@ export function DetilKendalaWordCloud({
                           fontWeight={word.weight}
                           fill={color}
                           textAnchor="middle"
+                          dominantBaseline="middle"
                           transform={`translate(${word.x}, ${word.y}) rotate(${word.rotate})`}
                         >
                           {word.text}

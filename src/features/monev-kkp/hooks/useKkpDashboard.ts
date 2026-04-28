@@ -26,7 +26,7 @@ export function useKkpDashboard(
     ),
     queryFn: () => getKkpDashboardData(year, triwulan, kdkanwil, kdkppn),
     ...createQueryOptions("dashboard", {
-      staleTime: 0, // Force fresh fetch while troubleshooting
+      staleTime: 12 * 60 * 60 * 1000, // 12 hours
       refetchOnMount: "always",
       refetchOnWindowFocus: true,
     }),

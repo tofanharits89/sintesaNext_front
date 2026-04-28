@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { QuickStatCard } from "@/components/mbg/QuickStatCard";
 import { StatsRankingCard } from "@/components/mbg/StatsRankingCard";
 import { RankingBarChart } from "@/components/monev-kkp/dashboard/RankingBarChart";
@@ -16,8 +16,7 @@ import {
   TrendingUp,
   AlertTriangle,
   CircleDashed,
-  Calendar,
-  MapPin,
+  RefreshCw,
 } from "lucide-react";
 import {
   QuickStatCardSkeleton,
@@ -33,18 +32,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useEffect } from "react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api/httpClient";
+import { Button } from "@/components/ui/button";
 
 const iconByLabel: Record<string, React.ComponentType<{ className?: string }>> =
-  {
-    "Total Satker KKP": Building2,
-    "Total Kartu KKP": CreditCard,
-    "Total Nilai UP KKP": Banknote,
-    "Total Nilai Tagihan": Receipt,
-    "Total Transaksi SP2D": TrendingUp,
-    "Satker Belum Transaksi": AlertTriangle,
-  };
+{
+  "Total Satker KKP": Building2,
+  "Total Kartu KKP": CreditCard,
+  "Total Nilai UP KKP": Banknote,
+  "Total Nilai Tagihan": Receipt,
+  "Total Transaksi SP2D": TrendingUp,
+  "Satker Belum Transaksi": AlertTriangle,
+};
 
 /** Get default previous triwulan */
 function getInitialPeriode() {
@@ -74,12 +75,25 @@ const periodes = [
   { value: "4", label: "Triwulan 4 (Jan - Des)" },
 ];
 
+// Component to prevent hydration mismatch
+function NoSSR({ children }: { children: React.ReactNode }) {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  return isClient ? <>{children}</> : null;
+}
+
 export default function DashboardMonevKkpPage() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const initial = getInitialPeriode();
   const [year, setYear] = useState(initial.year);
   const [triwulan, setTriwulan] = useState(initial.triwulan);
   const [filterScope, setFilterScope] = useState<"all" | "local">("all");
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const userRole = String(user?.role || "").toLowerCase();
   const isKppnUser = userRole === "kppn" || userRole === "3";
@@ -89,20 +103,44 @@ export default function DashboardMonevKkpPage() {
     userRole === "2" ||
     userRole.includes("kanwil");
 
+  const canRefresh = userRole === "super_admin" || userRole === "co_admin";
+
   const showScopeFilter = isKppnUser || isKanwilUser;
-  
+
   // Calculate query parameters based on selected scope
   // We pass 'all' to signal the backend to bypass RBAC restrictions for KPPN/Kanwil users
-  const kdkanwilQuery = (filterScope === "all" ? "all" : (isKanwilUser ? user?.kdkanwil : undefined)) as string | undefined;
-  const kdkppnQuery = (filterScope === "all" ? "all" : (isKppnUser ? user?.kdkppn : undefined)) as string | undefined;
+  const kdkanwilQuery = (filterScope === "all" ? "all" : (isKanwilUser ? (user?.kdkanwil ?? undefined) : undefined));
+  const kdkppnQuery = (filterScope === "all" ? "all" : (isKppnUser ? (user?.kdkppn ?? undefined) : undefined));
 
   const { data, isLoading, error } = useKkpDashboard(year, triwulan, kdkanwilQuery, kdkppnQuery);
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      // 1. Clear backend cache
+      await apiClient.post("/cache/invalidate/monev-kkp");
+
+      // 2. Clear frontend cache (force refetch)
+      await queryClient.invalidateQueries({
+        queryKey: ["monev-kkp", "dashboard"],
+      });
+
+      toast.success("Cache berhasil dibersihkan", {
+        description: "Data dashboard sedang diperbarui dari server.",
+      });
+    } catch (err) {
+      console.error("Refresh error:", err);
+      toast.error("Gagal melakukan refresh cache");
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [queryClient]);
 
   useEffect(() => {
     if (error) {
       const msg = error instanceof Error ? error.message : "Gagal memuat data dashboard";
       const isConnReset = msg.toLowerCase().includes("econnreset") || msg.toLowerCase().includes("network error");
-      
+
       if (isConnReset) {
         toast.error("Koneksi ke server terputus", {
           description: "Data terlalu besar atau server sibuk. Kami sedang mencoba memulihkan koneksi.",
@@ -121,8 +159,8 @@ export default function DashboardMonevKkpPage() {
     return `Kanwil DJPb ${name}`;
   };
 
-  const unitLabel = isKanwilUser 
-    ? (user?.nmkanwil ? formatKanwilName(user.nmkanwil) : `Kanwil DJPb ${user?.kdkanwil || ""}`) 
+  const unitLabel = isKanwilUser
+    ? (user?.nmkanwil ? formatKanwilName(user.nmkanwil) : `Kanwil DJPb ${user?.kdkanwil || ""}`)
     : (user?.nmkppn || `KPPN ${user?.kdkppn || ""}`);
 
   const quickStats = useMemo(() => data?.quickStats ?? [], [data]);
@@ -147,6 +185,13 @@ export default function DashboardMonevKkpPage() {
   const kendalaStats = useMemo(() => data?.kendalaStats ?? [], [data]);
   const detilKendalaWords = useMemo(() => data?.detilKendalaWords ?? [], [data]);
 
+  const lastRefreshText = data?._meta?.asOfJakarta
+    ? new Date(data._meta.asOfJakarta).toLocaleString("id-ID", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    })
+    : "-";
+
   return (
     <div className="space-y-6">
       {/* Header + Filters */}
@@ -158,19 +203,21 @@ export default function DashboardMonevKkpPage() {
           <p className="text-sm text-muted-foreground">
             Ringkasan dan analitik Monitoring Kartu Kredit Pemerintah.
           </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Terakhir diperbarui: <NoSSR>{lastRefreshText}</NoSSR>
+          </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {showScopeFilter && (
             <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Wilayah:</span>
+              <span className="text-sm text-muted-foreground">Kanwil:</span>
               <Select value={filterScope} onValueChange={(val: "all" | "local") => setFilterScope(val)}>
-                <SelectTrigger className="w-[180px] h-9">
-                  <SelectValue placeholder="Pilih Wilayah" />
+                <SelectTrigger className="w-[240px] h-9">
+                  <SelectValue placeholder="Pilih Kanwil" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Semua (Nasional)</SelectItem>
+                  <SelectItem value="all">Semua Kanwil (Nasional)</SelectItem>
                   <SelectItem value="local">
                     {unitLabel}
                   </SelectItem>
@@ -180,8 +227,7 @@ export default function DashboardMonevKkpPage() {
           )}
 
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Tahun:</span>
+            <span className="text-sm text-muted-foreground">Tahun:</span>
             <Select value={year} onValueChange={setYear}>
               <SelectTrigger className="w-[100px] h-9">
                 <SelectValue placeholder="Pilih Tahun" />
@@ -195,7 +241,7 @@ export default function DashboardMonevKkpPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Periode:</span>
+            <span className="text-sm text-muted-foreground">Periode:</span>
             <Select value={triwulan} onValueChange={setTriwulan}>
               <SelectTrigger className="w-[200px] h-9">
                 <SelectValue placeholder="Pilih Periode" />
@@ -209,6 +255,21 @@ export default function DashboardMonevKkpPage() {
               </SelectContent>
             </Select>
           </div>
+
+          {canRefresh && (
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9"
+              onClick={handleRefresh}
+              disabled={isRefreshing || isLoading}
+              title="Refresh data (invalidate cache)"
+            >
+              <RefreshCw
+                className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+              />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -216,32 +277,31 @@ export default function DashboardMonevKkpPage() {
       <div className="grid gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
         {isLoading
           ? Array.from({ length: 6 }).map((_, i) => (
-              <QuickStatCardSkeleton key={`skeleton-${i}`} />
-            ))
+            <QuickStatCardSkeleton key={`skeleton-${i}`} />
+          ))
           : quickStats.map((s, i) => {
-              const Icon =
-                iconByLabel[s.label as keyof typeof iconByLabel] ??
-                CircleDashed;
-              return (
-                <QuickStatCard
-                  key={`${year}-${triwulan}-${i}`}
-                  label={s.label}
-                  icon={
-                    <Icon
-                      className={`h-4 w-4 ${
-                        s.variant === "down"
-                          ? "text-red-500"
-                          : s.variant === "up"
-                            ? "text-green-500"
-                            : "text-blue-500"
+            const Icon =
+              iconByLabel[s.label as keyof typeof iconByLabel] ??
+              CircleDashed;
+            return (
+              <QuickStatCard
+                key={`${year}-${triwulan}-${i}`}
+                label={s.label}
+                icon={
+                  <Icon
+                    className={`h-4 w-4 ${s.variant === "down"
+                      ? "text-red-500"
+                      : s.variant === "up"
+                        ? "text-green-500"
+                        : "text-blue-500"
                       }`}
-                    />
-                  }
-                  value={s.value}
-                  trendVariant={s.variant ?? "neutral"}
-                />
-              );
-            })}
+                  />
+                }
+                value={s.value}
+                trendVariant={s.variant ?? "neutral"}
+              />
+            );
+          })}
       </div>
 
       {/* Row 2: Transaksi Charts (KL & Satker) + Rankings */}
@@ -317,7 +377,7 @@ export default function DashboardMonevKkpPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Row 4: Kategori Kendala Word Cloud */}
           <KendalaDistributionChart data={kendalaStats} isLoading={isLoading} />
-  
+
           {/* Row 5: Detil Kendala Word Cloud */}
           <DetilKendalaWordCloud data={detilKendalaWords} isLoading={isLoading} />
         </div>

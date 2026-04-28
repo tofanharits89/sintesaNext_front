@@ -62,6 +62,9 @@ export type KkpDashboardData = {
   kendalaStats: KendalaItem[];
   detilKendalaWords: WordCloudItem[];
   nmlokasi?: string | null;
+  _meta?: {
+    asOfJakarta?: string;
+  };
 };
 
 export type SankeyFlowItem = {
@@ -461,6 +464,9 @@ function aggregateDashboardData(rows: RawKkpRow[]): KkpDashboardData {
     kendalaStats,
     detilKendalaWords,
     nmlokasi: rows.length > 0 ? (rows[0]?.nmlokasi || null) : null,
+    _meta: {
+      asOfJakarta: new Date().toISOString(),
+    },
   };
 }
 
