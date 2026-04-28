@@ -18,6 +18,8 @@ export type RankingTab = {
   key: string;
   label: string;
   items: RankedItem[];
+  valuePrefix?: string;
+  valueSuffix?: string;
 };
 
 const PAGE_SIZE = 8;
@@ -25,9 +27,13 @@ const PAGE_SIZE = 8;
 function RankingList({
   items,
   badgeColor = "blue",
+  valuePrefix = "",
+  valueSuffix = "",
 }: {
   items: RankedItem[];
   badgeColor?: "blue" | "orange" | "purple";
+  valuePrefix?: string;
+  valueSuffix?: string;
 }) {
   const [page, setPage] = useState(1);
 
@@ -76,7 +82,9 @@ function RankingList({
               </span>
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-sm font-medium font-mono tabular-nums">
+                  {valuePrefix}
                   {it.value.toLocaleString("id-ID")}
+                  {valueSuffix}
                 </span>
                 <Badge variant="outline" className={badgeClass}>
                   {it.percentage.toFixed(2)}%
@@ -155,6 +163,8 @@ export function StatsRankingCard({
                 <RankingList
                   items={tab.items}
                   badgeColor={TAB_BADGE_COLOR[tab.key] ?? "blue"}
+                  valuePrefix={tab.valuePrefix}
+                  valueSuffix={tab.valueSuffix}
                 />
               </TabsContent>
             ))}

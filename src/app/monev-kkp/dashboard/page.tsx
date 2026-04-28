@@ -222,19 +222,23 @@ export default function DashboardMonevKkpPage() {
               title="Statistik KPPN"
               tabs={[
                 {
-                  key: "transaksi",
-                  label: "Transaksi",
-                  items: (kppnRankings?.transaksi ?? []).map((item) => ({
-                    ...item,
-                    value: Math.round(item.value / 1e6), // Show in millions for readability
-                  })),
-                },
-                {
                   key: "tagihan",
                   label: "Tagihan",
+                  valuePrefix: "Rp ",
+                  valueSuffix: " M",
                   items: (kppnRankings?.tagihan ?? []).map((item) => ({
                     ...item,
                     value: Math.round(item.value / 1e6),
+                  })),
+                },
+                {
+                  key: "transaksi",
+                  label: "Transaksi",
+                  valuePrefix: "Rp ",
+                  valueSuffix: " M",
+                  items: (kppnRankings?.transaksi ?? []).map((item) => ({
+                    ...item,
+                    value: Math.round(item.value / 1e6), // Show in millions for readability
                   })),
                 },
                 {
