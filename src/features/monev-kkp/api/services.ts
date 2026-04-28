@@ -64,6 +64,14 @@ export type KkpDashboardData = {
   nmlokasi?: string | null;
 };
 
+export type SankeyFlowItem = {
+  jns_kkp_prinsipal: string;
+  kdakun: string;
+  nmakun: string;
+  jml_transaksi: number;
+  total_nilai: number;
+};
+
 // Raw item from the backend
 interface RawKkpRow {
   kddept: string;
@@ -446,4 +454,30 @@ function aggregateDashboardData(rows: RawKkpRow[]): KkpDashboardData {
     detilKendalaWords,
     nmlokasi: rows.length > 0 ? (rows[0]?.nmlokasi || null) : null,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Sankey Data (jns_kkp_prinsipal → kode_akun flow)
+// ---------------------------------------------------------------------------
+
+export async function getKkpSankeyData(
+  year: string = "2026",
+  triwulan: string = "1",
+  kdkanwil?: string,
+  kdkppn?: string
+): Promise<SankeyFlowItem[]> {
+  let url = `/monev-kkp/sankey-data?tahun=${year}&triwulan=${triwulan}`;
+  if (kdkanwil) url += `&kdkanwil=${kdkanwil}`;
+  if (kdkppn) url += `&kdkppn=${kdkppn}`;
+
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: SankeyFlowItem[];
+  }>(url, { timeout: 60000 });
+
+  if (!response?.success || !response.data) {
+    throw new Error("Failed to fetch KKP sankey data");
+  }
+
+  return response.data;
 }

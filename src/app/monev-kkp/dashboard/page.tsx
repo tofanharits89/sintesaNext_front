@@ -5,6 +5,7 @@ import { QuickStatCard } from "@/components/mbg/QuickStatCard";
 import { StatsRankingCard } from "@/components/mbg/StatsRankingCard";
 import { RankingBarChart } from "@/components/monev-kkp/dashboard/RankingBarChart";
 import { BankDistributionChart } from "@/components/monev-kkp/dashboard/BankDistributionChart";
+import { KkpSankeyChart } from "@/components/monev-kkp/dashboard/KkpSankeyChart";
 import { KendalaDistributionChart } from "@/components/monev-kkp/dashboard/KendalaDistributionChart";
 import { DetilKendalaWordCloud } from "@/components/monev-kkp/dashboard/DetilKendalaWordCloud";
 import {
@@ -298,8 +299,20 @@ export default function DashboardMonevKkpPage() {
       </div>
 
       <div className="grid gap-4">
-        {/* Row 3: Bank Distribution */}
-        <BankDistributionChart data={bankDistribution} isLoading={isLoading} />
+        {/* Row 3: Bank Distribution + Sankey */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-1">
+            <BankDistributionChart data={bankDistribution} isLoading={isLoading} />
+          </div>
+          <div className="lg:col-span-2">
+            <KkpSankeyChart
+              year={year}
+              triwulan={triwulan}
+              kdkanwil={kdkanwilQuery}
+              kdkppn={kdkppnQuery}
+            />
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Row 4: Kategori Kendala Word Cloud */}
