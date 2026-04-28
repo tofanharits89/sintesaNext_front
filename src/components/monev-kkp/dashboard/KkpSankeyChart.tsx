@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Card,
   CardContent,
@@ -46,11 +46,46 @@ function getJenisBelanjaKey(kdakun: string): string {
 // Max number of detailed kode akun nodes (right column)
 const MAX_AKUN_NODES = 10;
 
+// Matte/dusty muted colors for nodes and links (better contrast on white bg)
+const MATTE_COLORS = [
+  "#CD5C5C", // dusty rose
+  "#E07A5F", // terracotta
+  "#D4A373", // muted ochre
+  "#81B29A", // sage green
+  "#5A7D9A", // muted blue
+  "#9D8189", // dusty mauve
+  "#4A6D7C", // muted teal
+  "#B5838D", // rosewood
+  "#6C5B7B", // dusty purple
+  "#C38D9E", // dusty pink
+  "#41B3A3", // muted mint
+  "#E27D60", // muted coral
+  "#59A68D", // matte sea green
+  "#C28258", // matte bronze
+  "#747C92", // slate blue
+];
+
 function formatRupiahShort(value: number): string {
   if (Math.abs(value) >= 1e12) return `Rp ${(value / 1e12).toFixed(2)} T`;
   if (Math.abs(value) >= 1e9) return `Rp ${(value / 1e9).toFixed(1)} M`;
   if (Math.abs(value) >= 1e6) return `Rp ${(value / 1e6).toFixed(0)} jt`;
   return `Rp ${value.toLocaleString("id-ID")}`;
+}
+
+// ---------------------------------------------------------------------------
+// Responsive breakpoint hook
+// ---------------------------------------------------------------------------
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < breakpoint);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, [breakpoint]);
+
+  return isMobile;
 }
 
 interface KkpSankeyChartProps {
@@ -67,6 +102,33 @@ export function KkpSankeyChart({
   kdkppn,
 }: KkpSankeyChartProps) {
   const { data: rawData, isLoading } = useKkpSankey(year, triwulan, kdkanwil, kdkppn);
+  const isMobile = useIsMobile();
+
+  // -------------------------------------------------------------------------
+  // Responsive chart config
+  // -------------------------------------------------------------------------
+  const chartConfig = useMemo(() => {
+    if (isMobile) {
+      return {
+        aspectRatio: "3 / 4",
+        nodeWidth: 8,
+        nodePadding: 36,
+        margin: { top: 8, right: 140, bottom: 8, left: 100 },
+        minHeight: "500px",
+        showValueLabels: false,
+        wrapChars: 16,
+      };
+    }
+    return {
+      aspectRatio: "16 / 9",
+      nodeWidth: 12,
+      nodePadding: 46,
+      margin: { top: 16, right: 260, bottom: 20, left: 150 },
+      minHeight: "280px",
+      showValueLabels: true,
+      wrapChars: 38,
+    };
+  }, [isMobile]);
 
   const sankeyData = useMemo((): SankeyData | null => {
     if (!rawData || rawData.length === 0) return null;
@@ -161,7 +223,8 @@ export function KkpSankeyChart({
 
     // Outcome nodes (top kode akun)
     for (const [kdakun, data] of topAkun) {
-      nodes.push({ name: data.nmakun || kdakun, category: "outcome", kdakun });
+      const name = data.nmakun ? `${kdakun} - ${data.nmakun}` : kdakun;
+      nodes.push({ name, category: "outcome", kdakun });
     }
 
     // "Lainnya" node if needed
@@ -268,26 +331,31 @@ export function KkpSankeyChart({
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col p-6 pt-0 pb-4">
-        <div className="flex-1 min-h-[280px] w-full">
+        <div className="flex-1 w-full" style={{ minHeight: chartConfig.minHeight }}>
           <SankeyChart
             data={sankeyData}
-            aspectRatio="16 / 9"
-            nodeWidth={12}
-            nodePadding={46}
-            margin={{ top: 16, right: 260, bottom: 16, left: 150 }}
+            aspectRatio={chartConfig.aspectRatio}
+            nodeWidth={chartConfig.nodeWidth}
+            nodePadding={chartConfig.nodePadding}
+            margin={chartConfig.margin}
           >
             <SankeyLink
-              stroke="var(--foreground)"
-              strokeOpacity={0.15}
-              fadedOpacity={0.04}
               useGradient={false}
+              strokeOpacity={0.4}
+              fadedOpacity={0.04}
+              getLinkColor={(link) => {
+                const sourceNode = link.source as any;
+                const idx = typeof sourceNode === "number" ? sourceNode : Number(sourceNode.index ?? 0);
+                return MATTE_COLORS[idx % MATTE_COLORS.length] ?? "#000";
+              }}
             />
             <SankeyNode
-              fill="var(--foreground)"
               lineCap={3}
               showLabels={true}
-              showValueLabels={true}
+              showValueLabels={chartConfig.showValueLabels}
               fadedOpacity={0.3}
+              wrapChars={chartConfig.wrapChars}
+              getNodeColor={(_, index) => MATTE_COLORS[index % MATTE_COLORS.length] ?? "#000"}
             />
             <SankeyTooltip formatValue={formatRupiahShort} />
           </SankeyChart>

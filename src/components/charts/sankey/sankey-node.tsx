@@ -58,6 +58,8 @@ export interface SankeyNodeProps {
     node: SankeyNodeType<SankeyNodeDatum, SankeyLinkDatum>,
     index: number
   ) => string;
+  /** Max characters per line for label wrapping. Default: 28 */
+  wrapChars?: number;
 }
 
 interface AnimatedNodeProps {
@@ -79,6 +81,7 @@ interface AnimatedNodeProps {
   isLeftSide: boolean;
   showLabels: boolean;
   showValueLabels: boolean;
+  wrapChars: number;
 }
 
 function AnimatedNode({
@@ -100,6 +103,7 @@ function AnimatedNode({
   isLeftSide,
   showLabels,
   showValueLabels,
+  wrapChars,
 }: AnimatedNodeProps) {
   const [isAnimated, setIsAnimated] = useState(false);
   const [showNameLabel, setShowNameLabel] = useState(false);
@@ -228,7 +232,7 @@ function AnimatedNode({
       />
       {showLabels && (
         <>
-          {wrapText(name, 28).map((line, i) => (
+          {wrapText(name, wrapChars).map((line, i) => (
             <motion.text
               key={`name-${i}`}
               animate={{
@@ -256,9 +260,9 @@ function AnimatedNode({
               initial={{ opacity: 0, x: isLeftSide ? x + 8 : x + width - 8 }}
               textAnchor={isLeftSide ? "end" : "start"}
               transition={currentValueTransition}
-              y={y + height / 2 + wrapText(name, 28).length * 16}
+              y={y + height / 2 + wrapText(name, wrapChars).length * 16}
             >
-              {value.toLocaleString("id-ID")}
+              Rp {value.toLocaleString("id-ID")}
             </motion.text>
           )}
         </>
@@ -273,6 +277,7 @@ export function SankeyNode({
   fadedOpacity = 0.4,
   showLabels = true,
   showValueLabels = true,
+  wrapChars = 28,
   getNodeColor: getNodeColorProp,
 }: SankeyNodeProps) {
   const {
@@ -406,6 +411,7 @@ export function SankeyNode({
             showLabels={showLabels}
             showValueLabels={showValueLabels}
             totalNodes={nodes.length}
+            wrapChars={wrapChars}
             value={displayValue}
             width={nodeWidth}
             x={nodeX}
