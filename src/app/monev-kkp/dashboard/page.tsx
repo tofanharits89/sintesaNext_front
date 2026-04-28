@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { QuickStatCard } from "@/components/mbg/QuickStatCard";
 import { StatsRankingCard } from "@/components/mbg/StatsRankingCard";
-import { TransaksiKppnChart } from "@/components/monev-kkp/dashboard/TransaksiKppnChart";
+import { RankingBarChart } from "@/components/monev-kkp/dashboard/RankingBarChart";
 import { BankDistributionChart } from "@/components/monev-kkp/dashboard/BankDistributionChart";
 import { KendalaDistributionChart } from "@/components/monev-kkp/dashboard/KendalaDistributionChart";
 import { DetilKendalaWordCloud } from "@/components/monev-kkp/dashboard/DetilKendalaWordCloud";
@@ -32,6 +32,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
 const iconByLabel: Record<string, React.ComponentType<{ className?: string }>> =
   {
@@ -93,7 +95,24 @@ export default function DashboardMonevKkpPage() {
   const kdkanwilQuery = (filterScope === "all" ? "all" : (isKanwilUser ? user?.kdkanwil : undefined)) as string | undefined;
   const kdkppnQuery = (filterScope === "all" ? "all" : (isKppnUser ? user?.kdkppn : undefined)) as string | undefined;
 
-  const { data, isLoading } = useKkpDashboard(year, triwulan, kdkanwilQuery, kdkppnQuery);
+  const { data, isLoading, error } = useKkpDashboard(year, triwulan, kdkanwilQuery, kdkppnQuery);
+
+  useEffect(() => {
+    if (error) {
+      const msg = error instanceof Error ? error.message : "Gagal memuat data dashboard";
+      const isConnReset = msg.toLowerCase().includes("econnreset") || msg.toLowerCase().includes("network error");
+      
+      if (isConnReset) {
+        toast.error("Koneksi ke server terputus", {
+          description: "Data terlalu besar atau server sibuk. Kami sedang mencoba memulihkan koneksi.",
+        });
+      } else {
+        toast.error("Gagal memuat data", {
+          description: msg,
+        });
+      }
+    }
+  }, [error]);
 
   const formatKanwilName = (name: string) => {
     if (!name) return "";
@@ -107,7 +126,22 @@ export default function DashboardMonevKkpPage() {
 
   const quickStats = useMemo(() => data?.quickStats ?? [], [data]);
   const kppnRankings = useMemo(() => data?.kppnRankings, [data]);
-  const transaksiPerKppn = useMemo(() => data?.transaksiPerKppn ?? [], [data]);
+  const transaksiPerKL = useMemo(
+    () =>
+      (data?.transaksiPerKL ?? []).map((item) => ({
+        name: `${item.kddept} - ${item.nmdept}`,
+        value: item.totalTransaksi,
+      })),
+    [data],
+  );
+  const transaksiPerSatker = useMemo(
+    () =>
+      (data?.transaksiPerSatker ?? []).map((item) => ({
+        name: `${item.kdsatker} - ${item.nmsatker}`,
+        value: item.totalTransaksi,
+      })),
+    [data],
+  );
   const bankDistribution = useMemo(() => data?.bankDistribution ?? [], [data]);
   const kendalaStats = useMemo(() => data?.kendalaStats ?? [], [data]);
   const detilKendalaWords = useMemo(() => data?.detilKendalaWords ?? [], [data]);
@@ -209,10 +243,21 @@ export default function DashboardMonevKkpPage() {
             })}
       </div>
 
-      {/* Row 2: Transaksi Chart (75%) + Rankings (25%) */}
+      {/* Row 2: Transaksi Charts (KL & Satker) + Rankings */}
       <div className="grid gap-4 grid-cols-1 xl:grid-cols-4">
-        <div className="xl:col-span-3">
-          <TransaksiKppnChart data={transaksiPerKppn} isLoading={isLoading} />
+        <div className="xl:col-span-3 grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <RankingBarChart
+            title="Top 10 Kementerian/Lembaga"
+            description="Nilai transaksi kumulatif per K/L"
+            data={transaksiPerKL}
+            isLoading={isLoading}
+          />
+          <RankingBarChart
+            title="Top 10 Satker"
+            description="Nilai transaksi kumulatif per Satker"
+            data={transaksiPerSatker}
+            isLoading={isLoading}
+          />
         </div>
         <div className="xl:col-span-1">
           {isLoading ? (

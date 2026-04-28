@@ -8,6 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  LabelList,
 } from "recharts";
 import {
   Card,
@@ -17,7 +18,6 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { ChartCardSkeleton } from "@/components/ui/dashboard-skeletons";
-import type { TransaksiKppnItem } from "@/features/monev-kkp/api/services";
 
 function fmtRupiah(val: number | null | undefined): string {
   if (val === null || val === undefined || !isFinite(Number(val))) return "–";
@@ -28,13 +28,14 @@ function fmtRupiah(val: number | null | undefined): string {
   return n.toLocaleString("id-ID");
 }
 
-/** Shorten KPPN name for chart */
-function shortKppn(name: string): string {
+function shortenName(name: string): string {
   return name
-    .replace(/^KPPN\s+/i, "")
-    .replace(/^Kantor\s+/i, "")
+    .replace(/KPPN\s+/i, "")
+    .replace(/Kantor\s+/i, "")
+    .replace(/KEMENTERIAN\s+/i, "")
+    .replace(/BADAN\s+/i, "")
     .trim()
-    .slice(0, 20);
+    .slice(0, 40);
 }
 
 const COLORS = [
@@ -42,22 +43,28 @@ const COLORS = [
   "#60a5fa", "#93c5fd", "#6366f1", "#4f46e5", "#4338ca",
 ];
 
-interface TransaksiKppnChartProps {
-  data: TransaksiKppnItem[];
+interface RankingBarChartProps {
+  title: string;
+  description: string;
+  data: { name: string; value: number }[];
   isLoading?: boolean;
+  valueLabel?: string;
 }
 
-export function TransaksiKppnChart({
+export function RankingBarChart({
+  title,
+  description,
   data,
   isLoading,
-}: TransaksiKppnChartProps) {
+  valueLabel = "Transaksi",
+}: RankingBarChartProps) {
   if (isLoading) return <ChartCardSkeleton />;
   if (!data || data.length === 0) {
     return (
       <Card className="flex h-full flex-col">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Transaksi per KPPN</CardTitle>
-          <CardDescription>Belum ada data transaksi</CardDescription>
+          <CardTitle className="text-base">{title}</CardTitle>
+          <CardDescription>Belum ada data</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-1 items-center justify-center">
           <p className="text-sm text-muted-foreground">
@@ -69,20 +76,16 @@ export function TransaksiKppnChart({
   }
 
   const chartData = data.map((item) => ({
-    name: shortKppn(item.nmkppn),
-    fullName: item.nmkppn,
-    value: item.totalTransaksi,
+    name: shortenName(item.name),
+    fullName: item.name,
+    value: item.value,
   }));
 
   return (
     <Card className="flex h-full flex-col">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base">
-          Top {data.length} KPPN — Transaksi SP2D
-        </CardTitle>
-        <CardDescription>
-          Nilai transaksi kumulatif per KPPN
-        </CardDescription>
+        <CardTitle className="text-base">{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col p-6 pt-0 pb-4">
         <div className="flex-1 min-h-[320px] w-full">
@@ -104,11 +107,11 @@ export function TransaksiKppnChart({
               <YAxis
                 dataKey="name"
                 type="category"
-                fontSize={11}
+                fontSize={10}
                 tickLine={false}
                 axisLine={false}
                 stroke="#888"
-                width={110}
+                width={180}
               />
               <Tooltip
                 content={({ active, payload }) => {
@@ -119,7 +122,7 @@ export function TransaksiKppnChart({
                   );
                   return (
                     <div className="rounded-lg border bg-background p-2.5 shadow-sm text-sm min-w-[200px]">
-                      <p className="text-xs font-semibold mb-1 text-foreground">
+                      <p className="text-xs font-semibold mb-1 text-foreground whitespace-normal">
                         {d?.fullName ?? entry.payload?.name}
                       </p>
                       <div className="flex items-center gap-2">
@@ -127,7 +130,7 @@ export function TransaksiKppnChart({
                           className="w-2 h-2 rounded-full shrink-0"
                           style={{ backgroundColor: "#3b82f6" }}
                         />
-                        <span className="font-medium">Transaksi:</span>
+                        <span className="font-medium">{valueLabel}:</span>
                         <span>
                           {new Intl.NumberFormat("id-ID", {
                             style: "currency",
@@ -147,6 +150,14 @@ export function TransaksiKppnChart({
                     fill={COLORS[idx % COLORS.length] ?? "#888"}
                   />
                 ))}
+                <LabelList
+                  dataKey="value"
+                  position="insideRight"
+                  formatter={(v: number) => fmtRupiah(v)}
+                  fontSize={9}
+                  fill="#fff"
+                  offset={10}
+                />
               </Bar>
             </BarChart>
           </ResponsiveContainer>

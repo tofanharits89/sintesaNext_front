@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/api/httpClient";
+import kddeptData from "@/data/kddept.json";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -29,9 +30,15 @@ export type BankDistItem = {
   percentage: number;
 };
 
-export type TransaksiKppnItem = {
-  kdkppn: string;
-  nmkppn: string;
+export type TransaksiKLItem = {
+  kddept: string;
+  nmdept: string;
+  totalTransaksi: number;
+};
+
+export type TransaksiSatkerItem = {
+  kdsatker: string;
+  nmsatker: string;
   totalTransaksi: number;
 };
 
@@ -50,7 +57,8 @@ export type KkpDashboardData = {
   quickStats: QuickStatView[];
   kppnRankings: KppnRankingsData;
   bankDistribution: BankDistItem[];
-  transaksiPerKppn: TransaksiKppnItem[];
+  transaksiPerKL: TransaksiKLItem[];
+  transaksiPerSatker: TransaksiSatkerItem[];
   kendalaStats: KendalaItem[];
   detilKendalaWords: WordCloudItem[];
   nmlokasi?: string | null;
@@ -126,17 +134,50 @@ export async function getKkpDashboardData(
   if (kdkanwil) url += `&kdkanwil=${kdkanwil}`;
   if (kdkppn) url += `&kdkppn=${kdkppn}`;
 
-  const response = await apiClient.get<{
-    success: boolean;
-    data?: RawKkpRow[];
-  }>(url);
+  const MAX_RETRIES = 2;
+  let lastError: any = null;
 
-  if (!response?.success || !response.data) {
-    throw new Error("Failed to fetch KKP dashboard data");
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await apiClient.get<{
+        success: boolean;
+        data?: RawKkpRow[];
+      }>(url, {
+        // Increase timeout specifically for this potentially large request
+        timeout: 300000, // 5 minutes
+      });
+
+      if (!response?.success || !response.data) {
+        throw new Error("Failed to fetch KKP dashboard data");
+      }
+
+      const rows = response.data;
+      return aggregateDashboardData(rows);
+    } catch (error: any) {
+      lastError = error;
+      const errorMessage = (error?.message || "").toLowerCase();
+      const isNetworkError = 
+        errorMessage.includes("econnreset") || 
+        errorMessage.includes("network error") ||
+        errorMessage.includes("timeout");
+
+      if (!isNetworkError || attempt === MAX_RETRIES) {
+        break;
+      }
+      
+      // Wait before retrying (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
+      console.warn(`Retrying KKP dashboard fetch (attempt ${attempt + 1}/${MAX_RETRIES})...`);
+    }
   }
 
-  const rows = response.data;
+  throw lastError || new Error("Failed to fetch KKP dashboard data after retries");
+}
 
+/**
+ * Extracted aggregation logic for clarity and maintainability
+ */
+function aggregateDashboardData(rows: RawKkpRow[]): KkpDashboardData {
   // ── Quick Stats ──────────────────────────────────────────
   const totalSatker = rows.length;
   const totalKartu = rows.reduce((s, r) => s + Number(r.jumlah_kartu || 0), 0);
@@ -250,12 +291,40 @@ export async function getKkpDashboardData(
       percentage: bankTotal > 0 ? (count / bankTotal) * 100 : 0,
     }));
 
-  // ── Transaksi per KPPN (top 10 bar chart) ────────────────
-  const transaksiPerKppn: TransaksiKppnItem[] = [...kppnMap.entries()]
-    .map(([kdkppn, v]) => ({
-      kdkppn,
-      nmkppn: v.nmkppn,
-      totalTransaksi: v.transaksi,
+  // ── Transaksi per KL (top 10 bar chart) ──────────────────
+  const klMap = new Map<string, number>();
+  const kdToNmDept = new Map(kddeptData.map(d => [d.kddept, d.nmdept]));
+  
+  for (const r of rows) {
+    const key = (r.kddept || "").trim();
+    if (!key) continue;
+    klMap.set(key, (klMap.get(key) || 0) + Number(r.nilai_trans_sp2d || 0));
+  }
+  
+  const transaksiPerKL: TransaksiKLItem[] = [...klMap.entries()]
+    .map(([kddept, totalTransaksi]) => ({
+      kddept,
+      nmdept: kdToNmDept.get(kddept) || `K/L ${kddept}`,
+      totalTransaksi,
+    }))
+    .sort((a, b) => b.totalTransaksi - a.totalTransaksi)
+    .slice(0, 10);
+
+  // ── Transaksi per Satker (top 10 bar chart) ──────────────
+  const satkerMap = new Map<string, { nmsatker: string; total: number }>();
+  for (const r of rows) {
+    const key = (r.kdsatker || "").trim();
+    if (!key) continue;
+    const existing = satkerMap.get(key) || { nmsatker: r.nmsatker || key, total: 0 };
+    existing.total += Number(r.nilai_trans_sp2d || 0);
+    satkerMap.set(key, existing);
+  }
+
+  const transaksiPerSatker: TransaksiSatkerItem[] = [...satkerMap.entries()]
+    .map(([kdsatker, v]) => ({
+      kdsatker,
+      nmsatker: v.nmsatker,
+      totalTransaksi: v.total,
     }))
     .sort((a, b) => b.totalTransaksi - a.totalTransaksi)
     .slice(0, 10);
@@ -371,7 +440,8 @@ export async function getKkpDashboardData(
     quickStats,
     kppnRankings,
     bankDistribution,
-    transaksiPerKppn,
+    transaksiPerKL,
+    transaksiPerSatker,
     kendalaStats,
     detilKendalaWords,
     nmlokasi: rows.length > 0 ? (rows[0]?.nmlokasi || null) : null,
