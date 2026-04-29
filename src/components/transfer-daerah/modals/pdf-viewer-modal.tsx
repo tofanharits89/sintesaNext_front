@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +31,10 @@ export function PdfViewerModal({
   const [scale, setScale] = useState<number>(1.1);
   const [pdfMod, setPdfMod] = useState<ReactPdfModule | null>(null);
   const [loadError, setLoadError] = useState<string>("");
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+
+  // Stable options object — prevents <Document> from re-fetching on every render
+  const pdfOptions = useMemo(() => ({}), []);
 
   useEffect(() => {
     if (open) {
@@ -38,6 +42,45 @@ export function PdfViewerModal({
       setNumPages(0);
       setLoadError("");
     }
+  }, [open, url]);
+
+  // Pre-fetch the PDF as a local blob so pdfjs never makes a direct network
+  // request. This avoids cross-origin / credential issues with pdfjs's
+  // internal XHR transport and gives us a clean error message on failure.
+  useEffect(() => {
+    if (!open || !url) {
+      setBlobUrl(null);
+      return;
+    }
+    let cancelled = false;
+    let createdBlobUrl: string | null = null;
+    setBlobUrl(null);
+
+    fetch(url, { credentials: "include" })
+      .then((res) => {
+        if (!res.ok)
+          throw new Error(
+            `Gagal memuat PDF (HTTP ${res.status} ${res.statusText})`,
+          );
+        return res.blob();
+      })
+      .then((blob) => {
+        if (cancelled) return;
+        createdBlobUrl = URL.createObjectURL(blob);
+        setBlobUrl(createdBlobUrl);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled)
+          setLoadError(
+            (err as any)?.message ||
+              "PDF tidak bisa diakses. Periksa file atau sesi login.",
+          );
+      });
+
+    return () => {
+      cancelled = true;
+      if (createdBlobUrl) URL.revokeObjectURL(createdBlobUrl);
+    };
   }, [open, url]);
 
   const onDocumentLoadSuccess = ({
@@ -116,18 +159,20 @@ export function PdfViewerModal({
             <div className="p-4 text-sm text-muted-foreground">
               Tidak ada URL PDF
             </div>
-          ) : !pdfMod ? (
-            <div className="p-4">Memuat penampil PDF...</div>
+          ) : loadError ? (
+            <div className="p-4 text-sm text-red-600">{loadError}</div>
+          ) : !pdfMod || !blobUrl ? (
+            <div className="p-4">Memuat PDF...</div>
           ) : (
             <pdfMod.Document
-              file={url}
-              options={{ withCredentials: true }}
+              file={blobUrl}
+              options={pdfOptions}
               onLoadSuccess={onDocumentLoadSuccess}
               onLoadError={onDocumentLoadError}
               loading={<div className="p-4">Memuat PDF...</div>}
               error={
                 <div className="p-4 text-sm text-red-600">
-                  {loadError || "Gagal memuat PDF"}
+                  {"Gagal merender PDF"}
                 </div>
               }
             >
