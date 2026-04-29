@@ -31,10 +31,16 @@ export function PdfViewerModal({
   const [scale, setScale] = useState<number>(1.1);
   const [pdfMod, setPdfMod] = useState<ReactPdfModule | null>(null);
   const [loadError, setLoadError] = useState<string>("");
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
+  const [pdfFile, setPdfFile] = useState<{ data: Uint8Array } | null>(null);
 
   // Stable options object — prevents <Document> from re-fetching on every render
   const pdfOptions = useMemo(() => ({}), []);
+
+  // Create stable file object from ArrayBuffer
+  const stablePdfFile = useMemo(() => {
+    return pdfFile;
+  }, [pdfFile]);
 
   useEffect(() => {
     if (open) {
@@ -49,28 +55,42 @@ export function PdfViewerModal({
   // internal XHR transport and gives us a clean error message on failure.
   useEffect(() => {
     if (!open || !url) {
-      setBlobUrl(null);
+      setPdfData(null);
+      setPdfFile(null);
       return;
     }
     let cancelled = false;
-    let createdBlobUrl: string | null = null;
-    setBlobUrl(null);
+    setPdfData(null);
+    setPdfFile(null);
 
     const proxyUrl = `/api/pdf-proxy?url=${encodeURIComponent(url)}`;
+    console.log("Fetching PDF from:", proxyUrl);
     fetch(proxyUrl, { credentials: "include" })
       .then((res) => {
-        if (!res.ok)
-          throw new Error(
-            `Gagal memuat PDF (HTTP ${res.status} ${res.statusText})`,
-          );
-        return res.blob();
+        console.log("PDF proxy response status:", res.status, res.statusText);
+        if (!res.ok) {
+          // Try to get error details from response
+          return res.text().then(text => {
+            throw new Error(
+              `Gagal memuat PDF (HTTP ${res.status} ${res.statusText}): ${text}`,
+            );
+          });
+        }
+        return res.arrayBuffer();
       })
-      .then((blob) => {
+      .then((arrayBuffer) => {
         if (cancelled) return;
-        createdBlobUrl = URL.createObjectURL(blob);
-        setBlobUrl(createdBlobUrl);
+        console.log("PDF array buffer size:", arrayBuffer.byteLength, "bytes");
+        if (arrayBuffer.byteLength === 0) {
+          throw new Error("PDF content is empty");
+        }
+        setPdfData(arrayBuffer);
+        // Create Uint8Array to prevent detached ArrayBuffer error
+        const uint8Array = new Uint8Array(arrayBuffer);
+        setPdfFile({ data: uint8Array });
       })
       .catch((err: unknown) => {
+        console.error("PDF fetch error:", err);
         if (!cancelled)
           setLoadError(
             (err as any)?.message ||
@@ -80,7 +100,6 @@ export function PdfViewerModal({
 
     return () => {
       cancelled = true;
-      if (createdBlobUrl) URL.revokeObjectURL(createdBlobUrl);
     };
   }, [open, url]);
 
@@ -163,11 +182,11 @@ export function PdfViewerModal({
             </div>
           ) : loadError ? (
             <div className="p-4 text-sm text-red-600">{loadError}</div>
-          ) : !pdfMod || !blobUrl ? (
+          ) : !pdfMod || !stablePdfFile ? (
             <div className="p-4">Memuat PDF...</div>
           ) : (
             <pdfMod.Document
-              file={blobUrl}
+              file={stablePdfFile}
               options={pdfOptions}
               onLoadSuccess={onDocumentLoadSuccess}
               onLoadError={onDocumentLoadError}
