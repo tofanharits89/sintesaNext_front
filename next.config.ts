@@ -85,7 +85,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
-              "connect-src 'self' ws: wss: http://localhost:* http://10.0.8.42:* https://*",
+              "connect-src 'self' ws: wss: http://localhost:* http://10.0.8.42:* https://* https://*:*",
               "media-src 'self'",
               "object-src 'none'",
               "frame-src 'self' https://app.powerbi.com",

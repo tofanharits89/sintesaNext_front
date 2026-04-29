@@ -144,6 +144,7 @@ export function PdfViewerModal({
       <DialogContent
         showCloseButton={false}
         className="flex h-[90vh] w-[95vw] max-w-7xl flex-col overflow-hidden p-0 sm:max-w-7xl"
+        aria-describedby={undefined}
       >
         <DialogHeader className="border-b p-4 pb-2">
           <DialogTitle className="truncate">
