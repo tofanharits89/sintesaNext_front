@@ -15,7 +15,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Trash2, Scissors, PauseCircle, Undo2 } from "lucide-react";
-import { PdfjsViewerIframeModal } from "./modals/pdfjs-viewer-iframe-modal";
+import { PdfViewerModal } from "./modals/pdf-viewer-modal";
 import { DataKmkModal } from "./modals/data-kmk-modal";
 import { PencabutanModal } from "./modals/pencabutan-modal";
 import { DataPencabutanModal } from "./modals/data-pencabutan-modal";
@@ -45,13 +45,16 @@ export function DataKmkTab({}: DataKmkTabProps) {
     useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [isDataPencabutanModalOpen, setIsDataPencabutanModalOpen] = useState(false);
-  const [selectedNoKmkForPencabutan, setSelectedNoKmkForPencabutan] = useState<string | undefined>(undefined);
+  const [isDataPencabutanModalOpen, setIsDataPencabutanModalOpen] =
+    useState(false);
+  const [selectedNoKmkForPencabutan, setSelectedNoKmkForPencabutan] = useState<
+    string | undefined
+  >(undefined);
   const { rows, isLoading, error, mutate } = useKmkDau(selectedYear);
 
   // Generate years from current year back to 2020
   const years = Array.from({ length: currentYear - 2019 }, (_, i) =>
-    (currentYear - i).toString()
+    (currentYear - i).toString(),
   );
 
   const fallbackAttemptedRef = useRef(false);
@@ -180,9 +183,7 @@ export function DataKmkTab({}: DataKmkTabProps) {
               className={getJenisBadgeClasses(jenisCode)}
               title={displayText}
             >
-              <span className="truncate">
-                {displayText}
-              </span>
+              <span className="truncate">{displayText}</span>
             </Badge>
           </div>
         );
@@ -219,7 +220,12 @@ export function DataKmkTab({}: DataKmkTabProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handleOpenPreview(row.getValue("fileUrl"), row.original?.fileName || undefined)}
+            onClick={() =>
+              handleOpenPreview(
+                row.getValue("fileUrl"),
+                row.original?.fileName || undefined,
+              )
+            }
             className="h-8 w-8 p-0 cursor-pointer"
             title="Lihat File"
           >
@@ -236,7 +242,7 @@ export function DataKmkTab({}: DataKmkTabProps) {
       cell: ({ row }: any) => {
         // Get jenis from the jenis column - same as Kriteria column does
         const jenis = String(row.original?.jenis ?? "");
-        
+
         return (
           <div className="flex items-center justify-center gap-2">
             {/* Data Pemotongan (jenis 1 atau 4) */}
@@ -279,7 +285,9 @@ export function DataKmkTab({}: DataKmkTabProps) {
                 className="h-8 w-8 p-0 cursor-pointer"
                 onClick={() => {
                   setSelectedNoKmkForPencabutan(
-                    row.original?.nomorKmk || row.original?.no_kmk || row.getValue?.("nomorKmk")
+                    row.original?.nomorKmk ||
+                      row.original?.no_kmk ||
+                      row.getValue?.("nomorKmk"),
                   );
                   setIsDataPencabutanModalOpen(true);
                 }}
@@ -379,9 +387,9 @@ export function DataKmkTab({}: DataKmkTabProps) {
         initialYear={selectedYear}
         onCreated={async () => {
           // Invalidate and refetch KMK DAU list immediately
-          await queryClient.invalidateQueries({ 
+          await queryClient.invalidateQueries({
             queryKey: ["kmk-dau", selectedYear],
-            refetchType: 'active'
+            refetchType: "active",
           });
           // Force immediate refetch
           await mutate();
@@ -414,20 +422,27 @@ export function DataKmkTab({}: DataKmkTabProps) {
           try {
             const id = selectedItem?.id;
             if (!id) throw new Error("ID tidak ditemukan");
-            const headersWithCsrf: HeadersInit = addCsrfToHeaders({ "Content-Type": "application/json" });
-            
-            const resp = await fetch(apiPath(`/transfer-daerah/dau/kmk/${encodeURIComponent(String(id))}?year=${encodeURIComponent(selectedYear)}`), {
-              method: "DELETE",
-              headers: headersWithCsrf,
-              credentials: "include",
+            const headersWithCsrf: HeadersInit = addCsrfToHeaders({
+              "Content-Type": "application/json",
             });
+
+            const resp = await fetch(
+              apiPath(
+                `/transfer-daerah/dau/kmk/${encodeURIComponent(String(id))}?year=${encodeURIComponent(selectedYear)}`,
+              ),
+              {
+                method: "DELETE",
+                headers: headersWithCsrf,
+                credentials: "include",
+              },
+            );
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             setIsDeleteModalOpen(false);
             setSelectedItem(null);
             // Invalidate and refetch
-            await queryClient.invalidateQueries({ 
+            await queryClient.invalidateQueries({
               queryKey: ["kmk-dau", selectedYear],
-              refetchType: 'active'
+              refetchType: "active",
             });
             await mutate();
           } catch (e) {
@@ -437,8 +452,7 @@ export function DataKmkTab({}: DataKmkTabProps) {
         }}
       />
 
-      {/* PDF.js Viewer (iframe) Modal */}
-      <PdfjsViewerIframeModal
+      <PdfViewerModal
         open={isPdfOpen}
         onOpenChange={setIsPdfOpen}
         url={pdfUrl ?? ""}

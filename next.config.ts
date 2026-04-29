@@ -89,6 +89,7 @@ const nextConfig: NextConfig = {
               "media-src 'self'",
               "object-src 'none'",
               "frame-src 'self' https://app.powerbi.com",
+              "worker-src 'self' blob:",
               "frame-ancestors 'none'",
               "form-action 'self'",
               "base-uri 'self'",
