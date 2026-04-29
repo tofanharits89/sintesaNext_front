@@ -1,5 +1,5 @@
-import LandingKL from "@/components/profile/landing-kl";
+import LandingKinerja from "@/components/profile-kl/landing";
 
 export default function KementerianPage() {
-  return <LandingKL />;
+  return <LandingKinerja />;
 }

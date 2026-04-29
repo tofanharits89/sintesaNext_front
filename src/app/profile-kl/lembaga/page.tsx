@@ -1,5 +1,5 @@
-import LandingLembaga from "@/components/profile/landing-lembaga";
+import LandingKinerja from "@/components/profile-kl/landing";
 
 export default function LembagaPage() {
-  return <LandingLembaga />;
+  return <LandingKinerja />;
 }

@@ -51,6 +51,7 @@ const AppShell = memo(function AppShell({
       "/monev-kkp",
       "/belwil",
       "/iku-pa",
+      "/profile-kl",
     ],
     [],
   );

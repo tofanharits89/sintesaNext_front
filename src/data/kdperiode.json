@@ -1,0 +1,14 @@
+[
+  { "kdperiode": "1", "nmperiode": "Januari" },
+  { "kdperiode": "2", "nmperiode": "Februari" },
+  { "kdperiode": "3", "nmperiode": "Maret" },
+  { "kdperiode": "4", "nmperiode": "April" },
+  { "kdperiode": "5", "nmperiode": "Mei" },
+  { "kdperiode": "6", "nmperiode": "Juni" },
+  { "kdperiode": "7", "nmperiode": "Juli" },
+  { "kdperiode": "8", "nmperiode": "Agustus" },
+  { "kdperiode": "9", "nmperiode": "September" },
+  { "kdperiode": "10", "nmperiode": "Oktober" },
+  { "kdperiode": "11", "nmperiode": "November" },
+  { "kdperiode": "12", "nmperiode": "Desember" }
+]
