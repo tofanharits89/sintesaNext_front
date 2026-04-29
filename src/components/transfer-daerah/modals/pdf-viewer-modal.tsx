@@ -56,7 +56,8 @@ export function PdfViewerModal({
     let createdBlobUrl: string | null = null;
     setBlobUrl(null);
 
-    fetch(url, { credentials: "include" })
+    const proxyUrl = `/api/pdf-proxy?url=${encodeURIComponent(url)}`;
+    fetch(proxyUrl, { credentials: "include" })
       .then((res) => {
         if (!res.ok)
           throw new Error(
