@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { directBackendClient } from "@/lib/api/httpClient";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Pencil, Trash2 } from "lucide-react";
 
 export interface TemuanRow {
@@ -201,16 +202,14 @@ export default function Temuan({
   const textareaCls = inputCls + " resize-none";
 
   return (
-    <Sheet open={show} onOpenChange={(open) => !open && handleClose()}>
-      <SheetContent
-        side="top"
-        className="h-auto max-h-[90vh] overflow-y-auto bg-gray-50 dark:bg-gray-900"
-      >
-        <SheetHeader>
-          <SheetTitle>Rekam Data Temuan BPK</SheetTitle>
-        </SheetHeader>
-        <div className="mt-4 px-4">
-          <form onSubmit={handleSubmit}>
+    <Dialog open={show} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-5xl gap-0 overflow-hidden p-0">
+        <DialogHeader className="border-b px-6 py-4">
+          <DialogTitle>Rekam Data Temuan BPK</DialogTitle>
+        </DialogHeader>
+
+        <div className="max-h-[82vh] overflow-y-auto px-6 py-5">
+          <form id="temuan-form" onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {/* Temuan */}
               <div>
@@ -260,22 +259,15 @@ export default function Temuan({
                 )}
               </div>
             </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-            >
-              {loading ? "Menyimpan..." : "Simpan"}
-            </button>
           </form>
 
-          <hr className="my-4" />
+          <hr className="my-5" />
 
           {/* Table */}
           <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
+            <table className="w-full border-collapse text-sm">
               <thead>
-                <tr className="bg-gray-100 dark:bg-gray-700 text-left">
+                <tr className="bg-gray-100 text-left dark:bg-gray-700">
                   <th className="border px-3 py-2">No</th>
                   <th className="border px-3 py-2">Temuan BPK</th>
                   <th className="border px-3 py-2">Nilai</th>
@@ -291,7 +283,7 @@ export default function Temuan({
                     <td className="border px-3 py-2">{idx + 1}</td>
                     <td className="border px-3 py-2">{item.temuan}</td>
                     <td className="border px-3 py-2">{item.nilai}</td>
-                    <td className="border px-3 py-2 space-x-2">
+                    <td className="space-x-2 border px-3 py-2">
                       <button
                         type="button"
                         onClick={() => handleEdit(item.id_temuan)}
@@ -316,7 +308,26 @@ export default function Temuan({
             <p className="mt-3 text-xs italic text-gray-400">{updateInfo}</p>
           )}
         </div>
-      </SheetContent>
-    </Sheet>
+
+        <DialogFooter className="border-t bg-gray-50 px-6 py-4 dark:bg-gray-900">
+          <button
+            type="button"
+            onClick={handleClose}
+            disabled={loading}
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-gray-800"
+          >
+            Batal
+          </button>
+          <button
+            type="submit"
+            form="temuan-form"
+            disabled={loading}
+            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+          >
+            {loading ? "Menyimpan..." : "Simpan"}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { directBackendClient } from "@/lib/api/httpClient";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export interface TrenRow {
   isu: string;
@@ -109,42 +110,54 @@ export default function Tren({ show, handleClose, data, isi }: TrenProps) {
   ];
 
   return (
-    <Sheet open={show} onOpenChange={(open) => !open && handleClose()}>
-      <SheetContent
-        side="left"
-        className="w-full sm:max-w-md overflow-y-auto bg-gray-50 dark:bg-gray-900"
-      >
-        <SheetHeader>
-          <SheetTitle>Rekam Data Tren</SheetTitle>
-        </SheetHeader>
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4 px-4">
-          {fields.map(({ name, label }) => (
-            <div key={name}>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                {label}
-              </label>
-              <textarea
-                name={name}
-                rows={3}
-                placeholder="Masukkan teks di sini..."
-                value={formData[name]}
-                onChange={handleChange}
-                className={textareaClass}
-              />
-            </div>
-          ))}
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-          >
-            {loading ? "Menyimpan..." : "Simpan"}
-          </button>
-          {updateInfo && (
-            <p className="text-xs italic text-gray-400 mt-2">{updateInfo}</p>
-          )}
+    <Dialog open={show} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl gap-0 overflow-hidden p-0">
+        <DialogHeader className="border-b px-6 py-4">
+          <DialogTitle>Rekam Data Tren</DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="flex max-h-[82vh] flex-col">
+          <div className="space-y-4 overflow-y-auto px-6 py-5">
+            {fields.map(({ name, label }) => (
+              <div key={name}>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {label}
+                </label>
+                <textarea
+                  name={name}
+                  rows={3}
+                  placeholder="Masukkan teks di sini..."
+                  value={formData[name]}
+                  onChange={handleChange}
+                  className={textareaClass}
+                />
+              </div>
+            ))}
+
+            {updateInfo && (
+              <p className="text-xs italic text-gray-400">{updateInfo}</p>
+            )}
+          </div>
+
+          <DialogFooter className="border-t bg-gray-50 px-6 py-4 dark:bg-gray-900">
+            <button
+              type="button"
+              onClick={handleClose}
+              disabled={loading}
+              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-gray-800"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+            >
+              {loading ? "Menyimpan..." : "Simpan"}
+            </button>
+          </DialogFooter>
         </form>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }

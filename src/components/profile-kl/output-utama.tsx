@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { directBackendClient } from "@/lib/api/httpClient";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Pencil, Trash2 } from "lucide-react";
 
 export interface OutputRow {
@@ -215,16 +216,18 @@ export default function OutputUtama({
   ];
 
   return (
-    <Sheet open={show} onOpenChange={(open) => !open && handleClose()}>
-      <SheetContent
-        side="top"
-        className="h-auto max-h-[90vh] overflow-y-auto bg-gray-50 dark:bg-gray-900"
-      >
-        <SheetHeader>
-          <SheetTitle>Rekam Output Utama Belanja K/L</SheetTitle>
-        </SheetHeader>
-        <div className="mt-4 px-4">
-          <form onSubmit={handleSubmit} className="space-y-4">
+    <Dialog open={show} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-5xl gap-0 overflow-hidden p-0">
+        <DialogHeader className="border-b px-6 py-4">
+          <DialogTitle>Rekam Output Utama Belanja K/L</DialogTitle>
+        </DialogHeader>
+
+        <div className="max-h-[82vh] overflow-y-auto px-6 py-5">
+          <form
+            id="output-utama-form"
+            onSubmit={handleSubmit}
+            className="space-y-4"
+          >
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -253,10 +256,13 @@ export default function OutputUtama({
                 />
               </div>
             </div>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {yearGroups.map(({ y, p, r, pct }) => (
-                <>
-                  <div key={`${y}-lbl`}>
+                <div
+                  key={y}
+                  className="grid grid-cols-1 gap-3 rounded-lg border bg-white p-3 dark:bg-gray-950 sm:grid-cols-4 lg:contents"
+                >
+                  <div>
                     <label className="block text-xs text-gray-500 mb-1">
                       Tahun
                     </label>
@@ -269,7 +275,7 @@ export default function OutputUtama({
                       className={inputCls}
                     />
                   </div>
-                  <div key={`${p}-lbl`}>
+                  <div>
                     <label className="block text-xs text-gray-500 mb-1">
                       Pagu
                     </label>
@@ -283,7 +289,7 @@ export default function OutputUtama({
                       className={inputCls}
                     />
                   </div>
-                  <div key={`${r}-lbl`}>
+                  <div>
                     <label className="block text-xs text-gray-500 mb-1">
                       Realisasi
                     </label>
@@ -297,7 +303,7 @@ export default function OutputUtama({
                       className={inputCls}
                     />
                   </div>
-                  <div key={`${pct}-lbl`}>
+                  <div>
                     <label className="block text-xs text-gray-500 mb-1">
                       Persen
                     </label>
@@ -311,23 +317,16 @@ export default function OutputUtama({
                       className={inputCls}
                     />
                   </div>
-                </>
+                </div>
               ))}
             </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-            >
-              {loading ? "Menyimpan..." : "Simpan"}
-            </button>
           </form>
 
-          <hr className="my-4" />
+          <hr className="my-5" />
           <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
+            <table className="w-full border-collapse text-sm">
               <thead>
-                <tr className="bg-gray-100 dark:bg-gray-700 text-left">
+                <tr className="bg-gray-100 text-left dark:bg-gray-700">
                   <th className="border px-3 py-2">No</th>
                   <th className="border px-3 py-2">Nama Output</th>
                   <th className="border px-3 py-2">Keterangan</th>
@@ -343,7 +342,7 @@ export default function OutputUtama({
                     <td className="border px-3 py-2">{idx + 1}</td>
                     <td className="border px-3 py-2">{item.namaoutput}</td>
                     <td className="border px-3 py-2">{item.catatan}</td>
-                    <td className="border px-3 py-2 space-x-2">
+                    <td className="space-x-2 border px-3 py-2">
                       <button
                         type="button"
                         onClick={() => handleEdit(item.id_output)}
@@ -368,7 +367,26 @@ export default function OutputUtama({
             <p className="mt-3 text-xs italic text-gray-400">{updateInfo}</p>
           )}
         </div>
-      </SheetContent>
-    </Sheet>
+
+        <DialogFooter className="border-t bg-gray-50 px-6 py-4 dark:bg-gray-900">
+          <button
+            type="button"
+            onClick={handleClose}
+            disabled={loading}
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-gray-800"
+          >
+            Batal
+          </button>
+          <button
+            type="submit"
+            form="output-utama-form"
+            disabled={loading}
+            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+          >
+            {loading ? "Menyimpan..." : "Simpan"}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

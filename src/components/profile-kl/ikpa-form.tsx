@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { directBackendClient } from "@/lib/api/httpClient";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Pencil, Trash2 } from "lucide-react";
 
 export interface IkpaRow {
@@ -150,18 +151,15 @@ export default function IkpaForm({
     "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100";
 
   return (
-    <Sheet open={show} onOpenChange={(open) => !open && handleClose()}>
-      <SheetContent
-        side="bottom"
-        className="h-auto max-h-[80vh] overflow-y-auto bg-gray-50 dark:bg-gray-900"
-      >
-        <SheetHeader>
-          <SheetTitle>Rekam Data IKPA</SheetTitle>
-        </SheetHeader>
-        <div className="mt-4 px-4">
+    <Dialog open={show} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl gap-0 overflow-hidden p-0">
+        <DialogHeader className="border-b px-6 py-4">
+          <DialogTitle>Rekam Data IKPA</DialogTitle>
+        </DialogHeader>
+
+        <div className="max-h-[82vh] overflow-y-auto px-6 py-5">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form id="ikpa-form" onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">
@@ -191,20 +189,12 @@ export default function IkpaForm({
                   />
                 </div>
               </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                {loading ? "Menyimpan..." : "Simpan"}
-              </button>
             </form>
 
-            {/* Table */}
             <div className="overflow-x-auto">
-              <table className="w-full text-sm border-collapse">
+              <table className="w-full border-collapse text-sm">
                 <thead>
-                  <tr className="bg-gray-100 dark:bg-gray-700 text-left">
+                  <tr className="bg-gray-100 text-left dark:bg-gray-700">
                     <th className="border px-3 py-2">No</th>
                     <th className="border px-3 py-2">Tahun</th>
                     <th className="border px-3 py-2">Periode</th>
@@ -222,7 +212,7 @@ export default function IkpaForm({
                       <td className="border px-3 py-2">{item.thang}</td>
                       <td className="border px-3 py-2">{item.periode}</td>
                       <td className="border px-3 py-2">{item.nilaiikpa}</td>
-                      <td className="border px-3 py-2 space-x-2">
+                      <td className="space-x-2 border px-3 py-2">
                         <button
                           type="button"
                           onClick={() => handleEdit(item.id)}
@@ -248,7 +238,26 @@ export default function IkpaForm({
             <p className="mt-3 text-xs italic text-gray-400">{updateInfo}</p>
           )}
         </div>
-      </SheetContent>
-    </Sheet>
+
+        <DialogFooter className="border-t bg-gray-50 px-6 py-4 dark:bg-gray-900">
+          <button
+            type="button"
+            onClick={handleClose}
+            disabled={loading}
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-gray-800"
+          >
+            Batal
+          </button>
+          <button
+            type="submit"
+            form="ikpa-form"
+            disabled={loading}
+            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+          >
+            {loading ? "Menyimpan..." : "Simpan"}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
