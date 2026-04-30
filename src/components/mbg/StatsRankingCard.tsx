@@ -23,6 +23,8 @@ export type RankingTab = {
   key: string;
   label: string;
   items: RankedItem[];
+  valuePrefix?: string;
+  valueSuffix?: string;
 };
 
 const PAGE_SIZE = 8;
@@ -112,7 +114,9 @@ function RankingList({
               {/* Right: realisasi + badge */}
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-sm font-medium font-mono tabular-nums">
+                  {valuePrefix}
                   {it.value.toLocaleString("id-ID")}
+                  {valueSuffix}
                 </span>
                 <Badge variant="outline" className={badgeClass}>
                   {it.percentage.toFixed(2)}%
