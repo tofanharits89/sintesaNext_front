@@ -1,64 +1,54 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { apiPath } from "@/lib/config/base-path";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { Loader2, GitCompareArrows } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 interface RekonDetailRow {
-  THANG?: string;
-  thang?: string;
-  NMBULAN?: string;
-  nmbulan?: string;
-  KDKPPN?: string;
-  kdkppn?: string;
-  NMKPPN?: string;
-  nmkppn?: string;
-  KDPEMDA?: string;
-  kdpemda?: string;
-  NMPEMDA?: string;
-  nmpemda?: string;
-  PAGU?: number;
-  pagu?: number;
-  ALOKASI_BULAN?: number;
-  alokasi_bulan?: number;
-  TUNDASINTESA?: number;
-  tunda?: number;
-  POTONGANSINTESA?: number;
-  potongan?: number;
-  SALURSINTESA?: number;
-  salur?: number;
-  PENUNDAANOMSPAN?: number;
-  penundaanomspan?: number;
-  POTONGANOMSPAN?: number;
-  potonganomspan?: number;
-  CABUT?: number;
-  cabut?: number;
+  THANG?: string;   thang?: string;
+  NMBULAN?: string; nmbulan?: string;
+  KDKPPN?: string;  kdkppn?: string;
+  NMKPPN?: string;  nmkppn?: string;
+  KDPEMDA?: string; kdpemda?: string;
+  NMPEMDA?: string; nmpemda?: string;
+  PAGU?: number;             pagu?: number;
+  ALOKASI_BULAN?: number;    alokasi_bulan?: number;
+  TUNDASINTESA?: number;     tunda?: number;
+  POTONGANSINTESA?: number;  potongan?: number;
+  SALURSINTESA?: number;     salur?: number;
+  PENUNDAANOMSPAN?: number;  penundaanomspan?: number;
+  POTONGANOMSPAN?: number;   potonganomspan?: number;
+  CABUT?: number;            cabut?: number;
 }
 
 interface RekonPotonganRow {
-  thang?: string;
-  bulan?: string;
-  kdkppn?: string;
-  kdpemda?: string;
-  akun_pusat?: string;
-  AKUN_PUSAT?: string;
-  akun_omspan?: string;
-  AKUN_OMSPAN?: string;
-  nilai_pusat?: number;
-  NILAI_PUSAT?: number;
-  nilai_omspan?: number;
-  NILAI_OMSPAN?: number;
+  thang?: string; bulan?: string; kdkppn?: string; kdpemda?: string;
+  akun_pusat?: string;  AKUN_PUSAT?: string;
+  akun_omspan?: string; AKUN_OMSPAN?: string;
+  nilai_pusat?: number; NILAI_PUSAT?: number;
+  nilai_omspan?: number; NILAI_OMSPAN?: number;
 }
 
 interface RekonDataDetailModalProps {
@@ -81,19 +71,7 @@ function formatNumber(value: number | undefined | null): string {
   }).format(Number(value ?? 0));
 }
 
-function normalizeRow(item: RekonDetailRow): Required<{
-  NMKPPN: string;
-  KDKPPN: string;
-  NMPEMDA: string;
-  KDPEMDA: string;
-  NMBULAN: string;
-  ALOKASI_BULAN: number;
-  TUNDASINTESA: number;
-  POTONGANSINTESA: number;
-  SALURSINTESA: number;
-  PENUNDAANOMSPAN: number;
-  POTONGANOMSPAN: number;
-}> {
+function normalizeRow(item: RekonDetailRow) {
   return {
     NMKPPN: String(item.NMKPPN ?? item.nmkppn ?? ""),
     KDKPPN: String(item.KDKPPN ?? item.kdkppn ?? ""),
@@ -143,10 +121,8 @@ export function RekonDataDetailModal({
   bulan,
 }: RekonDataDetailModalProps) {
   const enabled = open && !!kdkppn && !!kdpemda && !!thang && !!bulan;
-
   const queryParams = `thang=${thang}&kdpemda=${kdpemda}&kdkppn=${kdkppn}&bulan=${bulan}`;
 
-  // Fetch rekon detail (sintesa vs OMSPAN)
   const { data: detailData, isLoading: loadingDetail, error: errorDetail } =
     useQuery<RekonDetailRow[]>({
       queryKey: ["rekon-detail", thang, kdpemda, kdkppn, bulan],
@@ -156,7 +132,6 @@ export function RekonDataDetailModal({
       refetchOnWindowFocus: false,
     });
 
-  // Fetch detail per akun potongan
   const { data: potonganData, isLoading: loadingPotongan } =
     useQuery<RekonPotonganRow[]>({
       queryKey: ["rekon-potongan", thang, kdpemda, kdkppn, bulan],
@@ -172,130 +147,179 @@ export function RekonDataDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-base">
-            <span className="text-emerald-600">◈</span>
-            Rekon Data DAU | Sintesa vs OMSPAN TKD
+      <DialogContent className="max-w-[95vw] md:max-w-4xl max-h-[90vh] overflow-auto p-0">
+        {/* Header */}
+        <DialogHeader className="px-5 pt-5 pb-3">
+          <DialogTitle className="flex items-center gap-2 text-sm font-semibold">
+            <GitCompareArrows className="h-4 w-4 text-emerald-600 shrink-0" />
+            Rekonsilisasi DAU &mdash; Sintesa vs OMSPAN TKD
           </DialogTitle>
+          {/* Context badges */}
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            <Badge variant="outline" className="text-[10px] font-normal px-2 py-0.5">
+              TA {thang}
+            </Badge>
+            <Badge variant="outline" className="text-[10px] font-normal px-2 py-0.5">
+              KPPN {kdkppn}
+            </Badge>
+            <Badge variant="outline" className="text-[10px] font-normal px-2 py-0.5">
+              Pemda {kdpemda}
+            </Badge>
+            <Badge variant="outline" className="text-[10px] font-normal px-2 py-0.5">
+              Bulan {bulan}
+            </Badge>
+          </div>
         </DialogHeader>
 
-        {isLoading ? (
-          <div className="flex flex-col items-center gap-2 py-10">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Memuat data rekon...</p>
-          </div>
-        ) : errorDetail ? (
-          <div className="text-sm text-red-600 py-4">
-            {String((errorDetail as Error).message || errorDetail)}
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs border-collapse">
-              <thead>
-                <tr className="bg-muted/70">
-                  <th rowSpan={3} className="border px-2 py-1 text-center align-middle">KPPN</th>
-                  <th rowSpan={3} className="border px-2 py-1 text-center align-middle">Pemda</th>
-                  <th rowSpan={3} className="border px-2 py-1 text-center align-middle">Bulan</th>
-                  <th colSpan={3} className="border px-2 py-1 text-center">Sintesa</th>
-                  <th colSpan={2} className="border px-2 py-1 text-center">OMSPAN</th>
-                </tr>
-                <tr className="bg-muted/50">
-                  <th rowSpan={2} className="border px-2 py-1 text-center align-middle">Alokasi</th>
-                  <th rowSpan={2} className="border px-2 py-1 text-center align-middle">Penundaan</th>
-                  <th colSpan={1} className="border px-2 py-1 text-center">Potongan</th>
-                  <th rowSpan={1} className="border px-2 py-1 text-center">Penundaan</th>
-                  <th colSpan={1} className="border px-2 py-1 text-center">Potongan</th>
-                </tr>
-              </thead>
-              <tbody className="font-semibold">
-                {displayData.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="border px-2 py-4 text-center text-muted-foreground">
-                      Tidak ada data
-                    </td>
-                  </tr>
-                ) : (
-                  displayData.map((row, idx) => {
-                    const tundaBeda = row.PENUNDAANOMSPAN !== row.TUNDASINTESA;
-                    const potongBeda = row.POTONGANOMSPAN !== row.POTONGANSINTESA;
-                    return (
-                      <tr key={idx}>
-                        <td className="border px-2 py-1 text-center align-middle">
-                          {row.NMKPPN} - {row.KDKPPN}
-                        </td>
-                        <td className="border px-2 py-1 text-center align-middle">
-                          {row.NMPEMDA} - {row.KDPEMDA}
-                        </td>
-                        <td className="border px-2 py-1 text-center align-middle">
-                          {row.NMBULAN}
-                        </td>
-                        <td className="border px-2 py-1 text-right align-middle">
-                          {formatNumber(row.ALOKASI_BULAN)}
-                        </td>
-                        {/* Sintesa Penundaan */}
-                        <td
-                          className="border px-2 py-1 text-right align-middle"
-                          style={{ color: tundaBeda ? "white" : undefined, background: tundaBeda ? "#dc2626" : undefined }}
-                        >
-                          <span>{formatNumber(row.TUNDASINTESA)}</span>
-                        </td>
-                        {/* Sintesa Potongan */}
-                        <td
-                          className="border px-2 py-1 text-right align-middle"
-                          style={{ color: potongBeda ? "white" : undefined, background: potongBeda ? "#dc2626" : undefined }}
-                        >
-                          <span>{formatNumber(row.POTONGANSINTESA)}</span>
-                        </td>
-                        {/* OMSPAN Penundaan */}
-                        <td
-                          className="border px-2 py-1 text-right align-middle"
-                          style={{ color: tundaBeda ? "white" : undefined, background: tundaBeda ? "#dc2626" : undefined }}
-                        >
-                          <span>{formatNumber(row.PENUNDAANOMSPAN)}</span>
-                        </td>
-                        {/* OMSPAN Potongan */}
-                        <td
-                          className="border px-2 py-1 text-right align-middle"
-                          style={{ color: potongBeda ? "white" : undefined, background: potongBeda ? "#dc2626" : undefined }}
-                        >
-                          <span>{formatNumber(row.POTONGANOMSPAN)}</span>
+        <Separator />
+
+        <div className="px-5 py-4">
+          {isLoading ? (
+            <div className="flex flex-col items-center gap-2 py-12">
+              <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">Memuat data rekon...</p>
+            </div>
+          ) : errorDetail ? (
+            <div className="rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3 text-xs text-destructive">
+              {String((errorDetail as Error).message || errorDetail)}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Main comparison table */}
+              <div className="overflow-x-auto rounded-md border border-border">
+                <table className="w-full text-xs border-collapse">
+                  <thead>
+                    {/* Row 1: group headers */}
+                    <tr className="bg-muted/60 text-foreground">
+                      <th rowSpan={3} className="border border-border px-2 py-1.5 text-center align-middle font-semibold whitespace-nowrap">KPPN</th>
+                      <th rowSpan={3} className="border border-border px-2 py-1.5 text-center align-middle font-semibold whitespace-nowrap">Pemda</th>
+                      <th rowSpan={3} className="border border-border px-2 py-1.5 text-center align-middle font-semibold whitespace-nowrap">Bulan</th>
+                      <th rowSpan={3} className="border border-border px-2 py-1.5 text-center align-middle font-semibold whitespace-nowrap">Alokasi</th>
+                      <th colSpan={2} className="border border-border px-2 py-1.5 text-center font-semibold bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300">
+                        Sintesa
+                      </th>
+                      <th colSpan={2} className="border border-border px-2 py-1.5 text-center font-semibold bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300">
+                        OMSPAN
+                      </th>
+                    </tr>
+                    {/* Row 2: sub-headers */}
+                    <tr className="bg-muted/40">
+                      <th className="border border-border px-2 py-1 text-center font-medium text-blue-600 dark:text-blue-400">Penundaan</th>
+                      <th className="border border-border px-2 py-1 text-center font-medium text-blue-600 dark:text-blue-400">Potongan</th>
+                      <th className="border border-border px-2 py-1 text-center font-medium text-amber-600 dark:text-amber-400">Penundaan</th>
+                      <th className="border border-border px-2 py-1 text-center font-medium text-amber-600 dark:text-amber-400">Potongan</th>
+                    </tr>
+                  </thead>
+                  <tbody className="font-mono">
+                    {displayData.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="border border-border px-2 py-6 text-center text-muted-foreground text-xs">
+                          Tidak ada data untuk parameter yang dipilih
                         </td>
                       </tr>
-                    );
-                  })
-                )}
+                    ) : (
+                      displayData.map((row, idx) => {
+                        const tundaBeda = row.PENUNDAANOMSPAN !== row.TUNDASINTESA;
+                        const potongBeda = row.POTONGANOMSPAN !== row.POTONGANSINTESA;
+                        return (
+                          <tr key={idx} className="hover:bg-muted/30 transition-colors">
+                            <td className="border border-border px-2 py-1.5 text-center align-middle font-sans">
+                              <span className="font-medium">{row.KDKPPN}</span>
+                              <span className="text-muted-foreground text-[10px] block">{row.NMKPPN}</span>
+                            </td>
+                            <td className="border border-border px-2 py-1.5 text-center align-middle font-sans">
+                              <span className="font-medium">{row.KDPEMDA}</span>
+                              <span className="text-muted-foreground text-[10px] block">{row.NMPEMDA}</span>
+                            </td>
+                            <td className="border border-border px-2 py-1.5 text-center align-middle font-sans whitespace-nowrap">
+                              {row.NMBULAN}
+                            </td>
+                            <td className="border border-border px-2 py-1.5 text-right align-middle">
+                              {formatNumber(row.ALOKASI_BULAN)}
+                            </td>
+                            {/* Sintesa Penundaan */}
+                            <td className={cn(
+                              "border border-border px-2 py-1.5 text-right align-middle transition-colors",
+                              tundaBeda
+                                ? "bg-destructive text-destructive-foreground font-semibold"
+                                : "bg-blue-50/50 dark:bg-blue-950/20 text-blue-800 dark:text-blue-200"
+                            )}>
+                              {formatNumber(row.TUNDASINTESA)}
+                            </td>
+                            {/* Sintesa Potongan */}
+                            <td className={cn(
+                              "border border-border px-2 py-1.5 text-right align-middle transition-colors",
+                              potongBeda
+                                ? "bg-destructive text-destructive-foreground font-semibold"
+                                : "bg-blue-50/50 dark:bg-blue-950/20 text-blue-800 dark:text-blue-200"
+                            )}>
+                              {formatNumber(row.POTONGANSINTESA)}
+                            </td>
+                            {/* OMSPAN Penundaan */}
+                            <td className={cn(
+                              "border border-border px-2 py-1.5 text-right align-middle transition-colors",
+                              tundaBeda
+                                ? "bg-destructive text-destructive-foreground font-semibold"
+                                : "bg-amber-50/50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-200"
+                            )}>
+                              {formatNumber(row.PENUNDAANOMSPAN)}
+                            </td>
+                            {/* OMSPAN Potongan */}
+                            <td className={cn(
+                              "border border-border px-2 py-1.5 text-right align-middle transition-colors",
+                              potongBeda
+                                ? "bg-destructive text-destructive-foreground font-semibold"
+                                : "bg-amber-50/50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-200"
+                            )}>
+                              {formatNumber(row.POTONGANOMSPAN)}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
 
-                {/* Sub-header for per-akun potongan breakdown */}
-                {potonganRows.length > 0 && (
-                  <tr className="bg-muted/30">
-                    <th colSpan={4} className="border px-2 py-1" />
-                    <th className="border px-2 py-1 text-center text-xs">Akun (Sintesa)</th>
-                    <th className="border px-2 py-1 text-center text-xs">Nilai (Sintesa)</th>
-                    <th className="border px-2 py-1 text-center text-xs">Akun (OMSPAN)</th>
-                    <th className="border px-2 py-1 text-center text-xs">Nilai (OMSPAN)</th>
-                  </tr>
-                )}
-
-                {potonganRows.map((row, idx) => (
-                  <tr key={`potongan-${idx}`}>
-                    <td colSpan={4} className="border" />
-                    <td className="border px-2 py-1 text-center align-middle">{row.akun_pusat}</td>
-                    <td className="border px-2 py-1 text-right align-middle">
-                      {formatNumber(row.nilai_pusat)}
-                    </td>
-                    <td className="border px-2 py-1 text-center align-middle">
-                      {row.akun_omspan === "0" || row.akun_omspan === "" ? "-" : row.akun_omspan}
-                    </td>
-                    <td className="border px-2 py-1 text-right align-middle">
-                      {formatNumber(row.nilai_omspan)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              {/* Per-akun potongan breakdown */}
+              {potonganRows.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    Detail Per Akun Potongan
+                  </p>
+                  <div className="overflow-x-auto rounded-md border border-border">
+                    <Table className="text-xs">
+                      <TableHeader>
+                        <TableRow className="bg-muted/60">
+                          <TableHead className="text-center text-xs font-semibold h-8">No</TableHead>
+                          <TableHead className="text-center text-xs font-semibold h-8 text-blue-600 dark:text-blue-400">Akun (Sintesa)</TableHead>
+                          <TableHead className="text-right text-xs font-semibold h-8 text-blue-600 dark:text-blue-400">Nilai (Sintesa)</TableHead>
+                          <TableHead className="text-center text-xs font-semibold h-8 text-amber-600 dark:text-amber-400">Akun (OMSPAN)</TableHead>
+                          <TableHead className="text-right text-xs font-semibold h-8 text-amber-600 dark:text-amber-400">Nilai (OMSPAN)</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {potonganRows.map((row, idx) => (
+                          <TableRow key={`potongan-${idx}`} className="hover:bg-muted/30">
+                            <TableCell className="text-center text-muted-foreground tabular-nums">{idx + 1}</TableCell>
+                            <TableCell className="text-center font-mono">{row.akun_pusat || "-"}</TableCell>
+                            <TableCell className="text-right tabular-nums">{formatNumber(row.nilai_pusat)}</TableCell>
+                            <TableCell className="text-center font-mono">
+                              {!row.akun_omspan || row.akun_omspan === "0" ? (
+                                <span className="text-muted-foreground">-</span>
+                              ) : row.akun_omspan}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">{formatNumber(row.nilai_omspan)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

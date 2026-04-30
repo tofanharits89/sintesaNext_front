@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -13,10 +14,11 @@ import {
 import { DataTable } from "@/components/ui/data-table";
 import { ResetButton } from "@/components/ui/reset-button";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import tkdData from "@/data/kdkppn_tkd.json";
 import { apiPath } from "@/lib/config/base-path";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { RefreshCw, Loader2 } from "lucide-react";
+import { RefreshCw, Loader2, Clock, DatabaseZap } from "lucide-react";
 import { RekonDataDetailModal } from "./rekon-data-detail";
 import { toast } from "sonner";
 import { http } from "@/lib/api/httpClient";
@@ -42,9 +44,7 @@ export interface RekonRow {
   beda?: string | null;
 }
 
-interface RekonsiliasiDataTabProps {
-  // No selectedYear prop — this tab manages its own year state (all tahun anggaran)
-}
+interface RekonsiliasiDataTabProps {}
 
 // ---------------------------------------------------------------------------
 // Fetcher helper (GET only — no CSRF needed)
@@ -63,7 +63,7 @@ async function fetcher<T>(url: string): Promise<T> {
 }
 
 // ---------------------------------------------------------------------------
-// OMSPAN API (login + fetch data) — called client-side (SPAN API)
+// OMSPAN API (login + fetch data) — called client-side
 // ---------------------------------------------------------------------------
 
 const OMSPAN_API_BASE = "https://spanint.kemenkeu.go.id/apitkd/api";
@@ -117,11 +117,10 @@ export function RekonsiliasiDataTab({}: RekonsiliasiDataTabProps) {
   const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
   const [selectedKppn, setSelectedKppn] = useState("");
   const [selectedKabKota, setSelectedKabKota] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("all"); // "all" | "00" | "01"
+  const [selectedStatus, setSelectedStatus] = useState("all");
   const [isSyncing, setIsSyncing] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<string>("");
 
-  // Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedDetail, setSelectedDetail] = useState<{
     kdkppn: string;
@@ -130,7 +129,6 @@ export function RekonsiliasiDataTab({}: RekonsiliasiDataTabProps) {
     bulan: string;
   } | null>(null);
 
-  // Build unique KPPN list from TKD mapping
   const uniqueKppn = Array.from(
     new Map(
       (tkdData as Array<any>).map((d) => [
@@ -140,7 +138,6 @@ export function RekonsiliasiDataTab({}: RekonsiliasiDataTabProps) {
     ).values()
   ).sort((a, b) => a.kdkppn.localeCompare(b.kdkppn));
 
-  // Kab/Kota filtered by selected KPPN
   const filteredKabKotaOptions = selectedKppn
     ? (tkdData as Array<any>)
         .filter((row) => row.kdkppn === selectedKppn && !String(row.kdkabkota).endsWith("00"))
@@ -149,23 +146,15 @@ export function RekonsiliasiDataTab({}: RekonsiliasiDataTabProps) {
 
   useEffect(() => { setSelectedKabKota(""); }, [selectedKppn]);
 
-  // Months list (value = "01" .. "12", label = "Januari" etc.)
   const months = [
-    { value: "01", label: "Januari" },
-    { value: "02", label: "Februari" },
-    { value: "03", label: "Maret" },
-    { value: "04", label: "April" },
-    { value: "05", label: "Mei" },
-    { value: "06", label: "Juni" },
-    { value: "07", label: "Juli" },
-    { value: "08", label: "Agustus" },
-    { value: "09", label: "September" },
-    { value: "10", label: "Oktober" },
-    { value: "11", label: "November" },
-    { value: "12", label: "Desember" },
+    { value: "01", label: "Januari" }, { value: "02", label: "Februari" },
+    { value: "03", label: "Maret" },   { value: "04", label: "April" },
+    { value: "05", label: "Mei" },     { value: "06", label: "Juni" },
+    { value: "07", label: "Juli" },    { value: "08", label: "Agustus" },
+    { value: "09", label: "September" },{ value: "10", label: "Oktober" },
+    { value: "11", label: "November" },{ value: "12", label: "Desember" },
   ];
 
-  // Build query string
   const buildQueryKey = () => {
     const params = new URLSearchParams();
     params.set("thang", selectedYear);
@@ -179,14 +168,13 @@ export function RekonsiliasiDataTab({}: RekonsiliasiDataTabProps) {
   const rekapUrl = apiPath(`/transfer-daerah/omspan/rekap?${buildQueryKey()}`);
   const updateInfoUrl = apiPath(`/transfer-daerah/omspan/update-info`);
 
-  const { data: rekonData, isLoading, error, refetch } = useQuery<RekonRow[]>({
+  const { data: rekonData, isLoading, error } = useQuery<RekonRow[]>({
     queryKey: ["rekon-omspan", selectedYear, selectedMonth, selectedKppn, selectedKabKota, selectedStatus],
     queryFn: () => fetcher<RekonRow[]>(rekapUrl),
     staleTime: 3 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
-  // Load update info
   const { data: updateData } = useQuery<{ tgupdate: string }>({
     queryKey: ["rekon-omspan-update-info"],
     queryFn: () => fetcher<{ tgupdate: string }>(updateInfoUrl),
@@ -198,23 +186,16 @@ export function RekonsiliasiDataTab({}: RekonsiliasiDataTabProps) {
     if (updateData?.tgupdate) setUpdateInfo(updateData.tgupdate);
   }, [updateData]);
 
-  // Sync from OMSPAN
   const handleSync = async () => {
     setIsSyncing(true);
     try {
-      // 1. Truncate existing data (via http — auto-attach CSRF)
       await http.delete(apiPath(`/transfer-daerah/omspan/truncate?thang=${selectedYear}`));
-
-      // 2. Login OMSPAN
       const token = await loginOmspan(selectedYear);
-
-      // 3. Fetch pemotongan & penundaan in parallel
       const [pemotongan, penundaan] = await Promise.all([
         fetchOmspanPemotongan(token),
         fetchOmspanPenundaan(token),
       ]);
 
-      // 4. Save in batches of 150 (via http — auto-attach CSRF)
       const saveBatch = async (path: string, items: any[]) => {
         const batchSize = 150;
         for (let i = 0; i < items.length; i += batchSize) {
@@ -225,11 +206,10 @@ export function RekonsiliasiDataTab({}: RekonsiliasiDataTabProps) {
       await saveBatch(`/transfer-daerah/omspan/pemotongan?thang=${selectedYear}`, pemotongan);
       await saveBatch(`/transfer-daerah/omspan/penundaan?thang=${selectedYear}`, penundaan);
 
-      // 5. Refresh data table and update info
       await queryClient.invalidateQueries({ queryKey: ["rekon-omspan"] });
       await queryClient.invalidateQueries({ queryKey: ["rekon-omspan-update-info"] });
 
-      toast.success(`Sinkronisasi berhasil — Data OMSPAN ${selectedYear} berhasil diperbarui`);
+      toast.success(`Sinkronisasi berhasil — Data OMSPAN ${selectedYear} telah diperbarui`);
     } catch (err: any) {
       toast.error(`Gagal sinkronisasi: ${err.message}`);
     } finally {
@@ -260,55 +240,63 @@ export function RekonsiliasiDataTab({}: RekonsiliasiDataTabProps) {
   const columns = [
     {
       accessorKey: "no",
-      header: ({ column }: any) => <div className="text-center font-medium">No</div>,
-      cell: ({ row }: any) => <div className="text-center">{row.getValue("no")}</div>,
+      header: () => <div className="text-center font-semibold text-xs">No</div>,
+      cell: ({ row }: any) => (
+        <div className="text-center text-xs tabular-nums text-muted-foreground">{row.getValue("no")}</div>
+      ),
     },
     {
       accessorKey: "thang",
-      header: ({ column }: any) => <div className="text-center font-medium">TA</div>,
-      cell: ({ row }: any) => <div className="text-center">{row.getValue("thang")}</div>,
+      header: () => <div className="text-center font-semibold text-xs">TA</div>,
+      cell: ({ row }: any) => (
+        <div className="text-center text-xs font-medium">{row.getValue("thang")}</div>
+      ),
     },
     {
       accessorKey: "nmbulan",
-      header: ({ column }: any) => <div className="text-center font-medium">Bulan</div>,
-      cell: ({ row }: any) => <div className="text-center">{row.getValue("nmbulan")}</div>,
+      header: () => <div className="text-center font-semibold text-xs">Bulan</div>,
+      cell: ({ row }: any) => (
+        <div className="text-center text-xs">{row.getValue("nmbulan")}</div>
+      ),
     },
     {
       accessorKey: "nmkppn",
-      header: ({ column }: any) => <div className="text-center font-medium">KPPN</div>,
+      header: () => <div className="text-center font-semibold text-xs">KPPN</div>,
       cell: ({ row }: any) => (
-        <div className="text-center max-w-[160px] truncate mx-auto" title={row.getValue("nmkppn")}>
-          {row.original.nmkppn} - {row.original.kdkppn}
+        <div className="text-xs max-w-[160px] truncate" title={row.getValue("nmkppn")}>
+          <span className="font-medium">{row.original.kdkppn}</span>
+          <span className="text-muted-foreground"> - {row.original.nmkppn}</span>
         </div>
       ),
     },
     {
       accessorKey: "nmpemda",
-      header: ({ column }: any) => <div className="text-center font-medium">Kab/Kota</div>,
+      header: () => <div className="text-center font-semibold text-xs">Kab/Kota</div>,
       cell: ({ row }: any) => (
-        <div className="text-center max-w-[160px] truncate mx-auto" title={row.getValue("nmpemda")}>
-          {row.original.nmpemda} - {row.original.kdpemda}
+        <div className="text-xs max-w-[180px] truncate" title={row.getValue("nmpemda")}>
+          <span className="font-medium">{row.original.kdpemda}</span>
+          <span className="text-muted-foreground"> - {row.original.nmpemda}</span>
         </div>
       ),
     },
     {
       accessorKey: "beda",
-      header: ({ column }: any) => <div className="text-center font-medium">Status</div>,
+      header: () => <div className="text-center font-semibold text-xs">Status</div>,
       cell: ({ row }: any) => {
         const beda = row.getValue("beda");
         return (
           <div className="flex justify-center">
             <button
               onClick={() => handleOpenDetail(row.original as RekonRow)}
-              className="cursor-pointer"
+              className="cursor-pointer focus:outline-none"
               title="Lihat Detail Rekon"
             >
               {beda ? (
-                <Badge variant="destructive" className="gap-1">
+                <Badge variant="destructive" className="gap-1 text-xs px-2 py-0.5">
                   <span>⚠</span> Berbeda
                 </Badge>
               ) : (
-                <Badge variant="default" className="gap-1 bg-emerald-600 hover:bg-emerald-700">
+                <Badge className="gap-1 text-xs px-2 py-0.5 bg-emerald-600 hover:bg-emerald-700 text-white">
                   <span>✓</span> Sama
                 </Badge>
               )}
@@ -320,58 +308,70 @@ export function RekonsiliasiDataTab({}: RekonsiliasiDataTabProps) {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Filter Card */}
-      <Card>
-        <CardHeader>
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle>Filter Data Rekonsilisasi</CardTitle>
+            <div className="flex items-center gap-2">
+              <DatabaseZap className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-semibold">Filter Rekonsilisasi DAU</CardTitle>
+            </div>
             <ResetButton onReset={handleReset} />
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-            {/* Tahun */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Tahun Anggaran</label>
+
+        <Separator />
+
+        <CardContent className="pt-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {/* Tahun Anggaran */}
+            <div className="space-y-1.5">
+              <Label htmlFor="rekon-year" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Tahun Anggaran
+              </Label>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="rekon-year" className="h-8 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {years.map((y) => (
-                    <SelectItem key={y} value={y}>{y}</SelectItem>
+                    <SelectItem key={y} value={y} className="text-xs">{y}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
             {/* Bulan */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Bulan</label>
+            <div className="space-y-1.5">
+              <Label htmlFor="rekon-month" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Bulan
+              </Label>
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="rekon-month" className="h-8 text-xs">
                   <SelectValue placeholder="Pilih bulan" />
                 </SelectTrigger>
                 <SelectContent>
                   {months.map((m) => (
-                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                    <SelectItem key={m.value} value={m.value} className="text-xs">{m.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
             {/* KPPN */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">KPPN</label>
+            <div className="space-y-1.5">
+              <Label htmlFor="rekon-kppn" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                KPPN
+              </Label>
               <Select value={selectedKppn} onValueChange={setSelectedKppn}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih KPPN" />
+                <SelectTrigger id="rekon-kppn" className="h-8 text-xs">
+                  <SelectValue placeholder="Semua KPPN" />
                 </SelectTrigger>
                 <SelectContent>
                   {uniqueKppn.map((k) => (
-                    <SelectItem key={k.kdkppn} value={k.kdkppn} title={`${k.kdkppn} - ${k.nmkppn}`}>
-                      <span className="truncate">{k.kdkppn} - {k.nmkppn}</span>
+                    <SelectItem key={k.kdkppn} value={k.kdkppn} className="text-xs">
+                      {k.kdkppn} - {k.nmkppn}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -379,16 +379,18 @@ export function RekonsiliasiDataTab({}: RekonsiliasiDataTabProps) {
             </div>
 
             {/* Kab/Kota */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Kab/Kota</label>
+            <div className="space-y-1.5">
+              <Label htmlFor="rekon-kabkota" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Kab/Kota
+              </Label>
               <Select value={selectedKabKota} onValueChange={setSelectedKabKota} disabled={!selectedKppn}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={selectedKppn ? "Pilih Kab/Kota" : "Pilih KPPN dulu"} />
+                <SelectTrigger id="rekon-kabkota" className="h-8 text-xs">
+                  <SelectValue placeholder={selectedKppn ? "Semua Kab/Kota" : "Pilih KPPN dulu"} />
                 </SelectTrigger>
                 <SelectContent>
                   {filteredKabKotaOptions.map((loc) => (
-                    <SelectItem key={loc.kdkabkota} value={loc.kdkabkota} title={`${loc.kdkabkota} - ${loc.nmkabkota}`}>
-                      <span className="truncate">{loc.kdkabkota} - {loc.nmkabkota}</span>
+                    <SelectItem key={loc.kdkabkota} value={loc.kdkabkota} className="text-xs">
+                      {loc.kdkabkota} - {loc.nmkabkota}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -396,39 +398,47 @@ export function RekonsiliasiDataTab({}: RekonsiliasiDataTabProps) {
             </div>
 
             {/* Status */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Status</label>
+            <div className="space-y-1.5">
+              <Label htmlFor="rekon-status" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Status
+              </Label>
               <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Semua Data" />
+                <SelectTrigger id="rekon-status" className="h-8 text-xs">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                <SelectItem value="all">Semua Data</SelectItem>
-                  <SelectItem value="00">Data Sama</SelectItem>
-                  <SelectItem value="01">Data Berbeda</SelectItem>
+                  <SelectItem value="all" className="text-xs">Semua Data</SelectItem>
+                  <SelectItem value="00" className="text-xs">Data Sama</SelectItem>
+                  <SelectItem value="01" className="text-xs">Data Berbeda</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Sync button */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Ambil Data OMSPAN</label>
+            {/* Sync */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Sinkronisasi OMSPAN
+              </Label>
               <Button
                 variant="outline"
-                className="w-full gap-2"
+                size="sm"
+                className="w-full h-8 gap-1.5 text-xs border-amber-400/60 text-amber-700 hover:bg-amber-50 hover:border-amber-500 dark:text-amber-400 dark:hover:bg-amber-950/30"
                 onClick={handleSync}
                 disabled={isSyncing}
                 title={updateInfo ? `Update terakhir: ${updateInfo}` : "Klik untuk ambil data OMSPAN"}
               >
                 {isSyncing ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <RefreshCw className="h-4 w-4 text-red-500" />
+                  <RefreshCw className="h-3.5 w-3.5" />
                 )}
                 {isSyncing ? "Mengambil..." : "Sinkronisasi"}
               </Button>
               {updateInfo && (
-                <p className="text-xs text-muted-foreground italic">(update {updateInfo})</p>
+                <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                  <Clock className="h-2.5 w-2.5 shrink-0" />
+                  {updateInfo}
+                </p>
               )}
             </div>
           </div>
@@ -436,18 +446,31 @@ export function RekonsiliasiDataTab({}: RekonsiliasiDataTabProps) {
       </Card>
 
       {/* Data Table Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Data Rekonsilisasi DAU</CardTitle>
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-semibold">Data Rekonsilisasi DAU</CardTitle>
+            {rekonData && (
+              <span className="text-xs text-muted-foreground">
+                {rekonData.length.toLocaleString("id-ID")} baris
+              </span>
+            )}
+          </div>
         </CardHeader>
-        <CardContent>
+
+        <Separator />
+
+        <CardContent className="pt-4">
           {isLoading && (
-            <div className="text-sm text-muted-foreground mb-2 flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" /> Memuat data...
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <span>Memuat data...</span>
             </div>
           )}
           {error ? (
-            <div className="text-sm text-red-600">{String((error as Error).message || error)}</div>
+            <div className="rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3 text-xs text-destructive">
+              {String((error as Error).message || error)}
+            </div>
           ) : (
             <DataTable columns={columns} data={rows} />
           )}
