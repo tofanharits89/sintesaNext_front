@@ -1,10 +1,14 @@
-import { AuthGuard } from "@/components/auth/AuthGuard";
+import { Suspense } from "react";
+import { GenericCardSkeleton } from "@/components/ui/dashboard-skeletons";
 
-export default async function ProfileLayout({
+export default function ProfileLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Server-side AuthGuard will redirect to /login when unauthenticated
-  return <AuthGuard>{children}</AuthGuard>;
+  return (
+    <Suspense fallback={<GenericCardSkeleton showHeader contentLines={10} />}>
+      {children}
+    </Suspense>
+  );
 }

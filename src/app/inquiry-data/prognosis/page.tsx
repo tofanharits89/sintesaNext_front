@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Info, Settings, Keyboard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,31 +14,56 @@ import { PrognosisChart } from "@/components/prognosis/chart-proyeksi";
 import { PrognosisAIAnalysis } from "@/components/prognosis/ai-analysis";
 import { PrognosisTableDetail } from "@/components/prognosis/table-detail";
 import { PrognosisSQLModal } from "@/components/prognosis/sql-modal";
+import { levelOptions } from "@/components/prognosis/shared";
 
 export default function PrognosisPage() {
   const { user } = useAuth();
   const role = user?.role;
+  const kdkanwil = user?.kdkanwil;
+  const kdkppn = user?.kdkppn;
   const currentYear = new Date().getFullYear();
-  const tahunProyeksi = 2026;
+  const tahunProyeksi = currentYear;
+
+  // --- Role helpers ---
+  const isKanwilKppn = role === "kanwil_djpb" || role === "kppn";
 
   // --- State Management ---
 
+  // Level
+  const defaultLevel = isKanwilKppn ? "3" : "1";
+  const [level, setLevel] = useState(defaultLevel);
+
   // Filter States
   const [jenisLaporan, setJenisLaporan] = useState("1");
-  const [selectedKddept, setSelectedKddept] = useState("");
-  const [selectedJenisBelanja, setSelectedJenisBelanja] = useState("all");
+  const [selectedKddept, setSelectedKddept] = useState(""); // untuk level 1 & 2: ID utama; level 3: kdsatker
+  const [selectedKementerian, setSelectedKementerian] = useState(""); // level 2 & 3: kddept
+  const [selectedUnit, setSelectedUnit] = useState(""); // level 3: kdunit
+  const [selectedJenisBelanja, setSelectedJenisBelanja] = useState("");
   const [selectedBaseline, setSelectedBaseline] = useState("");
-  const [selectedMetode, setSelectedMetode] = useState("xgboost");
+  const [selectedMetode, setSelectedMetode] = useState("arima");
   const [selectedTargetProyeksi, setSelectedTargetProyeksi] = useState("12");
 
   // Options States
   const [kementerianOptions, setKementerianOptions] = useState<any[]>([]);
-  const [jenisBelanjaOptions, setJenisBelanjaOptions] = useState<any[]>([]);
+  const [kementerianLevel3Options, setKementerianLevel3Options] = useState<
+    any[]
+  >([]);
+  const [jenisBelanjaOptions, setJenisBelanjaOptions] = useState<any[]>([
+    { label: "Semua Jenis Belanja", value: "" },
+  ]);
   const [baselineOptions, setBaselineOptions] = useState<any[]>([]);
+  const [unitOptions, setUnitOptions] = useState<any[]>([]);
+  const [satkerOptions, setSatkerOptions] = useState<any[]>([]);
+  const [targetOptions, setTargetOptions] = useState<
+    { label: number; value: number }[]
+  >([]);
 
   // UI States
   const [loading, setLoading] = useState(false);
   const [loadingResults, setLoadingResults] = useState(false);
+  const [loadingJenisBelanja, setLoadingJenisBelanja] = useState(false);
+  const [loadingBaseline, setLoadingBaseline] = useState(false);
+  const [loadingSatker, setLoadingSatker] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [showModalSQL, setShowModalSQL] = useState(false);
   const [sqlQuery, setSqlQuery] = useState("");
@@ -54,62 +79,66 @@ export default function PrognosisPage() {
   // Chart zoom state
   const [selectedZoomYear, setSelectedZoomYear] = useState<number | null>(null);
 
+  // --- Computed ---
+
+  // Filter level options berdasarkan role
+  const filteredLevelOptions = useMemo(() => {
+    if (isKanwilKppn) return levelOptions.filter((o) => o.value === "3");
+    return levelOptions;
+  }, [isKanwilKppn]);
+
   // --- Effects ---
 
+  // Target options berdasarkan jenis laporan
   useEffect(() => {
-    const fetchOptions = async () => {
-      try {
-        setLoading(true);
-        const depts = await apiClient.get("/prognosis/getKementerian");
-        setKementerianOptions(depts || []);
+    if (jenisLaporan === "1") {
+      setTargetOptions(
+        Array.from({ length: 12 }, (_, i) => ({ label: i + 1, value: i + 1 })),
+      );
+    } else {
+      setTargetOptions(
+        Array.from({ length: 3 }, (_, i) => ({ label: i + 1, value: i + 1 })),
+      );
+    }
+  }, [jenisLaporan]);
 
-        const belanjas = await apiClient.get("/prognosis/getJenisBelanja");
-        setJenisBelanjaOptions(belanjas || []);
-
-        const baselines = [];
-        // Tahun dimulai dari 2009 hingga tahun berjalan
-        for (let y = 2009; y <= currentYear; y++) {
-          baselines.push({ label: y.toString(), value: y.toString() });
-        }
-        setBaselineOptions(baselines);
-
-        if (depts?.length > 0) setSelectedKddept(depts[0].value);
-        setSelectedBaseline((currentYear - 3).toString());
-      } catch (error) {
-        console.error("Failed to fetch options", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchOptions();
-  }, [currentYear]);
-
-  // Fetch jenis belanja ketika kementerian berubah
+  // Set default level untuk kanwil/kppn
   useEffect(() => {
-    const fetchJenisBelanjaByKddept = async () => {
-      if (selectedKddept) {
-        try {
-          const belanjas = await apiClient.get(
-            `/prognosis/getJenisBelanja?kddept=${selectedKddept}`,
-          );
-          setJenisBelanjaOptions(belanjas || []);
-          // Reset pilihan jenis belanja ke "all" ketika kementerian berubah
-          setSelectedJenisBelanja("all");
-        } catch (error) {
-          console.error("Failed to fetch jenis belanja for kddept", error);
-        }
-      }
-    };
-    fetchJenisBelanjaByKddept();
-  }, [selectedKddept]);
+    if (isKanwilKppn && level !== "3") setLevel("3");
+  }, [isKanwilKppn]);
 
-  // Ambil pagu tahun proyeksi (2026) untuk pengali nominal proyeksi
+  // Reset state ketika level berubah
   useEffect(() => {
-    const fetchPagu2026 = async () => {
-      if (!selectedKddept) return;
+    setSelectedKddept("");
+    setSelectedKementerian("");
+    setSelectedUnit("");
+    setSelectedJenisBelanja("");
+    setSelectedBaseline("");
+    setUnitOptions([]);
+    setSatkerOptions([]);
+    setTableData([]);
+    setChartData([]);
+    setPredictionData(null);
+    setShowResults(false);
+
+    if (level === "1") {
+      fetchKementerianData();
+    } else if (level === "2") {
+      fetchKementerianData();
+    } else if (level === "3") {
+      fetchKementerianForLevel3();
+    }
+  }, [level]);
+
+  // Fetch pagu tahun proyeksi
+  useEffect(() => {
+    const fetchPagu = async () => {
+      const kddeptForPagu =
+        level === "3" ? selectedKementerian : selectedKddept;
+      if (!kddeptForPagu) return;
       try {
         const params = new URLSearchParams({
-          kddept: selectedKddept,
+          kddept: kddeptForPagu,
           tahun: String(tahunProyeksi),
           jenbel: selectedJenisBelanja || "all",
         });
@@ -118,22 +147,369 @@ export default function PrognosisPage() {
         );
         const pagu = Number((res as any)?.pagu ?? 0);
         setPagu2026(Number.isFinite(pagu) ? pagu : 0);
-      } catch (error) {
-        console.error("Failed to fetch pagu 2026", error);
+      } catch {
         setPagu2026(0);
       }
     };
-    fetchPagu2026();
-  }, [selectedKddept, selectedJenisBelanja, tahunProyeksi]);
+    fetchPagu();
+  }, [
+    selectedKddept,
+    selectedKementerian,
+    selectedJenisBelanja,
+    tahunProyeksi,
+    level,
+  ]);
+
+  // Fetch jenis belanja ketika kementerian berubah (Level 1 & 2)
+  useEffect(() => {
+    if (level === "3") return; // Level 3 ditangani via onKementerianChange / onUnitChange / onSatkerChange
+    // Level 1: kddept key = selectedKddept (kementerian code)
+    // Level 2: kddept key = selectedKementerian (kementerian code), selectedKddept holds unit code
+    const kddeptKey = level === "2" ? selectedKementerian : selectedKddept;
+    if (kddeptKey) {
+      fetchJenisBelanjaData(kddeptKey);
+      fetchBaselineData(kddeptKey);
+      setSelectedJenisBelanja("");
+    } else {
+      setJenisBelanjaOptions([{ label: "Semua Jenis Belanja", value: "" }]);
+      setBaselineOptions([]);
+    }
+  }, [selectedKddept, selectedKementerian, level]);
+
+  // --- Data Fetch Functions ---
+
+  const fetchKementerianData = async () => {
+    try {
+      setLoading(true);
+      const depts = await apiClient.get("/prognosis/getKementerian");
+      const opts = Array.isArray(depts) ? depts : [];
+      setKementerianOptions(opts);
+    } catch (e) {
+      console.error("Failed to fetch kementerian", e);
+      setKementerianOptions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchKementerianForLevel3 = async () => {
+    try {
+      setLoading(true);
+      const pembulatan = 1;
+      let query = "";
+      if (isKanwilKppn) {
+        let roleFilter = "";
+        if (role === "kppn") {
+          if (kdkanwil) roleFilter += ` AND h.kdkanwil = '${kdkanwil}'`;
+          if (kdkppn) roleFilter += ` AND h.kdkppn = '${kdkppn}'`;
+        } else if (role === "kanwil_djpb") {
+          if (kdkanwil) roleFilter += ` AND h.kdkanwil = '${kdkanwil}'`;
+        }
+        query = `SELECT h.kddept, MAX(m.nmdept) AS nmdept FROM prognosis.histori_satker_bulanan h LEFT JOIN prognosis.mapping_ba_long m ON h.kddept = m.kddept WHERE h.kddept IS NOT NULL${roleFilter} GROUP BY h.kddept ORDER BY h.kddept`;
+      } else {
+        query = `SELECT kddept, MAX(nmdept) AS nmdept FROM prognosis.mapping_ba_long WHERE kddept IS NOT NULL AND nmdept IS NOT NULL AND TRIM(nmdept) != '' GROUP BY kddept ORDER BY kddept`;
+      }
+      const response = await apiClient.post("/prognosis/getDataKinerja", {
+        queryParams: query,
+      });
+      const data = Array.isArray(response)
+        ? response
+        : ((response as any)?.data ?? []);
+      setKementerianLevel3Options(
+        data.map((item: any) => ({
+          label: `${item.kddept} - ${item.nmdept || ""}`,
+          value: item.kddept,
+        })),
+      );
+    } catch (e) {
+      console.error("Failed to fetch kementerian level 3", e);
+      setKementerianLevel3Options([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUnitData = async (kddept: string) => {
+    if (!kddept) {
+      setUnitOptions([]);
+      return;
+    }
+    try {
+      setLoading(true);
+      const res = await apiClient.get(`/prognosis/uniteselon?kddept=${kddept}`);
+      const data = Array.isArray(res) ? res : ((res as any)?.data ?? []);
+      setUnitOptions(
+        data.map((item: any) => ({
+          label: `${item.kdunit} - ${item.nmunit || ""}`,
+          value: item.kdunit,
+        })),
+      );
+    } catch {
+      setUnitOptions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUnitForLevel3 = async (kddept: string) => {
+    if (!kddept) {
+      setUnitOptions([]);
+      return;
+    }
+    try {
+      setLoading(true);
+      let roleFilter = "";
+      if (role === "kppn") {
+        if (kdkanwil) roleFilter += ` AND a.kdkanwil = '${kdkanwil}'`;
+        if (kdkppn) roleFilter += ` AND a.kdkppn = '${kdkppn}'`;
+      } else if (role === "kanwil_djpb") {
+        if (kdkanwil) roleFilter += ` AND a.kdkanwil = '${kdkanwil}'`;
+      }
+      const query = `SELECT a.kdunit, MAX(b.nmunit) as nmunit FROM prognosis.histori_satker_bulanan a LEFT JOIN dbref.t_unit_2025 b ON a.kddept = b.kddept AND a.kdunit = b.kdunit WHERE a.kddept = '${kddept}' AND a.kdunit IS NOT NULL${roleFilter} GROUP BY a.kdunit ORDER BY a.kdunit`;
+      const response = await apiClient.post("/prognosis/getDataKinerja", {
+        queryParams: query,
+      });
+      const data = Array.isArray(response)
+        ? response
+        : ((response as any)?.data ?? []);
+      setUnitOptions(
+        data.map((item: any) => ({
+          label: `${item.kdunit} - ${item.nmunit || ""}`,
+          value: item.kdunit,
+        })),
+      );
+    } catch {
+      setUnitOptions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSatkerData = async (kddept: string, kdunit: string) => {
+    if (!kddept || !kdunit) {
+      setSatkerOptions([]);
+      return;
+    }
+    try {
+      setLoadingSatker(true);
+      let queryParams = `kddept=${kddept}&kdunit=${kdunit}`;
+      if (role === "kppn") {
+        if (kdkanwil) queryParams += `&kdkanwil=${kdkanwil}`;
+        if (kdkppn) queryParams += `&kdkppn=${kdkppn}`;
+      } else if (role === "kanwil_djpb") {
+        if (kdkanwil) queryParams += `&kdkanwil=${kdkanwil}`;
+      }
+      const res = await apiClient.get(`/prognosis/satker?${queryParams}`);
+      const data = Array.isArray(res) ? res : ((res as any)?.data ?? []);
+      setSatkerOptions(
+        data.map((item: any) => ({
+          label: `${item.kdsatker} - ${item.nmsatker || ""}`,
+          value: item.kdsatker,
+        })),
+      );
+    } catch {
+      setSatkerOptions([]);
+    } finally {
+      setLoadingSatker(false);
+    }
+  };
+
+  const fetchJenisBelanjaData = async (kddept: string) => {
+    try {
+      setLoadingJenisBelanja(true);
+      const belanjas = await apiClient.get(
+        `/prognosis/getJenisBelanja?kddept=${kddept}`,
+      );
+      const data = Array.isArray(belanjas) ? belanjas : [];
+      setJenisBelanjaOptions([
+        { label: "Semua Jenis Belanja", value: "" },
+        ...data,
+      ]);
+    } catch {
+      setJenisBelanjaOptions([{ label: "Semua Jenis Belanja", value: "" }]);
+    } finally {
+      setLoadingJenisBelanja(false);
+    }
+  };
+
+  const fetchJenisBelanjaForLevel3 = async (
+    kddept: string,
+    kdunit: string | null,
+    kdsatker: string | null,
+  ) => {
+    try {
+      setLoadingJenisBelanja(true);
+      const tableName = "prognosis.histori_satker_bulanan";
+      let whereClause = `kddept = '${kddept}'`;
+      if (kdunit) whereClause += ` AND kdunit = '${kdunit}'`;
+      if (kdsatker) whereClause += ` AND kdsatker = '${kdsatker}'`;
+      if (role === "kppn") {
+        if (kdkanwil) whereClause += ` AND kdkanwil = '${kdkanwil}'`;
+        if (kdkppn) whereClause += ` AND kdkppn = '${kdkppn}'`;
+      } else if (role === "kanwil_djpb") {
+        if (kdkanwil) whereClause += ` AND kdkanwil = '${kdkanwil}'`;
+      }
+      const jbQuery = `SELECT DISTINCT jenbel FROM ${tableName} WHERE jenbel IS NOT NULL AND ${whereClause} ORDER BY jenbel`;
+      const response = await apiClient.post("/prognosis/getDataKinerja", {
+        queryParams: jbQuery,
+      });
+      const data = Array.isArray(response)
+        ? response
+        : ((response as any)?.data ?? []);
+      setJenisBelanjaOptions([
+        { label: "Semua Jenis Belanja", value: "" },
+        ...data.map((item: any) => ({
+          label: item.jenbel,
+          value: item.jenbel,
+        })),
+      ]);
+
+      // Fetch baseline juga
+      await fetchBaselineForLevel3(kddept, kdunit, kdsatker, whereClause);
+    } catch {
+      setJenisBelanjaOptions([{ label: "Semua Jenis Belanja", value: "" }]);
+    } finally {
+      setLoadingJenisBelanja(false);
+    }
+  };
+
+  const fetchBaselineData = async (kddept: string) => {
+    try {
+      setLoadingBaseline(true);
+      const baselines: { label: string; value: number }[] = [];
+      for (let y = 2009; y <= currentYear; y++) {
+        baselines.push({ label: y.toString(), value: y });
+      }
+      setBaselineOptions(baselines);
+      setSelectedBaseline((currentYear - 3).toString());
+    } catch {
+      setBaselineOptions([]);
+    } finally {
+      setLoadingBaseline(false);
+    }
+  };
+
+  const fetchBaselineForLevel3 = async (
+    kddept: string,
+    kdunit: string | null,
+    kdsatker: string | null,
+    whereClause: string,
+  ) => {
+    try {
+      setLoadingBaseline(true);
+      if (kdsatker) {
+        // Satker spesifik: query DB
+        const blQuery = `SELECT DISTINCT tahun FROM prognosis.histori_satker_bulanan WHERE ${whereClause} ORDER BY tahun`;
+        const blResponse = await apiClient.post("/prognosis/getDataKinerja", {
+          queryParams: blQuery,
+        });
+        const blData = Array.isArray(blResponse)
+          ? blResponse
+          : ((blResponse as any)?.data ?? []);
+        setBaselineOptions(
+          blData.map((item: any) => ({
+            label: item.tahun.toString(),
+            value: item.tahun,
+          })),
+        );
+        if (blData.length > 0) setSelectedBaseline(blData[0].tahun.toString());
+      } else {
+        // Aggregate: generate 2017 s/d sekarang
+        const years: { label: string; value: number }[] = [];
+        for (let y = 2017; y <= currentYear; y++)
+          years.push({ label: y.toString(), value: y });
+        setBaselineOptions(years);
+        setSelectedBaseline((currentYear - 3).toString());
+      }
+    } catch {
+      setBaselineOptions([]);
+    } finally {
+      setLoadingBaseline(false);
+    }
+  };
+
+  // --- Event Handlers (level-aware kementerian/unit/satker changes) ---
+
+  const handleKementerianChange = (val: string) => {
+    if (level === "1") {
+      setSelectedKddept(val);
+    } else if (level === "2") {
+      setSelectedKementerian(val);
+      setSelectedKddept("");
+      setUnitOptions([]);
+      if (val) fetchUnitData(val);
+    } else if (level === "3") {
+      setSelectedKementerian(val);
+      setSelectedUnit("");
+      setSelectedKddept("");
+      setUnitOptions([]);
+      setSatkerOptions([]);
+      setSelectedJenisBelanja("");
+      setSelectedBaseline("");
+      if (val) {
+        fetchUnitForLevel3(val);
+        fetchJenisBelanjaForLevel3(val, null, null);
+      }
+    }
+  };
+
+  const handleUnitChange = (val: string) => {
+    if (level === "2") {
+      setSelectedKddept(val);
+    } else if (level === "3") {
+      setSelectedUnit(val);
+      setSelectedKddept("");
+      setSatkerOptions([]);
+      setSelectedJenisBelanja("");
+      setSelectedBaseline("");
+      if (val && selectedKementerian) {
+        fetchSatkerData(selectedKementerian, val);
+        fetchJenisBelanjaForLevel3(selectedKementerian, val, null);
+      } else if (selectedKementerian) {
+        fetchJenisBelanjaForLevel3(selectedKementerian, null, null);
+      }
+    }
+  };
+
+  const handleSatkerChange = (val: string) => {
+    setSelectedKddept(val);
+    setSelectedJenisBelanja("");
+    setSelectedBaseline("");
+    if (selectedKementerian) {
+      fetchJenisBelanjaForLevel3(
+        selectedKementerian,
+        selectedUnit || null,
+        val || null,
+      );
+    }
+  };
 
   // --- Handlers ---
 
   const handleTayang = async () => {
-    if (!selectedKddept || !selectedBaseline) {
+    // Validasi
+    if (level === "3") {
+      if (!selectedKementerian) {
+        Swal.fire({
+          icon: "warning",
+          title: "Pilih Kementerian",
+          text: "Silakan pilih Kementerian/Lembaga terlebih dahulu",
+        });
+        return;
+      }
+    } else if (!selectedKddept) {
       Swal.fire({
         icon: "warning",
-        title: "Parameter Tidak Lengkap",
-        text: "Silakan pilih Kementerian dan Baseline terlebih dahulu",
+        title: "Pilih Kementerian",
+        text: "Silakan pilih Kementerian/Lembaga terlebih dahulu",
+      });
+      return;
+    }
+    if (!selectedBaseline) {
+      Swal.fire({
+        icon: "warning",
+        title: "Pilih Tahun Baseline",
+        text: "Silakan pilih Tahun Baseline terlebih dahulu",
       });
       return;
     }
@@ -143,13 +519,10 @@ export default function PrognosisPage() {
       setShowResults(false);
 
       const historical = await fetchHistoricalData();
-      // console.log("[handleTayang] Historical data fetched:", historical);
-
       if (historical && historical.length > 0) {
         await fetchPredictionData(historical);
         setShowResults(true);
       } else {
-        console.warn("[handleTayang] No historical data returned");
         Swal.fire({
           icon: "warning",
           title: "Data Historis Kosong",
@@ -158,14 +531,13 @@ export default function PrognosisPage() {
       }
     } catch (error) {
       console.error("[handleTayang] Error:", error);
-      const errorMsg =
-        error instanceof Error
-          ? error.message
-          : "Gagal memproses data prognosis";
       Swal.fire({
         icon: "error",
         title: "Kesalahan",
-        text: errorMsg,
+        text:
+          error instanceof Error
+            ? error.message
+            : "Gagal memproses data prognosis",
       });
     } finally {
       setLoadingResults(false);
@@ -175,38 +547,172 @@ export default function PrognosisPage() {
   const fetchHistoricalData = async () => {
     const pembulatan = 1;
     let query = "";
+    const startYear =
+      (level === "2" || level === "3") && parseInt(selectedBaseline) < 2017
+        ? 2017
+        : parseInt(selectedBaseline);
+    // tahun column is character varying — cast to integer for numeric comparison
+    const tahunFilter = `tahun::integer >= ${startYear} AND tahun::integer <= ${currentYear}`;
 
     if (jenisLaporan === "1") {
+      // COALESCE wraps every realN so NULL columns don't null-out the whole SUM.
+      // Without it, SUM(real1 + real2 + NULL) = NULL and months after the last
+      // loaded month are silently dropped from the chart.
       const realbulananakumulatif = `
-                , ROUND(SUM(real1)/${pembulatan}, 0) AS JAN
-                , ROUND(SUM(real1 + real2)/${pembulatan}, 0) AS FEB
-                , ROUND(SUM(real1 + real2 + real3)/${pembulatan}, 0) AS MAR
-                , ROUND(SUM(real1 + real2 + real3 + real4)/${pembulatan}, 0) AS APR
-                , ROUND(SUM(real1 + real2 + real3 + real4 + real5)/${pembulatan}, 0) AS MEI
-                , ROUND(SUM(real1 + real2 + real3 + real4 + real5 + real6)/${pembulatan}, 0) AS JUN
-                , ROUND(SUM(real1 + real2 + real3 + real4 + real5 + real6 + real7)/${pembulatan}, 0) AS JUL
-                , ROUND(SUM(real1 + real2 + real3 + real4 + real5 + real6 + real7 + real8)/${pembulatan}, 0) AS AGS
-                , ROUND(SUM(real1 + real2 + real3 + real4 + real5 + real6 + real7 + real8 + real9)/${pembulatan}, 0) AS SEP
-                , ROUND(SUM(real1 + real2 + real3 + real4 + real5 + real6 + real7 + real8 + real9 + real10)/${pembulatan}, 0) AS OKT
-                , ROUND(SUM(real1 + real2 + real3 + real4 + real5 + real6 + real7 + real8 + real9 + real10 + real11)/${pembulatan}, 0) AS NOV
-                , ROUND(SUM(real1 + real2 + real3 + real4 + real5 + real6 + real7 + real8 + real9 + real10 + real11 + real12)/${pembulatan}, 0) AS DES
-            `;
+        , ROUND(SUM(COALESCE(real1,0))/${pembulatan}, 0) AS JAN
+        , ROUND(SUM(COALESCE(real1,0) + COALESCE(real2,0))/${pembulatan}, 0) AS FEB
+        , ROUND(SUM(COALESCE(real1,0) + COALESCE(real2,0) + COALESCE(real3,0))/${pembulatan}, 0) AS MAR
+        , ROUND(SUM(COALESCE(real1,0) + COALESCE(real2,0) + COALESCE(real3,0) + COALESCE(real4,0))/${pembulatan}, 0) AS APR
+        , ROUND(SUM(COALESCE(real1,0) + COALESCE(real2,0) + COALESCE(real3,0) + COALESCE(real4,0) + COALESCE(real5,0))/${pembulatan}, 0) AS MEI
+        , ROUND(SUM(COALESCE(real1,0) + COALESCE(real2,0) + COALESCE(real3,0) + COALESCE(real4,0) + COALESCE(real5,0) + COALESCE(real6,0))/${pembulatan}, 0) AS JUN
+        , ROUND(SUM(COALESCE(real1,0) + COALESCE(real2,0) + COALESCE(real3,0) + COALESCE(real4,0) + COALESCE(real5,0) + COALESCE(real6,0) + COALESCE(real7,0))/${pembulatan}, 0) AS JUL
+        , ROUND(SUM(COALESCE(real1,0) + COALESCE(real2,0) + COALESCE(real3,0) + COALESCE(real4,0) + COALESCE(real5,0) + COALESCE(real6,0) + COALESCE(real7,0) + COALESCE(real8,0))/${pembulatan}, 0) AS AGS
+        , ROUND(SUM(COALESCE(real1,0) + COALESCE(real2,0) + COALESCE(real3,0) + COALESCE(real4,0) + COALESCE(real5,0) + COALESCE(real6,0) + COALESCE(real7,0) + COALESCE(real8,0) + COALESCE(real9,0))/${pembulatan}, 0) AS SEP
+        , ROUND(SUM(COALESCE(real1,0) + COALESCE(real2,0) + COALESCE(real3,0) + COALESCE(real4,0) + COALESCE(real5,0) + COALESCE(real6,0) + COALESCE(real7,0) + COALESCE(real8,0) + COALESCE(real9,0) + COALESCE(real10,0))/${pembulatan}, 0) AS OKT
+        , ROUND(SUM(COALESCE(real1,0) + COALESCE(real2,0) + COALESCE(real3,0) + COALESCE(real4,0) + COALESCE(real5,0) + COALESCE(real6,0) + COALESCE(real7,0) + COALESCE(real8,0) + COALESCE(real9,0) + COALESCE(real10,0) + COALESCE(real11,0))/${pembulatan}, 0) AS NOV
+        , ROUND(SUM(COALESCE(real1,0) + COALESCE(real2,0) + COALESCE(real3,0) + COALESCE(real4,0) + COALESCE(real5,0) + COALESCE(real6,0) + COALESCE(real7,0) + COALESCE(real8,0) + COALESCE(real9,0) + COALESCE(real10,0) + COALESCE(real11,0) + COALESCE(real12,0))/${pembulatan}, 0) AS DES`;
 
-      const actualJenbel =
-        selectedJenisBelanja === "all" ? "" : selectedJenisBelanja;
-      query = `SELECT kddept, nmdept, '${
-        actualJenbel || "Semua Jenis Belanja"
-      }' as jenbel, tahun, ROUND(SUM(pagu)/${pembulatan}, 0) as pagu ${realbulananakumulatif} FROM prognosis.mapping_ba_long WHERE kddept = '${selectedKddept}' AND tahun >= '${selectedBaseline}' AND tahun <= '${currentYear}'`;
-      if (actualJenbel) query += ` AND jenbel = '${actualJenbel}'`;
-      query += ` GROUP BY kddept, nmdept, tahun ORDER BY tahun`;
+      if (level === "3") {
+        const tableName = "prognosis.histori_satker_bulanan";
+        let roleFilter = "";
+        if (role === "kppn") {
+          if (kdkanwil) roleFilter += ` AND kdkanwil = '${kdkanwil}'`;
+          if (kdkppn) roleFilter += ` AND kdkppn = '${kdkppn}'`;
+        } else if (role === "kanwil_djpb") {
+          if (kdkanwil) roleFilter += ` AND kdkanwil = '${kdkanwil}'`;
+        }
+
+        if (selectedKddept) {
+          // Case 3: satker spesifik
+          query = `SELECT kdsatker as kddept, nmsatker as nmdept, '${selectedJenisBelanja || "Semua Jenis Belanja"}' as jenbel, tahun, ROUND(SUM(pagu)/${pembulatan}, 0) as pagu${realbulananakumulatif} FROM ${tableName} WHERE kdsatker = '${selectedKddept}' AND ${tahunFilter}`;
+          if (selectedKementerian)
+            query += ` AND kddept = '${selectedKementerian}'`;
+          if (selectedUnit) query += ` AND kdunit = '${selectedUnit}'`;
+          if (selectedJenisBelanja)
+            query += ` AND jenbel = '${selectedJenisBelanja}'`;
+          query += roleFilter;
+          query += ` GROUP BY kdsatker, nmsatker, tahun ORDER BY tahun`;
+        } else if (selectedUnit) {
+          // Case 2: unit — histori_satker_bulanan has no nmunit, use label from state
+          const rawUnitLabelBul =
+            unitOptions.find((o: any) => o.value === selectedUnit)?.label ||
+            selectedUnit;
+          const unitLabelBul = (
+            rawUnitLabelBul.includes(" - ")
+              ? rawUnitLabelBul.split(" - ").slice(1).join(" - ")
+              : rawUnitLabelBul
+          ).replace(/'/g, "''");
+          query = `SELECT '${selectedUnit}' as kddept, '${unitLabelBul}' as nmdept, '${selectedJenisBelanja || "Semua Jenis Belanja"}' as jenbel, tahun, ROUND(SUM(pagu)/${pembulatan}, 0) as pagu${realbulananakumulatif} FROM ${tableName} WHERE kddept = '${selectedKementerian}' AND kdunit = '${selectedUnit}' AND ${tahunFilter}`;
+          if (selectedJenisBelanja)
+            query += ` AND jenbel = '${selectedJenisBelanja}'`;
+          query += roleFilter;
+          query += ` GROUP BY tahun ORDER BY tahun`;
+        } else {
+          // Case 1: kementerian aggregate
+          query = `SELECT kddept, '${selectedJenisBelanja || "Semua Jenis Belanja"}' as jenbel, tahun, ROUND(SUM(pagu)/${pembulatan}, 0) as pagu${realbulananakumulatif} FROM ${tableName} WHERE kddept = '${selectedKementerian}' AND ${tahunFilter}`;
+          if (selectedJenisBelanja)
+            query += ` AND jenbel = '${selectedJenisBelanja}'`;
+          query += roleFilter;
+          query += ` GROUP BY kddept, tahun ORDER BY tahun`;
+        }
+      } else {
+        // Level 1 & 2: histori_satker_bulanan has real1-real12, map/unit tables don't
+        if (level === "2") {
+          const rawLabel =
+            unitOptions.find((o: any) => o.value === selectedKddept)?.label ||
+            selectedKddept;
+          const unitLabel = (
+            rawLabel.includes(" - ")
+              ? rawLabel.split(" - ").slice(1).join(" - ")
+              : rawLabel
+          ).replace(/'/g, "''");
+          query = `SELECT '${selectedKddept}' as kddept, '${unitLabel}' as nmdept, '${selectedJenisBelanja || "Semua Jenis Belanja"}' as jenbel, tahun, ROUND(SUM(pagu)/${pembulatan}, 0) as pagu${realbulananakumulatif} FROM prognosis.histori_satker_bulanan WHERE kddept = '${selectedKementerian}' AND kdunit = '${selectedKddept}' AND ${tahunFilter}`;
+          if (selectedJenisBelanja)
+            query += ` AND jenbel = '${selectedJenisBelanja}'`;
+          query += ` GROUP BY tahun ORDER BY tahun`;
+        } else {
+          // Level 1
+          const kemLabel = (
+            kementerianOptions.find((o: any) => o.value === selectedKddept)
+              ?.label || selectedKddept
+          ).replace(/'/g, "''");
+          query = `SELECT '${selectedKddept}' as kddept, '${kemLabel}' as nmdept, '${selectedJenisBelanja || "Semua Jenis Belanja"}' as jenbel, tahun, ROUND(SUM(pagu)/${pembulatan}, 0) as pagu${realbulananakumulatif} FROM prognosis.histori_satker_bulanan WHERE kddept = '${selectedKddept}' AND ${tahunFilter}`;
+          if (selectedJenisBelanja)
+            query += ` AND jenbel = '${selectedJenisBelanja}'`;
+          query += ` GROUP BY tahun ORDER BY tahun`;
+        }
+      }
     } else {
-      const actualJenbel =
-        selectedJenisBelanja === "all" ? "" : selectedJenisBelanja;
-      query = `SELECT kddept, nmdept, '${
-        actualJenbel || "Semua Jenis Belanja"
-      }' as jenbel, tahun, ROUND(SUM(pagu)/${pembulatan}, 0) as pagu, ROUND(SUM(real1 + real2 + real3 + real4 + real5 + real6 + real7 + real8 + real9 + real10 + real11 + real12)/${pembulatan}, 0) as total_realisasi FROM prognosis.mapping_ba_long WHERE kddept = '${selectedKddept}' AND tahun >= '${selectedBaseline}' AND tahun <= '${currentYear}'`;
-      if (actualJenbel) query += ` AND jenbel = '${actualJenbel}'`;
-      query += ` GROUP BY kddept, nmdept, tahun ORDER BY tahun`;
+      // Tahunan
+      const realTahunan = `ROUND(SUM(real1 + real2 + real3 + real4 + real5 + real6 + real7 + real8 + real9 + real10 + real11 + real12)/${pembulatan}, 0) as total_realisasi`;
+
+      if (level === "3") {
+        const tableName = "prognosis.histori_satker_bulanan";
+        let roleFilter = "";
+        if (role === "kppn") {
+          if (kdkanwil) roleFilter += ` AND kdkanwil = '${kdkanwil}'`;
+          if (kdkppn) roleFilter += ` AND kdkppn = '${kdkppn}'`;
+        } else if (role === "kanwil_djpb") {
+          if (kdkanwil) roleFilter += ` AND kdkanwil = '${kdkanwil}'`;
+        }
+        if (selectedKddept) {
+          query = `SELECT kdsatker as kddept, nmsatker as nmdept, '${selectedJenisBelanja || "Semua Jenis Belanja"}' as jenbel, tahun, ROUND(SUM(pagu)/${pembulatan}, 0) as pagu, ${realTahunan} FROM ${tableName} WHERE kdsatker = '${selectedKddept}' AND ${tahunFilter}`;
+          if (selectedKementerian)
+            query += ` AND kddept = '${selectedKementerian}'`;
+          if (selectedUnit) query += ` AND kdunit = '${selectedUnit}'`;
+          if (selectedJenisBelanja)
+            query += ` AND jenbel = '${selectedJenisBelanja}'`;
+          query += roleFilter;
+          query += ` GROUP BY kdsatker, nmsatker, tahun ORDER BY tahun`;
+        } else if (selectedUnit) {
+          // histori_satker_bulanan has no nmunit, use label from state
+          const rawUnitLabelTah =
+            unitOptions.find((o: any) => o.value === selectedUnit)?.label ||
+            selectedUnit;
+          const unitLabelTah = (
+            rawUnitLabelTah.includes(" - ")
+              ? rawUnitLabelTah.split(" - ").slice(1).join(" - ")
+              : rawUnitLabelTah
+          ).replace(/'/g, "''");
+          query = `SELECT '${selectedUnit}' as kddept, '${unitLabelTah}' as nmdept, '${selectedJenisBelanja || "Semua Jenis Belanja"}' as jenbel, tahun, ROUND(SUM(pagu)/${pembulatan}, 0) as pagu, ${realTahunan} FROM ${tableName} WHERE kddept = '${selectedKementerian}' AND kdunit = '${selectedUnit}' AND ${tahunFilter}`;
+          if (selectedJenisBelanja)
+            query += ` AND jenbel = '${selectedJenisBelanja}'`;
+          query += roleFilter;
+          query += ` GROUP BY tahun ORDER BY tahun`;
+        } else {
+          query = `SELECT kddept, '${selectedJenisBelanja || "Semua Jenis Belanja"}' as jenbel, tahun, ROUND(SUM(pagu)/${pembulatan}, 0) as pagu, ${realTahunan} FROM ${tableName} WHERE kddept = '${selectedKementerian}' AND ${tahunFilter}`;
+          if (selectedJenisBelanja)
+            query += ` AND jenbel = '${selectedJenisBelanja}'`;
+          query += roleFilter;
+          query += ` GROUP BY kddept, tahun ORDER BY tahun`;
+        }
+      } else {
+        // Level 1 & 2: histori_satker_bulanan has real1-real12, map/unit tables don't
+        if (level === "2") {
+          const rawLabel =
+            unitOptions.find((o: any) => o.value === selectedKddept)?.label ||
+            selectedKddept;
+          const unitLabel = (
+            rawLabel.includes(" - ")
+              ? rawLabel.split(" - ").slice(1).join(" - ")
+              : rawLabel
+          ).replace(/'/g, "''");
+          query = `SELECT '${selectedKddept}' as kddept, '${unitLabel}' as nmdept, '${selectedJenisBelanja || "Semua Jenis Belanja"}' as jenbel, tahun, ROUND(SUM(pagu)/${pembulatan}, 0) as pagu, ${realTahunan} FROM prognosis.histori_satker_bulanan WHERE kddept = '${selectedKementerian}' AND kdunit = '${selectedKddept}' AND ${tahunFilter}`;
+          if (selectedJenisBelanja)
+            query += ` AND jenbel = '${selectedJenisBelanja}'`;
+          query += ` GROUP BY tahun ORDER BY tahun`;
+        } else {
+          // Level 1
+          const kemLabel = (
+            kementerianOptions.find((o: any) => o.value === selectedKddept)
+              ?.label || selectedKddept
+          ).replace(/'/g, "''");
+          query = `SELECT '${selectedKddept}' as kddept, '${kemLabel}' as nmdept, '${selectedJenisBelanja || "Semua Jenis Belanja"}' as jenbel, tahun, ROUND(SUM(pagu)/${pembulatan}, 0) as pagu, ${realTahunan} FROM prognosis.histori_satker_bulanan WHERE kddept = '${selectedKddept}' AND ${tahunFilter}`;
+          if (selectedJenisBelanja)
+            query += ` AND jenbel = '${selectedJenisBelanja}'`;
+          query += ` GROUP BY tahun ORDER BY tahun`;
+        }
+      }
     }
 
     setSqlQuery(query);
@@ -214,28 +720,19 @@ export default function PrognosisPage() {
       const response = await apiClient.post(`/prognosis/getDataKinerja`, {
         queryParams: query,
       });
-      // console.log("[fetchHistoricalData] Raw Response:", response);
-
-      // Handle different response formats
       let data = response;
       if (response && typeof response === "object") {
-        // If response is wrapped in a data property, unwrap it
-        if ("data" in response && Array.isArray(response.data)) {
-          data = response.data;
-        }
-        // If response is directly an array, use it
-        else if (Array.isArray(response)) {
+        if (
+          "data" in (response as any) &&
+          Array.isArray((response as any).data)
+        ) {
+          data = (response as any).data;
+        } else if (Array.isArray(response)) {
           data = response;
         }
       }
-
-      // console.log("[fetchHistoricalData] Processed Data:", data);
-
-      if (!Array.isArray(data)) {
-        console.error("[fetchHistoricalData] Response is not an array:", data);
+      if (!Array.isArray(data))
         throw new Error("Invalid response format from server");
-      }
-
       setTableData(data);
       return data;
     } catch (error) {
@@ -263,17 +760,16 @@ export default function PrognosisPage() {
           "DES",
         ];
         months.forEach((month, index) => {
-          // Check for both uppercase (SQL AS 'JAN') and lowercase (Postgres default) keys
           const val = item[month] ?? item[month.toLowerCase()];
-
-          // Keep 0 values; dropping them can produce empty payloads and 400 from backend
           if (val !== null && val !== undefined) {
             mlData.push({
               tahun: parseInt(item.tahun),
               bulan: index + 1,
               pagu: parseFloat(item.pagu || 0),
               realisasi: parseFloat(val || 0),
-              kddept: parseInt(selectedKddept),
+              kddept: parseInt(
+                level === "3" ? selectedKementerian : selectedKddept,
+              ),
               jenbel: item.jenbel,
             });
           }
@@ -285,36 +781,22 @@ export default function PrognosisPage() {
         bulan: 12,
         pagu: parseFloat(item.pagu || 0),
         realisasi: parseFloat(item.total_realisasi || 0),
-        kddept: parseInt(selectedKddept),
+        kddept: parseInt(level === "3" ? selectedKementerian : selectedKddept),
         jenbel: item.jenbel,
       }));
     }
 
-    // Defensive: backend returns 400 if data is empty
     if (!mlData || mlData.length === 0) {
       await Swal.fire({
         icon: "warning",
         title: "Data Tidak Tersedia",
-        text: "Data realisasi untuk parameter yang dipilih masih kosong. Silakan ubah baseline / kementerian / jenis belanja, lalu coba lagi.",
+        text: "Data realisasi untuk parameter yang dipilih masih kosong.",
       });
       return;
     }
 
-    // Proyeksi untuk tahun berjalan (2026) dari Januari sampai Desember
-    let predictionStartMonth = 1;
-    let predictionStartYear = currentYear;
-
-    if (jenisLaporan === "1") {
-      // Untuk laporan bulanan, proyeksi dimulai dari Januari tahun berjalan
-      predictionStartMonth = 1;
-      predictionStartYear = currentYear;
-    } else {
-      // Untuk laporan tahunan, proyeksi dimulai dari tahun berjalan
-      predictionStartMonth = 1;
-      predictionStartYear = currentYear;
-    }
-
-    // Simpan ke state untuk digunakan di chart
+    const predictionStartMonth = 1;
+    const predictionStartYear = currentYear;
     setDynamicStartMonth(predictionStartMonth);
     setDynamicStartYear(predictionStartYear);
 
@@ -327,28 +809,17 @@ export default function PrognosisPage() {
         training_end_year: currentYear,
         prediction_start_year: predictionStartYear,
         prediction_start_month: predictionStartMonth,
-        kddept: selectedKddept,
-        jenis_belanja:
-          selectedJenisBelanja === "all" ? "" : selectedJenisBelanja,
+        kddept: level === "3" ? selectedKementerian : selectedKddept,
+        jenis_belanja: selectedJenisBelanja || "",
       },
     };
 
     try {
-      // console.log(
-      //   "[fetchPredictionData] Sending prediction request:",
-      //   predictionRequest
-      // );
       const res = await apiClient.post("/prognosis/predict", predictionRequest);
-      // console.log("[fetchPredictionData] Raw Response:", res);
-
-      // Handle wrapped response
       let prediction = res;
-      if (res && typeof res === "object") {
-        if ("prediction" in res) {
-          prediction = res.prediction;
-        }
+      if (res && typeof res === "object" && "prediction" in (res as any)) {
+        prediction = (res as any).prediction;
       }
-
       if (prediction) {
         setPredictionData(res);
         prepareChartData(
@@ -357,8 +828,6 @@ export default function PrognosisPage() {
           predictionStartMonth,
           predictionStartYear,
         );
-      } else {
-        console.warn("[fetchPredictionData] No prediction data in response");
       }
     } catch (error) {
       console.error("[fetchPredictionData] Error:", error);
@@ -372,8 +841,18 @@ export default function PrognosisPage() {
     startMonth: number,
     startYear: number,
   ) => {
-    const data: any[] = [];
+    // Use a Map keyed by `name` so historical + prediction with the same
+    // period (e.g. "2026-01") are merged into one data point — this makes
+    // the realisasi and prediksi lines overlap on the chart.
+    const pointMap = new Map<string, any>();
+    const upsert = (name: string, extra: object) => {
+      pointMap.set(name, { name, ...pointMap.get(name), ...extra });
+    };
+
+    const currentMonth = new Date().getMonth() + 1; // 1-12
+
     historical.forEach((item) => {
+      const itemYear = parseInt(item.tahun);
       if (jenisLaporan === "1") {
         const months = [
           "JAN",
@@ -389,22 +868,30 @@ export default function PrognosisPage() {
           "NOV",
           "DES",
         ];
+        // For the current year, only plot months up to currentMonth so we
+        // don't show a misleading flat line where future data is still 0.
+        const monthLimit = itemYear === currentYear ? currentMonth : 12;
         months.forEach((m, i) => {
-          const val = item[m];
-          if (val) {
-            data.push({
-              name: `${item.tahun}-${(i + 1).toString().padStart(2, "0")}`,
-              realisasi: (val / item.pagu) * 100,
-              type: "Historical",
+          if (i + 1 > monthLimit) return; // skip future months in current year
+          const val = item[m] ?? item[m.toLowerCase()];
+          if (
+            val !== null &&
+            val !== undefined &&
+            Number(val) > 0 &&
+            Number(item.pagu) > 0
+          ) {
+            const name = `${item.tahun}-${(i + 1).toString().padStart(2, "0")}`;
+            upsert(name, {
+              realisasi: (Number(val) / Number(item.pagu)) * 100,
             });
           }
         });
       } else {
-        data.push({
-          name: item.tahun.toString(),
-          realisasi: (item.total_realisasi / item.pagu) * 100,
-          type: "Historical",
-        });
+        if (item.pagu) {
+          upsert(item.tahun.toString(), {
+            realisasi: (Number(item.total_realisasi) / Number(item.pagu)) * 100,
+          });
+        }
       }
     });
 
@@ -415,19 +902,22 @@ export default function PrognosisPage() {
         );
         let pName = "";
         if (jenisLaporan === "1") {
-          // Gunakan parameter startMonth langsung, bukan state
-          const monthIndex = (startMonth - 1 + i) % 12; // 0-11
-          const month = monthIndex + 1; // 1-12
+          const monthIndex = (startMonth - 1 + i) % 12;
+          const month = monthIndex + 1;
           const year = startYear + Math.floor((startMonth - 1 + i) / 12);
           pName = `${year}-${month.toString().padStart(2, "0")}`;
         } else {
-          // Untuk laporan tahunan, mulai dari tahun berikutnya
           pName = (startYear + i).toString();
         }
-        data.push({ name: pName, prediksi: percentage, type: "Prediction" });
+        upsert(pName, { prediksi: percentage });
       });
     }
-    setChartData(data);
+
+    // Sort chronologically before setting state
+    const sorted = Array.from(pointMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
+    setChartData(sorted);
   };
 
   const handleRefresh = () => {
@@ -443,19 +933,207 @@ export default function PrognosisPage() {
     });
   };
 
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat("id-ID", {
+  // --- Download Handlers ---
+
+  const handleDownloadCSV = async () => {
+    if (!tableData || tableData.length === 0) {
+      await Swal.fire({
+        icon: "info",
+        title: "Data Tidak Tersedia",
+        text: "Silakan klik Tayang terlebih dahulu.",
+      });
+      return;
+    }
+    try {
+      const headerMapping: Record<string, string> = {
+        kddept: "Kode",
+        nmdept: "Nama",
+        jenbel: "Jenis Belanja",
+        tahun: "Tahun",
+        pagu: "Pagu (Rp)",
+        JAN: "Januari",
+        FEB: "Februari",
+        MAR: "Maret",
+        APR: "April",
+        MEI: "Mei",
+        JUN: "Juni",
+        JUL: "Juli",
+        AGS: "Agustus",
+        SEP: "September",
+        OKT: "Oktober",
+        NOV: "November",
+        DES: "Desember",
+        total_realisasi: "Total Realisasi (Rp)",
+      };
+      const dataKeys = Object.keys(tableData[0]);
+      const headers = dataKeys.map((k) => headerMapping[k] || k);
+      let csvContent = "\uFEFF" + headers.join(",") + "\n";
+      tableData.forEach((row) => {
+        const rowValues = dataKeys.map((key) => {
+          let value = row[key];
+          if (typeof value === "number")
+            value = new Intl.NumberFormat("id-ID").format(value);
+          if (value == null) value = "";
+          value = String(value);
+          if (
+            value.includes(",") ||
+            value.includes('"') ||
+            value.includes("\n")
+          )
+            value = '"' + value.replace(/"/g, '""') + '"';
+          return value;
+        });
+        csvContent += rowValues.join(",") + "\n";
+      });
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute(
+        "download",
+        `prognosis_${currentYear}_${Date.now()}.csv`,
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      await Swal.fire({
+        icon: "success",
+        title: "Berhasil!",
+        text: "File CSV berhasil didownload.",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } catch (e) {
+      await Swal.fire({
+        icon: "error",
+        title: "Gagal",
+        text: "Terjadi kesalahan saat mendownload CSV.",
+      });
+    }
+  };
+
+  const handleDownloadExcel = async () => {
+    if (!tableData || tableData.length === 0) {
+      await Swal.fire({
+        icon: "info",
+        title: "Data Tidak Tersedia",
+        text: "Silakan klik Tayang terlebih dahulu.",
+      });
+      return;
+    }
+    try {
+      const XLSX = await import("xlsx");
+      const headerMapping: Record<string, string> = {
+        kddept: "Kode",
+        nmdept: "Nama",
+        jenbel: "Jenis Belanja",
+        tahun: "Tahun",
+        pagu: "Pagu (Rp)",
+        JAN: "Januari",
+        FEB: "Februari",
+        MAR: "Maret",
+        APR: "April",
+        MEI: "Mei",
+        JUN: "Juni",
+        JUL: "Juli",
+        AGS: "Agustus",
+        SEP: "September",
+        OKT: "Oktober",
+        NOV: "November",
+        DES: "Desember",
+        total_realisasi: "Total Realisasi (Rp)",
+      };
+      const dataKeys = Object.keys(tableData[0]);
+      const renamedData = tableData.map((row) => {
+        const newRow: Record<string, any> = {};
+        dataKeys.forEach((key) => {
+          newRow[headerMapping[key] || key] = row[key] ?? "";
+        });
+        return newRow;
+      });
+      const ws = XLSX.utils.json_to_sheet(renamedData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Prognosis Data");
+      XLSX.writeFile(wb, `prognosis_${currentYear}_${Date.now()}.xlsx`);
+      await Swal.fire({
+        icon: "success",
+        title: "Berhasil!",
+        text: "File Excel berhasil didownload.",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } catch (e) {
+      await Swal.fire({
+        icon: "error",
+        title: "Gagal",
+        text: "Terjadi kesalahan saat mendownload Excel.",
+      });
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!tableData || tableData.length === 0) {
+      await Swal.fire({
+        icon: "info",
+        title: "Data Tidak Tersedia",
+        text: "Silakan klik Tayang terlebih dahulu.",
+      });
+      return;
+    }
+    try {
+      const printWindow = window.open("", "_blank");
+      if (!printWindow) throw new Error("Pop-up diblokir");
+      const headerMapping: Record<string, string> = {
+        kddept: "Kode",
+        nmdept: "Nama",
+        jenbel: "Jenis Belanja",
+        tahun: "Tahun",
+        pagu: "Pagu",
+        JAN: "Jan",
+        FEB: "Feb",
+        MAR: "Mar",
+        APR: "Apr",
+        MEI: "Mei",
+        JUN: "Jun",
+        JUL: "Jul",
+        AGS: "Ags",
+        SEP: "Sep",
+        OKT: "Okt",
+        NOV: "Nov",
+        DES: "Des",
+        total_realisasi: "Total Realisasi",
+      };
+      const dataKeys = Object.keys(tableData[0]);
+      const headers = dataKeys.map((k) => headerMapping[k] || k);
+      let tableHTML = `<table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:10px"><thead><tr style="background:#4472C4;color:white">${headers.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>`;
+      tableData.forEach((row) => {
+        tableHTML += `<tr>${dataKeys.map((k) => `<td>${row[k] != null ? (typeof row[k] === "number" ? new Intl.NumberFormat("id-ID").format(row[k]) : row[k]) : ""}</td>`).join("")}</tr>`;
+      });
+      tableHTML += "</tbody></table>";
+      printWindow.document.write(
+        `<html><head><title>Prognosis</title></head><body><h2>Prognosis Data Belanja - ${new Date().toLocaleDateString("id-ID")}</h2>${tableHTML}<script>window.onload=()=>{window.print();window.close();}<\/script></body></html>`,
+      );
+      printWindow.document.close();
+    } catch (e) {
+      await Swal.fire({
+        icon: "error",
+        title: "Gagal",
+        text: "Terjadi kesalahan saat membuat PDF.",
+      });
+    }
+  };
+
+  const formatCurrency = (val: number) =>
+    new Intl.NumberFormat("id-ID", {
       style: "currency",
       currency: "IDR",
       minimumFractionDigits: 0,
     }).format(val);
-  };
 
   // --- Render ---
 
   return (
     <div className="space-y-6">
-      {/* Page Header - Matched with Belanja Page style */}
+      {/* Page Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Prognosis</h1>
@@ -464,8 +1142,6 @@ export default function PrognosisPage() {
             parameter yang dapat disesuaikan
           </p>
         </div>
-
-        {/* Header Action area */}
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -474,8 +1150,6 @@ export default function PrognosisPage() {
             <Settings className="w-4 h-4" />
             Pengaturan
           </Button>
-
-          {/* Keyboard shortcut hint */}
           <div className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
             <Keyboard className="w-3 h-3" />
             <span>Ctrl+P</span>
@@ -483,25 +1157,43 @@ export default function PrognosisPage() {
         </div>
       </div>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <div className="space-y-6">
-        {/* 1. Filters Card */}
+        {/* 1. Filters */}
         <PrognosisFilters
           jenisLaporan={jenisLaporan}
           setJenisLaporan={setJenisLaporan}
+          level={level}
+          setLevel={setLevel}
+          filteredLevelOptions={filteredLevelOptions}
           selectedKddept={selectedKddept}
           setSelectedKddept={setSelectedKddept}
+          selectedKementerian={selectedKementerian}
+          onKementerianChange={handleKementerianChange}
+          kementerianOptions={kementerianOptions}
+          kementerianLevel3Options={kementerianLevel3Options}
+          selectedUnit={selectedUnit}
+          onUnitChange={handleUnitChange}
+          unitOptions={unitOptions}
+          selectedSatker={selectedKddept}
+          onSatkerChange={handleSatkerChange}
+          satkerOptions={satkerOptions}
           selectedJenisBelanja={selectedJenisBelanja}
           setSelectedJenisBelanja={setSelectedJenisBelanja}
+          jenisBelanjaOptions={jenisBelanjaOptions}
+          loadingJenisBelanja={loadingJenisBelanja}
           selectedBaseline={selectedBaseline}
           setSelectedBaseline={setSelectedBaseline}
+          baselineOptions={baselineOptions}
+          loadingBaseline={loadingBaseline}
           selectedMetode={selectedMetode}
           setSelectedMetode={setSelectedMetode}
           selectedTargetProyeksi={selectedTargetProyeksi}
           setSelectedTargetProyeksi={setSelectedTargetProyeksi}
-          kementerianOptions={kementerianOptions}
-          jenisBelanjaOptions={jenisBelanjaOptions}
-          baselineOptions={baselineOptions}
+          targetOptions={targetOptions}
+          loading={loading}
+          loadingSatker={loadingSatker}
+          role={role}
         />
 
         {/* 2. Action Bar */}
@@ -511,9 +1203,12 @@ export default function PrognosisPage() {
           handleRefresh={handleRefresh}
           setShowModalSQL={setShowModalSQL}
           role={role}
+          onDownloadCSV={handleDownloadCSV}
+          onDownloadExcel={handleDownloadExcel}
+          onDownloadPDF={handleDownloadPDF}
         />
 
-        {/* 3. Results Area */}
+        {/* 3. Empty state */}
         {!showResults && !loadingResults && (
           <div className="flex flex-col items-center justify-center py-20 bg-muted/40 rounded-3xl border-2 border-dashed space-y-4">
             <div className="p-4 bg-muted/50 rounded-full">
@@ -531,6 +1226,7 @@ export default function PrognosisPage() {
           </div>
         )}
 
+        {/* 4. Results */}
         {showResults && (
           <div className="space-y-6">
             <PrognosisChart
@@ -552,8 +1248,8 @@ export default function PrognosisPage() {
               pagu2026={pagu2026}
               jenisLaporan={jenisLaporan}
               currentYear={currentYear}
-              startMonth={1}
-              startYear={currentYear}
+              startMonth={dynamicStartMonth}
+              startYear={dynamicStartYear}
               formatCurrency={formatCurrency}
             />
           </div>

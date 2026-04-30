@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -16,7 +18,7 @@ import { RekamDataTransaksiModal } from "./modals/rekam-data-transaksi-modal";
 import { KertasKerjaModal } from "./modals/kertas-kerja-modal";
 import tkdData from "@/data/kdkppn_tkd.json";
 import { useDauTransaksi } from "@/hooks/use-dau-transaksi";
-import { FilePenLine, FileText } from "lucide-react";
+import { FilePenLine, FileText, Loader2, ReceiptText } from "lucide-react";
 
 interface DataTransaksiTabProps {
   // Remove selectedYear prop as this tab will manage its own year state
@@ -278,93 +280,77 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
   // }, [rows, isLoading, selectedMonth, selectedKppn, selectedKabKota, selectedYear, defaultYear, years]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Filter Card */}
-      <Card>
-        <CardHeader>
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle>Filter Data</CardTitle>
+            <div className="flex items-center gap-2">
+              <ReceiptText className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-semibold">Filter Data Transaksi</CardTitle>
+            </div>
             <ResetButton onReset={handleReset} />
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Tahun</label>
+
+        <Separator />
+
+        <CardContent className="pt-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="transaksi-year" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tahun</Label>
               <Select value={selectedYear ?? ""} onValueChange={handleYearSelect}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="transaksi-year" className="h-8 text-xs">
                   <SelectValue className="truncate" />
                 </SelectTrigger>
                 <SelectContent>
                   {years.map((year) => (
-                    <SelectItem key={year} value={year}>
-                      {year}
-                    </SelectItem>
+                    <SelectItem key={year} value={year} className="text-xs">{year}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Bulan</label>
+            <div className="space-y-1.5">
+              <Label htmlFor="transaksi-month" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Bulan</Label>
               <Select value={selectedMonth ?? ""} onValueChange={handleMonthSelect}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih bulan" />
+                <SelectTrigger id="transaksi-month" className="h-8 text-xs">
+                  <SelectValue placeholder="Semua Bulan" />
                 </SelectTrigger>
                 <SelectContent>
                   {months.map((month) => (
-                    <SelectItem key={month} value={month}>
-                      {month}
-                    </SelectItem>
+                    <SelectItem key={month} value={month} className="text-xs">{month}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">KPPN</label>
+            <div className="space-y-1.5">
+              <Label htmlFor="transaksi-kppn" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">KPPN</Label>
               <Select value={selectedKppn ?? ""} onValueChange={handleKppnSelect}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih KPPN" />
+                <SelectTrigger id="transaksi-kppn" className="h-8 text-xs">
+                  <SelectValue placeholder="Semua KPPN" />
                 </SelectTrigger>
                 <SelectContent>
                   {uniqueKppn.map((kppn) => (
-                    <SelectItem
-                      key={kppn.kdkppn}
-                      value={kppn.kdkppn}
-                      title={`${kppn.kdkppn} - ${kppn.nmkppn}`}
-                    >
-                      <span className="truncate">
-                        {kppn.kdkppn} - {kppn.nmkppn}
-                      </span>
+                    <SelectItem key={kppn.kdkppn} value={kppn.kdkppn} className="text-xs" title={`${kppn.kdkppn} - ${kppn.nmkppn}`}>
+                      <span className="truncate">{kppn.kdkppn} - {kppn.nmkppn}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Kab/Kota</label>
-              <Select value={selectedKabKota ?? ""} onValueChange={handleKabKotaSelect}>
-                <SelectTrigger className="w-full" disabled={!selectedKppn}>
-                  <SelectValue
-                    placeholder={
-                      selectedKppn
-                        ? "Pilih Kab/Kota"
-                        : "Pilih KPPN terlebih dahulu"
-                    }
-                  />
+            <div className="space-y-1.5">
+              <Label htmlFor="transaksi-kabkota" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Kab/Kota</Label>
+              <Select value={selectedKabKota ?? ""} onValueChange={handleKabKotaSelect} disabled={!selectedKppn}>
+                <SelectTrigger id="transaksi-kabkota" className="h-8 text-xs" disabled={!selectedKppn}>
+                  <SelectValue placeholder={selectedKppn ? "Semua Kab/Kota" : "Pilih KPPN dulu"} />
                 </SelectTrigger>
                 <SelectContent>
                   {filteredKabKotaOptions.map((lokasi) => (
-                    <SelectItem
-                      key={lokasi.kdkabkota}
-                      value={lokasi.kdkabkota}
-                      title={`${lokasi.kdkabkota} - ${lokasi.nmkabkota}`}
-                    >
-                      <span className="truncate">
-                        {lokasi.kdkabkota} - {lokasi.nmkabkota}
-                      </span>
+                    <SelectItem key={lokasi.kdkabkota} value={lokasi.kdkabkota} className="text-xs" title={`${lokasi.kdkabkota} - ${lokasi.nmkabkota}`}>
+                      <span className="truncate">{lokasi.kdkabkota} - {lokasi.nmkabkota}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -375,16 +361,29 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
       </Card>
 
       {/* Data Table Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Data Transaksi</CardTitle>
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-semibold">Data Transaksi DAU</CardTitle>
+            {rows && (
+              <span className="text-xs text-muted-foreground">{rows.length.toLocaleString("id-ID")} baris</span>
+            )}
+          </div>
         </CardHeader>
-        <CardContent>
+
+        <Separator />
+
+        <CardContent className="pt-4">
           {isLoading && (
-            <div className="text-sm text-muted-foreground mb-2">Memuat data...</div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <span>Memuat data...</span>
+            </div>
           )}
           {error ? (
-            <div className="text-sm text-red-600">{String(error.message || error)}</div>
+            <div className="rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3 text-xs text-destructive">
+              {String(error.message || error)}
+            </div>
           ) : (
             <DataTable columns={columns} data={rows} />
           )}

@@ -43,6 +43,10 @@ import {
   Gavel,
   CreditCard,
   BarChart2,
+  Map,
+  IdCard,
+  BotOffIcon,
+  BottleWine,
 } from "lucide-react";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -188,6 +192,11 @@ const defaultMenu: MenuItem[] = [
     children: [{ label: "Sektor" }, { label: "Rekomendasi" }],
   },
   {
+    label: "IKI Dit.PA",
+    children: [{ label: "Efektivitas Pusat-Daerah" }, { label: "Kontraktual" }],
+  },
+
+  {
     label: "Profil K/L",
     children: [{ label: "Kementerian" }, { label: "Lembaga" }],
   },
@@ -212,7 +221,8 @@ const MENU_ROUTE_PREFIXES: Array<{ prefix: string; parent: string }> = [
   { prefix: "/data-supplier", parent: "Data Supplier" },
   { prefix: "/epa", parent: "EPA" },
   { prefix: "/spending-review", parent: "Spending Review" },
-  { prefix: "/profil-kl", parent: "Profil K/L" },
+  { prefix: "/iku-pa", parent: "IKI Dit.PA" },
+  { prefix: "/profile-kl", parent: "Profil K/L" },
   { prefix: "/tentang-kita", parent: "Tentang Kita" },
 ];
 
@@ -356,6 +366,15 @@ export function ResponsiveSidebar({
             className={`${cls} text-orange-600 dark:text-orange-400`}
           />
         );
+      case "IKI Dit.PA":
+        return (
+          <BookOpen className={`${cls} text-orange-600 dark:text-orange-400`} />
+        );
+      case "Profil K/L":
+        return (
+          <IdCard className={`${cls} text-orange-600 dark:text-orange-400`} />
+        );
+
       case "Tentang Kita":
         return (
           <Info className={`${cls} text-neutral-600 dark:text-neutral-300`} />
@@ -475,6 +494,10 @@ export function ResponsiveSidebar({
         return <Database className={cls} />;
       case "Kewilayahan__Subsidi":
         return <Database className={cls} />;
+      case "IKI Dit.PA__Efektivitas Pusat-Daerah":
+        return <Map className={cls} />;
+      case "IKI Dit.PA__Kontraktual":
+        return <Building2 className={cls} />;
       case "Dispensasi__LLAT":
         return <CheckCircle className={cls} />;
       case "Dispensasi__Kontrak KPPN":
@@ -489,6 +512,10 @@ export function ResponsiveSidebar({
         return <Building2 className={cls} />;
       case "Monev KKP__Direktorat PA":
         return <Building2 className={cls} />;
+      case "Profil KL__Kementerian":
+        return <BotOffIcon className={cls} />;
+      case "Profil KL__Lembaga":
+        return <BottleWine className={cls} />;
       default:
         return null;
     }
@@ -604,7 +631,7 @@ export function ResponsiveSidebar({
                       className={cn(
                         "h-9 w-48 gap-1 bg-white dark:bg-card hover:bg-accent dark:hover:bg-accent",
                         activeMenuLabel === m.label &&
-                        "bg-accent text-accent-foreground",
+                          "bg-accent text-accent-foreground",
                       )}
                     >
                       <span className="inline-flex items-center">
@@ -618,7 +645,7 @@ export function ResponsiveSidebar({
                           {m.children.map((c) => {
                             const menuKey = `${m.label}__${c.label}`;
                             let href = "#";
-                            let onMouseEnterFn = () => { };
+                            let onMouseEnterFn = () => {};
 
                             // Route mapping
                             if (
@@ -956,6 +983,34 @@ export function ResponsiveSidebar({
                               href = "/monev-kkp/direktorat-pa";
                               onMouseEnterFn = () =>
                                 import("@/components/monev-kkp/direktorat-pa-content");
+                            } else if (
+                              c.label === "Efektivitas Pusat-Daerah" &&
+                              m.label === "IKI Dit.PA"
+                            ) {
+                              href = "/iku-pa/apbd";
+                              onMouseEnterFn = () =>
+                                import("@/components/iku-pa/apbd");
+                            } else if (
+                              c.label === "Kontraktual" &&
+                              m.label === "IKI Dit.PA"
+                            ) {
+                              href = "/iku-pa/kontraktual";
+                              onMouseEnterFn = () =>
+                                import("@/components/iku-pa/kontraktual");
+                            } else if (
+                              c.label === "Kementerian" &&
+                              m.label === "Profil K/L"
+                            ) {
+                              href = "/profile-kl/kementerian";
+                              onMouseEnterFn = () =>
+                                import("@/components/profile-kl/landing-kl");
+                            } else if (
+                              c.label === "Lembaga" &&
+                              m.label === "Profil K/L"
+                            ) {
+                              href = "/profile-kl/lembaga";
+                              onMouseEnterFn = () =>
+                                import("@/components/profile-kl/landing-lembaga");
                             }
 
                             return (
@@ -1241,7 +1296,7 @@ export function ResponsiveSidebar({
                         key={c.label}
                         href="/tentang-kita/profil"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
-                        onMouseEnter={() => { }}
+                        onMouseEnter={() => {}}
                         onClick={() => {
                           trackMenuUsage({
                             menu: m.label,
@@ -2099,6 +2154,91 @@ export function ResponsiveSidebar({
                             menu: m.label,
                             submenu: c.label,
                             path: "/ikpa",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Efektivitas Pusat-Daerah" &&
+                      m.label === "IKI Dit.PA" ? (
+                      <Link
+                        key={c.label}
+                        href="/iku-pa/apbd"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/iku-pa/apbd",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Kontraktual" &&
+                      m.label === "IKI Dit.PA" ? (
+                      <Link
+                        key={c.label}
+                        href="/iku-pa/kontraktual"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/iku-pa/kontraktual",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Kementerian" &&
+                      m.label === "Profile K/L" ? (
+                      <Link
+                        key={c.label}
+                        href="/profile-kl/kementerian"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onMouseEnter={() => {
+                          import("@/components/profile-kl/landing-kl");
+                        }}
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/profile-kl/kementerian",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Lembaga" && m.label === "Profile K/L" ? (
+                      <Link
+                        key={c.label}
+                        href="/profile-kl/lembaga"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onMouseEnter={() => {
+                          import("@/components/profile-kl/landing-lembaga");
+                        }}
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/profile-kl/lembaga",
                           });
                           setOpen(false);
                         }}

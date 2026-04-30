@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -14,8 +16,8 @@ import {
 import { DataTable } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Trash2, Scissors, PauseCircle, Undo2 } from "lucide-react";
-import { PdfjsViewerIframeModal } from "./modals/pdfjs-viewer-iframe-modal";
+import { FileText, Trash2, Scissors, PauseCircle, Undo2, Loader2, ScrollText } from "lucide-react";
+import { PdfViewerModal } from "./modals/pdf-viewer-modal";
 import { DataKmkModal } from "./modals/data-kmk-modal";
 import { PencabutanModal } from "./modals/pencabutan-modal";
 import { DataPencabutanModal } from "./modals/data-pencabutan-modal";
@@ -45,13 +47,16 @@ export function DataKmkTab({}: DataKmkTabProps) {
     useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [isDataPencabutanModalOpen, setIsDataPencabutanModalOpen] = useState(false);
-  const [selectedNoKmkForPencabutan, setSelectedNoKmkForPencabutan] = useState<string | undefined>(undefined);
+  const [isDataPencabutanModalOpen, setIsDataPencabutanModalOpen] =
+    useState(false);
+  const [selectedNoKmkForPencabutan, setSelectedNoKmkForPencabutan] = useState<
+    string | undefined
+  >(undefined);
   const { rows, isLoading, error, mutate } = useKmkDau(selectedYear);
 
   // Generate years from current year back to 2020
   const years = Array.from({ length: currentYear - 2019 }, (_, i) =>
-    (currentYear - i).toString()
+    (currentYear - i).toString(),
   );
 
   const fallbackAttemptedRef = useRef(false);
@@ -180,9 +185,7 @@ export function DataKmkTab({}: DataKmkTabProps) {
               className={getJenisBadgeClasses(jenisCode)}
               title={displayText}
             >
-              <span className="truncate">
-                {displayText}
-              </span>
+              <span className="truncate">{displayText}</span>
             </Badge>
           </div>
         );
@@ -219,7 +222,12 @@ export function DataKmkTab({}: DataKmkTabProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handleOpenPreview(row.getValue("fileUrl"), row.original?.fileName || undefined)}
+            onClick={() =>
+              handleOpenPreview(
+                row.getValue("fileUrl"),
+                row.original?.fileName || undefined,
+              )
+            }
             className="h-8 w-8 p-0 cursor-pointer"
             title="Lihat File"
           >
@@ -236,7 +244,7 @@ export function DataKmkTab({}: DataKmkTabProps) {
       cell: ({ row }: any) => {
         // Get jenis from the jenis column - same as Kriteria column does
         const jenis = String(row.original?.jenis ?? "");
-        
+
         return (
           <div className="flex items-center justify-center gap-2">
             {/* Data Pemotongan (jenis 1 atau 4) */}
@@ -279,7 +287,9 @@ export function DataKmkTab({}: DataKmkTabProps) {
                 className="h-8 w-8 p-0 cursor-pointer"
                 onClick={() => {
                   setSelectedNoKmkForPencabutan(
-                    row.original?.nomorKmk || row.original?.no_kmk || row.getValue?.("nomorKmk")
+                    row.original?.nomorKmk ||
+                      row.original?.no_kmk ||
+                      row.getValue?.("nomorKmk"),
                   );
                   setIsDataPencabutanModalOpen(true);
                 }}
@@ -315,44 +325,51 @@ export function DataKmkTab({}: DataKmkTabProps) {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Data Table Card */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-            <CardTitle className="text-lg font-semibold">Data KMK</CardTitle>
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            {/* Title */}
+            <div className="flex items-center gap-2">
+              <ScrollText className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-semibold">Data KMK</CardTitle>
+            </div>
 
-            <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:gap-4">
+            {/* Controls row */}
+            <div className="flex flex-wrap items-center gap-2">
               {/* Year Filter */}
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium whitespace-nowrap">
-                  Tahun:
-                </label>
+              <div className="flex items-center gap-1.5">
+                <Label htmlFor="kmk-year" className="text-xs font-medium text-muted-foreground uppercase tracking-wide whitespace-nowrap">
+                  Tahun
+                </Label>
                 <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger className="w-full sm:w-[120px]">
+                  <SelectTrigger id="kmk-year" className="h-8 w-[90px] text-xs">
                     <SelectValue className="truncate" />
                   </SelectTrigger>
                   <SelectContent>
                     {years.map((year) => (
-                      <SelectItem key={year} value={year}>
-                        {year}
-                      </SelectItem>
+                      <SelectItem key={year} value={year} className="text-xs">{year}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
+              <Separator orientation="vertical" className="h-6 hidden sm:block" />
+
               {/* Action Buttons */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <Button
+                  size="sm"
                   onClick={() => setIsDataKmkModalOpen(true)}
-                  className="bg-slate-800 hover:bg-slate-900 text-white min-w-[100px] h-10 flex-1 sm:flex-initial"
+                  className="h-8 text-xs px-3 bg-foreground hover:bg-foreground/90 text-background"
                 >
                   Data KMK
                 </Button>
                 <Button
+                  size="sm"
                   onClick={() => setIsPencabutanModalOpen(true)}
-                  className="bg-slate-800 hover:bg-slate-900 text-white min-w-[100px] h-10 flex-1 sm:flex-initial"
+                  className="h-8 text-xs px-3 bg-foreground hover:bg-foreground/90 text-background"
                 >
                   Pencabutan
                 </Button>
@@ -360,9 +377,12 @@ export function DataKmkTab({}: DataKmkTabProps) {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+
+        <Separator />
+
+        <CardContent className="pt-4">
           {error ? (
-            <div className="text-sm text-red-600 mb-2">
+            <div className="rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3 text-xs text-destructive mb-3">
               {String((error as any).message || error)}
             </div>
           ) : null}
@@ -379,9 +399,9 @@ export function DataKmkTab({}: DataKmkTabProps) {
         initialYear={selectedYear}
         onCreated={async () => {
           // Invalidate and refetch KMK DAU list immediately
-          await queryClient.invalidateQueries({ 
+          await queryClient.invalidateQueries({
             queryKey: ["kmk-dau", selectedYear],
-            refetchType: 'active'
+            refetchType: "active",
           });
           // Force immediate refetch
           await mutate();
@@ -414,20 +434,27 @@ export function DataKmkTab({}: DataKmkTabProps) {
           try {
             const id = selectedItem?.id;
             if (!id) throw new Error("ID tidak ditemukan");
-            const headersWithCsrf: HeadersInit = addCsrfToHeaders({ "Content-Type": "application/json" });
-            
-            const resp = await fetch(apiPath(`/transfer-daerah/dau/kmk/${encodeURIComponent(String(id))}?year=${encodeURIComponent(selectedYear)}`), {
-              method: "DELETE",
-              headers: headersWithCsrf,
-              credentials: "include",
+            const headersWithCsrf: HeadersInit = addCsrfToHeaders({
+              "Content-Type": "application/json",
             });
+
+            const resp = await fetch(
+              apiPath(
+                `/transfer-daerah/dau/kmk/${encodeURIComponent(String(id))}?year=${encodeURIComponent(selectedYear)}`,
+              ),
+              {
+                method: "DELETE",
+                headers: headersWithCsrf,
+                credentials: "include",
+              },
+            );
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             setIsDeleteModalOpen(false);
             setSelectedItem(null);
             // Invalidate and refetch
-            await queryClient.invalidateQueries({ 
+            await queryClient.invalidateQueries({
               queryKey: ["kmk-dau", selectedYear],
-              refetchType: 'active'
+              refetchType: "active",
             });
             await mutate();
           } catch (e) {
@@ -437,8 +464,7 @@ export function DataKmkTab({}: DataKmkTabProps) {
         }}
       />
 
-      {/* PDF.js Viewer (iframe) Modal */}
-      <PdfjsViewerIframeModal
+      <PdfViewerModal
         open={isPdfOpen}
         onOpenChange={setIsPdfOpen}
         url={pdfUrl ?? ""}
