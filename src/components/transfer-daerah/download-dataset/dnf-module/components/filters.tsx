@@ -10,22 +10,15 @@ import {
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { ResetButton } from "@/components/ui/reset-button";
 import { 
-  ChevronDown, 
-  Download, 
-  RotateCcw, 
   Play, 
   Database, 
   Loader2,
   FileText,
   FileSpreadsheet,
-  FileDown
+  FileDown,
+  Settings2
 } from "lucide-react";
 import { SelectOption, MONTHS } from "../dnf-types";
 
@@ -57,8 +50,8 @@ interface FilterTPGProps {
   onDownloadCSV: () => void;
   onDownloadExcel: () => void;
   onDownloadPDF: () => void;
-  onRefresh: () => void;
   onShowSQL: () => void;
+  onReset: () => void;
   loading: boolean;
 }
 
@@ -90,13 +83,19 @@ export const FilterTPG: React.FC<FilterTPGProps> = ({
   onDownloadCSV,
   onDownloadExcel,
   onDownloadPDF,
-  onRefresh,
   onShowSQL,
+  onReset,
   loading,
 }) => (
   <Card>
     <CardHeader>
-      <CardTitle className="text-base font-semibold">Filter Data TPG</CardTitle>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Settings2 className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-base font-semibold">Filter Data TPG</CardTitle>
+        </div>
+        <ResetButton onReset={onReset} />
+      </div>
     </CardHeader>
     <CardContent className="space-y-4">
       <div className="flex flex-wrap gap-4">
@@ -216,7 +215,7 @@ export const FilterTPG: React.FC<FilterTPGProps> = ({
           <Button
             onClick={onTayang}
             disabled={loading}
-            className="min-w-[150px] h-10"
+            className="w-36 h-10"
           >
             {loading ? (
               <>
@@ -231,44 +230,38 @@ export const FilterTPG: React.FC<FilterTPGProps> = ({
             )}
           </Button>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="min-w-[150px] h-10 gap-2">
-                <Download className="h-4 w-4" />
-                Download
-                <ChevronDown className="h-4 w-4 opacity-50" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="center" className="min-w-[150px]">
-              <DropdownMenuItem onClick={onDownloadCSV} className="gap-2">
-                <FileText className="h-4 w-4" />
-                CSV
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onDownloadExcel} className="gap-2">
-                <FileSpreadsheet className="h-4 w-4" />
-                EXCEL
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onDownloadPDF} className="gap-2">
-                <FileDown className="h-4 w-4" />
-                PDF
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            variant="outline"
+            onClick={onDownloadCSV}
+            className="w-36 h-10 gap-2 bg-sky-50 text-sky-700 border-sky-100 hover:bg-sky-100 hover:text-sky-800"
+          >
+            <FileText className="h-4 w-4" />
+            CSV
+          </Button>
 
           <Button
             variant="outline"
-            onClick={onRefresh}
-            className="min-w-[150px] h-10"
+            onClick={onDownloadExcel}
+            className="w-36 h-10 gap-2 bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100 hover:text-emerald-800"
           >
-            <RotateCcw className="h-4 w-4 mr-2" />
-            Refresh
+            <FileSpreadsheet className="h-4 w-4" />
+            EXCEL
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={onDownloadPDF}
+            className="w-36 h-10 gap-2 bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-100 hover:text-rose-800"
+          >
+            <FileDown className="h-4 w-4" />
+            PDF
           </Button>
 
           {role === "X" && (
             <Button
               variant="outline"
               onClick={onShowSQL}
-              className="min-w-[150px] h-10 bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200"
+              className="w-36 h-10 bg-slate-50 text-slate-700 border-slate-100 hover:bg-slate-100 hover:text-slate-800"
             >
               <Database className="h-4 w-4 mr-2" />
               SQL
@@ -308,8 +301,8 @@ interface FilterBosBopProps {
   onDownloadCSV: () => void;
   onDownloadExcel: () => void;
   onDownloadPDF: () => void;
-  onRefresh: () => void;
   onShowSQL: () => void;
+  onReset: () => void;
   loading: boolean;
 }
 
@@ -341,14 +334,21 @@ export const FilterBosBop: React.FC<FilterBosBopProps> = ({
   onDownloadCSV,
   onDownloadExcel,
   onDownloadPDF,
-  onRefresh,
   onShowSQL,
+  onReset,
   loading,
 }) => (
   <Card>
     <CardHeader>
-      <CardTitle className="text-base font-semibold">Filter Data BOS / BOP</CardTitle>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Settings2 className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-base font-semibold">Filter Data BOS / BOP</CardTitle>
+        </div>
+        <ResetButton onReset={onReset} />
+      </div>
     </CardHeader>
+
     <CardContent className="space-y-4">
       <div className="flex flex-wrap gap-4">
         <div className="flex-1 min-w-[200px] space-y-2">
@@ -458,6 +458,67 @@ export const FilterBosBop: React.FC<FilterBosBopProps> = ({
               </SelectContent>
             </Select>
           </div>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="border-t pt-6 mt-2">
+        <div className="flex flex-wrap justify-center gap-3">
+          <Button
+            onClick={onTayang}
+            disabled={loading}
+            className="w-36 h-10"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              <>
+                <Play className="h-4 w-4 mr-2" />
+                Tayang
+              </>
+            )}
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={onDownloadCSV}
+            className="w-36 h-10 gap-2 bg-sky-50 text-sky-700 border-sky-100 hover:bg-sky-100 hover:text-sky-800"
+          >
+            <FileText className="h-4 w-4" />
+            CSV
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={onDownloadExcel}
+            className="w-36 h-10 gap-2 bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100 hover:text-emerald-800"
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            EXCEL
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={onDownloadPDF}
+            className="w-36 h-10 gap-2 bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-100 hover:text-rose-800"
+          >
+            <FileDown className="h-4 w-4" />
+            PDF
+          </Button>
+
+          {role === "X" && (
+            <Button
+              variant="outline"
+              onClick={onShowSQL}
+              className="w-36 h-10 bg-slate-50 text-slate-700 border-slate-100 hover:bg-slate-100 hover:text-slate-800"
+            >
+              <Database className="h-4 w-4 mr-2" />
+              SQL
+            </Button>
+          )}
         </div>
       </div>
     </CardContent>

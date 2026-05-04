@@ -65,22 +65,22 @@ const DNF: React.FC = () => {
             role={dnf.role}
             onTayang={dnf.handleTayangTpg}
             onShowSQL={dnf.handleShowSQL}
+            onReset={dnf.handleResetTpg}
             loading={dnf.tpgLoading}
             onDownloadCSV={dnf.handleDownloadCSV}
             onDownloadExcel={dnf.handleDownloadExcel}
             onDownloadPDF={dnf.handleDownloadPDF}
-            onRefresh={dnf.handleRefresh}
           />
 
 
-          {dnf.tpgShowResults && (
-            <TableTPG
-              data={dnf.tpgTableData}
-              currentPage={dnf.tpgCurrentPage}
-              setCurrentPage={dnf.setTpgCurrentPage}
-              itemsPerPage={dnf.itemsPerPage}
-            />
-          )}
+          <TableTPG
+            data={dnf.tpgTableData}
+            showResults={dnf.tpgShowResults}
+            currentPage={dnf.tpgCurrentPage}
+            setCurrentPage={dnf.setTpgCurrentPage}
+            itemsPerPage={dnf.itemsPerPage}
+            setItemsPerPage={dnf.setItemsPerPage}
+          />
         </TabsContent>
 
         <TabsContent value="bos_bop" className="space-y-4 pt-4">
@@ -110,22 +110,23 @@ const DNF: React.FC = () => {
             role={dnf.role}
             onTayang={dnf.handleTayangBosBop}
             onShowSQL={dnf.handleShowSQL}
+            onReset={dnf.handleResetBosBop}
             loading={dnf.bosBopLoading}
             onDownloadCSV={dnf.handleDownloadCSV}
             onDownloadExcel={dnf.handleDownloadExcel}
             onDownloadPDF={dnf.handleDownloadPDF}
-            onRefresh={dnf.handleRefresh}
           />
 
 
-          {dnf.bosBopShowResults && (
-            <TableBosBop
-              data={dnf.bosBopTableData}
-              currentPage={dnf.bosBopCurrentPage}
-              setCurrentPage={dnf.setBosBopCurrentPage}
-              itemsPerPage={dnf.itemsPerPage}
-            />
-          )}
+
+          <TableBosBop
+            data={dnf.bosBopTableData}
+            showResults={dnf.bosBopShowResults}
+            currentPage={dnf.bosBopCurrentPage}
+            setCurrentPage={dnf.setBosBopCurrentPage}
+            itemsPerPage={dnf.itemsPerPage}
+            setItemsPerPage={dnf.setItemsPerPage}
+          />
         </TabsContent>
       </TabsContents>
     </Tabs>

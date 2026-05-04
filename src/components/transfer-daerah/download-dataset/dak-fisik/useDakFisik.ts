@@ -42,7 +42,7 @@ export const useDakFisik = () => {
 
   // State for Pagination
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const itemsPerPage = 15;
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
 
   const API_BASE = process.env.NEXT_PUBLIC_DAKFISIK_DNF_DATA || "/api/v1/transfer-daerah/dataset/query?sql=";
 
@@ -201,11 +201,6 @@ export const useDakFisik = () => {
       setTableData(data);
       setCurrentPage(1);
       setShowResults(true);
-      SwalConfig.fire({
-        icon: "success",
-        title: "Berhasil",
-        text: `Data berhasil ditampilkan (${data.length} baris)`,
-      });
     } catch (error: any) {
       console.error("Error fetching data:", error);
       SwalConfig.fire({
@@ -262,6 +257,33 @@ export const useDakFisik = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBidang]);
 
+  const handleReset = () => {
+    if (yearOptions.length > 0) {
+      setSelectedYear(yearOptions[0]?.value ?? "");
+    } else {
+
+      setSelectedYear(String(currentYear));
+    }
+
+    if (role === "0") {
+      setSelectedkanwil("");
+      setSelectedkppn("");
+    } else if (role === "2") {
+      setSelectedkanwil(kdkanwil);
+      setSelectedkppn("");
+    } else if (role === "3") {
+      setSelectedkanwil(kdkanwil);
+      setSelectedkppn(kdkppn);
+    }
+
+    setSelectedLokasi("");
+    setSelectedJenisDana("all");
+    setSelectedBidang("all");
+    setSelectedSubBidang("all");
+    setStartMonth("1");
+    setEndMonth("12");
+  };
+
   return {
     role,
     user,
@@ -281,7 +303,7 @@ export const useDakFisik = () => {
       tableData, setTableData,
       loadingResults, setLoadingResults,
       currentPage, setCurrentPage,
-      itemsPerPage,
+      itemsPerPage, setItemsPerPage,
     },
     sql: {
       showModalSQL, setShowModalSQL,
@@ -290,6 +312,9 @@ export const useDakFisik = () => {
     actions: {
       handleTayang,
       handleShowSQL,
+      handleReset,
     }
   };
 };
+
+

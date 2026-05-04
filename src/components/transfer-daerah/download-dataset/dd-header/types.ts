@@ -63,16 +63,19 @@ export interface DDHeaderFiltersProps {
   onDownloadCSV: () => void;
   onDownloadExcel: () => void;
   onDownloadPDF: () => void;
-  onRefresh: () => void;
   onShowSQL: () => void;
+  onReset: () => void;
   loadingResults: boolean;
 }
 
+
 export interface DDHeaderTableProps {
   tableData: DDHeaderData[];
+  showResults: boolean;
   currentPage: number;
   setCurrentPage: (page: number) => void;
   itemsPerPage: number;
+  setItemsPerPage: (size: number) => void;
 }
 
 export interface SQLModalProps {

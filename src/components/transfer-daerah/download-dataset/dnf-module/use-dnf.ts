@@ -84,7 +84,7 @@ export const useDNF = () => {
   // Pagination & SQL Modal
   const [tpgCurrentPage, setTpgCurrentPage] = useState<number>(1);
   const [bosBopCurrentPage, setBosBopCurrentPage] = useState<number>(1);
-  const itemsPerPage = 15;
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
   const [showModalSQL, setShowModalSQL] = useState<boolean>(false);
   const [sqlQuery, setSqlQuery] = useState<string>("");
   const [isCopied, setIsCopied] = useState<boolean>(false);
@@ -256,7 +256,6 @@ export const useDNF = () => {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  const handleRefresh = () => window.location.reload();
 
   // ===== DOWNLOAD =====
   const handleDownloadCSV = () => {
@@ -323,7 +322,6 @@ export const useDNF = () => {
       setTpgTableData(data);
       setTpgCurrentPage(1);
       setTpgShowResults(true);
-      SwalConfig.fire({ icon: "success", title: "Berhasil", text: `Data berhasil ditampilkan (${data.length} baris)` });
     } catch (error: any) {
       console.error(error);
       SwalConfig.fire({ icon: "error", title: "Error", text: error.response?.data?.message || "Gagal mengambil data" });
@@ -350,7 +348,6 @@ export const useDNF = () => {
       setBosBopTableData(data);
       setBosBopCurrentPage(1);
       setBosBopShowResults(true);
-      SwalConfig.fire({ icon: "success", title: "Berhasil", text: `Data berhasil ditampilkan (${data.length} baris)` });
     } catch (error: any) {
       console.error(error);
       SwalConfig.fire({ icon: "error", title: "Error", text: error.response?.data?.message || "Gagal mengambil data" });
@@ -376,6 +373,44 @@ export const useDNF = () => {
   useEffect(() => { fetchTpgKppn(tpgSelectedkanwil); }, [tpgSelectedkanwil]);
   useEffect(() => { fetchBosBopKppn(bosBopSelectedKanwil); }, [bosBopSelectedKanwil]);
 
+  const handleResetTpg = () => {
+    if (tpgYearOptions.length > 0) setTpgSelectedYear(tpgYearOptions[0]?.value ?? "");
+    setTpgStartMonth("1");
+    setTpgEndMonth("12");
+    if (role === "0") { 
+      setTpgSelectedkanwil(""); 
+      setTpgSelectedkppn(""); 
+    } else if (role === "2") { 
+      setTpgSelectedkanwil(kdkanwil); 
+      setTpgSelectedkppn(""); 
+    } else if (role === "3") { 
+      setTpgSelectedkanwil(kdkanwil); 
+      setTpgSelectedkppn(kdkppn); 
+    }
+    setTpgSelectedPeriode("all");
+    setTpgSelectedGelombang("all");
+    setTpgSelectedJenisTkd("all");
+  };
+
+  const handleResetBosBop = () => {
+    if (bosBopYearOptions.length > 0) setBosBopSelectedYear(bosBopYearOptions[0]?.value ?? "");
+    setBosBopStartMonth("1");
+    setBosBopEndMonth("12");
+    if (role === "0") { 
+      setBosBopSelectedKanwil(""); 
+      setBosBopSelectedKppn(""); 
+    } else if (role === "2") { 
+      setBosBopSelectedKanwil(kdkanwil); 
+      setBosBopSelectedKppn(""); 
+    } else if (role === "3") { 
+      setBosBopSelectedKanwil(kdkanwil); 
+      setBosBopSelectedKppn(kdkppn); 
+    }
+    setBosBopSelectedProgram("all");
+    setBosBopSelectedJenisBos("all");
+    setBosBopSelectedJenjang("all");
+  };
+
   return {
     user,
     role,
@@ -392,6 +427,7 @@ export const useDNF = () => {
     tpgSelectedJenisTkd, setTpgSelectedJenisTkd, tpgJenisTkdOptions,
     tpgShowResults, tpgTableData, tpgLoading, tpgCurrentPage, setTpgCurrentPage,
     handleTayangTpg,
+    handleResetTpg,
     // BOS BOP
     bosBopSelectedYear, setBosBopSelectedYear, bosBopYearOptions,
     bosBopStartMonth, setBosBopStartMonth,
@@ -403,11 +439,12 @@ export const useDNF = () => {
     bosBopSelectedKppn, setBosBopSelectedKppn, bosBopKppnOptions,
     bosBopShowResults, bosBopTableData, bosBopLoading, bosBopCurrentPage, setBosBopCurrentPage,
     handleTayangBosBop,
+    handleResetBosBop,
     // Shared
-    itemsPerPage,
+    itemsPerPage, setItemsPerPage,
     showModalSQL, handleShowSQL, handleCloseSQL,
     sqlQuery, isCopied, handleCopy,
-    handleRefresh,
     handleDownloadCSV, handleDownloadExcel, handleDownloadPDF
   };
 };
+

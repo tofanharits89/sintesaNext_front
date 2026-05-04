@@ -18,17 +18,15 @@ const DD_header: React.FC = () => {
     endMonth, setEndMonth,
     yearOptions, kanwilOptions, kppnOptions, lokasiOptions,
     tableData, showResults, loadingResults,
-    currentPage, setCurrentPage, itemsPerPage,
+    currentPage, setCurrentPage, itemsPerPage, setItemsPerPage,
     showModalSQL, sqlQuery, isCopied,
-    handleTayang, handleShowSQL, handleCloseSQL, handleCopy, handleRefresh,
+    handleTayang, handleShowSQL, handleCloseSQL, handleCopy,
     handleDownloadCSV, handleDownloadExcel, handleDownloadPDF,
+    handleReset,
   } = useDDHeader();
 
   return (
     <div className="dak-fisik-container">
-      <div className="mb-4">
-        <h3 className="mb-3 font-semibold text-lg">Dana Desa</h3>
-      </div>
 
       {/* Filter Section */}
       <DDHeaderFilters
@@ -51,23 +49,26 @@ const DD_header: React.FC = () => {
         role={role}
         onTayang={handleTayang}
         onShowSQL={handleShowSQL}
+        onReset={handleReset}
         loadingResults={loadingResults}
         onDownloadCSV={handleDownloadCSV}
         onDownloadExcel={handleDownloadExcel}
         onDownloadPDF={handleDownloadPDF}
-        onRefresh={handleRefresh}
       />
 
 
+
       {/* Results Section */}
-      {showResults && (
+      <div className="mt-4">
         <DDHeaderTable
           tableData={tableData}
+          showResults={showResults}
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
           itemsPerPage={itemsPerPage}
+          setItemsPerPage={setItemsPerPage}
         />
-      )}
+      </div>
 
       {/* SQL Modal */}
       <SQLModal

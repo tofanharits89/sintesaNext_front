@@ -43,7 +43,7 @@ export const useDDHeader = () => {
 
   // State untuk Pagination
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const itemsPerPage = 15;
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
 
   const API_BASE = process.env.NEXT_PUBLIC_DAKFISIK_DNF_DATA || "/api/v1/transfer-daerah/dataset/query?sql=";
 
@@ -136,7 +136,6 @@ export const useDDHeader = () => {
       setTableData(data);
       setCurrentPage(1);
       setShowResults(true);
-      SwalConfig.fire({ icon: "success", title: "Berhasil", text: `Data berhasil ditampilkan (${data.length} baris)` });
     } catch (error: any) {
       console.error("Error fetching data:", error);
       SwalConfig.fire({ icon: "error", title: "Error", text: error.response?.data?.message || "Gagal mengambil data" });
@@ -159,7 +158,6 @@ export const useDDHeader = () => {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  const handleRefresh = () => window.location.reload();
 
   const handleDownloadCSV = () => {
     if (tableData.length === 0) {
@@ -243,6 +241,30 @@ export const useDDHeader = () => {
     fetchkppnData(selectedkanwil);
   }, [selectedkanwil]);
 
+  const handleReset = () => {
+    if (yearOptions.length > 0) {
+      setSelectedYear(yearOptions[0]?.value ?? "");
+    } else {
+
+      setSelectedYear(String(year));
+    }
+
+    if (role === "0") {
+      setSelectedkanwil("");
+      setSelectedkppn("");
+    } else if (role === "2") {
+      setSelectedkanwil(kdkanwil);
+      setSelectedkppn("");
+    } else if (role === "3") {
+      setSelectedkanwil(kdkanwil);
+      setSelectedkppn(kdkppn);
+    }
+
+    setSelectedLokasi("");
+    setStartMonth("1");
+    setEndMonth("12");
+  };
+
   return {
     user,
     role,
@@ -254,9 +276,11 @@ export const useDDHeader = () => {
     endMonth, setEndMonth,
     yearOptions, kanwilOptions, kppnOptions, lokasiOptions,
     tableData, showResults, loadingResults,
-    currentPage, setCurrentPage, itemsPerPage,
+    currentPage, setCurrentPage, itemsPerPage, setItemsPerPage,
     showModalSQL, sqlQuery, isCopied,
-    handleTayang, handleShowSQL, handleCloseSQL, handleCopy, handleRefresh,
+    handleTayang, handleShowSQL, handleCloseSQL, handleCopy,
     handleDownloadCSV, handleDownloadExcel, handleDownloadPDF,
+    handleReset,
   };
 };
+

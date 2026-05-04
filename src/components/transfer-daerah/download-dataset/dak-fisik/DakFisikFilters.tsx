@@ -10,22 +10,15 @@ import {
 } from "@/components/ui/select";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Button } from "@/components/ui/button";
+import { ResetButton } from "@/components/ui/reset-button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { 
-  ChevronDown, 
-  Download, 
-  RotateCcw, 
-  Play, 
-  Database, 
+  Play,
+  Database,
   Loader2,
   FileText,
   FileSpreadsheet,
-  FileDown
+  FileDown,
+  Settings2
 } from "lucide-react";
 import { MONTHS, SelectOption } from "./types";
 
@@ -60,8 +53,8 @@ interface DakFisikFiltersProps {
   onDownloadCSV: () => void;
   onDownloadExcel: () => void;
   onDownloadPDF: () => void;
-  onRefresh: () => void;
   onShowSQL: () => void;
+  onReset: () => void;
   loadingResults: boolean;
 }
 
@@ -80,15 +73,22 @@ export const DakFisikFilters: React.FC<DakFisikFiltersProps> = ({
   onDownloadCSV,
   onDownloadExcel,
   onDownloadPDF,
-  onRefresh,
   onShowSQL,
+  onReset,
   loadingResults,
 }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base font-semibold">Filter Data</CardTitle>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Settings2 className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-base font-semibold">Filter Data DAK Fisik</CardTitle>
+          </div>
+          <ResetButton onReset={onReset} />
+        </div>
       </CardHeader>
+
       <CardContent className="space-y-4">
         <div className="flex flex-wrap gap-4">
           <div className="flex-1 min-w-[200px] space-y-2">
@@ -250,7 +250,7 @@ export const DakFisikFilters: React.FC<DakFisikFiltersProps> = ({
             <Button
               onClick={onTayang}
               disabled={loadingResults}
-              className="min-w-[150px] h-10"
+              className="w-36 h-10"
             >
               {loadingResults ? (
                 <>
@@ -265,44 +265,38 @@ export const DakFisikFilters: React.FC<DakFisikFiltersProps> = ({
               )}
             </Button>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="min-w-[150px] h-10 gap-2">
-                  <Download className="h-4 w-4" />
-                  Download
-                  <ChevronDown className="h-4 w-4 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="min-w-[150px]">
-                <DropdownMenuItem onClick={onDownloadCSV} className="gap-2">
-                  <FileText className="h-4 w-4" />
-                  CSV
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={onDownloadExcel} className="gap-2">
-                  <FileSpreadsheet className="h-4 w-4" />
-                  EXCEL
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={onDownloadPDF} className="gap-2">
-                  <FileDown className="h-4 w-4" />
-                  PDF
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button
+              variant="outline"
+              onClick={onDownloadCSV}
+              className="w-36 h-10 gap-2 bg-sky-50 text-sky-700 border-sky-100 hover:bg-sky-100 hover:text-sky-800"
+            >
+              <FileText className="h-4 w-4" />
+              CSV
+            </Button>
 
             <Button
               variant="outline"
-              onClick={onRefresh}
-              className="min-w-[150px] h-10"
+              onClick={onDownloadExcel}
+              className="w-36 h-10 gap-2 bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100 hover:text-emerald-800"
             >
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Refresh
+              <FileSpreadsheet className="h-4 w-4" />
+              EXCEL
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={onDownloadPDF}
+              className="w-36 h-10 gap-2 bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-100 hover:text-rose-800"
+            >
+              <FileDown className="h-4 w-4" />
+              PDF
             </Button>
 
             {role === "X" && (
               <Button
                 variant="outline"
                 onClick={onShowSQL}
-                className="min-w-[150px] h-10 bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200"
+                className="w-36 h-10 bg-slate-50 text-slate-700 border-slate-100 hover:bg-slate-100 hover:text-slate-800"
               >
                 <Database className="h-4 w-4 mr-2" />
                 SQL

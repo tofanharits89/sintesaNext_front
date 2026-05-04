@@ -22,9 +22,6 @@ const DakFisik: React.FC = () => {
     actions,
   } = useDakFisik();
 
-  const handleRefresh = () => {
-    window.location.reload();
-  };
 
   const handleDownloadCSV = async () => {
     if (results.tableData.length === 0) {
@@ -71,9 +68,6 @@ const DakFisik: React.FC = () => {
 
   return (
     <div className="dak-fisik-container">
-      <div className="mb-4">
-        <h3 className="mb-3 font-semibold text-lg">DAK Fisik</h3>
-      </div>
 
       {/* Filter Section */}
       <DakFisikFilters
@@ -81,25 +75,26 @@ const DakFisik: React.FC = () => {
         role={role}
         onTayang={actions.handleTayang}
         onShowSQL={actions.handleShowSQL}
+        onReset={actions.handleReset}
         loadingResults={results.loadingResults}
+
         onDownloadCSV={handleDownloadCSV}
         onDownloadExcel={() => handleDownloadExcel(results.tableData, filters.selectedYear)}
         onDownloadPDF={handleDownloadPDF}
-        onRefresh={handleRefresh}
       />
 
 
       {/* Results Section */}
-      {results.showResults && (
-        <div className="mt-4">
-          <DakFisikTable
-            tableData={results.tableData}
-            currentPage={results.currentPage}
-            setCurrentPage={results.setCurrentPage}
-            itemsPerPage={results.itemsPerPage}
-          />
-        </div>
-      )}
+      <div className="mt-4">
+        <DakFisikTable
+          tableData={results.tableData}
+          showResults={results.showResults}
+          currentPage={results.currentPage}
+          setCurrentPage={results.setCurrentPage}
+          itemsPerPage={results.itemsPerPage}
+          setItemsPerPage={results.setItemsPerPage}
+        />
+      </div>
 
       {/* SQL Modal */}
       <SQLModal
