@@ -12,6 +12,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown, Download, RotateCcw, Play, Database, Loader2 } from "lucide-react";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 
 // Interface for select options
 interface SelectOption {
@@ -66,68 +77,7 @@ const SwalConfig = Swal.mixin({
   },
 });
 
-// Presentational subcomponents
-interface SectionProps {
-  title: string;
-  children: React.ReactNode;
-}
-
-const Section: React.FC<SectionProps> = ({ title, children }) => (
-  <div className="mb-4 rounded-xl bg-zinc-600 text-white px-3 py-3">
-    {title && (
-      <h5 className="text-white mb-2 font-semibold text-base">{title}</h5>
-    )}
-    <div>{children}</div>
-  </div>
-);
-
-interface FieldProps {
-  label: string;
-  children: React.ReactNode;
-}
-
-const Field: React.FC<FieldProps> = ({ label, children }) => (
-  <div className="mb-3 flex flex-col sm:flex-row sm:items-center gap-2">
-    <label className="form-label text-white mb-0 shrink-0 sm:w-1/6">
-      {label}
-    </label>
-    <div className="flex-1">{children}</div>
-  </div>
-);
-
-interface SelectFieldProps {
-  label: string;
-  options?: SelectOption[];
-  value: string;
-  onChange: (value: string) => void;
-  defaultLabel?: string;
-  disabled?: boolean;
-}
-
-const SelectField: React.FC<SelectFieldProps> = ({
-  label,
-  options = [],
-  value,
-  onChange,
-  defaultLabel = "-- Pilih --",
-  disabled = false,
-}) => (
-  <Field label={label}>
-    <select
-      className="form-control"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      disabled={disabled}
-    >
-      <option value="">{defaultLabel}</option>
-      {options.map((o) => (
-        <option key={o.value ?? o} value={o.value ?? o}>
-          {o.label ?? o}
-        </option>
-      ))}
-    </select>
-  </Field>
-);
+// No custom Section/Field components needed, using Shadcn directly
 
 interface ButtonRowProps {
   onTayang: () => void;
@@ -150,108 +100,63 @@ const ButtonRow: React.FC<ButtonRowProps> = ({
   onDownloadPDF,
   onRefresh,
 }) => {
-  const [showMenu, setShowMenu] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node))
-        setShowMenu(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
   return (
     <div className="flex flex-wrap gap-2 items-center py-1">
-      <button
-        className="btn btn-success btn-sm"
+      <Button
+        variant="success"
+        size="sm"
         onClick={onTayang}
         disabled={loadingResults}
+        className="gap-2"
       >
         {loadingResults ? (
-          <span className="flex items-center gap-1">
-            <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
             Loading...
-          </span>
+          </>
         ) : (
-          "Tayang"
+          <>
+            <Play className="h-4 w-4" />
+            Tayang
+          </>
         )}
-      </button>
+      </Button>
 
-      <div className="relative" ref={menuRef}>
-        <div className="flex">
-          <button
-            className="btn btn-sm text-white rounded-r-none"
-            style={{ backgroundColor: "#0ea5e9", borderColor: "#0ea5e9" }}
-            onClick={() => {
-              onDownloadCSV();
-              setShowMenu(false);
-            }}
-          >
-            ↓ Download
-          </button>
-          <button
-            className="btn btn-sm text-white rounded-l-none border-l-0 px-2"
-            style={{ backgroundColor: "#0ea5e9", borderColor: "#0ea5e9" }}
-            onClick={() => setShowMenu((v) => !v)}
-          >
-            ▾
-          </button>
-        </div>
-        {showMenu && (
-          <div className="absolute top-full left-0 mt-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded shadow-lg z-50 min-w-[120px]">
-            <button
-              className="block w-full px-4 py-2 text-left text-sm text-zinc-800 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-700"
-              onClick={() => {
-                onDownloadCSV();
-                setShowMenu(false);
-              }}
-            >
-              CSV
-            </button>
-            <button
-              className="block w-full px-4 py-2 text-left text-sm text-zinc-800 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-700"
-              onClick={() => {
-                onDownloadExcel();
-                setShowMenu(false);
-              }}
-            >
-              EXCEL
-            </button>
-            <button
-              className="block w-full px-4 py-2 text-left text-sm text-zinc-800 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-700"
-              onClick={() => {
-                onDownloadPDF();
-                setShowMenu(false);
-              }}
-            >
-              PDF
-            </button>
-          </div>
-        )}
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="info" size="sm" className="gap-2">
+            <Download className="h-4 w-4" />
+            Download
+            <ChevronDown className="h-4 w-4 opacity-50" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem onClick={onDownloadCSV}>CSV</DropdownMenuItem>
+          <DropdownMenuItem onClick={onDownloadExcel}>EXCEL</DropdownMenuItem>
+          <DropdownMenuItem onClick={onDownloadPDF}>PDF</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-      <button
-        className="btn btn-secondary btn-sm"
+      <Button
+        variant="secondary"
+        size="sm"
         onClick={onRefresh}
-        title="Refresh Halaman"
+        className="gap-2"
       >
-        ↺ Refresh
-      </button>
+        <RotateCcw className="h-4 w-4" />
+        Refresh
+      </Button>
 
       {role === "X" && (
-        <button
-          className="btn btn-sm"
+        <Button
+          variant="warning"
+          size="sm"
           onClick={onShowSQL}
-          style={{
-            backgroundColor: "#f59e0b",
-            borderColor: "#f59e0b",
-            color: "#000",
-          }}
+          className="gap-2"
         >
+          <Database className="h-4 w-4" />
           SQL
-        </button>
+        </Button>
       )}
     </div>
   );
@@ -314,12 +219,13 @@ const DD_header: React.FC = () => {
       const query =
         "SELECT DISTINCT thang FROM tkd.dd_header ORDER BY thang DESC";
       const encodedQuery = encodeURIComponent(query);
+      const API_BASE = process.env.NEXT_PUBLIC_DAKFISIK_DNF_DATA || "/api/v1/transfer-daerah/dataset/query?sql=";
       const response = await http.get(
-        `${process.env.NEXT_PUBLIC_DAKFISIK_DNF_DATA}${encodedQuery}`,
+        `${API_BASE}${encodedQuery}`,
       );
       const years = response.data.result || [];
       setYearOptions(
-        years.map((y: any) => ({ label: y.thang, value: y.thang })),
+        years.map((y: any) => ({ label: String(y.thang), value: String(y.thang) })),
       );
       setSelectedYear(String(year));
     } catch (error) {
@@ -337,14 +243,15 @@ const DD_header: React.FC = () => {
       }
 
       const encodedQuery = encodeURIComponent(query);
+      const API_BASE = process.env.NEXT_PUBLIC_DAKFISIK_DNF_DATA || "/api/v1/transfer-daerah/dataset/query?sql=";
       const response = await http.get(
-        `${process.env.NEXT_PUBLIC_DAKFISIK_DNF_DATA}${encodedQuery}`,
+        `${API_BASE}${encodedQuery}`,
       );
       const kanwil = response.data.result || [];
       setKanwilOptions(
         kanwil.map((k: any) => ({
           label: `${k.kdkanwil} - ${k.nmkanwil}`,
-          value: k.kdkanwil,
+          value: String(k.kdkanwil),
         })),
       );
 
@@ -374,14 +281,15 @@ const DD_header: React.FC = () => {
       }
 
       const encodedQuery = encodeURIComponent(query);
+      const API_BASE = process.env.NEXT_PUBLIC_DAKFISIK_DNF_DATA || "/api/v1/transfer-daerah/dataset/query?sql=";
       const response = await http.get(
-        `${process.env.NEXT_PUBLIC_DAKFISIK_DNF_DATA}${encodedQuery}`,
+        `${API_BASE}${encodedQuery}`,
       );
       const kppn = response.data.result || [];
       setKppnOptions(
         kppn.map((k: any) => ({
           label: `${k.kdkppn} - ${k.nmkppn || "N/A"}`,
-          value: k.kdkppn,
+          value: String(k.kdkppn),
         })),
       );
 
@@ -400,14 +308,15 @@ const DD_header: React.FC = () => {
       const query =
         "SELECT DISTINCT a.kdlokasi, b.nmkabkota FROM tkd.dd_header a LEFT JOIN dbref.t_kabkota_apbd b ON a.kdlokasi = REPLACE(b.kdkabkota, '.', '') ORDER BY a.kdlokasi ASC";
       const encodedQuery = encodeURIComponent(query);
+      const API_BASE = process.env.NEXT_PUBLIC_DAKFISIK_DNF_DATA || "/api/v1/transfer-daerah/dataset/query?sql=";
       const response = await http.get(
-        `${process.env.NEXT_PUBLIC_DAKFISIK_DNF_DATA}${encodedQuery}`,
+        `${API_BASE}${encodedQuery}`,
       );
       const lokasi = response.data.result || [];
       setLokasiOptions(
         lokasi.map((l: any) => ({
           label: `${l.kdlokasi} - ${l.nmkabkota || "N/A"}`,
-          value: l.kdlokasi,
+          value: String(l.kdlokasi),
         })),
       );
     } catch (error) {
@@ -422,10 +331,10 @@ const DD_header: React.FC = () => {
     const filterKppn = selectedkppn || (role === "3" ? kdkppn : "");
 
     let whereConditions = "WHERE 1=1";
-    if (selectedYear) whereConditions += ` AND a.thang = '${selectedYear}'`;
-    if (filterKanwil) whereConditions += ` AND c.kdkanwil = '${filterKanwil}'`;
-    if (filterKppn) whereConditions += ` AND a.kdkppn = '${filterKppn}'`;
-    if (selectedLokasi)
+    if (selectedYear && selectedYear !== "all") whereConditions += ` AND a.thang = '${selectedYear}'`;
+    if (filterKanwil && filterKanwil !== "all") whereConditions += ` AND c.kdkanwil = '${filterKanwil}'`;
+    if (filterKppn && filterKppn !== "all") whereConditions += ` AND a.kdkppn = '${filterKppn}'`;
+    if (selectedLokasi && selectedLokasi !== "all")
       whereConditions += ` AND a.kdlokasi = '${selectedLokasi}'`;
     if (startMonth && endMonth)
       whereConditions += ` AND EXTRACT(MONTH FROM a.tgl_sp2d) BETWEEN ${startMonth} AND ${endMonth}`;
@@ -750,8 +659,9 @@ ORDER BY c.kdkanwil, a.kdkppn`;
     try {
       const query = generateSQLQuery();
       const encodedQuery = encodeURIComponent(query);
+      const API_BASE = process.env.NEXT_PUBLIC_DAKFISIK_DNF_DATA || "/api/v1/transfer-daerah/dataset/query?sql=";
       const response = await http.get(
-        `${process.env.NEXT_PUBLIC_DAKFISIK_DNF_DATA}${encodedQuery}`,
+        `${API_BASE}${encodedQuery}`,
       );
 
       const data = response.data.result || [];
@@ -796,292 +706,326 @@ ORDER BY c.kdkanwil, a.kdkppn`;
       </div>
 
       {/* Filter Section */}
-      <Section title="Filter Data">
-        <SelectField
-          label="Tahun"
-          options={yearOptions}
-          value={selectedYear}
-          onChange={setSelectedYear}
-          defaultLabel="-- Semua --"
-        />
-        <SelectField
-          label="Kanwil"
-          options={kanwilOptions}
-          value={selectedkanwil}
-          onChange={setSelectedkanwil}
-          defaultLabel="-- Semua --"
-          disabled={role === "2" || role === "3"}
-        />
-        <SelectField
-          label="KPPN"
-          options={kppnOptions}
-          value={selectedkppn}
-          onChange={setSelectedkppn}
-          defaultLabel="-- Semua --"
-          disabled={role === "3"}
-        />
-        <SelectField
-          label="Lokasi"
-          options={lokasiOptions}
-          value={selectedLokasi}
-          onChange={setSelectedLokasi}
-          defaultLabel="-- Semua --"
-        />
-        <Field label="Bulan SP2D">
-          <div className="flex items-center gap-2">
-            <div className="flex-1">
-              <Select value={startMonth} onValueChange={setStartMonth}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Dari Bulan" />
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base font-semibold">Filter Data</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Tahun</Label>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger>
+                  <SelectValue placeholder="-- Semua --" />
                 </SelectTrigger>
                 <SelectContent>
-                  {MONTHS.map((m) => (
-                    <SelectItem key={m.value} value={m.value}>
-                      {m.label}
+                  <SelectItem value="all">-- Semua --</SelectItem>
+                  {yearOptions.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <span className="text-white text-sm px-2 shrink-0">s.d.</span>
-            <div className="flex-1">
-              <Select value={endMonth} onValueChange={setEndMonth}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Sampai Bulan" />
-                </SelectTrigger>
-                <SelectContent>
-                  {MONTHS.map((m) => (
-                    <SelectItem key={m.value} value={m.value}>
-                      {m.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+
+            <div className="space-y-2">
+              <Label>Kanwil</Label>
+              <SearchableSelect
+                options={kanwilOptions}
+                value={selectedkanwil}
+                onValueChange={setSelectedkanwil}
+                disabled={role === "2" || role === "3"}
+                placeholder="-- Semua --"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>KPPN</Label>
+              <SearchableSelect
+                options={kppnOptions}
+                value={selectedkppn}
+                onValueChange={setSelectedkppn}
+                disabled={role === "3"}
+                placeholder="-- Semua --"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Lokasi</Label>
+              <SearchableSelect
+                options={lokasiOptions}
+                value={selectedLokasi}
+                onValueChange={setSelectedLokasi}
+                placeholder="-- Semua --"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Bulan SP2D</Label>
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <Select value={startMonth} onValueChange={setStartMonth}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Dari" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MONTHS.map((m) => (
+                        <SelectItem key={m.value} value={m.value}>
+                          {m.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <span className="text-sm px-1 shrink-0">s.d.</span>
+                <div className="flex-1">
+                  <Select value={endMonth} onValueChange={setEndMonth}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Sampai" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MONTHS.map((m) => (
+                        <SelectItem key={m.value} value={m.value}>
+                          {m.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
           </div>
-        </Field>
-      </Section>
+        </CardContent>
+      </Card>
 
-      {/* Button Section */}
-      <Section title="">
-        <ButtonRow
-          onTayang={handleTayang}
-          onShowSQL={handleShowSQL}
-          role={role}
-          loadingResults={loadingResults}
-          onDownloadCSV={handleDownloadCSV}
-          onDownloadExcel={handleDownloadExcel}
-          onDownloadPDF={handleDownloadPDF}
-          onRefresh={handleRefresh}
-        />
-      </Section>
+      <Card>
+        <CardContent className="pt-6">
+          <ButtonRow
+            onTayang={handleTayang}
+            onShowSQL={handleShowSQL}
+            role={role}
+            loadingResults={loadingResults}
+            onDownloadCSV={handleDownloadCSV}
+            onDownloadExcel={handleDownloadExcel}
+            onDownloadPDF={handleDownloadPDF}
+            onRefresh={handleRefresh}
+          />
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={handleTayang} disabled={loadingResults}>
+              {loadingResults ? "Memuat..." : "Tayang"}
+            </Button>
+            <Button variant="outline" onClick={handleShowSQL}>
+              Lihat SQL
+            </Button>
+            <Button variant="outline" onClick={handleDownloadCSV}>
+              Download CSV
+            </Button>
+            <Button variant="outline" onClick={handleDownloadExcel}>
+              Download Excel
+            </Button>
+            <Button variant="outline" onClick={handleDownloadPDF}>
+              Download PDF
+            </Button>
+            <Button variant="ghost" onClick={handleRefresh}>
+              Refresh
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Results Section */}
       {showResults && (
-        <div className="results-section">
-          <Section title={`Hasil Data (${tableData.length} baris)`}>
-            <div
-              className="mb-3 flex justify-between items-center rounded-md px-4 py-2"
-              style={{ backgroundColor: "#1e293b" }}
-            >
-              <span className="text-white text-sm">
-                Halaman {currentPage} dari{" "}
-                {Math.ceil(tableData.length / itemsPerPage) || 1}
-              </span>
-              <div className="flex gap-2">
-                <button
-                  className="btn btn-sm text-white"
-                  style={{
-                    backgroundColor: "rgba(255,255,255,0.15)",
-                    borderColor: "rgba(255,255,255,0.3)",
-                  }}
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  ← Sebelumnya
-                </button>
-                <button
-                  className="btn btn-sm text-white"
-                  style={{
-                    backgroundColor: "rgba(255,255,255,0.15)",
-                    borderColor: "rgba(255,255,255,0.3)",
-                  }}
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={
-                    currentPage >= Math.ceil(tableData.length / itemsPerPage)
-                  }
-                >
-                  Berikutnya →
-                </button>
-              </div>
-            </div>
-
-            <div
-              style={{
-                overflowX: "auto",
-                overflowY: "auto",
-                maxHeight: "600px",
-                display: "block",
-                WebkitOverflowScrolling: "touch",
-                scrollBehavior: "smooth",
-              }}
-            >
-              <table
-                className="table table-bordered"
-                style={{
-                  minWidth: "2500px",
-                  marginBottom: 0,
-                  wordWrap: "break-word" as const,
-                  tableLayout: "auto",
-                  fontSize: "0.85rem",
-                  backgroundColor: "#1e293b",
-                  color: "#f8fafc",
-                }}
+        <div className="results-section space-y-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-base font-semibold">
+                Hasil Data ({tableData.length.toLocaleString("id-ID")} baris)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div
+                className="mb-3 flex justify-between items-center rounded-md px-4 py-2 bg-zinc-800"
               >
-                <thead
+                <span className="text-white text-sm">
+                  Halaman {currentPage} dari{" "}
+                  {Math.ceil(tableData.length / itemsPerPage) || 1}
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-white border-zinc-600 hover:bg-zinc-700"
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    ← Sebelumnya
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-white border-zinc-600 hover:bg-zinc-700"
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={
+                      currentPage >= Math.ceil(tableData.length / itemsPerPage)
+                    }
+                  >
+                    Berikutnya →
+                  </Button>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  overflowX: "auto",
+                  overflowY: "auto",
+                  maxHeight: "600px",
+                  display: "block",
+                  WebkitOverflowScrolling: "touch",
+                  scrollBehavior: "smooth",
+                }}
+                className="rounded-md border border-zinc-800"
+              >
+                <table
+                  className="w-full border-collapse"
                   style={{
-                    position: "sticky",
-                    top: 0,
+                    minWidth: "2200px",
+                    marginBottom: 0,
+                    wordWrap: "break-word" as const,
+                    tableLayout: "auto",
+                    fontSize: "0.85rem",
                     backgroundColor: "#1e293b",
                     color: "#f8fafc",
-                    zIndex: 1,
-                    boxShadow: "0 2px 2px -1px rgba(0, 0, 0, 0.4)",
                   }}
                 >
-                  <tr>
-                    <th rowSpan={2} style={{ width: "2%", minWidth: "40px" }}>
-                      No
-                    </th>
-                    <th rowSpan={2} style={{ width: "4%", minWidth: "60px" }}>
-                      Tahun
-                    </th>
-                    <th rowSpan={2} style={{ width: "4%", minWidth: "60px" }}>
-                      Kd Kanwil
-                    </th>
-                    <th rowSpan={2} style={{ width: "10%", minWidth: "150px" }}>
-                      Nama Kanwil
-                    </th>
-                    <th rowSpan={2} style={{ width: "4%", minWidth: "60px" }}>
-                      Kd KPPN
-                    </th>
-                    <th rowSpan={2} style={{ width: "10%", minWidth: "150px" }}>
-                      Nama KPPN
-                    </th>
-                    <th rowSpan={2} style={{ width: "4%", minWidth: "60px" }}>
-                      Kd Lokasi
-                    </th>
-                    <th rowSpan={2} style={{ width: "10%", minWidth: "180px" }}>
-                      Nama Pemda
-                    </th>
-                    <th rowSpan={2} style={{ width: "6%", minWidth: "120px" }}>
-                      Pagu
-                    </th>
-                    <th colSpan={12} className="text-center">
-                      Realisasi Bulanan
-                    </th>
-                    <th rowSpan={2} style={{ width: "6%", minWidth: "120px" }}>
-                      Total
-                    </th>
-                  </tr>
-                  <tr>
-                    {[
-                      "Jan",
-                      "Feb",
-                      "Mar",
-                      "Apr",
-                      "Mei",
-                      "Jun",
-                      "Jul",
-                      "Ags",
-                      "Sep",
-                      "Okt",
-                      "Nov",
-                      "Des",
-                    ].map((m) => (
-                      <th key={m} style={{ minWidth: "100px" }}>
-                        {m}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {tableData
-                    .slice(
-                      (currentPage - 1) * itemsPerPage,
-                      currentPage * itemsPerPage,
-                    )
-                    .map((row, index) => (
-                      <tr key={index}>
-                        <td style={{ whiteSpace: "nowrap" }}>
-                          {(currentPage - 1) * itemsPerPage + index + 1}
-                        </td>
-                        <td style={{ whiteSpace: "nowrap" }}>{row.thang}</td>
-                        <td style={{ whiteSpace: "nowrap" }}>{row.kdkanwil}</td>
-                        <td
-                          style={{
-                            whiteSpace: "normal",
-                            wordWrap: "break-word",
-                          }}
-                        >
-                          {row.nmkanwil}
-                        </td>
-                        <td style={{ whiteSpace: "nowrap" }}>{row.kdkppn}</td>
-                        <td
-                          style={{
-                            whiteSpace: "normal",
-                            wordWrap: "break-word",
-                          }}
-                        >
-                          {row.nmkppn}
-                        </td>
-                        <td style={{ whiteSpace: "nowrap" }}>{row.kdlokasi}</td>
-                        <td
-                          style={{
-                            whiteSpace: "normal",
-                            wordWrap: "break-word",
-                          }}
-                        >
-                          {row.nmkabkota}
-                        </td>
-                        <td
-                          style={{ whiteSpace: "nowrap", textAlign: "right" }}
-                        >
-                          {new Intl.NumberFormat("id-ID").format(row.pagu || 0)}
-                        </td>
-                        {[
-                          "Januari",
-                          "Februari",
-                          "Maret",
-                          "April",
-                          "Mei",
-                          "Juni",
-                          "Juli",
-                          "Agustus",
-                          "September",
-                          "Oktober",
-                          "November",
-                          "Desember",
-                        ].map((m) => (
+                  <thead
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      backgroundColor: "#1e293b",
+                      color: "#f8fafc",
+                      zIndex: 1,
+                      boxShadow: "0 2px 2px -1px rgba(0, 0, 0, 0.4)",
+                    }}
+                  >
+                    <tr>
+                      <th className="border border-zinc-700 p-2 text-left" style={{ width: "2%", minWidth: "40px" }}>No</th>
+                      <th className="border border-zinc-700 p-2 text-left" style={{ width: "4%", minWidth: "60px" }}>Tahun</th>
+                      <th className="border border-zinc-700 p-2 text-left" style={{ width: "4%", minWidth: "60px" }}>Kanwil</th>
+                      <th className="border border-zinc-700 p-2 text-left" style={{ width: "10%", minWidth: "150px" }}>Nama Kanwil</th>
+                      <th className="border border-zinc-700 p-2 text-left" style={{ width: "4%", minWidth: "60px" }}>KPPN</th>
+                      <th className="border border-zinc-700 p-2 text-left" style={{ width: "10%", minWidth: "150px" }}>Nama KPPN</th>
+                      <th className="border border-zinc-700 p-2 text-left" style={{ width: "4%", minWidth: "60px" }}>Lokasi</th>
+                      <th className="border border-zinc-700 p-2 text-left" style={{ width: "10%", minWidth: "150px" }}>Nama Pemda</th>
+                      <th className="border border-zinc-700 p-2 text-left" style={{ width: "6%", minWidth: "120px" }}>Pagu</th>
+                      {[
+                        "Jan",
+                        "Feb",
+                        "Mar",
+                        "Apr",
+                        "Mei",
+                        "Jun",
+                        "Jul",
+                        "Ags",
+                        "Sep",
+                        "Okt",
+                        "Nov",
+                        "Des",
+                      ].map((m) => (
+                        <th key={m} className="border border-zinc-700 p-2 text-left" style={{ minWidth: "90px" }}>{m}</th>
+                      ))}
+                      <th className="border border-zinc-700 p-2 text-left" style={{ width: "6%", minWidth: "120px" }}>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tableData
+                      .slice(
+                        (currentPage - 1) * itemsPerPage,
+                        currentPage * itemsPerPage,
+                      )
+                      .map((row, index) => (
+                        <tr key={index} className="hover:bg-zinc-700/50">
+                          <td className="border border-zinc-700 p-2" style={{ whiteSpace: "nowrap" }}>
+                            {(currentPage - 1) * itemsPerPage + index + 1}
+                          </td>
+                          <td className="border border-zinc-700 p-2" style={{ whiteSpace: "nowrap" }}>{row.thang}</td>
+                          <td className="border border-zinc-700 p-2" style={{ whiteSpace: "nowrap" }}>{row.kdkanwil}</td>
                           <td
-                            key={m}
+                            className="border border-zinc-700 p-2"
+                            style={{
+                              whiteSpace: "normal",
+                              wordWrap: "break-word",
+                            }}
+                          >
+                            {row.nmkanwil}
+                          </td>
+                          <td className="border border-zinc-700 p-2" style={{ whiteSpace: "nowrap" }}>{row.kdkppn}</td>
+                          <td
+                            className="border border-zinc-700 p-2"
+                            style={{
+                              whiteSpace: "normal",
+                              wordWrap: "break-word",
+                            }}
+                          >
+                            {row.nmkppn}
+                          </td>
+                          <td className="border border-zinc-700 p-2" style={{ whiteSpace: "nowrap" }}>{row.kdlokasi}</td>
+                          <td
+                            className="border border-zinc-700 p-2"
+                            style={{
+                              whiteSpace: "normal",
+                              wordWrap: "break-word",
+                            }}
+                          >
+                            {row.nmkabkota}
+                          </td>
+                          <td
+                            className="border border-zinc-700 p-2"
                             style={{ whiteSpace: "nowrap", textAlign: "right" }}
                           >
-                            {new Intl.NumberFormat("id-ID").format(row[m] || 0)}
+                            {new Intl.NumberFormat("id-ID").format(row.pagu || 0)}
                           </td>
-                        ))}
-                        <td
-                          style={{ whiteSpace: "nowrap", textAlign: "right" }}
-                        >
-                          {new Intl.NumberFormat("id-ID").format(
-                            row.total_nilai || 0,
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
-          </Section>
+                          {[
+                            "Januari",
+                            "Februari",
+                            "Maret",
+                            "April",
+                            "Mei",
+                            "Juni",
+                            "Juli",
+                            "Agustus",
+                            "September",
+                            "Oktober",
+                            "November",
+                            "Desember",
+                          ].map((m) => (
+                            <td
+                              key={m}
+                              className="border border-zinc-700 p-2"
+                              style={{ whiteSpace: "nowrap", textAlign: "right" }}
+                            >
+                              {new Intl.NumberFormat("id-ID").format(row[m] || 0)}
+                            </td>
+                          ))}
+                          <td
+                            className="border border-zinc-700 p-2"
+                            style={{
+                              whiteSpace: "nowrap",
+                              textAlign: "right",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            {new Intl.NumberFormat("id-ID").format(
+                              row.total_nilai || 0,
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
