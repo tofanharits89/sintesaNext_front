@@ -193,7 +193,7 @@ const DakFisik: React.FC = () => {
   const year = new Date().getFullYear();
 
   // State untuk filter
-  const [selectedYear, setSelectedYear] = useState<string>(String(year));
+  const [selectedYear, setSelectedYear] = useState<string>("");
   const [selectedkppn, setSelectedkppn] = useState<string>("");
   const [kppnOptions, setKppnOptions] = useState<SelectOption[]>([]);
   const [selectedkanwil, setSelectedkanwil] = useState<string>("");
@@ -240,7 +240,11 @@ const DakFisik: React.FC = () => {
       setYearOptions(
         years.map((y: any) => ({ label: String(y.thang), value: String(y.thang) })),
       );
-      setSelectedYear(String(year));
+      if (years.length > 0) {
+        setSelectedYear(String(years[0].thang));
+      } else {
+        setSelectedYear(String(year));
+      }
     } catch (error) {
       console.error("Error fetching years:", error);
     }
@@ -249,10 +253,10 @@ const DakFisik: React.FC = () => {
   const fetchKanwilData = async () => {
     try {
       let query =
-        "SELECT DISTINCT kdkanwil, nmkanwil FROM dbref.t_kanwil_2025 WHERE kdkanwil IS NOT NULL ORDER BY kdkanwil ASC";
+        "SELECT kdkanwil, MIN(nmkanwil) AS nmkanwil FROM dbref.t_kanwil_2025 WHERE kdkanwil IS NOT NULL GROUP BY kdkanwil ORDER BY kdkanwil ASC";
 
       if ((role === "2" || role === "3") && kdkanwil) {
-        query = `SELECT DISTINCT kdkanwil, nmkanwil FROM dbref.t_kanwil_2025 WHERE kdkanwil = '${kdkanwil}'`;
+        query = `SELECT kdkanwil, MIN(nmkanwil) AS nmkanwil FROM dbref.t_kanwil_2025 WHERE kdkanwil = '${kdkanwil}' GROUP BY kdkanwil`;
       }
 
       const encodedQuery = encodeURIComponent(query);
@@ -283,14 +287,14 @@ const DakFisik: React.FC = () => {
       let query = "";
 
       if (role === "3" && kdkppn) {
-        query = `SELECT DISTINCT kdkppn, nmkppn FROM dbref.t_kppn_2026 WHERE kdkppn = '${kdkppn}' ORDER BY kdkppn ASC`;
+        query = `SELECT kdkppn, MIN(nmkppn) AS nmkppn FROM dbref.t_kppn_2026 WHERE kdkppn = '${kdkppn}' GROUP BY kdkppn ORDER BY kdkppn ASC`;
       } else if (role === "2" && kdkanwil) {
-        query = `SELECT DISTINCT kdkppn, nmkppn FROM dbref.t_kppn_2026 WHERE kdkanwil = '${kdkanwil}' ORDER BY kdkppn ASC`;
+        query = `SELECT kdkppn, MIN(nmkppn) AS nmkppn FROM dbref.t_kppn_2026 WHERE kdkanwil = '${kdkanwil}' GROUP BY kdkppn ORDER BY kdkppn ASC`;
       } else if (selectedKanwil) {
-        query = `SELECT DISTINCT kdkppn, nmkppn FROM dbref.t_kppn_2026 WHERE kdkanwil = '${selectedKanwil}' ORDER BY kdkppn ASC`;
+        query = `SELECT kdkppn, MIN(nmkppn) AS nmkppn FROM dbref.t_kppn_2026 WHERE kdkanwil = '${selectedKanwil}' GROUP BY kdkppn ORDER BY kdkppn ASC`;
       } else {
         query =
-          "SELECT DISTINCT kdkppn, nmkppn FROM dbref.t_kppn_2026 WHERE kdkppn IS NOT NULL ORDER BY kdkppn ASC";
+          "SELECT kdkppn, MIN(nmkppn) AS nmkppn FROM dbref.t_kppn_2026 WHERE kdkppn IS NOT NULL GROUP BY kdkppn ORDER BY kdkppn ASC";
       }
 
       const encodedQuery = encodeURIComponent(query);
@@ -361,7 +365,7 @@ const DakFisik: React.FC = () => {
   const fetchBidangData = async () => {
     try {
       const query =
-        "SELECT DISTINCT kdbidang, nmbidang FROM tkd.dak_fisik ORDER BY nmbidang";
+        "SELECT kdbidang, MIN(nmbidang) AS nmbidang FROM tkd.dak_fisik GROUP BY kdbidang ORDER BY nmbidang";
       const encodedQuery = encodeURIComponent(query);
       const API_BASE = process.env.NEXT_PUBLIC_DAKFISIK_DNF_DATA || "/api/v1/transfer-daerah/dataset/query?sql=";
       const response = await http.get(
@@ -381,11 +385,11 @@ const DakFisik: React.FC = () => {
 
   const fetchSubBidangData = async (kdbidang: string | null = null) => {
     try {
-      let query = "SELECT DISTINCT kdsubidang, nmsubidang FROM tkd.dak_fisik";
-      if (kdbidang) {
+      let query = "SELECT kdsubidang, MIN(nmsubidang) AS nmsubidang FROM tkd.dak_fisik";
+      if (kdbidang && kdbidang !== "all") {
         query += ` WHERE kdbidang = '${kdbidang}'`;
       }
-      query += " ORDER BY nmsubidang";
+      query += " GROUP BY kdsubidang ORDER BY nmsubidang";
       const encodedQuery = encodeURIComponent(query);
       const API_BASE = process.env.NEXT_PUBLIC_DAKFISIK_DNF_DATA || "/api/v1/transfer-daerah/dataset/query?sql=";
       const response = await http.get(
@@ -411,9 +415,9 @@ const DakFisik: React.FC = () => {
 
     let where = "WHERE 1=1";
     if (selectedYear && selectedYear !== "all") where += ` AND a.thang = '${selectedYear}'`;
-    if (filterKanwil && filterKanwil !== "all") where += ` AND b.kdkanwil = '${filterKanwil}'`;
-    if (filterKppn && filterKppn !== "all") where += ` AND a.kdkppn = '${filterKppn}'`;
-    if (selectedLokasi && selectedLokasi !== "all") where += ` AND a.kdlokasi = '${selectedLokasi}'`;
+    if (filterKanwil) where += ` AND b.kdkanwil = '${filterKanwil}'`;
+    if (filterKppn) where += ` AND a.kdkppn = '${filterKppn}'`;
+    if (selectedLokasi) where += ` AND a.kdlokasi = '${selectedLokasi}'`;
     if (startMonth && endMonth)
       where += ` AND EXTRACT(MONTH FROM a.tgsp2d) BETWEEN ${startMonth} AND ${endMonth}`;
     if (selectedJenisDana && selectedJenisDana !== "all")
@@ -828,11 +832,11 @@ ORDER BY a.kdlokasi, a.kdsubidang, a.kdkppn`;
           <CardTitle className="text-base font-semibold">Filter Data</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="space-y-2">
+          <div className="flex flex-wrap gap-4">
+            <div className="flex-1 min-w-[200px] space-y-2">
               <Label>Tahun</Label>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="-- Semua --" />
                 </SelectTrigger>
                 <SelectContent>
@@ -846,10 +850,13 @@ ORDER BY a.kdlokasi, a.kdsubidang, a.kdkppn`;
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="flex-1 min-w-[250px] space-y-2">
               <Label>Kanwil</Label>
               <SearchableSelect
-                options={kanwilOptions}
+                options={[
+                  { label: "-- Semua --", value: "" },
+                  ...kanwilOptions
+                ]}
                 value={selectedkanwil}
                 onValueChange={setSelectedkanwil}
                 disabled={role === "2" || role === "3"}
@@ -857,10 +864,13 @@ ORDER BY a.kdlokasi, a.kdsubidang, a.kdkppn`;
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="flex-1 min-w-[250px] space-y-2">
               <Label>KPPN</Label>
               <SearchableSelect
-                options={kppnOptions}
+                options={[
+                  { label: "-- Semua --", value: "" },
+                  ...kppnOptions
+                ]}
                 value={selectedkppn}
                 onValueChange={setSelectedkppn}
                 disabled={role === "3"}
@@ -868,23 +878,26 @@ ORDER BY a.kdlokasi, a.kdsubidang, a.kdkppn`;
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="flex-1 min-w-[250px] space-y-2">
               <Label>Lokasi</Label>
               <SearchableSelect
-                options={lokasiOptions}
+                options={[
+                  { label: "-- Semua --", value: "" },
+                  ...lokasiOptions
+                ]}
                 value={selectedLokasi}
                 onValueChange={setSelectedLokasi}
                 placeholder="-- Semua --"
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="flex-1 min-w-[200px] space-y-2">
               <Label>Jenis Dana</Label>
               <Select
                 value={selectedJenisDana}
                 onValueChange={setSelectedJenisDana}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="-- Semua --" />
                 </SelectTrigger>
                 <SelectContent>
@@ -898,10 +911,10 @@ ORDER BY a.kdlokasi, a.kdsubidang, a.kdkppn`;
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="flex-1 min-w-[200px] space-y-2">
               <Label>Bidang</Label>
               <Select value={selectedBidang} onValueChange={setSelectedBidang}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="-- Semua --" />
                 </SelectTrigger>
                 <SelectContent>
@@ -916,13 +929,13 @@ ORDER BY a.kdlokasi, a.kdsubidang, a.kdkppn`;
             </div>
 
             {selectedBidang && (
-              <div className="space-y-2">
+              <div className="flex-1 min-w-[200px] space-y-2">
                 <Label>Sub Bidang</Label>
                 <Select
                   value={selectedSubBidang}
                   onValueChange={setSelectedSubBidang}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="-- Semua --" />
                   </SelectTrigger>
                   <SelectContent>
@@ -937,7 +950,7 @@ ORDER BY a.kdlokasi, a.kdsubidang, a.kdkppn`;
               </div>
             )}
 
-            <div className="space-y-2">
+            <div className="flex-1 min-w-[300px] space-y-2">
               <Label>Bulan SP2D</Label>
               <div className="flex items-center gap-2">
                 <div className="flex-1">

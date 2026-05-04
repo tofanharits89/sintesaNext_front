@@ -267,6 +267,7 @@ const DNF: React.FC = () => {
     try {
       const d = await fetchData("SELECT DISTINCT thang FROM tkd.tpg ORDER BY thang DESC");
       setTpgYearOptions(d.map((y: any) => ({ label: String(y.thang), value: String(y.thang) })));
+      if (d.length > 0) setTpgSelectedYear(String(d[0].thang));
     } catch (e) {
       console.error("Error fetching TPG years:", e);
     }
@@ -276,13 +277,13 @@ const DNF: React.FC = () => {
     try {
       let query = "";
       if (role === "3" && kdkppn)
-        query = `SELECT DISTINCT kdkppn, nmkppn FROM dbref.t_kppn_2025 WHERE kdkppn = '${kdkppn}' ORDER BY kdkppn ASC`;
+        query = `SELECT kdkppn, MIN(nmkppn) AS nmkppn FROM dbref.t_kppn_2025 WHERE kdkppn = '${kdkppn}' GROUP BY kdkppn ORDER BY kdkppn ASC`;
       else if (role === "2" && kdkanwil)
-        query = `SELECT DISTINCT kdkppn, nmkppn FROM dbref.t_kppn_2025 WHERE kdkanwil = '${kdkanwil}' ORDER BY kdkppn ASC`;
+        query = `SELECT kdkppn, MIN(nmkppn) AS nmkppn FROM dbref.t_kppn_2025 WHERE kdkanwil = '${kdkanwil}' GROUP BY kdkppn ORDER BY kdkppn ASC`;
       else if (selectedKanwil)
-        query = `SELECT DISTINCT kdkppn, nmkppn FROM dbref.t_kppn_2025 WHERE kdkanwil = '${selectedKanwil}' ORDER BY kdkppn ASC`;
+        query = `SELECT kdkppn, MIN(nmkppn) AS nmkppn FROM dbref.t_kppn_2025 WHERE kdkanwil = '${selectedKanwil}' GROUP BY kdkppn ORDER BY kdkppn ASC`;
       else
-        query = "SELECT DISTINCT kdkppn, nmkppn FROM dbref.t_kppn_2025 WHERE kdkppn IS NOT NULL ORDER BY kdkppn ASC";
+        query = "SELECT kdkppn, MIN(nmkppn) AS nmkppn FROM dbref.t_kppn_2025 WHERE kdkppn IS NOT NULL GROUP BY kdkppn ORDER BY kdkppn ASC";
       const d = await fetchData(query);
       setTpgkppnOptions(d.map((k: any) => ({ label: `${k.kdkppn} - ${k.nmkppn || "N/A"}`, value: String(k.kdkppn) })));
       if (role === "3" && kdkppn) setTpgSelectedkppn(kdkppn);
@@ -294,9 +295,9 @@ const DNF: React.FC = () => {
 
   const fetchTpgKanwil = async () => {
     try {
-      let query = "SELECT DISTINCT kdkanwil, nmkanwil FROM dbref.t_kanwil_2025 WHERE kdkanwil IS NOT NULL ORDER BY kdkanwil ASC";
+      let query = "SELECT kdkanwil, MIN(nmkanwil) AS nmkanwil FROM dbref.t_kanwil_2025 WHERE kdkanwil IS NOT NULL GROUP BY kdkanwil ORDER BY kdkanwil ASC";
       if ((role === "2" || role === "3") && kdkanwil)
-        query = `SELECT DISTINCT kdkanwil, nmkanwil FROM dbref.t_kanwil_2025 WHERE kdkanwil = '${kdkanwil}'`;
+        query = `SELECT kdkanwil, MIN(nmkanwil) AS nmkanwil FROM dbref.t_kanwil_2025 WHERE kdkanwil = '${kdkanwil}' GROUP BY kdkanwil`;
       const d = await fetchData(query);
       setTpgkanwilOptions(d.map((k: any) => ({ label: `${k.kdkanwil} - ${k.nmkanwil}`, value: String(k.kdkanwil) })));
       if ((role === "2" || role === "3") && kdkanwil) setTpgSelectedkanwil(kdkanwil);
@@ -330,6 +331,7 @@ const DNF: React.FC = () => {
     try {
       const d = await fetchData("SELECT DISTINCT thang FROM tkd.bos_bop ORDER BY thang DESC");
       setBosBopYearOptions(d.map((y: any) => ({ label: String(y.thang), value: String(y.thang) })));
+      if (d.length > 0) setBosBopSelectedYear(String(d[0].thang));
     } catch (e) { console.error(e); }
   };
   const fetchBosBopPrograms = async () => {
@@ -354,8 +356,8 @@ const DNF: React.FC = () => {
   const fetchBosBopKanwil = async () => {
     try {
       let query = (role === "2" || role === "3") && kdkanwil
-        ? `SELECT DISTINCT kdkanwil, nmkanwil FROM dbref.t_kanwil_2025 WHERE kdkanwil = '${kdkanwil}' ORDER BY kdkanwil ASC`
-        : "SELECT DISTINCT kdkanwil, nmkanwil FROM dbref.t_kanwil_2025 WHERE kdkanwil IS NOT NULL ORDER BY kdkanwil ASC";
+        ? `SELECT kdkanwil, MIN(nmkanwil) AS nmkanwil FROM dbref.t_kanwil_2025 WHERE kdkanwil = '${kdkanwil}' GROUP BY kdkanwil ORDER BY kdkanwil ASC`
+        : "SELECT kdkanwil, MIN(nmkanwil) AS nmkanwil FROM dbref.t_kanwil_2025 WHERE kdkanwil IS NOT NULL GROUP BY kdkanwil ORDER BY kdkanwil ASC";
       const d = await fetchData(query);
       setBosBopKanwilOptions(d.map((k: any) => ({ label: `${k.kdkanwil} - ${k.nmkanwil || "N/A"}`, value: String(k.kdkanwil) })));
       if ((role === "2" || role === "3") && kdkanwil) setBosBopSelectedKanwil(kdkanwil);
@@ -367,13 +369,13 @@ const DNF: React.FC = () => {
     try {
       let query = "";
       if (role === "3" && kdkppn)
-        query = `SELECT DISTINCT kdkppn, nmkppn FROM dbref.t_kppn_2025 WHERE kdkppn = '${kdkppn}' ORDER BY kdkppn ASC`;
+        query = `SELECT kdkppn, MIN(nmkppn) AS nmkppn FROM dbref.t_kppn_2025 WHERE kdkppn = '${kdkppn}' GROUP BY kdkppn ORDER BY kdkppn ASC`;
       else if (role === "2" && kdkanwil)
-        query = `SELECT DISTINCT kdkppn, nmkppn FROM dbref.t_kppn_2025 WHERE kdkanwil = '${kdkanwil}' ORDER BY kdkppn ASC`;
+        query = `SELECT kdkppn, MIN(nmkppn) AS nmkppn FROM dbref.t_kppn_2025 WHERE kdkanwil = '${kdkanwil}' GROUP BY kdkppn ORDER BY kdkppn ASC`;
       else if (selectedKanwil)
-        query = `SELECT DISTINCT kdkppn, nmkppn FROM dbref.t_kppn_2025 WHERE kdkanwil = '${selectedKanwil}' ORDER BY kdkppn ASC`;
+        query = `SELECT kdkppn, MIN(nmkppn) AS nmkppn FROM dbref.t_kppn_2025 WHERE kdkanwil = '${selectedKanwil}' GROUP BY kdkppn ORDER BY kdkppn ASC`;
       else
-        query = "SELECT DISTINCT kdkppn, nmkppn FROM dbref.t_kppn_2025 WHERE kdkppn IS NOT NULL ORDER BY kdkppn ASC";
+        query = "SELECT kdkppn, MIN(nmkppn) AS nmkppn FROM dbref.t_kppn_2025 WHERE kdkppn IS NOT NULL GROUP BY kdkppn ORDER BY kdkppn ASC";
       const d = await fetchData(query);
       setBosBopKppnOptions(d.map((k: any) => ({ label: `${k.kdkppn} - ${k.nmkppn || "N/A"}`, value: String(k.kdkppn) })));
       if (role === "3" && kdkppn) setBosBopSelectedKppn(kdkppn);
@@ -386,9 +388,9 @@ const DNF: React.FC = () => {
     let w = "WHERE 1=1";
     if (tpgSelectedYear && tpgSelectedYear !== "all") w += ` AND thang = '${tpgSelectedYear}'`;
     const fKanwil = tpgSelectedkanwil || ((role === "2" || role === "3") ? kdkanwil : "");
-    if (fKanwil && fKanwil !== "all") w += ` AND kode_kanwil = '${fKanwil}'`;
+    if (fKanwil) w += ` AND kode_kanwil = '${fKanwil}'`;
     const fKppn = tpgSelectedkppn || (role === "3" ? kdkppn : "");
-    if (fKppn && fKppn !== "all") w += ` AND kppn = '${fKppn}'`;
+    if (fKppn) w += ` AND kppn = '${fKppn}'`;
     if (tpgStartMonth && tpgEndMonth) w += ` AND EXTRACT(MONTH FROM tgsp2d) BETWEEN ${tpgStartMonth} AND ${tpgEndMonth}`;
     if (tpgSelectedPeriode && tpgSelectedPeriode !== "all") w += ` AND nm_periode = '${tpgSelectedPeriode}'`;
     if (tpgSelectedGelombang && tpgSelectedGelombang !== "all") w += ` AND gelombang = '${tpgSelectedGelombang}'`;
@@ -412,9 +414,9 @@ const DNF: React.FC = () => {
     if (bosBopSelectedJenisBos && bosBopSelectedJenisBos !== "all") w += ` AND a.jenis_bos = '${bosBopSelectedJenisBos}'`;
     if (bosBopSelectedJenjang && bosBopSelectedJenjang !== "all") w += ` AND a.jenjang = '${bosBopSelectedJenjang}'`;
     const fKanwil = bosBopSelectedKanwil || ((role === "2" || role === "3") ? kdkanwil : "");
-    if (fKanwil && fKanwil !== "all") w += ` AND c.kdkanwil = '${fKanwil}'`;
+    if (fKanwil) w += ` AND c.kdkanwil = '${fKanwil}'`;
     const fKppn = bosBopSelectedKppn || (role === "3" ? kdkppn : "");
-    if (fKppn && fKppn !== "all") w += ` AND a.kdkppn = '${fKppn}'`;
+    if (fKppn) w += ` AND a.kdkppn = '${fKppn}'`;
     return `SELECT a.thang, c.kdkanwil, d.nmkanwil, a.kdkppn, e.nmkabkota AS nmkabkota_kppn, a.nmprogram, a.jenjang, a.status_sekolah, a.jenis_bos, a.kdlokasi_kedudukan, b.nmkabkota AS nmkabkota_sekolah,
     SUM(CASE WHEN EXTRACT(MONTH FROM a.tgsp2d) = 1 THEN a.nilai ELSE 0 END) AS Januari, SUM(CASE WHEN EXTRACT(MONTH FROM a.tgsp2d) = 2 THEN a.nilai ELSE 0 END) AS Februari,
     SUM(CASE WHEN EXTRACT(MONTH FROM a.tgsp2d) = 3 THEN a.nilai ELSE 0 END) AS Maret, SUM(CASE WHEN EXTRACT(MONTH FROM a.tgsp2d) = 4 THEN a.nilai ELSE 0 END) AS April,
@@ -580,11 +582,11 @@ const DNF: React.FC = () => {
               <CardTitle className="text-base font-semibold">Filter Data TPG</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="space-y-2">
+              <div className="flex flex-wrap gap-4">
+                <div className="flex-1 min-w-[200px] space-y-2">
                   <Label>Tahun</Label>
                   <Select value={tpgSelectedYear} onValueChange={setTpgSelectedYear}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="-- Semua --" />
                     </SelectTrigger>
                     <SelectContent>
@@ -596,10 +598,13 @@ const DNF: React.FC = () => {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
+                <div className="flex-1 min-w-[250px] space-y-2">
                   <Label>Kanwil</Label>
                   <SearchableSelect
-                    options={tpgkanwilOptions}
+                    options={[
+                      { label: "-- Semua --", value: "" },
+                      ...tpgkanwilOptions
+                    ]}
                     value={tpgSelectedkanwil}
                     onValueChange={setTpgSelectedkanwil}
                     disabled={role === "2" || role === "3"}
@@ -607,10 +612,13 @@ const DNF: React.FC = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="flex-1 min-w-[250px] space-y-2">
                   <Label>KPPN</Label>
                   <SearchableSelect
-                    options={tpgkppnOptions}
+                    options={[
+                      { label: "-- Semua --", value: "" },
+                      ...tpgkppnOptions
+                    ]}
                     value={tpgSelectedkppn}
                     onValueChange={setTpgSelectedkppn}
                     disabled={role === "3"}
@@ -618,10 +626,10 @@ const DNF: React.FC = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="flex-1 min-w-[200px] space-y-2">
                   <Label>Periode</Label>
                   <Select value={tpgSelectedPeriode} onValueChange={setTpgSelectedPeriode}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="-- Semua --" />
                     </SelectTrigger>
                     <SelectContent>
@@ -633,10 +641,10 @@ const DNF: React.FC = () => {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
+                <div className="flex-1 min-w-[200px] space-y-2">
                   <Label>Gelombang</Label>
                   <Select value={tpgSelectedGelombang} onValueChange={setTpgSelectedGelombang}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="-- Semua --" />
                     </SelectTrigger>
                     <SelectContent>
@@ -648,10 +656,10 @@ const DNF: React.FC = () => {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
+                <div className="flex-1 min-w-[200px] space-y-2">
                   <Label>Jenis TKD</Label>
                   <Select value={tpgSelectedJenisTkd} onValueChange={setTpgSelectedJenisTkd}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="-- Semua --" />
                     </SelectTrigger>
                     <SelectContent>
@@ -663,7 +671,7 @@ const DNF: React.FC = () => {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
+                <div className="flex-1 min-w-[300px] space-y-2">
                   <Label>Bulan SP2D</Label>
                   <div className="flex items-center gap-2">
                     <Select value={tpgStartMonth} onValueChange={setTpgStartMonth}>
@@ -799,11 +807,11 @@ const DNF: React.FC = () => {
               <CardTitle className="text-base font-semibold">Filter Data BOS / BOP</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="space-y-2">
+              <div className="flex flex-wrap gap-4">
+                <div className="flex-1 min-w-[200px] space-y-2">
                   <Label>Tahun</Label>
                   <Select value={bosBopSelectedYear} onValueChange={setBosBopSelectedYear}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="-- Semua --" />
                     </SelectTrigger>
                     <SelectContent>
@@ -815,10 +823,13 @@ const DNF: React.FC = () => {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
+                <div className="flex-1 min-w-[250px] space-y-2">
                   <Label>Kanwil</Label>
                   <SearchableSelect
-                    options={bosBopKanwilOptions}
+                    options={[
+                      { label: "-- Semua --", value: "" },
+                      ...bosBopKanwilOptions
+                    ]}
                     value={bosBopSelectedKanwil}
                     onValueChange={setBosBopSelectedKanwil}
                     disabled={role === "2" || role === "3"}
@@ -826,10 +837,13 @@ const DNF: React.FC = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="flex-1 min-w-[250px] space-y-2">
                   <Label>KPPN</Label>
                   <SearchableSelect
-                    options={bosBopKppnOptions}
+                    options={[
+                      { label: "-- Semua --", value: "" },
+                      ...bosBopKppnOptions
+                    ]}
                     value={bosBopSelectedKppn}
                     onValueChange={setBosBopSelectedKppn}
                     disabled={role === "3"}
@@ -837,10 +851,10 @@ const DNF: React.FC = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="flex-1 min-w-[200px] space-y-2">
                   <Label>Program</Label>
                   <Select value={bosBopSelectedProgram} onValueChange={setBosBopSelectedProgram}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="-- Semua --" />
                     </SelectTrigger>
                     <SelectContent>
@@ -852,10 +866,10 @@ const DNF: React.FC = () => {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
+                <div className="flex-1 min-w-[200px] space-y-2">
                   <Label>Jenis BOS</Label>
                   <Select value={bosBopSelectedJenisBos} onValueChange={setBosBopSelectedJenisBos}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="-- Semua --" />
                     </SelectTrigger>
                     <SelectContent>
@@ -867,10 +881,10 @@ const DNF: React.FC = () => {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
+                <div className="flex-1 min-w-[200px] space-y-2">
                   <Label>Jenjang</Label>
                   <Select value={bosBopSelectedJenjang} onValueChange={setBosBopSelectedJenjang}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="-- Semua --" />
                     </SelectTrigger>
                     <SelectContent>
@@ -882,7 +896,7 @@ const DNF: React.FC = () => {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
+                <div className="flex-1 min-w-[300px] space-y-2">
                   <Label>Bulan SP2D</Label>
                   <div className="flex items-center gap-2">
                     <Select value={bosBopStartMonth} onValueChange={setBosBopStartMonth}>

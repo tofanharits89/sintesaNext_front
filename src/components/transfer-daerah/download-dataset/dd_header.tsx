@@ -186,7 +186,7 @@ const DD_header: React.FC = () => {
   const year = new Date().getFullYear();
 
   // State untuk filter
-  const [selectedYear, setSelectedYear] = useState<string>(String(year));
+  const [selectedYear, setSelectedYear] = useState<string>("");
   const [selectedkppn, setSelectedkppn] = useState<string>("");
   const [kppnOptions, setKppnOptions] = useState<SelectOption[]>([]);
   const [selectedkanwil, setSelectedkanwil] = useState<string>("");
@@ -227,7 +227,11 @@ const DD_header: React.FC = () => {
       setYearOptions(
         years.map((y: any) => ({ label: String(y.thang), value: String(y.thang) })),
       );
-      setSelectedYear(String(year));
+      if (years.length > 0) {
+        setSelectedYear(String(years[0].thang));
+      } else {
+        setSelectedYear(String(year));
+      }
     } catch (error) {
       console.error("Error fetching years:", error);
     }
@@ -236,10 +240,10 @@ const DD_header: React.FC = () => {
   const fetchKanwilData = async () => {
     try {
       let query =
-        "SELECT DISTINCT kdkanwil, nmkanwil FROM dbref.t_kanwil_2025 WHERE kdkanwil IS NOT NULL ORDER BY kdkanwil ASC";
+        "SELECT kdkanwil, MIN(nmkanwil) AS nmkanwil FROM dbref.t_kanwil_2025 WHERE kdkanwil IS NOT NULL GROUP BY kdkanwil ORDER BY kdkanwil ASC";
 
       if ((role === "2" || role === "3") && kdkanwil) {
-        query = `SELECT DISTINCT kdkanwil, nmkanwil FROM dbref.t_kanwil_2025 WHERE kdkanwil = '${kdkanwil}'`;
+        query = `SELECT kdkanwil, MIN(nmkanwil) AS nmkanwil FROM dbref.t_kanwil_2025 WHERE kdkanwil = '${kdkanwil}' GROUP BY kdkanwil`;
       }
 
       const encodedQuery = encodeURIComponent(query);
@@ -270,14 +274,14 @@ const DD_header: React.FC = () => {
       let query = "";
 
       if (role === "3" && kdkppn) {
-        query = `SELECT DISTINCT kdkppn, nmkppn FROM dbref.t_kppn_2026 WHERE kdkppn = '${kdkppn}' ORDER BY kdkppn ASC`;
+        query = `SELECT kdkppn, MIN(nmkppn) AS nmkppn FROM dbref.t_kppn_2026 WHERE kdkppn = '${kdkppn}' GROUP BY kdkppn ORDER BY kdkppn ASC`;
       } else if (role === "2" && kdkanwil) {
-        query = `SELECT DISTINCT kdkppn, nmkppn FROM dbref.t_kppn_2026 WHERE kdkanwil = '${kdkanwil}' ORDER BY kdkppn ASC`;
+        query = `SELECT kdkppn, MIN(nmkppn) AS nmkppn FROM dbref.t_kppn_2026 WHERE kdkanwil = '${kdkanwil}' GROUP BY kdkppn ORDER BY kdkppn ASC`;
       } else if (selectedKanwil) {
-        query = `SELECT DISTINCT kdkppn, nmkppn FROM dbref.t_kppn_2026 WHERE kdkanwil = '${selectedKanwil}' ORDER BY kdkppn ASC`;
+        query = `SELECT kdkppn, MIN(nmkppn) AS nmkppn FROM dbref.t_kppn_2026 WHERE kdkanwil = '${selectedKanwil}' GROUP BY kdkppn ORDER BY kdkppn ASC`;
       } else {
         query =
-          "SELECT DISTINCT kdkppn, nmkppn FROM dbref.t_kppn_2026 WHERE kdkppn IS NOT NULL ORDER BY kdkppn ASC";
+          "SELECT kdkppn, MIN(nmkppn) AS nmkppn FROM dbref.t_kppn_2026 WHERE kdkppn IS NOT NULL GROUP BY kdkppn ORDER BY kdkppn ASC";
       }
 
       const encodedQuery = encodeURIComponent(query);
@@ -306,7 +310,7 @@ const DD_header: React.FC = () => {
   const fetchLokasiData = async () => {
     try {
       const query =
-        "SELECT DISTINCT a.kdlokasi, b.nmkabkota FROM tkd.dd_header a LEFT JOIN dbref.t_kabkota_apbd b ON a.kdlokasi = REPLACE(b.kdkabkota, '.', '') ORDER BY a.kdlokasi ASC";
+        "SELECT a.kdlokasi, MIN(b.nmkabkota) AS nmkabkota FROM tkd.dd_header a LEFT JOIN dbref.t_kabkota_apbd b ON a.kdlokasi = REPLACE(b.kdkabkota, '.', '') GROUP BY a.kdlokasi ORDER BY a.kdlokasi ASC";
       const encodedQuery = encodeURIComponent(query);
       const API_BASE = process.env.NEXT_PUBLIC_DAKFISIK_DNF_DATA || "/api/v1/transfer-daerah/dataset/query?sql=";
       const response = await http.get(
@@ -332,9 +336,9 @@ const DD_header: React.FC = () => {
 
     let whereConditions = "WHERE 1=1";
     if (selectedYear && selectedYear !== "all") whereConditions += ` AND a.thang = '${selectedYear}'`;
-    if (filterKanwil && filterKanwil !== "all") whereConditions += ` AND c.kdkanwil = '${filterKanwil}'`;
-    if (filterKppn && filterKppn !== "all") whereConditions += ` AND a.kdkppn = '${filterKppn}'`;
-    if (selectedLokasi && selectedLokasi !== "all")
+    if (filterKanwil) whereConditions += ` AND c.kdkanwil = '${filterKanwil}'`;
+    if (filterKppn) whereConditions += ` AND a.kdkppn = '${filterKppn}'`;
+    if (selectedLokasi)
       whereConditions += ` AND a.kdlokasi = '${selectedLokasi}'`;
     if (startMonth && endMonth)
       whereConditions += ` AND EXTRACT(MONTH FROM a.tgl_sp2d) BETWEEN ${startMonth} AND ${endMonth}`;
@@ -711,11 +715,11 @@ ORDER BY c.kdkanwil, a.kdkppn`;
           <CardTitle className="text-base font-semibold">Filter Data</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="space-y-2">
+          <div className="flex flex-wrap gap-4">
+            <div className="flex-1 min-w-[200px] space-y-2">
               <Label>Tahun</Label>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="-- Semua --" />
                 </SelectTrigger>
                 <SelectContent>
@@ -729,10 +733,13 @@ ORDER BY c.kdkanwil, a.kdkppn`;
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="flex-1 min-w-[250px] space-y-2">
               <Label>Kanwil</Label>
               <SearchableSelect
-                options={kanwilOptions}
+                options={[
+                  { label: "-- Semua --", value: "" },
+                  ...kanwilOptions
+                ]}
                 value={selectedkanwil}
                 onValueChange={setSelectedkanwil}
                 disabled={role === "2" || role === "3"}
@@ -740,10 +747,13 @@ ORDER BY c.kdkanwil, a.kdkppn`;
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="flex-1 min-w-[250px] space-y-2">
               <Label>KPPN</Label>
               <SearchableSelect
-                options={kppnOptions}
+                options={[
+                  { label: "-- Semua --", value: "" },
+                  ...kppnOptions
+                ]}
                 value={selectedkppn}
                 onValueChange={setSelectedkppn}
                 disabled={role === "3"}
@@ -751,17 +761,20 @@ ORDER BY c.kdkanwil, a.kdkppn`;
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="flex-1 min-w-[250px] space-y-2">
               <Label>Lokasi</Label>
               <SearchableSelect
-                options={lokasiOptions}
+                options={[
+                  { label: "-- Semua --", value: "" },
+                  ...lokasiOptions
+                ]}
                 value={selectedLokasi}
                 onValueChange={setSelectedLokasi}
                 placeholder="-- Semua --"
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="flex-1 min-w-[300px] space-y-2">
               <Label>Bulan SP2D</Label>
               <div className="flex items-center gap-2">
                 <div className="flex-1">
