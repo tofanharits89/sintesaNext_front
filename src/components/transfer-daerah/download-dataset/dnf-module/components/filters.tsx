@@ -53,6 +53,7 @@ interface FilterTPGProps {
   onShowSQL: () => void;
   onReset: () => void;
   loading: boolean;
+  hasData: boolean;
 }
 
 export const FilterTPG: React.FC<FilterTPGProps> = ({
@@ -86,6 +87,7 @@ export const FilterTPG: React.FC<FilterTPGProps> = ({
   onShowSQL,
   onReset,
   loading,
+  hasData,
 }) => (
   <Card>
     <CardHeader>
@@ -97,117 +99,131 @@ export const FilterTPG: React.FC<FilterTPGProps> = ({
         <ResetButton onReset={onReset} />
       </div>
     </CardHeader>
-    <CardContent className="space-y-4">
-      <div className="flex flex-wrap gap-4">
-        <div className="flex-1 min-w-[200px] space-y-2">
-          <Label>Tahun</Label>
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="-- Semua --" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">-- Semua --</SelectItem>
-              {yearOptions.map((o) => (
-                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex-1 min-w-[250px] space-y-2">
-          <Label>Kanwil</Label>
-          <SearchableSelect
-            options={[{ label: "-- Semua --", value: "" }, ...kanwilOptions]}
-            value={selectedKanwil}
-            onValueChange={setSelectedKanwil}
-            disabled={role === "2" || role === "3"}
-            placeholder="-- Semua --"
-          />
-        </div>
-
-        <div className="flex-1 min-w-[250px] space-y-2">
-          <Label>KPPN</Label>
-          <SearchableSelect
-            options={[{ label: "-- Semua --", value: "" }, ...kppnOptions]}
-            value={selectedKppn}
-            onValueChange={setSelectedKppn}
-            disabled={role === "3"}
-            placeholder="-- Semua --"
-          />
-        </div>
-
-        <div className="flex-1 min-w-[200px] space-y-2">
-          <Label>Periode</Label>
-          <Select value={selectedPeriode} onValueChange={setSelectedPeriode}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="-- Semua --" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">-- Semua --</SelectItem>
-              {periodeOptions.map((o) => (
-                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex-1 min-w-[200px] space-y-2">
-          <Label>Gelombang</Label>
-          <Select value={selectedGelombang} onValueChange={setSelectedGelombang}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="-- Semua --" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">-- Semua --</SelectItem>
-              {gelombangOptions.map((o) => (
-                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex-1 min-w-[200px] space-y-2">
-          <Label>Jenis TKD</Label>
-          <Select value={selectedJenisTkd} onValueChange={setSelectedJenisTkd}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="-- Semua --" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">-- Semua --</SelectItem>
-              {jenisTkdOptions.map((o) => (
-                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex-1 min-w-[300px] space-y-2">
-          <Label>Bulan SP2D</Label>
-          <div className="flex items-center gap-2">
-            <Select value={startMonth} onValueChange={setStartMonth}>
+    <CardContent className="space-y-6">
+      <div className="space-y-4">
+        {/* Row 1: Tahun, Kanwil, KPPN */}
+        <div className="flex flex-wrap gap-4">
+          <div className="flex-1 min-w-[200px] space-y-2">
+            <Label>Tahun</Label>
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Dari" />
+                <SelectValue placeholder="-- Semua --" />
               </SelectTrigger>
               <SelectContent>
-                {MONTHS.map((m) => (
-                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                <SelectItem value="all">-- Semua --</SelectItem>
+                {yearOptions.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <span className="text-sm shrink-0">s.d.</span>
-            <Select value={endMonth} onValueChange={setEndMonth}>
+          </div>
+
+          <div className="flex-1 min-w-[250px] space-y-2">
+            <Label>Kanwil</Label>
+            <SearchableSelect
+              options={[{ label: "-- Semua --", value: "" }, ...kanwilOptions]}
+              value={selectedKanwil}
+              onValueChange={setSelectedKanwil}
+              disabled={role === "2" || role === "3"}
+              placeholder="-- Semua --"
+            />
+          </div>
+
+          <div className="flex-1 min-w-[250px] space-y-2">
+            <Label>KPPN</Label>
+            <SearchableSelect
+              options={[{ label: "-- Semua --", value: "" }, ...kppnOptions]}
+              value={selectedKppn}
+              onValueChange={setSelectedKppn}
+              disabled={role === "3"}
+              placeholder="-- Semua --"
+            />
+          </div>
+        </div>
+
+        {/* Row 2: Periode, Gelombang, Jenis TKD */}
+        <div className="flex flex-wrap gap-4">
+          <div className="flex-1 min-w-[200px] space-y-2">
+            <Label>Periode</Label>
+            <Select value={selectedPeriode} onValueChange={setSelectedPeriode}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Sampai" />
+                <SelectValue placeholder="-- Semua --" />
               </SelectTrigger>
               <SelectContent>
-                {MONTHS.map((m) => (
-                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                <SelectItem value="all">-- Semua --</SelectItem>
+                {periodeOptions.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex-1 min-w-[200px] space-y-2">
+            <Label>Gelombang</Label>
+            <Select value={selectedGelombang} onValueChange={setSelectedGelombang}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="-- Semua --" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">-- Semua --</SelectItem>
+                {gelombangOptions.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex-1 min-w-[200px] space-y-2">
+            <Label>Jenis TKD</Label>
+            <Select value={selectedJenisTkd} onValueChange={setSelectedJenisTkd}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="-- Semua --" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">-- Semua --</SelectItem>
+                {jenisTkdOptions.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
         </div>
+
+        {/* Row 3: Bulan SP2D */}
+        <div className="flex flex-wrap gap-4">
+          <div className="flex-1 space-y-2">
+            <Label>Bulan SP2D</Label>
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <Select value={startMonth} onValueChange={setStartMonth}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Dari" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MONTHS.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <span className="text-sm shrink-0">s.d.</span>
+              <div className="flex-1">
+                <Select value={endMonth} onValueChange={setEndMonth}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Sampai" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MONTHS.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+
 
       {/* Action Buttons */}
       <div className="border-t pt-6 mt-2">
@@ -233,7 +249,8 @@ export const FilterTPG: React.FC<FilterTPGProps> = ({
           <Button
             variant="outline"
             onClick={onDownloadCSV}
-            className="w-36 h-10 gap-2 bg-sky-50 text-sky-700 border-sky-100 hover:bg-sky-100 hover:text-sky-800"
+            disabled={!hasData || loading}
+            className="w-36 h-10 gap-2 bg-sky-50 text-sky-700 border-sky-100 hover:bg-sky-100 hover:text-sky-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FileText className="h-4 w-4" />
             CSV
@@ -242,7 +259,8 @@ export const FilterTPG: React.FC<FilterTPGProps> = ({
           <Button
             variant="outline"
             onClick={onDownloadExcel}
-            className="w-36 h-10 gap-2 bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100 hover:text-emerald-800"
+            disabled={!hasData || loading}
+            className="w-36 h-10 gap-2 bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100 hover:text-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FileSpreadsheet className="h-4 w-4" />
             EXCEL
@@ -251,7 +269,8 @@ export const FilterTPG: React.FC<FilterTPGProps> = ({
           <Button
             variant="outline"
             onClick={onDownloadPDF}
-            className="w-36 h-10 gap-2 bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-100 hover:text-rose-800"
+            disabled={!hasData || loading}
+            className="w-36 h-10 gap-2 bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-100 hover:text-rose-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FileDown className="h-4 w-4" />
             PDF
@@ -304,6 +323,7 @@ interface FilterBosBopProps {
   onShowSQL: () => void;
   onReset: () => void;
   loading: boolean;
+  hasData: boolean;
 }
 
 export const FilterBosBop: React.FC<FilterBosBopProps> = ({
@@ -337,6 +357,7 @@ export const FilterBosBop: React.FC<FilterBosBopProps> = ({
   onShowSQL,
   onReset,
   loading,
+  hasData,
 }) => (
   <Card>
     <CardHeader>
@@ -349,117 +370,131 @@ export const FilterBosBop: React.FC<FilterBosBopProps> = ({
       </div>
     </CardHeader>
 
-    <CardContent className="space-y-4">
-      <div className="flex flex-wrap gap-4">
-        <div className="flex-1 min-w-[200px] space-y-2">
-          <Label>Tahun</Label>
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="-- Semua --" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">-- Semua --</SelectItem>
-              {yearOptions.map((o) => (
-                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex-1 min-w-[250px] space-y-2">
-          <Label>Kanwil</Label>
-          <SearchableSelect
-            options={[{ label: "-- Semua --", value: "" }, ...kanwilOptions]}
-            value={selectedKanwil}
-            onValueChange={setSelectedKanwil}
-            disabled={role === "2" || role === "3"}
-            placeholder="-- Semua --"
-          />
-        </div>
-
-        <div className="flex-1 min-w-[250px] space-y-2">
-          <Label>KPPN</Label>
-          <SearchableSelect
-            options={[{ label: "-- Semua --", value: "" }, ...kppnOptions]}
-            value={selectedKppn}
-            onValueChange={setSelectedKppn}
-            disabled={role === "3"}
-            placeholder="-- Semua --"
-          />
-        </div>
-
-        <div className="flex-1 min-w-[200px] space-y-2">
-          <Label>Program</Label>
-          <Select value={selectedProgram} onValueChange={setSelectedProgram}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="-- Semua --" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">-- Semua --</SelectItem>
-              {programOptions.map((o) => (
-                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex-1 min-w-[200px] space-y-2">
-          <Label>Jenis BOS</Label>
-          <Select value={selectedJenisBos} onValueChange={setSelectedJenisBos}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="-- Semua --" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">-- Semua --</SelectItem>
-              {jenisBosOptions.map((o) => (
-                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex-1 min-w-[200px] space-y-2">
-          <Label>Jenjang</Label>
-          <Select value={selectedJenjang} onValueChange={setSelectedJenjang}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="-- Semua --" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">-- Semua --</SelectItem>
-              {jenjangOptions.map((o) => (
-                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex-1 min-w-[300px] space-y-2">
-          <Label>Bulan SP2D</Label>
-          <div className="flex items-center gap-2">
-            <Select value={startMonth} onValueChange={setStartMonth}>
+    <CardContent className="space-y-6">
+      <div className="space-y-4">
+        {/* Row 1: Tahun, Kanwil, KPPN */}
+        <div className="flex flex-wrap gap-4">
+          <div className="flex-1 min-w-[200px] space-y-2">
+            <Label>Tahun</Label>
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Dari" />
+                <SelectValue placeholder="-- Semua --" />
               </SelectTrigger>
               <SelectContent>
-                {MONTHS.map((m) => (
-                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                <SelectItem value="all">-- Semua --</SelectItem>
+                {yearOptions.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <span className="text-sm shrink-0">s.d.</span>
-            <Select value={endMonth} onValueChange={setEndMonth}>
+          </div>
+
+          <div className="flex-1 min-w-[250px] space-y-2">
+            <Label>Kanwil</Label>
+            <SearchableSelect
+              options={[{ label: "-- Semua --", value: "" }, ...kanwilOptions]}
+              value={selectedKanwil}
+              onValueChange={setSelectedKanwil}
+              disabled={role === "2" || role === "3"}
+              placeholder="-- Semua --"
+            />
+          </div>
+
+          <div className="flex-1 min-w-[250px] space-y-2">
+            <Label>KPPN</Label>
+            <SearchableSelect
+              options={[{ label: "-- Semua --", value: "" }, ...kppnOptions]}
+              value={selectedKppn}
+              onValueChange={setSelectedKppn}
+              disabled={role === "3"}
+              placeholder="-- Semua --"
+            />
+          </div>
+        </div>
+
+        {/* Row 2: Program, Jenis BOS, Jenjang */}
+        <div className="flex flex-wrap gap-4">
+          <div className="flex-1 min-w-[200px] space-y-2">
+            <Label>Program</Label>
+            <Select value={selectedProgram} onValueChange={setSelectedProgram}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Sampai" />
+                <SelectValue placeholder="-- Semua --" />
               </SelectTrigger>
               <SelectContent>
-                {MONTHS.map((m) => (
-                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                <SelectItem value="all">-- Semua --</SelectItem>
+                {programOptions.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex-1 min-w-[200px] space-y-2">
+            <Label>Jenis BOS</Label>
+            <Select value={selectedJenisBos} onValueChange={setSelectedJenisBos}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="-- Semua --" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">-- Semua --</SelectItem>
+                {jenisBosOptions.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex-1 min-w-[200px] space-y-2">
+            <Label>Jenjang</Label>
+            <Select value={selectedJenjang} onValueChange={setSelectedJenjang}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="-- Semua --" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">-- Semua --</SelectItem>
+                {jenjangOptions.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
         </div>
+
+        {/* Row 3: Bulan SP2D */}
+        <div className="flex flex-wrap gap-4">
+          <div className="flex-1 space-y-2">
+            <Label>Bulan SP2D</Label>
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <Select value={startMonth} onValueChange={setStartMonth}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Dari" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MONTHS.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <span className="text-sm shrink-0">s.d.</span>
+              <div className="flex-1">
+                <Select value={endMonth} onValueChange={setEndMonth}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Sampai" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MONTHS.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+
 
       {/* Action Buttons */}
       <div className="border-t pt-6 mt-2">
@@ -485,7 +520,8 @@ export const FilterBosBop: React.FC<FilterBosBopProps> = ({
           <Button
             variant="outline"
             onClick={onDownloadCSV}
-            className="w-36 h-10 gap-2 bg-sky-50 text-sky-700 border-sky-100 hover:bg-sky-100 hover:text-sky-800"
+            disabled={!hasData || loading}
+            className="w-36 h-10 gap-2 bg-sky-50 text-sky-700 border-sky-100 hover:bg-sky-100 hover:text-sky-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FileText className="h-4 w-4" />
             CSV
@@ -494,7 +530,8 @@ export const FilterBosBop: React.FC<FilterBosBopProps> = ({
           <Button
             variant="outline"
             onClick={onDownloadExcel}
-            className="w-36 h-10 gap-2 bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100 hover:text-emerald-800"
+            disabled={!hasData || loading}
+            className="w-36 h-10 gap-2 bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100 hover:text-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FileSpreadsheet className="h-4 w-4" />
             EXCEL
@@ -503,7 +540,8 @@ export const FilterBosBop: React.FC<FilterBosBopProps> = ({
           <Button
             variant="outline"
             onClick={onDownloadPDF}
-            className="w-36 h-10 gap-2 bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-100 hover:text-rose-800"
+            disabled={!hasData || loading}
+            className="w-36 h-10 gap-2 bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-100 hover:text-rose-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FileDown className="h-4 w-4" />
             PDF

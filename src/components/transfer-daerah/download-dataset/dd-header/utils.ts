@@ -1,4 +1,6 @@
 import Swal from "sweetalert2";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 import { DDHeaderData } from "./types";
 
 export const MONTHS = [
@@ -170,67 +172,55 @@ export const convertTableDataToCSV = (data: DDHeaderData[]): string => {
   return csv;
 };
 
-export const convertTableDataToPDF = (data: DDHeaderData[], selectedYear: string): string => {
-  let html = `
-    <html>
-    <head>
-      <style>
-        body { font-family: Arial, sans-serif; font-size: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 4px; text-align: left; }
-        th { background-color: #52525B; color: white; }
-        tr:nth-child(even) { background-color: #f2f2f2; }
-        h2 { text-align: center; }
-        .number { text-align: right; }
-      </style>
-    </head>
-    <body>
-      <h2>Laporan Dana Desa Tahun ${selectedYear}</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>No</th><th>Tahun</th><th>Kanwil</th><th>KPPN</th>
-            <th>Pemda</th><th>Pagu</th><th>Jan</th><th>Feb</th>
-            <th>Mar</th><th>Apr</th><th>Mei</th><th>Jun</th>
-            <th>Jul</th><th>Ags</th><th>Sep</th><th>Okt</th>
-            <th>Nov</th><th>Des</th><th>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-  `;
-
-  data.forEach((row, index) => {
-    const fmt = (n: number) => new Intl.NumberFormat("id-ID").format(n);
-    html += `
-      <tr>
-        <td>${index + 1}</td>
-        <td>${row.thang}</td>
-        <td>${row.nmkanwil || row.kdkanwil}</td>
-        <td>${row.nmkppn || row.kdkppn}</td>
-        <td>${row.nmkabkota || row.kdlokasi}</td>
-        <td class="number">${fmt(row.pagu || 0)}</td>
-        <td class="number">${fmt(row.Januari || 0)}</td>
-        <td class="number">${fmt(row.Februari || 0)}</td>
-        <td class="number">${fmt(row.Maret || 0)}</td>
-        <td class="number">${fmt(row.April || 0)}</td>
-        <td class="number">${fmt(row.Mei || 0)}</td>
-        <td class="number">${fmt(row.Juni || 0)}</td>
-        <td class="number">${fmt(row.Juli || 0)}</td>
-        <td class="number">${fmt(row.Agustus || 0)}</td>
-        <td class="number">${fmt(row.September || 0)}</td>
-        <td class="number">${fmt(row.Oktober || 0)}</td>
-        <td class="number">${fmt(row.November || 0)}</td>
-        <td class="number">${fmt(row.Desember || 0)}</td>
-        <td class="number">${fmt(row.total_nilai || 0)}</td>
-      </tr>
-    `;
+export const handleDownloadPDF = (data: DDHeaderData[], selectedYear: string) => {
+  const doc = new jsPDF({
+    orientation: "landscape",
+    unit: "mm",
+    format: "a4",
   });
 
-  html += `
-        </tbody>
-      </table>
-    </body>
-    </html>
-  `;
-  return html;
+  doc.setFontSize(14);
+  doc.text(`Laporan Dana Desa Tahun ${selectedYear}`, 14, 15);
+  doc.setFontSize(10);
+  doc.text(`Dicetak pada: ${new Date().toLocaleString("id-ID")}`, 14, 22);
+
+  const tableColumn = [
+    "No", "Tahun", "Kanwil", "KPPN", "Pemda", 
+    "Pagu", "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", 
+    "Jul", "Ags", "Sep", "Okt", "Nov", "Des", "Total"
+  ];
+  
+  const tableRows = data.map((row, index) => {
+    const fmt = (n: number) => new Intl.NumberFormat("id-ID").format(n || 0);
+    return [
+      index + 1,
+      row.thang,
+      row.nmkanwil || row.kdkanwil,
+      row.nmkppn || row.kdkppn,
+      row.nmkabkota || row.kdlokasi,
+      fmt(row.pagu),
+      fmt(row.Januari), fmt(row.Februari), fmt(row.Maret), fmt(row.April), 
+      fmt(row.Mei), fmt(row.Juni), fmt(row.Juli), fmt(row.Agustus), 
+      fmt(row.September), fmt(row.Oktober), fmt(row.November), fmt(row.Desember),
+      fmt(row.total_nilai)
+    ];
+  });
+
+  autoTable(doc, {
+    head: [tableColumn],
+    body: tableRows,
+    startY: 28,
+    styles: { fontSize: 7, cellPadding: 2 },
+    headStyles: { fillColor: [82, 82, 91], textColor: 255, halign: "center" },
+    columnStyles: {
+      5: { halign: "right" },
+      6: { halign: "right" }, 7: { halign: "right" }, 8: { halign: "right" },
+      9: { halign: "right" }, 10: { halign: "right" }, 11: { halign: "right" },
+      12: { halign: "right" }, 13: { halign: "right" }, 14: { halign: "right" },
+      15: { halign: "right" }, 16: { halign: "right" }, 17: { halign: "right" },
+      18: { halign: "right" }
+    }
+  });
+
+  doc.save(`dana_desa_${selectedYear}.pdf`);
 };

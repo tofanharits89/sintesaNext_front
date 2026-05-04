@@ -7,7 +7,7 @@ import {
   SwalConfig, 
   generateSQLQuery, 
   convertTableDataToCSV, 
-  convertTableDataToPDF 
+  handleDownloadPDF as handleDownloadPDFAction
 } from "./utils";
 
 export const useDDHeader = () => {
@@ -160,10 +160,6 @@ export const useDDHeader = () => {
 
 
   const handleDownloadCSV = () => {
-    if (tableData.length === 0) {
-      SwalConfig.fire({ icon: "warning", title: "Tidak ada data", text: "Silakan tayang data terlebih dahulu" });
-      return;
-    }
     const csv = convertTableDataToCSV(tableData);
     const element = document.createElement("a");
     element.setAttribute("href", "data:text/csv;charset=utf-8," + encodeURIComponent(csv));
@@ -175,10 +171,6 @@ export const useDDHeader = () => {
   };
 
   const handleDownloadExcel = () => {
-    if (tableData.length === 0) {
-      SwalConfig.fire({ icon: "warning", title: "Tidak ada data", text: "Silakan tayang data terlebih dahulu" });
-      return;
-    }
     const dataToExport = tableData.map((row, index) => ({
       No: index + 1,
       Tahun: row.thang,
@@ -217,17 +209,7 @@ export const useDDHeader = () => {
   };
 
   const handleDownloadPDF = () => {
-    if (tableData.length === 0) {
-      SwalConfig.fire({ icon: "warning", title: "Tidak ada data", text: "Silakan tayang data terlebih dahulu" });
-      return;
-    }
-    const html = convertTableDataToPDF(tableData, selectedYear);
-    const element = document.createElement("div");
-    element.innerHTML = html;
-    element.style.display = "none";
-    document.body.appendChild(element);
-    window.print();
-    document.body.removeChild(element);
+    handleDownloadPDFAction(tableData, selectedYear);
   };
 
   useEffect(() => {
@@ -263,6 +245,8 @@ export const useDDHeader = () => {
     setSelectedLokasi("");
     setStartMonth("1");
     setEndMonth("12");
+    setTableData([]);
+    setShowResults(false);
   };
 
   return {

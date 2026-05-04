@@ -1,5 +1,7 @@
 import Swal from "sweetalert2";
 import * as xlsx from "xlsx";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 import { DakFisikData } from "./types";
 
 export const SwalConfig = Swal.mixin({
@@ -182,84 +184,66 @@ export const convertTableDataToCSV = (data: DakFisikData[]): string => {
   return csv;
 };
 
-export const convertTableDataToPDF = (data: DakFisikData[], selectedYear: string): string => {
-  let html = `
-    <html>
-    <head>
-      <style>
-        body { font-family: Arial, sans-serif; font-size: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 4px; text-align: left; }
-        th { background-color: #52525B; color: white; }
-        tr:nth-child(even) { background-color: #f2f2f2; }
-        h2 { text-align: center; }
-        .number { text-align: right; }
-      </style>
-    </head>
-    <body>
-      <h2>Laporan DAK Fisik Tahun ${selectedYear}</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>No</th><th>Pemda</th><th>Kanwil</th><th>KPPN</th>
-            <th>Bidang</th><th>Sub Bidang</th><th>Pagu</th><th>Real.</th>
-            <th>Sisa</th><th>%</th><th>Jan</th><th>Feb</th><th>Mar</th>
-            <th>Apr</th><th>Mei</th><th>Jun</th><th>Jul</th><th>Ags</th>
-            <th>Sep</th><th>Okt</th><th>Nov</th><th>Des</th>
-          </tr>
-        </thead>
-        <tbody>
-  `;
-
-  data.forEach((row, index) => {
-    const fmt = (n: number) => new Intl.NumberFormat("id-ID").format(n);
-    html += `
-      <tr>
-        <td>${index + 1}</td>
-        <td>${row.pemda || row.kdlokasi}</td>
-        <td>${row.kdkanwil}</td>
-        <td>${row.nmkppn || row.kdkppn}</td>
-        <td>${row.nmbidang}</td>
-        <td>${row.nmsubidang}</td>
-        <td class="number">${fmt(row.pagu)}</td>
-        <td class="number">${fmt(row.total_penyaluran)}</td>
-        <td class="number">${fmt(row.sisa_pagu)}</td>
-        <td class="number">${row.prosentase}%</td>
-        <td class="number">${fmt(row.Jan)}</td>
-        <td class="number">${fmt(row.Feb)}</td>
-        <td class="number">${fmt(row.Mar)}</td>
-        <td class="number">${fmt(row.Apr)}</td>
-        <td class="number">${fmt(row.Mei)}</td>
-        <td class="number">${fmt(row.Jun)}</td>
-        <td class="number">${fmt(row.Jul)}</td>
-        <td class="number">${fmt(row.Ags)}</td>
-        <td class="number">${fmt(row.Sep)}</td>
-        <td class="number">${fmt(row.Okt)}</td>
-        <td class="number">${fmt(row.Nov)}</td>
-        <td class="number">${fmt(row.Des)}</td>
-      </tr>
-    `;
+export const handleDownloadPDF = (data: DakFisikData[], selectedYear: string) => {
+  const doc = new jsPDF({
+    orientation: "landscape",
+    unit: "mm",
+    format: "a4",
   });
 
-  html += `
-        </tbody>
-      </table>
-    </body>
-    </html>
-  `;
-  return html;
+  doc.setFontSize(14);
+  doc.text(`Laporan DAK Fisik Tahun ${selectedYear}`, 14, 15);
+  doc.setFontSize(10);
+  doc.text(`Dicetak pada: ${new Date().toLocaleString("id-ID")}`, 14, 22);
+
+  const tableColumn = [
+    "No", "Pemda", "Kanwil", "KPPN", "Bidang", "Sub Bidang", 
+    "Pagu", "Realisasi", "Sisa", "%", 
+    "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", 
+    "Jul", "Ags", "Sep", "Okt", "Nov", "Des"
+  ];
+  
+  const tableRows = data.map((row, index) => {
+    const fmt = (n: number) => new Intl.NumberFormat("id-ID").format(n || 0);
+    return [
+      index + 1,
+      row.pemda || row.kdlokasi,
+      row.kdkanwil,
+      row.nmkppn || row.kdkppn,
+      row.nmbidang,
+      row.nmsubidang,
+      fmt(row.pagu),
+      fmt(row.total_penyaluran),
+      fmt(row.sisa_pagu),
+      `${row.prosentase}%`,
+      fmt(row.Jan), fmt(row.Feb), fmt(row.Mar), fmt(row.Apr), 
+      fmt(row.Mei), fmt(row.Jun), fmt(row.Jul), fmt(row.Ags), 
+      fmt(row.Sep), fmt(row.Okt), fmt(row.Nov), fmt(row.Des)
+    ];
+  });
+
+  autoTable(doc, {
+    head: [tableColumn],
+    body: tableRows,
+    startY: 28,
+    styles: { fontSize: 7, cellPadding: 2 },
+    headStyles: { fillColor: [82, 82, 91], textColor: 255, halign: "center" },
+    columnStyles: {
+      6: { halign: "right" },
+      7: { halign: "right" },
+      8: { halign: "right" },
+      9: { halign: "center" },
+      10: { halign: "right" }, 11: { halign: "right" }, 12: { halign: "right" },
+      13: { halign: "right" }, 14: { halign: "right" }, 15: { halign: "right" },
+      16: { halign: "right" }, 17: { halign: "right" }, 18: { halign: "right" },
+      19: { halign: "right" }, 20: { halign: "right" }, 21: { halign: "right" }
+    }
+  });
+
+  doc.save(`dak_fisik_${selectedYear}.pdf`);
 };
 
 export const handleDownloadExcel = (tableData: DakFisikData[], selectedYear: string) => {
-  if (tableData.length === 0) {
-    SwalConfig.fire({
-      icon: "warning",
-      title: "Tidak ada data",
-      text: "Silakan tayang data terlebih dahulu",
-    });
-    return;
-  }
-
   const dataToExport = tableData.map((row, index) => ({
     No: index + 1,
     Tahun: row.thang,

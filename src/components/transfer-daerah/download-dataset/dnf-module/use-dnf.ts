@@ -12,7 +12,7 @@ import {
   generateBosBopSQLQuery,
   convertTableDataToCSV,
   exportToExcel,
-  generatePDFHtml
+  handleDownloadPDF as handleDownloadPDFAction
 } from "./dnf-utils";
 
 const SwalConfig = Swal.mixin({
@@ -261,10 +261,6 @@ export const useDNF = () => {
   const handleDownloadCSV = () => {
     const data = activeTab === "tpg" ? tpgTableData : bosBopTableData;
     const year = activeTab === "tpg" ? tpgSelectedYear : bosBopSelectedYear;
-    if (data.length === 0) {
-      SwalConfig.fire({ icon: "warning", title: "Tidak ada data", text: "Silakan tayang data terlebih dahulu" });
-      return;
-    }
     const csv = convertTableDataToCSV(data, activeTab);
     const el = document.createElement("a");
     el.setAttribute("href", "data:text/csv;charset=utf-8," + encodeURIComponent(csv));
@@ -278,27 +274,13 @@ export const useDNF = () => {
   const handleDownloadExcel = () => {
     const data = activeTab === "tpg" ? tpgTableData : bosBopTableData;
     const year = activeTab === "tpg" ? tpgSelectedYear : bosBopSelectedYear;
-    if (data.length === 0) {
-      SwalConfig.fire({ icon: "warning", title: "Tidak ada data", text: "Silakan tayang data terlebih dahulu" });
-      return;
-    }
     exportToExcel(data, activeTab, year);
   };
 
   const handleDownloadPDF = () => {
     const data = activeTab === "tpg" ? tpgTableData : bosBopTableData;
     const year = activeTab === "tpg" ? tpgSelectedYear : bosBopSelectedYear;
-    if (data.length === 0) {
-      SwalConfig.fire({ icon: "warning", title: "Tidak ada data", text: "Silakan tayang data terlebih dahulu" });
-      return;
-    }
-    const html = generatePDFHtml(data, activeTab, year);
-    const el = document.createElement("div");
-    el.innerHTML = html;
-    el.style.display = "none";
-    document.body.appendChild(el);
-    window.print();
-    document.body.removeChild(el);
+    handleDownloadPDFAction(data, activeTab, year);
   };
 
   // ===== HANDLE TAYANG =====
@@ -390,6 +372,8 @@ export const useDNF = () => {
     setTpgSelectedPeriode("all");
     setTpgSelectedGelombang("all");
     setTpgSelectedJenisTkd("all");
+    setTpgTableData([]);
+    setTpgShowResults(false);
   };
 
   const handleResetBosBop = () => {
@@ -409,6 +393,8 @@ export const useDNF = () => {
     setBosBopSelectedProgram("all");
     setBosBopSelectedJenisBos("all");
     setBosBopSelectedJenjang("all");
+    setBosBopTableData([]);
+    setBosBopShowResults(false);
   };
 
   return {

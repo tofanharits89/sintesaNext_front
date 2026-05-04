@@ -1,4 +1,6 @@
 import * as xlsx from "xlsx";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 import { TpgData, BosBopData } from "./dnf-types";
 
 export const generateTpgSQLQuery = (params: {
@@ -135,20 +137,94 @@ export const exportToExcel = (data: any[], activeTab: string, selectedYear: stri
   xlsx.writeFile(wb, activeTab === "tpg" ? `tpg_${selectedYear || "semua_tahun"}.xlsx` : `bos_bop_${selectedYear || "semua_tahun"}.xlsx`);
 };
 
-export const generatePDFHtml = (data: any[], activeTab: string, selectedYear: string): string => {
-  const fmt = (n: number) => new Intl.NumberFormat("id-ID").format(n);
-  let html = "";
+export const handleDownloadPDF = (data: any[], activeTab: string, selectedYear: string) => {
+  const doc = new jsPDF({
+    orientation: "landscape",
+    unit: "mm",
+    format: "a4",
+  });
+
+  const title = activeTab === "tpg" ? "Laporan TPG" : "Laporan BOS / BOP";
+  const yearText = selectedYear && selectedYear !== "all" ? `Tahun ${selectedYear}` : "Semua Tahun";
+
+  doc.setFontSize(14);
+  doc.text(`${title} ${yearText}`, 14, 15);
+  doc.setFontSize(10);
+  doc.text(`Dicetak pada: ${new Date().toLocaleString("id-ID")}`, 14, 22);
+
+  let tableColumn: string[] = [];
+  let tableRows: any[][] = [];
+
   if (activeTab === "tpg") {
-    html = `<html><head><style>body{font-family:Arial;font-size:9px}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ddd;padding:3px}th{background:#52525B;color:white}tr:nth-child(even){background:#f2f2f2}.number{text-align:right}</style></head><body><h2>Laporan TPG ${selectedYear ? `Tahun ${selectedYear}` : "Semua Tahun"}</h2><table><thead><tr><th>No</th><th>Tahun</th><th>Periode</th><th>Kanwil</th><th>Nm Kanwil</th><th>KPPN</th><th>Nm KPPN</th><th>Lokasi</th><th>Jenis TKD</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>Mei</th><th>Jun</th><th>Jul</th><th>Ags</th><th>Sep</th><th>Okt</th><th>Nov</th><th>Des</th><th>Total</th></tr></thead><tbody>`;
-    data.forEach((row, i) => {
-      html += `<tr><td>${i + 1}</td><td>${row.thang}</td><td>${row.nm_periode}</td><td>${row.kode_kanwil}</td><td>${row.nm_kanwil}</td><td>${row.kppn}</td><td>${row.nm_kppn}</td><td>${row.nm_lokasi}</td><td>${row.jenis_tkd}</td><td class="number">${fmt(row.Januari || 0)}</td><td class="number">${fmt(row.Februari || 0)}</td><td class="number">${fmt(row.Maret || 0)}</td><td class="number">${fmt(row.April || 0)}</td><td class="number">${fmt(row.Mei || 0)}</td><td class="number">${fmt(row.Juni || 0)}</td><td class="number">${fmt(row.Juli || 0)}</td><td class="number">${fmt(row.Agustus || 0)}</td><td class="number">${fmt(row.September || 0)}</td><td class="number">${fmt(row.Oktober || 0)}</td><td class="number">${fmt(row.November || 0)}</td><td class="number">${fmt(row.Desember || 0)}</td><td class="number" style="font-weight:bold">${fmt(row.total_setahun || 0)}</td></tr>`;
+    tableColumn = [
+      "No", "Tahun", "Periode", "Kanwil", "KPPN", "Lokasi", "Jenis TKD",
+      "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", 
+      "Jul", "Ags", "Sep", "Okt", "Nov", "Des", "Total"
+    ];
+    tableRows = data.map((row, index) => {
+      const fmt = (n: number) => new Intl.NumberFormat("id-ID").format(n || 0);
+      return [
+        index + 1,
+        row.thang,
+        row.nm_periode,
+        row.kode_kanwil,
+        row.kppn,
+        row.nm_lokasi,
+        row.jenis_tkd,
+        fmt(row.Januari), fmt(row.Februari), fmt(row.Maret), fmt(row.April), 
+        fmt(row.Mei), fmt(row.Juni), fmt(row.Juli), fmt(row.Agustus), 
+        fmt(row.September), fmt(row.Oktober), fmt(row.November), fmt(row.Desember),
+        fmt(row.total_setahun)
+      ];
     });
   } else {
-    html = `<html><head><style>body{font-family:Arial;font-size:8px}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ddd;padding:3px}th{background:#52525B;color:white;font-size:7px;text-align:center}tr:nth-child(even){background:#f2f2f2}.number{text-align:right}</style></head><body><h2>Laporan BOS BOP ${selectedYear ? `Tahun ${selectedYear}` : "Semua Tahun"}</h2><table><thead><tr><th rowspan="2">No</th><th rowspan="2">Tahun</th><th rowspan="2">Kd Kanwil</th><th rowspan="2">Nm Kanwil</th><th rowspan="2">Kd KPPN</th><th rowspan="2">Nm KPPN</th><th rowspan="2">Program</th><th rowspan="2">Jenjang</th><th rowspan="2">Status</th><th rowspan="2">Jenis BOS</th><th rowspan="2">Kd Lokasi</th><th rowspan="2">Nm Lokasi</th><th colspan="12">Realisasi Bulanan</th><th rowspan="2">Total Nilai</th><th rowspan="2">Total Siswa</th></tr><tr><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>Mei</th><th>Jun</th><th>Jul</th><th>Ags</th><th>Sep</th><th>Okt</th><th>Nov</th><th>Des</th></tr></thead><tbody>`;
-    data.forEach((row, i) => {
-      html += `<tr><td>${i + 1}</td><td>${row.thang}</td><td>${row.kdkanwil}</td><td>${row.nmkanwil}</td><td>${row.kdkppn}</td><td>${row.nmkabkota_kppn}</td><td>${row.nmprogram}</td><td>${row.jenjang}</td><td>${row.status_sekolah}</td><td>${row.jenis_bos}</td><td>${row.kdlokasi_kedudukan}</td><td>${row.nmkabkota_sekolah}</td><td class="number">${fmt(row.Januari || 0)}</td><td class="number">${fmt(row.Februari || 0)}</td><td class="number">${fmt(row.Maret || 0)}</td><td class="number">${fmt(row.April || 0)}</td><td class="number">${fmt(row.Mei || 0)}</td><td class="number">${fmt(row.Juni || 0)}</td><td class="number">${fmt(row.Juli || 0)}</td><td class="number">${fmt(row.Agustus || 0)}</td><td class="number">${fmt(row.September || 0)}</td><td class="number">${fmt(row.Oktober || 0)}</td><td class="number">${fmt(row.November || 0)}</td><td class="number">${fmt(row.Desember || 0)}</td><td class="number" style="font-weight:bold">${fmt(row.total_nilai || 0)}</td><td class="number" style="font-weight:bold">${fmt(row.total_siswa || 0)}</td></tr>`;
+    tableColumn = [
+      "No", "Tahun", "Kanwil", "KPPN", "Program", "Jenjang", "Status", "Jenis", "Lokasi",
+      "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", 
+      "Jul", "Ags", "Sep", "Okt", "Nov", "Des", "Total", "Siswa"
+    ];
+    tableRows = data.map((row, index) => {
+      const fmt = (n: number) => new Intl.NumberFormat("id-ID").format(n || 0);
+      return [
+        index + 1,
+        row.thang,
+        row.kdkanwil,
+        row.kdkppn,
+        row.nmprogram,
+        row.jenjang,
+        row.status_sekolah,
+        row.jenis_bos,
+        row.nmkabkota_sekolah || row.kdlokasi_kedudukan,
+        fmt(row.Januari), fmt(row.Februari), fmt(row.Maret), fmt(row.April), 
+        fmt(row.Mei), fmt(row.Juni), fmt(row.Juli), fmt(row.Agustus), 
+        fmt(row.September), fmt(row.Oktober), fmt(row.November), fmt(row.Desember),
+        fmt(row.total_nilai),
+        fmt(row.total_siswa)
+      ];
     });
   }
-  html += `</tbody></table></body></html>`;
-  return html;
+
+  autoTable(doc, {
+    head: [tableColumn],
+    body: tableRows,
+    startY: 28,
+    styles: { fontSize: 6, cellPadding: 1.5 },
+    headStyles: { fillColor: [82, 82, 91], textColor: 255, halign: "center" },
+    columnStyles: activeTab === "tpg" ? {
+      7: { halign: "right" }, 8: { halign: "right" }, 9: { halign: "right" },
+      10: { halign: "right" }, 11: { halign: "right" }, 12: { halign: "right" },
+      13: { halign: "right" }, 14: { halign: "right" }, 15: { halign: "right" },
+      16: { halign: "right" }, 17: { halign: "right" }, 18: { halign: "right" },
+      19: { halign: "right" }
+    } : {
+      9: { halign: "right" }, 10: { halign: "right" }, 11: { halign: "right" },
+      12: { halign: "right" }, 13: { halign: "right" }, 14: { halign: "right" },
+      15: { halign: "right" }, 16: { halign: "right" }, 17: { halign: "right" },
+      18: { halign: "right" }, 19: { halign: "right" }, 20: { halign: "right" },
+      21: { halign: "right" }, 22: { halign: "right" }
+    }
+  });
+
+  const fileName = activeTab === "tpg" ? `tpg_${selectedYear}.pdf` : `bos_bop_${selectedYear}.pdf`;
+  doc.save(fileName);
 };

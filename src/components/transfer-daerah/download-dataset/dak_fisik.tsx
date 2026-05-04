@@ -9,7 +9,7 @@ import { SQLModal } from "./dak-fisik/SQLModal";
 import {
   SwalConfig,
   convertTableDataToCSV,
-  convertTableDataToPDF,
+  handleDownloadPDF as handleDownloadPDFAction,
   handleDownloadExcel,
 } from "./dak-fisik/utils";
 
@@ -24,15 +24,6 @@ const DakFisik: React.FC = () => {
 
 
   const handleDownloadCSV = async () => {
-    if (results.tableData.length === 0) {
-      SwalConfig.fire({
-        icon: "warning",
-        title: "Tidak ada data",
-        text: "Silakan tayang data terlebih dahulu",
-      });
-      return;
-    }
-
     const csv = convertTableDataToCSV(results.tableData);
     const element = document.createElement("a");
     element.setAttribute(
@@ -47,23 +38,7 @@ const DakFisik: React.FC = () => {
   };
 
   const handleDownloadPDF = async () => {
-    if (results.tableData.length === 0) {
-      SwalConfig.fire({
-        icon: "warning",
-        title: "Tidak ada data",
-        text: "Silakan tayang data terlebih dahulu",
-      });
-      return;
-    }
-
-    const html = convertTableDataToPDF(results.tableData, filters.selectedYear);
-    const element = document.createElement("div");
-    element.innerHTML = html;
-    element.style.display = "none";
-    document.body.appendChild(element);
-
-    window.print();
-    document.body.removeChild(element);
+    handleDownloadPDFAction(results.tableData, filters.selectedYear);
   };
 
   return (
@@ -77,6 +52,7 @@ const DakFisik: React.FC = () => {
         onShowSQL={actions.handleShowSQL}
         onReset={actions.handleReset}
         loadingResults={results.loadingResults}
+        hasData={results.tableData.length > 0}
 
         onDownloadCSV={handleDownloadCSV}
         onDownloadExcel={() => handleDownloadExcel(results.tableData, filters.selectedYear)}
@@ -93,6 +69,7 @@ const DakFisik: React.FC = () => {
           setCurrentPage={results.setCurrentPage}
           itemsPerPage={results.itemsPerPage}
           setItemsPerPage={results.setItemsPerPage}
+          loadingResults={results.loadingResults}
         />
       </div>
 

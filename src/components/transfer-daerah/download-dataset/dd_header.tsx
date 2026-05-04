@@ -51,6 +51,7 @@ const DD_header: React.FC = () => {
         onShowSQL={handleShowSQL}
         onReset={handleReset}
         loadingResults={loadingResults}
+        hasData={tableData.length > 0}
         onDownloadCSV={handleDownloadCSV}
         onDownloadExcel={handleDownloadExcel}
         onDownloadPDF={handleDownloadPDF}
@@ -67,6 +68,7 @@ const DD_header: React.FC = () => {
           setCurrentPage={setCurrentPage}
           itemsPerPage={itemsPerPage}
           setItemsPerPage={setItemsPerPage}
+          loadingResults={loadingResults}
         />
       </div>
 

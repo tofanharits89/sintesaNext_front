@@ -1,5 +1,6 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
 import {
   Table,
   TableBody,
@@ -35,6 +36,7 @@ interface TableTPGProps {
   setCurrentPage: (p: number) => void;
   itemsPerPage: number;
   setItemsPerPage: (size: number) => void;
+  loading?: boolean;
 }
 
 export const TableTPG: React.FC<TableTPGProps> = ({
@@ -44,6 +46,7 @@ export const TableTPG: React.FC<TableTPGProps> = ({
   setCurrentPage,
   itemsPerPage,
   setItemsPerPage,
+  loading = false,
 }) => {
   const totalRows = data.length;
   const totalPages = Math.ceil(totalRows / itemsPerPage) || 1;
@@ -69,7 +72,9 @@ export const TableTPG: React.FC<TableTPGProps> = ({
         </div>
       </CardHeader>
       <CardContent>
-        {!showResults ? (
+        {loading ? (
+          <TableSkeleton rows={itemsPerPage} />
+        ) : !showResults ? (
           <div className="border rounded-md">
             <div className="h-10 bg-muted/50 border-b flex items-center px-4">
               <div className="text-xs font-medium text-muted-foreground uppercase">
@@ -262,6 +267,7 @@ interface TableBosBopProps {
   setCurrentPage: (p: number) => void;
   itemsPerPage: number;
   setItemsPerPage: (size: number) => void;
+  loading?: boolean;
 }
 
 export const TableBosBop: React.FC<TableBosBopProps> = ({
@@ -271,6 +277,7 @@ export const TableBosBop: React.FC<TableBosBopProps> = ({
   setCurrentPage,
   itemsPerPage,
   setItemsPerPage,
+  loading = false,
 }) => {
   const totalRows = data.length;
   const totalPages = Math.ceil(totalRows / itemsPerPage) || 1;
@@ -296,7 +303,9 @@ export const TableBosBop: React.FC<TableBosBopProps> = ({
         </div>
       </CardHeader>
       <CardContent>
-        {!showResults ? (
+        {loading ? (
+          <TableSkeleton rows={itemsPerPage} />
+        ) : !showResults ? (
           <div className="border rounded-md">
             <div className="h-10 bg-muted/50 border-b flex items-center px-4">
               <div className="text-xs font-medium text-muted-foreground uppercase">

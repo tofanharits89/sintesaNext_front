@@ -67,6 +67,7 @@ const DNF: React.FC = () => {
             onShowSQL={dnf.handleShowSQL}
             onReset={dnf.handleResetTpg}
             loading={dnf.tpgLoading}
+            hasData={dnf.tpgTableData.length > 0}
             onDownloadCSV={dnf.handleDownloadCSV}
             onDownloadExcel={dnf.handleDownloadExcel}
             onDownloadPDF={dnf.handleDownloadPDF}
@@ -80,6 +81,7 @@ const DNF: React.FC = () => {
             setCurrentPage={dnf.setTpgCurrentPage}
             itemsPerPage={dnf.itemsPerPage}
             setItemsPerPage={dnf.setItemsPerPage}
+            loading={dnf.tpgLoading}
           />
         </TabsContent>
 
@@ -112,6 +114,7 @@ const DNF: React.FC = () => {
             onShowSQL={dnf.handleShowSQL}
             onReset={dnf.handleResetBosBop}
             loading={dnf.bosBopLoading}
+            hasData={dnf.bosBopTableData.length > 0}
             onDownloadCSV={dnf.handleDownloadCSV}
             onDownloadExcel={dnf.handleDownloadExcel}
             onDownloadPDF={dnf.handleDownloadPDF}
@@ -126,6 +129,7 @@ const DNF: React.FC = () => {
             setCurrentPage={dnf.setBosBopCurrentPage}
             itemsPerPage={dnf.itemsPerPage}
             setItemsPerPage={dnf.setItemsPerPage}
+            loading={dnf.bosBopLoading}
           />
         </TabsContent>
       </TabsContents>

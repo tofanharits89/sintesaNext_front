@@ -282,6 +282,8 @@ export const useDakFisik = () => {
     setSelectedSubBidang("all");
     setStartMonth("1");
     setEndMonth("12");
+    setTableData([]);
+    setShowResults(false);
   };
 
   return {

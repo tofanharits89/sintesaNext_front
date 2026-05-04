@@ -49,6 +49,7 @@ export const DDHeaderFilters: React.FC<DDHeaderFiltersProps> = ({
   onShowSQL,
   onReset,
   loadingResults,
+  hasData,
 }) => {
   return (
     <Card>
@@ -121,8 +122,10 @@ export const DDHeaderFilters: React.FC<DDHeaderFiltersProps> = ({
               placeholder="-- Semua --"
             />
           </div>
+        </div>
 
-          <div className="flex-1 min-w-[300px] space-y-2">
+        <div className="flex flex-wrap gap-4 pt-2">
+          <div className="flex-1 space-y-2">
             <Label>Bulan SP2D</Label>
             <div className="flex items-center gap-2">
               <div className="flex-1">
@@ -158,6 +161,10 @@ export const DDHeaderFilters: React.FC<DDHeaderFiltersProps> = ({
           </div>
         </div>
 
+
+
+
+
         {/* Action Buttons */}
         <div className="border-t pt-6 mt-2">
           <div className="flex flex-wrap justify-center gap-3">
@@ -182,7 +189,8 @@ export const DDHeaderFilters: React.FC<DDHeaderFiltersProps> = ({
           <Button
             variant="outline"
             onClick={onDownloadCSV}
-            className="w-36 h-10 gap-2 bg-sky-50 text-sky-700 border-sky-100 hover:bg-sky-100 hover:text-sky-800"
+            disabled={!hasData || loadingResults}
+            className="w-36 h-10 gap-2 bg-sky-50 text-sky-700 border-sky-100 hover:bg-sky-100 hover:text-sky-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FileText className="h-4 w-4" />
             CSV
@@ -191,7 +199,8 @@ export const DDHeaderFilters: React.FC<DDHeaderFiltersProps> = ({
           <Button
             variant="outline"
             onClick={onDownloadExcel}
-            className="w-36 h-10 gap-2 bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100 hover:text-emerald-800"
+            disabled={!hasData || loadingResults}
+            className="w-36 h-10 gap-2 bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100 hover:text-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FileSpreadsheet className="h-4 w-4" />
             EXCEL
@@ -200,7 +209,8 @@ export const DDHeaderFilters: React.FC<DDHeaderFiltersProps> = ({
           <Button
             variant="outline"
             onClick={onDownloadPDF}
-            className="w-36 h-10 gap-2 bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-100 hover:text-rose-800"
+            disabled={!hasData || loadingResults}
+            className="w-36 h-10 gap-2 bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-100 hover:text-rose-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FileDown className="h-4 w-4" />
             PDF

@@ -66,6 +66,7 @@ export interface DDHeaderFiltersProps {
   onShowSQL: () => void;
   onReset: () => void;
   loadingResults: boolean;
+  hasData: boolean;
 }
 
 
@@ -76,6 +77,7 @@ export interface DDHeaderTableProps {
   setCurrentPage: (page: number) => void;
   itemsPerPage: number;
   setItemsPerPage: (size: number) => void;
+  loadingResults?: boolean;
 }
 
 export interface SQLModalProps {

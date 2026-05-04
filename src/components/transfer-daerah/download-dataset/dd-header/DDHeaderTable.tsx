@@ -1,5 +1,6 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
 import {
   Table,
   TableBody,
@@ -35,6 +36,7 @@ export const DDHeaderTable: React.FC<DDHeaderTableProps> = ({
   setCurrentPage,
   itemsPerPage,
   setItemsPerPage,
+  loadingResults = false,
 }) => {
   const totalRows = tableData.length;
   const totalPages = Math.ceil(totalRows / itemsPerPage) || 1;
@@ -62,12 +64,14 @@ export const DDHeaderTable: React.FC<DDHeaderTableProps> = ({
           <div className="flex items-center gap-2">
             <ListFilter className="h-4 w-4 text-muted-foreground" />
             <CardTitle className="text-base font-semibold">
-              Hasil Data
+              Hasil Data Dana Desa
             </CardTitle>
           </div>
         </CardHeader>
         <CardContent>
-          {!showResults ? (
+          {loadingResults ? (
+            <TableSkeleton rows={itemsPerPage} />
+          ) : !showResults ? (
             <div className="border rounded-md">
               <div className="h-10 bg-muted/50 border-b flex items-center px-4">
                 <div className="text-xs font-medium text-muted-foreground uppercase">
