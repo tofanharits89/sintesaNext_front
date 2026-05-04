@@ -33,10 +33,14 @@ function RankingList({
   items,
   badgeColor = "blue",
   showTargetBar = false,
+  valuePrefix = "",
+  valueSuffix = "",
 }: {
   items: RankedItem[];
   badgeColor?: "blue" | "orange" | "purple";
   showTargetBar?: boolean;
+  valuePrefix?: string;
+  valueSuffix?: string;
 }) {
   const [page, setPage] = useState(1);
 
@@ -196,6 +200,8 @@ export function StatsRankingCard({
                   items={tab.items}
                   badgeColor={TAB_BADGE_COLOR[tab.key] ?? "blue"}
                   showTargetBar={tab.key === "penerima"}
+                  valuePrefix={tab.valuePrefix ?? ""}
+                  valueSuffix={tab.valueSuffix ?? ""}
                 />
               </TabsContent>
             ))}

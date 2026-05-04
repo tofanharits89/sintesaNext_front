@@ -1,11 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/components/animate-ui/components/animate/tabs";
 import { DataKmkTab } from "@/components/transfer-daerah/data-kmk-tab";
 import { DataTransaksiTab } from "@/components/transfer-daerah/data-transaksi-tab";
 import { RekonsiliasiDataTab } from "@/components/transfer-daerah/rekonsilisasi-data-tab";
 
 export default function DAUPage() {
+  const [activeTab, setActiveTab] = useState("data-kmk");
+  const [rekonHeaderAction, setRekonHeaderAction] = useState<React.ReactNode>(null);
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -18,10 +22,19 @@ export default function DAUPage() {
             Kelola data DAU, transaksi, dan rekonsilisasi
           </p>
         </div>
+        {activeTab === "rekonsilisasi-data" && rekonHeaderAction ? (
+          <div className="flex items-center gap-2">
+            {rekonHeaderAction}
+          </div>
+        ) : null}
       </div>
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="data-kmk" className="w-full gap-3">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="w-full gap-3"
+      >
         <div className="border-b border-border/50 pb-3 mb-0">
           <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-0">
             <TabsTrigger value="data-kmk" className="h-12 md:h-full px-4 md:px-5 py-0 text-sm md:text-base flex items-center justify-center whitespace-nowrap">
@@ -46,7 +59,7 @@ export default function DAUPage() {
           </TabsContent>
 
           <TabsContent value="rekonsilisasi-data">
-            <RekonsiliasiDataTab />
+            <RekonsiliasiDataTab onHeaderActionChange={setRekonHeaderAction} />
           </TabsContent>
         </TabsContents>
       </Tabs>

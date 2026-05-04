@@ -1,6 +1,12 @@
 ﻿"use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsContents,
+  TabsList,
+  TabsTrigger,
+} from "@/components/animate-ui/components/animate/tabs";
 import { PenilaianKanwil } from "./penilaian-kanwil";
 import { PenilaianKppn } from "./penilaian-kppn";
 
@@ -18,23 +24,33 @@ export function LandingPenilaianIku({ role, username, kdkppn }: LandingPenilaian
         <p className="text-sm text-muted-foreground">Analisa / Laporan</p>
       </div>
 
-      <Tabs defaultValue="nilai_monev" className="w-full">
-        <TabsList className="w-full h-auto p-2 rounded-xl grid grid-cols-2 gap-2">
-          <TabsTrigger value="nilai_monev" className="h-10 text-sm">
-            Nilai Monev Kanwil
-          </TabsTrigger>
-          <TabsTrigger value="nilai_lk" className="h-10 text-sm">
-            Nilai LK KPPN
-          </TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="nilai_monev" className="w-full gap-3">
+        <div className="border-b border-border/50 pb-3 mb-0">
+          <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-0">
+            <TabsTrigger
+              value="nilai_monev"
+              className="h-12 md:h-full px-4 md:px-5 py-0 text-sm md:text-base flex items-center justify-center whitespace-nowrap"
+            >
+              Nilai Monev Kanwil
+            </TabsTrigger>
+            <TabsTrigger
+              value="nilai_lk"
+              className="h-12 md:h-full px-4 md:px-5 py-0 text-sm md:text-base flex items-center justify-center whitespace-nowrap"
+            >
+              Nilai LK KPPN
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="nilai_monev" className="mt-4">
-          <PenilaianKanwil role={role} username={username} />
-        </TabsContent>
+        <TabsContents>
+          <TabsContent value="nilai_monev">
+            <PenilaianKanwil role={role} username={username} />
+          </TabsContent>
 
-        <TabsContent value="nilai_lk" className="mt-4">
-          <PenilaianKppn role={role} username={username} kdkppn={kdkppn} />
-        </TabsContent>
+          <TabsContent value="nilai_lk">
+            <PenilaianKppn role={role} username={username} kdkppn={kdkppn} />
+          </TabsContent>
+        </TabsContents>
       </Tabs>
     </div>
   );

@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -281,59 +280,55 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
 
   return (
     <div className="space-y-4">
-      {/* Filter Card */}
-      <Card className="shadow-sm">
-        <CardHeader className="pb-3">
+      <Card>
+        <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ReceiptText className="h-4 w-4 text-muted-foreground" />
-              <CardTitle className="text-sm font-semibold">Filter Data Transaksi</CardTitle>
+              <CardTitle>Filter Data Transaksi</CardTitle>
             </div>
             <ResetButton onReset={handleReset} />
           </div>
         </CardHeader>
-
-        <Separator />
-
-        <CardContent className="pt-4">
+        <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="transaksi-year" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tahun</Label>
+              <Label htmlFor="transaksi-year" className="text-sm font-medium">Tahun</Label>
               <Select value={selectedYear ?? ""} onValueChange={handleYearSelect}>
-                <SelectTrigger id="transaksi-year" className="h-8 text-xs">
-                  <SelectValue className="truncate" />
+                <SelectTrigger id="transaksi-year" className="w-full">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {years.map((year) => (
-                    <SelectItem key={year} value={year} className="text-xs">{year}</SelectItem>
+                    <SelectItem key={year} value={year}>{year}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="transaksi-month" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Bulan</Label>
+              <Label htmlFor="transaksi-month" className="text-sm font-medium">Bulan</Label>
               <Select value={selectedMonth ?? ""} onValueChange={handleMonthSelect}>
-                <SelectTrigger id="transaksi-month" className="h-8 text-xs">
+                <SelectTrigger id="transaksi-month" className="w-full">
                   <SelectValue placeholder="Semua Bulan" />
                 </SelectTrigger>
                 <SelectContent>
                   {months.map((month) => (
-                    <SelectItem key={month} value={month} className="text-xs">{month}</SelectItem>
+                    <SelectItem key={month} value={month}>{month}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="transaksi-kppn" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">KPPN</Label>
+              <Label htmlFor="transaksi-kppn" className="text-sm font-medium">KPPN</Label>
               <Select value={selectedKppn ?? ""} onValueChange={handleKppnSelect}>
-                <SelectTrigger id="transaksi-kppn" className="h-8 text-xs">
+                <SelectTrigger id="transaksi-kppn" className="w-full">
                   <SelectValue placeholder="Semua KPPN" />
                 </SelectTrigger>
                 <SelectContent>
                   {uniqueKppn.map((kppn) => (
-                    <SelectItem key={kppn.kdkppn} value={kppn.kdkppn} className="text-xs" title={`${kppn.kdkppn} - ${kppn.nmkppn}`}>
+                    <SelectItem key={kppn.kdkppn} value={kppn.kdkppn} title={`${kppn.kdkppn} - ${kppn.nmkppn}`}>
                       <span className="truncate">{kppn.kdkppn} - {kppn.nmkppn}</span>
                     </SelectItem>
                   ))}
@@ -342,14 +337,14 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="transaksi-kabkota" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Kab/Kota</Label>
+              <Label htmlFor="transaksi-kabkota" className="text-sm font-medium">Kab/Kota</Label>
               <Select value={selectedKabKota ?? ""} onValueChange={handleKabKotaSelect} disabled={!selectedKppn}>
-                <SelectTrigger id="transaksi-kabkota" className="h-8 text-xs" disabled={!selectedKppn}>
+                <SelectTrigger id="transaksi-kabkota" className="w-full" disabled={!selectedKppn}>
                   <SelectValue placeholder={selectedKppn ? "Semua Kab/Kota" : "Pilih KPPN dulu"} />
                 </SelectTrigger>
                 <SelectContent>
                   {filteredKabKotaOptions.map((lokasi) => (
-                    <SelectItem key={lokasi.kdkabkota} value={lokasi.kdkabkota} className="text-xs" title={`${lokasi.kdkabkota} - ${lokasi.nmkabkota}`}>
+                    <SelectItem key={lokasi.kdkabkota} value={lokasi.kdkabkota} title={`${lokasi.kdkabkota} - ${lokasi.nmkabkota}`}>
                       <span className="truncate">{lokasi.kdkabkota} - {lokasi.nmkabkota}</span>
                     </SelectItem>
                   ))}
@@ -360,20 +355,16 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
         </CardContent>
       </Card>
 
-      {/* Data Table Card */}
-      <Card className="shadow-sm">
-        <CardHeader className="pb-3">
+      <Card>
+        <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-semibold">Data Transaksi DAU</CardTitle>
+            <CardTitle>Data Transaksi DAU</CardTitle>
             {rows && (
               <span className="text-xs text-muted-foreground">{rows.length.toLocaleString("id-ID")} baris</span>
             )}
           </div>
         </CardHeader>
-
-        <Separator />
-
-        <CardContent className="pt-4">
+        <CardContent>
           {isLoading && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
