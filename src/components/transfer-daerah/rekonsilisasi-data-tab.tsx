@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
 import { ResetButton } from "@/components/ui/reset-button";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Badge } from "@/components/ui/badge";
 import tkdData from "@/data/kdkppn_tkd.json";
 import { apiPath } from "@/lib/config/base-path";
@@ -404,36 +405,35 @@ export function RekonsiliasiDataTab({ onHeaderActionChange }: RekonsiliasiDataTa
               <Label htmlFor="rekon-kppn" className="text-sm font-medium">
                 KPPN
               </Label>
-              <Select value={selectedKppn} onValueChange={setSelectedKppn}>
-                <SelectTrigger id="rekon-kppn" className="w-full">
-                  <SelectValue placeholder="Semua KPPN" />
-                </SelectTrigger>
-                <SelectContent>
-                  {uniqueKppn.map((k) => (
-                    <SelectItem key={k.kdkppn} value={k.kdkppn}>
-                      {k.kdkppn} - {k.nmkppn}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                options={[
+                  { value: "", label: "Semua KPPN" },
+                  ...uniqueKppn.map(k => ({ value: k.kdkppn, label: `${k.kdkppn} - ${k.nmkppn}` }))
+                ]}
+                value={selectedKppn}
+                onValueChange={setSelectedKppn}
+                placeholder="Semua KPPN"
+                searchPlaceholder="Cari KPPN..."
+                emptyMessage="KPPN tidak ditemukan."
+              />
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="rekon-kabkota" className="text-sm font-medium">
                 Kab/Kota
               </Label>
-              <Select value={selectedKabKota} onValueChange={setSelectedKabKota} disabled={!selectedKppn}>
-                <SelectTrigger id="rekon-kabkota" className="w-full">
-                  <SelectValue placeholder={selectedKppn ? "Semua Kab/Kota" : "Pilih KPPN dulu"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredKabKotaOptions.map((loc) => (
-                    <SelectItem key={loc.kdkabkota} value={loc.kdkabkota}>
-                      {loc.kdkabkota} - {loc.nmkabkota}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                options={[
+                  { value: "", label: "Semua Kab/Kota" },
+                  ...filteredKabKotaOptions.map(loc => ({ value: String(loc.kdkabkota), label: `${loc.kdkabkota} - ${loc.nmkabkota}` }))
+                ]}
+                value={selectedKabKota}
+                onValueChange={setSelectedKabKota}
+                placeholder={selectedKppn ? "Semua Kab/Kota" : "Pilih KPPN dulu"}
+                searchPlaceholder="Cari Kab/Kota..."
+                emptyMessage="Kab/Kota tidak ditemukan."
+                disabled={!selectedKppn}
+              />
             </div>
 
             <div className="space-y-1.5">

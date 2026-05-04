@@ -12,6 +12,9 @@ import {
 import { Label } from "@/components/ui/label";
 import { DataTable } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
+import { Button } from "@/components/ui/button";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import { ResetButton } from "@/components/ui/reset-button";
 import { CheckCircle, SlidersHorizontal, ScrollText } from "lucide-react";
 import { toast } from "sonner";
 import { http } from "@/lib/api/httpClient";
@@ -68,12 +71,16 @@ interface PenilaianKanwilProps {
 }
 
 export function PenilaianKanwil({ role, username }: PenilaianKanwilProps) {
+  const now = new Date();
+  const currentYear = String(now.getFullYear());
+  const currentSemester = now.getMonth() < 6 ? "I" : "II";
+
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<KanwilData[]>([]);
   const [open, setOpen] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [selectedYear, setSelectedYear] = useState("2024");
-  const [selectedPeriod, setSelectedPeriod] = useState("I");
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [selectedPeriod, setSelectedPeriod] = useState(currentSemester);
   const [selectedKanwil, setSelectedKanwil] = useState("");
   const [datakirim, setDataKirim] = useState<DataKirimKanwil | null>(null);
 
@@ -166,6 +173,12 @@ export function PenilaianKanwil({ role, username }: PenilaianKanwilProps) {
     getData();
   };
 
+  const handleReset = () => {
+    setSelectedYear(currentYear);
+    setSelectedPeriod(currentSemester);
+    setSelectedKanwil("");
+  };
+
   const getData = async () => {
     setLoading(true);
     const sql = `
@@ -232,8 +245,11 @@ export function PenilaianKanwil({ role, username }: PenilaianKanwilProps) {
       header: () => <div className="text-center font-medium">ANALISA I</div>,
       cell: ({ row }: any) => (
         <div className="flex justify-center">
-          <CheckCircle
-            className="h-4 w-4 text-blue-500 cursor-pointer"
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0 cursor-pointer"
+            title="Analisa I"
             onClick={() =>
               handleModal(
                 row.original.kdkanwil,
@@ -257,7 +273,9 @@ export function PenilaianKanwil({ role, username }: PenilaianKanwilProps) {
                 row.original.ket2,
               )
             }
-          />
+          >
+            <CheckCircle className="h-4 w-4 text-blue-500" />
+          </Button>
         </div>
       ),
     },
@@ -266,8 +284,11 @@ export function PenilaianKanwil({ role, username }: PenilaianKanwilProps) {
       header: () => <div className="text-center font-medium">ANALISA II</div>,
       cell: ({ row }: any) => (
         <div className="flex justify-center">
-          <CheckCircle
-            className="h-4 w-4 text-green-500 cursor-pointer"
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0 cursor-pointer"
+            title="Analisa II"
             onClick={() =>
               handleModal(
                 row.original.kdkanwil,
@@ -291,7 +312,9 @@ export function PenilaianKanwil({ role, username }: PenilaianKanwilProps) {
                 row.original.ket2,
               )
             }
-          />
+          >
+            <CheckCircle className="h-4 w-4 text-green-500" />
+          </Button>
         </div>
       ),
     },
@@ -309,9 +332,12 @@ export function PenilaianKanwil({ role, username }: PenilaianKanwilProps) {
       {/* Filter Card */}
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
-            <CardTitle>Filter</CardTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
+              <CardTitle>Filter</CardTitle>
+            </div>
+            <ResetButton onReset={handleReset} />
           </div>
         </CardHeader>
         <CardContent>
@@ -344,18 +370,17 @@ export function PenilaianKanwil({ role, username }: PenilaianKanwilProps) {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="kanwilSelect" className="text-sm font-medium">Kanwil</Label>
-              <Select value={selectedKanwil} onValueChange={setSelectedKanwil}>
-                <SelectTrigger id="kanwilSelect" className="w-full">
-                  <SelectValue placeholder="Semua Kanwil" />
-                </SelectTrigger>
-                <SelectContent>
-                  {kanwilOptions.map((k) => (
-                    <SelectItem key={k.kdkanwil} value={k.kdkanwil}>
-                      <span className="truncate">{k.kdkanwil} - {k.nmkanwil}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                options={[
+                  { value: "", label: "Semua Kanwil" },
+                  ...kanwilOptions.map(k => ({ value: k.kdkanwil, label: `${k.kdkanwil} - ${k.nmkanwil}` }))
+                ]}
+                value={selectedKanwil}
+                onValueChange={setSelectedKanwil}
+                placeholder="Pilih Kanwil"
+                searchPlaceholder="Cari kode atau nama Kanwil..."
+                emptyMessage="Kanwil tidak ditemukan."
+              />
             </div>
           </div>
         </CardContent>

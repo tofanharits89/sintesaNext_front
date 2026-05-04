@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
 import { ResetButton } from "@/components/ui/reset-button";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { RekamDataTransaksiModal } from "./modals/rekam-data-transaksi-modal";
 import { KertasKerjaModal } from "./modals/kertas-kerja-modal";
 import tkdData from "@/data/kdkppn_tkd.json";
@@ -322,34 +323,33 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
 
             <div className="space-y-1.5">
               <Label htmlFor="transaksi-kppn" className="text-sm font-medium">KPPN</Label>
-              <Select value={selectedKppn ?? ""} onValueChange={handleKppnSelect}>
-                <SelectTrigger id="transaksi-kppn" className="w-full">
-                  <SelectValue placeholder="Semua KPPN" />
-                </SelectTrigger>
-                <SelectContent>
-                  {uniqueKppn.map((kppn) => (
-                    <SelectItem key={kppn.kdkppn} value={kppn.kdkppn} title={`${kppn.kdkppn} - ${kppn.nmkppn}`}>
-                      <span className="truncate">{kppn.kdkppn} - {kppn.nmkppn}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                options={[
+                  { value: "", label: "Semua KPPN" },
+                  ...uniqueKppn.map(kppn => ({ value: kppn.kdkppn, label: `${kppn.kdkppn} - ${kppn.nmkppn}` }))
+                ]}
+                value={selectedKppn ?? ""}
+                onValueChange={handleKppnSelect}
+                placeholder="Semua KPPN"
+                searchPlaceholder="Cari KPPN..."
+                emptyMessage="KPPN tidak ditemukan."
+              />
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="transaksi-kabkota" className="text-sm font-medium">Kab/Kota</Label>
-              <Select value={selectedKabKota ?? ""} onValueChange={handleKabKotaSelect} disabled={!selectedKppn}>
-                <SelectTrigger id="transaksi-kabkota" className="w-full" disabled={!selectedKppn}>
-                  <SelectValue placeholder={selectedKppn ? "Semua Kab/Kota" : "Pilih KPPN dulu"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredKabKotaOptions.map((lokasi) => (
-                    <SelectItem key={lokasi.kdkabkota} value={lokasi.kdkabkota} title={`${lokasi.kdkabkota} - ${lokasi.nmkabkota}`}>
-                      <span className="truncate">{lokasi.kdkabkota} - {lokasi.nmkabkota}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                options={[
+                  { value: "", label: "Semua Kab/Kota" },
+                  ...filteredKabKotaOptions.map(lokasi => ({ value: String(lokasi.kdkabkota), label: `${lokasi.kdkabkota} - ${lokasi.nmkabkota}` }))
+                ]}
+                value={selectedKabKota ?? ""}
+                onValueChange={handleKabKotaSelect}
+                placeholder={selectedKppn ? "Semua Kab/Kota" : "Pilih KPPN dulu"}
+                searchPlaceholder="Cari Kab/Kota..."
+                emptyMessage="Kab/Kota tidak ditemukan."
+                disabled={!selectedKppn}
+              />
             </div>
           </div>
         </CardContent>

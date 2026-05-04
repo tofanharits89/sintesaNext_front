@@ -12,6 +12,9 @@ import {
 import { Label } from "@/components/ui/label";
 import { DataTable } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
+import { Button } from "@/components/ui/button";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import { ResetButton } from "@/components/ui/reset-button";
 import { CheckCircle, SlidersHorizontal, ScrollText } from "lucide-react";
 import { toast } from "sonner";
 import { http } from "@/lib/api/httpClient";
@@ -43,12 +46,16 @@ export function PenilaianKppn({
   username,
   kdkppn: kdkppnUser,
 }: PenilaianKppnProps) {
+  const now = new Date();
+  const currentYear = String(now.getFullYear());
+  const currentSemester = now.getMonth() < 6 ? "I" : "II";
+
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<KppnData[]>([]);
   const [open, setOpen] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [selectedYear, setSelectedYear] = useState("2024");
-  const [selectedPeriod, setSelectedPeriod] = useState("I");
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [selectedPeriod, setSelectedPeriod] = useState(currentSemester);
   const [selectedKppn, setSelectedKppn] = useState("");
   const [datakirim, setDataKirim] = useState<DataKirimKppn | null>(null);
 
@@ -93,6 +100,12 @@ export function PenilaianKppn({
     getData();
   };
 
+  const handleReset = () => {
+    setSelectedYear(currentYear);
+    setSelectedPeriod(currentSemester);
+    setSelectedKppn("");
+  };
+
   const getData = async () => {
     setLoading(true);
     const kppnFilter =
@@ -114,7 +127,12 @@ export function PenilaianKppn({
         apiPath(`/transfer-daerah/iku/referensi/${encryptedQuery}`),
         { params: { user: username } },
       );
-      setData(response.data?.result ?? []);
+      const resultData = response.data?.result ?? [];
+      const formattedData = resultData.map((d: KppnData) => ({
+        ...d,
+        nmkppn: d.nmkppn ? d.nmkppn.replace(/(?<=\b[a-zA-Z])\s+(?=[a-zA-Z]\b)/g, "") : d.nmkppn,
+      }));
+      setData(formattedData);
     } catch (error: unknown) {
       const err = error as { response?: { data?: { error?: string } } };
       toast.error(
@@ -156,12 +174,17 @@ export function PenilaianKppn({
       header: () => <div className="text-center font-medium">ANALISA</div>,
       cell: ({ row }: any) => (
         <div className="flex justify-center">
-          <CheckCircle
-            className="h-4 w-4 text-red-500 cursor-pointer"
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0 cursor-pointer"
+            title="Analisa"
             onClick={() =>
               handleModal(row.original.kdkppn, row.original.nmkppn, selectedPeriod)
             }
-          />
+          >
+            <CheckCircle className="h-4 w-4 text-red-500" />
+          </Button>
         </div>
       ),
     },
@@ -172,9 +195,12 @@ export function PenilaianKppn({
       {/* Filter Card */}
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
-            <CardTitle>Filter</CardTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
+              <CardTitle>Filter</CardTitle>
+            </div>
+            <ResetButton onReset={handleReset} />
           </div>
         </CardHeader>
         <CardContent>
@@ -207,18 +233,17 @@ export function PenilaianKppn({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="kppnSelect" className="text-sm font-medium">KPPN</Label>
-              <Select value={selectedKppn} onValueChange={setSelectedKppn}>
-                <SelectTrigger id="kppnSelect" className="w-full">
-                  <SelectValue placeholder="Semua KPPN" />
-                </SelectTrigger>
-                <SelectContent>
-                  {kppnOptions.map((k) => (
-                    <SelectItem key={k.kdkppn} value={k.kdkppn}>
-                      <span className="truncate">{k.kdkppn} - {k.nmkppn}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                options={[
+                  { value: "", label: "Semua KPPN" },
+                  ...kppnOptions.map(k => ({ value: k.kdkppn, label: `${k.kdkppn} - ${k.nmkppn}` }))
+                ]}
+                value={selectedKppn}
+                onValueChange={setSelectedKppn}
+                placeholder="Pilih KPPN"
+                searchPlaceholder="Cari kode atau nama KPPN..."
+                emptyMessage="KPPN tidak ditemukan."
+              />
             </div>
           </div>
         </CardContent>

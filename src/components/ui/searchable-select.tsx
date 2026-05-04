@@ -63,6 +63,7 @@ export function SearchableSelect({
         placeholder={placeholder}
         aria-label={searchPlaceholder}
         disabled={disabled}
+        onFocus={(e) => e.target.select()}
       />
       <ComboboxContent className="!bg-zinc-100 dark:!bg-black">
         <ComboboxEmpty>{emptyMessage}</ComboboxEmpty>
