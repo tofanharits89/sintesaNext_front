@@ -17,9 +17,9 @@ export default function ApbdPage() {
       }
 
       const isAdmin = user.role === "super_admin" || user.role === "co_admin";
-      const isKanwil = user.role === "kanwil_djpb";
+      const isDitpa = user.role === "ditpa";
 
-      if (!isAdmin && !isKanwil) {
+      if (!isAdmin && !isDitpa) {
         router.push("/unauthorized");
       }
     }
@@ -36,8 +36,8 @@ export default function ApbdPage() {
   if (!user) return null;
 
   const isAdmin = user.role === "super_admin" || user.role === "co_admin";
-  const isKanwil = user.role === "kanwil_djpb";
-  if (!isAdmin && !isKanwil) return null;
+  const isDitpa = user.role === "ditpa";
+  if (!isAdmin && !isDitpa) return null;
 
   return (
     <div className="space-y-6">
