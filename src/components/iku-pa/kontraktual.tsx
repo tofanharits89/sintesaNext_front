@@ -1,8 +1,29 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import axios from "axios";
 import * as XLSX from "xlsx";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTable } from "@/components/ui/data-table";
+import { ColumnDef } from "@tanstack/react-table";
+import { Eye, FileSpreadsheet, X, Download } from "lucide-react";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/animate-ui/components/radix/dialog";
 
 // ─── Konstanta ────────────────────────────────────────────────────────────────
 
@@ -43,6 +64,80 @@ type DetailRow = {
   kontrak?: number;
   pagu?: number;
 };
+
+// ─── Detail Columns ─────────────────────────────────────────────────────────
+
+const detailColumns: ColumnDef<DetailRow>[] = [
+  {
+    id: "no",
+    header: () => <div className="text-center font-medium">NO</div>,
+    cell: ({ row }) => <div className="text-center">{row.index + 1}</div>,
+  },
+  {
+    accessorKey: "kdsatker",
+    header: () => (
+      <div className="text-center font-medium whitespace-nowrap">KODE SATKER</div>
+    ),
+    cell: ({ row }) => (
+      <div className="text-center font-mono">
+        {row.original.kdsatker}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "nmsatker",
+    header: () => <div className="text-center font-medium">SATUAN KERJA</div>,
+    cell: ({ row }) => (
+      <div className="text-center max-w-[300px] truncate mx-auto" title={row.original.nmsatker}>
+        {row.original.nmsatker}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "nmunit",
+    header: () => <div className="text-center font-medium">UNIT</div>,
+    cell: ({ row }) => (
+      <div className="text-center max-w-[200px] truncate mx-auto" title={row.original.nmunit}>
+        {row.original.nmunit}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "seksi",
+    header: () => <div className="text-center font-medium">SEKSI</div>,
+    cell: ({ row }) => <div className="text-center">{row.original.seksi}</div>,
+  },
+  {
+    accessorKey: "pagu",
+    header: () => <div className="text-center font-medium whitespace-nowrap">PAGU (RP)</div>,
+    cell: ({ row }) => {
+      const val = row.original.pagu ?? 0;
+      return (
+        <div className="text-right font-mono tabular-nums pr-2">
+          {Number(val).toLocaleString("id-ID", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          })}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "kontrak",
+    header: () => <div className="text-center font-medium whitespace-nowrap">KONTRAK (RP)</div>,
+    cell: ({ row }) => {
+      const val = row.original.kontrak ?? 0;
+      return (
+        <div className="text-right font-mono text-green-600 dark:text-green-400 tabular-nums pr-2">
+          {Number(val).toLocaleString("id-ID", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          })}
+        </div>
+      );
+    },
+  },
+];
 
 type ActiveCell = { subditIdx: number; twIdx: number } | null;
 
@@ -137,6 +232,102 @@ export default function KontraktualContent() {
   const activeAvg = activeGroup
     ? headerAvg[activeGroup.subdit]?.[active!.twIdx]
     : null;
+
+  const columns = useMemo<ColumnDef<SummaryRow>[]>(
+    () => [
+      {
+        id: "no",
+        header: () => <div className="text-center font-medium">No</div>,
+        cell: ({ row }) => <div className="text-center">{row.index + 1}</div>,
+      },
+      {
+        accessorKey: "kddept",
+        header: () => <div className="text-center font-medium">BA</div>,
+        cell: ({ row }) => (
+          <div className="text-center font-mono">{row.getValue("kddept")}</div>
+        ),
+      },
+      {
+        accessorKey: "nmdept",
+        header: () => <div className="text-center font-medium">Kementerian / Lembaga</div>,
+        cell: ({ row }) => (
+          <div className="text-center min-w-[200px]">{row.getValue("nmdept")}</div>
+        ),
+      },
+      {
+        accessorKey: "jenbel",
+        header: () => <div className="text-center font-medium">Jenis Belanja</div>,
+        cell: ({ row }) => (
+          <div className="text-center min-w-[200px]">{row.getValue("jenbel")}</div>
+        ),
+      },
+      {
+        accessorKey: "periode",
+        header: () => <div className="text-center font-medium">Periode</div>,
+        cell: ({ row }) => (
+          <div className="text-center">{row.getValue("periode")}</div>
+        ),
+      },
+      {
+        accessorKey: "pagu",
+        header: () => <div className="text-center font-medium">Pagu (Rp)</div>,
+        cell: ({ row }) => (
+          <div className="text-right font-mono tabular-nums">
+            {fmt(row.getValue("pagu"))}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "kontrak",
+        header: () => <div className="text-center font-medium">Kontrak (Rp)</div>,
+        cell: ({ row }) => (
+          <div className="text-right font-mono tabular-nums">
+            {fmt(row.getValue("kontrak"))}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "persentase",
+        header: () => <div className="text-center font-medium">% Kontrak</div>,
+        cell: ({ row }) => (
+          <div className="text-right font-mono tabular-nums">
+            {Number(row.getValue("persentase")).toFixed(2)}%
+          </div>
+        ),
+      },
+      {
+        accessorKey: "indeks",
+        header: () => <div className="text-center font-medium">Indeks</div>,
+        cell: ({ row }) => (
+          <div
+            className={`text-center ${indeksColor(row.getValue("indeks"))}`}
+          >
+            {row.getValue("indeks")}
+          </div>
+        ),
+      },
+      {
+        id: "actions",
+        header: () => <div className="text-center font-medium">Details</div>,
+        cell: ({ row }) => (
+          <div className="flex justify-center">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0 cursor-pointer"
+              onClick={() => handleDetailsClick(row.original)}
+              title="Lihat detail satker"
+            >
+              <Eye className="h-4 w-4 text-amber-600" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
   const handleDetailsClick = async (r: SummaryRow) => {
     setModal({ open: true, row: r });
     setDetailRows([]);
@@ -234,357 +425,181 @@ export default function KontraktualContent() {
   return (
     <>
       <div className="space-y-4">
-        {/* ── Header Card ─────────────────────────────────────────────────────── */}
-        <div className="overflow-x-auto rounded-lg border border-yellow-400">
-          <table className="w-full border-collapse text-xs">
-            <thead>
-              {/* Baris 1: Subdit label */}
-              <tr>
-                {SUBDIT_DEFS.map((g, i) => (
-                  <th
-                    key={g.label}
-                    colSpan={8}
-                    className={`bg-blue-900 text-white font-bold text-center py-2 px-4 ${
-                      i < SUBDIT_DEFS.length - 1
-                        ? "border-r-2 border-yellow-400"
-                        : ""
-                    }`}
+        <Card className="border-blue-900/10 shadow-lg overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle>Filter Data : Pilih Subdit dan Periode</CardTitle>
+            {activeGroup && (
+              <div className="text-xs font-medium text-muted-foreground bg-blue-50 dark:bg-blue-900/10 px-3 py-1.5 rounded-full border border-blue-100 dark:border-blue-900/20">
+                Menampilkan:{" "}
+                <span className="text-blue-900 dark:text-blue-400 font-bold">
+                  {activeGroup.label} — {activeTw}
+                </span>{" "}
+                · Rata-rata indeks:{" "}
+                <span className="text-blue-900 dark:text-blue-400 font-bold">
+                  {activeAvg ?? "—"}
+                </span>
+              </div>
+            )}
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="rounded-xl border border-blue-900/10 shadow-sm overflow-hidden bg-white dark:bg-slate-950">
+              <div className="flex w-full overflow-x-auto no-scrollbar scroll-smooth">
+                {SUBDIT_DEFS.map((g, gi) => (
+                  <div 
+                    key={g.label} 
+                    className="flex flex-col flex-1 min-w-max border-r border-blue-900/10 last:border-r-0"
                   >
-                    {g.label}
-                  </th>
+                    <div className="bg-blue-900 text-white font-bold text-center py-2.5 px-4 text-[10px] uppercase tracking-widest border-b border-yellow-400/30">
+                      {g.label}
+                    </div>
+                    <div className="flex flex-1">
+                      {triwulans.map((tw, ti) => {
+                        const isActive =
+                          active?.subditIdx === gi && active?.twIdx === ti;
+                        const avg = headerAvg[g.subdit]?.[ti];
+                        const display =
+                          avg !== null && avg !== undefined ? avg : "—";
+                        return (
+                          <div
+                            key={`${gi}-${ti}`}
+                            onClick={() => fetchData(gi, ti)}
+                            className={`
+                              group flex flex-col flex-1 items-center justify-center py-2 px-2
+                              border-r border-blue-900/5 last:border-r-0 cursor-pointer 
+                              transition-all duration-300 min-w-[50px] relative
+                              ${isActive 
+                                ? "bg-yellow-400 text-blue-900 shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]" 
+                                : "bg-white hover:bg-blue-50 dark:bg-slate-950 dark:hover:bg-blue-900/20"
+                              }
+                            `}
+                            title={`Lihat ${g.label} – ${tw} (rata-rata indeks: ${display})`}
+                          >
+                            <span className={`
+                              text-[9px] font-bold uppercase mb-0.5 tracking-tight
+                              ${isActive ? "text-blue-900/70" : "text-muted-foreground/80"}
+                            `}>
+                              {tw}
+                            </span>
+                            <span className={`
+                              text-sm font-black tabular-nums
+                              ${isActive ? "text-blue-900" : "text-foreground"}
+                            `}>
+                              {display}
+                            </span>
+                            {isActive && (
+                              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-900/20" />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 ))}
-              </tr>
-              {/* Baris 2: Tw + Rata-rata Indeks (klik) */}
-              <tr>
-                {SUBDIT_DEFS.map((g, gi) =>
-                  triwulans.map((tw, ti) => {
-                    const isActive =
-                      active?.subditIdx === gi && active?.twIdx === ti;
-                    const avg = headerAvg[g.subdit]?.[ti];
-                    const display =
-                      avg !== null && avg !== undefined ? avg : "—";
-                    return (
-                      <React.Fragment key={`${gi}-${ti}`}>
-                        <th className="bg-blue-900 text-white text-center py-1.5 px-3 border border-yellow-400 font-normal whitespace-nowrap min-w-[40px]">
-                          {tw}
-                        </th>
-                        <th
-                          onClick={() => fetchData(gi, ti)}
-                          className={`text-center py-1.5 px-3 border border-yellow-400 font-bold min-w-[36px] cursor-pointer transition-colors ${
-                            isActive
-                              ? "bg-yellow-400 text-blue-900"
-                              : "bg-blue-900 text-white hover:bg-yellow-400 hover:text-blue-900"
-                          } ${
-                            ti === triwulans.length - 1 &&
-                            gi < SUBDIT_DEFS.length - 1
-                              ? "border-r-2 border-r-yellow-400"
-                              : ""
-                          }`}
-                          title={`Lihat ${g.label} – ${tw} (rata-rata indeks: ${display})`}
-                        >
-                          {display}
-                        </th>
-                      </React.Fragment>
-                    );
-                  }),
-                )}
-              </tr>
-            </thead>
-          </table>
-        </div>
-
-        {/* ── Judul aktif ─────────────────────────────────────────────────────── */}
-        {activeGroup && (
-          <div className="text-sm font-medium text-muted-foreground">
-            Menampilkan:{" "}
-            <span className="text-foreground font-semibold">
-              {activeGroup.label} — {activeTw}
-            </span>{" "}
-            · Rata-rata indeks:{" "}
-            <span className="text-foreground font-semibold">
-              {activeAvg ?? "—"}
-            </span>
-          </div>
-        )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* ── Tabel data ──────────────────────────────────────────────────────── */}
-        <div className="flex justify-end">
-          <button
-            onClick={downloadExcel}
-            disabled={rows.length === 0 || loading}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded border border-green-600 text-green-700 hover:bg-green-600 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            title="Unduh Excel"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-4 h-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle>Ringkasan IKU Kontraktual</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={downloadExcel}
+              disabled={rows.length === 0 || loading}
+              className="bg-green-700 dark:bg-card hover:bg-green-600 flex items-center"
+              title="Unduh Excel"
             >
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="12" y1="18" x2="12" y2="12" />
-              <line x1="9" y1="15" x2="15" y2="15" />
-            </svg>
-            Download Excel
-          </button>
-        </div>
-        <div className="overflow-x-auto rounded-lg border shadow-sm">
-          {loading ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">
-              Memuat data…
-            </div>
-          ) : error ? (
-            <div className="py-10 text-center text-sm text-red-500">
-              {error}
-            </div>
-          ) : rows.length === 0 ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">
-              Tidak ada data untuk filter ini.
-            </div>
-          ) : (
-            <table className="w-full border-collapse text-xs">
-              <thead>
-                <tr className="bg-blue-900 text-white">
-                  <th className="border border-blue-700 px-3 py-2 text-center w-8">
-                    No
-                  </th>
-                  <th className="border border-blue-700 px-3 py-2 text-left min-w-[60px]">
-                    BA
-                  </th>
-                  <th className="border border-blue-700 px-3 py-2 text-left min-w-[200px]">
-                    Kementerian / Lembaga
-                  </th>
-                  <th className="border border-blue-700 px-3 py-2 text-left min-w-[200px]">
-                    Jenis Belanja
-                  </th>
-                  <th className="border border-blue-700 px-3 py-2 text-center">
-                    Periode
-                  </th>
-                  <th className="border border-blue-700 px-3 py-2 text-right min-w-[120px]">
-                    Pagu (Rp)
-                  </th>
-                  <th className="border border-blue-700 px-3 py-2 text-right min-w-[120px]">
-                    Kontrak (Rp)
-                  </th>
-                  <th className="border border-blue-700 px-3 py-2 text-right">
-                    % Kontrak
-                  </th>
-                  <th className="border border-blue-700 px-3 py-2 text-center">
-                    Indeks
-                  </th>
-                  <th className="border border-blue-700 px-1 py-1 text-center">
-                    Details
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r, i) => (
-                  <tr
-                    key={`${r.kddept}-${r.periode}-${r.jenbel}-${i}`}
-                    className="hover:bg-blue-50 dark:hover:bg-blue-950"
-                  >
-                    <td className="border border-gray-300 dark:border-gray-700 px-2 py-1.5 text-center">
-                      {i + 1}
-                    </td>
-                    <td className="border border-gray-300 dark:border-gray-700 px-2 py-1.5 font-mono">
-                      {r.kddept}
-                    </td>
-                    <td className="border border-gray-300 dark:border-gray-700 px-3 py-1.5">
-                      {r.nmdept}
-                    </td>
-                    <td className="border border-gray-300 dark:border-gray-700 px-3 py-1.5">
-                      {r.jenbel}
-                    </td>
-
-                    <td className="border border-gray-300 dark:border-gray-700 px-2 py-1.5 text-center">
-                      {r.periode}
-                    </td>
-                    <td className="border border-gray-300 dark:border-gray-700 px-2 py-1.5 text-right">
-                      {fmt(r.pagu)}
-                    </td>
-                    <td className="border border-gray-300 dark:border-gray-700 px-2 py-1.5 text-right">
-                      {fmt(r.kontrak)}
-                    </td>
-                    <td className="border border-gray-300 dark:border-gray-700 px-2 py-1.5 text-right">
-                      {Number(r.persentase).toFixed(2)}%
-                    </td>
-                    <td
-                      className={`border border-gray-300 dark:border-gray-700 px-2 py-1.5 text-center ${indeksColor(r.indeks)}`}
-                    >
-                      {r.indeks}
-                    </td>
-                    <td className="border border-gray-300 dark:border-gray-700 px-2 py-1.5 text-center">
-                      <button
-                        title="Lihat detail satker"
-                        onClick={() => handleDetailsClick(r)}
-                        className="inline-flex items-center justify-center p-1 rounded text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="w-4 h-4"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                          <circle cx="12" cy="12" r="3" />
-                        </svg>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+              <FileSpreadsheet className="w-4 h-4 text-white mr-2" />
+              <span className="text-sm text-white">Unduh Data Excel</span>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <TableSkeleton rows={10} />
+            ) : error ? (
+              <div className="py-10 text-center text-sm text-red-500">
+                {error}
+              </div>
+            ) : rows.length === 0 ? (
+              <div className="py-10 text-center text-sm text-muted-foreground">
+                Tidak ada data untuk filter ini.
+              </div>
+            ) : (
+              <DataTable
+                columns={columns}
+                data={rows}
+                initialPageSize={10}
+                tableClassName="text-xs"
+              />
+            )}
+          </CardContent>
+        </Card>
       </div>
 
-      {/* ── Modal Detail ──────────────────────────────────────────────────── */}
-      {modal.open && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          onClick={() => setModal({ open: false, row: null })}
+      {/* ── Modal Detail ───────────────────────────────────────────────────────── */}
+      <Dialog 
+        open={modal.open} 
+        onOpenChange={(open) => setModal((prev) => ({ ...prev, open }))}
+      >
+        <DialogContent 
+          showCloseButton={false}
+          className="max-w-7xl sm:max-w-7xl h-[85vh] flex flex-col p-0 overflow-hidden"
         >
-          <div
-            className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-5xl max-h-[85vh] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header modal */}
-            <div className="flex items-center justify-between px-4 py-3 border-b bg-blue-900 rounded-t-lg">
-              <div className="text-white text-sm font-semibold">
-                Detail Satker — {modal.row?.nmdept} | Jenbel:{" "}
-                {modal.row?.jenbel} | Periode: {modal.row?.periode}
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={downloadDetailExcel}
-                  disabled={detailRows.length === 0 || detailLoading}
-                  className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded border border-green-400 text-green-300 hover:bg-green-600 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  title="Unduh Excel"
+          <DialogHeader className="px-6 py-4">
+            <DialogTitle>Detail Satker: {modal.row?.nmdept ?? "Memuat..."}</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            {detailLoading ? (
+              <TableSkeleton rows={10} />
+            ) : detailError ? (
+              <div className="py-12 text-center">
+                <p className="text-red-500 font-medium">{detailError}</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-4"
+                  onClick={() => modal.row && handleDetailsClick(modal.row)}
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="w-3.5 h-3.5"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                    <line x1="12" y1="18" x2="12" y2="12" />
-                    <line x1="9" y1="15" x2="15" y2="15" />
-                  </svg>
-                  Excel
-                </button>
-                <button
-                  onClick={() => setModal({ open: false, row: null })}
-                  className="text-white hover:text-yellow-300 transition-colors"
-                  title="Tutup"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="w-5 h-5"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
+                  Coba Lagi
+                </Button>
               </div>
-            </div>
-            {/* Body modal */}
-            <div className="overflow-auto flex-1 p-3">
-              {detailLoading ? (
-                <div className="py-10 text-center text-sm text-muted-foreground">
-                  Memuat detail…
-                </div>
-              ) : detailError ? (
-                <div className="py-10 text-center text-sm text-red-500">
-                  {detailError}
-                </div>
-              ) : detailRows.length === 0 ? (
-                <div className="py-10 text-center text-sm text-muted-foreground">
-                  Tidak ada data.
-                </div>
-              ) : (
-                <table className="w-full border-collapse text-xs">
-                  <thead>
-                    <tr className="bg-blue-900 text-white">
-                      <th className="border border-blue-700 px-2 py-1.5 text-center w-8">
-                        No
-                      </th>
-                      <th className="border border-blue-700 px-2 py-1.5 text-left">
-                        Kode Satker
-                      </th>
-                      <th className="border border-blue-700 px-2 py-1.5 text-left min-w-[200px]">
-                        Satker
-                      </th>
-                      <th className="border border-blue-700 px-2 py-1.5 text-left">
-                        Unit
-                      </th>
-                      <th className="border border-blue-700 px-2 py-1.5 text-center">
-                        Seksi
-                      </th>
-                      <th className="border border-blue-700 px-2 py-1.5 text-right min-w-[110px]">
-                        Pagu (Rp)
-                      </th>
-                      <th className="border border-blue-700 px-2 py-1.5 text-right min-w-[110px]">
-                        Kontrak (Rp)
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {detailRows.map((d, i) => (
-                      <tr
-                        key={d.id}
-                        className="hover:bg-blue-50 dark:hover:bg-blue-950"
-                      >
-                        <td className="border border-gray-300 dark:border-gray-700 px-2 py-1 text-center">
-                          {i + 1}
-                        </td>
-                        <td className="border border-gray-300 dark:border-gray-700 px-2 py-1 font-mono">
-                          {d.kdsatker}
-                        </td>
-                        <td className="border border-gray-300 dark:border-gray-700 px-2 py-1">
-                          {d.nmsatker}
-                        </td>
-                        <td className="border border-gray-300 dark:border-gray-700 px-2 py-1">
-                          {d.nmunit}
-                        </td>
-                        <td className="border border-gray-300 dark:border-gray-700 px-2 py-1 text-center">
-                          {d.seksi}
-                        </td>
-                        <td className="border border-gray-300 dark:border-gray-700 px-2 py-1 text-right">
-                          {fmt(d.pagu ?? 0)}
-                        </td>
-                        <td className="border border-gray-300 dark:border-gray-700 px-2 py-1 text-right">
-                          {fmt(d.kontrak ?? 0)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
+            ) : detailRows.length === 0 ? (
+              <div className="py-20 text-center flex flex-col items-center justify-center text-muted-foreground border rounded-lg bg-muted/10">
+                <FileSpreadsheet className="w-12 h-12 mb-4 opacity-10" />
+                <p className="text-sm">Tidak ada data detail untuk satker ini.</p>
+              </div>
+            ) : (
+              <DataTable 
+                columns={detailColumns} 
+                data={detailRows} 
+                hidePagination 
+                initialPageSize={detailRows.length || 100}
+                tableClassName="text-xs"
+              />
+            )}
           </div>
-        </div>
-      )}
+
+          <DialogFooter className="px-6 py-4 flex flex-row items-center sm:justify-between gap-2 bg-muted/5">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={downloadDetailExcel}
+              disabled={detailRows.length === 0 || detailLoading}
+              className="bg-green-700 text-white hover:bg-green-600 hover:text-white"
+            >
+              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              Unduh Data Excel
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setModal({ open: false, row: null })}>
+              Tutup
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
