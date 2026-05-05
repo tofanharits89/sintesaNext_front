@@ -12,7 +12,10 @@ import OutputUtama, { type OutputRow } from "./output-utama";
 import IkpaForm, { type IkpaRow } from "./ikpa-form";
 import Pdf from "./pdf";
 import kddept from "@/data/kddept.json";
-import { Plus } from "lucide-react";
+import { Plus, FileText } from "lucide-react";
+import { DataTable } from "@/components/ui/data-table";
+import { Button } from "@/components/ui/button";
+import { ColumnDef } from "@tanstack/react-table";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type FilterData = { thang: string; periode: string; dept: string };
@@ -130,25 +133,85 @@ export default function LandingLembaga() {
 
   const updateReload = () => { fetchTemuan(); fetchOutput(); fetchIkpa(); };
 
+  // ─── Column Definitions ──────────────────────────────────────────────────────
+  const temuanColumns: ColumnDef<any>[] = [
+    {
+      id: "no",
+      header: () => <div className="text-center font-medium">No</div>,
+      cell: ({ row }) => <div className="text-center">{row.index + 1}</div>,
+    },
+    {
+      accessorKey: "temuan",
+      header: () => <div className="text-center font-medium">Temuan BPK</div>,
+      cell: ({ row }) => (
+        <div className="text-left font-medium max-w-[400px] whitespace-normal break-words">
+          {row.getValue("temuan")}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "nilai",
+      header: () => <div className="text-center font-medium">Nilai</div>,
+      cell: ({ row }) => (
+        <div className="text-left text-muted-foreground">{row.getValue("nilai")}</div>
+      ),
+    },
+    {
+      id: "isuList",
+      header: () => <div className="text-center font-medium">Tindak Lanjut</div>,
+      cell: ({ row }) => (
+        <ol className="ml-4 list-decimal space-y-0.5 text-xs text-muted-foreground">
+          {(row.original.isuList as string[]).map((s, i) => (
+            <li key={i}>{s}</li>
+          ))}
+        </ol>
+      ),
+    },
+  ];
+
+  const outputColumns: ColumnDef<any>[] = [
+    {
+      accessorKey: "tahun",
+      header: () => <div className="text-center font-medium">Tahun</div>,
+      cell: ({ row }) => <div className="text-center">{row.getValue("tahun")}</div>,
+    },
+    {
+      accessorKey: "pagu",
+      header: () => <div className="text-center font-medium">Pagu</div>,
+      cell: ({ row }) => <div className="text-center">{row.getValue("pagu")}</div>,
+    },
+    {
+      accessorKey: "realisasi",
+      header: () => <div className="text-center font-medium">Realisasi</div>,
+      cell: ({ row }) => <div className="text-center">{row.getValue("realisasi")}</div>,
+    },
+    {
+      accessorKey: "persen",
+      header: () => <div className="text-center font-medium">Persen</div>,
+      cell: ({ row }) => <div className="text-center">{row.getValue("persen")}</div>,
+    },
+  ];
+
   // ─── Render ──────────────────────────────────────────────────────────────────
   return (
-    <main className="space-y-4 p-4 print:p-0">
+    <div className="space-y-6 animate-in fade-in duration-700">
       {/* ── Header ── */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-foreground">
+          <h1 className="text-2xl font-semibold tracking-tight">
             Profil Kinerja Lembaga
           </h1>
           <p className="text-sm text-muted-foreground">
             Isu Spesifik &amp; Analisa Kinerja Pelaksanaan Anggaran
           </p>
         </div>
-        <button
+        <Button
           onClick={() => setShowPdf(true)}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity print:hidden"
+          className="print:hidden"
         >
+          <FileText className="mr-2 h-4 w-4" />
           Download PDF
-        </button>
+        </Button>
       </div>
 
       {/* ── Filter ── */}
@@ -254,33 +317,13 @@ export default function LandingLembaga() {
           <LoadingRows />
         ) : (
           <div className="max-h-72 overflow-x-auto overflow-y-auto">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr className="sticky top-0 bg-muted text-left text-xs font-semibold text-muted-foreground">
-                  <th className="border border-border px-3 py-2">No</th>
-                  <th className="border border-border px-3 py-2">Temuan BPK</th>
-                  <th className="border border-border px-3 py-2">Nilai</th>
-                  <th className="border border-border px-3 py-2">Tindak Lanjut</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mergedTemuan.map((item, idx) => (
-                  <tr
-                    key={item.id_temuan}
-                    className="text-foreground transition-colors hover:bg-muted/50 even:bg-muted/30"
-                  >
-                    <td className="border border-border px-3 py-2">{idx + 1}</td>
-                    <td className="border border-border px-3 py-2">{item.temuan}</td>
-                    <td className="border border-border px-3 py-2">{item.nilai}</td>
-                    <td className="border border-border px-3 py-2">
-                      <ol className="ml-4 list-decimal space-y-0.5">
-                        {item.isuList.map((s, i) => <li key={i}>{s}</li>)}
-                      </ol>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <DataTable
+              columns={temuanColumns}
+              data={mergedTemuan}
+              hidePagination={mergedTemuan.length <= 10}
+              initialPageSize={10}
+              emptyMessage="Belum ada data temuan."
+            />
           </div>
         )}
       </div>
@@ -298,7 +341,7 @@ export default function LandingLembaga() {
         </div>
         {loading ? (
           <LoadingRows />
-        ) : (
+        ) : namaoutputList.length > 0 ? (
           <div className="space-y-4">
             {namaoutputList.map((outputName, idx) => {
               const rows = dataOutput.filter((r) => r.namaoutput === outputName);
@@ -308,29 +351,13 @@ export default function LandingLembaga() {
                     {outputName || "—"}
                   </h3>
                   <div className="overflow-x-auto">
-                    <table className="w-full border-collapse text-sm">
-                      <thead>
-                        <tr className="bg-muted text-left text-xs font-semibold text-muted-foreground">
-                          <th className="border border-border px-3 py-2">Tahun</th>
-                          <th className="border border-border px-3 py-2">Pagu</th>
-                          <th className="border border-border px-3 py-2">Realisasi</th>
-                          <th className="border border-border px-3 py-2">Persen</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rows.map((r, i) => (
-                          <tr
-                            key={i}
-                            className="text-foreground transition-colors hover:bg-muted/50 even:bg-muted/30"
-                          >
-                            <td className="border border-border px-3 py-2">{r.tahun}</td>
-                            <td className="border border-border px-3 py-2">{r.pagu}</td>
-                            <td className="border border-border px-3 py-2">{r.realisasi}</td>
-                            <td className="border border-border px-3 py-2">{r.persen}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    <DataTable
+                      columns={outputColumns}
+                      data={rows}
+                      hidePagination={true}
+                      initialPageSize={10}
+                      emptyMessage="Belum ada data output."
+                    />
                   </div>
                   {rows[0]?.catatan && (
                     <p className="mt-1 text-justify text-xs text-muted-foreground">
@@ -340,6 +367,31 @@ export default function LandingLembaga() {
                 </div>
               );
             })}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <DataTable 
+              columns={[
+                {
+                  id: "no",
+                  header: () => <div className="text-center font-medium">No</div>,
+                  cell: () => <div className="text-center">—</div>,
+                },
+                {
+                  accessorKey: "namaoutput",
+                  header: () => <div className="text-center font-medium">Nama Output</div>,
+                  cell: () => <div className="text-center">—</div>,
+                },
+                {
+                  accessorKey: "catatan",
+                  header: () => <div className="text-center font-medium">Keterangan</div>,
+                  cell: () => <div className="text-center">—</div>,
+                }
+              ]} 
+              data={[]} 
+              hidePagination={true}
+              emptyMessage="Belum ada data output utama."
+            />
           </div>
         )}
       </div>
@@ -368,9 +420,15 @@ export default function LandingLembaga() {
           thang={inputValues.thang}
           dept={inputValues.dept}
           periode={inputValues.periode}
+          nmdept={deptInfo?.nmdept}
+          isuData={data}
+          trenData={dataTren}
+          temuanData={dataTemuan}
+          outputData={dataOutput}
+          ikpaData={dataIkpa}
           onDone={() => setShowPdf(false)}
         />
       )}
-    </main>
+    </div>
   );
 }

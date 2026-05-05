@@ -37,13 +37,13 @@ This document provides essential context and instructions for the SintesaNEx Fro
 
 | Command | Purpose |
 | :--- | :--- |
-| `npm run dev` | Start development server with Turbopack. |
-| `npm run build` | Production build (allocates 8GB memory). |
-| `npm run test` | Run Vitest in watch mode. |
-| `npm run test:coverage` | Run tests and verify 80% coverage threshold. |
-| `npm run typecheck` | Run TypeScript compiler checks. |
-| `npm run lint:fix` | Run ESLint and auto-fix issues. |
-| `npm run clean` | Remove build and coverage artifacts. |
+| `pnpm dev` | Start development server with Turbopack. |
+| `pnpm build` | Production build (allocates 8GB memory). |
+| `pnpm test` | Run Vitest in watch mode. |
+| `pnpm test:coverage` | Run tests and verify 80% coverage threshold. |
+| `pnpm typecheck` | Run TypeScript compiler checks. |
+| `pnpm lint:fix` | Run ESLint and auto-fix issues. |
+| `pnpm clean` | Remove build and coverage artifacts. |
 
 ## Development Workflow
 

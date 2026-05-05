@@ -8,7 +8,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/components/animate-ui/components/radix/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2 } from "lucide-react";
 
 export interface IsuRow {
   id: number;
@@ -48,22 +52,15 @@ function formatDate(d: string) {
   });
 }
 
-const emptyForm = (): IsuForm => ({
-  input1: "",
-  input2: "",
-  input3: "",
-  input4: "",
-});
-
 export default function Isu({ show, handleClose, data, isi }: IsuProps) {
   const [loading, setLoading] = useState(false);
   const [updateInfo, setUpdateInfo] = useState("");
-  const [formData, setFormData] = useState<IsuForm>(() => ({
-    input1: isi[0]?.isu ?? "",
-    input2: isi[1]?.isu ?? "",
-    input3: isi[2]?.isu ?? "",
-    input4: isi[3]?.isu ?? "",
-  }));
+  const [formData, setFormData] = useState<IsuForm>({
+    input1: "",
+    input2: "",
+    input3: "",
+    input4: "",
+  });
 
   useEffect(() => {
     setFormData({
@@ -76,6 +73,8 @@ export default function Isu({ show, handleClose, data, isi }: IsuProps) {
       setUpdateInfo(
         `Diupdate terakhir oleh ${isi[0].username} tanggal ${formatDate(isi[0].createdAt)}`,
       );
+    } else {
+      setUpdateInfo("");
     }
   }, [isi]);
 
@@ -97,9 +96,6 @@ export default function Isu({ show, handleClose, data, isi }: IsuProps) {
     }
   };
 
-  const textareaClass =
-    "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100";
-
   const fields: { name: keyof IsuForm; label: string }[] = [
     { name: "input1", label: "Isu 1" },
     { name: "input2", label: "Isu 2" },
@@ -109,50 +105,63 @@ export default function Isu({ show, handleClose, data, isi }: IsuProps) {
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl gap-0 overflow-hidden p-0">
-        <DialogHeader className="border-b px-6 py-4">
+      <DialogContent showCloseButton={false} className="sm:max-w-7xl gap-0 overflow-hidden p-0">
+        <DialogHeader className="px-6 py-4">
           <DialogTitle>Rekam Isu Spesifik</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex max-h-[82vh] flex-col">
-          <div className="space-y-4 overflow-y-auto px-6 py-5">
-            {fields.map(({ name, label }) => (
-              <div key={name}>
-                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {label}
-                </label>
-                <textarea
-                  name={name}
-                  rows={4}
-                  placeholder="Masukkan teks di sini..."
-                  value={formData[name]}
-                  onChange={handleChange}
-                  className={textareaClass}
-                />
-              </div>
-            ))}
+        <form onSubmit={handleSubmit} className="flex max-h-[85vh] flex-col">
+          <div className="space-y-6 overflow-y-auto px-6 py-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              {fields.map(({ name, label }) => (
+                <div key={name} className="space-y-2">
+                  <Label htmlFor={name} className="text-sm font-semibold">
+                    {label}
+                  </Label>
+                  <Textarea
+                    id={name}
+                    name={name}
+                    rows={6}
+                    placeholder="Masukkan deskripsi isu spesifik di sini..."
+                    value={formData[name]}
+                    onChange={handleChange}
+                    className="resize-none"
+                  />
+                </div>
+              ))}
+            </div>
 
             {updateInfo && (
-              <p className="text-xs italic text-gray-400">{updateInfo}</p>
+              <p className="text-xs italic text-muted-foreground border-t pt-4">
+                {updateInfo}
+              </p>
             )}
           </div>
 
-          <DialogFooter className="border-t bg-gray-50 px-6 py-4 dark:bg-gray-900">
-            <button
+          <DialogFooter className="px-6 py-4 bg-white dark:bg-card">
+            <Button
               type="button"
+              variant="outline"
               onClick={handleClose}
               disabled={loading}
-              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-gray-800"
+              className="px-6"
             >
               Batal
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               disabled={loading}
-              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+              className="px-8"
             >
-              {loading ? "Menyimpan..." : "Simpan"}
-            </button>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                "Simpan"
+              )}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
