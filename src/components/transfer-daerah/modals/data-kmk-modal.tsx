@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +29,7 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils/utils";
 
-import { VirtualizedSelect } from "@/components/ui/virtualized-select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 
 import jenisKMK from "@/data/jeniskmk_tkd.json";
 import kriteriaKMK from "@/data/jeniskriteria_tkd.json";
@@ -201,14 +201,32 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
     : [];
 
   // Dasar Penundaan options from backend (tkd25.ref_kmk_penundaan where jenis='2')
-  const { items: dasarPenundaanItems, options: dasarPenundaanOptions, isLoading: dasarPenundaanLoading, error: dasarPenundaanError } =
+  const { items: dasarPenundaanItems, options: dasarPenundaanOptionsRaw, isLoading: dasarPenundaanLoading, error: dasarPenundaanError } =
     useDasarPenundaanOptions(formData.jenis === "3");
+
+  const dasarPenundaanOptions = useMemo(() => {
+    const seen = new Set();
+    return dasarPenundaanOptionsRaw.filter(opt => {
+      if (seen.has(opt.value)) return false;
+      seen.add(opt.value);
+      return true;
+    });
+  }, [dasarPenundaanOptionsRaw]);
   const {
     items: dasarPencabutanItems,
-    options: dasarPencabutanOptions,
+    options: dasarPencabutanOptionsRaw,
     isLoading: dasarPencabutanLoading,
     error: dasarPencabutanError,
   } = useDasarPencabutanOptions(formData.jenis === "3");
+
+  const dasarPencabutanOptions = useMemo(() => {
+    const seen = new Set();
+    return dasarPencabutanOptionsRaw.filter(opt => {
+      if (seen.has(opt.value)) return false;
+      seen.add(opt.value);
+      return true;
+    });
+  }, [dasarPencabutanOptionsRaw]);
 
   // Dynamic KPPN & Kab/Kota options based on selected Dasar Penundaan (no_kmk)
   const {
@@ -325,7 +343,7 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
                 ) : dasarPenundaanError ? (
                   <div className="text-sm text-red-600">Gagal memuat opsi dasar penundaan</div>
                 ) : dasarPenundaanOptions.length > 0 ? (
-                  <VirtualizedSelect
+                  <SearchableSelect
                     options={dasarPenundaanOptions}
                     value={formData.dasarPenundaan}
                     onValueChange={(value) => {
@@ -363,7 +381,7 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
                 ) : dasarPencabutanError ? (
                   <div className="text-sm text-red-600">Gagal memuat opsi dasar pencabutan</div>
                 ) : dasarPencabutanOptions.length > 0 ? (
-                  <VirtualizedSelect
+                  <SearchableSelect
                     options={dasarPencabutanOptions}
                     value={formData.dasarPencabutan}
                     onValueChange={(value) => {
@@ -422,7 +440,7 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
                   ) : kppnError ? (
                     <div className="text-sm text-red-600">Gagal memuat KPPN</div>
                   ) : (
-                    <VirtualizedSelect
+                    <SearchableSelect
                       options={kppnOptions}
                       value={formData.kppn}
                       onValueChange={(value) =>
@@ -440,7 +458,7 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
                   ) : kabKotaError ? (
                     <div className="text-sm text-red-600">Gagal memuat Kab/Kota</div>
                   ) : (
-                    <VirtualizedSelect
+                    <SearchableSelect
                       options={kabKotaOptions}
                       value={formData.kabkota}
                       onValueChange={(value) => setFormData({ ...formData, kabkota: value })}
