@@ -17,6 +17,7 @@ export type RankedItem = {
   value: number;
   percentage: number;
   target?: number | null;
+  attainment?: number | null;
 };
 
 export type RankingTab = {
@@ -27,7 +28,7 @@ export type RankingTab = {
   valueSuffix?: string;
 };
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 5;
 
 function RankingList({
   items,
@@ -80,52 +81,72 @@ function RankingList({
         {pagedItems.map((it, idx) => (
           <li
             key={`${it.name}-${idx}`}
-            className="rounded-md px-2 py-2.5 bg-background"
+            className="rounded-lg px-3 py-3 bg-muted/30 border border-transparent hover:border-border transition-colors"
           >
-            <div className="flex items-center gap-2">
-              {/* Left: number + name */}
-              <span className="text-sm min-w-0 flex-1 truncate">
-                {(page - 1) * PAGE_SIZE + idx + 1}.{" "}
-                <span className="font-semibold">{it.name}</span>
-              </span>
+            <div className="flex flex-col gap-2">
+              {/* Top Row: Index + Name and Realisasi Value */}
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs min-w-0 flex-1 truncate">
+                  <span className="text-muted-foreground font-medium">
+                    {(page - 1) * PAGE_SIZE + idx + 1}.
+                  </span>{" "}
+                  <span className="font-bold text-foreground">{it.name}</span>
+                </span>
 
-              {/* Middle: target info (penerima only) */}
-              {showTargetBar && (
-                <div className="flex-shrink-0 w-36 px-1">
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>
-                      {it.target != null && it.target > 0
-                        ? it.target.toLocaleString("id-ID")
-                        : "—"}
-                    </span>
-                    {it.target != null && it.target > 0 && (
-                      <span className="font-medium text-blue-600 dark:text-blue-400">
-                        {Math.min(100, it.percentage).toFixed(1)}%
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs font-bold font-mono tabular-nums text-foreground">
+                    {valuePrefix}
+                    {it.value.toLocaleString("id-ID")}
+                    {valueSuffix}
+                  </span>
+                  <Badge
+                    variant="outline"
+                    className={`${badgeClass} text-[10px] px-1.5 py-0 h-4.5 flex items-center shrink-0 font-bold`}
+                  >
+                    {it.percentage.toFixed(2)}%
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Bottom Row: Target Progress (penerima only) */}
+              {showTargetBar && it.target != null && it.target > 0 && (
+                <div className="mt-1">
+                  <div className="relative w-full bg-muted/50 rounded-md h-5 overflow-hidden border border-muted-foreground/10">
+                    {/* Layer 1: Background Text (Muted - visible when bar is behind it) */}
+                    <div className="absolute inset-0 flex items-center justify-between px-2 pointer-events-none">
+                      <span className="text-[10px] font-bold tracking-tight text-muted-foreground">
+                        Target: {it.target.toLocaleString("id-ID")}
                       </span>
-                    )}
-                  </div>
-                  {it.target != null && it.target > 0 && (
-                    <div className="w-full bg-muted rounded-full h-1.5 mt-1">
-                      <div
-                        className="bg-blue-500 h-1.5 rounded-full transition-all"
-                        style={{ width: `${Math.min(100, it.percentage)}%` }}
-                      />
+                      <span className="text-[10px] font-bold tracking-tight text-blue-700 dark:text-blue-300">
+                        {(it.attainment ?? 0).toFixed(1)}% Capaian
+                      </span>
                     </div>
-                  )}
+
+                    {/* Layer 2: Progress Bar (Blue) */}
+                    <div
+                      className="absolute inset-0 bg-blue-600 transition-all duration-700 ease-in-out shadow-[inset_-2px_0_4px_rgba(0,0,0,0.1)]"
+                      style={{
+                        clipPath: `inset(0 ${100 - Math.min(100, it.attainment ?? 0)}% 0 0)`,
+                      }}
+                    />
+
+                    {/* Layer 3: Foreground Text (White - visible only over the blue bar) */}
+                    <div
+                      className="absolute inset-0 flex items-center justify-between px-2 pointer-events-none transition-all duration-700 ease-in-out"
+                      style={{
+                        clipPath: `inset(0 ${100 - Math.min(100, it.attainment ?? 0)}% 0 0)`,
+                      }}
+                    >
+                      <span className="text-[10px] font-bold tracking-tight text-white whitespace-nowrap">
+                        Target: {it.target.toLocaleString("id-ID")}
+                      </span>
+                      <span className="text-[10px] font-bold tracking-tight text-white whitespace-nowrap">
+                        {(it.attainment ?? 0).toFixed(1)}% Capaian
+                      </span>
+                    </div>
+                  </div>
                 </div>
               )}
-
-              {/* Right: realisasi + badge */}
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-sm font-medium font-mono tabular-nums">
-                  {valuePrefix}
-                  {it.value.toLocaleString("id-ID")}
-                  {valueSuffix}
-                </span>
-                <Badge variant="outline" className={badgeClass}>
-                  {it.percentage.toFixed(2)}%
-                </Badge>
-              </div>
             </div>
           </li>
         ))}
