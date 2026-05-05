@@ -96,14 +96,14 @@ export function RankingBarChart({
   }));
 
   return (
-    <Card className="flex h-full flex-col">
+    <Card className="flex h-full flex-col min-w-0">
       <CardHeader className="pb-2">
         <CardTitle className="text-base">{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col p-6 pt-0 pb-4">
-        <div className="flex-1 min-h-[400px] w-full">
-          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+      <CardContent className="flex flex-1 flex-col p-6 pt-0 pb-4 min-w-0">
+        <div className="flex-1 min-h-[400px] w-full min-w-0">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={1}>
             <BarChart
               data={chartData}
               layout="vertical"

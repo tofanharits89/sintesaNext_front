@@ -67,7 +67,7 @@ export function LineChartComponent({
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={height} minWidth={0}>
+        <ResponsiveContainer width="100%" height={height} minWidth={0} minHeight={0}>
           <LineChart data={data} {...(chartMargin ? { margin: chartMargin } : {})}>
             <XAxis
               dataKey="name"

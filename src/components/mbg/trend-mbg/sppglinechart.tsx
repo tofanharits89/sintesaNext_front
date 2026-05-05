@@ -335,7 +335,7 @@ export default function SPPGChartLine() {
   }
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden min-w-0">
       <CardHeader className="p-0">
         <div className="bg-muted/50 px-4 py-3 border-b border-border flex flex-wrap gap-3 items-end">
           {/* Kanwil multi-select */}
@@ -390,7 +390,7 @@ export default function SPPGChartLine() {
         )}
       </CardHeader>
 
-      <CardContent className="p-4">
+      <CardContent className="p-4 min-w-0">
         <div className="h-[280px]">
           {isDataError ? (
             <div className="flex flex-col items-center justify-center h-full bg-destructive/5 rounded border border-dashed border-destructive/40 p-6 gap-2">
@@ -421,7 +421,7 @@ export default function SPPGChartLine() {
               </p>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={1}>
               <LineChart
                 data={chartData}
                 margin={{ top: 10, right: 20, left: 10, bottom: 40 }}

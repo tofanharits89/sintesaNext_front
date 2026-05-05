@@ -429,7 +429,7 @@ export function IkpaLanding() {
                         <CardTitle className="text-lg">Trend Permohonan Bulanan</CardTitle>
                     </CardHeader>
                     <CardContent className="h-[250px] p-4">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                             <LineChart data={statsData?.monthlyTrend || []} margin={{ top: 20, right: 30, left: 20, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
                                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }} padding={{ left: 20, right: 20 }} />
@@ -732,7 +732,7 @@ function ShareChartCard({ title, data, horizontal = false }: { title: string; da
             </CardHeader>
             <CardContent className="p-4">
                 <div className="h-[250px]">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                         <BarChart layout={horizontal ? "vertical" : "horizontal"} data={data} margin={{ left: horizontal ? 20 : 0 }}>
                             <XAxis type={horizontal ? "number" : "category"} dataKey={horizontal ? "value" : "name"} hide />
                             <YAxis type={horizontal ? "category" : "number"} dataKey={horizontal ? "name" : "value"} hide />

@@ -54,7 +54,7 @@ export function MultipleBarChartComponent({
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent className="px-8 pt-0">
-        <ResponsiveContainer width="100%" height={effectiveHeight} minWidth={0}>
+        <ResponsiveContainer width="100%" height={effectiveHeight} minWidth={0} minHeight={0}>
           <BarChart
             data={data}
             margin={{ top: 12, right: 10, left: 0, bottom: 4 }}
