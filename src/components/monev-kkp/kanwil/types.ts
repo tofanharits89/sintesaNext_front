@@ -1,6 +1,8 @@
 export interface RingkasanKanwilData {
   id: string | number;
   kodeKppn: string;
+  kdkppn?: string;
+  kdkanwil?: string;
   namaKppn: string;
   kodeBA: string;
   kodeSatker: string;
@@ -33,6 +35,7 @@ export interface RingkasanKanwilData {
 export interface MonitoringKppnData {
   id: string | number;
   kdkppn: string;
+  kdkanwil?: string;
   nmkppn: string;
   jumlah_satker_up_kkp: number;
   jumlah_satker_transaksi: number;

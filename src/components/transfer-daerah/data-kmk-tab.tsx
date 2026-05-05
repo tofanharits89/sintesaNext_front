@@ -29,11 +29,13 @@ import { addCsrfToHeaders } from "@/utils/csrf-utils";
 
 interface DataKmkTabProps {
   // Remove the selectedYear prop as this tab will manage its own year state
+  kdkanwil?: string;
+  kdkppn?: string;
 }
 
 // Data is now fetched from backend via useKmkDau
 
-export function DataKmkTab({}: DataKmkTabProps) {
+export function DataKmkTab({ kdkanwil, kdkppn }: DataKmkTabProps) {
   const queryClient = useQueryClient();
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear.toString());
@@ -50,7 +52,7 @@ export function DataKmkTab({}: DataKmkTabProps) {
   const [selectedNoKmkForPencabutan, setSelectedNoKmkForPencabutan] = useState<
     string | undefined
   >(undefined);
-  const { rows, isLoading, error, mutate } = useKmkDau(selectedYear);
+  const { rows, isLoading, error, mutate } = useKmkDau(selectedYear, kdkanwil, kdkppn);
 
   // Generate years from current year back to 2020
   const years = Array.from({ length: currentYear - 2019 }, (_, i) =>
@@ -402,16 +404,22 @@ export function DataKmkTab({}: DataKmkTabProps) {
         open={isDataPenundaanModalOpen}
         onOpenChange={setIsDataPenundaanModalOpen}
         data={selectedItem}
+        kdkanwil={kdkanwil}
+        kdkppn={kdkppn}
       />
       <DataPemotonganModal
         open={isDataPemotonganModalOpen}
         onOpenChange={setIsDataPemotonganModalOpen}
         data={selectedItem}
+        kdkanwil={kdkanwil}
+        kdkppn={kdkppn}
       />
       <DataPencabutanModal
         open={isDataPencabutanModalOpen}
         onOpenChange={setIsDataPencabutanModalOpen}
         noKmk={selectedNoKmkForPencabutan ?? ""}
+        kdkanwil={kdkanwil}
+        kdkppn={kdkppn}
       />
       <DeleteConfirmModal
         open={isDeleteModalOpen}

@@ -3,15 +3,43 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useKmkPencabutan } from "@/hooks/use-kmk-pencabutan";
+import { useMemo } from "react";
+import tkdData from "@/data/kdkppn_tkd.json";
 
 interface DataPencabutanModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   noKmk?: string;
+  kdkanwil?: string;
+  kdkppn?: string;
 }
 
-export function DataPencabutanModal({ open, onOpenChange, noKmk }: DataPencabutanModalProps) {
-  const { rows, isLoading, error } = useKmkPencabutan(noKmk);
+export function DataPencabutanModal({ open, onOpenChange, noKmk, kdkanwil, kdkppn }: DataPencabutanModalProps) {
+  const { rows: rawRows, isLoading, error } = useKmkPencabutan(noKmk, kdkanwil, kdkppn);
+
+  // Client-side filter fallback for Kanwil/KPPN users
+  const rows = useMemo(() => {
+    if (!rawRows) return [];
+    
+    // If KPPN user, filter strictly by kdkppn
+    if (kdkppn) {
+      const targetKppn = String(kdkppn).trim().padStart(3, '0');
+      return rawRows.filter(r => String(r.kdkppn || "").trim().padStart(3, '0') === targetKppn);
+    }
+
+    // If Kanwil user, filter by KPPNs belonging to that Kanwil
+    if (kdkanwil) {
+      const targetKanwil = String(kdkanwil).trim().padStart(2, '0');
+      const kppnsInKanwil = new Set(
+        (tkdData as any[])
+          .filter((d) => String(d.kdkanwil || "").trim().padStart(2, '0') === targetKanwil)
+          .map((d) => String(d.kdkppn || "").trim().padStart(3, '0'))
+      );
+      return rawRows.filter(r => kppnsInKanwil.has(String(r.kdkppn || "").trim().padStart(3, '0')));
+    }
+
+    return rawRows;
+  }, [rawRows, kdkanwil, kdkppn]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

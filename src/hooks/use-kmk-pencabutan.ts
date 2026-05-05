@@ -38,13 +38,18 @@ const fetcher = async (url: string) => {
   return (result?.data as KmkPencabutanRow[]) ?? [];
 };
 
-export function useKmkPencabutan(no_kmk?: string) {
+export function useKmkPencabutan(no_kmk?: string, kdkanwil?: string, kdkppn?: string) {
   const enabled = Boolean(no_kmk);
-const url = no_kmk
-    ? apiPath(`/transfer-daerah/dau/kmk/pencabutan?no_kmk=${encodeURIComponent(no_kmk)}`)
+  const queryParts: string[] = [];
+  if (no_kmk) queryParts.push(`no_kmk=${encodeURIComponent(no_kmk)}`);
+  if (kdkanwil) queryParts.push(`kdkanwil=${encodeURIComponent(kdkanwil)}`);
+  if (kdkppn) queryParts.push(`kdkppn=${encodeURIComponent(kdkppn)}`);
+
+  const url = no_kmk
+    ? apiPath(`/transfer-daerah/dau/kmk/pencabutan?${queryParts.join("&")}`)
     : null;
   const { data, error, isLoading, refetch } = useQuery<KmkPencabutanRow[]>({
-    queryKey: ["kmk-pencabutan", { no_kmk }],
+    queryKey: ["kmk-pencabutan", { no_kmk, kdkanwil, kdkppn }],
     queryFn: () => fetcher(url!),
     enabled: !!url,
     refetchOnWindowFocus: false,

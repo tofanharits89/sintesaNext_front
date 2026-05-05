@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -22,11 +22,13 @@ import { FilePenLine, FileText, Loader2, ReceiptText } from "lucide-react";
 
 interface DataTransaksiTabProps {
   // Remove selectedYear prop as this tab will manage its own year state
+  kdkanwil?: string;
+  kdkppn?: string;
 }
 
 // Live data now fetched via useDauTransaksi
 
-export function DataTransaksiTab({}: DataTransaksiTabProps) {
+export function DataTransaksiTab({ kdkanwil, kdkppn }: DataTransaksiTabProps) {
   const now = new Date();
   const defaultYear = String(now.getFullYear());
 
@@ -39,30 +41,51 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
   const [isKertasKerjaModalOpen, setIsKertasKerjaModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
+  // Sync props to internal state
+  useEffect(() => {
+    if (kdkppn) {
+      setSelectedKppn(kdkppn);
+    } else {
+      setSelectedKppn("");
+    }
+  }, [kdkppn]);
+
   // Build unique KPPN list from TKD mapping
-  const uniqueKppn = Array.from(
-    new Map(
-      (tkdData as Array<any>).map((d) => [
-        d.kdkppn,
-        { kdkppn: d.kdkppn, nmkppn: d.nmkppn },
-      ])
-    ).values()
-  ).sort((a, b) => a.kdkppn.localeCompare(b.kdkppn));
+  const uniqueKppn = useMemo(() => {
+    let base = Array.from(
+      new Map(
+        (tkdData as Array<any>).map((d) => [
+          d.kdkppn,
+          { kdkppn: d.kdkppn, nmkppn: d.nmkppn, kdkanwil: d.kdkanwil },
+        ])
+      ).values()
+    );
+
+    if (kdkanwil) {
+      base = base.filter(k => k.kdkanwil === kdkanwil);
+    }
+
+    return base.sort((a, b) => a.kdkppn.localeCompare(b.kdkppn));
+  }, [kdkanwil]);
 
   // Hierarchical: Kab/Kota depends on selected KPPN from TKD mapping
-  const filteredKabKotaOptions = selectedKppn
-    ? (tkdData as Array<any>)
-        .filter(
-          (row) =>
-            row.kdkppn === selectedKppn
-        )
-        .sort((a, b) => String(a.kdkabkota).localeCompare(String(b.kdkabkota)))
-    : [];
+  const filteredKabKotaOptions = useMemo(() => {
+    return selectedKppn
+      ? (tkdData as Array<any>)
+          .filter(
+            (row) =>
+              row.kdkppn === selectedKppn
+          )
+          .sort((a, b) => String(a.kdkabkota).localeCompare(String(b.kdkabkota)))
+      : [];
+  }, [selectedKppn]);
 
   // Clear Kab/Kota when KPPN changes
   useEffect(() => {
-    setSelectedKabKota("");
-  }, [selectedKppn]);
+    if (selectedKppn !== kdkppn) {
+      setSelectedKabKota("");
+    }
+  }, [selectedKppn, kdkppn]);
 
   // Generate years from current year back to 2020
   const currentYear = new Date().getFullYear();
@@ -89,7 +112,7 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
     fallbackStageRef.current = "none";
     setSelectedYear(defaultYear);
     setSelectedMonth(""); // Reset to empty (all months)
-    setSelectedKppn("");
+    setSelectedKppn(kdkppn || "");
     setSelectedKabKota("");
   };
 
@@ -227,10 +250,27 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
     ...(bulanNum !== undefined ? { bulan: bulanNum } : {}),
     ...(selectedKppn ? { kppn: selectedKppn } : {}),
     ...(selectedKabKota ? { kabkota: selectedKabKota } : {}),
+    kdkanwil: kdkanwil,
+    kdkppn: kdkppn,
   } as const;
 
   
-  const { rows, isLoading, error } = useDauTransaksi(params as any);
+  const { rows: rawRows, isLoading, error } = useDauTransaksi(params as any);
+
+  // Client-side filter fallback: If kdkanwil is provided, ensure we only show rows belonging to that kanwil's KPPNs.
+  // This handles cases where the backend might not strictly filter by kdkanwil when kppn is empty.
+  const rows = useMemo(() => {
+    if (!kdkanwil || !rawRows) return rawRows || [];
+    
+    // Get list of KPPNs belonging to this Kanwil
+    const kppnsInKanwil = new Set(
+      (tkdData as any[])
+        .filter((d) => d.kdkanwil === kdkanwil)
+        .map((d) => d.kdkppn)
+    );
+
+    return rawRows.filter((r) => kppnsInKanwil.has(r.kppn?.split(" - ")[0] || r.kppn));
+  }, [rawRows, kdkanwil]);
 
   const handleYearSelect = (value: string) => {
     fallbackStageRef.current = "none";
@@ -251,33 +291,6 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
     fallbackStageRef.current = "none";
     setSelectedKabKota(value);
   };
-
-  // Disable fallback logic - respect user's filter selections even if no results
-  // useEffect(() => {
-  //   if (isLoading || rows.length > 0) {
-  //     return;
-  //   }
-  //
-  //   // Only apply fallbacks if this is the initial load and no explicit filters are selected
-  //   if (!selectedMonth && !selectedKppn && !selectedKabKota && fallbackStageRef.current === "none") {
-  //     // First fallback: try without month filter if no results for current month
-  //     if (selectedMonth) {
-  //       fallbackStageRef.current = "clearedMonth";
-  //       setSelectedMonth("");
-  //       return;
-  //     }
-  //
-  //     // Second fallback: switch to previous year when current year has no rows
-  //     if (selectedYear === defaultYear && fallbackStageRef.current !== "switchedYear") {
-  //       const fallbackYear = years.find((year) => year !== selectedYear);
-  //       if (fallbackYear) {
-  //         fallbackStageRef.current = "switchedYear";
-  //         setSelectedYear(fallbackYear);
-  //         return;
-  //       }
-  //     }
-  //   }
-  // }, [rows, isLoading, selectedMonth, selectedKppn, selectedKabKota, selectedYear, defaultYear, years]);
 
   return (
     <div className="space-y-4">
@@ -333,6 +346,7 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
                 placeholder="Semua KPPN"
                 searchPlaceholder="Cari KPPN..."
                 emptyMessage="KPPN tidak ditemukan."
+                disabled={!!kdkppn}
               />
             </div>
 

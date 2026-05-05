@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -46,6 +46,8 @@ export interface RekonRow {
 
 interface RekonsiliasiDataTabProps {
   onHeaderActionChange?: (node: ReactNode | null) => void;
+  kdkanwil?: string;
+  kdkppn?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -104,7 +106,7 @@ async function fetchOmspanPenundaan(token: string): Promise<any[]> {
 // Component
 // ---------------------------------------------------------------------------
 
-export function RekonsiliasiDataTab({ onHeaderActionChange }: RekonsiliasiDataTabProps) {
+export function RekonsiliasiDataTab({ onHeaderActionChange, kdkanwil, kdkppn }: RekonsiliasiDataTabProps) {
   const queryClient = useQueryClient();
 
   const currentYear = new Date().getFullYear();
@@ -112,8 +114,7 @@ export function RekonsiliasiDataTab({ onHeaderActionChange }: RekonsiliasiDataTa
     (currentYear - i).toString()
   );
 
-  const currentMonth = new Date().getMonth() + 1;
-  const defaultMonth = String(currentMonth).padStart(2, "0");
+  const defaultMonth = "00"; // Default to 'Semua Bulan'
 
   const [selectedYear, setSelectedYear] = useState(currentYear.toString());
   const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
@@ -131,24 +132,49 @@ export function RekonsiliasiDataTab({ onHeaderActionChange }: RekonsiliasiDataTa
     bulan: string;
   } | null>(null);
 
-  const uniqueKppn = Array.from(
-    new Map(
-      (tkdData as Array<any>).map((d) => [
-        d.kdkppn,
-        { kdkppn: d.kdkppn, nmkppn: d.nmkppn },
-      ])
-    ).values()
-  ).sort((a, b) => a.kdkppn.localeCompare(b.kdkppn));
+  // Sync props to internal state
+  useEffect(() => {
+    if (kdkppn) {
+      setSelectedKppn(kdkppn);
+    } else {
+      setSelectedKppn("");
+    }
+  }, [kdkppn]);
 
-  const filteredKabKotaOptions = selectedKppn
-    ? (tkdData as Array<any>)
-        .filter((row) => row.kdkppn === selectedKppn && !String(row.kdkabkota).endsWith("00"))
-        .sort((a, b) => String(a.kdkabkota).localeCompare(String(b.kdkabkota)))
-    : [];
+  const uniqueKppn = useMemo(() => {
+    let base = Array.from(
+      new Map(
+        (tkdData as Array<any>).map((d) => [
+          d.kdkppn,
+          { kdkppn: d.kdkppn, nmkppn: d.nmkppn, kdkanwil: d.kdkanwil },
+        ])
+      ).values()
+    );
 
-  useEffect(() => { setSelectedKabKota(""); }, [selectedKppn]);
+    if (kdkanwil) {
+      const targetKanwil = String(kdkanwil).trim().padStart(2, '0');
+      base = base.filter(k => String(k.kdkanwil).trim().padStart(2, '0') === targetKanwil);
+    }
+
+    return base.sort((a, b) => a.kdkppn.localeCompare(b.kdkppn));
+  }, [kdkanwil]);
+
+  const filteredKabKotaOptions = useMemo(() => {
+    return selectedKppn
+      ? (tkdData as Array<any>)
+          .filter((row) => row.kdkppn === selectedKppn && !String(row.kdkabkota).endsWith("00"))
+          .sort((a, b) => String(a.kdkabkota).localeCompare(String(b.kdkabkota)))
+      : [];
+  }, [selectedKppn]);
+
+  useEffect(() => { 
+    if (selectedKppn !== kdkppn) {
+      setSelectedKabKota(""); 
+    }
+  }, [selectedKppn, kdkppn]);
 
   const months = [
+    { value: "00", label: "Semua Bulan" },
     { value: "01", label: "Januari" }, { value: "02", label: "Februari" },
     { value: "03", label: "Maret" },   { value: "04", label: "April" },
     { value: "05", label: "Mei" },     { value: "06", label: "Juni" },
@@ -164,18 +190,34 @@ export function RekonsiliasiDataTab({ onHeaderActionChange }: RekonsiliasiDataTa
     if (selectedKppn) params.set("kdkppn", selectedKppn);
     if (selectedKabKota) params.set("kdpemda", selectedKabKota);
     if (selectedStatus && selectedStatus !== "all") params.set("bedadata", selectedStatus);
+    if (kdkanwil) params.set("kdkanwil", kdkanwil);
     return params.toString();
   };
 
   const rekapUrl = apiPath(`/transfer-daerah/omspan/rekap?${buildQueryKey()}`);
   const updateInfoUrl = apiPath(`/transfer-daerah/omspan/update-info`);
 
-  const { data: rekonData, isLoading, error } = useQuery<RekonRow[]>({
-    queryKey: ["rekon-omspan", selectedYear, selectedMonth, selectedKppn, selectedKabKota, selectedStatus],
+  const { data: rawRekonData, isLoading, error } = useQuery<RekonRow[]>({
+    queryKey: ["rekon-omspan", selectedYear, selectedMonth, selectedKppn, selectedKabKota, selectedStatus, kdkanwil, kdkppn],
     queryFn: () => fetcher<RekonRow[]>(rekapUrl),
     staleTime: 3 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
+
+  // Client-side filter fallback for Kanwil users
+  const rekonData = useMemo(() => {
+    if (!kdkanwil || !rawRekonData) return rawRekonData || [];
+    
+    // Get list of KPPNs belonging to this Kanwil with robust padding and trimming
+    const targetKanwil = String(kdkanwil).trim().padStart(2, '0');
+    const kppnsInKanwil = new Set(
+      (tkdData as any[])
+        .filter((d) => String(d.kdkanwil || "").trim().padStart(2, '0') === targetKanwil)
+        .map((d) => String(d.kdkppn || "").trim().padStart(3, '0'))
+    );
+
+    return rawRekonData.filter((r) => kppnsInKanwil.has(String(r.kdkppn || "").trim().padStart(3, '0')));
+  }, [rawRekonData, kdkanwil]);
 
   const { data: updateData } = useQuery<{ tgupdate: string }>({
     queryKey: ["rekon-omspan-update-info"],
@@ -415,6 +457,7 @@ export function RekonsiliasiDataTab({ onHeaderActionChange }: RekonsiliasiDataTa
                 placeholder="Semua KPPN"
                 searchPlaceholder="Cari KPPN..."
                 emptyMessage="KPPN tidak ditemukan."
+                disabled={!!kdkppn}
               />
             </div>
 

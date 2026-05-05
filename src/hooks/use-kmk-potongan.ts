@@ -58,19 +58,24 @@ const fetcher = async (url: string) => {
 export function useKmkPotongan(
   no_kmk?: string,
   thang?: string | number,
-  enabled: boolean = true
+  enabled: boolean = true,
+  kdkanwil?: string,
+  kdkppn?: string
 ) {
+  const queryParts: string[] = [];
+  if (no_kmk) queryParts.push(`no_kmk=${encodeURIComponent(no_kmk)}`);
+  if (thang) queryParts.push(`thang=${encodeURIComponent(String(thang))}`);
+  if (kdkanwil) queryParts.push(`kdkanwil=${encodeURIComponent(kdkanwil)}`);
+  if (kdkppn) queryParts.push(`kdkppn=${encodeURIComponent(kdkppn)}`);
+
   const key =
     no_kmk && thang && enabled
-? apiPath(
-          `/transfer-daerah/dau/kmk/potongan?no_kmk=${encodeURIComponent(
-            no_kmk
-          )}&thang=${encodeURIComponent(String(thang))}`
-        )
+      ? apiPath(`/transfer-daerah/dau/kmk/potongan?${queryParts.join("&")}`)
       : null;
 
   const { data, error, isLoading, refetch } = useQuery<RawPotonganItem[]>({
-    queryKey: ["kmk-potongan", { no_kmk, thang }],
+    queryKey: ["kmk-potongan", { no_kmk, thang, kdkanwil, kdkppn }],
+
     queryFn: () => fetcher(key!),
     enabled: !!key && enabled,
     refetchOnWindowFocus: false,
