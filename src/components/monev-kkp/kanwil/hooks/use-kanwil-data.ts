@@ -9,7 +9,7 @@ export const useKanwilData = (
   contentType: "ringkasan" | "monitoring",
   onPeriodeChange?: (year: string, periode: string) => void
 ) => {
-  const { user } = useAuth();
+  const { user, filterDataByRole } = useAuth();
   
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
@@ -38,10 +38,21 @@ export const useKanwilData = (
     setIsLoading(true);
     try {
       const triwulan = selectedPeriode.replace("Q", "");
-      const kppnParam = selectedKppn !== "all" ? `&kdkppn=${selectedKppn}` : "";
+      
+      // Determine KPPN filter
+      let kppnParam = selectedKppn !== "all" ? `&kdkppn=${selectedKppn}` : "";
+      
+      // Add regional filters based on user role to API call
+      let regionalParams = "";
+      if (user?.role === "kanwil_djpb" && user.kdkanwil) {
+        regionalParams = `&kdkanwil=${user.kdkanwil}`;
+      } else if (user?.role === "kppn" && user.kdkppn) {
+        regionalParams = `&kdkppn=${user.kdkppn}`;
+      }
+      
       const ts = new Date().getTime();
       const apiUrl = apiPath(
-        `/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}${kppnParam}&_t=${ts}`
+        `/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}${kppnParam}${regionalParams}&_t=${ts}`
       );
 
       const response = await fetch(apiUrl, {
@@ -59,6 +70,8 @@ export const useKanwilData = (
       const mappedData = result.data.map((item: any, index: number) => ({
         id: `${item.kdsatker}-${index}`,
         kodeKppn: item.kdkppn,
+        kdkppn: item.kdkppn, // For RBAC filter compatibility
+        kdkanwil: item.kdkanwil, // For RBAC filter compatibility
         namaKppn: item.nmkppn || item.kdkppn || "-",
         kodeBA: item.kddept,
         kodeSatker: item.kdsatker,
@@ -87,24 +100,38 @@ export const useKanwilData = (
         tanggal_sp2d_list: item.tanggal_sp2d_list || "",
         jenis_belanja_list: item.jenis_belanja_list || "",
       }));
-      setRingkasanData(mappedData);
+      
+      // Apply RBAC filtering on the frontend
+      const filteredData = filterDataByRole(mappedData);
+      setRingkasanData(filteredData);
     } catch (error) {
       console.error(error);
       toast.error("Gagal mengambil data ringkasan");
     } finally {
       setIsLoading(false);
     }
-  }, [user, selectedYear, selectedPeriode, selectedKppn]);
+  }, [user, selectedYear, selectedPeriode, selectedKppn, filterDataByRole]);
 
   const fetchMonitoringData = useCallback(async () => {
     if (!user) return;
     setIsLoading(true);
     try {
       const triwulan = selectedPeriode.replace("Q", "");
-      const kppnParam = selectedKppn !== "all" ? `&kdkppn=${selectedKppn}` : "";
+      
+      // Determine KPPN filter
+      let kppnParam = selectedKppn !== "all" ? `&kdkppn=${selectedKppn}` : "";
+      
+      // Add regional filters based on user role to API call
+      let regionalParams = "";
+      if (user?.role === "kanwil_djpb" && user.kdkanwil) {
+        regionalParams = `&kdkanwil=${user.kdkanwil}`;
+      } else if (user?.role === "kppn" && user.kdkppn) {
+        regionalParams = `&kdkppn=${user.kdkppn}`;
+      }
+
       const ts = new Date().getTime();
       const apiUrl = apiPath(
-        `/monev-kkp/kanwil/monitoring-kppn?tahun=${selectedYear}&triwulan=${triwulan}${kppnParam}&_t=${ts}`
+        `/monev-kkp/kanwil/monitoring-kppn?tahun=${selectedYear}&triwulan=${triwulan}${kppnParam}${regionalParams}&_t=${ts}`
       );
 
       const response = await fetch(apiUrl, {
@@ -122,6 +149,7 @@ export const useKanwilData = (
       const mappedData = result.data.map((item: any) => ({
         id: item.kdkppn,
         kdkppn: item.kdkppn,
+        kdkanwil: item.kdkanwil, // For RBAC filter compatibility
         nmkppn: item.nmkppn,
         jumlah_satker_up_kkp: Number(item.jumlah_satker_up_kkp || 0),
         jumlah_satker_transaksi: Number(item.jumlah_satker_transaksi || 0),
@@ -129,22 +157,34 @@ export const useKanwilData = (
         status: String(item.sts_kirim_kppn || "").trim() === "1" ? "sent" : "not_sent",
         tanggalKirim: item.tgkirim_kppn || null,
       }));
-      setMonitoringData(mappedData);
+
+      // Apply RBAC filtering on the frontend
+      const filteredData = filterDataByRole(mappedData);
+      setMonitoringData(filteredData);
     } catch (error) {
       console.error(error);
       toast.error("Gagal mengambil data monitoring");
     } finally {
       setIsLoading(false);
     }
-  }, [user, selectedYear, selectedPeriode, selectedKppn]);
+  }, [user, selectedYear, selectedPeriode, selectedKppn, filterDataByRole]);
 
   const fetchKppnRefList = useCallback(async () => {
     if (!user) return;
     setIsLoadingKppnRef(true);
     try {
       const ts = new Date().getTime();
+      
+      // Add regional filter for KPPN reference list
+      let regionalParams = "";
+      if (user?.role === "kanwil_djpb" && user.kdkanwil) {
+        regionalParams = `&kdkanwil=${user.kdkanwil}`;
+      } else if (user?.role === "kppn" && user.kdkppn) {
+        regionalParams = `&kdkppn=${user.kdkppn}`;
+      }
+
       const response = await fetch(
-        apiPath(`/monev-kkp/kanwil/ref-kppn?tahun=${selectedYear}&_t=${ts}`),
+        apiPath(`/monev-kkp/kanwil/ref-kppn?tahun=${selectedYear}${regionalParams}&_t=${ts}`),
         {
           credentials: "include",
           cache: "no-store",

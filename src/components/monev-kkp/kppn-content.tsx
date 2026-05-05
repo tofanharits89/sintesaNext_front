@@ -80,7 +80,7 @@ interface KppnContentProps {
 export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
   function KppnContent({ statusLaporan = "not_sent", tglKirimKppn = null, onPeriodeChange }, ref) {
     // Get authenticated user info
-    const { user, isLoading: isAuthLoading } = useAuth();
+    const { user, isLoading: isAuthLoading, filterDataByRole } = useAuth();
     const now = new Date();
     const currentMonth = now.getMonth() + 1;
     const currentYear = now.getFullYear();
@@ -113,8 +113,17 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
       try {
         const triwulan = selectedPeriode.replace("Q", "");
         const ts = new Date().getTime();
+        
+        // Add regional filters based on user role to API call
+        let regionalParams = "";
+        if (user?.role === "kppn" && user.kdkppn) {
+          regionalParams = `&kdkppn=${user.kdkppn}`;
+        } else if (user?.role === "kanwil_djpb" && user.kdkanwil) {
+          regionalParams = `&kdkanwil=${user.kdkanwil}`;
+        }
+
         const response = await fetch(
-          apiPath(`/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}&_t=${ts}`),
+          apiPath(`/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}${regionalParams}&_t=${ts}`),
           {
             credentials: "include",
             cache: "no-store",
@@ -170,7 +179,9 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
           tahun: selectedYear,
         }));
 
-        setData(mappedData);
+        // Apply RBAC filtering on the frontend as an additional security layer
+        const filteredData = filterDataByRole(mappedData);
+        setData(filteredData);
       } catch (error) {
         console.error("Error fetching KKP data:", error);
         toast.error("Gagal mengambil data dari server");
