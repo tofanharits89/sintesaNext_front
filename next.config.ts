@@ -130,11 +130,7 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  eslint: {
-    // Ignore ESLint during builds to prevent lint errors from blocking production builds
-    // Lint can still be run via `npm run lint` separately in CI or locally
-    ignoreDuringBuilds: true,
-  },
+  // eslint block removed for Next.js 16 compatibility
 
   typescript: {
     // Only ignore build errors in CI, fail locally to catch issues early

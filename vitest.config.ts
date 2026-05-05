@@ -10,6 +10,8 @@ export default defineConfig({
     globals: true,
     css: true,
     exclude: [
+      'node_modules/**',
+      '.next/**',
       'src/hooks/__tests__/use-saved-queries.test.ts',
     ],
     coverage: {

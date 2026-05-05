@@ -136,7 +136,7 @@ function isLogoutInProgress(request: NextRequest): boolean {
 /**
  * Main middleware function - simplified and optimized
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip middleware for API routes, static assets, and Next.js internals
