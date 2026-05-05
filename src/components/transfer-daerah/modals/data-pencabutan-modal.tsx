@@ -10,8 +10,8 @@ interface DataPencabutanModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   noKmk?: string;
-  kdkanwil?: string;
-  kdkppn?: string;
+  kdkanwil?: string | undefined;
+  kdkppn?: string | undefined;
 }
 
 export function DataPencabutanModal({ open, onOpenChange, noKmk, kdkanwil, kdkppn }: DataPencabutanModalProps) {

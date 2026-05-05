@@ -22,8 +22,8 @@ interface DataPenundaanModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   data: any;
-  kdkanwil?: string;
-  kdkppn?: string;
+  kdkanwil?: string | undefined;
+  kdkppn?: string | undefined;
 }
 
 export function DataPenundaanModal({

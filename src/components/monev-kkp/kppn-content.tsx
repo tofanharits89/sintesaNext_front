@@ -142,7 +142,7 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
         const result = await response.json();
 
         // Map backend data to frontend KkpData structure
-        const mappedData = result.data.map((item: any, index: number) => ({
+        const mappedData: KkpData[] = result.data.map((item: any, index: number) => ({
           id: `${item.kdsatker}-${index}`,
           kodeBA: item.kddept,
           kodeSatker: item.kdsatker,
