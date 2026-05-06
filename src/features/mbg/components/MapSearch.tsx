@@ -225,7 +225,7 @@ export function MapSearch({ year = "2026" }: { year?: string }) {
       if (destroyed || !containerRef.current) return;
       const map = L.map(containerRef.current, {
         attributionControl: false,
-        scrollWheelZoom: true,
+        scrollWheelZoom: false,
         zoomControl: true,
       }).setView([-2.5, 118], 5);
 

@@ -136,7 +136,7 @@ export function LogUserOnlineSkeleton() {
             <Table>
               <TableHeader className="bg-slate-50 dark:bg-slate-800">
                 <TableRow>
-                  {Array.from({ length: 8 }).map((_, i) => (
+                  {Array.from({ length: 9 }).map((_, i) => (
                     <TableHead key={i}><Skeleton className="h-4 w-full" /></TableHead>
                   ))}
                 </TableRow>
@@ -144,7 +144,7 @@ export function LogUserOnlineSkeleton() {
               <TableBody>
                 {Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    {Array.from({ length: 8 }).map((_, j) => (
+                    {Array.from({ length: 9 }).map((_, j) => (
                       <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                     ))}
                   </TableRow>

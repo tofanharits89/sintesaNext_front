@@ -13,7 +13,6 @@ import {
   Tabs,
   TabsList,
   TabsTrigger,
-  TabsContents,
   TabsContent,
 } from "@/components/animate-ui/components/animate/tabs";
 import { Button } from "@/components/ui/button";
@@ -678,7 +677,7 @@ export default function MonevKkpKanwilPage() {
           </TabsList>
         </div>
 
-        <TabsContents>
+        {activeTab === "ringkasan-kanwil" && (
           <TabsContent value="ringkasan-kanwil" className="space-y-4">
             <KanwilContent
               ref={kanwilContentRef}
@@ -689,11 +688,13 @@ export default function MonevKkpKanwilPage() {
               onPeriodeChange={handlePeriodeChange}
             />
           </TabsContent>
+        )}
 
+        {activeTab === "monitoring-kppn" && (
           <TabsContent value="monitoring-kppn" className="space-y-4">
             <KanwilContent contentType="monitoring" />
           </TabsContent>
-        </TabsContents>
+        )}
       </Tabs>
     </div>
   );

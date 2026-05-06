@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { QuickStatCard } from "@/components/mbg/QuickStatCard";
 import { StatsRankingCard } from "@/components/mbg/StatsRankingCard";
@@ -17,6 +17,7 @@ import {
   Handshake,
   CircleDashed,
   Calendar,
+  RefreshCw,
 } from "lucide-react";
 import { QueryErrorBoundary } from "@/components/ui/query-error-boundary";
 import {
@@ -34,19 +35,60 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api/httpClient";
+import { toast } from "sonner";
+import { formatJakartaDateTime } from "@/utils/formatters";
 
 import { MapSearch } from "@/features/mbg/components/MapSearch";
 import { Suspense } from "react";
 
 export default function DashboardMBGPage() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [year, setYear] = useState("2026");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastRefreshText, setLastRefreshText] = useState<string>("");
 
-  const { data: quickStatsData, isLoading: isQuickStatsLoading } =
+  const { data: quickStatsResponse, isLoading: isQuickStatsLoading } =
     useQuickStats(year);
   const { data: provRankingsData, isLoading: isRankingLoading } =
     useProvRankings(year);
 
-  const quickStats = useMemo(() => quickStatsData ?? [], [quickStatsData]);
+  const quickStats = useMemo(() => quickStatsResponse?.data ?? [], [quickStatsResponse]);
+  const lastRefreshJakarta = quickStatsResponse?._meta?.asOfJakarta;
+
+  const userRole = String(user?.role || "").toLowerCase();
+  const canRefresh = userRole === "super_admin" || userRole === "co_admin";
+
+  useEffect(() => {
+    if (lastRefreshJakarta) {
+      setLastRefreshText(formatJakartaDateTime(lastRefreshJakarta));
+    }
+  }, [lastRefreshJakarta]);
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      // Invalidate backend (Redis) cache
+      await apiClient.post("/cache/invalidate/dashboard");
+
+      // Invalidate client-side React Query caches for MBG
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["financial", "mbg"] }),
+      ]);
+
+      toast.success("Data dashboard berhasil diperbarui");
+    } catch (error: any) {
+      console.error("Dashboard refresh failed:", error);
+      toast.error(error?.message || "Gagal memperbarui data dashboard");
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [queryClient]);
+
   const iconByLabel = useMemo(
     () => ({
       "Total SPPG Aktif": Building2,
@@ -67,20 +109,40 @@ export default function DashboardMBGPage() {
           <p className="text-sm text-muted-foreground">
             Ringkasan dan analitik Makan Bergizi.
           </p>
+          {lastRefreshText && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Terakhir diperbarui: {lastRefreshText}
+            </p>
+          )}
         </div>
 
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">Tahun:</span>
-          <Select value={year} onValueChange={setYear}>
-            <SelectTrigger className="w-[120px] h-9">
-              <SelectValue placeholder="Pilih Tahun" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="2026">2026</SelectItem>
-              <SelectItem value="2025">2025</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-muted-foreground">Tahun:</span>
+            <Select value={year} onValueChange={setYear}>
+              <SelectTrigger className="w-[100px] h-9">
+                <SelectValue placeholder="Pilih Tahun" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2026">2026</SelectItem>
+                <SelectItem value="2025">2025</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {canRefresh && (
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              title="Refresh data (invalidate cache)"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+            </Button>
+          )}
         </div>
       </div>
 

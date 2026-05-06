@@ -261,6 +261,11 @@ export function ResponsiveSidebar({
       .filter((item) => {
         // Only admins can see Data Supplier
         if (item.label === "Data Supplier" && !isAdmin) return false;
+
+        // Only admins and ditpa can see IKI Dit.PA
+        if (item.label === "IKI Dit.PA" && !isAdmin && user.role !== "ditpa")
+          return false;
+
         return true;
       })
       .map((item) => {

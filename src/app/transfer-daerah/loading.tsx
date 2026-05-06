@@ -1,21 +1,29 @@
-import { ComponentLoadingFallback } from "@/components/ui/loading-fallback";
+import { Skeleton } from "@/components/ui/skeleton";
+import { GenericCardSkeleton } from "@/components/ui/dashboard-skeletons";
 
 export default function TransferDaerahLoading() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <div className="h-8 w-56 bg-gray-200 rounded animate-pulse" />
-          <div className="h-4 w-80 bg-gray-200 rounded animate-pulse" />
+      {/* Page Header Skeleton */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div>
+          <Skeleton className="h-8 w-64 mb-1" /> {/* Title */}
+          <Skeleton className="h-4 w-80" /> {/* Subtitle */}
         </div>
       </div>
-      <div className="space-y-4">
-        <div className="flex space-x-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-10 w-32 bg-gray-200 rounded animate-pulse" />
-          ))}
+
+      {/* Main Content Tabs Skeleton */}
+      <div className="w-full space-y-6">
+        <div className="border-b border-border/50 pb-3 mb-0">
+          <div className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-0 bg-muted/20">
+            <Skeleton className="h-10 md:h-full rounded-lg mx-1" />
+            <Skeleton className="h-10 md:h-full rounded-lg mx-1" />
+            <Skeleton className="h-10 md:h-full rounded-lg mx-1" />
+          </div>
         </div>
-        <ComponentLoadingFallback />
+
+        {/* Tab Content Placeholder */}
+        <GenericCardSkeleton showHeader={false} contentLines={15} />
       </div>
     </div>
   );

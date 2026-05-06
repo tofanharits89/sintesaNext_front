@@ -1,7 +1,7 @@
-﻿"use client";
+"use client";
 
-import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState, useEffect, useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -10,15 +10,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Loader2, CheckCircle } from "lucide-react";
+import { DataTable } from "@/components/ui/data-table";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
+import { Button } from "@/components/ui/button";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import { ResetButton } from "@/components/ui/reset-button";
+import { CheckCircle, SlidersHorizontal, ScrollText } from "lucide-react";
 import { toast } from "sonner";
 import { http } from "@/lib/api/httpClient";
 import { apiPath } from "@/lib/config/base-path";
@@ -74,13 +71,42 @@ interface PenilaianKanwilProps {
 }
 
 export function PenilaianKanwil({ role, username }: PenilaianKanwilProps) {
+  const now = new Date();
+  const currentYear = String(now.getFullYear());
+  const currentSemester = now.getMonth() < 6 ? "I" : "II";
+
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<KanwilData[]>([]);
   const [open, setOpen] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [selectedYear, setSelectedYear] = useState("2024");
-  const [selectedPeriod, setSelectedPeriod] = useState("I");
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [selectedPeriod, setSelectedPeriod] = useState(currentSemester);
+  const [selectedKanwil, setSelectedKanwil] = useState("");
   const [datakirim, setDataKirim] = useState<DataKirimKanwil | null>(null);
+
+  const kanwilOptions = useMemo(
+    () =>
+      Array.from(
+        new Map(data.map((d) => [d.kdkanwil, { kdkanwil: d.kdkanwil, nmkanwil: d.nmkanwil }])).values(),
+      ).sort((a, b) => a.kdkanwil.localeCompare(b.kdkanwil)),
+    [data],
+  );
+
+  const filteredData = useMemo(
+    () => (selectedKanwil ? data.filter((d) => d.kdkanwil === selectedKanwil) : data),
+    [data, selectedKanwil],
+  );
+
+  const tableRows = useMemo(
+    () =>
+      filteredData.map((row, index) => ({
+        ...row,
+        no: index + 1,
+        tahun: selectedYear,
+        periode: `Semester ${selectedPeriod}`,
+      })),
+    [filteredData, selectedYear, selectedPeriod],
+  );
 
   useEffect(() => {
     getData();
@@ -147,6 +173,12 @@ export function PenilaianKanwil({ role, username }: PenilaianKanwilProps) {
     getData();
   };
 
+  const handleReset = () => {
+    setSelectedYear(currentYear);
+    setSelectedPeriod(currentSemester);
+    setSelectedKanwil("");
+  };
+
   const getData = async () => {
     setLoading(true);
     const sql = `
@@ -183,144 +215,200 @@ export function PenilaianKanwil({ role, username }: PenilaianKanwilProps) {
     }
   };
 
-  return (
-    <Card>
-      <div className="flex flex-wrap gap-4 p-4">
-        <div className="flex-1 min-w-40">
-          <Label htmlFor="yearSelect">Tahun:</Label>
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger id="yearSelect" className="mt-1">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="2023">2023</SelectItem>
-              <SelectItem value="2024">2024</SelectItem>
-              <SelectItem value="2025">2025</SelectItem>
-              <SelectItem value="2026">2026</SelectItem>
-            </SelectContent>
-          </Select>
+  const columns: any[] = [
+    {
+      accessorKey: "no",
+      header: () => <div className="text-center font-medium">No</div>,
+      cell: ({ row }: any) => <div className="text-center">{row.getValue("no")}</div>,
+    },
+    {
+      accessorKey: "tahun",
+      header: () => <div className="text-center font-medium">Tahun</div>,
+      cell: ({ row }: any) => <div className="text-center">{row.getValue("tahun")}</div>,
+    },
+    {
+      accessorKey: "periode",
+      header: () => <div className="text-center font-medium">Periode</div>,
+      cell: ({ row }: any) => <div className="text-center">{row.getValue("periode")}</div>,
+    },
+    {
+      id: "kanwil",
+      header: () => <div className="text-center font-medium">Kanwil</div>,
+      cell: ({ row }: any) => (
+        <div className="text-center">
+          {row.original.kdkanwil} - {row.original.nmkanwil}
         </div>
-        <div className="flex-1 min-w-40">
-          <Label htmlFor="periodSelect">Periode:</Label>
-          <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-            <SelectTrigger id="periodSelect" className="mt-1">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="I">Semester I</SelectItem>
-              <SelectItem value="II">Semester II</SelectItem>
-            </SelectContent>
-          </Select>
+      ),
+    },
+    {
+      id: "analisa1",
+      header: () => <div className="text-center font-medium">ANALISA I</div>,
+      cell: ({ row }: any) => (
+        <div className="flex justify-center">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0 cursor-pointer"
+            title="Analisa I"
+            onClick={() =>
+              handleModal(
+                row.original.kdkanwil,
+                row.original.nmkanwil,
+                "I",
+                row.original.ringkasan1,
+                row.original.penyusunan1,
+                row.original.metode1,
+                row.original.kualitasdd1,
+                row.original.kualitasdf1,
+                row.original.kualitasbos1,
+                row.original.kesimpulan1,
+                row.original.ket1,
+                row.original.ringkasan2,
+                row.original.penyusunan2,
+                row.original.metode2,
+                row.original.kualitasdd2,
+                row.original.kualitasdf2,
+                row.original.kualitasbos2,
+                row.original.kesimpulan2,
+                row.original.ket2,
+              )
+            }
+          >
+            <CheckCircle className="h-4 w-4 text-blue-500" />
+          </Button>
         </div>
-      </div>
+      ),
+    },
+    {
+      id: "analisa2",
+      header: () => <div className="text-center font-medium">ANALISA II</div>,
+      cell: ({ row }: any) => (
+        <div className="flex justify-center">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0 cursor-pointer"
+            title="Analisa II"
+            onClick={() =>
+              handleModal(
+                row.original.kdkanwil,
+                row.original.nmkanwil,
+                "II",
+                row.original.ringkasan1,
+                row.original.penyusunan1,
+                row.original.metode1,
+                row.original.kualitasdd1,
+                row.original.kualitasdf1,
+                row.original.kualitasbos1,
+                row.original.kesimpulan1,
+                row.original.ket1,
+                row.original.ringkasan2,
+                row.original.penyusunan2,
+                row.original.metode2,
+                row.original.kualitasdd2,
+                row.original.kualitasdf2,
+                row.original.kualitasbos2,
+                row.original.kesimpulan2,
+                row.original.ket2,
+              )
+            }
+          >
+            <CheckCircle className="h-4 w-4 text-green-500" />
+          </Button>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "total",
+      header: () => <div className="text-center font-medium">RATA-RATA</div>,
+      cell: ({ row }: any) => (
+        <div className="text-center font-bold text-cyan-600">{row.getValue("total")}</div>
+      ),
+    },
+  ];
 
-      <CardContent className="p-4">
-        {loading ? (
-          <div className="flex justify-center items-center h-[500px]">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+  return (
+    <div className="space-y-4">
+      {/* Filter Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
+              <CardTitle>Filter</CardTitle>
+            </div>
+            <ResetButton onReset={handleReset} />
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table className="text-xs">
-              <TableHeader>
-                <TableRow>
-                  <TableHead rowSpan={2} className="align-middle">
-                    No
-                  </TableHead>
-                  <TableHead rowSpan={2} className="align-middle">
-                    Tahun
-                  </TableHead>
-                  <TableHead rowSpan={2} className="align-middle">
-                    Periode
-                  </TableHead>
-                  <TableHead rowSpan={2} className="align-middle">
-                    Kanwil
-                  </TableHead>
-                  <TableHead colSpan={3} className="text-center">
-                    LAPORAN MONEV
-                  </TableHead>
-                </TableRow>
-                <TableRow>
-                  <TableHead className="align-middle">ANALISA I</TableHead>
-                  <TableHead className="align-middle">ANALISA II</TableHead>
-                  <TableHead className="align-middle">RATA-RATA</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.map((row, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{selectedYear}</TableCell>
-                    <TableCell>Semester {selectedPeriod}</TableCell>
-                    <TableCell>
-                      {row.kdkanwil} - {row.nmkanwil}
-                    </TableCell>
-                    <TableCell>
-                      <CheckCircle
-                        className="h-4 w-4 text-blue-500 cursor-pointer"
-                        onClick={() =>
-                          handleModal(
-                            row.kdkanwil,
-                            row.nmkanwil,
-                            "I",
-                            row.ringkasan1,
-                            row.penyusunan1,
-                            row.metode1,
-                            row.kualitasdd1,
-                            row.kualitasdf1,
-                            row.kualitasbos1,
-                            row.kesimpulan1,
-                            row.ket1,
-                            row.ringkasan2,
-                            row.penyusunan2,
-                            row.metode2,
-                            row.kualitasdd2,
-                            row.kualitasdf2,
-                            row.kualitasbos2,
-                            row.kesimpulan2,
-                            row.ket2,
-                          )
-                        }
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <CheckCircle
-                        className="h-4 w-4 text-green-500 cursor-pointer"
-                        onClick={() =>
-                          handleModal(
-                            row.kdkanwil,
-                            row.nmkanwil,
-                            "II",
-                            row.ringkasan1,
-                            row.penyusunan1,
-                            row.metode1,
-                            row.kualitasdd1,
-                            row.kualitasdf1,
-                            row.kualitasbos1,
-                            row.kesimpulan1,
-                            row.ket1,
-                            row.ringkasan2,
-                            row.penyusunan2,
-                            row.metode2,
-                            row.kualitasdd2,
-                            row.kualitasdf2,
-                            row.kualitasbos2,
-                            row.kesimpulan2,
-                            row.ket2,
-                          )
-                        }
-                      />
-                    </TableCell>
-                    <TableCell className="font-bold text-cyan-600">
-                      {row.total}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="yearSelect" className="text-sm font-medium">Tahun</Label>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger id="yearSelect" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2023">2023</SelectItem>
+                  <SelectItem value="2024">2024</SelectItem>
+                  <SelectItem value="2025">2025</SelectItem>
+                  <SelectItem value="2026">2026</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="periodSelect" className="text-sm font-medium">Periode</Label>
+              <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                <SelectTrigger id="periodSelect" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="I">Semester I</SelectItem>
+                  <SelectItem value="II">Semester II</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="kanwilSelect" className="text-sm font-medium">Kanwil</Label>
+              <SearchableSelect
+                options={[
+                  { value: "", label: "Semua Kanwil" },
+                  ...kanwilOptions.map(k => ({ value: k.kdkanwil, label: `${k.kdkanwil} - ${k.nmkanwil}` }))
+                ]}
+                value={selectedKanwil}
+                onValueChange={setSelectedKanwil}
+                placeholder="Pilih Kanwil"
+                searchPlaceholder="Cari kode atau nama Kanwil..."
+                emptyMessage="Kanwil tidak ditemukan."
+              />
+            </div>
           </div>
-        )}
-      </CardContent>
+        </CardContent>
+      </Card>
+
+      {/* Table Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ScrollText className="h-4 w-4 text-muted-foreground" />
+              <CardTitle>Nilai Monev Kanwil</CardTitle>
+            </div>
+            {tableRows && (
+              <span className="text-xs text-muted-foreground">
+                {tableRows.length.toLocaleString("id-ID")} baris
+              </span>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <TableSkeleton rows={10} />
+          ) : (
+            <DataTable columns={columns} data={tableRows} />
+          )}
+        </CardContent>
+      </Card>
 
       {open === "1" && datakirim && (
         <ModalKanwil
@@ -332,6 +420,6 @@ export function PenilaianKanwil({ role, username }: PenilaianKanwilProps) {
           kirim={datakirim}
         />
       )}
-    </Card>
+    </div>
   );
 }

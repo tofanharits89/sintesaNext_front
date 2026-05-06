@@ -219,7 +219,7 @@ export default function Harmonisasi() {
   useEffect(() => {
     // Fetch K/L list for filter dropdown (from 2026 table)
     const fetchKlList = async () => {
-      const klQuery = `SELECT DISTINCT a.kddept, b.nmdept FROM monev2026.pagu_output_2026_new_harmonis a LEFT JOIN dbref.t_dept_2026 b ON a.kddept = b.kddept ORDER BY a.kddept`;
+      const klQuery = `SELECT a.kddept, MIN(b.nmdept) AS nmdept FROM monev2026.pagu_output_2026_new_harmonis a LEFT JOIN dbref.t_dept_2026 b ON a.kddept = b.kddept GROUP BY a.kddept ORDER BY a.kddept`;
       const encoded = encodeURIComponent(klQuery);
       const cleaned = decodeURIComponent(encoded)
         .replace(/\n/g, " ")

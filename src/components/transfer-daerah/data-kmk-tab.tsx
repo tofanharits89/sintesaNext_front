@@ -5,7 +5,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -16,7 +15,7 @@ import {
 import { DataTable } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Trash2, Scissors, PauseCircle, Undo2, Loader2, ScrollText } from "lucide-react";
+import { FileText, Trash2, Scissors, PauseCircle, Undo2, ScrollText } from "lucide-react";
 import { PdfViewerModal } from "./modals/pdf-viewer-modal";
 import { DataKmkModal } from "./modals/data-kmk-modal";
 import { PencabutanModal } from "./modals/pencabutan-modal";
@@ -26,16 +25,17 @@ import { DataPemotonganModal } from "./modals/data-pemotongan-modal";
 import { DeleteConfirmModal } from "./modals/delete-confirm-modal";
 import { useKmkDau } from "@/hooks/use-kmk-dau";
 import { apiPath } from "@/lib/config/base-path";
-import { getAuthTokenFromCookie } from "@/lib/utils/cookieManager";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
 
 interface DataKmkTabProps {
   // Remove the selectedYear prop as this tab will manage its own year state
+  kdkanwil?: string;
+  kdkppn?: string;
 }
 
 // Data is now fetched from backend via useKmkDau
 
-export function DataKmkTab({}: DataKmkTabProps) {
+export function DataKmkTab({ kdkanwil, kdkppn }: DataKmkTabProps) {
   const queryClient = useQueryClient();
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear.toString());
@@ -52,7 +52,7 @@ export function DataKmkTab({}: DataKmkTabProps) {
   const [selectedNoKmkForPencabutan, setSelectedNoKmkForPencabutan] = useState<
     string | undefined
   >(undefined);
-  const { rows, isLoading, error, mutate } = useKmkDau(selectedYear);
+  const { rows, isLoading, error, mutate } = useKmkDau(selectedYear, kdkanwil, kdkppn);
 
   // Generate years from current year back to 2020
   const years = Array.from({ length: currentYear - 2019 }, (_, i) =>
@@ -326,50 +326,42 @@ export function DataKmkTab({}: DataKmkTabProps) {
 
   return (
     <div className="space-y-4">
-      {/* Data Table Card */}
-      <Card className="shadow-sm">
-        <CardHeader className="pb-3">
+      <Card>
+        <CardHeader>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            {/* Title */}
             <div className="flex items-center gap-2">
               <ScrollText className="h-4 w-4 text-muted-foreground" />
-              <CardTitle className="text-sm font-semibold">Data KMK</CardTitle>
+              <CardTitle>Data KMK</CardTitle>
             </div>
 
-            {/* Controls row */}
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Year Filter */}
-              <div className="flex items-center gap-1.5">
-                <Label htmlFor="kmk-year" className="text-xs font-medium text-muted-foreground uppercase tracking-wide whitespace-nowrap">
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="kmk-year" className="text-sm font-medium text-muted-foreground whitespace-nowrap">
                   Tahun
                 </Label>
                 <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger id="kmk-year" className="h-8 w-[90px] text-xs">
-                    <SelectValue className="truncate" />
+                  <SelectTrigger id="kmk-year" className="w-[110px]">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {years.map((year) => (
-                      <SelectItem key={year} value={year} className="text-xs">{year}</SelectItem>
+                      <SelectItem key={year} value={year}>{year}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-
-              <Separator orientation="vertical" className="h-6 hidden sm:block" />
-
-              {/* Action Buttons */}
               <div className="flex items-center gap-1.5">
                 <Button
                   size="sm"
                   onClick={() => setIsDataKmkModalOpen(true)}
-                  className="h-8 text-xs px-3 bg-foreground hover:bg-foreground/90 text-background"
+                  className="bg-foreground text-background hover:bg-foreground/90"
                 >
                   Data KMK
                 </Button>
                 <Button
                   size="sm"
                   onClick={() => setIsPencabutanModalOpen(true)}
-                  className="h-8 text-xs px-3 bg-foreground hover:bg-foreground/90 text-background"
+                  className="bg-foreground text-background hover:bg-foreground/90"
                 >
                   Pencabutan
                 </Button>
@@ -377,10 +369,7 @@ export function DataKmkTab({}: DataKmkTabProps) {
             </div>
           </div>
         </CardHeader>
-
-        <Separator />
-
-        <CardContent className="pt-4">
+        <CardContent>
           {error ? (
             <div className="rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3 text-xs text-destructive mb-3">
               {String((error as any).message || error)}
@@ -415,16 +404,22 @@ export function DataKmkTab({}: DataKmkTabProps) {
         open={isDataPenundaanModalOpen}
         onOpenChange={setIsDataPenundaanModalOpen}
         data={selectedItem}
+        kdkanwil={kdkanwil}
+        kdkppn={kdkppn}
       />
       <DataPemotonganModal
         open={isDataPemotonganModalOpen}
         onOpenChange={setIsDataPemotonganModalOpen}
         data={selectedItem}
+        kdkanwil={kdkanwil}
+        kdkppn={kdkppn}
       />
       <DataPencabutanModal
         open={isDataPencabutanModalOpen}
         onOpenChange={setIsDataPencabutanModalOpen}
         noKmk={selectedNoKmkForPencabutan ?? ""}
+        kdkanwil={kdkanwil}
+        kdkppn={kdkppn}
       />
       <DeleteConfirmModal
         open={isDeleteModalOpen}

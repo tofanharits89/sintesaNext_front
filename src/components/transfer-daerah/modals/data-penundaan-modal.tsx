@@ -16,17 +16,22 @@ import { ConfirmationModals } from "@/components/ui/confirmation-modal";
 import { useKmkPotongan, RawPotonganItem } from "@/hooks/use-kmk-potongan";
 import { apiPath } from "@/lib/config/base-path";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
+import tkdData from "@/data/kdkppn_tkd.json";
 
 interface DataPenundaanModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   data: any;
+  kdkanwil?: string | undefined;
+  kdkppn?: string | undefined;
 }
 
 export function DataPenundaanModal({
   open,
   onOpenChange,
   data,
+  kdkanwil,
+  kdkppn,
 }: DataPenundaanModalProps) {
   const fmtNum = (value: number | string | null | undefined) => {
     const num = Number(value ?? 0);
@@ -46,11 +51,37 @@ export function DataPenundaanModal({
       : data?.tahun != null
       ? String(data.tahun)
       : undefined;
-  const { rows, isLoading, error, grandTotal, mutate } = useKmkPotongan(
+  const { rows: rawRows, isLoading, error, grandTotal, mutate } = useKmkPotongan(
     resolvedNoKmk,
     resolvedThang,
-    open
+    open,
+    kdkanwil,
+    kdkppn
   );
+
+  // Client-side filter fallback for Kanwil/KPPN users
+  const rows = useMemo(() => {
+    if (!rawRows) return [];
+    
+    // If KPPN user, filter strictly by kdkppn
+    if (kdkppn) {
+      const targetKppn = String(kdkppn).trim().padStart(3, '0');
+      return rawRows.filter(r => String(r.kdkppn || "").trim().padStart(3, '0') === targetKppn);
+    }
+
+    // If Kanwil user, filter by KPPNs belonging to that Kanwil
+    if (kdkanwil) {
+      const targetKanwil = String(kdkanwil).trim().padStart(2, '0');
+      const kppnsInKanwil = new Set(
+        (tkdData as any[])
+          .filter((d) => String(d.kdkanwil || "").trim().padStart(2, '0') === targetKanwil)
+          .map((d) => String(d.kdkppn || "").trim().padStart(3, '0'))
+      );
+      return rawRows.filter(r => kppnsInKanwil.has(String(r.kdkppn || "").trim().padStart(3, '0')));
+    }
+
+    return rawRows;
+  }, [rawRows, kdkanwil, kdkppn]);
 
   // Local state for search and pagination
   const [searchTerm, setSearchTerm] = useState("");

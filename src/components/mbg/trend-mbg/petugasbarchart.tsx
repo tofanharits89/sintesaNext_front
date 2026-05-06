@@ -332,7 +332,7 @@ export default function PetugasBarChart() {
   }
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden min-w-0">
       <CardHeader className="p-0">
         <div className="bg-muted/50 px-4 py-3 border-b border-border flex flex-wrap gap-3 items-end">
           {/* Province */}
@@ -388,7 +388,7 @@ export default function PetugasBarChart() {
         </div>
       </CardHeader>
 
-      <CardContent className="p-4">
+      <CardContent className="p-4 min-w-0">
         <div className="h-[320px]">
           {isDataError ? (
             <div className="flex flex-col items-center justify-center h-full bg-destructive/5 rounded border border-dashed border-destructive/40 p-6 gap-2">
@@ -419,7 +419,7 @@ export default function PetugasBarChart() {
               </p>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={1}>
               <BarChart
                 data={rows}
                 margin={{ top: 20, right: 20, left: 10, bottom: 70 }}

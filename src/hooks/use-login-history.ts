@@ -21,6 +21,8 @@ interface LoginHistoryEntry {
   location?: string | null;
   nmkanwil?: string | null;
   nmkppn?: string | null;
+  kdkanwil?: string | null;
+  kdkppn?: string | null;
   createdAt: string;
 }
 

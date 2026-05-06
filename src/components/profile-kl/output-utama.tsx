@@ -8,8 +8,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Pencil, Trash2 } from "lucide-react";
+} from "@/components/animate-ui/components/radix/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Pencil, Trash2, Loader2, Plus } from "lucide-react";
+import { DataTable } from "@/components/ui/data-table";
+import { ColumnDef } from "@tanstack/react-table";
 
 export interface OutputRow {
   id_output: number;
@@ -115,6 +121,8 @@ export default function OutputUtama({
       setUpdateInfo(
         `Diupdate terakhir oleh ${isi[0].username} tanggal ${formatDate(isi[0].createdAt)}`,
       );
+    } else {
+      setUpdateInfo("");
     }
   }, [isi]);
 
@@ -190,24 +198,23 @@ export default function OutputUtama({
     });
   };
 
-  const inputCls =
-    "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100";
-  const textareaCls = inputCls + " resize-none";
-
   const yearGroups = [
     {
+      label: "Tahun Anggaran 1",
       y: "tahun1" as const,
       p: "pagu1" as const,
       r: "realisasi1" as const,
       pct: "persen1" as const,
     },
     {
+      label: "Tahun Anggaran 2",
       y: "tahun2" as const,
       p: "pagu2" as const,
       r: "realisasi2" as const,
       pct: "persen2" as const,
     },
     {
+      label: "Tahun Anggaran 3",
       y: "tahun3" as const,
       p: "pagu3" as const,
       r: "realisasi3" as const,
@@ -215,176 +222,219 @@ export default function OutputUtama({
     },
   ];
 
+  const columns: ColumnDef<any>[] = [
+    {
+      id: "no",
+      header: () => <div className="text-center font-medium">No</div>,
+      cell: ({ row }) => <div className="text-center">{row.index + 1}</div>,
+    },
+    {
+      accessorKey: "namaoutput",
+      header: () => <div className="text-center font-medium">Nama Output</div>,
+      cell: ({ row }) => (
+        <div className="text-left font-medium max-w-[300px] whitespace-normal break-words">
+          {row.getValue("namaoutput")}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "catatan",
+      header: () => <div className="text-center font-medium">Keterangan</div>,
+      cell: ({ row }) => (
+        <div className="text-left text-muted-foreground max-w-[300px] whitespace-normal break-words">
+          {row.getValue("catatan")}
+        </div>
+      ),
+    },
+    {
+      id: "actions",
+      header: () => <div className="text-center font-medium">Aksi</div>,
+      cell: ({ row }) => (
+        <div className="flex items-center justify-center gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleEdit(row.original.id_output)}
+            className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleHapus(row.original.id_output)}
+            className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <Dialog open={show} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-5xl gap-0 overflow-hidden p-0">
-        <DialogHeader className="border-b px-6 py-4">
+      <DialogContent showCloseButton={false} className="sm:max-w-7xl gap-0 overflow-hidden p-0">
+        <DialogHeader className="px-6 py-4">
           <DialogTitle>Rekam Output Utama Belanja K/L</DialogTitle>
         </DialogHeader>
 
-        <div className="max-h-[82vh] overflow-y-auto px-6 py-5">
+        <div className="max-h-[85vh] overflow-y-auto px-6 py-6">
           <form
             id="output-utama-form"
             onSubmit={handleSubmit}
-            className="space-y-4"
+            className="space-y-8"
           >
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="namaoutput" className="text-sm font-semibold">
                   Nama Output
-                </label>
-                <textarea
+                </Label>
+                <Textarea
+                  id="namaoutput"
                   name="namaoutput"
                   rows={3}
                   value={formData.namaoutput}
                   onChange={handleChange}
-                  placeholder="Masukkan teks di sini..."
-                  className={textareaCls}
+                  placeholder="Masukkan nama output utama..."
+                  className="resize-none"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Keterangan
-                </label>
-                <textarea
+              <div className="space-y-2">
+                <Label htmlFor="catatan" className="text-sm font-semibold">
+                  Keterangan / Catatan
+                </Label>
+                <Textarea
+                  id="catatan"
                   name="catatan"
                   rows={3}
                   value={formData.catatan}
                   onChange={handleChange}
-                  placeholder="Masukkan teks di sini..."
-                  className={textareaCls}
+                  placeholder="Masukkan keterangan tambahan..."
+                  className="resize-none"
                 />
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {yearGroups.map(({ y, p, r, pct }) => (
+
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+              {yearGroups.map(({ label, y, p, r, pct }) => (
                 <div
                   key={y}
-                  className="grid grid-cols-1 gap-3 rounded-lg border bg-white p-3 dark:bg-gray-950 sm:grid-cols-4 lg:contents"
+                  className="space-y-4 rounded-xl border bg-muted/30 p-4"
                 >
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">
-                      Tahun
-                    </label>
-                    <input
-                      name={y}
-                      type="text"
-                      value={formData[y]}
-                      onChange={handleChange}
-                      placeholder="Tahun"
-                      className={inputCls}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">
-                      Pagu
-                    </label>
-                    <input
-                      name={p}
-                      type="text"
-                      maxLength={5}
-                      value={formData[p]}
-                      onChange={handleChange}
-                      placeholder="Pagu"
-                      className={inputCls}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">
-                      Realisasi
-                    </label>
-                    <input
-                      name={r}
-                      type="text"
-                      maxLength={5}
-                      value={formData[r]}
-                      onChange={handleChange}
-                      placeholder="Realisasi"
-                      className={inputCls}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">
-                      Persen
-                    </label>
-                    <input
-                      name={pct}
-                      type="text"
-                      maxLength={6}
-                      value={formData[pct]}
-                      onChange={handleChange}
-                      placeholder="%"
-                      className={inputCls}
-                    />
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/80">
+                    {label}
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor={y} className="text-[11px] font-medium uppercase text-muted-foreground">Tahun</Label>
+                      <Input
+                        id={y}
+                        name={y}
+                        type="text"
+                        value={formData[y]}
+                        onChange={handleChange}
+                        placeholder="YYYY"
+                        className="h-9 bg-background"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor={p} className="text-[11px] font-medium uppercase text-muted-foreground">Pagu</Label>
+                      <Input
+                        id={p}
+                        name={p}
+                        type="text"
+                        maxLength={5}
+                        value={formData[p]}
+                        onChange={handleChange}
+                        placeholder="0.00"
+                        className="h-9 bg-background"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor={r} className="text-[11px] font-medium uppercase text-muted-foreground">Realisasi</Label>
+                      <Input
+                        id={r}
+                        name={r}
+                        type="text"
+                        maxLength={5}
+                        value={formData[r]}
+                        onChange={handleChange}
+                        placeholder="0.00"
+                        className="h-9 bg-background"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor={pct} className="text-[11px] font-medium uppercase text-muted-foreground">Persen (%)</Label>
+                      <Input
+                        id={pct}
+                        name={pct}
+                        type="text"
+                        maxLength={6}
+                        value={formData[pct]}
+                        onChange={handleChange}
+                        placeholder="0.00"
+                        className="h-9 bg-background"
+                      />
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           </form>
 
-          <hr className="my-5" />
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr className="bg-gray-100 text-left dark:bg-gray-700">
-                  <th className="border px-3 py-2">No</th>
-                  <th className="border px-3 py-2">Nama Output</th>
-                  <th className="border px-3 py-2">Keterangan</th>
-                  <th className="border px-3 py-2">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {uniqueOutputs.map((item, idx) => (
-                  <tr
-                    key={item.id_output}
-                    className="even:bg-gray-50 dark:even:bg-gray-800"
-                  >
-                    <td className="border px-3 py-2">{idx + 1}</td>
-                    <td className="border px-3 py-2">{item.namaoutput}</td>
-                    <td className="border px-3 py-2">{item.catatan}</td>
-                    <td className="space-x-2 border px-3 py-2">
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(item.id_output)}
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleHapus(item.id_output)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="my-10 border-t" />
+
+          {/* Table */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                Daftar Output Terdaftar
+              </h3>
+            </div>
+            <DataTable 
+              columns={columns} 
+              data={uniqueOutputs} 
+              initialPageSize={10}
+              emptyMessage="Belum ada data output utama."
+            />
           </div>
+
           {updateInfo && (
-            <p className="mt-3 text-xs italic text-gray-400">{updateInfo}</p>
+            <p className="mt-8 text-xs italic text-muted-foreground border-t pt-4">
+              {updateInfo}
+            </p>
           )}
         </div>
 
-        <DialogFooter className="border-t bg-gray-50 px-6 py-4 dark:bg-gray-900">
-          <button
+        <DialogFooter className="px-6 py-4 bg-white dark:bg-card">
+          <Button
             type="button"
+            variant="outline"
             onClick={handleClose}
             disabled={loading}
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-gray-800"
+            className="px-6"
           >
             Batal
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
             form="output-utama-form"
             disabled={loading}
-            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+            className="px-8"
           >
-            {loading ? "Menyimpan..." : "Simpan"}
-          </button>
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Menyimpan...
+              </>
+            ) : (
+              <span className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Simpan
+              </span>
+            )}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

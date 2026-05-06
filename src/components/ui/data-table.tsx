@@ -70,6 +70,8 @@ interface DataTableProps<TData, TValue> {
   footerInfoText?: string;
   // Whether to show the table footer (grand totals)
   showFooter?: boolean;
+  // Custom message when no data is available
+  emptyMessage?: string;
 }
 
 export function DataTable<TData, TValue>({
@@ -86,6 +88,7 @@ export function DataTable<TData, TValue>({
   initialPageSize,
   footerInfoText,
   showFooter = false,
+  emptyMessage = "No results.",
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -215,9 +218,9 @@ export function DataTable<TData, TValue>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center"
+                  className="h-24 text-center text-muted-foreground italic"
                 >
-                  No results.
+                  {emptyMessage}
                 </TableCell>
               </TableRow>
             )}

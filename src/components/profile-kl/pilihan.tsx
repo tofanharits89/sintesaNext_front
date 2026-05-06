@@ -1,8 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import kddept from "@/data/kddept.json";
 import kdperiode from "@/data/kdperiode.json";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 
 export interface FilterParams {
   thang: string;
@@ -25,77 +34,84 @@ export default function Pilihan({
   const [selectedPeriode, setSelectedPeriode] = useState("1");
   const [selectedDept, setSelectedDept] = useState(defaultDept);
 
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { id, value } = e.target;
-    if (id === "thang") {
-      setSelectedTA(value);
-      onInputChange("thang", value);
-    } else if (id === "periode") {
-      setSelectedPeriode(value);
-      onInputChange("periode", value);
-    } else if (id === "dept") {
-      setSelectedDept(value);
-      onInputChange("dept", value);
-    }
-  };
+  // Sync state if defaultDept changes (e.g. from props)
+  useEffect(() => {
+    setSelectedDept(defaultDept);
+  }, [defaultDept]);
 
-  const selectCls =
-    "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100";
+  // Format K/L list for SearchableSelect
+  const kementerianOptions = useMemo(() => {
+    return (kddept as { kddept: string; nmdept: string }[]).map((k) => ({
+      value: k.kddept,
+      label: `${k.kddept} - ${k.nmdept}`,
+    }));
+  }, []);
 
   return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 p-2">
-      <div>
-        <label htmlFor="thang" className="block text-xs text-gray-500 mb-1">
-          Pilih TA
-        </label>
-        <select
-          id="thang"
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 p-4">
+      <div className="space-y-1.5">
+        <Label htmlFor="thang" className="text-xs font-medium text-muted-foreground">
+          Tahun Anggaran
+        </Label>
+        <Select
           value={selectedTA}
-          onChange={handleChange}
-          className={selectCls}
+          onValueChange={(val) => {
+            setSelectedTA(val);
+            onInputChange("thang", val);
+          }}
         >
-          {TAHUN_OPTIONS.map((ta) => (
-            <option key={ta} value={ta}>
-              TA {ta}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger id="thang" className="w-full bg-background">
+            <SelectValue placeholder="Pilih TA" />
+          </SelectTrigger>
+          <SelectContent>
+            {TAHUN_OPTIONS.map((ta) => (
+              <SelectItem key={ta} value={ta}>
+                TA {ta}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      <div>
-        <label htmlFor="periode" className="block text-xs text-gray-500 mb-1">
-          Pilih Periode
-        </label>
-        <select
-          id="periode"
+      <div className="space-y-1.5">
+        <Label htmlFor="periode" className="text-xs font-medium text-muted-foreground">
+          Periode Kinerja
+        </Label>
+        <Select
           value={selectedPeriode}
-          onChange={handleChange}
-          className={selectCls}
+          onValueChange={(val) => {
+            setSelectedPeriode(val);
+            onInputChange("periode", val);
+          }}
         >
-          {kdperiode.map((p) => (
-            <option key={p.kdperiode} value={p.kdperiode}>
-              {p.kdperiode} - {p.nmperiode}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger id="periode" className="w-full bg-background">
+            <SelectValue placeholder="Pilih Periode" />
+          </SelectTrigger>
+          <SelectContent>
+            {kdperiode.map((p) => (
+              <SelectItem key={p.kdperiode} value={p.kdperiode}>
+                {p.kdperiode} - {p.nmperiode}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      <div>
-        <label htmlFor="dept" className="block text-xs text-gray-500 mb-1">
-          Pilih Kementerian / Lembaga
-        </label>
-        <select
-          id="dept"
+      <div className="space-y-1.5">
+        <Label htmlFor="dept" className="text-xs font-medium text-muted-foreground">
+          Kementerian / Lembaga
+        </Label>
+        <SearchableSelect
+          options={kementerianOptions}
           value={selectedDept}
-          onChange={handleChange}
-          className={selectCls}
-        >
-          {(kddept as { kddept: string; nmdept: string }[]).map((k) => (
-            <option key={k.kddept} value={k.kddept}>
-              {k.kddept} - {k.nmdept}
-            </option>
-          ))}
-        </select>
+          onValueChange={(val) => {
+            setSelectedDept(val);
+            onInputChange("dept", val);
+          }}
+          placeholder="Pilih K/L..."
+          searchPlaceholder="Cari kode atau nama K/L..."
+          className="bg-background hover:bg-zinc-50 dark:hover:bg-zinc-900 border-input"
+        />
       </div>
     </div>
   );

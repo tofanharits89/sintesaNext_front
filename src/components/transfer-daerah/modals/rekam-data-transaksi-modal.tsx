@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { VirtualizedSelect } from "@/components/ui/virtualized-select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useKmkDau } from "@/hooks/use-kmk-dau";
 import { useDasarPenundaanOptions } from "@/hooks/use-dasar-penundaan";
 import { useKmkPemotongan } from "@/hooks/use-kmk-pemotongan";
@@ -93,14 +93,41 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataT
   // Dynamic options from backend
   const { options: jenisOptions } = useJenisKmkOptions();
   const { options: kriteriaOptions } = useKriteriaOptions(formData.jenis || undefined);
-  const { options: dasarPemotonganOptions } = useDasarPemotonganOptions(formData.kriteria || undefined);
-  const { options: kdakunOptions, akunMap } = useKodeAkunOptions(formData.kriteria || undefined);
+  const { options: dasarPemotonganOptionsRaw } = useDasarPemotonganOptions(formData.kriteria || undefined);
+  const { options: kdakunOptionsRaw, akunMap } = useKodeAkunOptions(formData.kriteria || undefined);
+
+  const dasarPemotonganOptions = useMemo(() => {
+    const seen = new Set();
+    return (dasarPemotonganOptionsRaw || []).filter(opt => {
+      if (seen.has(opt.value)) return false;
+      seen.add(opt.value);
+      return true;
+    });
+  }, [dasarPemotonganOptionsRaw]);
+
+  const kdakunOptions = useMemo(() => {
+    const seen = new Set();
+    return (kdakunOptionsRaw || []).filter(opt => {
+      if (seen.has(opt.value)) return false;
+      seen.add(opt.value);
+      return true;
+    });
+  }, [kdakunOptionsRaw]);
 
   // Keep KMK list available if needed elsewhere, but dasar pemotongan now comes from ref hook
   const { rows: kmkRows } = useKmkDau(tahun);
 
   // Dasar KMK Penundaan options from backend
-  const { options: dasarPenundaanOptions } = useDasarPenundaanOptions(true);
+  const { options: dasarPenundaanOptionsRaw } = useDasarPenundaanOptions(true);
+
+  const dasarPenundaanOptions = useMemo(() => {
+    const seen = new Set();
+    return (dasarPenundaanOptionsRaw || []).filter(opt => {
+      if (seen.has(opt.value)) return false;
+      seen.add(opt.value);
+      return true;
+    });
+  }, [dasarPenundaanOptionsRaw]);
 
   // When selecting dasar pemotongan, fetch pemotongan detail to derive kdsatker/kdlokasi for this Pemda
   const { rows: pemotonganRows } = useKmkPemotongan(formData.dasarPemotongan || undefined, !!formData.dasarPemotongan);
@@ -334,7 +361,7 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataT
               {/* Dasar KMK Pemotongan */}
               <div className="space-y-1.5">
                 <Label>Dasar KMK Pemotongan</Label>
-                <VirtualizedSelect
+                <SearchableSelect
                   options={dasarPemotonganOptions}
                   value={formData.dasarPemotongan}
                   onValueChange={(value) =>
@@ -354,7 +381,7 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataT
               {/* Kode Akun */}
               <div className="space-y-1.5">
                 <Label>Kode Akun</Label>
-                <VirtualizedSelect
+                <SearchableSelect
                   options={kdakunOptions}
                   value={formData.kdakun}
                   onValueChange={(value) => setFormData((p) => ({ ...p, kdakun: value }))}
@@ -393,7 +420,7 @@ export function RekamDataTransaksiModal({ open, onOpenChange, data }: RekamDataT
               {/* Dasar KMK Penundaan */}
               <div className="space-y-1.5">
                 <Label>Dasar KMK Penundaan</Label>
-                <VirtualizedSelect
+                <SearchableSelect
                   options={dasarPenundaanOptions}
                   value={formData.dasarPenundaan}
                   onValueChange={(value) => setFormData((p) => ({ ...p, dasarPenundaan: value }))}

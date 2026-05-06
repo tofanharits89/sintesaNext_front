@@ -52,12 +52,20 @@ const fetcher = async (url: string) => {
   return data;
 };
 
-export function useDauTransaksi(params: { thang?: number | string; bulan?: number | string; kppn?: string; kabkota?: string }) {
+export function useDauTransaksi(params: { 
+  thang?: number | string; 
+  bulan?: number | string; 
+  kppn?: string; 
+  kabkota?: string;
+  kdkanwil?: string;
+}) {
   const q: string[] = [];
   if (params?.thang !== undefined && params?.thang !== "") q.push(`thang=${encodeURIComponent(String(params.thang))}`);
   if (params?.bulan !== undefined && params?.bulan !== "") q.push(`bulan=${encodeURIComponent(String(params.bulan))}`);
   if (params?.kppn) q.push(`kppn=${encodeURIComponent(params.kppn)}`);
   if (params?.kabkota) q.push(`kabkota=${encodeURIComponent(params.kabkota)}`);
+  if (params?.kdkanwil) q.push(`kdkanwil=${encodeURIComponent(params.kdkanwil)}`);
+  
   const key = apiPath(`/transfer-daerah/dau/transaksi${q.length ? `?${q.join("&")}` : ""}`);
 
   const { data, error, isLoading, refetch } = useQuery<RawDauTransaksiRow[]>({

@@ -3,13 +3,6 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { Edit, Trash2, Loader2 } from "lucide-react";
@@ -18,8 +11,11 @@ import { DeleteConfirmModal } from "./modals/delete-confirm-modal";
 import { useAuth } from "@/hooks/useAuth";
 import { useKertasKerja } from "@/features/mbg/hooks/use-kertas-kerja";
 
-export function PerkembanganLainnyaTab() {
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+interface PerkembanganLainnyaTabProps {
+  selectedYear: string;
+}
+
+export function PerkembanganLainnyaTab({ selectedYear }: PerkembanganLainnyaTabProps) {
   const [isPerkembanganLainnyaModalOpen, setIsPerkembanganLainnyaModalOpen] =
     useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -73,12 +69,6 @@ export function PerkembanganLainnyaTab() {
     );
     return actualKey ? item[actualKey] : null;
   };
-
-  // Generate years from current year back to 2020
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: currentYear - 2019 }, (_, i) =>
-    (currentYear - i).toString()
-  );
 
   const handleEdit = (item: any) => {
     setSelectedItem(item);
@@ -240,25 +230,6 @@ export function PerkembanganLainnyaTab() {
             </CardTitle>
 
             <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:gap-4">
-              {/* Year Filter */}
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium whitespace-nowrap">
-                  Tahun:
-                </label>
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger className="w-full sm:w-[120px]">
-                    <SelectValue className="truncate" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {years.map((year) => (
-                      <SelectItem key={year} value={year}>
-                        {year}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Action Button */}
               <Button
                 onClick={() => {

@@ -63,6 +63,8 @@ import {
   LogUserMenuSkeleton
 } from "@/components/ui/loading-fallback";
 import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/components/animate-ui/components/animate/tabs";
+import kanwilData from "@/data/kdkanwil.json";
+import kppnData from "@/data/kdkppn.json";
 
 // Simple tabs using local state
 const TABS = [
@@ -416,7 +418,8 @@ export default function LogUserPage() {
                                   <TableHead className="text-center font-bold">Nama Lengkap</TableHead>
                                   <TableHead className="text-center font-bold">Username</TableHead>
                                   <TableHead className="text-center font-bold">Role</TableHead>
-                                  <TableHead className="text-center font-bold">Unit Kerja</TableHead>
+                                  <TableHead className="text-center font-bold">Kanwil</TableHead>
+                                  <TableHead className="text-center font-bold">KPPN</TableHead>
                                   <TableHead className="text-center font-bold">Lokasi</TableHead>
                                   <TableHead className="text-center font-bold">Waktu Login</TableHead>
                                   <TableHead className="text-center font-bold">Durasi Login</TableHead>
@@ -434,7 +437,10 @@ export default function LogUserPage() {
                                       </Badge>
                                     </TableCell>
                                     <TableCell className="text-sm text-center">
-                                      {userInfo.user.nmkppn || userInfo.user.nmkanwil || "-"}
+                                      {userInfo.user.kdkanwil ? (kanwilData.find(k => k.kdkanwil === userInfo.user.kdkanwil)?.nmkanwil || userInfo.user.nmkanwil || "-") : "-"}
+                                    </TableCell>
+                                    <TableCell className="text-sm text-center">
+                                      {userInfo.user.kdkppn ? (kppnData.find(k => k.kdkppn === userInfo.user.kdkppn)?.nmkppn || userInfo.user.nmkppn || "-") : "-"}
                                     </TableCell>
                                     <TableCell className="text-sm text-muted-foreground text-center">{userInfo.location || "Tidak diketahui"}</TableCell>
                                     <TableCell className="text-sm text-muted-foreground text-center">{userInfo.loginAt ? formatLoginDateTime(userInfo.loginAt) : "Tidak diketahui"}</TableCell>
@@ -467,7 +473,8 @@ export default function LogUserPage() {
                                       </Badge>
                                     </div>
                                     <div className="space-y-1">
-                                      <p className="text-xs text-muted-foreground"><span className="font-medium">Unit:</span> {userInfo.user.nmkppn || userInfo.user.nmkanwil || "-"}</p>
+                                      <p className="text-xs text-muted-foreground"><span className="font-medium">Kanwil:</span> {userInfo.user.kdkanwil ? (kanwilData.find(k => k.kdkanwil === userInfo.user.kdkanwil)?.nmkanwil || userInfo.user.nmkanwil || "-") : "-"}</p>
+                                      <p className="text-xs text-muted-foreground"><span className="font-medium">KPPN:</span> {userInfo.user.kdkppn ? (kppnData.find(k => k.kdkppn === userInfo.user.kdkppn)?.nmkppn || userInfo.user.nmkppn || "-") : "-"}</p>
                                       <p className="text-xs text-muted-foreground"><span className="font-medium">Lokasi:</span> {userInfo.location || "Tidak diketahui"}</p>
                                       <p className="text-xs text-muted-foreground"><span className="font-medium">Login:</span> {userInfo.loginAt ? formatLoginDateTime(userInfo.loginAt) : "Tidak diketahui"}</p>
                                       <p className="text-xs text-muted-foreground"><span className="font-medium">Durasi:</span> {userInfo.loginAt ? calculateLoginDuration(userInfo.loginAt) : "Tidak diketahui"}</p>
@@ -540,7 +547,7 @@ export default function LogUserPage() {
                       </CardHeader>
                       <CardContent>
                         <div className="h-80 w-full">
-                          <ResponsiveContainer width="100%" height={320} minWidth={0}>
+                          <ResponsiveContainer width="100%" height={320} minWidth={0} minHeight={0}>
                             <BarChart
                               data={weeklyLogins}
                               margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
@@ -625,7 +632,9 @@ export default function LogUserPage() {
                                       <div>
                                         <p className="font-medium text-sm">{entry.userName || entry.username}</p>
                                         <p className="text-xs text-muted-foreground">
-                                          {entry.userRole} {entry.nmkppn || entry.nmkanwil ? `| ${entry.nmkppn || entry.nmkanwil}` : ""}
+                                          {entry.userRole} 
+                                          {entry.kdkanwil && ` | Kanwil: ${kanwilData.find(k => k.kdkanwil === entry.kdkanwil)?.nmkanwil || entry.nmkanwil}`}
+                                          {entry.kdkppn && ` | KPPN: ${kppnData.find(k => k.kdkppn === entry.kdkppn)?.nmkppn || entry.nmkppn}`}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
                                           Lokasi: {entry.location || "Tidak diketahui"}

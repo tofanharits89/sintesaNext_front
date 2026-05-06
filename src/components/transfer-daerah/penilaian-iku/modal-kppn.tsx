@@ -1,11 +1,11 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Building2 } from "lucide-react";
 import { http } from "@/lib/api/httpClient";
 import { apiPath } from "@/lib/config/base-path";
 import {
@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -91,6 +92,7 @@ interface ModalKppnProps {
 function SelectField({
   field,
   count,
+  placeholder = "-- Pilih --",
 }: {
   field: {
     value: string | number;
@@ -99,16 +101,18 @@ function SelectField({
     name: string;
   };
   count: number;
+  placeholder?: string;
 }) {
+  const val = field.value != null ? String(field.value) : "";
   return (
-    <Select value={String(field.value)} onValueChange={field.onChange}>
-      <SelectTrigger>
-        <SelectValue placeholder="-- Pilih --" />
+    <Select value={val} onValueChange={field.onChange}>
+      <SelectTrigger className="w-full">
+        <SelectValue placeholder={placeholder}>{val !== "" ? val : undefined}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         {Array.from({ length: count }, (_, i) => (
           <SelectItem key={i} value={String(i)}>
-            {i}
+            {String(i)}
           </SelectItem>
         ))}
       </SelectContent>
@@ -160,36 +164,37 @@ export function ModalKppn({
     }
   };
 
-  const colClass = "grid grid-cols-2 gap-4 mb-2";
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-green-600 text-base">
+      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle>
             Input Nilai Analisa Laporan Keuangan Jenis {kirim[0].periode} TA.{" "}
             {kirim[0].thang}
           </DialogTitle>
         </DialogHeader>
 
-        <p className="text-sm text-green-600 font-medium">
-          KPPN {kirim[0].nmkppn}
+        <p className="text-sm font-medium flex items-center gap-2">
+          <Building2 className="h-4 w-4 text-muted-foreground" />
+          {kirim[0].kdkppn} - KPPN {kirim[0].nmkppn}
         </p>
 
+        <div className="flex-1 overflow-y-auto">
+
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             {/* Pengesahan */}
-            <div className={colClass}>
+            <div className="flex items-end gap-4">
               <FormField
                 control={form.control}
                 name="sahlengkap"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-blue-600">
-                      &#x27A1; Pengesahan
-                    </FormLabel>
+                  <FormItem className="flex-1">
+                    <FormLabel>Pengesahan</FormLabel>
                     <FormControl>
-                      <SelectField field={field as any} count={6} />
+                      <SelectField field={field as any} count={6} placeholder="Kelengkapan" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -199,10 +204,9 @@ export function ModalKppn({
                 control={form.control}
                 name="sahsesuai"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>&nbsp;</FormLabel>
+                  <FormItem className="flex-1">
                     <FormControl>
-                      <SelectField field={field as any} count={11} />
+                      <SelectField field={field as any} count={11} placeholder="Kesesuaian" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -211,17 +215,15 @@ export function ModalKppn({
             </div>
 
             {/* Penjelasan */}
-            <div className={colClass}>
+            <div className="flex items-end gap-4">
               <FormField
                 control={form.control}
                 name="jelaslengkap"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-blue-600">
-                      &#x27A1; Penjelasan
-                    </FormLabel>
+                  <FormItem className="flex-1">
+                    <FormLabel>Penjelasan</FormLabel>
                     <FormControl>
-                      <SelectField field={field as any} count={6} />
+                      <SelectField field={field as any} count={6} placeholder="Kelengkapan" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -231,10 +233,9 @@ export function ModalKppn({
                 control={form.control}
                 name="jelassesuai"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>&nbsp;</FormLabel>
+                  <FormItem className="flex-1">
                     <FormControl>
-                      <SelectField field={field as any} count={11} />
+                      <SelectField field={field as any} count={11} placeholder="Kesesuaian" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -243,17 +244,15 @@ export function ModalKppn({
             </div>
 
             {/* Tabel */}
-            <div className={colClass}>
+            <div className="flex items-end gap-4">
               <FormField
                 control={form.control}
                 name="tabellengkap"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-blue-600">
-                      &#x27A1; Tabel
-                    </FormLabel>
+                  <FormItem className="flex-1">
+                    <FormLabel>Tabel</FormLabel>
                     <FormControl>
-                      <SelectField field={field as any} count={6} />
+                      <SelectField field={field as any} count={6} placeholder="Kelengkapan" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -263,10 +262,9 @@ export function ModalKppn({
                 control={form.control}
                 name="tabelsesuai"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>&nbsp;</FormLabel>
+                  <FormItem className="flex-1">
                     <FormControl>
-                      <SelectField field={field as any} count={11} />
+                      <SelectField field={field as any} count={11} placeholder="Kesesuaian" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -275,17 +273,15 @@ export function ModalKppn({
             </div>
 
             {/* CALK */}
-            <div className={colClass}>
+            <div className="flex items-end gap-4">
               <FormField
                 control={form.control}
                 name="calklengkap"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-blue-600">
-                      &#x27A1; CALK
-                    </FormLabel>
+                  <FormItem className="flex-1">
+                    <FormLabel>CALK</FormLabel>
                     <FormControl>
-                      <SelectField field={field as any} count={11} />
+                      <SelectField field={field as any} count={11} placeholder="Kelengkapan" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -295,10 +291,9 @@ export function ModalKppn({
                 control={form.control}
                 name="calksesuai"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>&nbsp;</FormLabel>
+                  <FormItem className="flex-1">
                     <FormControl>
-                      <SelectField field={field as any} count={31} />
+                      <SelectField field={field as any} count={31} placeholder="Kesesuaian" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -307,17 +302,15 @@ export function ModalKppn({
             </div>
 
             {/* Lampiran */}
-            <div className={colClass}>
+            <div className="flex items-end gap-4">
               <FormField
                 control={form.control}
                 name="lamplengkap"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-blue-600">
-                      &#x27A1; Lampiran
-                    </FormLabel>
+                  <FormItem className="flex-1">
+                    <FormLabel>Lampiran</FormLabel>
                     <FormControl>
-                      <SelectField field={field as any} count={8} />
+                      <SelectField field={field as any} count={8} placeholder="Kelengkapan" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -327,10 +320,9 @@ export function ModalKppn({
                 control={form.control}
                 name="lampsesuai"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>&nbsp;</FormLabel>
+                  <FormItem className="flex-1">
                     <FormControl>
-                      <SelectField field={field as any} count={9} />
+                      <SelectField field={field as any} count={9} placeholder="Kesesuaian" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -339,19 +331,27 @@ export function ModalKppn({
             </div>
 
             <div className="flex justify-end pt-2">
-              <Button
-                type="submit"
-                variant="destructive"
-                disabled={loading || form.formState.isSubmitting}
-              >
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : null}
-                Simpan
-              </Button>
             </div>
           </form>
         </Form>
+        </div>
+
+        <DialogFooter className="flex-shrink-0 flex flex-col sm:flex-row sm:justify-end gap-3">
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Tutup
+            </Button>
+            <Button
+              onClick={form.handleSubmit(onSubmit)}
+              disabled={loading || form.formState.isSubmitting}
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Simpan
+            </Button>
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

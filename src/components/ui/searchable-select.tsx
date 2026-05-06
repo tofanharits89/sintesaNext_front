@@ -45,7 +45,7 @@ export function SearchableSelect({
       items={options}
       value={selectedOption}
       onValueChange={(nextValue) => {
-        if (!nextValue) {
+        if (nextValue === undefined || nextValue === null) {
           return;
         }
 
@@ -63,8 +63,13 @@ export function SearchableSelect({
         placeholder={placeholder}
         aria-label={searchPlaceholder}
         disabled={disabled}
+        onFocus={(e) => e.target.select()}
       />
-      <ComboboxContent className="!bg-zinc-100 dark:!bg-black">
+      <ComboboxContent 
+        className="!bg-zinc-100 dark:!bg-black"
+        onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <ComboboxEmpty>{emptyMessage}</ComboboxEmpty>
         <ComboboxList>
           {(option: SearchableSelectOption) => (
@@ -72,6 +77,8 @@ export function SearchableSelect({
               key={option.value}
               value={option}
               className="data-highlighted:!bg-zinc-200 dark:data-highlighted:!bg-zinc-950"
+              onPointerDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
             >
               {option.label}
             </ComboboxItem>
