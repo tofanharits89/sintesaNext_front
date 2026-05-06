@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import BelanjaNegaraWeekly from "@/components/weekly/belanja-negara";
 import PengeluaranAkun from "@/components/weekly/pengeluaran-akun";
+import PengeluaranFungsi from "@/components/weekly/pengeluaran-fungsi";
+import RealisasiKlWeekly from "@/components/weekly/realisasi-kl";
 import { http } from "@/lib/api/httpClient";
 import { toast } from "sonner";
 
@@ -346,6 +348,41 @@ export default function WeeklyLanding() {
           }
         >
           <PengeluaranAkun />
+        </AccordionItem>
+
+        {/* 4 — Pengeluaran Fungsi */}
+        <AccordionItem
+          id="pengeluaran-fungsi"
+          title="Pengeluaran Fungsi"
+          subtitle="Komposisi Pagu Fungsi & Realisasi K/L"
+          badge="Fungsi"
+          badgeColor="amber"
+          icon={
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <line x1="9" y1="3" x2="9" y2="21" />
+            </svg>
+          }
+        >
+          <PengeluaranFungsi />
+        </AccordionItem>
+
+        {/* 5 — Realisasi K/L */}
+        <AccordionItem
+          id="realisasi-kl"
+          title="Belanja K/L"
+          subtitle="Realisasi 15 K/L dengan Pagu APBN Terbesar"
+          badge="15 K/L"
+          badgeColor="blue"
+          icon={
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <path d="M21 12H3" />
+              <path d="M12 3v18" />
+            </svg>
+          }
+        >
+          <RealisasiKlWeekly />
         </AccordionItem>
       </div>
     </div>
