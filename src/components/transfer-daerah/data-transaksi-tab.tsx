@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -14,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
 import { ResetButton } from "@/components/ui/reset-button";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { RekamDataTransaksiModal } from "./modals/rekam-data-transaksi-modal";
 import { KertasKerjaModal } from "./modals/kertas-kerja-modal";
 import tkdData from "@/data/kdkppn_tkd.json";
@@ -22,11 +22,13 @@ import { FilePenLine, FileText, Loader2, ReceiptText } from "lucide-react";
 
 interface DataTransaksiTabProps {
   // Remove selectedYear prop as this tab will manage its own year state
+  kdkanwil?: string;
+  kdkppn?: string;
 }
 
 // Live data now fetched via useDauTransaksi
 
-export function DataTransaksiTab({}: DataTransaksiTabProps) {
+export function DataTransaksiTab({ kdkanwil, kdkppn }: DataTransaksiTabProps) {
   const now = new Date();
   const defaultYear = String(now.getFullYear());
 
@@ -39,30 +41,51 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
   const [isKertasKerjaModalOpen, setIsKertasKerjaModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
+  // Sync props to internal state
+  useEffect(() => {
+    if (kdkppn) {
+      setSelectedKppn(kdkppn);
+    } else {
+      setSelectedKppn("");
+    }
+  }, [kdkppn]);
+
   // Build unique KPPN list from TKD mapping
-  const uniqueKppn = Array.from(
-    new Map(
-      (tkdData as Array<any>).map((d) => [
-        d.kdkppn,
-        { kdkppn: d.kdkppn, nmkppn: d.nmkppn },
-      ])
-    ).values()
-  ).sort((a, b) => a.kdkppn.localeCompare(b.kdkppn));
+  const uniqueKppn = useMemo(() => {
+    let base = Array.from(
+      new Map(
+        (tkdData as Array<any>).map((d) => [
+          d.kdkppn,
+          { kdkppn: d.kdkppn, nmkppn: d.nmkppn, kdkanwil: d.kdkanwil },
+        ])
+      ).values()
+    );
+
+    if (kdkanwil) {
+      base = base.filter(k => k.kdkanwil === kdkanwil);
+    }
+
+    return base.sort((a, b) => a.kdkppn.localeCompare(b.kdkppn));
+  }, [kdkanwil]);
 
   // Hierarchical: Kab/Kota depends on selected KPPN from TKD mapping
-  const filteredKabKotaOptions = selectedKppn
-    ? (tkdData as Array<any>)
-        .filter(
-          (row) =>
-            row.kdkppn === selectedKppn
-        )
-        .sort((a, b) => String(a.kdkabkota).localeCompare(String(b.kdkabkota)))
-    : [];
+  const filteredKabKotaOptions = useMemo(() => {
+    return selectedKppn
+      ? (tkdData as Array<any>)
+          .filter(
+            (row) =>
+              row.kdkppn === selectedKppn
+          )
+          .sort((a, b) => String(a.kdkabkota).localeCompare(String(b.kdkabkota)))
+      : [];
+  }, [selectedKppn]);
 
   // Clear Kab/Kota when KPPN changes
   useEffect(() => {
-    setSelectedKabKota("");
-  }, [selectedKppn]);
+    if (selectedKppn !== kdkppn) {
+      setSelectedKabKota("");
+    }
+  }, [selectedKppn, kdkppn]);
 
   // Generate years from current year back to 2020
   const currentYear = new Date().getFullYear();
@@ -89,7 +112,7 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
     fallbackStageRef.current = "none";
     setSelectedYear(defaultYear);
     setSelectedMonth(""); // Reset to empty (all months)
-    setSelectedKppn("");
+    setSelectedKppn(kdkppn || "");
     setSelectedKabKota("");
   };
 
@@ -227,10 +250,27 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
     ...(bulanNum !== undefined ? { bulan: bulanNum } : {}),
     ...(selectedKppn ? { kppn: selectedKppn } : {}),
     ...(selectedKabKota ? { kabkota: selectedKabKota } : {}),
+    kdkanwil: kdkanwil,
+    kdkppn: kdkppn,
   } as const;
 
   
-  const { rows, isLoading, error } = useDauTransaksi(params as any);
+  const { rows: rawRows, isLoading, error } = useDauTransaksi(params as any);
+
+  // Client-side filter fallback: If kdkanwil is provided, ensure we only show rows belonging to that kanwil's KPPNs.
+  // This handles cases where the backend might not strictly filter by kdkanwil when kppn is empty.
+  const rows = useMemo(() => {
+    if (!kdkanwil || !rawRows) return rawRows || [];
+    
+    // Get list of KPPNs belonging to this Kanwil
+    const kppnsInKanwil = new Set(
+      (tkdData as any[])
+        .filter((d) => d.kdkanwil === kdkanwil)
+        .map((d) => d.kdkppn)
+    );
+
+    return rawRows.filter((r) => kppnsInKanwil.has(r.kppn?.split(" - ")[0] || r.kppn));
+  }, [rawRows, kdkanwil]);
 
   const handleYearSelect = (value: string) => {
     fallbackStageRef.current = "none";
@@ -252,128 +292,93 @@ export function DataTransaksiTab({}: DataTransaksiTabProps) {
     setSelectedKabKota(value);
   };
 
-  // Disable fallback logic - respect user's filter selections even if no results
-  // useEffect(() => {
-  //   if (isLoading || rows.length > 0) {
-  //     return;
-  //   }
-  //
-  //   // Only apply fallbacks if this is the initial load and no explicit filters are selected
-  //   if (!selectedMonth && !selectedKppn && !selectedKabKota && fallbackStageRef.current === "none") {
-  //     // First fallback: try without month filter if no results for current month
-  //     if (selectedMonth) {
-  //       fallbackStageRef.current = "clearedMonth";
-  //       setSelectedMonth("");
-  //       return;
-  //     }
-  //
-  //     // Second fallback: switch to previous year when current year has no rows
-  //     if (selectedYear === defaultYear && fallbackStageRef.current !== "switchedYear") {
-  //       const fallbackYear = years.find((year) => year !== selectedYear);
-  //       if (fallbackYear) {
-  //         fallbackStageRef.current = "switchedYear";
-  //         setSelectedYear(fallbackYear);
-  //         return;
-  //       }
-  //     }
-  //   }
-  // }, [rows, isLoading, selectedMonth, selectedKppn, selectedKabKota, selectedYear, defaultYear, years]);
-
   return (
     <div className="space-y-4">
-      {/* Filter Card */}
-      <Card className="shadow-sm">
-        <CardHeader className="pb-3">
+      <Card>
+        <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ReceiptText className="h-4 w-4 text-muted-foreground" />
-              <CardTitle className="text-sm font-semibold">Filter Data Transaksi</CardTitle>
+              <CardTitle>Filter Data Transaksi</CardTitle>
             </div>
             <ResetButton onReset={handleReset} />
           </div>
         </CardHeader>
-
-        <Separator />
-
-        <CardContent className="pt-4">
+        <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="transaksi-year" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tahun</Label>
+              <Label htmlFor="transaksi-year" className="text-sm font-medium">Tahun</Label>
               <Select value={selectedYear ?? ""} onValueChange={handleYearSelect}>
-                <SelectTrigger id="transaksi-year" className="h-8 text-xs">
-                  <SelectValue className="truncate" />
+                <SelectTrigger id="transaksi-year" className="w-full">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {years.map((year) => (
-                    <SelectItem key={year} value={year} className="text-xs">{year}</SelectItem>
+                    <SelectItem key={year} value={year}>{year}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="transaksi-month" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Bulan</Label>
+              <Label htmlFor="transaksi-month" className="text-sm font-medium">Bulan</Label>
               <Select value={selectedMonth ?? ""} onValueChange={handleMonthSelect}>
-                <SelectTrigger id="transaksi-month" className="h-8 text-xs">
+                <SelectTrigger id="transaksi-month" className="w-full">
                   <SelectValue placeholder="Semua Bulan" />
                 </SelectTrigger>
                 <SelectContent>
                   {months.map((month) => (
-                    <SelectItem key={month} value={month} className="text-xs">{month}</SelectItem>
+                    <SelectItem key={month} value={month}>{month}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="transaksi-kppn" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">KPPN</Label>
-              <Select value={selectedKppn ?? ""} onValueChange={handleKppnSelect}>
-                <SelectTrigger id="transaksi-kppn" className="h-8 text-xs">
-                  <SelectValue placeholder="Semua KPPN" />
-                </SelectTrigger>
-                <SelectContent>
-                  {uniqueKppn.map((kppn) => (
-                    <SelectItem key={kppn.kdkppn} value={kppn.kdkppn} className="text-xs" title={`${kppn.kdkppn} - ${kppn.nmkppn}`}>
-                      <span className="truncate">{kppn.kdkppn} - {kppn.nmkppn}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="transaksi-kppn" className="text-sm font-medium">KPPN</Label>
+              <SearchableSelect
+                options={[
+                  { value: "", label: "Semua KPPN" },
+                  ...uniqueKppn.map(kppn => ({ value: kppn.kdkppn, label: `${kppn.kdkppn} - ${kppn.nmkppn}` }))
+                ]}
+                value={selectedKppn ?? ""}
+                onValueChange={handleKppnSelect}
+                placeholder="Semua KPPN"
+                searchPlaceholder="Cari KPPN..."
+                emptyMessage="KPPN tidak ditemukan."
+                disabled={!!kdkppn}
+              />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="transaksi-kabkota" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Kab/Kota</Label>
-              <Select value={selectedKabKota ?? ""} onValueChange={handleKabKotaSelect} disabled={!selectedKppn}>
-                <SelectTrigger id="transaksi-kabkota" className="h-8 text-xs" disabled={!selectedKppn}>
-                  <SelectValue placeholder={selectedKppn ? "Semua Kab/Kota" : "Pilih KPPN dulu"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredKabKotaOptions.map((lokasi) => (
-                    <SelectItem key={lokasi.kdkabkota} value={lokasi.kdkabkota} className="text-xs" title={`${lokasi.kdkabkota} - ${lokasi.nmkabkota}`}>
-                      <span className="truncate">{lokasi.kdkabkota} - {lokasi.nmkabkota}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="transaksi-kabkota" className="text-sm font-medium">Kab/Kota</Label>
+              <SearchableSelect
+                options={[
+                  { value: "", label: "Semua Kab/Kota" },
+                  ...filteredKabKotaOptions.map(lokasi => ({ value: String(lokasi.kdkabkota), label: `${lokasi.kdkabkota} - ${lokasi.nmkabkota}` }))
+                ]}
+                value={selectedKabKota ?? ""}
+                onValueChange={handleKabKotaSelect}
+                placeholder={selectedKppn ? "Semua Kab/Kota" : "Pilih KPPN dulu"}
+                searchPlaceholder="Cari Kab/Kota..."
+                emptyMessage="Kab/Kota tidak ditemukan."
+                disabled={!selectedKppn}
+              />
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Data Table Card */}
-      <Card className="shadow-sm">
-        <CardHeader className="pb-3">
+      <Card>
+        <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-semibold">Data Transaksi DAU</CardTitle>
+            <CardTitle>Data Transaksi DAU</CardTitle>
             {rows && (
               <span className="text-xs text-muted-foreground">{rows.length.toLocaleString("id-ID")} baris</span>
             )}
           </div>
         </CardHeader>
-
-        <Separator />
-
-        <CardContent className="pt-4">
+        <CardContent>
           {isLoading && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />

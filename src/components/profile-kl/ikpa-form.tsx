@@ -8,8 +8,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Pencil, Trash2 } from "lucide-react";
+} from "@/components/animate-ui/components/radix/dialog";
+import { Pencil, Trash2, Loader2, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { DataTable } from "@/components/ui/data-table";
+import { ColumnDef } from "@tanstack/react-table";
 
 export interface IkpaRow {
   id: number;
@@ -91,12 +96,15 @@ export default function IkpaForm({
   const [formData, setFormData] = useState<IkpaFormData>(emptyForm);
 
   useEffect(() => {
-    if (isi.length > 0 && isi[0]) {
+    if (show && isi.length > 0 && isi[0]) {
       setUpdateInfo(
         `Diupdate terakhir oleh ${isi[0].username} tanggal ${formatDate(isi[0].createdAt)}`,
       );
+    } else if (!show) {
+      setFormData(emptyForm());
+      setUpdateInfo("");
     }
-  }, [isi]);
+  }, [isi, show]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -147,115 +155,156 @@ export default function IkpaForm({
     });
   };
 
-  const inputCls =
-    "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100";
+  const columns: ColumnDef<IkpaRow>[] = [
+    {
+      id: "no",
+      header: () => <div className="text-center font-medium">No</div>,
+      cell: ({ row }) => <div className="text-center">{row.index + 1}</div>,
+    },
+    {
+      accessorKey: "thang",
+      header: () => <div className="text-center font-medium">Tahun</div>,
+      cell: ({ row }) => <div className="text-center">{row.getValue("thang")}</div>,
+    },
+    {
+      accessorKey: "periode",
+      header: () => <div className="text-center font-medium">Periode</div>,
+      cell: ({ row }) => <div className="text-center">{row.getValue("periode")}</div>,
+    },
+    {
+      accessorKey: "nilaiikpa",
+      header: () => <div className="text-center font-medium">Nilai</div>,
+      cell: ({ row }) => <div className="text-center font-semibold">{row.getValue("nilaiikpa")}</div>,
+    },
+    {
+      id: "actions",
+      header: () => <div className="text-center font-medium">Aksi</div>,
+      cell: ({ row }) => (
+        <div className="flex justify-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+            onClick={() => handleEdit(row.original.id)}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+            onClick={() => handleHapus(row.original.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl gap-0 overflow-hidden p-0">
-        <DialogHeader className="border-b px-6 py-4">
+      <DialogContent showCloseButton={false} className="sm:max-w-7xl gap-0 overflow-hidden p-0 bg-white dark:bg-card">
+        <DialogHeader className="px-6 py-4">
           <DialogTitle>Rekam Data IKPA</DialogTitle>
         </DialogHeader>
 
-        <div className="max-h-[82vh] overflow-y-auto px-6 py-5">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <form id="ikpa-form" onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">
-                    Tahun
-                  </label>
-                  <input
-                    name="input1"
-                    type="text"
-                    value={formData.input1}
-                    onChange={handleChange}
-                    placeholder="Tahun IKPA"
-                    className={inputCls}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">
-                    Nilai IKPA
-                  </label>
-                  <input
-                    name="input2"
-                    type="number"
-                    step="0.01"
-                    value={formData.input2}
-                    onChange={handleChange}
-                    placeholder="Nilai IKPA"
-                    className={inputCls}
-                  />
-                </div>
-              </div>
-            </form>
-
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-sm">
-                <thead>
-                  <tr className="bg-gray-100 text-left dark:bg-gray-700">
-                    <th className="border px-3 py-2">No</th>
-                    <th className="border px-3 py-2">Tahun</th>
-                    <th className="border px-3 py-2">Periode</th>
-                    <th className="border px-3 py-2">Nilai</th>
-                    <th className="border px-3 py-2">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {isi.map((item, idx) => (
-                    <tr
-                      key={item.id}
-                      className="even:bg-gray-50 dark:even:bg-gray-800"
+        <div className="max-h-[85vh] overflow-y-auto px-6 py-6">
+          <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
+            {/* Form Column */}
+            <div className="md:col-span-1">
+              <form id="ikpa-form" onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-4 rounded-xl border bg-muted/30 p-6">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                    Input Data Baru / Edit
+                  </h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold text-muted-foreground">Tahun</Label>
+                      <Input
+                        name="input1"
+                        value={formData.input1}
+                        onChange={handleChange}
+                        placeholder="Contoh: 2025"
+                        className="bg-white dark:bg-background"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold text-muted-foreground">Nilai IKPA</Label>
+                      <Input
+                        name="input2"
+                        type="number"
+                        step="0.01"
+                        value={formData.input2}
+                        onChange={handleChange}
+                        placeholder="0.00"
+                        className="bg-white dark:bg-background"
+                      />
+                    </div>
+                  </div>
+                  {formData.input3 && (
+                    <Button 
+                      variant="ghost" 
+                      type="button" 
+                      onClick={() => setFormData(emptyForm())}
+                      className="w-full text-xs mt-2"
                     >
-                      <td className="border px-3 py-2">{idx + 1}</td>
-                      <td className="border px-3 py-2">{item.thang}</td>
-                      <td className="border px-3 py-2">{item.periode}</td>
-                      <td className="border px-3 py-2">{item.nilaiikpa}</td>
-                      <td className="space-x-2 border px-3 py-2">
-                        <button
-                          type="button"
-                          onClick={() => handleEdit(item.id)}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleHapus(item.id)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      Batal Edit
+                    </Button>
+                  )}
+                </div>
+              </form>
+            </div>
+
+            {/* Table Column */}
+            <div className="md:col-span-2 space-y-4">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                Riwayat Data IKPA
+              </h3>
+              <DataTable 
+                columns={columns} 
+                data={isi} 
+                initialPageSize={10}
+                emptyMessage="Belum ada riwayat data IKPA."
+              />
             </div>
           </div>
+
           {updateInfo && (
-            <p className="mt-3 text-xs italic text-gray-400">{updateInfo}</p>
+            <p className="mt-8 text-xs italic text-muted-foreground border-t pt-4">
+              {updateInfo}
+            </p>
           )}
         </div>
 
-        <DialogFooter className="border-t bg-gray-50 px-6 py-4 dark:bg-gray-900">
-          <button
+        <DialogFooter className="px-6 py-4 bg-white dark:bg-card">
+          <Button
             type="button"
+            variant="outline"
             onClick={handleClose}
             disabled={loading}
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-gray-800"
+            className="px-6"
           >
             Batal
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
             form="ikpa-form"
             disabled={loading}
-            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+            className="px-8"
           >
-            {loading ? "Menyimpan..." : "Simpan"}
-          </button>
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Menyimpan...
+              </>
+            ) : (
+              <span className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Simpan
+              </span>
+            )}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

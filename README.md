@@ -20,13 +20,13 @@ A modern Next.js 15 application built for the Ministry of Finance of Indonesia, 
 ### Prerequisites
 
 - Node.js 18+ (LTS recommended)
-- npm or yarn
+- pnpm (recommended) or npm/yarn
 - Backend API running and reachable (see Configuration)
 
 ### Installation
 
 ```bash
-npm install
+pnpm install
 
 # Create .env.local (see Configuration for required keys)
 ```
@@ -35,41 +35,41 @@ npm install
 
 ```bash
 # Start development server with Turbopack (default)
-npm run dev
+pnpm dev
 
 # Start without Turbopack
-npm run dev:no-turbo
+pnpm dev:no-turbo
 ```
 
 ### Production Build
 
 ```bash
 # Build for production
-npm run build
+pnpm build
 
 # Start production server
-npm start
+pnpm start
 ```
 
 ## Available Scripts
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start development server with Turbopack |
-| `npm run dev:no-turbo` | Development without Turbopack |
-| `npm run build` | Production build (8GB memory allocation) |
-| `npm run build:analyze` | Build with bundle analyzer |
-| `npm run start` | Start production server |
-| `npm run typecheck` | TypeScript type checking |
-| `npm run lint` | Run ESLint |
-| `npm run lint:fix` | ESLint with auto-fix |
-| `npm run test` | Run Vitest (watch) |
-| `npm run test:run` | Run tests once |
-| `npm run test:ui` | Tests with Vitest UI |
-| `npm run test:coverage` | Run tests with coverage (80% threshold) |
-| `npm run clean` | Clean .next, dist, and coverage directories |
-| `npm run install:clean` | Clean install via scripts/install-clean.js |
-| `npm run analyze:bundle` | Analyze existing bundle |
+| `pnpm dev` | Start development server with Turbopack |
+| `pnpm dev:no-turbo` | Development without Turbopack |
+| `pnpm build` | Production build (8GB memory allocation) |
+| `pnpm build:analyze` | Build with bundle analyzer |
+| `pnpm start` | Start production server |
+| `pnpm typecheck` | TypeScript type checking |
+| `pnpm lint` | Run ESLint |
+| `pnpm lint:fix` | ESLint with auto-fix |
+| `pnpm test` | Run Vitest (watch) |
+| `pnpm test:run` | Run tests once |
+| `pnpm test:ui` | Tests with Vitest UI |
+| `pnpm test:coverage` | Run tests with coverage (80% threshold) |
+| `pnpm clean` | Clean .next, dist, and coverage directories |
+| `pnpm install:clean` | Clean install via scripts/install-clean.js |
+| `pnpm analyze:bundle` | Analyze existing bundle |
 
 ## Technology Stack (Current)
 
@@ -271,7 +271,7 @@ Feature-specific:
 - `CACHE_INVALIDATE_SECRET` - cache signature validation
 
 Build flags:
-- `ANALYZE` - enable bundle analyzer (`npm run build:analyze`)
+- `ANALYZE` - enable bundle analyzer (`pnpm build:analyze`)
 - `HTTPS` - enable HSTS in production
 - `CI` - ignore TS build errors in CI when true
 
@@ -302,16 +302,16 @@ Build flags:
 
 ```bash
 # Run all tests
-npm run test
+pnpm test
 
 # Run tests with UI
-npm run test:ui
+pnpm test:ui
 
 # Run tests with coverage
-npm run test:coverage
+pnpm test:coverage
 
 # Run tests once
-npm run test:run
+pnpm test:run
 ```
 
 - 80% coverage thresholds enforced across branches/functions/lines/statements
@@ -322,7 +322,7 @@ npm run test:run
 
 - React Query cache presets: static, user, dashboard, realtime, critical, financial, search
 - Image optimization for WebP and AVIF with minimum cache TTL
-- Bundle analyzer via `npm run build:analyze`
+- Bundle analyzer via `pnpm build:analyze`
 - Build memory allocation: 8GB (`--max-old-space-size=8192`)
 - Next.js output: `standalone` for Docker deployment
 
@@ -341,9 +341,9 @@ docker-compose -f ../docker-compose.prod.yml up -d
 
 ## Troubleshooting
 
-1. Build memory issues: use `npm run build`
-2. TypeScript errors: `npm run typecheck`
-3. Linting errors: `npm run lint:fix`
+1. Build memory issues: use `pnpm build`
+2. TypeScript errors: `pnpm typecheck`
+3. Linting errors: `pnpm lint:fix`
 4. Test failures: verify coverage thresholds and component tests
 
 ## License

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useForm, type Resolver } from "react-hook-form";
@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -114,18 +115,19 @@ export function ModalKanwil({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-green-600 text-base">
+      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle>
             Input Nilai Analisa Laporan Monev Kanwil Semester {kirim[0].periode}{" "}
             TA. {kirim[0].thang} [Analisa {kirim[0].analisa}]
           </DialogTitle>
         </DialogHeader>
 
-        <p className="text-sm text-green-600 font-medium">
+        <p className="text-sm font-medium">
           KANWIL {kirim[0].nmkanwil}
         </p>
 
+        <div className="flex-1 overflow-y-auto">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -287,19 +289,27 @@ export function ModalKanwil({
             />
 
             <div className="flex justify-end pt-2">
-              <Button
-                type="submit"
-                variant="destructive"
-                disabled={loading || form.formState.isSubmitting}
-              >
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : null}
-                Simpan
-              </Button>
             </div>
           </form>
         </Form>
+        </div>
+
+        <DialogFooter className="flex-shrink-0 flex flex-col sm:flex-row sm:justify-end gap-3">
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Tutup
+            </Button>
+            <Button
+              onClick={form.handleSubmit(onSubmit)}
+              disabled={loading || form.formState.isSubmitting}
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Simpan
+            </Button>
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

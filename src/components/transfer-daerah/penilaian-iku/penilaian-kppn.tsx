@@ -1,7 +1,7 @@
-﻿"use client";
+"use client";
 
-import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState, useEffect, useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -10,15 +10,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Loader2, CheckCircle } from "lucide-react";
+import { DataTable } from "@/components/ui/data-table";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
+import { Button } from "@/components/ui/button";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import { ResetButton } from "@/components/ui/reset-button";
+import { CheckCircle, SlidersHorizontal, ScrollText } from "lucide-react";
 import { toast } from "sonner";
 import { http } from "@/lib/api/httpClient";
 import { apiPath } from "@/lib/config/base-path";
@@ -49,13 +46,42 @@ export function PenilaianKppn({
   username,
   kdkppn: kdkppnUser,
 }: PenilaianKppnProps) {
+  const now = new Date();
+  const currentYear = String(now.getFullYear());
+  const currentSemester = now.getMonth() < 6 ? "I" : "II";
+
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<KppnData[]>([]);
   const [open, setOpen] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [selectedYear, setSelectedYear] = useState("2024");
-  const [selectedPeriod, setSelectedPeriod] = useState("I");
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [selectedPeriod, setSelectedPeriod] = useState(currentSemester);
+  const [selectedKppn, setSelectedKppn] = useState("");
   const [datakirim, setDataKirim] = useState<DataKirimKppn | null>(null);
+
+  const kppnOptions = useMemo(
+    () =>
+      Array.from(
+        new Map(data.map((d) => [d.kdkppn, { kdkppn: d.kdkppn, nmkppn: d.nmkppn }])).values(),
+      ).sort((a, b) => a.kdkppn.localeCompare(b.kdkppn)),
+    [data],
+  );
+
+  const filteredData = useMemo(
+    () => (selectedKppn ? data.filter((d) => d.kdkppn === selectedKppn) : data),
+    [data, selectedKppn],
+  );
+
+  const tableRows = useMemo(
+    () =>
+      filteredData.map((row, index) => ({
+        ...row,
+        no: index + 1,
+        tahun: selectedYear,
+        jenisLaporan: selectedPeriod,
+      })),
+    [filteredData, selectedYear, selectedPeriod],
+  );
 
   useEffect(() => {
     getData();
@@ -72,6 +98,12 @@ export function PenilaianKppn({
     setShowModal(false);
     setOpen("");
     getData();
+  };
+
+  const handleReset = () => {
+    setSelectedYear(currentYear);
+    setSelectedPeriod(currentSemester);
+    setSelectedKppn("");
   };
 
   const getData = async () => {
@@ -95,7 +127,12 @@ export function PenilaianKppn({
         apiPath(`/transfer-daerah/iku/referensi/${encryptedQuery}`),
         { params: { user: username } },
       );
-      setData(response.data?.result ?? []);
+      const resultData = response.data?.result ?? [];
+      const formattedData = resultData.map((d: KppnData) => ({
+        ...d,
+        nmkppn: d.nmkppn ? d.nmkppn.replace(/(?<=\b[a-zA-Z])\s+(?=[a-zA-Z]\b)/g, "") : d.nmkppn,
+      }));
+      setData(formattedData);
     } catch (error: unknown) {
       const err = error as { response?: { data?: { error?: string } } };
       toast.error(
@@ -107,78 +144,134 @@ export function PenilaianKppn({
     }
   };
 
-  return (
-    <Card>
-      <div className="flex flex-wrap gap-4 p-4">
-        <div className="flex-1 min-w-40">
-          <Label htmlFor="yearSelectKppn">Tahun:</Label>
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger id="yearSelectKppn" className="mt-1">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="2023">2023</SelectItem>
-              <SelectItem value="2024">2024</SelectItem>
-              <SelectItem value="2025">2025</SelectItem>
-              <SelectItem value="2026">2026</SelectItem>
-            </SelectContent>
-          </Select>
+  const columns: any[] = [
+    {
+      accessorKey: "no",
+      header: () => <div className="text-center font-medium">No</div>,
+      cell: ({ row }: any) => <div className="text-center">{row.getValue("no")}</div>,
+    },
+    {
+      accessorKey: "tahun",
+      header: () => <div className="text-center font-medium">Tahun</div>,
+      cell: ({ row }: any) => <div className="text-center">{row.getValue("tahun")}</div>,
+    },
+    {
+      id: "kppn",
+      header: () => <div className="text-center font-medium">KPPN</div>,
+      cell: ({ row }: any) => (
+        <div className="text-center">
+          {row.original.kdkppn} - {row.original.nmkppn}
         </div>
-        <div className="flex-1 min-w-40">
-          <Label htmlFor="periodSelectKppn">Jenis Laporan:</Label>
-          <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-            <SelectTrigger id="periodSelectKppn" className="mt-1">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="I">LK Audited</SelectItem>
-              <SelectItem value="II">LK Unaudited</SelectItem>
-            </SelectContent>
-          </Select>
+      ),
+    },
+    {
+      accessorKey: "jenisLaporan",
+      header: () => <div className="text-center font-medium">Jenis Laporan</div>,
+      cell: ({ row }: any) => <div className="text-center">{row.getValue("jenisLaporan")}</div>,
+    },
+    {
+      id: "analisa",
+      header: () => <div className="text-center font-medium">ANALISA</div>,
+      cell: ({ row }: any) => (
+        <div className="flex justify-center">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0 cursor-pointer"
+            title="Analisa"
+            onClick={() =>
+              handleModal(row.original.kdkppn, row.original.nmkppn, selectedPeriod)
+            }
+          >
+            <CheckCircle className="h-4 w-4 text-red-500" />
+          </Button>
         </div>
-      </div>
+      ),
+    },
+  ];
 
-      <CardContent className="p-4">
-        {loading ? (
-          <div className="flex justify-center items-center h-[500px]">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+  return (
+    <div className="space-y-4">
+      {/* Filter Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
+              <CardTitle>Filter</CardTitle>
+            </div>
+            <ResetButton onReset={handleReset} />
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table className="text-xs">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="align-middle">No</TableHead>
-                  <TableHead className="align-middle">Tahun</TableHead>
-                  <TableHead className="align-middle">KPPN</TableHead>
-                  <TableHead className="align-middle">Jenis Laporan</TableHead>
-                  <TableHead className="align-middle">ANALISA</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.map((row, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{selectedYear}</TableCell>
-                    <TableCell>
-                      {row.kdkppn} - {row.nmkppn}
-                    </TableCell>
-                    <TableCell>{selectedPeriod}</TableCell>
-                    <TableCell>
-                      <CheckCircle
-                        className="h-4 w-4 text-red-500 cursor-pointer"
-                        onClick={() =>
-                          handleModal(row.kdkppn, row.nmkppn, selectedPeriod)
-                        }
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="yearSelectKppn" className="text-sm font-medium">Tahun</Label>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger id="yearSelectKppn" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2023">2023</SelectItem>
+                  <SelectItem value="2024">2024</SelectItem>
+                  <SelectItem value="2025">2025</SelectItem>
+                  <SelectItem value="2026">2026</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="periodSelectKppn" className="text-sm font-medium">Jenis Laporan</Label>
+              <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                <SelectTrigger id="periodSelectKppn" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="I">LK Audited</SelectItem>
+                  <SelectItem value="II">LK Unaudited</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="kppnSelect" className="text-sm font-medium">KPPN</Label>
+              <SearchableSelect
+                options={[
+                  { value: "", label: "Semua KPPN" },
+                  ...kppnOptions.map(k => ({ value: k.kdkppn, label: `${k.kdkppn} - ${k.nmkppn}` }))
+                ]}
+                value={selectedKppn}
+                onValueChange={setSelectedKppn}
+                placeholder="Pilih KPPN"
+                searchPlaceholder="Cari kode atau nama KPPN..."
+                emptyMessage="KPPN tidak ditemukan."
+              />
+            </div>
           </div>
-        )}
-      </CardContent>
+        </CardContent>
+      </Card>
+
+      {/* Table Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ScrollText className="h-4 w-4 text-muted-foreground" />
+              <CardTitle>Nilai LK KPPN</CardTitle>
+            </div>
+            {tableRows && (
+              <span className="text-xs text-muted-foreground">
+                {tableRows.length.toLocaleString("id-ID")} baris
+              </span>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <TableSkeleton rows={10} />
+          ) : (
+            <DataTable columns={columns} data={tableRows} />
+          )}
+        </CardContent>
+      </Card>
 
       {open === "1" && datakirim && (
         <ModalKppn
@@ -190,6 +283,6 @@ export function PenilaianKppn({
           kirim={datakirim}
         />
       )}
-    </Card>
+    </div>
   );
 }

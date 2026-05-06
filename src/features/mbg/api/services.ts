@@ -59,11 +59,20 @@ function formatCount(value: number): string {
   return value.toLocaleString("id-ID");
 }
 
+export type MbgQuickStatsResponse = {
+  data: QuickStatView[];
+  _meta?: {
+    asOfJakarta?: string;
+    cacheExpiresAtUtc?: string;
+    cacheMaxAgeSeconds?: number;
+  };
+};
+
 export async function getQuickStats(
   year: string = "2026",
-): Promise<QuickStatView[]> {
+): Promise<MbgQuickStatsResponse> {
   const params = new URLSearchParams({ year });
-  const response = await apiClient.get<MbgQuickStatsApiResponse>(
+  const response = await apiClient.get<MbgQuickStatsApiResponse & { _meta?: any }>(
     `/dashboard/mbg/quick-stats?${params.toString()}`,
   );
 
@@ -71,40 +80,44 @@ export async function getQuickStats(
     throw new Error("Failed to fetch MBG quick stats");
   }
 
-  const stats = response.data;
-
-  return [
+  const raw = response.data;
+  const views: QuickStatView[] = [
     {
       label: "Total SPPG Aktif",
-      value: formatCount(stats.jumlahsppg),
+      value: formatCount(raw.jumlahsppg),
       variant: "neutral",
     },
     {
       label: "Petugas SPPG",
-      value: formatCount(stats.jumlahpetugas),
+      value: formatCount(raw.jumlahpetugas),
       variant: "neutral",
     },
     {
       label: "Supplier MBG",
-      value: formatCount(stats.jumlahsupplier),
+      value: formatCount(raw.jumlahsupplier),
       variant: "neutral",
     },
     {
       label: "Kelompok Manfaat",
-      value: formatCount(stats.jumlahkelompok),
+      value: formatCount(raw.jumlahkelompok),
       variant: "neutral",
     },
     {
       label: "Penerima Manfaat",
-      value: formatCount(stats.jumlahpenerima),
+      value: formatCount(raw.jumlahpenerima),
       variant: "neutral",
     },
     {
       label: "Total Mitra",
-      value: formatCount(stats.jumlahmitra),
+      value: formatCount(raw.jumlahmitra),
       variant: "neutral",
     },
   ];
+
+  return {
+    data: views,
+    _meta: response._meta,
+  };
 }
 
 export type RankingsData = {
@@ -191,6 +204,7 @@ export type RankedItem = {
   value: number;
   percentage: number;
   target?: number | null;
+  attainment?: number | null;
 };
 
 export type ProvRankingsData = {

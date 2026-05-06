@@ -23,7 +23,12 @@ export function useKkpSankey(
       user?.role,
       `${effectiveKanwil}-${effectiveKppn}`
     ),
-    queryFn: () => getKkpSankeyData(year, triwulan, kdkanwil, kdkppn),
+    queryFn: () => getKkpSankeyData(
+      year, 
+      triwulan, 
+      effectiveKanwil !== "all" ? effectiveKanwil : undefined, 
+      effectiveKppn !== "all" ? effectiveKppn : undefined
+    ),
     ...createQueryOptions("dashboard", {
       staleTime: 5 * 60 * 1000, // 5 minutes
       refetchOnWindowFocus: false,

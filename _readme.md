@@ -1,4 +1,4 @@
-﻿![Preview](https://github.com/user-attachments/assets/***)
+![Preview](https://github.com/user-attachments/assets/***)
 
 [![Version](https://img.shields.io/npm/v/@isoterik/react-word-cloud)](https://www.npmjs.com/package/@isoterik/react-word-cloud)
 [![Downloads](https://img.shields.io/npm/dt/@isoterik/react-word-cloud.svg)](https://www.npmjs.com/package/@isoterik/react-word-cloud)
@@ -21,12 +21,10 @@ Check out the [live demo (playground)](https://react-word-cloud-demo.vercel.app/
 
 ## Installation
 
-Install via npm or yarn:
+Install via pnpm:
 
 ```bash
-npm install @isoterik/react-word-cloud
-# or
-yarn add @isoterik/react-word-cloud
+pnpm add @isoterik/react-word-cloud
 ```
 
 ## Table of Contents

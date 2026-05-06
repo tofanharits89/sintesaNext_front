@@ -150,7 +150,7 @@ export function StackedAreaChartComponent({
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={height} minWidth={0}>
+        <ResponsiveContainer width="100%" height={height} minWidth={0} minHeight={0}>
           <AreaChart
             data={data}
             margin={{

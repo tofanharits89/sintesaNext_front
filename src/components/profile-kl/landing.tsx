@@ -13,7 +13,8 @@ import IkpaForm, { type IkpaRow } from "./ikpa-form";
 import Pdf from "./pdf";
 import { LEMBAGA_CODES } from "@/components/profile-kl/landing-kl";
 import kddept from "@/data/kddept.json";
-import { Plus } from "lucide-react";
+import { Plus, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -206,12 +207,13 @@ export default function LandingKinerja() {
             Isu Spesifik &amp; Analisa Kinerja Pelaksanaan Anggaran
           </p>
         </div>
-        <button
+        <Button
           onClick={() => setShowPdf(true)}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 print:hidden"
+          className="print:hidden"
         >
+          <FileText className="mr-2 h-4 w-4" />
           Download PDF
-        </button>
+        </Button>
       </div>
 
       {/* Filter */}
@@ -476,6 +478,12 @@ export default function LandingKinerja() {
           thang={inputValues.thang}
           dept={inputValues.dept}
           periode={inputValues.periode}
+          nmdept={deptInfo?.nmdept}
+          isuData={data}
+          trenData={dataTren}
+          temuanData={dataTemuan}
+          outputData={dataOutput}
+          ikpaData={dataIkpa}
           onDone={() => setShowPdf(false)}
         />
       )}

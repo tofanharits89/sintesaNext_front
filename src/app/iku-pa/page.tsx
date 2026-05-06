@@ -17,12 +17,9 @@ export default function IkuPaPage() {
 
       const isAdmin = user.role === "super_admin" || user.role === "co_admin";
       const isDitpa = user.role === "ditpa";
-      const isKanwil = user.role === "kanwil_djpb";
 
       if (isAdmin || isDitpa) {
         router.replace("/iku-pa/kontraktual");
-      } else if (isKanwil) {
-        router.replace("/iku-pa/apbd");
       } else {
         router.replace("/unauthorized");
       }

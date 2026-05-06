@@ -13,24 +13,53 @@ import { Input } from "@/components/ui/input";
 import { useKmkPemotongan } from "@/hooks/use-kmk-pemotongan";
 import { ConfirmationModals } from "@/components/ui/confirmation-modal";
 import { Trash2 } from "lucide-react";
+import tkdData from "@/data/kdkppn_tkd.json";
 
 interface DataPemotonganModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   data?: any;
+  kdkanwil?: string | undefined;
+  kdkppn?: string | undefined;
 }
 
 export function DataPemotonganModal({
   open,
   onOpenChange,
   data,
+  kdkanwil,
+  kdkppn,
 }: DataPemotonganModalProps) {
   const no_kmk: string | undefined = (data?.no_kmk ??
     data?.nokmk ??
     data?.noKmk ??
     data?.nomorKmk) as string | undefined;
 
-  const { rows, isLoading, error } = useKmkPemotongan(no_kmk, open);
+  const { rows: rawRows, isLoading, error } = useKmkPemotongan(no_kmk, open, kdkanwil, kdkppn);
+
+  // Client-side filter fallback for Kanwil/KPPN users
+  const rows = useMemo(() => {
+    if (!rawRows) return [];
+    
+    // If KPPN user, filter strictly by kdkppn
+    if (kdkppn) {
+      const targetKppn = String(kdkppn).trim().padStart(3, '0');
+      return rawRows.filter(r => String(r.kdkppn || "").trim().padStart(3, '0') === targetKppn);
+    }
+
+    // If Kanwil user, filter by KPPNs belonging to that Kanwil
+    if (kdkanwil) {
+      const targetKanwil = String(kdkanwil).trim().padStart(2, '0');
+      const kppnsInKanwil = new Set(
+        (tkdData as any[])
+          .filter((d) => String(d.kdkanwil || "").trim().padStart(2, '0') === targetKanwil)
+          .map((d) => String(d.kdkppn || "").trim().padStart(3, '0'))
+      );
+      return rawRows.filter(r => kppnsInKanwil.has(String(r.kdkppn || "").trim().padStart(3, '0')));
+    }
+
+    return rawRows;
+  }, [rawRows, kdkanwil, kdkppn]);
 
   const handleDelete = async (item: any) => {
     // TODO: Wire up actual delete API for pemotongan item

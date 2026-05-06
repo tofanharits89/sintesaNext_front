@@ -47,14 +47,25 @@ const fetcher = async (url: string) => {
   return result?.data ?? result;
 };
 
-export function useKmkPemotongan(no_kmk?: string, enabled: boolean = true) {
+export function useKmkPemotongan(
+  no_kmk?: string,
+  enabled: boolean = true,
+  kdkanwil?: string,
+  kdkppn?: string
+) {
+  const queryParts: string[] = [];
+  if (no_kmk) queryParts.push(`no_kmk=${encodeURIComponent(no_kmk)}`);
+  if (kdkanwil) queryParts.push(`kdkanwil=${encodeURIComponent(kdkanwil)}`);
+  if (kdkppn) queryParts.push(`kdkppn=${encodeURIComponent(kdkppn)}`);
+
   const url =
     no_kmk && enabled
-? apiPath(`/transfer-daerah/dau/kmk/pemotongan?no_kmk=${encodeURIComponent(no_kmk)}`)
+      ? apiPath(`/transfer-daerah/dau/kmk/pemotongan?${queryParts.join("&")}`)
       : null;
 
   const { data, error, isLoading, refetch } = useQuery<RawPemotonganItem[]>({
-    queryKey: ["kmk-pemotongan", { no_kmk }],
+    queryKey: ["kmk-pemotongan", { no_kmk, kdkanwil, kdkppn }],
+
     queryFn: () => fetcher(url!),
     enabled: !!url && enabled,
     refetchOnWindowFocus: false,

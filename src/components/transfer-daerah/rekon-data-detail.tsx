@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
+  DialogFooter,
+} from "@/components/animate-ui/components/radix/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -147,169 +147,164 @@ export function RekonDataDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] md:max-w-4xl max-h-[90vh] overflow-auto p-0">
-        {/* Header */}
-        <DialogHeader className="px-5 pt-5 pb-3">
-          <DialogTitle className="flex items-center gap-2 text-sm font-semibold">
+      <DialogContent
+        showCloseButton={false}
+        className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden"
+      >
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle className="flex items-center gap-2">
             <GitCompareArrows className="h-4 w-4 text-emerald-600 shrink-0" />
             Rekonsilisasi DAU &mdash; Sintesa vs OMSPAN TKD
           </DialogTitle>
-          {/* Context badges */}
-          <div className="flex flex-wrap gap-1.5 pt-1">
-            <Badge variant="outline" className="text-[10px] font-normal px-2 py-0.5">
+          <div className="flex flex-wrap gap-2 pt-1">
+            <Badge variant="outline">
               TA {thang}
             </Badge>
-            <Badge variant="outline" className="text-[10px] font-normal px-2 py-0.5">
+            <Badge variant="outline">
               KPPN {kdkppn}
             </Badge>
-            <Badge variant="outline" className="text-[10px] font-normal px-2 py-0.5">
+            <Badge variant="outline">
               Pemda {kdpemda}
             </Badge>
-            <Badge variant="outline" className="text-[10px] font-normal px-2 py-0.5">
+            <Badge variant="outline">
               Bulan {bulan}
             </Badge>
           </div>
         </DialogHeader>
 
-        <Separator />
-
-        <div className="px-5 py-4">
+        <div className="flex-1 overflow-y-auto py-4">
           {isLoading ? (
             <div className="flex flex-col items-center gap-2 py-12">
               <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
-              <p className="text-xs text-muted-foreground">Memuat data rekon...</p>
+              <p className="text-sm text-muted-foreground">Memuat data rekon...</p>
             </div>
           ) : errorDetail ? (
-            <div className="rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3 text-xs text-destructive">
+            <div className="rounded-md border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
               {String((errorDetail as Error).message || errorDetail)}
             </div>
           ) : (
-            <div className="space-y-4">
-              {/* Main comparison table */}
+            <div className="space-y-6">
               <div className="overflow-x-auto rounded-md border border-border">
-                <table className="w-full text-xs border-collapse">
-                  <thead>
-                    {/* Row 1: group headers */}
-                    <tr className="bg-muted/60 text-foreground">
-                      <th rowSpan={3} className="border border-border px-2 py-1.5 text-center align-middle font-semibold whitespace-nowrap">KPPN</th>
-                      <th rowSpan={3} className="border border-border px-2 py-1.5 text-center align-middle font-semibold whitespace-nowrap">Pemda</th>
-                      <th rowSpan={3} className="border border-border px-2 py-1.5 text-center align-middle font-semibold whitespace-nowrap">Bulan</th>
-                      <th rowSpan={3} className="border border-border px-2 py-1.5 text-center align-middle font-semibold whitespace-nowrap">Alokasi</th>
-                      <th colSpan={2} className="border border-border px-2 py-1.5 text-center font-semibold bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/60 hover:bg-muted/60">
+                      <TableHead rowSpan={2} className="h-12 border-b text-center align-middle font-medium whitespace-nowrap">KPPN</TableHead>
+                      <TableHead rowSpan={2} className="h-12 border-b text-center align-middle font-medium whitespace-nowrap">Pemda</TableHead>
+                      <TableHead rowSpan={2} className="h-12 border-b text-center align-middle font-medium whitespace-nowrap">Bulan</TableHead>
+                      <TableHead rowSpan={2} className="h-12 border-b text-center align-middle font-medium whitespace-nowrap">Alokasi</TableHead>
+                      <TableHead colSpan={2} className="h-12 border-b bg-blue-50 text-center font-medium text-blue-700 dark:bg-blue-950/30 dark:text-blue-300">
                         Sintesa
-                      </th>
-                      <th colSpan={2} className="border border-border px-2 py-1.5 text-center font-semibold bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300">
+                      </TableHead>
+                      <TableHead colSpan={2} className="h-12 border-b bg-amber-50 text-center font-medium text-amber-700 dark:bg-amber-950/30 dark:text-amber-300">
                         OMSPAN
-                      </th>
-                    </tr>
-                    {/* Row 2: sub-headers */}
-                    <tr className="bg-muted/40">
-                      <th className="border border-border px-2 py-1 text-center font-medium text-blue-600 dark:text-blue-400">Penundaan</th>
-                      <th className="border border-border px-2 py-1 text-center font-medium text-blue-600 dark:text-blue-400">Potongan</th>
-                      <th className="border border-border px-2 py-1 text-center font-medium text-amber-600 dark:text-amber-400">Penundaan</th>
-                      <th className="border border-border px-2 py-1 text-center font-medium text-amber-600 dark:text-amber-400">Potongan</th>
-                    </tr>
-                  </thead>
-                  <tbody className="font-mono">
+                      </TableHead>
+                    </TableRow>
+                    <TableRow className="bg-muted/40 hover:bg-muted/40">
+                      <TableHead className="h-10 text-center font-medium text-blue-600 dark:text-blue-400">Penundaan</TableHead>
+                      <TableHead className="h-10 text-center font-medium text-blue-600 dark:text-blue-400">Potongan</TableHead>
+                      <TableHead className="h-10 text-center font-medium text-amber-600 dark:text-amber-400">Penundaan</TableHead>
+                      <TableHead className="h-10 text-center font-medium text-amber-600 dark:text-amber-400">Potongan</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {displayData.length === 0 ? (
-                      <tr>
-                        <td colSpan={8} className="border border-border px-2 py-6 text-center text-muted-foreground text-xs">
+                      <TableRow>
+                        <TableCell colSpan={8} className="h-24 text-center text-sm text-muted-foreground">
                           Tidak ada data untuk parameter yang dipilih
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ) : (
                       displayData.map((row, idx) => {
                         const tundaBeda = row.PENUNDAANOMSPAN !== row.TUNDASINTESA;
                         const potongBeda = row.POTONGANOMSPAN !== row.POTONGANSINTESA;
                         return (
-                          <tr key={idx} className="hover:bg-muted/30 transition-colors">
-                            <td className="border border-border px-2 py-1.5 text-center align-middle font-sans">
-                              <span className="font-medium">{row.KDKPPN}</span>
-                              <span className="text-muted-foreground text-[10px] block">{row.NMKPPN}</span>
-                            </td>
-                            <td className="border border-border px-2 py-1.5 text-center align-middle font-sans">
-                              <span className="font-medium">{row.KDPEMDA}</span>
-                              <span className="text-muted-foreground text-[10px] block">{row.NMPEMDA}</span>
-                            </td>
-                            <td className="border border-border px-2 py-1.5 text-center align-middle font-sans whitespace-nowrap">
+                          <TableRow key={idx} className="hover:bg-muted/30">
+                            <TableCell className="text-center align-middle">
+                              <div className="space-y-0.5">
+                                <div className="font-medium">{row.KDKPPN}</div>
+                                <div className="text-xs text-muted-foreground">{row.NMKPPN}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-center align-middle">
+                              <div className="space-y-0.5">
+                                <div className="font-medium">{row.KDPEMDA}</div>
+                                <div className="text-xs text-muted-foreground">{row.NMPEMDA}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-center align-middle whitespace-nowrap">
                               {row.NMBULAN}
-                            </td>
-                            <td className="border border-border px-2 py-1.5 text-right align-middle">
+                            </TableCell>
+                            <TableCell className="text-right align-middle font-mono tabular-nums">
                               {formatNumber(row.ALOKASI_BULAN)}
-                            </td>
-                            {/* Sintesa Penundaan */}
-                            <td className={cn(
-                              "border border-border px-2 py-1.5 text-right align-middle transition-colors",
+                            </TableCell>
+                            <TableCell className={cn(
+                              "text-right align-middle font-mono tabular-nums transition-colors",
                               tundaBeda
                                 ? "bg-destructive text-destructive-foreground font-semibold"
                                 : "bg-blue-50/50 dark:bg-blue-950/20 text-blue-800 dark:text-blue-200"
                             )}>
                               {formatNumber(row.TUNDASINTESA)}
-                            </td>
-                            {/* Sintesa Potongan */}
-                            <td className={cn(
-                              "border border-border px-2 py-1.5 text-right align-middle transition-colors",
+                            </TableCell>
+                            <TableCell className={cn(
+                              "text-right align-middle font-mono tabular-nums transition-colors",
                               potongBeda
                                 ? "bg-destructive text-destructive-foreground font-semibold"
                                 : "bg-blue-50/50 dark:bg-blue-950/20 text-blue-800 dark:text-blue-200"
                             )}>
                               {formatNumber(row.POTONGANSINTESA)}
-                            </td>
-                            {/* OMSPAN Penundaan */}
-                            <td className={cn(
-                              "border border-border px-2 py-1.5 text-right align-middle transition-colors",
+                            </TableCell>
+                            <TableCell className={cn(
+                              "text-right align-middle font-mono tabular-nums transition-colors",
                               tundaBeda
                                 ? "bg-destructive text-destructive-foreground font-semibold"
                                 : "bg-amber-50/50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-200"
                             )}>
                               {formatNumber(row.PENUNDAANOMSPAN)}
-                            </td>
-                            {/* OMSPAN Potongan */}
-                            <td className={cn(
-                              "border border-border px-2 py-1.5 text-right align-middle transition-colors",
+                            </TableCell>
+                            <TableCell className={cn(
+                              "text-right align-middle font-mono tabular-nums transition-colors",
                               potongBeda
                                 ? "bg-destructive text-destructive-foreground font-semibold"
                                 : "bg-amber-50/50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-200"
                             )}>
                               {formatNumber(row.POTONGANOMSPAN)}
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         );
                       })
                     )}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
 
-              {/* Per-akun potongan breakdown */}
               {potonganRows.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  <p className="text-sm font-medium text-muted-foreground">
                     Detail Per Akun Potongan
                   </p>
                   <div className="overflow-x-auto rounded-md border border-border">
-                    <Table className="text-xs">
+                    <Table>
                       <TableHeader>
-                        <TableRow className="bg-muted/60">
-                          <TableHead className="text-center text-xs font-semibold h-8">No</TableHead>
-                          <TableHead className="text-center text-xs font-semibold h-8 text-blue-600 dark:text-blue-400">Akun (Sintesa)</TableHead>
-                          <TableHead className="text-right text-xs font-semibold h-8 text-blue-600 dark:text-blue-400">Nilai (Sintesa)</TableHead>
-                          <TableHead className="text-center text-xs font-semibold h-8 text-amber-600 dark:text-amber-400">Akun (OMSPAN)</TableHead>
-                          <TableHead className="text-right text-xs font-semibold h-8 text-amber-600 dark:text-amber-400">Nilai (OMSPAN)</TableHead>
+                        <TableRow className="bg-muted/60 hover:bg-muted/60">
+                          <TableHead className="h-10 text-center font-medium">No</TableHead>
+                          <TableHead className="h-10 text-center font-medium text-blue-600 dark:text-blue-400">Akun (Sintesa)</TableHead>
+                          <TableHead className="h-10 text-right font-medium text-blue-600 dark:text-blue-400">Nilai (Sintesa)</TableHead>
+                          <TableHead className="h-10 text-center font-medium text-amber-600 dark:text-amber-400">Akun (OMSPAN)</TableHead>
+                          <TableHead className="h-10 text-right font-medium text-amber-600 dark:text-amber-400">Nilai (OMSPAN)</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {potonganRows.map((row, idx) => (
                           <TableRow key={`potongan-${idx}`} className="hover:bg-muted/30">
-                            <TableCell className="text-center text-muted-foreground tabular-nums">{idx + 1}</TableCell>
+                            <TableCell className="text-center">{idx + 1}</TableCell>
                             <TableCell className="text-center font-mono">{row.akun_pusat || "-"}</TableCell>
-                            <TableCell className="text-right tabular-nums">{formatNumber(row.nilai_pusat)}</TableCell>
+                            <TableCell className="text-right font-mono tabular-nums">{formatNumber(row.nilai_pusat)}</TableCell>
                             <TableCell className="text-center font-mono">
                               {!row.akun_omspan || row.akun_omspan === "0" ? (
                                 <span className="text-muted-foreground">-</span>
                               ) : row.akun_omspan}
                             </TableCell>
-                            <TableCell className="text-right tabular-nums">{formatNumber(row.nilai_omspan)}</TableCell>
+                            <TableCell className="text-right font-mono tabular-nums">{formatNumber(row.nilai_omspan)}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -320,6 +315,11 @@ export function RekonDataDetailModal({
             </div>
           )}
         </div>
+        <DialogFooter className="flex-shrink-0 gap-2 sm:justify-end">
+          <Button onClick={() => onOpenChange(false)} className="min-w-24">
+            Tutup
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

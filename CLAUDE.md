@@ -5,22 +5,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ### Development
-- `npm run dev` - Start dev server with Turbopack
-- `npm run dev:no-turbo` - Dev server without Turbopack
-- `npm run typecheck` - TypeScript type checking
-- `npm run lint` / `npm run lint:fix` - ESLint
+- `pnpm dev` - Start dev server with Turbopack
+- `pnpm dev:no-turbo` - Dev server without Turbopack
+- `pnpm typecheck` - TypeScript type checking
+- `pnpm lint` / `pnpm lint:fix` - ESLint
 
 ### Testing
-- `npm run test` - Run Vitest in watch mode
-- `npm run test:ui` - Vitest with UI
-- `npm run test:run` - Run tests once
-- `npm run test:coverage` - Run tests with coverage (80% threshold enforced)
+- `pnpm test` - Run Vitest in watch mode
+- `pnpm test:ui` - Vitest with UI
+- `pnpm test:run` - Run tests once
+- `pnpm test:coverage` - Run tests with coverage (80% threshold enforced)
 
 ### Build & Deploy
-- `npm run build` - Production build (uses 8GB memory allocation)
-- `npm run build:analyze` - Build with bundle analyzer
-- `npm start` - Start production server
-- `npm run clean` - Clean .next, dist, and coverage directories
+- `pnpm build` - Production build (uses 8GB memory allocation)
+- `pnpm build:analyze` - Build with bundle analyzer
+- `pnpm start` - Start production server
+- `pnpm clean` - Clean .next, dist, and coverage directories
 
 ## Architecture Overview
 
@@ -156,7 +156,7 @@ queryKeyFactories.user.profile()
 - **Route folders**: kebab-case (match URLs, e.g., `data-makrokesra`)
 - **Import order**: React/Next → external libs → aliases → relative paths
 - Use TypeScript strict mode
-- Run `npm run lint` and `npm run typecheck` before pushing
+- Run `pnpm lint` and `pnpm typecheck` before pushing
 
 ### Testing
 

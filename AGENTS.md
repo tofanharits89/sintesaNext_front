@@ -10,12 +10,12 @@
 
 ## Build, Test, and Development Commands
 
-- `npm run dev` / `npm run dev:no-turbo`: start the local dev server (Turbopack on/off).
-- `npm run build` / `npm run start`: production build and serve.
-- `npm run lint` / `npm run lint:fix`: lint with Next.js ESLint rules.
-- `npm run typecheck`: TypeScript type checking.
-- `npm run test`, `test:run`, `test:ui`, `test:coverage`: Vitest watch, single-run, UI, and coverage modes.
-- `npm run build:analyze` and `npm run clean`: bundle analysis and cleanup.
+- `pnpm dev` / `pnpm dev:no-turbo`: start the local dev server (Turbopack on/off).
+- `pnpm build` / `pnpm start`: production build and serve.
+- `pnpm lint` / `pnpm lint:fix`: lint with Next.js ESLint rules.
+- `pnpm typecheck`: TypeScript type checking.
+- `pnpm test`, `test:run`, `test:ui`, `test:coverage`: Vitest watch, single-run, UI, and coverage modes.
+- `pnpm build:analyze` and `pnpm clean`: bundle analysis and cleanup.
 
 ## Coding Style & Naming Conventions
 

@@ -24,7 +24,12 @@ export function useKkpDashboard(
       user?.role, 
       `${effectiveKanwil}-${effectiveKppn}`
     ),
-    queryFn: () => getKkpDashboardData(year, triwulan, kdkanwil, kdkppn),
+    queryFn: () => getKkpDashboardData(
+      year, 
+      triwulan, 
+      effectiveKanwil !== "all" ? effectiveKanwil : undefined, 
+      effectiveKppn !== "all" ? effectiveKppn : undefined
+    ),
     ...createQueryOptions("dashboard", {
       staleTime: 12 * 60 * 60 * 1000, // 12 hours
       refetchOnMount: "always",

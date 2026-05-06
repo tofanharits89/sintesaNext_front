@@ -31,7 +31,7 @@ export const PrognosisChart = ({
   return (
     <Section title="Grafik Proyeksi Realisasi Anggaran (%)">
       <div className="h-[400px] w-full mt-4">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
           <LineChart
             data={chartData}
             margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
