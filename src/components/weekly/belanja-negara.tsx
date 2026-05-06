@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import * as XLSX from "xlsx";
 import { useBelanjaNegaraWeekly, type BelanjaNegaraRow } from "@/hooks/use-belanja-negara-weekly";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -118,6 +119,15 @@ export default function BelanjaNegaraWeekly() {
     setAppliedParams({ tglSd2026, tglAwal2026, tglAkhir2026, tglYoy2025, tglReal2025 });
   };
 
+  const handleExportExcel = () => {
+    if (!data || data.length === 0) return;
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "BelanjaNegara");
+    const currentDate = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `Belanja_Negara_${currentDate}.xlsx`);
+  };
+
   // Derive title info from params
   const titleDate = appliedParams.tglAkhir2026
     ? new Date(appliedParams.tglAkhir2026).toLocaleDateString("id-ID", {
@@ -180,25 +190,39 @@ export default function BelanjaNegaraWeekly() {
           </div>
         </div>
 
-        <button
-          className="bn-apply-btn"
-          onClick={handleApply}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <span className="bn-spinner" />
-              Memuat...
-            </>
-          ) : (
-            <>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-              Tampilkan Data
-            </>
-          )}
-        </button>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <button
+            className="bn-apply-btn"
+            onClick={handleExportExcel}
+            disabled={isLoading || data.length === 0}
+            style={{ backgroundColor: "#16a34a", color: "white" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Excel
+          </button>
+          
+          <button
+            className="bn-apply-btn"
+            onClick={handleApply}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <span className="bn-spinner" />
+                Memuat...
+              </>
+            ) : (
+              <>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                Tampilkan Data
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* ── Error ───────────────────────────────────────────────────────────── */}

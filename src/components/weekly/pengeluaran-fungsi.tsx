@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import * as XLSX from "xlsx";
 import {
   PieChart,
   Pie,
@@ -198,6 +199,15 @@ export default function PengeluaranFungsi() {
     setTabelLoading(false);
   }, [tglAkhir]);
 
+  const handleExportExcel = () => {
+    if (!tabelData || tabelData.length === 0) return;
+    const ws = XLSX.utils.json_to_sheet(tabelData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "PengeluaranFungsi");
+    const currentDate = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `Pengeluaran_Fungsi_${currentDate}.xlsx`);
+  };
+
   const isLoading = pieLoading || tabelLoading;
 
   return (
@@ -218,18 +228,26 @@ export default function PengeluaranFungsi() {
             <input id="pf-tgl-akhir" type="date" className="pa-date-input"
               value={tglAkhir} onChange={(e) => setTglAkhir(e.target.value)} />
           </div>
-          <button className="pa-load-btn" onClick={handleLoad} disabled={isLoading}>
-            {isLoading ? (
-              <><span className="bn-spinner" /> Memuat...</>
-            ) : (
-              <>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-                </svg>
-                Tampilkan
-              </>
-            )}
-          </button>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <button className="pa-load-btn" onClick={handleExportExcel} disabled={isLoading || tabelData.length === 0} style={{ backgroundColor: "#16a34a" }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Excel
+            </button>
+            <button className="pa-load-btn" onClick={handleLoad} disabled={isLoading}>
+              {isLoading ? (
+                <><span className="bn-spinner" /> Memuat...</>
+              ) : (
+                <>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                  </svg>
+                  Tampilkan
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
