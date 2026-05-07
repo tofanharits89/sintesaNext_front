@@ -475,8 +475,8 @@ export default function MonevKkpDirektoratPaPage() {
         onValueChange={setActiveTab}
         className="w-full gap-3"
       >
-        <div className="border-b border-border/50 pb-3 mb-0">
-          <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-0">
+        <div className="border-b border-border/50 pb-3 mb-0 overflow-x-auto overflow-y-hidden">
+          <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-1 md:grid-cols-5 gap-2 md:gap-0 min-w-[800px]">
             <TabsTrigger
               value="ringkasan-kanwil"
               className="h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap"
@@ -508,6 +508,14 @@ export default function MonevKkpDirektoratPaPage() {
               <Building2 className="h-4 w-4 mr-2" />
               <span>Monitoring Laporan KPPN</span>
             </TabsTrigger>
+
+            <TabsTrigger
+              value="data-transaksi"
+              className="h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap"
+            >
+              <LayoutList className="h-4 w-4 mr-2" />
+              <span>Data Transaksi</span>
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -532,6 +540,10 @@ export default function MonevKkpDirektoratPaPage() {
 
           <TabsContent value="monitoring-kppn" className="space-y-4">
             <DirektoratPaContent contentType="monitoring-kppn" />
+          </TabsContent>
+
+          <TabsContent value="data-transaksi" className="space-y-4">
+            <DirektoratPaContent contentType="data-transaksi" />
           </TabsContent>
         </TabsContents>
       </Tabs>

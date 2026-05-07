@@ -30,7 +30,8 @@ import {
   getRingkasanKanwilColumns, 
   getRingkasanKppnColumns, 
   getMonitoringKanwilColumns, 
-  getMonitoringKppnColumns 
+  getMonitoringKppnColumns,
+  getTransaksiColumns
 } from "./direktorat-pa/columns";
 import { useDirektoratPaData } from "./direktorat-pa/hooks/use-direktorat-pa-data";
 import { DirektoratPaFilter } from "./direktorat-pa/direktorat-pa-filter";
@@ -46,6 +47,7 @@ export const DirektoratPaContent = forwardRef<
     ringkasanData,
     monitoringKanwilData,
     monitoringKppnData,
+    transaksiData,
     isLoading,
     selectedYear,
     setSelectedYear,
@@ -63,6 +65,15 @@ export const DirektoratPaContent = forwardRef<
     kppnRefList,
     isLoadingKppnRef,
     fetchRingkasanData,
+    fetchTransaksiData,
+    exportTransaksiToExcel,
+    transaksiPagination,
+    setTransaksiPagination,
+    totalTransaksi,
+    ringkasanPagination,
+    setRingkasanPagination,
+    totalRingkasan,
+    grandTotals,
   } = useDirektoratPaData(contentType);
 
   // Modal state
@@ -209,24 +220,22 @@ export const DirektoratPaContent = forwardRef<
     onViewRingkasan: handleViewRingkasan,
   };
 
-  // Apply client-side status filter for monitoring tabs
-  const filteredMonitoringKanwilData =
-    selectedStatus === "all"
-      ? monitoringKanwilData
-      : monitoringKanwilData.filter((d) => d.status === selectedStatus);
-
-  const filteredMonitoringKppnData =
-    selectedStatus === "all"
-      ? monitoringKppnData
-      : monitoringKppnData.filter((d) => d.status === selectedStatus);
-
   const getColumnsAndData = (): { columns: any[]; data: any[] } => {
     switch (contentType) {
-      case "ringkasan-kanwil": return { columns: getRingkasanKanwilColumns(columnHandlers), data: ringkasanData };
-      case "ringkasan-kppn": return { columns: getRingkasanKppnColumns(columnHandlers), data: ringkasanData };
-      case "monitoring-kanwil": return { columns: getMonitoringKanwilColumns(columnHandlers), data: filteredMonitoringKanwilData };
-      case "monitoring-kppn": return { columns: getMonitoringKppnColumns(columnHandlers), data: filteredMonitoringKppnData };
-      default: return { columns: getRingkasanKanwilColumns(columnHandlers), data: ringkasanData };
+      case "ringkasan-kanwil":
+        return {
+          columns: getRingkasanKanwilColumns(columnHandlers, grandTotals),
+          data: ringkasanData,
+        };
+      case "ringkasan-kppn":
+        return {
+          columns: getRingkasanKppnColumns(columnHandlers, grandTotals),
+          data: ringkasanData,
+        };
+      case "monitoring-kanwil": return { columns: getMonitoringKanwilColumns(columnHandlers), data: monitoringKanwilData };
+      case "monitoring-kppn": return { columns: getMonitoringKppnColumns(columnHandlers), data: monitoringKppnData };
+      case "data-transaksi": return { columns: getTransaksiColumns(grandTotals), data: transaksiData };
+      default: return { columns: [], data: [] };
     }
   };
 
@@ -238,6 +247,7 @@ export const DirektoratPaContent = forwardRef<
       case "ringkasan-kppn": return "Ringkasan Laporan per KPPN";
       case "monitoring-kanwil": return "Monitoring Laporan Kanwil";
       case "monitoring-kppn": return "Monitoring Laporan KPPN";
+      case "data-transaksi": return "Data Transaksi KKP";
       default: return "Ringkasan Laporan per Kanwil";
     }
   };
@@ -311,6 +321,7 @@ export const DirektoratPaContent = forwardRef<
         activeKppnList={activeKppnList}
         isLoadingKanwilRef={isLoadingKanwilRef}
         isLoadingKppnRef={isLoadingKppnRef}
+        {...(contentType === "data-transaksi" ? { onExportExcel: exportTransaksiToExcel } : {})}
       />
 
       <Card>
@@ -320,8 +331,30 @@ export const DirektoratPaContent = forwardRef<
             <DataTable 
               columns={columns} 
               data={data} 
-              initialPageSize={25} 
-              showFooter={contentType === "monitoring-kanwil" || contentType === "monitoring-kppn" || contentType === "ringkasan-kppn" || contentType === "ringkasan-kanwil"}
+              initialPageSize={10} 
+              showFooter={contentType === "monitoring-kanwil" || contentType === "monitoring-kppn" || contentType === "ringkasan-kppn" || contentType === "ringkasan-kanwil" || contentType === "data-transaksi"}
+              manualPagination={contentType === "data-transaksi" || contentType === "ringkasan-kanwil" || contentType === "ringkasan-kppn"}
+              rowCount={
+                contentType === "data-transaksi" 
+                  ? totalTransaksi 
+                  : (contentType === "ringkasan-kanwil" || contentType === "ringkasan-kppn")
+                  ? totalRingkasan
+                  : undefined
+              }
+              controlledPagination={
+                contentType === "data-transaksi"
+                  ? transaksiPagination
+                  : (contentType === "ringkasan-kanwil" || contentType === "ringkasan-kppn")
+                  ? ringkasanPagination
+                  : undefined
+              }
+              onPaginationChange={
+                contentType === "data-transaksi"
+                  ? setTransaksiPagination
+                  : (contentType === "ringkasan-kanwil" || contentType === "ringkasan-kppn")
+                  ? setRingkasanPagination
+                  : undefined
+              }
             />
           )}
         </CardContent>

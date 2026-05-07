@@ -72,6 +72,10 @@ interface DataTableProps<TData, TValue> {
   showFooter?: boolean;
   // Custom message when no data is available
   emptyMessage?: string;
+  // Enable manual pagination (server-side)
+  manualPagination?: boolean;
+  // Total row count for manual pagination
+  rowCount?: number;
 }
 
 export function DataTable<TData, TValue>({
@@ -89,6 +93,8 @@ export function DataTable<TData, TValue>({
   footerInfoText,
   showFooter = false,
   emptyMessage = "No results.",
+  manualPagination = false,
+  rowCount,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -99,13 +105,10 @@ export function DataTable<TData, TValue>({
   });
   const effectivePagination = controlledPagination ?? uncontrolledPagination;
 
-  const table = useReactTable({
+  const tableOptions: any = {
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     autoResetPageIndex,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -122,15 +125,26 @@ export function DataTable<TData, TValue>({
       
       onPaginationChange?.(next);
     },
-    manualPagination: false, // We want client-side pagination since we pass the full dataset
+    manualPagination,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       pagination: effectivePagination,
     },
+  };
 
-  });
+  if (!manualPagination) {
+    tableOptions.getPaginationRowModel = getPaginationRowModel();
+    tableOptions.getSortedRowModel = getSortedRowModel();
+    tableOptions.getFilteredRowModel = getFilteredRowModel();
+  }
+
+  if (rowCount !== undefined) {
+    tableOptions.rowCount = rowCount;
+  }
+
+  const table = useReactTable(tableOptions);
 
   // Expose table instance to parent for external pagination controls
   useEffect(() => {
@@ -411,7 +425,7 @@ export function DataTable<TData, TValue>({
                 Showing{" "}
                 {(() => {
                   const { pageIndex, pageSize } = table.getState().pagination;
-                  const total = table.getFilteredRowModel().rows.length;
+                  const total = rowCount ?? table.getFilteredRowModel().rows.length;
                   const start = total === 0 ? 0 : pageIndex * pageSize + 1;
                   const end = Math.min((pageIndex + 1) * pageSize, total);
                   return `${start}-${end} of ${total}`;

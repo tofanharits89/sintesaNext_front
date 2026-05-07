@@ -6,6 +6,7 @@ import {
   RingkasanData,
   MonitoringKanwilData,
   MonitoringKppnData,
+  TransaksiData,
 } from "../types";
 
 export const useDirektoratPaData = (contentType: string) => {
@@ -44,6 +45,12 @@ export const useDirektoratPaData = (contentType: string) => {
   const [monitoringKppnData, setMonitoringKppnData] = useState<
     MonitoringKppnData[]
   >([]);
+  const [transaksiData, setTransaksiData] = useState<TransaksiData[]>([]);
+  const [transaksiPagination, setTransaksiPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+  const [totalTransaksi, setTotalTransaksi] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
   // Filter state
@@ -61,6 +68,13 @@ export const useDirektoratPaData = (contentType: string) => {
   >([]);
   const [isLoadingKanwilRef, setIsLoadingKanwilRef] = useState(false);
 
+  const [ringkasanPagination, setRingkasanPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+  const [totalRingkasan, setTotalRingkasan] = useState(0);
+  const [grandTotals, setGrandTotals] = useState<any>(null);
+
   const fetchRingkasanData = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -68,22 +82,28 @@ export const useDirektoratPaData = (contentType: string) => {
       let kppnParam = "";
       let kanwilParam = "";
       if (contentType === "ringkasan-kppn" && selectedKppn !== "all") {
-        kppnParam = `&kdkppn=${selectedKppn}`;
+        kppnParam = selectedKppn;
       }
       if (
         (contentType === "ringkasan-kanwil" ||
           contentType === "ringkasan-kppn") &&
         selectedKanwil !== "all"
       ) {
-        kanwilParam = `&kdkanwil=${selectedKanwil}`;
+        kanwilParam = selectedKanwil;
       }
-      const apiUrl = apiPath(
-        `/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}${kanwilParam}${kppnParam}`,
-      );
 
-      const response = await fetch(apiUrl, { credentials: "include" });
-      if (!response.ok) throw new Error("Gagal mengambil data ringkasan");
-      const result = await response.json();
+      const page = ringkasanPagination.pageIndex + 1;
+      const limit = ringkasanPagination.pageSize;
+
+      const { getKkpKppnData } = await import("@/features/monev-kkp/api/services");
+      const result = await getKkpKppnData(
+        selectedYear,
+        triwulan,
+        page,
+        limit,
+        kanwilParam || undefined,
+        kppnParam || undefined
+      );
 
       const mappedData: RingkasanData[] = result.data.map(
         (item: any, index: number) => ({
@@ -124,6 +144,8 @@ export const useDirektoratPaData = (contentType: string) => {
         }),
       );
       setRingkasanData(mappedData);
+      setTotalRingkasan(result.total);
+      setGrandTotals(result.totals);
     } catch (error) {
       console.error(error);
       toast.error("Gagal mengambil data ringkasan");
@@ -136,6 +158,7 @@ export const useDirektoratPaData = (contentType: string) => {
     selectedYear,
     selectedKanwil,
     selectedKppn,
+    ringkasanPagination,
   ]);
 
   const fetchMonitoringKanwilData = useCallback(async () => {
@@ -216,6 +239,104 @@ export const useDirektoratPaData = (contentType: string) => {
     }
   }, [selectedPeriode, selectedYear, selectedKanwil, selectedKppn]);
 
+  const fetchTransaksiData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const triwulan = selectedPeriode.replace("Q", "");
+      let kppnParam = "";
+      let kanwilParam = "";
+      if (selectedKppn !== "all") {
+        kppnParam = `&kdkppn=${selectedKppn}`;
+      }
+      if (selectedKanwil !== "all") {
+        kanwilParam = `&kdkanwil=${selectedKanwil}`;
+      }
+      
+      const page = transaksiPagination.pageIndex + 1;
+      const limit = transaksiPagination.pageSize;
+      
+      const apiUrl = apiPath(
+        `/monev-kkp/direktorat/data-transaksi?tahun=${selectedYear}&triwulan=${triwulan}${kanwilParam}${kppnParam}&page=${page}&limit=${limit}`,
+      );
+
+      const response = await fetch(apiUrl, { credentials: "include" });
+      if (!response.ok) throw new Error("Gagal mengambil data transaksi");
+      const result = await response.json();
+
+      setTransaksiData(result.data || []);
+      setTotalTransaksi(result.total || 0);
+      setGrandTotals(result.totals || null);
+    } catch (error) {
+      console.error(error);
+      toast.error("Gagal mengambil data transaksi");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedPeriode, selectedYear, selectedKanwil, selectedKppn, transaksiPagination]);
+
+  const exportTransaksiToExcel = useCallback(async () => {
+    try {
+      const triwulan = selectedPeriode.replace("Q", "");
+      let kppnParam = "";
+      let kanwilParam = "";
+      if (selectedKppn !== "all") {
+        kppnParam = `&kdkppn=${selectedKppn}`;
+      }
+      if (selectedKanwil !== "all") {
+        kanwilParam = `&kdkanwil=${selectedKanwil}`;
+      }
+      
+      // Fetch a large amount to get "all" data
+      const apiUrl = apiPath(
+        `/monev-kkp/direktorat/data-transaksi?tahun=${selectedYear}&triwulan=${triwulan}${kanwilParam}${kppnParam}&page=1&limit=100000`,
+      );
+
+      toast.info("Sedang menyiapkan data Excel, harap tunggu...");
+      const response = await fetch(apiUrl, { credentials: "include" });
+      if (!response.ok) throw new Error("Gagal mengambil data untuk export");
+      const result = await response.json();
+      const data = result.data || [];
+
+      if (data.length === 0) {
+        toast.error("Tidak ada data untuk diunduh");
+        return;
+      }
+
+      // Dynamic import XLSX for better bundle size
+      const XLSX = await import("xlsx");
+      
+      const excelData = data.map((item: any, index: number) => ({
+        "No": index + 1,
+        "Nama Kanwil": item.nmlokasi,
+        "Nama KPPN": item.nmkppn,
+        "Kode Satker": item.kdsatker,
+        "Nama Satker": item.nmsatker,
+        "Tanggal BAST": item.tg_bast ? new Date(item.tg_bast).toLocaleDateString('id-ID') : '-',
+        "Nomor BAST": item.no_bast || '-',
+        "Tanggal SPM": item.tg_spm ? new Date(item.tg_spm).toLocaleDateString('id-ID') : '-',
+        "Nomor SPM": item.no_spm || '-',
+        "Tanggal SP2D": item.tg_sp2d ? new Date(item.tg_sp2d).toLocaleDateString('id-ID') : '',
+        "Nomor SP2D": item.no_sp2d,
+        "Nilai Transaksi KKP (Rp)": item.nilai_transaksi,
+        "Jenis SPM/SP2D": item.jns_kkp_prinsipal,
+        "Program/Kegiatan/Output/Akun": `${item.kdprogram || 'XX'}.${item.kdgiat || 'XXXX'}.${item.kdoutput || 'XXX'}.${item.kdakun}`,
+        "Kode Akun": item.kdakun,
+        "Nama Akun": item.nmakun
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(excelData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Data Transaksi KKP");
+      
+      const fileName = `Data_Transaksi_KKP_${selectedYear}_${selectedPeriode}_${new Date().getTime()}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+      toast.success("Data berhasil diunduh");
+    } catch (error) {
+      console.error(error);
+      toast.error("Gagal mengunduh data Excel");
+    }
+  }, [selectedPeriode, selectedYear, selectedKanwil, selectedKppn]);
+
   const fetchKppnRefList = useCallback(async (kdkanwil?: string) => {
     setIsLoadingKppnRef(true);
     try {
@@ -288,6 +409,8 @@ export const useDirektoratPaData = (contentType: string) => {
       fetchMonitoringKanwilData();
     } else if (contentType === "monitoring-kppn") {
       fetchMonitoringKppnData();
+    } else if (contentType === "data-transaksi") {
+      fetchTransaksiData();
     }
   }, [
     user,
@@ -299,7 +422,13 @@ export const useDirektoratPaData = (contentType: string) => {
     fetchRingkasanData,
     fetchMonitoringKanwilData,
     fetchMonitoringKppnData,
+    fetchTransaksiData,
   ]);
+
+  useEffect(() => {
+    setTransaksiPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    setRingkasanPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  }, [selectedYear, selectedPeriode, selectedKanwil, selectedKppn]);
 
   useEffect(() => {
     if (!user) return;
@@ -325,6 +454,7 @@ export const useDirektoratPaData = (contentType: string) => {
     ringkasanData,
     monitoringKanwilData,
     monitoringKppnData,
+    transaksiData,
     isLoading,
     selectedYear,
     setSelectedYear,
@@ -342,5 +472,14 @@ export const useDirektoratPaData = (contentType: string) => {
     kppnRefList,
     isLoadingKppnRef,
     fetchRingkasanData,
+    fetchTransaksiData,
+    exportTransaksiToExcel,
+    transaksiPagination,
+    setTransaksiPagination,
+    totalTransaksi,
+    ringkasanPagination,
+    setRingkasanPagination,
+    totalRingkasan,
+    grandTotals,
   };
 };

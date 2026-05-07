@@ -8,7 +8,8 @@ import {
 } from "@/components/ui/select";
 import { ResetButton } from "@/components/ui/reset-button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { Building2 } from "lucide-react";
+import { Building2, FileDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface DirektoratPaFilterProps {
   contentType: string;
@@ -27,6 +28,7 @@ interface DirektoratPaFilterProps {
   activeKppnList: { value: string; label: string }[];
   isLoadingKanwilRef: boolean;
   isLoadingKppnRef: boolean;
+  onExportExcel?: (() => void) | (() => Promise<void>);
 }
 
 const STATUS_OPTIONS = [
@@ -52,6 +54,7 @@ export const DirektoratPaFilter = ({
   activeKppnList,
   isLoadingKanwilRef,
   isLoadingKppnRef,
+  onExportExcel,
 }: DirektoratPaFilterProps) => {
   const years = ["2026", "2025", "2024", "2023"];
   const periodes = [
@@ -89,7 +92,20 @@ export const DirektoratPaFilter = ({
             <span className="font-medium">Direktorat Pelaksanaan Anggaran</span>
             <span className="text-muted-foreground">— Menampilkan data agregat dari seluruh Kanwil dan KPPN</span>
           </div>
-          <ResetButton onReset={handleReset} />
+          <div className="flex items-center gap-2">
+            {onExportExcel && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onExportExcel}
+                className="flex items-center gap-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+              >
+                <FileDown className="h-4 w-4" />
+                <span className="hidden sm:inline">Unduh Data Excel</span>
+              </Button>
+            )}
+            <ResetButton onReset={handleReset} />
+          </div>
         </div>
       </CardHeader>
       <CardContent>
