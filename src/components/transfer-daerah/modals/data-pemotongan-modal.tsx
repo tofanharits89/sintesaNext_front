@@ -84,11 +84,11 @@ export function DataPemotonganModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="max-w-[95vw] md:max-w-[1200px] h-[85vh] flex flex-col overflow-hidden w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
-        <DialogHeader>
+      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle>Data Pemotongan - {no_kmk || "-"}</DialogTitle>
         </DialogHeader>
-        <div className="flex-1 overflow-hidden flex flex-col min-h-0 px-3 py-3">
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col min-h-0 py-3">
           {!no_kmk ? (
             <div className="p-3 text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-md">
               Data KMK terpilih tidak memiliki parameter lengkap untuk memuat
@@ -234,7 +234,7 @@ export function DataPemotonganModal({
             </>
           )}
         </div>
-        <DialogFooter className="flex items-center justify-end">
+        <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2 flex items-center justify-end">
           <Button
             variant="destructive"
             className="w-24"

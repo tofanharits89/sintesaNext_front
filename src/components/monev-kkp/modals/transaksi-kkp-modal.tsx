@@ -142,222 +142,224 @@ export function TransaksiKkpModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="max-w-7xl sm:max-w-7xl max-h-[90vh] overflow-y-auto"
+        className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0"
       >
-        <DialogHeader>
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle>Detail Transaksi KKP</DialogTitle>
         </DialogHeader>
 
-        {isLoading ? (
-          <div className="space-y-6 py-2">
-            {/* Skeleton for Header Info */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm bg-primary/5 p-4 rounded-lg">
-              <div className="space-y-1">
-                <span className="text-muted-foreground text-xs uppercase font-semibold">Kementerian/Lembaga</span>
-                <Skeleton className="h-5 w-48 bg-muted-foreground/20 mt-1" />
-              </div>
-              <div className="space-y-1">
-                <span className="text-muted-foreground text-xs uppercase font-semibold">Satuan Kerja</span>
-                <Skeleton className="h-5 w-64 bg-muted-foreground/20 mt-1" />
-              </div>
-              <div className="space-y-1">
-                <span className="text-muted-foreground text-xs uppercase font-semibold">Periode</span>
-                <Skeleton className="h-5 w-40 bg-muted-foreground/20 mt-1" />
-              </div>
-            </div>
-
-            {/* Skeleton for Table */}
-            <div className="border rounded-lg p-8">
-              <div className="space-y-3">
-                <Skeleton className="h-8 w-full bg-muted-foreground/10" />
-                <Skeleton className="h-8 w-full bg-muted-foreground/10" />
-                <Skeleton className="h-8 w-full bg-muted-foreground/10" />
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-6 py-2">
-            {/* Info section */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm bg-primary/5 p-4 rounded-lg">
-              {data[0] && (
+        <div className="flex-1 overflow-y-auto p-6">
+          {isLoading ? (
+            <div className="space-y-6 py-2">
+              {/* Skeleton for Header Info */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm bg-primary/5 p-4 rounded-lg">
                 <div className="space-y-1">
                   <span className="text-muted-foreground text-xs uppercase font-semibold">Kementerian/Lembaga</span>
+                  <Skeleton className="h-5 w-48 bg-muted-foreground/20 mt-1" />
+                </div>
+                <div className="space-y-1">
+                  <span className="text-muted-foreground text-xs uppercase font-semibold">Satuan Kerja</span>
+                  <Skeleton className="h-5 w-64 bg-muted-foreground/20 mt-1" />
+                </div>
+                <div className="space-y-1">
+                  <span className="text-muted-foreground text-xs uppercase font-semibold">Periode</span>
+                  <Skeleton className="h-5 w-40 bg-muted-foreground/20 mt-1" />
+                </div>
+              </div>
+
+              {/* Skeleton for Table */}
+              <div className="border rounded-lg p-8">
+                <div className="space-y-3">
+                  <Skeleton className="h-8 w-full bg-muted-foreground/10" />
+                  <Skeleton className="h-8 w-full bg-muted-foreground/10" />
+                  <Skeleton className="h-8 w-full bg-muted-foreground/10" />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6 py-2">
+              {/* Info section */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm bg-primary/5 p-4 rounded-lg">
+                {data[0] && (
+                  <div className="space-y-1">
+                    <span className="text-muted-foreground text-xs uppercase font-semibold">Kementerian/Lembaga</span>
+                    <div className="font-medium mt-1">
+                      {data[0].kddept} – {data[0].nmdept}
+                    </div>
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <span className="text-muted-foreground text-xs uppercase font-semibold">Satuan Kerja</span>
                   <div className="font-medium mt-1">
-                    {data[0].kddept} – {data[0].nmdept}
+                    {kdsatker}
+                    {namaSatker ? ` – ${namaSatker}` : ""}
                   </div>
                 </div>
-              )}
-              <div className="space-y-1">
-                <span className="text-muted-foreground text-xs uppercase font-semibold">Satuan Kerja</span>
-                <div className="font-medium mt-1">
-                  {kdsatker}
-                  {namaSatker ? ` – ${namaSatker}` : ""}
+                <div className="space-y-1">
+                  <span className="text-muted-foreground text-xs uppercase font-semibold">Periode</span>
+                  <div className="font-medium mt-1">
+                    {periodeLabels[triwulan] ?? `Triwulan ${triwulan}`} {tahun}
+                  </div>
                 </div>
               </div>
-              <div className="space-y-1">
-                <span className="text-muted-foreground text-xs uppercase font-semibold">Periode</span>
-                <div className="font-medium mt-1">
-                  {periodeLabels[triwulan] ?? `Triwulan ${triwulan}`} {tahun}
-                </div>
-              </div>
-            </div>
 
-            {/* Table */}
-            <div className="border rounded-lg overflow-hidden">
-              {groups.length === 0 ? (
-                <div className="py-10 text-center text-muted-foreground">
-                  Tidak ada data transaksi.
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs border-collapse">
-                    <thead className="bg-muted">
-                      <tr>
-                        <th
-                          rowSpan={2}
-                          className="p-3 text-center whitespace-nowrap border-b border-border font-semibold"
-                        >
-                          No.
-                        </th>
-                        <th
-                          colSpan={3}
-                          className="p-3 text-center whitespace-nowrap border-b border-border font-semibold"
-                        >
-                          Nilai Transaksi (SP2D based)
-                        </th>
-                        <th
-                          rowSpan={2}
-                          className="p-3 text-center whitespace-nowrap border-b border-border font-semibold"
-                        >
-                          Jenis KKP (Prinsipal)
-                        </th>
-                        <th
-                          rowSpan={2}
-                          className="p-3 text-center whitespace-nowrap border-b border-border font-semibold"
-                        >
-                          Jumlah Transaksi (BAST based)
-                        </th>
-                        <th
-                          rowSpan={2}
-                          className="p-3 text-center whitespace-nowrap border-b border-border font-semibold"
-                        >
-                          Kode Akun
-                        </th>
-                        <th
-                          rowSpan={2}
-                          className="p-3 text-center whitespace-nowrap border-b border-border font-semibold"
-                        >
-                          Nama Akun
-                        </th>
-                        <th
-                          rowSpan={2}
-                          className="p-3 text-center whitespace-nowrap border-b border-border font-semibold"
-                        >
-                          Nilai (Rp)
-                        </th>
-                      </tr>
-                      <tr>
-                        <th className="p-3 text-center whitespace-nowrap border-b border-border font-semibold">
-                          Tanggal SP2D
-                        </th>
-                        <th className="p-3 text-center whitespace-nowrap border-b border-border font-semibold">
-                          No SP2D
-                        </th>
-                        <th className="p-3 text-center whitespace-nowrap border-b border-border font-semibold">
-                          Nilai (Rp)
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {groups.map((g, gi) =>
-                        g.rows.map((row, ri) => (
-                          <tr
-                            key={`${g.no_sp2d}-${ri}`}
-                            className="border-t hover:bg-muted/40 transition-colors"
+              {/* Table */}
+              <div className="border rounded-lg overflow-hidden">
+                {groups.length === 0 ? (
+                  <div className="py-10 text-center text-muted-foreground">
+                    Tidak ada data transaksi.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs border-collapse">
+                      <thead className="bg-muted">
+                        <tr>
+                          <th
+                            rowSpan={2}
+                            className="p-3 text-center whitespace-nowrap border-b border-border font-semibold"
                           >
-                            {ri === 0 && (
-                              <>
-                                <td
-                                  rowSpan={g.rows.length}
-                                  className="p-3 text-center border-b border-border align-middle"
-                                >
-                                  {gi + 1}
-                                </td>
-                                <td
-                                  rowSpan={g.rows.length}
-                                  className="p-3 text-center whitespace-nowrap border-b border-border align-middle"
-                                >
-                                  {formatDate(g.tg_sp2d)}
-                                </td>
-                                <td
-                                  rowSpan={g.rows.length}
-                                  className="p-3 text-center whitespace-nowrap border-b border-border align-middle font-mono"
-                                >
-                                  {g.no_sp2d}
-                                </td>
-                                <td
-                                  rowSpan={g.rows.length}
-                                  className="p-3 text-right font-mono border-b border-border align-middle pr-3"
-                                >
-                                  Rp {formatRupiah(g.nilai_sp2d)}
-                                </td>
-                              </>
-                            )}
-                            <td className="p-3 text-center whitespace-nowrap border-b border-border">
-                              {row.jns_kkp_prinsipal}
-                            </td>
-                            <td className="p-3 text-center border-b border-border">
-                              {row.jml_transaksi}
-                            </td>
-                            <td className="p-3 text-center border-b border-border font-mono">
-                              {row.kdakun}
-                            </td>
-                            <td
-                              className="p-3 text-left border-b border-border max-w-[200px] truncate"
-                              title={row.nmakun}
+                            No.
+                          </th>
+                          <th
+                            colSpan={3}
+                            className="p-3 text-center whitespace-nowrap border-b border-border font-semibold"
+                          >
+                            Nilai Transaksi (SP2D based)
+                          </th>
+                          <th
+                            rowSpan={2}
+                            className="p-3 text-center whitespace-nowrap border-b border-border font-semibold"
+                          >
+                            Jenis KKP (Prinsipal)
+                          </th>
+                          <th
+                            rowSpan={2}
+                            className="p-3 text-center whitespace-nowrap border-b border-border font-semibold"
+                          >
+                            Jumlah Transaksi (BAST based)
+                          </th>
+                          <th
+                            rowSpan={2}
+                            className="p-3 text-center whitespace-nowrap border-b border-border font-semibold"
+                          >
+                            Kode Akun
+                          </th>
+                          <th
+                            rowSpan={2}
+                            className="p-3 text-center whitespace-nowrap border-b border-border font-semibold"
+                          >
+                            Nama Akun
+                          </th>
+                          <th
+                            rowSpan={2}
+                            className="p-3 text-center whitespace-nowrap border-b border-border font-semibold"
+                          >
+                            Nilai (Rp)
+                          </th>
+                        </tr>
+                        <tr>
+                          <th className="p-3 text-center whitespace-nowrap border-b border-border font-semibold">
+                            Tanggal SP2D
+                          </th>
+                          <th className="p-3 text-center whitespace-nowrap border-b border-border font-semibold">
+                            No SP2D
+                          </th>
+                          <th className="p-3 text-center whitespace-nowrap border-b border-border font-semibold">
+                            Nilai (Rp)
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {groups.map((g, gi) =>
+                          g.rows.map((row, ri) => (
+                            <tr
+                              key={`${g.no_sp2d}-${ri}`}
+                              className="border-t hover:bg-muted/40 transition-colors"
                             >
-                              {row.nmakun}
-                            </td>
-                            <td className="p-3 text-right font-mono border-b border-border pr-3">
-                              Rp {formatRupiah(row.nilai_akun)}
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                    <tfoot className="bg-muted font-semibold">
-                      <tr>
-                        <td
-                          colSpan={2}
-                          className="p-3 border-t border-border"
-                        />
-                        <td className="p-3 text-center border-t border-border">
-                          Total
-                        </td>
-                        <td className="p-3 text-right font-mono border-t border-border pr-3">
-                          Rp {formatRupiah(totalNilaiSp2d)}
-                        </td>
-                        <td className="p-3 border-t border-border" />
-                        <td className="p-3 text-center border-t border-border">
-                          {totalJmlTransaksi}
-                        </td>
-                        <td
-                          colSpan={2}
-                          className="p-3 border-t border-border"
-                        />
-                        <td className="p-3 text-right font-mono border-t border-border pr-3">
-                          Rp {formatRupiah(totalNilaiAkun)}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              )}
+                              {ri === 0 && (
+                                <>
+                                  <td
+                                    rowSpan={g.rows.length}
+                                    className="p-3 text-center border-b border-border align-middle"
+                                  >
+                                    {gi + 1}
+                                  </td>
+                                  <td
+                                    rowSpan={g.rows.length}
+                                    className="p-3 text-center whitespace-nowrap border-b border-border align-middle"
+                                  >
+                                    {formatDate(g.tg_sp2d)}
+                                  </td>
+                                  <td
+                                    rowSpan={g.rows.length}
+                                    className="p-3 text-center whitespace-nowrap border-b border-border align-middle font-mono"
+                                  >
+                                    {g.no_sp2d}
+                                  </td>
+                                  <td
+                                    rowSpan={g.rows.length}
+                                    className="p-3 text-right font-mono border-b border-border align-middle pr-3"
+                                  >
+                                    Rp {formatRupiah(g.nilai_sp2d)}
+                                  </td>
+                                </>
+                              )}
+                              <td className="p-3 text-center whitespace-nowrap border-b border-border">
+                                {row.jns_kkp_prinsipal}
+                              </td>
+                              <td className="p-3 text-center border-b border-border">
+                                {row.jml_transaksi}
+                              </td>
+                              <td className="p-3 text-center border-b border-border font-mono">
+                                {row.kdakun}
+                              </td>
+                              <td
+                                className="p-3 text-left border-b border-border max-w-[200px] truncate"
+                                title={row.nmakun}
+                              >
+                                {row.nmakun}
+                              </td>
+                              <td className="p-3 text-right font-mono border-b border-border pr-3">
+                                Rp {formatRupiah(row.nilai_akun)}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                      <tfoot className="bg-muted font-semibold">
+                        <tr>
+                          <td
+                            colSpan={2}
+                            className="p-3 border-t border-border"
+                          />
+                          <td className="p-3 text-center border-t border-border">
+                            Total
+                          </td>
+                          <td className="p-3 text-right font-mono border-t border-border pr-3">
+                            Rp {formatRupiah(totalNilaiSp2d)}
+                          </td>
+                          <td className="p-3 border-t border-border" />
+                          <td className="p-3 text-center border-t border-border">
+                            {totalJmlTransaksi}
+                          </td>
+                          <td
+                            colSpan={2}
+                            className="p-3 border-t border-border"
+                          />
+                          <td className="p-3 text-right font-mono border-t border-border pr-3">
+                            Rp {formatRupiah(totalNilaiAkun)}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        <DialogFooter className="gap-2 sm:gap-2">
+        <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button onClick={() => onOpenChange(false)}>
             Tutup
           </Button>

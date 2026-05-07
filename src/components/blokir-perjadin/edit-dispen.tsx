@@ -182,9 +182,9 @@ const EditDispen: React.FC<EditDispenProps> = ({
     <Dialog open={show} onOpenChange={(open) => !open && handleModalClose()}>
       <DialogContent
         showCloseButton={false}
-        className="w-[95vw] max-w-2xl sm:max-w-2xl"
+        className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0"
       >
-        <DialogHeader>
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle className="flex items-center gap-2">
             <i className="bi bi-back text-primary" />
             Rekam Dispensasi Blokir
@@ -198,7 +198,8 @@ const EditDispen: React.FC<EditDispenProps> = ({
           initialValues={initialValues}
         >
           {({ handleSubmit, handleChange, values, touched, errors }) => (
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+              <div className="flex-1 space-y-6 overflow-y-auto p-6">
               <div className="rounded-lg border bg-card p-4 sm:p-6">
                 <div className="space-y-2">
                   <Label htmlFor="dispensasi_blokir">Nilai Dispensasi</Label>
@@ -220,8 +221,9 @@ const EditDispen: React.FC<EditDispenProps> = ({
                   </ErrorMessage>
                 </div>
               </div>
+            </div>
 
-              <DialogFooter className="gap-2 sm:gap-2">
+              <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
                 <Button
                   type="button"
                   variant="outline"

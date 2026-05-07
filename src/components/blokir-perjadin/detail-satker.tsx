@@ -141,18 +141,18 @@ export default function DetailSatkerBlokir({
     >
       <DialogContent
         showCloseButton={false}
-        className="w-[95vw] max-w-6xl sm:max-w-6xl max-h-[90vh] overflow-hidden flex flex-col"
+        className="max-w-6xl sm:max-w-6xl max-h-[90vh] flex flex-col p-0 gap-0"
       >
-        <DialogHeader>
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle className="flex items-center gap-2">
             <i className="bi bi-briefcase-fill text-primary" />
             Satker yang Sudah dan Belum Revisi Blokir
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden">
-          <div className="h-full rounded-lg border bg-card">
-            <div className="max-h-[60vh] overflow-auto">
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="rounded-lg border bg-card">
+            <div className="overflow-auto">
               <Table>
                 <TableHeader className="sticky top-0 z-10 bg-muted/60 backdrop-blur-sm">
                   <TableRow>
@@ -230,7 +230,7 @@ export default function DetailSatkerBlokir({
           )}
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-2">
+        <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button
             type="button"
             variant="outline"

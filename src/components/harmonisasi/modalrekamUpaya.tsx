@@ -203,12 +203,12 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && onHide()}>
-      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle>Rekam Upaya Harmonisasi</DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto py-2 px-1">
+        <div className="flex-1 overflow-y-auto p-6">
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
@@ -367,7 +367,7 @@ export default function RekamUpaya({ show, onHide }: RekamUpayaProps) {
           )}
         </div>
 
-        <DialogFooter className="flex-shrink-0 mt-4">
+        <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button variant="outline" onClick={onHide} type="button">
             Tutup
           </Button>

@@ -162,14 +162,14 @@ export default function ModalRekamKontrak({
 
   return (
     <Dialog open={show} onOpenChange={handleModalClose}>
-      <DialogContent className="w-full max-w-5xl sm:max-w-6xl max-h-[90vh] flex flex-col overflow-hidden w-[95vw] max-w-7xl sm:max-w-7xl" showCloseButton={false}>
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent className="w-full max-w-5xl sm:max-w-6xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden w-[95vw] max-w-7xl sm:max-w-7xl" showCloseButton={false}>
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle className="flex items-center justify-center gap-2 text-xl font-bold">
             <span>Data Dispensasi Kontrak</span>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="w-full flex-1 overflow-hidden space-y-4">
+        <div className="w-full flex-1 overflow-y-auto p-6 space-y-4">
           <Tabs
             value={activeTab}
             onValueChange={(value: string) => {
@@ -328,7 +328,7 @@ export default function ModalRekamKontrak({
           </Tabs>
         </div>
 
-        <DialogFooter className="flex-shrink-0 border-t pt-4">
+        <DialogFooter className="p-6 pt-4 flex-shrink-0 border-t">
           <Button variant="outline" onClick={handleModalClose}>
             Tutup
           </Button>

@@ -127,13 +127,14 @@ export function MakrokesraModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="max-w-4xl sm:max-w-4xl w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
-        <DialogHeader>
+      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle>
             {data ? "Edit Data Makrokesra" : "Tambah Data Makrokesra"}
           </DialogTitle>
         </DialogHeader>
-        <div className="grid gap-6 py-4">
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="grid gap-6">
           {/* Form Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Tahun */}
@@ -279,8 +280,9 @@ export function MakrokesraModal({
             />
           </div>
         </div>
+      </div>
 
-        <DialogFooter>
+        <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button variant="outline" onClick={handleClose}>
             Batal
           </Button>

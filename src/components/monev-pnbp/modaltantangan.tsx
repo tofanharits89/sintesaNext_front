@@ -386,15 +386,15 @@ export default function RekamanTantangan({
 
   return (
     <Dialog open={show} onOpenChange={onHide}>
-      <DialogContent showCloseButton={false} className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col w-[95vw] max-w-7xl sm:max-w-7xl">
-        <DialogHeader>
+      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle className="flex items-center gap-2">
             <MessageSquareText className="text-green-600" />
             Aspek {clusterTitle[jenis as number]}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden flex gap-0">
+        <div className="flex-1 overflow-hidden flex gap-0 p-6">
           {/* Left Navigation */}
           <div className="w-1/3 border-r pr-4 flex flex-col">
               <Tabs
@@ -474,7 +474,7 @@ export default function RekamanTantangan({
             </form>
           </div>
         </div>
-        <DialogFooter className="flex-shrink-0 border-t pt-4">
+        <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button variant="outline" type="button" onClick={onHide}>
             Tutup
           </Button>

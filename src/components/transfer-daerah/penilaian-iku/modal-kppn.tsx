@@ -168,20 +168,19 @@ export function ModalKppn({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle>
             Input Nilai Analisa Laporan Keuangan Jenis {kirim[0].periode} TA.{" "}
             {kirim[0].thang}
           </DialogTitle>
         </DialogHeader>
 
-        <p className="text-sm font-medium flex items-center gap-2">
-          <Building2 className="h-4 w-4 text-muted-foreground" />
-          {kirim[0].kdkppn} - KPPN {kirim[0].nmkppn}
-        </p>
-
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto p-6">
+          <p className="text-sm font-medium flex items-center gap-2 mb-4">
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+            {kirim[0].kdkppn} - KPPN {kirim[0].nmkppn}
+          </p>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
@@ -336,7 +335,7 @@ export function ModalKppn({
         </Form>
         </div>
 
-        <DialogFooter className="flex-shrink-0 flex flex-col sm:flex-row sm:justify-end gap-3">
+        <DialogFooter className="p-6 pt-4 flex flex-col sm:flex-row sm:justify-end gap-3">
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Tutup

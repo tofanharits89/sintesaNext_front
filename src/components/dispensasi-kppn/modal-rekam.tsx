@@ -218,12 +218,12 @@ const Rekam: React.FC<Props> = ({ show, onHide }) => {
 
   return (
     <Dialog open={show} onOpenChange={handleModalClose}>
-      <DialogContent showCloseButton={false} className="max-w-4xl sm:max-w-4xl w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
-        <DialogHeader>
+      <DialogContent showCloseButton={false} className="max-w-4xl sm:max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle>Rekam Dispensasi Kontrak KPPN</DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-6 py-4">
+        <div className="flex-1 overflow-y-auto p-6">
           <Formik
             validationSchema={validationSchema}
             enableReinitialize={true}
@@ -455,7 +455,7 @@ const Rekam: React.FC<Props> = ({ show, onHide }) => {
           </Formik>
         </div>
 
-        <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-3">
+        <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleModalClose}>
               <X className="mr-2 h-4 w-4" /> Batal

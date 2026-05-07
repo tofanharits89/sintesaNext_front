@@ -311,16 +311,16 @@ export function NewMessageDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh] flex flex-col overflow-hidden"
+        className="w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden"
       >
-        <DialogHeader>
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle>Pesan Baru</DialogTitle>
           <DialogDescription>
             Pilih penerima dan buat pesan.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 flex-1 overflow-y-auto">
+        <div className="space-y-4 flex-1 overflow-y-auto p-6">
           {/* User Selection */}
           {!selectedUser ? (
             <div className="space-y-3">
@@ -453,7 +453,7 @@ export function NewMessageDialog({
             </div>
           )}
         </div>
-        <DialogFooter className="mt-2">
+        <DialogFooter className="p-6 pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Batal
           </Button>
