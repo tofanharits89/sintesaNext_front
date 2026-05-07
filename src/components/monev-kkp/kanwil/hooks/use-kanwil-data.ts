@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { apiPath } from "@/lib/config/base-path";
 import { useAuth } from "@/hooks/useAuth";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
-import { RingkasanKanwilData, MonitoringKppnData } from "../types";
+import { RingkasanKanwilData, MonitoringKppnData, TransaksiData } from "../types";
 
 const normalizeStatus = (status: unknown) =>
   String(status || "").trim() === "1" ? "sent" : "not_sent";
@@ -69,7 +69,7 @@ const buildMonitoringFallbackFromRingkasan = (rows: any[]): MonitoringKppnData[]
 };
 
 export const useKanwilData = (
-  contentType: "ringkasan" | "monitoring",
+  contentType: "ringkasan" | "monitoring" | "transaksi",
   onPeriodeChange?: (year: string, periode: string) => void
 ) => {
   const { user, filterDataByRole } = useAuth();
@@ -89,6 +89,7 @@ export const useKanwilData = (
 
   const [ringkasanData, setRingkasanData] = useState<RingkasanKanwilData[]>([]);
   const [monitoringData, setMonitoringData] = useState<MonitoringKppnData[]>([]);
+  const [transaksiData, setTransaksiData] = useState<TransaksiData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedYear, setSelectedYear] = useState(String(prevYear));
   const [selectedKppn, setSelectedKppn] = useState("all");
@@ -96,26 +97,39 @@ export const useKanwilData = (
   const [kppnRefList, setKppnRefList] = useState<{ value: string; label: string }[]>([]);
   const [isLoadingKppnRef, setIsLoadingKppnRef] = useState(false);
 
+  // Pagination state
+  const [ringkasanPagination, setRingkasanPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+  const [totalRingkasan, setTotalRingkasan] = useState(0);
+
+  const [transaksiPagination, setTransaksiPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+  const [totalTransaksi, setTotalTransaksi] = useState(0);
+  const [grandTotals, setGrandTotals] = useState<any>(null);
+
   const fetchRingkasanData = useCallback(async () => {
     if (!user) return;
     setIsLoading(true);
     try {
       const triwulan = selectedPeriode.replace("Q", "");
-      
-      // Determine KPPN filter
-      let kppnParam = selectedKppn !== "all" ? `&kdkppn=${selectedKppn}` : "";
-      
-      // Add regional filters based on user role to API call
+      const kppnParam = selectedKppn !== "all" ? `&kdkppn=${selectedKppn}` : "";
       let regionalParams = "";
       if (user?.role === "kanwil_djpb" && user.kdkanwil) {
         regionalParams = `&kdkanwil=${user.kdkanwil}`;
       } else if (user?.role === "kppn" && user.kdkppn) {
         regionalParams = `&kdkppn=${user.kdkppn}`;
       }
-      
       const ts = new Date().getTime();
+
+      const page = ringkasanPagination.pageIndex + 1;
+      const limit = ringkasanPagination.pageSize;
+
       const apiUrl = apiPath(
-        `/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}${kppnParam}${regionalParams}&_t=${ts}`
+        `/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}${kppnParam}${regionalParams}&page=${page}&limit=${limit}&_t=${ts}`
       );
 
       const response = await fetch(apiUrl, {
@@ -130,7 +144,7 @@ export const useKanwilData = (
       if (!response.ok) throw new Error("Gagal mengambil data ringkasan");
       const result = await response.json();
 
-      const mappedData = result.data.map((item: any, index: number) => ({
+      const mappedData = (result.data || []).map((item: any, index: number) => ({
         id: `${item.kdsatker}-${index}`,
         kodeKppn: item.kdkppn,
         kdkppn: item.kdkppn, // For RBAC filter compatibility
@@ -167,24 +181,23 @@ export const useKanwilData = (
       // Apply RBAC filtering on the frontend
       const filteredData = filterDataByRole<RingkasanKanwilData>(mappedData);
       setRingkasanData(filteredData);
+      setTotalRingkasan(result.total || mappedData.length);
+      setGrandTotals(result.totals || null);
     } catch (error) {
       console.error(error);
       toast.error("Gagal mengambil data ringkasan");
     } finally {
       setIsLoading(false);
     }
-  }, [user, selectedYear, selectedPeriode, selectedKppn, filterDataByRole]);
+  }, [user, selectedYear, selectedPeriode, selectedKppn, filterDataByRole, ringkasanPagination]);
 
-  const fetchMonitoringData = useCallback(async () => {
+  const fetchTransaksiData = useCallback(async () => {
     if (!user) return;
     setIsLoading(true);
     try {
       const triwulan = selectedPeriode.replace("Q", "");
-      
-      // Determine KPPN filter
       let kppnParam = selectedKppn !== "all" ? `&kdkppn=${selectedKppn}` : "";
       
-      // Add regional filters based on user role to API call
       let regionalParams = "";
       if (user?.role === "kanwil_djpb" && user.kdkanwil) {
         regionalParams = `&kdkanwil=${user.kdkanwil}`;
@@ -192,47 +205,49 @@ export const useKanwilData = (
         regionalParams = `&kdkppn=${user.kdkppn}`;
       }
 
+      const page = transaksiPagination.pageIndex + 1;
+      const limit = transaksiPagination.pageSize;
+      const ts = new Date().getTime();
+
+      const apiUrl = apiPath(
+        `/monev-kkp/direktorat/data-transaksi?tahun=${selectedYear}&triwulan=${triwulan}${kppnParam}${regionalParams}&page=${page}&limit=${limit}&_t=${ts}`
+      );
+
+      const response = await fetch(apiUrl, { credentials: "include" });
+      if (!response.ok) throw new Error("Gagal mengambil data transaksi");
+      const result = await response.json();
+
+      setTransaksiData(result.data || []);
+      setTotalTransaksi(result.total || 0);
+      setGrandTotals(result.totals || null);
+    } catch (error) {
+      console.error(error);
+      toast.error("Gagal mengambil data transaksi");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, selectedYear, selectedPeriode, selectedKppn, transaksiPagination]);
+
+  const fetchMonitoringData = useCallback(async () => {
+    if (!user) return;
+    setIsLoading(true);
+    try {
+      const triwulan = selectedPeriode.replace("Q", "");
+      const kppnParam = selectedKppn !== "all" ? `&kdkppn=${selectedKppn}` : "";
+      let regionalParams = "";
+      if (user?.role === "kanwil_djpb" && user.kdkanwil) {
+        regionalParams = `&kdkanwil=${user.kdkanwil}`;
+      } else if (user?.role === "kppn" && user.kdkppn) {
+        regionalParams = `&kdkppn=${user.kdkppn}`;
+      }
       const ts = new Date().getTime();
       const apiUrl = apiPath(
         `/monev-kkp/kanwil/monitoring-kppn?tahun=${selectedYear}&triwulan=${triwulan}${kppnParam}${regionalParams}&_t=${ts}`
       );
-
-      const response = await fetch(apiUrl, {
-        credentials: "include",
-        cache: "no-store",
-        headers: {
-          "Cache-Control": "no-cache",
-          "Pragma": "no-cache",
-        },
-      });
-
+      const response = await fetch(apiUrl, { credentials: "include" });
       if (!response.ok) throw new Error("Gagal mengambil data monitoring");
       const result = await response.json();
-
-      let mappedData = mapMonitoringRows(Array.isArray(result.data) ? result.data : []);
-
-      if (mappedData.length === 0) {
-        const fallbackUrl = apiPath(
-          `/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}${kppnParam}${regionalParams}&_t=${ts}`
-        );
-        const fallbackResponse = await fetch(fallbackUrl, {
-          credentials: "include",
-          cache: "no-store",
-          headers: {
-            "Cache-Control": "no-cache",
-            "Pragma": "no-cache",
-          },
-        });
-
-        if (fallbackResponse.ok) {
-          const fallbackResult = await fallbackResponse.json();
-          mappedData = buildMonitoringFallbackFromRingkasan(
-            Array.isArray(fallbackResult.data) ? fallbackResult.data : [],
-          );
-        }
-      }
-
-      // Apply RBAC filtering on the frontend
+      const mappedData = mapMonitoringRows(Array.isArray(result.data) ? result.data : []);
       const filteredData = filterDataByRole<MonitoringKppnData>(mappedData);
       setMonitoringData(filteredData);
     } catch (error) {
@@ -288,17 +303,22 @@ export const useKanwilData = (
   useEffect(() => {
     if (contentType === "ringkasan") {
       fetchRingkasanData();
-    } else {
+    } else if (contentType === "monitoring") {
       fetchMonitoringData();
+    } else if (contentType === "transaksi") {
+      fetchTransaksiData();
     }
-  }, [contentType, fetchRingkasanData, fetchMonitoringData]);
+  }, [contentType, fetchRingkasanData, fetchTransaksiData, selectedYear, selectedPeriode, selectedKppn, user, filterDataByRole]);
 
   useEffect(() => {
     fetchKppnRefList();
   }, [fetchKppnRefList]);
 
+  const lastNotified = useRef("");
   useEffect(() => {
-    if (onPeriodeChange) {
+    const key = `${selectedYear}-${selectedPeriode}`;
+    if (onPeriodeChange && lastNotified.current !== key) {
+      lastNotified.current = key;
       onPeriodeChange(selectedYear, selectedPeriode);
     }
   }, [selectedYear, selectedPeriode, onPeriodeChange]);
@@ -313,6 +333,8 @@ export const useKanwilData = (
     setSelectedYear(String(prevYear));
     setSelectedKppn("all");
     setSelectedPeriode(`Q${prevQ}`);
+    setRingkasanPagination({ pageIndex: 0, pageSize: 10 });
+    setTransaksiPagination({ pageIndex: 0, pageSize: 10 });
   }, [prevYear, prevQ]);
 
   const resetLaporanKppn = useCallback(async (kdkppn: string, tahun: string, triwulan: string) => {
@@ -347,6 +369,7 @@ export const useKanwilData = (
   return {
     ringkasanData,
     monitoringData,
+    transaksiData,
     isLoading,
     selectedYear,
     setSelectedYear,
@@ -358,7 +381,14 @@ export const useKanwilData = (
     isLoadingKppnRef,
     handleReset,
     fetchRingkasanData,
-    fetchMonitoringData,
+    fetchTransaksiData,
     resetLaporanKppn,
+    ringkasanPagination,
+    setRingkasanPagination,
+    totalRingkasan,
+    transaksiPagination,
+    setTransaksiPagination,
+    totalTransaksi,
+    grandTotals,
   };
 };

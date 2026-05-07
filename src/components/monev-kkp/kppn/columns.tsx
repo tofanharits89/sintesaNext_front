@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Pencil, Trash2, RotateCcw } from "lucide-react";
-import { RingkasanKanwilData, MonitoringKppnData } from "./types";
+import { Pencil, Eye, Trash2 } from "lucide-react";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 // Formatting helpers
@@ -27,13 +26,13 @@ export const formatDate = (dateString: string | null) => {
 };
 
 interface ColumnHandlers {
+  onEditKendala: (item: any) => void;
+  onViewKendala: (item: any) => void;
+  onDeleteKendala: (item: any) => void;
   onViewSatkerDetail: (kdsatker: string, namaSatker: string) => void;
   onViewKartu: (kdsatker: string, namaSatker: string) => void;
   onViewTagihan: (kdsatker: string, namaSatker: string) => void;
   onViewTransaksi: (kdsatker: string, namaSatker: string) => void;
-  onEditKendala: (item: RingkasanKanwilData) => void;
-  onViewKendala: (item: RingkasanKanwilData) => void;
-  onDeleteKendala: (item: RingkasanKanwilData) => void;
   statusLaporan?: string;
 }
 
@@ -42,26 +41,6 @@ export const getRingkasanColumns = (handlers: ColumnHandlers, totals?: any) => [
     id: "no",
     header: () => <div className="text-center font-medium">No</div>,
     cell: ({ row }: any) => <div className="text-center">{row.index + 1}</div>,
-  },
-  {
-    accessorKey: "kodeKppn",
-    header: () => <div className="text-center font-medium">Kode KPPN</div>,
-    cell: ({ row }: any) => (
-      <div className="text-center">{row.getValue("kodeKppn")}</div>
-    ),
-  },
-  {
-    accessorKey: "namaKppn",
-    header: () => <div className="text-center font-medium">Nama KPPN</div>,
-    cell: ({ row }: any) => (
-      <div
-        className="text-left max-w-[150px] truncate"
-        title={row.getValue("namaKppn")}
-      >
-        {row.getValue("namaKppn")}
-      </div>
-    ),
-    footer: () => <div className="text-center font-bold">GRAND TOTAL</div>,
   },
   {
     accessorKey: "kodeBA",
@@ -99,12 +78,11 @@ export const getRingkasanColumns = (handlers: ColumnHandlers, totals?: any) => [
         {row.getValue("namaSatker")}
       </div>
     ),
+    footer: () => <div className="text-center font-bold">GRAND TOTAL</div>,
   },
   {
     accessorKey: "upKkpPerBulan",
-    header: () => (
-      <div className="text-center font-medium">UP KKP Per Bulan (Rp)</div>
-    ),
+    header: () => <div className="text-center font-medium">UP KKP Per Bulan (Rp)</div>,
     cell: ({ row }: any) => (
       <div className="text-right font-mono tabular-nums pr-2">
         {formatRupiah(row.getValue("upKkpPerBulan"))}
@@ -139,9 +117,7 @@ export const getRingkasanColumns = (handlers: ColumnHandlers, totals?: any) => [
   },
   {
     accessorKey: "bankPenerbit",
-    header: () => (
-      <div className="text-center font-medium">Bank Penerbit KKP</div>
-    ),
+    header: () => <div className="text-center font-medium">Bank Penerbit KKP</div>,
     cell: ({ row }: any) => (
       <div className="text-center">{row.getValue("bankPenerbit")}</div>
     ),
@@ -177,9 +153,7 @@ export const getRingkasanColumns = (handlers: ColumnHandlers, totals?: any) => [
   },
   {
     accessorKey: "nilaiTagihan",
-    header: () => (
-      <div className="text-center font-medium">Nilai Tagihan (Rp)</div>
-    ),
+    header: () => <div className="text-center font-medium">Nilai Tagihan (Rp)</div>,
     cell: ({ row }: any) => (
       <div
         className="text-right font-mono tabular-nums pr-2 cursor-pointer text-blue-600 hover:underline"
@@ -308,225 +282,11 @@ export const getRingkasanColumns = (handlers: ColumnHandlers, totals?: any) => [
   },
 ];
 
-interface MonitoringHandlers {
-  onViewRingkasan: (item: MonitoringKppnData) => void;
-  onResetStatus: (item: MonitoringKppnData) => void;
-  showPengembalian?: boolean;
-}
-
-export const getMonitoringColumns = (handlers: MonitoringHandlers, totals?: any) => {
-  const columns = [
-    {
-      id: "no",
-      header: () => <div className="text-center font-medium">No</div>,
-      cell: ({ row }: any) => (
-        <div className="text-center">{row.index + 1}</div>
-      ),
-    },
-    {
-      accessorKey: "kdkppn",
-      header: () => <div className="text-center font-medium">Kode KPPN</div>,
-      cell: ({ row }: any) => (
-        <div className="text-center">{row.getValue("kdkppn")}</div>
-      ),
-    },
-    {
-      accessorKey: "nmkppn",
-      header: () => <div className="text-center font-medium">Nama KPPN</div>,
-      cell: ({ row }: any) => (
-        <div
-          className="text-left max-w-[200px] truncate"
-          title={row.getValue("nmkppn")}
-        >
-          {row.getValue("nmkppn")}
-        </div>
-      ),
-      footer: () => <div className="text-center font-bold">GRAND TOTAL</div>,
-    },
-    {
-      accessorKey: "jumlah_satker_up_kkp",
-      header: () => (
-        <div className="text-center font-medium">
-          Jumlah Satker dengan UP KKP
-        </div>
-      ),
-      cell: ({ row }: any) => (
-        <div className="text-center">
-          {row.getValue("jumlah_satker_up_kkp")}
-        </div>
-      ),
-      footer: ({ table }: any) => (
-        <div className="text-center font-bold">
-          {table
-            .getFilteredRowModel()
-            .rows.reduce(
-              (sum: number, row: any) =>
-                sum + (Number(row.getValue("jumlah_satker_up_kkp")) || 0),
-              0,
-            )}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "jumlah_satker_transaksi",
-      header: () => (
-        <div className="text-center font-medium">Jumlah Satker (Transaksi)</div>
-      ),
-      cell: ({ row }: any) => (
-        <div className="text-center">
-          {row.getValue("jumlah_satker_transaksi")}
-        </div>
-      ),
-      footer: ({ table }: any) => (
-        <div className="text-center font-bold">
-          {table
-            .getFilteredRowModel()
-            .rows.reduce(
-              (sum: number, row: any) =>
-                sum + (Number(row.getValue("jumlah_satker_transaksi")) || 0),
-              0,
-            )}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "nilai_transaksi",
-      header: () => (
-        <div className="text-center font-medium">Nilai Transaksi (Rp)</div>
-      ),
-      cell: ({ row }: any) => (
-        <div className="text-right font-mono tabular-nums pr-2">
-          {formatRupiah(row.getValue("nilai_transaksi"))}
-        </div>
-      ),
-      footer: ({ table }: any) => (
-        <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
-          {formatRupiah(
-            totals
-              ? totals.nilaiTransaksi
-              : table
-                  .getFilteredRowModel()
-                  .rows.reduce(
-                    (sum: number, row: any) =>
-                      sum + (Number(row.getValue("nilai_transaksi")) || 0),
-                    0,
-                  ),
-          )}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "status",
-      header: () => <div className="text-center font-medium">Status</div>,
-      cell: ({ row }: any) => {
-        const status = row.getValue("status");
-        return (
-          <div className="flex justify-center">
-            <Badge variant={status === "sent" ? "success" : "destructive"}>
-              {status === "sent" ? "Sudah Kirim" : "Belum Kirim"}
-            </Badge>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "tanggalKirim",
-      header: () => (
-        <div className="text-center font-medium">Tanggal Kirim Laporan</div>
-      ),
-      cell: ({ row }: any) => (
-        <div className="text-center">
-          {formatDate(row.getValue("tanggalKirim"))}
-        </div>
-      ),
-    },
-    {
-      id: "actions",
-      header: () => (
-        <div className="text-center font-medium">Ringkasan Laporan</div>
-      ),
-      cell: ({ row }: any) => (
-        <div className="flex items-center justify-center">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 w-8 p-0 cursor-pointer"
-            onClick={() => handlers.onViewRingkasan(row.original)}
-            title="Lihat Ringkasan Laporan"
-            disabled={row.original.status !== "sent"}
-          >
-            <Eye className="h-4 w-4 text-amber-600" />
-          </Button>
-        </div>
-      ),
-    },
-    {
-      id: "pengembalian",
-      header: () => (
-        <div className="text-center font-medium pr-4">Pengembalian</div>
-      ),
-      cell: ({ row }: any) => (
-        <div className="flex items-center justify-center pr-4">
-          <ConfirmationModal
-            trigger={
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 w-8 p-0 cursor-pointer"
-                title={
-                  row.original.status === "sent"
-                    ? "Kembalikan laporan ke status Belum Kirim"
-                    : "Laporan belum dikirim"
-                }
-                disabled={row.original.status !== "sent"}
-              >
-                <RotateCcw
-                  className={`h-4 w-4 ${row.original.status === "sent" ? "text-rose-600" : "text-muted-foreground"}`}
-                />
-              </Button>
-            }
-            title="Kembalikan Laporan?"
-            description={`Apakah Anda yakin ingin mengembalikan laporan KPPN ${row.original.nmkppn} ke status Belum Kirim? Hal ini juga akan mereset status laporan Kanwil untuk periode ini.`}
-            confirmText="Ya, Kembalikan"
-            cancelText="Batal"
-            variant="destructive"
-            onConfirm={() => handlers.onResetStatus(row.original)}
-          />
-        </div>
-      ),
-    },
-  ];
-
-  if (!handlers.showPengembalian) {
-    return columns.filter((col) => col.id !== "pengembalian");
-  }
-
-  return columns;
-};
-
 export const getTransaksiColumns = (totals?: any) => [
   {
     id: "no",
     header: () => <div className="text-center font-medium">No</div>,
     cell: ({ row }: any) => <div className="text-center">{row.index + 1}</div>,
-  },
-  {
-    accessorKey: "nmlokasi",
-    header: () => <div className="text-center font-medium">Nama Kanwil</div>,
-    cell: ({ row }: any) => (
-      <div className="text-center" title={row.original.nmlokasi}>
-        {row.original.nmlokasi}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "namaKppn",
-    header: () => <div className="text-center font-medium">Nama KPPN</div>,
-    cell: ({ row }: any) => (
-      <div className="text-center" title={row.original.nmkppn}>
-        {row.original.nmkppn}
-      </div>
-    ),
   },
   {
     accessorKey: "kdsatker",
@@ -540,7 +300,7 @@ export const getTransaksiColumns = (totals?: any) => [
     header: () => <div className="text-center font-medium">Nama Satker</div>,
     cell: ({ row }: any) => (
       <div
-        className="text-left truncate max-w-[200px]"
+        className="text-left truncate max-w-[300px]"
         title={row.getValue("nmsatker")}
       >
         {row.getValue("nmsatker")}
@@ -611,17 +371,17 @@ export const getTransaksiColumns = (totals?: any) => [
     ),
     footer: ({ table }: any) => (
       <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
-        {formatRupiah(
-          totals
-            ? totals.nilaiTransaksi
-            : table
+        {totals
+          ? formatRupiah(totals.nilaiTransaksi)
+          : formatRupiah(
+              table
                 .getFilteredRowModel()
                 .rows.reduce(
                   (sum: number, row: any) =>
                     sum + (Number(row.getValue("nilai_transaksi")) || 0),
                   0,
                 ),
-        )}
+            )}
       </div>
     ),
   },

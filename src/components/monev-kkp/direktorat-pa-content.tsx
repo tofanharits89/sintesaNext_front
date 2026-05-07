@@ -8,13 +8,14 @@ import { LihatKendalaModal } from "./modals/lihat-kendala-modal";
 import { TransaksiKkpModal } from "./modals/transaksi-kkp-modal";
 import { TagihanKkpModal } from "./modals/tagihan-kkp-modal";
 import { KartuKkpModal } from "./modals/kartu-kkp-modal";
+import { Building2, Calendar, Clock, FileSpreadsheet, Eye } from "lucide-react";
+import * as XLSX from "xlsx-js-style";
 import { SatkerDetailModal } from "./modals/satker-detail-modal";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { apiPath } from "@/lib/config/base-path";
 import { Button } from "@/components/ui/button";
-import { FileSpreadsheet } from "lucide-react";
 
 // Modularized imports
 import { 
@@ -243,6 +244,45 @@ export const DirektoratPaContent = forwardRef<
 
   const { columns, data } = getColumnsAndData();
 
+  const handleExportGeneric = () => {
+    if (data.length === 0) {
+      toast.error("Tidak ada data untuk diekspor");
+      return;
+    }
+
+    let excelData = data;
+    if (contentType === "monitoring-kanwil") {
+      excelData = data.map((item: any, index: number) => ({
+        "No": index + 1,
+        "Kode Kanwil": item.kdkanwil,
+        "Nama Kanwil": item.nmkanwil,
+        "Jumlah Satker (UP KKP)": item.jumlah_satker_up_kkp,
+        "Jumlah Satker (Transaksi)": item.jumlah_satker_transaksi,
+        "Nilai Transaksi (Rp)": item.nilai_transaksi,
+        "Status Laporan": item.status === "sent" ? "Sudah Kirim" : "Belum Kirim",
+        "Tanggal Kirim": item.tanggalKirim ? new Date(item.tanggalKirim).toLocaleDateString("id-ID") : "-"
+      }));
+    } else if (contentType === "monitoring-kppn") {
+      excelData = data.map((item: any, index: number) => ({
+        "No": index + 1,
+        "Kode KPPN": item.kdkppn,
+        "Nama KPPN": item.nmkppn,
+        "Kode Kanwil": item.kdkanwil,
+        "Jumlah Satker (UP KKP)": item.jumlah_satker_up_kkp,
+        "Jumlah Satker (Transaksi)": item.jumlah_satker_transaksi,
+        "Nilai Transaksi (Rp)": item.nilai_transaksi,
+        "Status Laporan": item.status === "sent" ? "Sudah Kirim" : "Belum Kirim",
+        "Tanggal Kirim": item.tanggalKirim ? new Date(item.tanggalKirim).toLocaleDateString("id-ID") : "-"
+      }));
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data Export");
+    XLSX.writeFile(workbook, `export-${contentType}-${selectedYear}-${selectedPeriode}.xlsx`);
+    toast.success("Data berhasil diekspor");
+  };
+
   const getTitle = () => {
     switch (contentType) {
       case "ringkasan-kanwil": return "Ringkasan Laporan per Kanwil";
@@ -329,11 +369,11 @@ export const DirektoratPaContent = forwardRef<
       <Card>
         <CardHeader className="flex flex-row items-center justify-between py-3">
           <CardTitle>{getTitle()}</CardTitle>
-          {contentType === "data-transaksi" && (
+          {(contentType === "data-transaksi" || contentType.startsWith("monitoring")) && (
             <Button
               variant="outline"
               size="sm"
-              onClick={exportTransaksiToExcel}
+              onClick={contentType === "data-transaksi" ? exportTransaksiToExcel : handleExportGeneric}
               className="bg-green-700 dark:bg-card hover:bg-green-600 flex items-center"
             >
               <FileSpreadsheet className="w-4 h-4 text-white mr-2" />
@@ -350,26 +390,23 @@ export const DirektoratPaContent = forwardRef<
               showFooter={contentType === "monitoring-kanwil" || contentType === "monitoring-kppn" || contentType === "ringkasan-kppn" || contentType === "ringkasan-kanwil" || contentType === "data-transaksi"}
               manualPagination={contentType === "data-transaksi" || contentType === "ringkasan-kanwil" || contentType === "ringkasan-kppn"}
               rowCount={
-                contentType === "data-transaksi" 
+                (contentType === "data-transaksi" 
                   ? totalTransaksi 
                   : (contentType === "ringkasan-kanwil" || contentType === "ringkasan-kppn")
                   ? totalRingkasan
-                  : undefined
+                  : undefined) as any
               }
               controlledPagination={
-                contentType === "data-transaksi"
+                (contentType === "data-transaksi"
                   ? transaksiPagination
                   : (contentType === "ringkasan-kanwil" || contentType === "ringkasan-kppn")
                   ? ringkasanPagination
-                  : undefined
+                  : undefined) as any
               }
-              onPaginationChange={
-                contentType === "data-transaksi"
-                  ? setTransaksiPagination
-                  : (contentType === "ringkasan-kanwil" || contentType === "ringkasan-kppn")
-                  ? setRingkasanPagination
-                  : undefined
-              }
+              onPaginationChange={(p) => {
+                if (contentType === "data-transaksi") setTransaksiPagination(p);
+                else if (contentType === "ringkasan-kanwil" || contentType === "ringkasan-kppn") setRingkasanPagination(p);
+              }}
             />
           )}
         </CardContent>

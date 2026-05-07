@@ -44,13 +44,29 @@ export interface MonitoringKppnData {
   tanggalKirim?: string | null;
 }
 
+export interface TransaksiData {
+  id: string | number;
+  kdkanwil: string;
+  nmkanwil: string;
+  kdkppn: string;
+  nmkppn: string;
+  kdsatker: string;
+  nmsatker: string;
+  tgl_sp2d: string;
+  no_sp2d: string;
+  nilai_akun: number;
+  jml_transaksi: number;
+  triwulan: number;
+  bulan: number;
+}
+
 export interface KanwilContentRef {
   getData: () => RingkasanKanwilData[];
   getSelectedPeriode: () => { year: string; periode: string };
 }
 
 export interface KanwilContentProps {
-  contentType?: "ringkasan" | "monitoring";
+  contentType?: "ringkasan" | "monitoring" | "transaksi";
   statusLaporan?: "sent" | "not_sent";
   tglKirimKanwil?: string | null;
   kppnCompletionStatus?: "complete" | "incomplete";
