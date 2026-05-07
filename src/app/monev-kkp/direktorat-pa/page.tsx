@@ -475,43 +475,39 @@ export default function MonevKkpDirektoratPaPage() {
         onValueChange={setActiveTab}
         className="w-full gap-3"
       >
-        <div className="border-b border-border/50 pb-3 mb-0 overflow-x-auto overflow-y-hidden">
-          <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-1 md:grid-cols-5 gap-2 md:gap-0 min-w-[800px]">
+        <div className="border-b border-border/50 pb-3 mb-0">
+          <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl flex flex-wrap md:grid md:grid-cols-5 gap-2 md:gap-0">
             <TabsTrigger
               value="ringkasan-kanwil"
-              className="h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap"
+              className="flex-1 h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap"
             >
               <LayoutList className="h-4 w-4 mr-2" />
               <span>Ringkasan Laporan per Kanwil</span>
             </TabsTrigger>
-
             <TabsTrigger
               value="ringkasan-kppn"
-              className="h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap"
+              className="flex-1 h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap"
             >
               <LayoutList className="h-4 w-4 mr-2" />
               <span>Ringkasan Laporan per KPPN</span>
             </TabsTrigger>
-
             <TabsTrigger
               value="monitoring-kanwil"
-              className="h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap"
+              className="flex-1 h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap"
             >
               <MapPin className="h-4 w-4 mr-2" />
               <span>Monitoring Laporan Kanwil</span>
             </TabsTrigger>
-
             <TabsTrigger
               value="monitoring-kppn"
-              className="h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap"
+              className="flex-1 h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap"
             >
               <Building2 className="h-4 w-4 mr-2" />
               <span>Monitoring Laporan KPPN</span>
             </TabsTrigger>
-
             <TabsTrigger
               value="data-transaksi"
-              className="h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap"
+              className="flex-1 h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap"
             >
               <LayoutList className="h-4 w-4 mr-2" />
               <span>Data Transaksi</span>
