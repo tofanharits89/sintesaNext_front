@@ -288,124 +288,121 @@ export function DataTable<TData, TValue>({
 
           {/* Center: Pagination */}
           <div className="flex items-center justify-center order-1 md:order-2 w-full md:w-auto">
-            <Pagination className="mx-auto overflow-x-auto no-scrollbar justify-center">
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={(e) => {
-                      e.preventDefault();
-                      table.previousPage();
-                    }}
-                    className={cn(
-                      "cursor-pointer select-none",
-                      !table.getCanPreviousPage() &&
-                        "pointer-events-none opacity-50",
-                    )}
-                  />
-                </PaginationItem>
+            <Pagination className="mx-auto justify-center">
+              <div className="flex items-center justify-between w-full sm:min-w-[400px] gap-2">
+                <PaginationPrevious
+                  onClick={(e) => {
+                    e.preventDefault();
+                    table.previousPage();
+                  }}
+                  className={cn(
+                    "cursor-pointer select-none",
+                    !table.getCanPreviousPage() &&
+                      "pointer-events-none opacity-50",
+                  )}
+                />
 
-                {/* Page numbers logic */}
-                {(() => {
-                  const totalPage = table.getPageCount();
-                  const currentPage = table.getState().pagination.pageIndex + 1;
-                  const items = [];
+                <PaginationContent className="flex-1 justify-center gap-1 overflow-x-auto no-scrollbar">
+                  {(() => {
+                    const totalPage = table.getPageCount();
+                    const currentPage = table.getState().pagination.pageIndex + 1;
+                    const items = [];
 
-                  if (totalPage <= 7) {
-                    for (let i = 1; i <= totalPage; i++) {
+                    if (totalPage <= 7) {
+                      for (let i = 1; i <= totalPage; i++) {
+                        items.push(
+                          <PaginationItem key={i}>
+                            <PaginationLink
+                              isActive={currentPage === i}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                table.setPageIndex(i - 1);
+                              }}
+                              className="cursor-pointer select-none"
+                            >
+                              {i}
+                            </PaginationLink>
+                          </PaginationItem>,
+                        );
+                      }
+                    } else {
+                      // Always show first
                       items.push(
-                        <PaginationItem key={i}>
+                        <PaginationItem key={1}>
                           <PaginationLink
-                            isActive={currentPage === i}
+                            isActive={currentPage === 1}
                             onClick={(e) => {
                               e.preventDefault();
-                              table.setPageIndex(i - 1);
+                              table.setPageIndex(0);
                             }}
                             className="cursor-pointer select-none"
                           >
-                            {i}
+                            1
+                          </PaginationLink>
+                        </PaginationItem>,
+                      );
+
+                      if (currentPage > 3) {
+                        items.push(<PaginationEllipsis key="left-ellipsis" />);
+                      }
+
+                      // Middle pages
+                      const start = Math.max(2, currentPage - 1);
+                      const end = Math.min(totalPage - 1, currentPage + 1);
+
+                      for (let i = start; i <= end; i++) {
+                        items.push(
+                          <PaginationItem key={i}>
+                            <PaginationLink
+                              isActive={currentPage === i}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                table.setPageIndex(i - 1);
+                              }}
+                              className="cursor-pointer select-none"
+                            >
+                              {i}
+                            </PaginationLink>
+                          </PaginationItem>,
+                        );
+                      }
+
+                      if (currentPage < totalPage - 2) {
+                        items.push(<PaginationEllipsis key="right-ellipsis" />);
+                      }
+
+                      // Always show last
+                      items.push(
+                        <PaginationItem key={totalPage}>
+                          <PaginationLink
+                            isActive={currentPage === totalPage}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              table.setPageIndex(totalPage - 1);
+                            }}
+                            className="cursor-pointer select-none"
+                          >
+                            {totalPage}
                           </PaginationLink>
                         </PaginationItem>,
                       );
                     }
-                  } else {
-                    // Always show first
-                    items.push(
-                      <PaginationItem key={1}>
-                        <PaginationLink
-                          isActive={currentPage === 1}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            table.setPageIndex(0);
-                          }}
-                          className="cursor-pointer select-none"
-                        >
-                          1
-                        </PaginationLink>
-                      </PaginationItem>,
-                    );
+                    return items;
+                  })()}
+                </PaginationContent>
 
-                    if (currentPage > 3) {
-                      items.push(<PaginationEllipsis key="left-ellipsis" />);
-                    }
-
-                    // Middle pages
-                    const start = Math.max(2, currentPage - 1);
-                    const end = Math.min(totalPage - 1, currentPage + 1);
-
-                    for (let i = start; i <= end; i++) {
-                      items.push(
-                        <PaginationItem key={i}>
-                          <PaginationLink
-                            isActive={currentPage === i}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              table.setPageIndex(i - 1);
-                            }}
-                            className="cursor-pointer select-none"
-                          >
-                            {i}
-                          </PaginationLink>
-                        </PaginationItem>,
-                      );
-                    }
-
-                    if (currentPage < totalPage - 2) {
-                      items.push(<PaginationEllipsis key="right-ellipsis" />);
-                    }
-
-                    // Always show last
-                    items.push(
-                      <PaginationItem key={totalPage}>
-                        <PaginationLink
-                          isActive={currentPage === totalPage}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            table.setPageIndex(totalPage - 1);
-                          }}
-                          className="cursor-pointer select-none"
-                        >
-                          {totalPage}
-                        </PaginationLink>
-                      </PaginationItem>,
-                    );
-                  }
-                  return items;
-                })()}
-
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={(e) => {
-                      e.preventDefault();
-                      table.nextPage();
-                    }}
-                    className={cn(
-                      "cursor-pointer select-none",
-                      !table.getCanNextPage() &&
-                        "pointer-events-none opacity-50",
-                    )}
-                  />
-                </PaginationItem>
-              </PaginationContent>
+                <PaginationNext
+                  onClick={(e) => {
+                    e.preventDefault();
+                    table.nextPage();
+                  }}
+                  className={cn(
+                    "cursor-pointer select-none",
+                    !table.getCanNextPage() &&
+                      "pointer-events-none opacity-50",
+                  )}
+                />
+              </div>
             </Pagination>
           </div>
 
