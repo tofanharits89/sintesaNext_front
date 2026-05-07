@@ -13,6 +13,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { apiPath } from "@/lib/config/base-path";
+import { Button } from "@/components/ui/button";
+import { FileSpreadsheet } from "lucide-react";
 
 // Modularized imports
 import { 
@@ -325,7 +327,20 @@ export const DirektoratPaContent = forwardRef<
       />
 
       <Card>
-        <CardHeader><CardTitle>{getTitle()}</CardTitle></CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between py-3">
+          <CardTitle>{getTitle()}</CardTitle>
+          {contentType === "data-transaksi" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportTransaksiToExcel}
+              className="bg-green-700 dark:bg-card hover:bg-green-600 flex items-center"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-white mr-2" />
+              <span className="text-sm text-white">Unduh Data Excel</span>
+            </Button>
+          )}
+        </CardHeader>
         <CardContent>
           {isLoading ? <TableSkeleton rows={10} /> : (
             <DataTable 

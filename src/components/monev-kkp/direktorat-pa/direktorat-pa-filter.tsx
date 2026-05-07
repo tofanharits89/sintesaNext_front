@@ -70,14 +70,19 @@ export const DirektoratPaFilter = ({
     contentType === "ringkasan-kanwil" ||
     contentType === "monitoring-kanwil" ||
     contentType === "monitoring-kppn" ||
-    contentType === "ringkasan-kppn";
+    contentType === "ringkasan-kppn" ||
+    contentType === "data-transaksi";
   const showKppn =
-    contentType === "ringkasan-kppn" || contentType === "monitoring-kppn";
+    contentType === "ringkasan-kppn" || 
+    contentType === "monitoring-kppn" ||
+    contentType === "data-transaksi";
 
-  // Compute grid cols for monitoring: always Tahun + Kanwil + (KPPN?) + Status + Periode
+  // Compute grid cols for monitoring and transactions: always Tahun + Kanwil + (KPPN?) + Status + Periode
   // monitoring-kanwil: 4 cols (Tahun, Kanwil, Status, Periode)
   // monitoring-kppn:   5 cols (Tahun, Kanwil, KPPN, Status, Periode)
-  const monitoringCols = showKppn ? "md:grid-cols-5" : "md:grid-cols-4";
+  // data-transaksi:    4 cols (Tahun, Kanwil, KPPN, Periode)
+  const isTransaction = contentType === "data-transaksi";
+  const monitoringCols = showKppn ? (isTransaction ? "md:grid-cols-4" : "md:grid-cols-5") : "md:grid-cols-4";
 
   // Ringkasan grid cols (no Status)
   const ringkasanCols = showKppn ? "md:grid-cols-4" : "md:grid-cols-3";
@@ -93,17 +98,6 @@ export const DirektoratPaFilter = ({
             <span className="text-muted-foreground">— Menampilkan data agregat dari seluruh Kanwil dan KPPN</span>
           </div>
           <div className="flex items-center gap-2">
-            {onExportExcel && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={onExportExcel}
-                className="flex items-center gap-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
-              >
-                <FileDown className="h-4 w-4" />
-                <span className="hidden sm:inline">Unduh Data Excel</span>
-              </Button>
-            )}
             <ResetButton onReset={handleReset} />
           </div>
         </div>

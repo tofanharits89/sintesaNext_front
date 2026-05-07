@@ -37,8 +37,7 @@ export interface TransaksiData {
   nmkppn: string;
   kdsatker: string;
   nmsatker: string;
-  tg_bast?: string | null;
-  no_bast?: string;
+  jml_transaksi: number;
   tg_spm?: string | null;
   no_spm?: string;
   tg_sp2d: string;

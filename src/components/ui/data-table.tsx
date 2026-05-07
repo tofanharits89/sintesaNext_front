@@ -153,15 +153,6 @@ export function DataTable<TData, TValue>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table, sorting, columnFilters, columnVisibility, data]);
 
-  // Keep react-table internal page size in sync with the requested initialPageSize
-  useEffect(() => {
-    if (
-      initialPageSize &&
-      table.getState().pagination.pageSize !== initialPageSize
-    ) {
-      table.setPageSize(initialPageSize);
-    }
-  }, [initialPageSize, table]);
 
   // Notify parent when uncontrolled pagination changes so external UIs can re-render
   useEffect(() => {

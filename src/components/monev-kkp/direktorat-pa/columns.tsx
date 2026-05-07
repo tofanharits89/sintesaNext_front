@@ -5,8 +5,6 @@ import { RingkasanData, MonitoringKanwilData, MonitoringKppnData } from "./types
 
 export const formatRupiah = (value: number) => {
   return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
@@ -375,7 +373,7 @@ export const getMonitoringKanwilColumns = (handlers: ColumnHandlers) => [
   },
   {
     accessorKey: "nilai_transaksi",
-    header: () => <div className="text-center font-medium">Total Nilai Transaksi</div>,
+    header: () => <div className="text-center font-medium">Total Nilai Transaksi (Rp)</div>,
     cell: ({ row }: any) => (
       <div className="text-right font-mono tabular-nums pr-2">
         {formatRupiah(row.getValue("nilai_transaksi"))}
@@ -469,7 +467,7 @@ export const getMonitoringKppnColumns = (handlers: ColumnHandlers) => [
   },
   {
     accessorKey: "nilai_transaksi",
-    header: () => <div className="text-center font-medium">Nilai Transaksi</div>,
+    header: () => <div className="text-center font-medium">Nilai Transaksi (Rp)</div>,
     cell: ({ row }: any) => (
       <div className="text-right font-mono tabular-nums pr-2">
         {formatRupiah(row.getValue("nilai_transaksi"))}
@@ -560,14 +558,14 @@ export const getTransaksiColumns = (totals?: any) => [
     footer: () => <div className="text-center font-bold">GRAND TOTAL</div>,
   },
   {
-    accessorKey: "tg_bast",
-    header: () => <div className="text-center font-medium">Tanggal BAST</div>,
-    cell: ({ row }: any) => <div className="text-center">{formatDate(row.getValue("tg_bast"))}</div>,
-  },
-  {
-    accessorKey: "no_bast",
-    header: () => <div className="text-center font-medium">Nomor BAST</div>,
-    cell: ({ row }: any) => <div className="text-center">{row.getValue("no_bast") || "-"}</div>,
+    accessorKey: "jml_transaksi",
+    header: () => <div className="text-center font-medium">Jumlah Transaksi (BAST)</div>,
+    cell: ({ row }: any) => <div className="text-center">{row.getValue("jml_transaksi") || 0}</div>,
+    footer: ({ table }: any) => (
+      <div className="text-center font-bold text-black">
+        {totals ? (totals.jmlTransaksi || 0).toLocaleString("id-ID") : table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("jml_transaksi")) || 0), 0).toLocaleString("id-ID")}
+      </div>
+    ),
   },
   {
     accessorKey: "tg_spm",

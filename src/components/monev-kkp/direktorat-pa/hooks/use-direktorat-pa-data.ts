@@ -311,13 +311,13 @@ export const useDirektoratPaData = (contentType: string) => {
         "Nama KPPN": item.nmkppn,
         "Kode Satker": item.kdsatker,
         "Nama Satker": item.nmsatker,
-        "Tanggal BAST": item.tg_bast ? new Date(item.tg_bast).toLocaleDateString('id-ID') : '-',
-        "Nomor BAST": item.no_bast || '-',
+        "Jumlah Transaksi (BAST)": item.jml_transaksi || 0,
         "Tanggal SPM": item.tg_spm ? new Date(item.tg_spm).toLocaleDateString('id-ID') : '-',
         "Nomor SPM": item.no_spm || '-',
         "Tanggal SP2D": item.tg_sp2d ? new Date(item.tg_sp2d).toLocaleDateString('id-ID') : '',
         "Nomor SP2D": item.no_sp2d,
-        "Nilai Transaksi KKP (Rp)": item.nilai_transaksi,
+        "Nilai Transaksi KKP (Rp)": Math.round(Number(item.nilai_transaksi || 0)),
+        "Total Transaksi KKP (Rp)": Math.round(Number(item.nilai_transaksi || 0)),
         "Jenis SPM/SP2D": item.jns_kkp_prinsipal,
         "Program/Kegiatan/Output/Akun": `${item.kdprogram || 'XX'}.${item.kdgiat || 'XXXX'}.${item.kdoutput || 'XXX'}.${item.kdakun}`,
         "Kode Akun": item.kdakun,
@@ -325,6 +325,43 @@ export const useDirektoratPaData = (contentType: string) => {
       }));
 
       const worksheet = XLSX.utils.json_to_sheet(excelData);
+      
+      // Apply accounting number format to Nilai and Total columns (Indices 10 and 11)
+      const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
+      for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+        const cellK = worksheet[XLSX.utils.encode_cell({ r: R, c: 10 })];
+        if (cellK) {
+          cellK.t = 'n';
+          cellK.z = '#,##0';
+        }
+        
+        const cellL = worksheet[XLSX.utils.encode_cell({ r: R, c: 11 })];
+        if (cellL) {
+          cellL.t = 'n';
+          cellL.z = '#,##0';
+        }
+      }
+
+      // Set column widths for better readability
+      worksheet['!cols'] = [
+        { wch: 6 },   // No
+        { wch: 25 },  // Nama Kanwil
+        { wch: 25 },  // Nama KPPN
+        { wch: 12 },  // Kode Satker
+        { wch: 35 },  // Nama Satker
+        { wch: 22 },  // Jumlah Transaksi (BAST)
+        { wch: 15 },  // Tanggal SPM
+        { wch: 20 },  // Nomor SPM
+        { wch: 15 },  // Tanggal SP2D
+        { wch: 20 },  // Nomor SP2D
+        { wch: 25 },  // Nilai Transaksi KKP (Rp)
+        { wch: 25 },  // Total Transaksi KKP (Rp)
+        { wch: 20 },  // Jenis SPM/SP2D
+        { wch: 30 },  // Program/Kegiatan/Output/Akun
+        { wch: 12 },  // Kode Akun
+        { wch: 30 }   // Nama Akun
+      ];
+
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Data Transaksi KKP");
       
