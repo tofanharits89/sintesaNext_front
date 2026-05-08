@@ -1266,7 +1266,7 @@
   background: color-mix(in oklch, var(--muted) 60%, #1e3a5f 20%);
 }
 
-/* ── Growth Colors ───────────────────────────────────────────────────────── */
+/* ── Growth Colors & Badges ───────────────────────────────────────────────── */
 .bn-positive {
   color: #16a34a;
   font-weight: 600;

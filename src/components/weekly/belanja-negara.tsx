@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import * as XLSX from "xlsx";
 import { useBelanjaNegaraWeekly, type BelanjaNegaraRow } from "@/hooks/use-belanja-negara-weekly";
+import { Badge } from "@/components/ui/badge";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -258,15 +259,15 @@ export default function BelanjaNegaraWeekly() {
               <tr>
                 {/* 2025 sub-headers */}
                 <th className="bn-th bn-th-num bn-group-2025">Pagu<br/>2025</th>
-                <th className="bn-th bn-th-num bn-group-2025">Real s.d.<br/>{tglReal2025}</th>
+                <th className="bn-th bn-th-num bn-group-2025">s.d. {tglReal2025 ? new Date(tglReal2025).toLocaleDateString("id-ID", { day: 'numeric', month: 'short' }) : "-"}</th>
                 <th className="bn-th bn-th-num bn-group-2025">% Capaian<br/>2025</th>
-
+ 
                 {/* 2026 sub-headers */}
                 <th className="bn-th bn-th-num bn-group-2026">APBN<br/>2026</th>
                 <th className="bn-th bn-th-num bn-group-2026">DIPA<br/>2026</th>
-                <th className="bn-th bn-th-num bn-group-2026">Real s.d.<br/>{appliedParams.tglSd2026}</th>
-                <th className="bn-th bn-th-num bn-group-2026">Real<br/>{appliedParams.tglAwal2026} – {appliedParams.tglAkhir2026}</th>
-                <th className="bn-th bn-th-num bn-group-2026">Real s.d.<br/>{appliedParams.tglAkhir2026}</th>
+                <th className="bn-th bn-th-num bn-group-2026">s.d. {appliedParams.tglSd2026 ? new Date(appliedParams.tglSd2026).toLocaleDateString("id-ID", { day: 'numeric', month: 'short' }) : "-"}</th>
+                <th className="bn-th bn-th-num bn-group-2026">Realisasi Minggu Ini<br/>({appliedParams.tglAwal2026 ? new Date(appliedParams.tglAwal2026).toLocaleDateString("id-ID", { day: 'numeric', month: 'short' }) : "-"} – {appliedParams.tglAkhir2026 ? new Date(appliedParams.tglAkhir2026).toLocaleDateString("id-ID", { day: 'numeric', month: 'short' }) : "-"})</th>
+                <th className="bn-th bn-th-num bn-group-2026">s.d. {appliedParams.tglAkhir2026 ? new Date(appliedParams.tglAkhir2026).toLocaleDateString("id-ID", { day: 'numeric', month: 'short' }) : "-"}</th>
                 <th className="bn-th bn-th-num bn-group-2026">% thd<br/>APBN</th>
                 <th className="bn-th bn-th-num bn-group-2026">% thd<br/>DIPA</th>
                 <th className="bn-th bn-th-num bn-group-2026">Sisa Pagu<br/>APBN</th>
@@ -290,19 +291,32 @@ export default function BelanjaNegaraWeekly() {
                       {/* 2025 */}
                       <td className="bn-td bn-td-num">{fmtTriliun(row["Pagu 2025"])}</td>
                       <td className="bn-td bn-td-num">{fmtTriliun(row["Realisasi 2025 (s.d. Mei)"])}</td>
-                      <td className="bn-td bn-td-num">{fmtPct(row["% Capaian 2025"])}</td>
-
+                      <td className="bn-td text-center">
+                        <Badge variant="secondary" className="font-bold px-3">
+                          {fmtPct(row["% Capaian 2025"])}
+                        </Badge>
+                      </td>
+ 
                       {/* 2026 */}
                       <td className="bn-td bn-td-num">{fmtTriliun(row["APBN 2026"])}</td>
                       <td className="bn-td bn-td-num">{fmtTriliun(row["DIPA 2026"])}</td>
                       <td className="bn-td bn-td-num">{fmtTriliun(row["Realisasi s.d. 24 Apr 2026"])}</td>
                       <td className="bn-td bn-td-num">{fmtTriliun(row["Realisasi 25-29 Apr 2026"])}</td>
                       <td className="bn-td bn-td-num bn-td-highlight">{fmtTriliun(row["Realisasi s.d. 29 Apr 2026"])}</td>
-                      <td className="bn-td bn-td-num">{fmtPct(row["% thd APBN"])}</td>
-                      <td className="bn-td bn-td-num">{fmtPct(row["% thd DIPA"])}</td>
+                      <td className="bn-td text-center">
+                        <Badge variant="secondary" className="font-bold px-3">{fmtPct(row["% thd APBN"])}</Badge>
+                      </td>
+                      <td className="bn-td text-center">
+                        <Badge variant="secondary" className="font-bold px-3">{fmtPct(row["% thd DIPA"])}</Badge>
+                      </td>
                       <td className="bn-td bn-td-num">{fmtTriliun(row["Sisa Pagu APBN"])}</td>
-                      <td className={`bn-td bn-td-num ${growthColor(growth)}`}>
-                        {fmtPct(growth)}
+                      <td className="bn-td text-center">
+                        <Badge 
+                          variant={growth && growth > 0 ? "success" : growth && growth < 0 ? "destructive" : "secondary"}
+                          className="font-bold px-3"
+                        >
+                          {fmtPct(growth)}
+                        </Badge>
                       </td>
                     </tr>
                   );

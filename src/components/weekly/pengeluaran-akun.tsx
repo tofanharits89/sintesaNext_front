@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { apiPath } from "@/lib/config/base-path";
+import { Badge } from "@/components/ui/badge";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -359,7 +360,9 @@ export default function PengeluaranAkun() {
                           <td className="pa-td pa-td-num">{fmt1(row["APBN 2026"])}</td>
                           <td className="pa-td pa-td-num">{fmt1(row["Realisasi 25 - 29 Apr 2026"])}</td>
                           <td className="pa-td pa-td-num pa-td-highlight">{fmt1(row["Realisasi s.d. 29 Apr 2026"])}</td>
-                          <td className="pa-td pa-td-num">{fmtPct(row["% thd APBN"])}</td>
+                          <td className="pa-td text-center">
+                            <Badge variant="secondary" className="font-bold px-3">{fmtPct(row["% thd APBN"])}</Badge>
+                          </td>
                         </tr>
                       );
                     })}

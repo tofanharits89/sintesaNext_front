@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import * as XLSX from "xlsx";
 import { apiPath } from "@/lib/config/base-path";
+import { Badge } from "@/components/ui/badge";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -45,7 +46,7 @@ function isGrandTotal(uraian: string): boolean {
 const fmtDateObj = (dString: string) => {
   if (!dString) return "";
   const d = new Date(dString);
-  return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  return d.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
 };
 
 const fmtDateShort = (dString: string) => {
@@ -240,7 +241,7 @@ export default function RealisasiKlWeekly() {
                   {/* Row 2: Columns */}
                   <tr>
                     <th className="pa-th rk-th-dark">
-                      Real<br/>s.d.<br/>{strAkhir25}
+                      s.d.<br/>{strAkhir25}
                     </th>
                     <th className="pa-th rk-th-dark">
                       % thd<br/>APBN
@@ -250,13 +251,13 @@ export default function RealisasiKlWeekly() {
                     <th className="pa-th rk-th-yellow">DIPA</th>
                     
                     <th className="pa-th rk-th-yellow">
-                      REAL<br/>s.d.<br/>{strSd26}
+                      s.d.<br/>{strSd26}
                     </th>
                     <th className="pa-th rk-th-yellow">
                       {strAwal26} - {strAkhir26}
                     </th>
                     <th className="pa-th rk-th-yellow">
-                      REAL<br/>s.d.<br/>{strAkhir26}
+                      s.d.<br/>{strAkhir26}
                     </th>
                     
                     <th className="pa-th rk-th-yellow">% thd<br/>APBN</th>
@@ -291,7 +292,9 @@ export default function RealisasiKlWeekly() {
                         
                         {/* 2025 Metriks */}
                         <td className="pa-td pa-td-num">{fmt1(row["Real s.d. 29 Apr 2025"])}</td>
-                        <td className="pa-td pa-td-num">{fmtPct(row["% thd APBN 2025"])}</td>
+                        <td className="pa-td text-center">
+                          <Badge variant="secondary" className="font-bold px-3">{fmtPct(row["% thd APBN 2025"])}</Badge>
+                        </td>
                         
                         {/* 2026 Metriks */}
                         <td className="pa-td pa-td-num">{fmt1(row.APBN)}</td>
@@ -301,13 +304,24 @@ export default function RealisasiKlWeekly() {
                         <td className="pa-td pa-td-num rk-td-highlight">{fmt1(row["25 - 29 Apr 2026"])}</td>
                         <td className="pa-td pa-td-num rk-td-highlight">{fmt1(row["REAL s.d. 29 Apr 2026"])}</td>
                         
-                        <td className="pa-td pa-td-num">{fmtPct(row["% thd APBN"])}</td>
-                        <td className="pa-td pa-td-num">{fmtPct(row["% thd DIPA"])}</td>
+                        <td className="pa-td text-center">
+                          <Badge variant="secondary" className="font-bold px-3">{fmtPct(row["% thd APBN"])}</Badge>
+                        </td>
+                        <td className="pa-td text-center">
+                          <Badge variant="secondary" className="font-bold px-3">{fmtPct(row["% thd DIPA"])}</Badge>
+                        </td>
                         
                         <td className="pa-td pa-td-num">{fmt1(row["Sisa Pagu APBN"])}</td>
                         <td className="pa-td pa-td-num">{fmt1(row["Sisa Pagu DIPA"])}</td>
                         
-                        <td className="pa-td pa-td-num">{fmtPct(row["Growth YoY"])}</td>
+                        <td className="pa-td text-center">
+                          <Badge
+                            variant={row["Growth YoY"] > 0 ? "success" : row["Growth YoY"] < 0 ? "destructive" : "secondary"}
+                            className="font-bold px-3"
+                          >
+                            {fmtPct(row["Growth YoY"])}
+                          </Badge>
+                        </td>
                       </tr>
                     );
                   })}
