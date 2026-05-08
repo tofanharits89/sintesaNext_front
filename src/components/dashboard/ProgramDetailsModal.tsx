@@ -66,16 +66,16 @@ export function ProgramDetailsModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh] flex flex-col overflow-hidden [&>button]:hidden"
+        className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden [&>button]:hidden"
       >
-        <DialogHeader>
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle>{programName}</DialogTitle>
           <DialogDescription>
             Detail Sub-Output Program
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto p-6">
           {aggregated.length === 0 ? (
             <div className="rounded-lg border border-muted bg-muted/10 p-8 text-center">
               <p className="text-sm text-muted-foreground">
@@ -120,7 +120,7 @@ export function ProgramDetailsModal({
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="p-6 pt-4">
           <DialogClose asChild>
             <Button type="button" variant="secondary">Tutup</Button>
           </DialogClose>

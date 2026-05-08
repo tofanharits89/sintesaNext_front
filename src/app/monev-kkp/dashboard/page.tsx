@@ -86,6 +86,13 @@ function NoSSR({ children }: { children: React.ReactNode }) {
   return isClient ? <>{children}</> : null;
 }
 
+const formatKkpValue = (val: number): string => {
+  const v = Math.abs(val);
+  if (v >= 1e9) return `${(val / 1e9).toFixed(1)} M`;
+  if (v >= 1e6) return `${(val / 1e6).toFixed(0)} Jt`;
+  return val.toLocaleString("id-ID");
+};
+
 export default function DashboardMonevKkpPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -331,21 +338,15 @@ export default function DashboardMonevKkpPage() {
                   key: "tagihan",
                   label: "Tagihan",
                   valuePrefix: "Rp ",
-                  valueSuffix: " M",
-                  items: (kppnRankings?.tagihan ?? []).map((item) => ({
-                    ...item,
-                    value: Math.round(item.value / 1e6),
-                  })),
+                  valueFormatter: formatKkpValue,
+                  items: kppnRankings?.tagihan ?? [],
                 },
                 {
                   key: "transaksi",
                   label: "Transaksi",
                   valuePrefix: "Rp ",
-                  valueSuffix: " M",
-                  items: (kppnRankings?.transaksi ?? []).map((item) => ({
-                    ...item,
-                    value: Math.round(item.value / 1e6), // Show in millions for readability
-                  })),
+                  valueFormatter: formatKkpValue,
+                  items: kppnRankings?.transaksi ?? [],
                 },
                 {
                   key: "kartu",

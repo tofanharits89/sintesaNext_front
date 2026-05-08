@@ -43,11 +43,11 @@ export function DataPencabutanModal({ open, onOpenChange, noKmk, kdkanwil, kdkpp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle>Data Pencabutan - {noKmk || "-"}</DialogTitle>
         </DialogHeader>
-        <div className="flex-1 overflow-hidden flex flex-col min-h-0 px-3 py-3">
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col min-h-0 py-3">
           {error ? (
             <div className="p-3 text-sm text-red-600">{String((error as any).message || error)}</div>
           ) : isLoading ? (
@@ -93,7 +93,7 @@ export function DataPencabutanModal({ open, onOpenChange, noKmk, kdkanwil, kdkpp
             </div>
           )}
         </div>
-        <DialogFooter className="flex-shrink-0">
+        <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button variant="destructive" className="w-24" onClick={() => onOpenChange(false)}>
             Tutup
           </Button>

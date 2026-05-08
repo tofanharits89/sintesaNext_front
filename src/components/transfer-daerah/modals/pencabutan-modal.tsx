@@ -156,11 +156,11 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
-          <DialogHeader className="flex-shrink-0">
+        <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="p-6 pb-2">
             <DialogTitle>Pencabutan KMK</DialogTitle>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto grid gap-3 py-4">
+          <div className="flex-1 overflow-y-auto p-6 grid gap-3 py-4">
             {/* Row 1: Tahun & Dasar Penundaan */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {/* Tahun */}
@@ -296,7 +296,7 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
             </div>
           </div>
 
-          <DialogFooter className="flex-shrink-0 flex flex-col sm:flex-row sm:justify-between gap-3">
+          <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
             <div className="flex justify-start">
               <Button
                 variant="outline"

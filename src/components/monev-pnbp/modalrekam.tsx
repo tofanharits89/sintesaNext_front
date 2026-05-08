@@ -194,9 +194,9 @@ const Rekam: React.FC<RekamProps> = ({
     <Dialog open={show} onOpenChange={(open) => !open && onHide()}>
       <DialogContent
         showCloseButton={false}
-        className="max-w-4xl w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh] flex flex-col overflow-hidden"
+        className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0"
       >
-        <DialogHeader>
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle>Kirim Nota Dinas</DialogTitle>
         </DialogHeader>
         <Formik
@@ -211,7 +211,7 @@ const Rekam: React.FC<RekamProps> = ({
               onSubmit={handleSubmit}
               className="flex flex-1 flex-col overflow-hidden"
             >
-              <div className="flex-1 space-y-4 overflow-y-auto pr-1">
+              <div className="flex-1 space-y-4 overflow-y-auto p-6 pr-1">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="col-span-1 space-y-2">
                     <Label>Tahun</Label>
@@ -278,7 +278,7 @@ const Rekam: React.FC<RekamProps> = ({
             </form>
           )}
         </Formik>
-        <DialogFooter className="flex-shrink-0 border-t pt-4">
+        <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button variant="secondary" type="button" onClick={onHide}>
             Tutup
           </Button>

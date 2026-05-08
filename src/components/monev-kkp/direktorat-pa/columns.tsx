@@ -5,8 +5,6 @@ import { RingkasanData, MonitoringKanwilData, MonitoringKppnData } from "./types
 
 export const formatRupiah = (value: number) => {
   return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
@@ -32,7 +30,7 @@ interface ColumnHandlers {
   onViewRingkasan: (item: any) => void;
 }
 
-export const getRingkasanKanwilColumns = (handlers: ColumnHandlers) => [
+export const getRingkasanKanwilColumns = (handlers: ColumnHandlers, totals?: any) => [
   {
     id: "no",
     header: () => <div className="text-center font-medium">No</div>,
@@ -47,7 +45,7 @@ export const getRingkasanKanwilColumns = (handlers: ColumnHandlers) => [
     accessorKey: "namaLokasi",
     header: () => <div className="text-center font-medium">Nama Kanwil</div>,
     cell: ({ row }: any) => (
-      <div className="text-left max-w-[200px] truncate" title={row.getValue("namaLokasi")}>
+      <div className="text-center" title={row.getValue("namaLokasi")}>
         {row.getValue("namaLokasi")}
       </div>
     ),
@@ -75,7 +73,7 @@ export const getRingkasanKanwilColumns = (handlers: ColumnHandlers) => [
     accessorKey: "namaSatker",
     header: () => <div className="text-center font-medium">Nama Satker</div>,
     cell: ({ row }: any) => (
-      <div className="text-left max-w-[200px] truncate" title={row.getValue("namaSatker")}>
+      <div className="text-left" title={row.getValue("namaSatker")}>
         {row.getValue("namaSatker")}
       </div>
     ),
@@ -90,7 +88,7 @@ export const getRingkasanKanwilColumns = (handlers: ColumnHandlers) => [
     ),
     footer: ({ table }: any) => (
       <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
-        {formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("upKkpPerBulan")) || 0), 0))}
+        {totals ? formatRupiah(totals.upKkpPerBulan) : formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("upKkpPerBulan")) || 0), 0))}
       </div>
     ),
   },
@@ -118,7 +116,7 @@ export const getRingkasanKanwilColumns = (handlers: ColumnHandlers) => [
     ),
     footer: ({ table }: any) => (
       <div className="text-center font-bold">
-        {table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("jumlahKartu")) || 0), 0)}
+        {totals ? totals.jumlahKartu : table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("jumlahKartu")) || 0), 0)}
       </div>
     ),
   },
@@ -136,7 +134,7 @@ export const getRingkasanKanwilColumns = (handlers: ColumnHandlers) => [
     ),
     footer: ({ table }: any) => (
       <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
-        {formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("nilaiTagihan")) || 0), 0))}
+        {totals ? formatRupiah(totals.nilaiTagihan) : formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("nilaiTagihan")) || 0), 0))}
       </div>
     ),
   },
@@ -154,7 +152,7 @@ export const getRingkasanKanwilColumns = (handlers: ColumnHandlers) => [
     ),
     footer: ({ table }: any) => (
       <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
-        {formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("nilaiTransaksi")) || 0), 0))}
+        {totals ? formatRupiah(totals.nilaiTransaksi) : formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("nilaiTransaksi")) || 0), 0))}
       </div>
     ),
   },
@@ -177,7 +175,7 @@ export const getRingkasanKanwilColumns = (handlers: ColumnHandlers) => [
   },
 ];
 
-export const getRingkasanKppnColumns = (handlers: ColumnHandlers) => [
+export const getRingkasanKppnColumns = (handlers: ColumnHandlers, totals?: any) => [
   {
     id: "no",
     header: () => <div className="text-center font-medium">No</div>,
@@ -192,7 +190,7 @@ export const getRingkasanKppnColumns = (handlers: ColumnHandlers) => [
     accessorKey: "namaKppn",
     header: () => <div className="text-center font-medium">Nama KPPN</div>,
     cell: ({ row }: any) => (
-      <div className="text-left max-w-[150px] truncate" title={row.getValue("namaKppn")}>
+      <div className="text-center" title={row.getValue("namaKppn")}>
         {row.getValue("namaKppn")}
       </div>
     ),
@@ -220,7 +218,7 @@ export const getRingkasanKppnColumns = (handlers: ColumnHandlers) => [
     accessorKey: "namaSatker",
     header: () => <div className="text-center font-medium">Nama Satker</div>,
     cell: ({ row }: any) => (
-      <div className="text-left max-w-[200px] truncate" title={row.getValue("namaSatker")}>
+      <div className="text-left" title={row.getValue("namaSatker")}>
         {row.getValue("namaSatker")}
       </div>
     ),
@@ -235,7 +233,7 @@ export const getRingkasanKppnColumns = (handlers: ColumnHandlers) => [
     ),
     footer: ({ table }: any) => (
       <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
-        {formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("upKkpPerBulan")) || 0), 0))}
+        {totals ? formatRupiah(totals.upKkpPerBulan) : formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("upKkpPerBulan")) || 0), 0))}
       </div>
     ),
   },
@@ -263,7 +261,7 @@ export const getRingkasanKppnColumns = (handlers: ColumnHandlers) => [
     ),
     footer: ({ table }: any) => (
       <div className="text-center font-bold">
-        {table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("jumlahKartu")) || Number(row.original.jumlahKartu) || 0), 0)}
+        {totals ? totals.jumlahKartu : table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("jumlahKartu")) || Number(row.original.jumlahKartu) || 0), 0)}
       </div>
     ),
   },
@@ -281,7 +279,7 @@ export const getRingkasanKppnColumns = (handlers: ColumnHandlers) => [
     ),
     footer: ({ table }: any) => (
       <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
-        {formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("nilaiTagihan")) || 0), 0))}
+        {totals ? formatRupiah(totals.nilaiTagihan) : formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("nilaiTagihan")) || 0), 0))}
       </div>
     ),
   },
@@ -299,7 +297,7 @@ export const getRingkasanKppnColumns = (handlers: ColumnHandlers) => [
     ),
     footer: ({ table }: any) => (
       <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
-        {formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("nilaiTransaksi")) || 0), 0))}
+        {totals ? formatRupiah(totals.nilaiTransaksi) : formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("nilaiTransaksi")) || 0), 0))}
       </div>
     ),
   },
@@ -337,7 +335,7 @@ export const getMonitoringKanwilColumns = (handlers: ColumnHandlers) => [
     accessorKey: "nmlokasi",
     header: () => <div className="text-center font-medium">Nama Kanwil</div>,
     cell: ({ row }: any) => (
-      <div className="text-left max-w-[200px] truncate" title={row.getValue("nmlokasi")}>
+      <div className="text-center" title={row.getValue("nmlokasi")}>
         {row.getValue("nmlokasi")}
       </div>
     ),
@@ -375,7 +373,7 @@ export const getMonitoringKanwilColumns = (handlers: ColumnHandlers) => [
   },
   {
     accessorKey: "nilai_transaksi",
-    header: () => <div className="text-center font-medium">Total Nilai Transaksi</div>,
+    header: () => <div className="text-center font-medium">Total Nilai Transaksi (Rp)</div>,
     cell: ({ row }: any) => (
       <div className="text-right font-mono tabular-nums pr-2">
         {formatRupiah(row.getValue("nilai_transaksi"))}
@@ -441,7 +439,7 @@ export const getMonitoringKppnColumns = (handlers: ColumnHandlers) => [
     accessorKey: "nmkppn",
     header: () => <div className="text-center font-medium">Nama KPPN</div>,
     cell: ({ row }: any) => (
-      <div className="text-left max-w-[200px] truncate" title={row.getValue("nmkppn")}>
+      <div className="text-center" title={row.getValue("nmkppn")}>
         {row.getValue("nmkppn")}
       </div>
     ),
@@ -469,7 +467,7 @@ export const getMonitoringKppnColumns = (handlers: ColumnHandlers) => [
   },
   {
     accessorKey: "nilai_transaksi",
-    header: () => <div className="text-center font-medium">Nilai Transaksi</div>,
+    header: () => <div className="text-center font-medium">Nilai Transaksi (Rp)</div>,
     cell: ({ row }: any) => (
       <div className="text-right font-mono tabular-nums pr-2">
         {formatRupiah(row.getValue("nilai_transaksi"))}
@@ -515,6 +513,122 @@ export const getMonitoringKppnColumns = (handlers: ColumnHandlers) => [
         >
           <Eye className="h-4 w-4 text-amber-600" />
         </Button>
+      </div>
+    ),
+  },
+];
+
+export const getTransaksiColumns = (totals?: any) => [
+  {
+    id: "no",
+    header: () => <div className="text-center font-medium">No</div>,
+    cell: ({ row }: any) => <div className="text-center">{row.index + 1}</div>,
+  },
+  {
+    accessorKey: "nmlokasi",
+    header: () => <div className="text-center font-medium">Nama Kanwil</div>,
+    cell: ({ row }: any) => (
+      <div className="text-center" title={row.getValue("nmlokasi")}>
+        {row.getValue("nmlokasi")}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "nmkppn",
+    header: () => <div className="text-center font-medium">Nama KPPN</div>,
+    cell: ({ row }: any) => (
+      <div className="text-center" title={row.getValue("nmkppn")}>
+        {row.getValue("nmkppn")}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "kdsatker",
+    header: () => <div className="text-center font-medium">Kode Satker</div>,
+    cell: ({ row }: any) => <div className="text-center font-mono">{row.getValue("kdsatker")}</div>,
+  },
+  {
+    accessorKey: "nmsatker",
+    header: () => <div className="text-center font-medium">Nama Satker</div>,
+    cell: ({ row }: any) => (
+      <div className="text-left" title={row.getValue("nmsatker")}>
+        {row.getValue("nmsatker")}
+      </div>
+    ),
+    footer: () => <div className="text-center font-bold">GRAND TOTAL</div>,
+  },
+  {
+    accessorKey: "jml_transaksi",
+    header: () => <div className="text-center font-medium">Jumlah Transaksi (BAST)</div>,
+    cell: ({ row }: any) => <div className="text-center">{row.getValue("jml_transaksi") || 0}</div>,
+    footer: ({ table }: any) => (
+      <div className="text-center font-bold text-black">
+        {totals ? (totals.jmlTransaksi || 0).toLocaleString("id-ID") : table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("jml_transaksi")) || 0), 0).toLocaleString("id-ID")}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "tg_spm",
+    header: () => <div className="text-center font-medium">Tanggal SPM</div>,
+    cell: ({ row }: any) => <div className="text-center">{formatDate(row.getValue("tg_spm"))}</div>,
+  },
+  {
+    accessorKey: "no_spm",
+    header: () => <div className="text-center font-medium">Nomor SPM</div>,
+    cell: ({ row }: any) => <div className="text-center">{row.getValue("no_spm") || "-"}</div>,
+  },
+  {
+    accessorKey: "tg_sp2d",
+    header: () => <div className="text-center font-medium">Tanggal SP2D</div>,
+    cell: ({ row }: any) => <div className="text-center">{formatDate(row.getValue("tg_sp2d"))}</div>,
+  },
+  {
+    accessorKey: "no_sp2d",
+    header: () => <div className="text-center font-medium">Nomor SP2D</div>,
+    cell: ({ row }: any) => <div className="text-center font-mono">{row.getValue("no_sp2d")}</div>,
+  },
+  {
+    accessorKey: "nilai_transaksi",
+    header: () => <div className="text-center font-medium">Nilai Transaksi KKP (Rp)</div>,
+    cell: ({ row }: any) => (
+      <div className="text-right font-mono tabular-nums pr-2">
+        {formatRupiah(row.getValue("nilai_transaksi"))}
+      </div>
+    ),
+    footer: ({ table }: any) => (
+      <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
+        {totals ? formatRupiah(totals.nilaiTransaksi) : formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("nilai_transaksi")) || 0), 0))}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "jns_kkp_prinsipal",
+    header: () => <div className="text-center font-medium">Jenis SPM/SP2D</div>,
+    cell: ({ row }: any) => <div className="text-center">{row.getValue("jns_kkp_prinsipal")}</div>,
+  },
+  {
+    id: "program_akun",
+    header: () => <div className="text-center font-medium">Program/Kegiatan/Output/Akun</div>,
+    cell: ({ row }: any) => {
+      const { kdprogram, kdgiat, kdoutput, kdakun } = row.original;
+      return (
+        <div className="text-center font-mono text-[10px]">
+          {kdprogram || "XX"}.{kdgiat || "XXXX"}.{kdoutput || "XXX"}.{kdakun}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "nilai_transaksi_total",
+    header: () => <div className="text-center font-medium">Total Transaksi KKP (Rp)</div>,
+    cell: ({ row }: any) => (
+      <div className="text-right font-mono tabular-nums pr-2">
+        {formatRupiah(row.getValue("nilai_transaksi"))}
+      </div>
+    ),
+    footer: ({ table }: any) => (
+      <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
+        {totals ? formatRupiah(totals.nilaiTransaksi) : formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("nilai_transaksi")) || 0), 0))}
       </div>
     ),
   },

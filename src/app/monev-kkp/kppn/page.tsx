@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   KppnContent,
@@ -9,7 +9,14 @@ import {
 } from "@/components/monev-kkp/kppn-content";
 import { MonevKkpPageSkeleton } from "@/components/monev-kkp/monev-page-skeleton";
 import { Button } from "@/components/ui/button";
-import { FileSpreadsheet, Send } from "lucide-react";
+import { LayoutList, Send, FileSpreadsheet } from "lucide-react";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContents,
+  TabsContent,
+} from "@/components/animate-ui/components/animate/tabs";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { toast } from "sonner";
 import * as XLSX from "xlsx-js-style";
@@ -41,6 +48,7 @@ export default function MonevKkpKppnPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const [isExporting, setIsExporting] = useState(false);
+  const [activeTab, setActiveTab] = useState("ringkasan-laporan");
   const [isSending, setIsSending] = useState(false);
   const [statusLaporan, setStatusLaporan] = useState<"sent" | "not_sent">(
     "not_sent",
@@ -178,10 +186,10 @@ export default function MonevKkpKppnPage() {
   }, [user, selectedYear, selectedPeriode]);
 
   // Callback from KppnContent when filters change
-  const handlePeriodeChange = (year: string, periode: string) => {
+  const handlePeriodeChange = useCallback((year: string, periode: string) => {
     setSelectedYear(year);
     setSelectedPeriode(periode);
-  };
+  }, []);
 
   if (isLoading || !user || !ALLOWED_ROLES.includes(user.role as string)) {
     return (
@@ -589,71 +597,73 @@ export default function MonevKkpKppnPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Monev KKP</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground mt-1">
             Monitoring dan Evaluasi Kartu Kredit Pemerintah - KPPN
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Export Buttons */}
-          <Button
-            variant="outline"
-            disabled={isExporting}
-            onClick={handleExportExcel}
-            className="bg-green-700 dark:bg-card hover:bg-green-600 flex items-center"
-          >
-            {isExporting ? (
-              <Spinner size="sm" className="mr-2" />
-            ) : (
-              <FileSpreadsheet className="w-4 h-4 text-white" />
-            )}
-            <p className="text-sm text-white">
-              {isExporting ? "Mengunduh..." : "Unduh Laporan Excel"}
-            </p>
-          </Button>
+          {activeTab === "ringkasan-laporan" && (
+            <Button
+              variant="outline"
+              disabled={isExporting}
+              onClick={handleExportExcel}
+              className="bg-green-700 dark:bg-card hover:bg-green-600 flex items-center"
+            >
+              {isExporting ? (
+                <Spinner size="sm" className="mr-2 text-white" />
+              ) : (
+                <FileSpreadsheet className="w-4 h-4 text-white mr-2" />
+              )}
+              <p className="text-sm text-white">
+                {isExporting ? "Mengunduh..." : "Unduh Laporan Excel"}
+              </p>
+            </Button>
+          )}
 
-          {/* Kirim Laporan Button */}
-          <ConfirmationModal
-            trigger={
-              <Button
-                disabled={
-                  isLoadingStatus ||
-                  isSending ||
-                  statusLaporan === "sent" ||
-                  (selectedPeriode !== "Q1" &&
-                    prevStatusLaporan === "not_sent") ||
-                  !isPeriodPast()
-                }
-              >
-                {isLoadingStatus ? (
-                  <Spinner size="sm" className="mr-2" />
-                ) : (
-                  <Send className="mr-2 h-4 w-4" />
-                )}
-                {isLoadingStatus
-                  ? "Checking Status..."
-                  : isSending
-                    ? "Mengirim..."
-                    : statusLaporan === "sent"
-                      ? "Sudah Dikirim"
-                      : !isPeriodPast()
-                        ? "Periode Belum Berakhir"
-                        : "Kirim Laporan"}
-              </Button>
-            }
-            title="Kirim Laporan ke Kanwil?"
-            description="Apakah Anda yakin ingin mengirim laporan ini ke Kanwil? Pastikan semua data sudah benar sebelum mengirim."
-            confirmText="Ya, Kirim Laporan"
-            cancelText="Batal"
-            variant="info"
-            onConfirm={handleKirimLaporan}
-            disabled={
-              isLoadingStatus ||
-              isSending ||
-              statusLaporan === "sent" ||
-              (selectedPeriode !== "Q1" && prevStatusLaporan === "not_sent") ||
-              !isPeriodPast()
-            }
-          />
+          {activeTab === "ringkasan-laporan" && (
+            <ConfirmationModal
+              trigger={
+                <Button
+                  disabled={
+                    isLoadingStatus ||
+                    isSending ||
+                    statusLaporan === "sent" ||
+                    (selectedPeriode !== "Q1" &&
+                      prevStatusLaporan === "not_sent") ||
+                    !isPeriodPast()
+                  }
+                >
+                  {isLoadingStatus ? (
+                    <Spinner size="sm" className="mr-2" />
+                  ) : (
+                    <Send className="mr-2 h-4 w-4" />
+                  )}
+                  {isLoadingStatus
+                    ? "Checking Status..."
+                    : isSending
+                      ? "Mengirim..."
+                      : statusLaporan === "sent"
+                        ? "Sudah Dikirim"
+                        : !isPeriodPast()
+                          ? "Periode Belum Berakhir"
+                          : "Kirim Laporan"}
+                </Button>
+              }
+              title="Kirim Laporan ke Kanwil?"
+              description="Apakah Anda yakin ingin mengirim laporan ini ke Kanwil? Pastikan semua data sudah benar sebelum mengirim."
+              confirmText="Ya, Kirim Laporan"
+              cancelText="Batal"
+              variant="info"
+              onConfirm={handleKirimLaporan}
+              disabled={
+                isLoadingStatus ||
+                isSending ||
+                statusLaporan === "sent" ||
+                (selectedPeriode !== "Q1" && prevStatusLaporan === "not_sent") ||
+                !isPeriodPast()
+              }
+            />
+          )}
         </div>
       </div>
 
@@ -684,13 +694,52 @@ export default function MonevKkpKppnPage() {
         </div>
       )}
 
-      {/* Main Content */}
-      <KppnContent
-        ref={kppnContentRef}
-        statusLaporan={statusLaporan}
-        tglKirimKppn={tglKirimKppn}
-        onPeriodeChange={handlePeriodeChange}
-      />
+      {/* Main Tabs Content */}
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="w-full gap-3"
+      >
+        <div className="border-b border-border/50 pb-3 mb-0">
+          <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl flex flex-wrap md:grid md:grid-cols-2 gap-2 md:gap-0">
+            <TabsTrigger
+              value="ringkasan-laporan"
+              className="flex-1 h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap"
+            >
+              <LayoutList className="h-4 w-4 mr-2" />
+              <span>Ringkasan Laporan</span>
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="data-transaksi"
+              className="flex-1 h-12 md:h-full px-2 md:px-5 py-0 text-xs md:text-base whitespace-nowrap"
+            >
+              <LayoutList className="h-4 w-4 mr-2" />
+              <span>Data Transaksi</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContents>
+          <TabsContent value="ringkasan-laporan" className="space-y-4">
+            <KppnContent
+              ref={kppnContentRef}
+              contentType="ringkasan"
+              statusLaporan={statusLaporan}
+              tglKirimKppn={tglKirimKppn}
+              onPeriodeChange={handlePeriodeChange}
+            />
+          </TabsContent>
+
+          <TabsContent value="data-transaksi" className="space-y-4">
+            <KppnContent
+              contentType="transaksi"
+              statusLaporan={statusLaporan}
+              onPeriodeChange={handlePeriodeChange}
+            />
+          </TabsContent>
+        </TabsContents>
+      </Tabs>
     </div>
   );
 }

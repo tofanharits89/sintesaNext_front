@@ -26,6 +26,7 @@ export type RankingTab = {
   items: RankedItem[];
   valuePrefix?: string;
   valueSuffix?: string;
+  valueFormatter?: ((value: number) => string) | undefined;
 };
 
 const PAGE_SIZE = 5;
@@ -36,12 +37,14 @@ function RankingList({
   showTargetBar = false,
   valuePrefix = "",
   valueSuffix = "",
+  valueFormatter,
 }: {
   items: RankedItem[];
   badgeColor?: "blue" | "orange" | "purple";
   showTargetBar?: boolean;
   valuePrefix?: string;
   valueSuffix?: string;
+  valueFormatter?: ((value: number) => string) | undefined;
 }) {
   const [page, setPage] = useState(1);
 
@@ -96,8 +99,10 @@ function RankingList({
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="text-xs font-bold font-mono tabular-nums text-foreground">
                     {valuePrefix}
-                    {it.value.toLocaleString("id-ID")}
-                    {valueSuffix}
+                    {valueFormatter
+                      ? valueFormatter(it.value)
+                      : it.value.toLocaleString("id-ID")}
+                    {!valueFormatter && valueSuffix}
                   </span>
                   <Badge
                     variant="outline"
@@ -223,6 +228,7 @@ export function StatsRankingCard({
                   showTargetBar={tab.key === "penerima"}
                   valuePrefix={tab.valuePrefix ?? ""}
                   valueSuffix={tab.valueSuffix ?? ""}
+                  valueFormatter={tab.valueFormatter}
                 />
               </TabsContent>
             ))}

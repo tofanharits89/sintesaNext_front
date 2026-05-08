@@ -8,11 +8,14 @@ import { LihatKendalaModal } from "./modals/lihat-kendala-modal";
 import { TransaksiKkpModal } from "./modals/transaksi-kkp-modal";
 import { TagihanKkpModal } from "./modals/tagihan-kkp-modal";
 import { KartuKkpModal } from "./modals/kartu-kkp-modal";
+import { Building2, Calendar, Clock, FileSpreadsheet, Eye } from "lucide-react";
+import * as XLSX from "xlsx-js-style";
 import { SatkerDetailModal } from "./modals/satker-detail-modal";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { apiPath } from "@/lib/config/base-path";
+import { Button } from "@/components/ui/button";
 
 // Modularized imports
 import { 
@@ -30,7 +33,8 @@ import {
   getRingkasanKanwilColumns, 
   getRingkasanKppnColumns, 
   getMonitoringKanwilColumns, 
-  getMonitoringKppnColumns 
+  getMonitoringKppnColumns,
+  getTransaksiColumns
 } from "./direktorat-pa/columns";
 import { useDirektoratPaData } from "./direktorat-pa/hooks/use-direktorat-pa-data";
 import { DirektoratPaFilter } from "./direktorat-pa/direktorat-pa-filter";
@@ -46,6 +50,7 @@ export const DirektoratPaContent = forwardRef<
     ringkasanData,
     monitoringKanwilData,
     monitoringKppnData,
+    transaksiData,
     isLoading,
     selectedYear,
     setSelectedYear,
@@ -63,6 +68,15 @@ export const DirektoratPaContent = forwardRef<
     kppnRefList,
     isLoadingKppnRef,
     fetchRingkasanData,
+    fetchTransaksiData,
+    exportTransaksiToExcel,
+    transaksiPagination,
+    setTransaksiPagination,
+    totalTransaksi,
+    ringkasanPagination,
+    setRingkasanPagination,
+    totalRingkasan,
+    grandTotals,
   } = useDirektoratPaData(contentType);
 
   // Modal state
@@ -209,28 +223,65 @@ export const DirektoratPaContent = forwardRef<
     onViewRingkasan: handleViewRingkasan,
   };
 
-  // Apply client-side status filter for monitoring tabs
-  const filteredMonitoringKanwilData =
-    selectedStatus === "all"
-      ? monitoringKanwilData
-      : monitoringKanwilData.filter((d) => d.status === selectedStatus);
-
-  const filteredMonitoringKppnData =
-    selectedStatus === "all"
-      ? monitoringKppnData
-      : monitoringKppnData.filter((d) => d.status === selectedStatus);
-
   const getColumnsAndData = (): { columns: any[]; data: any[] } => {
     switch (contentType) {
-      case "ringkasan-kanwil": return { columns: getRingkasanKanwilColumns(columnHandlers), data: ringkasanData };
-      case "ringkasan-kppn": return { columns: getRingkasanKppnColumns(columnHandlers), data: ringkasanData };
-      case "monitoring-kanwil": return { columns: getMonitoringKanwilColumns(columnHandlers), data: filteredMonitoringKanwilData };
-      case "monitoring-kppn": return { columns: getMonitoringKppnColumns(columnHandlers), data: filteredMonitoringKppnData };
-      default: return { columns: getRingkasanKanwilColumns(columnHandlers), data: ringkasanData };
+      case "ringkasan-kanwil":
+        return {
+          columns: getRingkasanKanwilColumns(columnHandlers, grandTotals),
+          data: ringkasanData,
+        };
+      case "ringkasan-kppn":
+        return {
+          columns: getRingkasanKppnColumns(columnHandlers, grandTotals),
+          data: ringkasanData,
+        };
+      case "monitoring-kanwil": return { columns: getMonitoringKanwilColumns(columnHandlers), data: monitoringKanwilData };
+      case "monitoring-kppn": return { columns: getMonitoringKppnColumns(columnHandlers), data: monitoringKppnData };
+      case "data-transaksi": return { columns: getTransaksiColumns(grandTotals), data: transaksiData };
+      default: return { columns: [], data: [] };
     }
   };
 
   const { columns, data } = getColumnsAndData();
+
+  const handleExportGeneric = () => {
+    if (data.length === 0) {
+      toast.error("Tidak ada data untuk diekspor");
+      return;
+    }
+
+    let excelData = data;
+    if (contentType === "monitoring-kanwil") {
+      excelData = data.map((item: any, index: number) => ({
+        "No": index + 1,
+        "Kode Kanwil": item.kdkanwil,
+        "Nama Kanwil": item.nmkanwil,
+        "Jumlah Satker (UP KKP)": item.jumlah_satker_up_kkp,
+        "Jumlah Satker (Transaksi)": item.jumlah_satker_transaksi,
+        "Nilai Transaksi (Rp)": item.nilai_transaksi,
+        "Status Laporan": item.status === "sent" ? "Sudah Kirim" : "Belum Kirim",
+        "Tanggal Kirim": item.tanggalKirim ? new Date(item.tanggalKirim).toLocaleDateString("id-ID") : "-"
+      }));
+    } else if (contentType === "monitoring-kppn") {
+      excelData = data.map((item: any, index: number) => ({
+        "No": index + 1,
+        "Kode KPPN": item.kdkppn,
+        "Nama KPPN": item.nmkppn,
+        "Kode Kanwil": item.kdkanwil,
+        "Jumlah Satker (UP KKP)": item.jumlah_satker_up_kkp,
+        "Jumlah Satker (Transaksi)": item.jumlah_satker_transaksi,
+        "Nilai Transaksi (Rp)": item.nilai_transaksi,
+        "Status Laporan": item.status === "sent" ? "Sudah Kirim" : "Belum Kirim",
+        "Tanggal Kirim": item.tanggalKirim ? new Date(item.tanggalKirim).toLocaleDateString("id-ID") : "-"
+      }));
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data Export");
+    XLSX.writeFile(workbook, `export-${contentType}-${selectedYear}-${selectedPeriode}.xlsx`);
+    toast.success("Data berhasil diekspor");
+  };
 
   const getTitle = () => {
     switch (contentType) {
@@ -238,6 +289,7 @@ export const DirektoratPaContent = forwardRef<
       case "ringkasan-kppn": return "Ringkasan Laporan per KPPN";
       case "monitoring-kanwil": return "Monitoring Laporan Kanwil";
       case "monitoring-kppn": return "Monitoring Laporan KPPN";
+      case "data-transaksi": return "Data Transaksi KKP";
       default: return "Ringkasan Laporan per Kanwil";
     }
   };
@@ -311,17 +363,50 @@ export const DirektoratPaContent = forwardRef<
         activeKppnList={activeKppnList}
         isLoadingKanwilRef={isLoadingKanwilRef}
         isLoadingKppnRef={isLoadingKppnRef}
+        {...(contentType === "data-transaksi" ? { onExportExcel: exportTransaksiToExcel } : {})}
       />
 
       <Card>
-        <CardHeader><CardTitle>{getTitle()}</CardTitle></CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between py-3">
+          <CardTitle>{getTitle()}</CardTitle>
+          {(contentType === "data-transaksi" || contentType.startsWith("monitoring")) && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={contentType === "data-transaksi" ? exportTransaksiToExcel : handleExportGeneric}
+              className="bg-green-700 dark:bg-card hover:bg-green-600 flex items-center"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-white mr-2" />
+              <span className="text-sm text-white">Unduh Data Excel</span>
+            </Button>
+          )}
+        </CardHeader>
         <CardContent>
           {isLoading ? <TableSkeleton rows={10} /> : (
             <DataTable 
               columns={columns} 
               data={data} 
-              initialPageSize={25} 
-              showFooter={contentType === "monitoring-kanwil" || contentType === "monitoring-kppn" || contentType === "ringkasan-kppn" || contentType === "ringkasan-kanwil"}
+              initialPageSize={10} 
+              showFooter={contentType === "monitoring-kanwil" || contentType === "monitoring-kppn" || contentType === "ringkasan-kppn" || contentType === "ringkasan-kanwil" || contentType === "data-transaksi"}
+              manualPagination={contentType === "data-transaksi" || contentType === "ringkasan-kanwil" || contentType === "ringkasan-kppn"}
+              rowCount={
+                (contentType === "data-transaksi" 
+                  ? totalTransaksi 
+                  : (contentType === "ringkasan-kanwil" || contentType === "ringkasan-kppn")
+                  ? totalRingkasan
+                  : undefined) as any
+              }
+              controlledPagination={
+                (contentType === "data-transaksi"
+                  ? transaksiPagination
+                  : (contentType === "ringkasan-kanwil" || contentType === "ringkasan-kppn")
+                  ? ringkasanPagination
+                  : undefined) as any
+              }
+              onPaginationChange={(p) => {
+                if (contentType === "data-transaksi") setTransaksiPagination(p);
+                else if (contentType === "ringkasan-kanwil" || contentType === "ringkasan-kppn") setRingkasanPagination(p);
+              }}
             />
           )}
         </CardContent>

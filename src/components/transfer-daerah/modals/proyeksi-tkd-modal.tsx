@@ -301,13 +301,13 @@ export function ProyeksiTkdModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle>
             {editData ? "Edit Proyeksi TKD" : "Rekam Proyeksi TKD"}
           </DialogTitle>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto grid gap-4 py-4">
+        <div className="flex-1 overflow-y-auto p-6 grid gap-4 py-4">
           {/* Selection Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Tahun */}
@@ -576,7 +576,7 @@ export function ProyeksiTkdModal({
           </div>
         </div>
 
-        <DialogFooter className="flex-shrink-0 flex flex-col sm:flex-row sm:justify-end gap-3">
+        <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleTutup}>
               Tutup

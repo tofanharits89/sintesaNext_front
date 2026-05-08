@@ -437,9 +437,9 @@ export default function Rekam({
     <Dialog open={show} onOpenChange={(open) => !open && onHide()}>
       <DialogContent
         showCloseButton={false}
-        className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden"
+        className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0"
       >
-        <DialogHeader className="flex-shrink-0">
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle className="text-xl text-center">
             Clustering Tantangan {clusterTitle[jenis]}
           </DialogTitle>
@@ -459,7 +459,7 @@ export default function Rekam({
           )}
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto p-6">
           <Tabs
             value={activeKey}
             onValueChange={setActiveKey}
@@ -541,7 +541,7 @@ export default function Rekam({
           </Tabs>
         </div>
 
-        <DialogFooter className="flex-shrink-0">
+        <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button variant="outline" onClick={onHide}>
             Tutup
           </Button>

@@ -161,22 +161,21 @@ export function DeleteConfirmModal({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="sm:max-w-[800px]">
-        <AlertDialogHeader>
+      <AlertDialogContent className="max-w-xl sm:max-w-xl h-[auto] flex flex-col p-0 gap-0">
+        <AlertDialogHeader className="p-6 pb-2">
           <AlertDialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-red-500" />
             {title}
           </AlertDialogTitle>
-          <AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="flex-1 overflow-y-auto p-6 pt-2">
+          <AlertDialogDescription className="mb-4">
             {description}
           </AlertDialogDescription>
-        </AlertDialogHeader>
-        
-        <div className="py-2">
           {renderDataPreview()}
         </div>
         
-        <AlertDialogFooter className="mt-2">
+        <AlertDialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <AlertDialogCancel onClick={() => onOpenChange(false)}>
             Batal
           </AlertDialogCancel>

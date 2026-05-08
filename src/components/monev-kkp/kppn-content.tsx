@@ -13,7 +13,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { ResetButton } from "@/components/ui/reset-button";
-import { Pencil, Eye, Trash2, Building2, Calendar, Clock } from "lucide-react";
+import { Building2, Calendar, Clock, FileSpreadsheet } from "lucide-react";
+import * as XLSX from "xlsx-js-style";
 import { KendalaHambatanModal } from "./modals/kendala-hambatan-modal";
 import { LihatKendalaModal } from "./modals/lihat-kendala-modal";
 import { TransaksiKkpModal } from "./modals/transaksi-kkp-modal";
@@ -25,7 +26,9 @@ import { toast } from "sonner";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { apiPath } from "@/lib/config/base-path";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
-import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { Spinner } from "@/components/ui/spinner";
+import { getRingkasanColumns, getTransaksiColumns } from "./kppn/columns";
+import { useKppnData } from "./kppn/hooks/use-kppn-data";
 
 // Type for the KKP data
 export interface KkpData {
@@ -72,136 +75,42 @@ export interface KppnContentRef {
 
 // Props interface
 interface KppnContentProps {
+  contentType?: "ringkasan" | "transaksi";
   statusLaporan?: "sent" | "not_sent";
   tglKirimKppn?: string | null;
   onPeriodeChange?: (year: string, periode: string) => void;
 }
 
 export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
-  function KppnContent({ statusLaporan = "not_sent", tglKirimKppn = null, onPeriodeChange }, ref) {
-    // Get authenticated user info
-    const { user, isLoading: isAuthLoading, filterDataByRole } = useAuth();
-    const now = new Date();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
-    const currentQ = Math.ceil(currentMonth / 3);
-    
-    let prevQ = currentQ - 1;
-    let prevYear = currentYear;
-    
-    if (prevQ === 0) {
-      prevQ = 4;
-      prevYear = currentYear - 1;
-    }
-
-    const [data, setData] = useState<KkpData[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [selectedYear, setSelectedYear] = useState(String(prevYear));
-    const [selectedPeriode, setSelectedPeriode] = useState(`Q${prevQ}`);
+  function KppnContent({ contentType = "ringkasan", statusLaporan = "not_sent", tglKirimKppn = null, onPeriodeChange }, ref) {
+    const { user } = useAuth();
+    const {
+      ringkasanData,
+      transaksiData,
+      isLoading,
+      selectedYear,
+      setSelectedYear,
+      selectedPeriode,
+      setSelectedPeriode,
+      handleReset,
+      fetchRingkasanData,
+      ringkasanPagination,
+      setRingkasanPagination,
+      totalRingkasan,
+      transaksiPagination,
+      setTransaksiPagination,
+      totalTransaksi,
+      grandTotals,
+    } = useKppnData(contentType, onPeriodeChange);
 
     // Expose getData and getSelectedPeriode methods to parent component via ref
     useImperativeHandle(ref, () => ({
-      getData: () => data,
+      getData: () => ringkasanData,
       getSelectedPeriode: () => ({
         year: selectedYear,
         periode: selectedPeriode,
       }),
     }));
-
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const triwulan = selectedPeriode.replace("Q", "");
-        const ts = new Date().getTime();
-        
-        // Add regional filters based on user role to API call
-        let regionalParams = "";
-        if (user?.role === "kppn" && user.kdkppn) {
-          regionalParams = `&kdkppn=${user.kdkppn}`;
-        } else if (user?.role === "kanwil_djpb" && user.kdkanwil) {
-          regionalParams = `&kdkanwil=${user.kdkanwil}`;
-        }
-
-        const response = await fetch(
-          apiPath(`/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulan}${regionalParams}&_t=${ts}`),
-          {
-            credentials: "include",
-            cache: "no-store",
-            headers: {
-              "Content-Type": "application/json",
-              "Cache-Control": "no-cache",
-              "Pragma": "no-cache"
-            },
-          },
-        );
-
-        if (!response.ok) {
-          throw new Error("Gagal mengambil data");
-        }
-
-        const result = await response.json();
-
-        // Map backend data to frontend KkpData structure
-        const mappedData: KkpData[] = result.data.map((item: any, index: number) => ({
-          id: `${item.kdsatker}-${index}`,
-          kodeBA: item.kddept,
-          kodeSatker: item.kdsatker,
-          namaSatker: item.nmsatker,
-          kdkppn: item.kdkppn,
-          nmkppn: item.nmkppn,
-          kdkanwil: item.kdkanwil,
-          nmkanwil: item.nmkanwil,
-          upKkpPerBulan: Number(item.nilai_up_kkp || 0),
-          porsiUpKkp: Number(item.porsi_up_kkp_dari_total_up || 0),
-          bankPenerbit: item.bank_penerbit,
-          jmlKartuUsul: item.jml_kartu_usul !== undefined && item.jml_kartu_usul !== null ? Number(item.jml_kartu_usul) : null,
-          jumlahKartu: Number(item.jumlah_kartu || 0),
-          jmlKartuOpr: Number(item.jml_kartu_opr || 0),
-          limitOpr: Number(item.limit_opr || 0),
-          jmlKartuPd: Number(item.jml_kartu_pd || 0),
-          limitPd: Number(item.limit_pd || 0),
-          nilaiTagihan: Number(item.nilai_tagihan || 0),
-          nilaiTransaksi: Number(item.nilai_trans_sp2d || 0),
-          kendala: item.kendala || "",
-          detil_kendala: item.detil_kendala || "",
-          detil_masukan_kendala: item.detil_masukan_kendala || "",
-          nomor_pks: item.nomor_pks || "",
-          tanggal_pks: item.tanggal_pks || "",
-          nomor_surat_up: item.nomor_surat_up || "",
-          tanggal_surat_up: item.tanggal_surat_up || "",
-          tanggal_ctk_tagihan: item.tanggal_ctk_tagihan || "",
-          tanggal_jth_tempo: item.tanggal_jth_tempo || "",
-          nomor_sp2d_list: item.nomor_sp2d_list || "",
-          tanggal_sp2d_list: item.tanggal_sp2d_list || "",
-          jenis_belanja_list: item.jenis_belanja_list || "",
-          bulan: item.bulan,
-          triwulan: item.triwulan,
-          tahun: selectedYear,
-        }));
-
-        // Apply RBAC filtering on the frontend as an additional security layer
-        const filteredData = filterDataByRole(mappedData);
-        setData(filteredData);
-      } catch (error) {
-        console.error("Error fetching KKP data:", error);
-        toast.error("Gagal mengambil data dari server");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    useEffect(() => {
-      if (user) {
-        fetchData();
-      }
-    }, [user, selectedYear, selectedPeriode]);
-
-    // Notify parent when year or periode changes
-    useEffect(() => {
-      if (onPeriodeChange) {
-        onPeriodeChange(selectedYear, selectedPeriode);
-      }
-    }, [selectedYear, selectedPeriode]);
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -226,21 +135,7 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
       kdsatker: string;
       namaSatker?: string;
     } | null>(null);
-
-    // Generate years from 2026 back to 2023
-    const years = ["2026", "2025", "2024", "2023"];
-
-    const periodes = [
-      { value: "Q1", label: "Triwulan 1 (Jan - Mar)" },
-      { value: "Q2", label: "Triwulan 2 (Jan - Jun)" },
-      { value: "Q3", label: "Triwulan 3 (Jan - Sep)" },
-      { value: "Q4", label: "Triwulan 4 (Jan - Des)" },
-    ];
-
-    const handleReset = () => {
-      setSelectedYear(String(prevYear));
-      setSelectedPeriode(`Q${prevQ}`);
-    };
+    const [isExporting, setIsExporting] = useState(false);
 
     const handleEditKendala = (item: any) => {
       setSelectedItem(item);
@@ -270,261 +165,158 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
         }
 
         toast.success("Data kendala berhasil dihapus");
-        fetchData();
+        fetchRingkasanData();
       } catch (error: any) {
         console.error("Error deleting kendala:", error);
         toast.error(error.message || "Gagal menghapus data kendala");
       }
     };
 
-    const formatRupiah = (value: number) => {
-      return new Intl.NumberFormat("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(value);
-    };
-
-    const formatPercent = (value: number) => {
-      return `${value.toFixed(1)}%`;
-    };
-
-    const columns = [
-      {
-        id: "no",
-        header: () => <div className="text-center font-medium">No</div>,
-        cell: ({ row }: any) => (
-          <div className="text-center">{row.index + 1}</div>
-        ),
-      },
-      {
-        accessorKey: "kodeBA",
-        header: () => <div className="text-center font-medium">Kode BA</div>,
-        cell: ({ row }: any) => (
-          <div className="text-center">{row.getValue("kodeBA")}</div>
-        ),
-      },
-      {
-        accessorKey: "kodeSatker",
-        header: () => (
-          <div className="text-center font-medium">Kode Satker</div>
-        ),
-        cell: ({ row }: any) => (
-          <div
-            className="text-center cursor-pointer text-blue-600 hover:underline font-medium"
-            onClick={() => {
-              setSatkerDetailTarget({
-                kdsatker: row.original.kodeSatker,
-                namaSatker: row.original.namaSatker,
-              });
-              setIsSatkerDetailModalOpen(true);
-            }}
-            title="Lihat detail satker"
-          >
-            {row.getValue("kodeSatker")}
-          </div>
-        ),
-      },
-      {
-        accessorKey: "namaSatker",
-        header: () => (
-          <div className="text-center font-medium">Nama Satker</div>
-        ),
-        cell: ({ row }: any) => (
-          <div
-            className="text-left max-w-[200px] truncate"
-            title={row.getValue("namaSatker")}
-          >
-            {row.getValue("namaSatker")}
-          </div>
-        ),
-        footer: () => <div className="text-center font-bold">GRAND TOTAL</div>,
-      },
-      {
-        accessorKey: "upKkpPerBulan",
-        header: () => (
-          <div className="text-center font-medium">UP KKP Per Bulan</div>
-        ),
-        cell: ({ row }: any) => (
-          <div className="text-right font-mono tabular-nums pr-2">
-            {formatRupiah(row.getValue("upKkpPerBulan"))}
-          </div>
-        ),
-        footer: ({ table }: any) => (
-          <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
-            {formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("upKkpPerBulan")) || 0), 0))}
-          </div>
-        ),
-      },
-      {
-        accessorKey: "porsiUpKkp",
-        header: () => (
-          <div className="text-center font-medium">
-            Porsi UP KKP dari Total UP
-          </div>
-        ),
-        cell: ({ row }: any) => (
-          <div className="text-center">
-            {formatPercent(row.getValue("porsiUpKkp"))}
-          </div>
-        ),
-      },
-      {
-        accessorKey: "bankPenerbit",
-        header: () => (
-          <div className="text-center font-medium">Bank Penerbit KKP</div>
-        ),
-        cell: ({ row }: any) => (
-          <div className="text-center">{row.getValue("bankPenerbit")}</div>
-        ),
-      },
-      {
-        accessorKey: "jumlahKartu",
-        header: () => (
-          <div className="text-center font-medium">Jumlah Kartu</div>
-        ),
-        cell: ({ row }: any) => (
-          <div
-            className="text-center cursor-pointer text-blue-600 hover:underline"
-            onClick={() => {
-              setKartuTarget({
-                kdsatker: row.original.kodeSatker,
-                namaSatker: row.original.namaSatker,
-              });
-              setIsKartuModalOpen(true);
-            }}
-            title="Lihat detail kartu"
-          >
-            {row.getValue("jumlahKartu")}
-          </div>
-        ),
-        footer: ({ table }: any) => (
-          <div className="text-center font-bold">
-            {table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("jumlahKartu")) || 0), 0)}
-          </div>
-        ),
-      },
-      {
-        accessorKey: "nilaiTagihan",
-        header: () => (
-          <div className="text-center font-medium">Nilai Tagihan</div>
-        ),
-        cell: ({ row }: any) => (
-          <div
-            className="text-right font-mono tabular-nums pr-2 cursor-pointer text-blue-600 hover:underline"
-            onClick={() => {
-              setTagihanTarget({
-                kdsatker: row.original.kodeSatker,
-                namaSatker: row.original.namaSatker,
-              });
-              setIsTagihanModalOpen(true);
-            }}
-            title="Lihat detail tagihan"
-          >
-            {formatRupiah(row.getValue("nilaiTagihan"))}
-          </div>
-        ),
-        footer: ({ table }: any) => (
-          <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
-            {formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("nilaiTagihan")) || 0), 0))}
-          </div>
-        ),
-      },
-      {
-        accessorKey: "nilaiTransaksi",
-        header: () => (
-          <div className="text-center font-medium">Nilai Transaksi KKP</div>
-        ),
-        cell: ({ row }: any) => (
-          <div
-            className="text-right font-mono tabular-nums pr-2 cursor-pointer text-blue-600 hover:underline"
-            onClick={() => {
-              setTransaksiTarget({
-                kdsatker: row.original.kodeSatker,
-                namaSatker: row.original.namaSatker,
-              });
-              setIsTransaksiModalOpen(true);
-            }}
-            title="Lihat detail transaksi"
-          >
-            {formatRupiah(row.getValue("nilaiTransaksi"))}
-          </div>
-        ),
-        footer: ({ table }: any) => (
-          <div className="text-right font-mono tabular-nums pr-2 font-bold text-black">
-            {formatRupiah(table.getFilteredRowModel().rows.reduce((sum: number, row: any) => sum + (Number(row.getValue("nilaiTransaksi")) || 0), 0))}
-          </div>
-        ),
-      },
-      {
-        id: "actions",
-        header: () => (
-          <div className="text-center font-medium">Kendala dan Hambatan</div>
-        ),
-        cell: ({ row }: any) => {
-          const hasKendalaData = row.original.kendala && row.original.kendala.trim() !== "";
-          return (
-            <div className="flex items-center justify-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 w-8 p-0 cursor-pointer"
-                onClick={() => handleEditKendala(row.original)}
-                title={
-                  statusLaporan === "sent"
-                    ? "Laporan sudah dikirim, tidak dapat mengedit"
-                    : hasKendalaData
-                    ? "Edit Kendala/Hambatan (Sudah diisi)"
-                    : "Edit Kendala/Hambatan"
-                }
-                disabled={statusLaporan === "sent"}
-              >
-                <Pencil className={`h-4 w-4 ${hasKendalaData ? "text-green-600" : "text-blue-600"}`} />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 w-8 p-0 cursor-pointer"
-                onClick={() => handleViewKendala(row.original)}
-                title="Lihat Kendala/Hambatan"
-              >
-                <Eye className="h-4 w-4 text-amber-600" />
-              </Button>
-              {hasKendalaData && statusLaporan !== "sent" && (
-                <ConfirmationModal
-                  trigger={
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="h-8 w-8 p-0 cursor-pointer"
-                      title="Hapus Kendala/Hambatan"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  }
-                  title="Hapus Kendala?"
-                  description={`Apakah Anda yakin ingin menghapus data kendala untuk satker ${row.original.namaSatker}? Tindakan ini tidak dapat dibatalkan.`}
-                  confirmText="Ya, Hapus"
-                  cancelText="Batal"
-                  variant="destructive"
-                  onConfirm={() => handleDeleteKendala(row.original)}
-                />
-              )}
-            </div>
+    const handleExportExcel = async () => {
+      setIsExporting(true);
+      try {
+        const triwulan = selectedPeriode.replace("Q", "");
+        
+        if (contentType === "ringkasan") {
+          // Standard summary export (existing behavior but cleaned up)
+          if (ringkasanData.length === 0) {
+            toast.error("Tidak ada data untuk diekspor");
+            return;
+          }
+          const worksheet = XLSX.utils.json_to_sheet(ringkasanData);
+          const workbook = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(workbook, worksheet, "Ringkasan Laporan");
+          XLSX.writeFile(workbook, `Ringkasan_Laporan_KPPN_${selectedYear}_${selectedPeriode}.xlsx`);
+        } else {
+          // Improved transaction export (matching Direktorat PA)
+          toast.info("Sedang menyiapkan data Excel, harap tunggu...");
+          
+          // Fetch all data for export
+          const apiUrl = apiPath(
+            `/monev-kkp/direktorat/data-transaksi?tahun=${selectedYear}&triwulan=${triwulan}&kdkppn=${user?.kdkppn}&page=1&limit=100000`,
           );
-        },
+          
+          const response = await fetch(apiUrl, { credentials: "include" });
+          if (!response.ok) throw new Error("Gagal mengambil data untuk export");
+          const result = await response.json();
+          const data = result.data || [];
+
+          if (data.length === 0) {
+            toast.error("Tidak ada data untuk diunduh");
+            return;
+          }
+
+          const excelData = data.map((item: any, index: number) => ({
+            "No": index + 1,
+            "Kode Satker": item.kdsatker,
+            "Nama Satker": item.nmsatker,
+            "Jumlah Transaksi (BAST)": item.jml_transaksi || 0,
+            "Tanggal SPM": item.tg_spm ? new Date(item.tg_spm).toLocaleDateString('id-ID') : '-',
+            "Nomor SPM": item.no_spm || '-',
+            "Tanggal SP2D": item.tg_sp2d ? new Date(item.tg_sp2d).toLocaleDateString('id-ID') : '',
+            "Nomor SP2D": item.no_sp2d,
+            "Nilai Transaksi KKP (Rp)": Math.round(Number(item.nilai_transaksi || 0)),
+            "Total Transaksi KKP (Rp)": Math.round(Number(item.nilai_transaksi || 0)),
+            "Jenis SPM/SP2D": item.jns_kkp_prinsipal,
+            "Program/Kegiatan/Output/Akun": `${item.kdprogram || 'XX'}.${item.kdgiat || 'XXXX'}.${item.kdoutput || 'XXX'}.${item.kdakun}`,
+            "Kode Akun": item.kdakun,
+            "Nama Akun": item.nmakun
+          }));
+
+          const worksheet = XLSX.utils.json_to_sheet(excelData);
+          
+          // Apply accounting number format to Nilai and Total columns (Indices 8 and 9 in this mapping)
+          const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
+          for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+            const cellI = worksheet[XLSX.utils.encode_cell({ r: R, c: 8 })];
+            if (cellI) {
+              cellI.t = 'n';
+              cellI.z = '#,##0';
+            }
+            
+            const cellJ = worksheet[XLSX.utils.encode_cell({ r: R, c: 9 })];
+            if (cellJ) {
+              cellJ.t = 'n';
+              cellJ.z = '#,##0';
+            }
+          }
+
+          // Set column widths for better readability
+          worksheet['!cols'] = [
+            { wch: 6 },   // No
+            { wch: 12 },  // Kode Satker
+            { wch: 35 },  // Nama Satker
+            { wch: 22 },  // Jumlah Transaksi (BAST)
+            { wch: 15 },  // Tanggal SPM
+            { wch: 20 },  // Nomor SPM
+            { wch: 15 },  // Tanggal SP2D
+            { wch: 20 },  // Nomor SP2D
+            { wch: 25 },  // Nilai Transaksi KKP (Rp)
+            { wch: 25 },  // Total Transaksi KKP (Rp)
+            { wch: 20 },  // Jenis SPM/SP2D
+            { wch: 30 },  // Program/Kegiatan/Output/Akun
+            { wch: 12 },  // Kode Akun
+            { wch: 30 }   // Nama Akun
+          ];
+
+          const workbook = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(workbook, worksheet, "Data Transaksi KKP");
+          
+          const fileName = `Data_Transaksi_KKP_${selectedYear}_${selectedPeriode}_${new Date().getTime()}.xlsx`;
+          XLSX.writeFile(workbook, fileName);
+          toast.success("Data berhasil diunduh");
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error("Gagal mengekspor data");
+      } finally {
+        setIsExporting(false);
+      }
+    };
+
+    const ringkasanHandlers = {
+      onEditKendala: handleEditKendala,
+      onViewKendala: handleViewKendala,
+      onDeleteKendala: handleDeleteKendala,
+      onViewSatkerDetail: (kdsatker: string, namaSatker: string) => {
+        setSatkerDetailTarget({ kdsatker, namaSatker });
+        setIsSatkerDetailModalOpen(true);
       },
+      onViewKartu: (kdsatker: string, namaSatker: string) => {
+        setKartuTarget({ kdsatker, namaSatker });
+        setIsKartuModalOpen(true);
+      },
+      onViewTagihan: (kdsatker: string, namaSatker: string) => {
+        setTagihanTarget({ kdsatker, namaSatker });
+        setIsTagihanModalOpen(true);
+      },
+      onViewTransaksi: (kdsatker: string, namaSatker: string) => {
+        setTransaksiTarget({ kdsatker, namaSatker });
+        setIsTransaksiModalOpen(true);
+      },
+      statusLaporan,
+    };
+
+    const years = ["2026", "2025", "2024", "2023"];
+    const periodes = [
+      { value: "Q1", label: "Triwulan 1 (Jan - Mar)" },
+      { value: "Q2", label: "Triwulan 2 (Jan - Jun)" },
+      { value: "Q3", label: "Triwulan 3 (Jan - Sep)" },
+      { value: "Q4", label: "Triwulan 4 (Jan - Des)" },
     ];
+
+    const columns = contentType === "ringkasan" 
+      ? getRingkasanColumns(ringkasanHandlers, grandTotals) 
+      : getTransaksiColumns(grandTotals);
+
+    const data = contentType === "ringkasan" ? ringkasanData : transaksiData;
 
     return (
       <div className="space-y-6">
-        {/* Filter Card */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
               <CardTitle className="shrink-0">Filter Data</CardTitle>
-              {/* KPPN info inline — desktop only */}
               <div className="hidden md:flex items-center gap-x-5 flex-1 text-sm px-3 py-1.5">
                 <Building2 className="h-4 w-4 text-primary shrink-0" />
                 <div className="flex items-center gap-1.5">
@@ -535,33 +327,11 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
                   <span className="text-muted-foreground">Nama KPPN:</span>
                   <span className="font-medium">{user?.nmkppn || user?.kdkppn || "-"}</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-muted-foreground">Role:</span>
-                  <Badge variant="outline">{user?.role || "-"}</Badge>
-                </div>
               </div>
               <ResetButton onReset={handleReset} />
             </div>
           </CardHeader>
           <CardContent>
-            {/* KPPN Info — mobile only (on desktop it lives in the CardHeader) */}
-            <div className="flex md:hidden mb-4 p-3 bg-muted rounded-lg items-center gap-x-5 gap-y-1 flex-wrap text-sm">
-              <Building2 className="h-4 w-4 text-primary shrink-0" />
-              <div className="flex items-center gap-1.5">
-                <span className="text-muted-foreground">Kode KPPN:</span>
-                <span className="font-medium">{user?.kdkppn || "-"}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-muted-foreground">Nama KPPN:</span>
-                <span className="font-medium">{user?.nmkppn || user?.kdkppn || "-"}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-muted-foreground">Role:</span>
-                <Badge variant="outline">{user?.role || "-"}</Badge>
-              </div>
-            </div>
-
-            {/* Filters */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Tahun</label>
@@ -571,28 +341,20 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
                   </SelectTrigger>
                   <SelectContent>
                     {years.map((year) => (
-                      <SelectItem key={year} value={year}>
-                        {year}
-                      </SelectItem>
+                      <SelectItem key={year} value={year}>{year}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="space-y-2">
                 <label className="text-sm font-medium">Periode (Akumulatif)</label>
-                <Select
-                  value={selectedPeriode}
-                  onValueChange={setSelectedPeriode}
-                >
+                <Select value={selectedPeriode} onValueChange={setSelectedPeriode}>
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {periodes.map((periode) => (
-                      <SelectItem key={periode.value} value={periode.value}>
-                        {periode.label}
-                      </SelectItem>
+                      <SelectItem key={periode.value} value={periode.value}>{periode.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -601,20 +363,42 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
           </CardContent>
         </Card>
 
-        {/* Data Table Card */}
         <Card>
           <CardHeader>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <CardTitle>Ringkasan Laporan KPPN</CardTitle>
+              <CardTitle>
+                {contentType === "ringkasan" ? "Ringkasan Laporan KPPN" : "Data Transaksi"}
+              </CardTitle>
               <div className="flex flex-wrap items-center gap-3">
-                <Badge
-                  variant={statusLaporan === "sent" ? "success" : "destructive"}
-                  className="px-3 py-1 text-xs font-semibold uppercase tracking-wider shadow-sm"
-                >
-                  {statusLaporan === "sent" ? "Sudah Dikirim" : "Belum Dikirim"}
-                </Badge>
+                {contentType === "transaksi" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isExporting}
+                    onClick={handleExportExcel}
+                    className="bg-green-700 dark:bg-card hover:bg-green-600 flex items-center"
+                  >
+                    {isExporting ? (
+                      <Spinner size="sm" className="mr-2 text-white" />
+                    ) : (
+                      <FileSpreadsheet className="w-4 h-4 text-white mr-2" />
+                    )}
+                    <p className="text-xs text-white">
+                      {isExporting ? "Mengunduh..." : "Unduh Data Excel"}
+                    </p>
+                  </Button>
+                )}
+
+                {contentType === "ringkasan" && (
+                  <Badge
+                    variant={statusLaporan === "sent" ? "success" : "destructive"}
+                    className="px-3 py-1 text-xs font-semibold uppercase tracking-wider shadow-sm"
+                  >
+                    {statusLaporan === "sent" ? "Sudah Dikirim" : "Belum Dikirim"}
+                  </Badge>
+                )}
                 
-                {statusLaporan === "sent" && tglKirimKppn && (
+                {contentType === "ringkasan" && statusLaporan === "sent" && tglKirimKppn && (
                   <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground bg-muted/30 px-3 py-1.5 rounded-lg border border-border/50">
                     <div className="flex items-center gap-1.5">
                       <Calendar className="h-3.5 w-3.5 text-blue-500" />
@@ -633,7 +417,25 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
             {isLoading ? (
               <TableSkeleton rows={10} />
             ) : (
-              <DataTable columns={columns} data={data} initialPageSize={25} showFooter={true} />
+              <DataTable 
+                columns={columns} 
+                data={data as any[]} 
+                initialPageSize={10} 
+                showFooter={true}
+                manualPagination={true}
+                rowCount={
+                  contentType === "ringkasan"
+                    ? totalRingkasan
+                    : totalTransaksi
+                }
+                controlledPagination={
+                  contentType === "ringkasan" ? ringkasanPagination : transaksiPagination
+                }
+                onPaginationChange={(p) => {
+                  if (contentType === "ringkasan") setRingkasanPagination(p);
+                  else setTransaksiPagination(p);
+                }}
+              />
             )}
           </CardContent>
         </Card>
@@ -643,7 +445,7 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
           open={isEditModalOpen}
           onOpenChange={setIsEditModalOpen}
           data={selectedItem}
-          onSaved={fetchData}
+          onSaved={fetchRingkasanData}
           tahun={selectedYear}
           triwulan={selectedPeriode.replace("Q", "")}
         />
@@ -654,8 +456,6 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
           tahun={selectedYear}
           triwulan={selectedPeriode.replace("Q", "")}
         />
-
-        {/* Transaksi KKP Modal */}
         <TransaksiKkpModal
           open={isTransaksiModalOpen}
           onOpenChange={setIsTransaksiModalOpen}
@@ -664,8 +464,6 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
           tahun={selectedYear}
           triwulan={selectedPeriode.replace("Q", "")}
         />
-
-        {/* Tagihan KKP Modal */}
         <TagihanKkpModal
           open={isTagihanModalOpen}
           onOpenChange={setIsTagihanModalOpen}
@@ -674,8 +472,6 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
           tahun={selectedYear}
           triwulan={selectedPeriode.replace("Q", "")}
         />
-
-        {/* Kartu KKP Modal */}
         <KartuKkpModal
           open={isKartuModalOpen}
           onOpenChange={setIsKartuModalOpen}
@@ -683,15 +479,13 @@ export const KppnContent = forwardRef<KppnContentRef, KppnContentProps>(
           namaSatker={kartuTarget?.namaSatker ?? ""}
           tahun={selectedYear}
         />
-
-        {/* Satker Detail Modal */}
         <SatkerDetailModal
           open={isSatkerDetailModalOpen}
           onOpenChange={setIsSatkerDetailModalOpen}
           kdsatker={satkerDetailTarget?.kdsatker ?? ""}
           namaSatker={satkerDetailTarget?.namaSatker ?? ""}
           tahun={selectedYear}
-          onSaved={fetchData}
+          onSaved={fetchRingkasanData}
         />
       </div>
     );

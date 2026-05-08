@@ -15,7 +15,10 @@ import { toast } from "sonner";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { apiPath } from "@/lib/config/base-path";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Trash2 } from "lucide-react";
+import { Calendar, Clock, Trash2, FileSpreadsheet } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import * as XLSX from "xlsx-js-style";
+import { Spinner } from "@/components/ui/spinner";
 import { addCsrfToHeaders } from "@/utils/csrf-utils";
 
 // Modularized imports
@@ -32,7 +35,7 @@ export type {
   RingkasanKanwilData,
   MonitoringKppnData,
 };
-import { getRingkasanColumns, getMonitoringColumns } from "./kanwil/columns";
+import { getRingkasanColumns, getMonitoringColumns, getTransaksiColumns } from "./kanwil/columns";
 import { useKanwilData } from "./kanwil/hooks/use-kanwil-data";
 import { KanwilFilter } from "./kanwil/kanwil-filter";
 
@@ -54,6 +57,7 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
     const {
       ringkasanData,
       monitoringData,
+      transaksiData,
       isLoading,
       selectedYear,
       setSelectedYear,
@@ -66,6 +70,13 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
       handleReset,
       fetchRingkasanData,
       resetLaporanKppn,
+      ringkasanPagination,
+      setRingkasanPagination,
+      totalRingkasan,
+      transaksiPagination,
+      setTransaksiPagination,
+      totalTransaksi,
+      grandTotals,
     } = useKanwilData(contentType, onPeriodeChange);
 
     // Modal state
@@ -242,11 +253,141 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
 
     const columns =
       contentType === "ringkasan"
-        ? getRingkasanColumns(ringkasanHandlers)
-        : getMonitoringColumns(monitoringHandlers);
+        ? getRingkasanColumns(ringkasanHandlers, grandTotals)
+        : contentType === "monitoring"
+          ? getMonitoringColumns(monitoringHandlers, grandTotals)
+          : getTransaksiColumns(grandTotals);
 
     const data: any[] =
-      contentType === "ringkasan" ? ringkasanData : monitoringData;
+      contentType === "ringkasan"
+        ? ringkasanData
+        : contentType === "monitoring"
+          ? monitoringData
+          : transaksiData;
+
+    const [isExporting, setIsExporting] = useState(false);
+
+    const handleExportExcel = async () => {
+      setIsExporting(true);
+      try {
+        const triwulan = selectedPeriode.replace("Q", "");
+        
+        if (contentType === "transaksi") {
+          // Improved transaction export (matching Direktorat PA)
+          toast.info("Sedang menyiapkan data Excel, harap tunggu...");
+          
+          // Fetch all data for export
+          const apiUrl = apiPath(
+            `/monev-kkp/direktorat/data-transaksi?tahun=${selectedYear}&triwulan=${triwulan}&kdkanwil=${user?.kdkanwil}${selectedKppn !== "all" ? `&kdkppn=${selectedKppn}` : ""}&page=1&limit=100000`,
+          );
+          
+          const response = await fetch(apiUrl, { credentials: "include" });
+          if (!response.ok) throw new Error("Gagal mengambil data untuk export");
+          const result = await response.json();
+          const data = result.data || [];
+
+          if (data.length === 0) {
+            toast.error("Tidak ada data untuk diunduh");
+            return;
+          }
+
+          const excelData = data.map((item: any, index: number) => ({
+            "No": index + 1,
+            "Nama Kanwil": item.nmlokasi,
+            "Nama KPPN": item.nmkppn,
+            "Kode Satker": item.kdsatker,
+            "Nama Satker": item.nmsatker,
+            "Jumlah Transaksi (BAST)": item.jml_transaksi || 0,
+            "Tanggal SPM": item.tg_spm ? new Date(item.tg_spm).toLocaleDateString('id-ID') : '-',
+            "Nomor SPM": item.no_spm || '-',
+            "Tanggal SP2D": item.tg_sp2d ? new Date(item.tg_sp2d).toLocaleDateString('id-ID') : '',
+            "Nomor SP2D": item.no_sp2d,
+            "Nilai Transaksi KKP (Rp)": Math.round(Number(item.nilai_transaksi || 0)),
+            "Total Transaksi KKP (Rp)": Math.round(Number(item.nilai_transaksi || 0)),
+            "Jenis SPM/SP2D": item.jns_kkp_prinsipal,
+            "Program/Kegiatan/Output/Akun": `${item.kdprogram || 'XX'}.${item.kdgiat || 'XXXX'}.${item.kdoutput || 'XXX'}.${item.kdakun}`,
+            "Kode Akun": item.kdakun,
+            "Nama Akun": item.nmakun
+          }));
+
+          const worksheet = XLSX.utils.json_to_sheet(excelData);
+          
+          // Apply accounting number format to Nilai and Total columns (Indices 10 and 11 in this mapping)
+          const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
+          for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+            const cellK = worksheet[XLSX.utils.encode_cell({ r: R, c: 10 })];
+            if (cellK) {
+              cellK.t = 'n';
+              cellK.z = '#,##0';
+            }
+            
+            const cellL = worksheet[XLSX.utils.encode_cell({ r: R, c: 11 })];
+            if (cellL) {
+              cellL.t = 'n';
+              cellL.z = '#,##0';
+            }
+          }
+
+          // Set column widths for better readability
+          worksheet['!cols'] = [
+            { wch: 6 },   // No
+            { wch: 25 },  // Nama Kanwil
+            { wch: 25 },  // Nama KPPN
+            { wch: 12 },  // Kode Satker
+            { wch: 35 },  // Nama Satker
+            { wch: 22 },  // Jumlah Transaksi (BAST)
+            { wch: 15 },  // Tanggal SPM
+            { wch: 20 },  // Nomor SPM
+            { wch: 15 },  // Tanggal SP2D
+            { wch: 20 },  // Nomor SP2D
+            { wch: 25 },  // Nilai Transaksi KKP (Rp)
+            { wch: 25 },  // Total Transaksi KKP (Rp)
+            { wch: 20 },  // Jenis SPM/SP2D
+            { wch: 30 },  // Program/Kegiatan/Output/Akun
+            { wch: 12 },  // Kode Akun
+            { wch: 30 }   // Nama Akun
+          ];
+
+          const workbook = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(workbook, worksheet, "Data Transaksi KKP");
+          
+          const fileName = `Data_Transaksi_KKP_${selectedYear}_${selectedPeriode}_${new Date().getTime()}.xlsx`;
+          XLSX.writeFile(workbook, fileName);
+          toast.success("Data berhasil diunduh");
+        } else {
+          // Standard export for monitoring/ringkasan
+          if (data.length === 0) {
+            toast.error("Tidak ada data untuk diekspor");
+            return;
+          }
+
+          let excelData = data;
+          if (contentType === "monitoring") {
+            excelData = data.map((item: any, index: number) => ({
+              "No": index + 1,
+              "Kode KPPN": item.kdkppn,
+              "Nama KPPN": item.nmkppn,
+              "Jumlah Satker (UP KKP)": item.jumlah_satker_up_kkp,
+              "Jumlah Satker (Transaksi)": item.jumlah_satker_transaksi,
+              "Nilai Transaksi (Rp)": item.nilai_transaksi,
+              "Status Laporan": item.status === "sent" ? "Sudah Kirim" : "Belum Kirim",
+              "Tanggal Kirim": item.tanggalKirim ? new Date(item.tanggalKirim).toLocaleDateString("id-ID") : "-"
+            }));
+          }
+
+          const worksheet = XLSX.utils.json_to_sheet(excelData);
+          const workbook = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(workbook, worksheet, "Data Export");
+          XLSX.writeFile(workbook, `export-${contentType}-${selectedYear}-${selectedPeriode}.xlsx`);
+          toast.success("Data berhasil diekspor");
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error("Gagal mengekspor data");
+      } finally {
+        setIsExporting(false);
+      }
+    };
 
     return (
       <div className="space-y-6">
@@ -267,47 +408,74 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
               <CardTitle>
                 {contentType === "ringkasan"
                   ? "Ringkasan Laporan per Satker"
-                  : "Monitoring Laporan KPPN"}
+                  : contentType === "monitoring"
+                    ? "Monitoring Laporan KPPN"
+                    : "Data Transaksi"}
               </CardTitle>
 
-              {contentType === "ringkasan" && (
-                <div className="flex flex-wrap items-center gap-3">
-                  <Badge
-                    variant={
-                      statusLaporan === "sent" ? "success" : "destructive"
-                    }
-                    className="px-3 py-1 text-xs font-semibold uppercase tracking-wider shadow-sm"
+              <div className="flex flex-wrap items-center gap-3">
+                {(contentType === "transaksi" || contentType === "monitoring") && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isExporting}
+                    onClick={handleExportExcel}
+                    className="bg-green-700 dark:bg-card hover:bg-green-600 flex items-center"
                   >
-                    {statusLaporan === "sent"
-                      ? "Sudah Dikirim"
-                      : "Belum Dikirim"}
-                  </Badge>
+                    {isExporting ? (
+                      <Spinner size="sm" className="mr-2 text-white" />
+                    ) : (
+                      <FileSpreadsheet className="w-4 h-4 text-white mr-2" />
+                    )}
+                    <p className="text-xs text-white">
+                      {isExporting ? "Mengunduh..." : "Unduh Data Excel"}
+                    </p>
+                  </Button>
+                )}
 
-                  {statusLaporan === "sent" && tglKirimKanwil && (
-                    <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground bg-muted/30 px-3 py-1.5 rounded-lg border border-border/50">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="h-3.5 w-3.5 text-blue-500" />
-                        <span>
-                          {new Date(tglKirimKanwil).toLocaleDateString(
-                            "id-ID",
-                            { day: "2-digit", month: "long", year: "numeric" },
-                          )}
-                        </span>
+                {contentType === "ringkasan" && (
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Badge
+                      variant={
+                        statusLaporan === "sent" ? "success" : "destructive"
+                      }
+                      className="px-3 py-1 text-xs font-semibold uppercase tracking-wider shadow-sm"
+                    >
+                      {statusLaporan === "sent"
+                        ? "Sudah Dikirim"
+                        : "Belum Dikirim"}
+                    </Badge>
+
+                    {statusLaporan === "sent" && tglKirimKanwil && (
+                      <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground bg-muted/30 px-3 py-1.5 rounded-lg border border-border/50">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="h-3.5 w-3.5 text-blue-500" />
+                          <span>
+                            {new Date(tglKirimKanwil).toLocaleDateString(
+                              "id-ID",
+                              {
+                                day: "2-digit",
+                                month: "long",
+                                year: "numeric",
+                              },
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 border-l border-border/50 pl-4">
+                          <Clock className="h-3.5 w-3.5 text-amber-500" />
+                          <span>
+                            {new Date(tglKirimKanwil).toLocaleTimeString(
+                              "id-ID",
+                              { hour: "2-digit", minute: "2-digit" },
+                            )}{" "}
+                            WIB
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5 border-l border-border/50 pl-4">
-                        <Clock className="h-3.5 w-3.5 text-amber-500" />
-                        <span>
-                          {new Date(tglKirimKanwil).toLocaleTimeString(
-                            "id-ID",
-                            { hour: "2-digit", minute: "2-digit" },
-                          )}{" "}
-                          WIB
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -317,8 +485,29 @@ export const KanwilContent = forwardRef<KanwilContentRef, KanwilContentProps>(
               <DataTable
                 columns={columns}
                 data={data}
-                initialPageSize={25}
+                initialPageSize={10}
                 showFooter={true}
+                manualPagination={
+                  contentType === "transaksi" || contentType === "ringkasan"
+                }
+                rowCount={
+                  (contentType === "transaksi"
+                    ? totalTransaksi
+                    : contentType === "ringkasan"
+                      ? totalRingkasan
+                      : undefined) as any
+                }
+                controlledPagination={
+                  (contentType === "transaksi"
+                    ? transaksiPagination
+                    : contentType === "ringkasan"
+                      ? ringkasanPagination
+                      : undefined) as any
+                }
+                onPaginationChange={(pagination) => {
+                  if (contentType === "transaksi") setTransaksiPagination(pagination);
+                  else if (contentType === "ringkasan") setRingkasanPagination(pagination);
+                }}
               />
             )}
           </CardContent>

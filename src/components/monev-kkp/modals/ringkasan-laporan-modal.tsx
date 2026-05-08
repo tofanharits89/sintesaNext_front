@@ -7,7 +7,7 @@ import {
     DialogHeader,
     DialogTitle,
     DialogFooter,
-} from "@/components/ui/dialog";
+} from "@/components/animate-ui/components/radix/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -65,121 +65,126 @@ export function RingkasanLaporanModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent showCloseButton={false} className="max-w-[95vw] md:max-w-[1200px] h-[85vh] flex flex-col overflow-hidden w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
-                <DialogHeader>
+            <DialogContent
+                showCloseButton={false}
+                className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0"
+            >
+                <DialogHeader className="p-6 pb-2">
                     <DialogTitle>Ringkasan Laporan Per KPPN</DialogTitle>
                 </DialogHeader>
-                <div className="flex-1 overflow-hidden flex flex-col min-h-0 px-3 py-3">
-                    {/* Info Section */}
-                    <div className="mb-3 flex flex-wrap items-center gap-4 text-sm">
-                        <div className="flex items-center gap-2">
-                            <span className="text-muted-foreground">Periode:</span>
-                            <Badge variant="outline">{periodeLabels[periode] || periode}</Badge>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-muted-foreground">KPPN:</span>
-                            <span className="font-medium">{data.kodeKppn} - {data.namaKppn}</span>
-                        </div>
-                    </div>
 
-                    {/* Search */}
-                    <div className="mb-3 flex items-center gap-2">
-                        <Input
-                            placeholder="Cari satker/kode/bank..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="max-w-sm"
-                            disabled={isLoading}
-                        />
-                    </div>
-
-                    {/* Table */}
-                    <div className="border rounded-lg h-full flex flex-col overflow-hidden">
-                        {isLoading ? (
-                            <div className="flex-1 p-4">
-                                <TableSkeleton rows={10} />
+                <div className="flex-1 overflow-y-auto p-6">
+                    <div className="space-y-4">
+                        {/* Info Section */}
+                        <div className="flex flex-wrap items-center gap-4 text-sm bg-primary/5 p-4 rounded-lg">
+                            <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground uppercase text-[10px] font-semibold">Periode</span>
+                                <Badge variant="outline" className="bg-background">{periodeLabels[periode] || periode}</Badge>
                             </div>
-                        ) : (
-                        <div className="flex-1 w-full overflow-auto">
-                            <div className="min-w-full">
-                                <table className="w-full min-w-max text-xs">
-                                    <thead className="bg-muted sticky top-0 z-30">
-                                        <tr>
-                                            <th className="p-2 text-center whitespace-nowrap text-xs">No</th>
-                                            <th className="p-2 text-center whitespace-nowrap text-xs">Kode BA</th>
-                                            <th className="p-2 text-center whitespace-nowrap text-xs">Kode Satker</th>
-                                            <th className="p-2 text-center whitespace-nowrap text-xs">Nama Satker</th>
-                                            <th className="p-2 text-center whitespace-nowrap text-xs">UP KKP Per Bulan</th>
-                                            <th className="p-2 text-center whitespace-nowrap text-xs">Porsi UP KKP</th>
-                                            <th className="p-2 text-center whitespace-nowrap text-xs">Bank Penerbit</th>
-                                            <th className="p-2 text-center whitespace-nowrap text-xs">Jumlah Kartu</th>
-                                            <th className="p-2 text-center whitespace-nowrap text-xs">Nilai Tagihan</th>
-                                            <th className="p-2 text-center whitespace-nowrap text-xs">Nilai Transaksi</th>
-                                            <th className="p-2 text-center whitespace-nowrap text-xs">Kendala</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {filtered.length ? (
-                                            filtered.map((r: any, idx: number) => (
-                                                <tr key={r.id ?? idx} className="border-t">
-                                                    <td className="p-2 text-center text-xs">{idx + 1}</td>
-                                                    <td className="p-2 text-center text-xs">{r.kodeBA}</td>
-                                                    <td className="p-2 text-center text-xs">{r.kodeSatker}</td>
-                                                    <td className="p-2 text-left text-xs max-w-[180px] truncate" title={r.namaSatker}>
-                                                        {r.namaSatker}
-                                                    </td>
-                                                    <td className="p-2 text-right font-mono text-xs">
-                                                        Rp {formatRupiah(r.upKkpPerBulan)}
-                                                    </td>
-                                                    <td className="p-2 text-center text-xs">
-                                                        {formatPercent(r.porsiUpKkp)}
-                                                    </td>
-                                                    <td className="p-2 text-center text-xs">{r.bankPenerbit}</td>
-                                                    <td className="p-2 text-center text-xs">{r.jumlahKartu}</td>
-                                                    <td className="p-2 text-right font-mono text-xs">
-                                                        Rp {formatRupiah(r.nilaiTagihan)}
-                                                    </td>
-                                                    <td className="p-2 text-right font-mono text-xs">
-                                                        Rp {formatRupiah(r.nilaiTransaksi)}
-                                                    </td>
-                                                    <td className="p-2 text-left text-xs max-w-[200px] truncate" title={r.kendala || "Tidak ada kendala"}>
-                                                        {r.kendala && r.kendala.trim() !== '' ? (
-                                                            <div className="flex flex-wrap gap-1">
-                                                                {r.kendala.split(',').slice(0, 2).map((cat: string, idx: number) => (
-                                                                    <span
-                                                                        key={idx}
-                                                                        className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary whitespace-nowrap"
-                                                                    >
-                                                                        {cat.trim()}
-                                                                    </span>
-                                                                ))}
-                                                                {r.kendala.split(',').length > 2 && (
-                                                                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                                                                        +{r.kendala.split(',').length - 2} lainnya
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-muted-foreground italic">-</span>
-                                                        )}
+                            <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground uppercase text-[10px] font-semibold">KPPN</span>
+                                <span className="font-medium">{data.kodeKppn} - {data.namaKppn}</span>
+                            </div>
+                        </div>
+
+                        {/* Search */}
+                        <div className="flex items-center gap-2">
+                            <Input
+                                placeholder="Cari satker/kode/bank..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="max-w-sm"
+                                disabled={isLoading}
+                            />
+                        </div>
+
+                        {/* Table */}
+                        <div className="border rounded-lg overflow-hidden">
+                            {isLoading ? (
+                                <div className="p-4">
+                                    <TableSkeleton rows={10} />
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-xs border-collapse">
+                                        <thead className="bg-muted">
+                                            <tr>
+                                                <th className="p-2 text-center whitespace-nowrap border-b border-border font-semibold">No</th>
+                                                <th className="p-2 text-center whitespace-nowrap border-b border-border font-semibold">Kode BA</th>
+                                                <th className="p-2 text-center whitespace-nowrap border-b border-border font-semibold">Kode Satker</th>
+                                                <th className="p-2 text-center whitespace-nowrap border-b border-border font-semibold">Nama Satker</th>
+                                                <th className="p-2 text-center whitespace-nowrap border-b border-border font-semibold">UP KKP Per Bulan</th>
+                                                <th className="p-2 text-center whitespace-nowrap border-b border-border font-semibold">Porsi UP KKP</th>
+                                                <th className="p-2 text-center whitespace-nowrap border-b border-border font-semibold">Bank Penerbit</th>
+                                                <th className="p-2 text-center whitespace-nowrap border-b border-border font-semibold">Jumlah Kartu</th>
+                                                <th className="p-2 text-center whitespace-nowrap border-b border-border font-semibold">Nilai Tagihan</th>
+                                                <th className="p-2 text-center whitespace-nowrap border-b border-border font-semibold">Nilai Transaksi</th>
+                                                <th className="p-2 text-center whitespace-nowrap border-b border-border font-semibold">Kendala</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {filtered.length ? (
+                                                filtered.map((r: any, idx: number) => (
+                                                    <tr key={r.id ?? idx} className="border-t hover:bg-muted/40 transition-colors">
+                                                        <td className="p-2 text-center border-b border-border">{idx + 1}</td>
+                                                        <td className="p-2 text-center border-b border-border">{r.kodeBA}</td>
+                                                        <td className="p-2 text-center border-b border-border font-mono">{r.kodeSatker}</td>
+                                                        <td className="p-2 text-left border-b border-border max-w-[180px] truncate" title={r.namaSatker}>
+                                                            {r.namaSatker}
+                                                        </td>
+                                                        <td className="p-2 text-right border-b border-border font-mono">
+                                                            Rp {formatRupiah(r.upKkpPerBulan)}
+                                                        </td>
+                                                        <td className="p-2 text-center border-b border-border">
+                                                            {formatPercent(r.porsiUpKkp)}
+                                                        </td>
+                                                        <td className="p-2 text-center border-b border-border">{r.bankPenerbit}</td>
+                                                        <td className="p-2 text-center border-b border-border">{r.jumlahKartu}</td>
+                                                        <td className="p-2 text-right border-b border-border font-mono">
+                                                            Rp {formatRupiah(r.nilaiTagihan)}
+                                                        </td>
+                                                        <td className="p-2 text-right border-b border-border font-mono">
+                                                            Rp {formatRupiah(r.nilaiTransaksi)}
+                                                        </td>
+                                                        <td className="p-2 text-left border-b border-border max-w-[200px] truncate" title={r.kendala || "Tidak ada kendala"}>
+                                                            {r.kendala && r.kendala.trim() !== '' ? (
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {r.kendala.split(',').slice(0, 2).map((cat: string, idx: number) => (
+                                                                        <span
+                                                                            key={idx}
+                                                                            className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary whitespace-nowrap"
+                                                                        >
+                                                                            {cat.trim()}
+                                                                        </span>
+                                                                    ))}
+                                                                    {r.kendala.split(',').length > 2 && (
+                                                                        <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                                                            +{r.kendala.split(',').length - 2} lainnya
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-muted-foreground italic">-</span>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            ) : (
+                                                <tr>
+                                                    <td colSpan={11} className="text-center py-8 text-muted-foreground border-b border-border">
+                                                        Tidak ada data satker.
                                                     </td>
                                                 </tr>
-                                            ))
-                                        ) : (
-                                            <tr>
-                                                <td colSpan={11} className="text-center py-8 text-muted-foreground">
-                                                    Tidak ada data satker.
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
-                        )}
                     </div>
                 </div>
-                <DialogFooter className="flex items-center justify-end">
+
+                <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
                     <Button
                         variant="destructive"
                         className="w-24"

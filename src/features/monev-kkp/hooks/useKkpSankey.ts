@@ -26,8 +26,8 @@ export function useKkpSankey(
     queryFn: () => getKkpSankeyData(
       year, 
       triwulan, 
-      effectiveKanwil !== "all" ? effectiveKanwil : undefined, 
-      effectiveKppn !== "all" ? effectiveKppn : undefined
+      effectiveKanwil, 
+      effectiveKppn
     ),
     ...createQueryOptions("dashboard", {
       staleTime: 5 * 60 * 1000, // 5 minutes

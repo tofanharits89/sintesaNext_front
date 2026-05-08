@@ -149,9 +149,9 @@ export function RekonDataDetailModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden"
+        className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden"
       >
-        <DialogHeader className="flex-shrink-0">
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle className="flex items-center gap-2">
             <GitCompareArrows className="h-4 w-4 text-emerald-600 shrink-0" />
             Rekonsilisasi DAU &mdash; Sintesa vs OMSPAN TKD
@@ -172,7 +172,7 @@ export function RekonDataDetailModal({
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto py-4">
+        <div className="flex-1 overflow-y-auto p-6">
           {isLoading ? (
             <div className="flex flex-col items-center gap-2 py-12">
               <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
@@ -315,7 +315,7 @@ export function RekonDataDetailModal({
             </div>
           )}
         </div>
-        <DialogFooter className="flex-shrink-0 gap-2 sm:justify-end">
+        <DialogFooter className="p-6 pt-4 gap-2 sm:justify-end">
           <Button onClick={() => onOpenChange(false)} className="min-w-24">
             Tutup
           </Button>

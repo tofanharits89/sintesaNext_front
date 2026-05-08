@@ -163,10 +163,10 @@ export function PdfViewerModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="flex h-[90vh] w-[95vw] max-w-7xl flex-col overflow-hidden p-0 sm:max-w-7xl"
+        className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden"
         aria-describedby={undefined}
       >
-        <DialogHeader className="border-b p-4 pb-2">
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle className="truncate">
             {title || "Pratinjau PDF"}
           </DialogTitle>
@@ -207,7 +207,7 @@ export function PdfViewerModal({
             </pdfMod.Document>
           )}
         </div>
-        <DialogFooter className="border-t p-4 pt-2 sm:justify-between">
+        <DialogFooter className="p-6 pt-4 sm:justify-between">
           <div className="flex items-center gap-2">
             <Button
               variant="outline"

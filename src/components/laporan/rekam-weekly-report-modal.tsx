@@ -228,93 +228,48 @@ export function RekamWeeklyReportModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="w-full max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden"
+        className="w-full max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden"
       >
-        <DialogHeader>
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle>Rekam Data Laporan</DialogTitle>
         </DialogHeader>
 
-        <Form {...form}>
-          <form
-            id="rekam-weekly-report-form"
-            onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-6"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="periodeLaporan"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Periode Laporan</FormLabel>
-                    <Select
-                      onValueChange={(value) => {
-                        field.onChange(value);
-                        if (value === "mingguan") {
-                          form.setValue("bulan", "");
-                        } else {
-                          form.setValue("tanggalAwal", undefined);
-                          form.setValue("tanggalAkhir", undefined);
-                        }
-                      }}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Pilih Periode Laporan" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="mingguan">Mingguan</SelectItem>
-                        <SelectItem value="bulanan">Bulanan</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="tahun"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tahun</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ""}>
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Pilih Tahun" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {years.map((year) => (
-                          <SelectItem key={year} value={year}>
-                            {year}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {selectedPeriode === "mingguan" ? (
+        <div className="flex-1 overflow-y-auto p-6">
+          <Form {...form}>
+            <form
+              id="rekam-weekly-report-form"
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-6"
+            >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
-                  name="tanggalAwal"
+                  name="periodeLaporan"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Tanggal Awal</FormLabel>
-                      <FormControl>
-                        <DatePicker
-                          date={field.value}
-                          onDateChange={field.onChange}
-                          placeholder="Pilih tanggal awal"
-                        />
-                      </FormControl>
+                      <FormLabel>Periode Laporan</FormLabel>
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          if (value === "mingguan") {
+                            form.setValue("bulan", "");
+                          } else {
+                            form.setValue("tanggalAwal", undefined);
+                            form.setValue("tanggalAkhir", undefined);
+                          }
+                        }}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Pilih Periode Laporan" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="mingguan">Mingguan</SelectItem>
+                          <SelectItem value="bulanan">Bulanan</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -322,90 +277,137 @@ export function RekamWeeklyReportModal({
 
                 <FormField
                   control={form.control}
-                  name="tanggalAkhir"
+                  name="tahun"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Tanggal Akhir</FormLabel>
-                      <FormControl>
-                        <DatePicker
-                          date={field.value}
-                          onDateChange={field.onChange}
-                          placeholder="Pilih tanggal akhir"
-                        />
-                      </FormControl>
+                      <FormLabel>Tahun</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Pilih Tahun" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {years.map((year) => (
+                            <SelectItem key={year} value={year}>
+                              {year}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-            ) : (
+
+              {selectedPeriode === "mingguan" ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="tanggalAwal"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tanggal Awal</FormLabel>
+                        <FormControl>
+                          <DatePicker
+                            date={field.value}
+                            onDateChange={field.onChange}
+                            placeholder="Pilih tanggal awal"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="tanggalAkhir"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tanggal Akhir</FormLabel>
+                        <FormControl>
+                          <DatePicker
+                            date={field.value}
+                            onDateChange={field.onChange}
+                            placeholder="Pilih tanggal akhir"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              ) : (
+                <FormField
+                  control={form.control}
+                  name="bulan"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bulan</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Pilih Bulan" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {months.map((month) => (
+                            <SelectItem key={month.value} value={month.value}>
+                              {month.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
               <FormField
                 control={form.control}
-                name="bulan"
+                name="keterangan"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bulan</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ""}>
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Pilih Bulan" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {months.map((month) => (
-                          <SelectItem key={month.value} value={month.value}>
-                            {month.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Keterangan</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Masukkan keterangan..."
+                        className="w-full"
+                        {...field}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            )}
 
-            <FormField
-              control={form.control}
-              name="keterangan"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Keterangan</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Masukkan keterangan..."
-                      className="w-full"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="file"
+                render={({ field: { onChange, value, ...field } }) => (
+                  <FormItem>
+                    <FormLabel>File Upload</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="file"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                        onChange={(e) => onChange(e.target.files?.[0])}
+                        className="w-full"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </form>
+          </Form>
+        </div>
 
-            <FormField
-              control={form.control}
-              name="file"
-              render={({ field: { onChange, value, ...field } }) => (
-                <FormItem>
-                  <FormLabel>File Upload</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="file"
-                      accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-                      onChange={(e) => onChange(e.target.files?.[0])}
-                      className="w-full"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </form>
-        </Form>
-
-        <DialogFooter className="flex-shrink-0 mt-4">
+        <DialogFooter className="p-6 pt-4">
           <Button
             variant="outline"
             onClick={handleClose}

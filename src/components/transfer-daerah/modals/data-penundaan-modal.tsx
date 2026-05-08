@@ -138,11 +138,11 @@ export function DataPenundaanModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle>Data Penundaan - {resolvedNoKmk || "-"}</DialogTitle>
         </DialogHeader>
-        <div className="flex-1 overflow-hidden flex flex-col min-h-0 px-3 py-3">
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col min-h-0 py-3">
           {!resolvedNoKmk || !resolvedThang ? (
             <div className="p-3 text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-md">
               Data KMK terpilih tidak memiliki parameter lengkap untuk memuat
@@ -196,7 +196,7 @@ export function DataPenundaanModal({
             </>
           )}
         </div>
-        <DialogFooter className="flex-shrink-0 flex items-center justify-between">
+        <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2 flex items-center justify-between">
           <div className="w-[72px]" />
           <div className="flex-1 flex items-center justify-center gap-2">
             <Button

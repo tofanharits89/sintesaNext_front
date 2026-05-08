@@ -143,8 +143,8 @@ export function LaporanKppnModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle>Upload Laporan KPPN</DialogTitle>
         </DialogHeader>
 
@@ -152,7 +152,7 @@ export function LaporanKppnModal({
           <form
             id="laporan-kppn-form"
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="flex-1 overflow-y-auto space-y-4"
+            className="flex-1 overflow-y-auto p-6 space-y-4"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Tahun */}
@@ -408,7 +408,7 @@ export function LaporanKppnModal({
           </form>
         </Form>
 
-        <DialogFooter className="flex-shrink-0">
+        <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button variant="outline" onClick={handleTutup}>
             Tutup
           </Button>

@@ -228,15 +228,15 @@ export function KertasKerjaModal({ open, onOpenChange, data }: KertasKerjaModalP
   if (!isValidKdpemda) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent showCloseButton={false} className="sm:max-w-2xl w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vw] sm:max-h-[90vh]">
-          <DialogHeader>
+        <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="p-6 pb-2">
             <DialogTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
               Error - Data Tidak Valid
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
             <div className="text-sm text-red-600 bg-red-50 p-4 rounded-lg border border-red-200">
               <p className="font-medium">Tidak dapat menampilkan Kertas Kerja</p>
               <p className="mt-1">Kode Pemda (kdpemda) tidak valid atau tidak ditemukan dalam data yang dipilih.</p>
@@ -246,7 +246,7 @@ export function KertasKerjaModal({ open, onOpenChange, data }: KertasKerjaModalP
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Tutup
             </Button>
@@ -258,15 +258,15 @@ export function KertasKerjaModal({ open, onOpenChange, data }: KertasKerjaModalP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="sm:max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
             Kertas Kerja - {data?.kppn} • {data?.kabkota} • {data?.bulan} {data?.tahun}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-6">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Rekap Bulanan (Pemda & Bulan)</CardTitle>
@@ -321,7 +321,7 @@ export function KertasKerjaModal({ open, onOpenChange, data }: KertasKerjaModalP
           </Card>
         </div>
 
-        <DialogFooter className="flex-shrink-0">
+        <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Tutup
           </Button>

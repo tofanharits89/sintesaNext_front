@@ -256,12 +256,12 @@ export default function Temuan({
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent showCloseButton={false} className="sm:max-w-7xl gap-0 overflow-hidden p-0">
-        <DialogHeader className="px-6 py-4">
+      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle>Rekam Data Temuan BPK</DialogTitle>
         </DialogHeader>
 
-        <div className="max-h-[85vh] overflow-y-auto px-6 py-6">
+        <div className="flex-1 overflow-y-auto p-6">
           <form id="temuan-form" onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
               {/* Temuan */}
@@ -344,7 +344,7 @@ export default function Temuan({
           )}
         </div>
 
-        <DialogFooter className="px-6 py-4 bg-white dark:bg-card">
+        <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button
             type="button"
             variant="outline"

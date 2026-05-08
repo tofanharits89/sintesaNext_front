@@ -32,6 +32,25 @@ export interface RingkasanData {
   jenis_belanja_list?: string;
 }
 
+export interface TransaksiData {
+  nmlokasi: string;
+  nmkppn: string;
+  kdsatker: string;
+  nmsatker: string;
+  jml_transaksi: number;
+  tg_spm?: string | null;
+  no_spm?: string;
+  tg_sp2d: string;
+  no_sp2d: string;
+  nilai_transaksi: number;
+  jns_kkp_prinsipal: string;
+  kdakun: string;
+  nmakun: string;
+  kdprogram?: string;
+  kdgiat?: string;
+  kdoutput?: string;
+}
+
 export interface MonitoringKanwilData {
   id: string | number;
   kdkanwil: string;
@@ -72,5 +91,6 @@ export interface DirektoratPaContentProps {
     | "ringkasan-kanwil"
     | "ringkasan-kppn"
     | "monitoring-kanwil"
-    | "monitoring-kppn";
+    | "monitoring-kppn"
+    | "data-transaksi";
 }

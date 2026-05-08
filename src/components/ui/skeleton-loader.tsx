@@ -68,17 +68,17 @@ export function ChartSkeleton({ height = "h-80" }: { height?: string }) {
 export function TableSkeleton({ rows = 5 }: { rows?: number }) {
   return (
     <div className="rounded-lg border">
-      <div className="p-4 border-b">
-        <Skeleton className="h-6 w-40" />
+      <div className="p-3 border-b">
+        <Skeleton className="h-5 w-40" />
       </div>
       <div className="divide-y">
         {Array.from({ length: rows }).map((_, i) => (
-          <div key={i} className="p-4 flex items-center space-x-4">
-            <Skeleton className="h-4 w-4 rounded" />
-            <Skeleton className="h-4 flex-1" />
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-8 w-16" />
+          <div key={i} className="p-2.5 flex items-center space-x-4">
+            <Skeleton className="h-3 w-4 rounded" />
+            <Skeleton className="h-3 flex-1" />
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-6 w-16" />
           </div>
         ))}
       </div>

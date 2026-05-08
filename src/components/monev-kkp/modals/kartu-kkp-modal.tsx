@@ -86,140 +86,142 @@ export function KartuKkpModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="max-w-7xl sm:max-w-7xl max-h-[90vh] overflow-y-auto"
+        className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0"
       >
-        <DialogHeader>
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle>Detail Kartu KKP</DialogTitle>
         </DialogHeader>
 
-        {isLoading ? (
-          <div className="space-y-6 py-2">
-            {/* Skeleton for Header Info */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm bg-primary/5 p-4 rounded-lg">
-              <div className="space-y-1">
-                <span className="text-muted-foreground text-xs uppercase font-semibold">Kementerian/Lembaga</span>
-                <Skeleton className="h-5 w-48 bg-muted-foreground/20 mt-1" />
-              </div>
-              <div className="space-y-1">
-                <span className="text-muted-foreground text-xs uppercase font-semibold">Satuan Kerja</span>
-                <Skeleton className="h-5 w-64 bg-muted-foreground/20 mt-1" />
-              </div>
-              <div className="space-y-1">
-                <span className="text-muted-foreground text-xs uppercase font-semibold">Tahun</span>
-                <Skeleton className="h-5 w-24 bg-muted-foreground/20 mt-1" />
-              </div>
-            </div>
-
-            {/* Skeleton for Table */}
-            <div className="border rounded-lg p-8">
-              <div className="space-y-3">
-                <Skeleton className="h-8 w-full bg-muted-foreground/10" />
-                <Skeleton className="h-8 w-full bg-muted-foreground/10" />
-                <Skeleton className="h-8 w-full bg-muted-foreground/10" />
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-6 py-2">
-            {/* Info section */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm bg-primary/5 p-4 rounded-lg">
-              {data[0] && (
+        <div className="flex-1 overflow-y-auto p-6">
+          {isLoading ? (
+            <div className="space-y-6 py-2">
+              {/* Skeleton for Header Info */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm bg-primary/5 p-4 rounded-lg">
                 <div className="space-y-1">
                   <span className="text-muted-foreground text-xs uppercase font-semibold">Kementerian/Lembaga</span>
+                  <Skeleton className="h-5 w-48 bg-muted-foreground/20 mt-1" />
+                </div>
+                <div className="space-y-1">
+                  <span className="text-muted-foreground text-xs uppercase font-semibold">Satuan Kerja</span>
+                  <Skeleton className="h-5 w-64 bg-muted-foreground/20 mt-1" />
+                </div>
+                <div className="space-y-1">
+                  <span className="text-muted-foreground text-xs uppercase font-semibold">Tahun</span>
+                  <Skeleton className="h-5 w-24 bg-muted-foreground/20 mt-1" />
+                </div>
+              </div>
+
+              {/* Skeleton for Table */}
+              <div className="border rounded-lg p-8">
+                <div className="space-y-3">
+                  <Skeleton className="h-8 w-full bg-muted-foreground/10" />
+                  <Skeleton className="h-8 w-full bg-muted-foreground/10" />
+                  <Skeleton className="h-8 w-full bg-muted-foreground/10" />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6 py-2">
+              {/* Info section */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm bg-primary/5 p-4 rounded-lg">
+                {data[0] && (
+                  <div className="space-y-1">
+                    <span className="text-muted-foreground text-xs uppercase font-semibold">Kementerian/Lembaga</span>
+                    <div className="font-medium mt-1">
+                      {data[0].kddept} – {data[0].nmdept}
+                    </div>
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <span className="text-muted-foreground text-xs uppercase font-semibold">Satuan Kerja</span>
                   <div className="font-medium mt-1">
-                    {data[0].kddept} – {data[0].nmdept}
+                    {kdsatker}
+                    {namaSatker ? ` – ${namaSatker}` : ""}
                   </div>
                 </div>
-              )}
-              <div className="space-y-1">
-                <span className="text-muted-foreground text-xs uppercase font-semibold">Satuan Kerja</span>
-                <div className="font-medium mt-1">
-                  {kdsatker}
-                  {namaSatker ? ` – ${namaSatker}` : ""}
+                <div className="space-y-1">
+                  <span className="text-muted-foreground text-xs uppercase font-semibold">Tahun</span>
+                  <div className="font-medium mt-1">{tahun}</div>
                 </div>
               </div>
-              <div className="space-y-1">
-                <span className="text-muted-foreground text-xs uppercase font-semibold">Tahun</span>
-                <div className="font-medium mt-1">{tahun}</div>
-              </div>
-            </div>
 
-            {/* Table */}
-            <div className="border rounded-lg overflow-hidden">
-              {data.length === 0 ? (
-                <div className="py-10 text-center text-muted-foreground">
-                  Tidak ada data kartu.
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs border-collapse">
-                    <thead className="bg-muted">
-                      <tr>
-                        <th className="p-3 text-center whitespace-nowrap border-b border-border font-semibold">
-                          No.
-                        </th>
-                        <th className="p-3 text-left whitespace-nowrap border-b border-border font-semibold">
-                          Nomor KKP
-                        </th>
-                        <th className="p-3 text-center whitespace-nowrap border-b border-border font-semibold">
-                          Jenis KKP (Belanja)
-                        </th>
-                        <th className="p-3 text-center whitespace-nowrap border-b border-border font-semibold">
-                          Jenis KKP (Prinsipal)
-                        </th>
-                        <th className="p-3 text-right whitespace-nowrap border-b border-border font-semibold">
-                          Limit KKP (Rp)
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.map((row, idx) => (
-                        <tr
-                          key={`${row.no_kartu}-${idx}`}
-                          className="border-t hover:bg-muted/40 transition-colors"
-                        >
-                          <td className="p-3 text-center border-b border-border">
-                            {idx + 1}
+              {/* Table */}
+              <div className="border rounded-lg overflow-hidden">
+                {data.length === 0 ? (
+                  <div className="py-10 text-center text-muted-foreground">
+                    Tidak ada data kartu.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs border-collapse">
+                      <thead className="bg-muted">
+                        <tr>
+                          <th className="p-3 text-center whitespace-nowrap border-b border-border font-semibold">
+                            No.
+                          </th>
+                          <th className="p-3 text-left whitespace-nowrap border-b border-border font-semibold">
+                            Nomor KKP
+                          </th>
+                          <th className="p-3 text-center whitespace-nowrap border-b border-border font-semibold">
+                            Jenis KKP (Belanja)
+                          </th>
+                          <th className="p-3 text-center whitespace-nowrap border-b border-border font-semibold">
+                            Jenis KKP (Prinsipal)
+                          </th>
+                          <th className="p-3 text-right whitespace-nowrap border-b border-border font-semibold">
+                            Limit KKP (Rp)
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.map((row, idx) => (
+                          <tr
+                            key={`${row.no_kartu}-${idx}`}
+                            className="border-t hover:bg-muted/40 transition-colors"
+                          >
+                            <td className="p-3 text-center border-b border-border">
+                              {idx + 1}
+                            </td>
+                            <td className="p-3 text-left border-b border-border">
+                              <div className="font-mono font-medium">{row.no_kartu}</div>
+                              <div className="text-muted-foreground text-[11px] mt-0.5">
+                                {row.bank_penerbit}
+                              </div>
+                            </td>
+                            <td className="p-3 text-center border-b border-border">
+                              {row.jns_kkp_belanja}
+                            </td>
+                            <td className="p-3 text-center border-b border-border">
+                              {row.jns_kkp_prinsipal}
+                            </td>
+                            <td className="p-3 text-right font-mono border-b border-border pr-3">
+                              Rp {formatRupiah(row.nilai_limit)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot className="bg-muted font-semibold">
+                        <tr>
+                          <td className="p-3 border-t border-border" />
+                          <td className="p-3 border-t border-border" />
+                          <td className="p-3 border-t border-border" />
+                          <td className="p-3 text-center border-t border-border">
+                            Total
                           </td>
-                          <td className="p-3 text-left border-b border-border">
-                            <div className="font-mono font-medium">{row.no_kartu}</div>
-                            <div className="text-muted-foreground text-[11px] mt-0.5">
-                              {row.bank_penerbit}
-                            </div>
-                          </td>
-                          <td className="p-3 text-center border-b border-border">
-                            {row.jns_kkp_belanja}
-                          </td>
-                          <td className="p-3 text-center border-b border-border">
-                            {row.jns_kkp_prinsipal}
-                          </td>
-                          <td className="p-3 text-right font-mono border-b border-border pr-3">
-                            Rp {formatRupiah(row.nilai_limit)}
+                          <td className="p-3 text-right font-mono border-t border-border pr-3">
+                            Rp {formatRupiah(totalLimit)}
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
-                    <tfoot className="bg-muted font-semibold">
-                      <tr>
-                        <td className="p-3 border-t border-border" />
-                        <td className="p-3 border-t border-border" />
-                        <td className="p-3 border-t border-border" />
-                        <td className="p-3 text-center border-t border-border">
-                          Total
-                        </td>
-                        <td className="p-3 text-right font-mono border-t border-border pr-3">
-                          Rp {formatRupiah(totalLimit)}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              )}
+                      </tfoot>
+                    </table>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        <DialogFooter className="gap-2 sm:gap-2">
+        <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button onClick={() => onOpenChange(false)}>
             Tutup
           </Button>

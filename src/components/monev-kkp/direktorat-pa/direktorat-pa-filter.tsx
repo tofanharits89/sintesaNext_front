@@ -8,7 +8,8 @@ import {
 } from "@/components/ui/select";
 import { ResetButton } from "@/components/ui/reset-button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { Building2 } from "lucide-react";
+import { Building2, FileDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface DirektoratPaFilterProps {
   contentType: string;
@@ -27,6 +28,7 @@ interface DirektoratPaFilterProps {
   activeKppnList: { value: string; label: string }[];
   isLoadingKanwilRef: boolean;
   isLoadingKppnRef: boolean;
+  onExportExcel?: (() => void) | (() => Promise<void>);
 }
 
 const STATUS_OPTIONS = [
@@ -52,6 +54,7 @@ export const DirektoratPaFilter = ({
   activeKppnList,
   isLoadingKanwilRef,
   isLoadingKppnRef,
+  onExportExcel,
 }: DirektoratPaFilterProps) => {
   const years = ["2026", "2025", "2024", "2023"];
   const periodes = [
@@ -67,14 +70,19 @@ export const DirektoratPaFilter = ({
     contentType === "ringkasan-kanwil" ||
     contentType === "monitoring-kanwil" ||
     contentType === "monitoring-kppn" ||
-    contentType === "ringkasan-kppn";
+    contentType === "ringkasan-kppn" ||
+    contentType === "data-transaksi";
   const showKppn =
-    contentType === "ringkasan-kppn" || contentType === "monitoring-kppn";
+    contentType === "ringkasan-kppn" || 
+    contentType === "monitoring-kppn" ||
+    contentType === "data-transaksi";
 
-  // Compute grid cols for monitoring: always Tahun + Kanwil + (KPPN?) + Status + Periode
+  // Compute grid cols for monitoring and transactions: always Tahun + Kanwil + (KPPN?) + Status + Periode
   // monitoring-kanwil: 4 cols (Tahun, Kanwil, Status, Periode)
   // monitoring-kppn:   5 cols (Tahun, Kanwil, KPPN, Status, Periode)
-  const monitoringCols = showKppn ? "md:grid-cols-5" : "md:grid-cols-4";
+  // data-transaksi:    4 cols (Tahun, Kanwil, KPPN, Periode)
+  const isTransaction = contentType === "data-transaksi";
+  const monitoringCols = showKppn ? (isTransaction ? "md:grid-cols-4" : "md:grid-cols-5") : "md:grid-cols-4";
 
   // Ringkasan grid cols (no Status)
   const ringkasanCols = showKppn ? "md:grid-cols-4" : "md:grid-cols-3";
@@ -89,7 +97,9 @@ export const DirektoratPaFilter = ({
             <span className="font-medium">Direktorat Pelaksanaan Anggaran</span>
             <span className="text-muted-foreground">— Menampilkan data agregat dari seluruh Kanwil dan KPPN</span>
           </div>
-          <ResetButton onReset={handleReset} />
+          <div className="flex items-center gap-2">
+            <ResetButton onReset={handleReset} />
+          </div>
         </div>
       </CardHeader>
       <CardContent>

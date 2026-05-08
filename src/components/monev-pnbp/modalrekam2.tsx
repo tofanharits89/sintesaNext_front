@@ -320,17 +320,19 @@ export default function Rekam2({
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && handleModalClose()}>
-      <DialogContent showCloseButton={false} className="w-[95vw] max-w-7xl sm:max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
+      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle className="text-xl text-center">
             Hasil Koordinasi dengan Satker
           </DialogTitle>
         </DialogHeader>
-        <div className="px-1 py-2 rounded-md bg-muted/50 border text-sm text-muted-foreground flex flex-col gap-0.5">
-          <span><span className="font-medium text-foreground">Satker:</span> {nmsatker} ({kdsatker})</span>
-          <span><span className="font-medium text-foreground">Jenis PNBP:</span> {nmmppnbp}</span>
+        <div className="px-6 py-2">
+          <div className="px-3 py-2 rounded-md bg-muted/50 border text-sm text-muted-foreground flex flex-col gap-0.5">
+            <span><span className="font-medium text-foreground">Satker:</span> {nmsatker} ({kdsatker})</span>
+            <span><span className="font-medium text-foreground">Jenis PNBP:</span> {nmmppnbp}</span>
+          </div>
         </div>
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto p-6 pt-2">
           <Formik
             validationSchema={validationSchema}
             onSubmit={handleSubmitdata}
@@ -528,7 +530,7 @@ export default function Rekam2({
             }}
           </Formik>
         </div>
-        <DialogFooter className="border-t pt-4">
+        <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button size="default" variant="secondary" onClick={onHide}>
             Tutup
           </Button>

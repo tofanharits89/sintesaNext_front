@@ -204,12 +204,12 @@ export default function IkpaForm({
 
   return (
     <Dialog open={show} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent showCloseButton={false} className="sm:max-w-7xl gap-0 overflow-hidden p-0 bg-white dark:bg-card">
-        <DialogHeader className="px-6 py-4">
+      <DialogContent showCloseButton={false} className="max-w-7xl sm:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle>Rekam Data IKPA</DialogTitle>
         </DialogHeader>
 
-        <div className="max-h-[85vh] overflow-y-auto px-6 py-6">
+        <div className="flex-1 overflow-y-auto p-6">
           <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
             {/* Form Column */}
             <div className="md:col-span-1">
@@ -277,7 +277,7 @@ export default function IkpaForm({
           )}
         </div>
 
-        <DialogFooter className="px-6 py-4 bg-white dark:bg-card">
+        <DialogFooter className="p-6 pt-4 gap-2 sm:gap-2">
           <Button
             type="button"
             variant="outline"

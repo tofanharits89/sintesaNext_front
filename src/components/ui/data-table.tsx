@@ -72,6 +72,10 @@ interface DataTableProps<TData, TValue> {
   showFooter?: boolean;
   // Custom message when no data is available
   emptyMessage?: string;
+  // Enable manual pagination (server-side)
+  manualPagination?: boolean;
+  // Total row count for manual pagination
+  rowCount?: number;
 }
 
 export function DataTable<TData, TValue>({
@@ -89,6 +93,8 @@ export function DataTable<TData, TValue>({
   footerInfoText,
   showFooter = false,
   emptyMessage = "No results.",
+  manualPagination = false,
+  rowCount,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -99,13 +105,10 @@ export function DataTable<TData, TValue>({
   });
   const effectivePagination = controlledPagination ?? uncontrolledPagination;
 
-  const table = useReactTable({
+  const tableOptions: any = {
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     autoResetPageIndex,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -122,15 +125,26 @@ export function DataTable<TData, TValue>({
       
       onPaginationChange?.(next);
     },
-    manualPagination: false, // We want client-side pagination since we pass the full dataset
+    manualPagination,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       pagination: effectivePagination,
     },
+  };
 
-  });
+  if (!manualPagination) {
+    tableOptions.getPaginationRowModel = getPaginationRowModel();
+    tableOptions.getSortedRowModel = getSortedRowModel();
+    tableOptions.getFilteredRowModel = getFilteredRowModel();
+  }
+
+  if (rowCount !== undefined) {
+    tableOptions.rowCount = rowCount;
+  }
+
+  const table = useReactTable(tableOptions);
 
   // Expose table instance to parent for external pagination controls
   useEffect(() => {
@@ -139,15 +153,6 @@ export function DataTable<TData, TValue>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table, sorting, columnFilters, columnVisibility, data]);
 
-  // Keep react-table internal page size in sync with the requested initialPageSize
-  useEffect(() => {
-    if (
-      initialPageSize &&
-      table.getState().pagination.pageSize !== initialPageSize
-    ) {
-      table.setPageSize(initialPageSize);
-    }
-  }, [initialPageSize, table]);
 
   // Notify parent when uncontrolled pagination changes so external UIs can re-render
   useEffect(() => {
@@ -283,124 +288,121 @@ export function DataTable<TData, TValue>({
 
           {/* Center: Pagination */}
           <div className="flex items-center justify-center order-1 md:order-2 w-full md:w-auto">
-            <Pagination className="mx-auto overflow-x-auto no-scrollbar justify-center">
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={(e) => {
-                      e.preventDefault();
-                      table.previousPage();
-                    }}
-                    className={cn(
-                      "cursor-pointer select-none",
-                      !table.getCanPreviousPage() &&
-                        "pointer-events-none opacity-50",
-                    )}
-                  />
-                </PaginationItem>
+            <Pagination className="mx-auto justify-center">
+              <div className="flex items-center justify-between w-full sm:min-w-[400px] gap-2">
+                <PaginationPrevious
+                  onClick={(e) => {
+                    e.preventDefault();
+                    table.previousPage();
+                  }}
+                  className={cn(
+                    "cursor-pointer select-none",
+                    !table.getCanPreviousPage() &&
+                      "pointer-events-none opacity-50",
+                  )}
+                />
 
-                {/* Page numbers logic */}
-                {(() => {
-                  const totalPage = table.getPageCount();
-                  const currentPage = table.getState().pagination.pageIndex + 1;
-                  const items = [];
+                <PaginationContent className="flex-1 justify-center gap-1 overflow-x-auto no-scrollbar">
+                  {(() => {
+                    const totalPage = table.getPageCount();
+                    const currentPage = table.getState().pagination.pageIndex + 1;
+                    const items = [];
 
-                  if (totalPage <= 7) {
-                    for (let i = 1; i <= totalPage; i++) {
+                    if (totalPage <= 7) {
+                      for (let i = 1; i <= totalPage; i++) {
+                        items.push(
+                          <PaginationItem key={i}>
+                            <PaginationLink
+                              isActive={currentPage === i}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                table.setPageIndex(i - 1);
+                              }}
+                              className="cursor-pointer select-none"
+                            >
+                              {i}
+                            </PaginationLink>
+                          </PaginationItem>,
+                        );
+                      }
+                    } else {
+                      // Always show first
                       items.push(
-                        <PaginationItem key={i}>
+                        <PaginationItem key={1}>
                           <PaginationLink
-                            isActive={currentPage === i}
+                            isActive={currentPage === 1}
                             onClick={(e) => {
                               e.preventDefault();
-                              table.setPageIndex(i - 1);
+                              table.setPageIndex(0);
                             }}
                             className="cursor-pointer select-none"
                           >
-                            {i}
+                            1
+                          </PaginationLink>
+                        </PaginationItem>,
+                      );
+
+                      if (currentPage > 3) {
+                        items.push(<PaginationEllipsis key="left-ellipsis" />);
+                      }
+
+                      // Middle pages
+                      const start = Math.max(2, currentPage - 1);
+                      const end = Math.min(totalPage - 1, currentPage + 1);
+
+                      for (let i = start; i <= end; i++) {
+                        items.push(
+                          <PaginationItem key={i}>
+                            <PaginationLink
+                              isActive={currentPage === i}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                table.setPageIndex(i - 1);
+                              }}
+                              className="cursor-pointer select-none"
+                            >
+                              {i}
+                            </PaginationLink>
+                          </PaginationItem>,
+                        );
+                      }
+
+                      if (currentPage < totalPage - 2) {
+                        items.push(<PaginationEllipsis key="right-ellipsis" />);
+                      }
+
+                      // Always show last
+                      items.push(
+                        <PaginationItem key={totalPage}>
+                          <PaginationLink
+                            isActive={currentPage === totalPage}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              table.setPageIndex(totalPage - 1);
+                            }}
+                            className="cursor-pointer select-none"
+                          >
+                            {totalPage}
                           </PaginationLink>
                         </PaginationItem>,
                       );
                     }
-                  } else {
-                    // Always show first
-                    items.push(
-                      <PaginationItem key={1}>
-                        <PaginationLink
-                          isActive={currentPage === 1}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            table.setPageIndex(0);
-                          }}
-                          className="cursor-pointer select-none"
-                        >
-                          1
-                        </PaginationLink>
-                      </PaginationItem>,
-                    );
+                    return items;
+                  })()}
+                </PaginationContent>
 
-                    if (currentPage > 3) {
-                      items.push(<PaginationEllipsis key="left-ellipsis" />);
-                    }
-
-                    // Middle pages
-                    const start = Math.max(2, currentPage - 1);
-                    const end = Math.min(totalPage - 1, currentPage + 1);
-
-                    for (let i = start; i <= end; i++) {
-                      items.push(
-                        <PaginationItem key={i}>
-                          <PaginationLink
-                            isActive={currentPage === i}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              table.setPageIndex(i - 1);
-                            }}
-                            className="cursor-pointer select-none"
-                          >
-                            {i}
-                          </PaginationLink>
-                        </PaginationItem>,
-                      );
-                    }
-
-                    if (currentPage < totalPage - 2) {
-                      items.push(<PaginationEllipsis key="right-ellipsis" />);
-                    }
-
-                    // Always show last
-                    items.push(
-                      <PaginationItem key={totalPage}>
-                        <PaginationLink
-                          isActive={currentPage === totalPage}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            table.setPageIndex(totalPage - 1);
-                          }}
-                          className="cursor-pointer select-none"
-                        >
-                          {totalPage}
-                        </PaginationLink>
-                      </PaginationItem>,
-                    );
-                  }
-                  return items;
-                })()}
-
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={(e) => {
-                      e.preventDefault();
-                      table.nextPage();
-                    }}
-                    className={cn(
-                      "cursor-pointer select-none",
-                      !table.getCanNextPage() &&
-                        "pointer-events-none opacity-50",
-                    )}
-                  />
-                </PaginationItem>
-              </PaginationContent>
+                <PaginationNext
+                  onClick={(e) => {
+                    e.preventDefault();
+                    table.nextPage();
+                  }}
+                  className={cn(
+                    "cursor-pointer select-none",
+                    !table.getCanNextPage() &&
+                      "pointer-events-none opacity-50",
+                  )}
+                />
+              </div>
             </Pagination>
           </div>
 
@@ -411,7 +413,7 @@ export function DataTable<TData, TValue>({
                 Showing{" "}
                 {(() => {
                   const { pageIndex, pageSize } = table.getState().pagination;
-                  const total = table.getFilteredRowModel().rows.length;
+                  const total = rowCount ?? table.getFilteredRowModel().rows.length;
                   const start = total === 0 ? 0 : pageIndex * pageSize + 1;
                   const end = Math.min((pageIndex + 1) * pageSize, total);
                   return `${start}-${end} of ${total}`;

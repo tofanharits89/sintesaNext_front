@@ -504,7 +504,7 @@ export function TayangModal({
         className={`${
           isFullscreen
             ? "!fixed !inset-0 !w-screen !h-screen !max-w-none !max-h-none !m-0 !rounded-none !border-0 !translate-x-0 !translate-y-0 !top-0 !left-0 !transform-none"
-            : "max-w-7xl h-[90vh] sm:max-w-7xl"
+            : "max-w-7xl max-h-[90vh] sm:max-w-7xl"
         } flex flex-col overflow-hidden`}
         showCloseButton={false}
         style={
