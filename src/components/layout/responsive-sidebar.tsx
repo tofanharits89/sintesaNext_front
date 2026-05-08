@@ -87,6 +87,7 @@ const defaultMenu: MenuItem[] = [
       { label: "Dashboard Program" },
       { label: "Dashboard Efisiensi" },
       { label: "Dashboard Pengendalian Belanja" },
+      { label: "Dashboard Weekly" },
     ],
   },
   {
@@ -401,6 +402,8 @@ export function ResponsiveSidebar({
         return <TrendingUp className={cls} />;
       case "Dashboard__Dashboard Pengendalian Belanja":
         return <BarChart2 className={cls} />;
+      case "Dashboard__Dashboard Weekly":
+        return <CalendarDays className={cls} />;
       case "Makan Bergizi__Dashboard MBG":
         return <LineChart className={cls} />;
       case "Makan Bergizi__Kertas Kerja":
@@ -636,7 +639,7 @@ export function ResponsiveSidebar({
                       className={cn(
                         "h-9 w-48 gap-1 bg-white dark:bg-card hover:bg-accent dark:hover:bg-accent",
                         activeMenuLabel === m.label &&
-                          "bg-accent text-accent-foreground",
+                        "bg-accent text-accent-foreground",
                       )}
                     >
                       <span className="inline-flex items-center">
@@ -650,7 +653,7 @@ export function ResponsiveSidebar({
                           {m.children.map((c) => {
                             const menuKey = `${m.label}__${c.label}`;
                             let href = "#";
-                            let onMouseEnterFn = () => {};
+                            let onMouseEnterFn = () => { };
 
                             // Route mapping
                             if (
@@ -677,6 +680,11 @@ export function ResponsiveSidebar({
                               m.label === "Dashboard"
                             ) {
                               href = "/dashboard/pengendalian-belanja";
+                            } else if (
+                              c.label === "Dashboard Weekly" &&
+                              m.label === "Dashboard"
+                            ) {
+                              href = "/dashboard/weekly";
                             } else if (
                               c.label === "Kontrak" &&
                               m.label === "Inquiry Data"
@@ -1181,6 +1189,26 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </Link>
+                    ) : c.label === "Dashboard Weekly" &&
+                      m.label === "Dashboard" ? (
+                      <Link
+                        key={c.label}
+                        href="/dashboard/weekly"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/dashboard/weekly",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
                     ) : c.label === "Dashboard MBG" &&
                       m.label === "Makan Bergizi" ? (
                       <Link
@@ -1301,7 +1329,7 @@ export function ResponsiveSidebar({
                         key={c.label}
                         href="/tentang-kita/profil"
                         className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
-                        onMouseEnter={() => {}}
+                        onMouseEnter={() => { }}
                         onClick={() => {
                           trackMenuUsage({
                             menu: m.label,
