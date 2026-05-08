@@ -193,7 +193,7 @@ export default function DashboardEfisiensiPage() {
             <DataTable
               columns={columns}
               data={efisiensiData}
-              initialPageSize={25}
+              initialPageSize={10}
             />
           )}
         </div>

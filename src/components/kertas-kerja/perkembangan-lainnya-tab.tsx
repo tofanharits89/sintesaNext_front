@@ -258,7 +258,7 @@ export function PerkembanganLainnyaTab({ selectedYear }: PerkembanganLainnyaTabP
                   ...item,
                   no: index + 1,
                 }))}
-                initialPageSize={25}
+                initialPageSize={10}
               />
             )}
           </div>

@@ -223,7 +223,7 @@ export function KesimpulanRekomendasiTab({ selectedYear }: KesimpulanRekomendasi
                   ...item,
                   no: index + 1,
                 }))}
-                initialPageSize={25}
+                initialPageSize={10}
               />
             )}
           </div>

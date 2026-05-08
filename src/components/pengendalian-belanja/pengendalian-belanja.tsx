@@ -164,7 +164,7 @@ export default function PengendalianBelanja() {
               <DataTable
                 columns={columns}
                 data={data}
-                initialPageSize={25}
+                initialPageSize={10}
                 showFooter={true}
               />
             )}

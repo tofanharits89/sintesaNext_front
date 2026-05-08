@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import kanwilsData from "@/data/kdkanwil.json";
+import { useAuth } from "@/hooks/useAuth";
 
 interface KesimpulanRekomendasiModalProps {
   open: boolean;
@@ -40,6 +41,8 @@ export function KesimpulanRekomendasiModal({
     kesimpulan: "",
     rekomendasi: "",
   });
+  const { user } = useAuth();
+  const isRestrictedRole = user?.role === "kanwil_djpb" || user?.role === "kppn";
 
   const getValueCaseInsensitive = (item: any, targetKey: string) => {
     if (!item) return null;
@@ -76,8 +79,13 @@ export function KesimpulanRekomendasiModal({
         kesimpulan: "",
         rekomendasi: "",
       });
+
+      // Auto-fill kanwil for restricted roles (Kanwil/KPPN)
+      if (isRestrictedRole && user?.kdkanwil) {
+        setFormData(prev => ({ ...prev, kanwil: user.kdkanwil || "" }));
+      }
     }
-  }, [data, open]);
+  }, [data, open, isRestrictedRole, user?.kdkanwil]);
 
   const handleSubmit = () => {
     // Handle form submission
@@ -150,6 +158,7 @@ export function KesimpulanRekomendasiModal({
                 onValueChange={(value) =>
                   setFormData({ ...formData, kanwil: value })
                 }
+                disabled={isRestrictedRole}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue

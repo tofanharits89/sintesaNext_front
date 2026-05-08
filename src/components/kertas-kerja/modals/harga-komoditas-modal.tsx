@@ -21,6 +21,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useKertasKerjaDistinct } from "@/features/mbg/hooks/use-kertas-kerja";
 import kanwilsData from "@/data/kdkanwil.json";
+import { useAuth } from "@/hooks/useAuth";
 
 interface HargaKomoditasModalProps {
   open: boolean;
@@ -43,6 +44,8 @@ export function HargaKomoditasModal({
     satuan: "",
     keterangan: "",
   });
+  const { user } = useAuth();
+  const isRestrictedRole = user?.role === "kanwil_djpb" || user?.role === "kppn";
 
   const { data: distinctIndicatorsResponse } = useKertasKerjaDistinct(
     "data_bgn.indikator_bapanas",
@@ -82,8 +85,13 @@ export function HargaKomoditasModal({
         satuan: "",
         keterangan: "",
       });
+
+      // Auto-fill kanwil for restricted roles (Kanwil/KPPN)
+      if (isRestrictedRole && user?.kdkanwil) {
+        setFormData(prev => ({ ...prev, kanwil: user.kdkanwil || "" }));
+      }
     }
-  }, [data, open]);
+  }, [data, open, isRestrictedRole, user?.kdkanwil]);
 
   const handleSubmit = () => {
     console.log("Submitting Harga Komoditas:", formData);
@@ -175,6 +183,7 @@ export function HargaKomoditasModal({
                 onValueChange={(value) =>
                   setFormData({ ...formData, kanwil: value })
                 }
+                disabled={isRestrictedRole}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue

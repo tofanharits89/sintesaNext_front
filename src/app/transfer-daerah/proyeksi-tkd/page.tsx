@@ -24,10 +24,9 @@ import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
 export default function ProyeksiTkdPage() {
-  const PAGE_SIZE = 30;
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(String(currentYear));
-  const [offset, setOffset] = useState(0);
+  const [paginationState, setPaginationState] = useState({ pageIndex: 0, pageSize: 10 });
   const [isDownloading, setIsDownloading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -146,20 +145,18 @@ export default function ProyeksiTkdPage() {
   };
 
   useEffect(() => {
-    setOffset(0);
+    setPaginationState((prev) => ({ ...prev, pageIndex: 0 }));
   }, [selectedYear]);
+
+  const offset = paginationState.pageIndex * paginationState.pageSize;
 
   const { rows, pagination, isLoading, error } = useProyeksiTkd({
     thang: selectedYear,
-    limit: PAGE_SIZE,
+    limit: paginationState.pageSize,
     offset,
   });
 
-  const currentPage = pagination.currentPage;
-  const totalPages = pagination.totalPages;
   const totalItems = pagination.total;
-  const startItem = totalItems > 0 ? offset + 1 : 0;
-  const endItem = offset + rows.length;
 
   const columns = [
     {
@@ -389,42 +386,15 @@ export default function ProyeksiTkdPage() {
               {String((error as Error)?.message || error)}
             </div>
           ) : (
-            <div className="space-y-3">
-              <DataTable
-                columns={columns}
-                data={rows}
-                hidePagination
-                initialPageSize={PAGE_SIZE}
-              />
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">
-                  Menampilkan {startItem}-{endItem} dari {totalItems} data
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="text-sm text-muted-foreground">
-                    Halaman {currentPage} / {totalPages}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setOffset((prev) => Math.max(0, prev - PAGE_SIZE))
-                    }
-                    disabled={!pagination.hasPrev || isLoading}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setOffset((prev) => prev + PAGE_SIZE)}
-                    disabled={!pagination.hasNext || isLoading}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <DataTable
+              columns={columns}
+              data={rows}
+              manualPagination
+              rowCount={totalItems}
+              controlledPagination={paginationState}
+              onPaginationChange={setPaginationState}
+              initialPageSize={paginationState.pageSize}
+            />
           )}
         </CardContent>
       </Card>

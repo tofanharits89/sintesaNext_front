@@ -235,7 +235,7 @@ export function MakrokesraTab({ selectedYear }: MakrokesraTabProps) {
                   ...item,
                   no: index + 1,
                 }))}
-                initialPageSize={25}
+                initialPageSize={10}
               />
             )}
           </div>

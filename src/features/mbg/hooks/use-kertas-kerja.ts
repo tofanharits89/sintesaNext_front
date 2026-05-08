@@ -71,7 +71,7 @@ export function useKertasKerja(
     let filters = [];
     filters.push(`a.tahun = '${year}'`);
 
-    if (userRole === "2" && kdkanwil) {
+    if ((userRole === "kanwil_djpb" || userRole === "kppn") && kdkanwil) {
       filters.push(`a.kode_kanwil = '${kdkanwil}'`);
     }
 
