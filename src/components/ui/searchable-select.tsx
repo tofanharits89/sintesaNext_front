@@ -24,6 +24,7 @@ interface SearchableSelectProps {
   searchPlaceholder?: string;
   emptyMessage?: string;
   className?: string;
+  contentClassName?: string;
   disabled?: boolean;
 }
 
@@ -35,6 +36,7 @@ export function SearchableSelect({
   searchPlaceholder = "Cari...",
   emptyMessage = "Tidak ditemukan.",
   className,
+  contentClassName,
   disabled = false,
 }: SearchableSelectProps) {
   const selectedOption =
@@ -66,7 +68,7 @@ export function SearchableSelect({
         onFocus={(e) => e.target.select()}
       />
       <ComboboxContent 
-        className="!bg-zinc-100 dark:!bg-black"
+        className={cn("!bg-zinc-100 dark:!bg-black", contentClassName)}
         onPointerDown={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
       >

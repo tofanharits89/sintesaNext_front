@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useMapStats } from "@/features/mbg/hooks/useMapStats";
 import { useMapChoropleth } from "@/features/mbg/hooks/useMapChoropleth";
 import { MapStatsOverlay } from "@/components/mbg/MapStatsOverlay";
@@ -201,6 +202,17 @@ export function MapSearch({ year = "2026" }: { year?: string }) {
     });
     return m;
   }, [choroplethData]);
+
+  const provinceOptions = useMemo(
+    () => [
+      { value: "all", label: "Semua Provinsi" },
+      ...(provinces as { id: string; name: string }[]).map((p) => ({
+        value: p.id,
+        label: p.name,
+      })),
+    ],
+    [],
+  );
 
   // Stats overlay params
   const overlayScope = selectedProvince ? "province" : "national";
@@ -465,22 +477,15 @@ export function MapSearch({ year = "2026" }: { year?: string }) {
         {/* Filters */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {/* Province selector */}
-          <Select
+          <SearchableSelect
+            options={provinceOptions}
             value={internalProvinceValue}
             onValueChange={handleProvinceChange}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Pilih Provinsi" />
-            </SelectTrigger>
-            <SelectContent className="z-[9999]">
-              <SelectItem value="all">Semua Provinsi</SelectItem>
-              {(provinces as { id: string; name: string }[]).map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  {p.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            placeholder="Pilih Provinsi"
+            searchPlaceholder="Cari provinsi..."
+            emptyMessage="Provinsi tidak ditemukan."
+            contentClassName="z-[9999]"
+          />
 
           {/* Indicator selector */}
           <Select

@@ -139,6 +139,18 @@ const getFilterIcon = (filterKey: string) => {
   return iconMap[filterKey] || <Filter className="h-4 w-4" />;
 };
 
+/**
+ * Deduplicate options by value to prevent React "duplicate key" warnings
+ */
+const deduplicateOptions = (options: Option[]): Option[] => {
+  const seen = new Set<string>();
+  return options.filter((option) => {
+    if (seen.has(option.value)) return false;
+    seen.add(option.value);
+    return true;
+  });
+};
+
 export function FilterCard({
   filterKey,
   filterLabel,
@@ -526,7 +538,7 @@ export function FilterCard({
               { value: "SYC", label: "SYC - Single Year Contract" },
               { value: "MYC", label: "MYC - Multi Years Contract" },
             ];
-            return [...commonOptions, ...options];
+            return deduplicateOptions([...commonOptions, ...options]);
           }
           case "jenisTemaAnggaran": {
             // No "Semua" option for Jenis Tema Anggaran; default should be 000
@@ -539,14 +551,14 @@ export function FilterCard({
               value: item.kdtema,
               label: `${item.kdtema} - ${item.nmtema}`,
             }));
-            return options; // exclude commonOptions
+            return deduplicateOptions(options); // exclude commonOptions
           }
           case "kementerian": {
             const kementarianOptions = KDDEPT.map((item) => ({
               value: item.kddept,
               label: `${item.kddept} - ${item.nmdept}`,
             }));
-            return [...commonOptions, ...kementarianOptions];
+            return deduplicateOptions([...commonOptions, ...kementarianOptions]);
           }
 
           case "eselonI": {
@@ -561,7 +573,7 @@ export function FilterCard({
               value: item.kdunit,
               label: `${item.kdunit} - ${item.nmunit}`,
             }));
-            return [...commonOptions, ...eselonIOptions];
+            return deduplicateOptions([...commonOptions, ...eselonIOptions]);
           }
 
           case "kanwil": {
@@ -579,7 +591,7 @@ export function FilterCard({
               value: item.kdkanwil,
               label: `${item.kdkanwil} - ${item.nmkanwil}`,
             }));
-            return [...commonOptions, ...kanwilOptions];
+            return deduplicateOptions([...commonOptions, ...kanwilOptions]);
           }
 
           case "kppn": {
@@ -594,21 +606,14 @@ export function FilterCard({
               value: item.kdkppn,
               label: `${item.kdkppn} - ${item.nmkppn}`,
             }));
-            return [...commonOptions, ...kppnOptions];
+            return deduplicateOptions([...commonOptions, ...kppnOptions]);
           }
-
           case "kewenangan": {
-            const uniqueKewenangan = new Map<string, Option>();
-            KDDEKON.forEach((item) => {
-              if (!uniqueKewenangan.has(item.kddekon)) {
-                uniqueKewenangan.set(item.kddekon, {
-                  value: item.kddekon,
-                  label: `${item.kddekon} - ${item.nmdekon}`,
-                });
-              }
-            });
-            const kewenanganOptions = Array.from(uniqueKewenangan.values());
-            return [...commonOptions, ...kewenanganOptions];
+            const kewenanganOptions = KDDEKON.map((item) => ({
+              value: item.kddekon,
+              label: `${item.kddekon} - ${item.nmdekon}`,
+            }));
+            return deduplicateOptions([...commonOptions, ...kewenanganOptions]);
           }
 
           case "provinsi": {
@@ -616,7 +621,7 @@ export function FilterCard({
               value: item.kdlokasi,
               label: `${item.kdlokasi} - ${item.nmlokasi}`,
             }));
-            return [...commonOptions, ...provinsiOptions];
+            return deduplicateOptions([...commonOptions, ...provinsiOptions]);
           }
 
           case "kabkota": {
@@ -631,7 +636,7 @@ export function FilterCard({
               value: item.kdkabkota,
               label: `${item.kdkabkota} - ${item.nmkabkota}`,
             }));
-            return [...commonOptions, ...kabkotaOptions];
+            return deduplicateOptions([...commonOptions, ...kabkotaOptions]);
           }
 
           case "satker":
@@ -676,7 +681,7 @@ export function FilterCard({
               value: item.kdsatker,
               label: `${item.kdsatker} - ${item.nmsatker}`,
             }));
-            return [...commonOptions, ...satkerOptions];
+            return deduplicateOptions([...commonOptions, ...satkerOptions]);
 
           // For other filter types, return mock data
           case "fungsi":
@@ -687,7 +692,7 @@ export function FilterCard({
               value: item.kdfungsi,
               label: `${item.kdfungsi} - ${item.nmfungsi}`,
             }));
-            return [...commonOptions, ...fungsiOptions];
+            return deduplicateOptions([...commonOptions, ...fungsiOptions]);
           case "subFungsi":
             // Use kdsfung.json data - filter by selected Fungsi
             let subFungsiData = kdsfungData as Array<{
@@ -708,7 +713,7 @@ export function FilterCard({
               value: item.kdsfung,
               label: `${item.kdfungsi}.${item.kdsfung} - ${item.nmsfung}`,
             }));
-            return [...commonOptions, ...subFungsiOptions];
+            return deduplicateOptions([...commonOptions, ...subFungsiOptions]);
           case "program":
             // Use kdprogram.json data - filter by selected Kementerian and Unit Eselon 1
             let programData = kdprogramData as Array<{
@@ -742,7 +747,7 @@ export function FilterCard({
               value: item.kdprogram,
               label: `${item.kdprogram} - ${item.nmprogram}`,
             }));
-            return [...commonOptions, ...programOptions];
+            return deduplicateOptions([...commonOptions, ...programOptions]);
           case "kegiatan":
             // Use kdgiat.json data - filter by selected Kementerian, Unit, and Program
             let kegiatanData = kdgiatData as Array<{
@@ -785,7 +790,7 @@ export function FilterCard({
               value: item.kdgiat,
               label: `${item.kdgiat} - ${item.nmgiat}`,
             }));
-            return [...commonOptions, ...kegiatanOptions];
+            return deduplicateOptions([...commonOptions, ...kegiatanOptions]);
 
           case "outputKro":
             // Use kdoutput.json data - filter by selected Kementerian, Unit, Program, and Kegiatan
@@ -841,7 +846,7 @@ export function FilterCard({
               value: item.kdoutput,
               label: `${item.kdoutput} - ${item.nmoutput}`,
             }));
-            return [...commonOptions, ...outputOptions];
+            return deduplicateOptions([...commonOptions, ...outputOptions]);
 
           case "subOutputRo":
             // Use kdsoutput.json data - filter by selected Kementerian, Unit, Program, Kegiatan, and Output
@@ -912,7 +917,7 @@ export function FilterCard({
               value: item.kdsoutput,
               label: `${item.kdsoutput} - ${item.nmsoutput}`,
             }));
-            return [...commonOptions, ...subOutputOptions];
+            return deduplicateOptions([...commonOptions, ...subOutputOptions]);
 
           // Prioritas Nasional hierarchy filters
           case "jenisPn": {
@@ -922,7 +927,7 @@ export function FilterCard({
               value: item.kdpn,
               label: `${item.kdpn} - ${item.nmpn}`,
             }));
-            return [...commonOptions, ...pnOptions];
+            return deduplicateOptions([...commonOptions, ...pnOptions]);
           }
 
           case "programPrioritas": {
@@ -939,7 +944,7 @@ export function FilterCard({
               value: item.kdpp,
               label: `${item.kdpp} - ${item.nmpp}`,
             }));
-            return [...commonOptions, ...options];
+            return deduplicateOptions([...commonOptions, ...options]);
           }
 
           case "kegiatanPrioritas": {
@@ -961,7 +966,7 @@ export function FilterCard({
               value: item.kdkp,
               label: `${item.kdkp} - ${item.deskripsi}`,
             }));
-            return [...commonOptions, ...options];
+            return deduplicateOptions([...commonOptions, ...options]);
           }
 
           case "proyekPrioritas": {
@@ -988,7 +993,7 @@ export function FilterCard({
               value: item.kdproy,
               label: `${item.kdproy} - ${item.deskripsi}`,
             }));
-            return [...commonOptions, ...options];
+            return deduplicateOptions([...commonOptions, ...options]);
           }
 
           case "jenisMajorProject": {
@@ -998,7 +1003,7 @@ export function FilterCard({
               value: item.kdmp,
               label: `${item.kdmp} - ${item.nmmp}`,
             }));
-            return [...commonOptions, ...majorProjectOptions];
+            return deduplicateOptions([...commonOptions, ...majorProjectOptions]);
           }
 
           case "akun":
@@ -1013,7 +1018,7 @@ export function FilterCard({
                 value: item.kdgbkpk,
                 label: `${item.kdgbkpk} - ${item.nmgbkpk}`,
               }));
-              return [...commonOptions, ...jenisBelanjaOptions];
+              return deduplicateOptions([...commonOptions, ...jenisBelanjaOptions]);
             } else if (akunType === "kodeBkpk") {
               // Use kdbkpk.json data for Kode BKPK (4 Digit)
               const kodeBkpkOptions = (
@@ -1022,7 +1027,7 @@ export function FilterCard({
                 value: item.kdbkpk,
                 label: `${item.kdbkpk} - ${item.nmbkpk}`,
               }));
-              return [...commonOptions, ...kodeBkpkOptions];
+              return deduplicateOptions([...commonOptions, ...kodeBkpkOptions]);
             } else if (akunType === "kodeAkun") {
               // Use kdakun.json data for Kode Akun (6 Digit)
               const kodeAkunOptions = (
@@ -1031,7 +1036,7 @@ export function FilterCard({
                 value: item.kdakun,
                 label: `${item.kdakun} - ${item.nmakun}`,
               }));
-              return [...commonOptions, ...kodeAkunOptions];
+              return deduplicateOptions([...commonOptions, ...kodeAkunOptions]);
             }
 
             return commonOptions;
@@ -1044,7 +1049,7 @@ export function FilterCard({
               value: item.kdsdana,
               label: `${item.kdsdana} - ${item.nmsdana}`,
             }));
-            return [...commonOptions, ...sumberDanaOptions];
+            return deduplicateOptions([...commonOptions, ...sumberDanaOptions]);
 
           case "jenisInflasiIntervensi": {
             // Use inf_intervensi.json data for Jenis Inflasi Intervensi
@@ -1057,7 +1062,7 @@ export function FilterCard({
               value: item.inf_intervensi,
               label: `${item.inf_intervensi} - ${item.ur_inf_intervensi}`,
             }));
-            return [...commonOptions, ...inflationIntervensiOptions];
+            return deduplicateOptions([...commonOptions, ...inflationIntervensiOptions]);
           }
 
           case "jenisInflasiPengeluaran": {
@@ -1071,7 +1076,7 @@ export function FilterCard({
               value: item.inf_pengeluaran,
               label: `${item.inf_pengeluaran} - ${item.ur_inf_pengeluaran}`,
             }));
-            return [...commonOptions, ...inflationPengeluaranOptions];
+            return deduplicateOptions([...commonOptions, ...inflationPengeluaranOptions]);
           }
           case "stuntingIntervensi": {
             // Static options for Penanganan Stunting Intervensi
@@ -1102,7 +1107,7 @@ export function FilterCard({
               value: item.kdprogis,
               label: `${item.kdprogis} - ${item.nmprogis}`,
             }));
-            return [...commonOptions, ...options];
+            return deduplicateOptions([...commonOptions, ...options]);
           }
 
           case "cutOff":
@@ -1168,7 +1173,7 @@ export function FilterCard({
               label: item.label,
             }));
             // Replace "all" option with "Semua Status" from data
-            return statusSumberOptions;
+            return deduplicateOptions(statusSumberOptions);
           }
 
           default:

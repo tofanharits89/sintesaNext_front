@@ -126,7 +126,7 @@ export function useInquiryDataApi() {
           {
             encryptedQuery,
             format: "csv",
-            limit: 50000, // Higher limit for downloads
+            limit: 500000, // Higher limit for downloads
           },
           { responseType: "blob" },
         );
@@ -171,7 +171,7 @@ export function useInquiryDataApi() {
 
         const blobResp = await directBackendClient.post(
           "/inquiry-data/query",
-          { encryptedQuery, format: "excel" },
+          { encryptedQuery, format: "excel", limit: 500000 },
           { responseType: "blob" },
         );
 
