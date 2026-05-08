@@ -26,6 +26,7 @@ interface DatePickerProps {
   startMonth?: Date
   endMonth?: Date
   locale?: Locale
+  disabledDates?: any
 }
 
 import { id } from "date-fns/locale/id"
@@ -42,6 +43,7 @@ export function DatePicker({
   startMonth,
   endMonth,
   locale = id,
+  disabledDates,
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = React.useState(false)
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(date)
@@ -122,6 +124,7 @@ export function DatePicker({
           {...(startMonth && { startMonth })}
           {...(endMonth && { endMonth })}
           locale={locale}
+          disabled={disabledDates}
         />
         {showTime && (
           <div className="p-3 border-t">
