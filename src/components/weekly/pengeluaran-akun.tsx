@@ -33,8 +33,8 @@ interface BkpkRow {
   No: string;
   "Akun Belanja (BKPK)": string;
   "APBN 2026": number;
-  "Realisasi 25 - 29 Apr 2026": number;
-  "Realisasi s.d. 29 Apr 2026": number;
+  real_weekly: number;
+  real_sd_curr: number;
   "% thd APBN": number;
 }
 
@@ -137,8 +137,8 @@ async function fetchBkpk(tglAwal: string, tglAkhir: string): Promise<BkpkRow[]> 
   return data.map((d: any) => ({
     ...d,
     "APBN 2026": Number(d["APBN 2026"]),
-    "Realisasi 25 - 29 Apr 2026": Number(d["Realisasi 25 - 29 Apr 2026"]),
-    "Realisasi s.d. 29 Apr 2026": Number(d["Realisasi s.d. 29 Apr 2026"]),
+    real_weekly: Number(d.real_weekly),
+    real_sd_curr: Number(d.real_sd_curr),
     "% thd APBN": Number(d["% thd APBN"]),
   }));
 }
@@ -406,10 +406,10 @@ export default function PengeluaranAkun() {
                             {fmt1(row["APBN 2026"])}
                           </TableCell>
                           <TableCell className="p-2 text-right font-mono border-b border-r border-zinc-200">
-                            {fmt1(row["Realisasi 25 - 29 Apr 2026"])}
+                            {fmt1(row.real_weekly)}
                           </TableCell>
                           <TableCell className="p-2 text-right font-mono border-b border-r border-zinc-200 bg-zinc-50/50 group-hover:bg-zinc-100/50">
-                            {fmt1(row["Realisasi s.d. 29 Apr 2026"])}
+                            {fmt1(row.real_sd_curr)}
                           </TableCell>
                           <TableCell className="p-2 text-center border-b border-zinc-200">
                             <Badge variant="secondary" className="font-bold px-3 font-mono">

@@ -60,20 +60,36 @@ function addDays(dateStr: string, days: number): string {
   return toLocalISO(d);
 }
 
-/** 
- * Default for "Akhir Minggu Ini":
- * Today if Mon-Fri, else this Friday if Sat-Sun 
- */
-function defaultAkhirMinggu(): string {
-  const d = new Date();
-  const day = d.getDay();
-  if (day === 0) { // Sunday -> Friday
-    d.setDate(d.getDate() - 2);
-  } else if (day === 6) { // Saturday -> Friday
-    d.setDate(d.getDate() - 1);
+/** Get the last working day before a given date */
+function getLastWorkingDay(d: Date): Date {
+  const result = new Date(d);
+  result.setDate(result.getDate() - 1);
+  while (result.getDay() === 0 || result.getDay() === 6) {
+    result.setDate(result.getDate() - 1);
   }
-  // Else Mon-Fri -> keep today
-  return toLocalISO(d);
+  return result;
+}
+
+/** 
+ * Default for the date range picker:
+ * Monday of this week to Today (if Mon-Fri)
+ * OR Monday to Friday of the week that just ended (if Sat-Sun)
+ */
+function getDefaultRange(): { from: Date; to: Date } {
+  const to = new Date();
+  const day = to.getDay(); // 0: Sun, 1: Mon, ..., 6: Sat
+  
+  if (day === 0) { // Sunday -> Friday
+    to.setDate(to.getDate() - 2);
+  } else if (day === 6) { // Saturday -> Friday
+    to.setDate(to.getDate() - 1);
+  }
+  
+  const from = new Date(to);
+  const toDay = from.getDay(); // Now guaranteed 1-5
+  from.setDate(from.getDate() - (toDay - 1));
+  
+  return { from, to };
 }
 
 
@@ -81,27 +97,28 @@ function defaultAkhirMinggu(): string {
 
 export default function BelanjaNegaraWeekly() {
   // Compute default values
-  const defaultTo = defaultAkhirMinggu();
-  const defaultFrom = addDays(defaultTo, -7);
+  const defaultRange = getDefaultRange();
+  const defaultFromStr = toLocalISO(defaultRange.from);
+  const defaultToStr = toLocalISO(defaultRange.to);
 
   // Date range state (Minggu Ini)
   const [range, setRange] = useState<DateRange | undefined>({
-    from: new Date(defaultFrom),
-    to: new Date(defaultTo)
+    from: defaultRange.from,
+    to: defaultRange.to
   });
 
   // Applied params (only updated on "Tampilkan" click)
   const [appliedParams, setAppliedParams] = useState({
-    tglSd2026: defaultFrom,
-    tglAwal2026: addDays(defaultFrom, 1),
-    tglAkhir2026: defaultTo,
+    tglSd2026: toLocalISO(getLastWorkingDay(defaultRange.from)),
+    tglAwal2026: defaultFromStr,
+    tglAkhir2026: defaultToStr,
     tglYoy2025: (() => {
-      const d = new Date(defaultTo);
+      const d = new Date(defaultRange.to);
       d.setFullYear(d.getFullYear() - 1);
       return toLocalISO(d);
     })(),
     tglReal2025: (() => {
-      const d = new Date(defaultTo);
+      const d = new Date(defaultRange.to);
       d.setFullYear(d.getFullYear() - 1);
       return toLocalISO(d);
     })(),
@@ -112,9 +129,9 @@ export default function BelanjaNegaraWeekly() {
   const handleApply = () => {
     if (!range?.from || !range?.to) return;
 
-    const tglSd = toLocalISO(range.from);
-    const tglAwal = addDays(tglSd, 1);
+    const tglAwal = toLocalISO(range.from);
     const tglAkhir = toLocalISO(range.to);
+    const tglSd = toLocalISO(getLastWorkingDay(range.from));
     
     // Calculate 2025 date automatically from 2026 Akhir Minggu Ini
     const d2025 = new Date(range.to);
@@ -293,7 +310,7 @@ export default function BelanjaNegaraWeekly() {
 
                       {/* 2025 */}
                       <TableCell className="p-2 text-right font-mono border-b border-r border-zinc-200">{fmtTriliun(row["Pagu 2025"])}</TableCell>
-                      <TableCell className="p-2 text-right font-mono border-b border-r border-zinc-200">{fmtTriliun(row["Realisasi 2025 (s.d. Mei)"])}</TableCell>
+                      <TableCell className="p-2 text-right font-mono border-b border-r border-zinc-200">{fmtTriliun(row.real_sd_prev_year)}</TableCell>
                       <TableCell className="p-2 text-center border-b border-r border-zinc-200">
                         <Badge variant="secondary" className="font-bold px-3 font-mono">
                           {fmtPct(row["% Capaian 2025"])}
@@ -303,9 +320,9 @@ export default function BelanjaNegaraWeekly() {
                       {/* 2026 */}
                       <TableCell className="p-2 text-right font-mono border-b border-r border-zinc-200">{fmtTriliun(row["APBN 2026"])}</TableCell>
                       <TableCell className="p-2 text-right font-mono border-b border-r border-zinc-200">{fmtTriliun(row["DIPA 2026"])}</TableCell>
-                      <TableCell className="p-2 text-right font-mono border-b border-r border-zinc-200">{fmtTriliun(row["Realisasi s.d. 24 Apr 2026"])}</TableCell>
-                      <TableCell className="p-2 text-right font-mono border-b border-r border-zinc-200">{fmtTriliun(row["Realisasi 25-29 Apr 2026"])}</TableCell>
-                      <TableCell className="p-2 text-right font-mono border-b border-r border-zinc-200 bg-zinc-50/50 group-hover:bg-zinc-100/50">{fmtTriliun(row["Realisasi s.d. 29 Apr 2026"])}</TableCell>
+                      <TableCell className="p-2 text-right font-mono border-b border-r border-zinc-200">{fmtTriliun(row.real_sd_prev)}</TableCell>
+                      <TableCell className="p-2 text-right font-mono border-b border-r border-zinc-200">{fmtTriliun(row.real_weekly)}</TableCell>
+                      <TableCell className="p-2 text-right font-mono border-b border-r border-zinc-200 bg-zinc-50/50 group-hover:bg-zinc-100/50">{fmtTriliun(row.real_sd_curr)}</TableCell>
                       <TableCell className="p-2 text-center border-b border-r border-zinc-200">
                         <Badge variant="secondary" className="font-bold px-3 font-mono">{fmtPct(row["% thd APBN"])}</Badge>
                       </TableCell>

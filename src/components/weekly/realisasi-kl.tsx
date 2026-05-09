@@ -9,13 +9,13 @@ import { Badge } from "@/components/ui/badge";
 
 interface RealisasiKlRow {
   "BAGIAN ANGGARAN": string;
-  "Real s.d. 29 Apr 2025": number;
+  real_sd_prev_year: number;
   "% thd APBN 2025": number;
   APBN: number;
   DIPA: number;
-  "REAL s.d. 24 April 2026": number;
-  "25 - 29 Apr 2026": number;
-  "REAL s.d. 29 Apr 2026": number;
+  real_sd_prev: number;
+  real_weekly: number;
+  real_sd_curr: number;
   "% thd APBN": number;
   "% thd DIPA": number;
   "Sisa Pagu APBN": number;
@@ -87,13 +87,13 @@ async function fetchRealisasiKl(params: Record<string, string>): Promise<Realisa
   const data = JSON.parse(text)?.data ?? [];
   return data.map((d: any) => ({
     ...d,
-    "Real s.d. 29 Apr 2025": Number(d["Real s.d. 29 Apr 2025"]),
+    real_sd_prev_year: Number(d.real_sd_prev_year),
     "% thd APBN 2025": Number(d["% thd APBN 2025"]),
     APBN: Number(d.APBN),
     DIPA: Number(d.DIPA),
-    "REAL s.d. 24 April 2026": Number(d["REAL s.d. 24 April 2026"]),
-    "25 - 29 Apr 2026": Number(d["25 - 29 Apr 2026"]),
-    "REAL s.d. 29 Apr 2026": Number(d["REAL s.d. 29 Apr 2026"]),
+    real_sd_prev: Number(d.real_sd_prev),
+    real_weekly: Number(d.real_weekly),
+    real_sd_curr: Number(d.real_sd_curr),
     "% thd APBN": Number(d["% thd APBN"]),
     "% thd DIPA": Number(d["% thd DIPA"]),
     "Sisa Pagu APBN": Number(d["Sisa Pagu APBN"]),
@@ -291,7 +291,7 @@ export default function RealisasiKlWeekly() {
                         </td>
                         
                         {/* 2025 Metriks */}
-                        <td className="pa-td pa-td-num">{fmt1(row["Real s.d. 29 Apr 2025"])}</td>
+                        <td className="pa-td pa-td-num">{fmt1(row.real_sd_prev_year)}</td>
                         <td className="pa-td text-center">
                           <Badge variant="secondary" className="font-bold px-3">{fmtPct(row["% thd APBN 2025"])}</Badge>
                         </td>
@@ -300,9 +300,9 @@ export default function RealisasiKlWeekly() {
                         <td className="pa-td pa-td-num">{fmt1(row.APBN)}</td>
                         <td className="pa-td pa-td-num">{fmt1(row.DIPA)}</td>
                         
-                        <td className="pa-td pa-td-num">{fmt1(row["REAL s.d. 24 April 2026"])}</td>
-                        <td className="pa-td pa-td-num rk-td-highlight">{fmt1(row["25 - 29 Apr 2026"])}</td>
-                        <td className="pa-td pa-td-num rk-td-highlight">{fmt1(row["REAL s.d. 29 Apr 2026"])}</td>
+                        <td className="pa-td pa-td-num">{fmt1(row.real_sd_prev)}</td>
+                        <td className="pa-td pa-td-num rk-td-highlight">{fmt1(row.real_weekly)}</td>
+                        <td className="pa-td pa-td-num rk-td-highlight">{fmt1(row.real_sd_curr)}</td>
                         
                         <td className="pa-td text-center">
                           <Badge variant="secondary" className="font-bold px-3">{fmtPct(row["% thd APBN"])}</Badge>

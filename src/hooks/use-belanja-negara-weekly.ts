@@ -16,13 +16,13 @@ export interface BelanjaNegaraParams {
 export interface BelanjaNegaraRow {
   uraian: string;
   "Pagu 2025": number | null;
-  "Realisasi 2025 (s.d. Mei)": number | null;
+  real_sd_prev_year: number | null;
   "% Capaian 2025": number | null;
   "APBN 2026": number | null;
   "DIPA 2026": number | null;
-  "Realisasi s.d. 24 Apr 2026": number | null;
-  "Realisasi 25-29 Apr 2026": number | null;
-  "Realisasi s.d. 29 Apr 2026": number | null;
+  real_sd_prev: number | null;
+  real_weekly: number | null;
+  real_sd_curr: number | null;
   "% thd APBN": number | null;
   "% thd DIPA": number | null;
   "Sisa Pagu APBN": number | null;
