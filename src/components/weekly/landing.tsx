@@ -9,25 +9,6 @@ import ResumeTkd from "@/components/weekly/resume-tkd";
 import { http } from "@/lib/api/httpClient";
 import { toast } from "sonner";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-interface PengendalianBelanjaRow {
-  kode_ba: string;
-  nama_ba: string;
-  pagu_dipa: number;
-  blokir: number;
-  pagu_dipa_efektif: number;
-  realisasi_basis_kas: number;
-  pagu_kontrak: number;
-  real_kontrak: number;
-  outs_kontrak: number;
-  outs_uptup: number;
-  total_kas_dan_outstanding: number;
-  belum_sp2d: number;
-  nilai_spp_spm: number;
-  sisa_pagu_efektif: number;
-}
-
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function fmtT(v: number | null | undefined): string {
@@ -119,184 +100,35 @@ function AccordionItem({
   );
 }
 
-// ─── Pengendalian Belanja sub-panel ───────────────────────────────────────────
-
-const COLS = [
-  { key: "kode_ba",               label: "Kode BA" },
-  { key: "nama_ba",               label: "Nama K/L",        wide: true },
-  { key: "pagu_dipa",             label: "Pagu DIPA" },
-  { key: "blokir",                label: "Blokir" },
-  { key: "pagu_dipa_efektif",     label: "Pagu Efektif" },
-  { key: "realisasi_basis_kas",   label: "Realisasi" },
-  { key: "pagu_kontrak",          label: "Pagu Kontrak" },
-  { key: "real_kontrak",          label: "Real Kontrak" },
-  { key: "outs_kontrak",          label: "Outs Kontrak" },
-  { key: "outs_uptup",            label: "Outs UP/TUP" },
-  { key: "total_kas_dan_outstanding", label: "Total Kas+Outs" },
-  { key: "belum_sp2d",            label: "Belum SP2D" },
-  { key: "nilai_spp_spm",         label: "Nilai SPP/SPM" },
-  { key: "sisa_pagu_efektif",     label: "Sisa Pagu Efektif" },
-] as const;
-
-type ColKey = (typeof COLS)[number]["key"];
-
-function PengendalianBelanjaPanel() {
-  const [rows, setRows] = useState<PengendalianBelanjaRow[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-  const [tahun, setTahun] = useState(String(new Date().getFullYear()));
-  const [exclude999, setExclude999] = useState(false);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({ tahun });
-      if (exclude999) params.set("exclude999", "true");
-      const res = await http.get(`/api/v1/pengendalian-belanja?${params}`);
-      setRows(res.data?.result ?? []);
-      setLoaded(true);
-    } catch (err: any) {
-      toast.error(err?.message || "Gagal memuat data pengendalian belanja");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const years = Array.from({ length: new Date().getFullYear() - 2022 }, (_, i) =>
-    String(new Date().getFullYear() - i)
-  );
-
-  return (
-    <div className="wl-pb-panel">
-      {/* Controls */}
-      <div className="wl-pb-controls">
-        <div className="wl-pb-ctrl-group">
-          <label className="wl-pb-ctrl-label" htmlFor="pb-tahun">Tahun</label>
-          <select
-            id="pb-tahun"
-            className="wl-pb-select"
-            value={tahun}
-            onChange={(e) => setTahun(e.target.value)}
-          >
-            {years.map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-        </div>
-
-        <label className="wl-pb-checkbox-label">
-          <input
-            type="checkbox"
-            className="wl-pb-checkbox"
-            checked={exclude999}
-            onChange={(e) => setExclude999(e.target.checked)}
-          />
-          Exclude Non-K/L (999)
-        </label>
-
-        <button
-          className="wl-pb-fetch-btn"
-          onClick={fetchData}
-          disabled={loading}
-        >
-          {loading ? (
-            <><span className="bn-spinner" /> Memuat...</>
-          ) : (
-            <>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-              </svg>
-              Tampilkan
-            </>
-          )}
-        </button>
-      </div>
-
-      {/* Table */}
-      {!loaded && !loading && (
-        <div className="wl-pb-empty-hint">Klik "Tampilkan" untuk memuat data.</div>
-      )}
-
-      {loading && (
-        <div className="bn-loading">
-          <span className="bn-spinner bn-spinner-lg" />
-          <span>Memuat data pengendalian belanja...</span>
-        </div>
-      )}
-
-      {loaded && !loading && (
-        <div className="wl-pb-table-wrap">
-          <table className="wl-pb-table">
-            <thead>
-              <tr>
-                <th className="wl-pb-th wl-pb-th-num">No</th>
-                {COLS.map((c) => (
-                  <th
-                    key={c.key}
-                    className={`wl-pb-th${(c as any).wide ? " wl-pb-th-wide" : " wl-pb-th-num"}`}
-                  >
-                    {c.label}
-                  </th>
-                ))}
-                <th className="wl-pb-th wl-pb-th-num">% Real/Pagu</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.length === 0 ? (
-                <tr>
-                  <td colSpan={COLS.length + 2} className="wl-pb-empty">
-                    Tidak ada data.
-                  </td>
-                </tr>
-              ) : (
-                rows.map((r, i) => (
-                  <tr key={r.kode_ba} className="wl-pb-tr">
-                    <td className="wl-pb-td wl-pb-td-num">{i + 1}</td>
-                    <td className="wl-pb-td wl-pb-td-num">{r.kode_ba}</td>
-                    <td className="wl-pb-td wl-pb-td-name">{r.nama_ba}</td>
-                    <td className="wl-pb-td wl-pb-td-num">{fmtT(r.pagu_dipa)}</td>
-                    <td className="wl-pb-td wl-pb-td-num wl-pb-blokir">{fmtT(r.blokir)}</td>
-                    <td className="wl-pb-td wl-pb-td-num">{fmtT(r.pagu_dipa_efektif)}</td>
-                    <td className="wl-pb-td wl-pb-td-num wl-pb-real">{fmtT(r.realisasi_basis_kas)}</td>
-                    <td className="wl-pb-td wl-pb-td-num">{fmtT(r.pagu_kontrak)}</td>
-                    <td className="wl-pb-td wl-pb-td-num">{fmtT(r.real_kontrak)}</td>
-                    <td className="wl-pb-td wl-pb-td-num">{fmtT(r.outs_kontrak)}</td>
-                    <td className="wl-pb-td wl-pb-td-num">{fmtT(r.outs_uptup)}</td>
-                    <td className="wl-pb-td wl-pb-td-num">{fmtT(r.total_kas_dan_outstanding)}</td>
-                    <td className="wl-pb-td wl-pb-td-num">{fmtT(r.belum_sp2d)}</td>
-                    <td className="wl-pb-td wl-pb-td-num">{fmtT(r.nilai_spp_spm)}</td>
-                    <td className="wl-pb-td wl-pb-td-num wl-pb-sisa">{fmtT(r.sisa_pagu_efektif)}</td>
-                    <td className="wl-pb-td wl-pb-td-num">
-                      {pct(r.realisasi_basis_kas, r.pagu_dipa)}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
+// Component to prevent hydration mismatch
+function NoSSR({ children }: { children: React.ReactNode }) {
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => { setIsClient(true); }, []);
+  return isClient ? <>{children}</> : null;
 }
 
 // ─── Main Landing ─────────────────────────────────────────────────────────────
 
 export default function WeeklyLanding() {
   return (
-    <div className="wl-root">
+    <div className="space-y-6">
       {/* Page header */}
-      <div className="wl-page-header">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
-          <h1 className="wl-page-title">Dashboard Weekly</h1>
-          <p className="wl-page-subtitle">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Dashboard Weekly
+          </h1>
+          <p className="text-sm text-muted-foreground">
             Rekap mingguan realisasi belanja negara & pengendalian anggaran K/L
           </p>
-        </div>
-        <div className="wl-page-date">
-          {new Date().toLocaleDateString("id-ID", {
-            weekday: "long", day: "numeric", month: "long", year: "numeric",
-          })}
+          <p className="text-xs text-muted-foreground mt-1">
+            Terakhir diperbarui:{" "}
+            <NoSSR>
+              {new Date().toLocaleDateString("id-ID", {
+                weekday: "long", day: "numeric", month: "long", year: "numeric",
+              })}
+            </NoSSR>
+          </p>
         </div>
       </div>
 
@@ -319,21 +151,6 @@ export default function WeeklyLanding() {
           <BelanjaNegaraWeekly />
         </AccordionItem>
 
-        {/* 2 — Pengendalian Belanja */}
-        <AccordionItem
-          id="pengendalian-belanja"
-          title="Pengendalian Belanja"
-          subtitle="Pagu, blokir, realisasi, kontrak & outstanding per K/L"
-          badge="K/L"
-          badgeColor="amber"
-          icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 3v18h18" /><path d="m19 9-5 5-4-4-3 3" />
-            </svg>
-          }
-        >
-          <PengendalianBelanjaPanel />
-        </AccordionItem>
 
         {/* 3 — Pengeluaran Akun */}
         <AccordionItem

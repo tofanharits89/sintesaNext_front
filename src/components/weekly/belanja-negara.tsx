@@ -5,14 +5,6 @@ import * as XLSX from "xlsx";
 import { useBelanjaNegaraWeekly, type BelanjaNegaraRow } from "@/hooks/use-belanja-negara-weekly";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -22,7 +14,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils/utils";
-import { DatePicker } from "@/components/ui/date-picker";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { DateRange } from "react-day-picker";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -52,109 +45,86 @@ function rowLevel(uraian: string): "l1" | "l2" | "l3" {
   return "l1";
 }
 
-/** Today's date in YYYY-MM-DD */
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
+/** Format a date object to YYYY-MM-DD (local) */
+function toLocalISO(d: Date): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
-/** Monday of current week (ISO) */
-function thisMonday(): string {
+/** Add days to a date and return YYYY-MM-DD */
+function addDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return toLocalISO(d);
+}
+
+/** 
+ * Default for "Akhir Minggu Ini":
+ * Today if Mon-Fri, else this Friday if Sat-Sun 
+ */
+function defaultAkhirMinggu(): string {
   const d = new Date();
   const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  return d.toISOString().slice(0, 10);
+  if (day === 0) { // Sunday -> Friday
+    d.setDate(d.getDate() - 2);
+  } else if (day === 6) { // Saturday -> Friday
+    d.setDate(d.getDate() - 1);
+  }
+  // Else Mon-Fri -> keep today
+  return toLocalISO(d);
 }
 
-/** Friday of current week */
-function thisFriday(): string {
-  const d = new Date();
-  const day = d.getDay();
-  const diff = day === 0 ? -2 : 5 - day;
-  d.setDate(d.getDate() + diff);
-  return d.toISOString().slice(0, 10);
-}
-
-/** Last Friday (before this week) */
-function lastFriday(): string {
-  const d = new Date(thisMonday());
-  d.setDate(d.getDate() - 3); // Mon - 3 = Fri of prev week
-  return d.toISOString().slice(0, 10);
-}
-
-// ─── DatePicker sub-component ─────────────────────────────────────────────────
-
-interface DateFieldProps {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-}
-
-function DateField({ id, label, value, onChange }: DateFieldProps) {
-  // Convert string (YYYY-MM-DD) to Date object
-  const dateValue = value ? new Date(value) : undefined;
-
-  const handleDateChange = (newDate: Date | undefined) => {
-    if (newDate) {
-      // Convert Date object to string (YYYY-MM-DD)
-      const year = newDate.getFullYear();
-      const month = String(newDate.getMonth() + 1).padStart(2, "0");
-      const day = String(newDate.getDate()).padStart(2, "0");
-      onChange(`${year}-${month}-${day}`);
-    }
-  };
-
-  return (
-    <div className="bn-date-field">
-      <label className="bn-date-label" htmlFor={id}>{label}</label>
-      <DatePicker
-        date={dateValue}
-        onDateChange={handleDateChange}
-        className="w-full h-8 text-[11px]"
-        disabledDates={{ dayOfWeek: [0, 6] }}
-      />
-    </div>
-  );
-}
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function BelanjaNegaraWeekly() {
-  // Date state
-  const [tglSd2026, setTglSd2026] = useState(lastFriday());
-  const [tglAwal2026, setTglAwal2026] = useState(thisMonday());
-  const [tglAkhir2026, setTglAkhir2026] = useState(thisFriday());
+  // Compute default values
+  const defaultTo = defaultAkhirMinggu();
+  const defaultFrom = addDays(defaultTo, -7);
+
+  // Date range state (Minggu Ini)
+  const [range, setRange] = useState<DateRange | undefined>({
+    from: new Date(defaultFrom),
+    to: new Date(defaultTo)
+  });
 
   // Applied params (only updated on "Tampilkan" click)
   const [appliedParams, setAppliedParams] = useState({
-    tglSd2026: lastFriday(),
-    tglAwal2026: thisMonday(),
-    tglAkhir2026: thisFriday(),
+    tglSd2026: defaultFrom,
+    tglAwal2026: addDays(defaultFrom, 1),
+    tglAkhir2026: defaultTo,
     tglYoy2025: (() => {
-      const d = new Date(thisFriday());
+      const d = new Date(defaultTo);
       d.setFullYear(d.getFullYear() - 1);
-      return d.toISOString().slice(0, 10);
+      return toLocalISO(d);
     })(),
     tglReal2025: (() => {
-      const d = new Date(thisFriday());
+      const d = new Date(defaultTo);
       d.setFullYear(d.getFullYear() - 1);
-      return d.toISOString().slice(0, 10);
+      return toLocalISO(d);
     })(),
   });
 
   const { data, isLoading, error, refetch } = useBelanjaNegaraWeekly(appliedParams);
 
   const handleApply = () => {
+    if (!range?.from || !range?.to) return;
+
+    const tglSd = toLocalISO(range.from);
+    const tglAwal = addDays(tglSd, 1);
+    const tglAkhir = toLocalISO(range.to);
+    
     // Calculate 2025 date automatically from 2026 Akhir Minggu Ini
-    const d2025 = new Date(tglAkhir2026);
+    const d2025 = new Date(range.to);
     d2025.setFullYear(d2025.getFullYear() - 1);
-    const tgl2025 = d2025.toISOString().slice(0, 10);
+    const tgl2025 = toLocalISO(d2025);
 
     setAppliedParams({ 
-      tglSd2026, 
-      tglAwal2026, 
-      tglAkhir2026, 
+      tglSd2026: tglSd, 
+      tglAwal2026: tglAwal, 
+      tglAkhir2026: tglAkhir, 
       tglYoy2025: tgl2025, 
       tglReal2025: tgl2025 
     });
@@ -183,76 +153,80 @@ export default function BelanjaNegaraWeekly() {
     <section className="bn-section">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
 
-      {/* ── Date Filter Panel ───────────────────────────────────────────────── */}
-      <Card className="p-4 flex flex-col gap-4 shadow-sm">
-        <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-wider border-b pb-2">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-            <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
-          <span>Parameter Tanggal</span>
-        </div>
-
-        <div className="bn-filter-grid">
-          <div className="bn-filter-group">
-            <span className="bn-filter-group-label">Parameter Minggu Berjalan (2026)</span>
-            <div className="bn-filter-row">
-              <DateField id="tgl-sd-2026" label="s.d. Akhir Minggu Lalu" value={tglSd2026} onChange={setTglSd2026} />
-              <DateField id="tgl-awal-2026" label="Awal Minggu Ini" value={tglAwal2026} onChange={setTglAwal2026} />
-              <DateField id="tgl-akhir-2026" label="Akhir Minggu Ini" value={tglAkhir2026} onChange={setTglAkhir2026} />
+      {/* ── Table & Filter Container ───────────────────────────────────────── */}
+      <div className="rounded-xl border overflow-hidden bg-card shadow-sm">
+        {/* integrated filter header */}
+        <div className="p-4 border-b bg-muted/40 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-0.5">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                <span>Periode Minggu Ini</span>
+              </div>
+              <DateRangePicker 
+                date={range} 
+                onDateChange={setRange}
+                disabledDates={{ dayOfWeek: [0, 6] }}
+              />
             </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportExcel}
+              disabled={isLoading || data.length === 0}
+              className="h-9 px-3"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              <span className="hidden sm:inline">Unduh Data Excel</span>
+              <span className="sm:hidden">Excel</span>
+            </Button>
+
+            <Button
+              size="sm"
+              onClick={handleApply}
+              disabled={isLoading}
+              className="h-9 px-4"
+            >
+              {isLoading ? (
+                <>
+                  <span className="bn-spinner" />
+                  <span>Memuat...</span>
+                </>
+              ) : (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                  </svg>
+                  Tampilkan Data
+                </>
+              )}
+            </Button>
           </div>
         </div>
 
-        <div className="flex gap-2">
-          <Button
-            variant="success"
-            onClick={handleExportExcel}
-            disabled={isLoading || data.length === 0}
-            className="font-bold"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Excel
-          </Button>
+        {/* ── Error ───────────────────────────────────────────────────────────── */}
+        {error && (
+          <div className="p-4 border-b bg-red-50/50">
+            <div className="bn-error">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" />
+                <line x1="9" y1="9" x2="15" y2="15" />
+              </svg>
+              {String((error as any)?.message || error)}
+            </div>
+          </div>
+        )}
 
-          <Button
-            onClick={handleApply}
-            disabled={isLoading}
-            className="font-bold"
-          >
-            {isLoading ? (
-              <>
-                <span className="bn-spinner" />
-                Memuat...
-              </>
-            ) : (
-              <>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-                </svg>
-                Tampilkan Data
-              </>
-            )}
-          </Button>
-        </div>
-      </Card>
-
-      {/* ── Error ───────────────────────────────────────────────────────────── */}
-      {error && (
-        <div className="bn-error">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" />
-            <line x1="9" y1="9" x2="15" y2="15" />
-          </svg>
-          {String((error as any)?.message || error)}
-        </div>
-      )}
-
-      {/* ── Table ───────────────────────────────────────────────────────────── */}
-      <div className="rounded-md border overflow-hidden bg-card shadow-sm">
+        {/* ── Content (Table / Loading) ────────────────────────────────────────── */}
         {isLoading ? (
           <div className="bn-loading">
             <span className="bn-spinner bn-spinner-lg" />

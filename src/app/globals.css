@@ -1331,50 +1331,7 @@
 
 /* ========== WEEKLY LANDING MODULE STYLES (wl-*) ========== */
 
-/* ── Root layout ─────────────────────────────────────────────────────────── */
-.wl-root {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  padding: 1.5rem;
-  max-width: 100%;
-}
 
-/* ── Page header ─────────────────────────────────────────────────────────── */
-.wl-page-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.wl-page-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--foreground);
-  margin: 0;
-  letter-spacing: -0.02em;
-}
-
-.wl-page-subtitle {
-  font-size: 0.8125rem;
-  color: var(--muted-foreground);
-  margin: 0.25rem 0 0;
-}
-
-.wl-page-date {
-  font-size: 0.75rem;
-  color: var(--muted-foreground);
-  font-weight: 500;
-  padding: 0.375rem 0.75rem;
-  background: var(--muted);
-  border-radius: 9999px;
-  white-space: nowrap;
-  align-self: flex-start;
-}
 
 /* ── Accordion list ──────────────────────────────────────────────────────── */
 .wl-accordion-list {
@@ -1526,189 +1483,18 @@
   padding: 0;
 }
 
-/* ── Pengendalian Belanja panel ──────────────────────────────────────────── */
-.wl-pb-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1rem 1.25rem 1.25rem;
-}
 
-/* Controls */
-.wl-pb-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 0.75rem;
-  padding: 0.875rem 1rem;
-  background: var(--muted);
-  border-radius: 0.625rem;
-  border: 1px solid var(--border);
-}
-
-.wl-pb-ctrl-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.wl-pb-ctrl-label {
-  font-size: 0.6875rem;
-  font-weight: 500;
-  color: var(--muted-foreground);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.wl-pb-select {
-  background: var(--card);
-  border: 1px solid var(--border);
-  color: var(--foreground);
-  border-radius: 0.375rem;
-  padding: 0.375rem 0.625rem;
-  font-size: 0.8125rem;
-  font-family: inherit;
-  cursor: pointer;
-  transition: border-color 0.15s ease;
-}
-
-.wl-pb-select:focus {
-  outline: none;
-  border-color: var(--ring);
-  box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring) 30%, transparent);
-}
-
-.wl-pb-checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.8125rem;
-  color: var(--foreground);
-  cursor: pointer;
-  align-self: flex-end;
-  padding-bottom: 0.125rem;
-}
-
-.wl-pb-checkbox {
-  width: 1rem;
-  height: 1rem;
-  accent-color: var(--foreground);
-  cursor: pointer;
-}
-
-.wl-pb-fetch-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.4375rem 1rem;
-  border-radius: 0.5rem;
-  border: none;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  background: var(--foreground);
-  color: var(--background);
-  transition: opacity 0.15s ease, transform 0.1s ease;
-  align-self: flex-end;
-}
-
-.wl-pb-fetch-btn:hover:not(:disabled) {
-  opacity: 0.85;
-  transform: translateY(-1px);
-}
-
-.wl-pb-fetch-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-/* Empty hint */
-.wl-pb-empty-hint {
-  text-align: center;
-  padding: 2.5rem;
-  color: var(--muted-foreground);
-  font-size: 0.875rem;
-  background: var(--muted);
-  border-radius: 0.625rem;
-  border: 1px dashed var(--border);
-}
-
-/* Table */
-.wl-pb-table-wrap {
-  overflow-x: auto;
-  border-radius: 0.625rem;
-  border: 1px solid var(--border);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.wl-pb-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.75rem;
-  white-space: nowrap;
-}
-
-.wl-pb-th {
-  padding: 0.5rem 0.625rem;
-  text-align: center;
-  font-weight: 600;
-  font-size: 0.6875rem;
-  border: 1px solid var(--border);
-  background: color-mix(in oklch, var(--muted) 60%, #1e3a5f 25%);
-  color: var(--foreground);
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  line-height: 1.3;
-}
-
-.dark .wl-pb-th {
-  background: color-mix(in oklch, var(--muted) 40%, #1e3a5f 40%);
-}
-
-.wl-pb-th-wide { min-width: 14rem; text-align: left; }
-.wl-pb-th-num  { min-width: 6.5rem; }
-
-.wl-pb-td {
-  padding: 0.4375rem 0.625rem;
-  border: 1px solid var(--border);
-  vertical-align: middle;
-}
-
-.wl-pb-td-num  { text-align: right; font-variant-numeric: tabular-nums; }
-.wl-pb-td-name { min-width: 14rem; white-space: normal; }
-
-.wl-pb-blokir { color: #dc2626; }
-.wl-pb-real   { font-weight: 600; }
-.wl-pb-sisa   { font-weight: 600; color: #1d4ed8; }
-.dark .wl-pb-sisa { color: #93c5fd; }
-
-.wl-pb-tr:hover > td {
-  background: color-mix(in oklch, var(--muted) 50%, transparent);
-}
-
-.wl-pb-empty {
-  text-align: center;
-  padding: 2.5rem;
-  color: var(--muted-foreground);
-  font-size: 0.875rem;
-}
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .wl-root { padding: 1rem; gap: 1rem; }
-  .wl-page-title { font-size: 1.25rem; }
+
   .wl-accordion-trigger { padding: 0.875rem 1rem; }
   .wl-accordion-subtitle { display: none; }
-  .wl-pb-controls { flex-direction: column; align-items: stretch; }
-  .wl-pb-fetch-btn { width: 100%; justify-content: center; }
+
 }
 
 @media (max-width: 576px) {
-  .wl-root { padding: 0.75rem; }
-  .wl-page-header { flex-direction: column; }
-  .wl-page-date { align-self: stretch; text-align: center; }
+
 }
 
 
