@@ -11,6 +11,15 @@ import {
 } from "recharts";
 import { apiPath } from "@/lib/config/base-path";
 import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils/utils";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -98,8 +107,9 @@ function PieTooltip({ active, payload }: any) {
 
 // ─── Fetcher ──────────────────────────────────────────────────────────────────
 
-async function fetchPie(): Promise<PieRow[]> {
-  const res = await fetch(apiPath("/weekly/pengeluaran-akun/pie"), {
+async function fetchPie(tglAkhir: string): Promise<PieRow[]> {
+  const qs = new URLSearchParams({ tglAkhir });
+  const res = await fetch(apiPath(`/weekly/pengeluaran-akun/pie?${qs}`), {
     credentials: "include",
     cache: "no-store",
     signal: AbortSignal.timeout(60_000),
@@ -160,7 +170,7 @@ export default function PengeluaranAkun() {
     setBkpkError(null);
 
     const [pieResult, bkpkResult] = await Promise.allSettled([
-      fetchPie(),
+      fetchPie(tglAkhir),
       fetchBkpk(tglAwal, tglAkhir),
     ]);
 
@@ -178,6 +188,7 @@ export default function PengeluaranAkun() {
     } else {
       setBkpkError((bkpkResult.reason as Error).message);
     }
+    setBkpkLoading(false);
   }, [tglAwal, tglAkhir]);
 
   const handleExportExcel = () => {
@@ -257,42 +268,44 @@ export default function PengeluaranAkun() {
         <div className="pa-body">
 
           {/* ── Donut ───────────────────────────────────────────────────── */}
-          <div className="pa-chart-card">
+          <div className="pa-chart-card rounded-xl border-zinc-200 shadow-sm">
             <div className="pa-chart-wrap">
               {pieLoading ? (
                 <div className="bn-loading"><span className="bn-spinner bn-spinner-lg" /></div>
               ) : pieLoaded && pieData.length > 0 ? (
                 <div className="pa-donut-container">
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={pieData}
-                        dataKey="total_realisasi"
-                        nameKey="kategori_belanja"
-                        cx="50%"
-                        cy="50%"
-                        innerRadius="52%"
-                        outerRadius="78%"
-                        paddingAngle={2}
-                        startAngle={90}
-                        endAngle={-270}
-                      >
-                        {pieData.map((entry, i) => (
-                          <Cell
-                            key={`cell-${i}`}
-                            fill={PIE_COLORS[entry.kategori_belanja] ?? PIE_FALLBACK}
-                            stroke="none"
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip content={<PieTooltip />} />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <div className="relative w-full flex items-center justify-center">
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          dataKey="total_realisasi"
+                          nameKey="kategori_belanja"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius="60%"
+                          outerRadius="90%"
+                          paddingAngle={2}
+                          startAngle={90}
+                          endAngle={-270}
+                        >
+                          {pieData.map((entry, i) => (
+                            <Cell
+                              key={`cell-${i}`}
+                              fill={PIE_COLORS[entry.kategori_belanja] ?? PIE_FALLBACK}
+                              stroke="none"
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip content={<PieTooltip />} />
+                      </PieChart>
+                    </ResponsiveContainer>
 
-                  {/* Center label */}
-                  <div className="pa-donut-center">
-                    <span className="pa-donut-center-label">Total</span>
-                    <span className="pa-donut-center-value">Rp{grandTotalT} T</span>
+                    {/* Center label */}
+                    <div className="pa-donut-center">
+                      <span className="pa-donut-center-label">Total</span>
+                      <span className="pa-donut-center-value">Rp{grandTotalT} T</span>
+                    </div>
                   </div>
 
                   {/* Custom legend (matches screenshot style) */}
@@ -319,56 +332,96 @@ export default function PengeluaranAkun() {
           </div>
 
           {/* ── BKPK Table ──────────────────────────────────────────────── */}
-          <div className="pa-table-card">
+          <div className="flex-1 min-w-0 rounded-xl border overflow-hidden bg-card shadow-sm h-full">
             {bkpkLoading ? (
-              <div className="bn-loading"><span className="bn-spinner bn-spinner-lg" /></div>
+              <div className="bn-loading">
+                <span className="bn-spinner bn-spinner-lg" />
+              </div>
             ) : bkpkLoaded ? (
-              <div className="pa-table-wrap">
-                <table className="pa-table">
-                  <thead>
-                    <tr>
-                      <th className="pa-th pa-th-no">No</th>
-                      <th className="pa-th pa-th-akun">Akun Belanja (BKPK)<br /><span className="pa-th-sub">(Rp Triliun)</span></th>
-                      <th className="pa-th pa-th-num">APBN<br />2026</th>
-                      <th colSpan={2} className="pa-th pa-th-group">Realisasi</th>
-                      <th className="pa-th pa-th-num">% thd<br />APBN</th>
-                    </tr>
-                    <tr>
-                      <th className="pa-th" colSpan={3}></th>
-                      <th className="pa-th pa-th-num pa-th-sub-col">
-                        {tglAwal}<br />– {tglAkhir}
-                      </th>
-                      <th className="pa-th pa-th-num pa-th-sub-col">
-                        s.d.<br />{tglAkhir}
-                      </th>
-                      <th className="pa-th"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {bkpkData.map((row, i) => {
+              <Table className="relative border-separate border-spacing-0 text-xs whitespace-nowrap">
+                <TableHeader className="bg-background sticky top-0 z-20 shadow-sm">
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead rowSpan={2} className="sticky left-0 z-30 p-2 text-left font-semibold text-[11px] !bg-background border-b border-r border-zinc-200 w-[40px]">
+                      No
+                    </TableHead>
+                    <TableHead rowSpan={2} className="p-2 text-left font-semibold text-[11px] !bg-background border-b border-r border-zinc-200 min-w-[14rem]">
+                      Akun Belanja (BKPK)<br />
+                      <span className="text-[10px] font-normal text-muted-foreground">(Rp Triliun)</span>
+                    </TableHead>
+                    <TableHead rowSpan={2} className="p-2 text-center font-semibold text-[11px] !bg-background border-b border-r border-zinc-200 min-w-[6rem]">
+                      APBN<br />2026
+                    </TableHead>
+                    <TableHead colSpan={2} className="p-2 text-center font-bold text-[12px] !bg-background border-b border-r border-zinc-200 text-foreground">
+                      Realisasi
+                    </TableHead>
+                    <TableHead rowSpan={2} className="p-2 text-center font-semibold text-[11px] !bg-background border-b border-zinc-200 min-w-[6rem]">
+                      % thd<br />APBN
+                    </TableHead>
+                  </TableRow>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="p-2 text-center font-semibold text-[11px] !bg-background border-b border-r border-zinc-200 text-foreground/80 min-w-[6.5rem]">
+                      {tglAwal} –<br />{tglAkhir}
+                    </TableHead>
+                    <TableHead className="p-2 text-center font-semibold text-[11px] !bg-background border-b border-r border-zinc-200 text-foreground/80 min-w-[6.5rem]">
+                      s.d.<br />{tglAkhir}
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {bkpkData.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="p-12 text-center text-muted-foreground border-b border-zinc-200">
+                        Tidak ada data untuk parameter yang dipilih.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    bkpkData.map((row, i) => {
                       const isSub = isSubTotal(row["Akun Belanja (BKPK)"]);
                       const uraian = row["Akun Belanja (BKPK)"];
                       const isGrandTotal = uraian.includes("Total Seluruhnya");
                       const isTop10Total = uraian.includes("Total 10 BKPK");
+                      
                       return (
-                        <tr
+                        <TableRow
                           key={i}
-                          className={`pa-tr${isSub ? (isGrandTotal ? " pa-tr-grand" : isTop10Total ? " pa-tr-subtotal" : " pa-tr-sub") : ""}`}
+                          className={cn(
+                            "group hover:bg-muted/30",
+                            isGrandTotal && "bg-zinc-100/80 font-bold",
+                            isTop10Total && "bg-zinc-50/50 font-semibold",
+                            isSub && !isGrandTotal && !isTop10Total && "bg-zinc-50/30"
+                          )}
                         >
-                          <td className="pa-td pa-td-no">{row["No"]}</td>
-                          <td className="pa-td pa-td-akun">{uraian.trim()}</td>
-                          <td className="pa-td pa-td-num">{fmt1(row["APBN 2026"])}</td>
-                          <td className="pa-td pa-td-num">{fmt1(row["Realisasi 25 - 29 Apr 2026"])}</td>
-                          <td className="pa-td pa-td-num pa-td-highlight">{fmt1(row["Realisasi s.d. 29 Apr 2026"])}</td>
-                          <td className="pa-td text-center">
-                            <Badge variant="secondary" className="font-bold px-3">{fmtPct(row["% thd APBN"])}</Badge>
-                          </td>
-                        </tr>
+                          <TableCell className="p-2 text-center border-b border-r border-zinc-200 font-mono text-muted-foreground">
+                            {row["No"]}
+                          </TableCell>
+                          <TableCell className={cn(
+                            "p-2 border-b border-r border-zinc-200 group-hover:bg-muted/40 transition-colors whitespace-normal min-w-[14rem]",
+                            isGrandTotal && "font-bold text-[13px]",
+                            isTop10Total && "font-semibold",
+                            isSub && !isGrandTotal && !isTop10Total && "pl-4 text-muted-foreground"
+                          )}>
+                            {uraian.trim()}
+                          </TableCell>
+                          <TableCell className="p-2 text-right font-mono border-b border-r border-zinc-200">
+                            {fmt1(row["APBN 2026"])}
+                          </TableCell>
+                          <TableCell className="p-2 text-right font-mono border-b border-r border-zinc-200">
+                            {fmt1(row["Realisasi 25 - 29 Apr 2026"])}
+                          </TableCell>
+                          <TableCell className="p-2 text-right font-mono border-b border-r border-zinc-200 bg-zinc-50/50 group-hover:bg-zinc-100/50">
+                            {fmt1(row["Realisasi s.d. 29 Apr 2026"])}
+                          </TableCell>
+                          <TableCell className="p-2 text-center border-b border-zinc-200">
+                            <Badge variant="secondary" className="font-bold px-3 font-mono">
+                              {fmtPct(row["% thd APBN"])}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
                       );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                    })
+                  )}
+                </TableBody>
+              </Table>
             ) : null}
           </div>
         </div>
