@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dashboard-skeletons";
 import { useQuickStats } from "@/features/mbg/hooks/useQuickStats";
 import { useProvRankings } from "@/features/mbg/hooks/useProvRankings";
+import { useKabRankings } from "@/features/mbg/hooks/useKabRankings";
 import {
   Select,
   SelectContent,
@@ -52,10 +53,21 @@ export default function DashboardMBGPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefreshText, setLastRefreshText] = useState<string>("");
 
+  // Province selection lifted from MapSearch so StatsRankingCard can react to it
+  const [selectedProvinceId, setSelectedProvinceId] = useState<string>("");
+  const [selectedProvinceName, setSelectedProvinceName] = useState<string>("");
+
+  const handleProvinceChange = useCallback((id: string, name: string) => {
+    setSelectedProvinceId(id);
+    setSelectedProvinceName(name);
+  }, []);
+
   const { data: quickStatsResponse, isLoading: isQuickStatsLoading } =
     useQuickStats(year);
   const { data: provRankingsData, isLoading: isRankingLoading } =
     useProvRankings(year);
+  const { data: kabRankingsData, isLoading: isKabRankingLoading } =
+    useKabRankings(selectedProvinceName, year);
 
   const quickStats = useMemo(() => quickStatsResponse?.data ?? [], [quickStatsResponse]);
   const lastRefreshJakarta = quickStatsResponse?._meta?.asOfJakarta;
@@ -174,33 +186,47 @@ export default function DashboardMBGPage() {
         <div className="xl:col-span-3">
           <QueryErrorBoundary>
             <Suspense fallback={<MapSearchCardSkeleton className="h-96" />}>
-              <MapSearch year={year} />
+              <MapSearch
+                year={year}
+                provinceId={selectedProvinceId}
+                onProvinceChange={handleProvinceChange}
+              />
             </Suspense>
           </QueryErrorBoundary>
         </div>
         <div className="xl:col-span-1">
-          {isRankingLoading ? (
+          {isRankingLoading || (selectedProvinceName && isKabRankingLoading) ? (
             <StatsRankingCardSkeleton />
           ) : (
             <StatsRankingCard
-              title="Statistik Wilayah"
-              tabs={[
-                {
-                  key: "penerima",
-                  label: "Penerima",
-                  items: provRankingsData?.penerima ?? [],
-                },
-                {
-                  key: "sppg",
-                  label: "SPPG",
-                  items: provRankingsData?.sppg ?? [],
-                },
-                {
-                  key: "petugas",
-                  label: "Petugas",
-                  items: provRankingsData?.petugas ?? [],
-                },
-              ]}
+              title={selectedProvinceName ? `Statistik: ${selectedProvinceName}` : "Statistik Wilayah"}
+              tabs={
+                selectedProvinceName
+                  ? [
+                      {
+                        key: "penerima",
+                        label: "Penerima",
+                        items: kabRankingsData?.penerima ?? [],
+                      },
+                    ]
+                  : [
+                      {
+                        key: "penerima",
+                        label: "Penerima",
+                        items: provRankingsData?.penerima ?? [],
+                      },
+                      {
+                        key: "sppg",
+                        label: "SPPG",
+                        items: provRankingsData?.sppg ?? [],
+                      },
+                      {
+                        key: "petugas",
+                        label: "Petugas",
+                        items: provRankingsData?.petugas ?? [],
+                      },
+                    ]
+              }
             />
           )}
         </div>

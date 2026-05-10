@@ -195,6 +195,8 @@ export const queryKeyFactories = {
         ] as const,
       provRankings: (year: string = "2026") =>
         [...queryKeyFactories.financial.mbg.all(year), "provRankings"] as const,
+      kabRankings: (prov: string, year: string = "2026") =>
+        [...queryKeyFactories.financial.mbg.all(year), "kabRankings", prov] as const,
       realisasiBgn: () =>
         [...queryKeyFactories.financial.mbg.all(), "realisasiBgn"] as const,
       sebaranPenerima: () =>

@@ -179,7 +179,6 @@ export default function WeeklyLanding() {
     {
       id: "belanja-negara",
       title: "Belanja Negara",
-      subtitle: undefined,
       badge: "Live",
       badgeColor: "blue",
       icon: (
@@ -569,7 +568,7 @@ export default function WeeklyLanding() {
                 <CardContent>
                   {item.id === "belanja-negara" ? (
                     <BelanjaNegaraWeekly 
-                      dateRange={dateRange}
+                      {...(dateRange !== undefined ? { dateRange } : {})}
                       onDateChange={setDateRange}
                       onApply={handleApplyBelanja}
                       isLoading={isLoadingBelanja}
@@ -578,25 +577,25 @@ export default function WeeklyLanding() {
                   ) : item.id === "pengeluaran-akun" ? (
                     <PengeluaranAkun
                       ref={pengeluaranAkunRef}
-                      tglAwal={dateRangeAkun?.from ? toLocalISO(dateRangeAkun.from) : undefined}
-                      tglAkhir={dateRangeAkun?.to ? toLocalISO(dateRangeAkun.to) : undefined}
+                      {...(dateRangeAkun?.from ? { tglAwal: toLocalISO(dateRangeAkun.from) } : {})}
+                      {...(dateRangeAkun?.to ? { tglAkhir: toLocalISO(dateRangeAkun.to) } : {})}
                     />
                   ) : item.id === "pengeluaran-fungsi" ? (
                     <PengeluaranFungsi
                       ref={pengeluaranFungsiRef}
-                      tglAkhir={dateRangeFungsi?.to ? toLocalISO(dateRangeFungsi.to) : undefined}
+                      {...(dateRangeFungsi?.to ? { tglAkhir: toLocalISO(dateRangeFungsi.to) } : {})}
                     />
                   ) : item.id === "realisasi-kl" ? (
                     <RealisasiKlWeekly
                       ref={realisasiKlRef}
-                      tglAwal={dateRangeKl?.from ? toLocalISO(dateRangeKl.from) : undefined}
-                      tglAkhir={dateRangeKl?.to ? toLocalISO(dateRangeKl.to) : undefined}
+                      {...(dateRangeKl?.from ? { tglAwal: toLocalISO(dateRangeKl.from) } : {})}
+                      {...(dateRangeKl?.to ? { tglAkhir: toLocalISO(dateRangeKl.to) } : {})}
                     />
                   ) : item.id === "resume-tkd" ? (
                     <ResumeTkd
                       ref={resumeTkdRef}
-                      tglAwal={dateRangeTkd?.from ? toLocalISO(dateRangeTkd.from) : undefined}
-                      tglAkhir={dateRangeTkd?.to ? toLocalISO(dateRangeTkd.to) : undefined}
+                      {...(dateRangeTkd?.from ? { tglAwal: toLocalISO(dateRangeTkd.from) } : {})}
+                      {...(dateRangeTkd?.to ? { tglAkhir: toLocalISO(dateRangeTkd.to) } : {})}
                     />
                   ) : (
                     item.component

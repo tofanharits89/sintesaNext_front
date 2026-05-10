@@ -23,7 +23,6 @@ const Toaster = ({ ...props }: ToasterProps) => {
         } as React.CSSProperties
       }
       toastOptions={{
-        classNameFunction: () => "text-base",
         style: {
           fontSize: "1rem",
           lineHeight: "1.5",

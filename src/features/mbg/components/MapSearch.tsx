@@ -144,7 +144,15 @@ const LEGEND_ITEMS: Record<
 const fmt = (n: number) =>
   new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(n);
 
-export function MapSearch({ year = "2026" }: { year?: string }) {
+export function MapSearch({
+  year = "2026",
+  provinceId: controlledProvinceId,
+  onProvinceChange,
+}: {
+  year?: string;
+  provinceId?: string;
+  onProvinceChange?: (provinceId: string, provinceName: string) => void;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null);
@@ -153,7 +161,24 @@ export function MapSearch({ year = "2026" }: { year?: string }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const kabLayerRef = useRef<any>(null);
 
-  const [provinceId, setProvinceId] = useState<string>("");
+  // Support both controlled (via props) and uncontrolled (internal) province state
+  const [internalProvinceId, setInternalProvinceId] = useState<string>("");
+  const isControlled = controlledProvinceId !== undefined;
+  const provinceId = isControlled ? controlledProvinceId : internalProvinceId;
+
+  const setProvinceId = useCallback(
+    (id: string) => {
+      if (!isControlled) {
+        setInternalProvinceId(id);
+      }
+      if (onProvinceChange) {
+        const prov = (provinces as { id: string; name: string }[]).find((p) => p.id === id);
+        onProvinceChange(id, prov?.name ?? "");
+      }
+    },
+    [isControlled, onProvinceChange],
+  );
+
   const [indicator, setIndicator] = useState<MbgIndicatorKey>("jumlahpenerima");
   // Tracks when Leaflet map is ready — prevents layers firing before map init
   const [mapReady, setMapReady] = useState(false);
