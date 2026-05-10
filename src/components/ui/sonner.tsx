@@ -17,8 +17,18 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--normal-bg": "var(--popover)",
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
+          "--toast-font-size": "1rem",
+          "--toast-title-font-size": "1.0625rem",
+          "--toast-description-font-size": "0.9375rem",
         } as React.CSSProperties
       }
+      toastOptions={{
+        classNameFunction: () => "text-base",
+        style: {
+          fontSize: "1rem",
+          lineHeight: "1.5",
+        },
+      }}
       {...props}
     />
   )

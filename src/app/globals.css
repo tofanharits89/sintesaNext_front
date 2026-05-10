@@ -1504,7 +1504,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  padding: 1.25rem 1.25rem 1.5rem;
+  padding: 0;
 }
 
 /* ── Header / Controls ──────────────────────────────────────────────────── */
@@ -1716,7 +1716,7 @@
 }
 
 .pa-th {
-  padding: 0.4375rem 0.625rem;
+  padding: 0.75rem;
   text-align: center;
   font-weight: 600;
   font-size: 0.6875rem;
@@ -1742,7 +1742,7 @@
 .pa-th-sub-col { font-size: 0.625rem; font-weight: 500; }
 
 .pa-td {
-  padding: 0.375rem 0.625rem;
+  padding: 0.75rem;
   border: 1px solid var(--border);
   vertical-align: middle;
 }
@@ -1784,7 +1784,7 @@
 }
 
 @media (max-width: 640px) {
-  .pa-section { padding: 0.875rem; }
+  .pa-section { padding: 0; }
   .pa-header { flex-direction: column; align-items: stretch; }
   .pa-controls { flex-direction: column; }
   .pa-load-btn { width: 100%; justify-content: center; }
@@ -2215,5 +2215,172 @@
   }
   .rt-hc-value {
     font-size: 2.5rem;
+  }
+}
+
+
+/* ========== TOAST NOTIFICATION STYLES ========== */
+
+/* Main toaster container */
+.toaster {
+  --toast-font-size: 1rem;
+  --toast-title-font-size: 1.0625rem;
+  --toast-description-font-size: 0.9375rem;
+}
+
+/* Toast base styles */
+[data-sonner-toast] {
+  font-size: var(--toast-font-size, 1rem) !important;
+  line-height: 1.5 !important;
+  padding: 1rem 1.25rem !important;
+}
+
+/* Toast title */
+[data-sonner-toast] [data-title] {
+  font-size: var(--toast-title-font-size, 1.0625rem) !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+}
+
+/* Toast description/message */
+[data-sonner-toast] [data-description] {
+  font-size: var(--toast-description-font-size, 0.9375rem) !important;
+  line-height: 1.5 !important;
+  margin-top: 0.375rem !important;
+}
+
+/* Toast action button */
+[data-sonner-toast] [data-action] {
+  font-size: 0.9375rem !important;
+  padding: 0.375rem 0.75rem !important;
+}
+
+/* Toast close button */
+[data-sonner-toast] [data-close-button] {
+  font-size: 1.25rem !important;
+}
+
+/* Success toast */
+[data-sonner-toast][data-type="success"] {
+  background-color: #dcfce7 !important;
+  border-color: #86efac !important;
+  color: #166534 !important;
+}
+
+[data-sonner-toast][data-type="success"] [data-title] {
+  color: #166534 !important;
+}
+
+[data-sonner-toast][data-type="success"] [data-description] {
+  color: #166534 !important;
+}
+
+/* Error toast */
+[data-sonner-toast][data-type="error"] {
+  background-color: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  color: #7f1d1d !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-title] {
+  color: #7f1d1d !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-description] {
+  color: #7f1d1d !important;
+}
+
+/* Info toast */
+[data-sonner-toast][data-type="info"] {
+  background-color: #dbeafe !important;
+  border-color: #7dd3fc !important;
+  color: #0c2340 !important;
+}
+
+[data-sonner-toast][data-type="info"] [data-title] {
+  color: #0c2340 !important;
+}
+
+[data-sonner-toast][data-type="info"] [data-description] {
+  color: #0c2340 !important;
+}
+
+/* Warning toast */
+[data-sonner-toast][data-type="warning"] {
+  background-color: #fef3c7 !important;
+  border-color: #fde047 !important;
+  color: #78350f !important;
+}
+
+[data-sonner-toast][data-type="warning"] [data-title] {
+  color: #78350f !important;
+}
+
+[data-sonner-toast][data-type="warning"] [data-description] {
+  color: #78350f !important;
+}
+
+/* Dark mode toast adjustments */
+.dark [data-sonner-toast] {
+  font-size: var(--toast-font-size, 1rem) !important;
+}
+
+.dark [data-sonner-toast][data-type="success"] {
+  background-color: #064e3b !important;
+  border-color: #10b981 !important;
+  color: #d1fae5 !important;
+}
+
+.dark [data-sonner-toast][data-type="success"] [data-title],
+.dark [data-sonner-toast][data-type="success"] [data-description] {
+  color: #d1fae5 !important;
+}
+
+.dark [data-sonner-toast][data-type="error"] {
+  background-color: #7f1d1d !important;
+  border-color: #f87171 !important;
+  color: #fee2e2 !important;
+}
+
+.dark [data-sonner-toast][data-type="error"] [data-title],
+.dark [data-sonner-toast][data-type="error"] [data-description] {
+  color: #fee2e2 !important;
+}
+
+.dark [data-sonner-toast][data-type="info"] {
+  background-color: #0c2340 !important;
+  border-color: #38bdf8 !important;
+  color: #cffafe !important;
+}
+
+.dark [data-sonner-toast][data-type="info"] [data-title],
+.dark [data-sonner-toast][data-type="info"] [data-description] {
+  color: #cffafe !important;
+}
+
+.dark [data-sonner-toast][data-type="warning"] {
+  background-color: #78350f !important;
+  border-color: #fbbf24 !important;
+  color: #fef3c7 !important;
+}
+
+.dark [data-sonner-toast][data-type="warning"] [data-title],
+.dark [data-sonner-toast][data-type="warning"] [data-description] {
+  color: #fef3c7 !important;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 640px) {
+  [data-sonner-toast] {
+    font-size: 0.9375rem !important;
+    padding: 0.875rem 1rem !important;
+  }
+
+  [data-sonner-toast] [data-title] {
+    font-size: 1rem !important;
+  }
+
+  [data-sonner-toast] [data-description] {
+    font-size: 0.875rem !important;
   }
 }

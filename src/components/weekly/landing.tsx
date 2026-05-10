@@ -1,11 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import BelanjaNegaraWeekly from "@/components/weekly/belanja-negara";
-import PengeluaranAkun from "@/components/weekly/pengeluaran-akun";
-import PengeluaranFungsi from "@/components/weekly/pengeluaran-fungsi";
+import PengeluaranAkun, { type PengeluaranAkunHandle } from "@/components/weekly/pengeluaran-akun";
+import PengeluaranFungsi, { type PengeluaranFungsiHandle } from "@/components/weekly/pengeluaran-fungsi";
 import RealisasiKlWeekly from "@/components/weekly/realisasi-kl";
 import ResumeTkd from "@/components/weekly/resume-tkd";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  TabsContents,
+} from "@/components/animate-ui/components/animate/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { FileSpreadsheet } from "lucide-react";
+import { DateRange } from "react-day-picker";
 import { http } from "@/lib/api/httpClient";
 import { toast } from "sonner";
 
@@ -27,77 +40,48 @@ function pct(num: number, den: number): string {
   }) + "%";
 }
 
-// ─── Accordion primitive ──────────────────────────────────────────────────────
+/** Get the last working day before a given date */
+function getLastWorkingDay(d: Date): Date {
+  const result = new Date(d);
+  result.setDate(result.getDate() - 1);
+  while (result.getDay() === 0 || result.getDay() === 6) {
+    result.setDate(result.getDate() - 1);
+  }
+  return result;
+}
 
-interface AccordionItemProps {
+/** 
+ * Default for the date range picker:
+ * Monday of this week to Today (if Mon-Fri)
+ * OR Monday to Friday of the week that just ended (if Sat-Sun)
+ */
+function getDefaultRange(): { from: Date; to: Date } {
+  const to = new Date();
+  const day = to.getDay(); // 0: Sun, 1: Mon, ..., 6: Sat
+  
+  if (day === 0) { // Sunday -> Friday
+    to.setDate(to.getDate() - 2);
+  } else if (day === 6) { // Saturday -> Friday
+    to.setDate(to.getDate() - 1);
+  }
+  
+  const from = new Date(to);
+  const toDay = from.getDay(); // Now guaranteed 1-5
+  from.setDate(from.getDate() - (toDay - 1));
+  
+  return { from, to };
+}
+
+// ─── Tab Item Config ──────────────────────────────────────────────────────────
+
+interface TabItemConfig {
   id: string;
   title: string;
   subtitle?: string;
   icon: React.ReactNode;
   badge?: string;
   badgeColor?: "blue" | "green" | "amber" | "red";
-  defaultOpen?: boolean;
-  children: React.ReactNode;
-}
-
-function AccordionItem({
-  id,
-  title,
-  subtitle,
-  icon,
-  badge,
-  badgeColor = "blue",
-  defaultOpen = false,
-  children,
-}: AccordionItemProps) {
-  const [open, setOpen] = useState(defaultOpen);
-
-  return (
-    <div className={`wl-accordion-item${open ? " wl-accordion-open" : ""}`}>
-      <button
-        id={`wl-acc-btn-${id}`}
-        className="wl-accordion-trigger"
-        aria-expanded={open}
-        aria-controls={`wl-acc-panel-${id}`}
-        onClick={() => setOpen((p) => !p)}
-      >
-        <span className="wl-accordion-trigger-left">
-          <span className="wl-accordion-icon">{icon}</span>
-          <span className="wl-accordion-label-group">
-            <span className="wl-accordion-title">{title}</span>
-            {subtitle && <span className="wl-accordion-subtitle">{subtitle}</span>}
-          </span>
-        </span>
-        <span className="wl-accordion-trigger-right">
-          {badge && (
-            <span className={`wl-acc-badge wl-acc-badge-${badgeColor}`}>{badge}</span>
-          )}
-          <svg
-            className="wl-accordion-chevron"
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="m6 9 6 6 6-6" />
-          </svg>
-        </span>
-      </button>
-
-      <div
-        id={`wl-acc-panel-${id}`}
-        role="region"
-        aria-labelledby={`wl-acc-btn-${id}`}
-        className="wl-accordion-panel"
-      >
-        <div className="wl-accordion-panel-inner">{children}</div>
-      </div>
-    </div>
-  );
+  component: React.ReactNode;
 }
 
 // Component to prevent hydration mismatch
@@ -110,6 +94,131 @@ function NoSSR({ children }: { children: React.ReactNode }) {
 // ─── Main Landing ─────────────────────────────────────────────────────────────
 
 export default function WeeklyLanding() {
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => { setIsClient(true); }, []);
+
+  // Get default range
+  const defaultRange = getDefaultRange();
+
+  // Date range state for belanja-negara
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: defaultRange.from,
+    to: defaultRange.to,
+  });
+  const [isLoadingBelanja, setIsLoadingBelanja] = useState(false);
+
+  const handleApplyBelanja = () => {
+    setIsLoadingBelanja(true);
+    // Simulate loading
+    setTimeout(() => setIsLoadingBelanja(false), 500);
+  };
+
+  // Date range state for pengeluaran-akun
+  const [dateRangeAkun, setDateRangeAkun] = useState<DateRange | undefined>({
+    from: defaultRange.from,
+    to: defaultRange.to,
+  });
+  const [isLoadingAkun, setIsLoadingAkun] = useState(false);
+  const pengeluaranAkunRef = useRef<PengeluaranAkunHandle>(null);
+
+  const toLocalISO = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+
+  const handleApplyAkun = async () => {
+    setIsLoadingAkun(true);
+    await pengeluaranAkunRef.current?.load();
+    setIsLoadingAkun(false);
+  };
+
+  // Date state for pengeluaran-fungsi
+  const [dateRangeFungsi, setDateRangeFungsi] = useState<DateRange | undefined>({
+    from: defaultRange.from,
+    to: defaultRange.to,
+  });
+  const [isLoadingFungsi, setIsLoadingFungsi] = useState(false);
+  const pengeluaranFungsiRef = useRef<PengeluaranFungsiHandle>(null);
+
+  const handleApplyFungsi = async () => {
+    setIsLoadingFungsi(true);
+    await pengeluaranFungsiRef.current?.load();
+    setIsLoadingFungsi(false);
+  };
+  const tabItems: TabItemConfig[] = [
+    {
+      id: "belanja-negara",
+      title: "Belanja Negara",
+      subtitle: undefined,
+      badge: "Live",
+      badgeColor: "blue",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" />
+        </svg>
+      ),
+      component: <BelanjaNegaraWeekly />,
+    },
+    {
+      id: "pengeluaran-akun",
+      title: "Pengeluaran Akun (BKPK)",
+      subtitle: "Komposisi jenis belanja & top-10 realisasi akun",
+      badge: "Top-10",
+      badgeColor: "green",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21.21 15.89A10 10 0 1 1 8 2.83" /><path d="M22 12A10 10 0 0 0 12 2v10z" />
+        </svg>
+      ),
+      component: null, // rendered separately below with ref
+    },
+    {
+      id: "pengeluaran-fungsi",
+      title: "Pengeluaran Fungsi",
+      subtitle: "Komposisi Pagu Fungsi & Realisasi K/L",
+      badge: "Fungsi",
+      badgeColor: "amber",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+          <line x1="9" y1="3" x2="9" y2="21" />
+        </svg>
+      ),
+      component: null, // rendered separately below with ref
+    },
+    {
+      id: "realisasi-kl",
+      title: "Belanja K/L",
+      subtitle: "Realisasi 15 K/L dengan Pagu APBN Terbesar",
+      badge: "15 K/L",
+      badgeColor: "blue",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+          <path d="M21 12H3" />
+          <path d="M12 3v18" />
+        </svg>
+      ),
+      component: <RealisasiKlWeekly />,
+    },
+    {
+      id: "resume-tkd",
+      title: "Resume TKD",
+      subtitle: "Infografis & Komposisi Penyaluran TKD YoY",
+      badge: "TKD",
+      badgeColor: "blue",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+        </svg>
+      ),
+      component: <ResumeTkd />,
+    },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Page header */}
@@ -132,94 +241,230 @@ export default function WeeklyLanding() {
         </div>
       </div>
 
-      {/* Accordion sections */}
-      <div className="wl-accordion-list">
-        {/* 1 — Belanja Negara */}
-        <AccordionItem
-          id="belanja-negara"
-          defaultOpen
-          title="Belanja Negara"
-          subtitle="Realisasi mingguan berjenjang (KL · Non-KL · TKD)"
-          badge="Live"
-          badgeColor="blue"
-          icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" />
-            </svg>
-          }
-        >
-          <BelanjaNegaraWeekly />
-        </AccordionItem>
+      {/* Tabs sections */}
+      <Tabs defaultValue="belanja-negara" className="w-full gap-3">
+        <div className="border-b border-border/50 pb-3 mb-0">
+          <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-0">
+            {tabItems.map((item) => (
+              <TabsTrigger
+                key={item.id}
+                value={item.id}
+                className="h-12 md:h-full px-2 sm:px-3 md:px-4 py-0 text-xs sm:text-sm flex items-center justify-center whitespace-nowrap gap-2"
+              >
+                {item.icon}
+                <span className="font-medium">{item.title}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
 
+        <TabsContents>
+          {tabItems.map((item) => (
+            <TabsContent key={item.id} value={item.id} className="space-y-4">
+              {/* Filter Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Filter Data</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {item.id === "belanja-negara" ? (
+                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-0.5">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                            <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
+                            <line x1="3" y1="10" x2="21" y2="10" />
+                          </svg>
+                          <span>Periode Minggu Ini</span>
+                        </div>
+                        <DateRangePicker 
+                          date={dateRange} 
+                          onDateChange={setDateRange}
+                          disabledDates={{ dayOfWeek: [0, 6] }}
+                          className="w-72"
+                        />
+                      </div>
 
-        {/* 3 — Pengeluaran Akun */}
-        <AccordionItem
-          id="pengeluaran-akun"
-          title="Pengeluaran Akun (BKPK)"
-          subtitle="Komposisi jenis belanja & top-10 realisasi akun"
-          badge="Top-10"
-          badgeColor="green"
-          icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21.21 15.89A10 10 0 1 1 8 2.83" /><path d="M22 12A10 10 0 0 0 12 2v10z" />
-            </svg>
-          }
-        >
-          <PengeluaranAkun />
-        </AccordionItem>
+                      <Button
+                        size="sm"
+                        onClick={handleApplyBelanja}
+                        disabled={isLoadingBelanja}
+                        className="h-9 px-4"
+                      >
+                        {isLoadingBelanja ? (
+                          <>
+                            <span className="bn-spinner" />
+                            <span>Memuat...</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                            </svg>
+                            Tampilkan Data
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  ) : item.id === "pengeluaran-akun" ? (
+                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-0.5">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                            <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
+                            <line x1="3" y1="10" x2="21" y2="10" />
+                          </svg>
+                          <span>Periode Minggu Ini</span>
+                        </div>
+                        <DateRangePicker
+                          date={dateRangeAkun}
+                          onDateChange={setDateRangeAkun}
+                          disabledDates={{ dayOfWeek: [0, 6] }}
+                          className="w-72"
+                        />
+                      </div>
 
-        {/* 4 — Pengeluaran Fungsi */}
-        <AccordionItem
-          id="pengeluaran-fungsi"
-          title="Pengeluaran Fungsi"
-          subtitle="Komposisi Pagu Fungsi & Realisasi K/L"
-          badge="Fungsi"
-          badgeColor="amber"
-          icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-              <line x1="9" y1="3" x2="9" y2="21" />
-            </svg>
-          }
-        >
-          <PengeluaranFungsi />
-        </AccordionItem>
+                      <Button
+                        size="sm"
+                        onClick={handleApplyAkun}
+                        disabled={isLoadingAkun}
+                        className="h-9 px-4"
+                      >
+                        {isLoadingAkun ? (
+                          <>
+                            <span className="bn-spinner" />
+                            <span>Memuat...</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                            </svg>
+                            Tampilkan Data
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  ) : item.id === "pengeluaran-fungsi" ? (
+                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-0.5">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                            <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
+                            <line x1="3" y1="10" x2="21" y2="10" />
+                          </svg>
+                          <span>Tanggal s.d.</span>
+                        </div>
+                        <DateRangePicker
+                          date={dateRangeFungsi}
+                          onDateChange={setDateRangeFungsi}
+                          disabledDates={{ dayOfWeek: [0, 6] }}
+                          className="w-72"
+                        />
+                      </div>
 
-        {/* 5 — Realisasi K/L */}
-        <AccordionItem
-          id="realisasi-kl"
-          title="Belanja K/L"
-          subtitle="Realisasi 15 K/L dengan Pagu APBN Terbesar"
-          badge="15 K/L"
-          badgeColor="blue"
-          icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-              <path d="M21 12H3" />
-              <path d="M12 3v18" />
-            </svg>
-          }
-        >
-          <RealisasiKlWeekly />
-        </AccordionItem>
+                      <Button
+                        size="sm"
+                        onClick={handleApplyFungsi}
+                        disabled={isLoadingFungsi}
+                        className="h-9 px-4"
+                      >
+                        {isLoadingFungsi ? (
+                          <>
+                            <span className="bn-spinner" />
+                            <span>Memuat...</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                            </svg>
+                            Tampilkan Data
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {item.subtitle}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
 
-        {/* 6 — Resume TKD */}
-        <AccordionItem
-          id="resume-tkd"
-          title="Resume TKD"
-          subtitle="Infografis & Komposisi Penyaluran TKD YoY"
-          badge="TKD"
-          badgeColor="blue"
-          icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-            </svg>
-          }
-        >
-          <ResumeTkd />
-        </AccordionItem>
-      </div>
+              {/* Table/Content Card */}
+              <Card>
+                <CardHeader>
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <CardTitle>{item.title}</CardTitle>
+                  {item.id === "belanja-negara" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {}}
+                      disabled={isLoadingBelanja}
+                      className="bg-green-700 dark:bg-card hover:bg-green-600 flex items-center"
+                    >
+                      <FileSpreadsheet className="w-4 h-4 text-white mr-2" />
+                      <span className="text-sm text-white">Unduh Data Excel</span>
+                    </Button>
+                  )}
+                  {item.id === "pengeluaran-akun" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => pengeluaranAkunRef.current?.exportExcel()}
+                      className="bg-green-700 dark:bg-card hover:bg-green-600 flex items-center"
+                    >
+                      <FileSpreadsheet className="w-4 h-4 text-white mr-2" />
+                      <span className="text-sm text-white">Unduh Data Excel</span>
+                    </Button>
+                  )}
+                  {item.id === "pengeluaran-fungsi" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => pengeluaranFungsiRef.current?.exportExcel()}
+                      className="bg-green-700 dark:bg-card hover:bg-green-600 flex items-center"
+                    >
+                      <FileSpreadsheet className="w-4 h-4 text-white mr-2" />
+                      <span className="text-sm text-white">Unduh Data Excel</span>
+                    </Button>
+                  )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {item.id === "belanja-negara" ? (
+                    <BelanjaNegaraWeekly 
+                      dateRange={dateRange}
+                      onDateChange={setDateRange}
+                      onApply={handleApplyBelanja}
+                      isLoading={isLoadingBelanja}
+                      onExport={() => {}}
+                    />
+                  ) : item.id === "pengeluaran-akun" ? (
+                    <PengeluaranAkun
+                      ref={pengeluaranAkunRef}
+                      tglAwal={dateRangeAkun?.from ? toLocalISO(dateRangeAkun.from) : undefined}
+                      tglAkhir={dateRangeAkun?.to ? toLocalISO(dateRangeAkun.to) : undefined}
+                    />
+                  ) : item.id === "pengeluaran-fungsi" ? (
+                    <PengeluaranFungsi
+                      ref={pengeluaranFungsiRef}
+                      tglAkhir={dateRangeFungsi?.to ? toLocalISO(dateRangeFungsi.to) : undefined}
+                    />
+                  ) : (
+                    item.component
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          ))}
+        </TabsContents>
+      </Tabs>
     </div>
   );
 }

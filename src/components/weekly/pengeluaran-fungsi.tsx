@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useImperativeHandle, forwardRef } from "react";
 import * as XLSX from "xlsx";
 import {
   PieChart,
@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { apiPath } from "@/lib/config/base-path";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Table2 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -164,7 +165,7 @@ function FungsiTableSkeleton() {
         <thead>
           <tr className="bg-zinc-100/80">
             {["w-8", "w-40", "w-24", "w-24", "w-24", "w-16"].map((w, i) => (
-              <th key={i} className="p-2 border-b border-r border-zinc-200 last:border-r-0">
+              <th key={i} className="p-3 border-b border-r border-zinc-200 last:border-r-0">
                 <Skeleton className={`h-3 ${w} mx-auto bg-zinc-300/70`} />
               </th>
             ))}
@@ -173,18 +174,18 @@ function FungsiTableSkeleton() {
         <tbody>
           {Array.from({ length: ROWS }).map((_, rowIdx) => (
             <tr key={rowIdx} className={rowIdx % 2 === 0 ? "bg-white" : "bg-zinc-50/40"}>
-              <td className="p-2 border-b border-r border-zinc-200">
+              <td className="p-3 border-b border-r border-zinc-200">
                 <Skeleton className="h-3 w-4 mx-auto bg-zinc-200/80" />
               </td>
-              <td className="p-2 border-b border-r border-zinc-200">
+              <td className="p-3 border-b border-r border-zinc-200">
                 <Skeleton className={`h-3 bg-zinc-200/80 ${rowIdx % 2 === 0 ? "w-36" : "w-28"}`} />
               </td>
               {[0, 1, 2].map((j) => (
-                <td key={j} className="p-2 border-b border-r border-zinc-200">
+                <td key={j} className="p-3 border-b border-r border-zinc-200">
                   <Skeleton className="h-3 w-16 ml-auto bg-zinc-200/80" />
                 </td>
               ))}
-              <td className="p-2 border-b border-zinc-200">
+              <td className="p-3 border-b border-zinc-200">
                 <Skeleton className="h-3 w-12 ml-auto bg-zinc-200/80" />
               </td>
             </tr>
@@ -197,7 +198,14 @@ function FungsiTableSkeleton() {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function PengeluaranFungsi() {
+export interface PengeluaranFungsiHandle {
+  load: () => void;
+  exportExcel: () => void;
+}
+
+const PengeluaranFungsi = forwardRef<PengeluaranFungsiHandle, {
+  tglAkhir?: string;
+}>(function PengeluaranFungsi({ tglAkhir: tglAkhirProp }, ref) {
   // Pie state
   const [pieData,    setPieData]    = useState<FungsiPieRow[]>([]);
   const [pieLoading, setPieLoading] = useState(false);
@@ -205,7 +213,8 @@ export default function PengeluaranFungsi() {
   const [pieError,   setPieError]   = useState<string | null>(null);
 
   // Date param
-  const [tglAkhir, setTglAkhir] = useState(thisFriday());
+  const [tglAkhirInternal, setTglAkhirInternal] = useState(thisFriday());
+  const tglAkhir = tglAkhirProp ?? tglAkhirInternal;
 
   // Table state
   const [tabelData,    setTabelData]    = useState<FungsiTabelRow[]>([]);
@@ -253,50 +262,41 @@ export default function PengeluaranFungsi() {
 
   const isLoading = pieLoading || tabelLoading;
 
+  useImperativeHandle(ref, () => ({
+    load: handleLoad,
+    exportExcel: handleExportExcel,
+  }), [handleLoad, tabelData]);
+
   return (
     <section className="pa-section pf-section">
-      {/* ── Title ──────────────────────────────────────────────────────────── */}
-      <div className="pa-header">
-        <div>
-          <h2 className="pa-title">Pengeluaran Pemerintah Berdasarkan Fungsi</h2>
-          <p className="pa-subtitle">
-            Komposisi Pagu Fungsi dan Realisasi K/L s.d. {tglAkhir}
-          </p>
-        </div>
-
-        {/* ── Controls ────────────────────────────────────────────────────── */}
-        <div className="pa-controls">
-          <div className="pa-date-group">
-            <label className="pa-ctrl-label" htmlFor="pf-tgl-akhir">Tanggal s.d.</label>
-            <input id="pf-tgl-akhir" type="date" className="pa-date-input"
-              value={tglAkhir} onChange={(e) => setTglAkhir(e.target.value)} />
-          </div>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
-            <button className="pa-load-btn" onClick={handleExportExcel} disabled={isLoading || tabelData.length === 0} style={{ backgroundColor: "#16a34a" }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-              Excel
-            </button>
-            <button className="pa-load-btn" onClick={handleLoad} disabled={isLoading}>
-              {isLoading ? (
-                <><span className="bn-spinner" /> Memuat...</>
-              ) : (
-                <>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-                  </svg>
-                  Tampilkan
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* ── Empty hint ────────────────────────────────────────────────────── */}
       {!pieLoaded && !tabelLoaded && !isLoading && (
-        <div className="pa-empty-hint">Klik "Tampilkan" untuk memuat data.</div>
+        <div className="border rounded-md">
+          <div className="h-10 bg-muted/50 border-b flex items-center px-4">
+            <div className="text-xs font-medium text-muted-foreground uppercase">
+              Data belum dimuat
+            </div>
+          </div>
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-background/50">
+            <Table2 className="h-10 w-10 mb-2 opacity-20" />
+            <p className="text-sm">
+              Silahkan Pilih Tanggal dan klik &quot;Tampilkan&quot; untuk memuat data
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Loading skeleton (before first load) ─────────────────────────── */}
+      {isLoading && !pieLoaded && !tabelLoaded && (
+        <div className="space-y-3 animate-pulse">
+          <div className="h-10 bg-muted rounded-md w-full" />
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-12 bg-muted/50 rounded-md w-full" />
+            ))}
+          </div>
+          <div className="h-10 bg-muted rounded-md w-full" />
+        </div>
       )}
 
       {/* ── Error banners ─────────────────────────────────────────────────── */}
@@ -396,4 +396,7 @@ export default function PengeluaranFungsi() {
       )}
     </section>
   );
-}
+});
+
+export default PengeluaranFungsi;
+

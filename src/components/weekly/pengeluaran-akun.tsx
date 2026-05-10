@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useImperativeHandle, forwardRef } from "react";
 import * as XLSX from "xlsx";
 import {
   PieChart,
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Table2 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -154,26 +155,26 @@ function BkpkTableSkeleton() {
       <table className="w-full text-xs border-separate border-spacing-0">
         <thead>
           <tr className="bg-zinc-100/80">
-            <th className="p-2 border-b border-r border-zinc-200 w-[40px]">
+            <th className="p-3 border-b border-r border-zinc-200 w-[40px]">
               <Skeleton className="h-3 w-6 mx-auto bg-zinc-300/70" />
             </th>
-            <th className="p-2 border-b border-r border-zinc-200 min-w-[14rem]">
+            <th className="p-3 border-b border-r border-zinc-200 min-w-[14rem]">
               <Skeleton className="h-4 w-32 bg-zinc-300/70" />
             </th>
-            <th className="p-2 border-b border-r border-zinc-200 min-w-[6rem]">
+            <th className="p-3 border-b border-r border-zinc-200 min-w-[6rem]">
               <Skeleton className="h-4 w-16 mx-auto bg-zinc-300/70" />
             </th>
             {/* Realisasi group */}
-            <th colSpan={2} className="p-2 border-b border-r border-zinc-200 text-center">
+            <th colSpan={2} className="p-3 border-b border-r border-zinc-200 text-center">
               <Skeleton className="h-4 w-20 mx-auto bg-zinc-300/70" />
             </th>
-            <th className="p-2 border-b border-zinc-200 min-w-[6rem]">
+            <th className="p-3 border-b border-zinc-200 min-w-[6rem]">
               <Skeleton className="h-4 w-16 mx-auto bg-zinc-300/70" />
             </th>
           </tr>
           <tr className="bg-zinc-50/80">
             {[40, 224, 96, 104, 104, 96].map((w, i) => (
-              <th key={i} className="p-2 border-b border-r border-zinc-200 last:border-r-0">
+              <th key={i} className="p-3 border-b border-r border-zinc-200 last:border-r-0">
                 <Skeleton className="h-3 w-14 mx-auto bg-zinc-300/60" />
               </th>
             ))}
@@ -182,22 +183,22 @@ function BkpkTableSkeleton() {
         <tbody>
           {Array.from({ length: ROWS }).map((_, rowIdx) => (
             <tr key={rowIdx} className={rowIdx % 2 === 0 ? "bg-white" : "bg-zinc-50/40"}>
-              <td className="p-2 border-b border-r border-zinc-200">
+              <td className="p-3 border-b border-r border-zinc-200">
                 <Skeleton className="h-3 w-4 mx-auto bg-zinc-200/80" />
               </td>
-              <td className="p-2 border-b border-r border-zinc-200">
+              <td className="p-3 border-b border-r border-zinc-200">
                 <Skeleton className={`h-3 bg-zinc-200/80 ${rowIdx % 3 === 0 ? "w-48" : rowIdx % 3 === 1 ? "w-56 ml-3" : "w-40"}`} />
               </td>
-              <td className="p-2 border-b border-r border-zinc-200">
+              <td className="p-3 border-b border-r border-zinc-200">
                 <Skeleton className="h-3 w-14 ml-auto bg-zinc-200/80" />
               </td>
-              <td className="p-2 border-b border-r border-zinc-200">
+              <td className="p-3 border-b border-r border-zinc-200">
                 <Skeleton className="h-3 w-14 ml-auto bg-zinc-200/80" />
               </td>
-              <td className="p-2 border-b border-r border-zinc-200">
+              <td className="p-3 border-b border-r border-zinc-200">
                 <Skeleton className="h-3 w-14 ml-auto bg-zinc-200/80" />
               </td>
-              <td className="p-2 border-b border-zinc-200">
+              <td className="p-3 border-b border-zinc-200">
                 <Skeleton className="h-5 w-14 rounded-full mx-auto bg-zinc-200/80" />
               </td>
             </tr>
@@ -210,18 +211,28 @@ function BkpkTableSkeleton() {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function PengeluaranAkun() {
+export interface PengeluaranAkunHandle {
+  load: () => void;
+  exportExcel: () => void;
+}
+
+const PengeluaranAkun = forwardRef<PengeluaranAkunHandle, {
+  tglAwal?: string;
+  tglAkhir?: string;
+}>(function PengeluaranAkun({ tglAwal: tglAwalProp, tglAkhir: tglAkhirProp }, ref) {
   // Pie state
   const [pieData,    setPieData]    = useState<PieRow[]>([]);
   const [pieLoading, setPieLoading] = useState(false);
   const [pieLoaded,  setPieLoaded]  = useState(false);
   const [pieError,   setPieError]   = useState<string | null>(null);
 
-  // Table date params
-  const [tglAwal,  setTglAwal]  = useState(thisMonday());
-  const [tglAkhir, setTglAkhir] = useState(thisFriday());
+  // Table date params — use props if provided, else internal state
+  const [tglAwal,  setTglAwal]  = useState(tglAwalProp ?? thisMonday());
+  const [tglAkhir, setTglAkhir] = useState(tglAkhirProp ?? thisFriday());
 
-  // Table state
+  // Sync props → internal state when props change
+  const effectiveTglAwal  = tglAwalProp  ?? tglAwal;
+  const effectiveTglAkhir = tglAkhirProp ?? tglAkhir;
   const [bkpkData,    setBkpkData]    = useState<BkpkRow[]>([]);
   const [bkpkLoading, setBkpkLoading] = useState(false);
   const [bkpkLoaded,  setBkpkLoaded]  = useState(false);
@@ -235,8 +246,8 @@ export default function PengeluaranAkun() {
     setBkpkError(null);
 
     const [pieResult, bkpkResult] = await Promise.allSettled([
-      fetchPie(tglAkhir),
-      fetchBkpk(tglAwal, tglAkhir),
+      fetchPie(effectiveTglAkhir),
+      fetchBkpk(effectiveTglAwal, effectiveTglAkhir),
     ]);
 
     if (pieResult.status === "fulfilled") {
@@ -254,7 +265,7 @@ export default function PengeluaranAkun() {
       setBkpkError((bkpkResult.reason as Error).message);
     }
     setBkpkLoading(false);
-  }, [tglAwal, tglAkhir]);
+  }, [effectiveTglAwal, effectiveTglAkhir]);
 
   const handleExportExcel = () => {
     if (!bkpkData || bkpkData.length === 0) return;
@@ -273,55 +284,82 @@ export default function PengeluaranAkun() {
 
   const isLoading = pieLoading || bkpkLoading;
 
+  useImperativeHandle(ref, () => ({
+    load: handleLoad,
+    exportExcel: handleExportExcel,
+  }), [handleLoad, bkpkData]);
+
+  return (
+    <PengeluaranAkunInner
+      pieData={pieData}
+      pieLoading={pieLoading}
+      pieLoaded={pieLoaded}
+      pieError={pieError}
+      bkpkData={bkpkData}
+      bkpkLoading={bkpkLoading}
+      bkpkLoaded={bkpkLoaded}
+      bkpkError={bkpkError}
+      grandTotalT={grandTotalT}
+      tglAwal={effectiveTglAwal}
+      tglAkhir={effectiveTglAkhir}
+      onLoad={handleLoad}
+      onExport={handleExportExcel}
+    />
+  );
+})
+
+// ─── Inner render component ───────────────────────────────────────────────────
+
+export default PengeluaranAkun;function PengeluaranAkunInner({
+  pieData, pieLoading, pieLoaded, pieError,
+  bkpkData, bkpkLoading, bkpkLoaded, bkpkError,
+  grandTotalT, tglAwal, tglAkhir,
+  onLoad, onExport,
+}: {
+  pieData: PieRow[];
+  pieLoading: boolean;
+  pieLoaded: boolean;
+  pieError: string | null;
+  bkpkData: BkpkRow[];
+  bkpkLoading: boolean;
+  bkpkLoaded: boolean;
+  bkpkError: string | null;
+  grandTotalT: string;
+  tglAwal: string;
+  tglAkhir: string;
+  onLoad: () => void;
+  onExport: () => void;
+}) {
   return (
     <section className="pa-section">
-      {/* ── Title ──────────────────────────────────────────────────────────── */}
-      <div className="pa-header">
-        <div>
-          <h2 className="pa-title">Pengeluaran Pemerintah Berdasarkan Akun Belanja</h2>
-          <p className="pa-subtitle">
-            Komposisi dan top-10 BKPK realisasi K/L s.d. {tglAkhir}
-          </p>
-        </div>
-
-        {/* ── Date filter + button ──────────────────────────────────────── */}
-        <div className="pa-controls">
-          <div className="pa-date-group">
-            <label className="pa-ctrl-label" htmlFor="pa-tgl-awal">Awal Periode</label>
-            <input id="pa-tgl-awal" type="date" className="pa-date-input"
-              value={tglAwal} onChange={(e) => setTglAwal(e.target.value)} />
-          </div>
-          <div className="pa-date-group">
-            <label className="pa-ctrl-label" htmlFor="pa-tgl-akhir">Akhir Periode</label>
-            <input id="pa-tgl-akhir" type="date" className="pa-date-input"
-              value={tglAkhir} onChange={(e) => setTglAkhir(e.target.value)} />
-          </div>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
-            <button className="pa-load-btn" onClick={handleExportExcel} disabled={isLoading || bkpkData.length === 0} style={{ backgroundColor: "#16a34a" }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-              Excel
-            </button>
-            <button className="pa-load-btn" onClick={handleLoad} disabled={isLoading}>
-              {isLoading ? (
-                <><span className="bn-spinner" /> Memuat...</>
-              ) : (
-                <>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-                  </svg>
-                  Tampilkan
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* ── Empty hint ────────────────────────────────────────────────────── */}
-      {!pieLoaded && !bkpkLoaded && !isLoading && (
-        <div className="pa-empty-hint">Klik "Tampilkan" untuk memuat data.</div>
+      {!pieLoaded && !bkpkLoaded && !pieLoading && !bkpkLoading && (
+        <div className="border rounded-md">
+          <div className="h-10 bg-muted/50 border-b flex items-center px-4">
+            <div className="text-xs font-medium text-muted-foreground uppercase">
+              Data belum dimuat
+            </div>
+          </div>
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-background/50">
+            <Table2 className="h-10 w-10 mb-2 opacity-20" />
+            <p className="text-sm">
+              Silahkan Pilih Tanggal dan klik &quot;Tampilkan&quot; untuk memuat data
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Loading skeleton (before first load) ─────────────────────────── */}
+      {(pieLoading || bkpkLoading) && !pieLoaded && !bkpkLoaded && (
+        <div className="space-y-3 animate-pulse">
+          <div className="h-10 bg-muted rounded-md w-full" />
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-12 bg-muted/50 rounded-md w-full" />
+            ))}
+          </div>
+          <div className="h-10 bg-muted rounded-md w-full" />
+        </div>
       )}
 
       {/* ── Error banners ─────────────────────────────────────────────────── */}
@@ -404,28 +442,28 @@ export default function PengeluaranAkun() {
               <Table className="relative border-separate border-spacing-0 text-xs whitespace-nowrap">
                 <TableHeader className="bg-background sticky top-0 z-20 shadow-sm">
                   <TableRow className="hover:bg-transparent">
-                    <TableHead rowSpan={2} className="sticky left-0 z-30 p-2 text-left font-semibold text-[11px] !bg-background border-b border-r border-zinc-200 w-[40px]">
+                    <TableHead rowSpan={2} className="sticky left-0 z-30 p-3 text-left font-semibold text-[11px] !bg-background border-b border-r border-zinc-200 w-[40px]">
                       No
                     </TableHead>
-                    <TableHead rowSpan={2} className="p-2 text-left font-semibold text-[11px] !bg-background border-b border-r border-zinc-200 min-w-[14rem]">
+                    <TableHead rowSpan={2} className="p-3 text-left font-semibold text-[11px] !bg-background border-b border-r border-zinc-200 min-w-[14rem]">
                       Akun Belanja (BKPK)<br />
                       <span className="text-[10px] font-normal text-muted-foreground">(Rp Triliun)</span>
                     </TableHead>
-                    <TableHead rowSpan={2} className="p-2 text-center font-semibold text-[11px] !bg-background border-b border-r border-zinc-200 min-w-[6rem]">
+                    <TableHead rowSpan={2} className="p-3 text-center font-semibold text-[11px] !bg-background border-b border-r border-zinc-200 min-w-[6rem]">
                       APBN<br />2026
                     </TableHead>
-                    <TableHead colSpan={2} className="p-2 text-center font-bold text-[12px] !bg-background border-b border-r border-zinc-200 text-foreground">
+                    <TableHead colSpan={2} className="p-3 text-center font-bold text-[12px] !bg-background border-b border-r border-zinc-200 text-foreground">
                       Realisasi
                     </TableHead>
-                    <TableHead rowSpan={2} className="p-2 text-center font-semibold text-[11px] !bg-background border-b border-zinc-200 min-w-[6rem]">
+                    <TableHead rowSpan={2} className="p-3 text-center font-semibold text-[11px] !bg-background border-b border-zinc-200 min-w-[6rem]">
                       % thd<br />APBN
                     </TableHead>
                   </TableRow>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="p-2 text-center font-semibold text-[11px] !bg-background border-b border-r border-zinc-200 text-foreground/80 min-w-[6.5rem]">
+                    <TableHead className="p-3 text-center font-semibold text-[11px] !bg-background border-b border-r border-zinc-200 text-foreground/80 min-w-[6.5rem]">
                       {tglAwal} –<br />{tglAkhir}
                     </TableHead>
-                    <TableHead className="p-2 text-center font-semibold text-[11px] !bg-background border-b border-r border-zinc-200 text-foreground/80 min-w-[6.5rem]">
+                    <TableHead className="p-3 text-center font-semibold text-[11px] !bg-background border-b border-r border-zinc-200 text-foreground/80 min-w-[6.5rem]">
                       s.d.<br />{tglAkhir}
                     </TableHead>
                   </TableRow>
@@ -454,27 +492,27 @@ export default function PengeluaranAkun() {
                             isSub && !isGrandTotal && !isTop10Total && "bg-zinc-50/30"
                           )}
                         >
-                          <TableCell className="p-2 text-center border-b border-r border-zinc-200 font-mono text-muted-foreground">
+                          <TableCell className="p-3 text-center border-b border-r border-zinc-200 font-mono text-muted-foreground">
                             {row["No"]}
                           </TableCell>
                           <TableCell className={cn(
-                            "p-2 border-b border-r border-zinc-200 group-hover:bg-muted/40 transition-colors whitespace-normal min-w-[14rem]",
+                            "p-3 border-b border-r border-zinc-200 group-hover:bg-muted/40 transition-colors whitespace-normal min-w-[14rem]",
                             isGrandTotal && "font-bold text-[13px]",
                             isTop10Total && "font-semibold",
                             isSub && !isGrandTotal && !isTop10Total && "pl-4 text-muted-foreground"
                           )}>
                             {uraian.trim()}
                           </TableCell>
-                          <TableCell className="p-2 text-right font-mono border-b border-r border-zinc-200">
+                          <TableCell className="p-3 text-right font-mono border-b border-r border-zinc-200">
                             {fmt1(row["APBN 2026"])}
                           </TableCell>
-                          <TableCell className="p-2 text-right font-mono border-b border-r border-zinc-200">
+                          <TableCell className="p-3 text-right font-mono border-b border-r border-zinc-200">
                             {fmt1(row.real_weekly)}
                           </TableCell>
-                          <TableCell className="p-2 text-right font-mono border-b border-r border-zinc-200 bg-zinc-50/50 group-hover:bg-zinc-100/50">
+                          <TableCell className="p-3 text-right font-mono border-b border-r border-zinc-200 bg-zinc-50/50 group-hover:bg-zinc-100/50">
                             {fmt1(row.real_sd_curr)}
                           </TableCell>
-                          <TableCell className="p-2 text-center border-b border-zinc-200">
+                          <TableCell className="p-3 text-center border-b border-zinc-200">
                             <Badge variant="secondary" className="font-bold px-3 font-mono">
                               {fmtPct(row["% thd APBN"])}
                             </Badge>
