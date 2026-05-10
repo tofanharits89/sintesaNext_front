@@ -1791,7 +1791,7 @@
 /* ========== PENGELUARAN FUNGSI MODULE STYLES (pf-*) ========== */
 
 .pf-section {
-  padding-top: 1rem;
+  padding-top: 0;
 }
 
 .pf-body {
@@ -1983,7 +1983,7 @@
 /* ========== RESUME TKD MODULE STYLES (rt-*) ========== */
 
 .rt-section {
-  padding-top: 1rem;
+  padding-top: 0;
 }
 
 .rt-body {

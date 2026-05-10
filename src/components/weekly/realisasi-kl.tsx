@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useImperativeHandle, forwardRef } from "react";
 import * as XLSX from "xlsx";
 import { apiPath } from "@/lib/config/base-path";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Table2 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -155,12 +156,25 @@ function RealisasiKlTableSkeleton() {
   );
 }
 
+// ─── Handle ───────────────────────────────────────────────────────────────────
+
+export interface RealisasiKlHandle {
+  load: () => void;
+  exportExcel: () => void;
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function RealisasiKlWeekly() {
-  // Date params
-  const [tglAwal, setTglAwal] = useState(thisMonday());
-  const [tglAkhir, setTglAkhir] = useState(thisFriday());
+const RealisasiKlWeekly = forwardRef<RealisasiKlHandle, {
+  tglAwal?: string;
+  tglAkhir?: string;
+}>(function RealisasiKlWeekly({ tglAwal: tglAwalProp, tglAkhir: tglAkhirProp }, ref) {
+  // Date params — use props if provided, else internal state
+  const [tglAwalInternal, setTglAwalInternal] = useState(thisMonday());
+  const [tglAkhirInternal, setTglAkhirInternal] = useState(thisFriday());
+
+  const tglAwal = tglAwalProp ?? tglAwalInternal;
+  const tglAkhir = tglAkhirProp ?? tglAkhirInternal;
 
   // Table state
   const [data,    setData]    = useState<RealisasiKlRow[]>([]);
@@ -215,55 +229,28 @@ export default function RealisasiKlWeekly() {
     XLSX.writeFile(wb, `Realisasi_KL_${currentDate}.xlsx`);
   };
 
+  useImperativeHandle(ref, () => ({
+    load: handleLoad,
+    exportExcel: handleExportExcel,
+  }), [handleLoad, data]);
+
   return (
     <section className="pa-section">
-      {/* ── Title ──────────────────────────────────────────────────────────── */}
-      <div className="pa-header">
-        <div>
-          <h2 className="pa-title">Belanja K/L: Realisasi 15 K/L dengan Pagu APBN Terbesar</h2>
-          <p className="pa-subtitle">
-            Realisasi K/L beserta sisa pagu s.d. {strAkhir26}
-          </p>
-        </div>
-
-        {/* ── Controls ────────────────────────────────────────────────────── */}
-        <div className="pa-controls">
-          <div className="pa-date-group">
-            <label className="pa-ctrl-label" htmlFor="rk-tgl-awal">Awal Periode</label>
-            <input id="rk-tgl-awal" type="date" className="pa-date-input"
-              value={tglAwal} onChange={(e) => setTglAwal(e.target.value)} />
-          </div>
-          <div className="pa-date-group">
-            <label className="pa-ctrl-label" htmlFor="rk-tgl-akhir">Akhir Periode</label>
-            <input id="rk-tgl-akhir" type="date" className="pa-date-input"
-              value={tglAkhir} onChange={(e) => setTglAkhir(e.target.value)} />
-          </div>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
-            <button className="pa-load-btn" onClick={handleExportExcel} disabled={loading || data.length === 0} style={{ backgroundColor: "#16a34a" }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-              Excel
-            </button>
-            <button className="pa-load-btn" onClick={handleLoad} disabled={loading}>
-              {loading ? (
-                <><span className="bn-spinner" /> Memuat...</>
-              ) : (
-                <>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-                  </svg>
-                  Tampilkan
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* ── Empty hint ────────────────────────────────────────────────────── */}
       {!loaded && !loading && (
-        <div className="pa-empty-hint">Klik "Tampilkan" untuk memuat data.</div>
+        <div className="border rounded-md">
+          <div className="h-10 bg-muted/50 border-b flex items-center px-4">
+            <div className="text-xs font-medium text-muted-foreground uppercase">
+              Data belum dimuat
+            </div>
+          </div>
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-background/50">
+            <Table2 className="h-10 w-10 mb-2 opacity-20" />
+            <p className="text-sm">
+              Silahkan Pilih Tanggal dan klik &quot;Tampilkan&quot; untuk memuat data
+            </p>
+          </div>
+        </div>
       )}
 
       {/* ── Error banner ──────────────────────────────────────────────────── */}
@@ -386,4 +373,6 @@ export default function RealisasiKlWeekly() {
       )}
     </section>
   );
-}
+});
+
+export default RealisasiKlWeekly;

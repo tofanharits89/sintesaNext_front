@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import BelanjaNegaraWeekly from "@/components/weekly/belanja-negara";
 import PengeluaranAkun, { type PengeluaranAkunHandle } from "@/components/weekly/pengeluaran-akun";
 import PengeluaranFungsi, { type PengeluaranFungsiHandle } from "@/components/weekly/pengeluaran-fungsi";
-import RealisasiKlWeekly from "@/components/weekly/realisasi-kl";
-import ResumeTkd from "@/components/weekly/resume-tkd";
+import RealisasiKlWeekly, { type RealisasiKlHandle } from "@/components/weekly/realisasi-kl";
+import ResumeTkd, { type ResumeTkdHandle } from "@/components/weekly/resume-tkd";
 import {
   Tabs,
   TabsList,
@@ -147,6 +147,34 @@ export default function WeeklyLanding() {
     await pengeluaranFungsiRef.current?.load();
     setIsLoadingFungsi(false);
   };
+
+  // Date range state for realisasi-kl
+  const [dateRangeKl, setDateRangeKl] = useState<DateRange | undefined>({
+    from: defaultRange.from,
+    to: defaultRange.to,
+  });
+  const [isLoadingKl, setIsLoadingKl] = useState(false);
+  const realisasiKlRef = useRef<RealisasiKlHandle>(null);
+
+  const handleApplyKl = async () => {
+    setIsLoadingKl(true);
+    await realisasiKlRef.current?.load();
+    setIsLoadingKl(false);
+  };
+
+  // Date range state for resume-tkd
+  const [dateRangeTkd, setDateRangeTkd] = useState<DateRange | undefined>({
+    from: defaultRange.from,
+    to: defaultRange.to,
+  });
+  const [isLoadingTkd, setIsLoadingTkd] = useState(false);
+  const resumeTkdRef = useRef<ResumeTkdHandle>(null);
+
+  const handleApplyTkd = async () => {
+    setIsLoadingTkd(true);
+    await resumeTkdRef.current?.load();
+    setIsLoadingTkd(false);
+  };
   const tabItems: TabItemConfig[] = [
     {
       id: "belanja-negara",
@@ -201,7 +229,7 @@ export default function WeeklyLanding() {
           <path d="M12 3v18" />
         </svg>
       ),
-      component: <RealisasiKlWeekly />,
+      component: null, // rendered separately below with ref
     },
     {
       id: "resume-tkd",
@@ -215,7 +243,7 @@ export default function WeeklyLanding() {
           <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
         </svg>
       ),
-      component: <ResumeTkd />,
+      component: null, // rendered separately below with ref
     },
   ];
 
@@ -387,6 +415,86 @@ export default function WeeklyLanding() {
                         )}
                       </Button>
                     </div>
+                  ) : item.id === "realisasi-kl" ? (
+                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-0.5">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                            <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
+                            <line x1="3" y1="10" x2="21" y2="10" />
+                          </svg>
+                          <span>Periode Minggu Ini</span>
+                        </div>
+                        <DateRangePicker
+                          date={dateRangeKl}
+                          onDateChange={setDateRangeKl}
+                          disabledDates={{ dayOfWeek: [0, 6] }}
+                          className="w-72"
+                        />
+                      </div>
+
+                      <Button
+                        size="sm"
+                        onClick={handleApplyKl}
+                        disabled={isLoadingKl}
+                        className="h-9 px-4"
+                      >
+                        {isLoadingKl ? (
+                          <>
+                            <span className="bn-spinner" />
+                            <span>Memuat...</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                            </svg>
+                            Tampilkan Data
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  ) : item.id === "resume-tkd" ? (
+                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-0.5">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                            <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
+                            <line x1="3" y1="10" x2="21" y2="10" />
+                          </svg>
+                          <span>Periode Minggu Ini</span>
+                        </div>
+                        <DateRangePicker
+                          date={dateRangeTkd}
+                          onDateChange={setDateRangeTkd}
+                          disabledDates={{ dayOfWeek: [0, 6] }}
+                          className="w-72"
+                        />
+                      </div>
+
+                      <Button
+                        size="sm"
+                        onClick={handleApplyTkd}
+                        disabled={isLoadingTkd}
+                        className="h-9 px-4"
+                      >
+                        {isLoadingTkd ? (
+                          <>
+                            <span className="bn-spinner" />
+                            <span>Memuat...</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                            </svg>
+                            Tampilkan Data
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   ) : (
                     <p className="text-sm text-muted-foreground">
                       {item.subtitle}
@@ -434,6 +542,28 @@ export default function WeeklyLanding() {
                       <span className="text-sm text-white">Unduh Data Excel</span>
                     </Button>
                   )}
+                  {item.id === "realisasi-kl" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => realisasiKlRef.current?.exportExcel()}
+                      className="bg-green-700 dark:bg-card hover:bg-green-600 flex items-center"
+                    >
+                      <FileSpreadsheet className="w-4 h-4 text-white mr-2" />
+                      <span className="text-sm text-white">Unduh Data Excel</span>
+                    </Button>
+                  )}
+                  {item.id === "resume-tkd" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => resumeTkdRef.current?.exportExcel()}
+                      className="bg-green-700 dark:bg-card hover:bg-green-600 flex items-center"
+                    >
+                      <FileSpreadsheet className="w-4 h-4 text-white mr-2" />
+                      <span className="text-sm text-white">Unduh Data Excel</span>
+                    </Button>
+                  )}
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -455,6 +585,18 @@ export default function WeeklyLanding() {
                     <PengeluaranFungsi
                       ref={pengeluaranFungsiRef}
                       tglAkhir={dateRangeFungsi?.to ? toLocalISO(dateRangeFungsi.to) : undefined}
+                    />
+                  ) : item.id === "realisasi-kl" ? (
+                    <RealisasiKlWeekly
+                      ref={realisasiKlRef}
+                      tglAwal={dateRangeKl?.from ? toLocalISO(dateRangeKl.from) : undefined}
+                      tglAkhir={dateRangeKl?.to ? toLocalISO(dateRangeKl.to) : undefined}
+                    />
+                  ) : item.id === "resume-tkd" ? (
+                    <ResumeTkd
+                      ref={resumeTkdRef}
+                      tglAwal={dateRangeTkd?.from ? toLocalISO(dateRangeTkd.from) : undefined}
+                      tglAkhir={dateRangeTkd?.to ? toLocalISO(dateRangeTkd.to) : undefined}
                     />
                   ) : (
                     item.component
