@@ -14,7 +14,6 @@ import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import moment from "moment";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Loader2 } from "lucide-react";
 import { apiPath } from "@/lib/config/base-path";
 
 interface MonitoringProps {
@@ -136,18 +135,20 @@ export default function Monitoring({ cek, id, where }: MonitoringProps) {
 
       {/* Konten Utama: Loading atau Table */}
       {loading ? (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
+        <div className="rounded-md border border-zinc-200 overflow-hidden">
+          <div className="flex items-center gap-3 bg-zinc-100/80 px-4 py-3 border-b border-zinc-200">
+            {["w-8", "flex-1", "w-24", "w-28"].map((w, i) => (
+              <div key={i} className={`h-3 rounded bg-zinc-300/70 animate-pulse ${w}`} />
+            ))}
           </div>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-          </div>
-          <div className="flex justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className={`flex items-center gap-3 px-4 py-3 border-b border-zinc-200 last:border-b-0 ${i % 2 === 0 ? "bg-white" : "bg-zinc-50/40"}`}>
+              <div className="h-3 w-8 rounded bg-zinc-200/80 animate-pulse" />
+              <div className={`h-3 rounded bg-zinc-200/80 animate-pulse`} style={{ width: `${35 + (i * 7) % 30}%` }} />
+              <div className="h-3 w-24 rounded bg-zinc-200/80 animate-pulse ml-auto" />
+              <div className="h-3 w-28 rounded bg-zinc-200/80 animate-pulse" />
+            </div>
+          ))}
         </div>
       ) : (
         <div className="animate-in fade-in duration-500">

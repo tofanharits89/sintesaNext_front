@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -141,6 +142,70 @@ async function fetchBkpk(tglAwal: string, tglAkhir: string): Promise<BkpkRow[]> 
     real_sd_curr: Number(d.real_sd_curr),
     "% thd APBN": Number(d["% thd APBN"]),
   }));
+}
+
+// ─── Skeleton ────────────────────────────────────────────────────────────────
+
+/** Skeleton for the BKPK table (6 columns, 2 header rows) */
+function BkpkTableSkeleton() {
+  const ROWS = 12;
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs border-separate border-spacing-0">
+        <thead>
+          <tr className="bg-zinc-100/80">
+            <th className="p-2 border-b border-r border-zinc-200 w-[40px]">
+              <Skeleton className="h-3 w-6 mx-auto bg-zinc-300/70" />
+            </th>
+            <th className="p-2 border-b border-r border-zinc-200 min-w-[14rem]">
+              <Skeleton className="h-4 w-32 bg-zinc-300/70" />
+            </th>
+            <th className="p-2 border-b border-r border-zinc-200 min-w-[6rem]">
+              <Skeleton className="h-4 w-16 mx-auto bg-zinc-300/70" />
+            </th>
+            {/* Realisasi group */}
+            <th colSpan={2} className="p-2 border-b border-r border-zinc-200 text-center">
+              <Skeleton className="h-4 w-20 mx-auto bg-zinc-300/70" />
+            </th>
+            <th className="p-2 border-b border-zinc-200 min-w-[6rem]">
+              <Skeleton className="h-4 w-16 mx-auto bg-zinc-300/70" />
+            </th>
+          </tr>
+          <tr className="bg-zinc-50/80">
+            {[40, 224, 96, 104, 104, 96].map((w, i) => (
+              <th key={i} className="p-2 border-b border-r border-zinc-200 last:border-r-0">
+                <Skeleton className="h-3 w-14 mx-auto bg-zinc-300/60" />
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: ROWS }).map((_, rowIdx) => (
+            <tr key={rowIdx} className={rowIdx % 2 === 0 ? "bg-white" : "bg-zinc-50/40"}>
+              <td className="p-2 border-b border-r border-zinc-200">
+                <Skeleton className="h-3 w-4 mx-auto bg-zinc-200/80" />
+              </td>
+              <td className="p-2 border-b border-r border-zinc-200">
+                <Skeleton className={`h-3 bg-zinc-200/80 ${rowIdx % 3 === 0 ? "w-48" : rowIdx % 3 === 1 ? "w-56 ml-3" : "w-40"}`} />
+              </td>
+              <td className="p-2 border-b border-r border-zinc-200">
+                <Skeleton className="h-3 w-14 ml-auto bg-zinc-200/80" />
+              </td>
+              <td className="p-2 border-b border-r border-zinc-200">
+                <Skeleton className="h-3 w-14 ml-auto bg-zinc-200/80" />
+              </td>
+              <td className="p-2 border-b border-r border-zinc-200">
+                <Skeleton className="h-3 w-14 ml-auto bg-zinc-200/80" />
+              </td>
+              <td className="p-2 border-b border-zinc-200">
+                <Skeleton className="h-5 w-14 rounded-full mx-auto bg-zinc-200/80" />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -334,9 +399,7 @@ export default function PengeluaranAkun() {
           {/* ── BKPK Table ──────────────────────────────────────────────── */}
           <div className="flex-1 min-w-0 rounded-xl border overflow-hidden bg-card shadow-sm h-full">
             {bkpkLoading ? (
-              <div className="bn-loading">
-                <span className="bn-spinner bn-spinner-lg" />
-              </div>
+              <BkpkTableSkeleton />
             ) : bkpkLoaded ? (
               <Table className="relative border-separate border-spacing-0 text-xs whitespace-nowrap">
                 <TableHeader className="bg-background sticky top-0 z-20 shadow-sm">

@@ -11,6 +11,7 @@ import {
   Legend,
 } from "recharts";
 import { apiPath } from "@/lib/config/base-path";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -150,6 +151,48 @@ async function fetchFungsiTabel(tglAkhir: string): Promise<FungsiTabelRow[]> {
     BLOKIR: Number(d.BLOKIR),
     "%": Number(d["%"]),
   }));
+}
+
+// ─── Skeleton ────────────────────────────────────────────────────────────────
+
+/** Skeleton for the Fungsi table (6 columns, 1 header row) */
+function FungsiTableSkeleton() {
+  const ROWS = 13;
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs border-separate border-spacing-0">
+        <thead>
+          <tr className="bg-zinc-100/80">
+            {["w-8", "w-40", "w-24", "w-24", "w-24", "w-16"].map((w, i) => (
+              <th key={i} className="p-2 border-b border-r border-zinc-200 last:border-r-0">
+                <Skeleton className={`h-3 ${w} mx-auto bg-zinc-300/70`} />
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: ROWS }).map((_, rowIdx) => (
+            <tr key={rowIdx} className={rowIdx % 2 === 0 ? "bg-white" : "bg-zinc-50/40"}>
+              <td className="p-2 border-b border-r border-zinc-200">
+                <Skeleton className="h-3 w-4 mx-auto bg-zinc-200/80" />
+              </td>
+              <td className="p-2 border-b border-r border-zinc-200">
+                <Skeleton className={`h-3 bg-zinc-200/80 ${rowIdx % 2 === 0 ? "w-36" : "w-28"}`} />
+              </td>
+              {[0, 1, 2].map((j) => (
+                <td key={j} className="p-2 border-b border-r border-zinc-200">
+                  <Skeleton className="h-3 w-16 ml-auto bg-zinc-200/80" />
+                </td>
+              ))}
+              <td className="p-2 border-b border-zinc-200">
+                <Skeleton className="h-3 w-12 ml-auto bg-zinc-200/80" />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -313,7 +356,7 @@ export default function PengeluaranFungsi() {
               (Milyar Rupiah)
             </div>
             {tabelLoading ? (
-              <div className="bn-loading"><span className="bn-spinner bn-spinner-lg" /></div>
+              <FungsiTableSkeleton />
             ) : tabelLoaded ? (
               <div className="pa-table-wrap">
                 <table className="pa-table pf-table">

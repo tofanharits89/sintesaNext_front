@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import * as XLSX from "xlsx";
 import { apiPath } from "@/lib/config/base-path";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -100,6 +101,58 @@ async function fetchRealisasiKl(params: Record<string, string>): Promise<Realisa
     "Sisa Pagu DIPA": Number(d["Sisa Pagu DIPA"]),
     "Growth YoY": Number(d["Growth YoY"]),
   }));
+}
+
+// ─── Skeleton ────────────────────────────────────────────────────────────────
+
+/** Skeleton for the Realisasi K/L table (13 columns, 2 header rows) */
+function RealisasiKlTableSkeleton() {
+  const COL_COUNT = 13;
+  const ROWS = 17;
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs border-separate border-spacing-0">
+        <thead>
+          <tr className="bg-zinc-100/80">
+            <th className="p-2 border-b border-r border-zinc-200 min-w-[250px]">
+              <Skeleton className="h-4 w-32 bg-zinc-300/70" />
+            </th>
+            <th colSpan={2} className="p-2 border-b border-r border-zinc-200 text-center">
+              <Skeleton className="h-4 w-16 mx-auto bg-zinc-300/70" />
+            </th>
+            <th colSpan={10} className="p-2 border-b border-zinc-200 text-center">
+              <Skeleton className="h-4 w-16 mx-auto bg-zinc-300/70" />
+            </th>
+          </tr>
+          <tr className="bg-zinc-50/80">
+            {Array.from({ length: COL_COUNT }).map((_, i) => (
+              <th key={i} className="p-2 border-b border-r border-zinc-200 last:border-r-0">
+                <Skeleton className="h-3 w-14 mx-auto bg-zinc-300/60" />
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: ROWS }).map((_, rowIdx) => (
+            <tr key={rowIdx} className={rowIdx % 2 === 0 ? "bg-white" : "bg-zinc-50/40"}>
+              <td className="p-2 border-b border-r border-zinc-200 min-w-[250px]">
+                <Skeleton className={`h-3 bg-zinc-200/80 ${rowIdx % 3 === 0 ? "w-44" : rowIdx % 3 === 1 ? "w-52" : "w-36"}`} />
+              </td>
+              {Array.from({ length: COL_COUNT - 1 }).map((_, colIdx) => (
+                <td key={colIdx} className="p-2 border-b border-r border-zinc-200 last:border-r-0">
+                  {colIdx === 1 || colIdx === 7 || colIdx === 8 || colIdx === 11 ? (
+                    <Skeleton className="h-5 w-14 rounded-full mx-auto bg-zinc-200/80" />
+                  ) : (
+                    <Skeleton className="h-3 w-14 ml-auto bg-zinc-200/80" />
+                  )}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -220,7 +273,7 @@ export default function RealisasiKlWeekly() {
       {loaded && (
         <div className="pa-table-card rk-table-card">
           {loading ? (
-            <div className="bn-loading"><span className="bn-spinner bn-spinner-lg" /></div>
+            <RealisasiKlTableSkeleton />
           ) : (
             <div className="pa-table-wrap">
               <table className="pa-table rk-table">

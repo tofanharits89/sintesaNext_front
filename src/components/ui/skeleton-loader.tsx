@@ -67,21 +67,31 @@ export function ChartSkeleton({ height = "h-80" }: { height?: string }) {
 
 export function TableSkeleton({ rows = 5 }: { rows?: number }) {
   return (
-    <div className="rounded-lg border">
-      <div className="p-3 border-b">
-        <Skeleton className="h-5 w-40" />
+    <div className="rounded-lg border border-zinc-200 overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center gap-3 bg-zinc-100/80 px-4 py-3 border-b border-zinc-200">
+        <div className="h-3 w-4 rounded bg-zinc-300/70 animate-pulse" />
+        <div className="h-3 flex-1 rounded bg-zinc-300/70 animate-pulse" />
+        <div className="h-3 w-20 rounded bg-zinc-300/70 animate-pulse" />
+        <div className="h-3 w-16 rounded bg-zinc-300/70 animate-pulse" />
+        <div className="h-3 w-16 rounded bg-zinc-300/70 animate-pulse" />
       </div>
-      <div className="divide-y">
-        {Array.from({ length: rows }).map((_, i) => (
-          <div key={i} className="p-2.5 flex items-center space-x-4">
-            <Skeleton className="h-3 w-4 rounded" />
-            <Skeleton className="h-3 flex-1" />
-            <Skeleton className="h-3 w-20" />
-            <Skeleton className="h-3 w-16" />
-            <Skeleton className="h-6 w-16" />
-          </div>
-        ))}
-      </div>
+      {/* Body rows */}
+      {Array.from({ length: rows }).map((_, i) => (
+        <div
+          key={i}
+          className={cn(
+            "flex items-center gap-3 px-4 py-2.5 border-b border-zinc-200 last:border-b-0",
+            i % 2 === 0 ? "bg-white" : "bg-zinc-50/40"
+          )}
+        >
+          <div className="h-3 w-4 rounded bg-zinc-200/80 animate-pulse" />
+          <div className="h-3 rounded bg-zinc-200/80 animate-pulse" style={{ width: `${35 + (i * 9) % 30}%` }} />
+          <div className="h-3 w-20 rounded bg-zinc-200/80 animate-pulse ml-auto" />
+          <div className="h-3 w-16 rounded bg-zinc-200/80 animate-pulse" />
+          <div className="h-5 w-16 rounded-full bg-zinc-200/80 animate-pulse" />
+        </div>
+      ))}
     </div>
   );
 }

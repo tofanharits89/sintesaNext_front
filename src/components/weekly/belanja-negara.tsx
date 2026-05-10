@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { DateRange } from "react-day-picker";
 
@@ -92,6 +93,74 @@ function getDefaultRange(): { from: Date; to: Date } {
   return { from, to };
 }
 
+
+// ─── Skeleton ────────────────────────────────────────────────────────────────
+
+/** Skeleton that mirrors the belanja negara table structure (13 columns) */
+function BelanjaNegaraTableSkeleton() {
+  // 13 columns: 1 sticky label + 3 (2025) + 9 (2026)
+  const COL_COUNT = 13;
+  const ROWS = 10;
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs border-separate border-spacing-0">
+        {/* Header row 1 */}
+        <thead>
+          <tr className="bg-zinc-100/80">
+            <th className="p-2 border-b border-r border-zinc-200 min-w-[16rem]">
+              <Skeleton className="h-4 w-28 bg-zinc-300/70" />
+            </th>
+            {/* 2025 group label */}
+            <th colSpan={3} className="p-2 border-b border-r border-zinc-200 text-center">
+              <Skeleton className="h-4 w-20 mx-auto bg-zinc-300/70" />
+            </th>
+            {/* 2026 group label */}
+            <th colSpan={9} className="p-2 border-b border-zinc-200 text-center">
+              <Skeleton className="h-4 w-20 mx-auto bg-zinc-300/70" />
+            </th>
+          </tr>
+          {/* Header row 2 — sub-columns */}
+          <tr className="bg-zinc-50/80">
+            {Array.from({ length: COL_COUNT }).map((_, i) => (
+              <th key={i} className="p-2 border-b border-r border-zinc-200 last:border-r-0">
+                <Skeleton className="h-3 w-14 mx-auto bg-zinc-300/60" />
+              </th>
+            ))}
+          </tr>
+        </thead>
+
+        {/* Body rows */}
+        <tbody>
+          {Array.from({ length: ROWS }).map((_, rowIdx) => (
+            <tr key={rowIdx} className={rowIdx % 2 === 0 ? "bg-white" : "bg-zinc-50/40"}>
+              {/* Sticky label cell — vary widths to mimic hierarchy */}
+              <td className="p-2 border-b border-r border-zinc-200 min-w-[16rem]">
+                <Skeleton
+                  className={cn(
+                    "h-3 bg-zinc-200/80",
+                    rowIdx % 3 === 0 ? "w-40" : rowIdx % 3 === 1 ? "w-52 ml-3" : "w-44 ml-6"
+                  )}
+                />
+              </td>
+              {/* Data cells */}
+              {Array.from({ length: COL_COUNT - 1 }).map((_, colIdx) => (
+                <td key={colIdx} className="p-2 border-b border-r border-zinc-200 last:border-r-0">
+                  {/* Every 3rd column mimics a badge */}
+                  {colIdx === 2 || colIdx === 8 || colIdx === 9 ? (
+                    <Skeleton className="h-5 w-14 rounded-full mx-auto bg-zinc-200/80" />
+                  ) : (
+                    <Skeleton className="h-3 w-14 ml-auto bg-zinc-200/80" />
+                  )}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -245,10 +314,7 @@ export default function BelanjaNegaraWeekly() {
 
         {/* ── Content (Table / Loading) ────────────────────────────────────────── */}
         {isLoading ? (
-          <div className="bn-loading">
-            <span className="bn-spinner bn-spinner-lg" />
-            <span>Memuat data...</span>
-          </div>
+          <BelanjaNegaraTableSkeleton />
         ) : (
           <Table className="relative border-separate border-spacing-0 text-xs whitespace-nowrap">
             <TableHeader className="bg-background sticky top-0 z-20 shadow-sm">

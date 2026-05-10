@@ -155,25 +155,32 @@ export function TransaksiKkpModal({
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm bg-primary/5 p-4 rounded-lg">
                 <div className="space-y-1">
                   <span className="text-muted-foreground text-xs uppercase font-semibold">Kementerian/Lembaga</span>
-                  <Skeleton className="h-5 w-48 bg-muted-foreground/20 mt-1" />
+                  <Skeleton className="h-5 w-48 bg-zinc-200/80 mt-1" />
                 </div>
                 <div className="space-y-1">
                   <span className="text-muted-foreground text-xs uppercase font-semibold">Satuan Kerja</span>
-                  <Skeleton className="h-5 w-64 bg-muted-foreground/20 mt-1" />
+                  <Skeleton className="h-5 w-64 bg-zinc-200/80 mt-1" />
                 </div>
                 <div className="space-y-1">
                   <span className="text-muted-foreground text-xs uppercase font-semibold">Periode</span>
-                  <Skeleton className="h-5 w-40 bg-muted-foreground/20 mt-1" />
+                  <Skeleton className="h-5 w-40 bg-zinc-200/80 mt-1" />
                 </div>
               </div>
 
               {/* Skeleton for Table */}
-              <div className="border rounded-lg p-8">
-                <div className="space-y-3">
-                  <Skeleton className="h-8 w-full bg-muted-foreground/10" />
-                  <Skeleton className="h-8 w-full bg-muted-foreground/10" />
-                  <Skeleton className="h-8 w-full bg-muted-foreground/10" />
+              <div className="border border-zinc-200 rounded-lg overflow-hidden">
+                <div className="flex items-center gap-3 bg-zinc-100/80 px-4 py-3 border-b border-zinc-200">
+                  {["w-8", "w-28", "w-28", "w-28", "w-28", "w-20", "w-20", "flex-1", "w-28"].map((w, i) => (
+                    <div key={i} className={`h-3 rounded bg-zinc-300/70 animate-pulse ${w}`} />
+                  ))}
                 </div>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className={`flex items-center gap-3 px-4 py-3 border-b border-zinc-200 last:border-b-0 ${i % 2 === 0 ? "bg-white" : "bg-zinc-50/40"}`}>
+                    {["w-8", "w-28", "w-28", "w-28", "w-28", "w-20", "w-20", "flex-1", "w-28"].map((w, j) => (
+                      <div key={j} className={`h-3 rounded bg-zinc-200/80 animate-pulse ${w}`} />
+                    ))}
+                  </div>
+                ))}
               </div>
             </div>
           ) : (
