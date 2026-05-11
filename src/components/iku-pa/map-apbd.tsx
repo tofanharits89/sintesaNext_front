@@ -34,6 +34,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { FileSpreadsheet, X } from "lucide-react";
+import { ApbdDetailTableSkeleton } from "@/components/iku-pa/apbd-skeleton";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const geoData = require("./indobaru.json");
@@ -587,9 +588,7 @@ export default function MapApbd() {
           </CardHeader>
           <CardContent>
             {detailLoading ? (
-              <div className="p-12 text-sm text-center text-gray-500 animate-pulse">
-                Memuat data detail…
-              </div>
+              <ApbdDetailTableSkeleton rows={8} />
             ) : detailError ? (
               <div className="p-12 text-sm text-red-500 font-mono bg-red-50 rounded-md">
                 {detailError}
