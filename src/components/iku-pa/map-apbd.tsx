@@ -26,7 +26,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+
 import { FileSpreadsheet, X } from "lucide-react";
+
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const geoData = require("./indobaru.json");
 
@@ -446,27 +454,23 @@ export default function MapApbd() {
             <CardTitle className="text-base font-semibold">
               Peta Sebaran APBD per Kanwil
             </CardTitle>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-muted-foreground">Triwulan:</span>
-              {[1, 2, 3, 4].map((tw) => (
-                <button
-                  key={tw}
-                  onClick={() => setTriwulan(tw)}
-                  className={`px-3 py-1 text-xs font-semibold rounded border transition-colors ${
-                    triwulan === tw
-                      ? "bg-blue-900 text-white border-blue-900"
-                      : "border-blue-900 text-blue-900 hover:bg-blue-100"
-                  }`}
-                >
-                  Tw {["I", "II", "III", "IV"][tw - 1]}
-                </button>
-              ))}
-              {loading && (
-                <span className="text-xs text-muted-foreground animate-pulse ml-1">
-                  Memuat…
-                </span>
-              )}
-            </div>
+            <Tabs
+              value={String(triwulan)}
+              onValueChange={(v) => setTriwulan(Number(v))}
+              className="w-full sm:w-auto"
+            >
+              <TabsList className="w-full sm:w-auto grid grid-cols-2 sm:flex rounded-xl p-1 h-auto">
+                {[1, 2, 3, 4].map((tw) => (
+                  <TabsTrigger
+                    key={tw}
+                    value={String(tw)}
+                    className="text-xs px-3 py-1.5 rounded-lg data-[state=active]:bg-card"
+                  >
+                    Triwulan {["I", "II", "III", "IV"][tw - 1]}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
           </div>
         </CardHeader>
         <CardContent>
@@ -477,7 +481,16 @@ export default function MapApbd() {
           <div className="flex flex-col lg:flex-row gap-4 items-stretch">
 
             {/* ── Map container — stretches to match legend height ── */}
-            <Card className="w-full lg:w-[70%] lg:shrink-0 border shadow-sm overflow-hidden py-0 min-h-[350px]">
+            <Card className="relative w-full lg:w-[70%] lg:shrink-0 border shadow-sm overflow-hidden py-0 min-h-[350px]">
+              {loading && (
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background/70 backdrop-blur-sm">
+                  <Skeleton className="h-full w-full absolute inset-0 rounded-none" />
+                  <div className="relative z-20 flex flex-col items-center gap-2">
+                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    <span className="text-xs text-muted-foreground font-medium">Memuat data peta…</span>
+                  </div>
+                </div>
+              )}
               <div
                 ref={containerRef}
                 className="relative isolate z-0 w-full h-full"
