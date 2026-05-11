@@ -17,6 +17,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { FileSpreadsheet, X } from "lucide-react";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -144,7 +152,7 @@ export default function MapApbd() {
   const [data, setData] = useState<KanwilRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [legendOpen, setLegendOpen] = useState(false);
+
   const [selectedKanwil, setSelectedKanwil] = useState<{
     kdkanwil: string;
     name: string;
@@ -169,7 +177,7 @@ export default function MapApbd() {
         attributionControl: false,
         scrollWheelZoom: false,
         zoomControl: true,
-      }).setView([-2, 118], 6);
+      }).setView([-2, 118], 5);
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
         attribution: "© OpenStreetMap contributors",
@@ -431,105 +439,115 @@ export default function MapApbd() {
 
   return (
     <div className="space-y-4">
-      {/* ── Selector Triwulan ─── */}
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-medium">Triwulan:</span>
-        {[1, 2, 3, 4].map((tw) => (
-          <button
-            key={tw}
-            onClick={() => setTriwulan(tw)}
-            className={`px-3 py-1 text-xs font-semibold rounded border transition-colors ${
-              triwulan === tw
-                ? "bg-blue-900 text-white border-blue-900"
-                : "border-blue-900 text-blue-900 hover:bg-blue-100"
-            }`}
-          >
-            Tw {["I", "II", "III", "IV"][tw - 1]}
-          </button>
-        ))}
-        {loading && (
-          <span className="text-xs text-muted-foreground animate-pulse ml-2">
-            Memuat…
-          </span>
-        )}
-      </div>
-
-      {error && <div className="text-sm text-red-500">{error}</div>}
-
-      {/* ─── Peta Leaflet ─── */}
-      <div
-        ref={containerRef}
-        className="relative isolate z-0 w-full rounded-lg border border-yellow-400 overflow-hidden"
-        style={{ height: 750, background: "#b8b89a" }}
-      />
-
-      {/* ─── Tabel Legenda ─── */}
-      {/* ─── Legenda Indeks (Accordion) ─── */}
-      <div className="rounded-lg border overflow-hidden">
-        <button
-          type="button"
-          onClick={() => setLegendOpen((v) => !v)}
-          className="w-full flex items-center justify-between px-3 py-2 bg-blue-900 text-white text-xs font-semibold hover:bg-blue-800 transition-colors"
-        >
-          <span>Legenda Indeks APBD</span>
-          <span>{legendOpen ? "▲ Tutup" : "▼ Buka"}</span>
-        </button>
-        {legendOpen && (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-xs">
-              <thead>
-                <tr className="bg-blue-900 text-white">
-                  <th className="border border-blue-700 px-3 py-2 text-center">
-                    Capaian
-                  </th>
-                  <th className="border border-blue-700 px-3 py-2 text-center">
-                    Rentang Nilai Tw I s.d. Tw III
-                  </th>
-                  <th className="border border-blue-700 px-3 py-2 text-center">
-                    Rentang Nilai Tw IV
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {INDEKS_LEGEND.map((idx, i) => (
-                  <tr
-                    key={idx}
-                    className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                  >
-                    <td className="border border-gray-300 px-3 py-1.5 text-center">
-                      <span className="inline-flex items-center gap-1.5">
-                        <span
-                          className="inline-block w-3 h-3 square-sm flex-shrink-0"
-                          style={{ background: INDEKS_COLORS[idx] }}
-                        />
-                        <span className="font-medium">Indeks {idx}</span>
-                      </span>
-                    </td>
-                    <td
-                      className={`border border-gray-300 px-3 py-1.5 text-center ${
-                        triwulan !== 4
-                          ? "font-semibold text-blue-900"
-                          : "text-gray-500"
-                      }`}
-                    >
-                      {LEGEND_TW1TO3[i]}
-                    </td>
-                    <td
-                      className={`border border-gray-300 px-3 py-1.5 text-center ${
-                        triwulan === 4
-                          ? "font-semibold text-blue-900"
-                          : "text-gray-500"
-                      }`}
-                    >
-                      {LEGEND_TW4[i]}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* ── Filter Triwulan + Peta ─── */}
+      <Card className="border shadow-sm overflow-hidden">
+        <CardHeader className="pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <CardTitle className="text-base font-semibold">
+              Peta Sebaran APBD per Kanwil
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-muted-foreground">Triwulan:</span>
+              {[1, 2, 3, 4].map((tw) => (
+                <button
+                  key={tw}
+                  onClick={() => setTriwulan(tw)}
+                  className={`px-3 py-1 text-xs font-semibold rounded border transition-colors ${
+                    triwulan === tw
+                      ? "bg-blue-900 text-white border-blue-900"
+                      : "border-blue-900 text-blue-900 hover:bg-blue-100"
+                  }`}
+                >
+                  Tw {["I", "II", "III", "IV"][tw - 1]}
+                </button>
+              ))}
+              {loading && (
+                <span className="text-xs text-muted-foreground animate-pulse ml-1">
+                  Memuat…
+                </span>
+              )}
+            </div>
           </div>
-        )}
-      </div>
+        </CardHeader>
+        <CardContent>
+          {error && (
+            <div className="mb-3 text-sm text-red-500">{error}</div>
+          )}
+          {/* ─── Peta + Legenda side-by-side (70 : 30) ─── */}
+          <div className="flex flex-col lg:flex-row gap-4 items-stretch">
+
+            {/* ── Map container — stretches to match legend height ── */}
+            <Card className="w-full lg:w-[70%] lg:shrink-0 border shadow-sm overflow-hidden py-0 min-h-[350px]">
+              <div
+                ref={containerRef}
+                className="relative isolate z-0 w-full h-full"
+                style={{ background: "#b8b89a" }}
+              />
+            </Card>
+
+            {/* ── Legenda container — natural height drives the row ── */}
+            <Card className="w-full lg:w-[30%] border shadow-sm overflow-hidden flex flex-col py-0 gap-0">
+              <CardHeader className="shrink-0 px-4 pb-3 pt-4">
+                <CardTitle className="text-base font-semibold">Legenda Indeks APBD</CardTitle>
+              </CardHeader>
+              <CardContent className="px-4 pb-4 pt-0">
+                <div className="rounded-md border">
+                  <Table className="relative border-separate border-spacing-0 text-[11px]">
+                    <TableHeader className="bg-background sticky top-0 z-10 shadow-sm">
+                      <TableRow>
+                        <TableHead className="bg-background font-medium text-[11px] text-center">Capaian</TableHead>
+                        <TableHead className="bg-background font-medium text-center text-[11px]">Tw I–III</TableHead>
+                        <TableHead className="bg-background font-medium text-center text-[11px]">Tw IV</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {INDEKS_LEGEND.map((idx, i) => (
+                        <TableRow key={idx}>
+                          <TableCell className="py-1.5">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] font-semibold px-1.5 py-0.5 whitespace-nowrap gap-1.5"
+                              style={{
+                                borderColor: INDEKS_COLORS[idx],
+                                color: INDEKS_COLORS[idx],
+                              }}
+                            >
+                              <span
+                                className="inline-block w-2 h-2 rounded-full shrink-0"
+                                style={{ background: INDEKS_COLORS[idx] }}
+                              />
+                              Indeks {idx}
+                            </Badge>
+                          </TableCell>
+                          <TableCell
+                            className={`text-center py-1.5 font-mono ${
+                              triwulan !== 4
+                                ? "font-semibold text-blue-900"
+                                : "text-muted-foreground"
+                            }`}
+                          >
+                            {LEGEND_TW1TO3[i]}
+                          </TableCell>
+                          <TableCell
+                            className={`text-center py-1.5 font-mono ${
+                              triwulan === 4
+                                ? "font-semibold text-blue-900"
+                                : "text-muted-foreground"
+                            }`}
+                          >
+                            {LEGEND_TW4[i]}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+
+          </div>
+        </CardContent>
+      </Card>
 
       {/* ─── Detail per Kanwil ─── */}
       {selectedKanwil && (
