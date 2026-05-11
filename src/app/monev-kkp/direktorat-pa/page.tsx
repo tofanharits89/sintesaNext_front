@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import * as XLSX from "xlsx-js-style";
 import { useAuth } from "@/hooks/useAuth";
 import { Spinner } from "@/components/ui/spinner";
+import { apiPath } from "@/lib/config/base-path";
 
 // Allowed roles for Direktorat PA page
 const ALLOWED_ROLES = ["ditpa", "super_admin", "co_admin"];
@@ -76,18 +77,75 @@ export default function MonevKkpDirektoratPaPage() {
     try {
       const currentRef =
         activeTab === "ringkasan-kanwil" ? kanwilDataRef : kppnDataRef;
-      const data = currentRef.current?.getData() || [];
       const filters = currentRef.current?.getFilters();
-
-      if (data.length === 0) {
-        toast.error("Tidak ada data untuk diekspor");
-        return;
-      }
 
       const selectedYear = filters?.selectedYear || "2026";
       const selectedPeriode = filters?.selectedPeriode || "Q1";
       const kanwilLabel = filters?.kanwilLabel || "Semua Kanwil";
       const kppnLabel = filters?.kppnLabel || "Semua KPPN";
+      const selectedKanwil = filters?.selectedKanwil || "all";
+      const selectedKppn = filters?.selectedKppn || "all";
+
+      // Fetch ALL data from API (not just current page)
+      toast.info("Sedang menyiapkan data Excel, harap tunggu...");
+      const triwulanNum = selectedPeriode.replace("Q", "");
+      let kanwilParam = "";
+      let kppnParam = "";
+      if (activeTab === "ringkasan-kppn" && selectedKppn !== "all") {
+        kppnParam = `&kdkppn=${selectedKppn}`;
+      }
+      if (selectedKanwil !== "all") {
+        kanwilParam = `&kdkanwil=${selectedKanwil}`;
+      }
+      const apiUrl = apiPath(
+        `/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulanNum}${kanwilParam}${kppnParam}&page=1&limit=100000`,
+      );
+      const response = await fetch(apiUrl, {
+        credentials: "include",
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+      });
+      if (!response.ok) throw new Error("Gagal mengambil data untuk export");
+      const result = await response.json();
+
+      const data: RingkasanData[] = (result.data || []).map((item: any, index: number) => ({
+        id: `${item.kdsatker}-${index}`,
+        kodeKanwil: item.kdkanwil,
+        namaLokasi: item.nmlokasi || item.kdkanwil || "-",
+        kodeKppn: item.kdkppn,
+        namaKppn: item.nmkppn || item.kdkppn || "-",
+        kodeBA: item.kddept,
+        kodeSatker: item.kdsatker,
+        namaSatker: item.nmsatker,
+        upKkpPerBulan: Number(item.nilai_up_kkp || 0),
+        porsiUpKkp: Number(item.porsi_up_kkp_dari_total_up || 0),
+        bankPenerbit: item.bank_penerbit,
+        jmlKartuUsul: item.jml_kartu_usul !== undefined && item.jml_kartu_usul !== null ? Number(item.jml_kartu_usul) : null,
+        jumlahKartu: Number(item.jumlah_kartu || 0),
+        jmlKartuOpr: Number(item.jml_kartu_opr || 0),
+        limitOpr: Number(item.limit_opr || 0),
+        jmlKartuPd: Number(item.jml_kartu_pd || 0),
+        limitPd: Number(item.limit_pd || 0),
+        nilaiTagihan: Number(item.nilai_tagihan || 0),
+        nilaiTransaksi: Number(item.nilai_trans_sp2d || 0),
+        kendala: item.kendala || "",
+        detil_kendala: item.detil_kendala || "",
+        detil_masukan_kendala: item.detil_masukan_kendala || "",
+        nomor_pks: item.nomor_pks || "",
+        tanggal_pks: item.tanggal_pks || "",
+        nomor_surat_up: item.nomor_surat_up || "",
+        tanggal_surat_up: item.tanggal_surat_up || "",
+        tanggal_ctk_tagihan: item.tanggal_ctk_tagihan || "",
+        tanggal_jth_tempo: item.tanggal_jth_tempo || "",
+        nomor_sp2d_list: item.nomor_sp2d_list || "",
+        tanggal_sp2d_list: item.tanggal_sp2d_list || "",
+        jenis_belanja_list: item.jenis_belanja_list || "",
+      }));
+
+      if (data.length === 0) {
+        toast.error("Tidak ada data untuk diekspor");
+        return;
+      }
 
       // Convert selected periode (e.g. "Q1") to Roman numeral for the header
       const romanNumerals: Record<string, string> = {
