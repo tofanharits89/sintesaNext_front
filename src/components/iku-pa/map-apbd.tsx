@@ -8,6 +8,17 @@ import React, {
   useCallback,
 } from "react";
 import axios from "axios";
+import { ColumnDef } from "@tanstack/react-table";
+import { DataTable } from "@/components/ui/data-table";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { FileSpreadsheet, X } from "lucide-react";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const geoData = require("./indobaru.json");
 
@@ -156,7 +167,7 @@ export default function MapApbd() {
       if (destroyed || !containerRef.current) return;
       const map = L.map(containerRef.current, {
         attributionControl: false,
-        scrollWheelZoom: true,
+        scrollWheelZoom: false,
         zoomControl: true,
       }).setView([-2, 118], 6);
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -317,6 +328,95 @@ export default function MapApbd() {
     URL.revokeObjectURL(url);
   }, [detailData, selectedKanwil, triwulan]);
 
+  const detailColumns = useMemo<ColumnDef<DetailRow>[]>(() => {
+    const maxMonth = triwulan * 3;
+    const twLabel = ["I", "II", "III", "IV"][triwulan - 1];
+    return [
+      {
+        id: "no",
+        header: () => <div className="text-center font-medium">No</div>,
+        cell: ({ row }) => <div className="text-center">{row.index + 1}</div>,
+      },
+      {
+        accessorKey: "nmpemda",
+        header: () => <div className="text-center font-medium">Pemerintah Daerah</div>,
+        cell: ({ row }) => (
+          <div className="font-medium whitespace-nowrap max-w-[200px] overflow-hidden text-ellipsis">
+            {row.getValue("nmpemda")}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "nmakun1",
+        header: () => <div className="text-center font-medium">Kategori</div>,
+        cell: ({ row }) => <div>{row.getValue("nmakun1")}</div>,
+      },
+      {
+        accessorKey: "akun2",
+        header: () => <div className="text-center font-medium">Kode Akun</div>,
+        cell: ({ row }) => (
+          <div className="font-mono text-center">{row.getValue("akun2")}</div>
+        ),
+      },
+      {
+        accessorKey: "nmakun2",
+        header: () => <div className="text-center font-medium">Nama Akun</div>,
+        cell: ({ row }) => <div>{row.getValue("nmakun2")}</div>,
+      },
+      {
+        accessorKey: "pagu",
+        header: () => <div className="text-center font-medium">Pagu (Rp)</div>,
+        cell: ({ row }) => (
+          <div className="text-right font-mono tabular-nums">{fmt(row.getValue("pagu"))}</div>
+        ),
+      },
+      ...Array.from({ length: maxMonth }, (_, i) => ({
+        id: `real${i + 1}`,
+        header: () => (
+          <div className="text-center font-medium">{MONTH_LABELS[i]}</div>
+        ),
+        cell: ({ row }: { row: { original: DetailRow } }) => (
+          <div className="text-right font-mono tabular-nums">
+            {fmt(getReal(row.original, i + 1))}
+          </div>
+        ),
+      })) as ColumnDef<DetailRow>[],
+      {
+        accessorKey: "realisasi",
+        header: () => (
+          <div className="text-center font-medium whitespace-nowrap">
+            Total s.d. Tw {twLabel}
+          </div>
+        ),
+        cell: ({ row }) => (
+          <div className="text-right font-mono tabular-nums font-semibold text-blue-600">
+            {fmt(row.getValue("realisasi"))}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "persen",
+        header: () => <div className="text-center font-medium">%</div>,
+        cell: ({ row }) => {
+          const persen = row.getValue<number>("persen");
+          const colorClass =
+            persen >= 90
+              ? "border-green-500 text-green-600"
+              : persen < 50
+                ? "border-red-500 text-red-600"
+                : "border-yellow-500 text-yellow-600";
+          return (
+            <div className="flex justify-end">
+              <Badge variant="outline" className={`font-mono tabular-nums font-bold ${colorClass}`}>
+                {persen.toFixed(1)}%
+              </Badge>
+            </div>
+          );
+        },
+      },
+    ];
+  }, [triwulan]);
+
   useEffect(() => {
     fetchData(triwulan);
   }, [triwulan, fetchData]);
@@ -331,7 +431,7 @@ export default function MapApbd() {
 
   return (
     <div className="space-y-4">
-      {/* â”€â”€ Selector Triwulan â”€â”€â”€ */}
+      {/* ── Selector Triwulan ─── */}
       <div className="flex items-center gap-2">
         <span className="text-sm font-medium">Triwulan:</span>
         {[1, 2, 3, 4].map((tw) => (
@@ -349,7 +449,7 @@ export default function MapApbd() {
         ))}
         {loading && (
           <span className="text-xs text-muted-foreground animate-pulse ml-2">
-            Memuatâ€¦
+            Memuat…
           </span>
         )}
       </div>
@@ -433,151 +533,50 @@ export default function MapApbd() {
 
       {/* ─── Detail per Kanwil ─── */}
       {selectedKanwil && (
-        <div className="rounded-lg border overflow-hidden">
-          <div className="flex items-center justify-between px-3 py-2 bg-blue-900 text-white text-xs font-semibold">
-            <span>
+        <Card className="border-blue-900/10 shadow-lg overflow-hidden mt-6 bg-white">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle>
               Detail: {selectedKanwil.name} &mdash; Tw{" "}
               {["I", "II", "III", "IV"][triwulan - 1]}
-            </span>
+            </CardTitle>
             <div className="flex items-center gap-2">
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={downloadExcel}
                 disabled={!detailData.length}
-                className="flex items-center gap-1 px-2 py-0.5 rounded bg-green-700 hover:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold transition-colors"
+                className="h-8 bg-green-700 hover:bg-green-600 border-none text-white text-xs font-semibold transition-colors gap-2 px-3"
                 title="Download Excel"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-3.5 h-3.5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                Excel
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedKanwil(null)}
-                className="text-white hover:text-yellow-300 font-bold"
-              >
-                ✕
-              </button>
+                <FileSpreadsheet className="w-4 h-4" />
+                Unduh Data Excel
+              </Button>
             </div>
-          </div>
-          {detailLoading ? (
-            <div className="p-4 text-xs text-center text-gray-500 animate-pulse">
-              Memuat data detail…
-            </div>
-          ) : detailError ? (
-            <div className="p-4 text-xs text-red-500 font-mono bg-red-50">
-              {detailError}
-            </div>
-          ) : detailData.length === 0 ? (
-            <div className="p-4 text-xs text-center text-gray-500">
-              Tidak ada data untuk kanwil ini.
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <div style={{ maxHeight: 500, overflowY: "auto" }}>
-                <table
-                  className="border-collapse text-xs"
-                  style={{ minWidth: "max-content", width: "100%" }}
-                >
-                  <thead className="sticky top-0 z-10">
-                    <tr className="bg-blue-800 text-white">
-                      <th className="border border-blue-700 px-2 py-1.5 text-left whitespace-nowrap sticky left-0 bg-blue-800 z-20">
-                        Pemerintah Daerah
-                      </th>
-                      <th className="border border-blue-700 px-2 py-1.5 text-left whitespace-nowrap">
-                        Kategori
-                      </th>
-                      <th className="border border-blue-700 px-2 py-1.5 text-left whitespace-nowrap">
-                        Kode Akun
-                      </th>
-                      <th className="border border-blue-700 px-2 py-1.5 text-left whitespace-nowrap">
-                        Nama Akun
-                      </th>
-                      <th className="border border-blue-700 px-2 py-1.5 text-right whitespace-nowrap">
-                        Pagu (Rp)
-                      </th>
-                      {Array.from({ length: triwulan * 3 }, (_, i) => (
-                        <th
-                          key={i + 1}
-                          className="border border-blue-700 px-2 py-1.5 text-right whitespace-nowrap"
-                        >
-                          {MONTH_LABELS[i]}
-                        </th>
-                      ))}
-                      <th className="border border-blue-700 px-2 py-1.5 text-right whitespace-nowrap">
-                        Total s.d. Tw {["I", "II", "III", "IV"][triwulan - 1]}
-                      </th>
-                      <th className="border border-blue-700 px-2 py-1.5 text-right whitespace-nowrap">
-                        %
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-gray-900">
-                    {detailData.map((row, i) => (
-                      <tr
-                        key={`${row.kdpemda}-${row.akun1}-${row.akun2}-${i}`}
-                        className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                      >
-                        <td
-                          className="border border-gray-200 px-2 py-1 text-[11px] text-gray-900 sticky left-0 whitespace-nowrap max-w-[200px] overflow-hidden text-ellipsis"
-                          style={{
-                            background: i % 2 === 0 ? "#ffffff" : "#f9fafb",
-                          }}
-                        >
-                          {row.nmpemda}
-                        </td>
-                        <td className="border border-gray-200 px-2 py-1 text-[11px] text-gray-900 whitespace-nowrap">
-                          {row.nmakun1}
-                        </td>
-                        <td className="border border-gray-200 px-2 py-1 text-[11px] text-gray-900 whitespace-nowrap">
-                          {row.akun2}
-                        </td>
-                        <td className="border border-gray-200 px-2 py-1 text-[11px] text-gray-900 whitespace-nowrap">
-                          {row.nmakun2}
-                        </td>
-                        <td className="border border-gray-200 px-2 py-1 text-right whitespace-nowrap text-gray-900">
-                          {fmt(row.pagu)}
-                        </td>
-                        {Array.from({ length: triwulan * 3 }, (_, j) => (
-                          <td
-                            key={j + 1}
-                            className="border border-gray-200 px-2 py-1 text-right whitespace-nowrap text-gray-900"
-                          >
-                            {fmt(getReal(row, j + 1))}
-                          </td>
-                        ))}
-                        <td className="border border-gray-200 px-2 py-1 text-right whitespace-nowrap font-medium text-gray-900">
-                          {fmt(row.realisasi)}
-                        </td>
-                        <td
-                          className={`border border-gray-200 px-2 py-1 text-right whitespace-nowrap font-semibold ${
-                            row.persen >= 90
-                              ? "text-green-700"
-                              : row.persen < 50
-                                ? "text-red-600"
-                                : "text-yellow-700"
-                          }`}
-                        >
-                          {row.persen.toFixed(1)}%
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          </CardHeader>
+          <CardContent>
+            {detailLoading ? (
+              <div className="p-12 text-sm text-center text-gray-500 animate-pulse">
+                Memuat data detail…
               </div>
-            </div>
-          )}
-        </div>
+            ) : detailError ? (
+              <div className="p-12 text-sm text-red-500 font-mono bg-red-50 rounded-md">
+                {detailError}
+              </div>
+            ) : detailData.length === 0 ? (
+              <div className="p-12 text-sm text-center text-gray-500 italic">
+                Tidak ada data untuk kanwil ini.
+              </div>
+            ) : (
+              <DataTable
+                columns={detailColumns}
+                data={detailData}
+                initialPageSize={10}
+                tableClassName="text-xs"
+              />
+            )}
+          </CardContent>
+        </Card>
       )}
     </div>
   );
