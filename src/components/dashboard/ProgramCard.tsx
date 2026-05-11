@@ -64,77 +64,87 @@ export function ProgramCard({
     <>
       <Card className="flex flex-col overflow-hidden hover:shadow-md transition-shadow">
         {/* Card Header */}
-        <CardHeader>
-          <div className="flex items-start justify-between gap-2">
+        <CardHeader className="pb-4">
+          <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <CardTitle className="text-base line-clamp-2">{title}</CardTitle>
-              <CardDescription className="text-xs">{code}</CardDescription>
+              <CardTitle className="text-lg font-bold line-clamp-2 text-foreground/90 leading-tight">
+                {title}
+              </CardTitle>
+              <div className="mt-1 flex items-center gap-2">
+                <span className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-tight">
+                  CODE
+                </span>
+                <CardDescription className="text-xs font-semibold text-muted-foreground/80">
+                  {code}
+                </CardDescription>
+              </div>
             </div>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 flex-shrink-0"
+              className="h-9 w-9 flex-shrink-0 rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
               onClick={() => setIsModalOpen(true)}
               title="Lihat Detail"
             >
-              <Info className="h-4 w-4" />
+              <Info className="h-5 w-5" />
             </Button>
           </div>
         </CardHeader>
 
-      {/* Card Body */}
-      <CardContent>
-        <div className="flex gap-2">
-          {/* Left side: Info */}
-          <div className="flex-1 space-y-1 text-xs">
-            <div>
-              <p className="text-muted-foreground text-xs">Pagu</p>
-              <p className="font-semibold text-blue-600 text-xs">
-                {formatCurrency(pagu)}
-              </p>
+        {/* Card Body */}
+        <CardContent>
+          <div className="flex gap-4 items-center">
+            {/* Left side: Donut Chart */}
+            <div className="w-36 h-36 flex-shrink-0 flex items-center justify-center overflow-hidden">
+              <DonutChartComponent
+                data={chartData}
+                height={140}
+                colors={["#10b981", "#ef4444", "#9ca3af"]}
+                showLegend={false}
+                showLabel={false}
+                centerLabel={`${realisasiPercentage}%`}
+              />
             </div>
-            <div>
-              <p className="text-muted-foreground text-xs">Realisasi</p>
-              <p className="font-semibold text-green-600 text-xs">
-                {formatCurrency(realisasi)} ({realisasiPercentage}%)
-              </p>
-            </div>
-            <div>
-              <p className="text-muted-foreground text-xs">Blokir</p>
-              <p className="font-semibold text-red-600 text-xs">
-                {formatCurrency(blokir)}
-              </p>
+
+            {/* Right side: Info */}
+            <div className="flex-1 space-y-3 text-right">
+              <div>
+                <p className="text-muted-foreground text-xs uppercase tracking-wider font-medium">Pagu</p>
+                <p className="font-mono font-bold text-blue-600 text-base leading-tight">
+                  {formatCurrency(pagu)}
+                </p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs uppercase tracking-wider font-medium">Realisasi</p>
+                <p className="font-mono font-bold text-green-600 text-base leading-tight">
+                  {formatCurrency(realisasi)}
+                </p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs uppercase tracking-wider font-medium">Blokir</p>
+                <p className="font-mono font-bold text-red-600 text-base leading-tight">
+                  {formatCurrency(blokir)}
+                </p>
+              </div>
             </div>
           </div>
+        </CardContent>
 
-          {/* Right side: Donut Chart */}
-          <div className="w-24 h-24 flex-shrink-0 flex items-center justify-center overflow-hidden">
-            <DonutChartComponent
-              data={chartData}
-              height={96}
-              colors={["#10b981", "#ef4444", "#9ca3af"]}
-              showLegend={false}
-              showLabel={false}
-              centerLabel={`${realisasiPercentage}%`}
-            />
+        {/* Card Footer */}
+        <CardFooter className="pt-2 border-t border-border/50 bg-muted/5">
+          <div className="text-sm font-medium text-muted-foreground w-full flex justify-between items-center">
+            <span>Sisa Anggaran:</span>
+            <span className="font-mono font-bold text-foreground">{formatCurrency(Math.max(0, sisa))}</span>
           </div>
-        </div>
-      </CardContent>
+        </CardFooter>
+      </Card>
 
-      {/* Card Footer */}
-      <CardFooter>
-        <div className="text-xs text-muted-foreground w-full">
-          <p>Sisa: {formatCurrency(Math.max(0, sisa))}</p>
-        </div>
-      </CardFooter>
-    </Card>
-
-    <ProgramDetailsModal
-      open={isModalOpen}
-      onOpenChange={setIsModalOpen}
-      programName={title}
-      subOutputs={subOutputs}
-    />
+      <ProgramDetailsModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        programName={title}
+        subOutputs={subOutputs}
+      />
     </>
   );
 }
