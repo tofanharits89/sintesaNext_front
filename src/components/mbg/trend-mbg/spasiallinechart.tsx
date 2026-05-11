@@ -237,7 +237,7 @@ export default function SpasialLineChart() {
   const kdkanwil = isKanwil ? (user?.kdkanwil ?? undefined) : undefined;
 
   const [selectedProv, setSelectedProv] = useState<Option[]>([]);
-  const [tahun, setTahun] = useState<Option>({ value: "2025", label: "2025" });
+  const [tahun, setTahun] = useState<Option>({ value: "2026", label: "2026" });
   const [isExporting, setIsExporting] = useState(false);
   const [autoSelected, setAutoSelected] = useState(false);
 

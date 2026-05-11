@@ -624,9 +624,10 @@ export type PetugasProvinsiData = { provinsi: string[] };
 export type PetugasDataResponse = { rows: PetugasRow[] };
 
 export async function getPetugasProvinsi(
+  year: string = "2026",
   kdkanwil?: string,
 ): Promise<PetugasProvinsiData> {
-  const params = new URLSearchParams();
+  const params = new URLSearchParams({ year });
   if (kdkanwil) params.set("kdkanwil", kdkanwil);
   const qs = params.toString();
   const response = await apiClient.get<{
@@ -640,9 +641,10 @@ export async function getPetugasProvinsi(
 
 export async function getPetugasData(
   provinsi: string,
+  year: string = "2026",
   kdkanwil?: string,
 ): Promise<PetugasDataResponse> {
-  const params = new URLSearchParams({ provinsi });
+  const params = new URLSearchParams({ provinsi, year });
   if (kdkanwil) params.set("kdkanwil", kdkanwil);
   const response = await apiClient.get<{
     success: boolean;
@@ -667,9 +669,10 @@ export type SppgKanwilData = { kanwil: string[] };
 export type SppgDataResponse = { rows: SppgRawRow[] };
 
 export async function getSppgKanwil(
+  year: string = "2026",
   kdkanwil?: string,
 ): Promise<SppgKanwilData> {
-  const params = new URLSearchParams();
+  const params = new URLSearchParams({ year });
   if (kdkanwil) params.set("kdkanwil", kdkanwil);
   const qs = params.toString();
   const response = await apiClient.get<{
@@ -683,10 +686,11 @@ export async function getSppgKanwil(
 
 export async function getSppgData(
   kanwil: string[],
+  year: string = "2026",
   kdkanwil?: string,
 ): Promise<SppgDataResponse> {
-  const params = new URLSearchParams();
-  if (kanwil.length > 0) params.set("kanwil", kanwil.join(","));
+  const kwList = kanwil.join(",");
+  const params = new URLSearchParams({ kanwil: kwList, year });
   if (kdkanwil) params.set("kdkanwil", kdkanwil);
   const response = await apiClient.get<{
     success: boolean;

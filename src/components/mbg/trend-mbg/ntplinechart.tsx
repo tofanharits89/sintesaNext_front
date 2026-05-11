@@ -252,7 +252,7 @@ export default function NtpChartLine() {
 
   const [selectedProv, setSelectedProv] = useState<Option[]>([]);
   const [kategori, setKategori] = useState("Petani");
-  const [tahun, setTahun] = useState("2025");
+  const [tahun, setTahun] = useState("2026");
   const [isExporting, setIsExporting] = useState(false);
   const [autoSelected, setAutoSelected] = useState(false);
 

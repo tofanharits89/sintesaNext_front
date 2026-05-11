@@ -273,7 +273,7 @@ export default function PetugasBarChart() {
   const kdkanwil = isKanwil ? (user?.kdkanwil ?? undefined) : undefined;
 
   const [provinsi, setProvinsi] = useState<string | null>(null);
-  const [tahun, setTahun] = useState("2025");
+  const [tahun, setTahun] = useState("2026");
   const [autoSelected, setAutoSelected] = useState(false);
 
   const {
@@ -281,14 +281,14 @@ export default function PetugasBarChart() {
     isLoading: loadingProv,
     isError: isProvError,
     error: provError,
-  } = usePetugasProvinsi(kdkanwil);
+  } = usePetugasProvinsi(tahun, kdkanwil);
 
   const {
     data: petugasData,
     isLoading: loadingData,
     isError: isDataError,
     error: dataError,
-  } = usePetugasData(provinsi, kdkanwil);
+  } = usePetugasData(provinsi, tahun, kdkanwil);
 
   const provOptions = provinsiData?.provinsi ?? [];
 

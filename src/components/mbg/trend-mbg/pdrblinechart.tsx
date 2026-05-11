@@ -85,6 +85,7 @@ const TW_LIST: { key: "tw1" | "tw2" | "tw3" | "tw4"; label: string }[] = [
 const TAHUN_OPTIONS: Option[] = [
   { value: "2024", label: "2024" },
   { value: "2025", label: "2025" },
+  { value: "2026", label: "2026" },
 ];
 
 const COLORS = [

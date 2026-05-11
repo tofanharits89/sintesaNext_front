@@ -271,7 +271,7 @@ export default function SPPGChartLine() {
   const kdkanwil = isKanwil ? (user?.kdkanwil ?? undefined) : undefined;
 
   const [selectedKanwil, setSelectedKanwil] = useState<Option[]>([]);
-  const [tahun, setTahun] = useState("2025");
+  const [tahun, setTahun] = useState("2026");
   const [autoSelected, setAutoSelected] = useState(false);
 
   const {
@@ -279,7 +279,7 @@ export default function SPPGChartLine() {
     isLoading: loadingKanwil,
     isError: isKanwilError,
     error: kanwilError,
-  } = useSppgKanwil(kdkanwil);
+  } = useSppgKanwil(tahun, kdkanwil);
 
   const kanwilNames = selectedKanwil.map((k) => k.value);
 
@@ -288,7 +288,7 @@ export default function SPPGChartLine() {
     isLoading: loadingData,
     isError: isDataError,
     error: dataError,
-  } = useSppgData(kanwilNames, kdkanwil);
+  } = useSppgData(kanwilNames, tahun, kdkanwil);
 
   const kanwilOptions: Option[] = (kanwilData?.kanwil ?? []).map((k) => ({
     value: k,

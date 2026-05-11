@@ -241,7 +241,7 @@ export default function KomoditasChartLine() {
 
   const [selectedProv, setSelectedProv] = useState<Option[]>([]);
   const [kategori, setKategori] = useState("Beras Premium");
-  const [tahun, setTahun] = useState("2025");
+  const [tahun, setTahun] = useState("2026");
   const [isExporting, setIsExporting] = useState(false);
   const [autoSelected, setAutoSelected] = useState(false);
 
