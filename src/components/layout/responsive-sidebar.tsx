@@ -119,16 +119,6 @@ const defaultMenu: MenuItem[] = [
     ],
   },
   {
-    label: "Transfer Daerah",
-    children: [
-      { label: "DAU" },
-      { label: "Upload Laporan" },
-      { label: "Proyeksi TKD" },
-      { label: "Penilaian IKU" },
-      { label: "Dataset TKD" },
-    ],
-  },
-  {
     label: "Inquiry Data",
     children: [
       { label: "Belanja" },
@@ -140,6 +130,16 @@ const defaultMenu: MenuItem[] = [
       { label: "Revisi DIPA" },
       { label: "APBD" },
       { label: "Prognosis" },
+    ],
+  },
+  {
+    label: "Transfer Daerah",
+    children: [
+      { label: "DAU" },
+      { label: "Upload Laporan" },
+      { label: "Proyeksi TKD" },
+      { label: "Penilaian IKU" },
+      { label: "Dataset TKD" },
     ],
   },
   {
@@ -212,8 +212,8 @@ const MENU_ROUTE_PREFIXES: Array<{ prefix: string; parent: string }> = [
   { prefix: "/makan-bergizi", parent: "Makan Bergizi" },
   { prefix: "/monev-kkp", parent: "Monev KKP" },
   { prefix: "/belwil", parent: "Kewilayahan" },
-  { prefix: "/transfer-daerah", parent: "Transfer Daerah" },
   { prefix: "/inquiry-data", parent: "Inquiry Data" },
+  { prefix: "/transfer-daerah", parent: "Transfer Daerah" },
   { prefix: "/laporan", parent: "Laporan" },
   { prefix: "/data-eksternal", parent: "Data Eksternal" },
   { prefix: "/menu-rowset", parent: "Rowset Data" },
@@ -1570,6 +1570,64 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </Link>
+                    ) : c.label === "Kontrak" && m.label === "Inquiry Data" ? (
+                      <Link
+                        key={c.label}
+                        href="/inquiry-data/kontrak"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/inquiry-data/kontrak",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "UP/TUP" && m.label === "Inquiry Data" ? (
+                      <Link
+                        key={c.label}
+                        href="/inquiry-data/up-tup"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/inquiry-data/up-tup",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
+                    ) : c.label === "Penerimaan PNBP" &&
+                      m.label === "Inquiry Data" ? (
+                      <Link
+                        key={c.label}
+                        href="/inquiry-data/penerimaan-pnbp"
+                        className="block w-full text-left px-6 py-2 text-sm rounded-lg hover:bg-zinc-200 dark:hover:bg-card mx-1 my-1"
+                        onClick={() => {
+                          trackMenuUsage({
+                            menu: m.label,
+                            submenu: c.label,
+                            path: "/inquiry-data/penerimaan-pnbp",
+                          });
+                          setOpen(false);
+                        }}
+                      >
+                        <span className="inline-flex items-center">
+                          {subIconFor(m.label, c.label)}
+                          <span>{c.label}</span>
+                        </span>
+                      </Link>
                     ) : c.label === "RKAKL Detail" &&
                       m.label === "Inquiry Data" ? (
                       <Link
@@ -2237,7 +2295,7 @@ export function ResponsiveSidebar({
                         </span>
                       </Link>
                     ) : c.label === "Kementerian" &&
-                      m.label === "Profile K/L" ? (
+                      m.label === "Profil K/L" ? (
                       <Link
                         key={c.label}
                         href="/profile-kl/kementerian"
@@ -2259,7 +2317,7 @@ export function ResponsiveSidebar({
                           <span>{c.label}</span>
                         </span>
                       </Link>
-                    ) : c.label === "Lembaga" && m.label === "Profile K/L" ? (
+                    ) : c.label === "Lembaga" && m.label === "Profil K/L" ? (
                       <Link
                         key={c.label}
                         href="/profile-kl/lembaga"
