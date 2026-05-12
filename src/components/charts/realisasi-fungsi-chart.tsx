@@ -30,8 +30,8 @@ export const RealisasiFungsiChart = ({
       title={title}
       description={description}
       series={[
-        { dataKey: "Pagu DIPA", name: "Pagu DIPA", color: "#3b82f6" },
-        { dataKey: "Realisasi", name: "Realisasi", color: "#10b981" },
+        { dataKey: "Realisasi", name: "Realisasi", color: "var(--chart-realisasi)", labelColor: "var(--chart-realisasi-label)", stackId: "a", radius: 6 },
+        { dataKey: "Sisa Pagu", name: "Sisa Pagu", color: "var(--chart-sisa-pagu)", labelColor: "var(--chart-sisa-pagu-label)", stackId: "a", radius: 6 },
       ]}
       height={height}
       formatValue={formatChartCurrency}

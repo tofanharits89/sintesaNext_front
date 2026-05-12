@@ -27,7 +27,7 @@ export const ChartsSection = ({ data }: ChartsSectionProps) => {
           <RealizationChart
             data={data.realisasiJenisBelanjaData.data}
             isLoading={data.realisasiJenisBelanjaData.isLoading}
-            title="Realisasi per Jenis Belanja"
+            title="Realisasi K/L per Jenis Belanja"
             description="Perbandingan Pagu DIPA vs Realisasi (Triliun Rp)"
           />
         </Suspense>
@@ -55,7 +55,7 @@ export const ChartsSection = ({ data }: ChartsSectionProps) => {
           <TrenChart
             data={data.trenRealisasiBulananData.data}
             isLoading={data.trenRealisasiBulananData.isLoading}
-            title="Tren Realisasi Bulanan Per Jenis Belanja"
+            title="Tren Realisasi Bulanan K/L Per Jenis Belanja"
             description="Realisasi bulanan per jenis belanja 2025 (Triliun Rp)"
           />
         </Suspense>

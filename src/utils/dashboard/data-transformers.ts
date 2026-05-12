@@ -1,31 +1,45 @@
 export const transformRealisasiPerJenisBelanja = (data: any) => {
   if (!data?.categories || !data?.series) return [];
   
-  return data.categories.map((category: string, index: number) => ({
-    name: category,
-    "Pagu DIPA": data.series.find((s: any) => s.name === "Pagu DIPA")?.data[index] || 0,
-    Realisasi: data.series.find((s: any) => s.name === "Realisasi")?.data[index] || 0,
-  }));
+  return data.categories.map((category: string, index: number) => {
+    const pagu = data.series.find((s: any) => s.name === "Pagu DIPA")?.data[index] || 0;
+    const realisasi = data.series.find((s: any) => s.name === "Realisasi")?.data[index] || 0;
+    const sisaPagu = Math.max(0, pagu - realisasi);
+    return {
+      name: category,
+      "Pagu DIPA": pagu,
+      Realisasi: realisasi,
+      "Sisa Pagu": sisaPagu,
+    };
+  });
 };
 
 export const transformKLPaguTerbesar = (data: any) => {
   if (!Array.isArray(data)) return [];
   
-  return data.map((item: any) => ({
-    name: item.nama_kementerian,
-    "Pagu DIPA": item.pagu_dipa,
-    Realisasi: item.realisasi,
-  }));
+  return data.map((item: any) => {
+    const sisaPagu = Math.max(0, item.pagu_dipa - item.realisasi);
+    return {
+      name: item.nama_kementerian,
+      "Pagu DIPA": item.pagu_dipa,
+      Realisasi: item.realisasi,
+      "Sisa Pagu": sisaPagu,
+    };
+  });
 };
 
 export const transformKLPaguProgramTerbesar = (data: any) => {
   if (!Array.isArray(data)) return [];
   
-  return data.map((item: any) => ({
-    name: item.nama_program,
-    "Pagu DIPA": item.pagu_dipa,
-    Realisasi: item.realisasi,
-  }));
+  return data.map((item: any) => {
+    const sisaPagu = Math.max(0, item.pagu_dipa - item.realisasi);
+    return {
+      name: item.nama_program,
+      "Pagu DIPA": item.pagu_dipa,
+      Realisasi: item.realisasi,
+      "Sisa Pagu": sisaPagu,
+    };
+  });
 };
 
 export const transformTrenRealisasiBulanan = (data: any) => {
@@ -46,10 +60,14 @@ export const transformRealisasiKLPerFungsi = (data: any) => {
   return data.categories.map((category: string, index: number) => {
     const paguSeries = data.series.find((s: any) => s.name === "Pagu DIPA");
     const realisasiSeries = data.series.find((s: any) => s.name === "Realisasi");
+    const pagu = paguSeries?.data[index] || 0;
+    const realisasi = realisasiSeries?.data[index] || 0;
+    const sisaPagu = Math.max(0, pagu - realisasi);
     return {
       name: category,
-      "Pagu DIPA": paguSeries?.data[index] || 0,
-      Realisasi: realisasiSeries?.data[index] || 0,
+      "Pagu DIPA": pagu,
+      Realisasi: realisasi,
+      "Sisa Pagu": sisaPagu,
     };
   });
 };

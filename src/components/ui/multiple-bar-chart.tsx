@@ -1,17 +1,6 @@
 "use client";
 
-import {
-  Bar,
-  BarChart,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  LabelList,
-} from "recharts";
-import type { ReactNode } from "react";
-
+import { cn } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -19,6 +8,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { BarChart } from "@/components/charts/bar-chart";
+import { Bar } from "@/components/charts/bar";
+import { BarXAxis } from "@/components/charts/bar-x-axis";
+import { ChartTooltip } from "@/components/charts/tooltip";
 
 interface MultipleBarChartProps {
   data: Array<{
@@ -31,6 +24,9 @@ interface MultipleBarChartProps {
     dataKey: string;
     name: string;
     color: string;
+    stackId?: string;
+    radius?: number | [number, number, number, number];
+    labelColor?: string;
   }>;
   nameKey?: string;
   height?: number;
@@ -44,102 +40,83 @@ export function MultipleBarChartComponent({
   series,
   nameKey = "name",
   height = 300,
-  formatValue = (value) => value.toLocaleString("id-ID"),
+  formatValue = (value) => {
+    const trillion = value / 1_000_000_000_000;
+    return `${trillion.toLocaleString("id-ID", { maximumFractionDigits: 2 })}T`;
+  },
 }: MultipleBarChartProps) {
-  const effectiveHeight = height + 0;
+  const isStacked = series.some((s) => s.stackId);
+
+  // Dynamic legend positioning based on empty space
+  const leftTotal = series.reduce((acc, s) => acc + (Number(data[0]?.[s.dataKey]) || 0), 0);
+  const rightTotal = series.reduce((acc, s) => acc + (Number(data[data.length - 1]?.[s.dataKey]) || 0), 0);
+  const legendPosition = leftTotal > rightTotal ? "right" : "left";
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+        {description && <CardDescription className="text-[12px]">{description}</CardDescription>}
       </CardHeader>
-      <CardContent className="px-8 pt-0">
-        <ResponsiveContainer width="100%" height={effectiveHeight} minWidth={0} minHeight={0}>
+      <CardContent className="px-6 pt-0 pb-6">
+        <div style={{ height }} className="w-full relative">
+          {/* Absolute positioned Legend in empty space */}
+          <div className={cn(
+            "absolute z-10 flex flex-col items-start gap-1.5 p-2",
+            legendPosition === "right" ? "top-0 right-[25px] text-right items-end" : "top-0 left-[25px] text-left items-start"
+          )}>
+            {[...series].reverse().map((s, index) => (
+              <div key={index} className={cn("flex items-center gap-1.5", legendPosition === "right" && "flex-row-reverse")}>
+                <div
+                  className="w-2.5 h-2.5 rounded-full"
+                  style={{ backgroundColor: s.color }}
+                />
+                <span className="text-[10px] font-mono font-medium text-muted-foreground whitespace-nowrap">{s.name}</span>
+              </div>
+            ))}
+          </div>
+
           <BarChart
             data={data}
-            margin={{ top: 12, right: 10, left: 0, bottom: 4 }}
+            xDataKey={nameKey}
+            stacked={isStacked}
+            aspectRatio="auto"
+            className="h-full w-full"
+            barGap={0.25}
+            stackGap={4}
+            margin={{ top: 0, right: 10, bottom: 24, left: 10 }}
           >
-            <XAxis
-              dataKey={nameKey}
-              stroke="#888888"
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-              interval={0}
-              tickMargin={6}
-              tick={{ fontSize: 11, width: 80 }}
-              height={56}
+            <BarXAxis />
+            <ChartTooltip
+              rows={(point) =>
+                series.map((s) => ({
+                  color: s.color,
+                  label: s.name,
+                  value: formatValue((point[s.dataKey] as number) ?? 0),
+                }))
+              }
             />
-            <YAxis
-              stroke="#888888"
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-              tick={false}
-              width={0}
-            />
-            <Tooltip
-              content={({ active, payload, label }) => {
-                if (active && payload && payload.length) {
-                  return (
-                    <div className="rounded-lg border bg-background p-3 shadow-sm">
-                      <div className="mb-2">
-                        <span className="text-sm font-medium text-foreground">
-                          {label}
-                        </span>
-                      </div>
-                      <div className="grid gap-2">
-                        {payload.map((entry, index) => (
-                          <div key={index} className="flex items-center gap-2">
-                            <div
-                              className="w-3 h-3 rounded-sm"
-                              style={{ backgroundColor: entry.color }}
-                            />
-                            <span className="text-sm text-muted-foreground">
-                              {entry.name}:
-                            </span>
-                            <span className="text-sm font-medium">
-                              {formatValue(entry.value as number)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                }
-                return null;
-              }}
-            />
-            <Legend
-              verticalAlign="bottom"
-              align="center"
-              iconType="rect"
-              wrapperStyle={{ fontSize: "12px", marginBottom: -1 }}
-            />
-            {series.map((s, index) => (
-              <Bar
-                key={index}
-                dataKey={s.dataKey}
-                name={s.name}
-                fill={s.color}
-                radius={[4, 4, 0, 0]}
-              >
-                <LabelList
+            {series.map((s, index) => {
+              const radius = s.radius !== undefined && Array.isArray(s.radius) ? s.radius[0] : (s.radius !== undefined ? s.radius : "round");
+              return (
+                <Bar
+                  key={index}
                   dataKey={s.dataKey}
-                  position="top"
-                  fontSize={10}
-                  fill="#666"
-                  formatter={(value: ReactNode) => {
-                    let num = 0;
-                    if (typeof value === "number") num = value;
-                    else if (typeof value === "string") num = Number(value);
-                    return formatValue(num);
+                  fill={s.color}
+                  lineCap={typeof radius === "number" ? radius : "round"}
+                  stackGap={4}
+                  minPointSize={12}
+                  showLabels={true}
+                  labelColor={s.labelColor}
+                  labelFormatter={(val) => {
+                    const trillion = val / 1_000_000_000_000;
+                    return `${trillion >= 1 ? trillion.toFixed(1) : trillion.toFixed(2)}T`;
                   }}
                 />
-              </Bar>
-            ))}
+              );
+            })}
           </BarChart>
-        </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   );
