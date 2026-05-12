@@ -83,6 +83,11 @@ export async function getQuickStats(
   const raw = response.data;
   const views: QuickStatView[] = [
     {
+      label: "Penerima Manfaat",
+      value: formatCount(raw.jumlahpenerima),
+      variant: "neutral",
+    },
+    {
       label: "Total SPPG Aktif",
       value: formatCount(raw.jumlahsppg),
       variant: "neutral",
@@ -100,11 +105,6 @@ export async function getQuickStats(
     {
       label: "Kelompok Manfaat",
       value: formatCount(raw.jumlahkelompok),
-      variant: "neutral",
-    },
-    {
-      label: "Penerima Manfaat",
-      value: formatCount(raw.jumlahpenerima),
       variant: "neutral",
     },
     {
@@ -211,6 +211,9 @@ export type ProvRankingsData = {
   penerima: RankedItem[];
   sppg: RankedItem[];
   petugas: RankedItem[];
+  supplier: RankedItem[];
+  kelompok: RankedItem[];
+  mitra: RankedItem[];
 };
 
 export async function getProvRankings(

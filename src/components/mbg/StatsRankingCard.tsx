@@ -190,6 +190,9 @@ const TAB_BADGE_COLOR: Record<string, "blue" | "orange" | "purple"> = {
   penerima: "blue",
   sppg: "orange",
   petugas: "purple",
+  supplier: "orange",
+  kelompok: "blue",
+  mitra: "purple",
 };
 
 export function StatsRankingCard({
@@ -199,7 +202,13 @@ export function StatsRankingCard({
   title: string;
   tabs: RankingTab[];
 }) {
-  const defaultTab = tabs[0]?.key ?? "";
+  const firstKey = tabs[0]?.key ?? "";
+  const [activeTab, setActiveTab] = useState(firstKey);
+
+  // When the tab list changes (indicator switched), reset to the first tab
+  useEffect(() => {
+    setActiveTab(tabs[0]?.key ?? "");
+  }, [tabs]);
 
   return (
     <Card className="h-full">
@@ -207,7 +216,7 @@ export function StatsRankingCard({
         <CardTitle className="text-base">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue={defaultTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="relative w-full h-auto md:h-12 p-2 rounded-xl">
             {tabs.map((tab) => (
               <TabsTrigger

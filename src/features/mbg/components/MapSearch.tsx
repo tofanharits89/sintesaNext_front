@@ -148,10 +148,14 @@ export function MapSearch({
   year = "2026",
   provinceId: controlledProvinceId,
   onProvinceChange,
+  indicator: controlledIndicator,
+  onIndicatorChange,
 }: {
   year?: string;
   provinceId?: string;
   onProvinceChange?: (provinceId: string, provinceName: string) => void;
+  indicator?: MbgIndicatorKey;
+  onIndicatorChange?: (indicator: MbgIndicatorKey) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -179,7 +183,23 @@ export function MapSearch({
     [isControlled, onProvinceChange],
   );
 
-  const [indicator, setIndicator] = useState<MbgIndicatorKey>("jumlahpenerima");
+  // Support both controlled (via props) and uncontrolled (internal) indicator state
+  const [internalIndicator, setInternalIndicator] = useState<MbgIndicatorKey>("jumlahpenerima");
+  const isIndicatorControlled = controlledIndicator !== undefined;
+  const indicator = isIndicatorControlled ? controlledIndicator : internalIndicator;
+
+  const setIndicator = useCallback(
+    (val: MbgIndicatorKey) => {
+      if (!isIndicatorControlled) {
+        setInternalIndicator(val);
+      }
+      if (onIndicatorChange) {
+        onIndicatorChange(val);
+      }
+    },
+    [isIndicatorControlled, onIndicatorChange],
+  );
+
   // Tracks when Leaflet map is ready — prevents layers firing before map init
   const [mapReady, setMapReady] = useState(false);
 
@@ -283,6 +303,16 @@ export function MapSearch({
       kabLayerRef.current = null;
       setMapReady(false);
     };
+  }, []);
+
+  // ─── Invalidate map size when container resizes ───────────────────────────
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver(() => {
+      mapRef.current?.invalidateSize();
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
   }, []);
 
   // ─── Update province choropleth layer ────────────────────────────────────
@@ -485,8 +515,8 @@ export function MapSearch({
   const internalProvinceValue = !provinceId ? "all" : provinceId;
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
+    <Card className="h-full flex flex-col">
+      <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0 shrink-0">
         <CardTitle className="text-base">Peta Distribusi MBG</CardTitle>
         <Button
           variant="outline"
@@ -498,9 +528,9 @@ export function MapSearch({
           Reset
         </Button>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="flex flex-col flex-1 space-y-3 min-h-0">
         {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 shrink-0">
           {/* Province selector */}
           <SearchableSelect
             options={provinceOptions}
@@ -530,11 +560,8 @@ export function MapSearch({
           </Select>
         </div>
 
-        {/* Map container */}
-        <div
-          className="relative w-full rounded-md overflow-hidden border z-0"
-          style={{ height: 420 }}
-        >
+        {/* Map container — grows to fill remaining card height, min 420px */}
+        <div className="relative w-full flex-1 min-h-[420px] rounded-md overflow-hidden border z-0">
           <div ref={containerRef} className="h-full w-full z-0" />
 
           {/* Back to national button */}
