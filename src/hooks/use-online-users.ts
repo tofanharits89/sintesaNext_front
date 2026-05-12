@@ -106,7 +106,9 @@ export function useOnlineUsers(): UseOnlineUsersReturn {
       const u = payload?.user || payload;
       if (!u || !u.id) return;
       setOnlineUsers((prev) => {
-        if (prev.some((p) => p?.user?.id === String(u.id))) return prev;
+        // Deduplicate by socketId to support multiple sessions for the same user
+        if (prev.some((p) => p?.socketId === payload?.socketId)) return prev;
+        
         const item: OnlineUser = {
           socketId: payload?.socketId || `sock-${u.id}-${Date.now()}`,
           user: {
