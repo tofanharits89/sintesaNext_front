@@ -24,6 +24,7 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "mbgIntervensi", // Makan Bergizi Gratis
     "swasembadaPangan", // Swasembada Pangan
     "jenisProgramStrategis", // Program Strategis (not used on Belanja page)
+    "jenisPrioritasPresiden", // Prioritas Presiden (not used on Belanja page)
     "komponen", // RKAKL Detail specific
     "subKomponen", // RKAKL Detail specific
     "item", // RKAKL Detail specific
@@ -83,6 +84,7 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "belanjaPemerintah",
     "mbgIntervensi",
     "jenisProgramStrategis",
+    "jenisPrioritasPresiden",
     "jenisPn",
     "programPrioritas",
     "kegiatanPrioritas",
@@ -129,6 +131,7 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "stuntingIntervensi",
     "mbgIntervensi",
     "jenisProgramStrategis",
+    "jenisPrioritasPresiden",
     "jenisTemaAnggaran",
     "kemiskinanEkstrim",
     "belanjaPemilu",
@@ -180,6 +183,7 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "stuntingIntervensi",
     "mbgIntervensi",
     "jenisProgramStrategis",
+    "jenisPrioritasPresiden",
     "jenisTemaAnggaran",
     "kemiskinanEkstrim",
     "belanjaPemilu",
@@ -236,6 +240,7 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "stuntingIntervensi",
     "mbgIntervensi",
     "jenisProgramStrategis",
+    "jenisPrioritasPresiden",
     "jenisTemaAnggaran",
     "kemiskinanEkstrim",
     "belanjaPemilu",
@@ -293,6 +298,7 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "stuntingIntervensi",
     "mbgIntervensi",
     "jenisProgramStrategis",
+    "jenisPrioritasPresiden",
     "jenisTemaAnggaran",
     "kemiskinanEkstrim",
     "belanjaPemilu",
@@ -365,6 +371,7 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "stuntingIntervensi",
     "mbgIntervensi",
     "jenisProgramStrategis",
+    "jenisPrioritasPresiden",
     "jenisTemaAnggaran",
     "kemiskinanEkstrim",
     "belanjaPemilu",
@@ -446,6 +453,7 @@ export const SCOPE_EXCLUSIONS_BASE: Record<
     "belanjaPemerintah",
     "mbgIntervensi",
     "jenisProgramStrategis",
+    "jenisPrioritasPresiden",
     "jenisTemaAnggaran",
     "jenisBlokir",
     "jenisPn",

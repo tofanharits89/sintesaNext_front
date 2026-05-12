@@ -372,6 +372,22 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
     },
   },
   {
+    key: "jenisPrioritasPresiden",
+    label: "Jenis Prioritas Presiden",
+    order: 217,
+    showInUI: true,
+    noYearSuffix: true,
+    query: {
+      columnName: "kdpriopres",
+      reference: {
+        database: "monev2026",
+        table: "smry_prioritas_presiden_2026",
+        joinKey: "kdpriopres",
+        nameColumn: "nmpriopres",
+      },
+    },
+  },
+  {
     key: "jenisTemaAnggaran",
     label: "Jenis Tema Anggaran",
     order: 205,
