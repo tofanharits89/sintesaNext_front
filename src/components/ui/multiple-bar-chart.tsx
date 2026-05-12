@@ -88,6 +88,7 @@ export function MultipleBarChartComponent({
           >
             <BarXAxis />
             <ChartTooltip
+              showDatePill={false}
               rows={(point) =>
                 series.map((s) => ({
                   color: s.color,

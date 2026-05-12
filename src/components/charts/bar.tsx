@@ -38,7 +38,7 @@ export interface BarProps {
   /** Additional class name for data labels */
   labelClassName?: string;
   /** Custom color for data labels */
-  labelColor?: string;
+  labelColor?: string | undefined;
 }
 
 // Same easing as Line chart for consistent animation feel
