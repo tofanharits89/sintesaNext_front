@@ -119,7 +119,7 @@ export function DatePicker({
           mode="single"
           selected={selectedDate}
           onSelect={handleDateSelect}
-          initialFocus
+          autoFocus
           captionLayout={captionLayout}
           {...(startMonth && { startMonth })}
           {...(endMonth && { endMonth })}
