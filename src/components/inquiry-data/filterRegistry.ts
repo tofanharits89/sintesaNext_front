@@ -379,12 +379,7 @@ export const INQUIRY_FILTER_DEFS: FilterDef[] = [
     noYearSuffix: true,
     query: {
       columnName: "kdpriopres",
-      reference: {
-        database: "monev2026",
-        table: "smry_prioritas_presiden_2026",
-        joinKey: "kdpriopres",
-        nameColumn: "nmpriopres",
-      },
+      nameColumn: "nmpriopres",
     },
   },
   {

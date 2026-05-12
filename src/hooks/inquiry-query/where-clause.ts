@@ -137,6 +137,8 @@ export function buildWhereClause(
 
     if (filterKey === "jenisProgramStrategis" && mengandungKata && mengandungKata.trim()) {
       whereConditions.push(`main.nmprogis LIKE '%${mengandungKata.trim()}%'`);
+    } else if (filterKey === "jenisPrioritasPresiden" && mengandungKata && mengandungKata.trim()) {
+      whereConditions.push(`main.nmpriopres LIKE '%${mengandungKata.trim()}%'`);
     } else if (mengandungKata && mengandungKata.trim() && config.referenceTable) {
       const alias = `${filterKey}_ref`;
       if (filterKey === "register") {

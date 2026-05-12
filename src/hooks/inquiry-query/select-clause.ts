@@ -143,6 +143,28 @@ export function buildSelectClause(
       return;
     }
 
+    if (filterKey === "jenisPrioritasPresiden") {
+      if (jenisTampilan !== "jangan_tampilkan") {
+        switch (jenisTampilan) {
+          case "kode":
+            selectColumns.push(
+              `main.${config.columnName} AS ${filterKey}_kode`,
+            );
+            break;
+          case "uraian":
+            selectColumns.push(`main.nmpriopres AS ${filterKey}_uraian`);
+            break;
+          case "kode_uraian":
+            selectColumns.push(
+              `main.${config.columnName} AS ${filterKey}_kode`,
+            );
+            selectColumns.push(`main.nmpriopres AS ${filterKey}_uraian`);
+            break;
+        }
+      }
+      return;
+    }
+
     const alias = `${filterKey}_ref`;
     const needsJoinForSelect =
       config.referenceTable &&
