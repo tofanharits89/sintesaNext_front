@@ -210,34 +210,25 @@ export default function DashboardMBGPage() {
             <StatsRankingCard
               title={selectedProvinceName ? `Statistik: ${selectedProvinceName}` : "Statistik Wilayah"}
               tabs={(() => {
-                // When a province is selected, only kab-level penerima data is available
-                if (selectedProvinceName) {
-                  return [
-                    {
-                      key: "penerima",
-                      label: "Penerima",
-                      items: kabRankingsData?.penerima ?? [],
-                    },
-                  ];
-                }
-                // National view: show the tab matching the selected map indicator
+                const rankingData = selectedProvinceName ? kabRankingsData : provRankingsData;
+
                 if (selectedIndicator === "jumlahsppg") {
-                  return [{ key: "sppg", label: "SPPG", items: provRankingsData?.sppg ?? [] }];
+                  return [{ key: "sppg", label: "SPPG", items: rankingData?.sppg ?? [] }];
                 }
                 if (selectedIndicator === "jumlahpetugas") {
-                  return [{ key: "petugas", label: "Petugas", items: provRankingsData?.petugas ?? [] }];
+                  return [{ key: "petugas", label: "Petugas", items: rankingData?.petugas ?? [] }];
                 }
                 if (selectedIndicator === "jumlahsupplier") {
-                  return [{ key: "supplier", label: "Supplier", items: provRankingsData?.supplier ?? [] }];
+                  return [{ key: "supplier", label: "Supplier", items: rankingData?.supplier ?? [] }];
                 }
                 if (selectedIndicator === "jumlahkelompok") {
-                  return [{ key: "kelompok", label: "Kelompok", items: provRankingsData?.kelompok ?? [] }];
+                  return [{ key: "kelompok", label: "Kelompok", items: rankingData?.kelompok ?? [] }];
                 }
                 if (selectedIndicator === "jumlahmitra") {
-                  return [{ key: "mitra", label: "Mitra", items: provRankingsData?.mitra ?? [] }];
+                  return [{ key: "mitra", label: "Mitra", items: rankingData?.mitra ?? [] }];
                 }
                 // Default: jumlahpenerima
-                return [{ key: "penerima", label: "Penerima", items: provRankingsData?.penerima ?? [] }];
+                return [{ key: "penerima", label: "Penerima", items: rankingData?.penerima ?? [] }];
               })()}
             />
           )}

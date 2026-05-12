@@ -20,9 +20,7 @@ import {
   type MbgIndicatorKey,
 } from "@/features/mbg/types/domain";
 import type { MbgProvChoroplethRow } from "@/features/mbg/api/services";
-import useJumlahPenerimaKab, {
-  type PenerimaKabItem,
-} from "@/components/mbg/overview/jumlahpenerimaKab";
+import { useKabRankings } from "@/features/mbg/hooks/useKabRankings";
 import provinces from "@/data/indonesia/provinces.json";
 
 import indoData from "@/components/mbg/overview/indobaru.json";
@@ -225,17 +223,47 @@ export function MapSearch({
     return dbRow?.nama_provinsi ?? selectedProvince?.name ?? "";
   }, [provinceId, choroplethData, selectedProvince]);
 
-  // Kab-level penerima data (uses jumlahpenerimaKab hook → /penerima-by-regency)
-  const { dataPenerimaKab } = useJumlahPenerimaKab(provNameForKab, year);
+  // Kab-level rankings for all indicators
+  const { data: kabRankingsData } = useKabRankings(provNameForKab, year);
 
-  // Kab penerima lookup: normalized kabkota → data
-  const penerimaKabMap = useMemo(() => {
-    const m = new Map<string, PenerimaKabItem>();
-    dataPenerimaKab.forEach((item) => {
-      m.set(normalizeName(item.kabkota), item);
+  // Kab rankings lookup: indicator -> normalized kabkota -> data
+  const regencyRankingsMap = useMemo(() => {
+    const mainMap = new Map<string, Map<string, { value: number; percentage: number }>>();
+
+    if (!kabRankingsData) return mainMap;
+
+    const indicators: (keyof typeof kabRankingsData)[] = [
+      "penerima",
+      "sppg",
+      "petugas",
+      "supplier",
+      "kelompok",
+      "mitra",
+    ];
+
+    indicators.forEach((key) => {
+      const subMap = new Map<string, { value: number; percentage: number }>();
+      kabRankingsData[key]?.forEach((item) => {
+        subMap.set(normalizeName(item.name), {
+          value: item.value,
+          percentage: item.percentage,
+        });
+      });
+      mainMap.set(key, subMap);
     });
-    return m;
-  }, [dataPenerimaKab]);
+
+    return mainMap;
+  }, [kabRankingsData]);
+
+  const getIndicatorKeyForRanking = (ind: MbgIndicatorKey): string => {
+    if (ind === "jumlahpenerima") return "penerima";
+    if (ind === "jumlahsppg") return "sppg";
+    if (ind === "jumlahpetugas") return "petugas";
+    if (ind === "jumlahsupplier") return "supplier";
+    if (ind === "jumlahkelompok") return "kelompok";
+    if (ind === "jumlahmitra") return "mitra";
+    return "penerima";
+  };
 
   // Build choropleth map keyed by wilkode (reliable) + normalized name (fallback)
   const choroplethMap = useMemo(() => {
@@ -424,36 +452,41 @@ export function MapSearch({
       if (!features.length) return;
 
       const kabGeoJSON = { type: "FeatureCollection", features };
-      const showPenerima =
-        indicator === "jumlahpenerima" && penerimaKabMap.size > 0;
+      
+      const rankingKey = getIndicatorKeyForRanking(indicator);
+      const subMap = regencyRankingsMap.get(rankingKey);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const layer = L.geoJSON(kabGeoJSON as any, {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         style: (feature: any) => {
           const kabName = (feature?.properties?.WADMKK as string) ?? "";
-          const kabRow = penerimaKabMap.get(normalizeName(kabName));
-          const fillColor =
-            showPenerima && kabRow
-              ? getColorByIndicator(kabRow.penerimakab, "jumlahpenerima")
-              : "#3498db";
+          const row = subMap?.get(normalizeName(kabName));
+          const value = row?.value ?? 0;
+          
           return {
-            fillColor,
-            fillOpacity: 0.65,
-            color: "#2c3e50",
+            fillColor: getColorByIndicator(value, indicator),
+            fillOpacity: 0.7,
+            color: "#ffffff",
             weight: 0.8,
           };
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onEachFeature: (feature: any, lyr: any) => {
           const kabName = (feature?.properties?.WADMKK as string) ?? "Kab/Kota";
-          const kabRow = penerimaKabMap.get(normalizeName(kabName));
-          const tooltipExtra =
-            showPenerima && kabRow
-              ? `<br/>Penerima: <strong>${fmt(kabRow.penerimakab)}</strong> (${Number(kabRow.persenpenerimakab).toFixed(1)}%)`
-              : "";
+          const row = subMap?.get(normalizeName(kabName));
+          const value = row?.value ?? 0;
+          const percentage = row?.percentage ?? 0;
+
+          const indicatorLabel =
+            MBG_INDICATOR_OPTIONS.find((o) => o.value === indicator)?.label ??
+            indicator;
+
           lyr.bindTooltip(
-            `<div style="font-size:12px;line-height:1.6"><strong>${kabName}</strong>${tooltipExtra}</div>`,
+            `<div style="font-size:12px;line-height:1.6">
+              <strong>${kabName}</strong><br/>
+              ${indicatorLabel}: <strong>${fmt(value)}</strong> (${percentage.toFixed(1)}%)
+            </div>`,
             { sticky: true, opacity: 0.97 },
           );
           lyr.on("mouseover", function (this: typeof lyr) {
@@ -476,7 +509,7 @@ export function MapSearch({
         // ignore
       }
     });
-  }, [selectedProvince, penerimaKabMap, indicator]);
+  }, [selectedProvince, regencyRankingsMap, indicator]);
 
   // Trigger province layer update — wait for mapReady + data/indicator changes
   useEffect(() => {

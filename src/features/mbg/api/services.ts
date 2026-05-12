@@ -230,6 +230,21 @@ export async function getProvRankings(
   return response.data;
 }
 
+export async function getRegencyRankings(
+  prov: string,
+  year: string = "2026",
+): Promise<ProvRankingsData> {
+  const params = new URLSearchParams({ prov, year });
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: ProvRankingsData;
+  }>(`/dashboard/mbg/regency-rankings?${params.toString()}`);
+  if (!response?.success || !response.data) {
+    throw new Error("Failed to fetch MBG regency rankings");
+  }
+  return response.data;
+}
+
 export type BgnMonthlyPoint = {
   month: string;
   realisasi2025: number | null;
