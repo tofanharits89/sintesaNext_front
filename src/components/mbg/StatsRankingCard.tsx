@@ -124,20 +124,20 @@ function RankingList({
                       <span className="text-[10px] font-bold tracking-tight text-muted-foreground">
                         Target: {it.target.toLocaleString("id-ID")}
                       </span>
-                      <span className="text-[10px] font-bold tracking-tight text-blue-700 dark:text-blue-300">
+                      <span className="text-[10px] font-bold tracking-tight text-slate-600 dark:text-slate-400">
                         {(it.attainment ?? 0).toFixed(1)}% Capaian
                       </span>
                     </div>
 
-                    {/* Layer 2: Progress Bar (Blue) */}
+                    {/* Layer 2: Progress Bar (Neutral) */}
                     <div
-                      className="absolute inset-0 bg-blue-600 transition-all duration-700 ease-in-out shadow-[inset_-2px_0_4px_rgba(0,0,0,0.1)]"
+                      className="absolute inset-0 bg-slate-500 transition-all duration-700 ease-in-out shadow-[inset_-2px_0_4px_rgba(0,0,0,0.1)]"
                       style={{
                         clipPath: `inset(0 ${100 - Math.min(100, it.attainment ?? 0)}% 0 0)`,
                       }}
                     />
 
-                    {/* Layer 3: Foreground Text (White - visible only over the blue bar) */}
+                    {/* Layer 3: Foreground Text (White - visible only over the neutral bar) */}
                     <div
                       className="absolute inset-0 flex items-center justify-between px-2 pointer-events-none transition-all duration-700 ease-in-out"
                       style={{

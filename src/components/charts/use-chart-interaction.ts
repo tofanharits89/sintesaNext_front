@@ -29,6 +29,8 @@ interface UseChartInteractionParams {
     lo: number
   ) => number;
   canInteract: boolean;
+  onMouseMove?: (event: React.MouseEvent<SVGGElement>) => void;
+  onMouseLeave?: () => void;
 }
 
 interface ChartInteractionResult {
@@ -57,6 +59,8 @@ export function useChartInteraction({
   xAccessor,
   bisectDate,
   canInteract,
+  onMouseMove: onMouseMoveProp,
+  onMouseLeave: onMouseLeaveProp,
 }: UseChartInteractionParams): ChartInteractionResult {
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
   const [selection, setSelection] = useState<ChartSelection | null>(null);
@@ -293,8 +297,8 @@ export function useChartInteraction({
 
   const interactionHandlers = canInteract
     ? {
-        onMouseMove: handleMouseMove,
-        onMouseLeave: handleMouseLeave,
+        onMouseMove: onMouseMoveProp || handleMouseMove,
+        onMouseLeave: onMouseLeaveProp || handleMouseLeave,
         onMouseDown: handleMouseDown,
         onMouseUp: handleMouseUp,
         onTouchStart: handleTouchStart,

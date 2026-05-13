@@ -1,16 +1,13 @@
 "use client";
 
 import {
-  ComposedChart,
+  BarChart,
   Bar,
   Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
+  BarXAxis,
+  Grid,
+} from "@/components/charts";
+import { ChartTooltip } from "@/components/charts/tooltip";
 import {
   Card,
   CardContent,
@@ -40,7 +37,7 @@ function deltaVariant(a: number, b: number) {
   return { pct, up: pct >= 0 };
 }
 
-const COLOR_BAR = "#3b82f6"; // blue-500
+const COLOR_BAR = "#64748b"; // slate-500 (neutral)
 const COLOR_LINE = "#f59e0b"; // amber-500
 
 export function EfektivitasProgramChart() {
@@ -53,12 +50,12 @@ export function EfektivitasProgramChart() {
   const item2026 = data.items.find((r) => r.tahun === "2026");
   const programName = item2025?.nmprogram ?? item2026?.nmprogram ?? "";
 
-  // Chart data: 2 bars (one per year)
+  // Chart data: 2 items (one per year)
   const chartData = data.items.map((r: EfektivitasYearItem) => ({
     tahun: r.tahun,
-    "Penerima Manfaat": r.penerima_manfaat,
-    "Efektivitas (%)": r.persentase_efektivitas,
-    rata: r.rata_realisasi_per_bulan,
+    "Penerima Manfaat": r.penerima_manfaat ?? 0,
+    "Efektivitas (%)": r.persentase_efektivitas ?? 0,
+    rata: r.rata_realisasi_per_bulan ?? 0,
   }));
 
   // Delta badges
@@ -115,114 +112,47 @@ export function EfektivitasProgramChart() {
         </div>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col p-6 pt-0 pb-4 min-w-0">
-        <div className="flex-1 min-h-[220px] w-full min-w-0">
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={1}>
-            <ComposedChart
+        <div className="flex-1 min-h-[220px] w-full min-w-0 relative">
+          <BarChart
             data={chartData}
-            margin={{ top: 8, right: 48, left: 8, bottom: 0 }}
-            barCategoryGap="40%"
+            xDataKey="tahun"
+            margin={{ top: 24, right: 10, left: 10, bottom: 20 }}
+            aspectRatio="auto"
+            className="h-full w-full"
           >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              vertical={false}
-              stroke="#e5e7eb"
-            />
-            <XAxis
-              dataKey="tahun"
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-              stroke="#888"
-            />
-            {/* Left Y-axis: penerima manfaat */}
-            <YAxis
-              yAxisId="left"
-              fontSize={10}
-              tickLine={false}
-              axisLine={false}
-              stroke="#888"
-              tickFormatter={(v) => fmtCompact(v as number)}
-              width={46}
-            />
-            {/* Right Y-axis: efektivitas % */}
-            <YAxis
-              yAxisId="right"
-              orientation="right"
-              fontSize={10}
-              tickLine={false}
-              axisLine={false}
-              stroke={COLOR_LINE}
-              tickFormatter={(v) => `${v}%`}
-              width={44}
-            />
-            <Tooltip
-              content={({ active, payload, label }) => {
-                if (!active || !payload?.length) return null;
-                const d = data.items.find((r) => r.tahun === label);
-                return (
-                  <div className="rounded-lg border bg-background p-2 shadow-sm text-sm min-w-[210px]">
-                    <p className="text-xs font-semibold text-foreground mb-1.5">
-                      Tahun {label}
-                    </p>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-2 h-2 rounded-full shrink-0"
-                          style={{ backgroundColor: COLOR_BAR }}
-                        />
-                        <span className="text-muted-foreground">Penerima:</span>
-                        <span className="font-medium ml-auto">
-                          {fmtRibuan(d?.penerima_manfaat ?? 0)}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-2 h-2 rounded-full shrink-0"
-                          style={{ backgroundColor: COLOR_LINE }}
-                        />
-                        <span className="text-muted-foreground">
-                          Efektivitas:
-                        </span>
-                        <span className="font-medium ml-auto">
-                          {d?.persentase_efektivitas ?? 0}%
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-sm shrink-0 bg-slate-400" />
-                        <span className="text-muted-foreground">
-                          Rata Real/bln:
-                        </span>
-                        <span className="font-medium ml-auto">
-                          {fmtCompact(d?.rata_realisasi_per_bulan ?? 0)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              }}
-            />
-            <Legend
-              wrapperStyle={{ fontSize: "12px" }}
-              formatter={(value) => value}
-            />
+            <Grid horizontal />
             <Bar
-              yAxisId="left"
               dataKey="Penerima Manfaat"
               fill={COLOR_BAR}
-              radius={[4, 4, 0, 0]}
-              maxBarSize={64}
+              lineCap="round"
             />
             <Line
-              yAxisId="right"
-              type="monotone"
               dataKey="Efektivitas (%)"
               stroke={COLOR_LINE}
-              strokeWidth={2.5}
-              dot={{ r: 5, fill: COLOR_LINE }}
-              activeDot={{ r: 7 }}
+              yDomain={[-15, 105]}
+              strokeWidth={3}
             />
-          </ComposedChart>
-        </ResponsiveContainer>
+            <BarXAxis />
+            <ChartTooltip
+              rows={(point) => [
+                {
+                  color: COLOR_BAR,
+                  label: "Penerima Manfaat",
+                  value: fmtRibuan(point["Penerima Manfaat"] as number),
+                },
+                {
+                  color: COLOR_LINE,
+                  label: "Efektivitas (%)",
+                  value: `${point["Efektivitas (%)"]}%`,
+                },
+                {
+                  color: "#94a3b8",
+                  label: "Rata Real/bln",
+                  value: fmtCompact(point.rata as number),
+                }
+              ]}
+            />
+          </BarChart>
         </div>
 
         {/* Stat row below chart */}

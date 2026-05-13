@@ -22,6 +22,7 @@ import {
   type Margin,
   type TooltipData,
 } from "./chart-context";
+import { useChartInteraction } from "./use-chart-interaction";
 
 export type BarOrientation = "vertical" | "horizontal";
 
@@ -72,20 +73,25 @@ function extractBarConfigs(children: ReactNode): LineConfig[] {
         ? childType.displayName || childType.name || ""
         : "";
 
-    const props = child.props as BarProps | undefined;
+    const props = child.props as (BarProps & { strokeWidth?: number; yDomain?: [number, number] }) | undefined;
     const isBarComponent =
       componentName === "Bar" ||
       (props && typeof props.dataKey === "string" && props.dataKey.length > 0);
 
-    if (isBarComponent && props?.dataKey) {
+    if ((isBarComponent || componentName === "Line") && props?.dataKey) {
       // Use stroke for tooltip dot color if provided, otherwise fall back to fill
       // This allows gradient/pattern fills to have a solid dot color
       const dotColor =
         props.stroke || props.fill || "var(--chart-line-primary)";
+      
+      const isLine = componentName === "Line";
+      
       configs.push({
         dataKey: props.dataKey,
         stroke: dotColor,
-        strokeWidth: 0,
+        strokeWidth: isLine ? (props.strokeWidth || 2.5) : 0,
+        type: isLine ? "line" : "bar",
+        ...(isLine && props.yDomain ? { yDomain: props.yDomain } : {}),
       });
     }
   });
@@ -110,7 +116,7 @@ function isPostOverlayComponent(child: ReactElement): boolean {
       ? childType.displayName || childType.name || ""
       : "";
 
-  return componentName === "ChartMarkers" || componentName === "MarkerGroup";
+  return componentName === "ChartMarkers" || componentName === "MarkerGroup" || componentName === "Line";
 }
 
 interface ChartInnerProps {
@@ -201,12 +207,15 @@ function ChartInner({
 
   // Compute max value considering stacking
   const maxValue = useMemo(() => {
+    // Compute bar-related series for layout calculations
+    const barSeriesConfigs = lines.filter(l => l.type !== "line");
+    
     if (stacked) {
       // For stacked bars, sum all values at each data point
       let max = 0;
       for (const d of data) {
         let sum = 0;
-        for (const line of lines) {
+        for (const line of barSeriesConfigs) {
           const value = d[line.dataKey];
           if (typeof value === "number") {
             sum += value;
@@ -218,9 +227,9 @@ function ChartInner({
       }
       return max || 100;
     }
-    // For grouped bars, find max single value
+    // For grouped bars, find max single value among bar series
     let max = 0;
-    for (const line of lines) {
+    for (const line of barSeriesConfigs) {
       for (const d of data) {
         const value = d[line.dataKey];
         if (typeof value === "number" && value > max) {
@@ -326,9 +335,12 @@ function ChartInner({
       const xPositions: Record<string, number> = {};
       const barPos = categoryScale(String(clampedIndex)) ?? 0;
 
+      const barSeries = lines.filter(l => l.type !== "line");
+      const lineSeries = lines.filter(l => l.type === "line");
+
       if (isHorizontal) {
         // Horizontal bars: dots at end of bar (x = value), centered vertically in band
-        const seriesCount = lines.length;
+        const seriesCount = barSeries.length;
         const groupGap = seriesCount > 1 ? 4 : 0;
         const individualBarHeight =
           seriesCount > 0
@@ -338,7 +350,7 @@ function ChartInner({
         if (stacked) {
           // Stacked horizontal: all bars same y, x at cumulative end
           let cumulative = 0;
-          for (const line of lines) {
+          for (const line of barSeries) {
             const value = d[line.dataKey];
             if (typeof value === "number") {
               cumulative += value;
@@ -348,7 +360,7 @@ function ChartInner({
           }
         } else {
           // Grouped horizontal: each bar at its own y position
-          lines.forEach((line, idx) => {
+          barSeries.forEach((line, idx) => {
             const value = d[line.dataKey];
             if (typeof value === "number") {
               xPositions[line.dataKey] = valueScale(value) ?? 0;
@@ -359,11 +371,20 @@ function ChartInner({
             }
           });
         }
+        
+        // Handle line series separately (always centered in band)
+        for (const line of lineSeries) {
+          const value = d[line.dataKey];
+          if (typeof value === "number") {
+            xPositions[line.dataKey] = valueScale(value) ?? 0;
+            yPositions[line.dataKey] = barPos + bandWidth / 2;
+          }
+        }
       } else if (stacked) {
         // Vertical stacked bars
         let cumulative = 0;
         let seriesIdx = 0;
-        for (const line of lines) {
+        for (const line of barSeries) {
           const value = d[line.dataKey];
           if (typeof value === "number") {
             cumulative += value;
@@ -373,16 +394,28 @@ function ChartInner({
             seriesIdx++;
           }
         }
+        
+        // Lines always centered in band and use their own values
+        for (const line of lineSeries) {
+          const value = d[line.dataKey];
+          if (typeof value === "number") {
+            // If the line has a custom domain (dual axis), we should use a local scale
+            // But for tooltip pos, we'll use the main scale or just calculate it
+            // Actually, Line component handles its own dots, but Tooltip needs positions
+            yPositions[line.dataKey] = valueScale(value) ?? 0;
+            xPositions[line.dataKey] = barPos + bandWidth / 2;
+          }
+        }
       } else {
         // Vertical grouped bars
-        const seriesCount = lines.length;
+        const seriesCount = barSeries.length;
         const groupGap = seriesCount > 1 ? 4 : 0;
         const individualBarWidth =
           seriesCount > 0
             ? (bandWidth - groupGap * (seriesCount - 1)) / seriesCount
             : bandWidth;
 
-        lines.forEach((line, idx) => {
+        barSeries.forEach((line, idx) => {
           const value = d[line.dataKey];
           if (typeof value === "number") {
             yPositions[line.dataKey] = valueScale(value) ?? 0;
@@ -392,6 +425,27 @@ function ChartInner({
               individualBarWidth / 2;
           }
         });
+
+        // Lines always centered in band
+        for (const line of lineSeries) {
+          const value = d[line.dataKey];
+          if (typeof value === "number") {
+            // Handle dual-axis positioning by using the series-specific scale
+            let yPos: number;
+            if (line.yDomain) {
+              const localScale = scaleLinear({
+                range: [innerHeight, 0],
+                domain: line.yDomain,
+              });
+              yPos = localScale(value) ?? 0;
+            } else {
+              yPos = valueScale(value) ?? 0;
+            }
+            
+            yPositions[line.dataKey] = yPos;
+            xPositions[line.dataKey] = barPos + bandWidth / 2;
+          }
+        }
       }
 
       // Tooltip position: for horizontal, position at max bar end; for vertical, center of band
@@ -409,7 +463,7 @@ function ChartInner({
         index: clampedIndex,
         x: tooltipX,
         yPositions,
-        xPositions: Object.keys(xPositions).length > 0 ? xPositions : undefined,
+        xPositions,
       });
       setHoveredBarIndex(clampedIndex);
     },
@@ -420,19 +474,39 @@ function ChartInner({
       lines,
       margin.left,
       margin.top,
-      categoryAccessor,
       columnWidth,
       bandWidth,
       isHorizontal,
       stacked,
       stackGap,
+      innerHeight,
+      setTooltipData,
+      setHoveredBarIndex,
     ]
   );
 
   const handleMouseLeave = useCallback(() => {
     setTooltipData(null);
     setHoveredBarIndex(null);
-  }, []);
+  }, [setTooltipData, setHoveredBarIndex]);
+
+  const {
+    selection,
+    clearSelection,
+    interactionHandlers,
+    interactionStyle,
+  } = useChartInteraction({
+    xScale: categoryScale as any,
+    yScale: valueScale,
+    data,
+    lines,
+    margin,
+    xAccessor: (d: any) => new Date(String(d.tahun || d.date || 0)),
+    bisectDate: (data: any, date: any) => 0,
+    canInteract: isLoaded,
+    onMouseMove: handleMouseMove,
+    onMouseLeave: handleMouseLeave,
+  });
 
   // Early return if dimensions not ready
   if (width < 10 || height < 10) {

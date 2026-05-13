@@ -66,6 +66,8 @@ export interface LineConfig {
   dataKey: string;
   stroke: string;
   strokeWidth: number;
+  type?: "bar" | "line";
+  yDomain?: [number, number];
 }
 
 export interface ChartContextValue {
