@@ -86,7 +86,7 @@ export const transformPersentaseKL = (data: any) => {
 export const getTrenRealisasiLines = (data: any) => {
   if (!data?.series) return [];
   
-  const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444"] as const;
+  const colors = ["#7ca6cf", "#82b87a", "#e08888", "#a78dc9"] as const;
   
   return data.series.map((serie: any, index: number) => {
     const stroke: string = colors[index % colors.length] ?? "#3b82f6";

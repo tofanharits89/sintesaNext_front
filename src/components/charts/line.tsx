@@ -68,12 +68,53 @@ export function Line({
       .filter((p): p is { x: number; y: number; value: number; index: number } => p !== null);
   }, [data, dataKey, barScale, bandWidth, yScale]);
 
-  // Generate SVG path string
+  // Generate SVG path string (monotone cubic - no overshoot)
   const pathData = useMemo(() => {
     if (points.length < 2) return "";
-    return points.reduce((acc, p, i) => {
-      return i === 0 ? `M ${p.x},${p.y}` : `${acc} L ${p.x},${p.y}`;
-    }, "");
+    if (points.length === 2) {
+      return `M ${points[0]!.x},${points[0]!.y} L ${points[1]!.x},${points[1]!.y}`;
+    }
+    const n = points.length;
+    // Compute tangents (monotone)
+    const dx: number[] = [];
+    const dy: number[] = [];
+    const m: number[] = [];
+    for (let i = 0; i < n - 1; i++) {
+      dx.push(points[i + 1]!.x - points[i]!.x);
+      dy.push(points[i + 1]!.y - points[i]!.y);
+      m.push(dy[i]! / dx[i]!);
+    }
+    const tangents: number[] = [m[0]!];
+    for (let i = 1; i < n - 1; i++) {
+      if (m[i - 1]! * m[i]! <= 0) {
+        tangents.push(0);
+      } else {
+        tangents.push((m[i - 1]! + m[i]!) / 2);
+      }
+    }
+    tangents.push(m[n - 2]!);
+    // Clamp tangents for monotonicity
+    for (let i = 0; i < n - 1; i++) {
+      if (m[i] === 0) { tangents[i] = 0; tangents[i + 1] = 0; continue; }
+      const a = tangents[i]! / m[i]!;
+      const b = tangents[i + 1]! / m[i]!;
+      const s = a * a + b * b;
+      if (s > 9) {
+        const t = 3 / Math.sqrt(s);
+        tangents[i] = t * a * m[i]!;
+        tangents[i + 1] = t * b * m[i]!;
+      }
+    }
+    let d = `M ${points[0]!.x},${points[0]!.y}`;
+    for (let i = 0; i < n - 1; i++) {
+      const seg = dx[i]! / 3;
+      const cp1x = points[i]!.x + seg;
+      const cp1y = points[i]!.y + tangents[i]! * seg;
+      const cp2x = points[i + 1]!.x - seg;
+      const cp2y = points[i + 1]!.y - tangents[i + 1]! * seg;
+      d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${points[i + 1]!.x},${points[i + 1]!.y}`;
+    }
+    return d;
   }, [points]);
 
   if (!barScale || !bandWidth) {
