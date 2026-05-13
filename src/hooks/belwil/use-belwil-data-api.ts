@@ -139,73 +139,15 @@ export function useBelwilDataApi() {
           { responseType: "blob" },
         );
 
-        const blob = blobResp instanceof Blob ? blobResp : new Blob([blobResp]);
-
-        let parsed: QueryExecutionResult | null = null;
-        try {
-          const text = await blob.text();
-          if (text && text.trim().startsWith("{")) {
-            parsed = JSON.parse(text);
-            if (parsed && parsed.success === false) {
-              throw new Error(parsed.error || "Failed to get data for Excel");
-            }
-          }
-        } catch (_) {}
-
-        const XLSX = await import("xlsx");
-        const wb = XLSX.utils.book_new();
-
-        const MONTH_LABELS = [
-          "JAN",
-          "FEB",
-          "MAR",
-          "APR",
-          "MEI",
-          "JUN",
-          "JUL",
-          "AGS",
-          "SEP",
-          "OKT",
-          "NOV",
-          "DES",
-        ];
-        const isMonetary = (col: string) => {
-          const c = col.toLowerCase();
-          return (
-            c.includes("pagu") ||
-            c.includes("real") ||
-            c.includes("realisasi") ||
-            MONTH_LABELS.includes(col.toUpperCase())
-          );
-        };
-
-        const columns = parsed?.columns?.length
-          ? parsed.columns
-          : parsed?.data?.length
-            ? Object.keys(parsed.data[0])
-            : [];
-
-        const aoa: any[][] = [columns];
-        const rows = parsed?.data || [];
-        for (const row of rows) {
-          const arr: any[] = columns.map((col) => {
-            const v = (row as any)[col];
-            if (v === null || v === undefined || v === "") return null;
-            if (isMonetary(col)) {
-              const num = Number(v);
-              return !Number.isNaN(num) ? num : v;
-            }
-            return v;
-          });
-          aoa.push(arr);
-        }
-
-        const ws = XLSX.utils.aoa_to_sheet(aoa);
-        XLSX.utils.book_append_sheet(wb, ws, "Belanja Kewilayahan");
-        XLSX.writeFile(
-          wb,
-          `belanja_kewilayahan_${reportParams.tahun}_${Date.now()}.xlsx`,
-        );
+        const blobObj = blobResp instanceof Blob ? blobResp : new Blob([blobResp]);
+        const url = window.URL.createObjectURL(blobObj);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `belanja_kewilayahan_${reportParams.tahun}_${Date.now()}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
       } catch (error) {
         console.error("Excel download error:", error);
         throw error;
@@ -362,73 +304,15 @@ export function useBelwilTematikDataApi() {
           { responseType: "blob" },
         );
 
-        const blob = blobResp instanceof Blob ? blobResp : new Blob([blobResp]);
-
-        let parsed: QueryExecutionResult | null = null;
-        try {
-          const text = await blob.text();
-          if (text && text.trim().startsWith("{")) {
-            parsed = JSON.parse(text);
-            if (parsed && parsed.success === false) {
-              throw new Error(parsed.error || "Failed to get data for Excel");
-            }
-          }
-        } catch (_) {}
-
-        const XLSX = await import("xlsx");
-        const wb = XLSX.utils.book_new();
-
-        const MONTH_LABELS = [
-          "JAN",
-          "FEB",
-          "MAR",
-          "APR",
-          "MEI",
-          "JUN",
-          "JUL",
-          "AGS",
-          "SEP",
-          "OKT",
-          "NOV",
-          "DES",
-        ];
-        const isMonetary = (col: string) => {
-          const c = col.toLowerCase();
-          return (
-            c.includes("pagu") ||
-            c.includes("real") ||
-            c.includes("realisasi") ||
-            MONTH_LABELS.includes(col.toUpperCase())
-          );
-        };
-
-        const columns = parsed?.columns?.length
-          ? parsed.columns
-          : parsed?.data?.length
-            ? Object.keys(parsed.data[0])
-            : [];
-
-        const aoa: any[][] = [columns];
-        const rows = parsed?.data || [];
-        for (const row of rows) {
-          const arr: any[] = columns.map((col) => {
-            const v = (row as any)[col];
-            if (v === null || v === undefined || v === "") return null;
-            if (isMonetary(col)) {
-              const num = Number(v);
-              return !Number.isNaN(num) ? num : v;
-            }
-            return v;
-          });
-          aoa.push(arr);
-        }
-
-        const ws = XLSX.utils.aoa_to_sheet(aoa);
-        XLSX.utils.book_append_sheet(wb, ws, "Belwil Tematik");
-        XLSX.writeFile(
-          wb,
-          `belwil_tematik_${reportParams.tipeLaporan}_${reportParams.tahun}_${Date.now()}.xlsx`,
-        );
+        const blobObj = blobResp instanceof Blob ? blobResp : new Blob([blobResp]);
+        const url = window.URL.createObjectURL(blobObj);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `belwil_tematik_${reportParams.tipeLaporan}_${reportParams.tahun}_${Date.now()}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
       } catch (error) {
         console.error("Excel download error:", error);
         throw error;
@@ -579,61 +463,15 @@ export function useBelwilSubsidiDataApi() {
           { responseType: "blob" },
         );
 
-        const blob = blobResp instanceof Blob ? blobResp : new Blob([blobResp]);
-
-        let parsed: QueryExecutionResult | null = null;
-        try {
-          const text = await blob.text();
-          if (text && text.trim().startsWith("{")) {
-            parsed = JSON.parse(text);
-            if (parsed && parsed.success === false) {
-              throw new Error(parsed.error || "Failed to get data for Excel");
-            }
-          }
-        } catch (_) {}
-
-        const XLSX = await import("xlsx");
-        const wb = XLSX.utils.book_new();
-
-        const isNumericCol = (col: string) => {
-          const c = col.toLowerCase();
-          return (
-            /^real\d{1,2}$/.test(c) ||
-            /^jml_penerima\d{1,2}$/.test(c) ||
-            /^jml_va\d{1,2}$/.test(c) ||
-            c === "total_realisasi" ||
-            c === "total_penerima" ||
-            c === "total_va"
-          );
-        };
-
-        const columns = parsed?.columns?.length
-          ? parsed.columns
-          : parsed?.data?.length
-            ? Object.keys(parsed.data[0])
-            : [];
-
-        const aoa: any[][] = [columns];
-        const rows = parsed?.data || [];
-        for (const row of rows) {
-          const arr: any[] = columns.map((col) => {
-            const v = (row as any)[col];
-            if (v === null || v === undefined || v === "") return null;
-            if (isNumericCol(col)) {
-              const num = Number(v);
-              return !Number.isNaN(num) ? num : v;
-            }
-            return v;
-          });
-          aoa.push(arr);
-        }
-
-        const ws = XLSX.utils.aoa_to_sheet(aoa);
-        XLSX.utils.book_append_sheet(wb, ws, "Subsidi Kewilayahan");
-        XLSX.writeFile(
-          wb,
-          `subsidi_kewilayahan_${reportParams.tahun}_${Date.now()}.xlsx`,
-        );
+        const blobObj = blobResp instanceof Blob ? blobResp : new Blob([blobResp]);
+        const url = window.URL.createObjectURL(blobObj);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `subsidi_kewilayahan_${reportParams.tahun}_${Date.now()}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
       } catch (error) {
         console.error("Excel download error:", error);
         throw error;
@@ -784,59 +622,15 @@ export function useBelwilBansosDataApi() {
           { responseType: "blob" },
         );
 
-        const blob = blobResp instanceof Blob ? blobResp : new Blob([blobResp]);
-
-        let parsed: QueryExecutionResult | null = null;
-        try {
-          const text = await blob.text();
-          if (text && text.trim().startsWith("{")) {
-            parsed = JSON.parse(text);
-            if (parsed && parsed.success === false) {
-              throw new Error(parsed.error || "Failed to get data for Excel");
-            }
-          }
-        } catch (_) {}
-
-        const XLSX = await import("xlsx");
-        const wb = XLSX.utils.book_new();
-
-        const isNumericCol = (col: string) => {
-          const c = col.toLowerCase();
-          return (
-            /^real\d{1,2}$/.test(c) ||
-            /^jml\d{1,2}$/.test(c) ||
-            c === "total_realisasi" ||
-            c === "total_penerima"
-          );
-        };
-
-        const columns = parsed?.columns?.length
-          ? parsed.columns
-          : parsed?.data?.length
-            ? Object.keys(parsed.data[0])
-            : [];
-
-        const aoa: any[][] = [columns];
-        const rows = parsed?.data || [];
-        for (const row of rows) {
-          const arr: any[] = columns.map((col) => {
-            const v = (row as any)[col];
-            if (v === null || v === undefined || v === "") return null;
-            if (isNumericCol(col)) {
-              const num = Number(v);
-              return !Number.isNaN(num) ? num : v;
-            }
-            return v;
-          });
-          aoa.push(arr);
-        }
-
-        const ws = XLSX.utils.aoa_to_sheet(aoa);
-        XLSX.utils.book_append_sheet(wb, ws, "Bansos Kewilayahan");
-        XLSX.writeFile(
-          wb,
-          `bansos_kewilayahan_${reportParams.tahun}_${Date.now()}.xlsx`,
-        );
+        const blobObj = blobResp instanceof Blob ? blobResp : new Blob([blobResp]);
+        const url = window.URL.createObjectURL(blobObj);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `bansos_kewilayahan_${reportParams.tahun}_${Date.now()}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
       } catch (error) {
         console.error("Excel download error:", error);
         throw error;
