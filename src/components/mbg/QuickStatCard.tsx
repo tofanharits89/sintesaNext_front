@@ -25,7 +25,7 @@ export function QuickStatCard({
       : "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300";
 
   return (
-    <div className="rounded-lg p-3 bg-card text-card-foreground shadow border relative">
+    <div className="rounded-lg p-3 pr-6 bg-card text-card-foreground shadow border relative">
       {trend && (
         <Badge variant="secondary" className={cn("absolute top-2 right-2 text-xs", badgeClasses)}>
           {trend}
@@ -35,7 +35,7 @@ export function QuickStatCard({
         {icon}
         <p className="text-xs text-muted-foreground">{label}</p>
       </div>
-      <p className="mt-1 text-lg font-semibold">{value}</p>
+      <p className="mt-1 text-lg font-semibold font-mono text-right">{value}</p>
     </div>
   );
 }

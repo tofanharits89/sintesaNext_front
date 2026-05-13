@@ -83,6 +83,8 @@ export const QuickStatsSection = ({ quickStats }: QuickStatsSectionProps) => {
             icon={statCards[i]?.icon}
             loading={true}
             value="0"
+            className="pr-6"
+            valueClassName="font-mono text-right"
           />
         ))
       ) : (
@@ -92,6 +94,8 @@ export const QuickStatsSection = ({ quickStats }: QuickStatsSectionProps) => {
             label={card.label}
             icon={card.icon}
             value={card.value}
+            className="pr-6"
+            valueClassName="font-mono text-right"
           />
         ))
       )}
