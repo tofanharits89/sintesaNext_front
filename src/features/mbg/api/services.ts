@@ -39,6 +39,7 @@ export type QuickStatView = {
   value: string | number;
   trend?: string;
   variant?: "up" | "down" | "neutral";
+  breakdown?: { category: string; value: number }[];
 };
 
 type MbgQuickStatsApiData = {
@@ -48,6 +49,7 @@ type MbgQuickStatsApiData = {
   jumlahkelompok: number;
   jumlahpenerima: number;
   jumlahmitra: number;
+  breakdown_kelompok?: { category: string; value: number }[];
 };
 
 type MbgQuickStatsApiResponse = {
@@ -106,6 +108,7 @@ export async function getQuickStats(
       label: "Kelompok Manfaat",
       value: formatCount(raw.jumlahkelompok),
       variant: "neutral",
+      breakdown: raw.breakdown_kelompok,
     },
     {
       label: "Total Mitra",
@@ -163,6 +166,7 @@ export type MbgProvChoroplethRow = {
   jumlahkelompok: number;
   jumlahpenerima: number;
   jumlahmitra: number;
+  breakdown_kelompok?: { category: string; value: number }[];
 };
 
 export async function getMapChoropleth(
@@ -205,6 +209,7 @@ export type RankedItem = {
   percentage: number;
   target?: number | null;
   attainment?: number | null;
+  breakdown?: { category: string; value: number }[];
 };
 
 export type ProvRankingsData = {

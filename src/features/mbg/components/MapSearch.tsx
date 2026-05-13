@@ -395,6 +395,21 @@ export function MapSearch({
             `<div style="font-size:12px;line-height:1.6">
               <strong>${name}</strong><br/>
               ${indicatorLabel}: <strong>${fmt(value)}</strong>
+              ${
+                indicator === "jumlahkelompok" && row?.breakdown_kelompok
+                  ? `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:10px;color:#666">
+                      ${row.breakdown_kelompok
+                        .map(
+                          (b) =>
+                            `<div style="display:flex;justify-content:space-between;gap:12px">
+                              <span>${b.category}</span>
+                              <span style="font-weight:600">${fmt(b.value)}</span>
+                            </div>`,
+                        )
+                        .join("")}
+                    </div>`
+                  : ""
+              }
             </div>`,
             { sticky: true, opacity: 0.97 },
           );
@@ -455,6 +470,7 @@ export function MapSearch({
       
       const rankingKey = getIndicatorKeyForRanking(indicator);
       const subMap = regencyRankingsMap.get(rankingKey);
+      const kelompokBreakdownMap = regencyRankingsMap.get("kelompok");
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const layer = L.geoJSON(kabGeoJSON as any, {
@@ -482,10 +498,27 @@ export function MapSearch({
             MBG_INDICATOR_OPTIONS.find((o) => o.value === indicator)?.label ??
             indicator;
 
+          const kabBreakdown = kelompokBreakdownMap?.get(normalizeName(kabName)) as any;
+
           lyr.bindTooltip(
             `<div style="font-size:12px;line-height:1.6">
               <strong>${kabName}</strong><br/>
               ${indicatorLabel}: <strong>${fmt(value)}</strong> (${percentage.toFixed(1)}%)
+              ${
+                indicator === "jumlahkelompok" && kabBreakdown?.breakdown
+                  ? `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:10px;color:#666">
+                      ${kabBreakdown.breakdown
+                        .map(
+                          (b: any) =>
+                            `<div style="display:flex;justify-content:space-between;gap:12px">
+                              <span>${b.category}</span>
+                              <span style="font-weight:600">${fmt(b.value)}</span>
+                            </div>`,
+                        )
+                        .join("")}
+                    </div>`
+                  : ""
+              }
             </div>`,
             { sticky: true, opacity: 0.97 },
           );

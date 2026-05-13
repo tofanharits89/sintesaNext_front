@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ export type RankedItem = {
   percentage: number;
   target?: number | null;
   attainment?: number | null;
+  breakdown?: { category: string; value: number }[];
 };
 
 export type RankingTab = {
@@ -149,6 +151,62 @@ function RankingList({
                         {(it.attainment ?? 0).toFixed(1)}% Capaian
                       </span>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Breakdown Row: Category distribution (kelompok only) */}
+              {it.breakdown && it.breakdown.length > 0 && (
+                <div className="mt-1.5 flex flex-col gap-1">
+                  <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-muted/50 border border-muted-foreground/5">
+                    {it.breakdown.map((b, bIdx) => {
+                      const colors = [
+                        "bg-blue-500",
+                        "bg-indigo-500",
+                        "bg-cyan-500",
+                        "bg-sky-500",
+                        "bg-teal-500",
+                        "bg-slate-400",
+                      ];
+                      const colorClass = colors[bIdx % colors.length];
+                      const width = ((b.value / (it.value || 1)) * 100).toFixed(1);
+                      if (parseFloat(width) < 1) return null;
+                      return (
+                        <div
+                          key={bIdx}
+                          className={cn("h-full transition-all", colorClass)}
+                          style={{ width: `${width}%` }}
+                          title={`${b.category}: ${b.value.toLocaleString("id-ID")}`}
+                        />
+                      );
+                    })}
+                  </div>
+                  <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5 leading-none">
+                    {it.breakdown.slice(0, 4).map((b, bIdx) => (
+                      <div key={bIdx} className="flex items-center gap-1">
+                        <div
+                          className={cn(
+                            "w-1.5 h-1.5 rounded-full shrink-0",
+                            [
+                              "bg-blue-500",
+                              "bg-indigo-500",
+                              "bg-cyan-500",
+                              "bg-sky-500",
+                              "bg-teal-500",
+                              "bg-slate-400",
+                            ][bIdx % 6],
+                          )}
+                        />
+                        <span className="text-[9px] font-medium text-muted-foreground whitespace-nowrap uppercase tracking-tighter">
+                          {b.category}: {b.value.toLocaleString("id-ID")}
+                        </span>
+                      </div>
+                    ))}
+                    {it.breakdown.length > 4 && (
+                      <span className="text-[9px] text-muted-foreground font-medium uppercase tracking-tighter">
+                        +{it.breakdown.length - 4} LAINNYA
+                      </span>
+                    )}
                   </div>
                 </div>
               )}

@@ -183,6 +183,7 @@ export default function DashboardMBGPage() {
                   value={String(s.value)}
                   trend={s.trend}
                   trendVariant={(s.variant as any) ?? "neutral"}
+                  breakdown={s.breakdown}
                 />
               );
             })}
