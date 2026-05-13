@@ -228,7 +228,7 @@ export function MapSearch({
 
   // Kab rankings lookup: indicator -> normalized kabkota -> data
   const regencyRankingsMap = useMemo(() => {
-    const mainMap = new Map<string, Map<string, { value: number; percentage: number }>>();
+    const mainMap = new Map<string, Map<string, any>>();
 
     if (!kabRankingsData) return mainMap;
 
@@ -242,12 +242,9 @@ export function MapSearch({
     ];
 
     indicators.forEach((key) => {
-      const subMap = new Map<string, { value: number; percentage: number }>();
+      const subMap = new Map<string, any>();
       kabRankingsData[key]?.forEach((item) => {
-        subMap.set(normalizeName(item.name), {
-          value: item.value,
-          percentage: item.percentage,
-        });
+        subMap.set(normalizeName(item.name), item);
       });
       mainMap.set(key, subMap);
     });
@@ -396,7 +393,19 @@ export function MapSearch({
               <strong>${name}</strong><br/>
               ${indicatorLabel}: <strong>${fmt(value)}</strong>
               ${
-                indicator === "jumlahkelompok" && row?.breakdown_kelompok
+                indicator === "jumlahsppg" && row?.breakdown_sppg
+                  ? `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:10px;color:#666">
+                      ${row.breakdown_sppg
+                        .map(
+                          (b) =>
+                            `<div style="display:flex;justify-content:space-between;gap:12px">
+                              <span>${b.category}</span>
+                              <span style="font-weight:600">${fmt(b.value)}</span>
+                            </div>`,
+                        )
+                        .join("")}
+                    </div>`
+                  : indicator === "jumlahkelompok" && row?.breakdown_kelompok
                   ? `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:10px;color:#666">
                       ${row.breakdown_kelompok
                         .map(
@@ -408,7 +417,43 @@ export function MapSearch({
                         )
                         .join("")}
                     </div>`
-                  : ""
+                  : indicator === "jumlahsupplier" && row?.breakdown_supplier
+                    ? `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:10px;color:#666">
+                        ${row.breakdown_supplier
+                          .map(
+                            (b) =>
+                              `<div style="display:flex;justify-content:space-between;gap:12px">
+                                <span>${b.category}</span>
+                                <span style="font-weight:600">${fmt(b.value)}</span>
+                              </div>`,
+                          )
+                          .join("")}
+                      </div>`
+                    : indicator === "jumlahpetugas" && row?.breakdown_petugas
+                      ? `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:10px;color:#666">
+                          ${row.breakdown_petugas
+                            .map(
+                              (b) =>
+                                `<div style="display:flex;justify-content:space-between;gap:12px">
+                                  <span>${b.category}</span>
+                                  <span style="font-weight:600">${fmt(b.value)}</span>
+                                </div>`,
+                            )
+                            .join("")}
+                        </div>`
+                      : indicator === "jumlahmitra" && row?.breakdown_mitra
+                        ? `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:10px;color:#666">
+                            ${row.breakdown_mitra
+                              .map(
+                                (b) =>
+                                  `<div style="display:flex;justify-content:space-between;gap:12px">
+                                    <span>${b.category}</span>
+                                    <span style="font-weight:600">${fmt(b.value)}</span>
+                                  </div>`,
+                              )
+                              .join("")}
+                          </div>`
+                        : ""
               }
             </div>`,
             { sticky: true, opacity: 0.97 },
@@ -490,7 +535,7 @@ export function MapSearch({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onEachFeature: (feature: any, lyr: any) => {
           const kabName = (feature?.properties?.WADMKK as string) ?? "Kab/Kota";
-          const row = subMap?.get(normalizeName(kabName));
+          const row = subMap?.get(normalizeName(kabName)) as any;
           const value = row?.value ?? 0;
           const percentage = row?.percentage ?? 0;
 
@@ -505,7 +550,19 @@ export function MapSearch({
               <strong>${kabName}</strong><br/>
               ${indicatorLabel}: <strong>${fmt(value)}</strong> (${percentage.toFixed(1)}%)
               ${
-                indicator === "jumlahkelompok" && kabBreakdown?.breakdown
+                indicator === "jumlahsppg" && row?.breakdown
+                  ? `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:10px;color:#666">
+                      ${row.breakdown
+                        .map(
+                          (b: any) =>
+                            `<div style="display:flex;justify-content:space-between;gap:12px">
+                              <span>${b.category}</span>
+                              <span style="font-weight:600">${fmt(b.value)}</span>
+                            </div>`,
+                        )
+                        .join("")}
+                    </div>`
+                  : indicator === "jumlahkelompok" && kabBreakdown?.breakdown
                   ? `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:10px;color:#666">
                       ${kabBreakdown.breakdown
                         .map(
@@ -517,7 +574,43 @@ export function MapSearch({
                         )
                         .join("")}
                     </div>`
-                  : ""
+                  : indicator === "jumlahsupplier" && row?.breakdown
+                    ? `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:10px;color:#666">
+                        ${row.breakdown
+                          .map(
+                            (b: any) =>
+                              `<div style="display:flex;justify-content:space-between;gap:12px">
+                                <span>${b.category}</span>
+                                <span style="font-weight:600">${fmt(b.value)}</span>
+                              </div>`,
+                          )
+                          .join("")}
+                      </div>`
+                    : indicator === "jumlahpetugas" && row?.breakdown
+                      ? `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:10px;color:#666">
+                          ${row.breakdown
+                            .map(
+                              (b: any) =>
+                                `<div style="display:flex;justify-content:space-between;gap:12px">
+                                  <span>${b.category}</span>
+                                  <span style="font-weight:600">${fmt(b.value)}</span>
+                                </div>`,
+                            )
+                            .join("")}
+                        </div>`
+                      : indicator === "jumlahmitra" && row?.breakdown
+                        ? `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:10px;color:#666">
+                            ${row.breakdown
+                              .map(
+                                (b: any) =>
+                                  `<div style="display:flex;justify-content:space-between;gap:12px">
+                                    <span>${b.category}</span>
+                                    <span style="font-weight:600">${fmt(b.value)}</span>
+                                  </div>`,
+                              )
+                              .join("")}
+                          </div>`
+                        : ""
               }
             </div>`,
             { sticky: true, opacity: 0.97 },

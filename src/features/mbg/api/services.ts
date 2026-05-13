@@ -39,7 +39,7 @@ export type QuickStatView = {
   value: string | number;
   trend?: string;
   variant?: "up" | "down" | "neutral";
-  breakdown?: { category: string; value: number }[];
+  breakdown?: { category: string; value: number }[] | undefined;
 };
 
 type MbgQuickStatsApiData = {
@@ -49,7 +49,11 @@ type MbgQuickStatsApiData = {
   jumlahkelompok: number;
   jumlahpenerima: number;
   jumlahmitra: number;
-  breakdown_kelompok?: { category: string; value: number }[];
+  breakdown_kelompok?: { category: string; value: number }[] | undefined;
+  breakdown_supplier?: { category: string; value: number }[] | undefined;
+  breakdown_petugas?: { category: string; value: number }[] | undefined;
+  breakdown_mitra?: { category: string; value: number }[] | undefined;
+  breakdown_sppg?: { category: string; value: number }[] | undefined;
 };
 
 type MbgQuickStatsApiResponse = {
@@ -93,16 +97,19 @@ export async function getQuickStats(
       label: "Total SPPG Aktif",
       value: formatCount(raw.jumlahsppg),
       variant: "neutral",
+      breakdown: raw.breakdown_sppg,
     },
     {
       label: "Petugas SPPG",
       value: formatCount(raw.jumlahpetugas),
       variant: "neutral",
+      breakdown: raw.breakdown_petugas,
     },
     {
       label: "Supplier MBG",
       value: formatCount(raw.jumlahsupplier),
       variant: "neutral",
+      breakdown: raw.breakdown_supplier,
     },
     {
       label: "Kelompok Manfaat",
@@ -114,6 +121,7 @@ export async function getQuickStats(
       label: "Total Mitra",
       value: formatCount(raw.jumlahmitra),
       variant: "neutral",
+      breakdown: raw.breakdown_mitra,
     },
   ];
 
@@ -166,7 +174,11 @@ export type MbgProvChoroplethRow = {
   jumlahkelompok: number;
   jumlahpenerima: number;
   jumlahmitra: number;
-  breakdown_kelompok?: { category: string; value: number }[];
+  breakdown_kelompok?: { category: string; value: number }[] | undefined;
+  breakdown_supplier?: { category: string; value: number }[] | undefined;
+  breakdown_petugas?: { category: string; value: number }[] | undefined;
+  breakdown_mitra?: { category: string; value: number }[] | undefined;
+  breakdown_sppg?: { category: string; value: number }[] | undefined;
 };
 
 export async function getMapChoropleth(
