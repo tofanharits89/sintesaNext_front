@@ -2,15 +2,12 @@
 
 import { useMemo } from "react";
 import {
-  LineChart,
+  BarChart,
   Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  ReferenceLine,
-} from "recharts";
+  BarXAxis,
+  Grid,
+} from "@/components/charts";
+import { ChartTooltip } from "@/components/charts/tooltip";
 import {
   Card,
   CardContent,
@@ -34,6 +31,9 @@ function pctStr(realized: number | null | undefined, pagu: number): string {
   if (!realized || !pagu) return "";
   return ` (${((realized / pagu) * 100).toFixed(1)}%)`;
 }
+
+const COLOR_2025 = "#94a3b8"; // slate-400
+const COLOR_2026 = "#0f172a"; // slate-900
 
 export function BgnTrendChart() {
   const { data, isLoading } = useRealisasiBgn();
@@ -61,11 +61,19 @@ export function BgnTrendChart() {
   if (isLoading) return <ChartCardSkeleton />;
   if (!data) return null;
 
+  // Keep nulls so Line component skips future months (no drop to zero)
   const chartData = data.months.map((m) => ({
     name: m.month,
-    "Realisasi 2025": m.realisasi2025,
-    "Realisasi 2026": m.realisasi2026,
+    "Realisasi 2025": m.realisasi2025 as number | null,
+    "Realisasi 2026": m.realisasi2026 as number | null,
   }));
+
+  // Compute proper y-domain from actual values + pagu
+  const allValues = data.months.flatMap((m) =>
+    [m.realisasi2025, m.realisasi2026].filter((v): v is number => v !== null && v > 0)
+  );
+  const maxVal = Math.max(...allValues, 1);
+  const yDomain: [number, number] = [0, maxVal * 1.02];
 
   return (
     <Card className="flex h-full flex-col min-w-0">
@@ -96,7 +104,7 @@ export function BgnTrendChart() {
           {lastRealisasi2025 !== null && (
             <Badge
               variant="outline"
-              className="text-xs border-blue-300 text-blue-700 bg-blue-50 dark:border-blue-700 dark:text-blue-300 dark:bg-blue-950/30"
+              className="text-xs border-slate-300 text-slate-700 bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:bg-slate-950/30"
             >
               2025: {fmtT(lastRealisasi2025)}
               {pctStr(lastRealisasi2025, data.pagu2025)}
@@ -105,7 +113,7 @@ export function BgnTrendChart() {
           {lastRealisasi2026 !== null && (
             <Badge
               variant="outline"
-              className="text-xs border-emerald-300 text-emerald-700 bg-emerald-50 dark:border-emerald-700 dark:text-emerald-300 dark:bg-emerald-950/30"
+              className="text-xs border-slate-400 text-slate-900 bg-slate-100 dark:border-slate-500 dark:text-slate-200 dark:bg-slate-900/40"
             >
               2026 s.d. terkini: {fmtT(lastRealisasi2026)}
               {pctStr(lastRealisasi2026, data.pagu2026)}
@@ -114,98 +122,44 @@ export function BgnTrendChart() {
         </div>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col p-6 pt-0 pb-4 min-w-0">
-        <div className="flex-1 min-h-[248px] w-full min-w-0">
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={1}>
-            <LineChart
+        <div className="flex-1 min-h-[248px] w-full min-w-0 relative">
+          <BarChart
             data={chartData}
-            margin={{ top: 8, right: 16, bottom: 0, left: 8 }}
+            xDataKey="name"
+            margin={{ top: 24, right: 10, left: 10, bottom: 20 }}
+            aspectRatio="auto"
+            className="h-full w-full"
+            barGap={0.1}
           >
-            <XAxis
-              dataKey="name"
-              fontSize={11}
-              tickLine={false}
-              axisLine={false}
-              stroke="#888"
-            />
-            <YAxis
-              fontSize={11}
-              tickLine={false}
-              axisLine={false}
-              stroke="#888"
-              tickFormatter={(v) => fmtT(v as number)}
-              width={54}
-            />
-            <Tooltip
-              content={({ active, payload, label }) => {
-                if (!active || !payload?.length) return null;
-                return (
-                  <div className="rounded-lg border bg-background p-2 shadow-sm text-sm">
-                    <p className="text-xs text-muted-foreground uppercase mb-1.5">
-                      {label}
-                    </p>
-                    {payload.map((entry: any, i: number) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <div
-                          className="w-2 h-2 rounded-full shrink-0"
-                          style={{ backgroundColor: entry.color }}
-                        />
-                        <span className="font-medium">{entry.name}:</span>
-                        <span>{fmtT(entry.value as number)}</span>
-                      </div>
-                    ))}
-                  </div>
-                );
-              }}
-            />
-            <Legend wrapperStyle={{ fontSize: "12px" }} />
-            {data.pagu2025 > 0 && (
-              <ReferenceLine
-                y={data.pagu2025}
-                stroke="#3b82f6"
-                strokeDasharray="5 3"
-                strokeWidth={1}
-                label={{
-                  value: "PAGU 2025",
-                  position: "insideTopLeft",
-                  fontSize: 10,
-                  fill: "#3b82f6",
-                }}
-              />
-            )}
-            {data.pagu2026 > 0 && (
-              <ReferenceLine
-                y={data.pagu2026}
-                stroke="#10b981"
-                strokeDasharray="5 3"
-                strokeWidth={1}
-                label={{
-                  value: "PAGU 2026",
-                  position: "insideTopRight",
-                  fontSize: 10,
-                  fill: "#10b981",
-                }}
-              />
-            )}
+            <Grid horizontal />
             <Line
-              type="monotone"
               dataKey="Realisasi 2025"
-              stroke="#3b82f6"
-              strokeWidth={2}
-              dot={{ r: 3 }}
-              activeDot={{ r: 5 }}
-              connectNulls={false}
+              stroke={COLOR_2025}
+              strokeWidth={2.5}
+              yDomain={yDomain}
             />
             <Line
-              type="monotone"
               dataKey="Realisasi 2026"
-              stroke="#10b981"
-              strokeWidth={2}
-              dot={{ r: 3 }}
-              activeDot={{ r: 5 }}
-              connectNulls={false}
+              stroke={COLOR_2026}
+              strokeWidth={2.5}
+              yDomain={yDomain}
             />
-          </LineChart>
-        </ResponsiveContainer>
+            <BarXAxis showAllLabels />
+            <ChartTooltip
+              rows={(point) => [
+                {
+                  color: COLOR_2025,
+                  label: "Realisasi 2025",
+                  value: fmtT(point["Realisasi 2025"] as number),
+                },
+                {
+                  color: COLOR_2026,
+                  label: "Realisasi 2026",
+                  value: fmtT(point["Realisasi 2026"] as number),
+                },
+              ]}
+            />
+          </BarChart>
         </div>
       </CardContent>
     </Card>
