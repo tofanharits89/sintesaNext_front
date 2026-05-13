@@ -51,14 +51,14 @@ export const TrenChart = ({
     <Card className="flex h-full flex-col min-w-0">
       <CardHeader className="pb-2">
         <CardTitle className="text-base">{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardDescription className="text-[12px]">{description}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col p-6 pt-0 pb-4 min-w-0">
         <div className="flex-1 min-h-[248px] w-full min-w-0 relative">
           <BarChart
             data={chartData}
             xDataKey="name"
-            margin={{ top: 24, right: 10, left: 10, bottom: 20 }}
+            margin={{ top: 24, right: 10, left: 10, bottom: 32 }}
             aspectRatio="auto"
             className="h-full w-full"
             barGap={0.1}

@@ -58,7 +58,7 @@ export function BarChartComponent({
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+        {description && <CardDescription className="text-[12px]">{description}</CardDescription>}
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={height} minWidth={0} minHeight={0}>
