@@ -143,6 +143,28 @@ export function buildSelectClause(
       return;
     }
 
+    if (filterKey === "jenisPrioritasPresiden") {
+      if (jenisTampilan !== "jangan_tampilkan") {
+        switch (jenisTampilan) {
+          case "kode":
+            selectColumns.push(
+              `main.${config.columnName} AS ${filterKey}_kode`,
+            );
+            break;
+          case "uraian":
+            selectColumns.push(`main.nmpriopres AS ${filterKey}_uraian`);
+            break;
+          case "kode_uraian":
+            selectColumns.push(
+              `main.${config.columnName} AS ${filterKey}_kode`,
+            );
+            selectColumns.push(`main.nmpriopres AS ${filterKey}_uraian`);
+            break;
+        }
+      }
+      return;
+    }
+
     const alias = `${filterKey}_ref`;
     const needsJoinForSelect =
       config.referenceTable &&
@@ -375,7 +397,7 @@ export function buildSelectClause(
 
   const realizationColumns: string[] = [];
   for (let month = 1; month <= cutOffNum; month++)
-    realizationColumns.push(`real${month}`);
+    realizationColumns.push(`main.real${month}`);
   const realizationSum = realizationColumns.join(" + ");
 
   if (reportParams.tipeLaporan === "semua_kontrak") {
@@ -471,14 +493,14 @@ export function buildSelectClause(
       const monthName = MONTH_NAMES[month - 1];
       if (jenisAkumulasi === "akumulatif") {
         const cumulativeRealColumns: string[] = [];
-        for (let i = 1; i <= month; i++) cumulativeRealColumns.push(`real${i}`);
+        for (let i = 1; i <= month; i++) cumulativeRealColumns.push(`main.real${i}`);
         const cumulativeSum = cumulativeRealColumns.join(" + ");
         selectColumns.push(
           `ROUND(SUM(${cumulativeSum}) / ${divisor}, 0) AS ${monthName}`,
         );
       } else {
         selectColumns.push(
-          `ROUND(SUM(real${month}) / ${divisor}, 0) AS ${monthName}`,
+          `ROUND(SUM(main.real${month}) / ${divisor}, 0) AS ${monthName}`,
         );
       }
     }
@@ -487,14 +509,14 @@ export function buildSelectClause(
     for (let month = 1; month <= cutOffNum; month++) {
       const monthName = MONTH_NAMES[month - 1];
       selectColumns.push(
-        `ROUND(SUM(pagu${month}) / ${divisor}, 0) AS ${monthName}`,
+        `ROUND(SUM(main.pagu${month}) / ${divisor}, 0) AS ${monthName}`,
       );
     }
   } else if (reportParams.tipeLaporan === "pergerakan_blokir_bulanan") {
     for (let month = 1; month <= cutOffNum; month++) {
       const monthName = MONTH_NAMES[month - 1];
       selectColumns.push(
-        `ROUND(SUM(blokir${month}) / ${divisor}, 0) AS ${monthName}`,
+        `ROUND(SUM(main.blokir${month}) / ${divisor}, 0) AS ${monthName}`,
       );
     }
   } else if (
@@ -505,7 +527,7 @@ export function buildSelectClause(
     for (let month = 1; month <= cutOffNum; month++) {
       const monthName = MONTH_NAMES[month - 1];
       selectColumns.push(
-        `ROUND(SUM(blokir${month}) / ${divisor}, 0) AS ${monthName}`,
+        `ROUND(SUM(main.blokir${month}) / ${divisor}, 0) AS ${monthName}`,
       );
     }
   } else if (reportParams.tipeLaporan === "pagu_dan_blokir") {

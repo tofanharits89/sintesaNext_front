@@ -1,15 +1,10 @@
 "use client";
 
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
+import { BarChart } from "@/components/charts/bar-chart";
+import { Bar } from "@/components/charts/bar";
+import { BarXAxis } from "@/components/charts/bar-x-axis";
+import { Grid } from "@/components/charts/grid";
+import { ChartTooltip } from "@/components/charts/tooltip";
 import {
   Card,
   CardContent,
@@ -70,92 +65,54 @@ export function SebaranPenerimaChart() {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col p-6 pt-0 pb-4 min-w-0">
-        <div className="flex-1 min-h-[264px] w-full min-w-0">
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={1}>
-            <BarChart
+        <div className="flex-1 min-h-[264px] w-full min-w-0 relative">
+          {/* Legend */}
+          <div className="absolute top-0 right-0 z-10 flex items-center gap-4 text-[10px] font-mono text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLOR_2025 }} />
+              <span>Penerima 2025</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLOR_2026 }} />
+              <span>Penerima 2026</span>
+            </div>
+          </div>
+
+          <BarChart
             data={chartData}
-            margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-            barCategoryGap="25%"
-            barGap={2}
+            xDataKey="name"
+            margin={{ top: 24, right: 0, left: 0, bottom: 20 }}
+            barGap={0.3}
+            aspectRatio="auto"
+            className="h-full w-full"
           >
-            <XAxis
-              dataKey="name"
-              fontSize={10}
-              tickLine={false}
-              axisLine={false}
-              stroke="#888"
-              angle={-35}
-              textAnchor="end"
-              interval={0}
-              height={60}
-            />
-            <YAxis
-              fontSize={10}
-              tickLine={false}
-              axisLine={false}
-              stroke="#888"
-              tickFormatter={(v) => {
-                const n = Number(v);
-                if (n >= 1e6) return `${(n / 1e6).toFixed(1)}jt`;
-                if (n >= 1e3) return `${(n / 1e3).toFixed(0)}rb`;
-                return String(n);
-              }}
-              width={42}
-            />
-            <Tooltip
-              content={({ active, payload, label }) => {
-                if (!active || !payload?.length) return null;
-                const d = chartData.find((c) => c.name === label);
-                return (
-                  <div className="rounded-lg border bg-background p-2 shadow-sm text-sm min-w-[190px]">
-                    <p className="text-xs font-semibold mb-1.5 text-foreground">
-                      {d?.fullName ?? label}
-                    </p>
-                    {payload.map((entry: any, i: number) => {
-                      const persen =
-                        entry.dataKey === "2025"
-                          ? d?.persen2025
-                          : d?.persen2026;
-                      return (
-                        <div key={i} className="flex items-center gap-2 mb-0.5">
-                          <div
-                            className="w-2 h-2 rounded-full shrink-0"
-                            style={{ backgroundColor: entry.fill }}
-                          />
-                          <span className="font-medium">{entry.name}:</span>
-                          <span>{fmtRibuan(entry.value as number)}</span>
-                          {persen !== undefined && (
-                            <span className="text-muted-foreground text-xs">
-                              ({Number(persen).toFixed(1)}%)
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              }}
-            />
-            <Legend
-              wrapperStyle={{ fontSize: "12px", paddingTop: "4px" }}
-              formatter={(value) => `Penerima ${value}`}
-            />
+            <Grid horizontal />
             <Bar
               dataKey="2025"
-              name="2025"
               fill={COLOR_2025}
-              radius={[3, 3, 0, 0]}
-              maxBarSize={28}
+              lineCap="round"
             />
             <Bar
               dataKey="2026"
-              name="2026"
               fill={COLOR_2026}
-              radius={[3, 3, 0, 0]}
-              maxBarSize={28}
+              lineCap="round"
+            />
+            <BarXAxis showAllLabels />
+            <ChartTooltip
+              rows={(point) => [
+                {
+                  color: COLOR_2025,
+                  label: "Penerima 2025",
+                  value: `${fmtRibuan(point["2025"] as number)} (${Number(point.persen2025).toFixed(1)}%)`,
+                },
+                {
+                  color: COLOR_2026,
+                  label: "Penerima 2026",
+                  value: `${fmtRibuan(point["2026"] as number)} (${Number(point.persen2026).toFixed(1)}%)`,
+                },
+              ]}
             />
           </BarChart>
-        </ResponsiveContainer>
         </div>
       </CardContent>
     </Card>

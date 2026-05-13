@@ -126,9 +126,9 @@ export function useInquiryDataApi() {
           {
             encryptedQuery,
             format: "csv",
-            limit: 500000, // Higher limit for downloads
+            limit: 750000, // Higher limit for downloads
           },
-          { responseType: "blob" },
+          { responseType: "blob", timeout: 300000 },
         );
         const blob: Blob = resp instanceof Blob ? resp : new Blob([resp]);
 
@@ -150,7 +150,8 @@ export function useInquiryDataApi() {
     [buildQuery, encryptQuery],
   );
 
-  // Download Excel
+  // Download Excel — the backend now generates the .xlsx server-side,
+  // so the browser just downloads the binary file (no client-side SheetJS needed).
   const downloadExcel = useCallback(
     async (
       activeFilters: string[],
@@ -165,132 +166,48 @@ export function useInquiryDataApi() {
       setIsLoading(true);
 
       try {
-        // Build the SQL query and request full dataset for Excel (server caps)
         const sqlQuery = buildQuery(activeFilters, filterValues, reportParams);
         const encryptedQuery = encryptQuery(sqlQuery);
 
         const blobResp = await directBackendClient.post(
           "/inquiry-data/query",
-          { encryptedQuery, format: "excel", limit: 500000 },
-          { responseType: "blob" },
+          { encryptedQuery, format: "excel", limit: 750000 },
+          { responseType: "blob", timeout: 300000 },
         );
 
-        // Try to parse JSON error if backend replied with JSON
-        let isJson = false;
-        try {
-          const text = await (async () => {
-            if (blobResp instanceof Blob) return await blobResp.text();
-            if (blobResp && (blobResp as any).text)
-              return await (blobResp as any).text();
-            return "";
-          })();
-          if (text && text.trim().startsWith("{")) {
-            const maybe = JSON.parse(text);
-            if (maybe && maybe.success === false) {
-              throw new Error(
-                maybe.error || "Failed to get data for Excel export",
-              );
-            }
-          }
-        } catch (_) {
-          // not JSON, proceed as binary
-        }
-
+        // Check if the response is a JSON error instead of binary Excel
         const blob: Blob =
           blobResp instanceof Blob ? blobResp : new Blob([blobResp]);
 
-        const XLSX = await import("xlsx");
-        const wb = XLSX.utils.book_new();
-
-        // Determine columns order
-        const monthlyCols = [
-          "JAN",
-          "FEB",
-          "MAR",
-          "APR",
-          "MEI",
-          "JUN",
-          "JUL",
-          "AGS",
-          "SEP",
-          "OKT",
-          "NOV",
-          "DES",
-        ];
-        const isMonetary = (col: string) => {
-          const c = col.toLowerCase();
-          return (
-            c.includes("pagu") ||
-            c.includes("realisasi") ||
-            c.includes("blokir") ||
-            c.includes("anggaran") ||
-            monthlyCols.includes(col.toUpperCase())
-          );
-        };
-
-        // Attempt to read JSON structure from the blob (columns + data); fallback to CSV parsing
-        let parsed: QueryExecutionResult | null = null;
-        try {
-          const text = await blob.text();
-          if (text && text.trim().startsWith("{")) {
-            parsed = JSON.parse(text);
-          }
-        } catch {}
-
-        const columns = parsed?.columns?.length
-          ? parsed.columns
-          : parsed?.data?.length
-            ? Object.keys(parsed.data[0])
-            : [];
-
-        // Build AOA with header first, then rows; coerce monetary cells to numbers
-        const aoa: any[][] = [];
-        aoa.push(columns);
-        const rows = parsed?.data || ([] as any[]);
-        for (const row of rows) {
-          const arr: any[] = [];
-          for (const col of columns) {
-            const v = (row as any)[col];
-            if (v === null || v === undefined || v === "") {
-              arr.push(null);
-              continue;
+        // If the content type looks like JSON, it's likely an error response
+        if (blob.size < 10000) {
+          try {
+            const text = await blob.text();
+            if (text && text.trim().startsWith("{")) {
+              const maybe = JSON.parse(text);
+              if (maybe && maybe.success === false) {
+                throw new Error(
+                  maybe.error || "Failed to get data for Excel export",
+                );
+              }
             }
-            if (isMonetary(col)) {
-              const num = Number(v);
-              arr.push(!Number.isNaN(num) ? num : v);
-            } else {
-              arr.push(v);
+          } catch (e) {
+            if (e instanceof Error && e.message.includes("Failed to get data")) {
+              throw e;
             }
+            // Not JSON — proceed as binary
           }
-          aoa.push(arr);
         }
 
-        const ws = XLSX.utils.aoa_to_sheet(aoa);
-
-        // Apply number format to monetary columns (thousands separator)
-        const range = XLSX.utils.decode_range(
-          ws["!ref"] ||
-            (columns.length
-              ? `A1:${XLSX.utils.encode_col(columns.length - 1)}${aoa.length}`
-              : "A1:A1"),
-        );
-        columns.forEach((col, cIdx) => {
-          if (!isMonetary(col)) return;
-          for (let r = range.s.r + 1; r <= range.e.r; r++) {
-            // skip header row
-            const cellAddr = XLSX.utils.encode_cell({ r, c: cIdx });
-            const cell = (ws as any)[cellAddr];
-            if (cell && typeof cell.v === "number") {
-              cell.z = "#,##0"; // basic number format
-            }
-          }
-        });
-
-        XLSX.utils.book_append_sheet(wb, ws, "Inquiry Data");
-        const filename = `inquiry_data_${reportParams.tipeLaporan}_${
-          reportParams.tahun
-        }_${Date.now()}.xlsx`;
-        XLSX.writeFile(wb, filename);
+        // Trigger file download
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `inquiry_data_${reportParams.tipeLaporan}_${reportParams.tahun}_${Date.now()}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
       } catch (error) {
         console.error("Excel download error:", error);
         throw error;
@@ -298,7 +215,7 @@ export function useInquiryDataApi() {
         setIsLoading(false);
       }
     },
-    [executeQuery],
+    [buildQuery, encryptQuery],
   );
 
   // Preview converted query

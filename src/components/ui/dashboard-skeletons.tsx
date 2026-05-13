@@ -16,7 +16,7 @@ export function StatCardSkeleton({ className }: BaseSkeletonProps) {
   return (
     <div
       className={cn(
-        "rounded-lg p-3 bg-white dark:bg-neutral-900 shadow relative",
+        "rounded-lg p-3 pr-6 bg-white dark:bg-neutral-900 shadow relative",
         className
       )}
     >
@@ -24,7 +24,7 @@ export function StatCardSkeleton({ className }: BaseSkeletonProps) {
         <Skeleton className="h-4 w-4 rounded" />
         <Skeleton className="h-3 w-20" />
       </div>
-      <Skeleton className="mt-1 h-5 w-16" />
+      <Skeleton className="mt-1 h-5 w-16 ml-auto" />
     </div>
   );
 }
@@ -35,13 +35,13 @@ export function StatCardSkeleton({ className }: BaseSkeletonProps) {
  */
 export function QuickStatCardSkeleton({ className }: BaseSkeletonProps) {
   return (
-    <div className={cn("rounded-lg p-3 bg-white dark:bg-neutral-900 shadow border border-gray-200 dark:border-gray-700 relative", className)}>
+    <div className={cn("rounded-lg p-3 pr-6 bg-white dark:bg-neutral-900 shadow border border-gray-200 dark:border-gray-700 relative", className)}>
       {/* Trend badge in top-right corner */}
       <Skeleton className="absolute top-2 right-2 h-5 w-12 rounded-full" />
       {/* Label */}
       <Skeleton className="h-3 w-20" />
       {/* Value */}
-      <Skeleton className="h-5 w-16 mt-1" />
+      <Skeleton className="h-5 w-16 mt-1 ml-auto" />
     </div>
   );
 }

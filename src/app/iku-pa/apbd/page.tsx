@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import ApbdContent from "@/components/iku-pa/apbd";
+import { ApbdPageSkeleton } from "@/components/iku-pa/apbd-skeleton";
 
 export default function ApbdPage() {
   const { user, isLoading } = useAuth();
@@ -26,11 +27,7 @@ export default function ApbdPage() {
   }, [user, isLoading, router]);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <ApbdPageSkeleton />;
   }
 
   if (!user) return null;

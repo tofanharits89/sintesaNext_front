@@ -12,6 +12,8 @@ interface DonutChartProps {
   showLegend?: boolean;
   showLabel?: boolean;
   centerLabel?: string;
+  innerRadius?: number | string;
+  outerRadius?: number | string;
 }
 
 const defaultColors = ["#3b82f6", "#10b981", "#ef4444"];
@@ -23,6 +25,8 @@ export function DonutChartComponent({
   showLegend = false,
   showLabel = true,
   centerLabel,
+  innerRadius = "65%",
+  outerRadius = "100%",
 }: DonutChartProps) {
   return (
     <div className="relative" style={{ width: "100%", height }}>
@@ -32,8 +36,8 @@ export function DonutChartComponent({
             data={data}
             cx="50%"
             cy="50%"
-            innerRadius={20}
-            outerRadius={40}
+            innerRadius={innerRadius}
+            outerRadius={outerRadius}
             paddingAngle={1}
             dataKey="value"
             label={showLabel}
@@ -59,7 +63,7 @@ export function DonutChartComponent({
       </ResponsiveContainer>
       {centerLabel && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className="text-sm font-semibold text-foreground">
+          <span className="text-lg font-bold text-foreground">
             {centerLabel}
           </span>
         </div>

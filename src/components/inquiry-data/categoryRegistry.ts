@@ -421,6 +421,34 @@ export const TEMATIK_CATEGORIES: CategoryDefinition[] = [
     jenisAkumulasiAllowed: false,
   },
 
+  {
+    key: "prioritas_presiden",
+    label: "Prioritas Presiden",
+    description: "Analisis data berdasarkan Jenis Prioritas Presiden",
+    mandatoryFilters: [
+      {
+        key: "jenisPrioritasPresiden",
+        label: "Jenis Prioritas Presiden",
+        mandatory: true,
+        removable: false,
+        defaultValue: {
+          selection: "all",
+          jenisTampilan: "kode",
+        },
+      },
+    ],
+    mandatoryColumns: [],
+    queryConfig: {
+      // Use dedicated summary table; builder will append _{tahun} and monev{tahun}. schema
+      tableName: "smry_prioritas_presiden",
+      whereConditions: ["main.kdpriopres IS NOT NULL"],
+      groupByColumns: ["main.kdpriopres"],
+    },
+    excludeStandardFilters: ["register"],
+    reportTypeRestriction: "pagu_realisasi_bulanan",
+    jenisAkumulasiAllowed: false,
+  },
+
   // Add more categories as needed...
 ];
 
@@ -460,6 +488,7 @@ export function getTematikCategoryOptions(): {
     makan_bergizi_gratis: 11,
     swasembada_pangan: 12,
     program_strategis: 13,
+    prioritas_presiden: 14,
   };
 
   const keyed = TEMATIK_CATEGORIES.map((cat, idx) => ({

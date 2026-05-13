@@ -520,7 +520,7 @@ export function DataKmkModal({ open, onOpenChange, initialYear, onCreated }: Dat
                         // close popover after selecting a date
                         setDatePopoverOpen(false);
                       }}
-                      initialFocus
+                      autoFocus
                     />
                   </PopoverContent>
                 </Popover>

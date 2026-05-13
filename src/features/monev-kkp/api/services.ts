@@ -84,15 +84,18 @@ function formatCount(value: number): string {
 
 function formatRupiah(value: number): string {
   const v = value || 0;
-  if (Math.abs(v) >= 1e12) return `Rp${(v / 1e12).toFixed(2)} T`;
-  if (Math.abs(v) >= 1e9) return `Rp${(v / 1e9).toFixed(1)} M`;
-  if (Math.abs(v) >= 1e6) return `Rp${(v / 1e6).toFixed(0)} jt`;
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
+  if (Math.abs(v) >= 1e12) return `Rp ${(v / 1e12).toFixed(2)} T`;
+  if (Math.abs(v) >= 1e9) return `Rp ${(v / 1e9).toFixed(1)} M`;
+  if (Math.abs(v) >= 1e6) return `Rp ${(v / 1e6).toFixed(0)} Jt`;
+  
+  // Custom format to ensure "Rp " with space
+  const formatted = new Intl.NumberFormat("id-ID", {
+    style: "decimal",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(v);
+  
+  return `Rp ${formatted}`;
 }
 
 // ---------------------------------------------------------------------------

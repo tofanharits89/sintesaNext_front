@@ -20,7 +20,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Loader2,
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   RefreshCw,
   Search,
   Clock,
@@ -29,6 +37,8 @@ import {
   Maximize2,
   Minimize2,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils/utils";
 import { useInquiryDataApi, FilterValue } from "@/hooks/use-inquiry-data-api";
 import { normalizeActiveFilters } from "../filterRegistry";
 import { getCategoryLabel } from "../categoryRegistry";
@@ -56,7 +66,7 @@ export function TayangModal({
   scope = "general",
 }: TayangModalProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [pageSize, setPageSize] = useState(50);
+  const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -102,14 +112,13 @@ export function TayangModal({
     if (!row) return undefined;
     if (column in row) return row[column];
     const target = column.toUpperCase();
-    // find case-insensitive key match
     for (const k of Object.keys(row)) {
       if (k.toUpperCase() === target) return row[k];
     }
     return undefined;
   };
 
-  // Process data for search, sort, and pagination
+  // Process data for search and sort (pagination is server-side)
   const processedData = useMemo(() => {
     if (!lastResult?.data) return [];
 
@@ -130,19 +139,16 @@ export function TayangModal({
         const aVal = getRowValue(a, sortColumn);
         const bVal = getRowValue(b, sortColumn);
 
-        // Handle null/undefined values
         if (aVal == null && bVal == null) return 0;
         if (aVal == null) return sortDirection === "asc" ? -1 : 1;
         if (bVal == null) return sortDirection === "asc" ? 1 : -1;
 
-        // Handle numeric values
         const aNum = Number(aVal);
         const bNum = Number(bVal);
         if (!isNaN(aNum) && !isNaN(bNum)) {
           return sortDirection === "asc" ? aNum - bNum : bNum - aNum;
         }
 
-        // Handle string values
         const aStr = String(aVal).toLowerCase();
         const bStr = String(bVal).toLowerCase();
         if (aStr < bStr) return sortDirection === "asc" ? -1 : 1;
@@ -157,49 +163,26 @@ export function TayangModal({
   // Helper function to check if column should be summed in totals
   const isSummableColumn = (column: string): boolean => {
     const summableColumns = [
-      "PAGU_APBN",
-      "PAGU_DIPA",
-      "PAGU", // Add PAGU for RKAKL Detail
-      "REALISASI",
-      "PAGU_KONTRAK",
-      "REALISASI_KONTRAK",
-      "BLOKIR",
-      "NILAI_SP2D", // Add NILAI_SP2D for SP2D
-      "JAN",
-      "FEB",
-      "MAR",
-      "APR",
-      "MEI",
-      "JUN",
-      "JUL",
-      "AGS",
-      "SEP",
-      "OKT",
-      "NOV",
-      "DES",
-      "JMLPNRK", // Treat jmlpnrk as summable for grand totals
+      "PAGU_APBN", "PAGU_DIPA", "PAGU", "REALISASI",
+      "PAGU_KONTRAK", "REALISASI_KONTRAK", "BLOKIR", "NILAI_SP2D",
+      "JAN", "FEB", "MAR", "APR", "MEI", "JUN",
+      "JUL", "AGS", "SEP", "OKT", "NOV", "DES", "JMLPNRK",
     ];
     return summableColumns.includes(column.toUpperCase());
   };
 
-  // Grand totals across all data (prefer server-provided totals; fallback to client sum)
+  // Grand totals — prefer server-provided, fallback to client sum
   const grandTotals = useMemo(() => {
     if (!lastResult?.columns) return {};
 
-    // Prioritize server-provided grand totals (already computed across all data)
     const serverTotals = lastResult?.grandTotals;
     if (serverTotals && Object.keys(serverTotals).length > 0) {
-      // Use server totals if available - they're computed across ALL rows, not just current page
       const hasMeaningfulServerTotal = Object.entries(serverTotals).some(
         ([key, val]) => isSummableColumn(key) && typeof val === "number" && val > 0
       );
-      if (hasMeaningfulServerTotal) {
-        return serverTotals;
-      }
+      if (hasMeaningfulServerTotal) return serverTotals;
     }
 
-    // Fallback: Compute client totals only if server totals unavailable
-    // Note: This only sums the current page of data, not all data
     const clientTotals: Record<string, number> = {};
     lastResult.columns.forEach((column) => {
       if (!isSummableColumn(column)) return;
@@ -244,181 +227,62 @@ export function TayangModal({
     }
   };
 
-  // Helper function to check if column should be treated as monetary
+  // Monthly alias lists
+  const rMonthly = ["rjan","rfeb","rmar","rapr","rmei","rjun","rjul","rags","rsep","rokt","rnov","rdes"];
+  const pMonthly = ["pjan","pfeb","pmar","papr","pmei","pjun","pjul","pags","psep","pokt","pnov","pdes"];
+
   const isMonetaryColumn = (column: string): boolean => {
-    // Treat r- monthly alias (rjan..rdes), base monthly (jan..des), and monetary aggregates as currency
-    const rMonthly = [
-      "rjan",
-      "rfeb",
-      "rmar",
-      "rapr",
-      "rmei",
-      "rjun",
-      "rjul",
-      "rags",
-      "rsep",
-      "rokt",
-      "rnov",
-      "rdes",
-    ];
-    const baseMonthly = [
-      "jan",
-      "feb",
-      "mar",
-      "apr",
-      "mei",
-      "jun",
-      "jul",
-      "ags",
-      "sep",
-      "okt",
-      "nov",
-      "des",
-    ];
+    const baseMonthly = ["jan","feb","mar","apr","mei","jun","jul","ags","sep","okt","nov","des"];
     const lower = column.toLowerCase();
     return (
       lower.includes("pagu") ||
       lower.includes("realisasi") ||
       lower.includes("blokir") ||
       lower.includes("anggaran") ||
-      lower === "jmlpnrk" || // Format jmlpnrk like monetary columns
-      lower === "nilai_sp2d" || // Format nilai_sp2d like monetary columns
+      lower === "jmlpnrk" ||
+      lower === "nilai_sp2d" ||
       rMonthly.includes(lower) ||
       baseMonthly.includes(lower)
     );
   };
-  // Monthly alias lists for rendering and alignment
-  const rMonthly = [
-    "rjan",
-    "rfeb",
-    "rmar",
-    "rapr",
-    "rmei",
-    "rjun",
-    "rjul",
-    "rags",
-    "rsep",
-    "rokt",
-    "rnov",
-    "rdes",
-  ];
-  const pMonthly = [
-    "pjan",
-    "pfeb",
-    "pmar",
-    "papr",
-    "pmei",
-    "pjun",
-    "pjul",
-    "pags",
-    "psep",
-    "pokt",
-    "pnov",
-    "pdes",
-  ];
-  const rpMonthly = [
-    "rpjan",
-    "rpfeb",
-    "rpmar",
-    "rpapr",
-    "rpmei",
-    "rpjun",
-    "rpjul",
-    "rpags",
-    "rpsep",
-    "rpokt",
-    "rpnov",
-    "rpdes",
-  ];
 
-  // Format cell value for display
   const formatCellValue = (value: unknown, column: string): string => {
     if (value == null) return "-";
-
-    // Convert to number if it's a numeric string
     const numValue = Number(value);
     const isNumeric = !isNaN(numValue) && value !== "" && value !== null;
 
-    // Format numeric values (both numbers and numeric strings)
     if (isNumeric) {
       const lower = column.toLowerCase();
+      const rpMonthly = ["rpjan","rpfeb","rpmar","rpapr","rpmei","rpjun","rpjul","rpags","rpsep","rpokt","rpnov","rpdes"];
 
-      const pMonthly = [
-        "pjan",
-        "pfeb",
-        "pmar",
-        "papr",
-        "pmei",
-        "pjun",
-        "pjul",
-        "pags",
-        "psep",
-        "pokt",
-        "pnov",
-        "pdes",
-      ];
-      const rpMonthly = [
-        "rpjan",
-        "rpfeb",
-        "rpmar",
-        "rpapr",
-        "rpmei",
-        "rpjun",
-        "rpjul",
-        "rpags",
-        "rpsep",
-        "rpokt",
-        "rpnov",
-        "rpdes",
-      ];
-
-      // sum_vol: no decimals, thousand separator, right aligned (handled in class)
       if (lower === "sum_vol") {
-        return new Intl.NumberFormat("id-ID", {
-          maximumFractionDigits: 0,
-        }).format(Math.round(numValue));
+        return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(Math.round(numValue));
       }
-
-      // r* monthly: currency with pembulatan already in SQL; just format with grouping
       if (rMonthly.includes(lower)) {
         return new Intl.NumberFormat("id-ID").format(numValue);
       }
-
-      // rp* monthly: thousand separator, no decimals
-      if (lower.startsWith("rp")) {
-        return new Intl.NumberFormat("id-ID", {
-          maximumFractionDigits: 0,
-        }).format(Math.round(numValue));
+      if (rpMonthly.includes(lower) || lower.startsWith("rp")) {
+        return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(Math.round(numValue));
       }
-
-      // p* monthly: percentage, 2 decimals with % suffix
       if (pMonthly.includes(lower)) {
         return `${numValue.toFixed(2)}%`;
       }
-
-      // Monetary aggregates (e.g., PAGU_*, REALISASI, BLOKIR)
       if (isMonetaryColumn(column)) {
         return new Intl.NumberFormat("id-ID").format(numValue);
       }
-
-      // Non-monetary numeric columns: keep raw string to preserve leading zeros
       return String(value);
     }
 
     return String(value);
   };
 
-  // Helper function to get cell alignment class
   const getCellAlignmentClass = (column: string): string => {
     const lower = column.toLowerCase();
-    // Special exceptions for tipe laporan 6 (pergerakan_blokir_bulanan_per_jenis)
     if (reportParams.tipeLaporan === "pergerakan_blokir_bulanan_per_jenis") {
       if (column === "kdblokir_kode") return "text-center";
       if (column === "nmblokir_uraian") return "text-left";
     }
-    // Center-align statusSumber_uraian
     if (lower === "statussumber_uraian") return "text-center";
-    // Right-align monetary, r* monthly, rp* metrics, p* percentages, and sum_vol
     if (
       lower === "sum_vol" ||
       lower.startsWith("rp") ||
@@ -428,14 +292,10 @@ export function TayangModal({
     ) {
       return "text-right";
     }
-    // Left-align descriptive columns like 'uraian'
-    if (lower.includes("uraian")) {
-      return "text-left";
-    }
-    // Default alignment
+    if (lower.includes("uraian")) return "text-left";
     return "text-center";
   };
-  // Page name based on scope
+
   const getPageName = (scope: string): string => {
     const scopeNames: Record<string, string> = {
       belanja: "Belanja",
@@ -455,7 +315,6 @@ export function TayangModal({
     setSearchTerm("");
   };
 
-  // Get report type label
   const getReportTypeLabel = (tipeLaporan: string): string => {
     const labels: Record<string, string> = {
       pagu_apbn: "Pagu APBN",
@@ -463,8 +322,7 @@ export function TayangModal({
       pagu_realisasi_bulanan: "Pagu Realisasi Bulanan",
       pergerakan_pagu_bulanan: "Pergerakan Pagu Bulanan",
       pergerakan_blokir_bulanan: "Pergerakan Blokir Bulanan",
-      pergerakan_blokir_bulanan_per_jenis:
-        "Pergerakan Blokir Bulanan Per Jenis",
+      pergerakan_blokir_bulanan_per_jenis: "Pergerakan Blokir Bulanan Per Jenis",
       volume_output_kegiatan: "Volume Output Kegiatan (Data Caput)",
     };
     return labels[tipeLaporan] || tipeLaporan;
@@ -475,37 +333,95 @@ export function TayangModal({
     return getCategoryLabel(kategori);
   };
 
-  const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
-  };
+  const toggleFullscreen = () => setIsFullscreen(!isFullscreen);
 
   const handleCloseModal = () => {
     setIsFullscreen(false);
     onOpenChange(false);
   };
 
-  // Add effect to handle fullscreen body overflow
-  useEffect(() => {
-    if (isFullscreen) {
-      document.body.style.overflow = "hidden";
+  // Build pagination page items (same pattern as data-table.tsx)
+  const renderPaginationItems = () => {
+    const items = [];
+
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              isActive={currentPage === i}
+              onClick={(e) => { e.preventDefault(); setCurrentPage(i); }}
+              className="cursor-pointer select-none"
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
     } else {
-      document.body.style.overflow = "unset";
+      // First page
+      items.push(
+        <PaginationItem key={1}>
+          <PaginationLink
+            isActive={currentPage === 1}
+            onClick={(e) => { e.preventDefault(); setCurrentPage(1); }}
+            className="cursor-pointer select-none"
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      if (currentPage > 3) {
+        items.push(<PaginationEllipsis key="left-ellipsis" />);
+      }
+
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              isActive={currentPage === i}
+              onClick={(e) => { e.preventDefault(); setCurrentPage(i); }}
+              className="cursor-pointer select-none"
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+
+      if (currentPage < totalPages - 2) {
+        items.push(<PaginationEllipsis key="right-ellipsis" />);
+      }
+
+      // Last page
+      items.push(
+        <PaginationItem key={totalPages}>
+          <PaginationLink
+            isActive={currentPage === totalPages}
+            onClick={(e) => { e.preventDefault(); setCurrentPage(totalPages); }}
+            className="cursor-pointer select-none"
+          >
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
     }
 
-    // Cleanup on unmount or when fullscreen changes
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isFullscreen]);
+    return items;
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleCloseModal}>
       <DialogContent
-        className={`${
+        className={cn(
+          "!flex flex-col gap-3",
           isFullscreen
             ? "!fixed !inset-0 !w-screen !h-screen !max-w-none !max-h-none !m-0 !rounded-none !border-0 !translate-x-0 !translate-y-0 !top-0 !left-0 !transform-none"
-            : "max-w-7xl max-h-[90vh] sm:max-w-7xl"
-        } flex flex-col overflow-hidden`}
+            : "max-w-7xl w-full sm:max-w-7xl max-h-[90vh]"
+        )}
         showCloseButton={false}
         style={
           isFullscreen
@@ -526,7 +442,8 @@ export function TayangModal({
             : {}
         }
       >
-        <DialogHeader>
+        {/* Header */}
+        <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
               <Table className="w-5 h-5 text-blue-600" />
@@ -538,15 +455,8 @@ export function TayangModal({
               </span>
             </span>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={isLoading}
-              >
-                <RefreshCw
-                  className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
-                />
+              <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>
+                <RefreshCw className={cn("w-4 h-4 mr-2", isLoading && "animate-spin")} />
                 Refresh
               </Button>
               <Button
@@ -555,277 +465,260 @@ export function TayangModal({
                 onClick={toggleFullscreen}
                 title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
               >
-                {isFullscreen ? (
-                  <Minimize2 className="w-4 h-4" />
-                ) : (
-                  <Maximize2 className="w-4 h-4" />
-                )}
+                {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
               </Button>
             </div>
           </DialogTitle>
-          <DialogDescription>
-            {lastResult && lastResult.success && totalAvailable > 0
-              ? `Menampilkan ${displayStart}-${displayEnd} dari ${totalAvailable} baris`
-              : `${pageName} - ${getTematikKategoriLabel(
-                  reportParams.tematikKategori
-                )} tahun ${reportParams.tahun} dengan ${
-                  activeFilters.length
-                } filter aktif`}
-          </DialogDescription>
         </DialogHeader>
 
-        {/* Query Summary */}
-        <div className="space-y-4">
-          <div className="flex flex-wrap gap-2 items-center justify-between">
-            <div className="flex flex-wrap gap-2 items-center">
-              <Badge variant="secondary">Tahun: {reportParams.tahun}</Badge>
-              <Badge variant="secondary">
-                Pembulatan: {reportParams.pembulatan}
-              </Badge>
-              <Badge variant="outline">
-                Filter Aktif: {activeFilters.length}
-              </Badge>
-              {lastResult && (
-                <>
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    <BarChart3 className="w-3 h-3" />
-                    {totalAvailable} baris
-                  </Badge>
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {lastResult.executionTime}ms
-                  </Badge>
-                </>
-              )}
-            </div>
-
-            {/* Search and Pagination Controls */}
-            {lastResult && lastResult.success && lastResult.data && (
-              <div className="flex gap-2 items-center">
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Cari data..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setCurrentPage(1);
-                    }}
-                    className="pl-8 w-64"
-                  />
-                </div>
-                <Select
-                  value={pageSize.toString()}
-                  onValueChange={(value) => {
-                    const requested = parseInt(value);
-                    const capped = Math.min(requested, 100); // backend cap
-                    setPageSize(capped);
-                    setCurrentPage(1);
-                  }}
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="25">25 baris</SelectItem>
-                    <SelectItem value="50">50 baris</SelectItem>
-                    <SelectItem value="100">100 baris</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        {/* Badges + Search row */}
+        <div className="shrink-0 flex flex-wrap gap-2 items-center justify-between">
+          <div className="flex flex-wrap gap-2 items-center">
+            <Badge variant="secondary">Tahun: {reportParams.tahun}</Badge>
+            <Badge variant="secondary">Pembulatan: {reportParams.pembulatan}</Badge>
+            <Badge variant="outline">Filter Aktif: {activeFilters.length}</Badge>
+            {lastResult && (
+              <>
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <BarChart3 className="w-3 h-3" />
+                  {totalAvailable} baris
+                </Badge>
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {lastResult.executionTime}ms
+                </Badge>
+              </>
             )}
           </div>
-        </div>
 
-        {/* Dialog Body - Content Area */}
-        <div className="flex-1 overflow-hidden">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-80">
-              <div className="text-center">
-                <Loader2 className="w-12 h-12 animate-spin mx-auto mb-2" />
-                <p className="text-md text-muted-foreground">Loading data..</p>
-              </div>
-            </div>
-          ) : lastResult && !lastResult.success ? (
-            <div className="flex items-center justify-center h-80">
-              <div className="text-center">
-                <p className="text-sm text-red-600 mb-2">
-                  Error: {lastResult.error}
-                </p>
-                <Button variant="outline" size="sm" onClick={handleRefresh}>
-                  Coba Lagi
-                </Button>
-              </div>
-            </div>
-          ) : lastResult && lastResult.success && lastResult.data ? (
-            <div className="border rounded-lg h-full flex flex-col overflow-hidden">
-              <div className="flex-1 w-full overflow-auto">
-                <div className="min-w-full">
-                  <table className="w-full min-w-max">
-                    <thead className="bg-muted sticky top-0 z-30">
-                      <tr>
-                        <th className="p-2 text-center text-sm font-medium w-16 min-w-[80px] uppercase">
-                          No
-                        </th>
-                        {lastResult.columns?.map((column) => (
-                          <th
-                            key={column}
-                            className="p-2 text-center text-sm font-medium cursor-pointer hover:bg-muted/50 select-none w-40 min-w-[180px] whitespace-nowrap uppercase"
-                            onClick={() => handleColumnClick(column)}
-                          >
-                            <div className="flex items-center justify-center gap-1">
-                              {column}
-                              {sortColumn === column && (
-                                <span className="text-xs">
-                                  {sortDirection === "asc" ? "↑" : "↓"}
-                                </span>
-                              )}
-                            </div>
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {paginatedData.length > 0 ? (
-                        <>
-                          {paginatedData.map((row, index) => (
-                            <tr
-                              key={index}
-                              className="border-t hover:bg-muted/50"
-                            >
-                              <td className="p-2 text-center text-xs w-16 min-w-[80px]">
-                                {startIndex + index + 1}
-                              </td>
-                              {lastResult.columns?.map((column) => (
-                                <td
-                                  key={column}
-                                  className={`p-2 ${getCellAlignmentClass(
-                                    column
-                                  )} text-xs font-mono w-40 min-w-[180px] whitespace-nowrap`}
-                                >
-                                  {formatCellValue(getRowValue(row, column), column)}
-                                </td>
-                              ))}
-                            </tr>
-                          ))}
-
-                          {/* Grand Total Row (All Data) */}
-                          {lastResult.columns?.some((c) => isSummableColumn(c)) && (
-                            <tr className="border-t-2 border-primary bg-muted font-medium sticky bottom-0 z-20">
-                              {(() => {
-                                // Find the first summable column index
-                                const firstSummableIndex =
-                                  lastResult.columns?.findIndex((col) =>
-                                    isSummableColumn(col)
-                                  ) ?? -1;
-                                const columnsBeforeSummable =
-                                  firstSummableIndex > 0
-                                    ? firstSummableIndex
-                                    : 0;
-
-                                return (
-                                  <>
-                                    {/* Span "Grand Total" text across No column + columns before summable columns */}
-                                    <td
-                                      colSpan={1 + columnsBeforeSummable}
-                                      className="p-2 text-sm font-medium text-center min-w-[80px]"
-                                    >
-                                      Grand Total
-                                    </td>
-                                    {/* Show grand totals only for summable columns */}
-                                    {lastResult.columns
-                                      ?.slice(firstSummableIndex)
-                                      .map((column) => (
-                                        <td
-                                          key={column}
-                                          className={`p-2 ${getCellAlignmentClass(
-                                            column
-                                          )} text-sm font-mono font-medium w-40 min-w-[180px] whitespace-nowrap`}
-                                        >
-                                          {isSummableColumn(column)
-                                            ? formatCellValue(
-                                                grandTotals[column] ?? 0,
-                                                column
-                                              )
-                                            : "-"}
-                                        </td>
-                                      ))}
-                                  </>
-                                );
-                              })()}
-                            </tr>
-                          )}
-                        </>
-                      ) : (
-                        <tr>
-                          <td
-                            colSpan={(lastResult.columns?.length || 0) + 1}
-                            className="text-center py-8 text-muted-foreground"
-                          >
-                            {searchTerm
-                              ? "Tidak ada data yang sesuai dengan pencarian"
-                              : "Tidak ada data"}
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          ) : activeFilters.length === 0 ? (
-            <div className="flex items-center justify-center h-40">
-              <div className="text-center text-muted-foreground">
-                <p>Pilih filter terlebih dahulu untuk menampilkan data</p>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-40">
-              <div className="text-center text-muted-foreground">
-                <p>Klik &quot;Tayang&quot; untuk menampilkan data</p>
-              </div>
+          {lastResult && lastResult.success && lastResult.data && (
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Cari data..."
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                className="pl-8 w-56"
+              />
             </div>
           )}
         </div>
 
-        <DialogFooter className="flex flex-col gap-4 items-center sm:flex-row sm:justify-between">
-          <div className="flex justify-center sm:flex-1">
-            {lastResult && lastResult.success && totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="w-24"
-                >
-                  Sebelumnya
-                </Button>
-                <span className="text-sm">
-                  Halaman {currentPage} dari {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage(Math.min(totalPages, currentPage + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="w-24"
-                >
-                  Selanjutnya
-                </Button>
+        {/* Table area */}
+        <div className={cn("min-h-0 flex-1 flex flex-col")}>
+          {isLoading ? (
+            <div className="border rounded-lg overflow-hidden flex-1">
+              <table className="w-full min-w-max text-xs border-separate border-spacing-0">
+                {/* Skeleton header */}
+                <thead className="bg-muted">
+                  <tr>
+                    {/* No column */}
+                    <th className="p-2 w-12 min-w-[48px]">
+                      <Skeleton className="h-4 w-6 mx-auto" />
+                    </th>
+                    {/* Simulate 4 columns while loading */}
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <th key={i} className="p-2 min-w-[140px]">
+                        <Skeleton className="h-4 w-24 mx-auto" />
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: pageSize }).map((_, rowIdx) => (
+                    <tr key={rowIdx}>
+                      <td className="p-2 border-t border-border">
+                        <Skeleton className="h-3 w-6 mx-auto" />
+                      </td>
+                      {Array.from({ length: 4 }).map((_, colIdx) => {
+                        // Vary widths to look natural
+                        const widths = ["w-20", "w-28", "w-24", "w-16"];
+                        return (
+                          <td key={colIdx} className="p-2 border-t border-border">
+                            <Skeleton className={cn("h-3 mx-auto", widths[(rowIdx + colIdx) % widths.length])} />
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : lastResult && !lastResult.success ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <p className="text-sm text-red-600 mb-2">Error: {lastResult.error}</p>
+                <Button variant="outline" size="sm" onClick={handleRefresh}>Coba Lagi</Button>
               </div>
-            )}
+            </div>
+          ) : lastResult && lastResult.success && lastResult.data ? (
+            <div className="border rounded-lg overflow-auto flex-1">
+              <table className="w-full min-w-max text-xs border-separate border-spacing-0">
+                <thead className="bg-muted sticky top-0 z-10">
+                  <tr>
+                    <th className="p-2 text-center font-medium w-12 min-w-[48px] uppercase whitespace-nowrap">No</th>
+                    {lastResult.columns?.map((column) => (
+                      <th
+                        key={column}
+                        className="p-2 text-center font-medium cursor-pointer hover:bg-muted/70 select-none min-w-[140px] whitespace-nowrap uppercase"
+                        onClick={() => handleColumnClick(column)}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          {column}
+                          {sortColumn === column && (
+                            <span className="text-xs">{sortDirection === "asc" ? "↑" : "↓"}</span>
+                          )}
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedData.length > 0 ? (
+                    paginatedData.map((row, index) => (
+                      <tr key={index} className="hover:bg-muted/50">
+                        <td className="p-2 text-center w-12 min-w-[48px] border-t border-border">
+                          {startIndex + index + 1}
+                        </td>
+                        {lastResult.columns?.map((column) => (
+                          <td
+                            key={column}
+                            className={cn(
+                              "p-2 font-mono min-w-[140px] whitespace-nowrap border-t border-border",
+                              getCellAlignmentClass(column)
+                            )}
+                          >
+                            {formatCellValue(getRowValue(row, column), column)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={(lastResult.columns?.length || 0) + 1}
+                        className="text-center py-8 text-muted-foreground"
+                      >
+                        {searchTerm ? "Tidak ada data yang sesuai dengan pencarian" : "Tidak ada data"}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+
+                {/* Grand Total — sticky tfoot */}
+                {lastResult.columns?.some((c) => isSummableColumn(c)) && paginatedData.length > 0 && (
+                  <tfoot className="sticky bottom-0 z-10">
+                    {(() => {
+                      const firstSummableIndex = lastResult.columns?.findIndex((col) => isSummableColumn(col)) ?? -1;
+                      const columnsBeforeSummable = firstSummableIndex > 0 ? firstSummableIndex : 0;
+                      return (
+                        <tr className="bg-muted font-medium">
+                          <td
+                            colSpan={1 + columnsBeforeSummable}
+                            className="p-2 text-sm font-medium text-center border-t-2 border-primary"
+                          >
+                            Grand Total
+                          </td>
+                          {lastResult.columns?.slice(firstSummableIndex).map((column) => (
+                            <td
+                              key={column}
+                              className={cn(
+                                "p-2 text-sm font-mono font-medium min-w-[140px] whitespace-nowrap border-t-2 border-primary",
+                                getCellAlignmentClass(column)
+                              )}
+                            >
+                              {isSummableColumn(column)
+                                ? formatCellValue(grandTotals[column] ?? 0, column)
+                                : "-"}
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })()}
+                  </tfoot>
+                )}
+              </table>
+            </div>
+          ) : activeFilters.length === 0 ? (
+            <div className="flex items-center justify-center h-40 text-center text-muted-foreground">
+              <p>Pilih filter terlebih dahulu untuk menampilkan data</p>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-40 text-center text-muted-foreground">
+              <p>Klik &quot;Tayang&quot; untuk menampilkan data</p>
+            </div>
+          )}
+        </div>
+
+        {/* Pagination + footer */}
+        {lastResult && lastResult.success && lastResult.data && (
+          <div className="shrink-0 flex flex-col md:grid md:grid-cols-3 items-center gap-3">
+            {/* Left: Rows per page */}
+            <div className="flex items-center gap-2 order-2 md:order-1">
+              <p className="text-sm font-medium whitespace-nowrap">Baris per halaman</p>
+              <Select
+                value={pageSize.toString()}
+                onValueChange={(value) => {
+                  setPageSize(Number(value));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 25, 50, 100].map((size) => (
+                    <SelectItem key={size} value={`${size}`}>{size}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Center: Pagination */}
+            <div className="flex items-center justify-center order-1 md:order-2 w-full">
+              <Pagination className="mx-auto justify-center">
+                <div className="flex items-center justify-between w-full sm:min-w-[400px] gap-2">
+                  <PaginationPrevious
+                    onClick={(e) => { e.preventDefault(); setCurrentPage(Math.max(1, currentPage - 1)); }}
+                    className={cn(
+                      "cursor-pointer select-none",
+                      currentPage === 1 && "pointer-events-none opacity-50"
+                    )}
+                  />
+                  <PaginationContent className="flex-1 justify-center gap-1 overflow-x-auto">
+                    {renderPaginationItems()}
+                  </PaginationContent>
+                  <PaginationNext
+                    onClick={(e) => { e.preventDefault(); setCurrentPage(Math.min(totalPages, currentPage + 1)); }}
+                    className={cn(
+                      "cursor-pointer select-none",
+                      currentPage === totalPages && "pointer-events-none opacity-50"
+                    )}
+                  />
+                </div>
+              </Pagination>
+            </div>
+
+            {/* Right: Entry count + close */}
+            <div className="flex items-center justify-end gap-3 order-3 w-full md:w-auto">
+              <span className="text-sm text-muted-foreground whitespace-nowrap">
+                {displayStart}-{displayEnd} dari {totalAvailable} baris
+              </span>
+              <Button variant="destructive" onClick={handleCloseModal} className="w-20">
+                Tutup
+              </Button>
+            </div>
           </div>
-          <Button
-            variant="destructive"
-            onClick={handleCloseModal}
-            className="w-24"
-          >
-            Tutup
-          </Button>
-        </DialogFooter>
+        )}
+
+        {/* Close button when no data yet */}
+        {!(lastResult && lastResult.success && lastResult.data) && (
+          <DialogFooter className="shrink-0">
+            <Button variant="destructive" onClick={handleCloseModal} className="w-24">
+              Tutup
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -20,9 +20,7 @@ import {
   type MbgIndicatorKey,
 } from "@/features/mbg/types/domain";
 import type { MbgProvChoroplethRow } from "@/features/mbg/api/services";
-import useJumlahPenerimaKab, {
-  type PenerimaKabItem,
-} from "@/components/mbg/overview/jumlahpenerimaKab";
+import { useKabRankings } from "@/features/mbg/hooks/useKabRankings";
 import provinces from "@/data/indonesia/provinces.json";
 
 import indoData from "@/components/mbg/overview/indobaru.json";
@@ -148,10 +146,14 @@ export function MapSearch({
   year = "2026",
   provinceId: controlledProvinceId,
   onProvinceChange,
+  indicator: controlledIndicator,
+  onIndicatorChange,
 }: {
   year?: string;
   provinceId?: string;
   onProvinceChange?: (provinceId: string, provinceName: string) => void;
+  indicator?: MbgIndicatorKey;
+  onIndicatorChange?: (indicator: MbgIndicatorKey) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -179,7 +181,23 @@ export function MapSearch({
     [isControlled, onProvinceChange],
   );
 
-  const [indicator, setIndicator] = useState<MbgIndicatorKey>("jumlahpenerima");
+  // Support both controlled (via props) and uncontrolled (internal) indicator state
+  const [internalIndicator, setInternalIndicator] = useState<MbgIndicatorKey>("jumlahpenerima");
+  const isIndicatorControlled = controlledIndicator !== undefined;
+  const indicator = isIndicatorControlled ? controlledIndicator : internalIndicator;
+
+  const setIndicator = useCallback(
+    (val: MbgIndicatorKey) => {
+      if (!isIndicatorControlled) {
+        setInternalIndicator(val);
+      }
+      if (onIndicatorChange) {
+        onIndicatorChange(val);
+      }
+    },
+    [isIndicatorControlled, onIndicatorChange],
+  );
+
   // Tracks when Leaflet map is ready — prevents layers firing before map init
   const [mapReady, setMapReady] = useState(false);
 
@@ -205,17 +223,44 @@ export function MapSearch({
     return dbRow?.nama_provinsi ?? selectedProvince?.name ?? "";
   }, [provinceId, choroplethData, selectedProvince]);
 
-  // Kab-level penerima data (uses jumlahpenerimaKab hook → /penerima-by-regency)
-  const { dataPenerimaKab } = useJumlahPenerimaKab(provNameForKab, year);
+  // Kab-level rankings for all indicators
+  const { data: kabRankingsData } = useKabRankings(provNameForKab, year);
 
-  // Kab penerima lookup: normalized kabkota → data
-  const penerimaKabMap = useMemo(() => {
-    const m = new Map<string, PenerimaKabItem>();
-    dataPenerimaKab.forEach((item) => {
-      m.set(normalizeName(item.kabkota), item);
+  // Kab rankings lookup: indicator -> normalized kabkota -> data
+  const regencyRankingsMap = useMemo(() => {
+    const mainMap = new Map<string, Map<string, any>>();
+
+    if (!kabRankingsData) return mainMap;
+
+    const indicators: (keyof typeof kabRankingsData)[] = [
+      "penerima",
+      "sppg",
+      "petugas",
+      "supplier",
+      "kelompok",
+      "mitra",
+    ];
+
+    indicators.forEach((key) => {
+      const subMap = new Map<string, any>();
+      kabRankingsData[key]?.forEach((item) => {
+        subMap.set(normalizeName(item.name), item);
+      });
+      mainMap.set(key, subMap);
     });
-    return m;
-  }, [dataPenerimaKab]);
+
+    return mainMap;
+  }, [kabRankingsData]);
+
+  const getIndicatorKeyForRanking = (ind: MbgIndicatorKey): string => {
+    if (ind === "jumlahpenerima") return "penerima";
+    if (ind === "jumlahsppg") return "sppg";
+    if (ind === "jumlahpetugas") return "petugas";
+    if (ind === "jumlahsupplier") return "supplier";
+    if (ind === "jumlahkelompok") return "kelompok";
+    if (ind === "jumlahmitra") return "mitra";
+    return "penerima";
+  };
 
   // Build choropleth map keyed by wilkode (reliable) + normalized name (fallback)
   const choroplethMap = useMemo(() => {
@@ -285,6 +330,16 @@ export function MapSearch({
     };
   }, []);
 
+  // ─── Invalidate map size when container resizes ───────────────────────────
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver(() => {
+      mapRef.current?.invalidateSize();
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   // ─── Update province choropleth layer ────────────────────────────────────
   const updateProvLayer = useCallback(() => {
     if (!mapRef.current) return;
@@ -337,6 +392,69 @@ export function MapSearch({
             `<div style="font-size:12px;line-height:1.6">
               <strong>${name}</strong><br/>
               ${indicatorLabel}: <strong>${fmt(value)}</strong>
+              ${
+                indicator === "jumlahsppg" && row?.breakdown_sppg
+                  ? `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:10px;color:#666">
+                      ${row.breakdown_sppg
+                        .map(
+                          (b) =>
+                            `<div style="display:flex;justify-content:space-between;gap:12px">
+                              <span>${b.category}</span>
+                              <span style="font-weight:600">${fmt(b.value)}</span>
+                            </div>`,
+                        )
+                        .join("")}
+                    </div>`
+                  : indicator === "jumlahkelompok" && row?.breakdown_kelompok
+                  ? `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:10px;color:#666">
+                      ${row.breakdown_kelompok
+                        .map(
+                          (b) =>
+                            `<div style="display:flex;justify-content:space-between;gap:12px">
+                              <span>${b.category}</span>
+                              <span style="font-weight:600">${fmt(b.value)}</span>
+                            </div>`,
+                        )
+                        .join("")}
+                    </div>`
+                  : indicator === "jumlahsupplier" && row?.breakdown_supplier
+                    ? `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:10px;color:#666">
+                        ${row.breakdown_supplier
+                          .map(
+                            (b) =>
+                              `<div style="display:flex;justify-content:space-between;gap:12px">
+                                <span>${b.category}</span>
+                                <span style="font-weight:600">${fmt(b.value)}</span>
+                              </div>`,
+                          )
+                          .join("")}
+                      </div>`
+                    : indicator === "jumlahpetugas" && row?.breakdown_petugas
+                      ? `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:10px;color:#666">
+                          ${row.breakdown_petugas
+                            .map(
+                              (b) =>
+                                `<div style="display:flex;justify-content:space-between;gap:12px">
+                                  <span>${b.category}</span>
+                                  <span style="font-weight:600">${fmt(b.value)}</span>
+                                </div>`,
+                            )
+                            .join("")}
+                        </div>`
+                      : indicator === "jumlahmitra" && row?.breakdown_mitra
+                        ? `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:10px;color:#666">
+                            ${row.breakdown_mitra
+                              .map(
+                                (b) =>
+                                  `<div style="display:flex;justify-content:space-between;gap:12px">
+                                    <span>${b.category}</span>
+                                    <span style="font-weight:600">${fmt(b.value)}</span>
+                                  </div>`,
+                              )
+                              .join("")}
+                          </div>`
+                        : ""
+              }
             </div>`,
             { sticky: true, opacity: 0.97 },
           );
@@ -394,36 +512,107 @@ export function MapSearch({
       if (!features.length) return;
 
       const kabGeoJSON = { type: "FeatureCollection", features };
-      const showPenerima =
-        indicator === "jumlahpenerima" && penerimaKabMap.size > 0;
+      
+      const rankingKey = getIndicatorKeyForRanking(indicator);
+      const subMap = regencyRankingsMap.get(rankingKey);
+      const kelompokBreakdownMap = regencyRankingsMap.get("kelompok");
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const layer = L.geoJSON(kabGeoJSON as any, {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         style: (feature: any) => {
           const kabName = (feature?.properties?.WADMKK as string) ?? "";
-          const kabRow = penerimaKabMap.get(normalizeName(kabName));
-          const fillColor =
-            showPenerima && kabRow
-              ? getColorByIndicator(kabRow.penerimakab, "jumlahpenerima")
-              : "#3498db";
+          const row = subMap?.get(normalizeName(kabName));
+          const value = row?.value ?? 0;
+          
           return {
-            fillColor,
-            fillOpacity: 0.65,
-            color: "#2c3e50",
+            fillColor: getColorByIndicator(value, indicator),
+            fillOpacity: 0.7,
+            color: "#ffffff",
             weight: 0.8,
           };
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onEachFeature: (feature: any, lyr: any) => {
           const kabName = (feature?.properties?.WADMKK as string) ?? "Kab/Kota";
-          const kabRow = penerimaKabMap.get(normalizeName(kabName));
-          const tooltipExtra =
-            showPenerima && kabRow
-              ? `<br/>Penerima: <strong>${fmt(kabRow.penerimakab)}</strong> (${Number(kabRow.persenpenerimakab).toFixed(1)}%)`
-              : "";
+          const row = subMap?.get(normalizeName(kabName)) as any;
+          const value = row?.value ?? 0;
+          const percentage = row?.percentage ?? 0;
+
+          const indicatorLabel =
+            MBG_INDICATOR_OPTIONS.find((o) => o.value === indicator)?.label ??
+            indicator;
+
+          const kabBreakdown = kelompokBreakdownMap?.get(normalizeName(kabName)) as any;
+
           lyr.bindTooltip(
-            `<div style="font-size:12px;line-height:1.6"><strong>${kabName}</strong>${tooltipExtra}</div>`,
+            `<div style="font-size:12px;line-height:1.6">
+              <strong>${kabName}</strong><br/>
+              ${indicatorLabel}: <strong>${fmt(value)}</strong> (${percentage.toFixed(1)}%)
+              ${
+                indicator === "jumlahsppg" && row?.breakdown
+                  ? `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:10px;color:#666">
+                      ${row.breakdown
+                        .map(
+                          (b: any) =>
+                            `<div style="display:flex;justify-content:space-between;gap:12px">
+                              <span>${b.category}</span>
+                              <span style="font-weight:600">${fmt(b.value)}</span>
+                            </div>`,
+                        )
+                        .join("")}
+                    </div>`
+                  : indicator === "jumlahkelompok" && kabBreakdown?.breakdown
+                  ? `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:10px;color:#666">
+                      ${kabBreakdown.breakdown
+                        .map(
+                          (b: any) =>
+                            `<div style="display:flex;justify-content:space-between;gap:12px">
+                              <span>${b.category}</span>
+                              <span style="font-weight:600">${fmt(b.value)}</span>
+                            </div>`,
+                        )
+                        .join("")}
+                    </div>`
+                  : indicator === "jumlahsupplier" && row?.breakdown
+                    ? `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:10px;color:#666">
+                        ${row.breakdown
+                          .map(
+                            (b: any) =>
+                              `<div style="display:flex;justify-content:space-between;gap:12px">
+                                <span>${b.category}</span>
+                                <span style="font-weight:600">${fmt(b.value)}</span>
+                              </div>`,
+                          )
+                          .join("")}
+                      </div>`
+                    : indicator === "jumlahpetugas" && row?.breakdown
+                      ? `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:10px;color:#666">
+                          ${row.breakdown
+                            .map(
+                              (b: any) =>
+                                `<div style="display:flex;justify-content:space-between;gap:12px">
+                                  <span>${b.category}</span>
+                                  <span style="font-weight:600">${fmt(b.value)}</span>
+                                </div>`,
+                            )
+                            .join("")}
+                        </div>`
+                      : indicator === "jumlahmitra" && row?.breakdown
+                        ? `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:10px;color:#666">
+                            ${row.breakdown
+                              .map(
+                                (b: any) =>
+                                  `<div style="display:flex;justify-content:space-between;gap:12px">
+                                    <span>${b.category}</span>
+                                    <span style="font-weight:600">${fmt(b.value)}</span>
+                                  </div>`,
+                              )
+                              .join("")}
+                          </div>`
+                        : ""
+              }
+            </div>`,
             { sticky: true, opacity: 0.97 },
           );
           lyr.on("mouseover", function (this: typeof lyr) {
@@ -446,7 +635,7 @@ export function MapSearch({
         // ignore
       }
     });
-  }, [selectedProvince, penerimaKabMap, indicator]);
+  }, [selectedProvince, regencyRankingsMap, indicator]);
 
   // Trigger province layer update — wait for mapReady + data/indicator changes
   useEffect(() => {
@@ -485,8 +674,8 @@ export function MapSearch({
   const internalProvinceValue = !provinceId ? "all" : provinceId;
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
+    <Card className="h-full flex flex-col">
+      <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0 shrink-0">
         <CardTitle className="text-base">Peta Distribusi MBG</CardTitle>
         <Button
           variant="outline"
@@ -498,9 +687,9 @@ export function MapSearch({
           Reset
         </Button>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="flex flex-col flex-1 space-y-3 min-h-0">
         {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 shrink-0">
           {/* Province selector */}
           <SearchableSelect
             options={provinceOptions}
@@ -530,11 +719,8 @@ export function MapSearch({
           </Select>
         </div>
 
-        {/* Map container */}
-        <div
-          className="relative w-full rounded-md overflow-hidden border z-0"
-          style={{ height: 420 }}
-        >
+        {/* Map container — grows to fill remaining card height, min 420px */}
+        <div className="relative w-full flex-1 min-h-[420px] rounded-md overflow-hidden border z-0">
           <div ref={containerRef} className="h-full w-full z-0" />
 
           {/* Back to national button */}

@@ -108,10 +108,12 @@ export default function WeeklyLanding() {
     to: defaultRange.to,
   });
   const [isLoadingBelanja, setIsLoadingBelanja] = useState(false);
+  const [applyCounterBelanja, setApplyCounterBelanja] = useState(0);
 
   const handleApplyBelanja = () => {
     setIsLoadingBelanja(true);
-    // Simulate loading
+    setApplyCounterBelanja((c) => c + 1);
+    // Brief loading indicator while React Query fetches
     setTimeout(() => setIsLoadingBelanja(false), 500);
   };
 
@@ -733,6 +735,7 @@ export default function WeeklyLanding() {
                       onApply={handleApplyBelanja}
                       isLoading={isLoadingBelanja}
                       onExport={() => { }}
+                      applyCounter={applyCounterBelanja}
                     />
                   ) : item.id === "pengeluaran-akun" ? (
                     <PengeluaranAkun

@@ -39,6 +39,7 @@ export type QuickStatView = {
   value: string | number;
   trend?: string;
   variant?: "up" | "down" | "neutral";
+  breakdown?: { category: string; value: number }[] | undefined;
 };
 
 type MbgQuickStatsApiData = {
@@ -48,6 +49,11 @@ type MbgQuickStatsApiData = {
   jumlahkelompok: number;
   jumlahpenerima: number;
   jumlahmitra: number;
+  breakdown_kelompok?: { category: string; value: number }[] | undefined;
+  breakdown_supplier?: { category: string; value: number }[] | undefined;
+  breakdown_petugas?: { category: string; value: number }[] | undefined;
+  breakdown_mitra?: { category: string; value: number }[] | undefined;
+  breakdown_sppg?: { category: string; value: number }[] | undefined;
 };
 
 type MbgQuickStatsApiResponse = {
@@ -83,34 +89,39 @@ export async function getQuickStats(
   const raw = response.data;
   const views: QuickStatView[] = [
     {
-      label: "Total SPPG Aktif",
-      value: formatCount(raw.jumlahsppg),
-      variant: "neutral",
-    },
-    {
-      label: "Petugas SPPG",
-      value: formatCount(raw.jumlahpetugas),
-      variant: "neutral",
-    },
-    {
-      label: "Supplier MBG",
-      value: formatCount(raw.jumlahsupplier),
-      variant: "neutral",
-    },
-    {
-      label: "Kelompok Manfaat",
-      value: formatCount(raw.jumlahkelompok),
-      variant: "neutral",
-    },
-    {
       label: "Penerima Manfaat",
       value: formatCount(raw.jumlahpenerima),
       variant: "neutral",
     },
     {
+      label: "Total SPPG Aktif",
+      value: formatCount(raw.jumlahsppg),
+      variant: "neutral",
+      breakdown: raw.breakdown_sppg,
+    },
+    {
+      label: "Petugas SPPG",
+      value: formatCount(raw.jumlahpetugas),
+      variant: "neutral",
+      breakdown: raw.breakdown_petugas,
+    },
+    {
+      label: "Supplier MBG",
+      value: formatCount(raw.jumlahsupplier),
+      variant: "neutral",
+      breakdown: raw.breakdown_supplier,
+    },
+    {
+      label: "Kelompok Manfaat",
+      value: formatCount(raw.jumlahkelompok),
+      variant: "neutral",
+      breakdown: raw.breakdown_kelompok,
+    },
+    {
       label: "Total Mitra",
       value: formatCount(raw.jumlahmitra),
       variant: "neutral",
+      breakdown: raw.breakdown_mitra,
     },
   ];
 
@@ -163,6 +174,11 @@ export type MbgProvChoroplethRow = {
   jumlahkelompok: number;
   jumlahpenerima: number;
   jumlahmitra: number;
+  breakdown_kelompok?: { category: string; value: number }[] | undefined;
+  breakdown_supplier?: { category: string; value: number }[] | undefined;
+  breakdown_petugas?: { category: string; value: number }[] | undefined;
+  breakdown_mitra?: { category: string; value: number }[] | undefined;
+  breakdown_sppg?: { category: string; value: number }[] | undefined;
 };
 
 export async function getMapChoropleth(
@@ -205,12 +221,16 @@ export type RankedItem = {
   percentage: number;
   target?: number | null;
   attainment?: number | null;
+  breakdown?: { category: string; value: number }[];
 };
 
 export type ProvRankingsData = {
   penerima: RankedItem[];
   sppg: RankedItem[];
   petugas: RankedItem[];
+  supplier: RankedItem[];
+  kelompok: RankedItem[];
+  mitra: RankedItem[];
 };
 
 export async function getProvRankings(
@@ -223,6 +243,21 @@ export async function getProvRankings(
   }>(`/dashboard/mbg/province-rankings?${params.toString()}`);
   if (!response?.success || !response.data) {
     throw new Error("Failed to fetch MBG province rankings");
+  }
+  return response.data;
+}
+
+export async function getRegencyRankings(
+  prov: string,
+  year: string = "2026",
+): Promise<ProvRankingsData> {
+  const params = new URLSearchParams({ prov, year });
+  const response = await apiClient.get<{
+    success: boolean;
+    data?: ProvRankingsData;
+  }>(`/dashboard/mbg/regency-rankings?${params.toString()}`);
+  if (!response?.success || !response.data) {
+    throw new Error("Failed to fetch MBG regency rankings");
   }
   return response.data;
 }

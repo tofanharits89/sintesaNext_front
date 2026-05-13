@@ -45,6 +45,7 @@ import { formatJakartaDateTime } from "@/utils/formatters";
 
 import { MapSearch } from "@/features/mbg/components/MapSearch";
 import { Suspense } from "react";
+import type { MbgIndicatorKey } from "@/features/mbg/types/domain";
 
 export default function DashboardMBGPage() {
   const { user } = useAuth();
@@ -56,10 +57,16 @@ export default function DashboardMBGPage() {
   // Province selection lifted from MapSearch so StatsRankingCard can react to it
   const [selectedProvinceId, setSelectedProvinceId] = useState<string>("");
   const [selectedProvinceName, setSelectedProvinceName] = useState<string>("");
+  // Indicator selection lifted from MapSearch so StatsRankingCard can react to it
+  const [selectedIndicator, setSelectedIndicator] = useState<MbgIndicatorKey>("jumlahpenerima");
 
   const handleProvinceChange = useCallback((id: string, name: string) => {
     setSelectedProvinceId(id);
     setSelectedProvinceName(name);
+  }, []);
+
+  const handleIndicatorChange = useCallback((indicator: MbgIndicatorKey) => {
+    setSelectedIndicator(indicator);
   }, []);
 
   const { data: quickStatsResponse, isLoading: isQuickStatsLoading } =
@@ -103,11 +110,11 @@ export default function DashboardMBGPage() {
 
   const iconByLabel = useMemo(
     () => ({
+      "Penerima Manfaat": UserCheck,
       "Total SPPG Aktif": Building2,
       "Petugas SPPG": Users,
       "Supplier MBG": Truck,
       "Kelompok Manfaat": Layers3,
-      "Penerima Manfaat": UserCheck,
       "Total Mitra": Handshake,
     }),
     [],
@@ -176,6 +183,7 @@ export default function DashboardMBGPage() {
                   value={String(s.value)}
                   trend={s.trend}
                   trendVariant={(s.variant as any) ?? "neutral"}
+                  breakdown={s.breakdown}
                 />
               );
             })}
@@ -190,6 +198,8 @@ export default function DashboardMBGPage() {
                 year={year}
                 provinceId={selectedProvinceId}
                 onProvinceChange={handleProvinceChange}
+                indicator={selectedIndicator}
+                onIndicatorChange={handleIndicatorChange}
               />
             </Suspense>
           </QueryErrorBoundary>
@@ -200,33 +210,27 @@ export default function DashboardMBGPage() {
           ) : (
             <StatsRankingCard
               title={selectedProvinceName ? `Statistik: ${selectedProvinceName}` : "Statistik Wilayah"}
-              tabs={
-                selectedProvinceName
-                  ? [
-                      {
-                        key: "penerima",
-                        label: "Penerima",
-                        items: kabRankingsData?.penerima ?? [],
-                      },
-                    ]
-                  : [
-                      {
-                        key: "penerima",
-                        label: "Penerima",
-                        items: provRankingsData?.penerima ?? [],
-                      },
-                      {
-                        key: "sppg",
-                        label: "SPPG",
-                        items: provRankingsData?.sppg ?? [],
-                      },
-                      {
-                        key: "petugas",
-                        label: "Petugas",
-                        items: provRankingsData?.petugas ?? [],
-                      },
-                    ]
-              }
+              tabs={(() => {
+                const rankingData = selectedProvinceName ? kabRankingsData : provRankingsData;
+
+                if (selectedIndicator === "jumlahsppg") {
+                  return [{ key: "sppg", label: "SPPG", items: rankingData?.sppg ?? [] }];
+                }
+                if (selectedIndicator === "jumlahpetugas") {
+                  return [{ key: "petugas", label: "Petugas", items: rankingData?.petugas ?? [] }];
+                }
+                if (selectedIndicator === "jumlahsupplier") {
+                  return [{ key: "supplier", label: "Supplier", items: rankingData?.supplier ?? [] }];
+                }
+                if (selectedIndicator === "jumlahkelompok") {
+                  return [{ key: "kelompok", label: "Kelompok", items: rankingData?.kelompok ?? [] }];
+                }
+                if (selectedIndicator === "jumlahmitra") {
+                  return [{ key: "mitra", label: "Mitra", items: rankingData?.mitra ?? [] }];
+                }
+                // Default: jumlahpenerima
+                return [{ key: "penerima", label: "Penerima", items: rankingData?.penerima ?? [] }];
+              })()}
             />
           )}
         </div>

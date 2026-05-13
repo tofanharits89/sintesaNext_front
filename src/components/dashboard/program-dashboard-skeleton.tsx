@@ -9,53 +9,57 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
  */
 export function ProgramCardSkeleton() {
   return (
-    <Card className="flex flex-col overflow-hidden">
+    <Card className="flex flex-col overflow-hidden animate-pulse">
       {/* Card Header */}
-      <CardHeader>
-        <div className="flex items-start justify-between gap-2">
+      <CardHeader className="pb-4">
+        <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0 space-y-2">
-            <Skeleton className="h-5 w-3/4" /> {/* CardTitle */}
-            <Skeleton className="h-3 w-20" /> {/* CardDescription */}
+            <Skeleton className="h-6 w-3/4 rounded-md" /> {/* CardTitle */}
+            <div className="mt-1 flex items-center gap-2">
+              <Skeleton className="h-4 w-10 rounded bg-muted" /> {/* CODE badge */}
+              <Skeleton className="h-3 w-16" /> {/* code description */}
+            </div>
           </div>
-          <Skeleton className="h-8 w-8 rounded-md" /> {/* Info button */}
+          <Skeleton className="h-9 w-9 rounded-full" /> {/* Info button */}
         </div>
       </CardHeader>
 
       {/* Card Body */}
       <CardContent>
-        <div className="flex gap-2">
-          {/* Left side: Info */}
-          <div className="flex-1 space-y-1">
+        <div className="flex gap-4 items-center">
+          {/* Left side: Donut Chart */}
+          <div className="w-36 h-36 flex-shrink-0 flex items-center justify-center">
+            <Skeleton className="h-32 w-32 rounded-full border-4 border-muted" />
+          </div>
+
+          {/* Right side: Info */}
+          <div className="flex-1 space-y-4 flex flex-col items-end">
             {/* Pagu */}
-            <div className="space-y-1">
+            <div className="space-y-1 flex flex-col items-end">
               <Skeleton className="h-3 w-12" />
-              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-5 w-28" />
             </div>
 
             {/* Realisasi */}
-            <div className="space-y-1">
+            <div className="space-y-1 flex flex-col items-end">
               <Skeleton className="h-3 w-16" />
-              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-5 w-32" />
             </div>
 
             {/* Blokir */}
-            <div className="space-y-1">
+            <div className="space-y-1 flex flex-col items-end">
               <Skeleton className="h-3 w-12" />
-              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-5 w-24" />
             </div>
-          </div>
-
-          {/* Right side: Donut Chart */}
-          <div className="w-24 h-24 flex-shrink-0 flex items-center justify-center overflow-hidden">
-            <Skeleton className="h-24 w-24 rounded-full" />
           </div>
         </div>
       </CardContent>
 
       {/* Card Footer */}
-      <CardFooter>
-        <div className="w-full">
-          <Skeleton className="h-3 w-20" />
+      <CardFooter className="pt-2 border-t border-border/50 bg-muted/5">
+        <div className="w-full flex justify-between items-center">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-32" />
         </div>
       </CardFooter>
     </Card>

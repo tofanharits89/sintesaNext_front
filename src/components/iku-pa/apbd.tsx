@@ -2,14 +2,11 @@
 
 import React from "react";
 import dynamic from "next/dynamic";
+import { ApbdPageSkeleton } from "@/components/iku-pa/apbd-skeleton";
 
 const MapApbd = dynamic(() => import("./map-apbd"), {
   ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center h-64 text-sm text-muted-foreground">
-      Memuat peta…
-    </div>
-  ),
+  loading: () => <ApbdPageSkeleton />,
 });
 
 export default function ApbdContent() {

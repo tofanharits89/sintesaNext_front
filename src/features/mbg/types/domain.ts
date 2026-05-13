@@ -9,11 +9,11 @@ export type MbgIndicatorKey =
   | "jumlahmitra";
 
 export const MBG_INDICATOR_OPTIONS: { value: MbgIndicatorKey; label: string }[] = [
+  { value: "jumlahpenerima", label: "Penerima Manfaat" },
   { value: "jumlahsppg", label: "Total SPPG Aktif" },
   { value: "jumlahpetugas", label: "Petugas SPPG" },
   { value: "jumlahsupplier", label: "Supplier MBG" },
   { value: "jumlahkelompok", label: "Kelompok Manfaat" },
-  { value: "jumlahpenerima", label: "Penerima Manfaat" },
   { value: "jumlahmitra", label: "Total Mitra" },
 ];
 

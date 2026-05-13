@@ -271,7 +271,7 @@ export function PencabutanModal({ open, onOpenChange }: PencabutanModalProps) {
                         // close popover after selecting a date
                         setDatePopoverOpen(false);
                       }}
-                      initialFocus
+                      autoFocus
                     />
                   </PopoverContent>
                 </Popover>

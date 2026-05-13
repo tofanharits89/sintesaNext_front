@@ -139,6 +139,9 @@ uniqueActiveFilters.forEach((filterKey) => {
     if (filterKey === "jenisProgramStrategis" && (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian")) {
       addGroupBy("main.nmprogis");
     }
+    if (filterKey === "jenisPrioritasPresiden" && (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian")) {
+      addGroupBy("main.nmpriopres");
+    }
 
     if (filterKey === "item" && (jenisTampilan === "uraian" || jenisTampilan === "kode_uraian")) {
       // Add columns used in nameColumn expression to GROUP BY

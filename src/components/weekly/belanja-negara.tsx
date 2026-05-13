@@ -55,13 +55,6 @@ function toLocalISO(d: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-/** Add days to a date and return YYYY-MM-DD */
-function addDays(dateStr: string, days: number): string {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() + days);
-  return toLocalISO(d);
-}
-
 /** Get the last working day before a given date */
 function getLastWorkingDay(d: Date): Date {
   const result = new Date(d);
@@ -170,68 +163,47 @@ export default function BelanjaNegaraWeekly({
   onDateChange, 
   onApply,
   isLoading,
-  onExport
+  onExport,
+  applyCounter = 0,
 }: { 
   dateRange?: DateRange; 
   onDateChange?: (range: DateRange | undefined) => void;
   onApply?: () => void;
   isLoading?: boolean;
   onExport?: () => void;
+  applyCounter?: number;
 } = {}) {
   // Compute default values
   const defaultRange = getDefaultRange();
-  const defaultFromStr = toLocalISO(defaultRange.from);
-  const defaultToStr = toLocalISO(defaultRange.to);
 
-  // Date range state (Minggu Ini)
-  const [range, setRange] = useState<DateRange | undefined>(
-    dateRange || {
-      from: defaultRange.from,
-      to: defaultRange.to
-    }
-  );
-
-  // Applied params (only updated on "Tampilkan" click)
-  const [appliedParams, setAppliedParams] = useState({
-    tglSd2026: toLocalISO(getLastWorkingDay(defaultRange.from)),
-    tglAwal2026: defaultFromStr,
-    tglAkhir2026: defaultToStr,
-    tglYoy2025: (() => {
-      const d = new Date(defaultRange.to);
-      d.setFullYear(d.getFullYear() - 1);
-      return toLocalISO(d);
-    })(),
-    tglReal2025: (() => {
-      const d = new Date(defaultRange.to);
-      d.setFullYear(d.getFullYear() - 1);
-      return toLocalISO(d);
-    })(),
-  });
-
-  const { data, isLoading: dataLoading, error, refetch } = useBelanjaNegaraWeekly(appliedParams);
-
-  const handleApply = () => {
-    if (!range?.from || !range?.to) return;
-
-    const tglAwal = toLocalISO(range.from);
-    const tglAkhir = toLocalISO(range.to);
-    const tglSd = toLocalISO(getLastWorkingDay(range.from));
-    
-    // Calculate 2025 date automatically from 2026 Akhir Minggu Ini
-    const d2025 = new Date(range.to);
+  // Helper: build params from a date range
+  function buildParams(from: Date, to: Date) {
+    const tglAwal = toLocalISO(from);
+    const tglAkhir = toLocalISO(to);
+    const tglSd = toLocalISO(getLastWorkingDay(from));
+    const d2025 = new Date(to);
     d2025.setFullYear(d2025.getFullYear() - 1);
     const tgl2025 = toLocalISO(d2025);
+    return { tglSd2026: tglSd, tglAwal2026: tglAwal, tglAkhir2026: tglAkhir, tglYoy2025: tgl2025, tglReal2025: tgl2025 };
+  }
 
-    setAppliedParams({ 
-      tglSd2026: tglSd, 
-      tglAwal2026: tglAwal, 
-      tglAkhir2026: tglAkhir, 
-      tglYoy2025: tgl2025, 
-      tglReal2025: tgl2025 
-    });
+  // Applied params (only updated on "Tampilkan" click via applyCounter)
+  const [appliedParams, setAppliedParams] = useState(() =>
+    buildParams(defaultRange.from, defaultRange.to)
+  );
 
-    onApply?.();
-  };
+  // Track the last applied counter so we only recalculate on new clicks
+  const [lastApplied, setLastApplied] = useState(0);
+
+  // When the parent bumps applyCounter, recalculate params from the current dateRange prop
+  if (applyCounter > lastApplied) {
+    const from = dateRange?.from ?? defaultRange.from;
+    const to = dateRange?.to ?? defaultRange.to;
+    setAppliedParams(buildParams(from, to));
+    setLastApplied(applyCounter);
+  }
+
+  const { data, isLoading: dataLoading, error, refetch } = useBelanjaNegaraWeekly(appliedParams);
 
   const handleExportExcel = () => {
     if (!data || data.length === 0) return;

@@ -179,7 +179,59 @@ export default function MonevKkpKanwilPage() {
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     try {
-      const data = kanwilContentRef.current?.getData() || [];
+      // Fetch ALL data from API (not just current page)
+      toast.info("Sedang menyiapkan data Excel, harap tunggu...");
+      const triwulanNum = selectedPeriode.replace("Q", "");
+      const ts = new Date().getTime();
+
+      let regionalParams = "";
+      if (user?.role === "kanwil_djpb" && user.kdkanwil) {
+        regionalParams = `&kdkanwil=${user.kdkanwil}`;
+      }
+      const apiUrl = apiPath(
+        `/monev-kkp/kppn?tahun=${selectedYear}&triwulan=${triwulanNum}${regionalParams}&page=1&limit=100000&_t=${ts}`,
+      );
+      const response = await fetch(apiUrl, {
+        credentials: "include",
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+      });
+      if (!response.ok) throw new Error("Gagal mengambil data untuk export");
+      const result = await response.json();
+
+      const data: RingkasanKanwilData[] = (result.data || []).map((item: any, index: number) => ({
+        id: `${item.kdsatker}-${index}`,
+        kodeKppn: item.kdkppn,
+        kdkppn: item.kdkppn,
+        kdkanwil: item.kdkanwil,
+        namaKppn: item.nmkppn || item.kdkppn || "-",
+        kodeBA: item.kddept,
+        kodeSatker: item.kdsatker,
+        namaSatker: item.nmsatker,
+        upKkpPerBulan: Number(item.nilai_up_kkp || 0),
+        porsiUpKkp: Number(item.porsi_up_kkp_dari_total_up || 0),
+        bankPenerbit: item.bank_penerbit,
+        jmlKartuUsul: item.jml_kartu_usul !== undefined && item.jml_kartu_usul !== null ? Number(item.jml_kartu_usul) : null,
+        jumlahKartu: Number(item.jumlah_kartu || 0),
+        jmlKartuOpr: Number(item.jml_kartu_opr || 0),
+        limitOpr: Number(item.limit_opr || 0),
+        jmlKartuPd: Number(item.jml_kartu_pd || 0),
+        limitPd: Number(item.limit_pd || 0),
+        nilaiTagihan: Number(item.nilai_tagihan || 0),
+        nilaiTransaksi: Number(item.nilai_trans_sp2d || 0),
+        kendala: item.kendala || "",
+        detil_kendala: item.detil_kendala || "",
+        detil_masukan_kendala: item.detil_masukan_kendala || "",
+        nomor_pks: item.nomor_pks || "",
+        tanggal_pks: item.tanggal_pks || "",
+        nomor_surat_up: item.nomor_surat_up || "",
+        tanggal_surat_up: item.tanggal_surat_up || "",
+        tanggal_ctk_tagihan: item.tanggal_ctk_tagihan || "",
+        tanggal_jth_tempo: item.tanggal_jth_tempo || "",
+        nomor_sp2d_list: item.nomor_sp2d_list || "",
+        tanggal_sp2d_list: item.tanggal_sp2d_list || "",
+        jenis_belanja_list: item.jenis_belanja_list || "",
+      }));
 
       if (data.length === 0) {
         toast.error("Tidak ada data untuk diekspor");

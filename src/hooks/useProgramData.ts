@@ -29,22 +29,26 @@ export interface ProgramDataResponse {
 export interface UseProgramDataOptions {
   programType: "prioritas" | "strategis";
   year: string;
+  kanwil?: string;
   enabled?: boolean;
 }
 
 export function useProgramData(
   options: UseProgramDataOptions
 ): UseQueryResult<ProgramDataItem[], Error> {
-  const { programType, year, enabled } = options;
+  const { programType, year, kanwil, enabled } = options;
   const isClient = typeof window !== "undefined";
 
   return useQuery<ProgramDataItem[], Error>({
-    queryKey: ["program-data", programType, year],
+    queryKey: ["program-data", programType, year, kanwil || "semua"],
     queryFn: async () => {
       try {
         const params = new URLSearchParams();
         params.append("programType", programType);
         params.append("year", year);
+        if (kanwil) {
+          params.append("kanwil", kanwil);
+        }
 
         const endpoint = `/dashboard/program-data?${params.toString()}`;
 
