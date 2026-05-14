@@ -1,15 +1,7 @@
 "use client";
 
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-  LabelList,
-} from "recharts";
+import { BarChart, Bar, BarYAxis } from "@/components/charts";
+import { ChartTooltip } from "@/components/charts/tooltip";
 import {
   Card,
   CardContent,
@@ -37,25 +29,6 @@ function shortenName(name: string): string {
     .trim()
     .slice(0, 40);
 }
-
-const COLORS = [
-  "#3b82f6", "#2563eb", "#1d4ed8", "#1e40af", "#1e3a8a",
-  "#60a5fa", "#93c5fd", "#6366f1", "#4f46e5", "#4338ca",
-];
-
-const CustomYAxisTick = ({ x, y, payload }: any) => {
-  return (
-    <g transform={`translate(${x},${y})`}>
-      <foreignObject x={-176} y={-15} width={164} height={30}>
-        <div className="flex h-full w-full items-center justify-end px-2">
-          <span className="text-[10px] leading-[14px] text-[#888] text-right line-clamp-2 w-full break-words">
-            {payload.value}
-          </span>
-        </div>
-      </foreignObject>
-    </g>
-  );
-};
 
 interface RankingBarChartProps {
   title: string;
@@ -92,88 +65,75 @@ export function RankingBarChart({
   const chartData = data.map((item) => ({
     name: shortenName(item.name),
     fullName: item.name,
-    value: item.value,
+    Transaksi: item.value,
   }));
 
   return (
-    <Card className="flex h-full flex-col min-w-0">
-      <CardHeader className="pb-2">
+    <Card className="flex h-full min-w-0 flex-col">
+      <CardHeader>
         <CardTitle className="text-base">{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardDescription className="text-[12px]">{description}</CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col p-6 pt-0 pb-4 min-w-0">
-        <div className="flex-1 min-h-[400px] w-full min-w-0">
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={1}>
-            <BarChart
-              data={chartData}
-              layout="vertical"
-              margin={{ top: 4, right: 40, left: 4, bottom: 4 }}
-              barCategoryGap="18%"
-            >
-              <XAxis
-                type="number"
-                fontSize={10}
-                tickLine={false}
-                axisLine={false}
-                stroke="#888"
-                tickFormatter={(v) => fmtRupiah(v)}
-              />
-              <YAxis
-                dataKey="name"
-                type="category"
-                tick={<CustomYAxisTick />}
-                tickLine={false}
-                axisLine={false}
-                width={180}
-              />
-              <Tooltip
-                content={({ active, payload }) => {
-                  if (!active || !payload?.length) return null;
-                  const entry = payload[0]!;
-                  const d = chartData.find(
-                    (c) => c.name === entry.payload?.name,
-                  );
-                  return (
-                    <div className="rounded-lg border bg-background p-2.5 shadow-sm text-sm min-w-[200px]">
-                      <p className="text-xs font-semibold mb-1 text-foreground whitespace-normal">
-                        {d?.fullName ?? entry.payload?.name}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-2 h-2 rounded-full shrink-0"
-                          style={{ backgroundColor: "#3b82f6" }}
-                        />
-                        <span className="font-medium">{valueLabel}:</span>
-                        <span>
-                          {new Intl.NumberFormat("id-ID", {
-                            style: "currency",
-                            currency: "IDR",
-                            minimumFractionDigits: 0,
-                          }).format(Number(entry.value) || 0)}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                }}
-              />
-              <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={28}>
-                {chartData.map((_, idx) => (
-                  <Cell
-                    key={`cell-${idx}`}
-                    fill={COLORS[idx % COLORS.length] ?? "#888"}
-                  />
-                ))}
-                <LabelList
-                  dataKey="value"
-                  position="insideRight"
-                  formatter={(v: any) => fmtRupiah(Number(v))}
-                  fontSize={9}
-                  fill="#fff"
-                  offset={10}
-                />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+      <CardContent className="flex flex-1 flex-col px-6 pb-6 pt-0">
+        <div className="relative h-[400px] w-full min-w-0">
+          <BarChart
+            aspectRatio="auto"
+            barGap={0.22}
+            className="h-full w-full"
+            data={chartData}
+            margin={{ top: 4, right: 24, bottom: 8, left: 152 }}
+            orientation="horizontal"
+            xDataKey="name"
+          >
+            <BarYAxis
+              labelClassName="text-[10px] leading-tight"
+              labelMaxWidth={136}
+            />
+            <ChartTooltip
+              showCrosshair={false}
+              showDatePill={false}
+              showDots={false}
+              rows={(point) => [
+                {
+                  color: "var(--chart-realisasi)",
+                  label: valueLabel,
+                  value: new Intl.NumberFormat("id-ID", {
+                    style: "currency",
+                    currency: "IDR",
+                    maximumFractionDigits: 0,
+                  }).format(Number(point.Transaksi) || 0),
+                },
+              ]}
+              content={({ point }) => (
+                <div className="min-w-[220px] max-w-[320px] rounded-lg border bg-background p-2.5 text-sm shadow-sm">
+                  <p className="mb-1 whitespace-normal text-xs font-semibold text-foreground">
+                    {String(point.fullName ?? point.name ?? "")}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: "var(--chart-realisasi)" }}
+                    />
+                    <span className="font-medium text-muted-foreground">
+                      {valueLabel}:
+                    </span>
+                    <span className="font-semibold text-foreground">
+                      {fmtRupiah(Number(point.Transaksi) || 0)}
+                    </span>
+                  </div>
+                </div>
+              )}
+            />
+            <Bar
+              dataKey="Transaksi"
+              fill="var(--chart-realisasi)"
+              labelColor="var(--chart-realisasi-label)"
+              labelFormatter={fmtRupiah}
+              lineCap={6}
+              minPointSize={12}
+              showLabels
+            />
+          </BarChart>
         </div>
       </CardContent>
     </Card>

@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef } from "react";
-import dynamic from "next/dynamic";
+import { useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -10,30 +9,16 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { ChartCardSkeleton } from "@/components/ui/dashboard-skeletons";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import type { WordCloudItem } from "@/features/monev-kkp/api/services";
-
-// Dynamic import to avoid SSR issues (d3 uses window/document)
-const WordCloud = dynamic(
-  () => import("@isoterik/react-word-cloud").then((mod) => mod.WordCloud),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-[320px] w-full animate-pulse rounded-md bg-muted" />
-    ),
-  },
-) as any;
+import { BoundedWordCloud } from "./BoundedWordCloud";
 
 const WORD_COLORS = [
-  "#ef4444", "#f59e0b", "#8b5cf6", "#3b82f6", "#10b981",
-  "#ec4899", "#06b6d4", "#84cc16", "#f97316", "#6366f1",
-  "#14b8a6", "#a855f7", "#e11d48", "#0ea5e9", "#65a30d",
+  "#7aa6a1", "#d08b78", "#8fa66f", "#8ea4c8", "#c49a5e",
+  "#b5839b", "#78a6c8", "#b2a06d", "#9d91c2", "#c27f7f",
+  "#73a889", "#c18ca8", "#d1996b", "#7f9fc0", "#a8a66f",
 ];
+
+const MAX_VISIBLE_WORDS = 34;
 
 interface DetilKendalaWordCloudProps {
   data: WordCloudItem[];
@@ -44,60 +29,23 @@ export function DetilKendalaWordCloud({
   data,
   isLoading,
 }: DetilKendalaWordCloudProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 360 });
-  const [hoveredWord, setHoveredWord] = useState<string | null>(null);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    let animationFrameId: number;
-    const observer = new ResizeObserver((entries) => {
-      animationFrameId = requestAnimationFrame(() => {
-        for (const entry of entries) {
-          const { width } = entry.contentRect;
-          if (width > 0) {
-            setDimensions((prev) => {
-              // Only update if changed by more than 5px to avoid infinite sub-pixel loops
-              if (Math.abs(prev.width - width) > 5) {
-                return { width: Math.floor(width), height: 360 };
-              }
-              return prev;
-            });
-          }
-        }
-      });
-    });
-
-    observer.observe(el);
-    return () => {
-      observer.disconnect();
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, []);
-
   const totalWords = useMemo(
     () => data.reduce((s, d) => s + d.value, 0),
     [data],
   );
 
-  // Stable color callback
-  const wordColor = useMemo(() => {
-    const colorMap = new Map<string, string>();
-    data.forEach((item, i) => {
-      colorMap.set(item.text, WORD_COLORS[i % WORD_COLORS.length] ?? "#888");
-    });
-    return (word: { text: string }) => colorMap.get(word.text) ?? "#888";
-  }, [data]);
+  const words = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    const sorted = [...data]
+      .sort((a, b) => b.value - a.value)
+      .slice(0, MAX_VISIBLE_WORDS);
 
-  // Stable tooltip callback
-  const wordTooltip = useMemo(() => {
-    const tooltipMap = new Map<string, string>();
-    data.forEach((item) => {
-      tooltipMap.set(item.text, `"${item.text}" — muncul ${item.value}x`);
-    });
-    return (word: { text: string }) => tooltipMap.get(word.text) ?? word.text;
+    return sorted.map((item, i) => ({
+      color: WORD_COLORS[i % WORD_COLORS.length] ?? "#64748b",
+      text: item.text,
+      tooltip: `"${item.text}" - muncul ${item.value}x`,
+      value: item.value,
+    }));
   }, [data]);
 
   if (isLoading) return <ChartCardSkeleton />;
@@ -139,82 +87,13 @@ export function DetilKendalaWordCloud({
         </div>
       </CardHeader>
       <CardContent className="p-6 pt-0 pb-4">
-        <div
-          ref={containerRef}
-          className="group bg-zinc-100 dark:bg-black rounded-lg"
-          style={{ width: "100%", height: 360, overflow: "hidden", display: "flex", justifyContent: "center" }}
-        >
-          {data.length > 0 && dimensions.width > 0 && (
-            <TooltipProvider delayDuration={0}>
-              <WordCloud
-                words={data}
-                width={dimensions.width}
-                height={dimensions.height}
-                font="Inter, system-ui, sans-serif"
-                fontWeight="600"
-                fontSize={(word: any) => {
-                  const maxVal = Math.max(...data.map(d => d.value));
-                  const minVal = Math.min(...data.map(d => d.value));
-                  const minS = 14;
-                  const maxS = 80;
-
-                  let size;
-                  if (maxVal === minVal) {
-                    size = (minS + maxS) / 2;
-                  } else {
-                    size = minS + ((word.value - minVal) / (maxVal - minVal)) * (maxS - minS);
-                  }
-
-                  // D3-cloud drops words that exceed bounding box. 
-                  // Scale down font size if the text is too long for the container.
-                  // A rough estimate: character width is ~0.6x font size.
-                  const estimatedWidth = word.text.length * size * 0.6;
-                  const maxWidth = dimensions.width * 0.9;
-
-                  if (estimatedWidth > maxWidth) {
-                    size = maxWidth / (word.text.length * 0.6);
-                  }
-
-                  // Height check
-                  const maxHeight = dimensions.height * 0.8;
-                  if (size > maxHeight) {
-                    size = maxHeight;
-                  }
-
-                  return Math.max(minS, size);
-                }}
-                rotate={() => 0}
-                padding={4}
-                spiral="rectangular"
-                renderWord={(word: any) => {
-                  const color = wordColor({ text: word.text });
-
-                  return (
-                    <Tooltip key={word.text}>
-                      <TooltipTrigger asChild>
-                        <text
-                          className="transition-all duration-300 ease-out cursor-pointer outline-none group-hover:opacity-25 hover:!opacity-100 hover:font-[800] hover:[scale:1.05]"
-                          fontSize={word.size}
-                          fontFamily={word.font}
-                          fontWeight={word.weight}
-                          fill={color}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                          transform={`translate(${word.x}, ${word.y}) rotate(${word.rotate})`}
-                        >
-                          {word.text}
-                        </text>
-                      </TooltipTrigger>
-                      <TooltipContent className="pointer-events-none shadow-md" sideOffset={5}>
-                        <p className="text-sm font-medium">{wordTooltip({ text: word.text })}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  );
-                }}
-              />
-            </TooltipProvider>
-          )}
-        </div>
+        <BoundedWordCloud
+          height={360}
+          items={words}
+          maxFontSize={26}
+          maxVisible={MAX_VISIBLE_WORDS}
+          minFontSize={10}
+        />
       </CardContent>
     </Card>
   );

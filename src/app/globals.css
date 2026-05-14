@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@import "@fontsource/belanosima/400.css";
+@import "@fontsource/belanosima/600.css";
+@import "@fontsource/belanosima/700.css";
 @import "../styles/fonts.css";
 @import "leaflet/dist/leaflet.css";
 @plugin "tailwindcss-animate";
