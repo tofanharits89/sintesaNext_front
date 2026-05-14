@@ -56,6 +56,7 @@ export default function SimplifiedLoginForm() {
   const { user, isLoading, login } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [loginSucceeded, setLoginSucceeded] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [captchaCode, setCaptchaCode] = useState("");
   const [captchaTtlSeconds, setCaptchaTtlSeconds] = useState<number | null>(
@@ -93,8 +94,8 @@ export default function SimplifiedLoginForm() {
     "flex min-h-svh items-center justify-center p-6 transition-colors duration-500 bg-[radial-gradient(ellipse_at_bottom,_#f4f4f5_0%,_#fafafa_100%)] dark:bg-[radial-gradient(ellipse_at_bottom,_#151515_0%,_#000000_100%)]";
 
   // Client-side redirect if already authenticated
-  // Skip redirect only when FORM is not yet submitted (isSubmitting false)
-  // Once user submits login form, redirect even if reason=session_expired (because now they're authenticated)
+  // Skip redirect only before a successful form submit.
+  // Once login succeeds, redirect even if reason=session_expired remains in the URL.
   useEffect(() => {
     try {
       const params =
@@ -104,10 +105,11 @@ export default function SimplifiedLoginForm() {
       const reason = params?.get("reason");
 
       // Skip redirect only if:
-      // 1. We haven't submitted the login form yet (isSubmitting still false)
-      // 2. AND we arrived due to logout/session_expired (not after login)
+      // 1. We have not completed a successful login yet
+      // 2. AND we arrived due to logout/session_expired
       const isLogoutFlow =
-        (reason === "logout" || reason === "session_expired") && !isSubmitting;
+        (reason === "logout" || reason === "session_expired") &&
+        !loginSucceeded;
 
       if (!isLoading && user && !isLogoutFlow) {
         setIsRedirecting(true);
@@ -120,7 +122,7 @@ export default function SimplifiedLoginForm() {
         router.push("/dashboard/utama");
       }
     }
-  }, [user, isLoading, router, isSubmitting]);
+  }, [user, isLoading, router, loginSucceeded]);
 
   const form = useForm<FormInput, any, FormData>({
     resolver: zodResolver(schema),
@@ -213,6 +215,7 @@ export default function SimplifiedLoginForm() {
 
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
+    setLoginSucceeded(false);
 
     try {
       // Prevent submitting expired captcha (common after idle)
@@ -235,6 +238,7 @@ export default function SimplifiedLoginForm() {
       );
 
       if (result.success) {
+        setLoginSucceeded(true);
         toast.success("Login berhasil");
 
         // Ensure theme from localStorage is applied before navigating
@@ -251,12 +255,15 @@ export default function SimplifiedLoginForm() {
         // Wait for auth to be loaded before redirecting
         // This ensures user data is available when dashboard mounts
         // Auth state is now loaded (waited for in useAuth.login),
-        // the useEffect above will handle the redirect reactively.
+        // and this explicit navigation avoids getting stuck on
+        // /login?reason=session_expired if state propagation is delayed.
         setIsRedirecting(true);
+        router.replace("/dashboard/utama");
       } else {
         throw new Error(result.error || "Login gagal");
       }
     } catch (error: any) {
+      setLoginSucceeded(false);
       console.error("Login error:", error);
       toast.error(error.message || "Terjadi kesalahan saat login");
 
