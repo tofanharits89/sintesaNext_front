@@ -33,7 +33,7 @@ function shortenName(name: string): string {
 interface RankingBarChartProps {
   title: string;
   description: string;
-  data: { name: string; value: number }[];
+  data: { name: string; fullName?: string; value: number }[];
   isLoading?: boolean;
   valueLabel?: string;
 }
@@ -64,7 +64,7 @@ export function RankingBarChart({
 
   const chartData = data.map((item) => ({
     name: shortenName(item.name),
-    fullName: item.name,
+    fullName: item.fullName ?? item.name,
     Transaksi: item.value,
   }));
 
@@ -81,13 +81,14 @@ export function RankingBarChart({
             barGap={0.22}
             className="h-full w-full"
             data={chartData}
-            margin={{ top: 4, right: 24, bottom: 8, left: 152 }}
+            margin={{ top: 4, right: 24, bottom: 8, left: 108 }}
             orientation="horizontal"
             xDataKey="name"
           >
             <BarYAxis
-              labelClassName="text-[10px] leading-tight"
-              labelMaxWidth={136}
+              labelClassName="font-mono text-[10px] leading-tight"
+              labelMaxWidth={72}
+              labelPaddingRight={14}
             />
             <ChartTooltip
               showCrosshair={false}

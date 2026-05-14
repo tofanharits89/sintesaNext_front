@@ -16,6 +16,8 @@ export interface BarYAxisProps {
   labelMaxWidth?: number;
   /** Additional class name for label text. */
   labelClassName?: string;
+  /** Right padding (px) between labels and chart bars. Default: 8 */
+  labelPaddingRight?: number;
 }
 
 interface BarYAxisLabelProps {
@@ -25,6 +27,7 @@ interface BarYAxisLabelProps {
   isHovered: boolean;
   labelMaxWidth: number;
   labelClassName?: string | undefined;
+  labelPaddingRight: number;
 }
 
 function BarYAxisLabel({
@@ -34,13 +37,15 @@ function BarYAxisLabel({
   isHovered,
   labelMaxWidth,
   labelClassName,
+  labelPaddingRight,
 }: BarYAxisLabelProps) {
   return (
     <div
-      className="absolute right-0 flex items-center justify-end pr-2"
+      className="absolute right-0 flex items-center justify-end"
       style={{
         top: y,
         height: bandHeight,
+        paddingRight: labelPaddingRight,
       }}
     >
       <motion.span
@@ -70,6 +75,7 @@ export function BarYAxis({
   width,
   labelMaxWidth = 70,
   labelClassName,
+  labelPaddingRight = 8,
 }: BarYAxisProps) {
   const {
     margin,
@@ -149,6 +155,7 @@ export function BarYAxis({
           label={item.label}
           labelClassName={labelClassName}
           labelMaxWidth={labelMaxWidth}
+          labelPaddingRight={labelPaddingRight}
           y={item.y}
         />
       ))}

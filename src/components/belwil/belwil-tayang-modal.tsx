@@ -20,7 +20,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Loader2,
   RefreshCw,
   Search,
   Clock,
@@ -29,6 +28,17 @@ import {
   Maximize2,
   Minimize2,
 } from "lucide-react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import {
   useBelwilDataApi,
   useBelwilTematikDataApi,
@@ -271,6 +281,66 @@ export function BelwilTayangModal({
     onOpenChange(false);
   };
 
+  const renderPaginationItems = () => {
+    const items = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              isActive={currentPage === i}
+              onClick={(e) => { e.preventDefault(); setCurrentPage(i); }}
+              className="cursor-pointer select-none"
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      items.push(
+        <PaginationItem key={1}>
+          <PaginationLink
+            isActive={currentPage === 1}
+            onClick={(e) => { e.preventDefault(); setCurrentPage(1); }}
+            className="cursor-pointer select-none"
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+      if (currentPage > 3) items.push(<PaginationEllipsis key="left-ellipsis" />);
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              isActive={currentPage === i}
+              onClick={(e) => { e.preventDefault(); setCurrentPage(i); }}
+              className="cursor-pointer select-none"
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+      if (currentPage < totalPages - 2) items.push(<PaginationEllipsis key="right-ellipsis" />);
+      items.push(
+        <PaginationItem key={totalPages}>
+          <PaginationLink
+            isActive={currentPage === totalPages}
+            onClick={(e) => { e.preventDefault(); setCurrentPage(totalPages); }}
+            className="cursor-pointer select-none"
+          >
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    return items;
+  };
+
   useEffect(() => {
     if (isFullscreen) {
       document.body.style.overflow = "hidden";
@@ -285,11 +355,12 @@ export function BelwilTayangModal({
   return (
     <Dialog open={open} onOpenChange={handleCloseModal}>
       <DialogContent
-        className={`${
+        className={cn(
+          "!flex flex-col gap-3",
           isFullscreen
             ? "!fixed !inset-0 !w-screen !h-screen !max-w-none !max-h-none !m-0 !rounded-none !border-0 !translate-x-0 !translate-y-0 !top-0 !left-0 !transform-none"
-            : "max-w-7xl h-[90vh] sm:max-w-7xl"
-        } flex flex-col overflow-hidden`}
+            : "max-w-7xl w-full sm:max-w-7xl max-h-[90vh]"
+        )}
         showCloseButton={false}
         style={
           isFullscreen
@@ -310,7 +381,7 @@ export function BelwilTayangModal({
             : {}
         }
       >
-        <DialogHeader>
+        <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
               <Table className="w-5 h-5 text-blue-600" />
@@ -320,15 +391,8 @@ export function BelwilTayangModal({
               </span>
             </span>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={isLoading}
-              >
-                <RefreshCw
-                  className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
-                />
+              <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>
+                <RefreshCw className={cn("w-4 h-4 mr-2", isLoading && "animate-spin")} />
                 Refresh
               </Button>
               <Button
@@ -337,268 +401,248 @@ export function BelwilTayangModal({
                 onClick={toggleFullscreen}
                 title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
               >
-                {isFullscreen ? (
-                  <Minimize2 className="w-4 h-4" />
-                ) : (
-                  <Maximize2 className="w-4 h-4" />
-                )}
+                {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
               </Button>
             </div>
           </DialogTitle>
-          <DialogDescription>
-            {lastResult && lastResult.success && totalAvailable > 0
-              ? `Menampilkan ${displayStart}-${displayEnd} dari ${totalAvailable} baris`
-              : `Belanja Kewilayahan tahun ${reportParams.tahun} dengan ${activeFilters.length} filter aktif`}
-          </DialogDescription>
         </DialogHeader>
 
-        {/* Query Summary */}
-        <div className="space-y-4">
-          <div className="flex flex-wrap gap-2 items-center justify-between">
-            <div className="flex flex-wrap gap-2 items-center">
-              <Badge variant="secondary">Tahun: {reportParams.tahun}</Badge>
-              <Badge variant="secondary">
-                Pembulatan: {reportParams.pembulatan}
-              </Badge>
-              <Badge variant="outline">
-                Filter Aktif: {activeFilters.length}
-              </Badge>
-              {lastResult && (
-                <>
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    <BarChart3 className="w-3 h-3" />
-                    {totalAvailable} baris
-                  </Badge>
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {lastResult.executionTime}ms
-                  </Badge>
-                </>
-              )}
-            </div>
-
-            {lastResult && lastResult.success && lastResult.data && (
-              <div className="flex gap-2 items-center">
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Cari data..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setCurrentPage(1);
-                    }}
-                    className="pl-8 w-64"
-                  />
-                </div>
-                <Select
-                  value={pageSize.toString()}
-                  onValueChange={(value) => {
-                    const requested = parseInt(value);
-                    const capped = Math.min(requested, 100);
-                    setPageSize(capped);
-                    setCurrentPage(1);
-                  }}
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="25">25 baris</SelectItem>
-                    <SelectItem value="50">50 baris</SelectItem>
-                    <SelectItem value="100">100 baris</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        {/* Badges + Search row */}
+        <div className="shrink-0 flex flex-wrap gap-2 items-center justify-between">
+          <div className="flex flex-wrap gap-2 items-center">
+            <Badge variant="secondary">Tahun: {reportParams.tahun}</Badge>
+            <Badge variant="secondary">Pembulatan: {reportParams.pembulatan}</Badge>
+            <Badge variant="outline">Filter Aktif: {activeFilters.length}</Badge>
+            {lastResult && (
+              <>
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <BarChart3 className="w-3 h-3" />
+                  {totalAvailable} baris
+                </Badge>
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {lastResult.executionTime}ms
+                </Badge>
+              </>
             )}
           </div>
-        </div>
 
-        {/* Dialog Body */}
-        <div className="flex-1 overflow-hidden">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-80">
-              <div className="text-center">
-                <Loader2 className="w-12 h-12 animate-spin mx-auto mb-2" />
-                <p className="text-md text-muted-foreground">Loading data..</p>
-              </div>
-            </div>
-          ) : lastResult && !lastResult.success ? (
-            <div className="flex items-center justify-center h-80">
-              <div className="text-center">
-                <p className="text-sm text-red-600 mb-2">
-                  Error: {lastResult.error}
-                </p>
-                <Button variant="outline" size="sm" onClick={handleRefresh}>
-                  Coba Lagi
-                </Button>
-              </div>
-            </div>
-          ) : lastResult && lastResult.success && lastResult.data ? (
-            <div className="border rounded-lg h-full flex flex-col overflow-hidden">
-              <div className="flex-1 w-full overflow-auto">
-                <div className="min-w-full">
-                  <table className="w-full min-w-max">
-                    <thead className="bg-muted sticky top-0 z-30">
-                      <tr>
-                        <th className="p-2 text-center text-sm font-medium w-16 min-w-[80px] uppercase">
-                          No
-                        </th>
-                        {lastResult.columns?.map((column) => (
-                          <th
-                            key={column}
-                            className="p-2 text-center text-sm font-medium cursor-pointer hover:bg-muted/50 select-none w-40 min-w-[180px] whitespace-nowrap uppercase"
-                            onClick={() => handleColumnClick(column)}
-                          >
-                            <div className="flex items-center justify-center gap-1">
-                              {column}
-                              {sortColumn === column && (
-                                <span className="text-xs">
-                                  {sortDirection === "asc" ? "↑" : "↓"}
-                                </span>
-                              )}
-                            </div>
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {paginatedData.length > 0 ? (
-                        <>
-                          {paginatedData.map((row, index) => (
-                            <tr
-                              key={index}
-                              className="border-t hover:bg-muted/50"
-                            >
-                              <td className="p-2 text-center text-xs w-16 min-w-[80px]">
-                                {startIndex + index + 1}
-                              </td>
-                              {lastResult.columns?.map((column) => (
-                                <td
-                                  key={column}
-                                  className={`p-2 ${getCellAlignmentClass(column)} text-xs font-mono w-40 min-w-[180px] whitespace-nowrap`}
-                                >
-                                  {formatCellValue(
-                                    getRowValue(row, column),
-                                    column,
-                                  )}
-                                </td>
-                              ))}
-                            </tr>
-                          ))}
-
-                          {lastResult.columns?.some((c) =>
-                            isSummableColumn(c),
-                          ) && (
-                            <tr className="border-t-2 border-primary bg-muted font-medium sticky bottom-0 z-20">
-                              {(() => {
-                                const firstSummableIndex =
-                                  lastResult.columns?.findIndex((col) =>
-                                    isSummableColumn(col),
-                                  ) ?? -1;
-                                const columnsBeforeSummable =
-                                  firstSummableIndex > 0
-                                    ? firstSummableIndex
-                                    : 0;
-                                return (
-                                  <>
-                                    <td
-                                      colSpan={1 + columnsBeforeSummable}
-                                      className="p-2 text-sm font-medium text-center min-w-[80px]"
-                                    >
-                                      Grand Total
-                                    </td>
-                                    {lastResult.columns
-                                      ?.slice(firstSummableIndex)
-                                      .map((column) => (
-                                        <td
-                                          key={column}
-                                          className={`p-2 ${getCellAlignmentClass(column)} text-sm font-mono font-medium w-40 min-w-[180px] whitespace-nowrap`}
-                                        >
-                                          {isSummableColumn(column)
-                                            ? formatCellValue(
-                                                grandTotals[column] ?? 0,
-                                                column,
-                                              )
-                                            : "-"}
-                                        </td>
-                                      ))}
-                                  </>
-                                );
-                              })()}
-                            </tr>
-                          )}
-                        </>
-                      ) : (
-                        <tr>
-                          <td
-                            colSpan={(lastResult.columns?.length || 0) + 1}
-                            className="text-center py-8 text-muted-foreground"
-                          >
-                            {searchTerm
-                              ? "Tidak ada data yang sesuai dengan pencarian"
-                              : "Tidak ada data"}
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          ) : activeFilters.length === 0 ? (
-            <div className="flex items-center justify-center h-40">
-              <div className="text-center text-muted-foreground">
-                <p>Pilih filter terlebih dahulu untuk menampilkan data</p>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-40">
-              <div className="text-center text-muted-foreground">
-                <p>Klik &quot;Tayang&quot; untuk menampilkan data</p>
-              </div>
+          {lastResult && lastResult.success && lastResult.data && (
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Cari data..."
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                className="pl-8 w-56"
+              />
             </div>
           )}
         </div>
 
-        <DialogFooter className="flex flex-col gap-4 items-center sm:flex-row sm:justify-between">
-          <div className="flex justify-center sm:flex-1">
-            {lastResult && lastResult.success && totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="w-24"
-                >
-                  Sebelumnya
-                </Button>
-                <span className="text-sm">
-                  Halaman {currentPage} dari {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage(Math.min(totalPages, currentPage + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="w-24"
-                >
-                  Selanjutnya
-                </Button>
+        {/* Table area */}
+        <div className={cn("min-h-0 flex-1 flex flex-col")}>
+          {isLoading ? (
+            <div className="border rounded-lg overflow-hidden flex-1">
+              <table className="w-full min-w-max text-xs border-separate border-spacing-0">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="p-2 w-12 min-w-[48px]">
+                      <Skeleton className="h-4 w-6 mx-auto" />
+                    </th>
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <th key={i} className="p-2 min-w-[140px]">
+                        <Skeleton className="h-4 w-24 mx-auto" />
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: 10 }).map((_, rowIdx) => (
+                    <tr key={rowIdx}>
+                      <td className="p-2 border-t border-border">
+                        <Skeleton className="h-3 w-6 mx-auto" />
+                      </td>
+                      {Array.from({ length: 4 }).map((_, colIdx) => (
+                        <td key={colIdx} className="p-2 border-t border-border">
+                          <Skeleton className="h-3 w-24 mx-auto" />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : lastResult && !lastResult.success ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <p className="text-sm text-red-600 mb-2">Error: {lastResult.error}</p>
+                <Button variant="outline" size="sm" onClick={handleRefresh}>Coba Lagi</Button>
               </div>
-            )}
+            </div>
+          ) : lastResult && lastResult.success && lastResult.data ? (
+            <div className="border rounded-lg overflow-auto flex-1">
+              <table className="w-full min-w-max text-xs border-separate border-spacing-0">
+                <thead className="bg-muted sticky top-0 z-10">
+                  <tr>
+                    <th className="p-2 text-center font-medium w-12 min-w-[48px] uppercase whitespace-nowrap">No</th>
+                    {lastResult.columns?.map((column) => (
+                      <th
+                        key={column}
+                        className="p-2 text-center font-medium cursor-pointer hover:bg-muted/70 select-none min-w-[140px] whitespace-nowrap uppercase"
+                        onClick={() => handleColumnClick(column)}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          {column}
+                          {sortColumn === column && (
+                            <span className="text-xs">{sortDirection === "asc" ? "↑" : "↓"}</span>
+                          )}
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedData.length > 0 ? (
+                    paginatedData.map((row, index) => (
+                      <tr key={index} className="hover:bg-muted/50">
+                        <td className="p-2 text-center w-12 min-w-[48px] border-t border-border">
+                          {startIndex + index + 1}
+                        </td>
+                        {lastResult.columns?.map((column) => (
+                          <td
+                            key={column}
+                            className={cn(
+                              "p-2 font-mono min-w-[140px] whitespace-nowrap border-t border-border",
+                              getCellAlignmentClass(column)
+                            )}
+                          >
+                            {formatCellValue(getRowValue(row, column), column)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={(lastResult.columns?.length || 0) + 1}
+                        className="text-center py-8 text-muted-foreground"
+                      >
+                        {searchTerm ? "Tidak ada data yang sesuai dengan pencarian" : "Tidak ada data"}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+
+                {lastResult.columns?.some((c) => isSummableColumn(c)) && paginatedData.length > 0 && (
+                  <tfoot className="sticky bottom-0 z-10">
+                    {(() => {
+                      const firstSummableIndex = lastResult.columns?.findIndex((col) => isSummableColumn(col)) ?? -1;
+                      const columnsBeforeSummable = firstSummableIndex > 0 ? firstSummableIndex : 0;
+                      return (
+                        <tr className="bg-muted font-medium">
+                          <td
+                            colSpan={1 + columnsBeforeSummable}
+                            className="p-2 text-sm font-medium text-center border-t-2 border-primary"
+                          >
+                            Grand Total
+                          </td>
+                          {lastResult.columns?.slice(firstSummableIndex).map((column) => (
+                            <td
+                              key={column}
+                              className={cn(
+                                "p-2 text-sm font-mono font-medium min-w-[140px] whitespace-nowrap border-t-2 border-primary",
+                                getCellAlignmentClass(column)
+                              )}
+                            >
+                              {isSummableColumn(column)
+                                ? formatCellValue(grandTotals[column] ?? 0, column)
+                                : "-"}
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })()}
+                  </tfoot>
+                )}
+              </table>
+            </div>
+          ) : activeFilters.length === 0 ? (
+            <div className="flex items-center justify-center h-40 text-center text-muted-foreground">
+              <p>Pilih filter terlebih dahulu untuk menampilkan data</p>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-40 text-center text-muted-foreground">
+              <p>Klik &quot;Tayang&quot; untuk menampilkan data</p>
+            </div>
+          )}
+        </div>
+
+        {/* Pagination + footer */}
+        {lastResult && lastResult.success && lastResult.data && (
+          <div className="shrink-0 flex flex-col md:grid md:grid-cols-3 items-center gap-3">
+            <div className="flex items-center gap-2 order-2 md:order-1">
+              <p className="text-sm font-medium whitespace-nowrap">Baris per halaman</p>
+              <Select
+                value={pageSize.toString()}
+                onValueChange={(value) => {
+                  setPageSize(Number(value));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 25, 50, 100].map((size) => (
+                    <SelectItem key={size} value={`${size}`}>{size}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center justify-center order-1 md:order-2 w-full">
+              <Pagination className="mx-auto justify-center">
+                <div className="flex items-center justify-between w-full sm:min-w-[400px] gap-2">
+                  <PaginationPrevious
+                    onClick={(e) => { e.preventDefault(); setCurrentPage(Math.max(1, currentPage - 1)); }}
+                    className={cn(
+                      "cursor-pointer select-none",
+                      currentPage === 1 && "pointer-events-none opacity-50"
+                    )}
+                  />
+                  <PaginationContent className="flex-1 justify-center gap-1 overflow-x-auto">
+                    {renderPaginationItems()}
+                  </PaginationContent>
+                  <PaginationNext
+                    onClick={(e) => { e.preventDefault(); setCurrentPage(Math.min(totalPages, currentPage + 1)); }}
+                    className={cn(
+                      "cursor-pointer select-none",
+                      currentPage === totalPages && "pointer-events-none opacity-50"
+                    )}
+                  />
+                </div>
+              </Pagination>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 order-3 w-full md:w-auto">
+              <span className="text-sm text-muted-foreground whitespace-nowrap">
+                {displayStart}-{displayEnd} dari {totalAvailable} baris
+              </span>
+              <Button variant="destructive" onClick={handleCloseModal} className="w-20">
+                Tutup
+              </Button>
+            </div>
           </div>
-          <Button
-            variant="destructive"
-            onClick={handleCloseModal}
-            className="w-24"
-          >
-            Tutup
-          </Button>
-        </DialogFooter>
+        )}
+
+        {!(lastResult && lastResult.success && lastResult.data) && (
+          <DialogFooter className="shrink-0">
+            <Button variant="destructive" onClick={handleCloseModal} className="w-24">
+              Tutup
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -817,6 +861,66 @@ export function BelwilTematikTayangModal({
     onOpenChange(false);
   };
 
+  const renderPaginationItems = () => {
+    const items = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              isActive={currentPage === i}
+              onClick={(e) => { e.preventDefault(); setCurrentPage(i); }}
+              className="cursor-pointer select-none"
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      items.push(
+        <PaginationItem key={1}>
+          <PaginationLink
+            isActive={currentPage === 1}
+            onClick={(e) => { e.preventDefault(); setCurrentPage(1); }}
+            className="cursor-pointer select-none"
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+      if (currentPage > 3) items.push(<PaginationEllipsis key="left-ellipsis" />);
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              isActive={currentPage === i}
+              onClick={(e) => { e.preventDefault(); setCurrentPage(i); }}
+              className="cursor-pointer select-none"
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+      if (currentPage < totalPages - 2) items.push(<PaginationEllipsis key="right-ellipsis" />);
+      items.push(
+        <PaginationItem key={totalPages}>
+          <PaginationLink
+            isActive={currentPage === totalPages}
+            onClick={(e) => { e.preventDefault(); setCurrentPage(totalPages); }}
+            className="cursor-pointer select-none"
+          >
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    return items;
+  };
+
   useEffect(() => {
     document.body.style.overflow = isFullscreen ? "hidden" : "unset";
     return () => {
@@ -827,11 +931,12 @@ export function BelwilTematikTayangModal({
   return (
     <Dialog open={open} onOpenChange={handleCloseModal}>
       <DialogContent
-        className={`${
+        className={cn(
+          "!flex flex-col gap-3",
           isFullscreen
             ? "!fixed !inset-0 !w-screen !h-screen !max-w-none !max-h-none !m-0 !rounded-none !border-0 !translate-x-0 !translate-y-0 !top-0 !left-0 !transform-none"
-            : "max-w-7xl h-[90vh] sm:max-w-7xl"
-        } flex flex-col overflow-hidden`}
+            : "max-w-7xl w-full sm:max-w-7xl max-h-[90vh]"
+        )}
         showCloseButton={false}
         style={
           isFullscreen
@@ -852,22 +957,15 @@ export function BelwilTematikTayangModal({
             : {}
         }
       >
-        <DialogHeader>
+        <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
               <Table className="w-5 h-5 text-teal-600" />
               <span>Hasil Query Kewilayahan Tematik – {tipeLaporanLabel}</span>
             </span>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={isLoading}
-              >
-                <RefreshCw
-                  className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
-                />
+              <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>
+                <RefreshCw className={cn("w-4 h-4 mr-2", isLoading && "animate-spin")} />
                 Refresh
               </Button>
               <Button
@@ -876,265 +974,249 @@ export function BelwilTematikTayangModal({
                 onClick={toggleFullscreen}
                 title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
               >
-                {isFullscreen ? (
-                  <Minimize2 className="w-4 h-4" />
-                ) : (
-                  <Maximize2 className="w-4 h-4" />
-                )}
+                {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
               </Button>
             </div>
           </DialogTitle>
-          <DialogDescription>
-            {lastResult && lastResult.success && totalAvailable > 0
-              ? `Menampilkan ${displayStart}-${displayEnd} dari ${totalAvailable} baris`
-              : `Kewilayahan Tematik tahun ${reportParams.tahun} dengan ${activeFilters.length} filter aktif`}
-          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="flex flex-wrap gap-2 items-center justify-between">
-            <div className="flex flex-wrap gap-2 items-center">
-              <Badge variant="secondary">Tahun: {reportParams.tahun}</Badge>
-              <Badge variant="secondary">Tipe: {tipeLaporanLabel}</Badge>
-              <Badge variant="secondary">
-                Pembulatan: {reportParams.pembulatan}
-              </Badge>
-              <Badge variant="outline">
-                Filter Aktif: {activeFilters.length}
-              </Badge>
-              {lastResult && (
-                <>
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    <BarChart3 className="w-3 h-3" />
-                    {totalAvailable} baris
-                  </Badge>
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {lastResult.executionTime}ms
-                  </Badge>
-                </>
-              )}
-            </div>
-
-            {lastResult && lastResult.success && lastResult.data && (
-              <div className="flex gap-2 items-center">
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Cari data..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setCurrentPage(1);
-                    }}
-                    className="pl-8 w-64"
-                  />
-                </div>
-                <Select
-                  value={pageSize.toString()}
-                  onValueChange={(value) => {
-                    setPageSize(Math.min(parseInt(value), 100));
-                    setCurrentPage(1);
-                  }}
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="25">25 baris</SelectItem>
-                    <SelectItem value="50">50 baris</SelectItem>
-                    <SelectItem value="100">100 baris</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        {/* Badges + Search row */}
+        <div className="shrink-0 flex flex-wrap gap-2 items-center justify-between">
+          <div className="flex flex-wrap gap-2 items-center">
+            <Badge variant="secondary">Tahun: {reportParams.tahun}</Badge>
+            <Badge variant="secondary">Tipe: {tipeLaporanLabel}</Badge>
+            <Badge variant="secondary">Pembulatan: {reportParams.pembulatan}</Badge>
+            <Badge variant="outline">Filter Aktif: {activeFilters.length}</Badge>
+            {lastResult && (
+              <>
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <BarChart3 className="w-3 h-3" />
+                  {totalAvailable} baris
+                </Badge>
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {lastResult.executionTime}ms
+                </Badge>
+              </>
             )}
           </div>
-        </div>
 
-        <div className="flex-1 overflow-hidden">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-80">
-              <div className="text-center">
-                <Loader2 className="w-12 h-12 animate-spin mx-auto mb-2" />
-                <p className="text-md text-muted-foreground">Loading data..</p>
-              </div>
-            </div>
-          ) : lastResult && !lastResult.success ? (
-            <div className="flex items-center justify-center h-80">
-              <div className="text-center">
-                <p className="text-sm text-red-600 mb-2">
-                  Error: {lastResult.error}
-                </p>
-                <Button variant="outline" size="sm" onClick={handleRefresh}>
-                  Coba Lagi
-                </Button>
-              </div>
-            </div>
-          ) : lastResult && lastResult.success && lastResult.data ? (
-            <div className="border rounded-lg h-full flex flex-col overflow-hidden">
-              <div className="flex-1 w-full overflow-auto">
-                <div className="min-w-full">
-                  <table className="w-full min-w-max">
-                    <thead className="bg-muted sticky top-0 z-30">
-                      <tr>
-                        <th className="p-2 text-center text-sm font-medium w-16 min-w-[80px] uppercase">
-                          No
-                        </th>
-                        {lastResult.columns?.map((column) => (
-                          <th
-                            key={column}
-                            className="p-2 text-center text-sm font-medium cursor-pointer hover:bg-muted/50 select-none w-40 min-w-[180px] whitespace-nowrap uppercase"
-                            onClick={() => handleColumnClick(column)}
-                          >
-                            <div className="flex items-center justify-center gap-1">
-                              {column}
-                              {sortColumn === column && (
-                                <span className="text-xs">
-                                  {sortDirection === "asc" ? "↑" : "↓"}
-                                </span>
-                              )}
-                            </div>
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {paginatedData.length > 0 ? (
-                        <>
-                          {paginatedData.map((row, index) => (
-                            <tr
-                              key={index}
-                              className="border-t hover:bg-muted/50"
-                            >
-                              <td className="p-2 text-center text-xs w-16 min-w-[80px]">
-                                {startIndex + index + 1}
-                              </td>
-                              {lastResult.columns?.map((column) => (
-                                <td
-                                  key={column}
-                                  className={`p-2 ${getCellAlignmentClass(column)} text-xs font-mono w-40 min-w-[180px] whitespace-nowrap`}
-                                >
-                                  {formatCellValue(
-                                    getRowValue(row, column),
-                                    column,
-                                  )}
-                                </td>
-                              ))}
-                            </tr>
-                          ))}
-
-                          {lastResult.columns?.some((c) =>
-                            isSummableColumn(c),
-                          ) && (
-                            <tr className="border-t-2 border-primary bg-muted font-medium sticky bottom-0 z-20">
-                              {(() => {
-                                const firstSummableIndex =
-                                  lastResult.columns?.findIndex((col) =>
-                                    isSummableColumn(col),
-                                  ) ?? -1;
-                                const columnsBeforeSummable =
-                                  firstSummableIndex > 0
-                                    ? firstSummableIndex
-                                    : 0;
-                                return (
-                                  <>
-                                    <td
-                                      colSpan={1 + columnsBeforeSummable}
-                                      className="p-2 text-sm font-medium text-center min-w-[80px]"
-                                    >
-                                      Grand Total
-                                    </td>
-                                    {lastResult.columns
-                                      ?.slice(firstSummableIndex)
-                                      .map((column) => (
-                                        <td
-                                          key={column}
-                                          className={`p-2 ${getCellAlignmentClass(column)} text-sm font-mono font-medium w-40 min-w-[180px] whitespace-nowrap`}
-                                        >
-                                          {isSummableColumn(column)
-                                            ? formatCellValue(
-                                                grandTotals[column] ?? 0,
-                                                column,
-                                              )
-                                            : "-"}
-                                        </td>
-                                      ))}
-                                  </>
-                                );
-                              })()}
-                            </tr>
-                          )}
-                        </>
-                      ) : (
-                        <tr>
-                          <td
-                            colSpan={(lastResult.columns?.length || 0) + 1}
-                            className="text-center py-8 text-muted-foreground"
-                          >
-                            {searchTerm
-                              ? "Tidak ada data yang sesuai dengan pencarian"
-                              : "Tidak ada data"}
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          ) : activeFilters.length === 0 ? (
-            <div className="flex items-center justify-center h-40">
-              <div className="text-center text-muted-foreground">
-                <p>Pilih filter terlebih dahulu untuk menampilkan data</p>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-40">
-              <div className="text-center text-muted-foreground">
-                <p>Klik &quot;Tayang&quot; untuk menampilkan data</p>
-              </div>
+          {lastResult && lastResult.success && lastResult.data && (
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Cari data..."
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                className="pl-8 w-56"
+              />
             </div>
           )}
         </div>
 
-        <DialogFooter className="flex flex-col gap-4 items-center sm:flex-row sm:justify-between">
-          <div className="flex justify-center sm:flex-1">
-            {lastResult && lastResult.success && totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="w-24"
-                >
-                  Sebelumnya
-                </Button>
-                <span className="text-sm">
-                  Halaman {currentPage} dari {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage(Math.min(totalPages, currentPage + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="w-24"
-                >
-                  Selanjutnya
-                </Button>
+        {/* Table area */}
+        <div className={cn("min-h-0 flex-1 flex flex-col")}>
+          {isLoading ? (
+            <div className="border rounded-lg overflow-hidden flex-1">
+              <table className="w-full min-w-max text-xs border-separate border-spacing-0">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="p-2 w-12 min-w-[48px]">
+                      <Skeleton className="h-4 w-6 mx-auto" />
+                    </th>
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <th key={i} className="p-2 min-w-[140px]">
+                        <Skeleton className="h-4 w-24 mx-auto" />
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: 10 }).map((_, rowIdx) => (
+                    <tr key={rowIdx}>
+                      <td className="p-2 border-t border-border">
+                        <Skeleton className="h-3 w-6 mx-auto" />
+                      </td>
+                      {Array.from({ length: 4 }).map((_, colIdx) => (
+                        <td key={colIdx} className="p-2 border-t border-border">
+                          <Skeleton className="h-3 w-24 mx-auto" />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : lastResult && !lastResult.success ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <p className="text-sm text-red-600 mb-2">Error: {lastResult.error}</p>
+                <Button variant="outline" size="sm" onClick={handleRefresh}>Coba Lagi</Button>
               </div>
-            )}
+            </div>
+          ) : lastResult && lastResult.success && lastResult.data ? (
+            <div className="border rounded-lg overflow-auto flex-1">
+              <table className="w-full min-w-max text-xs border-separate border-spacing-0">
+                <thead className="bg-muted sticky top-0 z-10">
+                  <tr>
+                    <th className="p-2 text-center font-medium w-12 min-w-[48px] uppercase whitespace-nowrap">No</th>
+                    {lastResult.columns?.map((column) => (
+                      <th
+                        key={column}
+                        className="p-2 text-center font-medium cursor-pointer hover:bg-muted/70 select-none min-w-[140px] whitespace-nowrap uppercase"
+                        onClick={() => handleColumnClick(column)}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          {column}
+                          {sortColumn === column && (
+                            <span className="text-xs">{sortDirection === "asc" ? "↑" : "↓"}</span>
+                          )}
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedData.length > 0 ? (
+                    paginatedData.map((row, index) => (
+                      <tr key={index} className="hover:bg-muted/50">
+                        <td className="p-2 text-center w-12 min-w-[48px] border-t border-border">
+                          {startIndex + index + 1}
+                        </td>
+                        {lastResult.columns?.map((column) => (
+                          <td
+                            key={column}
+                            className={cn(
+                              "p-2 font-mono min-w-[140px] whitespace-nowrap border-t border-border",
+                              getCellAlignmentClass(column)
+                            )}
+                          >
+                            {formatCellValue(getRowValue(row, column), column)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={(lastResult.columns?.length || 0) + 1}
+                        className="text-center py-8 text-muted-foreground"
+                      >
+                        {searchTerm ? "Tidak ada data yang sesuai dengan pencarian" : "Tidak ada data"}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+
+                {lastResult.columns?.some((c) => isSummableColumn(c)) && paginatedData.length > 0 && (
+                  <tfoot className="sticky bottom-0 z-10">
+                    {(() => {
+                      const firstSummableIndex = lastResult.columns?.findIndex((col) => isSummableColumn(col)) ?? -1;
+                      const columnsBeforeSummable = firstSummableIndex > 0 ? firstSummableIndex : 0;
+                      return (
+                        <tr className="bg-muted font-medium">
+                          <td
+                            colSpan={1 + columnsBeforeSummable}
+                            className="p-2 text-sm font-medium text-center border-t-2 border-primary"
+                          >
+                            Grand Total
+                          </td>
+                          {lastResult.columns?.slice(firstSummableIndex).map((column) => (
+                            <td
+                              key={column}
+                              className={cn(
+                                "p-2 text-sm font-mono font-medium min-w-[140px] whitespace-nowrap border-t-2 border-primary",
+                                getCellAlignmentClass(column)
+                              )}
+                            >
+                              {isSummableColumn(column)
+                                ? formatCellValue(grandTotals[column] ?? 0, column)
+                                : "-"}
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })()}
+                  </tfoot>
+                )}
+              </table>
+            </div>
+          ) : activeFilters.length === 0 ? (
+            <div className="flex items-center justify-center h-40 text-center text-muted-foreground">
+              <p>Pilih filter terlebih dahulu untuk menampilkan data</p>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-40 text-center text-muted-foreground">
+              <p>Klik &quot;Tayang&quot; untuk menampilkan data</p>
+            </div>
+          )}
+        </div>
+
+        {/* Pagination + footer */}
+        {lastResult && lastResult.success && lastResult.data && (
+          <div className="shrink-0 flex flex-col md:grid md:grid-cols-3 items-center gap-3">
+            <div className="flex items-center gap-2 order-2 md:order-1">
+              <p className="text-sm font-medium whitespace-nowrap">Baris per halaman</p>
+              <Select
+                value={pageSize.toString()}
+                onValueChange={(value) => {
+                  setPageSize(Number(value));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 25, 50, 100].map((size) => (
+                    <SelectItem key={size} value={`${size}`}>{size}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center justify-center order-1 md:order-2 w-full">
+              <Pagination className="mx-auto justify-center">
+                <div className="flex items-center justify-between w-full sm:min-w-[400px] gap-2">
+                  <PaginationPrevious
+                    onClick={(e) => { e.preventDefault(); setCurrentPage(Math.max(1, currentPage - 1)); }}
+                    className={cn(
+                      "cursor-pointer select-none",
+                      currentPage === 1 && "pointer-events-none opacity-50"
+                    )}
+                  />
+                  <PaginationContent className="flex-1 justify-center gap-1 overflow-x-auto">
+                    {renderPaginationItems()}
+                  </PaginationContent>
+                  <PaginationNext
+                    onClick={(e) => { e.preventDefault(); setCurrentPage(Math.min(totalPages, currentPage + 1)); }}
+                    className={cn(
+                      "cursor-pointer select-none",
+                      currentPage === totalPages && "pointer-events-none opacity-50"
+                    )}
+                  />
+                </div>
+              </Pagination>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 order-3 w-full md:w-auto">
+              <span className="text-sm text-muted-foreground whitespace-nowrap">
+                {displayStart}-{displayEnd} dari {totalAvailable} baris
+              </span>
+              <Button variant="destructive" onClick={handleCloseModal} className="w-20">
+                Tutup
+              </Button>
+            </div>
           </div>
-          <Button
-            variant="destructive"
-            onClick={handleCloseModal}
-            className="w-24"
-          >
-            Tutup
-          </Button>
-        </DialogFooter>
+        )}
+
+        {!(lastResult && lastResult.success && lastResult.data) && (
+          <DialogFooter className="shrink-0">
+            <Button variant="destructive" onClick={handleCloseModal} className="w-24">
+              Tutup
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -1324,6 +1406,73 @@ export function BelwilSubsidiTayangModal({
     onOpenChange(false);
   };
 
+  const renderPaginationItems = () => {
+    const items = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              isActive={currentPage === i}
+              onClick={(e) => { e.preventDefault(); setCurrentPage(i); }}
+              className="cursor-pointer select-none"
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      items.push(
+        <PaginationItem key={1}>
+          <PaginationLink
+            isActive={currentPage === 1}
+            onClick={(e) => { e.preventDefault(); setCurrentPage(1); }}
+            className="cursor-pointer select-none"
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+      if (currentPage > 3) items.push(<PaginationEllipsis key="left-ellipsis" />);
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              isActive={currentPage === i}
+              onClick={(e) => { e.preventDefault(); setCurrentPage(i); }}
+              className="cursor-pointer select-none"
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+      if (currentPage < totalPages - 2) items.push(<PaginationEllipsis key="right-ellipsis" />);
+      items.push(
+        <PaginationItem key={totalPages}>
+          <PaginationLink
+            isActive={currentPage === totalPages}
+            onClick={(e) => { e.preventDefault(); setCurrentPage(totalPages); }}
+            className="cursor-pointer select-none"
+          >
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    return items;
+  };
+
+  useEffect(() => {
+    document.body.style.overflow = isFullscreen ? "hidden" : "unset";
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isFullscreen]);
+
   const cols: string[] =
     lastResult?.columns ||
     (lastResult?.data?.[0] ? Object.keys(lastResult.data[0] as object) : []);
@@ -1331,11 +1480,12 @@ export function BelwilSubsidiTayangModal({
   return (
     <Dialog open={open} onOpenChange={handleCloseModal}>
       <DialogContent
-        className={
+        className={cn(
+          "!flex flex-col gap-3",
           isFullscreen
-            ? "!fixed !inset-0 !w-screen !h-screen !max-w-none !max-h-none !m-0 !rounded-none !border-0 !translate-x-0 !translate-y-0 !top-0 !left-0 !transform-none flex flex-col overflow-hidden"
-            : "max-w-7xl h-[90vh] sm:max-w-7xl flex flex-col overflow-hidden"
-        }
+            ? "!fixed !inset-0 !w-screen !h-screen !max-w-none !max-h-none !m-0 !rounded-none !border-0 !translate-x-0 !translate-y-0 !top-0 !left-0 !transform-none"
+            : "max-w-7xl w-full sm:max-w-7xl max-h-[90vh]"
+        )}
         showCloseButton={false}
         style={
           isFullscreen
@@ -1356,13 +1506,11 @@ export function BelwilSubsidiTayangModal({
             : {}
         }
       >
-        <DialogHeader>
+        <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
               <Table className="w-5 h-5 text-teal-600" />
-              <span>
-                Hasil Query Subsidi Kewilayahan &ndash; {tipeLaporanLabel}
-              </span>
+              <span>Hasil Query Subsidi Kewilayahan – {tipeLaporanLabel}</span>
             </span>
             <div className="flex gap-2">
               <Button
@@ -1375,228 +1523,263 @@ export function BelwilSubsidiTayangModal({
                 }}
                 disabled={isLoading}
               >
-                <RefreshCw
-                  className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
-                />
+                <RefreshCw className={cn("w-4 h-4 mr-2", isLoading && "animate-spin")} />
                 Refresh
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setIsFullscreen(!isFullscreen)}
+                title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
               >
-                {isFullscreen ? (
-                  <Minimize2 className="w-4 h-4" />
-                ) : (
-                  <Maximize2 className="w-4 h-4" />
-                )}
+                {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
               </Button>
             </div>
           </DialogTitle>
-          <DialogDescription>
-            {lastResult?.success && totalAvailable > 0
-              ? `Menampilkan ${displayStart}-${displayEnd} dari ${totalAvailable} baris`
-              : `Subsidi Kewilayahan tahun ${reportParams.tahun} dengan ${activeFilters.length} filter aktif`}
-          </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-wrap gap-2 items-center justify-between mb-2">
+        {/* Badges + Search row */}
+        <div className="shrink-0 flex flex-wrap gap-2 items-center justify-between">
           <div className="flex flex-wrap gap-2 items-center">
             <Badge variant="secondary">Tahun: {reportParams.tahun}</Badge>
             <Badge variant="secondary">Tipe: {tipeLaporanLabel}</Badge>
             {reportParams.jnsBansos && reportParams.jnsBansos !== "all" && (
-              <Badge variant="secondary">
-                Subsidi: {reportParams.jnsBansos}
-              </Badge>
+              <Badge variant="secondary">Subsidi: {reportParams.jnsBansos}</Badge>
             )}
-            <Badge variant="outline">
-              Filter Aktif: {activeFilters.length}
-            </Badge>
+            <Badge variant="outline">Filter Aktif: {activeFilters.length}</Badge>
+            {lastResult && (
+              <>
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <BarChart3 className="w-3 h-3" />
+                  {totalAvailable} baris
+                </Badge>
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {lastResult.executionTime}ms
+                </Badge>
+              </>
+            )}
           </div>
-          <div className="flex items-center gap-2">
+
+          {lastResult && lastResult.success && lastResult.data && (
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
                 placeholder="Cari data..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 pr-3 py-1.5 text-sm border rounded-md bg-background w-48"
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                className="pl-8 w-56"
               />
             </div>
-            <Select
-              value={String(pageSize)}
-              onValueChange={(val) => {
-                setPageSize(Number(val));
-                setCurrentPage(1);
-              }}
-            >
-              <SelectTrigger className="w-24 h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[25, 50, 100, 200].map((s) => (
-                  <SelectItem key={s} value={String(s)}>
-                    {s} / hal
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          )}
         </div>
 
-        <div className="flex-1 overflow-auto min-h-0">
+        {/* Table area */}
+        <div className={cn("min-h-0 flex-1 flex flex-col")}>
           {isLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
-              <span className="ml-2 text-muted-foreground">
-                Memuat data subsidi...
-              </span>
-            </div>
-          ) : lastResult && !lastResult.success ? (
-            <div className="flex items-center justify-center h-full text-center">
-              <div>
-                <p className="text-red-500 font-medium">Error memuat data</p>
-                <p className="text-sm text-muted-foreground">
-                  {lastResult.error}
-                </p>
-              </div>
-            </div>
-          ) : lastResult?.data && lastResult.data.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              <div className="text-center">
-                <BarChart3 className="w-12 h-12 mx-auto opacity-30" />
-                <p>Tidak ada data untuk kriteria yang dipilih</p>
-              </div>
-            </div>
-          ) : lastResult?.data ? (
-            <div className="overflow-auto h-full rounded-md border">
-              <table className="min-w-full text-xs bg-background">
-                <thead className="bg-muted/50 sticky top-0 z-10">
+            <div className="border rounded-lg overflow-hidden flex-1">
+              <table className="w-full min-w-max text-xs border-separate border-spacing-0">
+                <thead className="bg-muted">
                   <tr>
-                    <th className="px-3 py-2 text-left font-medium text-muted-foreground border-b w-10">
-                      #
+                    <th className="p-2 w-12 min-w-[48px]">
+                      <Skeleton className="h-4 w-6 mx-auto" />
                     </th>
-                    {cols.map((col) => (
-                      <th
-                        key={col}
-                        className={`px-3 py-2 font-medium text-muted-foreground border-b cursor-pointer hover:bg-muted whitespace-nowrap ${getAlignClass(col)}`}
-                        onClick={() => {
-                          if (sortColumn === col)
-                            setSortDirection(
-                              sortDirection === "asc" ? "desc" : "asc",
-                            );
-                          else {
-                            setSortColumn(col);
-                            setSortDirection("asc");
-                          }
-                        }}
-                      >
-                        <span className="flex items-center gap-1">
-                          {col}
-                          {sortColumn === col && (
-                            <Clock
-                              className={`w-3 h-3 ${sortDirection === "desc" ? "rotate-180" : ""}`}
-                            />
-                          )}
-                        </span>
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <th key={i} className="p-2 min-w-[140px]">
+                        <Skeleton className="h-4 w-24 mx-auto" />
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedData.map((row, i) => (
-                    <tr
-                      key={i}
-                      className="border-b hover:bg-muted/30 transition-colors"
-                    >
-                      <td className="px-3 py-1.5 text-muted-foreground text-center">
-                        {startIndex + i + 1}
+                  {Array.from({ length: 10 }).map((_, rowIdx) => (
+                    <tr key={rowIdx}>
+                      <td className="p-2 border-t border-border">
+                        <Skeleton className="h-3 w-6 mx-auto" />
                       </td>
-                      {cols.map((col) => (
-                        <td
-                          key={col}
-                          className={`px-3 py-1.5 whitespace-nowrap ${getAlignClass(col)}`}
-                        >
-                          {fmtCell(getRowVal(row, col), col)}
+                      {Array.from({ length: 4 }).map((_, colIdx) => (
+                        <td key={colIdx} className="p-2 border-t border-border">
+                          <Skeleton className="h-3 w-24 mx-auto" />
                         </td>
                       ))}
                     </tr>
                   ))}
-                  {Object.keys(grandTotals).length > 0 && (
-                    <tr className="border-t-2 font-semibold bg-muted/50 sticky bottom-0">
-                      <td className="px-3 py-2 text-center">&#8721;</td>
-                      {cols.map((col) => {
-                        const t = grandTotals[col];
-                        return (
-                          <td
-                            key={col}
-                            className={`px-3 py-2 whitespace-nowrap ${getAlignClass(col)}`}
-                          >
-                            {t != null
-                              ? new Intl.NumberFormat("id-ID").format(t)
-                              : ""}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  )}
                 </tbody>
               </table>
             </div>
+          ) : lastResult && !lastResult.success ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <p className="text-sm text-red-600 mb-2">Error: {lastResult.error}</p>
+                <Button variant="outline" size="sm" onClick={fetchData}>Coba Lagi</Button>
+              </div>
+            </div>
+          ) : lastResult && lastResult.success && lastResult.data ? (
+            <div className="border rounded-lg overflow-auto flex-1">
+              <table className="w-full min-w-max text-xs border-separate border-spacing-0">
+                <thead className="bg-muted sticky top-0 z-10">
+                  <tr>
+                    <th className="p-2 text-center font-medium w-12 min-w-[48px] uppercase whitespace-nowrap">No</th>
+                    {cols.map((col) => (
+                      <th
+                        key={col}
+                        className="p-2 text-center font-medium cursor-pointer hover:bg-muted/70 select-none min-w-[140px] whitespace-nowrap uppercase"
+                        onClick={() => {
+                          if (sortColumn === col) setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+                          else { setSortColumn(col); setSortDirection("asc"); }
+                        }}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          {col}
+                          {sortColumn === col && (
+                            <span className="text-xs">{sortDirection === "asc" ? "↑" : "↓"}</span>
+                          )}
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedData.length > 0 ? (
+                    paginatedData.map((row, index) => (
+                      <tr key={index} className="hover:bg-muted/50">
+                        <td className="p-2 text-center w-12 min-w-[48px] border-t border-border">
+                          {startIndex + index + 1}
+                        </td>
+                        {cols.map((col) => (
+                          <td
+                            key={col}
+                            className={cn(
+                              "p-2 font-mono min-w-[140px] whitespace-nowrap border-t border-border",
+                              getAlignClass(col)
+                            )}
+                          >
+                            {fmtCell(getRowVal(row, col), col)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={cols.length + 1}
+                        className="text-center py-8 text-muted-foreground"
+                      >
+                        {searchTerm ? "Tidak ada data yang sesuai dengan pencarian" : "Tidak ada data"}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+
+                {Object.keys(grandTotals).length > 0 && paginatedData.length > 0 && (
+                  <tfoot className="sticky bottom-0 z-10">
+                    {(() => {
+                      const firstSummableIndex = cols.findIndex((col) => isSubsidiNumCol(col));
+                      const columnsBeforeSummable = firstSummableIndex > 0 ? firstSummableIndex : 0;
+                      return (
+                        <tr className="bg-muted font-medium">
+                          <td
+                            colSpan={1 + columnsBeforeSummable}
+                            className="p-2 text-sm font-medium text-center border-t-2 border-primary"
+                          >
+                            Grand Total
+                          </td>
+                          {cols.slice(firstSummableIndex).map((col) => (
+                            <td
+                              key={col}
+                              className={cn(
+                                "p-2 text-sm font-mono font-medium min-w-[140px] whitespace-nowrap border-t-2 border-primary",
+                                getAlignClass(col)
+                              )}
+                            >
+                              {isSubsidiNumCol(col)
+                                ? fmtCell(grandTotals[col] ?? 0, col)
+                                : "-"}
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })()}
+                  </tfoot>
+                )}
+              </table>
+            </div>
           ) : activeFilters.length === 0 ? (
-            <div className="flex items-center justify-center h-40">
-              <p className="text-muted-foreground">
-                Pilih filter terlebih dahulu untuk menampilkan data
-              </p>
+            <div className="flex items-center justify-center h-40 text-center text-muted-foreground">
+              <p>Pilih filter terlebih dahulu untuk menampilkan data</p>
             </div>
           ) : (
-            <div className="flex items-center justify-center h-40">
-              <p className="text-muted-foreground">
-                Klik &ldquo;Tayang&rdquo; untuk menampilkan data
-              </p>
+            <div className="flex items-center justify-center h-40 text-center text-muted-foreground">
+              <p>Klik &quot;Tayang&quot; untuk menampilkan data</p>
             </div>
           )}
         </div>
 
-        <DialogFooter className="flex flex-col gap-4 items-center sm:flex-row sm:justify-between flex-shrink-0 pt-4 border-t">
-          <div className="flex justify-center sm:flex-1">
-            {lastResult?.success && totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="w-24"
-                >
-                  Sebelumnya
-                </Button>
-                <span className="text-sm">
-                  Halaman {currentPage} dari {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage(Math.min(totalPages, currentPage + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="w-24"
-                >
-                  Selanjutnya
-                </Button>
-              </div>
-            )}
+        {/* Pagination + footer */}
+        {lastResult && lastResult.success && lastResult.data && (
+          <div className="shrink-0 flex flex-col md:grid md:grid-cols-3 items-center gap-3">
+            <div className="flex items-center gap-2 order-2 md:order-1">
+              <p className="text-sm font-medium whitespace-nowrap">Baris per halaman</p>
+              <Select
+                value={pageSize.toString()}
+                onValueChange={(value) => {
+                  setPageSize(Number(value));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 25, 50, 100].map((size) => (
+                    <SelectItem key={size} value={`${size}`}>{size}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center justify-center order-1 md:order-2 w-full">
+              <Pagination className="mx-auto justify-center">
+                <div className="flex items-center justify-between w-full sm:min-w-[400px] gap-2">
+                  <PaginationPrevious
+                    onClick={(e) => { e.preventDefault(); setCurrentPage(Math.max(1, currentPage - 1)); }}
+                    className={cn(
+                      "cursor-pointer select-none",
+                      currentPage === 1 && "pointer-events-none opacity-50"
+                    )}
+                  />
+                  <PaginationContent className="flex-1 justify-center gap-1 overflow-x-auto">
+                    {renderPaginationItems()}
+                  </PaginationContent>
+                  <PaginationNext
+                    onClick={(e) => { e.preventDefault(); setCurrentPage(Math.min(totalPages, currentPage + 1)); }}
+                    className={cn(
+                      "cursor-pointer select-none",
+                      currentPage === totalPages && "pointer-events-none opacity-50"
+                    )}
+                  />
+                </div>
+              </Pagination>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 order-3 w-full md:w-auto">
+              <span className="text-sm text-muted-foreground whitespace-nowrap">
+                {displayStart}-{displayEnd} dari {totalAvailable} baris
+              </span>
+              <Button variant="destructive" onClick={handleCloseModal} className="w-20">
+                Tutup
+              </Button>
+            </div>
           </div>
-          <Button
-            variant="destructive"
-            onClick={handleCloseModal}
-            className="w-24"
-          >
-            Tutup
-          </Button>
-        </DialogFooter>
+        )}
+
+        {!(lastResult && lastResult.success && lastResult.data) && (
+          <DialogFooter className="shrink-0">
+            <Button variant="destructive" onClick={handleCloseModal} className="w-24">
+              Tutup
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -1806,6 +1989,66 @@ export function BelwilBansosTayangModal({
     onOpenChange(false);
   };
 
+  const renderPaginationItems = () => {
+    const items = [];
+    if (bansosTotalPages <= 7) {
+      for (let i = 1; i <= bansosTotalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              isActive={currentPage === i}
+              onClick={(e) => { e.preventDefault(); setCurrentPage(i); }}
+              className="cursor-pointer select-none"
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      items.push(
+        <PaginationItem key={1}>
+          <PaginationLink
+            isActive={currentPage === 1}
+            onClick={(e) => { e.preventDefault(); setCurrentPage(1); }}
+            className="cursor-pointer select-none"
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+      if (currentPage > 3) items.push(<PaginationEllipsis key="left-ellipsis" />);
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(bansosTotalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              isActive={currentPage === i}
+              onClick={(e) => { e.preventDefault(); setCurrentPage(i); }}
+              className="cursor-pointer select-none"
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+      if (currentPage < bansosTotalPages - 2) items.push(<PaginationEllipsis key="right-ellipsis" />);
+      items.push(
+        <PaginationItem key={bansosTotalPages}>
+          <PaginationLink
+            isActive={currentPage === bansosTotalPages}
+            onClick={(e) => { e.preventDefault(); setCurrentPage(bansosTotalPages); }}
+            className="cursor-pointer select-none"
+          >
+            {bansosTotalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    return items;
+  };
+
   useEffect(() => {
     if (isFullscreen) {
       document.body.style.overflow = "hidden";
@@ -1820,11 +2063,12 @@ export function BelwilBansosTayangModal({
   return (
     <Dialog open={open} onOpenChange={handleBansosClose}>
       <DialogContent
-        className={`${
+        className={cn(
+          "!flex flex-col gap-3",
           isFullscreen
             ? "!fixed !inset-0 !w-screen !h-screen !max-w-none !max-h-none !m-0 !rounded-none !border-0 !translate-x-0 !translate-y-0 !top-0 !left-0 !transform-none"
-            : "max-w-7xl h-[90vh] sm:max-w-7xl"
-        } flex flex-col overflow-hidden`}
+            : "max-w-7xl w-full sm:max-w-7xl max-h-[90vh]"
+        )}
         showCloseButton={false}
         style={
           isFullscreen
@@ -1845,7 +2089,7 @@ export function BelwilBansosTayangModal({
             : {}
         }
       >
-        <DialogHeader>
+        <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
               <Table className="w-5 h-5 text-blue-600" />
@@ -1857,15 +2101,8 @@ export function BelwilBansosTayangModal({
               </span>
             </span>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleBansosRefresh}
-                disabled={isLoading}
-              >
-                <RefreshCw
-                  className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
-                />
+              <Button variant="outline" size="sm" onClick={handleBansosRefresh} disabled={isLoading}>
+                <RefreshCw className={cn("w-4 h-4 mr-2", isLoading && "animate-spin")} />
                 Refresh
               </Button>
               <Button
@@ -1874,270 +2111,247 @@ export function BelwilBansosTayangModal({
                 onClick={toggleBansosFs}
                 title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
               >
-                {isFullscreen ? (
-                  <Minimize2 className="w-4 h-4" />
-                ) : (
-                  <Maximize2 className="w-4 h-4" />
-                )}
+                {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
               </Button>
             </div>
           </DialogTitle>
-          <DialogDescription>
-            {lastResult && lastResult.success && bansosTotalAvail > 0
-              ? `Menampilkan ${bansosDisplayStart}-${bansosDisplayEnd} dari ${bansosTotalAvail} baris`
-              : `Bansos Kewilayahan tahun ${reportParams.tahun} dengan ${activeFilters.length} filter aktif`}
-          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="flex flex-wrap gap-2 items-center justify-between">
-            <div className="flex flex-wrap gap-2 items-center">
-              <Badge variant="secondary">Tahun: {reportParams.tahun}</Badge>
-              <Badge variant="secondary">
-                Pembulatan: {reportParams.pembulatan}
-              </Badge>
-              {reportParams.akumulatif && (
-                <Badge variant="secondary">Akumulatif</Badge>
-              )}
-              <Badge variant="outline">
-                Filter Aktif: {activeFilters.length}
-              </Badge>
-              {lastResult && (
-                <>
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    <BarChart3 className="w-3 h-3" />
-                    {bansosTotalAvail} baris
-                  </Badge>
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {lastResult.executionTime}ms
-                  </Badge>
-                </>
-              )}
-            </div>
-
-            {lastResult && lastResult.success && lastResult.data && (
-              <div className="flex gap-2 items-center">
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Cari data..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setCurrentPage(1);
-                    }}
-                    className="pl-8 w-64"
-                  />
-                </div>
-                <Select
-                  value={pageSize.toString()}
-                  onValueChange={(value) => {
-                    const requested = parseInt(value);
-                    const capped = Math.min(requested, 100);
-                    setPageSize(capped);
-                    setCurrentPage(1);
-                  }}
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="25">25 baris</SelectItem>
-                    <SelectItem value="50">50 baris</SelectItem>
-                    <SelectItem value="100">100 baris</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        {/* Badges + Search row */}
+        <div className="shrink-0 flex flex-wrap gap-2 items-center justify-between">
+          <div className="flex flex-wrap gap-2 items-center">
+            <Badge variant="secondary">Tahun: {reportParams.tahun}</Badge>
+            <Badge variant="secondary">Pembulatan: {reportParams.pembulatan}</Badge>
+            {reportParams.akumulatif && <Badge variant="secondary">Akumulatif</Badge>}
+            <Badge variant="outline">Filter Aktif: {activeFilters.length}</Badge>
+            {lastResult && (
+              <>
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <BarChart3 className="w-3 h-3" />
+                  {bansosTotalAvail} baris
+                </Badge>
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {lastResult.executionTime}ms
+                </Badge>
+              </>
             )}
           </div>
-        </div>
 
-        <div className="flex-1 overflow-hidden">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-80">
-              <div className="text-center">
-                <Loader2 className="w-12 h-12 animate-spin mx-auto mb-2" />
-                <p className="text-md text-muted-foreground">Loading data..</p>
-              </div>
-            </div>
-          ) : lastResult && !lastResult.success ? (
-            <div className="flex items-center justify-center h-80">
-              <div className="text-center">
-                <p className="text-sm text-red-600 mb-2">
-                  Error: {lastResult.error}
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleBansosRefresh}
-                >
-                  Coba Lagi
-                </Button>
-              </div>
-            </div>
-          ) : lastResult && lastResult.success && lastResult.data ? (
-            <div className="border rounded-lg h-full flex flex-col overflow-hidden">
-              <div className="flex-1 w-full overflow-auto">
-                <div className="min-w-full">
-                  <table className="w-full min-w-max">
-                    <thead className="bg-muted sticky top-0 z-30">
-                      <tr>
-                        <th className="p-2 text-center text-sm font-medium w-16 min-w-[80px] uppercase">
-                          No
-                        </th>
-                        {lastResult.columns?.map((column) => (
-                          <th
-                            key={column}
-                            className="p-2 text-center text-sm font-medium cursor-pointer hover:bg-muted/50 select-none w-40 min-w-[180px] whitespace-nowrap uppercase"
-                            onClick={() => handleBansosColClick(column)}
-                          >
-                            <div className="flex items-center justify-center gap-1">
-                              {column}
-                              {sortColumn === column && (
-                                <span className="text-xs">
-                                  {sortDirection === "asc"
-                                    ? "\u2191"
-                                    : "\u2193"}
-                                </span>
-                              )}
-                            </div>
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {bansosPaginatedData.length > 0 ? (
-                        <>
-                          {bansosPaginatedData.map((row, index) => (
-                            <tr
-                              key={index}
-                              className="border-t hover:bg-muted/50"
-                            >
-                              <td className="p-2 text-center text-xs w-16 min-w-[80px]">
-                                {bansosStartIdx + index + 1}
-                              </td>
-                              {lastResult.columns?.map((column) => (
-                                <td
-                                  key={column}
-                                  className={`p-2 ${getBansosCellAlign(column)} text-xs font-mono w-40 min-w-[180px] whitespace-nowrap`}
-                                >
-                                  {formatBansosCell(
-                                    getBansosRowValue(row, column),
-                                    column,
-                                  )}
-                                </td>
-                              ))}
-                            </tr>
-                          ))}
-
-                          {lastResult.columns?.some((c) =>
-                            isBansosSummable(c),
-                          ) && (
-                            <tr className="border-t-2 border-primary bg-muted font-medium sticky bottom-0 z-20">
-                              {(() => {
-                                const firstSummIdx =
-                                  lastResult.columns?.findIndex((col) =>
-                                    isBansosSummable(col),
-                                  ) ?? -1;
-                                const colsBefore =
-                                  firstSummIdx > 0 ? firstSummIdx : 0;
-                                return (
-                                  <>
-                                    <td
-                                      colSpan={colsBefore + 1}
-                                      className="p-2 text-xs font-semibold text-right"
-                                    >
-                                      GRAND TOTAL
-                                    </td>
-                                    {lastResult.columns
-                                      ?.slice(firstSummIdx)
-                                      .map((col) => (
-                                        <td
-                                          key={col}
-                                          className="p-2 text-right text-xs font-semibold font-mono"
-                                        >
-                                          {isBansosSummable(col)
-                                            ? bansosGrandTotals[col] != null
-                                              ? new Intl.NumberFormat(
-                                                  "id-ID",
-                                                ).format(
-                                                  Number(
-                                                    bansosGrandTotals[col],
-                                                  ),
-                                                )
-                                              : "-"
-                                            : ""}
-                                        </td>
-                                      ))}
-                                  </>
-                                );
-                              })()}
-                            </tr>
-                          )}
-                        </>
-                      ) : (
-                        <tr>
-                          <td
-                            colSpan={(lastResult.columns?.length || 0) + 1}
-                            className="text-center text-sm text-muted-foreground py-8"
-                          >
-                            Tidak ada data yang sesuai dengan filter yang
-                            dipilih.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-80">
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground">
-                  Klik Refresh untuk memuat data
-                </p>
-              </div>
+          {lastResult && lastResult.success && lastResult.data && (
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Cari data..."
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                className="pl-8 w-56"
+              />
             </div>
           )}
         </div>
 
-        <DialogFooter className="border-t pt-4">
-          <div className="flex items-center justify-between w-full">
-            <div className="text-sm text-muted-foreground">
-              {bansosTotalAvail > 0
-                ? `${bansosDisplayStart}\u2013${bansosDisplayEnd} dari ${bansosTotalAvail} baris`
-                : "Belum ada data"}
+        {/* Table area */}
+        <div className={cn("min-h-0 flex-1 flex flex-col")}>
+          {isLoading ? (
+            <div className="border rounded-lg overflow-hidden flex-1">
+              <table className="w-full min-w-max text-xs border-separate border-spacing-0">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="p-2 w-12 min-w-[48px]">
+                      <Skeleton className="h-4 w-6 mx-auto" />
+                    </th>
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <th key={i} className="p-2 min-w-[140px]">
+                        <Skeleton className="h-4 w-24 mx-auto" />
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: 10 }).map((_, rowIdx) => (
+                    <tr key={rowIdx}>
+                      <td className="p-2 border-t border-border">
+                        <Skeleton className="h-3 w-6 mx-auto" />
+                      </td>
+                      {Array.from({ length: 4 }).map((_, colIdx) => (
+                        <td key={colIdx} className="p-2 border-t border-border">
+                          <Skeleton className="h-3 w-24 mx-auto" />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage <= 1 || isLoading}
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          ) : lastResult && !lastResult.success ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <p className="text-sm text-red-600 mb-2">Error: {lastResult.error}</p>
+                <Button variant="outline" size="sm" onClick={handleBansosRefresh}>Coba Lagi</Button>
+              </div>
+            </div>
+          ) : lastResult && lastResult.success && lastResult.data ? (
+            <div className="border rounded-lg overflow-auto flex-1">
+              <table className="w-full min-w-max text-xs border-separate border-spacing-0">
+                <thead className="bg-muted sticky top-0 z-10">
+                  <tr>
+                    <th className="p-2 text-center font-medium w-12 min-w-[48px] uppercase whitespace-nowrap">No</th>
+                    {lastResult.columns?.map((column) => (
+                      <th
+                        key={column}
+                        className="p-2 text-center font-medium cursor-pointer hover:bg-muted/70 select-none min-w-[140px] whitespace-nowrap uppercase"
+                        onClick={() => handleBansosColClick(column)}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          {column}
+                          {sortColumn === column && (
+                            <span className="text-xs">{sortDirection === "asc" ? "↑" : "↓"}</span>
+                          )}
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {bansosPaginatedData.length > 0 ? (
+                    bansosPaginatedData.map((row, index) => (
+                      <tr key={index} className="hover:bg-muted/50">
+                        <td className="p-2 text-center w-12 min-w-[48px] border-t border-border">
+                          {bansosStartIdx + index + 1}
+                        </td>
+                        {lastResult.columns?.map((column) => (
+                          <td
+                            key={column}
+                            className={cn(
+                              "p-2 font-mono min-w-[140px] whitespace-nowrap border-t border-border",
+                              getBansosCellAlign(column)
+                            )}
+                          >
+                            {formatBansosCell(getBansosRowValue(row, column), column)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={(lastResult.columns?.length || 0) + 1}
+                        className="text-center py-8 text-muted-foreground"
+                      >
+                        {searchTerm ? "Tidak ada data yang sesuai dengan pencarian" : "Tidak ada data"}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+
+                {lastResult.columns?.some((c) => isBansosSummable(c)) && bansosPaginatedData.length > 0 && (
+                  <tfoot className="sticky bottom-0 z-10">
+                    {(() => {
+                      const firstSummIdx = lastResult.columns?.findIndex((col) => isBansosSummable(col)) ?? -1;
+                      const colsBefore = firstSummIdx > 0 ? firstSummIdx : 0;
+                      return (
+                        <tr className="bg-muted font-medium">
+                          <td
+                            colSpan={1 + colsBefore}
+                            className="p-2 text-sm font-medium text-center border-t-2 border-primary"
+                          >
+                            Grand Total
+                          </td>
+                          {lastResult.columns?.slice(firstSummIdx).map((col) => (
+                            <td
+                              key={col}
+                              className={cn(
+                                "p-2 text-sm font-mono font-medium min-w-[140px] whitespace-nowrap border-t-2 border-primary",
+                                getBansosCellAlign(col)
+                              )}
+                            >
+                              {isBansosSummable(col)
+                                ? bansosGrandTotals[col] != null
+                                  ? new Intl.NumberFormat("id-ID").format(Number(bansosGrandTotals[col]))
+                                  : "-"
+                                : "-"}
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })()}
+                  </tfoot>
+                )}
+              </table>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-40 text-center text-muted-foreground">
+              <p>Klik Refresh untuk memuat data</p>
+            </div>
+          )}
+        </div>
+
+        {/* Pagination + footer */}
+        {lastResult && lastResult.success && lastResult.data && (
+          <div className="shrink-0 flex flex-col md:grid md:grid-cols-3 items-center gap-3">
+            <div className="flex items-center gap-2 order-2 md:order-1">
+              <p className="text-sm font-medium whitespace-nowrap">Baris per halaman</p>
+              <Select
+                value={pageSize.toString()}
+                onValueChange={(value) => {
+                  setPageSize(Number(value));
+                  setCurrentPage(1);
+                }}
               >
-                Sebelumnya
-              </Button>
-              <span className="text-sm self-center px-2">
-                Halaman {currentPage} / {bansosTotalPages}
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 25, 50, 100].map((size) => (
+                    <SelectItem key={size} value={`${size}`}>{size}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center justify-center order-1 md:order-2 w-full">
+              <Pagination className="mx-auto justify-center">
+                <div className="flex items-center justify-between w-full sm:min-w-[400px] gap-2">
+                  <PaginationPrevious
+                    onClick={(e) => { e.preventDefault(); setCurrentPage(Math.max(1, currentPage - 1)); }}
+                    className={cn(
+                      "cursor-pointer select-none",
+                      currentPage === 1 && "pointer-events-none opacity-50"
+                    )}
+                  />
+                  <PaginationContent className="flex-1 justify-center gap-1 overflow-x-auto">
+                    {renderPaginationItems()}
+                  </PaginationContent>
+                  <PaginationNext
+                    onClick={(e) => { e.preventDefault(); setCurrentPage(Math.min(bansosTotalPages, currentPage + 1)); }}
+                    className={cn(
+                      "cursor-pointer select-none",
+                      currentPage === bansosTotalPages && "pointer-events-none opacity-50"
+                    )}
+                  />
+                </div>
+              </Pagination>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 order-3 w-full md:w-auto">
+              <span className="text-sm text-muted-foreground whitespace-nowrap">
+                {bansosDisplayStart}-{bansosDisplayEnd} dari {bansosTotalAvail} baris
               </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage >= bansosTotalPages || isLoading}
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(bansosTotalPages, p + 1))
-                }
-              >
-                Berikutnya
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleBansosClose}>
+              <Button variant="outline" size="sm" onClick={handleBansosClose} className="w-20">
                 Tutup
               </Button>
             </div>
           </div>
-        </DialogFooter>
+        )}
+
+        {!(lastResult && lastResult.success && lastResult.data) && (
+          <DialogFooter className="shrink-0">
+            <Button variant="outline" size="sm" onClick={handleBansosClose} className="w-24">
+              Tutup
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );
