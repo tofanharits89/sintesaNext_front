@@ -1,16 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api/httpClient";
 import { apiPath } from "@/lib/config/base-path";
-import { PlusSquare, Trash2, Download, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
+import { PlusSquare, Trash2, Download, AlertTriangle } from "lucide-react";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import Rekam2 from "./rekam2";
+import { DataTable } from "@/components/ui/data-table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,14 +21,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/animate-ui/components/radix/alert-dialog";
-
-// Styling untuk table dan kolom - matching weekly-report pattern
-const tableStyles = {
-  headerCell: "h-10 px-3 text-center align-middle font-medium whitespace-nowrap",
-  headerCellCenter: "h-10 px-3 text-center align-middle font-medium whitespace-nowrap",
-  bodyCell: "px-3 py-2 text-sm align-middle border-b",
-  bodyCellCenter: "px-3 py-2 text-sm text-center align-middle border-b whitespace-nowrap",
-};
 
 interface DispenSpmProps {
   cek: number;
@@ -56,18 +48,14 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<SpmData[]>([]);
-  const [page, setPage] = useState(0);
-  const limit = 15;
-  const [pages, setPages] = useState(0);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [rows, setRows] = useState(0);
-  const [sql, setSql] = useState("");
   const [showModalRekam, setShowModalRekam] = useState(false);
   const [tahun, setTahun] = useState("");
   const [idRekam, setIdRekam] = useState("");
   const [nomor, setNomor] = useState("");
   const [kdsatker, setKdsatker] = useState("");
   const [nmsatker, setNmsatker] = useState("");
-  const [error2, setError2] = useState<string | null>(null);
 
   // States for Delete Dialog
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -79,7 +67,7 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
     if (user) {
       getData();
     }
-  }, [user, cek, id, where, page]);
+  }, [user, cek, id, where, pagination.pageIndex, pagination.pageSize]);
 
   const getData = async () => {
     setLoading(true);
@@ -126,38 +114,14 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
       .replace(/\s+/g, " ")
       .trim();
 
-    const encodedQuery2 = encodeURIComponent(
-      `SELECT a.id, a.kddept, b.nmdept, a.kdunit, c.nmunit, a.kdsatker, i.nmsatker, a.kdlokasi, e.nmlokasi, a.kdkanwil, g.nmkanwil, a.kdkppn,
-  h.nmkppn, a.uraian, a.tgpermohonan, a.nopermohonan, a.kd_dispensasi, zz.nm_dispensasi, a.tgpersetujuan, a.nopersetujuan, z.nospm, z.tgspm,
-  z.nilspm, z.nobast, z.tgbast, z.status
-  FROM laporan_2023.dispensasi_spm a
-  LEFT JOIN laporan_2023.dispensasi_spm_lampiran z ON a.id = z.id_dispensasi
-  LEFT JOIN dbref.t_dept_2025 b ON a.kddept = b.kddept
-  LEFT JOIN dbref.t_unit_2025 c ON a.kddept = c.kddept AND a.kdunit = c.kdunit
-  LEFT JOIN dbref.t_lokasi_2025 e ON a.kdlokasi = e.kdlokasi
-  LEFT JOIN dbref.t_kanwil_2025 g ON a.kdkanwil = g.kdkanwil
-  LEFT JOIN dbref.t_kppn_2025 h ON a.kdkppn = h.kdkppn
-  LEFT JOIN dbref.t_satker_2025 i ON a.kdsatker = i.kdsatker
-  LEFT JOIN laporan_2023.ref_dispensasi zz ON a.kd_dispensasi = zz.kd_dispensasi
-  ${finalFilter ? `WHERE ${finalFilter}` : ""}
-  ORDER BY a.kddept, a.kdsatker, a.id`
-    );
-
-    const cleanedQuery2 = decodeURIComponent(encodedQuery2)
-      .replace(/\n/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-
-    setSql(cleanedQuery2);
     const encryptedQuery = btoa(cleanedQuery);
 
     try {
       // API endpoint: /dispensasi/:query?limit=15&page=0&user=username
       const result = await apiClient.get<any>(
-        `/dispensasi/${encryptedQuery}?limit=${limit}&page=${page}&user=${user?.username || ""}`
+        `/dispensasi/${encryptedQuery}?limit=${pagination.pageSize}&page=${pagination.pageIndex}&user=${user?.username || ""}`
       );
       setData(result.result || []);
-      setPages(result.totalPages || 0);
       setRows(result.totalRows || 0);
       setLoading(false);
     } catch (error) {
@@ -264,180 +228,124 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
     }
   };
 
-  const handleStatus = (status: boolean, total: number) => {
-    // Export status handling removed - implement as needed
-    console.log("Export status:", status, total);
-  };
-
   const handleCloseModalSPM = () => {
     setShowModalRekam(false);
   };
+
+  const columns: ColumnDef<SpmData>[] = [
+    {
+      id: "no",
+      header: () => <div className="text-center font-medium">No.</div>,
+      cell: ({ row }) => (
+        <div className="text-center">
+          {row.index + 1 + pagination.pageIndex * pagination.pageSize}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "thang",
+      header: () => <div className="text-center font-medium">TA</div>,
+      cell: ({ row }) => <div className="text-center">{row.original.thang}</div>,
+    },
+    {
+      accessorKey: "satker",
+      header: () => <div className="text-center font-medium">Satker</div>,
+      cell: ({ row }) => (
+        <div
+          className="text-left max-w-[360px] truncate"
+          title={`${row.original.nmsatker?.trim()} (${row.original.kdsatker})`}
+        >
+          {row.original.nmsatker?.trim()} ({row.original.kdsatker})
+        </div>
+      ),
+    },
+    {
+      accessorKey: "tgpermohonan",
+      header: () => <div className="text-center font-medium">Tgl Permohonan</div>,
+      cell: ({ row }) => <div className="text-center">{row.original.tgpermohonan}</div>,
+    },
+    {
+      accessorKey: "nopermohonan",
+      header: () => <div className="text-center font-medium">Nomor Permohonan</div>,
+      cell: ({ row }) => (
+        <div className="text-left max-w-[260px] truncate" title={row.original.nopermohonan?.trim()}>
+          {row.original.nopermohonan?.trim()}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "jmlspm",
+      header: () => <div className="text-center font-medium">Jumlah SPM</div>,
+      cell: ({ row }) => <div className="text-center">{row.original.jmlspm ?? "-"}</div>,
+    },
+    {
+      id: "aksi",
+      header: () => <div className="text-center font-medium">Opsi</div>,
+      cell: ({ row }) => (
+        <div className="flex items-center justify-center gap-2">
+          {user?.role !== "kppn" && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0"
+              title="Rekam SPM"
+              onClick={() =>
+                handleRekamSPM(
+                  String(row.original.id),
+                  row.original.nopermohonan?.trim() || "",
+                  row.original.nmsatker?.trim() || "",
+                  row.original.kdsatker,
+                  row.original.thang
+                )
+              }
+            >
+              <PlusSquare className="h-4 w-4 text-blue-600" />
+            </Button>
+          )}
+          {user?.role !== "kppn" && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0"
+              title="Hapus Dispensasi"
+              onClick={() =>
+                handleHapusDispSPM(
+                  String(row.original.id),
+                  row.original.jmlspm ?? 0
+                )
+              }
+            >
+              <Trash2 className="h-4 w-4 text-red-600" />
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0"
+            title="Download Dokumen"
+            onClick={() => handledownload(String(row.original.id))}
+          >
+            <Download className="h-4 w-4 text-amber-600" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div>
       {loading ? (
         <TableSkeleton rows={10} />
       ) : (
-        <>
-          <div className="rounded-md border">
-            <div className="overflow-x-auto">
-              <table className="w-full table-fixed text-sm">
-                <colgroup>
-                  <col className="w-10" />
-                  <col className="w-[8%]" />
-                  <col className="w-[38%]" />
-                  <col className="w-[12%]" />
-                  <col className="w-[26%]" />
-                  <col className="w-[8%]" />
-                  <col className="w-[8%]" />
-                </colgroup>
-                <thead>
-                  <tr className="border-b">
-                    <th className={tableStyles.headerCellCenter}>No.</th>
-                    <th className={tableStyles.headerCellCenter}>TA</th>
-                    <th className={tableStyles.headerCell}>Satker</th>
-                    <th className={tableStyles.headerCell}>Tgl Permohonan</th>
-                    <th className={tableStyles.headerCell}>Nomor Permohonan</th>
-                    <th className={tableStyles.headerCellCenter}>Jumlah SPM</th>
-                    <th className={tableStyles.headerCellCenter}>Opsi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="h-24 text-center text-muted-foreground">
-                        Belum ada data dispensasi SPM
-                      </td>
-                    </tr>
-                  ) : (
-                    data.map((row, index) => (
-                      <tr key={index} className="hover:bg-muted/50 transition-colors">
-                        <td className={tableStyles.bodyCellCenter}>
-                          {index + 1 + page * limit}
-                        </td>
-                        <td className={tableStyles.bodyCellCenter}>
-                          {row.thang}
-                        </td>
-                        <td className={`${tableStyles.bodyCell} overflow-hidden`} title={`${row.nmsatker?.trim()} (${row.kdsatker})`}>
-                          <span className="block truncate">{row.nmsatker?.trim()} ({row.kdsatker})</span>
-                        </td>
-                        <td className={tableStyles.bodyCellCenter}>
-                          {row.tgpermohonan}
-                        </td>
-                        <td className={`${tableStyles.bodyCell} overflow-hidden`} title={row.nopermohonan?.trim()}>
-                          <span className="block truncate">{row.nopermohonan?.trim()}</span>
-                        </td>
-                        <td className={tableStyles.bodyCellCenter}>
-                          {row.jmlspm ?? "-"}
-                        </td>
-                        <td className={tableStyles.bodyCellCenter}>
-                          <div className="flex items-center justify-center gap-2">
-                            {/* Rekam SPM - hanya untuk non-KPPN */}
-                            {user?.role !== "kppn" && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                                title="Rekam SPM"
-                                onClick={() =>
-                                  handleRekamSPM(
-                                    String(row.id),
-                                    row.nopermohonan?.trim() || "",
-                                    row.nmsatker?.trim() || "",
-                                    row.kdsatker,
-                                    row.thang
-                                  )
-                                }
-                              >
-                                <PlusSquare className="h-4 w-4 text-blue-600" />
-                              </Button>
-                            )}
-
-                            {/* Hapus Dispensasi - hanya untuk non-KPPN */}
-                            {user?.role !== "kppn" && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                                title="Hapus Dispensasi"
-                                onClick={() =>
-                                  handleHapusDispSPM(
-                                    String(row.id),
-                                    row.jmlspm ?? 0
-                                  )
-                                }
-                              >
-                                <Trash2 className="h-4 w-4 text-red-600" />
-                              </Button>
-                            )}
-
-                            {/* Download - untuk semua role */}
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              title="Download Dokumen"
-                              onClick={() => handledownload(String(row.id))}
-                            >
-                              <Download className="h-4 w-4 text-amber-600" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {data.length > 0 && (
-            <div className="flex items-center justify-between mt-4 mx-4">
-              <span className="text-sm text-muted-foreground">
-                Total: {rows.toLocaleString()}, Halaman {rows ? page + 1 : 0} dari {pages}
-              </span>
-              {pages > 1 && (
-                <div className="flex items-center justify-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage(Math.max(0, page - 1))}
-                    disabled={page === 0}
-                  >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Sebelumnya
-                  </Button>
-                  <div className="flex items-center gap-1 text-sm">
-                    <input
-                      type="number"
-                      min={1}
-                      max={pages}
-                      value={page + 1}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value);
-                        if (!isNaN(val) && val >= 1 && val <= pages) {
-                          setPage(val - 1);
-                        }
-                      }}
-                      className="w-14 h-8 text-center border rounded-md text-sm bg-zinc-100 dark:bg-black"
-                    />
-                    <span>/ {pages}</span>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage(Math.min(pages - 1, page + 1))}
-                    disabled={page === pages - 1}
-                  >
-                    Selanjutnya
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </div>
-              )}
-              <div className="w-48"></div>
-            </div>
-          )}
-        </>
+        <DataTable
+          columns={columns}
+          data={data}
+          emptyMessage="Belum ada data dispensasi SPM"
+          manualPagination={true}
+          rowCount={rows}
+          controlledPagination={pagination}
+          onPaginationChange={setPagination}
+        />
       )}
 
       <Rekam2
@@ -481,6 +389,6 @@ const DispenSPM: React.FC<DispenSpmProps> = ({ cek, id, where }) => {
       </AlertDialog>
     </div>
   );
-};;
+};
 
 export default DispenSPM;

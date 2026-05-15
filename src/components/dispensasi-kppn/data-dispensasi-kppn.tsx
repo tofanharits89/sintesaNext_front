@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { ColumnDef } from "@tanstack/react-table";
 import { useAuth } from "@/hooks/useAuth";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import moment from "moment";
-import { PlusSquare, Trash2, FileSpreadsheet, Loader2, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
+import { PlusSquare, Trash2, FileSpreadsheet, Loader2, AlertTriangle } from "lucide-react";
 import Rekam from "./modal-rekam";
 import {
   AlertDialog,
@@ -22,14 +23,7 @@ import {
 import RekamKontrak from "./modal-rekam-kontrak";
 import GenerateCSV from "@/components/GenerateCSV";
 import { apiPath } from "@/lib/config/base-path";
-
-// Table styling - matching dispensasi/llat pattern
-const tableStyles = {
-  headerCell: "h-10 px-3 text-center align-middle font-medium whitespace-nowrap",
-  headerCellCenter: "h-10 px-3 text-center align-middle font-medium whitespace-nowrap",
-  bodyCell: "px-3 py-2 text-sm align-middle border-b",
-  bodyCellCenter: "px-3 py-2 text-sm text-center align-middle border-b whitespace-nowrap",
-};
+import { DataTable } from "@/components/ui/data-table";
 
 interface DispensasiData {
   id: string;
@@ -63,9 +57,7 @@ const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = f
   const [nomor, setNomor] = useState("");
   const [data, setData] = useState<DispensasiData[]>([]);
   const [showModalRekam, setShowModalRekam] = useState(false);
-  const [page, setPage] = useState(0);
-  const [limit, setLimit] = useState(10);
-  const [pages, setPages] = useState(0);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [rows, setRows] = useState(0);
   const [sql, setSql] = useState("");
   const [kdsatker, setKdsatker] = useState("");
@@ -93,7 +85,7 @@ const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = f
     if (user) {
       getData();
     }
-  }, [page, where, user]);
+  }, [pagination.pageIndex, pagination.pageSize, where, user]);
 
   const getData = async () => {
     setLoading(true);
@@ -189,7 +181,7 @@ const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = f
     setSql(cleanedQuery2);
 
     const requestUrl = apiPath(
-      `/dispensasi/${encryptedQuery}?limit=${limit}&page=${page}&user=${user?.username || ""}`
+      `/dispensasi/${encryptedQuery}?limit=${pagination.pageSize}&page=${pagination.pageIndex}&user=${user?.username || ""}`
     );
     console.debug("dispensasi-kppn request url", requestUrl);
 
@@ -207,7 +199,6 @@ const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = f
 
       const result = await response.json();
       setData(result.result || []);
-      setPages(result.totalPages || 0);
       setRows(result.totalRows || 0);
       setLoading(false);
     } catch (error) {
@@ -309,6 +300,116 @@ const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = f
     }
   }, [isExporting]);
 
+  const columns: ColumnDef<DispensasiData>[] = [
+    {
+      id: "no",
+      header: () => <div className="text-center font-medium">No.</div>,
+      cell: ({ row }) => (
+        <div className="text-center">
+          {row.index + 1 + pagination.pageIndex * pagination.pageSize}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "kppn",
+      header: () => <div className="text-center font-medium">KPPN</div>,
+      cell: ({ row }) => (
+        <div
+          className="text-left max-w-[240px] truncate"
+          title={`${row.original.nmkppn} (${row.original.kdkppn})`}
+        >
+          {row.original.nmkppn} ({row.original.kdkppn})
+        </div>
+      ),
+    },
+    {
+      accessorKey: "satker",
+      header: () => <div className="text-center font-medium">Satker</div>,
+      cell: ({ row }) => (
+        <div
+          className="text-left max-w-[320px] truncate"
+          title={`${row.original.nmsatker?.trim()} (${row.original.kdsatker})`}
+        >
+          {row.original.nmsatker?.trim()} ({row.original.kdsatker})
+        </div>
+      ),
+    },
+    {
+      accessorKey: "tgpermohonan",
+      header: () => <div className="text-center font-medium">Tgl Permohonan</div>,
+      cell: ({ row }) => <div className="text-center whitespace-nowrap">{row.original.tgpermohonan}</div>,
+    },
+    {
+      accessorKey: "nopermohonan",
+      header: () => <div className="text-center font-medium">Nomor Permohonan</div>,
+      cell: ({ row }) => (
+        <div className="text-left max-w-[280px] truncate" title={row.original.nopermohonan?.trim()}>
+          {row.original.nopermohonan?.trim()}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "jmlkontrak",
+      header: () => <div className="text-center font-medium">Jumlah Kontrak</div>,
+      cell: ({ row }) => (
+        <div className="text-center">
+          {row.original.jmlkontrak > 0 ? (
+            row.original.jmlkontrak
+          ) : (
+            <span className="font-bold text-red-600">belum direkam</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "opsi",
+      header: () => <div className="text-center font-medium">Opsi</div>,
+      cell: ({ row }) => (
+        <div className="text-center">
+          {user?.role !== "kanwil_djpb" ? (
+            <div className="flex items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0"
+                title="Rekam Kontrak"
+                onClick={() =>
+                  handleRekamKontrak(
+                    row.original.id,
+                    row.original.nopermohonan,
+                    row.original.nmsatker,
+                    row.original.kdsatker,
+                    row.original.kdkppn
+                  )
+                }
+              >
+                <PlusSquare className="h-4 w-4 text-blue-600" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0"
+                title="Hapus Dispensasi"
+                onClick={() =>
+                  handleHapusDispSPM(
+                    row.original.id,
+                    row.original.jmlkontrak,
+                    row.original.kdsatker,
+                    row.original.kdkppn
+                  )
+                }
+              >
+                <Trash2 className="h-4 w-4 text-red-600" />
+              </Button>
+            </div>
+          ) : (
+            "-"
+          )}
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-4">
       {loading ? (
@@ -317,158 +418,15 @@ const DataDispensasiKPPN: React.FC<DataDispensasiKPPNProps> = ({ isRekamOpen = f
         <>
           <Card>
             <CardContent className="p-4">
-              <div className="rounded-md border">
-                <div className="overflow-x-auto">
-                  <table className="w-full table-fixed text-sm">
-                    <colgroup>
-                      <col className="w-10" />
-                      <col className="w-[18%]" />
-                      <col className="w-[28%]" />
-                      <col className="w-[12%]" />
-                      <col className="w-[24%]" />
-                      <col className="w-[10%]" />
-                      <col className="w-[8%]" />
-                    </colgroup>
-                    <thead>
-                      <tr className="border-b">
-                        <th className={tableStyles.headerCellCenter}>No.</th>
-                        <th className={tableStyles.headerCell}>KPPN</th>
-                        <th className={tableStyles.headerCell}>Satker</th>
-                        <th className={tableStyles.headerCell}>Tgl Permohonan</th>
-                        <th className={tableStyles.headerCell}>Nomor Permohonan</th>
-                        <th className={tableStyles.headerCellCenter}>Jumlah Kontrak</th>
-                        <th className={tableStyles.headerCellCenter}>Opsi</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.length === 0 ? (
-                        <tr>
-                          <td colSpan={7} className="h-24 text-center text-muted-foreground">
-                            Belum ada data dispensasi kontrak KPPN
-                          </td>
-                        </tr>
-                      ) : (
-                        data.map((row, index) => (
-                          <tr key={index} className="hover:bg-muted/50 transition-colors">
-                            <td className={tableStyles.bodyCellCenter}>
-                              {index + 1 + page * limit}
-                            </td>
-                            <td className={`${tableStyles.bodyCell} overflow-hidden`} title={`${row.nmkppn} (${row.kdkppn})`}>
-                              <span className="block truncate">{row.nmkppn} ({row.kdkppn})</span>
-                            </td>
-                            <td className={`${tableStyles.bodyCell} overflow-hidden`} title={`${row.nmsatker?.trim()} (${row.kdsatker})`}>
-                              <span className="block truncate">{row.nmsatker?.trim()} ({row.kdsatker})</span>
-                            </td>
-                            <td className={`${tableStyles.bodyCell} whitespace-nowrap`}>
-                              {row.tgpermohonan}
-                            </td>
-                            <td className={`${tableStyles.bodyCell} overflow-hidden`} title={row.nopermohonan?.trim()}>
-                              <span className="block truncate">{row.nopermohonan?.trim()}</span>
-                            </td>
-                            <td className={tableStyles.bodyCellCenter}>
-                              {row.jmlkontrak > 0 ? (
-                                row.jmlkontrak
-                              ) : (
-                                <span className="text-red-600 font-bold">
-                                  belum direkam
-                                </span>
-                              )}
-                            </td>
-                            <td className={tableStyles.bodyCellCenter}>
-                              {user?.role !== "kanwil_djpb" ? (
-                                <div className="flex items-center justify-center gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                    title="Rekam Kontrak"
-                                    onClick={() =>
-                                      handleRekamKontrak(
-                                        row.id,
-                                        row.nopermohonan,
-                                        row.nmsatker,
-                                        row.kdsatker,
-                                        row.kdkppn
-                                      )
-                                    }
-                                  >
-                                    <PlusSquare className="h-4 w-4 text-blue-600" />
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                    title="Hapus Dispensasi"
-                                    onClick={() =>
-                                      handleHapusDispSPM(
-                                        row.id,
-                                        row.jmlkontrak,
-                                        row.kdsatker,
-                                        row.kdkppn
-                                      )
-                                    }
-                                  >
-                                    <Trash2 className="h-4 w-4 text-red-600" />
-                                  </Button>
-                                </div>
-                              ) : (
-                                "-"
-                              )}
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {data.length > 0 && (
-                <div className="flex items-center justify-between mt-4">
-                  <span className="text-sm text-muted-foreground">
-                    Total: {rows.toLocaleString()}, Halaman {rows ? page + 1 : 0} dari {pages}
-                  </span>
-                  {pages > 1 && (
-                    <div className="flex items-center justify-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPage(Math.max(0, page - 1))}
-                        disabled={page === 0}
-                      >
-                        <ChevronLeft className="h-4 w-4 mr-1" />
-                        Sebelumnya
-                      </Button>
-                      <div className="flex items-center gap-1 text-sm">
-                        <input
-                          type="number"
-                          min={1}
-                          max={pages}
-                          value={page + 1}
-                          onChange={(e) => {
-                            const val = parseInt(e.target.value);
-                            if (!isNaN(val) && val >= 1 && val <= pages) {
-                              setPage(val - 1);
-                            }
-                          }}
-                          className="w-14 h-8 text-center border rounded-md text-sm bg-zinc-100 dark:bg-black"
-                        />
-                        <span>/ {pages}</span>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPage(Math.min(pages - 1, page + 1))}
-                        disabled={page === pages - 1}
-                      >
-                        Selanjutnya
-                        <ChevronRight className="h-4 w-4 ml-1" />
-                      </Button>
-                    </div>
-                  )}
-                  <div className="w-48"></div>
-                </div>
-              )}
+              <DataTable
+                columns={columns}
+                data={data}
+                emptyMessage="Belum ada data dispensasi kontrak KPPN"
+                manualPagination={true}
+                rowCount={rows}
+                controlledPagination={pagination}
+                onPaginationChange={setPagination}
+              />
             </CardContent>
           </Card>
           {export2 && (
