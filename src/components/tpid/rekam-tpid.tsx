@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,13 +18,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Loader2, FileSpreadsheet, CheckSquare, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, FileSpreadsheet, CheckSquare } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { http } from "@/lib/api/httpClient";
 import { apiPath } from "@/lib/config/base-path";
 import { cn } from "@/lib/utils/utils";
-import ReactPaginate from "react-paginate";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import numeral from "numeral";
 import moment from "moment";
 import GenerateCSV from "@/components/GenerateCSV";
@@ -58,7 +67,7 @@ export default function RekamTpid() {
   const [data, setData] = useState<TpidData[]>([]);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
-  const [limit, setLimit] = useState<number>(25);
+  const [limit, setLimit] = useState<number>(10);
   const [pages, setPages] = useState<number>(0);
   const [rows, setRows] = useState<number>(0);
 
@@ -123,8 +132,8 @@ export default function RekamTpid() {
         searchQuery
           ? [
             `(a.kdkanwil LIKE '%${searchQuery}%' or
-            b.nmkanwil LIKE '%${searchQuery}%' or
-            a.proker LIKE '%${searchQuery}%')`,
+            LOWER(b.nmkanwil) LIKE '%${searchQuery.toLowerCase()}%' or
+            LOWER(a.proker) LIKE '%${searchQuery.toLowerCase()}%')`,
           ]
           : []
       )
@@ -425,18 +434,15 @@ export default function RekamTpid() {
           </CardHeader>
           <CardContent className="space-y-4">
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-muted-foreground">Memuat data...</p>
-              </div>
+              <TableSkeleton />
             ) : (
               <div className="rounded-md border">
-                <Table className="text-xs">
-                  <TableHeader className="bg-muted/50">
+                <Table className="relative border-separate border-spacing-0 text-xs">
+                  <TableHeader className="bg-background sticky top-0 z-10 shadow-sm">
                 <TableRow>
                   <TableHead
                     rowSpan={2}
-                    className="text-center align-middle font-semibold border-r"
+                    className="text-center align-middle font-semibold border-r w-12 min-w-[48px]"
                   >
                     No
                   </TableHead>
@@ -704,43 +710,89 @@ export default function RekamTpid() {
             )}
 
             {/* Pagination */}
-            {!loading && (
-              <div className="flex flex-col md:flex-row justify-between items-center pt-1 gap-4">
-                <div className="text-sm text-muted-foreground">
-                  Menampilkan <span className="font-medium text-foreground">{numeral(rows).format("0,0")}</span> data.
-                  Halaman <span className="font-medium text-foreground">{rows ? page + 1 : 0}</span> dari <span className="font-medium text-foreground">{pages}</span>
+            {!loading && data.length > 0 && (
+              <div className="flex flex-col md:grid md:grid-cols-3 items-center justify-between gap-4 py-4">
+                {/* Left: Rows per page */}
+                <div className="flex items-center space-x-2 order-2 md:order-1">
+                  <p className="text-sm font-medium">Rows per page</p>
+                  <Select
+                    value={`${limit}`}
+                    onValueChange={(value) => {
+                      setLimit(Number(value));
+                      setPage(0);
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-[80px]">
+                      <SelectValue placeholder={limit} />
+                    </SelectTrigger>
+                    <SelectContent side="top">
+                      {[10, 25, 50, 100].map((pageSize) => (
+                        <SelectItem key={pageSize} value={`${pageSize}`}>
+                          {pageSize}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="flex justify-center">
-                  <ReactPaginate
-                    previousLabel={
-                      <div className="flex items-center gap-1 pl-2.5 pr-4">
-                        <ChevronLeft className="h-4 w-4" />
-                        <span>Previous</span>
-                      </div>
-                    }
-                    nextLabel={
-                      <div className="flex items-center gap-1 pl-4 pr-2.5">
-                        <span>Next</span>
-                        <ChevronRight className="h-4 w-4" />
-                      </div>
-                    }
-                    breakLabel={<span className="px-4">...</span>}
-                    pageCount={pages}
-                    marginPagesDisplayed={1}
-                    pageRangeDisplayed={3}
-                    onPageChange={handlePageClick}
-                    containerClassName="flex items-center gap-1 select-none"
-                    pageClassName="block"
-                    pageLinkClassName="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 w-9"
-                    activeClassName=""
-                    activeLinkClassName="border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground font-bold pointer-events-none"
-                    previousClassName="block"
-                    previousLinkClassName="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9"
-                    nextClassName="block"
-                    nextLinkClassName="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9"
-                    disabledClassName="opacity-50 pointer-events-none"
-                    forcePage={page}
-                  />
+
+                {/* Center: Numbered Pagination */}
+                <div className="flex items-center justify-center order-1 md:order-2 w-full md:w-auto">
+                  <Pagination className="mx-auto justify-center">
+                    <div className="flex items-center justify-between w-full sm:min-w-[400px] gap-2">
+                      <PaginationPrevious
+                        onClick={(e) => { e.preventDefault(); setPage((p) => Math.max(0, p - 1)); }}
+                        className={cn("cursor-pointer select-none", page === 0 && "pointer-events-none opacity-50")}
+                      />
+                      <PaginationContent className="flex-1 justify-center gap-1 overflow-x-auto no-scrollbar">
+                        {(() => {
+                          const totalPage = pages;
+                          const currentPage = page + 1;
+                          const items = [];
+                          if (totalPage <= 7) {
+                            for (let i = 1; i <= totalPage; i++) {
+                              items.push(
+                                <PaginationItem key={i}>
+                                  <PaginationLink isActive={currentPage === i} onClick={(e) => { e.preventDefault(); setPage(i - 1); }} className="cursor-pointer select-none">{i}</PaginationLink>
+                                </PaginationItem>
+                              );
+                            }
+                          } else {
+                            items.push(
+                              <PaginationItem key={1}>
+                                <PaginationLink isActive={currentPage === 1} onClick={(e) => { e.preventDefault(); setPage(0); }} className="cursor-pointer select-none">1</PaginationLink>
+                              </PaginationItem>
+                            );
+                            if (currentPage > 3) items.push(<PaginationEllipsis key="left-ellipsis" />);
+                            const start = Math.max(2, currentPage - 1);
+                            const end = Math.min(totalPage - 1, currentPage + 1);
+                            for (let i = start; i <= end; i++) {
+                              items.push(
+                                <PaginationItem key={i}>
+                                  <PaginationLink isActive={currentPage === i} onClick={(e) => { e.preventDefault(); setPage(i - 1); }} className="cursor-pointer select-none">{i}</PaginationLink>
+                                </PaginationItem>
+                              );
+                            }
+                            if (currentPage < totalPage - 2) items.push(<PaginationEllipsis key="right-ellipsis" />);
+                            items.push(
+                              <PaginationItem key={totalPage}>
+                                <PaginationLink isActive={currentPage === totalPage} onClick={(e) => { e.preventDefault(); setPage(totalPage - 1); }} className="cursor-pointer select-none">{totalPage}</PaginationLink>
+                              </PaginationItem>
+                            );
+                          }
+                          return items;
+                        })()}
+                      </PaginationContent>
+                      <PaginationNext
+                        onClick={(e) => { e.preventDefault(); setPage((p) => Math.min(pages - 1, p + 1)); }}
+                        className={cn("cursor-pointer select-none", page >= pages - 1 && "pointer-events-none opacity-50")}
+                      />
+                    </div>
+                  </Pagination>
+                </div>
+
+                {/* Right: Showing entries */}
+                <div className="text-sm text-muted-foreground whitespace-nowrap order-3 md:text-right">
+                  Showing {rows === 0 ? 0 : page * limit + 1}–{Math.min((page + 1) * limit, rows)} of {numeral(rows).format("0,0")} entries
                 </div>
               </div>
             )}

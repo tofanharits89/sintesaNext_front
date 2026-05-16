@@ -28,13 +28,22 @@ import { Badge } from "@/components/ui/badge";
 import {
   Pagination,
   PaginationContent,
+  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { TableSkeleton } from "@/components/ui/skeleton-loader";
 import { apiPath } from "@/lib/config/base-path";
+import { cn } from "@/lib/utils/utils";
 
 interface MonitoringBlokirProps {
   role?: string;
@@ -74,7 +83,7 @@ export default function MonitoringBlokir({
   const [selectedKdunit, setSelectedKdunit] = useState<string>("");
   const [refresh, setRefresh] = useState(false);
   const [page, setPage] = useState(0);
-  const [limit, setLimit] = useState(15);
+  const [limit, setLimit] = useState(10);
   const [sql, setSql] = useState("");
   const [showModalFilter, setShowModalFilter] = useState(false);
   const [where, setWhere] = useState("");
@@ -314,25 +323,25 @@ export default function MonitoringBlokir({
             <TableSkeleton rows={10} />
           ) : (
             <>
-              <div className="rounded-md border overflow-hidden">
-                <Table>
-                  <TableHeader className="bg-muted/50">
+              <div className="rounded-md border">
+                <Table className="relative border-separate border-spacing-0 text-xs">
+                  <TableHeader className="bg-background sticky top-0 z-10 shadow-sm">
                     <TableRow>
-                      <TableHead className="w-[60px] font-semibold text-center">No.</TableHead>
-                      <TableHead className="font-semibold text-center">
+                      <TableHead className="w-12 min-w-[48px] font-semibold text-center bg-background">No.</TableHead>
+                      <TableHead className="font-semibold text-center bg-background">
                         Kementerian/Lembaga
                       </TableHead>
-                      <TableHead className="font-semibold text-center">Unit Eselon I</TableHead>
-                      <TableHead className="font-semibold text-center">
+                      <TableHead className="font-semibold text-center bg-background">Unit Eselon I</TableHead>
+                      <TableHead className="font-semibold text-center bg-background">
                         Target Blokir
                       </TableHead>
-                      <TableHead className="font-semibold text-center">
+                      <TableHead className="font-semibold text-center bg-background">
                         Dispensasi
                       </TableHead>
-                      <TableHead className="font-semibold text-center">
+                      <TableHead className="font-semibold text-center bg-background">
                         Sudah Blokir
                       </TableHead>
-                      <TableHead className="font-semibold text-center">
+                      <TableHead className="font-semibold text-center bg-background">
                         Sisa
                       </TableHead>
                     </TableRow>
@@ -427,45 +436,70 @@ export default function MonitoringBlokir({
 
               {/* Pagination */}
               {data.length > 0 && (
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-5">
-                  <div className="text-sm text-muted-foreground">
-                    Menampilkan{" "}
-                    <span className="font-medium text-foreground">
-                      {numeral(paginatedData.length).format("0,0")}
-                    </span>{" "}
-                    dari{" "}
-                    <span className="font-medium text-foreground">
-                      {numeral(data.length).format("0,0")}
-                    </span>{" "}
-                    data. Halaman{" "}
-                    <span className="font-medium text-foreground">
-                      {page + 1}
-                    </span>{" "}
-                    dari{" "}
-                    <span className="font-medium text-foreground">{totalPages}</span>
+                <div className="flex flex-col md:grid md:grid-cols-3 items-center justify-between gap-4 py-4">
+                  {/* Left: Rows per page */}
+                  <div className="flex items-center space-x-2 order-2 md:order-1">
+                    <p className="text-sm font-medium">Rows per page</p>
+                    <Select
+                      value={`${limit}`}
+                      onValueChange={(value) => { setLimit(Number(value)); setPage(0); }}
+                    >
+                      <SelectTrigger className="h-8 w-[80px]">
+                        <SelectValue placeholder={limit} />
+                      </SelectTrigger>
+                      <SelectContent side="top">
+                        {[10, 25, 50, 100].map((s) => (
+                          <SelectItem key={s} value={`${s}`}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
+                  {/* Center: Numbered Pagination */}
+                  <div className="flex items-center justify-center order-1 md:order-2 w-full md:w-auto">
+                    <Pagination className="mx-auto justify-center">
+                      <div className="flex items-center justify-between w-full sm:min-w-[400px] gap-2">
                         <PaginationPrevious
-                          onClick={() => setPage(Math.max(0, page - 1))}
-                          aria-disabled={page === 0}
-                          className={page === 0 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          onClick={(e) => { e.preventDefault(); setPage((p) => Math.max(0, p - 1)); }}
+                          className={cn("cursor-pointer select-none", page === 0 && "pointer-events-none opacity-50")}
                         />
-                      </PaginationItem>
-
-                      {/* Simple Prev/Next for now, can implement complex logic if needed */}
-
-                      <PaginationItem>
+                        <PaginationContent className="flex-1 justify-center gap-1 overflow-x-auto no-scrollbar">
+                          {(() => {
+                            const totalPage = totalPages;
+                            const currentPage = page + 1;
+                            const items = [];
+                            if (totalPage <= 7) {
+                              for (let i = 1; i <= totalPage; i++) {
+                                items.push(
+                                  <PaginationItem key={i}>
+                                    <PaginationLink isActive={currentPage === i} onClick={(e) => { e.preventDefault(); setPage(i - 1); }} className="cursor-pointer select-none">{i}</PaginationLink>
+                                  </PaginationItem>
+                                );
+                              }
+                            } else {
+                              items.push(<PaginationItem key={1}><PaginationLink isActive={currentPage === 1} onClick={(e) => { e.preventDefault(); setPage(0); }} className="cursor-pointer select-none">1</PaginationLink></PaginationItem>);
+                              if (currentPage > 3) items.push(<PaginationEllipsis key="l" />);
+                              for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPage - 1, currentPage + 1); i++) {
+                                items.push(<PaginationItem key={i}><PaginationLink isActive={currentPage === i} onClick={(e) => { e.preventDefault(); setPage(i - 1); }} className="cursor-pointer select-none">{i}</PaginationLink></PaginationItem>);
+                              }
+                              if (currentPage < totalPage - 2) items.push(<PaginationEllipsis key="r" />);
+                              items.push(<PaginationItem key={totalPage}><PaginationLink isActive={currentPage === totalPage} onClick={(e) => { e.preventDefault(); setPage(totalPage - 1); }} className="cursor-pointer select-none">{totalPage}</PaginationLink></PaginationItem>);
+                            }
+                            return items;
+                          })()}
+                        </PaginationContent>
                         <PaginationNext
-                          onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
-                          aria-disabled={page === totalPages - 1}
-                          className={page === totalPages - 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          onClick={(e) => { e.preventDefault(); setPage((p) => Math.min(totalPages - 1, p + 1)); }}
+                          className={cn("cursor-pointer select-none", page >= totalPages - 1 && "pointer-events-none opacity-50")}
                         />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
+                      </div>
+                    </Pagination>
+                  </div>
+
+                  {/* Right: Showing entries */}
+                  <div className="text-sm text-muted-foreground whitespace-nowrap order-3 md:text-right">
+                    Showing {data.length === 0 ? 0 : page * limit + 1}–{Math.min((page + 1) * limit, data.length)} of {numeral(data.length).format("0,0")} entries
+                  </div>
                 </div>
               )}
             </>

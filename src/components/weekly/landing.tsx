@@ -273,12 +273,12 @@ export default function WeeklyLanding() {
       {/* Tabs sections */}
       <Tabs defaultValue="belanja-negara" className="w-full gap-3">
         <div className="border-b border-border/50 pb-3 mb-0">
-          <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-0">
+          <TabsList className="w-full h-auto md:h-14 p-2 rounded-xl grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-0">
             {tabItems.map((item) => (
               <TabsTrigger
                 key={item.id}
                 value={item.id}
-                className="h-12 md:h-full px-2 sm:px-3 md:px-4 py-0 text-xs sm:text-sm flex items-center justify-center whitespace-nowrap gap-2"
+                className="h-12 md:h-full px-2 sm:px-3 md:px-4 py-0 text-xs sm:text-sm flex items-center justify-center gap-2"
               >
                 {item.icon}
                 <span className="font-medium">{item.title}</span>

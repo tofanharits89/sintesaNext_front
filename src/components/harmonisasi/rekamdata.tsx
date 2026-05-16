@@ -13,10 +13,17 @@ import {
   CheckSquare,
   Pencil,
   FileSpreadsheet,
-  ChevronLeft,
-  ChevronRight,
   Download,
 } from "lucide-react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -109,7 +116,7 @@ export default function Harmonisasi() {
   const [showModal, setShowModal] = useState(false);
   const [showModalUpaya, setShowModalUpaya] = useState(false);
   const [page, setPage] = useState(0);
-  const [limit, setLimit] = useState(25);
+  const [limit, setLimit] = useState(10);
   const [pages, setPages] = useState(0);
   const [rows, setRows] = useState(0);
 
@@ -701,12 +708,12 @@ export default function Harmonisasi() {
               <TableSkeleton />
             ) : (
               <div className="rounded-md border">
-                <Table className="text-xs">
-                  <TableHeader className="bg-muted/50">
+                <Table className="relative border-separate border-spacing-0 text-xs">
+                  <TableHeader className="bg-background sticky top-0 z-10 shadow-sm">
                     <TableRow>
                       <TableHead
                         rowSpan={2}
-                        className="text-center whitespace-nowrap"
+                        className="text-center whitespace-nowrap w-12 min-w-[48px]"
                       >
                         No
                       </TableHead>
@@ -975,28 +982,88 @@ export default function Harmonisasi() {
 
             {/* Pagination Controls */}
             {data.length > 0 && (
-              <div className="flex items-center justify-between space-x-2 pt-4">
-                <div className="flex-1 text-sm text-muted-foreground">
-                  Total: {numeral(rows).format("0,0")} | Hal: {page + 1} dari{" "}
-                  {pages}
+              <div className="flex flex-col md:grid md:grid-cols-3 items-center justify-between gap-4 py-4">
+                {/* Left: Rows per page */}
+                <div className="flex items-center space-x-2 order-2 md:order-1">
+                  <p className="text-sm font-medium">Rows per page</p>
+                  <Select
+                    value={`${limit}`}
+                    onValueChange={(value) => {
+                      setLimit(Number(value));
+                      setPage(0);
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-[80px]">
+                      <SelectValue placeholder={limit} />
+                    </SelectTrigger>
+                    <SelectContent side="top">
+                      {[10, 25, 50, 100].map((pageSize) => (
+                        <SelectItem key={pageSize} value={`${pageSize}`}>
+                          {pageSize}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.max(0, p - 1))}
-                    disabled={page === 0}
-                  >
-                    <ChevronLeft className="h-4 w-4" /> Previous
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.min(pages - 1, p + 1))}
-                    disabled={page >= pages - 1}
-                  >
-                    Next <ChevronRight className="h-4 w-4" />
-                  </Button>
+
+                {/* Center: Numbered Pagination */}
+                <div className="flex items-center justify-center order-1 md:order-2 w-full md:w-auto">
+                  <Pagination className="mx-auto justify-center">
+                    <div className="flex items-center justify-between w-full sm:min-w-[400px] gap-2">
+                      <PaginationPrevious
+                        onClick={(e) => { e.preventDefault(); setPage((p) => Math.max(0, p - 1)); }}
+                        className={cn("cursor-pointer select-none", page === 0 && "pointer-events-none opacity-50")}
+                      />
+                      <PaginationContent className="flex-1 justify-center gap-1 overflow-x-auto no-scrollbar">
+                        {(() => {
+                          const totalPage = pages;
+                          const currentPage = page + 1;
+                          const items = [];
+                          if (totalPage <= 7) {
+                            for (let i = 1; i <= totalPage; i++) {
+                              items.push(
+                                <PaginationItem key={i}>
+                                  <PaginationLink isActive={currentPage === i} onClick={(e) => { e.preventDefault(); setPage(i - 1); }} className="cursor-pointer select-none">{i}</PaginationLink>
+                                </PaginationItem>
+                              );
+                            }
+                          } else {
+                            items.push(
+                              <PaginationItem key={1}>
+                                <PaginationLink isActive={currentPage === 1} onClick={(e) => { e.preventDefault(); setPage(0); }} className="cursor-pointer select-none">1</PaginationLink>
+                              </PaginationItem>
+                            );
+                            if (currentPage > 3) items.push(<PaginationEllipsis key="left-ellipsis" />);
+                            const start = Math.max(2, currentPage - 1);
+                            const end = Math.min(totalPage - 1, currentPage + 1);
+                            for (let i = start; i <= end; i++) {
+                              items.push(
+                                <PaginationItem key={i}>
+                                  <PaginationLink isActive={currentPage === i} onClick={(e) => { e.preventDefault(); setPage(i - 1); }} className="cursor-pointer select-none">{i}</PaginationLink>
+                                </PaginationItem>
+                              );
+                            }
+                            if (currentPage < totalPage - 2) items.push(<PaginationEllipsis key="right-ellipsis" />);
+                            items.push(
+                              <PaginationItem key={totalPage}>
+                                <PaginationLink isActive={currentPage === totalPage} onClick={(e) => { e.preventDefault(); setPage(totalPage - 1); }} className="cursor-pointer select-none">{totalPage}</PaginationLink>
+                              </PaginationItem>
+                            );
+                          }
+                          return items;
+                        })()}
+                      </PaginationContent>
+                      <PaginationNext
+                        onClick={(e) => { e.preventDefault(); setPage((p) => Math.min(pages - 1, p + 1)); }}
+                        className={cn("cursor-pointer select-none", page >= pages - 1 && "pointer-events-none opacity-50")}
+                      />
+                    </div>
+                  </Pagination>
+                </div>
+
+                {/* Right: Showing entries */}
+                <div className="text-sm text-muted-foreground whitespace-nowrap order-3 md:text-right">
+                  Showing {rows === 0 ? 0 : page * limit + 1}–{Math.min((page + 1) * limit, rows)} of {numeral(rows).format("0,0")} entries
                 </div>
               </div>
             )}
