@@ -1,20 +1,19 @@
-import { readFile } from "node:fs/promises";
+import { readFile, realpath } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
 export async function GET() {
-  // Resolve the worker from react-pdf's own pdfjs-dist dependency so the API
-  // and Worker versions always match.  We avoid require.resolve() because
-  // webpack/Turbopack rewrites it into a numeric module ID at build time.
-  // import.meta.resolve() is a Node runtime API that bundlers leave untouched.
-  const reactPdfPkg = fileURLToPath(import.meta.resolve("react-pdf/package.json"));
-  const reactPdfRoot = path.dirname(reactPdfPkg);          // …/node_modules/react-pdf
+  // Follow pnpm's symlink to find react-pdf's real location in the .pnpm store,
+  // then resolve its sibling pdfjs-dist so API and Worker versions always match.
+  // We avoid require.resolve() and import.meta.resolve() because Turbopack
+  // rewrites both into numeric module IDs at build time.
+  const symlinkedReactPdf = path.join(process.cwd(), "node_modules", "react-pdf");
+  const realReactPdfRoot = await realpath(symlinkedReactPdf);
   const workerPath = path.resolve(
-    reactPdfRoot,
-    "../pdfjs-dist/build/pdf.worker.min.mjs",              // sibling in pnpm store
+    realReactPdfRoot,
+    "../pdfjs-dist/build/pdf.worker.min.mjs",
   );
 
   const worker = await readFile(workerPath);
