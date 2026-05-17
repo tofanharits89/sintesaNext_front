@@ -1081,7 +1081,7 @@ export function ResponsiveSidebar({
       {/* Normal sidebar below lg */}
       <div className="lg:hidden">
         <Sheet open={open} onOpenChange={setOpen}>
-          <div className="border bg-white dark:bg-card shadow-sm mx-4 sm:mx-6 fixed top-22 left-0 right-0 sm:left-0 sm:right-0 z-30 rounded-xl">
+          <div className="border bg-white dark:bg-card shadow-sm fixed top-22 left-4 right-4 sm:left-6 sm:right-6 z-30 rounded-xl">
             <div className="h-12 flex items-center px-4">
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">

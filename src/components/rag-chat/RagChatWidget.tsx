@@ -72,16 +72,21 @@ export function RagChatWidget() {
 
   // Auto-scroll to latest message
   useEffect(() => {
-    if (!messagesEndRef.current) return;
-    try {
-      messagesEndRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "end",
-      });
-    } catch {
-      // ignore scroll errors
+    const scroll = () => {
+      if (!messagesEndRef.current) return;
+      try {
+        messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+      } catch {
+        // ignore scroll errors
+      }
+    };
+    if (isOpen) {
+      // Wait for animation to mount the DOM before scrolling
+      const t = setTimeout(scroll, 50);
+      return () => clearTimeout(t);
     }
-  }, [messages, streamProgress]);
+    scroll();
+  }, [messages, streamProgress, isOpen]);
 
   return (
     <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3">
