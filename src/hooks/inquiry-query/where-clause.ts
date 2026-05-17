@@ -113,6 +113,17 @@ export function buildWhereClause(
         return conditions.length > 1 ? `(${conditions.join(joinOperator)})` : conditions[0] || "";
       };
 
+      // Expected full code lengths for flexible partial-match support
+      const CODE_LENGTHS: Record<string, number> = {
+        kementerian: 3, eselonI: 2, kewenangan: 2,
+        provinsi: 2, kabkota: 4, kanwil: 3, kppn: 3, satker: 6,
+        fungsi: 2, subFungsi: 2, program: 8, kegiatan: 4,
+        outputKro: 4, subOutputRo: 3, sumberDana: 2,
+        komponen: 2, subKomponen: 6, jenisBlokir: 2, register: 6,
+        jenisPn: 2, programPrioritas: 4, kegiatanPrioritas: 6, proyekPrioritas: 8,
+        jenisMajorProject: 4,
+      };
+
       if (filterKey === "akun" && filterValue?.akunType === "kodeBkpk") {
         whereConditions.push(buildFlexibleCondition(`LEFT(main.${config.columnName}, 4)`, 4, values, isExclude));
       } else if (filterKey === "akun" && filterValue?.akunType === "jenisBelanja") {
@@ -128,6 +139,8 @@ export function buildWhereClause(
           .map((v) => `main.${config.columnName} ${isExclude ? "NOT LIKE" : "LIKE"} '%${v}%'`)
           .join(isExclude ? " AND " : " OR ");
         whereConditions.push(`(${likeConds})`);
+      } else if (CODE_LENGTHS[filterKey] !== undefined) {
+        whereConditions.push(buildFlexibleCondition(`main.${config.columnName}`, CODE_LENGTHS[filterKey], values, isExclude));
       } else {
         const valuesList = values.map((v) => `'${v}'`).join(", ");
         const operator = isExclude ? "NOT IN" : "IN";
@@ -136,23 +149,23 @@ export function buildWhereClause(
     }
 
     if (filterKey === "jenisProgramStrategis" && mengandungKata && mengandungKata.trim()) {
-      whereConditions.push(`main.nmprogis LIKE '%${mengandungKata.trim()}%'`);
+      whereConditions.push(`main.nmprogis ILIKE '%${mengandungKata.trim()}%'`);
     } else if (filterKey === "jenisPrioritasPresiden" && mengandungKata && mengandungKata.trim()) {
-      whereConditions.push(`main.nmpriopres LIKE '%${mengandungKata.trim()}%'`);
+      whereConditions.push(`main.nmpriopres ILIKE '%${mengandungKata.trim()}%'`);
     } else if (mengandungKata && mengandungKata.trim() && config.referenceTable) {
       const alias = `${filterKey}_ref`;
       if (filterKey === "register") {
-        whereConditions.push(`${alias}.register LIKE '%${mengandungKata.trim()}%'`);
+        whereConditions.push(`${alias}.register ILIKE '%${mengandungKata.trim()}%'`);
       } else {
         let nameCol = config.nameColumn!;
         if (filterKey === "akun" && filterValue?.akunType) {
           if (filterValue.akunType === "kodeBkpk") nameCol = "nmbkpk";
           else if (filterValue.akunType === "jenisBelanja") nameCol = "nmgbkpk";
         }
-        whereConditions.push(`${alias}.${nameCol} LIKE '%${mengandungKata.trim()}%'`);
+        whereConditions.push(`${alias}.${nameCol} ILIKE '%${mengandungKata.trim()}%'`);
       }
     } else if (mengandungKata && mengandungKata.trim() && !config.referenceTable && config.nameColumn) {
-      whereConditions.push(`${config.nameColumn} LIKE '%${mengandungKata.trim()}%'`);
+      whereConditions.push(`${config.nameColumn} ILIKE '%${mengandungKata.trim()}%'`);
     }
   });
 
