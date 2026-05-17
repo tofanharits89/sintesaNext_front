@@ -27,15 +27,10 @@ import {
   User,
   Menu,
 } from "lucide-react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { BarChart as BklitBarChart } from "@/components/charts/bar-chart";
+import { Bar as BklitBar } from "@/components/charts/bar";
+import { BarXAxis } from "@/components/charts/bar-x-axis";
+import { ChartTooltip } from "@/components/charts/tooltip";
 import { useMenuUsageTop } from "@/hooks/use-menu-usage";
 import {
   Select,
@@ -171,8 +166,6 @@ export default function LogUserPage() {
         };
       }); // Keep API order (oldest → newest) so chart reads left → right
   }, [weeklyStats]);
-
-  const maxCount = Math.max(...weeklyLogins.map((d) => d.count), 1);
 
   // Format login date and time with validation
   const formatLoginDateTime = (timestamp: string) => {
@@ -546,39 +539,34 @@ export default function LogUserPage() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="h-80 w-full">
-                          <ResponsiveContainer width="100%" height={320} minWidth={0} minHeight={0}>
-                            <BarChart
-                              data={weeklyLogins}
-                              margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-                            >
-                              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                              <XAxis dataKey="day" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
-                              <YAxis tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
-                              <Tooltip
-                                content={({ active, payload, label }) => {
-                                  if (active && payload && payload.length) {
-                                    const entry = payload[0];
-                                    if (!entry) return null;
-                                    const data = entry.payload;
-                                    return (
-                                      <div className="bg-background border rounded-lg p-3 shadow-lg">
-                                        <p className="font-medium">{label}</p>
-                                        {data.date && (
-                                          <p className="text-sm text-muted-foreground">{data.date}</p>
-                                        )}
-                                        <p className="text-sm">
-                                          <span className="font-medium text-blue-600">{entry.value}</span> login unik
-                                        </p>
-                                      </div>
-                                    );
-                                  }
-                                  return null;
-                                }}
-                              />
-                              <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} className="fill-blue-500 dark:fill-blue-600" />
-                            </BarChart>
-                          </ResponsiveContainer>
+                        <div className="h-64 w-full">
+                          <BklitBarChart
+                            data={weeklyLogins.map((d) => ({ name: `${d.day}\n${d.date}`, count: d.count, date: d.date }))}
+                            xDataKey="name"
+                            aspectRatio="auto"
+                            className="h-full w-full"
+                            barGap={0.3}
+                            margin={{ top: 8, right: 16, bottom: 32, left: 16 }}
+                          >
+                            <BarXAxis />
+                            <ChartTooltip
+                              showDatePill={false}
+                              rows={(point) => [
+                                {
+                                  color: "var(--chart-realisasi, hsl(var(--primary)))",
+                                  label: "Login unik",
+                                  value: String(point["count"] ?? 0),
+                                },
+                              ]}
+                            />
+                            <BklitBar
+                              dataKey="count"
+                              fill="var(--chart-realisasi, hsl(var(--primary)))"
+                              lineCap="round"
+                              showLabels={true}
+                              labelFormatter={(val) => String(val)}
+                            />
+                          </BklitBarChart>
                         </div>
                         <div className="mt-4 space-y-2">
                           <div className="text-sm text-muted-foreground">
