@@ -1,17 +1,18 @@
 import { readFile } from "node:fs/promises";
-import { createRequire } from "node:module";
 import path from "node:path";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
 export async function GET() {
-  const require = createRequire(import.meta.url);
-  const reactPdfPackagePath = require.resolve("react-pdf/package.json");
-  const reactPdfRoot = path.dirname(reactPdfPackagePath);
-  const workerPath = path.resolve(
-    reactPdfRoot,
-    "../pdfjs-dist/build/pdf.worker.min.mjs",
+  // Construct path manually — require.resolve() gets transformed by webpack/Turbopack
+  // into a numeric module ID, which breaks path.dirname().
+  const workerPath = path.join(
+    process.cwd(),
+    "node_modules",
+    "pdfjs-dist",
+    "build",
+    "pdf.worker.min.mjs",
   );
 
   const worker = await readFile(workerPath);
