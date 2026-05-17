@@ -37,9 +37,18 @@ interface LoginHistoryResponse {
   };
 }
 
+interface TopUserEntry {
+  userId: number;
+  userName: string;
+  username: string;
+  userRole: string;
+  loginCount: number;
+}
+
 interface UseLoginHistoryReturn {
   weeklyStats: LoginStats[];
   loginHistory: LoginHistoryEntry[];
+  weeklyTopUsers: TopUserEntry[];
   pagination: {
     currentPage: number;
     totalPages: number;
@@ -56,12 +65,14 @@ interface UseLoginHistoryReturn {
     endDate?: string,
     userId?: number
   ) => Promise<void>;
+  fetchTopWeeklyUsers: () => Promise<void>;
 }
 
 export const useLoginHistory = (): UseLoginHistoryReturn => {
   const { isAuthenticated } = useAuth();
   const [weeklyStats, setWeeklyStats] = useState<LoginStats[]>([]);
   const [loginHistory, setLoginHistory] = useState<LoginHistoryEntry[]>([]);
+  const [weeklyTopUsers, setWeeklyTopUsers] = useState<TopUserEntry[]>([]);
   const [pagination, setPagination] = useState<{
     currentPage: number;
     totalPages: number;
@@ -163,6 +174,36 @@ export const useLoginHistory = (): UseLoginHistoryReturn => {
     []
   );
 
+  const fetchTopWeeklyUsers = useCallback(async () => {
+    if (!isAuthenticated) return;
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 6);
+    startDate.setHours(0, 0, 0, 0);
+    try {
+      const resp = await http.get(apiPath(`/analytics/login-history`), {
+        params: { limit: 500, offset: 0, startDate: startDate.toISOString(), _ts: Date.now() },
+        headers: { 'X-Bypass-Cache': '1', 'Cache-Control': 'no-cache' },
+      });
+      const result = resp.data;
+      if (result?.success) {
+        const entries: LoginHistoryEntry[] = result.data ?? result.items ?? [];
+        const map = new Map<number, TopUserEntry>();
+        for (const e of entries) {
+          if (e.userRole === "super_admin" || e.userRole === "co_admin") continue;
+          const prev = map.get(e.userId);
+          if (prev) {
+            prev.loginCount += 1;
+          } else {
+            map.set(e.userId, { userId: e.userId, userName: e.userName, username: e.username, userRole: e.userRole, loginCount: 1 });
+          }
+        }
+        setWeeklyTopUsers(Array.from(map.values()).sort((a, b) => b.loginCount - a.loginCount));
+      }
+    } catch {
+      // silent — top users table is supplemental
+    }
+  }, [isAuthenticated]);
+
   // Auto-fetch weekly stats on mount when authenticated
   useEffect(() => {
     if (isAuthenticated) {
@@ -173,10 +214,12 @@ export const useLoginHistory = (): UseLoginHistoryReturn => {
   return {
     weeklyStats,
     loginHistory,
+    weeklyTopUsers,
     pagination,
     isLoading,
     error,
     fetchWeeklyStats,
     fetchLoginHistory,
+    fetchTopWeeklyUsers,
   };
 };

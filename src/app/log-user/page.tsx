@@ -58,6 +58,8 @@ import {
   LogUserMenuSkeleton
 } from "@/components/ui/loading-fallback";
 import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from "@/components/animate-ui/components/animate/tabs";
+import { DataTable } from "@/components/ui/data-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import kanwilData from "@/data/kdkanwil.json";
 import kppnData from "@/data/kdkppn.json";
 
@@ -84,11 +86,13 @@ export default function LogUserPage() {
   const {
     weeklyStats,
     loginHistory,
+    weeklyTopUsers,
     pagination,
     isLoading: isLoadingStats,
     error: statsError,
     fetchWeeklyStats,
     fetchLoginHistory,
+    fetchTopWeeklyUsers,
   } = useLoginHistory();
 
   const [historyPage, setHistoryPage] = useState(1);
@@ -103,8 +107,9 @@ export default function LogUserPage() {
     if (allowed && active === "history") {
       console.log(`[LogUser] Fetching login history page ${historyPage}...`);
       fetchLoginHistory(itemsPerPage, (historyPage - 1) * itemsPerPage);
+      if (historyPage === 1) fetchTopWeeklyUsers();
     }
-  }, [allowed, active, historyPage, fetchLoginHistory]);
+  }, [allowed, active, historyPage, fetchLoginHistory, fetchTopWeeklyUsers]);
 
   // Debug: Data state changes
   useEffect(() => {
@@ -277,6 +282,35 @@ export default function LogUserPage() {
   function refreshHistory() {
     throw new Error("Function not implemented.");
   }
+
+  type TopUserEntry = { userId: number; userName: string; username: string; userRole: string; loginCount: number };
+  const topUsersColumns: ColumnDef<TopUserEntry>[] = [
+    {
+      id: "rank",
+      header: "#",
+      cell: ({ row }) => <span className="text-muted-foreground font-medium">{row.index + 1}</span>,
+    },
+    { accessorKey: "userName", header: "Nama" },
+    {
+      accessorKey: "username",
+      header: "Username",
+      cell: ({ getValue }) => <span className="font-mono text-sm text-muted-foreground">{getValue() as string}</span>,
+    },
+    {
+      accessorKey: "userRole",
+      header: "Role",
+      cell: ({ getValue }) => (
+        <Badge variant="outline" className="text-xs">{getRoleDisplayName(getValue() as any)}</Badge>
+      ),
+    },
+    {
+      accessorKey: "loginCount",
+      header: "Login",
+      cell: ({ getValue }) => (
+        <div className="text-center"><Badge variant="secondary">{getValue() as number}</Badge></div>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in duration-700">
@@ -520,6 +554,7 @@ export default function LogUserPage() {
                   </div>
                 ) : (
                   <div className="flex flex-col gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Weekly Login Chart */}
                     <Card>
                       <CardHeader>
@@ -538,8 +573,16 @@ export default function LogUserPage() {
                           </Button>
                         </CardTitle>
                       </CardHeader>
-                      <CardContent>
-                        <div className="h-64 w-full">
+                      {/*
+                        On md+ the CardContent becomes a flex column that fills the
+                        stretched Card height (set by the grid row, which now follows
+                        the shorter Top Users card on the last page). The chart
+                        container uses flex-1 + min-h-0 so it can shrink/grow with
+                        the row height. On mobile we keep the original h-72 so the
+                        chart doesn't collapse to 0 in a single-column layout.
+                      */}
+                      <CardContent className="md:flex md:flex-1 md:flex-col md:min-h-0">
+                        <div className="h-72 w-full md:h-auto md:flex-1 md:min-h-0">
                           <BklitBarChart
                             data={weeklyLogins.map((d) => ({ name: `${d.day}\n${d.date}`, count: d.count, date: d.date }))}
                             xDataKey="name"
@@ -580,6 +623,35 @@ export default function LogUserPage() {
                         </div>
                       </CardContent>
                     </Card>
+
+                    {/* Top Users This Week */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                          <span>User Terbanyak Login (7 Hari)</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => fetchTopWeeklyUsers()}
+                            disabled={isLoadingStats}
+                            className="h-8 w-8 p-0"
+                          >
+                            <RefreshCw className={`h-4 w-4 ${isLoadingStats ? "animate-spin" : ""}`} />
+                          </Button>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <DataTable
+                          columns={topUsersColumns}
+                          data={weeklyTopUsers}
+                          initialPageSize={10}
+                          emptyMessage="Belum ada data"
+                          footerInfoText=""
+                          hideRowsPerPage
+                        />
+                      </CardContent>
+                    </Card>
+                  </div>
 
                     {/* Recent Login History */}
                     <Card>

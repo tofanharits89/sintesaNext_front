@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "dev:no-turbo": "next dev",
+    "dev": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev --turbopack",
+    "dev:no-turbo": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev",
     "build": "node --max-old-space-size=8192 node_modules/next/dist/bin/next build",
     "build:analyze": "cross-env NODE_OPTIONS=--max-old-space-size=8192 ANALYZE=true next build",
     "start": "next start",
@@ -70,7 +70,6 @@
     "formik": "^2.4.9",
     "framer-motion": "^12.38.0",
     "html-entities": "^2.6.0",
-    "indo-finance-dashboard": "file:",
     "jose": "^6.2.3",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
